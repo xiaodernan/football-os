@@ -1,0 +1,137 @@
+"""Auth routes: register, login, refresh, logout, me (ADR-003)."""
+
+from __future__ import annotations
+
+import hashlib
+import secrets
+from datetime import UTC, datetime, timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.core.db import get_db
+from app.core.security import (
+    create_access_token,
+    current_user,
+    hash_password,
+    limit,
+    new_public_id,
+    verify_password,
+)
+from app.core.timeutil import is_expired
+from app.models import AuditLog, RefreshSession, User
+from app.schemas import LoginIn, RegisterIn, TokenPair, UserOut
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+REFRESH_COOKIE = "fo_refresh"
+
+
+def _issue_refresh(db: Session, user_id: str) -> tuple[str, str]:
+    raw = secrets.token_urlsafe(48)
+    digest = hashlib.sha256(raw.encode()).hexdigest()
+    expires = datetime.now(UTC) + timedelta(days=settings.refresh_token_ttl_days)
+    db.add(RefreshSession(id=new_public_id("rs"), user_id=user_id, token_hash=digest, expires_at=expires))
+    return raw, digest
+
+
+def _set_refresh_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        REFRESH_COOKIE,
+        token,
+        httponly=True,
+        secure=settings.is_production,
+        samesite="strict",
+        max_age=settings.refresh_token_ttl_days * 24 * 3600,
+        path="/api/v1/auth",
+    )
+
+
+@router.post("/register", response_model=TokenPair, status_code=status.HTTP_201_CREATED)
+def register(payload: RegisterIn, request: Request, response: Response, db: Session = Depends(get_db)) -> TokenPair:
+    limit(request, 5, 300, scope="register")
+    email = payload.email.lower().strip()
+    if db.scalar(select(User).where(User.email == email)):
+        raise HTTPException(status.HTTP_409_CONFLICT, detail={"code": "email_taken", "message": "An account already uses this email"})
+    user = User(
+        id=new_public_id("usr"),
+        email=email,
+        password_hash=hash_password(payload.password),
+        display_name=payload.display_name.strip(),
+        role=payload.role,
+    )
+    db.add(user)
+    db.add(AuditLog(id=new_public_id("aud"), user_id=user.id, action="user.registered", detail={"role": user.role}))
+    db.commit()
+    refresh, _digest = _issue_refresh(db, user.id)
+    db.commit()
+    _set_refresh_cookie(response, refresh)
+    return TokenPair(
+        access_token=create_access_token(user.id, user.role),
+        expires_in_seconds=settings.access_token_ttl_minutes * 60,
+        demo_mode=settings.is_demo_mode,
+    )
+
+
+@router.post("/login", response_model=TokenPair)
+def login(payload: LoginIn, request: Request, response: Response, db: Session = Depends(get_db)) -> TokenPair:
+    limit(request, 10, 300, scope="login")
+    user = db.scalar(select(User).where(User.email == payload.email.lower().strip()))
+    if user is None or not verify_password(payload.password, user.password_hash):
+        # identical error for unknown email and wrong password (no account enumeration)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "invalid_credentials", "message": "Email or password is incorrect"})
+    if not user.is_active:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": "account_inactive", "message": "This account is disabled"})
+    user.last_login_at = datetime.now(UTC)
+    db.add(AuditLog(id=new_public_id("aud"), user_id=user.id, action="user.login", detail={}))
+    refresh, _digest = _issue_refresh(db, user.id)
+    db.commit()
+    _set_refresh_cookie(response, refresh)
+    return TokenPair(
+        access_token=create_access_token(user.id, user.role),
+        expires_in_seconds=settings.access_token_ttl_minutes * 60,
+        demo_mode=settings.is_demo_mode,
+    )
+
+
+@router.post("/refresh", response_model=TokenPair)
+def refresh(request: Request, response: Response, db: Session = Depends(get_db)) -> TokenPair:
+    raw = request.cookies.get(REFRESH_COOKIE)
+    if not raw:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "no_refresh", "message": "No active session"})
+    digest = hashlib.sha256(raw.encode()).hexdigest()
+    stored = db.scalar(select(RefreshSession).where(RefreshSession.token_hash == digest))
+    if stored is None or stored.revoked_at is not None or is_expired(stored.expires_at):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "refresh_invalid", "message": "Session expired, please sign in again"})
+    user = db.get(User, stored.user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": "account_inactive", "message": "This account is disabled"})
+    stored.revoked_at = datetime.now(UTC)  # rotate
+    new_raw, _ = _issue_refresh(db, user.id)
+    db.commit()
+    _set_refresh_cookie(response, new_raw)
+    return TokenPair(
+        access_token=create_access_token(user.id, user.role),
+        expires_in_seconds=settings.access_token_ttl_minutes * 60,
+        demo_mode=settings.is_demo_mode,
+    )
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    raw = request.cookies.get(REFRESH_COOKIE)
+    if raw:
+        digest = hashlib.sha256(raw.encode()).hexdigest()
+        stored = db.scalar(select(RefreshSession).where(RefreshSession.token_hash == digest))
+        if stored is not None:
+            stored.revoked_at = datetime.now(UTC)
+            db.commit()
+    response.delete_cookie(REFRESH_COOKIE, path="/api/v1/auth")
+
+
+@router.get("/me", response_model=UserOut)
+def me(user: User = Depends(current_user)) -> UserOut:
+    return UserOut.model_validate(user)
+

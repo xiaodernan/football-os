@@ -1,0 +1,23 @@
+name: football-os
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: football_os_db
+    environment:
+      POSTGRES_DB: football_os
+      POSTGRES_USER: football
+      POSTGRES_PASSWORD: football
+    ports:
+      - "54321:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./postgres/init-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U football -d football_os"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:
