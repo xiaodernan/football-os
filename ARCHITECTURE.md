@@ -6,10 +6,10 @@
 
 ```
                     ┌──────────────────────────────┐
-   browser / mobile │  apps/web  Next.js 15 (TS)   │  SSR + BFF + streaming + i18n
+   browser / mobile │  apps/web  Next.js 15 (TS)   │  SSR + BFF + SEO metadata (§81 i18n: not built)
                     │  design tokens · PWA-ready   │
                     └───────────────┬──────────────┘
-                                    │ HTTP/JSON (typed client in lib/api.ts)
+                                    │ HTTP/JSON (typed: lib/api.ts client · lib/server.ts server)
                     ┌───────────────▼──────────────┐
                     │   apps/api  FastAPI (Py3.11) │  auth · domain · coach engine
                     │                              │  providers · agent runtime (M2+)
@@ -91,13 +91,21 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
 
 ## 6. Frontend architecture
 
-- App Router with route groups: `(public)` football world/news/SEO pages, `(app)` My Football/Coach/Training/Tactical Lab, `(auth)`.
-- All data fetching through `lib/api.ts` (typed) — server components by default, client components only where interaction is required.
+- App Router. The planned route groups (`(public)`, `(app)`, `(auth)`) are **not** used: protection is enforced twice instead —
+  `middleware.ts` gates the `PROTECTED_PREFIXES` list, and each protected page calls `currentUser()`. Everything outside that
+  list (`/world`, `/knowledge`, the five §80 entity routes, `/login`, `/register`, `/healthz`) renders for a signed-out visitor.
+- All data fetching is typed: `lib/api.ts` is the client-safe half (`browserFetch` through the `/api/v1/*` cookie proxy),
+  `lib/server.ts` the server-only half (`serverFetch` reading the httpOnly jar), `lib/types.ts` the single wire contract for
+  both, `lib/world.ts` the world-page read helpers. Server components by default; client components only where interaction is required.
+- Football World pages never construct a URL. The API hands out `path` for every row (`SEO_ROUTES`/`web_path()` in
+  `app/services/world/plan.py`), so a §80 route exists in exactly one place across both tiers, and `sitemap.ts` builds its
+  983 entries from the same fields the pages link with.
 - i18n (spec §81): **not built yet** — the UI is English-only. Target shape when it lands: `messages/{en,zh,zh-TW}.json`, no literal strings inside components.
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.
-- Design system: `styles/tokens.css` (colour/type/spacing/radius/shadow) + `components/ui/*`; dark, premium, editorial, data-rich (spec §48).
+- Design system: `styles/globals.css` (tokens + the shared class vocabulary listed at the top of the file) plus per-surface
+  stylesheets (`world.css`, `coach.css`, `training.css`, …) and `components/ui/*`; dark, premium, editorial, data-rich (spec §48).
 - Trust surfaces: every AI/simulation/demo output carries a visible badge — `DEMO DATA`, `AI-generated`, `Estimated`, `Simulation`, `Source`, `Confidence` (spec §62).
 
 ## 7. Data & AI sourcing

@@ -167,6 +167,7 @@ def _stat_line_row(line: RealPlayerMatchStat, players: dict[str, RealPlayer], ma
         "natural_key": line.natural_key,
         "match_id": line.match_id,
         "match_slug": match.slug if match else None,
+        "match_path": web_path("match", match.slug) if match else None,
         "kickoff_at": _iso(match.kickoff_at) if match else None,
         "competition": _competition_brief(match.competition) if match else None,
         "player": _player_brief(player),
@@ -625,6 +626,7 @@ def player_detail(ident: str, request: Request, db: Session = Depends(get_db)) -
             {
                 "match_id": line.match_id,
                 "match_slug": matches[line.match_id].slug,
+                "match_path": web_path("match", matches[line.match_id].slug),
                 "kickoff_at": _iso(matches[line.match_id].kickoff_at),
                 "role": line.role,
                 "position": line.position,

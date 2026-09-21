@@ -1,12 +1,17 @@
 /**
- * End-to-end visual + functional QA walk for the M1 loop (spec PRINCIPLE 3, §88).
+ * End-to-end visual + functional QA walk: the M1 training loop, the M2 knowledge surface and the
+ * M3 Football World pages (spec PRINCIPLE 3, §56, §62, §65, §80, §88).
  *
- * Drives the real browser stack — middleware redirect, cookie proxy, server components and
- * client forms — against a running dev server, then writes screenshots at desktop and
- * 375px widths into docs/screenshots/ and prints an assertion report.
+ * Drives the real browser stack — middleware redirect, cookie proxy, server components, client
+ * forms and the generated-world routes — then writes screenshots at desktop and 375px widths into
+ * docs/screenshots/ and prints an assertion report (110 checks as of 2026-09-22).
  *
  *   web tier: http://127.0.0.1:3210   api tier: http://127.0.0.1:8731   (scripts/dev.sh)
  *   node scripts/visual-qa.mjs
+ *
+ * Evidence runs use a production build, not the dev server: use scripts/verify-production.sh,
+ * which builds, serves on :3211, refuses to proceed unless that port is serving the fresh build,
+ * runs this walk and releases the port.
  *
  * Env overrides: QA_BASE, CHROME_PATH.
  */
@@ -44,8 +49,13 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
 async function shot(page, name) {
   const file = `${stamp}-${name}.png`;
-  await page.screenshot({ path: resolve(OUT_DIR, file), fullPage: true });
-  shots.push(file);
+  try {
+    await page.screenshot({ path: resolve(OUT_DIR, file), fullPage: true });
+    shots.push(file);
+  } catch (error) {
+    // A missing PNG is a failure worth reporting; it must not abort the other 90 assertions.
+    check(`screenshot ${name} captured`, false, String(error?.message ?? error).slice(0, 160));
+  }
 }
 
 async function open(page, path) {
@@ -73,6 +83,31 @@ async function bodyText(page) {
   return page.evaluate(() => document.body.innerText);
 }
 
+/**
+ * Probe many URLs with a bounded pool. The sitemap now advertises ~1,000 world rows, and firing
+ * all of them at once makes the web tier refuse its own crawler — a failure of the harness, not
+ * of the product. A refused connection is reported as status 0 so the check fails loudly instead
+ * of throwing and aborting the run.
+ */
+async function probeStatuses(urls, concurrency = 8) {
+  const outcomes = new Array(urls.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(concurrency, urls.length) }, async () => {
+    for (;;) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= urls.length) return;
+      try {
+        outcomes[index] = (await fetch(urls[index])).status;
+      } catch {
+        outcomes[index] = 0;
+      }
+    }
+  });
+  await Promise.all(workers);
+  return outcomes;
+}
+
 async function clickByText(page, selector, text) {
   const handle = await page.evaluateHandle(
     (css, needle) =>
@@ -96,8 +131,12 @@ async function run() {
     headless: 'new',
     executablePath: CHROME,
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
+    // A walk of ~1,100 navigations and 46 full-page captures on a busy host needs more than the
+    // default 30s per waiter; without this a slow-but-fine render aborts the whole run.
+    protocolTimeout: 300_000,
   });
   const page = await browser.newPage();
+  page.setDefaultTimeout(120_000);
   /** Where an error was seen matters more than the minified React code Chrome prints. */
   const note = (line) => consoleErrors.push(`${line} @ ${new URL(page.url()).pathname}`);
   page.on('console', (message) => {
@@ -458,11 +497,12 @@ async function run() {
     );
     const locs = [...sitemap.text.matchAll(/<loc>([^<]+)<\/loc>/gu)].map((match) => match[1]);
     check('sitemap.xml is served and non-empty', sitemap.status === 200 && locs.length > 0, `${locs.length} <loc> entries`);
+    const locStatuses = await probeStatuses(locs);
+    const notOk = locs.filter((unused, index) => locStatuses[index] !== 200);
     check(
       'sitemap advertises only routes that answer 200 (no redirect chains)',
-      locs.length > 0 &&
-        (await Promise.all(locs.map(async (url) => (await fetch(url)).status))).every((status) => status === 200),
-      locs.length > 0 ? `${locs.length} URLs probed` : 'no URLs',
+      locs.length > 0 && notOk.length === 0,
+      `${locs.length} URLs probed, ${locs.length - notOk.length} answered 200${notOk.length ? ` — e.g. ${locStatuses[locs.indexOf(notOk[0])]} ${notOk[0]}` : ''}`,
     );
     check(
       'every library document appears in the sitemap',
@@ -509,6 +549,250 @@ async function run() {
     );
     await shot(page, '19-seo-document-head-desktop');
 
+    // 12b. Football World (M3): the public surface, the §80 routes and what they refuse to show.
+    // Rows are read through the web tier's own /api/v1 proxy, so this also proves a signed-out
+    // visitor can reach the world API at all.
+    const worldApi = async (path) => {
+      const response = await fetch(`${BASE}/api/v1/world${path}`);
+      if (!response.ok) throw new Error(`GET /api/v1/world${path} → ${response.status}`);
+      return response.json();
+    };
+    const worldStatus = await worldApi('/status');
+    const worldCompetitions = (await worldApi('/competitions?page_size=50')).items;
+    const worldLeague = worldCompetitions.find((row) => row.kind === 'league');
+    const worldCup = worldCompetitions.find((row) => row.kind !== 'league');
+    const worldTeam = (await worldApi('/teams?page_size=3')).items[0];
+    const worldPlayer = (await worldApi('/players?page_size=3')).items[0];
+    const worldPlayed = (await worldApi('/matches?status=completed&page_size=3')).items[0];
+    const worldScheduled = (await worldApi('/matches?status=scheduled&page_size=3')).items[0];
+    const worldArticle = (await worldApi('/news?page_size=3')).items[0];
+
+    check(
+      'the web proxy serves the world API to a signed-out visitor',
+      worldStatus.counts.players > 0 && worldStatus.is_demo_data === true,
+      `${worldStatus.counts.players} players · origin ${worldStatus.data_origin}`,
+    );
+    const bySegment = (segment) => locs.filter((url) => new URL(url).pathname.startsWith(`/${segment}/`)).length;
+    check(
+      'the sitemap advertises every generated row under its §80 route',
+      bySegment('player') === worldStatus.counts.players &&
+        bySegment('team') === worldStatus.counts.teams &&
+        bySegment('match') === worldStatus.counts.matches &&
+        bySegment('news') === worldStatus.counts.articles &&
+        bySegment('competition') === worldStatus.counts.competitions,
+      `player ${bySegment('player')}/${worldStatus.counts.players} · team ${bySegment('team')} · match ${bySegment('match')} · news ${bySegment('news')} · competition ${bySegment('competition')}`,
+    );
+    check(
+      'the search page stays out of the sitemap while content pages are in it',
+      !locs.some((url) => new URL(url).pathname === '/world/search') && locs.some((url) => new URL(url).pathname === '/world'),
+      `${locs.length} entries`,
+    );
+
+    await open(page, '/world');
+    await waitForText(page, 'Football World');
+    const worldIndex = await bodyText(page);
+    check(
+      'the world index prints the API-measured row counts',
+      Object.values(worldStatus.counts).every((count) => worldIndex.includes(count.toLocaleString('en-GB'))),
+      JSON.stringify(worldStatus.counts),
+    );
+    check(
+      'the world index labels itself demo data and repeats the API disclaimer verbatim',
+      /DEMO DATA/u.test(worldIndex) && worldIndex.includes(worldStatus.disclaimer.slice(0, 60)),
+      worldStatus.disclaimer.slice(0, 60),
+    );
+    check(
+      'the world index ships the single search box (spec §56)',
+      await page.evaluate(() => !!document.querySelector('form[action="/world/search"] input[name="q"]')),
+    );
+    check(
+      'the §65 gate is reported as met for every gated table',
+      /MEETS/u.test(worldIndex) && !/BELOW/u.test(worldIndex),
+    );
+    check(
+      'Football World is reachable from the navigation',
+      await page.evaluate(() => !!document.querySelector('.nav__link[href="/world"]')),
+    );
+    await shot(page, '21-world-index-desktop');
+
+    await open(page, '/world/search?q=athletic');
+    await waitForText(page, 'Results, ranked by term overlap');
+    const searchHead = await page.evaluate(() => document.head.querySelector('meta[name="robots"]')?.content ?? '');
+    check(
+      'the search page is noindex,follow so a query shell is not indexed as content',
+      /noindex/iu.test(searchHead) && /follow/iu.test(searchHead),
+      searchHead || 'no robots meta',
+    );
+    await shot(page, '22-world-search-desktop');
+
+    await open(page, worldScheduled.path);
+    await waitForText(page, 'no score yet');
+    const scheduledBody = await bodyText(page);
+    check(
+      'an unplayed fixture shows a kick-off time and refuses a score (spec §65)',
+      /not been played/iu.test(scheduledBody) && !/0\s*[–-]\s*0/u.test(scheduledBody) && !!worldScheduled.kickoff_at,
+      `${worldScheduled.status} · ${worldScheduled.score}`,
+    );
+    await shot(page, '23-world-match-scheduled-desktop');
+
+    await open(page, worldPlayed.path);
+    await waitForText(page, 'Who scored');
+    const playedBody = await bodyText(page);
+    const playedHead = await pageHead(worldPlayed.path);
+    const matchEvent = playedHead.jsonLd.find((node) => node['@type'] === 'SportsEvent');
+    const goalsInScore = (worldPlayed.home_goals ?? 0) + (worldPlayed.away_goals ?? 0);
+    check(
+      'the match centre shows the score and its own goals reconcile with the player lines',
+      playedBody.includes(`goals in score: ${goalsInScore}`) && /RECONCILES/u.test(playedBody),
+      playedBody.match(/goals in score: \d+[^]{0,60}/u)?.[0]?.replace(/\s+/g, ' ').slice(0, 90) ?? 'no goals block',
+    );
+    check(
+      'the match centre publishes SportsEvent data on both sides with a start date',
+      !!matchEvent?.homeTeam?.name &&
+        !!matchEvent?.awayTeam?.name &&
+        !!matchEvent?.startDate &&
+        String(matchEvent?.eventStatus ?? '').endsWith('EventCompleted') &&
+        matchEvent?.homeTeam?.url === `${BASE}${worldPlayed.home?.path}`,
+      `${matchEvent?.homeTeam?.name ?? '—'} v ${matchEvent?.awayTeam?.name ?? '—'} · ${matchEvent?.startDate ?? 'no startDate'}`,
+    );
+    await shot(page, '24-world-match-centre-desktop');
+
+    await open(page, worldTeam.path);
+    await waitForText(page, 'Squad');
+    const teamHead = await pageHead(worldTeam.path);
+    const sportsTeam = teamHead.jsonLd.find((node) => node['@type'] === 'SportsTeam');
+    const squadRows = await page.evaluate(() => document.querySelectorAll('.table tbody tr').length);
+    check('a club page lists its whole stored squad', squadRows >= worldTeam.squad_size, `${squadRows} table rows vs squad_size ${worldTeam.squad_size}`);
+    check(
+      'squad rows deep-link to the §80 /player/{slug} route',
+      (await page.evaluate(() => new Set([...document.querySelectorAll('a[href^="/player/"]')].map((a) => a.getAttribute('href'))).size)) >= worldTeam.squad_size,
+    );
+    check(
+      'the club page carries SportsTeam structured data on its own canonical URL',
+      sportsTeam?.name === worldTeam.name && sportsTeam?.url === teamHead.canonical,
+      `${sportsTeam?.name ?? 'no SportsTeam'} · ${teamHead.canonical}`,
+    );
+    await shot(page, '25-world-team-desktop');
+
+    const playerDetail = await worldApi(`/players/${worldPlayer.slug}`);
+    await open(page, worldPlayer.path);
+    await waitForText(page, 'Season totals');
+    const playerBody = await bodyText(page);
+    const playerHead = await pageHead(worldPlayer.path);
+    const athlete = playerHead.jsonLd.find((node) => node['@type'] === 'Athlete');
+    check(
+      'a player page states that its season totals are the sum of its stat lines',
+      /totals equal the sum of this player's stat lines/u.test(playerBody) && /consistency/iu.test(playerBody),
+      playerDetail.season_stats.consistency_check,
+    );
+    check(
+      'the player page renders every stored statistic line server-side',
+      // Row counts, not text: `.eyebrow` is uppercased by CSS, so `innerText` case is not stable to compare.
+      (await page.evaluate(() => [...document.querySelectorAll('table')].map((table) => table.querySelectorAll('tbody tr').length)))
+        .at(-1) === playerDetail.stat_lines.length && /rows/iu.test(playerBody),
+      `${playerDetail.stat_lines.length} lines from the API`,
+    );
+    check(
+      'the attribute radar is inline SVG, not a client-side chart',
+      (await page.evaluate(() => document.querySelectorAll('svg[role="img"]').length)) > 0 && !!athlete,
+      `${Object.keys(playerDetail.player.attributes).length} attributes`,
+    );
+    await shot(page, '26-world-player-desktop');
+
+    await open(page, worldLeague.path);
+    await waitForText(page, 'Table');
+    const leagueTable = await page.evaluate(() =>
+      [...document.querySelectorAll('.table tbody tr')].map((row) => [...row.querySelectorAll('td')].map((cell) => cell.textContent.trim())),
+    );
+    const pointsColumn = leagueTable.map((row) => Number.parseInt(row[9] ?? '', 10)).filter((value) => !Number.isNaN(value));
+    check(
+      'a league table is ordered by points and shows only played rows',
+      leagueTable.length >= 3 && pointsColumn.every((value, index) => index === 0 || pointsColumn[index - 1] >= value),
+      pointsColumn.join(' ≥ ') || 'no rows',
+    );
+    const leagueBody = await bodyText(page);
+    check(
+      'the standings say where they came from',
+      /aggregated from the stored completed fixtures/iu.test(leagueBody),
+      leagueBody.match(/Table aggregated[^.]*\./u)?.[0] ?? 'no provenance line',
+    );
+    await shot(page, '27-world-competition-league-desktop');
+
+    await open(page, worldCup.path);
+    await waitForText(page, 'Entrants');
+    const cupBody = await bodyText(page);
+    check(
+      'a knockout is not given an invented league table',
+      /No league table/u.test(cupBody) && /bracket/iu.test(cupBody) && !/aggregated from the stored completed fixtures/iu.test(cupBody),
+      cupBody.match(/Knockout[^.]*\./u)?.[0]?.slice(0, 90) ?? 'no format note',
+    );
+    await shot(page, '28-world-competition-cup-desktop');
+
+    await open(page, worldArticle.path);
+    await waitForText(page, 'Claim class');
+    const newsBody = await bodyText(page);
+    const newsHead = await pageHead(worldArticle.path);
+    const newsGraph = newsHead.jsonLd.find((node) => node['@type'] === 'NewsArticle');
+    check(
+      'a generated report declares its claim class, its source and its own disclaimer',
+      newsBody.includes(worldArticle.claim_class) &&
+        newsBody.includes(`source: ${worldArticle.source_name}`) &&
+        /synthetic-world/u.test(newsBody),
+      `${worldArticle.claim_class} · ${worldArticle.source_name}`,
+    );
+    check(
+      'the report carries NewsArticle structured data with a real publication date',
+      newsGraph?.headline === worldArticle.title && !!newsGraph?.datePublished && newsHead.ogUrl === newsHead.canonical,
+      `${newsGraph?.datePublished ?? 'no datePublished'}`,
+    );
+    const crossLinks = await page.evaluate(() => [
+      ...new Set(
+        [...document.querySelectorAll('a[href^="/player/"], a[href^="/team/"], a[href^="/match/"], a[href^="/competition/"], a[href^="/news/"]')].map(
+          (anchor) => anchor.getAttribute('href'),
+        ),
+      ),
+    ]);
+    const crossStatuses = await probeStatuses(crossLinks.slice(0, 12).map((href) => `${BASE}${href}`));
+    check(
+      'entity links out of a report resolve against the §80 routes',
+      crossLinks.length > 0 && crossStatuses.every((status) => status === 200),
+      `${crossLinks.length} links · ${crossStatuses.length} probed · ${crossStatuses.filter((status) => status !== 200).length} failed`,
+    );
+    await shot(page, '29-world-news-desktop');
+
+    await open(page, '/world/players');
+    await waitForText(page, 'Players');
+    const firstRow = () => page.evaluate(() => document.querySelector('.table tbody tr td:nth-child(2)')?.textContent.trim() ?? '');
+    const beforePaging = await firstRow();
+    await clickByText(page, 'a.btn', 'Next →');
+    await waitForText(page, 'Page 2 of');
+    const afterPaging = await firstRow();
+    check('the players list paginates to a different page of rows', !!beforePaging && !!afterPaging && beforePaging !== afterPaging, `${beforePaging} → ${afterPaging}`);
+    await open(page, '/world/players?position=ST&sort=goals&order=asc');
+    const positions = await page.evaluate(() => [...document.querySelectorAll('.table tbody tr .world-pos')].map((node) => node.textContent.trim()));
+    check(
+      'position and sort filters apply to every rendered row',
+      positions.length > 0 && positions.every((value) => value === 'ST'),
+      positions.slice(0, 4).join(', ') || 'no rows',
+    );
+    const goalColumn = await page.evaluate(() =>
+      [...document.querySelectorAll('.table tbody tr')].map((row) => Number.parseInt(row.children[6]?.textContent ?? '', 10)).filter((value) => !Number.isNaN(value)),
+    );
+    check(
+      'ascending sort really orders the column it claims to sort',
+      goalColumn.every((value, index) => index === 0 || goalColumn[index - 1] <= value),
+      goalColumn.slice(0, 6).join(' ≤ ') || 'no values',
+    );
+    await shot(page, '30-world-players-desktop');
+
+    const brokenSlug = await fetch(`${BASE}/team/no-such-club-exists-anywhere`);
+    const brokenBody = await brokenSlug.text();
+    check(
+      'an unknown world slug is a 404 page, not an empty shell or a invented record',
+      brokenSlug.status === 404 && !/Braeford|Ildwick/u.test(brokenBody),
+      `${brokenSlug.status}`,
+    );
+
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
     await page.setViewport(MOBILE);
     const mobileSurface = async ([path, marker, label]) => {
@@ -536,6 +820,13 @@ async function run() {
       ['/history', 'Training log', 'history'],
       ['/knowledge', 'Document library', 'knowledge'],
       ['/knowledge/buildup-vs-high-press', 'Passages', 'knowledge-document'],
+      ['/world', 'Browse', 'world'],
+      ['/world/players', 'Players', 'world-players'],
+      [worldTeam.path, 'Squad', 'world-team'],
+      [worldPlayer.path, 'Season totals', 'world-player'],
+      [worldPlayed.path, 'Who scored', 'world-match'],
+      [worldCup.path, 'Entrants', 'world-cup'],
+      [worldArticle.path, 'Claim class', 'world-news'],
       ['/settings', 'Data', 'settings'],
     ]) {
       await mobileSurface(surface);
@@ -554,6 +845,13 @@ async function run() {
     await open(page, '/my-football');
     check('logout clears the session (protected route bounces to login)', signedOut === 204 && new URL(page.url()).pathname === '/login', `status ${signedOut}`);
     await mobileSurface(['/login', 'Sign in', 'login-signed-out']);
+  } catch (error) {
+    // An abort used to print one line and discard the other ~100 results. Record it as a failed
+    // check, capture what the browser was actually looking at, and fall through to the summary.
+    check('the walk completed without an unhandled error', false, String(error?.message ?? error).slice(0, 220));
+    await shot(page, 'abort-state');
+    await open(page, '/login').catch(() => {});
+    await shot(page, 'abort-login').catch(() => {});
   } finally {
     await browser.close();
   }

@@ -1,8 +1,8 @@
 # M3 Football World — backend verification
 
-Date: 2026-09-21 (UTC). Scope: the synthetic world **backend** — models, migration, generator,
-unified search, `/api/v1/world/*`, the `/capabilities` flag. The public web pages at the §80 routes
-are the next increment (`ROADMAP.md` → M3 web surface) and are **not** claimed here.
+Date: 2026-09-21 (UTC), counts refreshed 2026-09-22. Scope: the synthetic world **backend** — models, migration, generator,
+unified search, `/api/v1/world/*`, the `/capabilities` flag. The public web pages at the §80 routes landed the next day
+and are verified separately in [`M3_WEB_VERIFICATION.md`](M3_WEB_VERIFICATION.md); nothing on this page depends on them.
 
 Spec anchors: §4 data model · §7 entities · §25 news schema · §26 fact/analysis/speculation ·
 §54 match centre · §55 player page · §56 one search box · §62/§88 provenance labelling ·
@@ -105,26 +105,27 @@ cd apps/api
 python -m ruff check app tests            # All checks passed
 python -m mypy app                        # no issues found in 45 source files
 python -m alembic upgrade head && python -m alembic check
-python -m pytest -q                                                  # 87 passed (SQLite)
+python -m pytest -q                                                  # 89 passed (SQLite)
 FOOTBALL_OS_TEST_DATABASE_URL="postgresql+psycopg2://football:football@127.0.0.1:54321/football_os_pytest" \
-  python -m pytest -q                                               # 87 passed (pgvector)
+  python -m pytest -q                                               # 89 passed (pgvector)
 python -m evals.run_rag_eval                                        # all gates passed (unchanged by M3)
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8731 &
 python ../../scripts/export_openapi.py   # 40 paths, 44 operations, incl. the 12 /world routes
 curl -s localhost:8731/api/v1/world/status
 ```
 
-`tests/test_world.py` is 39 tests in four classes: `TestPlan` (pure invariants), `TestSync`
+`tests/test_world.py` is 41 tests in four classes: `TestPlan` (pure invariants), `TestSync`
 (idempotence, gate floors, referential integrity), `TestReads` (HTTP envelope, pagination,
-slug-vs-id resolution, 404s, search filters), `TestSearchService` (ranking, nonsense queries,
-per-hit provenance).
+slug-vs-id resolution, 404s, search filters, every `*path` in a detail payload being a §80 route),
+`TestSearchService` (ranking, nonsense queries, per-hit provenance).
 
 ## 8. Not claimed by this milestone
 
-* Public `/player`, `/team`, `/match`, `/competition`, `/news` pages and the world index/search UI —
-  next increment, including their sitemap entries.
 * Any external data provider. `NEWS_API_KEY` / `FOOTBALL_DATA_API_KEY` remain unread; the world is
   generated locally and `source_name` says so (spec §45).
 * Season progression: fixtures are generated once per seed from `SEASON_START`; nothing simulates a
   matchday moving the table forward (that is M6's engine).
 * Multilingual rendering of world copy (§81).
+
+The public pages that consume these routes — `/world`, the five lists, `/world/search` and the five
+§80 entity pages — are verified in [`M3_WEB_VERIFICATION.md`](M3_WEB_VERIFICATION.md).

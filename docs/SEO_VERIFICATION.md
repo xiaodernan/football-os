@@ -5,6 +5,12 @@ Date: 2026-09-21 · Tier: `apps/web` · Evidence run: `202609212143` (66/66 brow
 A later run (2026-09-21 22:40 UTC) extended the harness to 68/68 by asserting two `/settings` rows: that M3 Football World
 reads Live from the data-derived API flag, and that the locale row ships only `en` with `zh`/`zh-TW` labelled planned.
 
+**Superseded 2026-09-22** by the M3 web surface: the walk is now **110 assertions**, and `sitemap.xml` is generated from
+live API reads across the whole site — **983 `<loc>` entries** (500 news + 300 players + 130 matches + 20 teams +
+10 competitions + 6 world pages + 17 knowledge documents), each asserted to answer 200, each per-type count asserted equal
+to the API's own row count. That work and its structured-data table are recorded in [`M3_WEB_VERIFICATION.md`](M3_WEB_VERIFICATION.md);
+everything below stays true of the §80 layer itself.
+
 Spec §80 requires public pages to carry Metadata, OpenGraph, Structured Data, Sitemap and Canonical, with
 `/{entity}/{slug}` routes. §81 asks for en / zh / zh-TW. This record states what is true now and names what is not.
 
@@ -24,7 +30,7 @@ claimed `i18n(en/zh/zh-TW)`, which was never true (see §5).
 | Per-route canonical + OG (never at layout level, or every child self-canonicalises to home) | `pageMetadata()` in `lib/site.ts`, used by `/knowledge` and `/knowledge/{slug}` | `knowledge index publishes canonical + matching OpenGraph URL` |
 | Site graph (`WebSite`) | `app/layout.tsx` body | `a WebSite graph identifies the site by absolute URL` |
 | Document graph (`Article`: headline, url, `mainEntityOfPage`, author, `dateModified`, keywords) | `app/knowledge/[slug]/page.tsx` | `document page carries Article structured data with its headline` |
-| `sitemap.xml` generated from a live API read | `app/sitemap.ts` | 3 assertions: served, 17 `<loc>` entries, every entry answers 200 |
+| `sitemap.xml` generated from a live API read | `app/sitemap.ts` | 3 assertions: served, 983 `<loc>` entries, every entry answers 200 |
 | `robots.txt` | `app/robots.ts` | 2 assertions: `text/plain`, all session-gated paths disallowed |
 
 Rendered head of `/knowledge/warmup-structure` (production build, `SITE_URL=http://127.0.0.1:3211`):
@@ -83,8 +89,8 @@ npx tsc --noEmit && npm run lint                       # clean
 NEXT_DIST_DIR=.next-ci npx next build                  # ƒ /sitemap.xml, ƒ /robots.txt
 SITE_URL=http://127.0.0.1:3211 NEXT_DIST_DIR=.next-ci npx next start -p 3211
 curl -s http://127.0.0.1:3211/robots.txt | tail -2     # Host/Sitemap must name 3211
-curl -s http://127.0.0.1:3211/sitemap.xml | grep -c "<loc>"   # 17
-QA_BASE=http://127.0.0.1:3211 node scripts/visual-qa.mjs      # 66/66, exit 0
+curl -s http://127.0.0.1:3211/sitemap.xml | grep -c "<loc>"   # 983 (17 before the world pages landed)
+QA_BASE=http://127.0.0.1:3211 node scripts/visual-qa.mjs      # 110/110 today; this run recorded 66/66, exit 0
 ```
 
 The QA walk exercises the whole M1+M2 loop against the **production build**, not a hot-reloaded dev server, so the

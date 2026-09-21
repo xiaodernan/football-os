@@ -480,3 +480,299 @@ export type KnowledgeAskResponse = {
   generated_at: string;
   disclaimer: string;
 };
+
+/* ---------------------------------------------------------------------------
+ * M3 Football World — GET /api/v1/world/* (spec §54 match centre, §55 player page,
+ * §56 unified search, §65 generated data, §80 public routes).
+ *
+ * Nullability mirrors the SQLAlchemy columns exactly: a `Mapped[int | None]`
+ * column must be `number | null` here, so a page cannot print an absent figure
+ * as `0`. Every payload extends `WorldEnvelope`, which is why no world page has
+ * to remember to add its own provenance note.
+ * ------------------------------------------------------------------------- */
+
+export type WorldEnvelope = {
+  data_origin: string;
+  is_demo_data: boolean;
+  demo_data: boolean;
+  disclaimer: string;
+};
+
+/** GET /world/status — what the tables actually hold, measured not asserted. */
+export type WorldStatus = WorldEnvelope & {
+  version: string;
+  seed: number;
+  auto_sync: boolean;
+  counts: Record<string, number>;
+  seasons: string[];
+  news_categories: string[];
+  positions: string[];
+  stat_method: Record<string, string>;
+  gate: Record<string, number>;
+};
+
+/** The shared shell of the five list routes. */
+export type WorldPage<T> = WorldEnvelope & {
+  items: T[];
+  page: number;
+  page_size: number;
+  total: number;
+  pages: number;
+};
+
+export type TeamBrief = { id: string; slug: string; name: string; short_name: string; path: string };
+export type PlayerBrief = { id: string; slug: string; name: string; position: string; path: string };
+export type CompetitionBrief = { id: string; slug: string; name: string; kind: string; path: string };
+
+/** A fixture as the list/aggregate routes report it. `score` is text on purpose. */
+export type MatchBrief = WorldEnvelope & {
+  id: string;
+  slug: string;
+  path: string;
+  season: string;
+  round_label: string;
+  kickoff_at: string | null;
+  venue: { name: string; city: string };
+  status: string;
+  home: TeamBrief | null;
+  away: TeamBrief | null;
+  home_goals: number | null;
+  away_goals: number | null;
+  score: string;
+  summary: string;
+};
+
+export type PlayerRow = WorldEnvelope & {
+  id: string;
+  slug: string;
+  path: string;
+  name: string;
+  position: string;
+  secondary_positions: string[];
+  age: number;
+  nation: string;
+  preferred_foot: string;
+  height_cm: number | null;
+  season: string;
+  overall: number;
+  potential: number;
+  archetype: string;
+  archetype_match: number;
+  goals: number;
+  assists: number;
+  appearances: number;
+  starts: number;
+  minutes: number;
+  rating: number;
+  form: number;
+  team_id: string | null;
+  club?: TeamBrief | null;
+};
+
+/** Team statistics as stored: two sides per metric, plus scalars like attendance. */
+export type StatPair = { home: number; away: number };
+export type MatchStats = Record<string, number | StatPair | Record<string, string>>;
+
+/** One per-player line inside a played match — the atom every aggregate is checked against. */
+export type StatLine = WorldEnvelope & {
+  id: string;
+  natural_key: string;
+  match_id: string;
+  match_slug: string | null;
+  match_path: string | null;
+  kickoff_at: string | null;
+  competition: CompetitionBrief | null;
+  player: PlayerBrief | null;
+  team_id: string;
+  role: string;
+  position: string;
+  minutes: number;
+  goals: number;
+  assists: number;
+  shots: number;
+  shots_on_target: number;
+  passes: number;
+  passes_accurate: number;
+  key_passes: number;
+  tackles: number;
+  interceptions: number;
+  duels_won: number;
+  saves: number;
+  fouls: number;
+  yellow_cards: number;
+  red_cards: number;
+  rating: number;
+};
+
+export type TeamRow = WorldEnvelope & {
+  id: string;
+  slug: string;
+  path: string;
+  name: string;
+  short_name: string;
+  city: string;
+  stadium: string;
+  capacity: number;
+  manager_name: string;
+  formation: string;
+  brand_color: string;
+  nation: string;
+  season: string;
+  squad_size: number;
+  overall: number;
+  competition: CompetitionBrief | null;
+};
+
+export type CompetitionRow = WorldEnvelope & {
+  id: string;
+  slug: string;
+  path: string;
+  name: string;
+  country: string;
+  kind: string;
+  tier: number;
+  region: string;
+  season: string;
+  summary: string;
+  team_count: number;
+};
+
+export type NewsRow = WorldEnvelope & {
+  id: string;
+  slug: string;
+  path: string;
+  title: string;
+  summary: string;
+  category: string;
+  claim_class: string;
+  season: string;
+  source_name: string;
+  author: string | null;
+  url: string | null;
+  published_at: string | null;
+  topics: string[];
+  entities: Record<string, string[]>;
+  entity_links: EntityRef[];
+};
+
+/** A typed pointer into the world; `path` is the §80 route the API itself publishes. */
+export type EntityRef = { type: string; slug: string; id: string | null; path: string };
+
+export type CompetitionList = WorldPage<CompetitionRow> & { kinds: string[] };
+export type TeamList = WorldPage<TeamRow> & { seasons: string[]; nations: string[] };
+export type PlayerList = WorldPage<PlayerRow> & { sorts: string[]; positions: string[] };
+export type MatchList = WorldPage<MatchBrief> & { statuses: string[] };
+export type NewsList = WorldPage<NewsRow> & { categories: string[]; claim_classes: string[] };
+
+export type StandingRow = {
+  position: number;
+  team_id: string;
+  team: TeamBrief | null;
+  name: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goals_for: number;
+  goals_against: number;
+  goal_difference: number;
+  points: number;
+};
+
+export type CompetitionDetail = WorldEnvelope & {
+  competition: CompetitionRow;
+  season: string;
+  standings: StandingRow[];
+  teams: (TeamBrief | null)[];
+  fixtures: MatchBrief[];
+  completed: number;
+  scheduled: number;
+  format_note: string;
+};
+
+export type TeamDetail = WorldEnvelope & {
+  team: TeamRow & { summary: string };
+  squad: PlayerRow[];
+  fixtures: MatchBrief[];
+  recent_stat_lines: StatLine[];
+  squad_notes: string[];
+};
+
+export type PlayerDetail = WorldEnvelope & {
+  player: PlayerRow & {
+    club: TeamBrief | null;
+    competition: CompetitionBrief | null;
+    attributes: Record<string, number>;
+    derivation_reasons: string[];
+    clean_sheets: number;
+    yellow_cards: number;
+    red_cards: number;
+    summary: string;
+  };
+  season_stats: {
+    season: string;
+    appearances: number;
+    starts: number;
+    minutes: number;
+    goals: number;
+    assists: number;
+    clean_sheets: number;
+    yellow_cards: number;
+    red_cards: number;
+    rating: number;
+    stored_from: string;
+    matches_stored: number;
+    consistency_check: string;
+  };
+  recent_form: {
+    match_id: string;
+    match_slug: string;
+    match_path: string;
+    kickoff_at: string | null;
+    role: string;
+    position: string;
+    minutes: number;
+    goals: number;
+    assists: number;
+    rating: number;
+  }[];
+  stat_lines: StatLine[];
+  method: Record<string, string>;
+};
+
+export type MatchDetail = WorldEnvelope & {
+  match: MatchBrief & { stats: MatchStats; competition: CompetitionBrief | null };
+  line_ups: Record<"home" | "away", { team: TeamBrief | null; starters: StatLine[]; substitutes: StatLine[] }>;
+  stat_lines: StatLine[];
+  available: boolean;
+  note: string | null;
+  method: Record<string, string>;
+  goals_check: { match_goals: number; line_up_goals: number };
+};
+
+export type NewsDetail = WorldEnvelope & {
+  article: NewsRow & { body?: string };
+  body: string;
+  related: EntityRef[];
+  editorial_note: string;
+};
+
+/** One ranked result of GET /world/search (spec §56). */
+export type WorldSearchHit = WorldEnvelope & {
+  type: string;
+  slug: string;
+  id: string;
+  title: string;
+  subtitle: string;
+  score: number;
+  path: string;
+  reasons: string[];
+};
+
+export type WorldSearchResponse = WorldEnvelope & {
+  query: string;
+  results: WorldSearchHit[];
+  total: number;
+  types: string[];
+  note: string;
+};

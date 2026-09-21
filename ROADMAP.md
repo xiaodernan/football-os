@@ -7,7 +7,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M0 Foundation** | monorepo, git, CI, docs+ADRs, design system, Next.js, FastAPI, Postgres/pgvector compose, auth foundation, provider abstraction, health checks | both apps build, tests green, login works | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M1 Player + AI Coach vertical slice** | Create user → create player → profile → training → completion → AI Coach → progress → history | closed loop usable in browser with real persistence | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M2 Football Knowledge + RAG** | ingestion, chunking, embeddings, pgvector hybrid retrieval, rerank, citations, Football AI | answers carry resolvable source citations | ✅ verified 2026-09-21 ([evidence](docs/M2_VERIFICATION.md)) |
-| **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 100 matches / 500 articles synthetic world | 🔨 backend verified 2026-09-21 ([evidence](docs/M3_VERIFICATION.md)) · web surface pending |
+| **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | drag/draw/save/share + analysis with evidence | ⬜ |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ⬜ |
 | **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | ⬜ |
@@ -39,7 +39,10 @@ All 13 are verified: `docs/M0_M1_VERIFICATION.md` §2 maps each one to a passing
 
 ## Now → next session
 
-**M3 Football World.** The backend half is verified — evidence in `docs/M3_VERIFICATION.md`:
+**M3 Football World — done.** Backend evidence in [`docs/M3_VERIFICATION.md`](docs/M3_VERIFICATION.md), web-surface
+evidence in [`docs/M3_WEB_VERIFICATION.md`](docs/M3_WEB_VERIFICATION.md).
+
+Backend (verified 2026-09-21):
 
 1. [x] seven tables + `0003_football_world` migration, `alembic upgrade head` and `alembic check` clean on pgvector
 2. [x] seeded deterministic generator (`WorldRng` → `plan_world(seed)` → identical `fingerprint()`), fictional name tables, no scraped or licensed material
@@ -47,15 +50,21 @@ All 13 are verified: `docs/M0_M1_VERIFICATION.md` §2 maps each one to a passing
 4. [x] 500-article newsroom that only quotes numbers present in the stat tables, `claim_class` separating fact / analysis / speculation, desk bylines and `source_name='synthetic-world'`
 5. [x] one unified search over all five entity types, explainable ranking, per-hit path + provenance
 6. [x] 12 public `/api/v1/world/*` routes registered and live, `GET /capabilities` reporting `m3_football_world` from the data rather than the code
-7. [x] 39 world tests, 87 total, green on SQLite **and** PostgreSQL+pgvector; ruff + mypy clean; `docs/api/openapi.json` regenerated (40 paths / 44 operations)
+7. [x] 41 world tests, 89 total, green on SQLite **and** PostgreSQL+pgvector; ruff + mypy clean; `docs/api/openapi.json` regenerated (40 paths / 44 operations)
 
-What the M3 gate still needs — the world's public web surface:
+Web surface (verified 2026-09-22):
 
-1. [ ] `/team/{slug}`, `/player/{slug}`, `/match/{slug}`, `/competition/{slug}`, `/news/{slug}` pages fed by those routes, each with `pageMetadata()` and the §80 path the API already hands out
-2. [ ] a world index (competitions → teams → fixtures → news) and the unified search page
-3. [ ] `sitemap.ts` entries for every one of those routes **in the same commit**, plus a QA assertion that each advertised `<loc>` answers 200
-4. [ ] `DEMO DATA` badging that renders the row's own `data_origin` and disclaimer, and an explicit "no score yet" state for scheduled fixtures
-5. [ ] `visual-qa.mjs` extended with world assertions and screenshots at 1440px and 375px against a production build
+1. [x] `/team/{slug}`, `/player/{slug}`, `/match/{slug}`, `/competition/{slug}`, `/news/{slug}` mounted at the exact §80 paths the API hands out — pages link through `path` fields, never by rebuilding a URL
+2. [x] a world index (counted contents + §65 gate state) and the unified search page, both public and JS-free
+3. [x] `sitemap.ts` gained those entries in the same commit: 983 `<loc>` values, asserted to match the API's own per-table counts, each answering 200
+4. [x] `DEMO DATA` badging driven by each row's own `data_origin`/`is_demo_data` + the API disclaimer, and an explicit "no score yet" state for scheduled fixtures
+5. [x] `visual-qa.mjs` extended with 42 world assertions and screenshots at 1440px and 375px against a production build (110/110)
+6. [x] structured data per entity: `Dataset`, `SportsOrganization`, `SportsTeam`, `Athlete`, `SportsEvent`, `NewsArticle`, plus `SearchAction`; `/world/search` is `noindex, follow`
+
+**Next: M4 Tactical Lab.** Spaces, roles and instructions as data; 2D/3D pitch; timeline player; "what happens if…"
+counterfactual with explorable reasons; AI feedback checked against tactical principles rather than praised.
+Also open from §65: the world's fixtures do not progress a season forward, and the 12 new page surfaces widen the
+§81 English-only debt.
 
 Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,
 `scripts/export_openapi.py`, `apps/web/scripts/visual-qa.mjs`. `docs/api/openapi.json` remains the
@@ -69,12 +78,13 @@ Milestones do not own these; every public route must satisfy them as it lands.
   and document-level JSON-LD — verified in `docs/SEO_VERIFICATION.md` against a **production build**, not a dev server
 - [x] §80 `sitemap.xml` and `robots.txt` generated from live API reads; every advertised `<loc>` is asserted to answer
   200, and session-gated routes are excluded from the sitemap and disallowed in robots rather than published as redirect chains
-- [x] `visual-qa.mjs` carries the SEO assertions plus a locale and a milestone-row check on `/settings` (68/68, latest run
-  2026-09-21 22:40 UTC against a production build) and tags browser console errors with the route they occurred on, so a
-  hydration or fetch failure is localisable instead of a minified code
-- [ ] §80 SEO routes for the world entities (`/player|team|match|competition|news/{slug}`) — the API already emits exactly these paths from
-  one table (`SEO_ROUTES`/`web_path()` in `app/services/world/plan.py`); the pages must mount them with the same `pageMetadata()`
-  helper, and `sitemap.ts` must gain those entries in the same commit, or the sitemap under-reports the site
+- [x] `visual-qa.mjs` carries the SEO assertions, the `/settings` locale and milestone rows, and 42 Football World
+  assertions (**110/110**, run `202609212343` against a production build, 46 PNGs, zero console errors). It tags browser
+  console errors with the route they occurred on, probes every sitemap `<loc>` through a bounded pool, and records an
+  unhandled abort as a failed check plus a screenshot instead of one log line — `docs/M3_WEB_VERIFICATION.md` §5
+- [x] §80 SEO routes for the world entities (`/player|team|match|competition|news/{slug}`) — mounted at the paths
+  `SEO_ROUTES`/`web_path()` in `app/services/world/plan.py` emits, with the same `pageMetadata()` helper, and
+  `sitemap.ts` lists all 983 of them from the API's own `path` fields (`docs/M3_WEB_VERIFICATION.md` §3)
 - [x] §81 honesty: the UI is English-only, and the docs no longer claim otherwise. `GET /capabilities` now reports
   `locales: ["en"]` with `locales_planned: ["en","zh","zh-TW"]` beside it, so the wire matches the shipped interface.
   Remaining step: land `messages/{en,zh,zh-TW}.json` and switch the field when translations actually exist.

@@ -232,6 +232,40 @@ class TestReads:
         for link in body["related"]:
             assert link["path"].startswith(("/player/", "/team/", "/competition/", "/match/"))
 
+    def test_every_path_in_a_detail_payload_is_a_seo_route(self, client) -> None:  # type: ignore[no-untyped-def]
+        """The web tier links straight from these fields instead of building URLs itself, so a wrong
+        prefix here becomes a 404 for a crawler. Walk every string that claims to be a path."""
+
+        def walk(node: object) -> Iterator[str]:
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key.endswith("path") and isinstance(value, str):
+                        yield value
+                    else:
+                        yield from walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    yield from walk(value)
+
+        checked = 0
+        for path in ("/competitions", "/teams", "/players", "/matches", "/news"):
+            item = _item(client, path)
+            body = client.get(f"{API}{path}/{item['slug']}").json()
+            for candidate in walk(body):
+                assert candidate.startswith(("/player/", "/team/", "/match/", "/competition/", "/news/")), (path, candidate)
+                assert SAFE_SLUG.match(candidate.rsplit("/", 1)[-1]), candidate
+                checked += 1
+        assert checked > 25, checked
+
+    def test_stat_lines_carry_the_match_path_too(self, client) -> None:  # type: ignore[no-untyped-def]
+        """A line without its fixture's path would force the client to rebuild `/match/{slug}`."""
+        played = client.get(f"{API}/matches", params={"status": "completed", "page_size": 1}).json()["items"][0]
+        detail = client.get(f"{API}/matches/{played['slug']}").json()
+        assert detail["stat_lines"], "a completed fixture must carry its lines"
+        for line in detail["stat_lines"][:5]:
+            assert line["match_path"] == web_path("match", played["slug"])
+            assert line["player"]["path"] == web_path("player", line["player"]["slug"])
+
     def test_capabilities_advertise_the_world_with_real_counts(self, client) -> None:  # type: ignore[no-untyped-def]
         body = client.get("/api/v1/capabilities").json()
         assert body["m3_football_world"] is True
