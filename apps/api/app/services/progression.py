@@ -80,6 +80,7 @@ class CompletionResult:
     xp_formula: str
     player: UserPlayer
     attribute_changes: list[dict[str, Any]]
+    skill_progress: list[dict[str, Any]]
     level_number: int
     level_changed: bool
     streak_days: int
@@ -97,47 +98,63 @@ def _recent_gain(db: Session, player_id: str, attribute: str, days: int = 7) -> 
     return int(sum(rows))
 
 
-def apply_skill_points(db: Session, player: UserPlayer, drill: TrainingDrill, quality: float) -> list[dict[str, Any]]:
-    """Convert drill emphasis into attribute gains with caps and stored reasons."""
+def apply_skill_points(db: Session, player: UserPlayer, drill: TrainingDrill, quality: float) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Convert drill emphasis into attribute gains with caps and stored reasons.
+
+    Returns (changes, progress). `progress` explains every targeted attribute, including the
+    common first-session case where the banked skill points are still below the 100-point
+    threshold — a user must be able to tell "still banking" from "nothing happened".
+    """
     changes: list[dict[str, Any]] = []
+    progress: list[dict[str, Any]] = []
     points = int(drill.xp_base * quality * 1.6)
     total_weight = sum(drill.target_attributes.values()) or 1
     for attribute, weight in sorted(drill.target_attributes.items()):
         if attribute not in ALL_ATTRIBUTES:
             continue
-        earned = int(points * weight / total_weight)
-        player_skill_points = int(player.attributes.get(f"_sp_{attribute}", 0)) + earned
         needed = SKILL_POINTS_PER_ATTRIBUTE_POINT
-        while player_skill_points >= needed:
-            current = player.attributes.get(attribute, 40)
-            capped_by_week = _recent_gain(db, player.id, attribute) >= MAX_ATTRIBUTE_GAIN_PER_ATTR_7D
-            if current >= min(99, player.potential + 8) or capped_by_week or current >= 99:
-                player_skill_points = min(player_skill_points, needed - 1)
-                break
-            before = current
-            after = current + 1
-            player.attributes = {**player.attributes, attribute: after}
-            player_skill_points -= needed
-            reason = (
-                f"{weight}/{total_weight} weight from '{drill.title}' "
-                f"({points} skill points at quality {quality:.2f})"
-                + (" — weekly cap reached, further points banked" if capped_by_week else "")
-            )
-            change = AttributeChange(
-                id=f"ac_{abs(hash((player.id, attribute, before))) % 10**12}",
-                player_id=player.id,
-                attribute=attribute,
-                delta=1,
-                before=before,
-                after=after,
-                reason=reason,
-                evidence_ids=[drill.id],
-            )
-            db.add(change)
-            changes.append({"attribute": attribute, "delta": 1, "before": before, "after": after, "reason": reason})
-            break  # one attribute point per session per attribute (MAX_ATTRIBUTE_GAIN_PER_SESSION)
-        player.attributes = {**player.attributes, f"_sp_{attribute}": player_skill_points}
-    return changes
+        earned = int(points * weight / total_weight)
+        banked = int(player.attributes.get(f"_sp_{attribute}", 0)) + earned
+        current = player.attributes.get(attribute, 40)
+        ceiling = ""
+        if banked >= needed:
+            if current >= min(99, player.potential + 8):
+                ceiling = "potential ceiling"
+            elif _recent_gain(db, player.id, attribute) >= MAX_ATTRIBUTE_GAIN_PER_ATTR_7D:
+                ceiling = "weekly cap"
+            elif current >= 99:
+                ceiling = "attribute maximum"
+            if ceiling:
+                banked = needed - 1
+            else:
+                before, after = current, current + 1
+                player.attributes = {**player.attributes, attribute: after}
+                banked -= needed
+                reason = f"{weight}/{total_weight} weight from '{drill.title}' ({points} skill points at quality {quality:.2f})"
+                change = AttributeChange(
+                    id=f"ac_{abs(hash((player.id, attribute, before))) % 10**12}",
+                    player_id=player.id,
+                    attribute=attribute,
+                    delta=1,
+                    before=before,
+                    after=after,
+                    reason=reason,
+                    evidence_ids=[drill.id],
+                )
+                db.add(change)
+                changes.append({"attribute": attribute, "delta": 1, "before": before, "after": after, "reason": reason})
+        player.attributes = {**player.attributes, f"_sp_{attribute}": banked}
+        progress.append(
+            {
+                "attribute": attribute,
+                "earned": earned,
+                "banked": banked,
+                "needed": needed,
+                "value": player.attributes.get(attribute, 40),
+                "ceiling": ceiling,
+            }
+        )
+    return changes, progress
 
 
 def refresh_derived_state(player: UserPlayer) -> None:
@@ -171,7 +188,7 @@ def complete_session(
     )
     capped = max(0, min(xp, MAX_DAILY_XP - todays_xp))
     quality = (execution * 0.55 + focus * 0.30 + difficulty_experience * 0.15) / 5
-    changes = apply_skill_points(db, player, drill, quality)
+    changes, skill_progress = apply_skill_points(db, player, drill, quality)
     player.xp += capped
     new_level = level_from_xp(player.xp)
     level_changed = new_level > player.level_number
@@ -210,6 +227,7 @@ def complete_session(
         xp_formula=formula,
         player=player,
         attribute_changes=changes,
+        skill_progress=skill_progress,
         level_number=player.level_number,
         level_changed=level_changed,
         streak_days=streak,

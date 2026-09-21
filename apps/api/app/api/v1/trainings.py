@@ -131,7 +131,7 @@ def complete(
             role="coach",
             kind="post_session",
             content=feedback["content"],
-            structured={"reasons": feedback["reasons"], "attribute_changes": result.attribute_changes},
+            structured={"reasons": feedback["reasons"], "attribute_changes": result.attribute_changes, "skill_progress": result.skill_progress},
             reasons=feedback["reasons"],
             confidence=feedback["confidence"],
         )
@@ -143,6 +143,7 @@ def complete(
         "xp_awarded": result.xp_awarded,
         "xp_formula": result.xp_formula,
         "attribute_changes": result.attribute_changes,
+        "skill_progress": result.skill_progress,
         "player_level": result.level_number,
         "level_changed": result.level_changed,
         "streak_days": result.streak_days,

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,7 +13,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.v1 import auth, coach, meta, players, progress, trainings
 from app.core.config import settings
-from app.core.db import init_db
+from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
 from app.services.training_catalog import sync_catalog
 
@@ -31,10 +33,19 @@ configured, and always say so.
 
 
 def create_app() -> FastAPI:
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        init_db()
+        with SessionLocal() as session:
+            sync_catalog(session)
+        logger.info("boot env=%s dialect=%s demo_mode=%s", settings.env, settings.database_url.split(":")[0], settings.is_demo_mode)
+        yield
+
     app = FastAPI(
         title="FOOTBALL OS API",
         version="0.1.0",
         description=DESCRIPTION,
+        lifespan=lifespan,
         openapi_url="/api/v1/openapi.json",
         docs_url="/api/v1/docs",
         redoc_url=None,
@@ -68,18 +79,6 @@ def create_app() -> FastAPI:
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:
         return JSONResponse({"status": "ok", "demo_mode": settings.is_demo_mode})
-
-    @app.on_event("startup")
-    def on_startup() -> None:
-        init_db()
-        from app.core.db import SessionLocal
-
-        session = SessionLocal()
-        try:
-            sync_catalog(session)
-        finally:
-            session.close()
-        logger.info("boot env=%s dialect=%s demo_mode=%s", settings.env, settings.database_url.split(":")[0], settings.is_demo_mode)
 
     return app
 

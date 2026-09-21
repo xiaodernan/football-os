@@ -93,6 +93,10 @@ def test_training_loop_awards_xp_and_explains_every_change(auth_client, player_i
     assert any("first-session" == a for a in result["new_achievements"]) or result["new_achievements"]
     assert all(change["delta"] == 1 and change["reason"] for change in result["attribute_changes"])
 
+    sessions = auth_client.get("/api/v1/trainings/sessions").json()["items"]
+    logged = [row for row in sessions if row["id"] == session_id]
+    assert logged and logged[0]["self_notes"] == "Felt sharp", "a note typed by the user must be stored verbatim"
+
     repeat = auth_client.post(f"/api/v1/trainings/sessions/{session_id}/complete", json={"execution": 5, "focus": 5, "difficulty_experience": 5})
     assert repeat.status_code == 409
 
@@ -110,6 +114,36 @@ def test_training_loop_awards_xp_and_explains_every_change(auth_client, player_i
     assert any(item["kind"].startswith("answer") or item["kind"] == "post_session" for item in history["items"])
     assert history["memory"]["sessions_total"] == 1
     assert history["disclaimer"]
+
+
+def _complete(auth_client, drill_id: str) -> dict:  # type: ignore[no-untyped-def]
+    planned = auth_client.post("/api/v1/trainings/sessions", json={"drill_id": drill_id, "available_minutes": 30, "has_pitch": True})
+    session_id = planned.json()["session_id"]
+    response = auth_client.post(f"/api/v1/trainings/sessions/{session_id}/complete", json={"execution": 5, "focus": 5, "difficulty_experience": 5})
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_skill_points_bank_until_an_attribute_moves(auth_client, player_id) -> None:  # type: ignore[no-untyped-def]
+    """One session cannot move an attribute (100 points per point) — the ledger must still explain it."""
+    drills = {d["slug"]: d for d in auth_client.get("/api/v1/trainings/drills").json()}
+    slug = auth_client.get(f"/api/v1/coach/today?player_id={player_id}&available_minutes=30").json()["recommendation"]["slug"]
+    drill_id = drills[slug]["id"]
+
+    first = _complete(auth_client, drill_id)
+    assert first["xp_awarded"] > 0
+    assert first["attribute_changes"] == []
+    assert first["skill_progress"], "every targeted attribute needs a banking row"
+    assert all(row["banked"] > 0 and row["needed"] == 100 and row["ceiling"] == "" for row in first["skill_progress"])
+
+    gained: list[dict] = []
+    for _ in range(6):
+        gained.extend(_complete(auth_client, drill_id)["attribute_changes"])
+    assert gained, "repeated sessions must eventually raise an attribute"
+    assert all(change["delta"] == 1 and change["reason"] for change in gained)
+
+    timeline = auth_client.get("/api/v1/progress/timeline").json()
+    assert timeline["attribute_series"], "a stored attribute change must surface on the timeline"
 
 
 def test_coach_recommendation_is_fresh_and_goal_aligned(auth_client, player_id) -> None:  # type: ignore[no-untyped-def]

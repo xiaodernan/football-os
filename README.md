@@ -4,7 +4,7 @@
 
 One platform connecting the real football world, personal football development, football simulation and football AI. Not a news site, not a score app, not an FM clone, not a chatbot wrapper.
 
-**Status:** M0 Foundation + M1 vertical slice (My Football → Player → Training → AI Coach → Progress → History) implemented and verified. See `ROADMAP.md` for gate status, `docs/PROJECT_AUDIT.md` for the environment audit.
+**Status:** M0 Foundation + M1 vertical slice (My Football → Player → Training → AI Coach → Progress → History) implemented and verified — 23 API/engine tests on SQLite *and* PostgreSQL+pgvector, 34/34 browser checks at 1440px and 375px. Evidence: `docs/M0_M1_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`.
 
 ## Architecture at a glance
 

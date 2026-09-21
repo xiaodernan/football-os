@@ -1,0 +1,65 @@
+/* My Football page — additive rules only, built on the globals.css vocabulary. */
+
+.mp-hero__top {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+}
+
+.mp-hero__stats {
+  margin-top: 1.4rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.mp-drill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.mp-disclaimer {
+  font-size: 0.78rem;
+  font-style: italic;
+  border-top: 1px dashed var(--line-soft);
+  padding-top: 0.7rem;
+}
+
+.mp-skill {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.mp-skill__radar {
+  display: grid;
+  place-items: center;
+}
+
+.mp-skill__meters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.mp-achievement {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+@media (max-width: 640px) {
+  .mp-skill {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,121 @@
+/* AI Coach page — additive rules only, built on the globals.css vocabulary. */
+
+.coach-tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.coach-tabs__link {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--text-2);
+  background: var(--bg-panel-2);
+}
+
+.coach-tabs__link:hover {
+  color: var(--text);
+  border-color: var(--accent-dim);
+}
+
+.coach-rec {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.coach-alt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.14);
+  transition: border-color 0.15s ease;
+}
+
+.coach-alt:hover {
+  border-color: var(--accent-dim);
+}
+
+.coach-alt__meta {
+  font-size: 0.8rem;
+}
+
+.coach-disclaimer {
+  font-size: 0.78rem;
+  font-style: italic;
+  border-top: 1px dashed var(--line-soft);
+  padding-top: 0.7rem;
+}
+
+.coach-chip {
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.coach-chip:hover {
+  border-color: var(--accent-dim);
+  color: var(--text);
+}
+
+.coach-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel-2);
+}
+
+.coach-answer__q {
+  font-weight: 620;
+  color: var(--text);
+}
+
+.coach-planlist__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-top: 0.35rem;
+}
+
+.plan-range {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.plan-group__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-top: 0.4rem;
+}
+
+.plan-group__title {
+  font-weight: 620;
+}
+
+.plan-group__title:hover {
+  color: var(--accent);
+}
+
+.plan-group__why {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .coach-memory.grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

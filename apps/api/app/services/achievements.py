@@ -5,6 +5,7 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.security import new_public_id
 from app.models import Achievement, AttributeChange, TrainingSession, User, UserAchievement, UserPlayer
 from app.services.progression import ACHIEVEMENTS
 
@@ -30,6 +31,6 @@ def award(db: Session, user: User, player: UserPlayer) -> list[str]:
             row = Achievement(id=f"ach_{slug}", **spec)
             db.add(row)
             db.flush()
-        db.add(UserAchievement(id=f"ua_{slug}_{user.id}", user_id=user.id, achievement_id=row.id))
+        db.add(UserAchievement(id=new_public_id("ua"), user_id=user.id, achievement_id=row.id))
         newly.append(slug)
     return newly

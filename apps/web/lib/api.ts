@@ -1,0 +1,70 @@
+/**
+ * Client-safe half of the API layer: no `next/headers` import anywhere in this module,
+ * so client components may import it (Next rejects that dependency in a client bundle).
+ * Server components use `@/lib/server` instead.
+ */
+
+import type { ApiError, UserOut } from "@/lib/types";
+
+export const ACCESS_COOKIE = "fo_access";
+export const REFRESH_COOKIE = "fo_refresh";
+export const REFRESH_PATH = "/api/v1/auth/refresh";
+
+export function apiBase(): string {
+  return process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8731";
+}
+
+export type ApiResult<T> = { ok: true; status: number; data: T } | { ok: false; status: number; error: ApiError };
+
+function normalizeError(status: number, payload: unknown): ApiError {
+  const detail = payload && typeof payload === "object" && "detail" in payload ? (payload as { detail: unknown }).detail : payload;
+  if (typeof detail === "string") return { code: "error", message: detail };
+  if (detail && typeof detail === "object") {
+    const d = detail as Record<string, unknown>;
+    return {
+      code: typeof d.code === "string" ? d.code : "error",
+      message: typeof d.message === "string" ? d.message : "Request failed",
+      details: d.details ?? d.detail,
+    };
+  }
+  return { code: "error", message: `Request failed with status ${status}` };
+}
+
+export async function readError(response: Response): Promise<ApiError> {
+  try {
+    return normalizeError(response.status, await response.json());
+  } catch {
+    return { code: "error", message: `Request failed with status ${response.status}` };
+  }
+}
+
+export function errorMessage(error: ApiError | undefined, fallback = "Something went wrong"): string {
+  if (!error) return fallback;
+  return error.message || fallback;
+}
+
+/** Client-side call through the Next proxy at /api/v1/*. Cookies travel automatically. */
+export async function browserFetch<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<ApiResult<T>> {
+  const headers: Record<string, string> = { accept: "application/json" };
+  let body: string | undefined;
+  if (init.body !== undefined) {
+    headers["content-type"] = "application/json";
+    body = JSON.stringify(init.body);
+  }
+  let response: Response;
+  try {
+    response = await fetch(`/api/v1${path}`, {
+      method: init.method ?? "GET",
+      headers,
+      body,
+      credentials: "same-origin",
+    });
+  } catch {
+    return { ok: false, status: 502, error: { code: "network_error", message: "The web tier could not reach the API." } };
+  }
+  if (!response.ok) return { ok: false, status: response.status, error: await readError(response) };
+  if (response.status === 204) return { ok: true, status: 204, data: null as T };
+  return { ok: true, status: response.status, data: (await response.json()) as T };
+}
+
+export type { ApiError, UserOut };

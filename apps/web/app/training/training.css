@@ -1,0 +1,56 @@
+/* Training Academy pages — additive rules only, built on the globals.css vocabulary. */
+
+.drill-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-raised) 100%);
+  transition: border-color 0.15s ease, transform 0.08s ease;
+}
+
+.drill-card:hover {
+  border-color: var(--accent-dim);
+  transform: translateY(-1px);
+}
+
+.drill-card__objective {
+  font-size: 0.88rem;
+  flex: 1;
+}
+
+.drill-card__point {
+  font-size: 0.82rem;
+  color: var(--text-2);
+  border-left: 2px solid var(--accent-dim);
+  padding-left: 0.6rem;
+}
+
+.session-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.session-card__ratings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.session-card__result {
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--line-soft);
+}
+
+@media (max-width: 640px) {
+  .session-card__ratings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

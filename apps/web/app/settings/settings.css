@@ -1,0 +1,73 @@
+/* Route-local rules for /settings (design vocabulary lives in styles/globals.css). */
+
+.st-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.st-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--line-soft);
+}
+.st-status-row:last-child {
+  border-bottom: 0;
+}
+.st-status-row__label {
+  font-size: 0.9rem;
+  color: var(--text-2);
+}
+
+.st-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.st-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-2);
+}
+
+.st-danger {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(255, 107, 107, 0.32);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 107, 107, 0.06);
+}
+.st-danger__title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: var(--danger);
+}
+
+.st-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+.st-confirm .input {
+  max-width: 220px;
+}
+
+.st-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}

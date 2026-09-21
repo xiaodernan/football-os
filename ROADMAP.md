@@ -4,8 +4,8 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 
 | Milestone | Scope | Gate | Status |
 | --- | --- | --- | --- |
-| **M0 Foundation** | monorepo, git, CI, docs+ADRs, design system, Next.js, FastAPI, Postgres/pgvector compose, auth foundation, provider abstraction, health checks | both apps build, tests green, login works | 🟩 built this session |
-| **M1 Player + AI Coach vertical slice** | Create user → create player → profile → training → completion → AI Coach → progress → history | closed loop usable in browser with real persistence | 🟩 built this session |
+| **M0 Foundation** | monorepo, git, CI, docs+ADRs, design system, Next.js, FastAPI, Postgres/pgvector compose, auth foundation, provider abstraction, health checks | both apps build, tests green, login works | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
+| **M1 Player + AI Coach vertical slice** | Create user → create player → profile → training → completion → AI Coach → progress → history | closed loop usable in browser with real persistence | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M2 Football Knowledge + RAG** | ingestion, chunking, embeddings, pgvector hybrid retrieval, rerank, citations, Football AI | answers carry resolvable source citations | ⬜ next |
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 100 matches / 500 articles synthetic world | ⬜ |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | drag/draw/save/share + analysis with evidence | ⬜ |
@@ -27,12 +27,20 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 - [x] Auth foundation: register, login, JWT, RBAC guard
 - [x] Provider abstraction with DEMO MODE fallback that self-labels
 - [x] CI workflow (install → lint → test → build)
-- [ ] Docker Postgres volume verified on this host (compose provided; dev fallback used)
+- [x] Docker Postgres + pgvector verified on this host: compose healthy, `alembic upgrade head` + `alembic check` (no drift), 21 tables, `vector` extension, and the full pytest suite green against it — see `docs/M0_M1_VERIFICATION.md` §1.3–1.5
 
 ## M1 exit criteria (the first real FOOTBALL OS loop)
 
 1. register → 2. create UserPlayer (position, age, level, foot, goal) → 3. derive archetype + attributes (explainable) → 4. player card renders → 5. ask Coach "What should I train today?" → 6. session created from training catalogue with objective/setup/coaching points/mistakes/progression/test → 7. complete session with self-rated execution → 8. XP awarded with reason + attribute delta with reason → 9. progress page shows level/streak/skill curves → 10. history page lists every session with its evidence → 11. coach follow-up message reflects the new state → 12. API + engine tests green → 13. screenshots captured on desktop + mobile viewport.
 
+All 13 are verified: `docs/M0_M1_VERIFICATION.md` §2 maps each one to a passing check in
+`apps/web/scripts/visual-qa.mjs` (34/34 browser assertions, 19 PNGs captured to `docs/screenshots/`) plus the
+23-test API/engine suite on SQLite and PostgreSQL.
+
 ## Now → next session
 
-M2 RAG (pgvector + ingestion + hybrid retrieval + citations), then M3 synthetic football world with SEO public pages.
+M2 Football Knowledge + RAG: pgvector is live and `docs/api/openapi.json` is the contract the web tier codes
+against, so the next slice is ingestion → chunking → embeddings → hybrid retrieval + rerank → cited answers
+(spec §62: every answer carries `sources[]`, `confidence`, and an `Estimated/Simulation/Source` label).
+Verification harness already in place to extend: `pytest` on both databases, `scripts/export_openapi.py`,
+`apps/web/scripts/visual-qa.mjs`.

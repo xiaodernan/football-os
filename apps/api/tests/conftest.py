@@ -1,4 +1,8 @@
-"""Test configuration: an isolated SQLite database per run (ADR-002 fallback path)."""
+"""Test configuration: SQLite by default, or a dedicated database via FOOTBALL_OS_TEST_DATABASE_URL.
+
+ADR-002 keeps SQLite as the local fallback; the Postgres leg is what CI and production run, so
+``FOOTBALL_OS_TEST_DATABASE_URL=postgresql+psycopg2://… pytest`` must point at a throwaway database.
+"""
 
 from __future__ import annotations
 
@@ -15,21 +19,26 @@ API_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(API_ROOT))
 
 _DB_PATH = Path(tempfile.gettempdir()) / "football_os_tests.db"
-os.environ["DATABASE_URL"] = f"sqlite:///{_DB_PATH.as_posix()}"
+os.environ["DATABASE_URL"] = os.environ.get("FOOTBALL_OS_TEST_DATABASE_URL") or f"sqlite:///{_DB_PATH.as_posix()}"
 os.environ["APP_SECRET"] = "test-secret-not-for-production"
 os.environ["ENV"] = "test"
 os.environ.pop("OPENAI_API_KEY", None)
 os.environ.pop("ANTHROPIC_API_KEY", None)
 
-if _DB_PATH.exists():
+if os.environ["DATABASE_URL"].startswith("sqlite") and _DB_PATH.exists():
     _DB_PATH.unlink()
 
 
 @pytest.fixture(scope="session", autouse=True)
 def _database() -> Iterator[None]:
-    from app.core.db import SessionLocal, init_db
+    from app.core.db import Base, SessionLocal, engine, init_db
     from app.seed_data import seed_catalogue
 
+    if not os.environ["DATABASE_URL"].startswith("sqlite"):
+        # A server-backed run reuses one database, so tests can hardcode emails; start empty.
+        if "test" not in os.environ["DATABASE_URL"].lower():
+            raise RuntimeError("FOOTBALL_OS_TEST_DATABASE_URL must name a throwaway database containing 'test'.")
+        Base.metadata.drop_all(bind=engine)
     init_db()
     session = SessionLocal()
     try:

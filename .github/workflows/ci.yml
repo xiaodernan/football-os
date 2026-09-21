@@ -42,6 +42,16 @@ jobs:
           python -m alembic check
           python -m seed --with-demo-user
           python -c "from sqlalchemy import create_engine, text; e=create_engine('postgresql+psycopg2://football:football@localhost:5432/football_os'); c=e.connect(); print('tables:', len(c.execute(text(\"select 1\")).fetchall()) and [r[0] for r in c.execute(text(\"select tablename from pg_tables where schemaname='public'\"))])"
+      # SQLite silently accepts over-length strings and lax types, so the same suite runs again
+      # against the database production uses.
+      - name: Tests (PostgreSQL + pgvector)
+        env:
+          DATABASE_URL: postgresql+psycopg2://football:football@localhost:5432/football_os
+          FOOTBALL_OS_TEST_DATABASE_URL: postgresql+psycopg2://football:football@localhost:5432/football_os_test
+        run: |
+          psql "postgresql://football:football@localhost:5432/postgres" -c "create database football_os_test owner football"
+          psql "postgresql://football:football@localhost:5432/football_os_test" -c "create extension if not exists vector"
+          python -m pytest
 
   web:
     runs-on: ubuntu-latest
