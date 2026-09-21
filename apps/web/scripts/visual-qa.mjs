@@ -432,8 +432,11 @@ async function run() {
       ['/my-football', PLAYER_NAME, 'my-football'],
       ['/coach', 'Recommended session', 'coach'],
       ['/training', 'min', 'training'],
+      [href ?? '/training', 'Add to my sessions', 'drill-detail'],
       ['/progress', PLAYER_NAME, 'progress'],
+      ['/history', 'Training log', 'history'],
       ['/knowledge', 'Document library', 'knowledge'],
+      ['/knowledge/buildup-vs-high-press', 'Passages', 'knowledge-document'],
       ['/settings', 'Data', 'settings'],
     ]) {
       await mobileSurface(surface);

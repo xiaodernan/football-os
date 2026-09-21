@@ -4,7 +4,7 @@
 
 One platform connecting the real football world, personal football development, football simulation and football AI. Not a news site, not a score app, not an FM clone, not a chatbot wrapper.
 
-**Status:** M0 Foundation · M1 vertical slice (My Football → Player → Training → AI Coach → Progress → History) · M2 Football Knowledge + RAG (16-document corpus → chunking → embeddings → hybrid retrieval + rerank → cited, refusal-capable answers) all implemented and **verified** — 48 API/engine/RAG tests on SQLite *and* PostgreSQL+pgvector, five RAG evaluation gates green on both engines, and 51/51 browser assertions at 1440px and 375px. M3 Football World (synthetic real-world data model + unified search) is in progress. Evidence: `docs/M0_M1_VERIFICATION.md`, `docs/M2_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`.
+**Status:** M0 Foundation · M1 vertical slice (My Football → Player → Training → AI Coach → Progress → History) · M2 Football Knowledge + RAG (16-document corpus → chunking → embeddings → hybrid retrieval + rerank → cited, refusal-capable answers) all implemented and **verified** — 48 API/engine/RAG tests on SQLite *and* PostgreSQL+pgvector, five RAG evaluation gates green on both engines, and 57/57 browser assertions at 1440px and 375px. M3 Football World (synthetic real-world data model + unified search) is in progress. Evidence: `docs/M0_M1_VERIFICATION.md`, `docs/M2_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`.
 
 ## Architecture at a glance
 

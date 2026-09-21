@@ -50,7 +50,7 @@ All 13 are verified: `docs/M0_M1_VERIFICATION.md` §2 maps each one to a passing
 7. [x] refusal: out-of-scope questions are refused with the rare terms it looked for; empty rare-term set now refuses instead of answering
 8. [x] evaluation harness (`evals/golden_rag.json` + `run_rag_eval.py`) as a CI gate: recall@5 1.0 · MRR 0.922 · citation integrity 1.0 · refusal accuracy 1.0 · hybrid delta 0.0, green on both databases
 9. [x] 48 tests on SQLite and PostgreSQL+pgvector; ruff + mypy clean; `alembic upgrade head` + `alembic check` clean; `docs/api/openapi.json` regenerated with all six `/api/v1/knowledge*` routes
-10. [x] `/knowledge` web surface (library, search, ask with citations) verified in the browser at 1440px and 375px — 51/51 assertions, 25 PNGs, evidence in `docs/M2_VERIFICATION.md` §3 (the run caught and fixed a real citation-link defect)
+10. [x] `/knowledge` web surface (library, search, ask with citations) verified in the browser at 1440px and 375px — 57/57 assertions, 28 PNGs, evidence in `docs/M2_VERIFICATION.md` §3 (the run caught and fixed a real citation-link defect)
 
 After M2 closes: **M3 Football World** (RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO
 routes). The model classes are already reserved in `app/models/__init__.py`; `docs/api/openapi.json` remains the

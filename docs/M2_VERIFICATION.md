@@ -213,9 +213,9 @@ check, instead of returning a confident sentence.
 
 ## 3. Web surface — `/knowledge`, verified in the browser
 
-`apps/web/scripts/visual-qa.mjs` was extended with 12 knowledge assertions and run against the live
-stack (Next.js on 3210 → FastAPI on 8731 → PostgreSQL + pgvector on 54321). **51/51 checks passed,
-25 screenshots captured** (`docs/screenshots/202609212110-*`); the M1 suite still passes unchanged, so
+`apps/web/scripts/visual-qa.mjs` was extended with 14 knowledge assertions and four more mobile surfaces and run against the live
+stack (Next.js on 3210 → FastAPI on 8731 → PostgreSQL + pgvector on 54321). **57/57 checks passed,
+28 screenshots captured** (`docs/screenshots/202609212121-*`); the M1 suite still passes unchanged, so
 the new surface did not regress the old one.
 
 | Check (assertion, not eyeball) | Result |
@@ -234,7 +234,8 @@ the new surface did not regress the old one.
 | Answer generation self-labels | badge reads `DEMO MODE · EXTRACTIVE ANSWER`, never "AI-generated" |
 | Out-of-scope question refused, nothing invented | `NO GROUNDED ANSWER … · 0 citation(s)` |
 | Refusal names the measured gate | reasons carry the rare-term/coverage floors, not a shrug |
-| 375 px pass | `/knowledge` renders with 0 px horizontal overflow, 8/8 nav links visible |
+| 375 px pass | `/knowledge` and `/knowledge/{slug}` render with 0 px horizontal overflow, 8/8 nav links visible |
+| 375 px pass (regression guard on M1) | `/history` and a drill detail page, plus the existing five surfaces, all clean |
 
 Two honesty rules the browser pass enforces rather than trusts:
 
