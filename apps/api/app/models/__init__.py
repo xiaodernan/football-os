@@ -24,6 +24,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
+from app.core.vector_type import EMBEDDING_DIM, EmbeddingVector
 
 ATTRIBUTES: dict[str, tuple[str, ...]] = {
     "technical": ("ball_control", "first_touch", "passing", "long_passing", "dribbling", "finishing", "crossing", "heading", "tackling"),
@@ -52,7 +53,7 @@ GOALS = (
 )
 SESSION_STATUSES = ("planned", "in_progress", "completed", "skipped")
 JOB_STATUSES = ("QUEUED", "RUNNING", "COMPLETED", "FAILED", "CANCELLED", "RETRYING")
-DATA_ORIGINS = ("synthetic", "licensed", "open", "user")
+DATA_ORIGINS = ("synthetic", "licensed", "open", "user", "project-authored")
 
 
 def utcnow() -> datetime:
@@ -412,3 +413,84 @@ class NewsArticle(Base, TimestampMixin):
 
 RealPlayerTableNote = "RealPlayer/Team/Competition/NewsArticle are reserved for M3 (synthetic, licensed or open provenance only)."
 
+
+class KnowledgeDocument(Base, TimestampMixin):
+    """One ingested knowledge source (spec §28-§29).
+
+    `data_origin='project-authored'` marks content this project wrote itself: it is real
+    editorial content, not DEMO DATA, and it is not a licensed third-party feed.
+    """
+
+    __tablename__ = "knowledge_documents"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    slug: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    category: Mapped[str] = mapped_column(String(40), index=True, nullable=False)
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+    applies_to: Mapped[list[str]] = mapped_column(JSON, default=list)
+    difficulty: Mapped[str] = mapped_column(String(20), default="intermediate", nullable=False)
+    source_label: Mapped[str] = mapped_column(String(400), default="", nullable=False)
+    editorial_confidence: Mapped[str] = mapped_column(String(10), default="medium", nullable=False)
+    last_reviewed: Mapped[str] = mapped_column(String(10), default="", nullable=False)
+    source_path: Mapped[str] = mapped_column(String(400), default="", nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), default="", nullable=False)
+    embedding_model: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    char_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="project-authored", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    ingested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    chunks: Mapped[list[KnowledgeChunk]] = relationship(
+        back_populates="document", cascade="all, delete-orphan", order_by="KnowledgeChunk.ordinal"
+    )
+
+
+class KnowledgeChunk(Base, TimestampMixin):
+    """A retrievable slice of a document: the unit a citation points at."""
+
+    __tablename__ = "knowledge_chunks"
+    __table_args__ = (
+        UniqueConstraint("document_id", "ordinal", name="uq_chunk_document_ordinal"),
+        Index("ix_chunk_category_ordinal", "category", "ordinal"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    document_id: Mapped[str] = mapped_column(
+        ForeignKey("knowledge_documents.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    heading: Mapped[str] = mapped_column(String(300), default="", nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    haystack: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    category: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    applies_to: Mapped[list[str]] = mapped_column(JSON, default=list)
+    difficulty: Mapped[str] = mapped_column(String(20), default="intermediate", nullable=False)
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+    terms: Mapped[dict[str, float]] = mapped_column(JSON, default=dict)
+    char_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    token_estimate: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    text_hash: Mapped[str] = mapped_column(String(64), default="", nullable=False, index=True)
+    embedding: Mapped[list[float]] = mapped_column(EmbeddingVector(EMBEDDING_DIM), nullable=False)
+    embedding_model: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    document: Mapped[KnowledgeDocument] = relationship(back_populates="chunks")
+
+
+class KnowledgeQuery(Base):
+    """What was asked, what was retrieved and whether it was answered — the RAG audit trail."""
+
+    __tablename__ = "knowledge_queries"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    user_id: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    mode: Mapped[str] = mapped_column(String(12), default="hybrid", nullable=False)
+    filters: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    hit_chunk_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    hit_scores: Mapped[list[float]] = mapped_column(JSON, default=list)
+    answered: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    retrieval_backend: Mapped[str] = mapped_column(String(20), default="", nullable=False)
+    latency_ms: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)

@@ -10,6 +10,7 @@ from __future__ import annotations
 import sys
 from logging.config import fileConfig
 from pathlib import Path
+from typing import Any
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -34,6 +35,17 @@ def _is_sqlite() -> bool:
     return settings.database_url.startswith("sqlite")
 
 
+# The HNSW index over `knowledge_chunks.embedding` is created by migration 0002 with
+# `USING hnsw (embedding vector_cosine_ops) WITH (m, ef_construction)`. That shape is
+# pgvector-specific and cannot be declared on the portable EmbeddingVector column, so
+# autogenerate would only ever propose dropping it. It stays migration-owned.
+_AUTOGENERATE_EXCLUDED = {"ix_chunk_embedding_hnsw"}
+
+
+def _include_object(object: Any, *_args: Any, **_kwargs: Any) -> bool:
+    return getattr(object, "name", None) not in _AUTOGENERATE_EXCLUDED
+
+
 def run_migrations_offline() -> None:
     context.configure(
         url=settings.database_url,
@@ -41,6 +53,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=_include_object,
         render_as_batch=_is_sqlite(),
     )
     with context.begin_transaction():
@@ -58,6 +71,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
+            include_object=_include_object,
             render_as_batch=_is_sqlite(),
         )
         with context.begin_transaction():

@@ -36,7 +36,7 @@ def capabilities() -> dict[str, object]:
     return {
         "m0_foundation": True,
         "m1_player_ai_coach": True,
-        "m2_rag": False,
+        "m2_rag": True,
         "m3_football_world": False,
         "m4_tactical_lab": False,
         "m5_video_analysis": False,

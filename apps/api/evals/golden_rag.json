@@ -1,0 +1,28 @@
+{
+  "version": "2026-09-21",
+  "note": "Golden retrieval set for the FOOTBALL OS knowledge base. Queries are phrased the way a player types them. expected_documents is the set of corpus slugs that legitimately answer the question.",
+  "recall_at": 5,
+  "queries": [
+    {"id": "first-touch", "query": "my first touch keeps bouncing away from me what should I practise", "expected_documents": ["first-touch-receiving"]},
+    {"id": "1v1-defending", "query": "how do I stop getting beaten in 1v1 as a defender", "expected_documents": ["1v1-defending-posture"]},
+    {"id": "passing-pressure", "query": "how can I pass faster under pressure with fewer touches", "expected_documents": ["passing-under-pressure"]},
+    {"id": "deceleration", "query": "how do I brake quickly without losing my balance", "expected_documents": ["deceleration-mechanics"]},
+    {"id": "scanning", "query": "how often should I check my shoulder before receiving the ball", "expected_documents": ["scanning-before-receiving"]},
+    {"id": "warmup", "query": "what order should a warm up go in before training", "expected_documents": ["warmup-structure"]},
+    {"id": "sprint-load", "query": "how many sprint sessions per week are safe", "expected_documents": ["hamstring-injury-risk", "load-progression-sleep"]},
+    {"id": "sleep", "query": "does sleep actually change how I recover from training", "expected_documents": ["load-progression-sleep", "hamstring-injury-risk"]},
+    {"id": "buildout", "query": "the keeper is being pressed how do we build out anyway", "expected_documents": ["buildup-vs-high-press"]},
+    {"id": "when-to-press", "query": "when should the team press", "expected_documents": ["pressing-triggers", "buildup-vs-high-press"]},
+    {"id": "counterpress", "query": "we just lost the ball in midfield what do we do in the first five seconds", "expected_documents": ["transition-defence-five-seconds"]},
+    {"id": "zonal-corners", "query": "what is zonal marking at corners", "expected_documents": ["set-piece-zonal-marking"]},
+    {"id": "handball", "query": "is it handball if the ball hits my arm", "expected_documents": ["handball-law-explained"]},
+    {"id": "offside", "query": "am I offside if I don't touch the ball but I stand in the keeper way", "expected_documents": ["offside-interference-explained"]},
+    {"id": "read-game", "query": "how do I read a game as a midfielder", "expected_documents": ["how-to-read-a-game"]},
+    {"id": "pressing-history", "query": "where did pressing ideas come from", "expected_documents": ["pressing-evolution-notes"]}
+  ],
+  "out_of_scope": [
+    {"id": "xg-model", "query": "what is the best expected goals model for the 2019 champions league"},
+    {"id": "cleat-sensor", "query": "how do I calibrate the torque sensor in my boots"},
+    {"id": "boot-brand", "query": "which boot brand does the number 10 wear"}
+  ]
+}

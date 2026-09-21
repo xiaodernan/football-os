@@ -29,7 +29,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements-dev.txt
       - name: Lint
-        run: python -m ruff check app tests seed.py migrations
+        run: python -m ruff check app tests evals seed.py migrations
       - name: Types
         run: python -m mypy app
       - name: Tests (SQLite dev fallback)
@@ -52,6 +52,12 @@ jobs:
           psql "postgresql://football:football@localhost:5432/postgres" -c "create database football_os_test owner football"
           psql "postgresql://football:football@localhost:5432/football_os_test" -c "create extension if not exists vector"
           python -m pytest
+      # Spec §64: the RAG benchmark is the reviewer for any change to retrieval, chunking or the
+      # corpus. It fails the build when a gate drops, so an answer-quality regression cannot merge.
+      - name: RAG evaluation gates (pgvector leg)
+        env:
+          DATABASE_URL: postgresql+psycopg2://football:football@localhost:5432/football_os
+        run: python -m evals.run_rag_eval
 
   web:
     runs-on: ubuntu-latest

@@ -33,6 +33,7 @@ if os.environ["DATABASE_URL"].startswith("sqlite") and _DB_PATH.exists():
 def _database() -> Iterator[None]:
     from app.core.db import Base, SessionLocal, engine, init_db
     from app.seed_data import seed_catalogue
+    from app.services.knowledge import sync_knowledge
 
     if not os.environ["DATABASE_URL"].startswith("sqlite"):
         # A server-backed run reuses one database, so tests can hardcode emails; start empty.
@@ -43,6 +44,10 @@ def _database() -> Iterator[None]:
     session = SessionLocal()
     try:
         seed_catalogue(session)
+        # The API ingests the corpus on boot, so tests must see the same universe it serves.
+        report = sync_knowledge(session)
+        if not report.ok:
+            raise RuntimeError("knowledge ingestion failed for the test database: " + "; ".join(report.errors))
     finally:
         session.close()
     yield

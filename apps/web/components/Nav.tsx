@@ -11,6 +11,7 @@ const LINKS: { href: string; label: string }[] = [
   { href: "/", label: "Home" },
   { href: "/my-football", label: "My Football" },
   { href: "/coach", label: "AI Coach" },
+  { href: "/knowledge", label: "Knowledge" },
   { href: "/training", label: "Training" },
   { href: "/progress", label: "Progress" },
   { href: "/history", label: "History" },

@@ -19,6 +19,11 @@ export const GOALS = [
 ] as const;
 export const ROLES = ["fan", "player", "coach", "manager", "scout", "academy"] as const;
 
+/** Retrieval filter enums the /knowledge search + ask endpoints accept. */
+export const KNOWLEDGE_MODES = ["semantic", "keyword", "hybrid"] as const;
+export const KNOWLEDGE_POSITIONS = ["goalkeeper", "defender", "midfielder", "forward", "all"] as const;
+export const KNOWLEDGE_DIFFICULTIES = ["beginner", "intermediate", "advanced"] as const;
+
 export type Position = (typeof POSITIONS)[number];
 export type PlayingLevel = (typeof LEVELS)[number];
 export type Foot = (typeof FEET)[number];
@@ -283,3 +288,184 @@ export type ProgressOverview = Overview;
 export type ProgressTimeline = Timeline;
 export type SessionListItem = SessionItem;
 export type SessionListPage = SessionList;
+
+/* ---------------------------------------------------------------------------
+   Football Knowledge (RAG) — mirrors apps/api/app/api/v1/knowledge.py envelopes.
+   AI-shaped responses (search/ask) reuse the AiEnvelope fields below but carry
+   richer `sources` (provenance + section), so they are declared independently.
+--------------------------------------------------------------------------- */
+
+export type KnowledgeCategoryCount = Record<string, number>;
+
+/** GET /knowledge/status */
+export type KnowledgeStatus = {
+  documents: number;
+  chunks: number;
+  categories: KnowledgeCategoryCount;
+  embedding_models: string[];
+  characters: number;
+  sources: string[];
+  pgvector: boolean;
+  database_dialect: string;
+  embedding_dim: number;
+  providers: Record<string, string | boolean>;
+  modes: string[];
+  answer_floor: number;
+  source_root: string;
+  demo_mode: boolean;
+};
+
+/** A row of GET /knowledge/documents and the shared header of the detail route. */
+export type KnowledgeDocument = {
+  slug: string;
+  title: string;
+  category: string;
+  tags: string[];
+  applies_to: string[];
+  difficulty: string;
+  source: string;
+  editorial_confidence: string;
+  last_reviewed: string | null;
+  data_origin: string;
+  is_demo_data: boolean;
+  char_count: number;
+  chunk_count: number;
+  embedding_model: string;
+  ingested_at: string | null;
+};
+
+export type KnowledgeDocumentList = {
+  total: number;
+  categories: string[];
+  items: KnowledgeDocument[];
+};
+
+/** One chunk of a document; `ordinal` is the anchor a citation deep-links to. */
+export type KnowledgeSection = {
+  ordinal: number;
+  heading: string;
+  text: string;
+  char_count: number;
+  tags: string[];
+};
+
+export type KnowledgeDocumentDetail = KnowledgeDocument & {
+  sections: KnowledgeSection[];
+};
+
+/** Reranker feature vector behind a result's score. */
+export type RetrievalFeatures = {
+  lexical?: number;
+  semantic?: number;
+  coverage?: number;
+  heading?: number;
+  [key: string]: number | undefined;
+};
+
+export type KnowledgeSearchResult = {
+  chunk_id: string;
+  document_slug: string;
+  title: string;
+  heading: string;
+  ordinal: number;
+  category: string;
+  difficulty: string;
+  applies_to: string[];
+  tags: string[];
+  score: number;
+  similarity: number;
+  lexical: number;
+  features: RetrievalFeatures;
+  rank: number;
+  excerpt: string;
+};
+
+/** A passage the answer/ranking was built from; `ref` is an in-app deep link. */
+export type KnowledgeCitation = {
+  type: string;
+  chunk_id: string;
+  document_id: string;
+  slug: string;
+  title: string;
+  section: string;
+  ordinal: number;
+  category: string;
+  source: string;
+  quote: string;
+  score: number;
+  similarity: number;
+  /** The 1-based `[n]` marker this citation answers to in the answer text — not a URL. Deep-link with `slug` + `ordinal`. */
+  ref: number;
+};
+
+export type KnowledgeSource = {
+  type: string;
+  ref: string;
+  label: string;
+  section?: string;
+  provenance?: string;
+};
+
+/** Honest verdict on whether the corpus actually covers the query. */
+export type Answerability = {
+  answerable: boolean;
+  discriminative_terms: string[];
+  discriminative_matches: string[];
+  discriminative_coverage: number;
+  df_ratio_limit: number;
+  coverage_floor: number;
+  match_floor: number;
+};
+
+export type RetrievalTimings = Record<string, number>;
+
+/** POST /knowledge/search */
+export type KnowledgeSearchResponse = {
+  query: string;
+  mode: string;
+  retrieval_backend: string;
+  scanned_chunks: number;
+  top_score: number;
+  reasons: string[];
+  timings_ms: RetrievalTimings;
+  results: KnowledgeSearchResult[];
+  citations: KnowledgeCitation[];
+  answerability: Answerability;
+  demo_mode: boolean;
+  provider: string;
+  model: string;
+  confidence: number;
+  sources: KnowledgeSource[];
+  generated_at: string;
+  disclaimer: string;
+};
+
+/** Ask answers are assembled extractively; `digest` maps each [n] ref to its sentences. */
+export type KnowledgeDigest = {
+  ref: number;
+  title: string;
+  section: string;
+  sentences: string[];
+};
+
+/** POST /knowledge/ask — when `answered` is false, `answer` is the refusal and citations are empty. */
+export type KnowledgeAskResponse = {
+  question: string;
+  answered: boolean;
+  answer: string;
+  digest: KnowledgeDigest[];
+  citations: KnowledgeCitation[];
+  demo_mode: boolean;
+  provider: string;
+  model: string;
+  confidence: number;
+  reasons: string[];
+  retrieval_backend: string;
+  mode: string;
+  scanned_chunks: number;
+  top_score: number;
+  timings_ms: RetrievalTimings;
+  sources: KnowledgeSource[];
+  generated_at: string;
+  disclaimer: string;
+};

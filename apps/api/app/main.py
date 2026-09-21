@@ -11,10 +11,11 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import auth, coach, meta, players, progress, trainings
+from app.api.v1 import auth, coach, knowledge, meta, players, progress, trainings
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
+from app.services.knowledge import corpus_stats, sync_knowledge
 from app.services.training_catalog import sync_catalog
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -38,6 +39,20 @@ def create_app() -> FastAPI:
         init_db()
         with SessionLocal() as session:
             sync_catalog(session)
+        if settings.knowledge_auto_ingest:
+            with SessionLocal() as session:
+                report = sync_knowledge(session)
+                if report.errors:
+                    logger.error("knowledge ingestion problems: %s", "; ".join(report.errors[:8]))
+                else:
+                    stats = corpus_stats(session)
+                    logger.info(
+                        "knowledge base ready docs=%d chunks=%d written_now=%d backend=%s",
+                        report.documents_seen,
+                        stats["chunks"],
+                        report.chunks_written,
+                        report.embedding_model,
+                    )
         logger.info("boot env=%s dialect=%s demo_mode=%s", settings.env, settings.database_url.split(":")[0], settings.is_demo_mode)
         yield
 
@@ -75,6 +90,7 @@ def create_app() -> FastAPI:
     app.include_router(trainings.router, prefix=api)
     app.include_router(coach.router, prefix=api)
     app.include_router(progress.router, prefix=api)
+    app.include_router(knowledge.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:

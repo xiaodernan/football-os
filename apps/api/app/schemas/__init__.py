@@ -206,3 +206,58 @@ class AiEnvelope(BaseModel):
     sources: list[dict[str, Any]] = []
     generated_at: str
     disclaimer: str
+
+
+KNOWLEDGE_POSITIONS = ("goalkeeper", "defender", "midfielder", "forward", "all")
+KNOWLEDGE_DIFFICULTIES = ("beginner", "intermediate", "advanced")
+
+
+def _clean_optional(value: str | None) -> str | None:
+    if value is None:
+        return None
+    stripped = value.strip().lower()
+    return stripped or None
+
+
+class KnowledgeFilterIn(BaseModel):
+    """Metadata filters shared by /search and /ask (spec §29 'Metadata Filter')."""
+
+    mode: Literal["semantic", "keyword", "hybrid"] = "hybrid"
+    top_k: int = Field(default=5, ge=1, le=20)
+    category: str | None = Field(default=None, max_length=40)
+    position: str | None = Field(default=None, max_length=20)
+    difficulty: str | None = Field(default=None, max_length=20)
+    tag: str | None = Field(default=None, max_length=40)
+    document_slug: str | None = Field(default=None, max_length=120)
+
+    @field_validator("category", "position", "difficulty", "tag", "document_slug", mode="after")
+    @classmethod
+    def _normalise(cls, value: str | None) -> str | None:
+        return _clean_optional(value)
+
+    @field_validator("position")
+    @classmethod
+    def _position_known(cls, value: str | None) -> str | None:
+        if value and value not in KNOWLEDGE_POSITIONS:
+            raise ValueError(f"position must be one of: {', '.join(KNOWLEDGE_POSITIONS)}")
+        return value
+
+    @field_validator("difficulty")
+    @classmethod
+    def _difficulty_known(cls, value: str | None) -> str | None:
+        if value and value not in KNOWLEDGE_DIFFICULTIES:
+            raise ValueError(f"difficulty must be one of: {', '.join(KNOWLEDGE_DIFFICULTIES)}")
+        return value
+
+
+class KnowledgeSearchIn(KnowledgeFilterIn):
+    query: str = Field(min_length=2, max_length=400)
+
+
+class KnowledgeAskIn(KnowledgeFilterIn):
+    question: str = Field(min_length=3, max_length=500)
+
+
+class KnowledgeIngestIn(BaseModel):
+    root: str | None = Field(default=None, max_length=400)
+    force: bool = False

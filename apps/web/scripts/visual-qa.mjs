@@ -252,14 +252,165 @@ async function run() {
     check('history lists the completed session with its evidence', /completed/iu.test(history) && /XP ledger/iu.test(history) && history.includes(NOTES.slice(0, 24)), history.includes(NOTES.slice(0, 24)) ? 'note shown' : 'note not shown');
     await shot(page, '12-history-desktop');
 
-    // 9. Settings: account, platform status, danger zone copy.
+    // 9. Knowledge base (M2): authored library, hybrid retrieval, cited answers, refusal.
+    await open(page, '/knowledge');
+    await waitForText(page, 'Document library');
+    await shot(page, '13-knowledge-library-desktop');
+    const library = await bodyText(page);
+    const cards = await page.evaluate(() => {
+      const nodes = [...document.querySelectorAll('#library a.kn-card')];
+      return {
+        total: nodes.length,
+        withProvenance: nodes.filter((n) => n.innerText.includes('PROJECT AUTHORED') && /last reviewed \d/iu.test(n.innerText)).length,
+        withPassages: nodes.filter((n) => /\d+ passages/u.test(n.innerText)).length,
+      };
+    });
+    check('knowledge library renders project-authored documents', cards.total > 0, `${cards.total} document cards`);
+    check(
+      'every library card carries provenance and its real chunk count',
+      cards.total > 0 && cards.withProvenance === cards.total && cards.withPassages === cards.total,
+      JSON.stringify(cards),
+    );
+    check(
+      'library states the corpus size it was read from',
+      /\d+ \S+ documents, \d+ indexed passages/u.test(library),
+      library.match(/\d+ \S* ?documents, \d+ indexed passages/u)?.[0] ?? 'no counts',
+    );
+
+    // A document deep-link must render the passages the citations point into.
+    const firstDoc = await page.evaluate(() => document.querySelector('#library a.kn-card')?.getAttribute('href') ?? '');
+    await open(page, firstDoc);
+    await waitForText(page, 'Passages');
+    const detail = await page.evaluate(() => {
+      const sections = [...document.querySelectorAll('.kn-section')];
+      return {
+        sections: sections.length,
+        anchored: sections.filter((s) => /^\d+$/u.test(s.id ?? '')).length,
+        origin: document.body.innerText.match(/data_origin: *([\w-]+)/u)?.[1] ?? '',
+        demo: document.body.innerText.match(/is_demo_data: *(true|false)/u)?.[1] ?? '',
+      };
+    });
+    check(
+      'document detail renders its passages with citation anchors',
+      detail.sections > 0 && detail.anchored === detail.sections,
+      `${detail.sections} passages, ${detail.anchored} anchorable`,
+    );
+    check('detail page declares its origin as authored, not demo', detail.origin === 'project-authored' && detail.demo === 'false', `data_origin=${detail.origin} is_demo_data=${detail.demo}`);
+    await shot(page, '14-knowledge-document-desktop');
+
+    // Hybrid retrieval over the corpus.
+    await open(page, '/knowledge');
+    await waitForText(page, 'Hybrid retrieval');
+    await page.type('#ksearch-query', 'how does a team press high in the opponent half');
+    await clickByText(page, 'button', 'Run search');
+    await waitForText(page, 'Why these ranked this way');
+    const searched = await page.evaluate(() => {
+      const results = [...document.querySelectorAll('.kn-result')];
+      const first = results[0];
+      return {
+        count: results.length,
+        excerpt: first?.querySelector('.kn-excerpt')?.innerText ?? '',
+        link: first?.querySelector('a[href^="/knowledge/"]')?.getAttribute('href') ?? '',
+        chips: first ? [...first.querySelectorAll('.kn-metrics .chip')].map((c) => c.innerText) : [],
+        backend: document.querySelector('.kn-result') ? document.body.innerText.match(/hybrid-pgvector|hybrid-vector-python|vector-python|bm25-python|pgvector/u)?.[0] ?? '' : '',
+        scanned: document.body.innerText.match(/\d+ chunks scanned/u)?.[0] ?? '',
+      };
+    });
+    check('knowledge search ranks passages from the live corpus', searched.count > 0, `${searched.count} hits · ${searched.scanned} · backend ${searched.backend}`);
+    check(
+      'top result carries its own score, cosine and bm25 values',
+      searched.chips.some((c) => /^score [\d.]+/u.test(c)) && searched.chips.some((c) => /^cosine [\d.]+/u.test(c)) && searched.chips.some((c) => /^bm25 [\d.]+/u.test(c)),
+      searched.chips.join(' | '),
+    );
+    await shot(page, '15-knowledge-search-desktop');
+
+    // The excerpt must be a verbatim slice of the stored passage — the anti-hallucination check.
+    const quoteCheck = await page.evaluate(
+      async (args) => {
+        const response = await fetch(args.path, { credentials: 'same-origin' });
+        if (!response.ok) return { status: response.status };
+        const html = await response.text();
+        const container = new DOMParser().parseFromString(html, 'text/html');
+        const section = container.querySelector(`.kn-section[id="${args.ordinal}"] .kn-section__text`);
+        const collapse = (value) => (value ?? '').replace(/\s+/g, ' ').trim();
+        return { status: response.status, excerpt: collapse(args.excerpt), found: collapse(section?.textContent).includes(collapse(args.excerpt)) };
+      },
+      { path: searched.link.split('#')[0], ordinal: searched.link.split('#')[1] ?? '0', excerpt: searched.excerpt.replace(/…$/u, '') },
+    );
+    check('search excerpt is verbatim in the cited passage', quoteCheck.found === true, JSON.stringify(quoteCheck).slice(0, 200));
+
+    // Ask must answer from citations, and must refuse when the corpus cannot ground an answer.
+    await open(page, '/knowledge');
+    await waitForText(page, 'Ask the library');
+    await page.type('#kask-question', 'How should a midfield pair react when the opposition presses their own goalkeeper?');
+    await clickByText(page, 'button', 'Ask the library');
+    await waitForText(page, 'Cited passages');
+    const libAnswer = await page.evaluate(() => {
+      const citations = [...document.querySelectorAll('.kn-cite')];
+      return {
+        badge: document.querySelector('.kn-answer-block .badge--demo')?.innerText ?? '',
+        answer: document.querySelector('.kn-answer')?.innerText ?? '',
+        cites: citations.map((c) => ({
+          quote: (c.querySelector('.kn-cite__quote')?.innerText ?? '').replace(/[“”]/gu, '').replace(/…$/u, '').trim(),
+          href: c.querySelector('a[href^="/knowledge/"]')?.getAttribute('href') ?? '',
+        })),
+      };
+    });
+    check('ask returns a grounded answer with at least one citation', libAnswer.cites.length >= 1 && libAnswer.answer.length > 60, `${libAnswer.cites.length} citation(s), ${libAnswer.answer.length} chars of answer`);
+    check('inline [n] markers point at the citation cards', /\[\d+\]/u.test(libAnswer.answer), libAnswer.answer.slice(0, 90));
+    check(
+      'every citation quotes a passage and links back to it',
+      libAnswer.cites.every((c) => c.quote.length > 40 && c.href.startsWith('/knowledge/')),
+      libAnswer.cites.map((c) => `${c.href} (${c.quote.length} chars)`).join(' | '),
+    );
+    check('demo-mode answers self-label as extractive, never as generated', /DEMO MODE/iu.test(libAnswer.badge) && /extractive/iu.test(libAnswer.badge), libAnswer.badge || 'no demo badge');
+    await shot(page, '16-knowledge-ask-desktop');
+
+    // Spec §62: a citation only counts if it resolves. Follow the first card's own link and require the quote.
+    const target = libAnswer.cites[0];
+    await open(page, target.href);
+    await waitForText(page, 'Passages');
+    const resolved = await page.evaluate((args) => {
+      const ordinal = (args.href.split('#')[1] ?? '0').replace(/\D/g, '') || '0';
+      const node = document.querySelector(`.kn-section[id="${ordinal}"] .kn-section__text`);
+      const collapse = (value) => (value ?? '').replace(/\s+/g, ' ').trim();
+      return { anchorFound: Boolean(node), quoteFound: collapse(node?.textContent).includes(collapse(args.quote)) };
+    }, { href: target.href, quote: target.quote });
+    check(
+      'a citation link resolves to the exact passage it quotes',
+      resolved.anchorFound && resolved.quoteFound,
+      `${target.href} — ${resolved.anchorFound ? (resolved.quoteFound ? 'quote is verbatim' : 'quote not in that passage') : 'anchor missing'}`,
+    );
+
+    await open(page, '/knowledge');
+    await waitForText(page, 'Ask the library');
+    await page.type('#kask-question', 'which boot brand does the number 10 wear');
+    await clickByText(page, 'button', 'Ask the library');
+    await waitForText(page, 'No grounded answer');
+    const refused = await page.evaluate(() => {
+      const block = document.querySelector('.kn-answer-block');
+      return {
+        notice: block?.querySelector('.notice--warn')?.innerText ?? '',
+        reasons: [...(block?.querySelectorAll('.reasons__item') ?? [])].map((li) => li.innerText).join(' · '),
+        citations: block?.querySelectorAll('.kn-cite').length ?? -1,
+      };
+    });
+    check(
+      'an out-of-scope question is refused with no invented citations',
+      /could not find a passage/iu.test(refused.notice) && refused.citations === 0,
+      `${refused.notice.replace(/\s+/g, ' ').slice(0, 120)} · ${refused.citations} citation(s)`,
+    );
+    check('the refusal names the measured gate that failed', /rare term|coverage/iu.test(refused.reasons), refused.reasons.replace(/\s+/g, ' ').slice(0, 170));
+    await shot(page, '17-knowledge-refusal-desktop');
+
+    // 10. Settings: account, platform status, danger zone copy.
     await open(page, '/settings');
     await waitForText(page, EMAIL);
     const settings = await bodyText(page);
     check('settings shows account email + platform status', /sqlite|postgresql/iu.test(settings) && /Live|Not built/iu.test(settings));
-    await shot(page, '13-settings-desktop');
+    await shot(page, '18-settings-desktop');
 
-    // 10. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
+    // 11. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
     await page.setViewport(MOBILE);
     const mobileSurface = async ([path, marker, label]) => {
       try {
@@ -275,23 +426,24 @@ async function run() {
       } catch (error) {
         check(`mobile 375px: ${label} renders "${marker}"`, false, `${new URL(page.url()).pathname} — ${String(error.message ?? error).slice(0, 140)}`);
       }
-      await shot(page, `14-mobile-${label}`);
+      await shot(page, `19-mobile-${label}`);
     };
     for (const surface of [
       ['/my-football', PLAYER_NAME, 'my-football'],
       ['/coach', 'Recommended session', 'coach'],
       ['/training', 'min', 'training'],
       ['/progress', PLAYER_NAME, 'progress'],
+      ['/knowledge', 'Document library', 'knowledge'],
       ['/settings', 'Data', 'settings'],
     ]) {
       await mobileSurface(surface);
     }
 
-    // 11. An authenticated visitor is bounced off the public auth pages, then signs out.
+    // 12. An authenticated visitor is bounced off the public auth pages, then signs out.
     await open(page, '/login');
     check('signed-in visitor is redirected away from /login', new URL(page.url()).pathname !== '/login', new URL(page.url()).pathname);
 
-    // 12. Sign out clears the cookies; the login screen must still work at 375px.
+    // 13. Sign out clears the cookies; the login screen must still work at 375px.
     await open(page, '/settings');
     const signedOut = await page.evaluate(async () => {
       const response = await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'same-origin' });

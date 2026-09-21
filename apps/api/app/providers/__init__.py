@@ -50,6 +50,21 @@ class EmbeddingProvider(Protocol):
     def embed(self, texts: list[str]) -> list[list[float]]: ...
 
 
+class RerankerProvider(Protocol):
+    name: str
+
+    def rerank(
+        self,
+        *,
+        query: str,
+        candidates: list[dict[str, Any]],
+        query_terms: dict[str, float],
+        df: dict[str, int],
+        total_docs: int,
+        avg_doc_length: float,
+    ) -> list[dict[str, Any]]: ...
+
+
 class VisionProvider(Protocol):
     name: str
 
@@ -156,10 +171,13 @@ class OpenAIChatProvider:
 
 
 class HashingEmbeddingProvider:
-    """Deterministic local embeddings for the SQLite/DEMO path (ADR-002 fallback).
+    """Deterministic local embeddings: signed hashing trick over unigrams and bigrams.
 
-    Not semantically strong; keeps the RAG interface honest until pgvector +
-    a real embedding provider are wired in M2.
+    This is a *lexical* vector, not a semantic one — it is honest for the SQLite/DEMO
+    path because hybrid retrieval pairs it with BM25 and the answer surface cites the
+    chunk it used instead of the model's own opinion. A real embedding model replaces it
+    as soon as a key exists (see OpenAIEmbeddingProvider), without a schema change: the
+    column dimension stays 256 because text-embedding-3-* supports `dimensions`.
     """
 
     name = "hash-local"
@@ -168,19 +186,127 @@ class HashingEmbeddingProvider:
     def embed(self, texts: list[str]) -> list[list[float]]:
         import hashlib
         import math
+        import re
 
         vectors: list[list[float]] = []
         for text in texts:
+            words = [t for t in re.findall(r"[a-z0-9]+", text.lower()) if len(t) > 1]
+            features = words + [f"{a}_{b}" for a, b in zip(words, words[1:], strict=False)]
             counts: dict[str, int] = {}
-            for token in "".join(c if c.isalnum() else " " for c in text.lower()).split():
-                counts[token] = counts.get(token, 0) + 1
+            for feature in features:
+                counts[feature] = counts.get(feature, 0) + 1
             vector = [0.0] * self.dim
-            for token, count in counts.items():
-                index = int(hashlib.sha1(token.encode()).hexdigest(), 16) % self.dim  # noqa: S324 - non-crypto hashing
-                vector[index] += math.log1p(count)
+            for feature, count in counts.items():
+                digest = hashlib.sha1(feature.encode()).hexdigest()  # noqa: S324 - non-crypto bucketing
+                index = int(digest[:8], 16) % self.dim
+                sign = 1.0 if int(digest[8:16], 16) % 2 == 0 else -1.0
+                vector[index] += sign * math.log1p(count)
             norm = math.sqrt(sum(v * v for v in vector)) or 1.0
             vectors.append([round(v / norm, 6) for v in vector])
         return vectors
+
+
+class OpenAIEmbeddingProvider:
+    """Real embeddings when a key is configured; otherwise never used (spec §45)."""
+
+    name = "openai"
+
+    def __init__(self, api_key: str, model: str = "text-embedding-3-small", dim: int = 256) -> None:
+        self.api_key = api_key
+        self.model = model
+        self.dim = dim
+        self.base_url = "https://api.openai.com/v1"
+        self.fallback = HashingEmbeddingProvider()
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        body = json.dumps({"model": self.model, "input": texts, "dimensions": self.dim}).encode()
+        request = urllib.request.Request(
+            f"{self.base_url}/embeddings",
+            data=body,
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=45) as response:  # noqa: S310 - fixed provider endpoint
+                payload = json.loads(response.read().decode())
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            logger.warning("embedding_provider_failure %s — falling back to hash-local", type(exc).__name__)
+            return self.fallback.embed(texts)
+        rows = sorted(payload.get("data", []), key=lambda row: row.get("index", 0))
+        vectors = [[float(v) for v in row["embedding"]] for row in rows]
+        if len(vectors) != len(texts) or any(len(v) != self.dim for v in vectors):
+            logger.warning("embedding_provider_shape_mismatch — falling back to hash-local")
+            return self.fallback.embed(texts)
+        return vectors
+
+
+class FeatureReranker:
+    """Deterministic cross-feature rerank of already-retrieved chunks (spec §29 'Reranking').
+
+    A neural cross-encoder can replace this behind RerankerProvider; until then the
+    features are declared and inspectable, so a ranking can be explained rather than
+    asserted — which is the whole point of the citation surface.
+    """
+
+    name = "feature-local"
+    weights = {"lexical": 0.42, "semantic": 0.33, "coverage": 0.17, "heading": 0.08}
+
+    def rerank(
+        self,
+        *,
+        query: str,
+        candidates: list[dict[str, Any]],
+        query_terms: dict[str, float],
+        df: dict[str, int],
+        total_docs: int,
+        avg_doc_length: float,
+    ) -> list[dict[str, Any]]:
+        from app.services.knowledge.text import bm25_score, coverage
+
+        scored: list[dict[str, Any]] = []
+        for candidate in candidates:
+            terms = {str(k): float(v) for k, v in candidate.get("terms", {}).items()}
+            lexical = bm25_score(
+                query_terms,
+                terms,
+                doc_length=int(candidate.get("token_estimate", 0)) or 1,
+                avg_doc_length=avg_doc_length,
+                df=df,
+                total_docs=total_docs,
+            )
+            semantic = max(0.0, float(candidate.get("similarity", 0.0)))
+            covered = coverage(query_terms, terms)
+            heading_bonus = 1.0 if _heading_matches(query, str(candidate.get("heading", ""))) else 0.0
+            features = {
+                "lexical": lexical,
+                "semantic": semantic,
+                "coverage": covered,
+                "heading": heading_bonus,
+            }
+            row = dict(candidate)
+            row["features"] = features
+            row["rerank_score"] = round(
+                self.weights["lexical"] * _squash(lexical)
+                + self.weights["semantic"] * semantic
+                + self.weights["coverage"] * covered
+                + self.weights["heading"] * heading_bonus,
+                6,
+            )
+            scored.append(row)
+        scored.sort(key=lambda row: (-row["rerank_score"], row.get("document_slug", ""), row.get("ordinal", 0)))
+        return scored
+
+
+def _squash(value: float) -> float:
+    return value / (1.0 + value) if value > 0 else 0.0
+
+
+def _heading_matches(query: str, heading: str) -> bool:
+    """Two shared content words between question and section heading is a real signal."""
+    from app.services.knowledge.text import content_words
+
+    query_words = {w for w in content_words(query) if len(w) > 3}
+    heading_words = {w for w in content_words(heading) if len(w) > 3}
+    return len(query_words & heading_words) >= 2
 
 
 class LocalStorageProvider:
@@ -207,7 +333,14 @@ def get_llm_provider() -> LLMProvider:
 
 
 def get_embedding_provider() -> EmbeddingProvider:
+    """A real embedding model is used the moment a key exists; the dimension never changes."""
+    if settings.openai_api_key and settings.embedding_provider == "openai":
+        return OpenAIEmbeddingProvider(settings.openai_api_key, settings.openai_embedding_model)
     return HashingEmbeddingProvider()
+
+
+def get_reranker_provider() -> RerankerProvider:
+    return FeatureReranker()
 
 
 def provider_status() -> dict[str, Any]:
@@ -215,6 +348,7 @@ def provider_status() -> dict[str, Any]:
         "demo_mode": settings.is_demo_mode,
         "llm": get_llm_provider().name,
         "embedding": get_embedding_provider().name,
+        "reranker": get_reranker_provider().name,
         "vision": "none-yet",
         "football_data": "synthetic-world",
         "news": "synthetic-world" if not settings.news_api_key else "licensed-api",
