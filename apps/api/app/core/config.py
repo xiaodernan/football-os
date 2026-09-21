@@ -47,6 +47,8 @@ class Settings:
     embedding_provider: str = field(default_factory=lambda: _env("EMBEDDING_PROVIDER", "hash-local"))
     knowledge_dir: str = field(default_factory=lambda: _env("KNOWLEDGE_DIR", str(API_ROOT.parent.parent / "data" / "knowledge")))
     knowledge_auto_ingest: bool = field(default_factory=lambda: _env("KNOWLEDGE_AUTO_INGEST", "1") != "0")
+    world_seed: int = field(default_factory=lambda: int(_env("WORLD_SEED", "3") or 3))
+    world_auto_sync: bool = field(default_factory=lambda: _env("WORLD_AUTO_SYNC", "1") != "0")
     anthropic_api_key: str = field(default_factory=lambda: _env("ANTHROPIC_API_KEY"))
     news_api_key: str = field(default_factory=lambda: _env("NEWS_API_KEY"))
     football_data_api_key: str = field(default_factory=lambda: _env("FOOTBALL_DATA_API_KEY"))
@@ -69,6 +71,8 @@ class Settings:
             notes.append("sqlite-fallback: pgvector features require PostgreSQL")
         if self.is_demo_mode:
             notes.append("DEMO MODE: no AI provider key configured, outputs are template-reasoned and labelled")
+        if not self.world_auto_sync:
+            notes.append("world-auto-sync-disabled: /api/v1/world serves whatever is already in the database")
         return notes
 
 

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
 from app.providers import provider_status
+from app.services.world import world_counts, world_ready, world_tables_present
 
 router = APIRouter(tags=["meta"])
 
@@ -31,19 +32,27 @@ def healthz(db: Session = Depends(get_db)) -> dict[str, object]:
 
 
 @router.get("/capabilities")
-def capabilities() -> dict[str, object]:
-    """Which milestones are live — the UI uses this instead of guessing."""
+def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
+    """Which milestones are live — the UI uses this instead of guessing.
+
+    M3 reports what the database actually holds rather than what the code could serve: the flag
+    flips to true only once the synthetic world is present in full, because a half-written world
+    must not be rendered as if it were real (spec §65, `DATA_POLICY.md`). `locales` likewise lists
+    only the language the UI ships today; §81 translations are `locales_planned`.
+    """
     return {
         "m0_foundation": True,
         "m1_player_ai_coach": True,
         "m2_rag": True,
-        "m3_football_world": False,
+        "m3_football_world": world_ready(db),
+        "m3_world": {"tables_present": world_tables_present(db), "counts": world_counts(db), "auto_sync": settings.world_auto_sync, "seed": settings.world_seed},
         "m4_tactical_lab": False,
         "m5_video_analysis": False,
         "m6_simulation": False,
         "m7_scouting": False,
         "m8_club_os": False,
         "m9_community": False,
-        "locales": ["en", "zh", "zh-TW"],
+        "locales": ["en"],
+        "locales_planned": ["en", "zh", "zh-TW"],
         "demo_mode": settings.is_demo_mode,
     }

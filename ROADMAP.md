@@ -7,7 +7,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M0 Foundation** | monorepo, git, CI, docs+ADRs, design system, Next.js, FastAPI, Postgres/pgvector compose, auth foundation, provider abstraction, health checks | both apps build, tests green, login works | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M1 Player + AI Coach vertical slice** | Create user → create player → profile → training → completion → AI Coach → progress → history | closed loop usable in browser with real persistence | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M2 Football Knowledge + RAG** | ingestion, chunking, embeddings, pgvector hybrid retrieval, rerank, citations, Football AI | answers carry resolvable source citations | ✅ verified 2026-09-21 ([evidence](docs/M2_VERIFICATION.md)) |
-| **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 100 matches / 500 articles synthetic world | 🔨 in progress |
+| **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 100 matches / 500 articles synthetic world | 🔨 backend verified 2026-09-21 ([evidence](docs/M3_VERIFICATION.md)) · web surface pending |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | drag/draw/save/share + analysis with evidence | ⬜ |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ⬜ |
 | **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | ⬜ |
@@ -39,23 +39,27 @@ All 13 are verified: `docs/M0_M1_VERIFICATION.md` §2 maps each one to a passing
 
 ## Now → next session
 
-**M2 Football Knowledge + RAG** — verified end to end (backend + web surface). Exit criteria:
+**M3 Football World.** The backend half is verified — evidence in `docs/M3_VERIFICATION.md`:
 
-1. [x] corpus in `data/knowledge` with the frontmatter contract (`id/title/category/tags/applies_to/difficulty/source/confidence/last_reviewed`), provenance labelled `project-authored`
-2. [x] ingestion: clean → section split → 220–1300 char chunks with the title prefixed → embeddings → rows; idempotent by content hash; deletions propagate; `--force-knowledge` re-embeds
-3. [x] portable vectors (ADR-002): `vector(256)` + HNSW on PostgreSQL, JSON + in-process cosine on the SQLite fallback, and the response names its own backend
-4. [x] hybrid retrieval: semantic + BM25 keyword + reciprocal rank fusion + deterministic feature rerank, all under one metadata-filter universe (category/position/difficulty/tag/document)
-5. [x] citations: every hit carries a verbatim `quote`, `chunk_id`, `slug#ordinal` deep link; 64/64 quotes verified byte-for-byte against stored chunks
-6. [x] answers: extractive digest in demo mode, LLM path only with a real key, confidence + `reasons[]` + `sources[]` + disclaimer, query audit row
-7. [x] refusal: out-of-scope questions are refused with the rare terms it looked for; empty rare-term set now refuses instead of answering
-8. [x] evaluation harness (`evals/golden_rag.json` + `run_rag_eval.py`) as a CI gate: recall@5 1.0 · MRR 0.922 · citation integrity 1.0 · refusal accuracy 1.0 · hybrid delta 0.0, green on both databases
-9. [x] 48 tests on SQLite and PostgreSQL+pgvector; ruff + mypy clean; `alembic upgrade head` + `alembic check` clean; `docs/api/openapi.json` regenerated with all six `/api/v1/knowledge*` routes
-10. [x] `/knowledge` web surface (library, search, ask with citations) verified in the browser at 1440px and 375px — 57/57 assertions, 28 PNGs, evidence in `docs/M2_VERIFICATION.md` §3 (the run caught and fixed a real citation-link defect)
+1. [x] seven tables + `0003_football_world` migration, `alembic upgrade head` and `alembic check` clean on pgvector
+2. [x] seeded deterministic generator (`WorldRng` → `plan_world(seed)` → identical `fingerprint()`), fictional name tables, no scraped or licensed material
+3. [x] idempotent sync: upsert by natural key, schema-fit validation before insert, second pass reports `changed=0`, deletions cascade with 0 orphan links
+4. [x] 500-article newsroom that only quotes numbers present in the stat tables, `claim_class` separating fact / analysis / speculation, desk bylines and `source_name='synthetic-world'`
+5. [x] one unified search over all five entity types, explainable ranking, per-hit path + provenance
+6. [x] 12 public `/api/v1/world/*` routes registered and live, `GET /capabilities` reporting `m3_football_world` from the data rather than the code
+7. [x] 39 world tests, 87 total, green on SQLite **and** PostgreSQL+pgvector; ruff + mypy clean; `docs/api/openapi.json` regenerated (40 paths / 44 operations)
 
-After M2 closes: **M3 Football World** (RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO
-routes). The model classes are already reserved in `app/models/__init__.py`; `docs/api/openapi.json` remains the
-contract the web tier codes against, and the verification harness to extend is `pytest` on both databases,
-`python -m evals.run_rag_eval`, `scripts/export_openapi.py` and `apps/web/scripts/visual-qa.mjs`.
+What the M3 gate still needs — the world's public web surface:
+
+1. [ ] `/team/{slug}`, `/player/{slug}`, `/match/{slug}`, `/competition/{slug}`, `/news/{slug}` pages fed by those routes, each with `pageMetadata()` and the §80 path the API already hands out
+2. [ ] a world index (competitions → teams → fixtures → news) and the unified search page
+3. [ ] `sitemap.ts` entries for every one of those routes **in the same commit**, plus a QA assertion that each advertised `<loc>` answers 200
+4. [ ] `DEMO DATA` badging that renders the row's own `data_origin` and disclaimer, and an explicit "no score yet" state for scheduled fixtures
+5. [ ] `visual-qa.mjs` extended with world assertions and screenshots at 1440px and 375px against a production build
+
+Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,
+`scripts/export_openapi.py`, `apps/web/scripts/visual-qa.mjs`. `docs/api/openapi.json` remains the
+contract the web tier codes against.
 
 ## Cross-cutting gates (spec §80 SEO, §81 i18n)
 
@@ -67,8 +71,9 @@ Milestones do not own these; every public route must satisfy them as it lands.
   200, and session-gated routes are excluded from the sitemap and disallowed in robots rather than published as redirect chains
 - [x] `visual-qa.mjs` carries the SEO assertions (66/66, run stamp `202609212143`) and now tags browser console errors with the
   route they occurred on, so a hydration or fetch failure is localisable instead of a minified code
-- [ ] §80 SEO routes for the world entities (`/player|team|match|competition|news/{slug}`) — arrives with M3, using the same
-  `pageMetadata()` helper; `sitemap.ts` must gain those entries in the same commit, or the sitemap under-reports the site
-- [ ] §81 i18n **not built**: the UI is English-only. Docs previously claimed `i18n(en/zh/zh-TW)`; `README.md` and
-  `ARCHITECTURE.md` §6 are corrected. Remaining step: reconcile the `locales` field of `GET /capabilities` with reality
-  (report `["en"]` until translations exist) in the same pass as the M3 API review, then land `messages/{en,zh,zh-TW}.json`.
+- [ ] §80 SEO routes for the world entities (`/player|team|match|competition|news/{slug}`) — the API already emits exactly these paths from
+  one table (`SEO_ROUTES`/`web_path()` in `app/services/world/plan.py`); the pages must mount them with the same `pageMetadata()`
+  helper, and `sitemap.ts` must gain those entries in the same commit, or the sitemap under-reports the site
+- [x] §81 honesty: the UI is English-only, and the docs no longer claim otherwise. `GET /capabilities` now reports
+  `locales: ["en"]` with `locales_planned: ["en","zh","zh-TW"]` beside it, so the wire matches the shipped interface.
+  Remaining step: land `messages/{en,zh,zh-TW}.json` and switch the field when translations actually exist.

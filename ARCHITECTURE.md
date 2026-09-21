@@ -58,11 +58,24 @@ app/
 
 `User 1—N UserPlayer` · `UserPlayer 1—N AttributeSet/TrainingSession/MatchPerformance/XpEvent/Achievement`
 `RealPlayer N—1 Team N—1 Competition` · `Match N—1 Team`, `Match 1—N MatchEvent`, `Match 1—N PlayerStat`
-`NewsArticle N—1 source provider`, links to `RealPlayer`/`Team` entities
+`NewsArticle N—M RealPlayer/Team/Competition/Match` through `NewsArticleLink`
 `TrainingSession` references a `Drill` (catalogue) + ` CoachingPoint` set + evidence links
 `Job` and `AgentRun`/`AgentStep` (M2+) record provider, model, token counts, latency, cost, success/error.
 
 RealPlayer vs UserPlayer are **separate tables**, never a flag on one table (spec §7).
+
+M3 builds the world locally rather than reading a provider: `WORLD_SEED` → `plan_world()` (pure, in-memory)
+→ `sync_world()` (upsert by natural key, schema validation before insert) → tables, with
+`search_world()` reading them for one typed, ranked result set (spec §56). Two rules hold it honest:
+
+- every row carries `data_origin='synthetic'` + `is_demo_data` + `WORLD_DISCLAIMER`, added by the sync layer
+  rather than by the caller, so a page cannot be rendered without the label (spec §62, §88);
+- an article may only quote a number that exists in `real_matches` / `real_player_match_stats`, and an
+  unplayed fixture keeps NULL goals all the way to the API response ("Data unavailable"), so the news
+  desk, the fixtures list and the league table cannot contradict each other.
+
+A news provider is still the plan for real headlines (spec §45); until a key exists, `source_name` is
+`synthetic-world` and the desk is a role, not a person.
 
 ## 4. Progression is explainable, never random
 

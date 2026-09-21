@@ -4,7 +4,7 @@
 
 One platform connecting the real football world, personal football development, football simulation and football AI. Not a news site, not a score app, not an FM clone, not a chatbot wrapper.
 
-**Status:** M0 Foundation · M1 vertical slice (My Football → Player → Training → AI Coach → Progress → History) · M2 Football Knowledge + RAG (16-document corpus → chunking → embeddings → hybrid retrieval + rerank → cited, refusal-capable answers) all implemented and **verified** — 48 API/engine/RAG tests on SQLite *and* PostgreSQL+pgvector, five RAG evaluation gates green on both engines, and 66/66 browser assertions at 1440px and 375px against a **production build**. M3 Football World (synthetic real-world data model + unified search) is in progress. Cross-cutting §80 SEO plumbing (canonical · OpenGraph · JSON-LD · generated sitemap/robots) is live on the public surface and verified — `docs/SEO_VERIFICATION.md`. Evidence: `docs/M0_M1_VERIFICATION.md`, `docs/M2_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`.
+**Status:** M0 Foundation · M1 vertical slice (My Football → Player → Training → AI Coach → Progress → History) · M2 Football Knowledge + RAG (16-document corpus → chunking → embeddings → hybrid retrieval + rerank → cited, refusal-capable answers) all implemented and **verified** — 66/66 browser assertions at 1440px and 375px against a **production build**, five RAG evaluation gates green on both engines. M3 Football World is **verified on the backend**: a deterministic synthetic world (10 competitions · 20 teams · 300 players · 130 matches · 3,172 stat lines · 500 news articles) behind 12 `/api/v1/world/*` routes with unified search and canonical §80 paths — `docs/M3_VERIFICATION.md`; its public web pages are the next increment. The whole suite is 87 tests, green on SQLite *and* PostgreSQL+pgvector. Cross-cutting §80 SEO plumbing (canonical · OpenGraph · JSON-LD · generated sitemap/robots) is live on the public surface and verified — `docs/SEO_VERIFICATION.md`. Evidence: `docs/M0_M1_VERIFICATION.md`, `docs/M2_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`.
 
 ## Architecture at a glance
 
@@ -13,6 +13,7 @@ apps/web   Next.js 15 + TypeScript   UI · BFF · auth UX · SEO metadata (canon
 apps/api   FastAPI + SQLAlchemy 2     auth · football world model · training catalogue · coach engine
                                           progression(XP→skill→attribute, explainable) · providers · jobs
                                           knowledge base: data/knowledge → chunks → embeddings → hybrid retrieval → citations
+                                          football world: seeded generator → idempotent sync → unified search → /api/v1/world/*
 PostgreSQL + pgvector (docker compose)   dev fallback: SQLite via DATABASE_URL
 ```
 
