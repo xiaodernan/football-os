@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Panel } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
 import { serverFetch } from "@/lib/server";
+import { absolute, pageMetadata, SITE_NAME } from "@/lib/site";
 import type { KnowledgeDocumentDetail } from "@/lib/types";
 
 import "../knowledge.css";
@@ -17,10 +18,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const result = await serverFetch<KnowledgeDocumentDetail>(`/knowledge/documents/${encodeURIComponent(slug)}`);
   const title = result.ok ? result.data.title : slug.replace(/-/g, " ");
-  return {
-    title,
-    description: result.ok ? `Knowledge document · ${result.data.category} · ${result.data.chunk_count} passages` : "Football knowledge document.",
-  };
+  const description = result.ok
+    ? `${result.data.category.replace(/_/g, " ")} · ${result.data.chunk_count} cited passages · ${result.data.source}`
+    : "Football knowledge document.";
+  return pageMetadata({ title, description, path: `/knowledge/${slug}`, type: "article" });
 }
 
 function formatDay(iso: string | null): string {
@@ -78,6 +79,26 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
           </div>
         )}
       </div>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: doc.title,
+            description: `Project-authored ${doc.category.replace(/_/g, " ")} document with ${doc.chunk_count} indexed passages.`,
+            url: absolute(`/knowledge/${doc.slug}`),
+            mainEntityOfPage: { "@type": "WebPage", "@id": absolute(`/knowledge/${doc.slug}`) },
+            author: { "@type": "Organization", name: SITE_NAME },
+            publisher: { "@type": "Organization", name: SITE_NAME },
+            inLanguage: "en",
+            isAccessibleForFree: true,
+            ...(doc.last_reviewed ? { dateModified: doc.last_reviewed } : {}),
+            ...(doc.tags.length > 0 ? { keywords: doc.tags.join(", ") } : {}),
+          }),
+        }}
+      />
 
       <Panel
         eyebrow="Provenance"

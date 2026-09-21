@@ -4,12 +4,12 @@
 
 One platform connecting the real football world, personal football development, football simulation and football AI. Not a news site, not a score app, not an FM clone, not a chatbot wrapper.
 
-**Status:** M0 Foundation · M1 vertical slice (My Football → Player → Training → AI Coach → Progress → History) · M2 Football Knowledge + RAG (16-document corpus → chunking → embeddings → hybrid retrieval + rerank → cited, refusal-capable answers) all implemented and **verified** — 48 API/engine/RAG tests on SQLite *and* PostgreSQL+pgvector, five RAG evaluation gates green on both engines, and 57/57 browser assertions at 1440px and 375px. M3 Football World (synthetic real-world data model + unified search) is in progress. Evidence: `docs/M0_M1_VERIFICATION.md`, `docs/M2_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`.
+**Status:** M0 Foundation · M1 vertical slice (My Football → Player → Training → AI Coach → Progress → History) · M2 Football Knowledge + RAG (16-document corpus → chunking → embeddings → hybrid retrieval + rerank → cited, refusal-capable answers) all implemented and **verified** — 48 API/engine/RAG tests on SQLite *and* PostgreSQL+pgvector, five RAG evaluation gates green on both engines, and 66/66 browser assertions at 1440px and 375px against a **production build**. M3 Football World (synthetic real-world data model + unified search) is in progress. Cross-cutting §80 SEO plumbing (canonical · OpenGraph · JSON-LD · generated sitemap/robots) is live on the public surface and verified — `docs/SEO_VERIFICATION.md`. Evidence: `docs/M0_M1_VERIFICATION.md`, `docs/M2_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`.
 
 ## Architecture at a glance
 
 ```
-apps/web   Next.js 15 + TypeScript   UI · BFF · auth UX · i18n(en/zh/zh-TW) · dark design system
+apps/web   Next.js 15 + TypeScript   UI · BFF · auth UX · SEO metadata (canonical/OG/JSON-LD) · sitemap + robots · dark design system
 apps/api   FastAPI + SQLAlchemy 2     auth · football world model · training catalogue · coach engine
                                           progression(XP→skill→attribute, explainable) · providers · jobs
                                           knowledge base: data/knowledge → chunks → embeddings → hybrid retrieval → citations
@@ -55,6 +55,8 @@ Verification commands: `pytest` and `python -m evals.run_rag_eval` (API, both da
 - AI output without real provider keys runs in self-labelled `DEMO MODE`.
 - Simulations are badged fictional. Progression is rule-based and explainable, never random.
 - No copyrighted assets, no scraped paywalled data, no fabricated citations.
+- The UI speaks English only today. `GET /capabilities` answers `locales: ["en","zh","zh-TW"]` as the §81 target, not as a
+  shipped feature — the translation layer itself is not built yet.
 
 ## Documentation
 

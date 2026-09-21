@@ -6,17 +6,19 @@ import { KnowledgeAsk } from "@/app/knowledge/KnowledgeAsk";
 import { KnowledgeSearch } from "@/app/knowledge/KnowledgeSearch";
 import { errorMessage } from "@/lib/api";
 import { currentUser, serverFetch } from "@/lib/server";
+import { pageMetadata } from "@/lib/site";
 import type { KnowledgeDocumentList, KnowledgeStatus } from "@/lib/types";
 
 import "./knowledge.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Football Knowledge",
   description:
     "The project-authored football knowledge base: browse the library, run hybrid retrieval, and ask questions answered only from cited passages.",
-};
+  path: "/knowledge",
+});
 
 const SECTIONS = [
   { id: "library", text: "Library" },

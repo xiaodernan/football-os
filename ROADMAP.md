@@ -56,3 +56,19 @@ After M2 closes: **M3 Football World** (RealPlayer/Team/Competition/Match/Stats/
 routes). The model classes are already reserved in `app/models/__init__.py`; `docs/api/openapi.json` remains the
 contract the web tier codes against, and the verification harness to extend is `pytest` on both databases,
 `python -m evals.run_rag_eval`, `scripts/export_openapi.py` and `apps/web/scripts/visual-qa.mjs`.
+
+## Cross-cutting gates (spec §80 SEO, §81 i18n)
+
+Milestones do not own these; every public route must satisfy them as it lands.
+
+- [x] §80 metadata layer: `metadataBase` from `SITE_URL`, per-route canonical + OpenGraph (`pageMetadata()`), site-level
+  and document-level JSON-LD — verified in `docs/SEO_VERIFICATION.md` against a **production build**, not a dev server
+- [x] §80 `sitemap.xml` and `robots.txt` generated from live API reads; every advertised `<loc>` is asserted to answer
+  200, and session-gated routes are excluded from the sitemap and disallowed in robots rather than published as redirect chains
+- [x] `visual-qa.mjs` carries the SEO assertions (66/66, run stamp `202609212143`) and now tags browser console errors with the
+  route they occurred on, so a hydration or fetch failure is localisable instead of a minified code
+- [ ] §80 SEO routes for the world entities (`/player|team|match|competition|news/{slug}`) — arrives with M3, using the same
+  `pageMetadata()` helper; `sitemap.ts` must gain those entries in the same commit, or the sitemap under-reports the site
+- [ ] §81 i18n **not built**: the UI is English-only. Docs previously claimed `i18n(en/zh/zh-TW)`; `README.md` and
+  `ARCHITECTURE.md` §6 are corrected. Remaining step: reconcile the `locales` field of `GET /capabilities` with reality
+  (report `["en"]` until translations exist) in the same pass as the M3 API review, then land `messages/{en,zh,zh-TW}.json`.

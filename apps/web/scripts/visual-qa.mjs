@@ -98,10 +98,12 @@ async function run() {
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });
   const page = await browser.newPage();
+  /** Where an error was seen matters more than the minified React code Chrome prints. */
+  const note = (line) => consoleErrors.push(`${line} @ ${new URL(page.url()).pathname}`);
   page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text());
+    if (message.type() === 'error') note(message.text());
   });
-  page.on('pageerror', (error) => consoleErrors.push(String(error)));
+  page.on('pageerror', (error) => note(String(error)));
   page.on('response', (response) => {
     const path = new URL(response.url()).pathname;
     // A 401 from the proxy is how the anonymous-visitor guard and silent refresh are supposed to behave.
@@ -410,7 +412,76 @@ async function run() {
     check('settings shows account email + platform status', /sqlite|postgresql/iu.test(settings) && /Live|Not built/iu.test(settings));
     await shot(page, '18-settings-desktop');
 
-    // 11. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
+    // 12. SEO surface (spec §80): robots, sitemap, canonical, OpenGraph and structured data.
+    const [robots, sitemap] = await Promise.all([
+      fetch(`${BASE}/robots.txt`).then(async (response) => ({
+        status: response.status,
+        type: response.headers.get('content-type') ?? '',
+        text: await response.text(),
+      })),
+      fetch(`${BASE}/sitemap.xml`).then(async (response) => ({ status: response.status, text: await response.text() })),
+    ]);
+    check('robots.txt is served as plain text', robots.status === 200 && /text\/plain/iu.test(robots.type), `${robots.status} ${robots.type}`);
+    const disallowed = ['/api/', '/my-football', '/training', '/progress', '/settings'];
+    check(
+      'robots.txt keeps every session-gated area out of the crawl',
+      disallowed.every((path) => robots.text.includes(`Disallow: ${path}`)),
+      disallowed.filter((path) => !robots.text.includes(`Disallow: ${path}`)).join(', ') || 'all disallowed',
+    );
+    const locs = [...sitemap.text.matchAll(/<loc>([^<]+)<\/loc>/gu)].map((match) => match[1]);
+    check('sitemap.xml is served and non-empty', sitemap.status === 200 && locs.length > 0, `${locs.length} <loc> entries`);
+    check(
+      'sitemap advertises only routes that answer 200 (no redirect chains)',
+      locs.length > 0 &&
+        (await Promise.all(locs.map(async (url) => (await fetch(url)).status))).every((status) => status === 200),
+      locs.length > 0 ? `${locs.length} URLs probed` : 'no URLs',
+    );
+    check(
+      'every library document appears in the sitemap',
+      locs.some((url) => url.endsWith(firstDoc)) && robots.text.includes('Sitemap:'),
+      `${locs.length} entries · ${firstDoc} ${locs.some((url) => url.endsWith(firstDoc)) ? 'present' : 'MISSING'}`,
+    );
+    const pageHead = async (path) => {
+      await open(page, path);
+      return page.evaluate(() => {
+        const read = (selector, attr = 'content') => document.head.querySelector(selector)?.getAttribute(attr) ?? '';
+        return {
+          canonical: read('link[rel="canonical"]', 'href'),
+          description: read('meta[name="description"]'),
+          ogType: read('meta[property="og:type"]'),
+          ogUrl: read('meta[property="og:url"]'),
+          ogTitle: read('meta[property="og:title"]'),
+          title: document.title,
+          jsonLd: [...document.querySelectorAll('script[type="application/ld+json"]')]
+            .map((node) => {
+              try {
+                return JSON.parse(node.textContent ?? '{}');
+              } catch {
+                return { '@type': 'unparseable' };
+              }
+            }),
+        };
+      });
+    };
+    const knowledgeHead = await pageHead('/knowledge');
+    check(
+      'knowledge index publishes canonical + matching OpenGraph URL',
+      /\/knowledge$/u.test(knowledgeHead.canonical) && knowledgeHead.ogUrl === knowledgeHead.canonical && knowledgeHead.ogType === 'website',
+      knowledgeHead.canonical || 'no canonical',
+    );
+    check('knowledge index title is templated, description is real', /\bFOOTBALL OS\b/u.test(knowledgeHead.title) && knowledgeHead.description.length > 60, knowledgeHead.title);
+    const siteGraph = knowledgeHead.jsonLd.find((node) => node['@type'] === 'WebSite');
+    check('a WebSite graph identifies the site by absolute URL', siteGraph?.name === 'FOOTBALL OS' && /^https?:\/\//u.test(String(siteGraph?.url ?? '')), JSON.stringify(siteGraph ?? {}));
+    const documentHead = await pageHead(firstDoc);
+    const article = documentHead.jsonLd.find((node) => node['@type'] === 'Article');
+    check(
+      'document page carries Article structured data with its headline',
+      article?.headline === documentHead.ogTitle && /^https?:\/\//u.test(String(article?.url ?? '')) && article?.author?.name === 'FOOTBALL OS',
+      `${article?.headline ?? 'no Article'} · ${article?.dateModified ?? 'no dateModified'}`,
+    );
+    await shot(page, '19-seo-document-head-desktop');
+
+    // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
     await page.setViewport(MOBILE);
     const mobileSurface = async ([path, marker, label]) => {
       try {
@@ -426,7 +497,7 @@ async function run() {
       } catch (error) {
         check(`mobile 375px: ${label} renders "${marker}"`, false, `${new URL(page.url()).pathname} — ${String(error.message ?? error).slice(0, 140)}`);
       }
-      await shot(page, `19-mobile-${label}`);
+      await shot(page, `20-mobile-${label}`);
     };
     for (const surface of [
       ['/my-football', PLAYER_NAME, 'my-football'],
@@ -442,11 +513,11 @@ async function run() {
       await mobileSurface(surface);
     }
 
-    // 12. An authenticated visitor is bounced off the public auth pages, then signs out.
+    // 14. An authenticated visitor is bounced off the public auth pages, then signs out.
     await open(page, '/login');
     check('signed-in visitor is redirected away from /login', new URL(page.url()).pathname !== '/login', new URL(page.url()).pathname);
 
-    // 13. Sign out clears the cookies; the login screen must still work at 375px.
+    // 15. Sign out clears the cookies; the login screen must still work at 375px.
     await open(page, '/settings');
     const signedOut = await page.evaluate(async () => {
       const response = await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'same-origin' });
