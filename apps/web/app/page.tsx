@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { Empty, Panel, Stat } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
 import { currentUser, serverFetch } from "@/lib/server";
-import type { Player, ProgressOverview } from "@/lib/types";
+import type { CapabilitiesResponse, Player, ProgressOverview } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -15,21 +15,9 @@ export const metadata: Metadata = {
     "FOOTBALL OS is a football operating system for fans, players and coaches. Today the AI player-coach vertical slice works end to end; the live football-world modules are still being built.",
 };
 
-/** Mirrors GET /capabilities. Layout.tsx reads a narrower subset; this page needs the rest. */
-type Capabilities = {
-  demo_mode: boolean;
-  m1_player_ai_coach: boolean;
-  m3_football_world: boolean;
-  m4_tactical_lab: boolean;
-  m5_video_analysis: boolean;
-  m6_simulation: boolean;
-  m7_scouting: boolean;
-  locales: string[];
-};
-
 export default async function HomePage() {
   const user = await currentUser();
-  const capabilitiesResult = await serverFetch<Capabilities>("/capabilities");
+  const capabilitiesResult = await serverFetch<CapabilitiesResponse>("/capabilities");
   const capabilities = capabilitiesResult.ok ? capabilitiesResult.data : null;
 
   let players: Player[] | null = null;

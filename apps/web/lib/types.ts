@@ -268,6 +268,10 @@ export type HealthResponse = {
   notes: string[];
 };
 
+/**
+ * GET /capabilities — the single wire definition. Routes read milestones from this instead
+ * of guessing (spec §88), so a flag that flips in the API cannot be shadowed by a stale copy.
+ */
 export type CapabilitiesResponse = {
   m0_foundation: boolean;
   m1_player_ai_coach: boolean;
@@ -277,7 +281,14 @@ export type CapabilitiesResponse = {
   m5_video_analysis: boolean;
   m6_simulation: boolean;
   m7_scouting: boolean;
+  m8_club_os: boolean;
+  m9_community: boolean;
+  /** What the world tables actually hold, so a half-written world cannot render as if it were real. */
+  m3_world?: { tables_present: boolean; counts: Record<string, number>; auto_sync: boolean; seed: number };
+  /** Languages the interface actually renders. The API reports only shipped ones (spec §81), so
+   * this is `["en"]` until `messages/` exists. */
   locales: string[];
+  locales_planned?: string[];
   demo_mode: boolean;
 };
 

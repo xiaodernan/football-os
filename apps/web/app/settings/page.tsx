@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { DataUnavailable, KeyValue, Panel, Stat } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
 import { serverFetch } from "@/lib/server";
+import type { CapabilitiesResponse, HealthResponse, UserOut } from "@/lib/types";
 
 import { PrivacyPanel } from "./PrivacyPanel";
 
@@ -14,33 +15,13 @@ export const metadata: Metadata = {
   description: "Account, data rights, honest platform status and the danger zone.",
 };
 
-/** Wire shapes for /auth/me, /healthz and /capabilities (mirrored per route; lib/types is churning). */
-type UserOut = {
-  id: string;
-  email: string;
-  display_name: string;
-  role: string;
-  plan: string;
-  locale: string;
-  streak_days: number;
-};
+/** Only the boolean switches may be listed as milestones, so a data block (`m3_world`) cannot be
+ * rendered as a "Live / Not built" row by accident. */
+type MilestoneKey = {
+  [K in keyof CapabilitiesResponse]-?: CapabilitiesResponse[K] extends boolean ? K : never;
+}[keyof CapabilitiesResponse];
 
-type Health = {
-  status: string;
-  environment: string;
-  database_dialect: string;
-  pgvector: boolean;
-  providers: Record<string, unknown>;
-  notes: string[];
-};
-
-type Capabilities = {
-  demo_mode?: boolean;
-  locales?: string[];
-} & Record<string, unknown>;
-
-/** Milestone switches, ordered. Keys mirror GET /capabilities exactly. */
-const MILESTONES: { key: string; label: string }[] = [
+const MILESTONES: { key: MilestoneKey; label: string }[] = [
   { key: "m0_foundation", label: "M0 · Foundation (accounts, training loop, progress)" },
   { key: "m1_player_ai_coach", label: "M1 · Player AI coach" },
   { key: "m2_rag", label: "M2 · RAG knowledge base" },
@@ -62,8 +43,8 @@ function describeProvider(value: unknown): string {
 export default async function SettingsPage() {
   const [meResult, healthResult, capsResult] = await Promise.all([
     serverFetch<UserOut>("/auth/me"),
-    serverFetch<Health>("/healthz"),
-    serverFetch<Capabilities>("/capabilities"),
+    serverFetch<HealthResponse>("/healthz"),
+    serverFetch<CapabilitiesResponse>("/capabilities"),
   ]);
 
   if (!meResult.ok && meResult.status === 401) redirect("/login");
@@ -256,6 +237,13 @@ export default async function SettingsPage() {
                       </span>
                     ))
                   )}
+                  {(capabilities.locales_planned ?? [])
+                    .filter((locale) => !(capabilities.locales ?? []).includes(locale))
+                    .map((locale) => (
+                      <span className="chip mono muted" key={`planned-${locale}`} title="Planned, not shipped">
+                        {locale} · planned
+                      </span>
+                    ))}
                 </span>
               </div>
             </div>

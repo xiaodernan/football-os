@@ -2,6 +2,9 @@
 
 Date: 2026-09-21 · Tier: `apps/web` · Evidence run: `202609212143` (66/66 browser assertions, 29 PNGs in `docs/screenshots/`)
 
+A later run (2026-09-21 22:40 UTC) extended the harness to 68/68 by asserting two `/settings` rows: that M3 Football World
+reads Live from the data-derived API flag, and that the locale row ships only `en` with `zh`/`zh-TW` labelled planned.
+
 Spec §80 requires public pages to carry Metadata, OpenGraph, Structured Data, Sitemap and Canonical, with
 `/{entity}/{slug}` routes. §81 asks for en / zh / zh-TW. This record states what is true now and names what is not.
 

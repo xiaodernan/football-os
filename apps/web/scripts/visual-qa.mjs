@@ -410,6 +410,34 @@ async function run() {
     await waitForText(page, EMAIL);
     const settings = await bodyText(page);
     check('settings shows account email + platform status', /sqlite|postgresql/iu.test(settings) && /Live|Not built/iu.test(settings));
+    // The two rows that must never lie: which milestones the API actually reports, and which
+    // languages the interface really renders (spec §81, §88).
+    const statusRow = (label) =>
+      page.evaluate(
+        (text) => {
+          const row = [...document.querySelectorAll('.st-status-row')].find((candidate) => candidate.textContent.includes(text));
+          return row ? row.textContent.replace(/\s+/g, ' ').trim() : null;
+        },
+        label,
+      );
+    const m3Row = await statusRow('M3 ·');
+    check(
+      'settings reports M3 Football World as Live because the API flag is data-derived',
+      /M3 · Football World.*Live/u.test(m3Row ?? ''),
+      m3Row ?? 'row missing',
+    );
+    const localeChips = await page.evaluate(() => {
+      const row = [...document.querySelectorAll('.st-status-row')].find((candidate) => candidate.textContent.includes('Locales shipped'));
+      if (!row) return null;
+      return [...row.querySelectorAll('.chip')].map((chip) => [chip.textContent.trim(), chip.getAttribute('title') ?? '']);
+    });
+    check(
+      'settings ships only English and labels every other locale planned (spec §81)',
+      !!localeChips &&
+        localeChips.filter(([, title]) => title === '').map(([text]) => text).join(',') === 'en' &&
+        localeChips.filter(([, title]) => title !== '').every(([text, title]) => /planned/iu.test(title) && text.includes('planned')),
+      JSON.stringify(localeChips),
+    );
     await shot(page, '18-settings-desktop');
 
     // 12. SEO surface (spec §80): robots, sitemap, canonical, OpenGraph and structured data.

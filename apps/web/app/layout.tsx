@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Nav } from "@/components/Nav";
 import { SITE_NAME, absolute, siteOrigin } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
-import type { UserOut } from "@/lib/types";
+import type { CapabilitiesResponse } from "@/lib/types";
 import "../styles/globals.css";
 
 export const dynamic = "force-dynamic";
@@ -27,26 +27,17 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-type Capabilities = {
-  demo_mode: boolean;
-  m1_player_ai_coach: boolean;
-  m3_football_world: boolean;
-  m4_tactical_lab: boolean;
-  m6_simulation: boolean;
-  m7_scouting: boolean;
-};
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [user, capabilities] = await Promise.all([
     currentUser().catch(() => null),
-    serverFetch<Capabilities>("/capabilities").then((result) => (result.ok ? result.data : null)),
+    serverFetch<CapabilitiesResponse>("/capabilities").then((result) => (result.ok ? result.data : null)),
   ]);
   const demoMode = capabilities?.demo_mode ?? true;
 
   return (
     <html lang="en">
       <body>
-        <Nav user={user as UserOut | null} demoMode={demoMode} />
+        <Nav user={user} demoMode={demoMode} />
         <main>{children}</main>
         <script
           type="application/ld+json"
