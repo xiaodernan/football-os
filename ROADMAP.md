@@ -10,7 +10,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) — world 3.2 (2026-09-23) added the sixth §65 gate item, 100 training sessions, browsed at `/world/training` |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 6 of 6 topics on all 50 systems (2 were refused until the corpus gained the missing passages); 3D pitch and board sharing beyond one owner are open follow-ups |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ✅ verified 2026-09-22 ([pipeline](docs/M5_VERIFICATION.md) · [web](docs/M5_WEB_VERIFICATION.md)) — upload, report, detection timeline and owner-only byte-range playback proven in the browser |
-| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine + `/simulate` + the §65 training log **browser-verified 2026-09-23**, Career Mode's backend verified by 28 tests ([backend](docs/M6_VERIFICATION.md) §10 · [web](docs/M6_WEB_VERIFICATION.md)); a career page, manager challenges (§21) and transfers (§22) outstanding |
+| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log and **Career Mode including its page** all browser-verified 2026-09-23 ([engine+career backend](docs/M6_VERIFICATION.md) §10 · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md)); manager challenges (§21) and transfers (§22) outstanding |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
 | **M8 Club OS / Academy** | organisations, teams, coaches, IDP, curriculum, permissions, multi-tenant | B2B tenant isolation proven | ⬜ |
 | **M9 Community** | feed, posts, comments, likes, follows, shared boards/plans | creator→content→feedback loop | ⬜ |
@@ -182,13 +182,14 @@ Verified 2026-09-23 (317 API tests on both engines + a browser walk at 190/190):
    of sleeping
 7. [x] the console gate now attributes a failed request by its **own URL** (`message.location().url`), not by the
    page the reader was on — which is what let it name the walk's own doubled path
-8. [x] **Career Mode's backend** (same day, §20): `careers` + `career_fixtures` (migration `0009`), a fixture
+9. [x] **Career Mode's page** (same day, §20): `/career` and `/career/[slug]` — the form that states a manager, club, philosophy, tactical system, budget and objectives, and the season page whose record, objective verdicts, fixture list and table of clubs met are all read back from the API's sums. Behind the session wall like the simulator, disallowed in robots, absent from the sitemap, reachable from a panel action on `/simulate`. 17 checks in the walk, quoted in [`docs/M6_CAREER_WEB_VERIFICATION.md`](docs/M6_CAREER_WEB_VERIFICATION.md)
+10. [x] **Career Mode's backend** (same day, §20): `careers` + `career_fixtures` (migration `0009`), a fixture
    list that is a *rotation* anyone can reproduce, rounds decided by `run_simulation` so there is still only one
    match model, a record and a mini-table summed from the career's own rows with their formulas printed,
    objectives that must be stated before a career can open, and 6 `/api/v1/careers/*` routes — 28 tests on both
    engines (`docs/M6_VERIFICATION.md` §10). **No page for it yet**, and the budget is stated intent nothing spends.
 
-Still open in M6: a **page** for the career backend that just landed, manager live challenges (§21), the transfer market
+Still open in M6: manager live challenges (§21), the transfer market
 (§22) — which is what would make a budget more than a stated number — squad and training carry-over between matches, a
 `sim_events` table so the timeline is stored rather than regenerated, and rendering the `training_log` the player detail
 route already returns.

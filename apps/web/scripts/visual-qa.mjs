@@ -5,7 +5,7 @@
  *
  * Drives the real browser stack — middleware redirect, cookie proxy, server components, client
  * forms and the generated-world routes — then writes screenshots at desktop and 375px widths into
- * docs/screenshots/ and prints an assertion report (190 checks as of 2026-09-23).
+ * docs/screenshots/ and prints an assertion report (207 checks as of 2026-09-23).
  *
  *   web tier: http://127.0.0.1:3210   api tier: http://127.0.0.1:8731   (scripts/dev.sh)
  *   node scripts/visual-qa.mjs
@@ -1768,8 +1768,12 @@ async function run() {
     );
     check(
       'the record the page prints is the arithmetic of the round it just played',
-      afterFirst.rounds === '1' && [0, 1, 3].includes(afterFirst.fixtures[0]?.points) && afterFirst.points === String(afterFirst.fixtures[0]?.points) && /^\d+ \/ \d+ \/ \d+$/u.test(afterFirst.wonLine),
-      `Rounds ${afterFirst.rounds} · W/D/L ${afterFirst.wonLine} · pts ${afterFirst.points} · row ${afterFirst.fixtures[0]?.points}`,
+      afterFirst.rounds === '1' &&
+        [0, 1, 3].includes(afterFirst.fixtures[0]?.points) &&
+        afterFirst.points.startsWith(String(afterFirst.fixtures[0]?.points)) &&
+        /sum\(career_fixtures\.points\), win 3 \/ draw 1 \/ loss 0/iu.test(afterFirst.points) &&
+        /^\d+ \/ \d+ \/ \d+$/u.test(afterFirst.wonLine),
+      `Rounds ${afterFirst.rounds} · W/D/L ${afterFirst.wonLine} · points cell ${afterFirst.points.slice(0, 34)} · row ${afterFirst.fixtures[0]?.points}`,
     );
     check('the season re-checks its copied score against the stored match report', /1 of 1 fixtures re-checked/iu.test(afterFirst.consistency), afterFirst.consistency.slice(0, 90) || 'no consistency sentence');
 
