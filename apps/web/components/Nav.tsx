@@ -46,6 +46,12 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
               </Link>
             );
           })}
+          {/* A board is private working material, so the only door to it is an authenticated one. */}
+          {user && (
+            <Link className={`nav__link ${pathname.startsWith("/tactics/boards") ? "nav__link--active" : ""}`} href="/tactics/boards">
+              My boards
+            </Link>
+          )}
         </div>
         <div className="nav__actions">
           {demoMode && (

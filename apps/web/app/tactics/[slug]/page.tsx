@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Pitch } from "@/components/pitch";
+import { PhasePlayer } from "@/components/PhasePlayer";
 import { BandLegend, ChangeNav, MetricTable, Verdicts } from "@/components/tactics";
 import { Meter, Panel } from "@/components/ui";
 import { JsonLd, OriginBadge, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
@@ -207,6 +208,10 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
             {system.block_depth} m block whose top edge is the {system.press_line_y} m press line.
           </p>
         </div>
+      </Panel>
+
+      <Panel eyebrow="Frames between are interpolation" title="Play the phase change">
+        <PhasePlayer inPhase={system.phase_in} outPhase={system.phase_out} transform={system.transform_note} />
       </Panel>
 
       <div className="grid grid-2">

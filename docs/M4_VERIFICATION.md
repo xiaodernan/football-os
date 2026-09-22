@@ -170,10 +170,10 @@ by token → 200 with no leaked identity; a second account reading/patching/shar
 * **No animation.** The two phases are stored as one transform pair so animation is a rendering job,
   but nothing renders them yet. The counterfactual view draws the displacement as arrows, which is the
   same data a tween would interpolate.
-* **No drag interface yet.** A board can be created, edited, shared and read today through the API
-  (§8); nothing in the browser lets a person move a dot with a pointer. That is the next increment,
-  and until it lands "editable board" means editable by client, not by coach. §65's
-  drag/draw/save/share is therefore half-closed: save and share are real, drag is not.
+* **The board UI is verified separately, and is not collaborative.** `/tactics/boards`, its editor and the public
+  `/tactics/shared/{token}` view are covered in [`M4_WEB_VERIFICATION.md`](M4_WEB_VERIFICATION.md) (drag measured into
+  the database, save, share, revoke, delete, 375px). One owner per board: no co-editors, no comments, no gallery —
+  those need M9's consent and permission story.
 * **No public board gallery.** Boards are `private` or `shared`; there is no community feed, no
   likes and no `published` visibility — that is M9's scope, and inventing a listing here would put
   user content on a crawlable surface before §21/§61's consent story exists.

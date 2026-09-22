@@ -13,7 +13,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_COOKIE, REFRESH_COOKIE, REFRESH_PATH, apiBase } from "@/lib/api";
 
 const PUBLIC_PATHS = new Set(["/", "/login", "/register", "/healthz"]);
-const PROTECTED_PREFIXES = ["/my-football", "/coach", "/training", "/progress", "/history", "/settings", "/onboarding"];
+const PROTECTED_PREFIXES = [
+  "/my-football",
+  "/coach",
+  "/training",
+  "/progress",
+  "/history",
+  "/settings",
+  "/onboarding",
+  // A user's own boards are theirs; `/tactics` and `/tactics/{slug}` stay public, and a shared
+  // board is reached through `/tactics/shared/{token}` precisely so it does NOT hit this wall.
+  "/tactics/boards",
+];
 
 /** Re-authenticate slightly early so the token cannot expire mid-render. */
 const SKEW_SECONDS = 60;

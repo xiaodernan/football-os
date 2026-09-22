@@ -21,6 +21,10 @@ const DISALLOWED = [
   "/progress",
   "/history",
   "/settings",
+  // A person's own boards, and links they handed out on purpose. `/tactics` and the 50 authored
+  // system pages stay crawlable; these two prefixes are user content, not publication.
+  "/tactics/boards",
+  "/tactics/shared",
 ];
 
 export default function robots(): MetadataRoute.Robots {

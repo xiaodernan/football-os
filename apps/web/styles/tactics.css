@@ -60,6 +60,12 @@
 }
 .tac-quote footer { margin-top: 0.35rem; font-size: 0.78rem; }
 
+/* The interactive board: the same grass, plus a pointer that can pick a player up. */
+.pitch-dot--grabbable { cursor: grab; }
+.pitch-dot--grabbable:active { cursor: grabbing; }
+.pitch-path line { stroke: rgba(255, 255, 255, 0.18); stroke-width: 0.25; stroke-dasharray: 1 1; }
+.pitch-scrub { flex: 1; min-width: 120px; accent-color: var(--accent); }
+
 @media (max-width: 900px) {
   .tac-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

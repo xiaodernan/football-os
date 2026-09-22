@@ -8,7 +8,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M1 Player + AI Coach vertical slice** | Create user → create player → profile → training → completion → AI Coach → progress → history | closed loop usable in browser with real persistence | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M2 Football Knowledge + RAG** | ingestion, chunking, embeddings, pgvector hybrid retrieval, rerank, citations, Football AI | answers carry resolvable source citations | ✅ verified 2026-09-21 ([evidence](docs/M2_VERIFICATION.md)) |
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) |
-| **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | 🔨 backend + lab pages verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) · editable board, animation, cited AI pending |
+| **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 4 of 6 topics and refuses 2; 3D pitch and board sharing beyond one owner are open follow-ups |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ⬜ |
 | **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | ⬜ |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
@@ -61,8 +61,10 @@ Web surface (verified 2026-09-22):
 5. [x] `visual-qa.mjs` extended with 42 world assertions and screenshots at 1440px and 375px against a production build (110/110)
 6. [x] structured data per entity: `Dataset`, `SportsOrganization`, `SportsTeam`, `Athlete`, `SportsEvent`, `NewsArticle`, plus `SearchAction`; `/world/search` is `noindex, follow`
 
-**Next: M4 Tactical Lab.** The gate is 50 tactical systems plus a board a user can drag, save and share.
-Evidence so far: [`docs/M4_VERIFICATION.md`](docs/M4_VERIFICATION.md).
+**M4 Tactical Lab — closed 2026-09-22.** The gate (50 systems + drag/draw/save/share + analysis with evidence) is met;
+the items still open below it are follow-ups, not gate gaps. **Next: M5 Video Analysis** — upload → processing → frame
+extraction → vision provider → events → analysis → report, with a demo vision provider behind the real interface
+(spec §14, §45, §62: every frame-derived claim labelled, no invented tracking).
 
 Verified 2026-09-22 (the pure layer + storage + reads, 99 tests):
 
@@ -98,11 +100,15 @@ Still open in M4:
    Coordinates are validated before they are written, metrics are recomputed on every read, a second account
    gets 404 rather than 403, and the shared payload exposes no owner identity — 17 tests on both engines plus
    a live HTTP pass (`docs/M4_VERIFICATION.md` §8)
-4. [ ] the drag interface: pointer-move the eleven dots on the existing board, save, share the link. Until this
-   lands, §65's "drag" is unmet and "editable" is true only of the API
-5. [ ] animation: interpolate the two stored phases, with the transform printed beside it
-5. [ ] 3D pitch (spec §13 lists 2D/3D; 2D is what ships)
-6. [ ] corpus follow-up so the two refused topics can be cited: author `data/knowledge` passages on width in attack and
+4. [x] the drag interface: pointer-move the eleven dots on the same metre-scaled board, snap to 0.5 m, save — the walk
+   proves the dragged position reaches the database (a midfielder measured 55 → 64.5 m) — then share a token link,
+   revoke it, delete the board
+5. [x] animation: `PhasePlayer` interpolates the two stored phases with the transform sentence beside it, badged
+   `SIMULATION` and carrying AI_POLICY §2's exact stamp, which the walk asserts is present
+6. [ ] 3D pitch (spec §13 lists 2D/3D; 2D is what ships)
+7. [ ] boards are single-owner by design: no co-editors, comments or public gallery — that needs M9's permission and
+   consent story, not just a listing
+8. [ ] corpus follow-up so the two refused topics can be cited: author `data/knowledge` passages on width in attack and
    on defensive-line height, then re-run `python -m evals.run_rag_eval` — the gates must be re-measured, never loosened
 
 Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,

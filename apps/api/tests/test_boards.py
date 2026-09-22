@@ -168,7 +168,8 @@ class TestSharing:
     def test_a_shared_board_is_readable_by_anyone_and_reveals_no_owner(self, auth_client) -> None:  # type: ignore[no-untyped-def]
         board = _create(auth_client, name="Shared shape")
         shared = auth_client.post(f"{API}/{board['slug']}/share").json()
-        assert shared["visibility"] == "shared" and shared["share_url"].startswith("/tactics/board/")
+        assert shared["visibility"] == "shared" and shared["share_url"] == f"/tactics/shared/{shared['share_token']}"
+        assert shared["share_url"].startswith("/tactics/shared/"), "a share link must not sit behind the login wall"
 
         from fastapi.testclient import TestClient
 

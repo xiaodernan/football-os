@@ -924,6 +924,44 @@ export type CompareResponse = TacticsProvenance & {
   note: string;
 };
 
+/* ---------------------------------------------------------------------------
+ * M4 user boards — GET/POST/PATCH /api/v1/boards/* (spec §13, §21, §61).
+ * Coordinates are the account's own (`data_origin: 'user'`), and the metrics are
+ * recomputed by the API from whatever it has stored, which is why the editor
+ * shows server numbers only and says when they are stale.
+ * ------------------------------------------------------------------------- */
+
+export type BoardPositions = { role: string; label?: string; band: string; x: number; y: number; zone?: string };
+
+export type BoardMetrics = { key: string; label: string; value: number; unit: string; formula: string };
+
+export type BoardDetail = TacticsProvenance & {
+  id: string;
+  slug: string;
+  name: string;
+  note: string;
+  origin_system: string | null;
+  visibility: string;
+  path: string;
+  phase_in: BoardPositions[];
+  phase_out: BoardPositions[];
+  metrics_in: BoardMetrics[];
+  metrics_out: BoardMetrics[];
+  roles: RoleCard[];
+  updated_at: string | null;
+  shared_at?: string | null;
+  share_url?: string | null;
+};
+
+export type BoardList = TacticsProvenance & {
+  items: BoardDetail[];
+  total: number;
+  limit_per_user: number;
+};
+
+/** `GET /boards/shared/{token}` — a public read that names no owner. */
+export type SharedBoard = BoardDetail & { owner: { name: string; id: string | null } };
+
 /** A passage reference from the knowledge corpus. `ref` is an in-app anchor, never a remote URL. */
 export type KnowledgeRef = {
   type: string;

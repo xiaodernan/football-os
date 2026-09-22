@@ -111,6 +111,14 @@ class TestDetail:
         assert response.status_code == 404
         assert response.json()["detail"]["code"] == "not_found"
 
+    def test_the_boards_namespace_says_where_it_actually_lives(self, client) -> None:  # type: ignore[no-untyped-def]
+        # `/tactics/boards` is the web page path; the API's boards live under `/boards`. A client that
+        # confuses them must get a pointer, not a misleading "no such tactical system".
+        response = client.get(f"{API}/boards")
+        assert response.status_code == 404
+        detail = response.json()["detail"]
+        assert detail["code"] == "wrong_path" and "/api/v1/boards" in detail["message"]
+
 
 class TestCounterfactual:
     def test_raising_the_back_line_is_recomputed_from_the_stored_board(self, client) -> None:  # type: ignore[no-untyped-def]

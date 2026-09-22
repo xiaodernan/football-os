@@ -61,7 +61,7 @@ class VisibilityIn(BaseModel):
     visibility: str = Field(min_length=4, max_length=12)
 
 
-def _row(board: TacticBoard, *, owner: bool = True, share_url: str | None = None) -> dict[str, Any]:
+def _row(board: TacticBoard, *, owner: bool = True) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "id": board.id,
         "slug": board.slug,
@@ -80,9 +80,10 @@ def _row(board: TacticBoard, *, owner: bool = True, share_url: str | None = None
         "disclaimer": USER_DISCLAIMER,
     }
     if owner:
-        payload["share_url"] = share_url
         payload["shared_at"] = board.shared_at.isoformat() if board.shared_at else None
-    payload["path"] = f"/tactics/board/{board.slug}"
+        # The owner always sees the link that currently works, so revoking visibly changes it.
+        payload["share_url"] = f"/tactics/shared/{board.share_token}" if board.share_token else None
+    payload["path"] = f"/tactics/boards/{board.slug}"
     return payload
 
 
@@ -252,7 +253,15 @@ def share_board(
     board.visibility = "shared"
     db.commit()
     db.refresh(board)
-    return {"id": board.id, "slug": board.slug, "share_token": board.share_token, "share_url": f"/tactics/board/{board.slug}?token={board.share_token}", "visibility": board.visibility}
+    return {
+        "id": board.id,
+        "slug": board.slug,
+        "share_token": board.share_token,
+        # The public door is `/tactics/shared/{token}` on purpose: a share link must never sit under
+        # the session-gated `/tactics/boards` path, or the person it was sent to meets a login wall.
+        "share_url": f"/tactics/shared/{board.share_token}",
+        "visibility": board.visibility,
+    }
 
 
 @router.post("/{ident}/revoke")
@@ -281,5 +290,5 @@ def read_shared(token: str, request: Request, db: Session = Depends(get_db)) -> 
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "not_found", "message": "This link no longer points at a board"})
     row = _row(board, owner=False)
     row["owner"] = {"name": "a FOOTBALL OS account", "id": None}
-    row["path"] = f"/tactics/board/{board.slug}"
+    row["path"] = f"/tactics/shared/{board.share_token}"
     return row

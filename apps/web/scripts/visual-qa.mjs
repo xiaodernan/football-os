@@ -118,7 +118,11 @@ async function clickByText(page, selector, text) {
     text,
   );
   const element = handle.asElement();
-  if (!element) throw new Error(`No ${selector} containing "${text}"`);
+  if (!element) {
+    // A missing control used to abort the walk with `No button containing "X"` and no context at all.
+    const seen = (await bodyText(page).catch(() => '')).replace(/\s+/g, ' ').slice(0, 260);
+    throw new Error(`no ${selector} containing "${text}" — the page said: ${seen || '(empty body)'}`);
+  }
   await element.click();
   return element;
 }
@@ -854,11 +858,14 @@ async function run() {
     await waitForText(page, 'Both phases, one structure');
     const detailBody = await bodyText(page);
     const detailHead = await pageHead(tactic.path);
+    const staticBoards = await page.evaluate(() => {
+      const boards = [...document.querySelectorAll('.pitch svg')];
+      return { svgs: boards.length, dots: boards.reduce((total, svg) => total + svg.querySelectorAll('.pitch-dot').length, 0) };
+    });
     check(
       'a system page draws both phases from the same eleven roles',
-      (await page.evaluate(() => document.querySelectorAll('.pitch-dot').length)) === 22 &&
-        (await page.evaluate(() => document.querySelectorAll('.table tbody tr').length)) >= 11 + 8 + 8,
-      await page.evaluate(() => `${document.querySelectorAll('.pitch-dot').length} dots across both boards`),
+      staticBoards.svgs === 2 && staticBoards.dots === 22 && (await page.evaluate(() => document.querySelectorAll('.table tbody tr').length)) >= 11 + 8 + 8,
+      `${staticBoards.svgs} static boards · ${staticBoards.dots} dots, plus the player's own eleven`,
     );
     check(
       'every measurement on the page repeats the rule that produced it',
@@ -982,6 +989,115 @@ async function run() {
     const brokenTactic = await fetch(`${BASE}/tactics/4-3-3-not-a-temperament`);
     check('an unknown tactical system is a 404, not an empty board', brokenTactic.status === 404, `${brokenTactic.status}`);
 
+    // 12d. The phase player, and a board a person can drag, save and share.
+    await open(page, tactic.path);
+    await waitForText(page, 'Play the phase change');
+    const playerBefore = await page.evaluate(() => document.querySelector('[data-testid="phase-label"]')?.textContent ?? '');
+    await clickByText(page, 'button', 'Play the phase change');
+    await sleep(700);
+    const playerDuring = await page.evaluate(() => ({
+      label: document.querySelector('[data-testid="phase-label"]')?.textContent ?? '',
+      badges: [...document.querySelectorAll('.badge--sim')].length,
+      scrub: !!document.querySelector('input.pitch-scrub'),
+      // AI_POLICY §2 requires this exact stamp on anything simulated.
+      policy: /Simulation result is fictional \/ model-generated and should not be interpreted as a real-world prediction\./u.test(
+        document.body.innerText,
+      ),
+    }));
+    check(
+      'the player moves between the two stored phases and carries the policy stamp on simulation',
+      playerBefore !== playerDuring.label &&
+        /\d% of the way/.test(playerDuring.label) &&
+        playerDuring.badges > 0 &&
+        playerDuring.scrub &&
+        playerDuring.policy,
+      `${playerBefore} → ${playerDuring.label} · AI_POLICY §2 sentence present: ${playerDuring.policy}`,
+    );
+    await clickByText(page, 'button', 'Pause');
+    await shot(page, '35-tactics-player-desktop');
+
+    await open(page, '/tactics/boards');
+    await waitForText(page, 'My tactical boards');
+    check('the boards area is signed-in only in the navigation too', await page.evaluate(() => !!document.querySelector('.nav__link[href="/tactics/boards"]')));
+    await clickByText(page, 'button', 'Create and edit');
+    await waitForText(page, 'Drag · save · share');
+    const dots = await page.evaluate(() => document.querySelectorAll('.pitch-dot--grabbable').length);
+    check('a new board opens as eleven draggable players on the same measured grass', dots === 11, `${dots} grabbable dots`);
+
+    const beforeDrag = await page.evaluate(() => {
+      const dot = document.querySelectorAll('.pitch-dot--grabbable')[6];
+      const circle = dot.querySelector('circle');
+      const box = circle.getBoundingClientRect();
+      return { cy: circle.getAttribute('cy'), x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    });
+    await page.mouse.move(beforeDrag.x, beforeDrag.y);
+    await page.mouse.down();
+    await page.mouse.move(beforeDrag.x + 4, beforeDrag.y - 70, { steps: 10 });
+    await page.mouse.up();
+    await sleep(250);
+    const afterDrag = await page.evaluate(() => document.querySelectorAll('.pitch-dot--grabbable')[6].querySelector('circle').getAttribute('cy'));
+    const dirtyNotice = await bodyText(page);
+    check(
+      'dragging a player moves it on the lawn and says the numbers are now stale',
+      Number(afterDrag) < Number(beforeDrag.cy) && /Unsaved changes/iu.test(dirtyNotice),
+      `cy ${beforeDrag.cy} → ${afterDrag}`,
+    );
+
+    const boardSlug = new URL(page.url()).pathname.split('/').pop();
+    // Read the stored board back through the browser, so the session cookie rides along: a plain
+    // Node fetch would only prove the endpoint rejects anonymous callers.
+    const readBoard = async () =>
+      page.evaluate(async (slug) => (await fetch(`/api/v1/boards/${slug}`, { cache: 'no-store' })).json(), boardSlug);
+    const storedBefore = await readBoard();
+    await clickByText(page, 'button', 'Save board');
+    await waitForText(page, 'Saved. The measurements');
+    const storedAfter = await readBoard();
+    const firstDifference = storedAfter.phase_in.findIndex((row, index) => row.x !== storedBefore.phase_in[index]?.x || row.y !== storedBefore.phase_in[index]?.y);
+    check(
+      'saving writes the dragged position to the database, not just to the page',
+      storedAfter.phase_in.length === 11 && firstDifference >= 0,
+      `dragged slot 6; stored change found at index ${firstDifference} (${
+        firstDifference >= 0 ? `${storedBefore.phase_in[firstDifference].role} ${storedBefore.phase_in[firstDifference].y} → ${storedAfter.phase_in[firstDifference].y}` : 'nothing differs'
+      })`,
+    );
+    check(
+      'the stored board carries the user-origin label and its own disclaimer',
+      storedAfter.data_origin === 'user' && /arranged by a FOOTBALL OS user/iu.test(storedAfter.disclaimer),
+      storedAfter.disclaimer.slice(0, 60),
+    );
+    await shot(page, '36-tactics-board-editor-desktop');
+
+    await clickByText(page, 'button', 'Create a share link');
+    await waitForText(page, 'Sharing is on');
+    const shareUrl = await page.evaluate(() => document.querySelector('a[href^="/tactics/shared/"]')?.getAttribute('href') ?? '');
+    const anonymous = await fetch(`${BASE}${shareUrl}`);
+    const anonymousBody = await anonymous.text();
+    // Checked against the values that would actually be a leak. An `@\w` pattern was my first try
+    // and matches the page's own `@media` CSS — a check that cannot pass proves nothing.
+    const leaks = [EMAIL, PLAYER_NAME, 'visual-qa-'].filter((secret) => anonymousBody.includes(secret));
+    check(
+      'the share link opens for a signed-out visitor and names no owner',
+      shareUrl.startsWith('/tactics/shared/') && anonymous.status === 200 && /a FOOTBALL OS account/u.test(anonymousBody) && leaks.length === 0,
+      `${anonymous.status} · ${shareUrl.slice(0, 34)}… · leaks: ${leaks.length ? leaks.join(',') : 'none'}`,
+    );
+    check('a shared board is not offered to the crawler', /Disallow: \/tactics\/shared/u.test((await (await fetch(`${BASE}/robots.txt`)).text())));
+
+    // The live link, at 375px, while it still works — it is revoked a few lines below.
+    // (Inlined rather than calling `mobileSurface`, which is defined later in the walk.)
+    await page.setViewport(MOBILE);
+    await open(page, shareUrl);
+    const sharedNarrow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    check('mobile 375px: the shared board renders its two phases with no horizontal overflow', sharedNarrow <= 1, `overflow ${sharedNarrow}px`);
+    await shot(page, '37-mobile-tactics-shared');
+    await page.setViewport(DESKTOP);
+    await open(page, `/tactics/boards/${boardSlug}`);
+    await waitForText(page, 'Revoke link');
+
+    await clickByText(page, 'button', 'Revoke link');
+    await waitForText(page, 'Link revoked');
+    const afterRevoke = await fetch(`${BASE}${shareUrl}`);
+    check('revoking kills the old link without deleting the board', afterRevoke.status === 404, `${afterRevoke.status}`);
+
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
     await page.setViewport(MOBILE);
     const mobileSurface = async ([path, marker, label]) => {
@@ -1039,6 +1155,8 @@ async function run() {
     });
     await open(page, '/my-football');
     check('logout clears the session (protected route bounces to login)', signedOut === 204 && new URL(page.url()).pathname === '/login', `status ${signedOut}`);
+    await open(page, '/tactics/boards');
+    check('a signed-out visitor never reaches the boards area', new URL(page.url()).pathname === '/login', new URL(page.url()).pathname);
     await mobileSurface(['/login', 'Sign in', 'login-signed-out']);
   } catch (error) {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed

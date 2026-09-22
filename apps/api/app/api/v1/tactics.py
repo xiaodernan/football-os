@@ -210,6 +210,13 @@ def system_detail(ident: str, request: Request, db: Session = Depends(get_db)) -
     """One system: both phases' boards, the measurements, the graded verdicts and the roles in the field."""
     limit(request, 120, 60, scope="tactics_detail")
     _require_catalogue(db)
+    if ident == "boards":
+        # A user-board request that landed on the catalogue route. Say where they live instead of
+        # answering "no such tactical system", which is what made this easy to miswire once.
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail={"code": "wrong_path", "message": "user boards are served from /api/v1/boards; /api/v1/tactics/{ident} is the authored catalogue"},
+        )
     row = _one(db, ident)
     board = dict(row.board or {})
     in_shape = shape_from_rows(list(board.get("phase_in") or []))
