@@ -14,10 +14,12 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
 from app.core.config import settings
 from app.core.db import SessionLocal
+from app.main import app
 from app.models import Job, ModelCall, VideoAsset, VideoDetection
 from app.services.video.media import MediaToolMissing, extract_frames, frame_interval, probe, to_png
 from app.services.video.pipeline import UploadRejection, UploadTooLarge, detect_container, store_upload
@@ -233,13 +235,53 @@ class TestPipelineAndOwnership:
         assert missing.status_code == 404 and missing.json()["detail"]["code"] == "no_such_frame"
         clip = auth_client.get(f"{API}/{asset_id}/file")
         assert clip.status_code == 200 and clip.content == clips["moving"].read_bytes()
+        assert clip.headers["accept-ranges"] == "bytes"
+
+    def test_a_report_read_later_carries_the_same_measurements_as_the_run_that_produced_them(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
+        """Reloading the page must not turn a measured clip into an unmeasured one."""
+        asset_id = upload(auth_client, clips["moving"]).json()["asset"]["id"]
+        from_run = auth_client.post(f"{API}/{asset_id}/analyse", params={"target_frames": 8}).json()
+        assert from_run["analysis"] is not None
+        from_storage = auth_client.get(f"{API}/{asset_id}").json()
+        assert from_storage["job"]["id"] == from_run["job"]["id"], "the GET picks the run that made these numbers"
+        stored = from_storage["analysis"]
+        assert stored is not None, "the measured summary has to survive the request that measured it"
+        for key in ("provider", "model", "frames_seen", "task", "limitations", "thresholds", "green_fraction_mean"):
+            assert stored[key] == from_run["analysis"][key], f"{key} differs between the run and the re-read"
+        assert "events" not in stored, "the events are rows; the job does not store them twice"
+        assert [stage["name"] for stage in from_storage["stages"]] == [stage["name"] for stage in from_run["stages"]]
+        assert [detection["id"] for detection in from_storage["detections"]] == [detection["id"] for detection in from_run["detections"]]
+
+    def test_an_unanalysed_upload_reports_no_measurements_rather_than_inventing_them(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
+        asset_id = upload(auth_client, clips["still"]).json()["asset"]["id"]
+        report = auth_client.get(f"{API}/{asset_id}").json()
+        assert report["analysis"] is None and report["job"] is None and report["stages"] == []
+        assert report["asset"]["status"] == "uploaded"
+
+    def test_the_clip_answers_a_byte_range_without_sending_the_whole_file(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
+        """A <video> element seeks by range; a server that ignores it cannot be scrubbed."""
+        asset_id = upload(auth_client, clips["moving"]).json()["asset"]["id"]
+        raw = clips["moving"].read_bytes()
+        head = auth_client.get(f"{API}/{asset_id}/file", headers={"range": "bytes=0-99"})
+        assert head.status_code == 206
+        assert head.content == raw[:100]
+        assert head.headers["content-range"] == f"bytes 0-99/{len(raw)}"
+        assert head.headers["content-length"] == "100"
+        tail = auth_client.get(f"{API}/{asset_id}/file", headers={"range": "bytes=-1024"})
+        assert tail.status_code == 206 and tail.content == raw[-1024:]
+        open_ended = auth_client.get(f"{API}/{asset_id}/file", headers={"range": f"bytes={len(raw) - 10}-"})
+        assert open_ended.content == raw[-10:]
+        middle = auth_client.get(f"{API}/{asset_id}/file", headers={"range": "bytes=50-149"})
+        assert middle.content == raw[50:150], "a partial read starts where it was asked to, not at the top of the file"
+        beyond = auth_client.get(f"{API}/{asset_id}/file", headers={"range": f"bytes={len(raw) + 5}-"})
+        assert beyond.status_code == 416
+        assert beyond.headers["content-range"] == f"bytes */{len(raw)}"
+        assert beyond.json()["detail"]["code"] == "range_not_satisfiable"
+        multi = auth_client.get(f"{API}/{asset_id}/file", headers={"range": "bytes=0-9, 20-29"})
+        assert multi.status_code == 200 and multi.content == raw, "a form this server does not honour falls back to the whole clip"
 
     def test_nothing_about_a_clip_is_readable_without_the_owners_session(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
         asset_id = upload(auth_client, clips["moving"]).json()["asset"]["id"]
-        from fastapi.testclient import TestClient
-
-        from app.main import app
-
         # A separate client, not the `client` fixture: `auth_client` is built on that same instance
         # and carries its Authorization header, which is what made an earlier version of this test
         # "prove" anonymity while still signed in.
@@ -247,11 +289,6 @@ class TestPipelineAndOwnership:
             assert anonymous.get(f"{API}/{asset_id}").status_code == 401
             assert anonymous.get(API).status_code == 401
             assert anonymous.get(f"{API}/{asset_id}/file").status_code == 401
-            assert anonymous.get(API).status_code == 401
-
-        from fastapi.testclient import TestClient
-
-        from app.main import app
 
         with TestClient(app) as stranger:
             registered = stranger.post(

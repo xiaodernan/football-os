@@ -17,8 +17,7 @@ const REFRESH_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30);
 
 type Captured = { accessToken?: string; expiresIn?: number; refresh?: string };
 
-function parseRefreshCookie(setCookie: string | null): string | undefined {
-  if (!setCookie) return undefined;
+function parseRefreshCookie(setCookie: string | null): string | undefined {  if (!setCookie) return undefined;
   const pair = setCookie.split(";")[0];
   const index = pair.indexOf("=");
   if (index < 0) return undefined;
@@ -27,15 +26,32 @@ function parseRefreshCookie(setCookie: string | null): string | undefined {
   return pair.slice(index + 1).trim();
 }
 
+/** The headers that describe a byte range survive only if the proxy copies them across. */
+function byteRangeHeaders(response: Response): Record<string, string> {
+  const copied: Record<string, string> = {};
+  for (const header of ["content-range", "accept-ranges", "content-length"] as const) {
+    const value = response.headers.get(header);
+    if (value) copied[header] = value;
+  }
+  return copied;
+}
+
+/** JSON is what the API answers; a byte-range request is media, and must not claim to want JSON. */
+function requestAccept(range?: string | null): string {
+  return range ? "*/*" : "application/json";
+}
+
 async function callApi(
   method: string,
   path: string,
-  options: { body?: ArrayBuffer | null; token?: string | null; refreshCookie?: string | null; contentType?: string | null },
+  options: { body?: ArrayBuffer | null; token?: string | null; refreshCookie?: string | null; contentType?: string | null; range?: string | null },
 ): Promise<{ response: Response; captured: Captured }> {
-  const headers: Record<string, string> = { accept: "application/json" };
+  const headers: Record<string, string> = { accept: requestAccept(options.range) };
   if (options.token) headers.authorization = `Bearer ${options.token}`;
   if (options.refreshCookie) headers.cookie = `${REFRESH_COOKIE}=${options.refreshCookie}`;
   if (options.body && options.contentType) headers["content-type"] = options.contentType;
+  // A <video> element seeks by byte range; without this the player would get the whole clip for every hop.
+  if (options.range) headers.range = options.range;
 
   const response = await fetch(`${apiBase()}${path}`, {
     method,
@@ -91,6 +107,7 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
 
   const body = method === "GET" || method === "HEAD" ? null : await request.arrayBuffer();
   const contentType = request.headers.get("content-type");
+  const range = request.headers.get("range");
   const jar = await cookies();
   let token = jar.get(ACCESS_COOKIE)?.value ?? null;
   const refreshCookie = jar.get(REFRESH_COOKIE)?.value ?? null;
@@ -108,12 +125,12 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
     }
   }
 
-  let { response, captured } = await callApi(method, target, { body, token, refreshCookie, contentType });
+  let { response, captured } = await callApi(method, target, { body, token, refreshCookie, contentType, range });
 
   if (response.status === 401 && !isAuthRoute && !attemptedRefresh) {
     const minted = await refreshSession(refreshCookie);
     if (minted?.accessToken) {
-      const retry = await callApi(method, target, { body, token: minted.accessToken, refreshCookie, contentType });
+      const retry = await callApi(method, target, { body, token: minted.accessToken, refreshCookie, contentType, range });
       response = retry.response;
       captured = retry.captured;
       mintedCookies = minted;
@@ -122,7 +139,10 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
 
   const out = new Response(response.body, {
     status: response.status,
-    headers: new Headers({ "content-type": response.headers.get("content-type") ?? "application/json" }),
+    headers: new Headers({
+      "content-type": response.headers.get("content-type") ?? "application/json",
+      ...byteRangeHeaders(response),
+    }),
   });
 
   if (path.join("/") === "auth/logout" && response.status === 204) return applyCookies(out, {}, { clear: true });

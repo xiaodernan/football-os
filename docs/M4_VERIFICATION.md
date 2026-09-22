@@ -107,12 +107,12 @@ python ../../scripts/export_openapi.py         # 52 paths / 59 operations, incl.
 curl -s "localhost:8731/api/v1/tactics/compare?a=4-3-3-press-high&b=4-3-3-low-block&phase=out"
 ```
 
-## 7. The cited analysis — and the two questions it refuses
+## 7. The cited analysis — the two questions it refused, and what closed them
 
 `feedback.py` asks six questions of the knowledge corpus through the same `retrieval.search` that `/knowledge`
 uses, with the same gates (`MIN_DISCRIMINATIVE_MATCHES = 2`, `MIN_DISCRIMINATIVE_COVERAGE = 0.40`, rare-term
-`df ≤ 30%`, `MIN_USEFUL_SCORE = 0.045`). Measured on the running server with the corpus ingested (732 passages,
-`hybrid-pgvector`):
+`df ≤ 30%`, `MIN_USEFUL_SCORE = 0.045`). Measured on the running server with the corpus as it stood that morning
+(732 passages, `hybrid-pgvector`):
 
 | Topic | Outcome | Citation |
 | --- | --- | --- |
@@ -123,17 +123,47 @@ uses, with the same gates (`MIN_DISCRIMINATIVE_MATCHES = 2`, `MIN_DISCRIMINATIVE
 | Width in attack | **refused** | “2/6 of the question's rare terms … → refuse” |
 | How high the team sits | **refused** | “1/4 of the question's rare terms … → refuse” |
 
-The refusals are the interesting result. Both topics *can* be made to answer `answerable=True` by rewording the
+The refusals were the interesting result. Both topics *can* be made to answer `answerable=True` by rewording the
 question — tried and rejected: the passages those rewordings retrieve are about reading a game and protecting the
 middle on a counter, not about width or territory. Rewording to clear a gate would buy a citation that does not
 support its sentence, which `AI_POLICY.md` §6 forbids and which a reader with the link open would catch. So the
-payload carries the refusal, the gate that fired, the measured number, and the page says plainly that the library
-has no passage for it. That gap is recorded as corpus follow-up work in `ROADMAP.md`, with the RAG eval to be
-re-run after — not the gates loosened.
+payload carried the refusal, the gate that fired, the measured number, and the page said plainly that the library
+had no passage for it.
+
+**Closed the same day, by writing the missing passages rather than moving the gates.** `data/knowledge/tactics/`
+gained `width-in-attack.md` (“Using width in attack to stretch a compact block”) and `squad-height-and-territory.md`
+(“Squad height: how high a team should sit and the territory that buys”), both project-authored, both inside the
+corpus's own shape rule (8 `##` sections, 650–950 words, an `## Evidence and its limits` section that says which
+claims are practice rather than findings). Re-measured on the running server with 18 documents / 138 chunks:
+
+| Topic | Outcome | Citation |
+| --- | --- | --- |
+| Width in attack | cited | `/knowledge/width-in-attack#0` |
+| How high the team sits | cited | `/knowledge/squad-height-and-territory#5` |
+
+Across **all 50 authored systems**: 6 cited, **0 refused**, every system. The distribution of citations is
+`buildup-vs-high-press` (pressing) · `width-in-attack` (width, compactness, lines) ·
+`transition-defence-five-seconds` (build-up) · `squad-height-and-territory` (height). The retrieval thresholds were
+not touched by this change; what changed is the corpus they measure against.
+
+`python -m evals.run_rag_eval` after the addition — re-measured, with two golden questions for the new passages
+(`stretch-low-block`, `squad-height`), both ranking first:
+
+```text
+corpus: 18 documents / 138 chunks / backend=hybrid-pgvector
+recall_at_k 1.0 (≥0.85) · mrr_at_k 0.9167 (≥0.6) · citation_integrity 1.0 · refusal_accuracy 1.0 · hybrid_delta 0.0
+keyword recall@5 1.000 · semantic recall@5 0.889 · citations checked: 72 → all gates passed
+```
+
+`refusal_accuracy` staying at 1.0 matters here: the corpus grew, and the three out-of-scope questions are still
+refused, so the new passages did not turn the library into something that answers anything.
 
 Every cited statement also keeps its own measurement trail: `metric.formula` is the same string the metrics table
 prints, and `citation.ref` is an in-app anchor (`/knowledge/{slug}#{ordinal}`) which the browser walk fetches, so a
-citation that resolved to nothing would fail the run rather than quietly mislead.
+citation that resolved to nothing would fail the run rather than quietly mislead. Closing the gap broke that check on
+purpose: it had counted "one library link per analysis point", which was true only while two topics were refused, and
+six points now cite four distinct passages. The assertion compares the page's links with the payload's refs instead —
+see [`M5_WEB_VERIFICATION.md`](M5_WEB_VERIFICATION.md) §4 item 7, since it was M5's walk that caught it.
 
 `fit` is arithmetic on the same six attributes the player model stores: `gap = attribute − demand`, `short` at
 ≤ −12, `exceeds` at ≥ +4, mean gap as the summary. Nothing in either endpoint writes to a stored row.
@@ -179,7 +209,8 @@ by token → 200 with no leaked identity; a second account reading/patching/shar
   user content on a crawlable surface before §21/§61's consent story exists.
 * **No model writes anything.** `/feedback` is extractive assembly over the corpus and the measured rows and labels
   itself that way (`model: "extractive assembly …"`, `provider: "none (no AI key configured)"`); `/fit` is arithmetic
-  on published thresholds. Neither mutates a player, a rating or a stored row. Two of the six topics stay ungrounded
-  until the corpus gains the passages named in §7.
+  on published thresholds. Neither mutates a player, a rating or a stored row. All six topics are cited for every
+  one of the 50 systems since §7's two passages landed; the refusal path is still in the payload and still tested,
+  it simply has nothing left to refuse in this catalogue.
 * The 50 systems are authored structures with measured consequences. They are not a claim about how
   any real team plays, and every response says so in its `disclaimer`.

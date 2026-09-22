@@ -4,12 +4,22 @@
 
 One platform connecting the real football world, personal football development, football simulation and football AI. Not a news site, not a score app, not an FM clone, not a chatbot wrapper.
 
-**Status:** M0 Foundation · M1 vertical slice (My Football → Player → Training → AI Coach → Progress → History) · M2 Football Knowledge + RAG (16-document corpus → chunking → embeddings → hybrid retrieval + rerank → cited, refusal-capable answers) · M3 Football World — deterministic synthetic world (10 competitions · 20 teams · 300 players · 130 matches · 3,172 stat lines · 500 news articles) behind 12 `/api/v1/world/*` routes with unified search, **and** its public web surface (`/world`, five browsable lists, `/world/search`, and the §80 pages `/player|team|match|competition|news/{slug}`) — all implemented and **verified**: 110/110 browser assertions at 1440px and 375px against a **production build**, 983 sitemap URLs each answering 200, five RAG evaluation gates green on both engines. The whole API suite is 244 tests, green on SQLite *and* PostgreSQL+pgvector. Evidence: `docs/M0_M1_VERIFICATION.md`, `docs/M2_VERIFICATION.md`, `docs/M3_VERIFICATION.md`, `docs/M3_WEB_VERIFICATION.md`; SEO surface: `docs/SEO_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`. M4 Tactical Lab is **verified end to end**: pitch geometry in metres, 14 roles with separate in/out-possession duties, 10 shapes × 5 temperaments = the 50 systems §65 asks for, eight metrics that each ship their own formula, six named counterfactuals, and an analysis that cites the knowledge corpus for what it can and refuses the rest (`docs/M4_VERIFICATION.md`); served by `/tactics`, `/tactics/{slug}`, `/tactics/compare`, a draggable **My boards** area (`/tactics/boards`), and a public read-only share link (`/tactics/shared/{token}`) with the pitch drawn as SVG from the same metres the measurements come from — **151/151** browser assertions, 1034 sitemap URLs, 218 API tests on both engines (`docs/M4_WEB_VERIFICATION.md`). M5 Video Analysis has its **pipeline** verified: ffprobe/ffmpeg media layer, a demo vision provider that measures the centre of non-pitch pixels and reports movement with its thresholds and limitations in the payload, magic-byte upload validation, `video_assets`/`video_detections`, 7 `/api/v1/video/*` routes, and the `Job`/`model_calls` tables written for real (`docs/M5_VERIFICATION.md`); the upload UI and report page are next. Still open in M4 as follow-ups rather than gate items: a 3D pitch, boards beyond single ownership (M9's consent story), and two knowledge-corpus passages (width in attack, defensive-line height) so the analysis can cite what it currently declines to claim.
+**Status:** M0–M5 are implemented and **verified**; the next milestone is M6 Football Simulation.
+
+* **M0 Foundation · M1 vertical slice** — register → create player → derive attributes → training → completion → XP and attribute deltas with their reasons → history: one closed loop with real persistence, not a form that pretends (`docs/M0_M1_VERIFICATION.md`).
+* **M2 Football Knowledge + RAG** — an 18-document / 138-chunk corpus → chunking → embeddings → hybrid retrieval + rerank → cited, refusal-capable answers. Five evaluation gates green on both engines, re-measured rather than loosened when the corpus grew (`docs/M2_VERIFICATION.md`).
+* **M3 Football World** — deterministic synthetic world (10 competitions · 20 teams · 300 players · 130 matches · 3,172 stat lines · 500 news articles) behind 12 `/api/v1/world/*` routes with unified search, **and** its public web surface (`/world`, five browsable lists, `/world/search`, and the §80 pages `/player|team|match|competition|news/{slug}`) (`docs/M3_VERIFICATION.md`, `docs/M3_WEB_VERIFICATION.md`).
+* **M4 Tactical Lab** — pitch geometry in metres, 14 roles with separate in/out-possession duties, 10 shapes × 5 temperaments = the 50 systems §65 asks for, eight metrics that each ship their own formula, six named counterfactuals, and an analysis that cites the corpus for all six of its topics on every one of the 50 systems — two of them were refused until the corpus gained the passages they needed (`docs/M4_VERIFICATION.md`). Served by `/tactics`, `/tactics/{slug}`, `/tactics/compare`, a draggable **My boards** area (`/tactics/boards`) and a public read-only share link (`/tactics/shared/{token}`), with the pitch drawn as SVG from the same metres the measurements come from (`docs/M4_WEB_VERIFICATION.md`).
+* **M5 Video Analysis** — `ffprobe` container facts and `ffmpeg` frame sampling as fixed-argv subprocesses, magic-byte upload validation, `video_assets`/`video_detections`, 7 `/api/v1/video/*` routes and `Job`/`model_calls` rows written for real, behind a demo vision provider that measures the centre of non-pitch pixels and carries its thresholds and a `limitations` sentence saying it detects no players, ball or football events (`docs/M5_VERIFICATION.md`). `/video` and `/video/{id}` upload, report, detection timeline and frame strip, with owner-only playback that answers byte ranges through the cookie proxy — `206` slices, suffix ranges, `416` past the end (`docs/M5_WEB_VERIFICATION.md`). No clip of anyone's is crawlable: the report is `noindex` and robots keeps `/video` out.
+
+Every one of those was verified the same way, on a fresh **production build**: **247 API tests** green on SQLite *and* PostgreSQL+pgvector, **164/164 browser assertions** with 58 screenshots at 1440px and 375px, 1036 sitemap URLs each answering 200, `ruff` + `mypy` clean, and a console gate that fails the walk unless every browser error was one the walk provoked on purpose. SEO surface: `docs/SEO_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`.
+
+Open as follow-ups rather than gate gaps: a 3D pitch, boards beyond single ownership (M9's consent story), a frame overlay for the measured centroids, event semantics for video (a claim this build cannot support without a real detector), and §81's three locales.
 
 ## Architecture at a glance
 
 ```
-apps/web   Next.js 15 + TypeScript   UI · BFF · auth UX · public knowledge, Football World and Tactical Lab pages (drag boards, SVG pitch) · SEO metadata (canonical/OG/JSON-LD) · sitemap + robots · dark design system
+apps/web   Next.js 15 + TypeScript   UI · BFF · auth UX · public knowledge, Football World and Tactical Lab pages (drag boards, SVG pitch) · private video analysis (/video) · SEO metadata (canonical/OG/JSON-LD) · sitemap + robots · dark design system
 apps/api   FastAPI + SQLAlchemy 2     auth · football world model · training catalogue · coach engine
                                           progression(XP→skill→attribute, explainable) · providers · jobs
                                           knowledge base: data/knowledge → chunks → embeddings → hybrid retrieval → citations
@@ -52,11 +62,23 @@ Verification commands: `pytest` and `python -m evals.run_rag_eval` (API, both da
 
 1. Browse the library by category — every document shows who wrote it, when it was reviewed and how many chunks it is → 2. Filter by position, difficulty or tag, which really narrows the retrieval universe (the response says how many chunks were scanned) → 3. Search in `semantic`, `keyword` or `hybrid` mode and see each leg's score, the rerank features and why rank 1 won → 4. Ask a question and get an answer built only from numbered passages, each with a verbatim quote and a deep link → 5. Ask something the corpus cannot support and it refuses, naming the rare terms it looked for → 6. Every answer carries `demo_mode`, `confidence`, `reasons[]`, `sources[]` and a disclaimer, so nothing generated here is presented as fact.
 
+## The measured clip loop (M5)
+
+1. Upload a clip to your own account — the container is decided by its magic bytes, not its filename → 2. Ask for the
+   analysis: `ffprobe` reads the container, `ffmpeg` samples frames at an even interval → 3. The `demo-pixel-stats`
+   provider measures the pitch-green fraction and where the centre of the non-pitch pixels moved, and calls that a
+   movement event when it shifts past its stated threshold → 4. The report page shows the provider's name, its model,
+   every threshold and a sentence saying it detects no players, no ball and no football events → 5. Play the clip back
+   through the owner-only route, which answers byte ranges, and reload to see the same numbers again → 6. Delete it and
+   the row, the detections and the bytes on disk are gone.
+
 ## Honesty guarantees
 
 - Synthetic world data is badged `DEMO DATA`; unavailable metrics show `Data unavailable`.
 - AI output without real provider keys runs in self-labelled `DEMO MODE`.
 - Simulations are badged fictional. Progression is rule-based and explainable, never random.
+- Every video detection names the provider that produced it, and that provider publishes what it cannot see. Nobody's
+  clip is crawlable: reports are `noindex` and robots keeps `/video` out of the crawl.
 - No copyrighted assets, no scraped paywalled data, no fabricated citations.
 - The UI speaks English only today. `GET /capabilities` answers `locales: ["en","zh","zh-TW"]` as the §81 target, not as a
   shipped feature — the translation layer itself is not built yet.

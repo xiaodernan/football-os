@@ -24,6 +24,9 @@ const PROTECTED_PREFIXES = [
   // A user's own boards are theirs; `/tactics` and `/tactics/{slug}` stay public, and a shared
   // board is reached through `/tactics/shared/{token}` precisely so it does NOT hit this wall.
   "/tactics/boards",
+  // Uploads are the most identifying files the platform can hold: no public read of a clip,
+  // a frame or a report, and no sitemap or robots allowance either.
+  "/video",
 ];
 
 /** Re-authenticate slightly early so the token cannot expire mid-render. */

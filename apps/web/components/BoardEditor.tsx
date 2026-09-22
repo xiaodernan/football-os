@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
-import { PITCH_VIEWBOX, PitchFrame, PlayerMarker, snapToGrass, toX, toY } from "@/components/pitch";
+import { PITCH_VIEWBOX, PitchFrame, PlayerMarker, snapToGrass } from "@/components/pitch";
 import { browserFetch, errorMessage } from "@/lib/api";
 import type { BoardDetail, BoardMetrics, BoardPositions } from "@/lib/types";
 

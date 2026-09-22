@@ -8,8 +8,8 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M1 Player + AI Coach vertical slice** | Create user → create player → profile → training → completion → AI Coach → progress → history | closed loop usable in browser with real persistence | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M2 Football Knowledge + RAG** | ingestion, chunking, embeddings, pgvector hybrid retrieval, rerank, citations, Football AI | answers carry resolvable source citations | ✅ verified 2026-09-21 ([evidence](docs/M2_VERIFICATION.md)) |
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) |
-| **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 4 of 6 topics and refuses 2; 3D pitch and board sharing beyond one owner are open follow-ups |
-| **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | 🔨 pipeline verified 2026-09-22 ([evidence](docs/M5_VERIFICATION.md)) · upload UI and report page pending |
+| **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 6 of 6 topics on all 50 systems (2 were refused until the corpus gained the missing passages); 3D pitch and board sharing beyond one owner are open follow-ups |
+| **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ✅ verified 2026-09-22 ([pipeline](docs/M5_VERIFICATION.md) · [web](docs/M5_WEB_VERIFICATION.md)) — upload, report, detection timeline and owner-only byte-range playback proven in the browser |
 | **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | ⬜ |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
 | **M8 Club OS / Academy** | organisations, teams, coaches, IDP, curriculum, permissions, multi-tenant | B2B tenant isolation proven | ⬜ |
@@ -62,9 +62,9 @@ Web surface (verified 2026-09-22):
 6. [x] structured data per entity: `Dataset`, `SportsOrganization`, `SportsTeam`, `Athlete`, `SportsEvent`, `NewsArticle`, plus `SearchAction`; `/world/search` is `noindex, follow`
 
 **M4 Tactical Lab — closed 2026-09-22.** The gate (50 systems + drag/draw/save/share + analysis with evidence) is met;
-the items still open below it are follow-ups, not gate gaps. **Next: M5 Video Analysis** — upload → processing → frame
-extraction → vision provider → events → analysis → report, with a demo vision provider behind the real interface
-(spec §14, §45, §62: every frame-derived claim labelled, no invented tracking).
+the items still open below it are follow-ups, not gate gaps. **M5 Video Analysis — closed the same day**, pipeline and
+browser both. **Next: M6 Football Simulation** — a deterministic match engine, Career Mode, manager challenges and
+squad/training/finance on top of it, with every result labelled fictional rather than observed.
 
 Verified 2026-09-22 (the pure layer + storage + reads, 99 tests):
 
@@ -90,9 +90,12 @@ Still open in M4:
 
 1. [x] AI tactical analysis with citations: `GET /tactics/{slug}/feedback` puts six coaching questions to the M2 corpus
    through the same hybrid retrieval and answerability gates as `/knowledge`, and renders only the statements whose
-   passage resolves — 4 cited, 2 refused for every system, because the library holds no passage on using width to
-   stretch a block or on how high a team sits. The refusals are on the page with the gate that produced them; rewording
-   the queries to score `answerable` would have bought citations to off-topic passages, which is worse than none
+   passage resolves — first measured as 4 cited and 2 refused for every system, because the library held no passage on
+   using width to stretch a block or on how high a team sits. The refusals went on the page with the gate that produced
+   them; rewording the queries to score `answerable` would have bought citations to off-topic passages, which is worse
+   than none. The gap was then closed by **writing the two missing passages** (`width-in-attack`, `squad-height-and-territory`),
+   not by moving a threshold: 6 cited and 0 refused across all 50 systems, with `run_rag_eval` still at recall 1.0 /
+   citation integrity 1.0 / refusal accuracy 1.0 on 18 documents and 138 chunks
 2. [x] `GET /tactics/{slug}/fit` — the session's player against the shape's six tactical demands, with published
    thresholds (`short ≤ -12`, `exceeds ≥ +4`), 409 `no_player` when there is no profile
 3. [x] user boards, stored and served: `tactic_boards` + migration `0005`, 8 routes under `/api/v1/boards`
@@ -108,12 +111,15 @@ Still open in M4:
 6. [ ] 3D pitch (spec §13 lists 2D/3D; 2D is what ships)
 7. [ ] boards are single-owner by design: no co-editors, comments or public gallery — that needs M9's permission and
    consent story, not just a listing
-8. [ ] corpus follow-up so the two refused topics can be cited: author `data/knowledge` passages on width in attack and
-   on defensive-line height, then re-run `python -m evals.run_rag_eval` — the gates must be re-measured, never loosened
+8. [x] corpus follow-up so the two refused topics can be cited: `data/knowledge/tactics/width-in-attack.md` and
+   `squad-height-and-territory.md` authored to the corpus's own shape rules, `python -m evals.run_rag_eval` re-measured
+   rather than loosened — recall@5 1.0, MRR 0.9167, citation integrity 1.0, refusal accuracy 1.0 on 18 documents /
+   138 chunks, with two new golden questions both ranking first
 
-**M5 Video Analysis — in progress.** Evidence: [`docs/M5_VERIFICATION.md`](docs/M5_VERIFICATION.md).
+**M5 Video Analysis — verified.** Evidence: [`docs/M5_VERIFICATION.md`](docs/M5_VERIFICATION.md) (pipeline) ·
+[`docs/M5_WEB_VERIFICATION.md`](docs/M5_WEB_VERIFICATION.md) (browser).
 
-Verified 2026-09-22 (26 tests + a live HTTP pass):
+Verified 2026-09-22 (29 video tests on both engines + a live HTTP pass + a browser walk):
 
 1. [x] media layer: `ffprobe` container facts, `ffmpeg` frame sampling to PPM at an even interval, a
    PNG display copy, all as subprocesses with fixed argument lists; missing tools raise
@@ -130,17 +136,20 @@ Verified 2026-09-22 (26 tests + a live HTTP pass):
    ledger row when the media tools are absent — and the jobs endpoint states there is no queue
 5. [x] ownership: every video read needs a session, another account gets 404 on all five doors, and the
    report omits `storage_key`; deletion removes the row, the detections and the bytes on disk
+6. [x] the web surface: `/video` holds the upload form and `/video/{id}` the report — detection timeline, the
+   sampled frames shown as the PNGs `ffmpeg` wrote, and a `<video>` whose source is the owner-only file route.
+   That route answers byte ranges, and the cookie proxy now carries `Range` out and `Content-Range` back, so the
+   browser seeks instead of downloading: `206 bytes 0-99/58056`, suffix ranges, `416 bytes */58056`. No §80 route
+   and no sitemap entry — the report is `noindex` and robots keeps `/video` out of the crawl. 12 checks in that
+   block, **164/164** in the walk, 58 screenshots (`docs/M5_WEB_VERIFICATION.md`)
 
 Still open in M5:
 
-1. [ ] the web surface: an upload form (`/video`), the per-clip report page with the sampled frames, the
-   detection timeline and a `<video>` element fed by the owner-only file route — no §80 route and no
-   sitemap entry for anyone's clips, because they are private
-2. [ ] frame overlay: draw the measured centroids on the displayed frame, so a viewer can see which
+1. [ ] frame overlay: draw the measured centroids on the displayed frame, so a viewer can see which
    pixels the numbers describe
-3. [ ] event semantics (a real vision model or hand-labelled data) — mapping pixel movement to passes,
+2. [ ] event semantics (a real vision model or hand-labelled data) — mapping pixel movement to passes,
    shots or presses would be a claim this build cannot support
-4. [ ] linking a clip to a user's player or an M6 match, and short shareable clips
+3. [ ] linking a clip to a user's player or an M6 match, and short shareable clips
 
 Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,
 `scripts/export_openapi.py`, `apps/web/scripts/visual-qa.mjs`. `docs/api/openapi.json` remains the

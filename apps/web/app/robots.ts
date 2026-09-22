@@ -25,6 +25,9 @@ const DISALLOWED = [
   // system pages stay crawlable; these two prefixes are user content, not publication.
   "/tactics/boards",
   "/tactics/shared",
+  // Uploaded clips and everything derived from them. A clip is the most identifying file a user can
+  // hand the platform, so it is disallowed rather than noindexed alone: no frame URL, no report.
+  "/video",
 ];
 
 export default function robots(): MetadataRoute.Robots {

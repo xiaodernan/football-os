@@ -16,8 +16,10 @@
  * Env overrides: QA_BASE, CHROME_PATH.
  */
 
-import { mkdir } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { execFile } from 'node:child_process';
+import { mkdir, stat, unlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import puppeteer from 'puppeteer-core';
@@ -891,24 +893,36 @@ async function run() {
     );
     const analysis = await tacticsApi(`/${tactic.slug}/feedback`);
     check(
-      'the analysis grounds some topics and refuses the rest, exactly as the API reports',
+      'every topic the analysis asks is either cited or refused, and the page shows the same split',
       (await page.evaluate(() => document.querySelectorAll('.tac-point').length)) === analysis.points.length &&
         analysis.points.length > 0 &&
-        analysis.ungrounded.length > 0,
+        // Six topics are asked (app/services/tactics/feedback.py TOPICS). A topic that is neither
+        // cited nor refused would be a silent gap between the measurement and the page.
+        analysis.points.length + analysis.ungrounded.length === 6,
       `${analysis.points.length} cited · ${analysis.ungrounded.length} refused over ${analysis.scanned_chunks} passages`,
     );
+    const expectedRefs = [...new Set(analysis.points.map((point) => point.citation.ref))];
     const citedHrefs = await page.evaluate(() => [...new Set([...document.querySelectorAll('a[href^="/knowledge/"]')].map((a) => a.getAttribute('href')))]);
     const citedStatuses = await probeStatuses(citedHrefs.map((href) => `${BASE}${href}`));
     check(
       'every passage the analysis leans on resolves to a real library anchor',
-      citedHrefs.length === analysis.points.length && citedStatuses.every((status) => status === 200),
-      `${citedHrefs.length} citation links · ${[...new Set(citedStatuses)].join(',')} statuses`,
+      // Six topics can lean on fewer than six passages — two systems of thought cited in the same
+      // document collapse here — so the claim is that the page's links are exactly the payload's refs,
+      // that no point cites nothing, and that every one of them answers.
+      analysis.points.every((point) => point.citation.ref.startsWith('/knowledge/')) &&
+        expectedRefs.length > 0 &&
+        citedHrefs.length === expectedRefs.length &&
+        expectedRefs.every((ref) => citedHrefs.includes(ref)) &&
+        citedStatuses.every((status) => status === 200),
+      `${analysis.points.length} points on ${citedHrefs.length} distinct passages · ${[...new Set(citedStatuses)].join(',')} statuses`,
     );
     const analysisBody = await bodyText(page);
+    const refusalPanelShown = /Topics this build refused to answer/iu.test(analysisBody);
     check(
-      'the page says which topics it refused, and names the gate that refused them',
-      /Topics this build refused to answer/iu.test(analysisBody) && analysisBody.includes(analysis.ungrounded[0].reason.slice(0, 40)),
-      analysis.ungrounded[0]?.reason.slice(0, 80) ?? 'no refusal shown',
+      'the page names the topics it refused with the gate that refused them, and claims no refusal it did not make',
+      refusalPanelShown === (analysis.ungrounded.length > 0) &&
+        (analysis.ungrounded.length === 0 || analysisBody.includes(analysis.ungrounded[0].reason.slice(0, 40))),
+      analysis.ungrounded.length ? analysis.ungrounded[0].reason.slice(0, 80) : `all ${analysis.points.length} topics grounded · no refusal panel`,
     );
     check(
       'the analysis is labelled extractive assembly, never a model opinion',
@@ -1098,6 +1112,200 @@ async function run() {
     const afterRevoke = await fetch(`${BASE}${shareUrl}`);
     check('revoking kills the old link without deleting the board', afterRevoke.status === 404, `${afterRevoke.status}`);
 
+    // 12e. Video analysis: upload a clip the walk generated, measure it, and prove nobody else can look.
+    const clipPath = join(tmpdir(), `football-os-visual-qa-${stamp}.mp4`);
+    let clipReady = false;
+    let clipFailure = '';
+    try {
+      await new Promise((resolveSpawn, rejectSpawn) => {
+        execFile(
+          'ffmpeg',
+          ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc2=s=320x180:d=2:r=25', '-pix_fmt', 'yuv420p', clipPath],
+          (error) => (error ? rejectSpawn(error) : resolveSpawn()),
+        );
+      });
+      clipReady = (await stat(clipPath)).size > 1000;
+    } catch (cause) {
+      clipFailure = String(cause?.message ?? cause).slice(0, 140);
+    }
+    check('the walk can generate its own test clip with ffmpeg (no third-party video in the repo)', clipReady, clipReady ? `${clipPath} · ${(await stat(clipPath)).size} bytes` : `ffmpeg unavailable: ${clipFailure}`);
+
+    if (clipReady) {
+      await open(page, '/video');
+      await waitForText(page, 'My video analysis');
+      const fileInput = await page.$('input[type="file"]');
+      check('the video index offers an upload control and states the privacy rule', !!fileInput && (await bodyText(page)).includes('only this account can read a clip'));
+      if (fileInput) {
+        await fileInput.uploadFile(clipPath);
+        await clickByText(page, 'button', 'Upload clip');
+        await waitForText(page, 'What was measured');
+        const reportPath = new URL(page.url()).pathname;
+        const uploadedBody = await bodyText(page);
+        check(
+          'an uploaded clip lands on its own report, labelled as the user content it is',
+          /^\/video\/vid_/u.test(reportPath) && /data_origin: user/u.test(uploadedBody) && /sha /u.test(uploadedBody),
+          `${reportPath} · ${uploadedBody.match(/data_origin: \w+/u)?.[0] ?? 'no origin'}`,
+        );
+        const head = await page.evaluate(() => document.head.querySelector('meta[name="robots"]')?.content ?? '');
+        const robotsText = (await (await fetch(`${BASE}/robots.txt`)).text()).replace(/\r/g, '');
+        check(
+          'a clip report is noindexed, and robots keeps /video out of the crawl entirely',
+          /noindex/iu.test(head) && /Disallow: \/video$/mu.test(robotsText),
+          `${head || 'no robots meta'} · disallow /video: ${/Disallow: \/video$/mu.test(robotsText)}`,
+        );
+
+        await clickByText(page, 'button', 'Analyse this clip');
+        await waitForText(page, 'Detection timeline', 120_000);
+        await page.waitForFunction(
+          () => [...document.querySelectorAll('[data-testid="video-frames"] img')].every((img) => img.complete && img.naturalWidth > 0),
+          { timeout: 60_000 },
+        );
+        const analysed = await page.evaluate(() => {
+          // innerText carries the line breaks the layout made — and a narrow mono cell breaks inside a
+          // token — so the measured panel is read from the DOM as textContent, not from what is on screen.
+          const text = document.body.innerText.replace(/\s+/g, ' ');
+          const measured = (document.querySelector('[data-testid="video-measured"]')?.textContent ?? '').replace(/\s+/g, ' ');
+          return {
+            detections: [...document.querySelectorAll('[data-testid="video-detections"] tbody tr')].map((row) => row.textContent.replace(/\s+/g, ' ').trim()),
+            frames: document.querySelectorAll('[data-testid="video-frames"] img').length,
+            frameChip: text.match(/(\d+) frames sampled/u)?.[1] ?? '',
+            provider: text.includes('demo-pixel-stats'),
+            model: measured.includes('ffmpeg ppm + pure-python statistics'),
+            limitations: measured.includes('It does not detect players, a ball, formations or football events'),
+            measured: measured.slice(0, 60),
+            player: document.querySelector('video')?.currentSrc ?? document.querySelector('video')?.getAttribute('src') ?? '',
+            loadedFrames: [...document.querySelectorAll('[data-testid="video-frames"] img')].filter((img) => img.naturalWidth > 0).length,
+          };
+        });
+        check(
+          'analysis names the demo provider, its model and its own limitations on the report',
+          analysed.detections.length >= 1 && analysed.provider && analysed.model && analysed.limitations,
+          `${analysed.detections.length} detections · provider ${analysed.provider} · model ${analysed.model} · limitations ${analysed.limitations} · ${analysed.detections[0]?.slice(0, 70) ?? '—'}`,
+        );
+        check(
+          'the frames strip shows exactly the samples the measurements came from, and they load',
+          analysed.frames > 0 && analysed.frames === Number(analysed.frameChip) && analysed.loadedFrames === analysed.frames,
+          `${analysed.frames} shown / ${analysed.frameChip} sampled / ${analysed.loadedFrames} decoded by the browser`,
+        );
+        check(
+          'playback and frames come from the owner-only API routes, not a public file path',
+          /\/api\/v1\/video\/vid_[^/]+\/file$/u.test(analysed.player),
+          analysed.player.replace(/^https?:\/\/[^/]+/u, '') || 'no player source',
+        );
+
+        // The player proving it read the bytes is a stronger claim than an attribute matching a regex:
+        // it exercises the route end to end, byte ranges included.
+        let playback = { ready: false, duration: 0, error: null };
+        try {
+          await page.waitForFunction(
+            () => {
+              const video = document.querySelector('video');
+              return !!video && video.readyState >= 1 && Number.isFinite(video.duration) && video.duration > 0;
+            },
+            { timeout: 45_000 },
+          );
+        } catch {
+          /* reported by the check below */
+        }
+        playback = await page.evaluate(() => {
+          const video = document.querySelector('video');
+          return { ready: !!video && video.readyState >= 1, duration: video?.duration ?? 0, error: video?.error?.code ?? null };
+        });
+        check(
+          "the browser reads the clip's metadata through the owner-only route, so the file really plays",
+          playback.ready && playback.duration > 0,
+          `duration ${playback.duration.toFixed(2)}s · media error code ${playback.error ?? 'none'}`,
+        );
+
+        // A <video> element asks for byte ranges, and the cookie proxy is the only road to the file. Asked for a
+        // slice, the browser must get 206 and the slice's own headers back — not a whole-file 200 it cannot use,
+        // and not a 416 the proxy swallows. This is fetched from inside the page because the session cookie is
+        // what authorises it; the harness's own fetch has no cookies.
+        const fileUrl = `${reportPath.replace('/video/', '/api/v1/video/')}/file`;
+        const ranged = await page.evaluate(
+          async (url) => {
+            const slice = await fetch(url, { credentials: 'same-origin', headers: { range: 'bytes=0-99' } });
+            const sliceBytes = await slice.arrayBuffer();
+            const suffix = await fetch(url, { credentials: 'same-origin', headers: { range: 'bytes=-1024' } });
+            const suffixBytes = await suffix.arrayBuffer();
+            const past = await fetch(url, { credentials: 'same-origin', headers: { range: 'bytes=99999999-' } });
+            await past.arrayBuffer();
+            const whole = await fetch(url, { credentials: 'same-origin' });
+            const wholeBytes = await whole.arrayBuffer();
+            return {
+              status: slice.status,
+              contentRange: slice.headers.get('content-range'),
+              acceptRanges: slice.headers.get('accept-ranges'),
+              sliceBytes: sliceBytes.byteLength,
+              suffixStatus: suffix.status,
+              suffixBytes: suffixBytes.byteLength,
+              suffixRange: suffix.headers.get('content-range'),
+              pastStatus: past.status,
+              pastRange: past.headers.get('content-range'),
+              wholeStatus: whole.status,
+              wholeBytes: wholeBytes.byteLength,
+            };
+          },
+          fileUrl,
+        );
+        const total = Number((ranged.contentRange ?? '').split('/')[1] ?? 0);
+        check(
+          'the clip answers a byte range through the cookie proxy with the slice and the headers that describe it',
+          ranged.status === 206 &&
+            ranged.sliceBytes === 100 &&
+            ranged.contentRange === `bytes 0-99/${total}` &&
+            ranged.acceptRanges === 'bytes' &&
+            ranged.suffixStatus === 206 &&
+            ranged.suffixBytes === 1024 &&
+            ranged.suffixRange === `bytes ${total - 1024}-${total - 1}/${total}` &&
+            ranged.pastStatus === 416 &&
+            ranged.pastRange === `bytes */${total}` &&
+            ranged.wholeStatus === 200 &&
+            ranged.wholeBytes === total,
+          `206 bytes 0-99/${total} · suffix ${ranged.suffixRange} · past-end ${ranged.pastStatus} ${ranged.pastRange} · whole ${ranged.wholeBytes} B`,
+        );
+
+        const anonReport = await fetch(`${BASE}${reportPath}`, { redirect: 'manual' });
+        const anonApi = await fetch(`${BASE}${reportPath.replace('/video/', '/api/v1/video/')}`, { redirect: 'manual' });
+        const anonFrame = await fetch(`${BASE}${reportPath}/frames/0`, { redirect: 'manual' });
+        check(
+          'a signed-out visitor is bounced from the report page and gets 401 from the clip, frame and file routes',
+          [anonReport.status, anonFrame.status].some((status) => [302, 307].includes(status)) &&
+            (anonReport.headers.get('location') ?? '').includes('/login') &&
+            anonApi.status === 401,
+          `page ${anonReport.status} → ${(anonReport.headers.get('location') ?? '').slice(0, 22)} · api ${anonApi.status} · frame ${anonFrame.status}`,
+        );
+
+        await page.setViewport(MOBILE);
+        await shot(page, '38-mobile-video-report');
+        const videoNarrow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        check('mobile 375px: the clip report holds with no horizontal overflow', videoNarrow <= 1, `overflow ${videoNarrow}px`);
+        await page.setViewport(DESKTOP);
+
+        // Detach the media before deleting: dropping the element alone leaves Chromium's in-flight range
+        // request running, and its 404 after the row is gone is the browser chasing a clip that no longer
+        // exists rather than anything the walk wants to claim about the report.
+        await page.evaluate(() => {
+          document.querySelectorAll('video').forEach((video) => {
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+            video.remove();
+          });
+          document.querySelectorAll('img[src^="/api/v1/video/"]').forEach((element) => element.remove());
+        });
+        await clickByText(page, 'button', 'Delete clip and file');
+        await waitForText(page, 'No clips yet', 60_000);
+        const afterDelete = await fetch(`${BASE}${reportPath}`, { redirect: 'manual' });
+        check(
+          'deleting empties the list and makes the old report URL unusable',
+          new URL(page.url()).pathname === '/video' && [302, 307, 404].includes(afterDelete.status),
+          `back to ${new URL(page.url()).pathname} · report now ${afterDelete.status}`,
+        );
+      }
+      await unlink(clipPath).catch(() => {});
+    }
+
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
     await page.setViewport(MOBILE);
     const mobileSurface = async ([path, marker, label]) => {
@@ -1171,8 +1379,28 @@ async function run() {
     await browser.close().catch(() => {});
   }
 
-  const failed = results.filter((result) => !result.ok);
-  console.log(`\n${results.length - failed.length}/${results.length} checks passed. Screenshots: ${shots.length} -> docs/screenshots/`);
+  // Console noise is a gate, not a footnote: a walk that prints errors and still exits 0 teaches
+  // nobody to read them. Exactly two are provoked on purpose, both by the video block deleting a
+  // clip whose file the browser still has open — Chromium's in-flight byte-range read then answers
+  // 404 as a response and again as a resource error on the page it came from.
+  const provoked = [
+    // Deleting a clip while its report still has the file open: Chromium's in-flight byte-range read of a row
+    // that no longer exists answers 404, once as a response and once as a resource error on the page it came from.
+    /^HTTP 404 \/api\/v1\/video\/[^/]+\/file$/,
+    /^Failed to load resource: the server responded with a status of 404 \(Not Found\) @ \/video\/[^/]+$/,
+    // The range probe above asks for bytes past the end of the clip on purpose, because a proxy that turned a 416
+    // into a 200 would leave a browser unable to tell that its range was refused.
+    /^HTTP 416 \/api\/v1\/video\/[^/]+\/file$/,
+    /^Failed to load resource: the server responded with a status of 416 \(Range Not Satisfiable\) @ \/video\/[^/]+$/,
+  ];
+  const unexpected = [...new Set(consoleErrors)].filter((line) => !provoked.some((pattern) => pattern.test(line)));
+  check(
+    'every browser console error was one this walk provoked on purpose',
+    unexpected.length === 0,
+    unexpected.length ? unexpected.slice(0, 3).join(' | ').slice(0, 220) : `${consoleErrors.length} seen, all of them deliberate`,
+  );
+
+  const failed = results.filter((result) => !result.ok);  console.log(`\n${results.length - failed.length}/${results.length} checks passed. Screenshots: ${shots.length} -> docs/screenshots/`);
   if (consoleErrors.length) {
     console.log(`\nBrowser console errors (${consoleErrors.length}):`);
     for (const line of [...new Set(consoleErrors)].slice(0, 15)) console.log(`  - ${line.slice(0, 300)}`);

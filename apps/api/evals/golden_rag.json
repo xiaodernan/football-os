@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-21",
+  "version": "2026-09-22",
   "note": "Golden retrieval set for the FOOTBALL OS knowledge base. Queries are phrased the way a player types them. expected_documents is the set of corpus slugs that legitimately answer the question.",
   "recall_at": 5,
   "queries": [
@@ -18,7 +18,9 @@
     {"id": "handball", "query": "is it handball if the ball hits my arm", "expected_documents": ["handball-law-explained"]},
     {"id": "offside", "query": "am I offside if I don't touch the ball but I stand in the keeper way", "expected_documents": ["offside-interference-explained"]},
     {"id": "read-game", "query": "how do I read a game as a midfielder", "expected_documents": ["how-to-read-a-game"]},
-    {"id": "pressing-history", "query": "where did pressing ideas come from", "expected_documents": ["pressing-evolution-notes"]}
+    {"id": "pressing-history", "query": "where did pressing ideas come from", "expected_documents": ["pressing-evolution-notes"]},
+    {"id": "stretch-low-block", "query": "how do we use width to stretch a compact low block", "expected_documents": ["width-in-attack"]},
+    {"id": "squad-height", "query": "how high should our team sit and how much space do we leave behind", "expected_documents": ["squad-height-and-territory"]}
   ],
   "out_of_scope": [
     {"id": "xg-model", "query": "what is the best expected goals model for the 2019 champions league"},

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final
@@ -247,6 +248,14 @@ def analyse_asset(session: Session, asset: VideoAsset, *, target_frames: int = 2
             "provider": result["provider"],
             "demo_mode": result["demo_mode"],
             "total_ms": int((time.perf_counter() - started) * 1000),
+            # The measured summary and the stage rows are stored with the job so that a report read
+            # later — a reload, a second visit — shows the same numbers, not an empty panel. The
+            # events themselves are already rows, so repeating them here would only bloat the job.
+            "stages": [
+                {"name": stage.name, "status": stage.status, "progress": stage.progress, "detail": stage.detail, "ms": stage.ms}
+                for stage in stages
+            ],
+            "analysis": {key: value for key, value in result.items() if key != "events"},
         }
         session.commit()
         return report_for(session, asset, job=job, stages=stages, analysis=result)
@@ -283,11 +292,25 @@ def report_for(
     asset: VideoAsset,
     *,
     job: Job | None = None,
-    stages: list[Stage] | None = None,
+    stages: Sequence[Stage | dict[str, Any]] | None = None,
     analysis: dict[str, Any] | None = None,
     failure: str | None = None,
 ) -> dict[str, Any]:
-    """The report a client renders: stored facts, the measured events, and what none of it means."""
+    """The report a client renders: stored facts, the measured events, and what none of it means.
+
+    `stages` may be live `Stage` rows from a run happening now, or the plain dicts a finished job kept
+    — the two report the same thing, and a report read back must not look thinner than the one the
+    analysis returned.
+    """
+    stored = {} if job is None else (job.result or {})
+    if stages is None:
+        stages = stored.get("stages") or None
+    if analysis is None and stored.get("analysis"):
+        analysis = stored["analysis"]
+    stage_rows: list[dict[str, Any]] = [
+        stage if isinstance(stage, dict) else {"name": stage.name, "status": stage.status, "progress": stage.progress, "detail": stage.detail, "ms": stage.ms}
+        for stage in stages or []
+    ]
     detections = list(session.scalars(select(VideoDetection).where(VideoDetection.asset_id == asset.id).order_by(VideoDetection.t_s)).all())
     return {
         "asset": {
@@ -311,7 +334,7 @@ def report_for(
             "error": asset.error,
         },
         "job": None if job is None else {"id": job.id, "type": job.type, "status": job.status, "progress": job.progress, "error": job.error, "result": job.result},
-        "stages": [{"name": stage.name, "status": stage.status, "progress": stage.progress, "detail": stage.detail, "ms": stage.ms} for stage in stages or []],
+        "stages": stage_rows,
         "detections": [
             {
                 "id": row.id,

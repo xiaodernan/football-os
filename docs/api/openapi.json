@@ -3442,6 +3442,7 @@
           "video"
         ],
         "summary": "Clip Report",
+        "description": "The same report the analysis returned, rebuilt from what the last run stored.",
         "operationId": "clip_report_api_v1_video__ident__get",
         "security": [
           {
@@ -3590,7 +3591,7 @@
           "video"
         ],
         "summary": "Clip File",
-        "description": "The clip itself, to its owner only — the browser needs it to show what was analysed.",
+        "description": "The clip itself, to its owner only — the browser needs it to show what was analysed.\n\nA `<video>` element asks for byte ranges, and a server that cannot answer them makes the player\ndownload the whole file before it can seek. So this route reads only the slice it was asked for,\nand never the whole clip into memory.",
         "operationId": "clip_file_api_v1_video__ident__file_get",
         "security": [
           {
@@ -3605,6 +3606,22 @@
             "schema": {
               "type": "string",
               "title": "Ident"
+            }
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Range"
             }
           }
         ],
@@ -3660,6 +3677,22 @@
             "schema": {
               "type": "integer",
               "title": "Index"
+            }
+          },
+          {
+            "name": "Range",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Range"
             }
           }
         ],

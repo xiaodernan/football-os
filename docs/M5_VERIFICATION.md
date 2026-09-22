@@ -104,13 +104,15 @@ and the API answers `503 media_tools_missing` rather than inventing frames (`DAT
 
 ## 7. Not claimed by this milestone
 
-* **No upload UI, no report page.** Nothing in the browser sends a clip or shows a timeline of
-  detections yet, so the §65 "upload → … → report" chain is verified at the API only. The web
-  increment needs the privacy rules respected: an account's clips are never public, so no §80 route
-  and no sitemap entry for them.
 * **No event semantics.** Detections are movement of a brightness centroid. Mapping them to passes,
   shots or presses would need a real model or hand-labelled data, and neither exists here.
 * **No linking a clip to a match or a player**, no clipping/share links, no frame-level drawing on the
-  pitch overlay — all of those belong with the report page and M6's match data.
+  pitch overlay — all of those belong with M6's match data.
 * **No background processing or storage service.** Local disk and synchronous jobs today; the
   `StorageProvider` interface is what a real object store would slot behind.
+
+The browser half of the chain — upload control, clip report, detection timeline, owner-only playback
+with byte ranges — shipped the same day and is verified in
+[`M5_WEB_VERIFICATION.md`](M5_WEB_VERIFICATION.md). An earlier draft of this section said *"no upload UI,
+no report page, the chain is verified at the API only"*; that sentence stopped being true in §7's own
+rewrite, and the reload of a measured clip is what proved it.

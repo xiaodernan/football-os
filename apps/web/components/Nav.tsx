@@ -48,9 +48,14 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
           })}
           {/* A board is private working material, so the only door to it is an authenticated one. */}
           {user && (
-            <Link className={`nav__link ${pathname.startsWith("/tactics/boards") ? "nav__link--active" : ""}`} href="/tactics/boards">
-              My boards
-            </Link>
+            <>
+              <Link className={`nav__link ${pathname.startsWith("/tactics/boards") ? "nav__link--active" : ""}`} href="/tactics/boards">
+                My boards
+              </Link>
+              <Link className={`nav__link ${pathname.startsWith("/video") ? "nav__link--active" : ""}`} href="/video">
+                Video
+              </Link>
+            </>
           )}
         </div>
         <div className="nav__actions">

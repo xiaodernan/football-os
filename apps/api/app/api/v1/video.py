@@ -11,12 +11,14 @@ queue and no worker, and nothing in the response claims otherwise (spec §47, PR
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
-from typing import Any, Final
+from typing import Annotated, Any, Final
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Request, Response, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from starlette.responses import StreamingResponse
 
 from app.core.config import settings
 from app.core.db import get_db
@@ -30,10 +32,69 @@ router = APIRouter(prefix="/video", tags=["video"])
 NOT_FOUND: Final = {"code": "not_found", "message": "No such clip for this account"}
 MAX_CLIPS_PER_USER: Final = 20
 FRAME_STATUSES: Final = ("analysed",)
+READ_CHUNK: Final = 64 * 1024
+_BYTE_RANGE: Final = re.compile(r"^bytes=(?:(?P<start>\d+)-(?P<end>\d*)|-(?P<suffix>\d+))$")
 
 
 def _mine(session: Session, user: User) -> Any:
     return select(VideoAsset).where(VideoAsset.owner_id == user.id)
+
+
+def _range_of(header: str | None, size: int) -> tuple[str, int, int]:
+    """How to read the file: `("full", 0, 0)`, `("partial", start, stop)` inclusive, or `("unsatisfiable", 0, 0)`.
+
+    An open-ended start means "to the end"; a bare `bytes=-N` means the last N bytes, which is how a
+    player reaches the metadata at the tail of an mp4. Anything this parser does not recognise —
+    including a multi-range request — is served whole, which RFC 9110 allows a server to do.
+    """
+    if not header:
+        return ("full", 0, 0)
+    match = _BYTE_RANGE.match(header.strip())
+    if match is None:
+        return ("full", 0, 0)
+    raw_start, raw_suffix = match.group("start"), match.group("suffix")
+    if raw_start is None:
+        return ("partial", max(size - int(raw_suffix), 0), size - 1)
+    start = int(raw_start)
+    if start >= size:
+        return ("unsatisfiable", 0, 0)
+    end = match.group("end")
+    return ("partial", start, min(int(end), size - 1) if end else size - 1)
+
+
+def _serve_slice(path: Path, media_type: str, range_header: str | None) -> Response:
+    """Stream `path` back, honouring one byte range if the request asked for one."""
+    size = path.stat().st_size
+    if size == 0:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=NOT_FOUND)
+    kind, start, stop = _range_of(range_header, size)
+    if kind == "full":
+        start, stop = 0, size - 1
+    headers = {"Accept-Ranges": "bytes"}
+    if kind == "unsatisfiable":
+        headers["Content-Range"] = f"bytes */{size}"
+        raise HTTPException(
+            status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
+            detail={"code": "range_not_satisfiable", "message": f"this clip is {size} bytes"},
+            headers=headers,
+        )
+    length = stop - start + 1
+    if kind == "partial":
+        headers["Content-Range"] = f"bytes {start}-{stop}/{size}"
+
+    def chunks() -> Any:
+        with path.open("rb") as handle:
+            handle.seek(start)
+            remaining = length
+            while remaining > 0:
+                block = handle.read(min(READ_CHUNK, remaining))
+                if not block:
+                    return
+                remaining -= len(block)
+                yield block
+
+    headers["Content-Length"] = str(length)
+    return StreamingResponse(chunks(), status_code=206 if kind == "partial" else 200, media_type=media_type, headers=headers)
 
 
 def _one(session: Session, user: User, ident: str) -> VideoAsset:
@@ -41,6 +102,12 @@ def _one(session: Session, user: User, ident: str) -> VideoAsset:
     if asset is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=NOT_FOUND)
     return asset
+
+
+def _analysis_jobs(session: Session, asset_id: str) -> list[Job]:
+    """This clip's runs, newest first. The job rows carry the measured summary a later report re-reads."""
+    rows = list(session.scalars(select(Job).where(Job.type == "video.analyse").order_by(Job.created_at.desc()).limit(20)).all())
+    return [job for job in rows if job.payload.get("asset_id") == asset_id]
 
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
@@ -111,8 +178,11 @@ def list_clips(
 
 @router.get("/{ident}")
 def clip_report(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """The same report the analysis returned, rebuilt from what the last run stored."""
     limit(request, 60, 60, scope="video_detail")
-    return pipeline.report_for(db, _one(db, user, ident))
+    asset = _one(db, user, ident)
+    runs = _analysis_jobs(db, asset.id)
+    return pipeline.report_for(db, asset, job=runs[0] if runs else None)
 
 
 @router.post("/{ident}/analyse")
@@ -136,18 +206,36 @@ def analyse_clip(
 
 
 @router.get("/{ident}/file")
-def clip_file(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> Response:
-    """The clip itself, to its owner only — the browser needs it to show what was analysed."""
+def clip_file(
+    ident: str,
+    request: Request,
+    range_header: Annotated[str | None, Header(alias="Range")] = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> Response:
+    """The clip itself, to its owner only — the browser needs it to show what was analysed.
+
+    A `<video>` element asks for byte ranges, and a server that cannot answer them makes the player
+    download the whole file before it can seek. So this route reads only the slice it was asked for,
+    and never the whole clip into memory.
+    """
     limit(request, 30, 60, scope="video_file")
     asset = _one(db, user, ident)
     stored = Path(settings.storage_dir) / asset.storage_key
     if not stored.is_file():
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=NOT_FOUND)
-    return Response(content=stored.read_bytes(), media_type=asset.content_type or "application/octet-stream")
+    return _serve_slice(stored, asset.content_type or "application/octet-stream", range_header)
 
 
 @router.get("/{ident}/frames/{index}")
-def clip_frame(ident: str, index: int, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> Response:
+def clip_frame(
+    ident: str,
+    index: int,
+    request: Request,
+    range_header: Annotated[str | None, Header(alias="Range")] = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> Response:
     """One sampled frame as PNG, from the same set the measurements came from."""
     limit(request, 120, 60, scope="video_frame")
     asset = _one(db, user, ident)
@@ -162,7 +250,7 @@ def clip_frame(ident: str, index: int, request: Request, db: Session = Depends(g
         png = to_png(frames[index])
     except MediaToolMissing as error:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail={"code": "media_tools_missing", "message": str(error)}) from error
-    return Response(content=png.read_bytes(), media_type="image/png")
+    return _serve_slice(png, "image/png", range_header)
 
 
 @router.get("/{ident}/jobs")
@@ -170,8 +258,7 @@ def clip_jobs(ident: str, request: Request, db: Session = Depends(get_db), user:
     """The bookkeeping for this clip's runs, so a report can be traced to the job that made it."""
     limit(request, 30, 60, scope="video_jobs")
     asset = _one(db, user, ident)
-    jobs = list(db.scalars(select(Job).where(Job.type == "video.analyse").order_by(Job.created_at.desc()).limit(20)).all())
-    relevant = [job for job in jobs if job.payload.get("asset_id") == asset.id]
+    relevant = _analysis_jobs(db, asset.id)
     return {
         "items": [
             {

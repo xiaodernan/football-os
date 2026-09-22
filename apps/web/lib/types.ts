@@ -962,6 +962,87 @@ export type BoardList = TacticsProvenance & {
 /** `GET /boards/shared/{token}` — a public read that names no owner. */
 export type SharedBoard = BoardDetail & { owner: { name: string; id: string | null } };
 
+/* ---------------------------------------------------------------------------
+ * M5 Video Analysis — /api/v1/video/* (spec §14, §47, §61, §62).
+ *
+ * An asset row is `data_origin: 'user'` and never public; its detections are
+ * `demo_mode: true` measurements of pixels. The two labels are different and the
+ * types keep them apart on purpose.
+ * ------------------------------------------------------------------------- */
+
+export type VideoAssetSummary = {
+  id: string;
+  title: string;
+  filename: string;
+  status: string;
+  duration_s: number;
+  width: number;
+  height: number;
+  size_bytes: number;
+  content_type: string;
+  frame_count: number;
+  created_at: string | null;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+export type VideoList = {
+  items: VideoAssetSummary[];
+  page: number;
+  page_size: number;
+  total: number;
+  pages: number;
+  limit_per_user: number;
+  privacy: string;
+};
+
+export type VideoDetection = {
+  id: string;
+  kind: string;
+  t_s: number;
+  x: number;
+  y: number;
+  confidence: number;
+  why: string;
+  provider: string;
+  model: string;
+  demo_mode: boolean;
+};
+
+export type VideoStage = { name: string; status: string; progress: number; detail: Record<string, unknown>; ms: number };
+
+export type VideoReport = {
+  asset: VideoAssetSummary & {
+    status: string;
+    fps: number;
+    codec: string;
+    bitrate_kbps: number;
+    frame_interval_s: number;
+    sha256: string;
+    error: string | null;
+  };
+  job: { id: string; type: string; status: string; progress: number; error: string | null; result: Record<string, unknown> | null } | null;
+  stages: VideoStage[];
+  detections: VideoDetection[];
+  analysis: {
+    provider: string;
+    model: string;
+    demo_mode: boolean;
+    task: string;
+    frames_seen: number;
+    grid?: number[];
+    thresholds?: Record<string, number>;
+    samples?: Record<string, unknown>[];
+    events?: Record<string, unknown>[];
+    green_fraction_mean?: number;
+    limitations: string;
+    error?: string;
+  } | null;
+  failure: string | null;
+  privacy: string;
+  disclaimer: string;
+};
+
 /** A passage reference from the knowledge corpus. `ref` is an in-app anchor, never a remote URL. */
 export type KnowledgeRef = {
   type: string;

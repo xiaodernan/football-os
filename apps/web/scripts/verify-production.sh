@@ -28,14 +28,21 @@ release_port
 sleep 2
 NEXT_DIST_DIR=.next-ci SITE_URL="http://127.0.0.1:$PORT" node node_modules/next/dist/bin/next start -p "$PORT" > /tmp/next-$PORT.log 2>&1 &
 
-for _ in $(seq 1 40); do
-  curl -sf -o /dev/null "http://127.0.0.1:$PORT/healthz" && break
+# The wait loop polls the one fact the walk depends on, not a health endpoint: /healthz is an app route
+# that proxies the API, so it can answer 500 while the server is perfectly fine, and the walk needs
+# instead to see the webpack chunk of THIS build in the HTML of a rendered page.
+ON_DISK=$(ls .next-ci/static/chunks/ 2>/dev/null | grep '^webpack-.*\.js$' | head -1)
+SERVED=""
+CODE=000
+for _ in $(seq 1 60); do
+  BODY=$(curl -s -w '\n%{http_code}' "http://127.0.0.1:$PORT/world")
+  CODE=$(printf '%s\n' "$BODY" | tail -1)
+  SERVED=$(printf '%s\n' "$BODY" | grep -o 'webpack-[a-f0-9]*\.js' | head -1)
+  [ -n "$ON_DISK" ] && [ "$SERVED" = "$ON_DISK" ] && break
   sleep 1
 done
 
-SERVED=$(curl -s "http://127.0.0.1:$PORT/world" | grep -o 'webpack-[a-f0-9]*\.js' | head -1)
-ON_DISK=$(ls .next-ci/static/chunks/ 2>/dev/null | grep '^webpack-.*\.js$' | head -1)
-echo "served chunk: ${SERVED:-none} · build chunk: ${ON_DISK:-missing}"
+echo "served chunk: ${SERVED:-none} (HTTP $CODE) · build chunk: ${ON_DISK:-missing}"
 if [ -z "$SERVED" ] || [ "$SERVED" != "$ON_DISK" ]; then
   echo "ABORT: port $PORT is not serving the build in .next-ci"
   tail -5 "/tmp/next-$PORT.log"

@@ -1,0 +1,18 @@
+/* M5 video surface. The clip and everything derived from it belong to one account, so nothing here
+   is styled to look shareable — no public card grid, no embed. */
+
+.video-player { width: 100%; max-width: 640px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #000; display: block; }
+
+/* The timeline: one mark per detection, positioned by its timestamp. */
+.video-track { position: relative; height: 22px; border-radius: 999px; background: linear-gradient(90deg, var(--bg-panel-2), var(--line-soft)); border: 1px solid var(--line); }
+.video-track__mark { position: absolute; top: 3px; width: 4px; height: 16px; border-radius: 2px; background: var(--warn); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4); }
+.video-track__mark:hover { background: var(--accent); }
+
+.video-frames { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.35rem; }
+.video-frames__item { margin: 0; display: flex; flex-direction: column; gap: 0.2rem; flex: 0 0 auto; }
+.video-frames__item img { width: 128px; height: auto; border: 1px solid var(--line); border-radius: 8px; display: block; background: #000; }
+.video-frames__item figcaption { font-size: 0.7rem; color: var(--text-3); }
+
+@media (max-width: 640px) {
+  .video-frames__item img { width: 104px; }
+}
