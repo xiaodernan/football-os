@@ -124,7 +124,15 @@ export default async function SimulateIndexPage() {
         </div>
       </Panel>
 
-      <Panel eyebrow={listing ? `${listing.total} of ${listing.limit_per_user} kept` : "not read"} title="This account’s matches">
+      <Panel
+        action={
+          <Link className="btn btn--ghost btn--sm" href="/career">
+            Run a season instead
+          </Link>
+        }
+        eyebrow={listing ? `${listing.total} of ${listing.limit_per_user} kept` : "not read"}
+        title="This account’s matches"
+      >
         {!listing ? (
           <p className="notice notice--warn">
             The list could not be read: {played.ok ? "the report arrived without a list" : `${played.error.code}: ${played.error.message}`}.

@@ -144,7 +144,7 @@ def list_careers(request: Request, db: Session = Depends(get_db), user: User = D
     items = []
     for career in rows:
         view = career_view(db, career, include_fixtures=False)
-        items.append(view["career"] | {"record": view["record"], "objectives_met": sum(1 for item in view["objectives"] if item["met"])})
+        items.append(view["career"] | {"record": view["record"], "objectives_met": sum(1 for item in view["objectives"] if item["met"]), "objectives_total": len(view["objectives"])})
     return {
         "items": items,
         "total": len(items),

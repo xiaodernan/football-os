@@ -32,6 +32,7 @@ const DISALLOWED = [
   // already; the account's own simulation history is not content, and a model scoreline must not be
   // crawlable as if it were a result.
   "/simulate",
+  "/career",
 ];
 
 export default function robots(): MetadataRoute.Robots {

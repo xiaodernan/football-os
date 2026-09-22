@@ -1656,6 +1656,200 @@ async function run() {
       `${Object.entries(refetch).map(([slug, code]) => `${slug.slice(-8)}→${code}`).join(' · ')}`,
     );
 
+    // 12g. M6 Career Mode (§20). A season is the visitor's choices and the server's sums, so the walk
+    // opens one, plays two rounds, checks the arithmetic the page prints, and deletes it again.
+    const anonCareer = await fetch(`${BASE}/career`, { redirect: 'manual' });
+    const anonCareerList = await fetch(`${BASE}/api/v1/careers`, { redirect: 'manual' });
+    const anonCareerOptions = await fetch(`${BASE}/api/v1/careers/options`, { redirect: 'manual' });
+    check(
+      'a signed-out visitor cannot open, list or read a career, while the knobs it is built from stay public',
+      [302, 307].includes(anonCareer.status) &&
+        (anonCareer.headers.get('location') ?? '').includes('/login?next=%2Fcareer') &&
+        anonCareerList.status === 401 &&
+        anonCareerOptions.status === 200,
+      `page ${anonCareer.status} -> ${(anonCareer.headers.get('location') ?? '').slice(0, 34)} · list ${anonCareerList.status} · options ${anonCareerOptions.status}`,
+    );
+
+    await open(page, '/simulate');
+    await waitForText(page, 'Play a fixture');
+    const seasonLinks = await page.evaluate(() => [...document.querySelectorAll('a')].map((node) => node.getAttribute('href')).filter((href) => href === '/career').length);
+    check(
+      'the simulator hands a visitor on to a season, so the career is reachable without typing a URL',
+      seasonLinks >= 1,
+      `${seasonLinks} link(s) from /simulate to /career`,
+    );
+
+    await open(page, '/career');
+    await waitForText(page, 'Open this career');
+    const formShape = await page.evaluate(() => {
+      const body = document.body.innerText;
+      const clubSelect = document.querySelector('select[aria-label="Club"]');
+      return {
+        clubs: clubSelect?.options.length ?? 0,
+        objectiveKinds: document.querySelector('select[aria-label^="objective"]')?.options.length ?? 0,
+        budgetCaveat: /nothing spends this budget yet/iu.test(body),
+        engineSentence: /labelled simulation engine/iu.test(body),
+      };
+    });
+    check(
+      'the career form offers the world clubs and the four objective kinds, and admits what a budget does not do',
+      formShape.clubs >= 20 && formShape.objectiveKinds === 4 && formShape.budgetCaveat && formShape.engineSentence,
+      `${formShape.clubs} clubs · ${formShape.objectiveKinds} objective kinds · budget caveat ${formShape.budgetCaveat} · engine ${formShape.engineSentence}`,
+    );
+
+    await page.type('input[aria-label="Manager name"]', 'QA Season Keeper');
+    await page.evaluate(() => {
+      const target = document.querySelector('input[aria-label="target"]');
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      setter?.call(target, '3');
+      target?.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await clickByText(page, 'button', 'Open this career');
+    await page.waitForFunction(() => location.pathname.startsWith('/career/'), { timeout: 60_000 });
+    const seasonUrl = new URL(page.url()).pathname;
+    const opened = await page.evaluate(() => {
+      const body = document.body.innerText;
+      const chips = [...document.querySelectorAll('.chip, .mono')].map((node) => node.textContent.trim());
+      return {
+        zeroRecord: /Rounds\s+0/ui.test(body),
+        formula: chips.find((text) => text.startsWith('sum(career_fixtures.points')) ?? '',
+        notYet: [...document.querySelectorAll('.badge')].filter((node) => node.textContent.trim() === 'NOT YET').length,
+        seedShown: /seed for the round is \d+/iu.test(body),
+        rotation: /opponents ordered by slug/iu.test(body),
+      };
+    });
+    check(
+      'a fresh season prints a zero record with the formula behind each figure, and an unmet objective with its criterion',
+      seasonUrl.startsWith('/career/') && opened.formula.toLowerCase().startsWith('sum(career_fixtures.points') && opened.notYet >= 1 && opened.rotation,
+      `${seasonUrl} · ${opened.formula} · ${opened.notYet} unmet · rotation ${opened.rotation}`,
+    );
+    check('the round about to be played is explained before it is played', opened.seedShown && opened.zeroRecord, `seed named ${opened.seedShown} · zero record ${opened.zeroRecord}`);
+    await shot(page, '31-career-season-opened');
+
+    const readSeason = async () =>
+      page.evaluate(() => {
+        const numbers = (label) => {
+          const cells = [...document.querySelectorAll('.world-kv dt, .world-kv dd')];
+          for (let index = 0; index < cells.length; index += 2) if (cells[index].textContent.trim() === label) return cells[index + 1]?.textContent.trim() ?? '';
+          return '';
+        };
+        const fixtureRows = [...document.querySelectorAll('.table tbody tr')].filter((row) => row.children.length === 9 && /^\d+$/u.test(row.children[0]?.textContent.trim() ?? ''));
+        return {
+          rounds: numbers('Rounds'),
+          points: numbers('Points'),
+          wonLine: numbers('Won / drawn / lost'),
+          consistency: [...document.querySelectorAll('p')].map((node) => node.textContent).find((text) => text.includes('re-checked')) ?? '',
+          fixtures: fixtureRows.map((row) => ({
+            round: row.children[0]?.textContent.trim() ?? '',
+            score: row.children[2]?.textContent.trim() ?? '',
+            points: Number.parseInt(row.children[4]?.textContent ?? '', 10),
+            digest: row.children[5]?.textContent.trim() ?? '',
+            seed: row.children[6]?.textContent.trim() ?? '',
+            report: row.children[8]?.querySelector('a')?.getAttribute('href') ?? '',
+          })),
+        };
+      });
+
+    await clickByText(page, 'button', 'Play the next round');
+    await page.waitForFunction(() => document.querySelector('[data-testid="career-round"]') !== null, { timeout: 90_000 });
+    const firstRound = await page.evaluate(() => {
+      const node = document.querySelector('[data-testid="career-round"]');
+      return { line: (node?.innerText ?? '').replace(/\s+/gu, ' '), chips: [...(node?.querySelectorAll('.chip') ?? [])].map((chip) => chip.textContent.trim()) };
+    });
+    await sleep(2_000);
+    const afterFirst = await readSeason();
+    check(
+      'playing a round reports the match that decided it, with digest, seed and model version on the row',
+      /Round 1 played/iu.test(firstRound.line) &&
+        firstRound.chips.some((chip) => /^digest: [0-9a-f]{16}$/u.test(chip)) &&
+        firstRound.chips.some((chip) => /^seed: \d+$/u.test(chip)) &&
+        firstRound.chips.some((chip) => /possession-block-v1@1\.0\.0/u.test(chip)),
+      `${firstRound.line.slice(0, 110)} · ${firstRound.chips.length} chips`,
+    );
+    check(
+      'the record the page prints is the arithmetic of the round it just played',
+      afterFirst.rounds === '1' && [0, 1, 3].includes(afterFirst.fixtures[0]?.points) && afterFirst.points === String(afterFirst.fixtures[0]?.points) && /^\d+ \/ \d+ \/ \d+$/u.test(afterFirst.wonLine),
+      `Rounds ${afterFirst.rounds} · W/D/L ${afterFirst.wonLine} · pts ${afterFirst.points} · row ${afterFirst.fixtures[0]?.points}`,
+    );
+    check('the season re-checks its copied score against the stored match report', /1 of 1 fixtures re-checked/iu.test(afterFirst.consistency), afterFirst.consistency.slice(0, 90) || 'no consistency sentence');
+
+    await clickByText(page, 'button', 'Play the next round');
+    await sleep(3_000);
+    await page.waitForFunction(
+      () => [...document.querySelectorAll('.world-kv dt')].some((cell) => cell.textContent.trim() === 'Rounds' && cell.nextElementSibling?.textContent.trim() === '2'),
+      { timeout: 90_000 },
+    );
+    const afterSecond = await readSeason();
+    const clubPlays = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('.table')].at(-1);
+      return [...(rows?.querySelectorAll('tbody tr') ?? [])].map((row) => Number.parseInt(row.children[2]?.textContent ?? '', 10));
+    });
+    check(
+      'two rounds make a fixture list, and the table of clubs met adds to two rows per round',
+      afterSecond.fixtures.length === 2 && afterSecond.rounds === '2' && clubPlays.length >= 2 && clubPlays.reduce((total, value) => total + (Number.isNaN(value) ? 0 : value), 0) === 4,
+      `${afterSecond.fixtures.length} rounds · plays per club ${clubPlays.join(', ')}`,
+    );
+    check(
+      'each round links out to the match report that decided it',
+      afterSecond.fixtures.every((row) => /^\/simulate\/[a-z0-9-]+$/u.test(row.report)),
+      afterSecond.fixtures.map((row) => `${row.report}`).join(' · '),
+    );
+    // Asked from the page, because the report is behind the session wall: a Node-side fetch has no
+    // cookie and would be answered with the very redirect the privacy check above asked for.
+    const reportStatus = await page.evaluate(async (path) => (await fetch(path, { credentials: 'same-origin', cache: 'no-store' })).status, afterSecond.fixtures[0]?.report ?? '/career');
+    check('the linked report is a page of its own and answers 200 for the owner', reportStatus === 200, `${afterSecond.fixtures[0]?.report} -> ${reportStatus}`);
+    await shot(page, '32-career-after-two-rounds');
+
+    const listRow = await page.evaluate(async () => {
+      const body = await (await fetch('/api/v1/careers', { credentials: 'same-origin' })).json();
+      return { total: body.total, met: body.items[0]?.objectives_met, outOf: body.items[0]?.objectives_total, limit: body.limit_per_user };
+    });
+    check('the account list counts the season it holds and states its ceiling', listRow.total >= 1 && listRow.outOf >= 1 && listRow.limit === 5, `total ${listRow.total} · objectives ${listRow.met}/${listRow.outOf} · ceiling ${listRow.limit}`);
+
+    await open(page, '/career');
+    await waitForText(page, 'Your seasons');
+    const listed = await page.evaluate(() => document.body.innerText.replace(/\s+/gu, ' '));
+    check(
+      'the career list shows the season with the record the season page summed',
+      /QA Season Keeper/iu.test(listed) && /of 5 used/iu.test(listed) && /\b\d of \d+\b/iu.test(listed),
+      listed.slice(listed.indexOf('Your seasons'), listed.indexOf('Your seasons') + 130),
+    );
+
+    await open(page, seasonUrl);
+    await waitForText(page, 'Play it out');
+    await clickByText(page, 'button', 'Retire from this club');
+    await sleep(2_500);
+    const retired = await page.evaluate(() => {
+      const play = [...document.querySelectorAll('button')].find((node) => node.textContent.includes('Play the next round'));
+      return { copy: /retired/iu.test(document.body.innerText), playDisabled: play?.disabled ?? false, found: Boolean(play) };
+    });
+    check('retiring the season stops the rounds and says so on the page', retired.copy && retired.found && retired.playDisabled, `copy ${retired.copy} · button found ${retired.found} · play disabled ${retired.playDisabled}`);
+    await clickByText(page, 'button', 'Take charge again');
+    await sleep(2_500);
+    const resumed = await page.evaluate(() => [...document.querySelectorAll('button')].find((node) => node.textContent.includes('Play the next round'))?.disabled ?? true);
+    check('taking charge again re-enables the next round', resumed === false, `play still disabled after resuming: ${resumed}`);
+
+    await clickByText(page, 'button', 'Delete this career');
+    await page.waitForFunction(() => location.pathname === '/career', { timeout: 60_000 });
+    await waitForText(page, 'No career opened yet', 30_000);
+    const afterDelete = await page.evaluate(async () => {
+      const careers = await (await fetch('/api/v1/careers', { credentials: 'same-origin' })).json();
+      const sims = await (await fetch('/api/v1/simulate', { credentials: 'same-origin' })).json();
+      return { careers: careers.total, matches: sims.total };
+    });
+    check(
+      'deleting a season removes the season and keeps the match reports the account chose to play',
+      afterDelete.careers === 0 && afterDelete.matches >= 2,
+      `careers ${afterDelete.careers} · stored matches left ${afterDelete.matches}`,
+    );
+    const robotsCareer = await (await fetch(`${BASE}/robots.txt`)).text();
+    const sitemapCareer = await (await fetch(`${BASE}/sitemap.xml`)).text();
+    check(
+      'a season stays out of the crawl: robots disallows it and the sitemap does not list it',
+      /Disallow:\s*\/career$/mu.test(robotsCareer) && !sitemapCareer.includes('/career'),
+      `robots rule ${/Disallow:\s*\/career$/mu.test(robotsCareer)} · sitemap mentions ${sitemapCareer.includes('/career')}`,
+    );
+
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
 
     await page.setViewport(MOBILE);

@@ -17,6 +17,8 @@ const PROTECTED_PREFIXES = [
   "/my-football",
   "/coach",
   "/training",
+  // A season is an account's fiction about a generated club, so it is read only by its owner.
+  "/career",
   "/progress",
   "/history",
   "/settings",

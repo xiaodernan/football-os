@@ -1325,3 +1325,139 @@ export type SimReplay = {
   replayed_score?: SimScore;
   model_version?: string;
 };
+
+/** --- M6 Career Mode (spec §20). Mirrors `app/services/simulation/career.career_view`. --- */
+export type CareerRow = {
+  id: string;
+  slug: string;
+  manager_name: string;
+  club_id: string | null;
+  club_name: string;
+  club_short: string;
+  club_path: string | null;
+  competition_name: string;
+  season: string;
+  philosophy: string;
+  system_slug: string;
+  system_path: string | null;
+  budget: number;
+  budget_units: string;
+  rounds_played: number;
+  status: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** Every figure here is summed from the career's own fixture rows on the request. */
+export type CareerRecord = {
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goals_for: number;
+  goals_against: number;
+  goal_difference: number;
+  points: number;
+  points_formula: string;
+  goal_difference_formula: string;
+  unbeaten_run: number;
+  form: string[];
+};
+
+export type CareerObjective = {
+  kind: string;
+  label: string;
+  target: number;
+  actual: number;
+  met: boolean;
+  formula: string;
+};
+
+export type CareerTableRow = {
+  position: number;
+  club_id: string | null;
+  name: string;
+  short_name: string;
+  played: number;
+  goals_for: number;
+  goals_against: number;
+  goal_difference: number;
+  points: number;
+  is_career_club: boolean;
+};
+
+export type CareerFixtureRow = {
+  round_index: number;
+  side: "home" | "away";
+  opponent_name: string;
+  opponent_short: string;
+  opponent_path: string;
+  venue_name: string;
+  club_goals: number;
+  opponent_goals: number;
+  outcome: "W" | "D" | "L";
+  points: number;
+  digest: string;
+  seed: number;
+  model_version: string;
+  match_slug: string;
+  match_path: string | null;
+  match_still_stored: boolean;
+};
+
+export type CareerNextFixture = {
+  available: boolean;
+  reason?: string;
+  round_index: number;
+  side?: string;
+  opponent_name?: string;
+  opponent_short?: string;
+  venue_name?: string;
+  venue_club?: string;
+  cycle?: number;
+  of?: number;
+  rotation?: string;
+  seed?: number;
+};
+
+export type CareerView = {
+  career: CareerRow;
+  record: CareerRecord;
+  objectives: CareerObjective[];
+  table: CareerTableRow[];
+  fixtures?: CareerFixtureRow[];
+  consistency: string;
+  model_versions: string[];
+  limitations: { budget: string; philosophy: string; table: string; objectives: string };
+  next_fixture?: CareerNextFixture;
+  played?: boolean;
+  match?: { slug: string; path: string; digest: string; seed: number; model_version: string };
+  status?: string;
+  data_origin: string;
+  is_demo_data: boolean;
+  demo_data: boolean;
+  disclaimer: string;
+};
+
+export type CareerList = {
+  items: (CareerRow & { record: CareerRecord; objectives_met: number; objectives_total: number })[];
+  total: number;
+  limit_per_user: number;
+  data_origin: string;
+  is_demo_data: boolean;
+  demo_data: boolean;
+  disclaimer: string;
+};
+
+export type CareerOptions = {
+  clubs: SimTeamOption[];
+  systems: SimSystemOption[];
+  philosophies: string[];
+  objective_kinds: Record<string, string>;
+  budget_ceiling: number;
+  budget_units: string;
+  max_careers_per_user: number;
+  data_origin: string;
+  is_demo_data: boolean;
+  disclaimer: string;
+};
