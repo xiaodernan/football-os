@@ -8,6 +8,7 @@ import type {
   MatchList,
   NewsList,
   PlayerList,
+  SystemList,
   TeamList,
   WorldEnvelope,
 } from "@/lib/types";
@@ -26,6 +27,7 @@ export const dynamic = "force-dynamic";
 const PUBLIC: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "/knowledge", changeFrequency: "weekly", priority: 0.9 },
   { path: "/world", changeFrequency: "daily", priority: 0.9 },
+  { path: "/tactics", changeFrequency: "weekly", priority: 0.9 },
   { path: "/world/competitions", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/teams", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/players", changeFrequency: "weekly", priority: 0.8 },
@@ -33,7 +35,7 @@ const PUBLIC: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["ch
   { path: "/world/news", changeFrequency: "daily", priority: 0.8 },
 ];
 
-/** `/world/search` is deliberately absent: a query page is not content (see its own `robots`). */
+/** `/world/search` and `/tactics/compare` are absent: a query page is not content (both are `noindex`). */
 
 type Row = { path: string };
 type StampRow = Row & { kickoff_at?: string | null; published_at?: string | null };
@@ -67,13 +69,14 @@ function entries(rows: StampRow[], dateKey?: "kickoff_at" | "published_at", prio
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [documents, competitions, teams, players, matches, articles] = await Promise.all([
+  const [documents, competitions, teams, players, matches, articles, systems] = await Promise.all([
     serverFetch<KnowledgeDocumentList>("/knowledge/documents"),
     collect<CompetitionList["items"][number]>("/world/competitions", 100),
     collect<TeamList["items"][number]>("/world/teams", 100),
     collect<PlayerList["items"][number]>("/world/players", 200),
     collect<MatchList["items"][number]>("/world/matches", 200),
     collect<NewsList["items"][number]>("/world/news", 100),
+    collect<SystemList["items"][number]>("/tactics", 50),
   ]);
 
   const fixed = PUBLIC.map((entry) => ({
@@ -82,18 +85,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: entry.priority,
   }));
 
-  const world = [
+  const entities = [
     ...entries(competitions, undefined, 0.8),
     ...entries(teams, undefined, 0.8),
     ...entries(players, undefined, 0.7),
     ...entries(matches, "kickoff_at", 0.6),
     ...entries(articles, "published_at", 0.6),
+    ...entries(systems, undefined, 0.7),
   ];
 
-  if (!documents.ok) return [...fixed, ...world];
+  if (!documents.ok) return [...fixed, ...entities];
   return [
     ...fixed,
-    ...world,
+    ...entities,
     ...documents.data.items.map((doc) => ({
       url: absolute(`/knowledge/${encodeURIComponent(doc.slug)}`),
       lastModified: new Date(doc.last_reviewed ?? doc.ingested_at ?? Date.now()),

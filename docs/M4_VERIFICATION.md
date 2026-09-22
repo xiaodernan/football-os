@@ -1,8 +1,9 @@
 # M4 Tactical Lab — backend verification (spec §11–§13, §62, §65)
 
 Date: 2026-09-22 · Tier: `apps/api` · Scope: the geometry, the 50-system catalogue, its storage and
-`/api/v1/tactics/*`. **The board UI, the animation, user-saved boards and the AI feedback loop are not
-claimed here** — see §7. `/tactics/{slug}` is therefore not in the sitemap and no page links to it yet.
+`/api/v1/tactics/*`. The pages that consume it — `/tactics`, `/tactics/{slug}`, `/tactics/compare` — are verified in
+[`M4_WEB_VERIFICATION.md`](M4_WEB_VERIFICATION.md); what M4 still does not claim (user-saved boards, animation, AI
+commentary) is listed in §7.
 
 ## 1. Why this milestone starts with a coordinate system
 
@@ -106,10 +107,11 @@ curl -s "localhost:8731/api/v1/tactics/compare?a=4-3-3-press-high&b=4-3-3-low-bl
 
 ## 7. Not claimed by this milestone
 
-* **No board UI yet.** `/tactics/{slug}` is served by no page, so it is deliberately absent from
-  `sitemap.ts` — advertising a route that 404s is the §80 failure mode, not a formatting slip.
+* **The web surface is verified separately.** `/tactics`, `/tactics/{slug}` and `/tactics/compare` are live, and the
+  50 system URLs are in `sitemap.ts` — the browser evidence is in [`M4_WEB_VERIFICATION.md`](M4_WEB_VERIFICATION.md).
 * **No animation.** The two phases are stored as one transform pair so animation is a rendering job,
-  but nothing renders them yet.
+  but nothing renders them yet. The counterfactual view draws the displacement as arrows, which is the
+  same data a tween would interpolate.
 * **No user-saved or shared boards.** §65's M4 gate includes drag/draw/save/share: that needs an
   owned `tactic_boards` table plus a share token, which is §21 (community) plumbing, not a
   read endpoint. Not started.

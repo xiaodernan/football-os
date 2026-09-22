@@ -776,3 +776,150 @@ export type WorldSearchResponse = WorldEnvelope & {
   types: string[];
   note: string;
 };
+
+/* ---------------------------------------------------------------------------
+ * M4 Tactical Lab — GET /api/v1/tactics/* (spec §11–§13, §62, §65, §80).
+ *
+ * These rows are `project-authored`, not synthetic: the coordinates are a design
+ * artefact of this repository and every figure is measured from them, which is why
+ * `is_demo_data` is false here and the disclaimer talks about measurement instead of
+ * invention. The board is stored as data, so the shapes below mirror `Role.to_dict`
+ * and `Metric.to_dict` from the API rather than restating them.
+ * ------------------------------------------------------------------------- */
+
+export type BoardSlot = { role: string; label: string; band: string; x: number; y: number; zone: string };
+
+export type BoardMetric = { key: string; label: string; value: number; unit: string; formula: string };
+
+export type RoleCard = {
+  key: string;
+  label: string;
+  band: string;
+  in_possession: string;
+  out_of_possession: string;
+  instructions: string[];
+  demands: Record<string, number>;
+  risk: string;
+};
+
+export type ChangeCard = { key: string; label: string; note: string; phase: string; target: string[] };
+
+export type TacticsStatus = TacticsProvenance & {
+  ready: boolean;
+  counts: Record<string, number>;
+  gate: Record<string, number>;
+  stored: number;
+  catalogue_fingerprint: string;
+  formations: string[];
+  temperaments: string[];
+  metrics: BoardMetric[];
+  metric_keys: string[];
+  changes: ChangeCard[];
+  auto_sync: boolean;
+  units: Record<string, string>;
+  note: string;
+};
+
+/** The API's provenance trio for this dataset — authored content, so `is_demo_data` is false. */
+export type TacticsProvenance = { data_origin: string; is_demo_data: boolean; disclaimer: string };
+
+export type SystemBrief = TacticsProvenance & {
+  id: string;
+  slug: string;
+  path: string;
+  name: string;
+  formation: string;
+  temperament_key: string;
+  temperament_label: string;
+  idea: string;
+  press_line_y: number;
+  block_depth: number;
+  content_hash: string;
+  in_possession: Record<string, number>;
+  out_of_possession: Record<string, number>;
+  strengths: string[];
+  risks: string[];
+};
+
+export type SystemList = TacticsProvenance & {
+  items: SystemBrief[];
+  page: number;
+  page_size: number;
+  total: number;
+  pages: number;
+  formations: string[];
+  temperaments: string[];
+};
+
+export type SystemDetail = TacticsProvenance & {
+  id: string;
+  slug: string;
+  path: string;
+  name: string;
+  formation: string;
+  temperament_key: string;
+  temperament_label: string;
+  idea: string;
+  press_line_y: number;
+  block_depth: number;
+  defensive_narrowing: number;
+  content_hash: string;
+  build_up: string;
+  tempo: string;
+  pressing_trigger: string;
+  width_note: string;
+  instructions: string[];
+  demands: Record<string, number>;
+  strengths: string[];
+  risks: string[];
+  phase_in: BoardSlot[];
+  phase_out: BoardSlot[];
+  metrics_in: BoardMetric[];
+  metrics_out: BoardMetric[];
+  roles: RoleCard[];
+  counterfactuals: ChangeCard[];
+  changes: ChangeCard[];
+  transform_note: string;
+};
+
+export type CounterfactualMetric = {
+  key: string;
+  label: string;
+  unit: string;
+  formula: string;
+  before: number;
+  after: number;
+  delta: number;
+  moved: boolean;
+};
+
+export type CounterfactualResponse = TacticsProvenance & {
+  system: SystemBrief;
+  change: ChangeCard;
+  phase: string;
+  board_before: BoardSlot[];
+  board_after: BoardSlot[];
+  metrics: CounterfactualMetric[];
+  moved_count: number;
+  clamped: { role: string; asked: { x: number; y: number }; placed: { x: number; y: number } }[];
+  recomputed: boolean;
+  note: string;
+};
+
+export type CompareMetricRow = {
+  key: string;
+  label: string;
+  unit: string;
+  formula: string;
+  a: number;
+  b: number;
+  delta: number;
+};
+
+export type CompareResponse = TacticsProvenance & {
+  a: SystemBrief;
+  b: SystemBrief;
+  phase: string;
+  metrics: CompareMetricRow[];
+  note: string;
+};

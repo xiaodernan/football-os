@@ -89,7 +89,7 @@ async function bodyText(page) {
  * of the product. A refused connection is reported as status 0 so the check fails loudly instead
  * of throwing and aborting the run.
  */
-async function probeStatuses(urls, concurrency = 8) {
+async function probeStatuses(urls, concurrency = 6) {
   const outcomes = new Array(urls.length);
   let cursor = 0;
   const workers = Array.from({ length: Math.min(concurrency, urls.length) }, async () => {
@@ -98,9 +98,11 @@ async function probeStatuses(urls, concurrency = 8) {
       cursor += 1;
       if (index >= urls.length) return;
       try {
-        outcomes[index] = (await fetch(urls[index])).status;
-      } catch {
-        outcomes[index] = 0;
+        // A stalled render must become a failed check, not a hung run: without the timeout one
+        // page that never answers parks the whole walk until something external kills the process.
+        outcomes[index] = (await fetch(urls[index], { signal: AbortSignal.timeout(25_000) })).status;
+      } catch (error) {
+        outcomes[index] = error?.name === 'TimeoutError' ? 408 : 0;
       }
     }
   });
@@ -793,6 +795,167 @@ async function run() {
       `${brokenSlug.status}`,
     );
 
+    // 12c. Tactical Lab (M4): the board is drawn from metres, a "what if" is a URL, and no
+    // measurement reaches the page without the formula that produced it.
+    const tacticsApi = async (path) => {
+      const response = await fetch(`${BASE}/api/v1/tactics${path}`);
+      if (!response.ok) throw new Error(`GET /api/v1/tactics${path} → ${response.status}`);
+      return response.json();
+    };
+    const tacticsStatus = await tacticsApi('/status');
+    const tacticsList = await tacticsApi('?page_size=50');
+    const tactic = tacticsList.items.find((item) => item.slug === '4-3-3-press-high') ?? tacticsList.items[0];
+    const tacticDetail = await tacticsApi(`/${tactic.slug}`);
+    const sibling = tacticsList.items.find((item) => item.formation === tactic.formation && item.slug !== tactic.slug);
+
+    check(
+      'the tactics API serves the whole authored catalogue to a signed-out visitor',
+      tacticsStatus.ready === true && tacticsStatus.stored === 50 && tacticsStatus.metrics.length === 8 && tacticsStatus.changes.length === 6,
+      `${tacticsStatus.stored} systems · ${tacticsStatus.metric_keys.length} measures · ${tacticsStatus.changes.length} changes`,
+    );
+    check(
+      'the sitemap advertises all 50 systems and neither query page',
+      bySegment('tactics') === 50 &&
+        !locs.some((url) => /\/tactics\/compare/iu.test(url)) &&
+        tacticsList.items.every((item) => locs.includes(`${BASE}${item.path}`)),
+      `${bySegment('tactics')} tactics entries of ${locs.length} total`,
+    );
+
+    await open(page, '/tactics');
+    await waitForText(page, 'Tactical Lab');
+    const tacticsIndex = await bodyText(page);
+    // Rendered text is compared with whitespace collapsed: `innerText` re-breaks a long paragraph at
+    // every visual line, which is not the page failing to say the thing.
+    const flatten = (value) => value.replace(/\s+/gu, ' ').trim();
+    const tacticsPlain = flatten(tacticsIndex);
+    check(
+      'the lab index is labelled PROJECT AUTHORED and never claims to be demo data',
+      /PROJECT AUTHORED/u.test(tacticsIndex) && !/DEMO DATA/u.test(tacticsIndex),
+      tacticsIndex.split('\n').filter((line) => /AUTHORED|DEMO DATA/iu.test(line)).slice(0, 3).join(' | ') || 'no label found',
+    );
+    check(
+      'the lab index repeats the API disclaimer verbatim',
+      tacticsPlain.includes(flatten(tacticsStatus.disclaimer)),
+      `${flatten(tacticsStatus.disclaimer).slice(0, 70)}… present: ${tacticsPlain.includes(flatten(tacticsStatus.disclaimer))}`,
+    );
+    check(
+      'the index prints the eight formulas and one real board of eleven positions',
+      (await page.evaluate(() => document.querySelectorAll('.tac-formula').length)) >= 8 &&
+        (await page.evaluate(() => document.querySelectorAll('.pitch-dot').length)) === 11,
+      await page.evaluate(
+        () =>
+          `${document.querySelectorAll('.tac-formula').length} formula cells · ${document.querySelectorAll('.pitch-dot').length} players drawn`,
+      ),
+    );
+    check('Tactical Lab is reachable from the navigation', await page.evaluate(() => !!document.querySelector('.nav__link[href="/tactics"]')));
+    await shot(page, '31-tactics-index-desktop');
+
+    await open(page, tactic.path);
+    await waitForText(page, 'Both phases, one structure');
+    const detailBody = await bodyText(page);
+    const detailHead = await pageHead(tactic.path);
+    check(
+      'a system page draws both phases from the same eleven roles',
+      (await page.evaluate(() => document.querySelectorAll('.pitch-dot').length)) === 22 &&
+        (await page.evaluate(() => document.querySelectorAll('.table tbody tr').length)) >= 11 + 8 + 8,
+      await page.evaluate(() => `${document.querySelectorAll('.pitch-dot').length} dots across both boards`),
+    );
+    check(
+      'every measurement on the page repeats the rule that produced it',
+      (await page.evaluate(() => [...document.querySelectorAll('.tac-formula')].every((cell) => cell.textContent.trim().length > 20))) &&
+        (await page.evaluate(() => document.querySelectorAll('.tac-formula').length)) >= 16,
+      await page.evaluate(() => `${document.querySelectorAll('.tac-formula').length} formula cells`),
+    );
+    check(
+      'the verdicts on the page are the ones the API graded from its own measurements',
+      tacticDetail.strengths.every((line) => detailBody.includes(line)) && tacticDetail.risks.every((line) => detailBody.includes(line)),
+      tacticDetail.strengths[0]?.slice(0, 110) ?? 'no verdicts',
+    );
+    check(
+      'the authored transform is stated with its own numbers, not presented as two drawings',
+      detailBody.includes(`${tacticDetail.block_depth} m`) && /same eleven players rescaled/iu.test(detailBody),
+      detailBody.match(/out-of-possession board is the same[^.]*\./iu)?.[0]?.slice(0, 120) ?? 'no transform note',
+    );
+    const tacticGraph = detailHead.jsonLd.find((node) => node['@type'] === 'Article');
+    check(
+      'the system page carries Article structured data whose URL is its canonical',
+      tacticGraph?.headline === tacticDetail.name && tacticGraph?.url === detailHead.canonical,
+      `${tacticGraph?.headline ?? 'no Article'} · ${detailHead.canonical}`,
+    );
+    await shot(page, '32-tactics-detail-desktop');
+
+    const counterfactualJson = await tacticsApi(`/${tactic.slug}/counterfactual?change=raise-back-line`);
+    const movedCount = counterfactualJson.board_before.filter(
+      (row, index) => row.x !== counterfactualJson.board_after[index].x || row.y !== counterfactualJson.board_after[index].y,
+    ).length;
+    await open(page, `${tactic.path}?change=raise-back-line`);
+    await waitForText(page, 'The board, before and after');
+    const counterfactual = await page.evaluate(() => {
+      const row = [...document.querySelectorAll('.table tbody tr')].find((candidate) => candidate.textContent.includes('Space behind'));
+      const cells = row ? [...row.querySelectorAll('td')].map((cell) => cell.textContent.trim()) : [];
+      return {
+        cells,
+        arrows: document.querySelectorAll('.pitch-moves line').length,
+        ghosts: document.querySelectorAll('.pitch-dot--ghost').length,
+        clamped: document.body.innerText.includes('would have left the pitch'),
+      };
+    });
+    check(
+      'the board draws exactly the displacements the API reported',
+      counterfactual.arrows === movedCount && counterfactual.ghosts === 11,
+      `${counterfactual.arrows} arrows drawn · ${movedCount} positions moved in the payload · ${counterfactual.ghosts} hollow before-positions`,
+    );
+    const behind = Number.parseFloat(counterfactual.cells[1] ?? '0');
+    const behindAfter = Number.parseFloat(counterfactual.cells[2] ?? '0');
+    check(
+      'raising the back line costs exactly the metres it buys, on the page and not just in a test',
+      counterfactual.cells.length === 5 && behindAfter - behind === 8,
+      counterfactual.cells.join(' | ').slice(0, 120),
+    );
+    await shot(page, '33-tactics-counterfactual-desktop');
+
+    await open(page, `${tactic.path}?change=teleport-the-striker`);
+    await waitForText(page, 'is not one of the');
+    check(
+      'an invented change is refused by name and the offered six are listed',
+      (await bodyText(page)).includes('6 changes this lab offers'),
+      'unknown-change notice rendered',
+    );
+
+    if (sibling) {
+      await open(page, `/tactics/compare?a=${encodeURIComponent(tactic.slug)}&b=${encodeURIComponent(sibling.slug)}&phase=out`);
+      await waitForText(page, 'Eight measurements, side by side');
+      const compared = await page.evaluate(() => {
+        const row = [...document.querySelectorAll('.table tbody tr')].find((candidate) => candidate.textContent.includes('Space behind'));
+        return {
+          cells: row ? [...row.querySelectorAll('td')].map((cell) => cell.textContent.trim()) : [],
+          robots: document.head.querySelector('meta[name="robots"]')?.content ?? '',
+          boards: document.querySelectorAll('.pitch-dot').length,
+        };
+      });
+      check(
+        'the comparison board measures both sides and keeps itself out of the index',
+        /noindex/iu.test(compared.robots) && compared.boards === 22 && compared.cells.length === 5,
+        `${compared.robots || 'no robots meta'} · ${compared.boards} dots`,
+      );
+      check(
+        'the same shape under two temperaments really differs where the words say it differs',
+        Number.parseFloat(compared.cells[1]) > Number.parseFloat(compared.cells[2]),
+        `${tactic.slug} ${compared.cells[1]} vs ${sibling.slug} ${compared.cells[2]}`,
+      );
+      await shot(page, '34-tactics-compare-desktop');
+    }
+
+    await open(page, '/tactics/compare');
+    await waitForText(page, 'Pick two different systems');
+    check(
+      'an unchosen comparison explains itself instead of inventing a row',
+      (await bodyText(page)).includes('Until both are chosen nothing is computed'),
+    );
+
+    const brokenTactic = await fetch(`${BASE}/tactics/4-3-3-not-a-temperament`);
+    check('an unknown tactical system is a 404, not an empty board', brokenTactic.status === 404, `${brokenTactic.status}`);
+
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
     await page.setViewport(MOBILE);
     const mobileSurface = async ([path, marker, label]) => {
@@ -827,6 +990,12 @@ async function run() {
       [worldPlayed.path, 'Who scored', 'world-match'],
       [worldCup.path, 'Entrants', 'world-cup'],
       [worldArticle.path, 'Claim class', 'world-news'],
+      ['/tactics', 'Systems', 'tactics'],
+      [tactic.path, 'Both phases', 'tactics-detail'],
+      [`${tactic.path}?change=raise-back-line`, 'before and after', 'tactics-counterfactual'],
+      sibling
+        ? [`/tactics/compare?a=${encodeURIComponent(tactic.slug)}&b=${encodeURIComponent(sibling.slug)}&phase=out`, 'side by side', 'tactics-compare']
+        : ['/tactics/compare', 'Pick two different systems', 'tactics-compare'],
       ['/settings', 'Data', 'settings'],
     ]) {
       await mobileSurface(surface);
@@ -853,7 +1022,9 @@ async function run() {
     await open(page, '/login').catch(() => {});
     await shot(page, 'abort-login').catch(() => {});
   } finally {
-    await browser.close();
+    // If Chrome died mid-walk, closing must not throw from the finally — that would swallow the
+    // report for the ~80 checks that already passed and leave one silent exit code behind.
+    await browser.close().catch(() => {});
   }
 
   const failed = results.filter((result) => !result.ok);

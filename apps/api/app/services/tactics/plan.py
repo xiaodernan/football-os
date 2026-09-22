@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Final
 
+from app.models import TACTICS_DISCLAIMER
 from app.services.tactics.analysis import CHANGES, Shape, in_possession, metrics_of, out_of_possession
 from app.services.tactics.roles import ROLES
 from app.services.tactics.shapes import FORMATION_SHAPES, TEMPERAMENTS
@@ -35,14 +36,13 @@ __all__ = [
 ]
 
 SYSTEM_COUNT: Final = 50
+
+# One disclaimer for this dataset, owned by the model layer that the API envelopes read. Duplicating
+# the sentence here is how a page ends up labelling the same row two different ways.
 PROVENANCE: Final = {
     "data_origin": "project-authored",
     "is_demo_data": False,
-    "disclaimer": (
-        "Tactical systems here are project-authored coaching structures: the coordinates are written by this repository, "
-        "and every width, spacing and separation figure is measured from them. Nothing on a tactics page records how a "
-        "real team actually played — there is no tracking data and no provider call."
-    ),
+    "disclaimer": TACTICS_DISCLAIMER,
 }
 RANKED_METRICS: Final = ("space_behind", "spacing", "width", "line_separation", "isolation", "balance")
 

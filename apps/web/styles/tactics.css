@@ -1,0 +1,57 @@
+/* M4 Tactical Lab. Class prefixes `.pitch-` (the drawn board) and `.tac-` (page furniture);
+   everything else comes from styles/globals.css. The board must survive 375px with no client JS. */
+
+.pitch { margin: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.pitch svg { width: 100%; height: auto; max-width: 420px; display: block; }
+.pitch__caption { font-size: 0.78rem; }
+
+.pitch-turf { fill: #0c1a14; stroke: var(--line); stroke-width: 0.4; }
+.pitch-mow { stroke: rgba(255, 255, 255, 0.02); stroke-width: 0.2; }
+.pitch-lines { fill: none; stroke: rgba(232, 238, 247, 0.42); stroke-width: 0.35; }
+.pitch-goals rect { fill: none; stroke: rgba(232, 238, 247, 0.55); stroke-width: 0.4; }
+.pitch-spots circle { fill: rgba(232, 238, 247, 0.55); }
+.pitch-axis { fill: var(--text-3); font-size: 2.6px; font-family: var(--mono); }
+
+.pitch-moves line { stroke: var(--warn); stroke-width: 0.45; stroke-dasharray: 1.6 1.1; }
+#pitch-arrow path { fill: var(--warn); }
+
+.pitch-dot circle { stroke: #04140c; stroke-width: 0.25; }
+.pitch-dot--goalkeeper circle { fill: #ffd166; }
+.pitch-dot--defensive circle { fill: #5fa8ff; }
+.pitch-dot--midfield circle { fill: #35f0a4; }
+.pitch-dot--attacking circle { fill: #ff6b6b; }
+.pitch-dot--ghost circle { fill: rgba(11, 17, 28, 0.65); stroke: var(--text-3); stroke-dasharray: 0.9 0.7; }
+.pitch-ring { fill: none; stroke: rgba(255, 182, 72, 0.55); stroke-width: 0.3; }
+
+.pitch-label { fill: #04140c; font-size: 2.5px; font-weight: 700; text-anchor: middle; font-family: var(--mono); }
+.pitch-label--ghost { fill: var(--text-2); }
+
+.band-legend { display: flex; flex-wrap: wrap; gap: 0.45rem; font-size: 0.76rem; color: var(--text-2); }
+.band-legend__key { display: inline-flex; align-items: center; gap: 0.3rem; }
+.band-legend__dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+.tac-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+.tac-card {
+  display: flex; flex-direction: column; gap: 0.35rem; padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg-panel-2);
+}
+.tac-card:hover { border-color: var(--accent-dim); }
+.tac-card__name { font-weight: 650; }
+.tac-card__idea { font-size: 0.82rem; color: var(--text-2); }
+.tac-card__metrics { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.15rem; }
+
+.tac-verdicts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.tac-metric { font-variant-numeric: tabular-nums; }
+.tac-metric--up { color: var(--accent); }
+.tac-metric--down { color: var(--warn); }
+.tac-formula { font-family: var(--mono); font-size: 0.72rem; color: var(--text-3); }
+.tac-boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+
+@media (max-width: 900px) {
+  .tac-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .tac-cards, .tac-verdicts, .tac-boards { grid-template-columns: minmax(0, 1fr); }
+  .pitch svg { max-width: 100%; }
+  .pitch-label { font-size: 3px; }
+}

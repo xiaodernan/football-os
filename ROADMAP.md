@@ -8,7 +8,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M1 Player + AI Coach vertical slice** | Create user → create player → profile → training → completion → AI Coach → progress → history | closed loop usable in browser with real persistence | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M2 Football Knowledge + RAG** | ingestion, chunking, embeddings, pgvector hybrid retrieval, rerank, citations, Football AI | answers carry resolvable source citations | ✅ verified 2026-09-21 ([evidence](docs/M2_VERIFICATION.md)) |
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) |
-| **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | 🔨 backend verified 2026-09-22 ([evidence](docs/M4_VERIFICATION.md)) · board, animation and web pending |
+| **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | 🔨 backend + lab pages verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) · editable board, animation, cited AI pending |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ⬜ |
 | **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | ⬜ |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
@@ -75,12 +75,21 @@ Verified 2026-09-22 (the pure layer + storage + reads, 99 tests):
 7. [x] served: 5 public `/api/v1/tactics/*` routes (status, list with formation/temperament/search filters, detail, counterfactual, compare); metrics are recomputed from the stored coordinates, and every response repeats its provenance and disclaimer; `m4_tactical_lab` is derived from the row count
 8. [x] 188 tests green on SQLite **and** PostgreSQL+pgvector; ruff + mypy clean (53 files); `docs/api/openapi.json` regenerated (45 paths / 49 operations)
 
+Web surface (verified 2026-09-22):
+
+9. [x] `/tactics` index — counted store, the eight measures with their formulas, one real board, filters by shape and temperament, JS-free pagination and search
+10. [x] `/tactics/{slug}` — the last §80 route shape the site did not serve: both phases drawn from the stored metres by `components/pitch.tsx` (server-rendered SVG, Law 1 markings, band colours, no client JS), the transform stated with its own numbers, the roles in the field, and the graded verdicts quoted character for character from the API
+11. [x] `/tactics/{slug}?change=…` — a counterfactual is a URL: before-positions hollow, each moved player drawn as an arrow, the delta table beside it, and clamps reported rather than hidden
+12. [x] `/tactics/compare?a=&b=&phase=` — plain GET form, `noindex, follow`, both boards measured side by side
+13. [x] `sitemap.ts` gained the 50 system URLs in the same commit (1034 `<loc>` entries, each answering 200); `PROJECT AUTHORED` labelling is single-sourced in `OriginBadge` and asserted absent-of-`DEMO DATA` in the walk
+14. [x] 136/136 browser assertions at 1440px and 375px against a production build, 54 PNGs, zero console errors — `docs/M4_WEB_VERIFICATION.md`
+
 Still open in M4:
 
-1. [ ] AI tactical analysis that cites the knowledge-corpus principle it checked against (reuses M2 retrieval, so a verdict is traceable rather than praised) and compares a user player's six tactical attributes against a system's `demands`
-2. [ ] the board itself: a server-rendered SVG pitch at `/tactics/{slug}` (the last §80 route shape the site does not serve), `/tactics` index, plus the user-editable board — drag/draw/save/share needs an owned `tactic_boards` row and a share token, not just a picture
+1. [ ] AI tactical analysis that cites the knowledge-corpus principle it checked against, plus `/tactics/{slug}/fit` against a user player's six tactical attributes (endpoints written; retrieval, tests and the UI panel are not yet)
+2. [ ] the editable board: drag/draw/save/share needs an owned `tactic_boards` row plus a share token (§21 territory), not just a picture
 3. [ ] animation: interpolate the two stored phases, with the transform printed beside it
-4. [ ] `visual-qa.mjs` tactics assertions at 1440px/375px against a production build, and `sitemap.ts` entries in the same commit that the pages exist
+4. [ ] 3D pitch (spec §13 lists 2D/3D; 2D is what ships)
 
 Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,
 `scripts/export_openapi.py`, `apps/web/scripts/visual-qa.mjs`. `docs/api/openapi.json` remains the

@@ -4,7 +4,7 @@
    type:   .eyebrow .lede .muted .mono .num .h1 .h2 .h3 .upper
    panels: .panel .panel__head .panel__title .panel__body .panel__foot .section
    data:   .stat .stat__value .stat__label .bar .bar__fill .kv .kv__key .kv__value
-   cards:  .player-card .ovr .chip .badge .badge--demo .badge--sim .badge--live .tag-list
+   cards:  .player-card .ovr .chip .badge .badge--demo .badge--authored .badge--sim .badge--live .tag-list
    forms:  .field .field__label .field__hint .form-grid .input .select .textarea .check
    buttons:.btn .btn--primary .btn--ghost .btn--danger .btn--sm
    lists:  .list .list__item .reasons .reasons__item
@@ -130,6 +130,8 @@ h1, h2, h3, h4, p { margin: 0; }
   text-transform: uppercase; border: 1px solid transparent;
 }
 .badge--demo { color: var(--warn); border-color: rgba(255, 182, 72, 0.4); background: rgba(255, 182, 72, 0.1); }
+/* Authored by this project (knowledge corpus, tactical catalogue): neither demo data nor a live source. */
+.badge--authored { color: var(--accent); border-color: rgba(53, 240, 164, 0.45); background: rgba(53, 240, 164, 0.08); }
 .badge--sim { color: var(--info); border-color: rgba(95, 168, 255, 0.4); background: rgba(95, 168, 255, 0.1); }
 .badge--live { color: var(--accent); border-color: rgba(53, 240, 164, 0.4); background: var(--accent-soft); }
 

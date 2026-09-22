@@ -33,18 +33,23 @@ export function formatMoment(iso: string | null | undefined): string {
     .DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" }).format(stamp)} UTC`;
 }
 
+/**
+ * One badge for the whole `data_origin` vocabulary, so two surfaces cannot label the same fact
+ * differently. Synthetic is demo data; project-authored is authored content (the knowledge corpus,
+ * the tactical catalogue) and must not be softened into "demo"; anything else is a named source.
+ */
 export function OriginBadge({ provenance }: { provenance: RowProvenance }) {
-  const synthetic = provenance.data_origin === "synthetic" || provenance.is_demo_data;
+  const authored = provenance.data_origin === "project-authored" && !provenance.is_demo_data;
+  const synthetic = !authored && (provenance.data_origin === "synthetic" || provenance.is_demo_data);
+  const label = authored ? "PROJECT AUTHORED" : synthetic ? "DEMO DATA" : `SOURCE · ${provenance.data_origin}`;
+  const title = authored
+    ? "Written for this project — no external text reproduced, and not a simulation of the real world. This is not demo data."
+    : synthetic
+      ? `data_origin: ${provenance.data_origin} · is_demo_data: ${String(provenance.is_demo_data)} — generated locally from the world seed.`
+      : `data_origin: ${provenance.data_origin} — served from a licensed provider, not generated here.`;
   return (
-    <span
-      className={`badge ${synthetic ? "badge--demo" : "badge--live"}`}
-      title={
-        synthetic
-          ? `data_origin: ${provenance.data_origin} · is_demo_data: ${String(provenance.is_demo_data)} — generated locally from the world seed.`
-          : `data_origin: ${provenance.data_origin} — served from a licensed provider, not generated here.`
-      }
-    >
-      {synthetic ? "DEMO DATA" : `SOURCE · ${provenance.data_origin}`}
+    <span className={`badge ${authored ? "badge--authored" : synthetic ? "badge--demo" : "badge--live"}`} title={title}>
+      {label}
     </span>
   );
 }
@@ -258,11 +263,21 @@ export function KeyValueGrid({ rows }: { rows: [string, ReactNode][] }) {
   );
 }
 
-/** The one state a world page must never paper over: the tables are empty or the API is down. */
-export function WorldUnavailable({ message, detail }: { message: string; detail?: ReactNode }) {
+/** The one state a data-driven page must never paper over: the tables are empty or the API is down. */
+export function WorldUnavailable({
+  message,
+  detail,
+  eyebrow = "Football World",
+  title = "Data unavailable",
+}: {
+  message: string;
+  detail?: ReactNode;
+  eyebrow?: string;
+  title?: string;
+}) {
   return (
     <div className="container page stack">
-      <WorldHead eyebrow="Football World" title="Data unavailable" />
+      <WorldHead eyebrow={eyebrow} title={title} />
       <div className="notice notice--warn">{message}</div>
       <p className="muted" style={{ fontSize: "0.88rem" }}>
         Nothing here is substituted with invented values (spec §78). {detail}

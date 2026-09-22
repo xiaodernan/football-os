@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Everything below is either session-gated (it redirects anonymous visitors to /login) or a
- * JSON proxy. The crawlable surface is the knowledge library — and, from M3, the world pages.
+ * JSON proxy. The crawlable surface is the knowledge library, the Football World pages (M3) and
+ * the Tactical Lab (M4) — none of which require an account, which is exactly why they may be advertised.
  */
 const DISALLOWED = [
   "/api/",
