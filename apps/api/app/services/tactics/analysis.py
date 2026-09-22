@@ -25,6 +25,7 @@ from app.services.tactics.shapes import Slot, Temperament
 
 __all__ = [
     "CHANGES",
+    "METRIC_KEYS",
     "Change",
     "Metric",
     "Shape",
@@ -34,7 +35,12 @@ __all__ = [
     "in_possession",
     "metrics_of",
     "out_of_possession",
+    "shape_from_rows",
 ]
+
+# The eight measurements a shape yields, in the order `metrics_of` reports them. The test suite
+# asserts the two agree, so this can be used as a contract without drifting.
+METRIC_KEYS: Final = ("width", "depth", "coverage", "balance", "spacing", "isolation", "line_separation", "space_behind")
 
 
 @dataclass(frozen=True)
@@ -65,6 +71,17 @@ class Shape:
             }
             for slot, point in zip(self.slots, self.points, strict=True)
         ]
+
+
+def shape_from_rows(rows: Sequence[Mapping[str, object]]) -> Shape:
+    """The inverse of `Shape.as_dict()`.
+
+    The API recomputes a counterfactual from the coordinates stored in the database rather than
+    serving a stored answer, so the answer always matches the board a reader is looking at — and a
+    row written by an older build cannot smuggle a stale conclusion.
+    """
+    slots = tuple(Slot(str(row["role"]), float(str(row["x"])), float(str(row["y"]))) for row in rows)
+    return Shape(slots, tuple(slot.point() for slot in slots))
 
 
 def in_possession(shape: Sequence[Slot], temperament: Temperament) -> Shape:
@@ -208,10 +225,14 @@ class Change:
     def matches(self, slot: Slot) -> bool:
         return slot.role in self.roles or ROLES[slot.role].band in self.bands
 
-    def apply(self, slot: Slot, point: Point) -> Point:
+    def desired(self, slot: Slot, point: Point) -> Point:
+        """Where this change would put a slot before the touchline is consulted."""
         if not self.matches(slot):
             return point
-        return clamp_point(Point(point.x * self.scale_x + self.dx, point.y + self.dy))
+        return Point(point.x * self.scale_x + self.dx, point.y + self.dy)
+
+    def apply(self, slot: Slot, point: Point) -> Point:
+        return self.desired(slot, point) if self.matches(slot) else clamp_point(self.desired(slot, point))
 
     def to_dict(self) -> dict[str, object]:
         return {"key": self.key, "label": self.label, "note": self.note, "phase": self.phase, "target": list(self.target)}

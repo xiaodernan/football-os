@@ -11,11 +11,12 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import auth, coach, knowledge, meta, players, progress, trainings, world
+from app.api.v1 import auth, coach, knowledge, meta, players, progress, tactics, trainings, world
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
 from app.services.knowledge import corpus_stats, sync_knowledge
+from app.services.tactics import sync_tactics
 from app.services.training_catalog import sync_catalog
 from app.services.world import sync_world
 
@@ -61,6 +62,13 @@ def create_app() -> FastAPI:
                     logger.error("football world sync problems: %s", "; ".join(world_report.errors[:8]))
                 elif world_report.changed:
                     logger.info("football world synced %s", world_report.summary_line())
+        if settings.tactics_auto_sync:
+            with SessionLocal() as session:
+                tactics_report = sync_tactics(session)
+                if tactics_report.errors:
+                    logger.error("tactical catalogue sync problems: %s", "; ".join(tactics_report.errors[:8]))
+                elif tactics_report.changed:
+                    logger.info("tactical systems synced %s", tactics_report.summary_line())
         logger.info("boot env=%s dialect=%s demo_mode=%s", settings.env, settings.database_url.split(":")[0], settings.is_demo_mode)
         yield
 
@@ -100,6 +108,7 @@ def create_app() -> FastAPI:
     app.include_router(progress.router, prefix=api)
     app.include_router(knowledge.router, prefix=api)
     app.include_router(world.router, prefix=api)
+    app.include_router(tactics.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:

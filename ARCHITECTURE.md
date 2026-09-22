@@ -54,7 +54,7 @@ app/
     data_synthetic.py  synthetic football world provider (licensed-safe)
 ```
 
-## 3. Football World data model (core, M0–M3)
+## 3. Football World data model (core, M0–M4)
 
 `User 1—N UserPlayer` · `UserPlayer 1—N AttributeSet/TrainingSession/MatchPerformance/XpEvent/Achievement`
 `RealPlayer N—1 Team N—1 Competition` · `Match N—1 Team`, `Match 1—N MatchEvent`, `Match 1—N PlayerStat`
@@ -76,6 +76,15 @@ M3 builds the world locally rather than reading a provider: `WORLD_SEED` → `pl
 
 A news provider is still the plan for real headlines (spec §45); until a key exists, `source_name` is
 `synthetic-world` and the desk is a role, not a person.
+
+M4 adds `tactical_systems` — 50 project-authored coaching structures, one row per shape × temperament.
+The same shape discipline applies, with two differences worth stating: these rows are
+`data_origin='project-authored'`, `is_demo_data=False` (they are a design artefact of this repository,
+not a simulation of the world), and only the identity/filter columns are typed — the measured artefact
+(both phases' coordinates, the eight metrics with their formulas, the graded verdicts, the roles in the
+field) is stored in `board` so the API serves what was computed. The API then **recomputes** metrics and
+counterfactuals from those coordinates on every request rather than reading a stored conclusion, so a
+page's numbers always match the dots on the same page (`docs/M4_VERIFICATION.md`).
 
 ## 4. Progression is explainable, never random
 

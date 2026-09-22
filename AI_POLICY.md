@@ -12,7 +12,13 @@
 
 ## Required UI contract
 
-Every AI payload includes: `demo_mode`, `provider`, `model`, `confidence`, `reasons[]`, `sources[]`, `generated_at`. Rendering is centralised in `<AiBadge>`/`<SourceList>` so no page can drop the label.
+Every AI payload includes: `demo_mode`, `provider`, `model`, `confidence`, `reasons[]`, `sources[]`, `generated_at`.
+
+Badges render through `components/ui.tsx::AiBadge`, so no page has to remember what `DEMO MODE` looks
+like. Citation and source lists are rendered by the surfaces that own them (`/knowledge`, `/coach`,
+and — from M3 — the world/tactics provenance strips); there is no single component that makes
+forgetting impossible, which is why the browser walk asserts the label is present on each surface
+instead of trusting a convention.
 
 ## Provider behaviour
 

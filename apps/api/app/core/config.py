@@ -49,6 +49,7 @@ class Settings:
     knowledge_auto_ingest: bool = field(default_factory=lambda: _env("KNOWLEDGE_AUTO_INGEST", "1") != "0")
     world_seed: int = field(default_factory=lambda: int(_env("WORLD_SEED", "3") or 3))
     world_auto_sync: bool = field(default_factory=lambda: _env("WORLD_AUTO_SYNC", "1") != "0")
+    tactics_auto_sync: bool = field(default_factory=lambda: _env("TACTICS_AUTO_SYNC", "1") != "0")
     anthropic_api_key: str = field(default_factory=lambda: _env("ANTHROPIC_API_KEY"))
     news_api_key: str = field(default_factory=lambda: _env("NEWS_API_KEY"))
     football_data_api_key: str = field(default_factory=lambda: _env("FOOTBALL_DATA_API_KEY"))
@@ -73,6 +74,8 @@ class Settings:
             notes.append("DEMO MODE: no AI provider key configured, outputs are template-reasoned and labelled")
         if not self.world_auto_sync:
             notes.append("world-auto-sync-disabled: /api/v1/world serves whatever is already in the database")
+        if not self.tactics_auto_sync:
+            notes.append("tactics-auto-sync-disabled: /api/v1/tactics serves whatever is already in the database")
         return notes
 
 

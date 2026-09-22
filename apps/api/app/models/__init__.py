@@ -674,3 +674,40 @@ WORLD_DISCLAIMER = (
 )
 
 
+TACTICS_DISCLAIMER = (
+    "Tactical systems are project-authored coaching structures. The coordinates are written by this repository and "
+    "every width, spacing and separation figure is measured from them; nothing here records how a real team played, "
+    "and there is no tracking data or provider call behind any number."
+)
+
+
+# --- Tactical Lab (M4) -------------------------------------------------------------------
+# Written only by `app.services.tactics.sync`. These rows are project-authored rather than
+# synthetic demo data: the shapes are a design artefact of this repository, so `is_demo_data`
+# is False and `data_origin` says "project-authored" — the same distinction the M2 knowledge
+# corpus draws. The measured numbers live in `board` because they are the *output* of the plan,
+# stored verbatim so the API serves exactly what was computed; everything a browse path filters
+# or orders by is a real column.
+class TacticalSystem(Base, TimestampMixin):
+    """One of the 50 tactical systems: a shape, a temperament, and what the geometry measures (spec §11–§13, §65)."""
+
+    __tablename__ = "tactical_systems"
+    __table_args__ = (
+        Index("ix_tactics_formation", "formation"),
+        Index("ix_tactics_temperament", "temperament_key"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    slug: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    formation: Mapped[str] = mapped_column(String(20), nullable=False)
+    temperament_key: Mapped[str] = mapped_column(String(40), nullable=False)
+    press_line_y: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    block_depth: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    defensive_narrowing: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)
+    board: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    content_hash: Mapped[str] = mapped_column(String(64), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="project-authored", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+

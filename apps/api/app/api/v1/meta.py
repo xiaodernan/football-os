@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
 from app.providers import provider_status
+from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_ready, tactics_tables_present
 from app.services.world import world_counts, world_ready, world_tables_present
 
 router = APIRouter(tags=["meta"])
@@ -46,7 +47,10 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
         "m2_rag": True,
         "m3_football_world": world_ready(db),
         "m3_world": {"tables_present": world_tables_present(db), "counts": world_counts(db), "auto_sync": settings.world_auto_sync, "seed": settings.world_seed},
-        "m4_tactical_lab": False,
+        # M4 is data-derived for the same reason M3 is: 49 of the 50 authored systems is not a
+        # Tactical Lab, and a flag that lied would let the UI advertise a route that 404s.
+        "m4_tactical_lab": tactics_ready(db),
+        "m4_tactics": {"tables_present": tactics_tables_present(db), "counts": tactics_counts(db), "gate": dict(TACTICS_GATE), "auto_sync": settings.tactics_auto_sync},
         "m5_video_analysis": False,
         "m6_simulation": False,
         "m7_scouting": False,

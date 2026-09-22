@@ -22,6 +22,8 @@ WORLD_ID_PREFIXES = {
     "stat_line": "wslt",
     "article": "wnws",
     "article_link": "wlnk",
+    # M4 reuses this id scheme for its own catalogue: same rule, different prefix.
+    "tactical_system": "wtac",
 }
 
 # Entity type → public URL prefix (spec §80). The web tier publishes exactly these routes, so

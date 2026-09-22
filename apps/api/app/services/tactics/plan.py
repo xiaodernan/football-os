@@ -25,7 +25,7 @@ from app.services.world.plan import Planned, content_hash, web_path
 __all__ = [
     "RANKED_METRICS",
     "SYSTEM_COUNT",
-    "TacticalSystem",
+    "PlannedSystem",
     "fingerprint",
     "planned_rows",
     "system_by_key",
@@ -72,8 +72,12 @@ def metric_value(shape: Shape, key: str) -> float:
 
 
 @dataclass(frozen=True)
-class TacticalSystem:
-    """One planned row: the coordinates, the measurements taken from them, and what they imply."""
+class PlannedSystem:
+    """One planned row: the coordinates, the measurements taken from them, and what they imply.
+
+    Named apart from the `TacticalSystem` table so a reader can tell "the plan wants this" from
+    "the database holds this" — the same distinction `world.plan.Planned` draws.
+    """
 
     key: str
     slug: str
@@ -193,7 +197,7 @@ def _draft() -> tuple[tuple[str, str, str, str, str, Shape, Shape], ...]:
 
 
 @lru_cache(maxsize=1)
-def tactical_systems() -> tuple[TacticalSystem, ...]:
+def tactical_systems() -> tuple[PlannedSystem, ...]:
     """The full catalogue, each system graded against the whole set."""
     drafted = _draft()
     ranks: dict[tuple[str, str], dict[float, str]] = {}
@@ -202,7 +206,7 @@ def tactical_systems() -> tuple[TacticalSystem, ...]:
         for metric in RANKED_METRICS:
             ranks[(phase, metric)] = _quartile_label([metric_value(shape, metric) for shape in shapes])
 
-    systems: list[TacticalSystem] = []
+    systems: list[PlannedSystem] = []
     for key, slug, name, formation_name, temperament_key, attacking, defending in drafted:
         demands: dict[str, int] = {}
         for slot in attacking.slots:
@@ -210,7 +214,7 @@ def tactical_systems() -> tuple[TacticalSystem, ...]:
                 demands[attribute] = max(demands.get(attribute, 0), level)
         strengths, risks = _verdict(name, (attacking, defending), ranks)
         systems.append(
-            TacticalSystem(
+            PlannedSystem(
                 key=key,
                 slug=slug,
                 name=name,
@@ -227,11 +231,11 @@ def tactical_systems() -> tuple[TacticalSystem, ...]:
     return tuple(systems)
 
 
-def system_by_key(key: str) -> TacticalSystem | None:
+def system_by_key(key: str) -> PlannedSystem | None:
     return next((system for system in tactical_systems() if system.key == key), None)
 
 
-def system_by_slug(slug: str) -> TacticalSystem | None:
+def system_by_slug(slug: str) -> PlannedSystem | None:
     return next((system for system in tactical_systems() if system.slug == slug), None)
 
 
@@ -244,7 +248,7 @@ def planned_rows() -> list[Planned]:
     return [Planned(natural_key=system.key, payload=system.payload(), content_hash=content_hash(system.payload())) for system in tactical_systems()]
 
 
-def tactical_problems(systems: Iterable[TacticalSystem] | None = None) -> list[str]:
+def tactical_problems(systems: Iterable[PlannedSystem] | None = None) -> list[str]:
     """Everything that would make this catalogue unfit to store. An empty list means fit."""
     rows = list(systems) if systems is not None else list(tactical_systems())
     problems: list[str] = []
