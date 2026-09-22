@@ -711,3 +711,32 @@ class TacticalSystem(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
+# --- User tactics boards (M4, spec §13 "Tactical Board", §21 sharing) --------------------
+# A board a person arranged, as opposed to the 50 the project authored. Coordinates are the user's
+# own and are validated on write (eleven slots, known roles, on the grass) rather than trusted: the
+# metrics a shared board displays are recomputed from them, so a saved position cannot end up
+# inconsistent with the numbers printed beside it.
+class TacticBoard(Base, TimestampMixin):
+    """A draggable eleven-player board owned by an account, shareable by unguessable token."""
+
+    __tablename__ = "tactic_boards"
+    __table_args__ = (
+        Index("ix_board_owner", "owner_id"),
+        Index("ix_board_visibility", "visibility"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    note: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    origin_system: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    phase_in: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    phase_out: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    visibility: Mapped[str] = mapped_column(String(12), default="private", nullable=False)
+    share_token: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    shared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+

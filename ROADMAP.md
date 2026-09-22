@@ -93,8 +93,14 @@ Still open in M4:
    the queries to score `answerable` would have bought citations to off-topic passages, which is worse than none
 2. [x] `GET /tactics/{slug}/fit` — the session's player against the shape's six tactical demands, with published
    thresholds (`short ≤ -12`, `exceeds ≥ +4`), 409 `no_player` when there is no profile
-3. [ ] the editable board: drag/draw/save/share needs an owned `tactic_boards` row plus a share token (§21 territory), not just a picture
-4. [ ] animation: interpolate the two stored phases, with the transform printed beside it
+3. [x] user boards, stored and served: `tactic_boards` + migration `0005`, 8 routes under `/api/v1/boards`
+   (create/edit/delete, share by 32-hex token, revoke, public read-only view, ceiling of 24 per account).
+   Coordinates are validated before they are written, metrics are recomputed on every read, a second account
+   gets 404 rather than 403, and the shared payload exposes no owner identity — 17 tests on both engines plus
+   a live HTTP pass (`docs/M4_VERIFICATION.md` §8)
+4. [ ] the drag interface: pointer-move the eleven dots on the existing board, save, share the link. Until this
+   lands, §65's "drag" is unmet and "editable" is true only of the API
+5. [ ] animation: interpolate the two stored phases, with the transform printed beside it
 5. [ ] 3D pitch (spec §13 lists 2D/3D; 2D is what ships)
 6. [ ] corpus follow-up so the two refused topics can be cited: author `data/knowledge` passages on width in attack and
    on defensive-line height, then re-run `python -m evals.run_rag_eval` — the gates must be re-measured, never loosened

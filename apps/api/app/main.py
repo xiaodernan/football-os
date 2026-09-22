@@ -11,7 +11,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import auth, coach, knowledge, meta, players, progress, tactics, trainings, world
+from app.api.v1 import auth, boards, coach, knowledge, meta, players, progress, tactics, trainings, world
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
@@ -109,6 +109,7 @@ def create_app() -> FastAPI:
     app.include_router(knowledge.router, prefix=api)
     app.include_router(world.router, prefix=api)
     app.include_router(tactics.router, prefix=api)
+    app.include_router(boards.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:

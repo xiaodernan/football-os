@@ -32,6 +32,7 @@ __all__ = [
     "ShapeDiff",
     "analyse",
     "apply_change",
+    "defend_block",
     "in_possession",
     "metrics_of",
     "out_of_possession",
@@ -90,18 +91,18 @@ def in_possession(shape: Sequence[Slot], temperament: Temperament) -> Shape:
     return Shape(tuple(shape), points)
 
 
-def out_of_possession(shape: Shape, temperament: Temperament) -> Shape:
-    """The same eleven, rescaled into the defending block.
+def defend_block(shape: Shape, *, press_line_y: float, block_depth: float, narrowing: float) -> Shape:
+    """The same eleven players rescaled into a defending block.
 
-    Transform (published to the UI): the outfield players' `y` spans are mapped linearly from
-    ``[min_y, max_y]`` onto ``[press_line - block_depth, press_line]``, and `x` is multiplied by
-    ``defensive_narrowing``. The keeper stays on its line. Nothing is added or removed, so
-    possession and non-possession are two views of one structure — which is what the animation
-    interpolates between.
+    Transform (the one the UI prints beside the drawing): outfield `y` spans are mapped linearly from
+    ``[min_y, max_y]`` onto ``[press_line_y - block_depth, press_line_y]``, and `x` is multiplied by
+    ``narrowing``. The keeper stays on its line. Nothing is added or removed, so the two phases are
+    two views of one structure rather than two drawings — which is also what a user board inherits
+    when it asks the server to derive its block.
     """
     outfield_y = [point.y for slot, point in zip(shape.slots, shape.points, strict=True) if slot.role != "GK"]
     low, high = min(outfield_y), max(outfield_y)
-    target_low = temperament.press_line_y - temperament.block_depth
+    target_low = press_line_y - block_depth
     span = high - low or 1.0
     points: list[Point] = []
     for slot, point in zip(shape.slots, shape.points, strict=True):
@@ -109,10 +110,18 @@ def out_of_possession(shape: Shape, temperament: Temperament) -> Shape:
             points.append(Point(point.x, min(point.y, 4.0)))
             continue
         ratio = (point.y - low) / span
-        y = target_low + ratio * temperament.block_depth
-        x = point.x * temperament.defensive_narrowing
-        points.append(clamp_point(Point(x, y)))
+        points.append(clamp_point(Point(point.x * narrowing, target_low + ratio * block_depth)))
     return Shape(shape.slots, tuple(points))
+
+
+def out_of_possession(shape: Shape, temperament: Temperament) -> Shape:
+    """A temperament's block, by the same transform the board editor uses."""
+    return defend_block(
+        shape,
+        press_line_y=temperament.press_line_y,
+        block_depth=temperament.block_depth,
+        narrowing=temperament.defensive_narrowing,
+    )
 
 
 @dataclass(frozen=True)

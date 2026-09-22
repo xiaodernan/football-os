@@ -99,11 +99,11 @@ cd apps/api
 python -m ruff check app tests                 # All checks passed
 python -m mypy app                             # 54 source files, no issues
 python -m alembic upgrade head && python -m alembic check
-python -m pytest -q                            # 200 passed (SQLite)   · 111 of them are M4
+python -m pytest -q                            # 217 passed (SQLite)   · 128 of them are M4
 FOOTBALL_OS_TEST_DATABASE_URL="postgresql+psycopg2://football:football@127.0.0.1:54321/football_os_pytest" \
-  python -m pytest -q                          # 200 passed (pgvector)
+  python -m pytest -q                          # 217 passed (pgvector), boards included
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8731 &
-python ../../scripts/export_openapi.py         # 47 paths / 51 operations, incl. the 7 /tactics routes
+python ../../scripts/export_openapi.py         # 52 paths / 59 operations, incl. 5 /tactics and 5 /boards paths
 curl -s "localhost:8731/api/v1/tactics/compare?a=4-3-3-press-high&b=4-3-3-low-block&phase=out"
 ```
 
@@ -138,16 +138,45 @@ citation that resolved to nothing would fail the run rather than quietly mislead
 `fit` is arithmetic on the same six attributes the player model stores: `gap = attribute − demand`, `short` at
 ≤ −12, `exceeds` at ≥ +4, mean gap as the summary. Nothing in either endpoint writes to a stored row.
 
-## 8. Not claimed by this milestone
+## 8. User boards: the same measurement applied to a hand-drawn eleven
+
+`tactic_boards` (migration `0005`) gives an account a place to arrange eleven players and send a link.
+It is deliberately not a copy of the authored catalogue:
+
+| Rule | Why it is enforced this way |
+| --- | --- |
+| Coordinates are validated **before** they are stored | the shared view recomputes the eight metrics from them, so a stored row of ten players, an unknown role or a point 900 m across would render as confident nonsense |
+| `422 invalid_board` carries the problem list | "phase_in: 10 positions, expected 11" is checkable; a bare 400 is not |
+| A non-finite coordinate is refused at the service boundary | JSON in Python can carry `NaN`, `Point` rejects it one step too late for a clean error, and no correct client can send it — so it is tested where the guard lives |
+| Metrics are recomputed on every read | drag a defender 10 m up and `space_behind` moves by 10.0 m; if it did not, the numbers would be decoration |
+| The block can be *derived* instead of drawn | `derive_block` runs `defend_block`, the same transform the authored 50 use, so a user's block is checkable against a printed formula |
+| Another account gets `404`, not `403` | `ownership_or_admin` — a 403 would confirm that the id exists |
+| Sharing is a token, revoking is a null | `secrets.token_hex(16)`; an unshared board has no URL, and revocation kills the link without deleting the work |
+| The shared view names no owner | `{name: "a FOOTBALL OS account", id: None}`, and the payload contains no `email`, `owner_id` or `share_token` (asserted) |
+| `data_origin='user'`, plus its own disclaimer | a hand-drawn board is neither authored content nor demo data, and a reader should know which of the three they are looking at |
+
+Ceiling: 24 boards per account (`409 board_limit`) — enough to explore, small enough that the
+per-account list endpoint needs no pagination story yet.
+
+Verified over live HTTP on the running server (not only `TestClient`): create → 201 private with 8
+metrics; list → 1; ten players → 422 naming the count; no token → 401 `unauthenticated`; public read
+by token → 200 with no leaked identity; a second account reading/patching/sharing/deleting the board →
+404 each; revoke → 200 `private`, then the old link → 404.
+
+## 9. Not claimed by this milestone
 
 * **The web surface is verified separately.** `/tactics`, `/tactics/{slug}` and `/tactics/compare` are live, and the
   50 system URLs are in `sitemap.ts` — the browser evidence is in [`M4_WEB_VERIFICATION.md`](M4_WEB_VERIFICATION.md).
 * **No animation.** The two phases are stored as one transform pair so animation is a rendering job,
   but nothing renders them yet. The counterfactual view draws the displacement as arrows, which is the
   same data a tween would interpolate.
-* **No user-saved or shared boards.** §65's M4 gate includes drag/draw/save/share: that needs an
-  owned `tactic_boards` table plus a share token, which is §21 (community) plumbing, not a
-  read endpoint. Not started.
+* **No drag interface yet.** A board can be created, edited, shared and read today through the API
+  (§8); nothing in the browser lets a person move a dot with a pointer. That is the next increment,
+  and until it lands "editable board" means editable by client, not by coach. §65's
+  drag/draw/save/share is therefore half-closed: save and share are real, drag is not.
+* **No public board gallery.** Boards are `private` or `shared`; there is no community feed, no
+  likes and no `published` visibility — that is M9's scope, and inventing a listing here would put
+  user content on a crawlable surface before §21/§61's consent story exists.
 * **No model writes anything.** `/feedback` is extractive assembly over the corpus and the measured rows and labels
   itself that way (`model: "extractive assembly …"`, `provider: "none (no AI key configured)"`); `/fit` is arithmetic
   on published thresholds. Neither mutates a player, a rating or a stored row. Two of the six topics stay ungrounded
