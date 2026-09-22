@@ -179,16 +179,52 @@ counts in this document are the counts on the machine.
 
 ## 9. Not claimed by this milestone
 
-* **Career Mode (§20), Manager live challenges (§21) and the transfer market (§22)** — none of them
-  exist yet. A career is a schedule of these matches plus standings, finances and a club to manage;
-  the schedule, competition-place tables and money model are the next slice, not this one.
+* **Manager live challenges (§21) and the transfer market (§22)** — they do not exist yet. Career
+  Mode (§20) landed after this section was written, as a schedule of these matches with a record and
+  objectives read off them; §10 says exactly which parts of that sentence are true and which are not.
+* **Finance.** A career carries a stated budget and nothing spends it: with no transfer market, no
+  fixture was affected by a large or a small number, and `limitations()` on every career response says
+  so instead of letting the figure look like a constraint that was tested.
 * **No `sim_events` table.** Events live inside the report JSON. The query that would need them
   (a scorer's season total across simulated matches) does not exist yet, and a table for it would be
   schema ahead of demand.
 * **Fatigue does not feed back into training or squad value.** The engine models fatigue *inside* a
-  match; nothing carries across matches, because there is no competition state to carry it in.
+  match. A career carries a schedule and a record across matches, but no player attribute, fatigue or
+  squad value is written back to the world's rows by playing.
 * **No provider is involved.** This is arithmetic on stored rows, so no `ModelCall` row is written
   and no key is consulted; the AI-labelling rule (§62) applies to the text the model generates about
   a match in later milestones, which this increment does not write.
 * **The 90-minute default is not a real football clock**: blocks are 6′, so a 90′ match is 15 blocks.
   Minute-level event times are block-derived.
+
+## 10. Career Mode (added 2026-09-23, backend only)
+
+`app/services/simulation/career.py` + `app/api/v1/careers.py` + migration `0009`. **There is no page
+for it yet**, so nothing in this section is browser-verified; the evidence is 28 tests
+(`tests/test_career.py`, `tests/test_career_api.py`) green on SQLite and PostgreSQL+pgvector, and the
+contract rows in `docs/api/openapi.json`.
+
+What a career is, and what it deliberately is not:
+
+* **The container, not a second engine.** `play_round` calls `run_simulation`; every round lands in
+  `sim_matches` with its own digest, and `career_fixtures` stores the round's inputs (opponent, side,
+  seed) plus a *copy* of the score so a career still reads after its report is deleted. The
+  `consistency` field re-reads the linked report and states how many fixtures were re-checked.
+* **A rotation, not a shuffle.** Opponents are the clubs of the career's own competition ordered by
+  slug, met once at home in the first cycle and once away in the second. A round's seed comes from
+  `blake2b(career_id:round_index)`, so the same two accounts managing the same club face the same
+  order — a test asserts it — while the score still comes from the engine.
+* **Sums, not stored numbers.** `played/won/drawn/lost/goal_difference/points/unbeaten_run` are
+  computed from the career's fixture rows on each read, each with the formula that produced it; the
+  mini-table is built from the same rows and says plainly that it covers only this career's fixtures,
+  not the competition's table.
+* **Judged by stated objectives.** A career cannot be opened without at least one objective from
+  `wins / points / goal_difference / unbeaten`, and each verdict prints the formula it was compared
+  with. No promotion, relegation or prize follows — the season is a fiction with a scoreboard, not a
+  league simulation.
+* **Private like the rest of §61.** `/careers/options` is public (it is the world's own clubs and the
+  50 authored systems); opening, playing, reading and deleting a career need a session, and another
+  account gets 404 rather than 403. Deleting a career removes its rounds and keeps the match reports
+  the account chose to play.
+* **Ceilings are enforced where they are checked:** 5 careers per account (`409 career_limit`), 90
+  minutes per round, and every route rate-limited under its own scope.

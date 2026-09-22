@@ -7,7 +7,7 @@ and the SQLite dev fallback (ADR-002).
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Final
 
 from sqlalchemy import (
     JSON,
@@ -869,3 +869,85 @@ class SimulationMatch(Base, TimestampMixin):
     report: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+# --- Career Mode (M6, spec §20) -------------------------------------------------------------------
+# A career is the container a season is played in: one account's fictional manager, one club borrowed
+# from the synthetic world, a fixture list produced by rotating that competition's clubs, and every
+# fixture decided by `possession-block-v1`. The rows below store the *inputs and the outcome of each
+# round*; the record, the mini-table and the objective verdicts are summed from them on each read, so
+# a career page and a fixture list cannot drift apart — the same rule a single `sim_matches` row
+# follows for one match.
+CAREER_STATUSES: Final[tuple[str, ...]] = ("active", "retired")
+CAREER_PHLOSOPHIES: Final[tuple[str, ...]] = ("possession", "direct", "pressing", "counter", "balanced")
+OBJECTIVE_KINDS: Final[tuple[str, ...]] = ("wins", "points", "goal_difference", "unbeaten")
+OBJECTIVE_FORMULA: Final[dict[str, str]] = {
+    "wins": "count of career_fixtures where outcome = W",
+    "points": "sum of career_fixtures.points (win 3, draw 1, loss 0)",
+    "goal_difference": "sum(club_goals) - sum(opponent_goals)",
+    "unbeaten": "longest run of career_fixtures with outcome in (W, D)",
+}
+
+
+class Career(Base, TimestampMixin):
+    """One user's managerial career: the club, the stated intent, and the objectives to judge it by."""
+
+    __tablename__ = "careers"
+    __table_args__ = (Index("ix_career_owner_created", "owner_id", "created_at"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    manager_name: Mapped[str] = mapped_column(String(80), default="", nullable=False)
+    club_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    club_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    club_short: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    competition_id: Mapped[str | None] = mapped_column(ForeignKey("competitions.id", ondelete="SET NULL"), nullable=True)
+    competition_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    season: Mapped[str] = mapped_column(String(12), default="", nullable=False)
+    philosophy: Mapped[str] = mapped_column(String(20), default="balanced", nullable=False)
+    system_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    budget: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    budget_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    objectives: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    rounds_played: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    status: Mapped[str] = mapped_column(String(12), default="active", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    owner: Mapped[User] = relationship()
+    club: Mapped[Team | None] = relationship()
+    fixtures: Mapped[list[CareerFixture]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerFixture.round_index")
+
+
+class CareerFixture(Base, TimestampMixin):
+    """One round: which club was met, on which side, and the stored match that decided it."""
+
+    __tablename__ = "career_fixtures"
+    __table_args__ = (
+        UniqueConstraint("career_id", "round_index", name="uq_career_round"),
+        Index("ix_career_fixture_match", "match_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    round_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    match_id: Mapped[str | None] = mapped_column(ForeignKey("sim_matches.id", ondelete="SET NULL"), nullable=True)
+    match_slug: Mapped[str] = mapped_column(String(80), default="", nullable=False)
+    digest: Mapped[str] = mapped_column(String(16), default="", nullable=False)
+    model_version: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    side: Mapped[str] = mapped_column(String(5), default="home", nullable=False)
+    opponent_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    opponent_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    opponent_short: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    venue_name: Mapped[str] = mapped_column(String(120), default="", nullable=False)
+    club_goals: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    opponent_goals: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    outcome: Mapped[str] = mapped_column(String(4), default="D", nullable=False)
+    points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="fixtures")
+    match: Mapped[SimulationMatch | None] = relationship()

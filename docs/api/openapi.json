@@ -3893,6 +3893,293 @@
         }
       }
     },
+    "/api/v1/careers/options": {
+      "get": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Read Options",
+        "description": "What a career can be built from: the clubs, the systems, and the objective kinds with their formulas.",
+        "operationId": "read_options_api_v1_careers_options_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Options Api V1 Careers Options Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/careers": {
+      "get": {
+        "tags": [
+          "career"
+        ],
+        "summary": "List Careers",
+        "operationId": "list_careers_api_v1_careers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response List Careers Api V1 Careers Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Open Career",
+        "operationId": "open_career_api_v1_careers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Open Career Api V1 Careers Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/careers/{ident}": {
+      "get": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Read Career",
+        "operationId": "read_career_api_v1_careers__ident__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Career Api V1 Careers  Ident  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Delete Career",
+        "description": "Remove the career and its rounds. The match reports it played stay in `/simulate`, because the\naccount chose to play them and may still want to read them; the career's own view says so.",
+        "operationId": "delete_career_api_v1_careers__ident__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Delete Career Api V1 Careers  Ident  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/careers/{ident}/play": {
+      "post": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Play Next",
+        "description": "Play the career's next round with the engine, then re-derive everything the page shows.",
+        "operationId": "play_next_api_v1_careers__ident__play_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Play Next Api V1 Careers  Ident  Play Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/careers/{ident}/retire": {
+      "post": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Retire",
+        "operationId": "retire_api_v1_careers__ident__retire_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Retire Api V1 Careers  Ident  Retire Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/simulate/options": {
       "get": {
         "tags": [
@@ -4299,6 +4586,67 @@
           "file"
         ],
         "title": "Body_upload_clip_api_v1_video_upload_post"
+      },
+      "CareerIn": {
+        "properties": {
+          "club": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Club"
+          },
+          "manager_name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "Manager Name"
+          },
+          "philosophy": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Philosophy",
+            "default": "balanced"
+          },
+          "system": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System"
+          },
+          "budget": {
+            "type": "integer",
+            "maximum": 10000000.0,
+            "minimum": 0.0,
+            "title": "Budget",
+            "default": 1000000
+          },
+          "objectives": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectiveIn"
+            },
+            "type": "array",
+            "maxItems": 4,
+            "title": "Objectives"
+          },
+          "season": {
+            "type": "string",
+            "maxLength": 12,
+            "title": "Season",
+            "default": "2026"
+          }
+        },
+        "type": "object",
+        "required": [
+          "club",
+          "manager_name"
+        ],
+        "title": "CareerIn"
       },
       "CoachAskIn": {
         "properties": {
@@ -4752,6 +5100,40 @@
           "password"
         ],
         "title": "LoginIn"
+      },
+      "ObjectiveIn": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "maxLength": 24,
+            "minLength": 2,
+            "title": "Kind"
+          },
+          "target": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": -100.0,
+            "title": "Target"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "target"
+        ],
+        "title": "ObjectiveIn"
       },
       "PlanIn": {
         "properties": {
