@@ -1,7 +1,7 @@
 """Upsert a generated world into the tables — the M2 ingest pattern applied to rows.
 
 `sync_world` walks the plan parent-first (competitions → teams → players → matches → stat lines →
-articles → links), matches every row on its natural key, and compares `content_hash`. So a re-run
+training sessions → articles → links), matches every row on its natural key, and compares `content_hash`. So a re-run
 against an unchanged seed is provably create 0 / update 0 / remove 0, which is what lets the
 lifespan call it on boot without turning startup into a rewrite of ~3,900 rows.
 
@@ -35,6 +35,7 @@ from app.models import (
     RealMatch,
     RealPlayer,
     RealPlayerMatchStat,
+    RealTrainingSession,
     Team,
 )
 from app.services.world.builder import STAT_METHOD, WorldSizes, plan_world
@@ -77,6 +78,7 @@ COLLECTIONS: Final[tuple[Collection, ...]] = (
     Collection("players", "player", RealPlayer, ("slug",)),
     Collection("matches", "match", RealMatch, ("slug",)),
     Collection("stat_lines", "stat_line", RealPlayerMatchStat, ("natural_key",)),
+    Collection("training_sessions", "training_session", RealTrainingSession, ("natural_key",)),
     Collection("articles", "article", NewsArticle, ("slug",)),
     Collection("article_links", "article_link", NewsArticleLink, ("article_id", "entity_type", "entity_slug"), hash_column=None),
 )
@@ -85,10 +87,11 @@ COUNT_MODELS: Final[dict[str, Any]] = {
     "teams": Team,
     "players": RealPlayer,
     "matches": RealMatch,
+    "training_sessions": RealTrainingSession,
     "articles": NewsArticle,
 }
 WORLD_TABLES: Final = tuple(str(collection.model.__tablename__) for collection in COLLECTIONS)
-GATE: Final[dict[str, int]] = {"competitions": 10, "teams": 20, "players": 300, "matches": 100, "articles": 500}
+GATE: Final[dict[str, int]] = {"competitions": 10, "teams": 20, "players": 300, "matches": 100, "training_sessions": 100, "articles": 500}
 
 
 @dataclass

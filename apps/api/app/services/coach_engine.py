@@ -134,11 +134,7 @@ def recommend_today(
     has_wall = True
     candidates: list[tuple[float, dict[str, Any], list[str]]] = []
     recent = _recent_categories(db, user.id)
-    training_load = sum(
-        db.scalars(
-            select(XpEvent.amount).where(XpEvent.user_id == user.id, XpEvent.created_at >= str(date.today() - timedelta(days=1)))
-        ).all()
-    )
+    training_load = sum(db.scalars(select(XpEvent.amount).where(XpEvent.user_id == user.id, XpEvent.created_at >= str(date.today() - timedelta(days=1)))).all())
 
     for drill in _drill_rows(db):
         reasons: list[str] = []
@@ -204,8 +200,7 @@ def recommend_today(
     candidates.sort(key=lambda item: (-item[0], item[1]["slug"]))
     top_score, best, best_reasons = candidates[0]
     alternatives = [
-        {"drill_id": d.get("id", ""), "slug": d["slug"], "title": d["title"], "category": d["category"], "duration_min": d["duration_min"], "score": round(s, 2)}
-        for s, d, _r in candidates[1:5]
+        {"drill_id": d.get("id", ""), "slug": d["slug"], "title": d["title"], "category": d["category"], "duration_min": d["duration_min"], "score": round(s, 2)} for s, d, _r in candidates[1:5]
     ]
     spread = max(0.1, top_score - (candidates[1][0] if len(candidates) > 1 else top_score - 1))
     confidence = round(max(0.3, min(0.95, 0.55 + min(0.4, len(candidates) / 20) + 0.1 * min(spread, 2))), 2)
@@ -250,7 +245,15 @@ def build_plan(db: Session, player: UserPlayer, *, horizon_days: int, available_
     for day_index in range(horizon_days):
         iso_weekday = day_index % 7
         if iso_weekday == 6:
-            days.append({"day": day_index + 1, "date": (date.today() + timedelta(days=day_index)).isoformat(), "type": "recovery", "sessions": [], "note": "Mobility, hydration and 10 min video review. Recovery is part of the plan."})
+            days.append(
+                {
+                    "day": day_index + 1,
+                    "date": (date.today() + timedelta(days=day_index)).isoformat(),
+                    "type": "recovery",
+                    "sessions": [],
+                    "note": "Mobility, hydration and 10 min video review. Recovery is part of the plan.",
+                }
+            )
             continue
         if days_per_week <= 3 and iso_weekday in (1, 3):
             days.append({"day": day_index + 1, "date": (date.today() + timedelta(days=day_index)).isoformat(), "type": "rest", "sessions": [], "note": "Scheduled rest day to keep load safe."})
@@ -294,9 +297,7 @@ def build_plan(db: Session, player: UserPlayer, *, horizon_days: int, available_
 def coach_message_after_completion(db: Session, user: User, player: UserPlayer, drill: TrainingDrill, execution: int) -> dict[str, Any]:
     """Follow-up that reflects the *new* stored state, not generic praise (spec §93)."""
     attrs = {k: v for k, v in player.attributes.items() if not k.startswith("_sp_")}
-    recent_changes = db.scalars(
-        select(AttributeChange).where(AttributeChange.player_id == player.id).order_by(AttributeChange.created_at.desc()).limit(6)
-    ).all()
+    recent_changes = db.scalars(select(AttributeChange).where(AttributeChange.player_id == player.id).order_by(AttributeChange.created_at.desc()).limit(6)).all()
     improving = [c.attribute for c in recent_changes]
     next_focus = sorted(attrs.items(), key=lambda item: item[1])[:3]
     archetype, match, _ = derive_archetype(player.position, attrs)
@@ -351,13 +352,9 @@ def history_summary(db: Session, user: User, player: UserPlayer) -> dict[str, An
         "xp_total": player.xp,
         "level": player.level_number,
         "streak_days": user.streak_days,
-        "attribute_trend": [
-            {"attribute": c.attribute, "delta": c.delta, "reason": c.reason, "at": c.created_at.isoformat()} for c in changes[:10]
-        ],
+        "attribute_trend": [{"attribute": c.attribute, "delta": c.delta, "reason": c.reason, "at": c.created_at.isoformat()} for c in changes[:10]],
         "goal_history": [player.goal],
-        "weakest_attributes": sorted(
-            ((k, v) for k, v in {a: player.attributes.get(a, 40) for group in ATTRIBUTES.values() for a in group}.items()), key=lambda item: item[1]
-        )[:5],
+        "weakest_attributes": sorted(((k, v) for k, v in {a: player.attributes.get(a, 40) for group in ATTRIBUTES.values() for a in group}.items()), key=lambda item: item[1])[:5],
     }
 
 

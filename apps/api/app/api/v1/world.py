@@ -13,6 +13,7 @@ drift apart.
 from __future__ import annotations
 
 import datetime as dt
+from collections.abc import Sequence
 from typing import Any, Final
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -30,6 +31,7 @@ from app.models import (
     RealMatch,
     RealPlayer,
     RealPlayerMatchStat,
+    RealTrainingSession,
     Team,
 )
 from app.services.world import search_world, web_path
@@ -68,6 +70,42 @@ def _page(items: list[dict[str, Any]], total: int, page: int, page_size: int, **
 
 def _iso(value: Any) -> str | None:
     return value.isoformat() if value is not None else None
+
+
+def _training_row(row: RealTrainingSession) -> dict[str, Any]:
+    """One demo session: what was run, how long, how hard, and the load that follows from both."""
+    return {
+        "id": row.id,
+        "player_slug": row.player_slug,
+        "player_name": row.player_name,
+        "player_path": web_path("player", row.player_slug),
+        "position": row.position,
+        "season": row.season,
+        "date": row.session_date,
+        "drill_slug": row.drill_slug,
+        "drill_title": row.drill_title,
+        "drill_path": web_path("drill", row.drill_slug),
+        "category": row.category,
+        "difficulty": row.difficulty,
+        "duration_min": row.duration_min,
+        "rpe": row.rpe,
+        "load_units": row.load_units,
+        "status": row.status,
+        "summary": row.summary,
+    }
+
+
+def _training_totals(rows: Sequence[RealTrainingSession]) -> dict[str, Any]:
+    minutes = sum(row.duration_min for row in rows)
+    return {
+        "sessions": len(rows),
+        "total_minutes": minutes,
+        "total_load": sum(row.load_units for row in rows),
+        "categories": sorted({row.category for row in rows}),
+        "drills": sorted({row.drill_slug for row in rows}),
+        "load_formula": "load_units = duration_min x rpe",
+        "mean_rpe": round(sum(row.rpe for row in rows) / len(rows), 2) if rows else 0,
+    }
 
 
 def _one(session: Session, model: Any, ident: str) -> Any:
@@ -273,6 +311,7 @@ def world_status(request: Request, db: Session = Depends(get_db)) -> dict[str, A
         "players": int(db.scalar(select(func.count(RealPlayer.id))) or 0),
         "matches": int(db.scalar(select(func.count(RealMatch.id))) or 0),
         "stat_lines": int(db.scalar(select(func.count(RealPlayerMatchStat.id))) or 0),
+        "training_sessions": int(db.scalar(select(func.count(RealTrainingSession.id))) or 0),
         "articles": int(db.scalar(select(func.count(NewsArticle.id))) or 0),
     }
     seasons = sorted({str(row[0]) for row in db.execute(select(RealMatch.season).distinct()).all()})
@@ -588,6 +627,7 @@ def player_detail(ident: str, request: Request, db: Session = Depends(get_db)) -
         ).all()
     )
     matches = {match.id: match for match in db.scalars(select(RealMatch).where(RealMatch.id.in_([line.match_id for line in season_lines] or ["-"]))).all()}
+    training = list(db.scalars(select(RealTrainingSession).where(RealTrainingSession.player_id == player.id).order_by(RealTrainingSession.session_date.desc(), RealTrainingSession.drill_slug)).all())
     team = db.get(Team, player.team_id) if player.team_id else None
     return _envelope(
         player={
@@ -638,7 +678,53 @@ def player_detail(ident: str, request: Request, db: Session = Depends(get_db)) -
             for line in season_lines[:5]
         ],
         stat_lines=[_stat_line_row(line, {player.id: player}, matches) for line in season_lines],
+        training_log=_training_totals(training) | {"items": [_training_row(row) for row in training]},
         method={"rating": STAT_METHOD["rating"], "season_totals": STAT_METHOD["season_totals"]},
+    )
+
+
+@router.get("/training")
+def list_training_sessions(
+    request: Request,
+    player: str | None = Query(default=None, max_length=160),
+    team: str | None = Query(default=None, max_length=160),
+    category: str | None = Query(default=None, max_length=40),
+    season: str | None = Query(default=None, max_length=12),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """The demo world's training log (spec §65: 100 sessions).
+
+    Public like the rest of the world, because every row belongs to a generated player. The
+    aggregates are computed from the rows that match the filters — not stored — so the totals on
+    this page and the items listed under them cannot disagree.
+    """
+    limit(request, 60, 60, scope="world_training")
+    stmt = select(RealTrainingSession)
+    if player is not None:
+        stmt = stmt.where(RealTrainingSession.player_id == _one(db, RealPlayer, player).id)
+    if team is not None:
+        resolved = _one(db, Team, team)
+        stmt = stmt.where(RealTrainingSession.team_id == resolved.id)
+    if category is not None:
+        stmt = stmt.where(RealTrainingSession.category == category)
+    if season is not None:
+        stmt = stmt.where(RealTrainingSession.season == season)
+    total = int(db.scalar(select(func.count()).select_from(stmt.subquery())) or 0)
+    rows = list(
+        db.scalars(stmt.order_by(RealTrainingSession.session_date.desc(), RealTrainingSession.player_slug, RealTrainingSession.drill_slug).offset((page - 1) * page_size).limit(page_size)).all()
+    )
+    categories = sorted({str(row[0]) for row in db.execute(select(RealTrainingSession.category).distinct()).all()})
+    return _page(
+        [_training_row(row) for row in rows],
+        total,
+        page,
+        page_size,
+        filters={"player": player, "team": team, "category": category, "season": season},
+        categories=categories,
+        page_totals=_training_totals(rows),
+        gate={"training_sessions": GATE["training_sessions"]},
     )
 
 

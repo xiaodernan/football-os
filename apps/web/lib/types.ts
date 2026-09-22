@@ -664,6 +664,45 @@ export type PlayerList = WorldPage<PlayerRow> & { sorts: string[]; positions: st
 export type MatchList = WorldPage<MatchBrief> & { statuses: string[] };
 export type NewsList = WorldPage<NewsRow> & { categories: string[]; claim_classes: string[] };
 
+/** One demo-world training session: `GET /world/training`, spec §65's 100 Training Sessions. */
+export type WorldTrainingRow = {
+  id: string;
+  player_slug: string;
+  player_name: string;
+  player_path: string;
+  position: string;
+  season: string;
+  date: string;
+  drill_slug: string;
+  drill_title: string;
+  drill_path: string;
+  category: string;
+  difficulty: number;
+  duration_min: number;
+  rpe: number;
+  load_units: number;
+  status: string;
+  summary: string;
+};
+
+/** Totals the API computes from the rows it is serving, never stores beside them. */
+export type WorldTrainingTotals = {
+  sessions: number;
+  total_minutes: number;
+  total_load: number;
+  categories: string[];
+  drills: string[];
+  load_formula: string;
+  mean_rpe: number;
+};
+
+export type WorldTrainingList = WorldPage<WorldTrainingRow> & {
+  filters: { player: string | null; team: string | null; category: string | null; season: string | null };
+  categories: string[];
+  page_totals: WorldTrainingTotals;
+  gate: Record<string, number>;
+};
+
 export type StandingRow = {
   position: number;
   team_id: string;
@@ -1087,4 +1126,202 @@ export type FeedbackResponse = TacticsProvenance & {
   provider: string;
   model: string;
   method: string;
+};
+
+/* ------------------------------------------------------------------- M6 simulation */
+
+/** One of the engine's own rates: a formula string, and what it reads (spec §19 asks for both). */
+export type SimFactor = { key: string; expression: string; reads: string };
+
+/** A measurement that fed a side: value, unit, and the sentence that says how it was obtained. */
+export type SimInputFactor = { key: string; label: string; value: number; unit: string; formula: string };
+
+export type SimModel = {
+  name: string;
+  version: string;
+  model_version: string;
+  seed: number;
+  minutes: number;
+  block_minutes: number;
+  blocks: number;
+  calibration: string;
+  coefficients: Record<string, number>;
+  factors: SimFactor[];
+  what_it_does_not_model: string[];
+};
+
+export type SimLineupRow = { player: string; position: string; band: string };
+
+export type SimSide = {
+  side: string;
+  team_id: string;
+  name: string;
+  short_name: string;
+  formation: string;
+  system_slug: string;
+  system_name: string;
+  goals: number;
+  possession_pct: number;
+  shots: number;
+  shots_on_target: number;
+  big_chances: number;
+  expected_goals: number;
+  passes: number;
+  pass_completions: number;
+  pass_accuracy_pct: number;
+  press_attempts: number;
+  turnovers_won: number;
+  high_turnovers_won: number;
+  transitions: number;
+  corners_conceded: number;
+  fouls: number;
+  yellow_cards: number;
+  red_cards: number;
+  injuries: number;
+  lineup: SimLineupRow[];
+  indices: Record<string, number>;
+  inputs: { tactics: Record<string, number>; factors: SimInputFactor[] };
+};
+
+export type SimEvent = {
+  minute: number;
+  type: string;
+  side: string;
+  team: string;
+  player: string;
+  position?: string;
+  chance?: string;
+  expected_goals?: number;
+  detail: string;
+  score?: string;
+  from_press?: boolean;
+};
+
+/** One block's line: the scoreboard plus every multiplier the model applied to it. */
+export type SimBlockSide = {
+  goals: number;
+  expected_goals: number;
+  shots: number;
+  possession_pct: number;
+  cumulative: string;
+  attack_term: number;
+  stretch: number;
+  opponent_opening: number;
+  fatigue: number;
+  late_space: number;
+  man_down_attack: number;
+  man_down_concede: number;
+  volume: number;
+  chance_quality: number;
+};
+
+export type SimBlock = { minute_from: number; minute_to: number; home: SimBlockSide; away: SimBlockSide };
+
+export type SimWinner = { side: string; name: string; team_id?: string };
+
+export type SimScore = { home: number; away: number; winner: SimWinner };
+
+export type SimReport = {
+  status: string;
+  model: SimModel;
+  score: SimScore;
+  sides: { home: SimSide; away: SimSide };
+  totals: Record<string, number>;
+  possession_share: { home: number; away: number; formula: string };
+  events: SimEvent[];
+  blocks: SimBlock[];
+  provenance: { data_origin: string; is_demo_data: boolean; disclaimer: string; inputs_are_from: string[] };
+  digest: string;
+};
+
+export type SimSummary = {
+  name: string;
+  short_name: string;
+  system_name: string;
+  formation: string;
+  possession_pct: number;
+  shots: number;
+  shots_on_target: number;
+  expected_goals: number;
+};
+
+/** `GET /simulate` rows carry no `report`; `GET /simulate/{ident}` and a fresh play do. */
+export type SimRow = {
+  id: string;
+  slug: string;
+  path: string;
+  model_version: string;
+  seed: number;
+  minutes: number;
+  block_minutes: number;
+  home_team_id: string | null;
+  away_team_id: string | null;
+  home_system: string;
+  away_system: string;
+  score: { home: number; away: number; winner_side: string };
+  digest: string;
+  created_at: string | null;
+  data_origin: string;
+  is_demo_data: boolean;
+  disclaimer: string;
+  home_summary: SimSummary;
+  away_summary: SimSummary;
+  report?: SimReport;
+};
+
+export type SimList = {
+  items: SimRow[];
+  total: number;
+  limit_per_user: number;
+  engine: SimEngine;
+  data_origin: string;
+  disclaimer: string;
+};
+
+/** The engine as the API describes it — the same strings a stored report carries. */
+export type SimEngine = {
+  name: string;
+  version: string;
+  disclaimer: string;
+  calibration: string;
+  factors: SimFactor[];
+  minute_choices: number[];
+  block_minutes: number;
+  inputs_are_from: string[];
+};
+
+export type SimTeamOption = {
+  team_id: string;
+  slug: string;
+  name: string;
+  short_name: string;
+  formation: string;
+  overall: number;
+  squad_size: number;
+  path: string;
+  data_origin: string;
+};
+
+export type SimSystemOption = { slug: string; name: string; formation: string; label: string; path: string };
+
+export type SimOptions = {
+  teams: SimTeamOption[];
+  systems: SimSystemOption[];
+  engine: SimEngine;
+  ready: boolean;
+  counts: { simulations: number };
+  data_origin: string;
+  disclaimer: string;
+};
+
+/** `GET /simulate/{ident}/replay` — the model's own reproducibility check, answered honestly. */
+export type SimReplay = {
+  possible: boolean;
+  reason?: string;
+  stored_digest?: string;
+  replayed_digest?: string;
+  identical?: boolean;
+  stored_score?: SimScore;
+  replayed_score?: SimScore;
+  model_version?: string;
 };

@@ -28,6 +28,10 @@ const DISALLOWED = [
   // Uploaded clips and everything derived from them. A clip is the most identifying file a user can
   // hand the platform, so it is disallowed rather than noindexed alone: no frame URL, no report.
   "/video",
+  // Which fixtures an account chooses to play, and the reports of them. The clubs are public fiction
+  // already; the account's own simulation history is not content, and a model scoreline must not be
+  // crawlable as if it were a result.
+  "/simulate",
 ];
 
 export default function robots(): MetadataRoute.Robots {

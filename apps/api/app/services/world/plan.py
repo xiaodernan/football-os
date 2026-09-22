@@ -20,6 +20,7 @@ WORLD_ID_PREFIXES = {
     "player": "wply",
     "match": "wmat",
     "stat_line": "wslt",
+    "training_session": "wtrs",
     "article": "wnws",
     "article_link": "wlnk",
     # M4 reuses this id scheme for its own catalogue: same rule, different prefix.
@@ -35,6 +36,8 @@ SEO_ROUTES: Final[dict[str, str]] = {
     "match": "/match",
     "article": "/news",
     "news": "/news",
+    # The Training Academy catalogue is a web surface too (`/training/{slug}`).
+    "drill": "/training",
     # M4: a tactical system gets a public page too, at the §80 shape `/tactics/{slug}`.
     "tactics": "/tactics",
 }
@@ -86,6 +89,7 @@ class WorldPlan:
     players: list[Planned] = field(default_factory=list)
     matches: list[Planned] = field(default_factory=list)
     stat_lines: list[Planned] = field(default_factory=list)
+    training_sessions: list[Planned] = field(default_factory=list)
     articles: list[Planned] = field(default_factory=list)
     article_links: list[Planned] = field(default_factory=list)
 
@@ -98,6 +102,7 @@ class WorldPlan:
             "players": self.players,
             "matches": self.matches,
             "stat_lines": self.stat_lines,
+            "training_sessions": self.training_sessions,
             "articles": self.articles,
             "article_links": self.article_links,
         }

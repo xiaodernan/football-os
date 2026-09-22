@@ -17,6 +17,8 @@ const REFRESH_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30);
 
 type Captured = { accessToken?: string; expiresIn?: number; refresh?: string };
 
+const refreshes = new Map<string, Promise<Captured | null>>();
+
 function parseRefreshCookie(setCookie: string | null): string | undefined {  if (!setCookie) return undefined;
   const pair = setCookie.split(";")[0];
   const index = pair.indexOf("=");
@@ -78,9 +80,17 @@ async function callApi(
 
 async function refreshSession(refreshCookie: string | null): Promise<Captured | null> {
   if (!refreshCookie) return null;
-  const { response, captured } = await callApi("POST", "/api/v1/auth/refresh", { refreshCookie });
-  if (!response.ok) return null;
-  return captured;
+  // One page load fans out into several parallel API calls, and each of them would otherwise
+  // spend the same single-use refresh token. The API tolerates that for a minute; not minting
+  // the duplicates in the first place is what keeps a session from churning rows per request.
+  const inFlight = refreshes.get(refreshCookie);
+  if (inFlight) return inFlight;
+  const attempt = (async () => {
+    const { response, captured } = await callApi("POST", "/api/v1/auth/refresh", { refreshCookie });
+    return response.ok ? captured : null;
+  })().finally(() => refreshes.delete(refreshCookie));
+  refreshes.set(refreshCookie, attempt);
+  return attempt;
 }
 
 function applyCookies(response: Response, captured: Captured, options: { clear?: boolean } = {}): Response {

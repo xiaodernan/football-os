@@ -60,10 +60,7 @@ def today(
     limit(request, 60, 3600, scope="coach_today")
     player = _player(db, user, player_id)
     rec = coach_engine.recommend_today(db, user, player, available_minutes=available_minutes, has_pitch=has_pitch)
-    content = (
-        f"Today: {rec.drill['title']} ({rec.drill['duration_min']} min, difficulty {rec.drill['difficulty']}/5). "
-        f"Objective — {rec.drill['objective']}"
-    )
+    content = f"Today: {rec.drill['title']} ({rec.drill['duration_min']} min, difficulty {rec.drill['difficulty']}/5). Objective — {rec.drill['objective']}"
     message = CoachMessage(
         id=new_public_id("msg"),
         user_id=user.id,
@@ -150,12 +147,10 @@ def ask(
         confidence = 0.74
     elif intent == "ball_loss":
         attrs = player.attributes
-        structured["message"] = (
-            f"Ball loss usually traces to first touch under pressure, not dribbling. Your first touch is {attrs.get('first_touch', 40)} and composure {attrs.get('composure', 40)}."
-        )
+        structured["message"] = f"Ball loss usually traces to first touch under pressure, not dribbling. Your first touch is {attrs.get('first_touch', 40)} and composure {attrs.get('composure', 40)}."
         reasons = [
             f"first_touch {attrs.get('first_touch', 40)} vs ball_control {attrs.get('ball_control', 40)} — the lower value is the limiter",
-            f"Recent sessions covered: {', '.join(sorted(coach_engine.history_summary(db, user, player)['recent_categories']) ) or 'none yet'}",
+            f"Recent sessions covered: {', '.join(sorted(coach_engine.history_summary(db, user, player)['recent_categories'])) or 'none yet'}",
             "Check whether you are receiving square-on; half-turn receiving removes half the pressure",
         ]
         confidence = 0.7

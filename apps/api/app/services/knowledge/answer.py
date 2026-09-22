@@ -237,10 +237,7 @@ def ask(
         scanned=found.scanned,
         top_score=found.top_score,
         timings_ms=timings,
-        disclaimer=(
-            "Grounded in the cited passages below. Coaching practice, not medical or scouting certification; "
-            "check the current wording of any law."
-        ),
+        disclaimer=("Grounded in the cited passages below. Coaching practice, not medical or scouting certification; check the current wording of any law."),
     )
     if persist:
         _record(db, result, user_id=user_id, hit_ids=[c["chunk_id"] if "chunk_id" in c else "" for c in citations])

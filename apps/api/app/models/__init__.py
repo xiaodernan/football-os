@@ -487,9 +487,7 @@ class RealMatch(Base, TimestampMixin):
     competition: Mapped[Competition | None] = relationship()
     home_team: Mapped[Team] = relationship(foreign_keys=[home_team_id])
     away_team: Mapped[Team] = relationship(foreign_keys=[away_team_id])
-    stat_lines: Mapped[list[RealPlayerMatchStat]] = relationship(
-        back_populates="match", cascade="all, delete-orphan", order_by="RealPlayerMatchStat.minute_rank"
-    )
+    stat_lines: Mapped[list[RealPlayerMatchStat]] = relationship(back_populates="match", cascade="all, delete-orphan", order_by="RealPlayerMatchStat.minute_rank")
 
 
 class RealPlayerMatchStat(TimestampMixin, Base):
@@ -532,6 +530,49 @@ class RealPlayerMatchStat(TimestampMixin, Base):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     match: Mapped[RealMatch] = relationship(back_populates="stat_lines")
+    player: Mapped[RealPlayer] = relationship()
+    team: Mapped[Team] = relationship()
+
+
+class RealTrainingSession(TimestampMixin, Base):
+    """A training session inside the generated world (spec §65 gate: 100 of them).
+
+    Kept apart from ``TrainingSession`` on purpose: that table is a real person's own log, with
+    export and erasure semantics attached, while these rows are demo history belonging to synthetic
+    players. The catalogue is referenced by ``drill_slug`` rather than a FK because the world plan is
+    built in memory from ``training_catalog.DRILLS`` and must not depend on the catalogue already
+    having been synced — a test asserts every slug resolves.
+    """
+
+    __tablename__ = "real_training_sessions"
+    __table_args__ = (
+        UniqueConstraint("natural_key", name="uq_world_training_natural_key"),
+        Index("ix_world_training_player_date", "player_id", "session_date"),
+        Index("ix_world_training_team", "team_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    natural_key: Mapped[str] = mapped_column(String(200), nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    team_id: Mapped[str] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    player_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    player_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    position: Mapped[str] = mapped_column(String(8), default="", nullable=False)
+    season: Mapped[str] = mapped_column(String(12), default="", nullable=False)
+    session_date: Mapped[str] = mapped_column(String(10), nullable=False)
+    drill_slug: Mapped[str] = mapped_column(String(140), nullable=False)
+    drill_title: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    category: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    difficulty: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    duration_min: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    rpe: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    load_units: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="completed", nullable=False)
+    summary: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(12), default="synthetic", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
     player: Mapped[RealPlayer] = relationship()
     team: Mapped[Team] = relationship()
 
@@ -613,9 +654,7 @@ class KnowledgeDocument(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     ingested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    chunks: Mapped[list[KnowledgeChunk]] = relationship(
-        back_populates="document", cascade="all, delete-orphan", order_by="KnowledgeChunk.ordinal"
-    )
+    chunks: Mapped[list[KnowledgeChunk]] = relationship(back_populates="document", cascade="all, delete-orphan", order_by="KnowledgeChunk.ordinal")
 
 
 class KnowledgeChunk(Base, TimestampMixin):
@@ -628,9 +667,7 @@ class KnowledgeChunk(Base, TimestampMixin):
     )
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
-    document_id: Mapped[str] = mapped_column(
-        ForeignKey("knowledge_documents.id", ondelete="CASCADE"), index=True, nullable=False
-    )
+    document_id: Mapped[str] = mapped_column(ForeignKey("knowledge_documents.id", ondelete="CASCADE"), index=True, nullable=False)
     ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
     heading: Mapped[str] = mapped_column(String(300), default="", nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
@@ -798,3 +835,37 @@ class VideoDetection(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
 
+# --- Football simulation (M6, spec §19, §20) ---------------------------------------------
+# A simulation is derived from the synthetic world's rows, so it is demo data by definition and is
+# stored that way on every row rather than only in the response body. `report` is the whole engine
+# output — scoreline, per-block ledger, events, and the formula strings behind each rate — and
+# `digest` is the hash the engine takes over it, so a saved match can be re-derived and compared
+# instead of trusted. The two team ids are nullable with SET NULL: the world may be regenerated or a
+# club removed, and the match record must survive that with its own copy of the names.
+class SimulationMatch(Base, TimestampMixin):
+    """One played match: the inputs that were chosen, the report the engine produced, its digest."""
+
+    __tablename__ = "sim_matches"
+    __table_args__ = (
+        Index("ix_sim_owner_created", "owner_id", "created_at"),
+        Index("ix_sim_fixture", "home_team_id", "away_team_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    minutes: Mapped[int] = mapped_column(Integer, default=90, nullable=False)
+    block_minutes: Mapped[int] = mapped_column(Integer, default=6, nullable=False)
+    home_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    away_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    home_system: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    away_system: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    home_goals: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    away_goals: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    winner_side: Mapped[str] = mapped_column(String(8), default="draw", nullable=False)
+    digest: Mapped[str] = mapped_column(String(16), default="", nullable=False, index=True)
+    report: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

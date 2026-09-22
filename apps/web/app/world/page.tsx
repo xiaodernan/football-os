@@ -101,7 +101,15 @@ export default async function WorldIndexPage() {
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow="What is actually in the tables" title="Contents, counted on this request">
+        <Panel
+          action={
+            <Link className="btn btn--ghost btn--sm" href="/world/training">
+              Training log
+            </Link>
+          }
+          eyebrow="What is actually in the tables"
+          title="Contents, counted on this request"
+        >
           <div className="world-tablewrap">
             <table className="table">
               <thead>

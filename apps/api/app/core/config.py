@@ -41,6 +41,9 @@ class Settings:
     cors_origins: tuple[str, ...] = field(default_factory=lambda: tuple(o for o in _env("CORS_ORIGINS", "http://localhost:3000").split(",") if o))
     access_token_ttl_minutes: int = field(default_factory=lambda: int(_env("ACCESS_TOKEN_TTL_MINUTES", "15") or 15))
     refresh_token_ttl_days: int = field(default_factory=lambda: int(_env("REFRESH_TOKEN_TTL_DAYS", "30") or 30))
+    # How long a rotated-out refresh token may still be presented, so parallel proxied requests
+    # from one browser cannot sign each other out. Past it, presenting one kills every session.
+    refresh_reuse_grace_seconds: int = field(default_factory=lambda: int(_env("REFRESH_REUSE_GRACE_SECONDS", "60") or 60))
     openai_api_key: str = field(default_factory=lambda: _env("OPENAI_API_KEY"))
     openai_model: str = field(default_factory=lambda: _env("OPENAI_MODEL", "gpt-4o-mini"))
     openai_embedding_model: str = field(default_factory=lambda: _env("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"))

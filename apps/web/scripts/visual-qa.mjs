@@ -1,10 +1,11 @@
 /**
- * End-to-end visual + functional QA walk: the M1 training loop, the M2 knowledge surface and the
- * M3 Football World pages (spec PRINCIPLE 3, §56, §62, §65, §80, §88).
+ * End-to-end visual + functional QA walk: the M1 training loop, the M2 knowledge surface, the M3
+ * Football World pages and the M4–M6 tactics, video and simulation surfaces
+ * (spec PRINCIPLE 3, §56, §62, §65, §80, §88).
  *
  * Drives the real browser stack — middleware redirect, cookie proxy, server components, client
  * forms and the generated-world routes — then writes screenshots at desktop and 375px widths into
- * docs/screenshots/ and prints an assertion report (110 checks as of 2026-09-22).
+ * docs/screenshots/ and prints an assertion report (190 checks as of 2026-09-23).
  *
  *   web tier: http://127.0.0.1:3210   api tier: http://127.0.0.1:8731   (scripts/dev.sh)
  *   node scripts/visual-qa.mjs
@@ -146,9 +147,23 @@ async function run() {
   const page = await browser.newPage();
   page.setDefaultTimeout(120_000);
   /** Where an error was seen matters more than the minified React code Chrome prints. */
-  const note = (line) => consoleErrors.push(`${line} @ ${new URL(page.url()).pathname}`);
+  const note = (line, where = new URL(page.url()).pathname) => consoleErrors.push(`${line} @ ${where}`);
   page.on('console', (message) => {
-    if (message.type() === 'error') note(message.text());
+    if (message.type() !== 'error') return;
+    const text = message.text();
+    // Chrome prints "Failed to load resource" for a request that failed without naming it, and
+    // `page.url()` only says where the reader was standing. Name the request instead: a 404 the
+    // walk asked for can then be matched to that check, and one it did not asks a readable question.
+    const source = message.location()?.url;
+    if (text.startsWith('Failed to load resource') && source) {
+      try {
+        note(text, new URL(source).pathname);
+        return;
+      } catch {
+        /* Not a URL worth splitting on; fall through to the page attribution below. */
+      }
+    }
+    note(text);
   });
   page.on('pageerror', (error) => note(String(error)));
   page.on('response', (response) => {
@@ -801,6 +816,75 @@ async function run() {
       `${brokenSlug.status}`,
     );
 
+    // 12b-2. The world's training log: the last item on the spec §65 list, and the only one whose
+    // numbers are arithmetic on two columns the reader can see.
+    await open(page, '/world');
+    const contentsRows = await page.evaluate(() =>
+      [...document.querySelectorAll('.table tbody tr')].map((row) => [...row.children].map((cell) => cell.textContent.trim())),
+    );
+    const trainingRow = contentsRows.find((cells) => cells[0] === 'training_sessions');
+    check(
+      'the world index counts the training log against its §65 gate instead of asserting it',
+      !!trainingRow && Number(trainingRow[1].replace(/\D/g, '')) >= 100 && trainingRow[2].replace(/\D/g, '') === '100' && /meets/iu.test(trainingRow[3]),
+      trainingRow?.join(' · ') ?? 'no training_sessions row',
+    );
+    await shot(page, '30a-world-index-training-gate');
+
+    await open(page, '/world/training');
+    await waitForText(page, 'no tracking data');
+    const trainingHead = await page.evaluate(() => {
+      const body = document.body.innerText;
+      const chips = [...document.querySelectorAll('.chip, .badge, .eyebrow, .mono')].map((node) => node.textContent.trim());
+      return {
+        demo: /demo data/iu.test(body),
+        formula: chips.find((text) => text.includes('duration_min x rpe')) ?? '',
+        rows: [...document.querySelectorAll('.table tbody tr')].map((row) => ({
+          date: row.children[0]?.textContent.trim() ?? '',
+          player: row.children[1]?.querySelector('a')?.getAttribute('href') ?? '',
+          drill: row.children[3]?.querySelector('a')?.getAttribute('href') ?? '',
+          focus: row.children[4]?.textContent.trim() ?? '',
+          minutes: Number.parseInt(row.children[5]?.textContent ?? '', 10),
+          rpe: Number.parseInt(row.children[6]?.textContent ?? '', 10),
+          load: Number.parseInt(row.children[7]?.textContent ?? '', 10),
+        })),
+      };
+    });
+    check('the training log is labelled demo data and prints the formula it uses', trainingHead.demo && /duration_min x rpe/u.test(trainingHead.formula), trainingHead.formula || 'no formula chip');
+    const arithmetic = trainingHead.rows.filter((row) => Number.isFinite(row.minutes) && Number.isFinite(row.rpe) && Number.isFinite(row.load));
+    check(
+      'every rendered load figure is the minutes and RPE on the same row, multiplied',
+      arithmetic.length >= 10 && arithmetic.every((row) => row.load === row.minutes * row.rpe),
+      `${arithmetic.length}/${trainingHead.rows.length} rows read · first: ${arithmetic[0] ? `${arithmetic[0].minutes}′ × ${arithmetic[0].rpe} = ${arithmetic[0].load}` : 'none'}`,
+    );
+    check(
+      'each session links the player to their page and the drill to the academy',
+      arithmetic.length > 0 && arithmetic.every((row) => /^\/player\/[a-z0-9-]+$/u.test(row.player) && /^\/training\/[a-z0-9-]+$/u.test(row.drill)),
+      arithmetic[0] ? `${arithmetic[0].player} · ${arithmetic[0].drill}` : 'no rows',
+    );
+    const focusChips = await page.evaluate(() => [...document.querySelectorAll('a')].filter((node) => node.pathname === '/world/training' && node.search.includes('category=')).map((node) => ({ href: node.getAttribute('href'), label: node.textContent.trim() })));
+    const chosen = focusChips.find((chip) => chip.label && !/all|clear/iu.test(chip.label));
+    if (chosen) {
+      // The chip's own href is already absolute, so prefixing it again asks the server for
+      // `/world/training/world/training`. Ask for exactly what the page offered.
+      await open(page, chosen.href.startsWith('/') ? chosen.href : `${BASE}${chosen.href}`);
+      await waitForText(page, 'no tracking data');
+      const focusColumn = await page.evaluate(() => [...document.querySelectorAll('.table tbody tr')].map((row) => row.children[4]?.textContent.trim() ?? ''));
+      check(
+        `the focus filter chip really narrows the table to "${chosen?.label}"`,
+        focusColumn.length > 0 && focusColumn.every((value) => value === chosen.label),
+        `${focusColumn.length} rows · ${[...new Set(focusColumn)].slice(0, 3).join(', ')}`,
+      );
+    } else {
+      check('the focus filter chip really narrows the table', false, `no category chips rendered: ${focusChips.length}`);
+    }
+    const sitemapText = await (await fetch(`${BASE}/sitemap.xml`)).text();
+    check(
+      'the training log is a sitemap entry while the academy it links into is not',
+      sitemapText.includes('/world/training') && !/<loc>[^<]*\/training\/[a-z0-9-]+<\/loc>/u.test(sitemapText),
+      sitemapText.includes('/world/training') ? 'listed · drill pages absent' : 'missing from the sitemap',
+    );
+    await shot(page, '30b-world-training-desktop');
+
     // 12c. Tactical Lab (M4): the board is drawn from metres, a "what if" is a URL, and no
     // measurement reaches the page without the formula that produced it.
     const tacticsApi = async (path) => {
@@ -1306,7 +1390,274 @@ async function run() {
       await unlink(clipPath).catch(() => {});
     }
 
+    // 12f. M6 match simulator. A fixture played from stored squads makes three claims about itself: it
+    // is reproducible, it is labelled as model output, and it belongs to the account that played it.
+    // The walk tests all three against rows it creates and destroys here, in this account.
+    const SIM_SEED = '20260922';
+    await open(page, '/simulate');
+    await waitForText(page, 'Play a fixture');
+    const picker = (await bodyText(page)).replace(/\s+/g, ' ');
+    // A Panel's eyebrow is rendered upper-case by CSS, and `innerText` reports what the reader sees,
+    // so anything read out of an eyebrow has to be matched without case. The meters, formulas and
+    // notices below are body text and keep their exact spelling.
+    check(
+      'the simulator names its model and prints the calibration note the engine authored',
+      /possession-block-v1@1\.0\.0/iu.test(picker) && /no real match data was used to fit them/u.test(picker),
+      picker.match(/possession-block-v1@[\d.]+/iu)?.[0] ?? 'no model version on the page',
+    );
+    check(
+      'model output is labelled simulation and demo data before anything is played, from an empty list',
+      /data_origin: simulation/u.test(picker) && /is_demo_data: true/u.test(picker) && /No matches played yet/u.test(picker),
+      `spec §19 sentence printed: ${/should not be interpreted as a real-world prediction/u.test(picker)}`,
+    );
+    const rates = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="sim-rates"] tbody tr')].map((row) =>
+        [...row.querySelectorAll('td')].map((cell) => (cell.textContent ?? '').replace(/\s+/g, ' ').trim()),
+      ),
+    );
+    check(
+      'every rate the model uses ships an expression and a plain reading of it',
+      rates.length >= 9 && rates.every((cells) => cells.length === 3 && /\d/u.test(cells[1]) && cells[2].length > 8),
+      `${rates.length} rates · ${rates[0]?.[0] ?? '—'} = ${(rates[0]?.[1] ?? '—').slice(0, 44)}`,
+    );
+
+    const anonSimPage = await fetch(`${BASE}/simulate`, { redirect: 'manual' });
+    const anonSimList = await fetch(`${BASE}/api/v1/simulate`, { redirect: 'manual' });
+    const anonSimOptions = await fetch(`${BASE}/api/v1/simulate/options`, { redirect: 'manual' });
+    check(
+      'a signed-out visitor may read the clubs and systems, but never an account list of matches',
+      [302, 307].includes(anonSimPage.status) && anonSimOptions.status === 200 && anonSimList.status === 401,
+      `page ${anonSimPage.status} → ${(anonSimPage.headers.get('location') ?? '').slice(0, 24)} · options ${anonSimOptions.status} · list ${anonSimList.status}`,
+    );
+    const simRobots = (await (await fetch(`${BASE}/robots.txt`)).text()).replace(/\r/g, '');
+    const simSitemap = await (await fetch(`${BASE}/sitemap.xml`)).text();
+    const simMeta = await page.evaluate(() => document.head.querySelector('meta[name="robots"]')?.content ?? '');
+    check(
+      'no model scoreline is crawlable: noindexed page, Disallowed path, absent from the sitemap',
+      /noindex/iu.test(simMeta) && /Disallow: \/simulate$/mu.test(simRobots) && !/\/simulate/u.test(simSitemap),
+      `${simMeta || 'no robots meta'} · disallow ${/Disallow: \/simulate$/mu.test(simRobots)} · in sitemap ${/\/simulate/u.test(simSitemap)}`,
+    );
+
+    // Clubs are picked from the payload rather than the first two on the shelf, so the walk always
+    // exercises the path where an authored shape adds metres to a side.
+    const staffed = await page.evaluate(async () => {
+      const options = await (await fetch('/api/v1/simulate/options', { credentials: 'same-origin' })).json();
+      const playable = options.teams.filter((team) => options.systems.some((system) => system.formation === team.formation));
+      return {
+        pair: playable.slice(0, 2).map((team) => team.slug),
+        formation: playable[0]?.formation ?? '',
+        teams: options.teams.length,
+        systems: options.systems.length,
+        ready: options.ready,
+      };
+    });
+    check(
+      'the picker is staffed from the generated world, and offers a shape for the clubs it plays',
+      staffed.ready === true && staffed.pair.length === 2 && staffed.systems >= 9,
+      `${staffed.teams} clubs · ${staffed.systems} systems · playing ${staffed.pair.join(' v ')} (${staffed.formation})`,
+    );
+    await shot(page, '39-simulate-index');
+
+    /** Play the chosen fixture through the form and return the report path it landed on. */
+    const playFixture = async (seed) => {
+      await setSelect(page, '[aria-label="Home club"]', staffed.pair[0]);
+      await sleep(350);
+      await setSelect(page, '[aria-label="Away club"]', staffed.pair[1]);
+      await sleep(350);
+      const shapes = {};
+      for (const label of ['Home tactical system', 'Away tactical system']) {
+        const offered = await page.evaluate(
+          (name) => [...document.querySelectorAll(`[aria-label="${name}"] option`)].map((node) => node.value).filter(Boolean),
+          label,
+        );
+        shapes[label] = offered[0] ?? '';
+        await setSelect(page, `[aria-label="${label}"]`, shapes[label]);
+      }
+      await setSelect(page, '[aria-label="Match length"]', '90');
+      await page.type('[aria-label="Seed"]', seed);
+      await clickByText(page, 'button', 'Play match');
+      try {
+        await page.waitForFunction(() => /^\/simulate\/[^/]+$/u.test(location.pathname), { timeout: 90_000 });
+      } catch (error) {
+        const said = (await bodyText(page).catch(() => '')).replace(/\s+/g, ' ').slice(0, 220);
+        throw new Error(`playing a fixture never reached its report — ${String(error?.message ?? error).slice(0, 120)} · the page said: ${said}`);
+      }
+      await waitForText(page, 'Block by block', 60_000);
+      return { path: new URL(page.url()).pathname, shapes };
+    };
+
+    const simRead = async () =>
+      page.evaluate(() => {
+        const text = (node) => (node?.textContent ?? '').replace(/\s+/g, ' ').trim();
+        const rowsOf = (testid) =>
+          [...document.querySelectorAll(`[data-testid="${testid}"] tbody tr`)].map((row) =>
+            [...row.querySelectorAll('td')].map((cell) => text(cell)),
+          );
+        const body = document.body.innerText.replace(/\s+/g, ' ');
+        return {
+          title: text(document.querySelector('h1')),
+          digest: body.match(/digest ([0-9a-f]{16})/u)?.[1] ?? '',
+          blockChip: Number(body.match(/(\d+) blocks of \d/u)?.[1] ?? -1),
+          eventChip: Number(body.match(/(\d+) events/u)?.[1] ?? -1),
+          blocks: rowsOf('sim-blocks'),
+          inputs: rowsOf('sim-inputs'),
+          lineups: [...document.querySelectorAll('[data-testid="sim-lineup"] tbody tr')].length,
+          lineupTables: document.querySelectorAll('[data-testid="sim-lineup"]').length,
+          modelRows: document.querySelectorAll('[data-testid="sim-model"] tbody tr').length,
+          eventRows: document.querySelectorAll('[data-testid="sim-events"] .timeline__row').length,
+          possession: [...document.querySelectorAll('.sim-possession .num')].map((node) => Number(text(node).replace('%', ''))),
+          body,
+        };
+      });
+
+    const firstSim = await playFixture(SIM_SEED);
+    const firstRead = await simRead();
+    check(
+      'a played fixture lands on its own stored report with digest, seed and model version printed',
+      /^\/simulate\/[a-z0-9-]+$/u.test(firstSim.path) && /^[0-9a-f]{16}$/u.test(firstRead.digest) && /possession-block-v1@1\.0\.0/iu.test(firstRead.body) && new RegExp(`seed ${SIM_SEED}`, 'iu').test(firstRead.body),
+      `${firstSim.path} · ${firstRead.digest || 'no digest'} · ${firstRead.body.match(/seed \d+/iu)?.[0] ?? 'no seed'}`,
+    );
+    check(
+      'the report prints the §19 sentence, the simulation badge and the tables its inputs came from',
+      /should not be interpreted as a real-world prediction/u.test(firstRead.body) && /simulation/u.test(firstRead.body) && /inputs from: \w+, ?\w+/u.test(firstRead.body),
+      firstRead.body.match(/inputs from: [\w,\s]+/u)?.[0]?.slice(0, 70) ?? 'no inputs-from chip',
+    );
+    const scoreInTitle = firstRead.title.match(/(\d+)\s*–\s*(\d+)/u);
+    const goalsFromBlocks = firstRead.blocks.reduce(
+      (total, row) => [total[0] + Number(row[1] ?? 0), total[1] + Number(row[5] ?? 0)],
+      [0, 0],
+    );
+    check(
+      'the block table adds up to the scoreline in the heading, and its rows match its own chip',
+      Boolean(scoreInTitle) &&
+        Number(scoreInTitle[1]) === goalsFromBlocks[0] &&
+        Number(scoreInTitle[2]) === goalsFromBlocks[1] &&
+        firstRead.blocks.length === firstRead.blockChip &&
+        firstRead.blocks.length >= 9,
+      `${firstRead.blocks.length} blocks (chip ${firstRead.blockChip}) · blocks ${goalsFromBlocks.join('–')} vs title ${scoreInTitle ? `${scoreInTitle[1]}–${scoreInTitle[2]}` : '?'}`,
+    );
+    check(
+      'the two sides share exactly 100% of possession, and the timeline matches its event count',
+      firstRead.possession.length === 2 && Math.abs(firstRead.possession.reduce((a, b) => a + b, 0) - 100) < 0.25 && firstRead.eventRows === firstRead.eventChip,
+      `${firstRead.possession.join(' / ')}% · ${firstRead.eventRows} rows for ${firstRead.eventChip} events`,
+    );
+    check(
+      'each side shows the eleven the shape selected, and every measured input carries its formula',
+      firstRead.lineupTables === 2 &&
+        firstRead.lineups === 22 &&
+        firstRead.inputs.length >= 12 &&
+        firstRead.inputs.every((row) => row.length === 3 && row[2].length > 12) &&
+        firstRead.modelRows === rates.length,
+      `${firstRead.lineups} lineup rows across ${firstRead.lineupTables} sides · ${firstRead.inputs.length} input rows · ${firstRead.modelRows}/${rates.length} model rates`,
+    );
+    await shot(page, '40-simulate-report');
+
+    await clickByText(page, 'button', 'Replay and compare');
+    await waitForText(page, 'replayed digest:', 120_000);
+    // Read the three digests the panel prints by the labels beside them rather than counting
+    // occurrences in one collapsed string: a chip that renders `undefined` then fails the check it
+    // belongs to, instead of quietly lowering a mention count somewhere else.
+    const replayPanel = await page.evaluate(() => {
+      const panel = document.querySelector('[data-testid="sim-replay"]');
+      const chips = [...(panel?.querySelectorAll('.chip') ?? [])].map((node) => (node.textContent ?? '').replace(/\s+/g, ' ').trim());
+      const labelled = (label) => chips.find((chip) => chip.toLowerCase().startsWith(label))?.slice(label.length).trim() ?? '';
+      return {
+        verdict: (panel?.querySelector('p')?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+        stored: labelled('stored digest:'),
+        replayed: labelled('replayed digest:'),
+        onPage: labelled('this page’s digest:'),
+        model: labelled('model:'),
+      };
+    });
+    check(
+      're-running the stored inputs server-side reproduces the digest on the row',
+      /^Identical\./u.test(replayPanel.verdict) &&
+        replayPanel.stored === firstRead.digest &&
+        replayPanel.replayed === firstRead.digest &&
+        replayPanel.onPage === firstRead.digest &&
+        /^[0-9a-f]{16}$/u.test(replayPanel.stored) &&
+        /possession-block-v1@1\.0\.0/u.test(replayPanel.model),
+      `stored ${replayPanel.stored || '—'} · replayed ${replayPanel.replayed || '—'} · page ${replayPanel.onPage || '—'} · row ${firstRead.digest || '—'} · ${replayPanel.model || 'no model'} · ${replayPanel.verdict.slice(0, 30)}`,
+    );
+
+    // A second row from the same fixture, shape and seed must agree with the first on its digest —
+    // that is the difference between a seeded model and a page that merely looks stable.
+    await open(page, '/simulate');
+    await waitForText(page, 'Play a fixture');
+    const secondSim = await playFixture(SIM_SEED);
+    const secondRead = await simRead();
+    check(
+      'the same fixture, shape and seed play to the same digest as a second, separately stored row',
+      secondSim.path !== firstSim.path && secondRead.digest === firstRead.digest && firstRead.digest.length === 16,
+      `${secondSim.path} vs ${firstSim.path} · ${secondRead.digest} vs ${firstRead.digest}`,
+    );
+    await open(page, '/simulate');
+    await waitForText(page, 'This account');
+    const kept = await page.evaluate(() => ({
+      cards: document.querySelectorAll('.tac-card').length,
+      keptChip: document.body.innerText.replace(/\s+/g, ' ').match(/(\d+) of \d+ kept/iu)?.[1] ?? '',
+      seeds: [...document.querySelectorAll('.tac-card .chip')].filter((node) => node.textContent?.includes('seed')).length,
+    }));
+    check(
+      'both stored matches appear in the account list, each with its seed and digest',
+      kept.cards === 2 && kept.keptChip === '2' && kept.seeds === 2,
+      `${kept.cards} cards · ${kept.keptChip} kept · ${kept.seeds} seed chips`,
+    );
+
+    // A second signed-in account in its own cookie jar: the row must not exist for it at all.
+    const other = await browser.createBrowserContext();
+    try {
+      const otherPage = await other.newPage();
+      otherPage.setDefaultTimeout(120_000);
+      await otherPage.goto(`${BASE}/register`, { waitUntil: 'networkidle2', timeout: 90_000 });
+      await otherPage.type('#email', `visual-qa-other-${stamp}@footballos.test`);
+      await otherPage.type('#password', PASSWORD);
+      await otherPage.type('#display_name', 'QA Other');
+      await otherPage.click('input[type="checkbox"]');
+      await otherPage.click('button[type="submit"]');
+      await otherPage.waitForFunction(() => location.pathname === '/onboarding', { timeout: 90_000 });
+      const outcomes = await otherPage.evaluate(async (slug) => {
+        const list = await (await fetch('/api/v1/simulate', { credentials: 'same-origin' })).json();
+        return {
+          page: (await fetch(`/simulate/${slug}`, { credentials: 'same-origin' })).status,
+          api: (await fetch(`/api/v1/simulate/${slug}`, { credentials: 'same-origin' })).status,
+          own: list.total,
+        };
+      }, firstSim.path.split('/').pop());
+      const otherSees = await otherPage.goto(`${BASE}${firstSim.path}`, { waitUntil: 'networkidle2', timeout: 90_000 });
+      const otherBody = (await otherPage.evaluate(() => document.body.innerText)).replace(/\s+/g, ' ');
+      check(
+        'another signed-in account gets a 404 for a match that is not its own, and an empty list of its own',
+        outcomes.api === 404 && outcomes.page === 404 && otherSees.status() === 404 && /not on the pitch/u.test(otherBody) && outcomes.own === 0,
+        `api ${outcomes.api} · proxy page ${outcomes.page} · visited ${otherSees.status()} · own list ${outcomes.own}`,
+      );
+    } catch (error) {
+      check('another signed-in account gets a 404 for a match that is not its own', false, String(error?.message ?? error).slice(0, 200));
+    } finally {
+      await other.close().catch(() => {});
+    }
+
+    // Erase what the walk played: the count in the evidence document must be the count on the row.
+    for (const path of [secondSim.path, firstSim.path]) {
+      await open(page, path);
+      await waitForText(page, 'Re-check it, or delete it');
+      await clickByText(page, 'button', 'Delete this match');
+      await sleep(1_200);
+    }
+    await waitForText(page, 'No matches played yet', 60_000);
+    const refetch = await page.evaluate(async (slugs) => {
+      const seen = {};
+      for (const slug of slugs) seen[slug] = (await fetch(`/api/v1/simulate/${slug}`, { credentials: 'same-origin' })).status;
+      return seen;
+    }, [firstSim.path, secondSim.path].map((path) => path.split('/').pop()));
+    check(
+      'deleting removes the rows for their owner and leaves the list empty again',
+      Object.values(refetch).every((code) => code === 404),
+      `${Object.entries(refetch).map(([slug, code]) => `${slug.slice(-8)}→${code}`).join(' · ')}`,
+    );
+
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
+
     await page.setViewport(MOBILE);
     const mobileSurface = async ([path, marker, label]) => {
       try {
@@ -1334,6 +1685,7 @@ async function run() {
       ['/knowledge', 'Document library', 'knowledge'],
       ['/knowledge/buildup-vs-high-press', 'Passages', 'knowledge-document'],
       ['/world', 'Browse', 'world'],
+      ['/world/training', 'no tracking data', 'world-training'],
       ['/world/players', 'Players', 'world-players'],
       [worldTeam.path, 'Squad', 'world-team'],
       [worldPlayer.path, 'Season totals', 'world-player'],
@@ -1346,6 +1698,7 @@ async function run() {
       sibling
         ? [`/tactics/compare?a=${encodeURIComponent(tactic.slug)}&b=${encodeURIComponent(sibling.slug)}&phase=out`, 'side by side', 'tactics-compare']
         : ['/tactics/compare', 'Pick two different systems', 'tactics-compare'],
+      ['/simulate', 'Play a fixture', 'simulate'],
       ['/settings', 'Data', 'settings'],
     ]) {
       await mobileSurface(surface);
@@ -1380,18 +1733,21 @@ async function run() {
   }
 
   // Console noise is a gate, not a footnote: a walk that prints errors and still exits 0 teaches
-  // nobody to read them. Exactly two are provoked on purpose, both by the video block deleting a
-  // clip whose file the browser still has open — Chromium's in-flight byte-range read then answers
-  // 404 as a response and again as a resource error on the page it came from.
+  // nobody to read them. The lines below are the ones this walk provokes on purpose, each from a row
+  // it has already deleted or refused.
   const provoked = [
     // Deleting a clip while its report still has the file open: Chromium's in-flight byte-range read of a row
-    // that no longer exists answers 404, once as a response and once as a resource error on the page it came from.
+    // that no longer exists answers 404, once as a response and once as a resource error on the request itself.
     /^HTTP 404 \/api\/v1\/video\/[^/]+\/file$/,
-    /^Failed to load resource: the server responded with a status of 404 \(Not Found\) @ \/video\/[^/]+$/,
+    /^Failed to load resource: the server responded with a status of 404 \(Not Found\) @ \/api\/v1\/video\/[^/]+\/file$/,
     // The range probe above asks for bytes past the end of the clip on purpose, because a proxy that turned a 416
     // into a 200 would leave a browser unable to tell that its range was refused.
     /^HTTP 416 \/api\/v1\/video\/[^/]+\/file$/,
-    /^Failed to load resource: the server responded with a status of 416 \(Range Not Satisfiable\) @ \/video\/[^/]+$/,
+    /^Failed to load resource: the server responded with a status of 416 \(Range Not Satisfiable\) @ \/api\/v1\/video\/[^/]+\/file$/,
+    // The M6 block deletes the matches it played and then re-reads them with its own session to prove the rows are
+    // gone for their owner. The 404 that answers is the result the walk is asking for, not a page defect.
+    /^HTTP 404 \/api\/v1\/simulate\/[^/]+$/,
+    /^Failed to load resource: the server responded with a status of 404 \(Not Found\) @ \/api\/v1\/simulate\/[^/]+$/,
   ];
   const unexpected = [...new Set(consoleErrors)].filter((line) => !provoked.some((pattern) => pattern.test(line)));
   check(

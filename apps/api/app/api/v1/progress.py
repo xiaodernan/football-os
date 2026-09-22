@@ -28,9 +28,7 @@ router = APIRouter(prefix="/progress", tags=["progress"])
 
 
 def _player_or_404(db: Session, user: User, player_id: str | None) -> UserPlayer:
-    player = db.get(UserPlayer, player_id) if player_id else db.scalar(
-        select(UserPlayer).where(UserPlayer.user_id == user.id).order_by(UserPlayer.created_at)
-    )
+    player = db.get(UserPlayer, player_id) if player_id else db.scalar(select(UserPlayer).where(UserPlayer.user_id == user.id).order_by(UserPlayer.created_at))
     if player is None:
         raise HTTPException(status.HTTP_409_CONFLICT, detail={"code": "no_player", "message": "Create your player profile first"})
     ownership_or_admin(user, player.user_id, "player")
@@ -99,9 +97,7 @@ def overview(player_id: str | None = Query(default=None), db: Session = Depends(
 def timeline(player_id: str | None = Query(default=None), days: int = Query(default=30, ge=7, le=180), db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
     player = _player_or_404(db, user, player_id)
     since = date.today() - timedelta(days=days)
-    sessions = db.scalars(
-        select(TrainingSession).where(TrainingSession.player_id == player.id, TrainingSession.planned_date >= since.isoformat()).order_by(TrainingSession.planned_date)
-    ).all()
+    sessions = db.scalars(select(TrainingSession).where(TrainingSession.player_id == player.id, TrainingSession.planned_date >= since.isoformat()).order_by(TrainingSession.planned_date)).all()
     changes = db.scalars(select(AttributeChange).where(AttributeChange.player_id == player.id, AttributeChange.created_at >= str(since)).order_by(AttributeChange.created_at)).all()
     by_attribute: dict[str, list[dict[str, Any]]] = {}
     for change in changes:
@@ -156,10 +152,7 @@ def export(request: Request, db: Session = Depends(get_db), user: User = Depends
             {"id": s.id, "status": s.status, "planned_date": s.planned_date, "xp_awarded": s.xp_awarded, "drill_id": s.drill_id, "execution_rating": s.execution_rating}
             for s in db.scalars(select(TrainingSession).where(TrainingSession.user_id == user.id)).all()
         ],
-        "xp_events": [
-            {"amount": e.amount, "reason": e.reason, "formula": e.formula, "at": e.created_at.isoformat()}
-            for e in db.scalars(select(XpEvent).where(XpEvent.user_id == user.id)).all()
-        ],
+        "xp_events": [{"amount": e.amount, "reason": e.reason, "formula": e.formula, "at": e.created_at.isoformat()} for e in db.scalars(select(XpEvent).where(XpEvent.user_id == user.id)).all()],
         "format_version": 1,
     }
 

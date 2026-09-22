@@ -110,13 +110,9 @@ def list_documents(
         stmt = stmt.where(KnowledgeDocument.category == category)
     if q:
         needle = f"%{q.lower()}%"
-        stmt = stmt.where(
-            func.lower(KnowledgeDocument.title).like(needle) | func.lower(KnowledgeDocument.source_label).like(needle)
-        )
+        stmt = stmt.where(func.lower(KnowledgeDocument.title).like(needle) | func.lower(KnowledgeDocument.source_label).like(needle))
     documents = list(db.scalars(stmt).all())
-    counts: dict[str, int] = {str(row[0]): int(row[1]) for row in db.execute(
-        select(KnowledgeChunk.document_id, func.count(KnowledgeChunk.id)).group_by(KnowledgeChunk.document_id)
-    ).all()}
+    counts: dict[str, int] = {str(row[0]): int(row[1]) for row in db.execute(select(KnowledgeChunk.document_id, func.count(KnowledgeChunk.id)).group_by(KnowledgeChunk.document_id)).all()}
     return {
         "total": len(documents),
         "categories": sorted({d.category for d in documents}),
@@ -129,9 +125,7 @@ def get_document(slug: str, db: Session = Depends(get_db)) -> dict[str, Any]:
     document = db.scalar(select(KnowledgeDocument).where(KnowledgeDocument.slug == slug))
     if document is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "not_found", "message": "No such knowledge document"})
-    chunks = db.scalars(
-        select(KnowledgeChunk).where(KnowledgeChunk.document_id == document.id).order_by(KnowledgeChunk.ordinal)
-    ).all()
+    chunks = db.scalars(select(KnowledgeChunk).where(KnowledgeChunk.document_id == document.id).order_by(KnowledgeChunk.ordinal)).all()
     return {
         **_document_dict(document),
         "sections": [
@@ -160,7 +154,10 @@ def search(
         db,
         body.query,
         filters=knowledge.Filters(
-            category=body.category, position=body.position, difficulty=body.difficulty, tag=body.tag,
+            category=body.category,
+            position=body.position,
+            difficulty=body.difficulty,
+            tag=body.tag,
             document_slug=body.document_slug,
         ),
         mode=body.mode,
@@ -189,7 +186,10 @@ def ask(
         db,
         body.question,
         filters=knowledge.Filters(
-            category=body.category, position=body.position, difficulty=body.difficulty, tag=body.tag,
+            category=body.category,
+            position=body.position,
+            difficulty=body.difficulty,
+            tag=body.tag,
             document_slug=body.document_slug,
         ),
         mode=body.mode,

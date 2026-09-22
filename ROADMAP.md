@@ -7,10 +7,10 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M0 Foundation** | monorepo, git, CI, docs+ADRs, design system, Next.js, FastAPI, Postgres/pgvector compose, auth foundation, provider abstraction, health checks | both apps build, tests green, login works | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M1 Player + AI Coach vertical slice** | Create user → create player → profile → training → completion → AI Coach → progress → history | closed loop usable in browser with real persistence | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M2 Football Knowledge + RAG** | ingestion, chunking, embeddings, pgvector hybrid retrieval, rerank, citations, Football AI | answers carry resolvable source citations | ✅ verified 2026-09-21 ([evidence](docs/M2_VERIFICATION.md)) |
-| **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) |
+| **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) — world 3.2 (2026-09-23) added the sixth §65 gate item, 100 training sessions, browsed at `/world/training` |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 6 of 6 topics on all 50 systems (2 were refused until the corpus gained the missing passages); 3D pitch and board sharing beyond one owner are open follow-ups |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ✅ verified 2026-09-22 ([pipeline](docs/M5_VERIFICATION.md) · [web](docs/M5_WEB_VERIFICATION.md)) — upload, report, detection timeline and owner-only byte-range playback proven in the browser |
-| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | ⬜ |
+| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine + `/simulate` + the §65 training log **verified 2026-09-23** ([backend](docs/M6_VERIFICATION.md) · [web](docs/M6_WEB_VERIFICATION.md)); Career Mode (§20), manager challenges (§21) and transfers (§22) outstanding |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
 | **M8 Club OS / Academy** | organisations, teams, coaches, IDP, curriculum, permissions, multi-tenant | B2B tenant isolation proven | ⬜ |
 | **M9 Community** | feed, posts, comments, likes, follows, shared boards/plans | creator→content→feedback loop | ⬜ |
@@ -63,8 +63,10 @@ Web surface (verified 2026-09-22):
 
 **M4 Tactical Lab — closed 2026-09-22.** The gate (50 systems + drag/draw/save/share + analysis with evidence) is met;
 the items still open below it are follow-ups, not gate gaps. **M5 Video Analysis — closed the same day**, pipeline and
-browser both. **Next: M6 Football Simulation** — a deterministic match engine, Career Mode, manager challenges and
-squad/training/finance on top of it, with every result labelled fictional rather than observed.
+browser both. **M6 Football Simulation — first slice verified 2026-09-23**: the deterministic possession-block engine,
+its `/simulate` surface, and the last outstanding §65 gate item (100 world training sessions, browsable at
+`/world/training`). **Next inside M6:** Career Mode (§20) as the container a season is played in, then manager live
+challenges (§21) and the transfer market (§22), with every result labelled fictional rather than observed.
 
 Verified 2026-09-22 (the pure layer + storage + reads, 99 tests):
 
@@ -154,6 +156,36 @@ Still open in M5:
 Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,
 `scripts/export_openapi.py`, `apps/web/scripts/visual-qa.mjs`. `docs/api/openapi.json` remains the
 contract the web tier codes against.
+
+**M6 Football Simulation (first slice) — verified 2026-09-23.** Evidence:
+[`docs/M6_VERIFICATION.md`](docs/M6_VERIFICATION.md) (engine + storage + reads) ·
+[`docs/M6_WEB_VERIFICATION.md`](docs/M6_WEB_VERIFICATION.md) (browser).
+
+Verified 2026-09-23 (317 API tests on both engines + a browser walk at 190/190):
+
+1. [x] `possession-block-v1@1.0.0`: a 90-minute match as fifteen six-minute blocks, each side measured from ten
+   factor rows through nine named rates, every rate shipping with the expression that produced it
+2. [x] determinism a stranger can check: `sha256` digest over the inputs, stored beside the report in `sim_matches`
+   (migration `0007`), and `POST /api/v1/simulate/{ident}/replay` re-playing from the stored seed + minutes + two
+   systems so the page prints `stored · replayed · Identical.` rather than asking to be believed
+3. [x] every result labelled fictional: `data_origin='simulation'`, `is_demo_data=true`, the simulation disclaimer on
+   the row and on `/simulate`, and no claim that any of it was observed
+4. [x] ownership: `/simulate` is behind the session wall, another account gets 404 on every door, and deleting a
+   match removes it for its owner (the walk re-reads both rows and gets 404)
+5. [x] the last §65 gate item: `real_training_sessions` (migration `0008`), 100 rows drawn in proportion to the
+   minutes the generated players played, each quoting a catalogue drill and copying its duration and difficulty,
+   `load_units = duration_min × rpe` computed on request — served by `GET /api/v1/world/training`, browsed at
+   `/world/training`, and printed as `MEETS` by `/world`'s own counts table
+6. [x] a session-rotation defect the walk found rather than a test: parallel proxied calls signed the user out of
+   their own account. Fixed with `REFRESH_REUSE_GRACE_SECONDS` (ADR-003 amended), destroy-on-stale-reuse, logout that
+   deletes the credential, a single-flight refresh in the cookie proxy, and four tests that age `revoked_at` instead
+   of sleeping
+7. [x] the console gate now attributes a failed request by its **own URL** (`message.location().url`), not by the
+   page the reader was on — which is what let it name the walk's own doubled path
+
+Still open in M6: Career Mode (§20), manager live challenges (§21), the transfer market (§22), squad/training/finance
+carry-over between matches, a `sim_events` table so the timeline is stored rather than regenerated, and rendering the
+`training_log` the player detail route already returns.
 
 ## Cross-cutting gates (spec §80 SEO, §81 i18n)
 

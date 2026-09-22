@@ -16,9 +16,9 @@ import pytest
 from sqlalchemy import func, select
 
 from app.core.db import SessionLocal
-from app.models import NewsArticle, NewsArticleLink, RealMatch, RealPlayer, Team
+from app.models import NewsArticle, NewsArticleLink, RealMatch, RealPlayer, RealTrainingSession, Team
 from app.services.world import search_world, sync_world, web_path, world_counts, world_ready
-from app.services.world.builder import WorldSizes, plan_world
+from app.services.world.builder import TRAINING_RPE, WorldSizes, plan_world
 from app.services.world.names import slugify
 from app.services.world.plan import WorldPlan, duplicate_keys
 from app.services.world.sync import COLLECTIONS, GATE, plan_problems
@@ -102,6 +102,36 @@ class TestPlan:
         assert duplicate_keys(rows) == []
         assert duplicate_keys([rows[0], rows[0]]) == [rows[0].natural_key]
 
+    def test_training_log_clears_the_last_gate_item_and_quotes_only_the_catalogue(self, plan: WorldPlan) -> None:
+        """Spec §65's 100 Training Sessions: demo history, but every field traceable to a row.
+
+        The drills are the project-authored catalogue, the durations and difficulties are copied
+        from it, and load is the session-RPE product — so nothing on a session row is invented for
+        the page, which is the difference between demo data and a fake measurement.
+        """
+        from app.services.training_catalog import DRILLS
+
+        rows = plan.collections["training_sessions"]
+        assert len(rows) >= GATE["training_sessions"]
+        by_slug = {str(drill["slug"]): drill for drill in DRILLS}
+        players = {row.natural_key for row in plan.collections["players"]}
+        for row in rows:
+            payload = row.payload
+            drill = by_slug.get(payload["drill_slug"])
+            assert drill is not None, f"{payload['drill_slug']} is not in the catalogue"
+            assert payload["player_slug"] in players
+            assert payload["drill_title"] == drill["title"] and payload["category"] == drill["category"]
+            assert payload["difficulty"] == drill["difficulty"]
+            assert payload["duration_min"] == drill["duration_min"]
+            assert payload["load_units"] == payload["duration_min"] * payload["rpe"]
+            assert TRAINING_RPE[0] <= payload["rpe"] <= TRAINING_RPE[1]
+            assert re.match(r"^\d{4}-\d{2}-\d{2}$", payload["session_date"]), payload["session_date"]
+        assert len({row.natural_key for row in rows}) == len(rows)
+        # Spread across the squad rather than one player's diary: the draw is weighted by minutes
+        # played, so a floor on distinct players is what tells those two stories apart.
+        assert len({row.payload["player_slug"] for row in rows}) >= 40, plan.counts()
+        assert len({row.payload["drill_slug"] for row in rows}) >= 10
+
 
 class TestSync:
     def test_second_sync_changes_nothing(self, session) -> None:  # type: ignore[no-untyped-def]
@@ -122,6 +152,14 @@ class TestSync:
 
         dangling = session.scalar(select(func.count()).select_from(RealPlayerMatchStat).where(RealPlayerMatchStat.player_id.not_in(select(RealPlayer.id))))
         assert dangling == 0
+
+    def test_world_training_rows_reference_players_that_exist(self, session) -> None:  # type: ignore[no-untyped-def]
+        """`drill_slug` is checked against the catalogue in the plan tests; `player_id` is a FK, so
+        the round trip through the database is what proves the row still points at a real club member."""
+        sync_world(session)
+        dangling = session.scalar(select(func.count()).select_from(RealTrainingSession).where(RealTrainingSession.player_id.not_in(select(RealPlayer.id))))
+        assert dangling == 0
+        assert session.scalar(select(func.count()).select_from(RealTrainingSession)) >= GATE["training_sessions"]
 
     def test_article_links_never_point_at_a_deleted_article(self, session) -> None:
         orphans = session.scalar(select(func.count()).select_from(NewsArticleLink).where(NewsArticleLink.article_id.not_in(select(NewsArticle.id))))
@@ -146,6 +184,7 @@ class TestReads:
         body = client.get(f"{API}/status").json()
         assert body["is_demo_data"] is True and body["data_origin"] == "synthetic"
         assert body["counts"]["teams"] >= GATE["teams"] and body["counts"]["articles"] >= GATE["articles"]
+        assert body["counts"]["training_sessions"] >= GATE["training_sessions"]
         assert body["gate"] == dict(GATE)
         assert isinstance(body["seed"], int)
         assert body["disclaimer"]
@@ -252,13 +291,45 @@ class TestReads:
             item = _item(client, path)
             body = client.get(f"{API}{path}/{item['slug']}").json()
             for candidate in walk(body):
-                assert candidate.startswith(("/player/", "/team/", "/match/", "/competition/", "/news/")), (path, candidate)
+                assert candidate.startswith(("/player/", "/team/", "/match/", "/competition/", "/news/", "/training/")), (path, candidate)
                 assert SAFE_SLUG.match(candidate.rsplit("/", 1)[-1]), candidate
                 checked += 1
         assert checked > 25, checked
 
-    def test_stat_lines_carry_the_match_path_too(self, client) -> None:  # type: ignore[no-untyped-def]
-        """A line without its fixture's path would force the client to rebuild `/match/{slug}`."""
+    def test_training_log_is_public_and_its_load_is_arithmetic(self, client) -> None:  # type: ignore[no-untyped-def]
+        body = client.get(f"{API}/training").json()
+        assert body["is_demo_data"] is True and body["data_origin"] == "synthetic" and body["disclaimer"]
+        assert body["total"] >= GATE["training_sessions"]
+        assert body["gate"] == {"training_sessions": GATE["training_sessions"]}
+        assert body["page_totals"]["sessions"] == len(body["items"]) > 0
+        for item in body["items"]:
+            assert item["load_units"] == item["duration_min"] * item["rpe"]
+            assert item["player_path"] == web_path("player", item["player_slug"])
+            assert item["drill_path"] == web_path("drill", item["drill_slug"])
+            assert "records no real person" in item["summary"]
+
+    def test_training_log_filters_narrow_to_the_player_or_club_asked_for(self, client) -> None:  # type: ignore[no-untyped-def]
+        item = client.get(f"{API}/training").json()["items"][0]
+        by_player = client.get(f"{API}/training", params={"player": item["player_slug"], "page_size": 100}).json()
+        assert by_player["total"] >= 1 and {row["player_slug"] for row in by_player["items"]} == {item["player_slug"]}
+        club = client.get(f"{API}/players/{item['player_slug']}").json()["player"]["club"]["slug"]
+        by_club = client.get(f"{API}/training", params={"team": club, "page_size": 100}).json()
+        assert by_club["total"] >= by_player["total"]
+        assert client.get(f"{API}/training", params={"player": "no-such-player"}).status_code == 404
+
+    def test_player_detail_and_the_log_agree_on_the_same_rows(self, client) -> None:  # type: ignore[no-untyped-def]
+        """Two read paths, one set of rows: a total on the player page that the list cannot reproduce
+        would be exactly the kind of stored-and-derived mismatch the rest of M3 refuses to ship."""
+        slug = client.get(f"{API}/training").json()["items"][0]["player_slug"]
+        log = client.get(f"{API}/players/{slug}").json()["training_log"]
+        listed = client.get(f"{API}/training", params={"player": slug, "page_size": 100}).json()
+        assert log["sessions"] == listed["total"] == len(log["items"])
+        assert {row["id"] for row in log["items"]} == {row["id"] for row in listed["items"]}
+        assert log["total_load"] == sum(row["load_units"] for row in listed["items"])
+        assert log["total_minutes"] == sum(row["duration_min"] for row in listed["items"]) > 0
+        assert log["load_formula"] == "load_units = duration_min x rpe"
+
+    def test_stat_lines_carry_the_match_path_too(self, client) -> None:  # type: ignore[no-untyped-def]        """A line without its fixture's path would force the client to rebuild `/match/{slug}`."""
         played = client.get(f"{API}/matches", params={"status": "completed", "page_size": 1}).json()["items"][0]
         detail = client.get(f"{API}/matches/{played['slug']}").json()
         assert detail["stat_lines"], "a completed fixture must carry its lines"

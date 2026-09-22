@@ -690,4 +690,3 @@ def sync_catalog(db: Session) -> int:
         created += 1
     db.commit()
     return created + 0
-

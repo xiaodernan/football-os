@@ -2063,6 +2063,132 @@
         }
       }
     },
+    "/api/v1/world/training": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "List Training Sessions",
+        "description": "The demo world's training log (spec §65: 100 sessions).\n\nPublic like the rest of the world, because every row belongs to a generated player. The\naggregates are computed from the rows that match the filters — not stored — so the totals on\nthis page and the items listed under them cannot disagree.",
+        "operationId": "list_training_sessions_api_v1_world_training_get",
+        "parameters": [
+          {
+            "name": "player",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 160
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Player"
+            }
+          },
+          {
+            "name": "team",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 160
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Team"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "season",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 12
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Season"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response List Training Sessions Api V1 World Training Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/matches": {
       "get": {
         "tags": [
@@ -3766,6 +3892,238 @@
           }
         }
       }
+    },
+    "/api/v1/simulate/options": {
+      "get": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Read Options",
+        "description": "What can be played: every club, every authored system, and what the engine claims about itself.",
+        "operationId": "read_options_api_v1_simulate_options_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Options Api V1 Simulate Options Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulate": {
+      "get": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "List Simulations",
+        "description": "The account's own matches, newest first, each with the seed that replays it.",
+        "operationId": "list_simulations_api_v1_simulate_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response List Simulations Api V1 Simulate Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Play",
+        "description": "Play a fixture from the two clubs' stored squads and keep the report.",
+        "operationId": "play_api_v1_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Play Api V1 Simulate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/simulate/{ident}": {
+      "get": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Read Simulation",
+        "operationId": "read_simulation_api_v1_simulate__ident__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Simulation Api V1 Simulate  Ident  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Delete Simulation",
+        "operationId": "delete_simulation_api_v1_simulate__ident__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulate/{ident}/replay": {
+      "get": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Replay",
+        "description": "Play the stored match again from its stored inputs and report whether it came out the same.\n\nThis is what spec §19 asks of a simulation: not that it is accurate, but that it is honest about\nbeing a model and reproducible in its own terms. If the engine ever changes without its version\nnumber moving, this is the check that stops matching.",
+        "operationId": "replay_api_v1_simulate__ident__replay_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Replay Api V1 Simulate  Ident  Replay Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4691,6 +5049,70 @@
           "accepts_data_policy"
         ],
         "title": "RegisterIn"
+      },
+      "SimulateIn": {
+        "properties": {
+          "home_team": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Home Team"
+          },
+          "away_team": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Away Team"
+          },
+          "home_system": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Home System"
+          },
+          "away_system": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Away System"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "minutes": {
+            "type": "integer",
+            "title": "Minutes",
+            "default": 90
+          }
+        },
+        "type": "object",
+        "required": [
+          "home_team",
+          "away_team"
+        ],
+        "title": "SimulateIn"
       },
       "TokenPair": {
         "properties": {

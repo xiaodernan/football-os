@@ -69,13 +69,17 @@ class Filters:
         return parts
 
     def to_dict(self) -> dict[str, str]:
-        return {k: v for k, v in {
-            "category": self.category,
-            "position": self.position,
-            "difficulty": self.difficulty,
-            "tag": self.tag,
-            "document_slug": self.document_slug,
-        }.items() if v}
+        return {
+            k: v
+            for k, v in {
+                "category": self.category,
+                "position": self.position,
+                "difficulty": self.difficulty,
+                "tag": self.tag,
+                "document_slug": self.document_slug,
+            }.items()
+            if v
+        }
 
 
 @dataclass
@@ -213,11 +217,7 @@ def _json_contains(column: Any, needle: str) -> Any:
 
 
 def _candidates(db: Session, filters: Filters) -> list[KnowledgeChunk]:
-    stmt = (
-        select(KnowledgeChunk)
-        .join(KnowledgeDocument, KnowledgeChunk.document_id == KnowledgeDocument.id)
-        .limit(CANDIDATE_SCAN_LIMIT)
-    )
+    stmt = select(KnowledgeChunk).join(KnowledgeDocument, KnowledgeChunk.document_id == KnowledgeDocument.id).limit(CANDIDATE_SCAN_LIMIT)
     if filters.category:
         stmt = stmt.where(KnowledgeChunk.category == filters.category)
     if filters.difficulty:
@@ -231,9 +231,7 @@ def _candidates(db: Session, filters: Filters) -> list[KnowledgeChunk]:
     return list(db.scalars(stmt).all())
 
 
-def _semantic_ranking(
-    db: Session, query_vector: list[float], filters: Filters, candidate_ids: set[str], top_k: int
-) -> tuple[list[str], dict[str, float], str]:
+def _semantic_ranking(db: Session, query_vector: list[float], filters: Filters, candidate_ids: set[str], top_k: int) -> tuple[list[str], dict[str, float], str]:
     """The pgvector leg. Returns ([], {}, 'vector-python') when the extension is not in play,
     in which case the caller computes cosine in-process over the same candidate set."""
     if not has_pgvector(db) or not candidate_ids:
@@ -271,12 +269,7 @@ def search(
 
     load_started = time.perf_counter()
     chunks = _candidates(db, filters)
-    documents = {
-        document.id: document
-        for document in db.scalars(
-            select(KnowledgeDocument).where(KnowledgeDocument.id.in_({c.document_id for c in chunks} or {""}))
-        ).all()
-    }
+    documents = {document.id: document for document in db.scalars(select(KnowledgeDocument).where(KnowledgeDocument.id.in_({c.document_id for c in chunks} or {""}))).all()}
     timings["load"] = int((time.perf_counter() - load_started) * 1000)
 
     if not chunks:
@@ -309,19 +302,14 @@ def search(
     query_terms = {t: 1.0 / math.log1p(len(t)) for t in dict.fromkeys(content_words(query))}
 
     score_started = time.perf_counter()
-    lexical_scores = {
-        c.id: bm25_score(query_terms, terms_by_chunk[c.id], doc_length=lengths[c.id], avg_doc_length=avg_length, df=df, total_docs=total_docs)
-        for c in chunks
-    }
+    lexical_scores = {c.id: bm25_score(query_terms, terms_by_chunk[c.id], doc_length=lengths[c.id], avg_doc_length=avg_length, df=df, total_docs=total_docs) for c in chunks}
     keyword_ranking = [cid for cid, _ in sorted(lexical_scores.items(), key=lambda kv: (-kv[1], kv[0])) if lexical_scores[cid] > 0]
 
     similarities: dict[str, float] = {}
     semantic_ranking: list[str] = []
     backend = "none"
     if mode in ("semantic", "hybrid"):
-        native_ids, native_sims, native_backend = _semantic_ranking(
-            db, query_vector, filters, {c.id for c in chunks}, top_k
-        )
+        native_ids, native_sims, native_backend = _semantic_ranking(db, query_vector, filters, {c.id for c in chunks}, top_k)
         similarities.update(native_sims)
         if native_backend == "pgvector" and native_ids:
             semantic_ranking = native_ids
@@ -413,19 +401,14 @@ def search(
         f"rerank kept {len(hits)} of {len(ranked)} candidates at score >= {MIN_USEFUL_SCORE}",
     ]
     if hits:
-        reasons.append(
-            "top match: “" + hits[0].title + " — " + hits[0].heading + "” "
-            f"(rerank {hits[0].score:.3f}, cosine {hits[0].similarity:.3f}, bm25 {hits[0].lexical:.2f})"
-        )
+        reasons.append("top match: “" + hits[0].title + " — " + hits[0].heading + f"” (rerank {hits[0].score:.3f}, cosine {hits[0].similarity:.3f}, bm25 {hits[0].lexical:.2f})")
     if filters.describe():
         reasons.append("metadata filter: " + ", ".join(filters.describe()))
 
     # Answerability: does the winning chunk contain a real share of the question's rare words?
     # Bare numbers are skipped — "10" or "2019" recurs in unrelated prose and cannot carry a topic.
     df_ceiling = max(1, int(total_docs * DISCRIMINATIVE_DF_RATIO))
-    discriminative = sorted(
-        term for term in query_terms if 0 < df.get(term, 0) <= df_ceiling and not term.isdigit()
-    )
+    discriminative = sorted(term for term in query_terms if 0 < df.get(term, 0) <= df_ceiling and not term.isdigit())
     matched: list[str] = []
     coverage = 0.0
     if hits and discriminative:
@@ -438,11 +421,7 @@ def search(
         )
     elif hits:
         reasons.append("the question shares no rare term with the corpus, so it cannot be grounded")
-    answerable = (
-        bool(hits)
-        and len(matched) >= MIN_DISCRIMINATIVE_MATCHES
-        and coverage >= MIN_DISCRIMINATIVE_COVERAGE
-    )
+    answerable = bool(hits) and len(matched) >= MIN_DISCRIMINATIVE_MATCHES and coverage >= MIN_DISCRIMINATIVE_COVERAGE
 
     timings["total"] = int((time.perf_counter() - started) * 1000)
     return SearchResult(

@@ -7,7 +7,7 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -20,7 +20,7 @@ from app.core.security import (
     new_public_id,
     verify_password,
 )
-from app.core.timeutil import is_expired
+from app.core.timeutil import as_utc, is_expired, now_utc
 from app.models import AuditLog, RefreshSession, User
 from app.schemas import LoginIn, RegisterIn, TokenPair, UserOut
 
@@ -103,12 +103,31 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "no_refresh", "message": "No active session"})
     digest = hashlib.sha256(raw.encode()).hexdigest()
     stored = db.scalar(select(RefreshSession).where(RefreshSession.token_hash == digest))
-    if stored is None or stored.revoked_at is not None or is_expired(stored.expires_at):
+    if stored is None or is_expired(stored.expires_at):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "refresh_invalid", "message": "Session expired, please sign in again"})
     user = db.get(User, stored.user_id)
     if user is None or not user.is_active:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": "account_inactive", "message": "This account is disabled"})
-    stored.revoked_at = datetime.now(UTC)  # rotate
+    now = now_utc()
+    if stored.revoked_at is not None:
+        # A refresh token is single-use, so a revoked one arriving back is either the same browser
+        # racing its own rotation across parallel requests, or a copy of a cookie someone kept. Age
+        # is the only distinction available without a device fingerprint, and it is a real one: the
+        # race completes in milliseconds, a replay of a dead cookie does not arrive inside a minute.
+        grace = timedelta(seconds=settings.refresh_reuse_grace_seconds)
+        if as_utc(stored.revoked_at) + grace < now:
+            # Nothing can tell a kept copy from a browser presenting an old cookie it forgot to drop,
+            # so the whole account is signed out: every row is destroyed, which is the same thing
+            # logout does. Flagging them instead would leave each one inside the grace window below
+            # and re-admit the very replay that caused it.
+            db.execute(delete(RefreshSession).where(RefreshSession.user_id == stored.user_id))
+            db.commit()
+            raise HTTPException(
+                status.HTTP_401_UNAUTHORIZED,
+                detail={"code": "refresh_reused", "message": "This session was signed out because its token was presented twice"},
+            )
+    else:
+        stored.revoked_at = now  # rotate
     new_raw, _ = _issue_refresh(db, user.id)
     db.commit()
     _set_refresh_cookie(response, new_raw)
@@ -126,7 +145,10 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
         digest = hashlib.sha256(raw.encode()).hexdigest()
         stored = db.scalar(select(RefreshSession).where(RefreshSession.token_hash == digest))
         if stored is not None:
-            stored.revoked_at = datetime.now(UTC)
+            # The row is the credential, so signing out destroys it rather than flagging it: a
+            # flagged row would still sit inside the rotation grace window below and could be
+            # presented back for a fresh session. Nothing else reads these rows after the fact.
+            db.delete(stored)
             db.commit()
     response.delete_cookie(REFRESH_COOKIE, path="/api/v1/auth")
 
@@ -134,4 +156,3 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(current_user)) -> UserOut:
     return UserOut.model_validate(user)
-

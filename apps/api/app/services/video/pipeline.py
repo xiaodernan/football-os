@@ -251,10 +251,7 @@ def analyse_asset(session: Session, asset: VideoAsset, *, target_frames: int = 2
             # The measured summary and the stage rows are stored with the job so that a report read
             # later — a reload, a second visit — shows the same numbers, not an empty panel. The
             # events themselves are already rows, so repeating them here would only bloat the job.
-            "stages": [
-                {"name": stage.name, "status": stage.status, "progress": stage.progress, "detail": stage.detail, "ms": stage.ms}
-                for stage in stages
-            ],
+            "stages": [{"name": stage.name, "status": stage.status, "progress": stage.progress, "detail": stage.detail, "ms": stage.ms} for stage in stages],
             "analysis": {key: value for key, value in result.items() if key != "events"},
         }
         session.commit()
@@ -308,8 +305,7 @@ def report_for(
     if analysis is None and stored.get("analysis"):
         analysis = stored["analysis"]
     stage_rows: list[dict[str, Any]] = [
-        stage if isinstance(stage, dict) else {"name": stage.name, "status": stage.status, "progress": stage.progress, "detail": stage.detail, "ms": stage.ms}
-        for stage in stages or []
+        stage if isinstance(stage, dict) else {"name": stage.name, "status": stage.status, "progress": stage.progress, "detail": stage.detail, "ms": stage.ms} for stage in stages or []
     ]
     detections = list(session.scalars(select(VideoDetection).where(VideoDetection.asset_id == asset.id).order_by(VideoDetection.t_s)).all())
     return {

@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
 from app.providers import provider_status
+from app.services.simulation.service import engine_description, sim_counts, sim_ready, sim_tables_present
 from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_ready, tactics_tables_present
+from app.services.video.status import video_readiness
 from app.services.world import world_counts, world_ready, world_tables_present
 
 router = APIRouter(tags=["meta"])
@@ -41,6 +43,8 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
     must not be rendered as if it were real (spec §65, `DATA_POLICY.md`). `locales` likewise lists
     only the language the UI ships today; §81 translations are `locales_planned`.
     """
+    video = video_readiness(db)
+    engine = engine_description()
     return {
         "m0_foundation": True,
         "m1_player_ai_coach": True,
@@ -51,8 +55,19 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
         # Tactical Lab, and a flag that lied would let the UI advertise a route that 404s.
         "m4_tactical_lab": tactics_ready(db),
         "m4_tactics": {"tables_present": tactics_tables_present(db), "counts": tactics_counts(db), "gate": dict(TACTICS_GATE), "auto_sync": settings.tactics_auto_sync},
-        "m5_video_analysis": False,
-        "m6_simulation": False,
+        "m5_video_analysis": video["ready"],
+        "m5_video": video,
+        # M6 reports the same way M3 and M4 do: the flag is whether the feature can serve, and the
+        # counts beside it say how much of it has been used. A simulation is always fiction, so the
+        # engine's own disclaimer travels with the flag rather than living in the UI's strings.
+        "m6_simulation": sim_ready(db),
+        "m6_simulation_engine": {
+            "tables_present": sim_tables_present(db),
+            "counts": sim_counts(db),
+            "model": engine["name"],
+            "model_version": engine["version"],
+            "disclaimer": engine["disclaimer"],
+        },
         "m7_scouting": False,
         "m8_club_os": False,
         "m9_community": False,

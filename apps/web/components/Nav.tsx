@@ -55,6 +55,9 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
               <Link className={`nav__link ${pathname.startsWith("/video") ? "nav__link--active" : ""}`} href="/video">
                 Video
               </Link>
+              <Link className={`nav__link ${pathname.startsWith("/simulate") ? "nav__link--active" : ""}`} href="/simulate">
+                Simulator
+              </Link>
             </>
           )}
         </div>

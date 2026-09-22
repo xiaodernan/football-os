@@ -15,7 +15,7 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]{2,}$")
 
 def _check_email(value: str) -> str:
     if not EMAIL_RE.match(value):
-        raise ValueError('Enter a valid email address')
+        raise ValueError("Enter a valid email address")
     return value.lower().strip()
 
 

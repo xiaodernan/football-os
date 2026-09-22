@@ -92,9 +92,7 @@ def _recent_gain(db: Session, player_id: str, attribute: str, days: int = 7) -> 
     from datetime import timedelta
 
     since = utcnow() - timedelta(days=days)
-    rows = db.scalars(
-        select(AttributeChange.delta).where(AttributeChange.player_id == player_id, AttributeChange.attribute == attribute, AttributeChange.created_at >= since)
-    ).all()
+    rows = db.scalars(select(AttributeChange.delta).where(AttributeChange.player_id == player_id, AttributeChange.attribute == attribute, AttributeChange.created_at >= since)).all()
     return int(sum(rows))
 
 
@@ -181,11 +179,7 @@ def complete_session(
 ) -> CompletionResult:
     streak, _ = update_streak(user)
     xp, formula = xp_for_completion(drill=drill, execution=execution, focus=focus, difficulty_experience=difficulty_experience, streak_days=streak)
-    todays_xp = sum(
-        db.scalars(
-            select(XpEvent.amount).where(XpEvent.user_id == user.id, XpEvent.created_at >= _today_start())
-        ).all()
-    )
+    todays_xp = sum(db.scalars(select(XpEvent.amount).where(XpEvent.user_id == user.id, XpEvent.created_at >= _today_start())).all())
     capped = max(0, min(xp, MAX_DAILY_XP - todays_xp))
     quality = (execution * 0.55 + focus * 0.30 + difficulty_experience * 0.15) / 5
     changes, skill_progress = apply_skill_points(db, player, drill, quality)

@@ -1,0 +1,49 @@
+/* M6 simulation surfaces. Shared primitives stay in globals.css; this file only lays out the picker. */
+
+.sim-fixtures {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.sim-fixtures--pair {
+  grid-template-columns: 1fr 1fr;
+}
+
+.sim-fixtures .input,
+.sim-fixtures select {
+  width: 100%;
+}
+
+.sim-swap {
+  align-self: end;
+  margin-bottom: 0.15rem;
+}
+
+.sim-controls {
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.sim-controls .stack-sm {
+  flex: 0 1 220px;
+}
+
+.sim-possession {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .sim-fixtures,
+  .sim-fixtures--pair {
+    grid-template-columns: 1fr;
+  }
+  .sim-swap {
+    justify-self: start;
+  }
+}

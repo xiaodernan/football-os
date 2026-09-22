@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 
 def test_health_reports_demo_mode(client) -> None:  # type: ignore[no-untyped-def]
     response = client.get("/api/v1/healthz")
@@ -32,9 +34,7 @@ def test_duplicate_email_is_rejected(client) -> None:  # type: ignore[no-untyped
 def test_weak_password_and_missing_consent_are_rejected(client) -> None:  # type: ignore[no-untyped-def]
     short = client.post("/api/v1/auth/register", json={"email": "weak@example.test", "password": "123", "display_name": "W", "accepts_data_policy": True})
     assert short.status_code == 422
-    no_consent = client.post(
-        "/api/v1/auth/register", json={"email": "nc@example.test", "password": "strong-pass-1234", "display_name": "NC", "accepts_data_policy": False}
-    )
+    no_consent = client.post("/api/v1/auth/register", json={"email": "nc@example.test", "password": "strong-pass-1234", "display_name": "NC", "accepts_data_policy": False})
     assert no_consent.status_code == 422
     assert no_consent.json()["error"]["code"] == "validation_error"
 
@@ -59,9 +59,7 @@ def test_player_creation_returns_explainable_profile(auth_client) -> None:  # ty
 
 
 def test_invalid_position_is_rejected(auth_client) -> None:  # type: ignore[no-untyped-def]
-    response = auth_client.post(
-        "/api/v1/players", json={"name": "Bad", "position": "STR", "age": 22, "level": "advanced", "preferred_foot": "right", "goal": "improve_passing"}
-    )
+    response = auth_client.post("/api/v1/players", json={"name": "Bad", "position": "STR", "age": 22, "level": "advanced", "preferred_foot": "right", "goal": "improve_passing"})
     assert response.status_code == 422
 
 
@@ -167,9 +165,7 @@ def test_youth_load_cap_is_applied(client) -> None:  # type: ignore[no-untyped-d
         json={"email": "youth@example.test", "password": "strong-pass-1234", "display_name": "Youth", "role": "player", "accepts_data_policy": True},
     )
     client.headers.update({"Authorization": f"Bearer {register.json()['access_token']}"})
-    player = client.post(
-        "/api/v1/players", json={"name": "Youth Player", "position": "ST", "age": 15, "level": "beginner", "preferred_foot": "right", "goal": "improve_finishing"}
-    ).json()
+    player = client.post("/api/v1/players", json={"name": "Youth Player", "position": "ST", "age": 15, "level": "beginner", "preferred_foot": "right", "goal": "improve_finishing"}).json()
     today = client.get(f"/api/v1/coach/today?player_id={player['id']}").json()
     assert today["recommendation"]["difficulty"] <= 3 or any("under-18" in r or "unsuitable" in r for r in today["reasons"])
 
@@ -189,8 +185,98 @@ def test_cross_user_access_returns_404(client, auth_client) -> None:  # type: ig
         json={"email": "intruder@example.test", "password": "strong-pass-1234", "display_name": "Intruder", "role": "player", "accepts_data_policy": True},
     )
     token = other.json()["access_token"]
-    victim_id = auth_client.post(
-        "/api/v1/players", json={"name": "Victim", "position": "CB", "age": 25, "level": "advanced", "preferred_foot": "right", "goal": "improve_defending"}
-    ).json()["id"]
+    victim_id = auth_client.post("/api/v1/players", json={"name": "Victim", "position": "CB", "age": 25, "level": "advanced", "preferred_foot": "right", "goal": "improve_defending"}).json()["id"]
     steal = client.get(f"/api/v1/players/{victim_id}", headers={"Authorization": f"Bearer {token}"})
     assert steal.status_code == 404
+
+
+def _post_as(client, path: str, raw: str | None, method: str = "post"):  # type: ignore[no-untyped-def]
+    """Call an auth route carrying exactly the refresh cookie named — or none at all. The TestClient
+    keeps a jar of its own, so leaving that to merge with a request would let a test pass against a
+    credential other than the one it says it is exercising."""
+    from app.api.v1.auth import REFRESH_COOKIE
+
+    client.cookies.clear()
+    headers = {"cookie": f"{REFRESH_COOKIE}={raw}"} if raw else {}
+    return getattr(client, method)(path, headers=headers)
+
+
+def _age_out_refresh_token(raw: str, minutes: int) -> None:
+    """Move a rotated-out token's revocation into the past — the only honest way to test a grace
+    window without sleeping through it."""
+    import hashlib
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import select
+
+    from app.core.db import SessionLocal
+    from app.models import RefreshSession
+
+    with SessionLocal() as session:
+        row = session.scalar(select(RefreshSession).where(RefreshSession.token_hash == hashlib.sha256(raw.encode()).hexdigest()))
+        assert row is not None
+        row.revoked_at = datetime.now(UTC) - timedelta(minutes=minutes)
+        session.commit()
+
+
+class TestRefreshRotation:
+    """ADR-003 rotates the refresh cookie on every use, which used to sign a browser out under its
+    own feet: one page load fans out into several proxied calls, and every call that found the access
+    token expired spent the same single-use token. The grace window makes that race harmless. A token
+    that comes back after the window cannot be told apart from a copy someone kept, so it takes every
+    session for the account down with it."""
+
+    REFRESH = "/api/v1/auth/refresh"
+
+    @staticmethod
+    def _register(client) -> str:  # type: ignore[no-untyped-def]
+        from app.api.v1.auth import REFRESH_COOKIE
+
+        response = client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": f"rotation-{uuid.uuid4().hex[:10]}@example.test",
+                "password": "strong-pass-1234",
+                "display_name": "Rotation",
+                "role": "player",
+                "accepts_data_policy": True,
+            },
+        )
+        assert response.status_code == 201, response.text
+        raw = response.cookies.get(REFRESH_COOKIE)
+        assert raw
+        return str(raw)
+
+    def test_a_token_a_rotation_replaced_still_works_inside_the_window(self, client) -> None:  # type: ignore[no-untyped-def]
+        from app.api.v1.auth import REFRESH_COOKIE
+
+        first = self._register(client)
+        rotated = _post_as(client, self.REFRESH, first)
+        assert rotated.status_code == 200, rotated.text
+        second = rotated.cookies.get(REFRESH_COOKIE)
+        assert second and second != first
+        raced = _post_as(client, self.REFRESH, first)
+        assert raced.status_code == 200, raced.text
+        assert raced.json()["access_token"]
+
+    def test_a_token_presented_after_the_window_signs_the_account_out_everywhere(self, client) -> None:  # type: ignore[no-untyped-def]
+        from app.api.v1.auth import REFRESH_COOKIE
+
+        first = self._register(client)
+        second = str(_post_as(client, self.REFRESH, first).cookies.get(REFRESH_COOKIE))
+        _age_out_refresh_token(first, minutes=3)
+        replayed = _post_as(client, self.REFRESH, first)
+        assert replayed.status_code == 401
+        assert replayed.json()["detail"]["code"] == "refresh_reused"
+        # The live cookie dies with it: reuse after the window is read as a copy, not as a race.
+        assert _post_as(client, self.REFRESH, second).status_code == 401
+
+    def test_a_request_with_no_cookie_at_all_is_refused(self, client) -> None:
+        assert _post_as(client, self.REFRESH, None).json()["detail"]["code"] == "no_refresh"
+
+    def test_logout_destroys_the_credential_rather_than_flagging_it(self, client) -> None:  # type: ignore[no-untyped-def]
+        first = self._register(client)
+        assert _post_as(client, "/api/v1/auth/logout", first).status_code == 204
+        back = _post_as(client, self.REFRESH, first)
+        assert back.status_code == 401
+        assert back.json()["detail"]["code"] == "refresh_invalid"

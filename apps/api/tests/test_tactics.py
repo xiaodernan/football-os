@@ -194,12 +194,8 @@ class TestMetrics:
         block = system_by_slug("4-3-3-low-block")
         behind = {phase: {metric.key: metric.value for metric in system.metrics(phase)}["space_behind"] for system, phase in ((press, "out"), (block, "out"))}
         assert behind["out"] > 0
-        assert {metric.key: metric.value for metric in block.metrics("out")}["space_behind"] < {
-            metric.key: metric.value for metric in press.metrics("out")
-        }["space_behind"]
-        assert {metric.key: metric.value for metric in block.metrics("out")}["spacing"] < {
-            metric.key: metric.value for metric in press.metrics("out")
-        }["spacing"]
+        assert {metric.key: metric.value for metric in block.metrics("out")}["space_behind"] < {metric.key: metric.value for metric in press.metrics("out")}["space_behind"]
+        assert {metric.key: metric.value for metric in block.metrics("out")}["spacing"] < {metric.key: metric.value for metric in press.metrics("out")}["spacing"]
 
 
 class TestCounterfactuals:
@@ -255,11 +251,7 @@ class TestCounterfactuals:
                 assert abs(after.value - before.value) == pytest.approx(abs(delta))
                 assert abs(delta) >= 0.05, f"{diff.change.key} reported {before.key} as moved by {delta}"
             reported = {before.key for before, _, _ in diff.moved}
-            recomputed = {
-                before.key
-                for before, after in zip(diff.before, diff.after, strict=True)
-                if abs(after.value - before.value) >= 0.05
-            }
+            recomputed = {before.key for before, after in zip(diff.before, diff.after, strict=True) if abs(after.value - before.value) >= 0.05}
             assert reported == recomputed
 
 
@@ -309,9 +301,7 @@ class TestCatalogue:
         by_phase: dict[str, list[float]] = {"press-high": [], "low-block": []}
         for system in tactical_systems():
             if system.temperament_key in by_phase:
-                by_phase[system.temperament_key].append(
-                    {metric.key: metric.value for metric in system.metrics("out")}["space_behind"]
-                )
+                by_phase[system.temperament_key].append({metric.key: metric.value for metric in system.metrics("out")}["space_behind"])
         assert min(by_phase["press-high"]) > max(by_phase["low-block"])
 
     def test_planned_rows_are_one_per_system_and_hash_stable(self) -> None:

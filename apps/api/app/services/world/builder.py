@@ -1,5 +1,5 @@
 """Seeded synthesis of the Football World (spec §65 gate: 10 competitions / 20 teams / 300 players /
-100+ matches / 500 articles).
+100+ matches / 100 training sessions / 500 articles).
 
 Two rules shape everything below:
 
@@ -21,6 +21,7 @@ from functools import lru_cache
 from typing import Any, Final
 
 from app.services.attributes import compute_overall, derive_archetype, derive_baseline
+from app.services.training_catalog import DRILLS
 from app.services.world.names import (
     brand_colour,
     club_name,
@@ -36,7 +37,7 @@ from app.services.world.news import plan_articles
 from app.services.world.plan import Planned, WorldPlan, world_id
 from app.services.world.rng import WorldRng
 
-WORLD_VERSION: Final = "3.1"
+WORLD_VERSION: Final = "3.2"
 SEASON_START: Final = dt.date(2026, 8, 8)
 KICKOFF_SLOTS: Final = ((12, 30), (15, 0), (17, 30), (20, 15))
 WORLD_COUNTRY: Final = "Generated World"
@@ -100,6 +101,7 @@ class WorldSizes:
     teams_per_league: int = 5
     season: str = "2026"
     next_season: str = "2027"
+    training_sessions: int = 100
 
     @property
     def competitions(self) -> int:
@@ -891,6 +893,78 @@ def _stat_rows(fixture: _Fixture) -> list[Planned]:
     return [Planned(natural_key=f"{fixture.slug}|{line.player.slug}", payload=line.columns(fixture)) for line in fixture.lines]
 
 
+TRAINING_WINDOW_DAYS: Final = 42
+TRAINING_RPE: Final = (5, 9)
+
+
+def _drills_for(position: str) -> list[dict[str, Any]]:
+    """Catalogue drills that name this position, falling back to the whole catalogue.
+
+    The drills are project-authored coaching material (spec §10), so a world training session
+    reuses one rather than inventing a plausible-sounding exercise.
+    """
+    matched = [drill for drill in DRILLS if position in drill["positions"]]
+    if matched:
+        return matched
+    general = [drill for drill in DRILLS if not drill["positions"]]
+    return general or list(DRILLS)
+
+
+def _training_rows(rng: WorldRng, draft: WorldDraft) -> list[Planned]:
+    """Spec §65's 100 training sessions: demo history for demo players.
+
+    The spread is derived, not decorative — a player is drawn in proportion to the minutes they
+    played in the generated fixtures, so the squad's regulars accumulate log rows and the fringe
+    does not. Load is the session-RPE formula (duration × RPE), the same arithmetic the user-side
+    logger applies, and the row says so in words.
+    """
+    stream = rng.fork("training-sessions")
+    players = sorted(draft.players, key=lambda player: player.slug)
+    weights = [max(player.minutes, 1) for player in players]
+    sizes = draft.sizes
+    taken: set[str] = set()
+    rows: list[Planned] = []
+    for _ in range(sizes.training_sessions):
+        player = stream.weighted(players, weights)
+        drill = stream.choice(_drills_for(player.position))
+        day = SEASON_START + dt.timedelta(days=stream.int_below(TRAINING_WINDOW_DAYS))
+        first_index = (day - SEASON_START).days
+        for offset in range(TRAINING_WINDOW_DAYS):
+            slot = SEASON_START + dt.timedelta(days=(first_index + offset) % TRAINING_WINDOW_DAYS)
+            key = f"{player.slug}|{slot.isoformat()}|{drill['slug']}"
+            if key not in taken:
+                break
+        taken.add(key)
+        duration = int(drill["duration_min"])
+        rpe = stream.randint(*TRAINING_RPE)
+        payload = {
+            "player_slug": player.slug,
+            "player_id": world_id("player", player.slug),
+            "team_id": world_id("team", player.club),
+            "player_name": player.name,
+            "position": player.position,
+            "season": sizes.season,
+            "session_date": slot.isoformat(),
+            "drill_slug": str(drill["slug"]),
+            "drill_title": str(drill["title"]),
+            "category": str(drill["category"]),
+            "difficulty": int(drill["difficulty"]),
+            "duration_min": duration,
+            "rpe": rpe,
+            "load_units": duration * rpe,
+            "status": "completed",
+            "summary": (
+                f"{player.name} ({player.position}, {draft.club(player.club).short}) trained {drill['title']} for "
+                f"{duration} min on {slot.isoformat()} at RPE {rpe}. Session load {duration * rpe} units is "
+                f"duration x RPE. The drill is the project-authored catalogue item '{drill['slug']}'; this log row "
+                f"belongs to a generated player and records no real person."
+            ),
+        }
+        rows.append(Planned(natural_key=key, payload=payload))
+    rows.sort(key=lambda row: (row.payload["session_date"], row.natural_key))
+    return rows
+
+
 @lru_cache(maxsize=8)
 def plan_world(seed: int, sizes: WorldSizes | None = None) -> WorldPlan:
     """Build the whole world in memory. Cached because the plan is a pure function of the seed."""
@@ -919,6 +993,7 @@ def plan_world(seed: int, sizes: WorldSizes | None = None) -> WorldPlan:
         players=[_player_row(player, dims) for player in sorted(draft.players, key=lambda player: player.slug)],
         matches=[Planned(natural_key=fixture.slug, payload=fixture.columns()) for fixture in fixtures],
         stat_lines=[row for fixture in fixtures for row in _stat_rows(fixture)],
+        training_sessions=_training_rows(rng, draft),
     )
     plan.articles, plan.article_links = plan_articles(draft)
     return plan

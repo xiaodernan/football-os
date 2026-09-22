@@ -136,9 +136,7 @@ def test_position_and_tag_filters_narrow_the_corpus(db: Session) -> None:
 
 
 def test_scoping_to_one_document_is_the_filter_the_detail_page_needs(db: Session) -> None:
-    result = knowledge.search(
-        db, "when does this not apply", filters=knowledge.Filters(document_slug="scanning-before-receiving"), top_k=5
-    )
+    result = knowledge.search(db, "when does this not apply", filters=knowledge.Filters(document_slug="scanning-before-receiving"), top_k=5)
     assert result.hits
     assert {hit.document_slug for hit in result.hits} == {"scanning-before-receiving"}
     empty = knowledge.search(db, "pressing", filters=knowledge.Filters(document_slug="no-such-document"))
