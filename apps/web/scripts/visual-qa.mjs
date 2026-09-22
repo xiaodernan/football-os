@@ -882,6 +882,32 @@ async function run() {
       tacticGraph?.headline === tacticDetail.name && tacticGraph?.url === detailHead.canonical,
       `${tacticGraph?.headline ?? 'no Article'} · ${detailHead.canonical}`,
     );
+    const analysis = await tacticsApi(`/${tactic.slug}/feedback`);
+    check(
+      'the analysis grounds some topics and refuses the rest, exactly as the API reports',
+      (await page.evaluate(() => document.querySelectorAll('.tac-point').length)) === analysis.points.length &&
+        analysis.points.length > 0 &&
+        analysis.ungrounded.length > 0,
+      `${analysis.points.length} cited · ${analysis.ungrounded.length} refused over ${analysis.scanned_chunks} passages`,
+    );
+    const citedHrefs = await page.evaluate(() => [...new Set([...document.querySelectorAll('a[href^="/knowledge/"]')].map((a) => a.getAttribute('href')))]);
+    const citedStatuses = await probeStatuses(citedHrefs.map((href) => `${BASE}${href}`));
+    check(
+      'every passage the analysis leans on resolves to a real library anchor',
+      citedHrefs.length === analysis.points.length && citedStatuses.every((status) => status === 200),
+      `${citedHrefs.length} citation links · ${[...new Set(citedStatuses)].join(',')} statuses`,
+    );
+    const analysisBody = await bodyText(page);
+    check(
+      'the page says which topics it refused, and names the gate that refused them',
+      /Topics this build refused to answer/iu.test(analysisBody) && analysisBody.includes(analysis.ungrounded[0].reason.slice(0, 40)),
+      analysis.ungrounded[0]?.reason.slice(0, 80) ?? 'no refusal shown',
+    );
+    check(
+      'the analysis is labelled extractive assembly, never a model opinion',
+      /EXTRACTIVE · NO AI KEY/u.test(analysisBody) && !/AI-generated/iu.test(analysisBody),
+      `${analysis.model} · ${analysis.provider}`,
+    );
     await shot(page, '32-tactics-detail-desktop');
 
     const counterfactualJson = await tacticsApi(`/${tactic.slug}/counterfactual?change=raise-back-line`);

@@ -21,7 +21,7 @@ reader to trust a figure (spec §62).
 | measurement | `analysis.py` | both phase transforms, 8 metrics with formulas, 6 named counterfactuals | 22 tests incl. per-slot arithmetic |
 | catalogue | `plan.py` | the 50 systems, graded against the catalogue's own quartiles | determinism, URL-safety, verdict-cites-number |
 | storage | `sync.py` | upsert by slug, forced provenance, refuse-on-invalid, delete-what-the-plan-dropped | idempotence + a poisoned-plan rollback |
-| reads | `app/api/v1/tactics.py` | 5 public routes, recomputed on request | 19 tests over HTTP |
+| reads | `app/api/v1/tactics.py` | 6 public routes + 1 authenticated, recomputed on request | 31 tests over HTTP |
 
 ## 2. What is in the catalogue, counted rather than described
 
@@ -63,6 +63,8 @@ catalogue fingerprint   38a6757a9395…   stable across a cache clear, i.e. acro
 | `GET /api/v1/tactics/{slug\|id}` | one system: both boards, 8+8 metrics, verdicts, roles, transform note | metrics recomputed from the stored coordinates |
 | `GET /api/v1/tactics/{slug\|id}/counterfactual?change=&phase=` | "what happens if", per-metric before/after/delta + clamps | unknown change → 422 `unknown_change` listing the six |
 | `GET /api/v1/tactics/compare?a=&b=&phase=` | the eight metrics side by side with deltas | every row repeats its formula |
+| `GET /api/v1/tactics/{slug\|id}/feedback` | six coaching questions put to the M2 corpus; cited statements and explicit refusals | any statement whose passage does not resolve (§7) |
+| `GET /api/v1/tactics/{slug\|id}/fit` | this account's player against the shape's tactical demands | a player-less account: 409 `no_player`, never a zero-filled comparison |
 
 Live proof on the dev database (pgvector, 2026-09-22): comparing `4-3-3 · High press` with
 `4-3-3 · Compact low block` out of possession gives `space_behind` **44.0 m vs 10.0 m** — the
@@ -95,17 +97,48 @@ moves `space_behind` 18 → 26 m and shortens the team's span by the same 8 m.
 ```bash
 cd apps/api
 python -m ruff check app tests                 # All checks passed
-python -m mypy app                             # 53 source files, no issues
+python -m mypy app                             # 54 source files, no issues
 python -m alembic upgrade head && python -m alembic check
-python -m pytest -q                            # 188 passed (SQLite)   · 99 of them are M4
+python -m pytest -q                            # 200 passed (SQLite)   · 111 of them are M4
 FOOTBALL_OS_TEST_DATABASE_URL="postgresql+psycopg2://football:football@127.0.0.1:54321/football_os_pytest" \
-  python -m pytest -q                          # 188 passed (pgvector)
+  python -m pytest -q                          # 200 passed (pgvector)
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8731 &
-python ../../scripts/export_openapi.py         # 45 paths / 49 operations, incl. the 5 /tactics routes
+python ../../scripts/export_openapi.py         # 47 paths / 51 operations, incl. the 7 /tactics routes
 curl -s "localhost:8731/api/v1/tactics/compare?a=4-3-3-press-high&b=4-3-3-low-block&phase=out"
 ```
 
-## 7. Not claimed by this milestone
+## 7. The cited analysis — and the two questions it refuses
+
+`feedback.py` asks six questions of the knowledge corpus through the same `retrieval.search` that `/knowledge`
+uses, with the same gates (`MIN_DISCRIMINATIVE_MATCHES = 2`, `MIN_DISCRIMINATIVE_COVERAGE = 0.40`, rare-term
+`df ≤ 30%`, `MIN_USEFUL_SCORE = 0.045`). Measured on the running server with the corpus ingested (732 passages,
+`hybrid-pgvector`):
+
+| Topic | Outcome | Citation |
+| --- | --- | --- |
+| Pressing line (block depth) | cited | `/knowledge/buildup-vs-high-press#0` |
+| Block compactness (spacing) | cited | `/knowledge/pressing-evolution-notes#2` |
+| Build-up under pressure (isolation) | cited | `/knowledge/transition-defence-five-seconds#4` |
+| Distance between the lines | cited | `/knowledge/how-to-read-a-game#1` |
+| Width in attack | **refused** | “2/6 of the question's rare terms … → refuse” |
+| How high the team sits | **refused** | “1/4 of the question's rare terms … → refuse” |
+
+The refusals are the interesting result. Both topics *can* be made to answer `answerable=True` by rewording the
+question — tried and rejected: the passages those rewordings retrieve are about reading a game and protecting the
+middle on a counter, not about width or territory. Rewording to clear a gate would buy a citation that does not
+support its sentence, which `AI_POLICY.md` §6 forbids and which a reader with the link open would catch. So the
+payload carries the refusal, the gate that fired, the measured number, and the page says plainly that the library
+has no passage for it. That gap is recorded as corpus follow-up work in `ROADMAP.md`, with the RAG eval to be
+re-run after — not the gates loosened.
+
+Every cited statement also keeps its own measurement trail: `metric.formula` is the same string the metrics table
+prints, and `citation.ref` is an in-app anchor (`/knowledge/{slug}#{ordinal}`) which the browser walk fetches, so a
+citation that resolved to nothing would fail the run rather than quietly mislead.
+
+`fit` is arithmetic on the same six attributes the player model stores: `gap = attribute − demand`, `short` at
+≤ −12, `exceeds` at ≥ +4, mean gap as the summary. Nothing in either endpoint writes to a stored row.
+
+## 8. Not claimed by this milestone
 
 * **The web surface is verified separately.** `/tactics`, `/tactics/{slug}` and `/tactics/compare` are live, and the
   50 system URLs are in `sitemap.ts` — the browser evidence is in [`M4_WEB_VERIFICATION.md`](M4_WEB_VERIFICATION.md).
@@ -115,9 +148,9 @@ curl -s "localhost:8731/api/v1/tactics/compare?a=4-3-3-press-high&b=4-3-3-low-bl
 * **No user-saved or shared boards.** §65's M4 gate includes drag/draw/save/share: that needs an
   owned `tactic_boards` table plus a share token, which is §21 (community) plumbing, not a
   read endpoint. Not started.
-* **No AI tactical analysis.** The feedback loop is planned to cite the M2 knowledge corpus's
-  tactical principles through the existing retrieval layer (so a verdict is traceable to a passage),
-  and to compare a user player's six tactical attributes against a system's `demands`. Neither is
-  wired; the `demands` field exists precisely so it can be computed rather than asserted later.
+* **No model writes anything.** `/feedback` is extractive assembly over the corpus and the measured rows and labels
+  itself that way (`model: "extractive assembly …"`, `provider: "none (no AI key configured)"`); `/fit` is arithmetic
+  on published thresholds. Neither mutates a player, a rating or a stored row. Two of the six topics stay ungrounded
+  until the corpus gains the passages named in §7.
 * The 50 systems are authored structures with measured consequences. They are not a claim about how
   any real team plays, and every response says so in its `disclaimer`.

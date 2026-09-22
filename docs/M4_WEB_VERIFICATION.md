@@ -1,8 +1,9 @@
 # M4 Tactical Lab — web surface verification (spec §11–§13, §62, §80)
 
-Date: 2026-09-22 · Tier: `apps/web` · Evidence run: `202609220157` (**136/136 browser assertions**, 54 PNGs in
-`docs/screenshots/`, zero browser console errors) against a **production build** served on `:3211`, API on `:8731`
-(pgvector). Backend evidence: [`M4_VERIFICATION.md`](M4_VERIFICATION.md); pattern followed: [`M3_WEB_VERIFICATION.md`](M3_WEB_VERIFICATION.md).
+Date: 2026-09-22 · Tier: `apps/web` · Evidence run: `202609220223` (**140/140 browser assertions**, 54 PNGs in
+`docs/screenshots/`; one React hydration warning recorded, see §5.6) against a **production build** served on `:3211`,
+API on `:8731` (pgvector). Backend evidence: [`M4_VERIFICATION.md`](M4_VERIFICATION.md); pattern followed:
+[`M3_WEB_VERIFICATION.md`](M3_WEB_VERIFICATION.md).
 
 ## 1. What landed
 
@@ -52,7 +53,7 @@ API measured in `metrics_in`.
 
 ## 4. What the browser walk adds
 
-Thirteen desktop assertions and four new mobile surfaces (run total **136/136**, 54 PNGs): catalogue fully served to a
+Seventeen desktop assertions and four new mobile surfaces (run total **140/140**, 54 PNGs): catalogue fully served to a
 signed-out visitor · all 50 systems advertised in the sitemap and neither query page · `PROJECT AUTHORED` present and
 `DEMO DATA` absent on `/tactics` · the API's disclaimer repeated verbatim · eight formulas plus one real
 eleven-player board on the index · the nav entry · both phases drawn from the same eleven roles (22 dots) · every
@@ -62,6 +63,12 @@ canonical · arrows exactly equal to the payload's moved positions with all elev
 `space_behind` rising exactly 8.00 m when the back line is raised 8 m · an invented change refused by name with the
 six real ones listed · the comparison measured on both sides, `noindex`, and differing where the vocabulary claims it
 differs · an unknown slug answering 404.
+
+Four of them police the cited analysis: the page renders exactly as many cited statements as the API returned (4 of 6,
+with the other 2 refused) · every `citation.ref` the page turns into a link is fetched and must answer 200, so a
+passage that does not exist fails the run rather than decorating the page · the refused topics appear with the text of
+the gate that refused them · and the panel is labelled `EXTRACTIVE · NO AI KEY` with no `AI-generated` string anywhere
+on it.
 
 At 375px the index, the detail page, the counterfactual and the comparison each hold with zero horizontal overflow, and
 all 11 navigation links stay visible.
@@ -87,6 +94,14 @@ all 11 navigation links stay visible.
    values from the *status* sample — two systems in one table. It now shows one named system's own eight measures, and
    `MetricTable` renders an absent value as "not on this card" instead of inventing one.
 
+6. **One React `#418` hydration warning, recorded and not reproducible.** The walk printed
+   `Minified React error #418 … @ /tactics/4-3-3-press-high` once during the 140-check run. Probes since: the same route
+   on the same production build, signed out → no console output; the same route on `next dev` (where React names the
+   mismatched node and prints the diff) → no warning. `scripts/probe-hydration.mjs` is the throwaway that runs either
+   probe. It is recorded rather than dropped, and the harness tags console errors with the route they happened on
+   precisely so that a recurrence is localisable: a hydration mismatch that only appears mid-walk, after other pages
+   have hydrated in the same browser session, points at session state or a previous document, not at this page's markup.
+
 ## 6. Reproduce
 
 ```bash
@@ -102,8 +117,10 @@ curl -s http://127.0.0.1:3211/sitemap.xml | grep -c "<loc>"   # 1034 (983 + the 
   share token — that is the next increment, and until it exists there is no user-generated tactic anywhere on the site.
 * **No animation yet.** The two phases are stored as one structure plus a documented transform, which is exactly what an
   interpolation needs, but nothing tweens between them on screen.
-* **No AI tactical commentary.** The verdicts are measurements graded against the catalogue's own quartiles, with the
-  percentile quoted in the sentence; no model writes them, and no claim here is checked against a knowledge-corpus
-  principle. `AI_POLICY.md` §5 says so plainly.
+* **No model opinion, and no borrowed authority.** The analysis panel on `/tactics/{slug}` is extractive: each statement
+  sits beside the passage that supports it and the measurement that prompted it, and the two topics the corpus cannot
+  support — width in attack, and how high a team sits — are printed as refusals naming the gate that stopped them.
+  Those are real gaps in `data/knowledge`, carried in `ROADMAP.md` as corpus work to be re-measured with the RAG eval,
+  not tuned away by rewording a question until it scores well enough to cite an off-topic passage.
 * **Not real football.** No club, competition or match is represented; the coordinates were written here. Every page prints
   the disclaimer, and `/tactics/{slug}` has no image assets to license.

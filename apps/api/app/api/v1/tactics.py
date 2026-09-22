@@ -20,9 +20,10 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.db import get_db
-from app.core.security import limit
-from app.models import TACTICS_DISCLAIMER, TacticalSystem
+from app.core.security import current_user, limit
+from app.models import TACTICS_DISCLAIMER, TacticalSystem, User, UserPlayer
 from app.services.tactics.analysis import CHANGES, METRIC_KEYS, Shape, apply_change, metrics_of, shape_from_rows
+from app.services.tactics.feedback import build_feedback, fit_rows
 from app.services.tactics.plan import SYSTEM_COUNT, fingerprint, system_path
 from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_tables_present
 
@@ -301,4 +302,58 @@ def counterfactual(
         clamped=clamped,
         recomputed=True,
         note="Computed from the stored coordinates on this request; the answer is never read out of a stored conclusion.",
+    )
+
+
+@router.get("/{ident}/feedback")
+def system_feedback(ident: str, request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """A tactical analysis whose every statement is anchored to a passage this project wrote.
+
+    Nothing here is a model's opinion: each topic is a retrieval query, and a topic whose retrieval
+    fails the corpus's answerability gates is returned in `ungrounded` rather than written as prose
+    (spec §13, §29; `AI_POLICY.md` §3).
+    """
+    limit(request, 30, 60, scope="tactics_feedback")
+    _require_catalogue(db)
+    row = _one(db, ident)
+    payload = {
+        "slug": row.slug,
+        "name": row.name,
+        "formation": row.formation,
+        "temperament_key": row.temperament_key,
+        "board": dict(row.board or {}),
+    }
+    return build_feedback(db, payload).to_dict()
+
+
+@router.get("/{ident}/fit")
+def system_fit(
+    ident: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """How this account's player compares with what the shape's roles demand — arithmetic, not praise."""
+    limit(request, 30, 60, scope="tactics_fit")
+    _require_catalogue(db)
+    row = _one(db, ident)
+    player = db.scalar(select(UserPlayer).where(UserPlayer.user_id == user.id).order_by(UserPlayer.created_at))
+    if player is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail={"code": "no_player", "message": "Create your player profile first"})
+    demands = dict((row.board or {}).get("demands") or {})
+    return _envelope(
+        system={"slug": row.slug, "name": row.name, "formation": row.formation, "temperament_key": row.temperament_key, "path": system_path(row.slug)},
+        player={
+            "id": player.id,
+            "name": player.name,
+            "position": player.position,
+            "archetype": player.archetype,
+            "overall": player.overall,
+            "attributes_from": "this account's progression ledger (XP events), not a provider or a model",
+        },
+        fit=fit_rows(demands, dict(player.attributes or {})),
+        note=(
+            "Attribute values come from your own progression ledger (XP → skill points → bounded attribute "
+            "deltas), and the demands come from the roles this shape fields. No model decided either number."
+        ),
     )

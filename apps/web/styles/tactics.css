@@ -47,6 +47,19 @@
 .tac-formula { font-family: var(--mono); font-size: 0.72rem; color: var(--text-3); }
 .tac-boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
 
+/* A cited statement: claim, the measurement it rests on, and the passage that backs it. */
+.tac-point {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  padding: 0.75rem 0; border-top: 1px solid var(--line-soft);
+}
+.tac-point:first-child { border-top: 0; padding-top: 0; }
+.tac-quote {
+  margin: 0; padding: 0.5rem 0.8rem; border-left: 2px solid var(--accent-dim);
+  background: var(--accent-soft); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.88rem; color: var(--text-2);
+}
+.tac-quote footer { margin-top: 0.35rem; font-size: 0.78rem; }
+
 @media (max-width: 900px) {
   .tac-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

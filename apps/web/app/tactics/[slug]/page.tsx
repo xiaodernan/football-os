@@ -8,7 +8,7 @@ import { Meter, Panel } from "@/components/ui";
 import { JsonLd, OriginBadge, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import { absolute, pageMetadata } from "@/lib/site";
 import { cleanParams, readWorld } from "@/lib/world";
-import type { CounterfactualResponse, SystemDetail, SystemList } from "@/lib/types";
+import type { CounterfactualResponse, FeedbackResponse, SystemDetail, SystemList } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +87,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
       })
     : null;
   const siblings = await readWorld<SystemList>("/tactics", { formation: system.formation, page_size: 20 });
+  const analysis = await readWorld<FeedbackResponse>(`/tactics/${encodeURIComponent(system.slug)}/feedback`);
   const phase = query.phase === "out" ? "out" : "in";
   const unknownChange = counterfactual && !counterfactual.ok && counterfactual.status === 422;
 
@@ -219,6 +220,69 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
 
       <Panel eyebrow="Decided by the numbers above" title="What this shape is for, and what it costs">
         <Verdicts risks={system.risks} strengths={system.strengths} />
+      </Panel>
+
+      <Panel
+        action={
+          analysis.ok ? (
+            <span className="chip mono" title="No AI provider key is configured: the text below is assembled from stored passages, not generated.">
+              {analysis.data.demo_mode ? "EXTRACTIVE · NO AI KEY" : `MODEL · ${analysis.data.model}`}
+            </span>
+          ) : null
+        }
+        eyebrow={`${analysis.ok ? analysis.data.points.length : 0} statements with a passage behind them · ${
+          analysis.ok ? analysis.data.ungrounded.length : 0
+        } refused`}
+        title="What this lab will say about the shape"
+      >
+        {analysis.ok ? (
+          <div className="stack">
+            {analysis.data.points.map((point) => (
+              <article className="tac-point" key={point.topic}>
+                <p className="eyebrow">
+                  {point.label} · {point.metric.value.toFixed(1)} {point.metric.unit} ·{" "}
+                  {point.metric.phase === "out" ? "out of possession" : "in possession"}
+                </p>
+                <p>{point.statement}</p>
+                <blockquote className="tac-quote">
+                  “{point.citation.quote}”
+                  <footer>
+                    <Link className="world-link" href={point.citation.ref}>
+                      {point.citation.title} · passage {point.citation.ordinal}
+                    </Link>{" "}
+                    <span className="muted mono">score {point.score.toFixed(3)}</span>
+                  </footer>
+                </blockquote>
+                <p className="tac-formula">{point.metric.formula}</p>
+              </article>
+            ))}
+
+            {analysis.data.ungrounded.length > 0 && (
+              <div className="notice notice--warn">
+                <p className="eyebrow">Topics this build refused to answer</p>
+                <ul className="reasons">
+                  {analysis.data.ungrounded.map((item) => (
+                    <li className="reasons__item" key={item.topic}>
+                      <strong>{item.label}</strong>
+                      {typeof item.value === "number" ? ` (${item.value.toFixed(1)} ${item.unit})` : ""} — {item.reason}
+                    </li>
+                  ))}
+                </ul>
+                <p style={{ marginTop: "0.4rem" }}>
+                  The library has no passage that supports these, and retrieval said so. The alternative was a sentence with a source it did
+                  not have, which is the one thing this surface is not for.
+                </p>
+              </div>
+            )}
+
+            <p className="muted world-section-note">
+              {analysis.data.method} Retrieved over {analysis.data.scanned_chunks.toLocaleString("en-GB")} passages with{" "}
+              <span className="mono">{analysis.data.retrieval_backend}</span>; provider <span className="mono">{analysis.data.provider}</span>.
+            </p>
+          </div>
+        ) : (
+          <div className="notice notice--warn">{analysis.message}</div>
+        )}
       </Panel>
 
       <Panel eyebrow={`${system.roles.length} slots in the field`} title="Roles, both ways">

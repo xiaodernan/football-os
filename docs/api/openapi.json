@@ -2854,6 +2854,99 @@
           }
         }
       }
+    },
+    "/api/v1/tactics/{ident}/feedback": {
+      "get": {
+        "tags": [
+          "tactics"
+        ],
+        "summary": "System Feedback",
+        "description": "A tactical analysis whose every statement is anchored to a passage this project wrote.\n\nNothing here is a model's opinion: each topic is a retrieval query, and a topic whose retrieval\nfails the corpus's answerability gates is returned in `ungrounded` rather than written as prose\n(spec §13, §29; `AI_POLICY.md` §3).",
+        "operationId": "system_feedback_api_v1_tactics__ident__feedback_get",
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response System Feedback Api V1 Tactics  Ident  Feedback Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tactics/{ident}/fit": {
+      "get": {
+        "tags": [
+          "tactics"
+        ],
+        "summary": "System Fit",
+        "description": "How this account's player compares with what the shape's roles demand — arithmetic, not praise.",
+        "operationId": "system_fit_api_v1_tactics__ident__fit_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response System Fit Api V1 Tactics  Ident  Fit Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

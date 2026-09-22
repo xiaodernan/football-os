@@ -86,10 +86,18 @@ Web surface (verified 2026-09-22):
 
 Still open in M4:
 
-1. [ ] AI tactical analysis that cites the knowledge-corpus principle it checked against, plus `/tactics/{slug}/fit` against a user player's six tactical attributes (endpoints written; retrieval, tests and the UI panel are not yet)
-2. [ ] the editable board: drag/draw/save/share needs an owned `tactic_boards` row plus a share token (§21 territory), not just a picture
-3. [ ] animation: interpolate the two stored phases, with the transform printed beside it
-4. [ ] 3D pitch (spec §13 lists 2D/3D; 2D is what ships)
+1. [x] AI tactical analysis with citations: `GET /tactics/{slug}/feedback` puts six coaching questions to the M2 corpus
+   through the same hybrid retrieval and answerability gates as `/knowledge`, and renders only the statements whose
+   passage resolves — 4 cited, 2 refused for every system, because the library holds no passage on using width to
+   stretch a block or on how high a team sits. The refusals are on the page with the gate that produced them; rewording
+   the queries to score `answerable` would have bought citations to off-topic passages, which is worse than none
+2. [x] `GET /tactics/{slug}/fit` — the session's player against the shape's six tactical demands, with published
+   thresholds (`short ≤ -12`, `exceeds ≥ +4`), 409 `no_player` when there is no profile
+3. [ ] the editable board: drag/draw/save/share needs an owned `tactic_boards` row plus a share token (§21 territory), not just a picture
+4. [ ] animation: interpolate the two stored phases, with the transform printed beside it
+5. [ ] 3D pitch (spec §13 lists 2D/3D; 2D is what ships)
+6. [ ] corpus follow-up so the two refused topics can be cited: author `data/knowledge` passages on width in attack and
+   on defensive-line height, then re-run `python -m evals.run_rag_eval` — the gates must be re-measured, never loosened
 
 Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,
 `scripts/export_openapi.py`, `apps/web/scripts/visual-qa.mjs`. `docs/api/openapi.json` remains the

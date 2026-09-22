@@ -923,3 +923,49 @@ export type CompareResponse = TacticsProvenance & {
   metrics: CompareMetricRow[];
   note: string;
 };
+
+/** A passage reference from the knowledge corpus. `ref` is an in-app anchor, never a remote URL. */
+export type KnowledgeRef = {
+  type: string;
+  chunk_id: string;
+  document_id: string;
+  slug: string;
+  title: string;
+  section: string;
+  ordinal: number;
+  category: string;
+  source: string;
+  quote: string;
+  score: number;
+  similarity: number;
+  ref: string;
+};
+
+/** `GET /tactics/{slug}/feedback` — statements that each carry a resolvable citation, plus the refusals. */
+export type FeedbackResponse = TacticsProvenance & {
+  system: { slug: string; name: string; formation: string; temperament_key: string; idea?: string; strengths: string[]; risks: string[] };
+  points: {
+    topic: string;
+    label: string;
+    statement: string;
+    metric: { key: string; value: number; unit: string; formula: string; phase: string };
+    citation: KnowledgeRef;
+    score: number;
+  }[];
+  ungrounded: {
+    topic: string;
+    label: string;
+    value?: number;
+    unit?: string;
+    reason: string;
+    answerability?: { answerable: boolean; coverage: number; top_score: number };
+  }[];
+  reasons: string[];
+  citations: KnowledgeRef[];
+  retrieval_backend: string;
+  scanned_chunks: number;
+  demo_mode: boolean;
+  provider: string;
+  model: string;
+  method: string;
+};
