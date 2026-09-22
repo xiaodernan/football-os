@@ -20,6 +20,7 @@ sys.path.insert(0, str(API_ROOT))
 
 _DB_PATH = Path(tempfile.gettempdir()) / "football_os_tests.db"
 os.environ["DATABASE_URL"] = os.environ.get("FOOTBALL_OS_TEST_DATABASE_URL") or f"sqlite:///{_DB_PATH.as_posix()}"
+os.environ["STORAGE_DIR"] = str(Path(tempfile.gettempdir()) / "football_os_test_storage")  # M5 uploads land here, not in the repo tree.
 os.environ["APP_SECRET"] = "test-secret-not-for-production"
 os.environ["ENV"] = "test"
 os.environ.pop("OPENAI_API_KEY", None)

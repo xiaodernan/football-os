@@ -740,3 +740,61 @@ class TacticBoard(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
+# --- Video analysis (M5, spec §14, §47, §62) ---------------------------------------------
+# An uploaded clip is user content, so it is never labelled demo data; what *is* demo is the
+# vision provider's output, and every detection row carries the provider, model and demo flag that
+# produced it so a report cannot present pixel statistics as football insight.
+class VideoAsset(Base, TimestampMixin):
+    """One uploaded clip, its container facts as ffprobe reported them, and its lifecycle state."""
+
+    __tablename__ = "video_assets"
+    __table_args__ = (
+        Index("ix_video_owner_created", "owner_id", "created_at"),
+        Index("ix_video_status", "status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    filename: Mapped[str] = mapped_column(String(240), default="", nullable=False)
+    storage_key: Mapped[str] = mapped_column(String(300), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), default="", nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), default="uploaded", nullable=False)
+    duration_s: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    width: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    fps: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    codec: Mapped[str] = mapped_column(String(30), default="", nullable=False)
+    bitrate_kbps: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    frame_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    frame_interval_s: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    media: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+class VideoDetection(Base):
+    """One measured event on a clip: where the non-pitch pixels were, and the number that said so."""
+
+    __tablename__ = "video_detections"
+    __table_args__ = (Index("ix_detection_asset_time", "asset_id", "t_s"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    asset_id: Mapped[str] = mapped_column(ForeignKey("video_assets.id", ondelete="CASCADE"), nullable=False)
+    job_id: Mapped[str | None] = mapped_column(ForeignKey("jobs.id", ondelete="SET NULL"), nullable=True)
+    kind: Mapped[str] = mapped_column(String(40), default="movement", nullable=False)
+    t_s: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    x: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    y: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    why: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    detail: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    provider: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    model: Mapped[str] = mapped_column(String(80), default="", nullable=False)
+    demo_mode: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+

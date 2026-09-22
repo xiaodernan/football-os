@@ -50,6 +50,11 @@ class Settings:
     world_seed: int = field(default_factory=lambda: int(_env("WORLD_SEED", "3") or 3))
     world_auto_sync: bool = field(default_factory=lambda: _env("WORLD_AUTO_SYNC", "1") != "0")
     tactics_auto_sync: bool = field(default_factory=lambda: _env("TACTICS_AUTO_SYNC", "1") != "0")
+    # M5 video: where uploads land on disk, and what may be uploaded at all (spec §5 upload
+    # allow-list). The type list is checked against the file's own bytes, not its name.
+    storage_dir: str = field(default_factory=lambda: _env("STORAGE_DIR", "var/storage"))
+    video_max_bytes: int = field(default_factory=lambda: int(_env("VIDEO_MAX_BYTES", str(64 * 1024 * 1024))))
+    video_allowed_types: tuple[str, ...] = ("video/mp4", "video/quicktime", "video/webm")
     anthropic_api_key: str = field(default_factory=lambda: _env("ANTHROPIC_API_KEY"))
     news_api_key: str = field(default_factory=lambda: _env("NEWS_API_KEY"))
     football_data_api_key: str = field(default_factory=lambda: _env("FOOTBALL_DATA_API_KEY"))

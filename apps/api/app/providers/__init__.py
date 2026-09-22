@@ -8,13 +8,16 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any, Protocol
 
 from app.core.config import settings
+from app.services.video.vision import DemoVisionProvider
 
 logger = logging.getLogger("football_os.providers")
 
@@ -285,10 +288,7 @@ class FeatureReranker:
             row = dict(candidate)
             row["features"] = features
             row["rerank_score"] = round(
-                self.weights["lexical"] * _squash(lexical)
-                + self.weights["semantic"] * semantic
-                + self.weights["coverage"] * covered
-                + self.weights["heading"] * heading_bonus,
+                self.weights["lexical"] * _squash(lexical) + self.weights["semantic"] * semantic + self.weights["coverage"] * covered + self.weights["heading"] * heading_bonus,
                 6,
             )
             scored.append(row)
@@ -310,20 +310,50 @@ def _heading_matches(query: str, heading: str) -> bool:
 
 
 class LocalStorageProvider:
-    """Filesystem storage behind the same contract object storage will use later."""
+    """Filesystem storage behind the same contract object storage will use later.
+
+    Keys are treated as relative paths and rejected if they try to escape the root, because the key
+    is built partly from a user's filename. A real object store has no such directory to climb out of.
+    """
 
     name = "local-fs"
 
     def __init__(self, root: str | None = None) -> None:
-        from pathlib import Path
+        self.root = Path(root or settings.storage_dir).resolve()
 
-        self.root = Path(root or (settings.database_url.split("//")[-1] and "."))
+    def _path(self, key: str) -> Path:
+        candidate = (self.root / key).resolve()
+        if not str(candidate).startswith(str(self.root) + os.sep):
+            raise ValueError(f"storage key {key!r} escapes the storage root")
+        return candidate
 
     def put(self, key: str, data: bytes, content_type: str) -> str:
-        raise NotImplementedError("Lands with M5 video upload; interface pinned here (spec §45).")
+        target = self._path(key)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        logger.info("stored %s (%d bytes, %s)", key, len(data), content_type)
+        return self.url_for(key)
+
+    def get(self, key: str) -> bytes:
+        return self._path(key).read_bytes()
+
+    def delete(self, key: str) -> None:
+        self._path(key).unlink(missing_ok=True)
 
     def url_for(self, key: str) -> str:
-        raise NotImplementedError("Lands with M5 video upload.")
+        """A path the API serves under its own auth, never a public file URL."""
+        return f"/api/v1/video/file/{key}"
+
+
+def get_vision_provider() -> VisionProvider:
+    """The demo provider measures pixels; a real model would be chosen here by credential."""
+    if settings.anthropic_api_key or settings.openai_api_key:
+        logger.warning("a vision model is not wired yet; staying on the demo provider (spec §45)")
+    return DemoVisionProvider()
+
+
+def get_storage_provider() -> StorageProvider:
+    return LocalStorageProvider(settings.storage_dir)
 
 
 def get_llm_provider() -> LLMProvider:
@@ -344,12 +374,14 @@ def get_reranker_provider() -> RerankerProvider:
 
 
 def provider_status() -> dict[str, Any]:
+    """Which provider serves each surface, including the ones that are a labelled demo (spec §59)."""
     return {
         "demo_mode": settings.is_demo_mode,
         "llm": get_llm_provider().name,
         "embedding": get_embedding_provider().name,
         "reranker": get_reranker_provider().name,
-        "vision": "none-yet",
+        "vision": get_vision_provider().name,
+        "storage": get_storage_provider().name,
         "football_data": "synthetic-world",
         "news": "synthetic-world" if not settings.news_api_key else "licensed-api",
     }

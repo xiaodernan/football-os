@@ -9,7 +9,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M2 Football Knowledge + RAG** | ingestion, chunking, embeddings, pgvector hybrid retrieval, rerank, citations, Football AI | answers carry resolvable source citations | ✅ verified 2026-09-21 ([evidence](docs/M2_VERIFICATION.md)) |
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 4 of 6 topics and refuses 2; 3D pitch and board sharing beyond one owner are open follow-ups |
-| **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ⬜ |
+| **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | 🔨 pipeline verified 2026-09-22 ([evidence](docs/M5_VERIFICATION.md)) · upload UI and report page pending |
 | **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | ⬜ |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
 | **M8 Club OS / Academy** | organisations, teams, coaches, IDP, curriculum, permissions, multi-tenant | B2B tenant isolation proven | ⬜ |
@@ -110,6 +110,37 @@ Still open in M4:
    consent story, not just a listing
 8. [ ] corpus follow-up so the two refused topics can be cited: author `data/knowledge` passages on width in attack and
    on defensive-line height, then re-run `python -m evals.run_rag_eval` — the gates must be re-measured, never loosened
+
+**M5 Video Analysis — in progress.** Evidence: [`docs/M5_VERIFICATION.md`](docs/M5_VERIFICATION.md).
+
+Verified 2026-09-22 (26 tests + a live HTTP pass):
+
+1. [x] media layer: `ffprobe` container facts, `ffmpeg` frame sampling to PPM at an even interval, a
+   PNG display copy, all as subprocesses with fixed argument lists; missing tools raise
+   `MediaToolMissing` and the API answers 503 rather than inventing frames
+2. [x] demo vision provider `demo-pixel-stats` behind the `VisionProvider` protocol that had been pinned
+   since M0: pitch-green fraction, brightest-cell and **centroid of the non-pitch pixels**, movement
+   events with shift, speed and confidence — every threshold in the payload, plus a `limitations`
+   sentence saying it detects no players, ball or football events
+3. [x] upload contract: container decided by **magic bytes** (a `MZ` file named `.mp4` → 415), size ceiling
+   in one place (`UploadTooLarge` → 413), sha256 + byte count stored, 20 clips per account, storage keys
+   that cannot escape the root, `var/` gitignored
+4. [x] `video_assets` / `video_detections` + migration `0006`; `LocalStorageProvider` implemented at last
+   (it said "Lands with M5"); 7 routes; `Job` and `ModelCall` rows written for real, including a failed
+   ledger row when the media tools are absent — and the jobs endpoint states there is no queue
+5. [x] ownership: every video read needs a session, another account gets 404 on all five doors, and the
+   report omits `storage_key`; deletion removes the row, the detections and the bytes on disk
+
+Still open in M5:
+
+1. [ ] the web surface: an upload form (`/video`), the per-clip report page with the sampled frames, the
+   detection timeline and a `<video>` element fed by the owner-only file route — no §80 route and no
+   sitemap entry for anyone's clips, because they are private
+2. [ ] frame overlay: draw the measured centroids on the displayed frame, so a viewer can see which
+   pixels the numbers describe
+3. [ ] event semantics (a real vision model or hand-labelled data) — mapping pixel movement to passes,
+   shots or presses would be a claim this build cannot support
+4. [ ] linking a clip to a user's player or an M6 match, and short shareable clips
 
 Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,
 `scripts/export_openapi.py`, `apps/web/scripts/visual-qa.mjs`. `docs/api/openapi.json` remains the
