@@ -33,6 +33,8 @@ SEO_ROUTES: Final[dict[str, str]] = {
     "match": "/match",
     "article": "/news",
     "news": "/news",
+    # M4: a tactical system gets a public page too, at the §80 shape `/tactics/{slug}`.
+    "tactics": "/tactics",
 }
 
 

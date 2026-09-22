@@ -8,7 +8,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M1 Player + AI Coach vertical slice** | Create user → create player → profile → training → completion → AI Coach → progress → history | closed loop usable in browser with real persistence | ✅ verified 2026-09-21 ([evidence](docs/M0_M1_VERIFICATION.md)) |
 | **M2 Football Knowledge + RAG** | ingestion, chunking, embeddings, pgvector hybrid retrieval, rerank, citations, Football AI | answers carry resolvable source citations | ✅ verified 2026-09-21 ([evidence](docs/M2_VERIFICATION.md)) |
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) |
-| **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | drag/draw/save/share + analysis with evidence | ⬜ |
+| **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | 🔨 geometry + catalogue core verified 2026-09-22 · routes, board and web pending |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ⬜ |
 | **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | ⬜ |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
@@ -61,10 +61,24 @@ Web surface (verified 2026-09-22):
 5. [x] `visual-qa.mjs` extended with 42 world assertions and screenshots at 1440px and 375px against a production build (110/110)
 6. [x] structured data per entity: `Dataset`, `SportsOrganization`, `SportsTeam`, `Athlete`, `SportsEvent`, `NewsArticle`, plus `SearchAction`; `/world/search` is `noindex, follow`
 
-**Next: M4 Tactical Lab.** Spaces, roles and instructions as data; 2D/3D pitch; timeline player; "what happens if…"
-counterfactual with explorable reasons; AI feedback checked against tactical principles rather than praised.
-Also open from §65: the world's fixtures do not progress a season forward, and the 12 new page surfaces widen the
-§81 English-only debt.
+**Next: M4 Tactical Lab.** The gate is 50 tactical systems plus a board a user can drag, save and share.
+
+Verified 2026-09-22 (the pure layer, `apps/api/app/services/tactics/`, 80 tests):
+
+1. [x] `pitch.py` — one metre coordinate system (origin at the team's own goal, Law 1 dimensions), clamping, thirds/lanes/zones, nearest-neighbour and centroid maths; a non-finite coordinate is rejected at construction
+2. [x] `roles.py` — 14 roles, each with separate in- and out-of-possession duties, instructions, a stated risk, and the tactical attributes it demands (the same six the player model stores, so fit can be computed)
+3. [x] `shapes.py` — ten authored base shapes × five temperaments; every shape validated to eleven slots, one keeper, on the grass
+4. [x] `analysis.py` — in-possession shift and out-of-possession rescale (the block's span is exactly the authored `block_depth`, its top exactly `press_line_y`), eight metrics that each carry their own formula, and six named counterfactuals that move only the slots they name
+5. [x] `plan.py` — 50 systems whose strengths/risks are **decided from their own measurements against the catalogue quartiles**, each sentence quoting the number and the percentile; deterministic fingerprint; `tactical_problems()` empty
+
+Still open in M4:
+
+1. [ ] store the catalogue (`tactical_systems` table + `0004` migration + idempotent sync by natural key, seeded by `python -m seed`)
+2. [ ] `/api/v1/tactics/*` routes: status, list with formation/temperament filters, detail with both phases, and a compare/counterfactual endpoint; `m4_tactical_lab` derived from the data
+3. [ ] AI tactical analysis that cites the knowledge-corpus principle it checked against (reuses M2 retrieval, so a verdict is traceable rather than praised)
+4. [ ] the board itself: a server-rendered SVG pitch at `/tactics/{slug}` plus a user-editable board (drag/draw/save/share is §9/§21 territory — it needs an owner and a share token, not just a picture)
+5. [ ] animation: interpolate the two stored phases, with the transform printed beside it
+6. [ ] `visual-qa.mjs` tactics assertions + `docs/M4_VERIFICATION.md`
 
 Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,
 `scripts/export_openapi.py`, `apps/web/scripts/visual-qa.mjs`. `docs/api/openapi.json` remains the
