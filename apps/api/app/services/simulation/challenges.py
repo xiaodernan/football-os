@@ -207,8 +207,7 @@ def _draft() -> tuple[Challenge, ...]:
             slug="three-year-rebuild",
             name="Three-year rebuild",
             brief=(
-                "Eighteen rounds — three six-round seasons — to reach thirty points and a goal difference that is "
-                "not negative. The longest window, and the only one that asks for two things at once."
+                "Eighteen rounds — three six-round seasons — to reach thirty points and a goal difference that is not negative. The longest window, and the only one that asks for two things at once."
             ),
             difficulty="extreme",
             window_rounds=18,
@@ -311,17 +310,10 @@ def fingerprint() -> str:
 def limitations() -> dict[str, str]:
     """What the challenge layer does not claim, in the words the page prints."""
     return {
-        "window": (
-            "A window closes on the number of rounds played, not on a calendar: there is no clock, no transfer "
-            "deadline and no season end in this build."
-        ),
-        "reward": (
-            "A reward is earned by the verdict and recorded on the run. Nothing spends or grants it yet — there is "
-            "no wallet, no shop and no entitlement behind these numbers."
-        ),
+        "window": ("A window closes on the number of rounds played, not on a calendar: there is no clock, no transfer deadline and no season end in this build."),
+        "reward": ("A reward is earned by the verdict and recorded on the run. Nothing spends or grants it yet — there is no wallet, no shop and no entitlement behind these numbers."),
         "constraints": (
-            "Each constraint publishes whether it is enforced. A constraint marked enforced=False is published, not "
-            "applied, and the sentence beside it names the mechanism the build is missing."
+            "Each constraint publishes whether it is enforced. A constraint marked enforced=False is published, not applied, and the sentence beside it names the mechanism the build is missing."
         ),
         "club": (
             "The weakest club is the lowest selected-eleven rating as the engine measures it, from the club's own "
@@ -335,6 +327,29 @@ def limitations() -> dict[str, str]:
 
 def _competition(session: Session, ident: str) -> Competition | None:
     return session.scalar(select(Competition).where(or_(Competition.id == ident, Competition.slug == ident)))
+
+
+def competition_options(session: Session) -> list[dict[str, Any]]:
+    """The competitions a `weakest` scenario can be pointed at, each with how many clubs it holds.
+
+    The count travels because it is the reader's check on the measurement: a scenario that takes the
+    lowest-rated club of a five-club competition is a different promise from one that scans twenty.
+    """
+    rows = list(session.scalars(select(Competition).order_by(Competition.tier, Competition.slug)).all())
+    counts: dict[str, int] = {str(team_id): int(total) for team_id, total in session.execute(select(Team.competition_id, func.count(Team.id)).group_by(Team.competition_id)).all() if team_id}
+    return [
+        {
+            "id": row.id,
+            "slug": row.slug,
+            "name": row.name,
+            "kind": row.kind,
+            "tier": row.tier,
+            "season": row.season,
+            "clubs": int(counts.get(row.id, 0)),
+            "path": f"/competition/{row.slug}",
+        }
+        for row in rows
+    ]
 
 
 def _measure_clubs(session: Session, teams: list[Team]) -> list[dict[str, Any]]:
@@ -413,8 +428,12 @@ def resolve_challenge_club(
         "gap_to_runner_up": None if runner_up is None else round(float(runner_up["overall"]) - float(weakest["overall"]), 4),
         "how": (
             f"every club in {row.name} was read the way the engine builds a side (app/services/simulation/profile.py: "
-            "mean overall of the eleven the formation selects, /100) and the lowest was taken. "
-            + (f"{runner_up['name']} measured {runner_up['overall']}, so the gap is {round(float(runner_up['overall']) - float(weakest['overall']), 4)}." if runner_up else "It is the only club in this competition the engine can build a side from.")
+            "mean overall of the eleven the formation selects, printed on the engine's 0–1 scale, from player attributes written /100) and the lowest was taken. "
+            + (
+                f"{runner_up['name']} measured {runner_up['overall']}, so the gap is {round(float(runner_up['overall']) - float(weakest['overall']), 4)}."
+                if runner_up
+                else "It is the only club in this competition the engine can build a side from."
+            )
         ),
     }
 
@@ -465,8 +484,7 @@ def verdict_for(challenge: Challenge, career: Career, rows: list[CareerFixture])
         "reason": (
             f"the window closed after {played} of {window} rounds with all {len(objectives)} objectives met"
             if earned
-            else f"{objectives_met} of {len(objectives)} objectives met after {played} of {window} rounds"
-            + ("" if window_closed else ", and the window is still open")
+            else f"{objectives_met} of {len(objectives)} objectives met after {played} of {window} rounds" + ("" if window_closed else ", and the window is still open")
         ),
     }
     return {
@@ -482,11 +500,7 @@ def verdict_for(challenge: Challenge, career: Career, rows: list[CareerFixture])
         "objectives_total": len(objectives),
         "reward": reward,
         "judged_on": "the sums of this run's own career_fixtures rows, recomputed on every read",
-        "closed_by": (
-            f"the window closed at round {window}"
-            if window_closed
-            else f"{remaining} of {window} rounds remain"
-        ),
+        "closed_by": (f"the window closed at round {window}" if window_closed else f"{remaining} of {window} rounds remain"),
     }
 
 
@@ -595,6 +609,7 @@ __all__ = [
     "challenge_counts",
     "challenge_problems",
     "challenge_ready",
+    "competition_options",
     "fingerprint",
     "limitations",
     "resolve_challenge_club",

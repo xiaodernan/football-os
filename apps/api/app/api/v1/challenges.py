@@ -35,6 +35,7 @@ from app.services.simulation.challenges import (
     VERDICT_STATUSES,
     challenge_by_slug,
     challenge_problems,
+    competition_options,
     fingerprint,
     limitations,
     resolve_challenge_club,
@@ -93,6 +94,9 @@ def read_catalogue(request: Request, db: Session = Depends(get_db)) -> dict[str,
         "window_enforced_by": "career.play_round, the only path that can play a round; a closed window answers 409 window_closed",
         "play_through": "POST /api/v1/careers/{ident}/play — a run's rounds are played through the career route",
         "clubs": club_options(db),
+        # A `weakest` scenario needs the caller to name a competition, so the choice it can name — and
+        # how many clubs each one holds — is published beside it rather than left to /world.
+        "competitions": competition_options(db),
         "systems": system_options(),
         "reward_units": REWARD_UNITS,
         "max_runs_per_user": MAX_RUNS_PER_USER,

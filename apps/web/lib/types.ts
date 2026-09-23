@@ -1344,6 +1344,9 @@ export type CareerRow = {
   budget_units: string;
   rounds_played: number;
   status: string;
+  /** Set when the career was opened from a live challenge (spec §21); empty for an open career. */
+  challenge_slug?: string;
+  challenge_window?: number;
   data_origin: string;
   is_demo_data: boolean;
 };
@@ -1432,6 +1435,8 @@ export type CareerView = {
   next_fixture?: CareerNextFixture;
   played?: boolean;
   match?: { slug: string; path: string; digest: string; seed: number; model_version: string };
+  /** The live verdict, present only when this career was opened from a live challenge (§21). */
+  challenge_verdict?: ChallengeVerdict | null;
   status?: string;
   data_origin: string;
   is_demo_data: boolean;
@@ -1459,5 +1464,138 @@ export type CareerOptions = {
   max_careers_per_user: number;
   data_origin: string;
   is_demo_data: boolean;
+  disclaimer: string;
+};
+
+/**
+ * --- M6 Manager live challenges (spec §21). Mirrors `app/services/simulation/challenges`. ---
+ *
+ * A run is a career played under a scenario, so `ChallengeRunView` extends `CareerView` rather than
+ * repeating it: the record, the fixtures and the table are the career's own sums, and the verdict is
+ * recomputed from those same rows on every read.
+ */
+export type ChallengeConstraint = {
+  key: string;
+  label: string;
+  /** The honest field: false means the scenario states the rule and nothing in the build applies it. */
+  enforced: boolean;
+  how: string;
+};
+
+export type ChallengeObjective = {
+  kind: string;
+  target: number;
+  label: string;
+};
+
+export type ChallengeReward = {
+  key?: string | null;
+  label?: string | null;
+  credits?: number | null;
+  credits_units?: string;
+  xp?: number | null;
+  earned?: boolean;
+  reason?: string;
+};
+
+export type ChallengeEntry = {
+  slug: string;
+  name: string;
+  brief: string;
+  difficulty: string;
+  window_rounds: number;
+  window: string;
+  club_selector: string;
+  philosophy: string;
+  budget: number;
+  budget_units: string;
+  system_slug: string;
+  objectives: ChallengeObjective[];
+  constraints: ChallengeConstraint[];
+  reward: Record<string, unknown>;
+};
+
+export type ChallengeClubChoice = {
+  selector: string;
+  chosen: { team_id: string; name: string; short_name: string; overall?: number };
+  competition?: { id: string; slug: string; name: string };
+  ranking?: { name: string; overall: number | null; measurable: boolean }[];
+  gap_to_runner_up?: number | null;
+  how: string;
+};
+
+export type ChallengeVerdict = {
+  challenge_slug: string;
+  challenge_name: string;
+  status: "in_progress" | "met" | "missed";
+  window_rounds: number;
+  rounds_played: number;
+  rounds_remaining: number;
+  window_closed: boolean;
+  objectives: (ChallengeObjective & { actual: number; met: boolean; formula: string })[];
+  objectives_met: number;
+  objectives_total: number;
+  reward: ChallengeReward;
+  judged_on: string;
+  closed_by: string;
+};
+
+export type ChallengeCatalogue = {
+  challenges: ChallengeEntry[];
+  total: number;
+  fingerprint: string;
+  integrity: { problems: string[]; clean: boolean };
+  objective_formulas: Record<string, string>;
+  verdict_statuses: string[];
+  how_a_verdict_is_decided: string;
+  window_enforced_by: string;
+  play_through: string;
+  clubs: SimTeamOption[];
+  competitions: { id: string; slug: string; name: string; kind: string; tier: number; season: string; clubs: number; path: string }[];
+  systems: SimSystemOption[];
+  reward_units: string;
+  max_runs_per_user: number;
+  limitations: Record<string, string>;
+  data_origin: string;
+  is_demo_data: boolean;
+  demo_data: boolean;
+  disclaimer: string;
+};
+
+export type ChallengeRunView = Omit<CareerView, "limitations"> & {
+  /** The career's own limitations, plus the four the challenge layer adds on every read. */
+  limitations: CareerView["limitations"] & Partial<Record<"window" | "reward" | "constraints" | "club", string>>;
+  challenge?: ChallengeEntry | null;
+  verdict?: ChallengeVerdict | null;
+  run?: {
+    id: string;
+    slug: string;
+    challenge_slug: string;
+    challenge_window: number;
+    scenario_known: boolean;
+    fingerprint?: string;
+    note?: string;
+  };
+  club_choice?: ChallengeClubChoice;
+};
+
+export type ChallengeRunList = {
+  items: {
+    id: string;
+    slug: string;
+    challenge_slug: string;
+    challenge_name: string;
+    club_name: string;
+    season: string;
+    rounds_played: number;
+    verdict: ChallengeVerdict | null;
+  }[];
+  total: number;
+  limit_per_user: number;
+  verdict_statuses: string[];
+  limitations: Record<string, string>;
+  data_origin: string;
+  is_demo_data: boolean;
+  demo_data: boolean;
   disclaimer: string;
 };

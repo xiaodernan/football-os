@@ -33,6 +33,9 @@ const DISALLOWED = [
   // crawlable as if it were a result.
   "/simulate",
   "/career",
+  // A challenge run is a career: which scenario an account took on, and the verdict its own rounds
+  // produced. Nothing here is a real competition, so nothing here should be crawlable as one.
+  "/challenges",
 ];
 
 export default function robots(): MetadataRoute.Robots {

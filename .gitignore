@@ -40,3 +40,6 @@ docs/screenshots/*.png
 
 # M5 video uploads and their sampled frames (local scratch space, never committed)
 var/
+
+# local scratch logs from agents working in this tree (never committed)
+.scratch/

@@ -49,6 +49,14 @@ export default async function CareerIndexPage() {
         <CareerForm options={options} />
       </Panel>
 
+      <p className="muted">
+        Rather than setting your own target, be judged by one that was fixed before you started:{" "}
+        <Link className="world-link" href="/challenges">
+          six authored scenarios
+        </Link>{" "}
+        name the objective, the round window and the reward, and the start route accepts no field for any of them.
+      </p>
+
       {!owned.ok ? (
         <WorldUnavailable message={owned.error.message} title="Your careers" />
       ) : owned.data.items.length === 0 ? (

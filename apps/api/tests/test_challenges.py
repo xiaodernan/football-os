@@ -30,7 +30,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.core.db import SessionLocal
 from app.models import Career, Competition, Team
@@ -350,6 +350,29 @@ def test_the_catalogue_is_public_and_states_how_a_verdict_is_decided(client: Tes
     assert body["disclaimer"]
     # The limitation a reader must not have to infer: the reward has no wallet behind it.
     assert "no wallet" in body["limitations"]["reward"]
+
+
+def test_the_catalogue_publishes_the_competitions_a_run_can_be_pointed_at(client: TestClient, world: dict[str, str]) -> None:
+    """A `weakest` scenario needs a competition named on the form, so the form gets the real list.
+
+    The counts are compared against the store rather than against themselves: a page that offers
+    "5 clubs" is making an arithmetic claim, and this is where it is checked.
+    """
+    response = client.get(API)
+    assert response.status_code == 200, response.text
+    rows = response.json()["competitions"]
+    assert rows, "a seeded world must offer a competition to name"
+    assert len({row["slug"] for row in rows}) == len(rows)
+    named = next(row for row in rows if row["slug"] == world["competition"])
+    session = SessionLocal()
+    try:
+        stored = int(session.scalar(select(func.count(Team.id)).where(Team.competition_id == named["id"])) or 0)
+        stored_competitions = int(session.scalar(select(func.count(Competition.id))) or 0)
+    finally:
+        session.close()
+    assert named["clubs"] == stored
+    assert len(rows) == stored_competitions
+    assert all(row["path"] == f"/competition/{row['slug']}" for row in rows), "the path must be the world's own SEO route"
 
 
 def test_starting_a_run_needs_a_session(client: TestClient, world: dict[str, str]) -> None:

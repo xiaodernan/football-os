@@ -10,7 +10,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) — world 3.2 (2026-09-23) added the sixth §65 gate item, 100 training sessions, browsed at `/world/training` |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 6 of 6 topics on all 50 systems (2 were refused until the corpus gained the missing passages); 3D pitch and board sharing beyond one owner are open follow-ups |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ✅ verified 2026-09-22 ([pipeline](docs/M5_VERIFICATION.md) · [web](docs/M5_WEB_VERIFICATION.md)) — upload, report, detection timeline and owner-only byte-range playback proven in the browser |
-| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log and **Career Mode including its page** all browser-verified 2026-09-23 ([engine+career backend](docs/M6_VERIFICATION.md) §10 · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md)); **manager live challenges (§21) backend verified on both engines 2026-09-24** ([docs/M6_VERIFICATION.md](docs/M6_VERIFICATION.md) §11) — 6 scenarios, window enforced in `play_round`, verdicts recomputed; its page and the transfer market (§22) outstanding |
+| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log, **Career Mode including its page** and **manager live challenges including their page** all browser-verified ([engine+career backend](docs/M6_VERIFICATION.md) §10–§11 · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md) · [challenge web](docs/M6_CHALLENGES_WEB_VERIFICATION.md)); 226/226 walk checks on a production build 2026-09-24 — the transfer market (§22), squad carry-over and `sim_events` outstanding |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
 | **M8 Club OS / Academy** | organisations, teams, coaches, IDP, curriculum, permissions, multi-tenant | B2B tenant isolation proven | ⬜ |
 | **M9 Community** | feed, posts, comments, likes, follows, shared boards/plans | creator→content→feedback loop | ⬜ |
@@ -161,14 +161,17 @@ contract the web tier codes against.
 [`docs/M6_VERIFICATION.md`](docs/M6_VERIFICATION.md) (engine + storage + reads) ·
 [`docs/M6_WEB_VERIFICATION.md`](docs/M6_WEB_VERIFICATION.md) (browser).
 
-**Manager live challenges (§21) — backend verified, both engines, 2026-09-24**
-(`docs/M6_VERIFICATION.md` §11). Six authored scenarios, each time-limited by a window the engine
+**Manager live challenges (§21) — backend and page verified, 2026-09-24**
+(`docs/M6_VERIFICATION.md` §11 · [`docs/M6_CHALLENGES_WEB_VERIFICATION.md`](docs/M6_CHALLENGES_WEB_VERIFICATION.md)).
+Six authored scenarios, each time-limited by a window the engine
 enforces, goal-based on objectives the caller cannot lower, and reward-based on a verdict recomputed
-from the run's own rows. 31 tests, a live pass on a seeded database, and every constraint publishing
+from the run's own rows. 32 tests, a live pass on a seeded database, and every constraint publishing
 whether it binds — so "no transfers" and "academy players only" read as stated intent rather than as
-rules something applied. **No page for it yet.**
+rules something applied. `/challenges` and `/challenges/runs/{slug}` put it on screen, and the browser walk
+holds it to the arithmetic: 17 checks over the measured club, the four-field form, the summed verdict and the
+`409 window_closed` the route answers for a seventh round.
 
-Verified 2026-09-23 (317 API tests on both engines + a browser walk at 190/190):
+Verified 2026-09-23 → 2026-09-24 (377 API tests on both engines + a browser walk at 226/226):
 
 1. [x] `possession-block-v1@1.0.0`: a 90-minute match as fifteen six-minute blocks, each side measured from ten
    factor rows through nine named rates, every rate shipping with the expression that produced it
@@ -198,10 +201,12 @@ Verified 2026-09-23 (317 API tests on both engines + a browser walk at 190/190):
 
 Still open in M6:
 
-1. [ ] **a page for the challenges** — the catalogue at `/challenges`, a start form, and a run page that
-   shows the verdict beside the fixtures it was summed from. Backend only today; `GET /challenges` is
-   public because the scenarios are this project's own fiction, while the run routes sit behind the
-   same session wall as careers, so a foreign run reads as 404
+1. [x] **a page for the challenges** (2026-09-24, §21): `/challenges` holds the six-scenario catalogue, the start
+   form and this account's runs; `/challenges/runs/[slug]` shows the verdict above the rounds it is summed from. The
+   walk proves the three §21 adjectives where they can actually break — the form has four fields and none of them is
+   a knob, the club handed back is the arithmetic minimum of the ranking the same response printed, and the round
+   past the window is refused by the *route* with `409 window_closed` and the final verdict beside it. 17 checks,
+   quoted in [`docs/M6_CHALLENGES_WEB_VERIFICATION.md`](docs/M6_CHALLENGES_WEB_VERIFICATION.md)
 2. [ ] the transfer market (§22) — which is what would make a budget more than a stated number, and
    what would let `no_transfers` become an enforced constraint instead of a published one
 3. [ ] squad and training carry-over between matches

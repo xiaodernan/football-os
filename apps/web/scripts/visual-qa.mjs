@@ -5,7 +5,7 @@
  *
  * Drives the real browser stack — middleware redirect, cookie proxy, server components, client
  * forms and the generated-world routes — then writes screenshots at desktop and 375px widths into
- * docs/screenshots/ and prints an assertion report (207 checks as of 2026-09-23).
+ * docs/screenshots/ and prints an assertion report (226 checks as of 2026-09-24).
  *
  *   web tier: http://127.0.0.1:3210   api tier: http://127.0.0.1:8731   (scripts/dev.sh)
  *   node scripts/visual-qa.mjs
@@ -1854,6 +1854,356 @@ async function run() {
       `robots rule ${/Disallow:\s*\/career$/mu.test(robotsCareer)} · sitemap mentions ${sitemapCareer.includes('/career')}`,
     );
 
+    // 12h. M6 manager live challenges (spec §21). The promise is three properties — a window that is time
+    // limited, a goal that cannot be moved, a reward that has to be earned — and none of them can be shown
+    // by looking at a page. So the walk starts the shortest-window scenario from the form, reads the
+    // measurement that chose the club, plays every round the browser will let it, adds up the fixture table
+    // against the verdict printed above it, and then asks the route for the round that is not there.
+    const anonChallengePage = await fetch(`${BASE}/challenges`, { redirect: 'manual' });
+    const anonCatalogue = await fetch(`${BASE}/api/v1/challenges`, { redirect: 'manual' });
+    const anonRuns = await fetch(`${BASE}/api/v1/challenges/runs`, { redirect: 'manual' });
+    check(
+      'a signed-out visitor cannot open the challenge page or list runs, while the authored catalogue stays public',
+      [302, 307].includes(anonChallengePage.status) &&
+        (anonChallengePage.headers.get('location') ?? '').includes('/login?next=%2Fchallenges') &&
+        anonCatalogue.status === 200 &&
+        anonRuns.status === 401,
+      `page ${anonChallengePage.status} -> ${(anonChallengePage.headers.get('location') ?? '').slice(0, 40)} · catalogue ${anonCatalogue.status} · runs ${anonRuns.status}`,
+    );
+
+    await open(page, '/challenges');
+    await waitForText(page, 'Start a run');
+    const catalogueShape = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('.tac-card')];
+      const chipTexts = (root) => [...root.querySelectorAll('.chip.mono')].map((node) => node.textContent.trim());
+      const perCard = cards.map((card) => {
+        const declared = chipTexts(card)
+          .map((text) => /constraints applied:\s*(\d+)\s+of\s+(\d+)/u.exec(text))
+          .filter((match) => match !== null)
+          .map((match) => ({ applied: Number(match[1]), total: Number(match[2]) }));
+        const badges = [...card.querySelectorAll('.badge')].map((node) => node.textContent.trim());
+        return {
+          declared: declared[0] ?? { applied: -1, total: -1 },
+          applied: badges.filter((text) => text === 'APPLIED').length,
+          stated: badges.filter((text) => text === 'STATED ONLY').length,
+          explained: [...card.querySelectorAll('li')].filter((node) => node.textContent.includes('STATED ONLY') && (node.querySelector('.muted')?.textContent.trim().length ?? 0) > 20).length,
+          hasWindow: chipTexts(card).some((text) => /^window: \d+ rounds$/u.test(text)),
+          objectives: [...card.querySelectorAll('li')].filter((node) => /target \d+/u.test(node.textContent)).length,
+          formulas: [...card.querySelectorAll('li')].filter((node) => /target \d+/u.test(node.textContent) && (node.querySelector('.mono')?.textContent.trim().length ?? 0) > 5).length,
+        };
+      });
+      const labels = [...document.querySelectorAll('.field > span')].map((node) => node.textContent.trim());
+      return {
+        scenarios: cards.length,
+        windows: perCard.filter((card) => card.hasWindow).length,
+        problems: [...document.querySelectorAll('.mono')].map((node) => node.textContent.trim()).find((text) => /^problems:/u.test(text)) ?? '',
+        declared: perCard.reduce((total, card) => total + card.declared.applied, 0),
+        declaredTotal: perCard.reduce((total, card) => total + card.declared.total, 0),
+        applied: perCard.reduce((total, card) => total + card.applied, 0),
+        stated: perCard.reduce((total, card) => total + card.stated, 0),
+        explained: perCard.reduce((total, card) => total + card.explained, 0),
+        objectives: perCard.reduce((total, card) => total + card.objectives, 0),
+        formulas: perCard.reduce((total, card) => total + card.formulas, 0),
+        bare: perCard.filter((card) => card.objectives !== card.formulas || card.objectives === 0).length,
+        labels,
+        negotiable: labels.filter((text) => /window|budget|objective|target|philosophy|reward/iu.test(text)),
+        notOffered: /the window, the budget and the objectives come from the scenario and are not offered here/iu.test(document.body.innerText),
+        competitions: [...document.querySelectorAll('select[aria-label="Competition"] option')].map((node) => ({ value: node.value, text: node.textContent.trim() })),
+      };
+    });
+    check(
+      'the catalogue screen holds one card per authored scenario, each with its window and a formula behind every target',
+      catalogueShape.scenarios === 6 && catalogueShape.windows === 6 && catalogueShape.problems === 'problems: 0' && catalogueShape.bare === 0 && catalogueShape.objectives === 10 && catalogueShape.formulas === 10,
+      `${catalogueShape.scenarios} scenarios · ${catalogueShape.windows} window chips · ${catalogueShape.problems} · ${catalogueShape.objectives} targets / ${catalogueShape.formulas} formulas`,
+    );
+    check(
+      'every card counts its own constraints correctly, and each one that is only stated says why in a sentence',
+      catalogueShape.applied === catalogueShape.declared &&
+        catalogueShape.applied + catalogueShape.stated === catalogueShape.declaredTotal &&
+        catalogueShape.stated === catalogueShape.explained &&
+        catalogueShape.stated > 0,
+      `${catalogueShape.applied} applied · ${catalogueShape.stated} stated only (all explained) · declared ${catalogueShape.declared}/${catalogueShape.declaredTotal}`,
+    );
+    check(
+      'the start form offers the choices a caller may make and nothing that would move a target',
+      catalogueShape.labels.length === 4 && catalogueShape.negotiable.length === 0 && catalogueShape.notOffered,
+      `${catalogueShape.labels.join(' / ')} · negotiable fields ${catalogueShape.negotiable.length}`,
+    );
+
+    await setSelect(page, 'select[aria-label="Scenario"]', 'win-with-academy-players');
+    await sleep(400);
+    // The competition is picked from the club counts the page itself publishes, not from a name in this
+    // script: a scenario that scans twenty clubs is a stronger test than one that scans two.
+    const ranked = catalogueShape.competitions
+      .map((row) => ({ ...row, clubs: Number.parseInt(/(\d+) clubs?/u.exec(row.text)?.[1] ?? '0', 10) }))
+      .sort((a, b) => b.clubs - a.clubs)[0];
+    await setSelect(page, 'select[aria-label="Competition"]', ranked.value);
+    await page.type('input[aria-label="Manager name"]', 'QA Challenge Keeper');
+    await clickByText(page, 'button', 'Start this run');
+    await page.waitForSelector('[data-testid="challenge-club-choice"]', { timeout: 90_000 });
+    await sleep(600);
+    const clubChoice = await page.evaluate(() => {
+      const node = document.querySelector('[data-testid="challenge-club-choice"]');
+      const rows = [...(node?.querySelectorAll('tbody tr') ?? [])].map((row) => ({
+        name: row.children[0]?.textContent.trim() ?? '',
+        cell: row.children[1]?.textContent.trim() ?? '',
+      }));
+      const chips = [...(node?.querySelectorAll('.chip.mono') ?? [])].map((chip) => chip.textContent.trim());
+      const taken = rows.find((row) => /taken$/u.test(row.cell));
+      const measured = rows.map((row) => Number.parseFloat(row.cell)).filter((value) => Number.isFinite(value));
+      return {
+        club: (node?.querySelector('strong')?.textContent ?? '').trim(),
+        rows: rows.length,
+        takenCount: rows.filter((row) => /taken$/u.test(row.cell)).length,
+        takenValue: Number.parseFloat(taken?.cell ?? ''),
+        lowest: Math.min(...measured),
+        lowestChip: chips.find((text) => text.startsWith('lowest measured:')) ?? '',
+        gapChip: chips.find((text) => text.startsWith('gap to runner-up:')) ?? '',
+        fingerprint: chips.find((text) => text.startsWith('catalogue:')) ?? '',
+        link: node?.querySelector('a')?.getAttribute('href') ?? '',
+      };
+    });
+    const printedLowest = Number.parseFloat(/lowest measured:\s*([\d.]+)/u.exec(clubChoice.lowestChip)?.[1] ?? '');
+    check(
+      'the club the scenario gave is the lowest rating in the ranking the same response printed, not a club the walk named',
+      clubChoice.rows >= 2 &&
+        clubChoice.takenCount === 1 &&
+        Number.isFinite(clubChoice.takenValue) &&
+        clubChoice.takenValue === clubChoice.lowest &&
+        clubChoice.lowestChip === `lowest measured: ${clubChoice.lowest}` &&
+        /^gap to runner-up: [\d.]+$/u.test(clubChoice.gapChip) &&
+        printedLowest === clubChoice.lowest &&
+        clubChoice.link.startsWith('/challenges/runs/'),
+      `${clubChoice.club} at ${clubChoice.takenValue} of ${clubChoice.rows} measured · ${clubChoice.lowestChip} · ${clubChoice.gapChip}`,
+    );
+    await shot(page, '33-challenges-club-measured');
+
+    const runLink = clubChoice.link;
+    const runIdent = runLink.split('/').pop();
+    await open(page, runLink);
+    await waitForText(page, 'Play it out');
+    const runShape = async () =>
+      page.evaluate(() => {
+        const panel = (title) => [...document.querySelectorAll('.panel')].find((node) => (node.querySelector('.panel__title')?.textContent ?? '').includes(title));
+        const verdict = panel('The verdict, as it stands');
+        const numbers = (label) => {
+          const cells = [...document.querySelectorAll('.world-kv dt, .world-kv dd')];
+          for (let index = 0; index < cells.length; index += 2) if (cells[index].textContent.trim() === label) return cells[index + 1]?.textContent.trim() ?? '';
+          return '';
+        };
+        const chips = [...document.querySelectorAll('.chip.mono')].map((node) => node.textContent.trim());
+        const rows = [...document.querySelectorAll('.table tbody tr')].filter((row) => row.children.length === 7);
+        const play = [...document.querySelectorAll('button')].find((node) => node.textContent.includes('Play the next round'));
+        const objective = [...(verdict?.querySelectorAll('li') ?? [])].map((node) => node.textContent.replace(/\s+/gu, ' ').trim());
+        return {
+          eyebrow: (verdict?.querySelector('.eyebrow')?.textContent ?? '').trim(),
+          rounds: chips.find((text) => /^rounds \d+ of \d+$/u.test(text)) ?? '',
+          remaining: chips.find((text) => /left in the window$/u.test(text)) ?? '',
+          objectives: objective,
+          closedBy: (verdict?.querySelector('p.muted')?.textContent ?? '').replace(/\s+/gu, ' ').trim(),
+          reward: (verdict?.querySelector('.notice')?.textContent ?? '').replace(/\s+/gu, ' ').trim(),
+          bar: document.querySelector('.bar')?.getAttribute('aria-label') ?? '',
+          barWidth: /width:\s*([\d.]+)%/u.exec(document.querySelector('.bar .bar__fill')?.getAttribute('style') ?? '')?.[1] ?? '',
+          points: numbers('Points'),
+          won: numbers('Won / drawn / lost'),
+          budget: numbers('Budget (set by the scenario)'),
+          rows: rows.map((row) => ({
+            round: row.children[0]?.textContent.trim() ?? '',
+            score: row.children[2]?.textContent.trim() ?? '',
+            outcome: row.children[2]?.querySelector('.badge')?.textContent.trim() ?? '',
+            points: Number.parseInt(row.children[3]?.textContent ?? '', 10),
+            digest: row.children[4]?.textContent.trim() ?? '',
+            seed: row.children[5]?.textContent.trim() ?? '',
+            report: row.children[6]?.querySelector('a')?.getAttribute('href') ?? '',
+          })),
+          constraints: [...(panel('What the scenario binds')?.querySelectorAll('.badge') ?? [])].map((node) => node.textContent.trim()),
+          limits: [...document.querySelectorAll('.notice--warn')].map((node) => node.textContent.replace(/\s+/gu, ' ').trim()),
+          consistency: [...document.querySelectorAll('p')].map((node) => node.textContent).find((text) => text.includes('re-checked')) ?? '',
+          refusal: (document.querySelector('[data-testid="challenge-window"]')?.textContent ?? '').replace(/\s+/gu, ' ').trim(),
+          playDisabled: play?.disabled ?? true,
+        };
+      });
+
+    const openedRun = await runShape();
+    check(
+      'a fresh run opens inside the scenario window with the goal already fixed and the reward unearned',
+      openedRun.rounds === 'rounds 0 of 6' &&
+        openedRun.remaining === '6 left in the window' &&
+        openedRun.eyebrow === 'IN_PROGRESS' &&
+        openedRun.bar === 'rounds used 0 of 6' &&
+        openedRun.barWidth === '0' &&
+        openedRun.objectives.join(' ').includes('0 of 4') &&
+        /not earned/u.test(openedRun.reward) &&
+        openedRun.rows.length === 0,
+      `${openedRun.rounds} · ${openedRun.eyebrow} · ${openedRun.remaining} · ${openedRun.objectives.join(' | ')} · bar ${openedRun.barWidth}%`,
+    );
+    check(
+      'the run page carries the scenario constraints and admits what the window and the reward do not do',
+      openedRun.constraints.filter((text) => text === 'APPLIED').length === 3 &&
+        openedRun.constraints.filter((text) => text === 'STATED ONLY').length === 1 &&
+        openedRun.limits.length >= 2 &&
+        /reward/iu.test(openedRun.limits.join(' ')) &&
+        /\bwindow\b/iu.test(openedRun.limits.join(' ')),
+      `${openedRun.constraints.join(', ')} · ${openedRun.limits.length} limitation notices`,
+    );
+    await shot(page, '34-challenge-run-before-round-1');
+
+    let secondRound = openedRun;
+    for (let guard = 0; guard < 9; guard += 1) {
+      const before = await runShape();
+      if (before.refusal || (before.rows.length >= 6 && before.playDisabled)) break;
+      await clickByText(page, 'button', 'Play the next round');
+      await page.waitForFunction(
+        (seen) => {
+          const rows = [...document.querySelectorAll('.table tbody tr')].filter((row) => row.children.length === 7).length;
+          const play = [...document.querySelectorAll('button')].find((node) => node.textContent.includes('Play the next round'));
+          return rows > seen || Boolean(document.querySelector('[data-testid="challenge-window"]')) || (play?.disabled ?? false);
+        },
+        { timeout: 90_000 },
+        before.rows.length,
+      );
+      await sleep(1_200);
+      if (guard === 1) secondRound = await runShape();
+    }
+    const closedRun = await runShape();
+    check(
+      'two rounds in, the window is still open and the verdict says so with the numbers it used',
+      secondRound.rows.length === 2 &&
+        secondRound.rounds === 'rounds 2 of 6' &&
+        secondRound.remaining === '4 left in the window' &&
+        secondRound.eyebrow === 'IN_PROGRESS' &&
+        secondRound.bar === 'rounds used 2 of 6' &&
+        /not earned/u.test(secondRound.reward),
+      `${secondRound.rounds} · ${secondRound.remaining} · ${secondRound.eyebrow} · 2 fixtures of ${closedRun.rows.length} played`,
+    );
+    check(
+      'the rounds the walk played are six distinct seeded fixtures, each with its own report',
+      closedRun.rows.length === 6 &&
+        new Set(closedRun.rows.map((row) => row.seed)).size === 6 &&
+        closedRun.rows.every((row) => /^[0-9a-f]{16}$/u.test(row.digest)) &&
+        closedRun.rows.every((row) => /^\/simulate\/[a-z0-9-]+$/u.test(row.report)),
+      `${closedRun.rows.length} rounds · ${new Set(closedRun.rows.map((row) => row.seed)).size} distinct seeds · reports ${closedRun.rows.map((row) => row.report).join(' ')}`.slice(0, 220),
+    );
+
+    const wins = closedRun.rows.filter((row) => row.outcome === 'W').length;
+    const pointsSum = closedRun.rows.reduce((total, row) => total + (Number.isNaN(row.points) ? 0 : row.points), 0);
+    const actualWins = Number.parseInt(/—\s*(\d+) of \d+/u.exec(closedRun.objectives[0] ?? '')?.[1] ?? '', 10);
+    const drawn = closedRun.rows.filter((row) => row.outcome === 'D').length;
+    const lost = closedRun.rows.filter((row) => row.outcome === 'L').length;
+    check(
+      'the verdict is the fixture table added up: the points figure is the Pts column and the win target is the W rows',
+      Number.parseInt(closedRun.points, 10) === pointsSum && actualWins === wins && closedRun.won === `${wins} / ${drawn} / ${lost}`,
+      `Pts column sums to ${pointsSum} and Points reads ${closedRun.points.split('·')[0].trim()} · ${wins} W rows against objective ${closedRun.objectives[0] ?? ''} · record ${closedRun.won}`,
+    );
+    check(
+      'the window closed at six rounds: the bar is full, the button is out, and the verdict is no longer in progress',
+      closedRun.rounds === 'rounds 6 of 6' &&
+        closedRun.remaining === '0 left in the window' &&
+        closedRun.barWidth === '100' &&
+        closedRun.playDisabled &&
+        closedRun.eyebrow !== 'IN_PROGRESS' &&
+        /the window closed at round 6/u.test(closedRun.closedBy),
+      `${closedRun.rounds} · ${closedRun.remaining} · status ${closedRun.eyebrow} · play disabled ${closedRun.playDisabled} · ${closedRun.closedBy.slice(0, 60)}`,
+    );
+    const met = /MET/u.test(closedRun.objectives.join(' '));
+    check(
+      'the reward is earned by the verdict and by nothing else: met exactly when every objective was reached',
+      met === (closedRun.eyebrow === 'MET') && (met ? /^Reward: .+ — earned\./u.test(closedRun.reward) : /^Reward: .+ — not earned\./u.test(closedRun.reward)),
+      `${closedRun.eyebrow} · objectives MET badge ${met} · ${closedRun.reward.slice(0, 120)}`,
+    );
+    await shot(page, '35-challenge-run-window-closed');
+
+    const windowRefusal = await page.evaluate(async (ident) => {
+      const response = await fetch(`/api/v1/careers/${ident}/play`, { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+      return { status: response.status, detail: (await response.json())?.detail };
+    }, runIdent);
+    check(
+      'the round past the window is refused by the route, not just by the button, and the refusal carries the verdict',
+      windowRefusal.status === 409 &&
+        windowRefusal.detail?.code === 'window_closed' &&
+        windowRefusal.detail?.rounds_played === 6 &&
+        windowRefusal.detail?.window_rounds === 6 &&
+        windowRefusal.detail?.challenge_slug === 'win-with-academy-players' &&
+        windowRefusal.detail?.verdict?.window_closed === true &&
+        windowRefusal.detail?.verdict?.status !== 'in_progress' &&
+        (windowRefusal.detail?.verdict?.reward?.earned ?? true) === (windowRefusal.detail?.verdict?.status === 'met'),
+      `${windowRefusal.status} ${windowRefusal.detail?.code} · ${windowRefusal.detail?.rounds_played}/${windowRefusal.detail?.window_rounds} rounds · verdict ${windowRefusal.detail?.verdict?.status} ${windowRefusal.detail?.verdict?.objectives_met}/${windowRefusal.detail?.verdict?.objectives_total}`,
+    );
+
+    await open(page, `/career/${runIdent}`);
+    await waitForText(page, 'Objectives the scenario set');
+    const asCareer = await page.evaluate(() => {
+      const notice = [...document.querySelectorAll('.notice')].find((node) => node.textContent.includes('challenge run'));
+      return {
+        text: (notice?.textContent ?? '').replace(/\s+/gu, ' ').trim(),
+        slug: notice?.querySelector('.mono')?.textContent.trim() ?? '',
+        href: notice?.querySelector('a')?.getAttribute('href') ?? '',
+        objectives: [...document.querySelectorAll('.panel')].find((node) => (node.querySelector('.panel__title')?.textContent ?? '').includes('Objectives'))?.querySelector('.panel__title')?.textContent.trim() ?? '',
+      };
+    });
+    check(
+      'a run is a career: the season page titles the goals as the scenario\'s, names its window, and links back to the run',
+      asCareer.slug === 'win-with-academy-players' &&
+        /its window of 6 rounds is enforced when a round is played/u.test(asCareer.text) &&
+        asCareer.href === `/challenges/runs/${runIdent}` &&
+        asCareer.objectives === 'Objectives the scenario set',
+      `${asCareer.objectives} · ${asCareer.slug} · ${asCareer.href} · ${asCareer.text.slice(0, 90)}`,
+    );
+
+    const rivalCtx = await browser.createBrowserContext();
+    try {
+      const rivalPage = await rivalCtx.newPage();
+      rivalPage.setDefaultTimeout(120_000);
+      await rivalPage.goto(`${BASE}/register`, { waitUntil: 'networkidle2', timeout: 90_000 });
+      await rivalPage.type('#email', `visual-qa-challenger-${stamp}@footballos.test`);
+      await rivalPage.type('#password', PASSWORD);
+      await rivalPage.type('#display_name', 'QA Rival');
+      await rivalPage.click('input[type="checkbox"]');
+      await rivalPage.click('button[type="submit"]');
+      await rivalPage.waitForFunction(() => location.pathname === '/onboarding', { timeout: 90_000 });
+      const rival = await rivalPage.evaluate(async (ident) => {
+        return {
+          run: (await fetch(`/api/v1/challenges/runs/${ident}`, { credentials: 'same-origin' })).status,
+          season: (await fetch(`/api/v1/careers/${ident}`, { credentials: 'same-origin' })).status,
+          play: (await fetch(`/api/v1/careers/${ident}/play`, { method: 'POST', credentials: 'same-origin' })).status,
+          page: (await fetch(`/challenges/runs/${ident}`, { credentials: 'same-origin' })).status,
+          own: (await (await fetch('/api/v1/challenges/runs', { credentials: 'same-origin' })).json()).total,
+        };
+      }, runIdent);
+      check(
+        'another signed-in account cannot read a run, play its rounds, or even see it in a list of its own',
+        rival.run === 404 && rival.season === 404 && rival.play === 404 && rival.page === 404 && rival.own === 0,
+        `run ${rival.run} · season ${rival.season} · play ${rival.play} · page ${rival.page} · own runs ${rival.own}`,
+      );
+    } catch (error) {
+      check('another signed-in account cannot read a run or play its rounds', false, String(error?.message ?? error).slice(0, 200));
+    } finally {
+      await rivalCtx.close().catch(() => {});
+    }
+
+    await open(page, runLink);
+    await waitForText(page, 'Play it out');
+    await clickByText(page, 'button', 'Delete this run');
+    await page.waitForFunction(() => location.pathname === '/challenges', { timeout: 60_000 });
+    await waitForText(page, 'No run started yet', 30_000);
+    const afterRunDelete = await page.evaluate(async () => {
+      const runs = await (await fetch('/api/v1/challenges/runs', { credentials: 'same-origin' })).json();
+      const sims = await (await fetch('/api/v1/simulate', { credentials: 'same-origin' })).json();
+      return { runs: runs.total, matches: sims.total, seen: runs.items?.length ?? 0 };
+    });
+    check(
+      'deleting a run removes the run and keeps the match reports its rounds produced',
+      afterRunDelete.runs === 0 && afterRunDelete.seen === 0 && afterRunDelete.matches >= 6,
+      `runs ${afterRunDelete.runs} · stored match reports left ${afterRunDelete.matches}`,
+    );
+    const robotsChallenges = await (await fetch(`${BASE}/robots.txt`)).text();
+    const sitemapChallenges = await (await fetch(`${BASE}/sitemap.xml`)).text();
+    check(
+      'a challenge run stays out of the crawl: robots disallows the surface and the sitemap does not list it',
+      /^Disallow:\s*\/challenges$/mu.test(robotsChallenges) && !sitemapChallenges.includes('/challenges'),
+      `robots rule ${/^Disallow:\s*\/challenges$/mu.test(robotsChallenges)} · sitemap mentions ${sitemapChallenges.includes('/challenges')}`,
+    );
+
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
 
     await page.setViewport(MOBILE);
@@ -1897,6 +2247,7 @@ async function run() {
         ? [`/tactics/compare?a=${encodeURIComponent(tactic.slug)}&b=${encodeURIComponent(sibling.slug)}&phase=out`, 'side by side', 'tactics-compare']
         : ['/tactics/compare', 'Pick two different systems', 'tactics-compare'],
       ['/simulate', 'Play a fixture', 'simulate'],
+      ['/challenges', 'Start a run', 'challenges'],
       ['/settings', 'Data', 'settings'],
     ]) {
       await mobileSurface(surface);
@@ -1946,6 +2297,11 @@ async function run() {
     // gone for their owner. The 404 that answers is the result the walk is asking for, not a page defect.
     /^HTTP 404 \/api\/v1\/simulate\/[^/]+$/,
     /^Failed to load resource: the server responded with a status of 404 \(Not Found\) @ \/api\/v1\/simulate\/[^/]+$/,
+    // The §21 block plays a challenge run to its window and then asks the route for one round more, on
+    // purpose: a button that has greyed out is a courtesy, and only the 409 proves the limit is enforced
+    // by the path that plays a round. Both lines are that refused round.
+    /^HTTP 409 \/api\/v1\/careers\/[^/]+\/play$/,
+    /^Failed to load resource: the server responded with a status of 409 \(Conflict\) @ \/api\/v1\/careers\/[^/]+\/play$/,
   ];
   const unexpected = [...new Set(consoleErrors)].filter((line) => !provoked.some((pattern) => pattern.test(line)));
   check(

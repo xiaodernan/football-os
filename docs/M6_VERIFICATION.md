@@ -198,12 +198,12 @@ counts in this document are the counts on the machine.
 * **The 90-minute default is not a real football clock**: blocks are 6′, so a 90′ match is 15 blocks.
   Minute-level event times are block-derived.
 
-## 10. Career Mode (added 2026-09-23, backend only)
+## 10. Career Mode (added 2026-09-23, backend)
 
-`app/services/simulation/career.py` + `app/api/v1/careers.py` + migration `0009`. **There is no page
-for it yet**, so nothing in this section is browser-verified; the evidence is 28 tests
-(`tests/test_career.py`, `tests/test_career_api.py`) green on SQLite and PostgreSQL+pgvector, and the
-contract rows in `docs/api/openapi.json`.
+`app/services/simulation/career.py` + `app/api/v1/careers.py` + migration `0009`. The evidence here is
+28 tests (`tests/test_career.py`, `tests/test_career_api.py`) green on SQLite and
+PostgreSQL+pgvector, plus the contract rows in `docs/api/openapi.json`. Its page landed the same day and
+is browser-verified in [`M6_CAREER_WEB_VERIFICATION.md`](M6_CAREER_WEB_VERIFICATION.md).
 
 What a career is, and what it deliberately is not:
 
@@ -232,9 +232,11 @@ What a career is, and what it deliberately is not:
 
 ## 11. Manager Live Challenges (added 2026-09-23, backend)
 
-`app/services/simulation/challenges.py` + `app/api/v1/challenges.py` + migration `0010`. **There is no
-page for it yet**, so nothing in this section is browser-verified; the evidence is 31 tests
-(`tests/test_challenges.py`) green on both engines, plus a live pass on a seeded database quoted below.
+`app/services/simulation/challenges.py` + `app/api/v1/challenges.py` + migration `0010`. The evidence
+here is 32 tests (`tests/test_challenges.py`) green on both engines, plus a live pass on a seeded
+database quoted below. The page landed 2026-09-24 and is browser-verified in
+[`M6_CHALLENGES_WEB_VERIFICATION.md`](M6_CHALLENGES_WEB_VERIFICATION.md): 17 walk checks over the
+catalogue, the measured club, the summed verdict and the refused seventh round.
 
 §21 asks for three properties of a challenge. This is what each one actually is:
 
@@ -266,7 +268,9 @@ Two further rules keep it consistent with the rest of M6:
 The weakest club a scenario hands you is chosen by **measurement**, not by an adjective:
 `resolve_challenge_club` builds every club in the named competition with `profile.team_profile` — the
 same reader the engine uses — ranks them by selected-eleven rating, and takes the lowest. The whole
-ranking and the gap to the runner-up travel with the choice.
+ranking and the gap to the runner-up travel with the choice. That rating is on the engine's **0–1**
+scale (the mean of `/100` player attributes, divided), which is what `/challenges` prints and what the
+browser walk reads back — `0.4891` is a low club, not a broken one.
 
 | Route | Auth | Notes |
 | --- | --- | --- |

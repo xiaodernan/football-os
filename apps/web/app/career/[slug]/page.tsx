@@ -92,7 +92,16 @@ export default async function CareerDetailPage({ params }: Props) {
           />
         </Panel>
 
-        <Panel eyebrow={`${objectivesSummary(view)}`} title="Objectives you set">
+        <Panel eyebrow={`${objectivesSummary(view)}`} title={career.challenge_slug ? "Objectives the scenario set" : "Objectives you set"}>
+          {career.challenge_slug && (
+            <p className="notice">
+              This season is a challenge run: the objective, the philosophy and the budget came from the scenario{" "}
+              <span className="mono">{career.challenge_slug}</span>, and its window of {career.challenge_window} rounds is enforced when a round is played.{" "}
+              <Link className="world-link" href={`/challenges/runs/${encodeURIComponent(career.slug)}`}>
+                open the run
+              </Link>
+            </p>
+          )}
           {view.objectives.length === 0 ? (
             <p className="muted">No objective is stored on this career, so nothing below can be called success.</p>
           ) : (

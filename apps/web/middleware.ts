@@ -19,6 +19,9 @@ const PROTECTED_PREFIXES = [
   "/training",
   // A season is an account's fiction about a generated club, so it is read only by its owner.
   "/career",
+  // A live challenge is a season too — the catalogue is public through the API, but the page that
+  // starts a run and lists this account's verdicts sits behind the same wall.
+  "/challenges",
   "/progress",
   "/history",
   "/settings",
