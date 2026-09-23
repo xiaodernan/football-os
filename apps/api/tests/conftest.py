@@ -2,8 +2,8 @@
 
 ADR-002 keeps SQLite as the local fallback; the Postgres leg is what CI and production run, so
 ``FOOTBALL_OS_TEST_DATABASE_URL=postgresql+psycopg2://… pytest`` must point at a throwaway database.
-For a server-backed URL that database is created for the run and dropped after it, so two overlapping
-runs never share a schema.
+Whichever engine a run uses, it owns the storage it clears: a server-backed run gets its own database,
+and a file-backed run gets its own file, so two overlapping runs never share a schema.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from sqlalchemy.engine import make_url
 API_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(API_ROOT))
 
-_DB_PATH = Path(tempfile.gettempdir()) / "football_os_tests.db"
+_DB_PATH = Path(tempfile.gettempdir()) / f"football_os_tests_{uuid.uuid4().hex[:6]}.db"
 os.environ["DATABASE_URL"] = os.environ.get("FOOTBALL_OS_TEST_DATABASE_URL") or f"sqlite:///{_DB_PATH.as_posix()}"
 os.environ["STORAGE_DIR"] = str(Path(tempfile.gettempdir()) / "football_os_test_storage")  # M5 uploads land here, not in the repo tree.
 os.environ["APP_SECRET"] = "test-secret-not-for-production"
@@ -61,8 +61,12 @@ def _run_scoped_url(url: str) -> str:
 
 os.environ["DATABASE_URL"] = _run_scoped_url(os.environ["DATABASE_URL"])
 
-if os.environ["DATABASE_URL"].startswith("sqlite") and _DB_PATH.exists():
-    _DB_PATH.unlink()
+# The file this run may delete: its own generated one, never a path someone pointed the run at, and
+# never the shared default another overlapping run is using (`init_db` creates the schema, so a fresh
+# name needs no clearing).
+_OWNED_SQLITE_FILE: Path | None = None
+if os.environ["DATABASE_URL"] == f"sqlite:///{_DB_PATH.as_posix()}":
+    _OWNED_SQLITE_FILE = _DB_PATH
 
 
 def _maintenance_engine(url: str):  # type: ignore[no-untyped-def]
@@ -142,6 +146,11 @@ def _database() -> Iterator[None]:
     if run_database is not None:
         engine.dispose()
         _release(os.environ["DATABASE_URL"], run_database)
+    elif _OWNED_SQLITE_FILE is not None:
+        engine.dispose()
+        # A run that named its own file cleans it up, so %TEMP% holds the suites rather than their debris.
+        for stale in (_OWNED_SQLITE_FILE, *_OWNED_SQLITE_FILE.parent.glob(f"{_OWNED_SQLITE_FILE.stem}.db-*")):
+            stale.unlink(missing_ok=True)
 
 
 @pytest.fixture()
