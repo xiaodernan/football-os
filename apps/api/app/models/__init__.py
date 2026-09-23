@@ -926,6 +926,8 @@ class Career(Base, TimestampMixin):
     owner: Mapped[User] = relationship()
     club: Mapped[Team | None] = relationship()
     fixtures: Mapped[list[CareerFixture]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerFixture.round_index")
+    listings: Mapped[list[TransferListing]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="TransferListing.listed_round")
+    moves: Mapped[list[CareerSquadMove]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSquadMove.round_index")
 
 
 class CareerFixture(Base, TimestampMixin):
@@ -959,3 +961,103 @@ class CareerFixture(Base, TimestampMixin):
 
     career: Mapped[Career] = relationship(back_populates="fixtures")
     match: Mapped[SimulationMatch | None] = relationship()
+
+
+# --- Transfer market (M6, spec §22) -----------------------------------------------------------------
+# The market is what turns a career's budget from a stated number into an arithmetic: every fee that
+# leaves or arrives is a row below, and `budget_remaining` is summed from those rows on each read, the
+# same way the career's points are. Two tables, because the two things have different lifetimes — a
+# *listing* is an offer the market made at a moment (its fee and its clause must not drift when the
+# player's stored attributes do), and a *move* is something the career actually did.
+MARKET_SIDES: Final[tuple[str, ...]] = ("in", "out")
+LISTING_STATUSES: Final[tuple[str, ...]] = ("open", "signed", "withdrawn")
+MOVE_KINDS: Final[tuple[str, ...]] = ("buy", "loan", "sell", "release")
+MOVE_EFFECT: Final[dict[str, str]] = {
+    "buy": "the player joins this career's club and stays",
+    "loan": "the player joins until loan_until_round, then stops being available",
+    "sell": "the player leaves this career's club and the fee arrives",
+    "release": "the player leaves this career's club for nothing",
+}
+# Stored so the number on a page and the rows behind it can be checked against each other by anyone.
+BUDGET_FORMULA: Final = "career.budget + sum(moves.fee where kind = sell) - sum(moves.fee where kind in (buy, loan))"
+
+
+class TransferListing(Base, TimestampMixin):
+    """One player the market offered a career, at the price the valuation printed when it was listed."""
+
+    __tablename__ = "transfer_listings"
+    __table_args__ = (
+        UniqueConstraint("career_id", "player_id", name="uq_listing_career_player"),
+        Index("ix_listing_career_status", "career_id", "status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    # The name, club and price as they read at listing time. The player row can be regenerated underneath
+    # a career; the offer that was made — and refused — stays what it was.
+    player_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    player_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    position: Mapped[str] = mapped_column(String(8), default="", nullable=False)
+    age: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    overall: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    potential: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    from_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    from_team_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    asking_fee: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # What the seller asks *now*. It starts equal to `asking_fee` and can only come down through
+    # negotiation, never below the floor that formula allows; keeping the listing-time price beside it
+    # is what lets a reader check that the haggling stopped where the printed rule said it would.
+    current_price: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    release_clause: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    contract_years: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    weekly_wage: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    tactical_fit: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    needed_band: Mapped[str] = mapped_column(String(12), default="", nullable=False)
+    status: Mapped[str] = mapped_column(String(12), default="open", nullable=False)
+    listed_round: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    negotiations: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_offer: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="listings")
+
+
+class CareerSquadMove(Base, TimestampMixin):
+    """One thing a career did to its squad, and the budget arithmetic it left behind.
+
+    `round_index` is the round the move was made before, which is what makes a stored match
+    re-derivable: the eleven the engine played in round 4 is the club's squad as of the moves made
+    before round 4, not as of today.
+    """
+
+    __tablename__ = "career_squad_moves"
+    __table_args__ = (
+        Index("ix_squad_move_career_round", "career_id", "round_index"),
+        Index("ix_squad_move_player", "player_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    round_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    kind: Mapped[str] = mapped_column(String(8), default="buy", nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    player_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    player_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    position: Mapped[str] = mapped_column(String(8), default="", nullable=False)
+    fee: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    fee_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    contract_years: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    weekly_wage: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    loan_until_round: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    listing_id: Mapped[str | None] = mapped_column(ForeignKey("transfer_listings.id", ondelete="SET NULL"), nullable=True)
+    counterparty_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    counterparty_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    # The balance the move produced, stored beside it so a reader can add the column up and get the
+    # same running total the next row reports.
+    budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="moves")

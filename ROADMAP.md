@@ -10,8 +10,8 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) — world 3.2 (2026-09-23) added the sixth §65 gate item, 100 training sessions, browsed at `/world/training` |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 6 of 6 topics on all 50 systems (2 were refused until the corpus gained the missing passages); 3D pitch and board sharing beyond one owner are open follow-ups |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ✅ verified 2026-09-22 ([pipeline](docs/M5_VERIFICATION.md) · [web](docs/M5_WEB_VERIFICATION.md)) — upload, report, detection timeline and owner-only byte-range playback proven in the browser |
-| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log, **Career Mode including its page** and **manager live challenges including their page** all browser-verified ([engine+career backend](docs/M6_VERIFICATION.md) §10–§11 · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md) · [challenge web](docs/M6_CHALLENGES_WEB_VERIFICATION.md)); 226/226 walk checks on a production build 2026-09-24 — the transfer market (§22), squad carry-over and `sim_events` outstanding |
-| **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
+| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log, **Career Mode including its page**, **manager live challenges including their page** and the **§22 transfer market's API tier** ([engine+career backend](docs/M6_VERIFICATION.md) §10–§11 · [market backend](docs/M6_VERIFICATION.md) §14 — the market · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md) · [challenge web](docs/M6_CHALLENGES_WEB_VERIFICATION.md)); 226/226 walk checks on a production build 2026-09-24, 426 API tests on both engines — the market's **page**, squad carry-over and `sim_events` outstanding |
+| **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ — the §22 market landed early inside M6, so `GET /api/v1/transfers/rules` and a career's need/fit/budget arithmetic are already the published numbers an AI Scout (§23) would have to reason over |
 | **M8 Club OS / Academy** | organisations, teams, coaches, IDP, curriculum, permissions, multi-tenant | B2B tenant isolation proven | ⬜ |
 | **M9 Community** | feed, posts, comments, likes, follows, shared boards/plans | creator→content→feedback loop | ⬜ |
 | **M10 Creator Economy** | creator profiles, programs, guides, entitlement/pricing architecture | no payment vendor required to demo | ⬜ |
@@ -171,6 +171,18 @@ rules something applied. `/challenges` and `/challenges/runs/{slug}` put it on s
 holds it to the arithmetic: 17 checks over the measured club, the four-field form, the summed verdict and the
 `409 window_closed` the route answers for a seventh round.
 
+**The transfer market (§22) — API tier verified 2026-09-24** (`docs/M6_VERIFICATION.md` §14 — the market). A budget
+became a sum of rows: `transfer_listings` priced by a formula the response prints, `career_squad_moves`
+as the only thing that moves money, a club's need read as its weakest engine band, a fit that reuses that
+same band measurement, a seller that answers an offer by a published ladder, and a release clause that is
+the only way into a rival. A deal changes the eleven through a round-scoped overlay composed at read time,
+so the generated world's player rows are never rewritten and a later signing cannot rewrite an older
+match — `replay_is_identical` rebuilds the squad *as of* the round and refuses rather than blaming the
+engine for an input change. 8 routes, 49 tests, both engines, and the match report now carries
+`squad_label` so an unfamiliar name in a club's eleven explains itself. That paragraph above about
+"no transfers" being stated intent is superseded: since this landed, the rule binds. No page yet —
+`/career/{slug}` still shows a budget it cannot spend from, which is the next task.
+
 Verified 2026-09-23 → 2026-09-24 (377 API tests on both engines + a browser walk at 226/226):
 
 1. [x] `possession-block-v1@1.0.0`: a 90-minute match as fifteen six-minute blocks, each side measured from ten
@@ -207,8 +219,14 @@ Still open in M6:
    a knob, the club handed back is the arithmetic minimum of the ranking the same response printed, and the round
    past the window is refused by the *route* with `409 window_closed` and the final verdict beside it. 17 checks,
    quoted in [`docs/M6_CHALLENGES_WEB_VERIFICATION.md`](docs/M6_CHALLENGES_WEB_VERIFICATION.md)
-2. [ ] the transfer market (§22) — which is what would make a budget more than a stated number, and
-   what would let `no_transfers` become an enforced constraint instead of a published one
+2. [x] **the transfer market's API tier** (2026-09-24, §22): `transfer_listings` + `career_squad_moves`
+   (migration `0011`), a valuation whose every figure is the printed formula recomputed from a stored
+   player row, a need that is the club's own weakest engine band, a budget that is a sum of move rows and
+   nothing else, a seller that answers an offer by a published ladder, a release clause that is the only
+   way into a rival, and a round-scoped squad overlay that reaches the eleven without editing the world.
+   Eight routes, 49 tests, and the engine now prints `squad_label` in a match report so a player who is
+   not on the club's page is explained by the report itself (`docs/M6_VERIFICATION.md` §14 — the market).
+   **Still open: the page.** `/career/{slug}` shows a budget it cannot spend from; the market is only an API
 3. [ ] squad and training carry-over between matches
 4. [ ] a `sim_events` table so the timeline is stored rather than regenerated
 5. [ ] rendering the `training_log` the player detail route already returns
@@ -217,7 +235,25 @@ Still open in M6:
    vanish. Caught while re-running §21: one spurious `relation "training_drills" does not exist` in a
    test that never queries that table, green on rerun. Fixed by creating, provisioning (`vector`) and
    dropping a uuid-suffixed database per server-backed run — proved by **two full 376-test suites
-   running concurrently, both green, nothing left behind** (`docs/M6_VERIFICATION.md` §13)
+   running concurrently, both green, nothing left behind** (`docs/M6_VERIFICATION.md` §13).
+   The default SQLite leg had the same defect in three lines (`_DB_PATH` was fixed while the guard read
+   `DATABASE_URL`, and the unlink ran at import, so `--collect-only` deleted a database) and now names
+   its own file and cleans only that up: **two full 377-test suites concurrent, both green, the shared
+   default's mtime unchanged, nothing left in `%TEMP%`** (§15)
+7. [ ] **§11's constraint metadata now under-states `no_transfers`.** `app/services/simulation/challenges.py:133`
+   still says `enforced=False`, `how="there is no transfer market yet (spec §22), so no signing is possible
+   with or without this rule"`; since §22 that rule *does* bind — `market.transferable()` refuses every move
+   for a career whose scenario carries it, and says `enforced: true` in its own refusal. Three places move
+   together and none of them is a backend-only edit: that row, `tests/test_challenges.py:155` (which asserts
+   it stays false) and `apps/web/scripts/visual-qa.mjs:2042` (which asserts the run page reads *3 APPLIED /
+   1 STATED ONLY*), so the walk has to be re-run on a production build with it. The direction of the error is
+   an under-claim — a binding rule advertised as merely stated — so nothing the product promises is false
+   meanwhile (`docs/M6_VERIFICATION.md` §14 — the market)
+8. [ ] **a wage bill.** §22's deals agree a weekly wage and publish the sum
+    (`/api/v1/transfers/{career}` → `budget.wage_committed_per_week`), but nothing deducts it: a career with a
+    300k-a-week squad and a career with a 3k one have the same balance. `limitations()["wages"]` says so; making
+    it true needs a per-round wage charge on the ledger, which changes every `budget_after` figure and so belongs
+    with the market's page rather than as a quiet patch.
 
 ## Cross-cutting gates (spec §80 SEO, §81 i18n)
 

@@ -9,6 +9,11 @@ Two rules shape this module:
 2. **A shape selects its own eleven.** The starting side is picked by the formation of the tactical
    system the club is playing, so a 4-2-3-1 and a 4-4-2 genuinely put different players forward,
    and the resulting attack/midfield/defence indices differ because of it.
+3. **A squad can be told to be other than what the `real_players` rows say.** A career that signed a
+   striker plays with that striker, and `SquadOverlay` is how the fact reaches this module: it adds and
+   removes players on top of the club's stored rows, and the two counts are published as factors so a
+   reader sees that the eleven was adjusted rather than read. Nothing else about how a side is built
+   changes — the overlay only decides which rows are in the pool.
 """
 
 from __future__ import annotations
@@ -52,6 +57,24 @@ TACTICAL_METRICS = ("width", "depth", "coverage", "balance", "spacing", "isolati
 
 
 @dataclass(frozen=True)
+class SquadOverlay:
+    """Players one career put into, or took out of, a club's stored squad before a given round.
+
+    Carried as rows rather than as numbers: `added` holds the player records themselves, so the
+    attributes the engine reads are the ones that were on file when the deal was struck, and `removed`
+    holds ids so a sold player cannot be selected by any formation.
+    """
+
+    added: tuple[RealPlayer, ...] = ()
+    removed: frozenset[str] = field(default_factory=frozenset)
+    label: str = ""
+
+    @property
+    def empty(self) -> bool:
+        return not self.added and not self.removed
+
+
+@dataclass(frozen=True)
 class SideProfile:
     """One side as the engine sees it: identity, four band indices, a press index, and the metres."""
 
@@ -68,6 +91,7 @@ class SideProfile:
     press: float
     form: float
     overall: float
+    squad_label: str = ""
     tactics: Mapping[str, float] = field(default_factory=dict)
     lineup: tuple[tuple[str, str, str], ...] = ()
     factors: tuple[Metric, ...] = ()
@@ -89,6 +113,7 @@ class SideProfile:
                 "form": round(self.form, 3),
                 "overall": round(self.overall, 3),
             },
+            "squad_label": self.squad_label,
             "tactics": {key: round(value, 2) for key, value in self.tactics.items()},
             "lineup": [{"player": player, "position": position, "band": band} for player, position, band in self.lineup],
             "factors": [metric.to_dict() for metric in self.factors],
@@ -158,17 +183,44 @@ def _band_index(players: Sequence[RealPlayer], keys: Sequence[str]) -> float:
     return max(0.0, min(1.0, (mean(values) - 28.0) / 68.0))
 
 
+def band_index(players: Sequence[RealPlayer], band: str) -> float:
+    """The number `team_profile` would print beside that band, for any set of players.
+
+    Public because §22's tactical fit has to be the *same measurement* the engine plays with, not a
+    second scale a reader would have to trust twice.
+    """
+    return _band_index(players, BAND_ATTRIBUTES[band])
+
+
+def band_of_position(position: str) -> str:
+    """Which band a stored position sits in, or `""` when this model does not staff it."""
+    for band, positions in BANDS.items():
+        if position in positions:
+            return band
+    return ""
+
+
 def _metrics_of_system(system: PlannedSystem) -> dict[str, float]:
     shape: Shape = system.shape("in")
     return {metric.key: metric.value for metric in metrics_of(shape) if metric.key in TACTICAL_METRICS}
 
 
-def team_profile(session: Session, team_id: str, *, system_slug: str | None = None) -> SideProfile:
-    """Read one club's rows and build the side the engine will play."""
+def team_profile(
+    session: Session, team_id: str, *, system_slug: str | None = None, squad: SquadOverlay | None = None
+) -> SideProfile:
+    """Read one club's rows and build the side the engine will play.
+
+    `squad` is the career's own transfer history applied to those rows; with none the club is its
+    stored squad, which is what every non-career fixture has always meant.
+    """
     team = session.get(Team, team_id)
     if team is None:
         raise LookupError(f"no team {team_id} in the generated world")
     rows = list(session.scalars(select(RealPlayer).where(RealPlayer.team_id == team_id)))
+    if squad is not None:
+        rows = [player for player in rows if player.id not in squad.removed]
+        present = {player.id for player in rows}
+        rows = [*rows, *[player for player in squad.added if player.id not in present]]
     if not rows:
         raise LookupError(f"team {team_id} has no players to select")
 
@@ -256,6 +308,25 @@ def team_profile(session: Session, team_id: str, *, system_slug: str | None = No
         for band in ("defence", "midfield", "attack")
     ]
 
+    squad_factors: list[Metric] = []
+    if squad is not None and not squad.empty:
+        squad_factors = [
+            Metric(
+                "transfers_in",
+                "Signed players applied",
+                float(len(squad.added)),
+                "count",
+                f"{squad.label}: these players were added to the club's stored squad rows before the side was selected, so the indices above are the squad this career has, not the squad the world generator wrote.",
+            ),
+            Metric(
+                "transfers_out",
+                "Departed players removed",
+                float(len(squad.removed)),
+                "count",
+                "ids taken out of the squad rows before selection, so a player this career sold or released cannot be picked by any formation.",
+            ),
+        ]
+
     return SideProfile(
         team_id=team.id,
         name=team.name,
@@ -270,9 +341,10 @@ def team_profile(session: Session, team_id: str, *, system_slug: str | None = No
         press=press,
         form=form,
         overall=overall,
+        squad_label=squad.label if squad is not None else "",
         tactics=tactics,
         lineup=tuple((player.name, player.position, band) for band in ("keeper", "defence", "midfield", "attack") for player in bands[band]),
-        factors=tuple([*factors, *shortfalls]),
+        factors=tuple([*factors, *shortfalls, *squad_factors]),
     )
 
 
@@ -297,6 +369,9 @@ def possession_share(home: SideProfile, away: SideProfile, home_tactics: Mapping
 __all__ = [
     "BANDS",
     "SideProfile",
+    "SquadOverlay",
+    "band_index",
+    "band_of_position",
     "possession_share",
     "select_starting_xi",
     "split_formation",

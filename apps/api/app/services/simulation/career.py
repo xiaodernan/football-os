@@ -13,9 +13,11 @@ Three rules keep this honest in the same way the single-match layer is honest.
    competition ordered by slug, taken in turn, with home and away alternating per cycle. A reader can
    reproduce round 7 without a random number, which is the point of calling it fictional.
 
-The budget and philosophy are *stated intent*: they shape what the page says the manager asked for, and
-nothing in the engine reads them yet — transfers and finance are later slices, and `limitations()` says
-so rather than letting a budget look like a constraint that was tested.
+The philosophy is *stated intent*: it shapes what the page says the manager asked for, and the engine
+reads the tactical system rather than the word. The budget is not stated intent any more — §22's
+market spends it, a fee is a row, and a signed player changes the eleven that gets selected, so
+`play_round` composes the squad from the club's stored rows plus this career's own moves as of the
+round being played. `limitations()` says which of these claims the build can actually support.
 """
 
 from __future__ import annotations
@@ -29,6 +31,7 @@ from sqlalchemy.orm import Session
 from app.core.security import new_public_id
 from app.models import OBJECTIVE_FORMULA, Career, CareerFixture, Competition, SimulationMatch, Team
 from app.services.simulation.service import run_simulation
+from app.services.simulation.squad import squad_as_of
 from app.services.world.names import slugify
 
 SEED_SPACE: Final = 2_147_483_647
@@ -68,7 +71,19 @@ def limitations() -> dict[str, str]:
     """What this layer does not claim, in the words the page prints."""
     return {
         "budget": (
-            f"The budget is stated intent carried on the career row ({'career credits'}). Nothing spends it yet: there is no transfer market, so no fixture was affected by a large or a small number."
+            "The budget is spent, not stated: every fee a career paid or received is a row in "
+            "career_squad_moves, and the balance is that sum against the figure on the career row. Read "
+            "/api/v1/transfers/{career} for the arithmetic and the formula it prints. What the budget does "
+            "not do is constrain the fixtures by itself — only a deal that was actually made changes the squad."
+        ),
+        "wages": (
+            "A deal records a weekly wage and a contract length, and the totals are published, but wages are not "
+            "deducted from the budget: there is no wage bill in this build, only a transfer fee."
+        ),
+        "scouting": (
+            "The market offers the best-rated players in each band with this club's weakest band filled first. It is a "
+            "rule over stored rows, not a scout's opinion, and it does not search for a player matching a description "
+            "— that is the AI Scout (spec §23) and it is not built."
         ),
         "philosophy": (
             "The philosophy is recorded and shown beside the tactical system the manager chose. The engine reads the "
@@ -189,6 +204,10 @@ def play_round(session: Session, career: Career) -> tuple[CareerFixture, Simulat
     if not plan["available"]:
         raise ValueError(str(plan["reason"]))
     home_id, away_id = (career.club_id or "", plan["opponent_team_id"]) if plan["side"] == "home" else (plan["opponent_team_id"], career.club_id or "")
+    # The squad this career has at the start of this round — the club's stored rows with every transfer
+    # made before it applied (spec §22). `None` until the market is used, which keeps a career that has
+    # not bought anyone playing exactly the club the world generated.
+    overlay = squad_as_of(session, career, int(plan["round_index"]))
     match = run_simulation(
         session,
         owner_id=career.owner_id,
@@ -198,6 +217,8 @@ def play_round(session: Session, career: Career) -> tuple[CareerFixture, Simulat
         away_system=None if plan["side"] == "home" else (career.system_slug or None),
         seed=int(plan["seed"]),
         minutes=90,
+        home_squad=overlay if home_id == (career.club_id or "") else None,
+        away_squad=overlay if away_id == (career.club_id or "") else None,
     )
     club_goals = match.home_goals if plan["side"] == "home" else match.away_goals
     opponent_goals = match.away_goals if plan["side"] == "home" else match.home_goals

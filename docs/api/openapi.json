@@ -4570,6 +4570,422 @@
           }
         }
       }
+    },
+    "/api/v1/transfers/rules": {
+      "get": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Read Rules",
+        "description": "The market's arithmetic, published for anyone: how a price, a clause, a wage and a fit are made.",
+        "operationId": "read_rules_api_v1_transfers_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Rules Api V1 Transfers Rules Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transfers/{ident}": {
+      "get": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Read Market",
+        "description": "Everything one career's market holds: the need, the offers, the squad, and the ledger.",
+        "operationId": "read_market_api_v1_transfers__ident__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Market Api V1 Transfers  Ident  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transfers/{ident}/market": {
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Open The Market",
+        "description": "Price this round's offers. A re-listed price starts afresh, so a negotiated discount ends with it.",
+        "operationId": "open_the_market_api_v1_transfers__ident__market_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Open The Market Api V1 Transfers  Ident  Market Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transfers/{ident}/negotiate": {
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Make Offer",
+        "description": "Put an offer in and take the answer the seller's rule gives, with the rule printed beside it.",
+        "operationId": "make_offer_api_v1_transfers__ident__negotiate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Make Offer Api V1 Transfers  Ident  Negotiate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transfers/{ident}/buy": {
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Sign Player",
+        "description": "Pay the current price — or the release clause, if a rival has to be moved.",
+        "operationId": "sign_player_api_v1_transfers__ident__buy_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuyIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Sign Player Api V1 Transfers  Ident  Buy Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transfers/{ident}/loan": {
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Loan Player",
+        "description": "Take a player for a stated number of rounds at a fraction of the fee.",
+        "operationId": "loan_player_api_v1_transfers__ident__loan_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoanIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Loan Player Api V1 Transfers  Ident  Loan Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transfers/{ident}/sell": {
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Sell Player",
+        "description": "Sell one of this career's own players; the proceeds arrive against the next round.",
+        "operationId": "sell_player_api_v1_transfers__ident__sell_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Sell Player Api V1 Transfers  Ident  Sell Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transfers/{ident}/release": {
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Release Player",
+        "description": "Let one go for nothing. No fee either way, and the eleven still loses a player.",
+        "operationId": "release_player_api_v1_transfers__ident__release_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Release Player Api V1 Transfers  Ident  Release Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4745,6 +5161,26 @@
           "file"
         ],
         "title": "Body_upload_clip_api_v1_video_upload_post"
+      },
+      "BuyIn": {
+        "properties": {
+          "listing": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Listing"
+          },
+          "use_clause": {
+            "type": "boolean",
+            "title": "Use Clause",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "listing"
+        ],
+        "title": "BuyIn"
       },
       "CareerIn": {
         "properties": {
@@ -5238,6 +5674,28 @@
         ],
         "title": "KnowledgeSearchIn"
       },
+      "LoanIn": {
+        "properties": {
+          "listing": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Listing"
+          },
+          "rounds": {
+            "type": "integer",
+            "maximum": 40.0,
+            "minimum": 1.0,
+            "title": "Rounds",
+            "default": 4
+          }
+        },
+        "type": "object",
+        "required": [
+          "listing"
+        ],
+        "title": "LoanIn"
+      },
       "LoginIn": {
         "properties": {
           "email": {
@@ -5293,6 +5751,43 @@
           "target"
         ],
         "title": "ObjectiveIn"
+      },
+      "OfferIn": {
+        "properties": {
+          "listing": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Listing"
+          },
+          "offer": {
+            "type": "integer",
+            "maximum": 1000000000.0,
+            "minimum": 0.0,
+            "title": "Offer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "listing",
+          "offer"
+        ],
+        "title": "OfferIn"
+      },
+      "OutIn": {
+        "properties": {
+          "player": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Player"
+          }
+        },
+        "type": "object",
+        "required": [
+          "player"
+        ],
+        "title": "OutIn"
       },
       "PlanIn": {
         "properties": {

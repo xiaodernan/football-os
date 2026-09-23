@@ -380,3 +380,147 @@ the shape CI hands it: `.github/workflows/ci.yml` names `football_os_test` and u
 its extension by hand immediately before `python -m pytest`. Those two `psql` steps are now gone, since
 a run that provisions its own database does not need a pre-made one, and a pre-made one is exactly the
 shared resource that caused this section.
+
+## 14. The transfer market spends the budget (2026-09-24, §22 backend)
+
+`app/services/simulation/market.py` + `squad.py` + `app/api/v1/transfers.py` + migration `0011`
+(`transfer_listings`, `career_squad_moves`). The evidence is 49 tests (`tests/test_transfers.py` 34 on
+the arithmetic and the squad, `tests/test_transfers_api.py` 15 on the wire) green on both engines, plus
+the served walk quoted at the end of this section against a live uvicorn on a spare port.
+
+§22 lists nine nouns and seven verbs. Each is answered by a number measured from stored rows, with the
+formula printed beside it — none by an adjective:
+
+| §22 word | what it is in this build |
+| --- | --- |
+| Player / Club / Age / Potential | the world's own `real_players` and `teams` rows; the market never writes a player of its own |
+| Need | the weakest of the **four band indices the engine itself reports**, computed over this career's squad with its transfers applied as of the round |
+| Budget | `career.budget + Σ sell fees − Σ (buy + loan) fees`, summed out of `career_squad_moves`; a fee that is not a row cannot be spent |
+| Tactical Fit | `0.5 ×` the player's own band index (`(mean − 28) / 68`, the same measurement) `+ 0.5 ×` one when his band is the band the club is short in |
+| Role | the band a position staffs (`BANDS`), which is also what the market's per-band selection fills |
+| Contract / Negotiation | valuation → weekly wage (`asking ÷ 500`) and length (`5 − max(0, age − 27)`, clamped 1–5); a seller that answers by a published ladder |
+| Clauses | `release_clause = asking × 1.5`, and the only way into a rival's squad |
+| Buy / Sell / Loan / Release | four `career_squad_moves` kinds, each with a `MOVE_EFFECT` sentence, each putting or taking a player in the eleven |
+
+The valuation is arithmetic on a row, not a market estimate:
+`asking = round_5( ((overall − 40) × 45,000 + max(0, potential − overall) × 25,000) × age_curve )` with
+the age curve stated as bands (0.60 at 16–20 … 0.45 at 32 and over) rather than fitted, because age is
+the one input a club cannot train.
+
+### How a deal reaches the engine without rewriting the world
+
+A signed player must change the eleven that gets selected, and must not do it by mutating
+`real_players` — those rows are the generated world's, shared by every career and by `/world`. So the
+deal is a **round-scoped overlay composed at read time** (`squad.py`):
+
+* `squad_as_of(session, career, round_index)` folds this career's move rows *up to that round* into the
+  club's stored squad and labels the result — `"{career.slug} squad as of round 3: 2 signed in, 1 departed"`.
+* `play_round` passes that overlay only to the career's own side, so a career that has never traded
+  plays exactly the club the world generated, with `squad_label` empty in the report.
+* `engine.py` now publishes `squad_label` inside each side of the report, so a reader of `/simulate/{slug}`
+  who sees an unknown name in a club's eleven is told which career's overlay put him there.
+* `replay_is_identical` rebuilds the arrivals and departures **as they stood before that round**, so a
+  signing made afterwards cannot quietly rewrite an older result. When the eleven that comes back
+  differs from the eleven the report says was picked, the answer is `possible: false` naming the side —
+  replaying a different squad and reporting the engine disagreed would blame the model for an input change.
+
+Loans are read the same way rather than stored twice: an expired loan is not a row that gets deleted, it
+is the same row whose `effective_kind` becomes `loan_out` once the round index passes
+`loan_until_round`. Nothing writes at midnight, and a squad read for round 2 cannot be contaminated by
+a deal struck in round 5.
+
+### The wall, and what a refusal has to carry
+
+One door per §61: `GET /api/v1/transfers/rules` is public fiction (the ten rules, the move effects, the
+disclaimer), everything else sits behind ownership, and a slug belonging to another account is a 404
+rather than a 403 so the existence of someone's transfer history is never confirmed. `GET` never
+reprices — listing a player at a price is an event, so it lives behind `POST /{ident}/market`, which is
+also what makes "a negotiated discount does not survive a re-list" a rule a reader can test.
+
+Every refusal answers with the figures that produced it: `insufficient_budget` carries the fee and the
+balance, `rival_will_not_sell` carries the clause and the current price, `would_not_field_a_side`
+carries the player and keeper counts, `not_your_player` carries the squad size **and the round the squad
+was read as of**.
+
+### Defects found while building this
+
+1. **A `no_transfers` career was a 500, not a refusal.** `_require_transferable` splatted the whole
+   verdict dict into `MarketRefusal(code=…, message=…)`, so any retired career, any closed window and
+   any §21 scenario forbidding transfers raised `TypeError: got multiple values for argument 'code'`.
+   The bug was in the path that enforces the constraint §11 published as unenforced — precisely the
+   path no single-match test touched. It now copies the verdict minus `code` and `message`, and a test
+   drives all three refusals.
+2. **A clause buy printed a risen market.** `buy` wrote the paid fee into the listing's
+   `current_price`, so a signed row showed a *higher* price than the one the club asked (2,325,000
+   against an asking 1,550,000), as if the shelf had repriced itself. The listing now keeps the price it
+   was offered at; what left the balance is the move row's `fee`, which is the ledger's job.
+3. **A refusal named a round it did not send.** `not_your_player` interpolated `as_of_round` into its
+   message but not into its detail, so the number a reader would check was only in prose.
+4. **A branch that could not be reached was being asserted.** `open_market`'s `kept_signed` cannot fire
+   after a permanent buy — `market_pool` excludes players this career already has, which is the correct
+   rule — so the only route to it is a **returning loanee**: his listing row still says `signed` while
+   he is back in the pool. The test now takes that route (a one-round loan, a round played, the market
+   opened again) instead of trusting a counter that could only ever read zero.
+
+### Served walk, on a running API
+
+Braeford Athletic, the world's weakest club at overall 49, 15 stored players, budget 4,000,000:
+
+```text
+need: midfield ← {"attack": 0.293, "defence": 0.275, "keeper": 0.285, "midfield": 0.247} (formation 4-4-2)
+offers: 12 open — the midfield band first, e.g. Loror Fennmann (CAM, 29) 70/72 asking 1,050,000
+        clause 1,575,000 wage 2,100 fit 0.774 from Dunmoor Town
+negotiation: countered — offer 892,500, floor 840,000, price now 971,250 of asking 1,050,000, attempts 1/3
+bought: 1,575,000 = 1,050,000 × 1.5 (the clause, because Dunmoor is a rival)
+loaned: Corand Ruceek for 232,500 = 1,550,000 × 0.15, "rounds 1 to 1 inclusive"
+ledger: 2 moves, spent 1,807,500, received 0, remaining 2,192,500; wages committed 2,100
+round:  digest 21826c0a86261d32, squad_label "… squad as of round 1: 2 signed in, 0 departed",
+        both the signed player and the loanee named in the career's eleven; the opponent's label is empty
+replay: possible True, identical True, stored digest == replayed digest,
+        note "replayed with … squad as of round 1: 2 signed in, 0 departed"
+foreign account: GET /transfers/{slug} → 404, POST …/buy → 404
+```
+
+The wage line is the round-2 reading, and it is the interesting one: the bought player's 2,100 is
+committed, the loanee's 3,100 is not, because the loan covered round 1 only. Reproduce it with
+`POST /api/v1/transfers/{career}/market`, `/negotiate`, `/buy`, `/loan`, then `POST /api/v1/careers/{slug}/play`
+and `GET /api/v1/simulate/{match}/replay`.
+
+### Gates measured for this section
+
+`ruff` clean over `app tests migrations`; `mypy app` clean at 74 files; `alembic upgrade head` and
+`alembic check` on both engines — PostgreSQL 16 (the dev database moved `0010 → 0011`) and a fresh
+SQLite file — both reporting *No new upgrade operations detected*; **426 tests green on the SQLite leg
+and 426 on the PostgreSQL leg**, of which the 49 counted above are this section's and the rest the
+branch already held; `python scripts/export_openapi.py` from the repo root now publishes
+**81 paths / 93 operations** (was 73 / 85), the eight additions being exactly
+`/api/v1/transfers/rules`, `/{ident}`, `/{ident}/market`, `/negotiate`, `/buy`, `/loan`, `/sell`,
+`/release`, and the regenerated `docs/api/openapi.json` diff being purely additive.
+
+### What this section changes in §11's text, and what it still does not claim
+
+§11 says the budget is "a number that cannot be raised and says that nothing spends it" and that
+`no_transfers` is "published and **not** applied, because there is no transfer market". Both sentences
+were true when written and both are superseded by this section: `market.transferable()` now refuses
+every move for a career whose scenario forbids them, and it reports `enforced: true` with the module
+and function that enforce it in the payload.
+
+The catalogue's own row (`app/services/simulation/challenges.py:133`, `enforced=False` with
+`how="there is no transfer market yet (spec §22)…"`) still under-states that, and it was not edited
+here: three places move together — that row, `tests/test_challenges.py:155` which asserts it stays
+false, and `apps/web/scripts/visual-qa.mjs:2042` which asserts the run page reads *3 APPLIED / 1 STATED
+ONLY* — and re-verifying the page is the walk's owner's call, not a side effect of a backend commit. The
+error is an under-claim (a rule that now binds is advertised as merely stated), so nothing the product
+promises became false; the follow-up is recorded in [`../ROADMAP.md`](../ROADMAP.md) with those three
+locations named.
+
+What is still not claimed, and is said out loud in `career.limitations()` (whose `budget` entry now
+points at this API instead of apologising for it):
+
+* **Wages are agreed, not deducted.** There is no wage bill in this build, only a transfer fee.
+* **The market is a rule, not an opinion.** It offers the best-rated players per band with the weakest
+  band filled first; searching for a player who matches a description is the AI Scout (§23) and is not built.
+* **Nothing here is a real transfer.** Generated clubs, generated players, arithmetic this project runs
+  on its own rows — `MARKET_DISCLAIMER` rides on every response, including the public one.
+* **There is no page yet.** The market is an API tier; `/career/{slug}` still shows a budget it cannot
+  spend, which is the next task rather than a claim this one makes.

@@ -33,7 +33,8 @@ from app.services.simulation.engine import (
     MatchInputs,
     simulate_match,
 )
-from app.services.simulation.profile import team_profile
+from app.services.simulation.profile import SideProfile, SquadOverlay, team_profile
+from app.services.simulation.squad import replay_squads
 from app.services.tactics.plan import tactical_systems
 from app.services.world import world_ready
 from app.services.world.names import slugify
@@ -100,14 +101,20 @@ def run_simulation(
     away_system: str | None = None,
     seed: int | None = None,
     minutes: int = 90,
+    home_squad: SquadOverlay | None = None,
+    away_squad: SquadOverlay | None = None,
 ) -> SimulationMatch:
     """Play one fixture, store it, and hand back the row whose `report` is the engine's output.
 
     The seed is chosen when the caller does not supply one and is always stored, because a simulation
     whose seed is lost is a claim the project cannot re-derive.
+
+    `home_squad`/`away_squad` carry a career's transfers (spec §22) onto the side. They are inputs the
+    match's own report records through the selected eleven, and `replay_is_identical` rebuilds them
+    from the same move rows, so a career match stays re-derivable after a signing.
     """
-    home = team_profile(session, home_team_id, system_slug=home_system)
-    away = team_profile(session, away_team_id, system_slug=away_system)
+    home = team_profile(session, home_team_id, system_slug=home_system, squad=home_squad)
+    away = team_profile(session, away_team_id, system_slug=away_system, squad=away_squad)
     inputs = MatchInputs(home=home, away=away, seed=seed if seed is not None else secrets.randbelow(2_147_483_647), minutes=minutes, block_minutes=BLOCK_MINUTES)
     report = simulate_match(inputs)
 
@@ -141,13 +148,32 @@ def run_simulation(
 
 
 def replay_is_identical(session: Session, match: SimulationMatch) -> dict[str, Any]:
-    """Re-run a stored match from its stored inputs and compare the digest, field by field."""
+    """Re-run a stored match from its stored inputs and compare the digest, field by field.
+
+    The inputs include a career's squad if the match was a career round: `replay_squads` finds the
+    fixture that recorded it and rebuilds the arrivals and departures as they stood *before that
+    round*, so a signing made afterwards cannot quietly rewrite an older result. When the eleven that
+    comes out differs from the eleven the report says was picked, the answer is a refusal — replaying
+    a different squad and reporting the engine disagreed would blame the model for an input change.
+    """
     if not match.home_team_id or not match.away_team_id:
         return {"possible": False, "reason": "one of the clubs is no longer in the generated world"}
-    home = team_profile(session, match.home_team_id, system_slug=match.home_system or None)
-    away = team_profile(session, match.away_team_id, system_slug=match.away_system or None)
-    report = simulate_match(MatchInputs(home=home, away=away, seed=match.seed, minutes=match.minutes, block_minutes=match.block_minutes))
+    home_squad, away_squad, squad_note = replay_squads(session, match.id, match.home_team_id, match.away_team_id)
+    home = team_profile(session, match.home_team_id, system_slug=match.home_system or None, squad=home_squad)
+    away = team_profile(session, match.away_team_id, system_slug=match.away_system or None, squad=away_squad)
     stored = _as_mapping(match.report)
+    changed = [side for side, profile in (("home", home), ("away", away)) if _lineup_changed(stored, side, profile)]
+    if changed:
+        return {
+            "possible": False,
+            "reason": (
+                f"the {' and '.join(changed)} side's selected eleven is no longer the eleven this match picked, "
+                "so replaying it would compare two different fixtures rather than re-deriving this one"
+            ),
+            "squad": squad_note,
+            "model_version": match.model_version,
+        }
+    report = simulate_match(MatchInputs(home=home, away=away, seed=match.seed, minutes=match.minutes, block_minutes=match.block_minutes))
     return {
         "possible": True,
         "stored_digest": match.digest,
@@ -155,8 +181,22 @@ def replay_is_identical(session: Session, match: SimulationMatch) -> dict[str, A
         "identical": report["digest"] == match.digest,
         "stored_score": stored.get("score"),
         "replayed_score": report["score"],
+        "squad": squad_note,
         "model_version": match.model_version,
     }
+
+
+def _lineup_changed(stored: dict[str, Any], side: str, profile: SideProfile) -> bool:
+    """True only when the report names an eleven and the rebuilt one differs from it.
+
+    A match stored before lineups were written, or one whose report is missing, is treated as
+    unchanged: there is nothing on file to disagree with, and inventing a difference would be a claim.
+    """
+    recorded = _as_mapping(_as_mapping(stored.get("sides")).get(side)).get("lineup")
+    if not isinstance(recorded, list) or not recorded:
+        return False
+    before = [str(row.get("player", "")) for row in recorded if isinstance(row, dict)]
+    return before != [name for name, _, _ in profile.lineup]
 
 
 def _as_mapping(value: object) -> dict[str, Any]:

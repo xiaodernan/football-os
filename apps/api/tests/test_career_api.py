@@ -7,7 +7,9 @@ Four questions, in the order a reviewer would ask them:
 * **Is every number traceable?** A response prints the formula it summed by, the rotation rule that
   picked the opponent, and the digest of the match that decided the round.
 * **Is the fiction said out loud?** `data_origin='simulation'`, the career disclaimer, and a
-  `limitations` block that admits the budget and the philosophy label do not reach the engine yet.
+  `limitations` block that admits what the layer still does not do — wages are recorded rather than
+  deducted, the philosophy label is not read by the engine, and the need it lists is arithmetic rather
+  than an AI Scout (the budget itself is spent for real since §22, on `/api/v1/transfers`).
 * **What survives deletion?** The career and its rounds go; the match reports it played stay, because
   the account chose to play them.
 """
@@ -114,7 +116,7 @@ class TestOpening:
         assert body["objectives"][0]["formula"] == OBJECTIVE_FORMULA["wins"]
         assert body["next_fixture"]["available"] is True and body["next_fixture"]["rotation"]
         assert body["is_demo_data"] is True and "fiction" in body["disclaimer"]
-        assert set(body["limitations"]) == {"budget", "philosophy", "table", "objectives"}
+        assert set(body["limitations"]) == {"budget", "wages", "scouting", "philosophy", "table", "objectives"}
 
     def test_the_career_appears_in_the_accounts_own_list(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
         opened = auth_client.post(API, json=_body(club_id)).json()

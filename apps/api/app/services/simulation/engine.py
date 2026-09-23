@@ -178,6 +178,10 @@ class _Side:
             "formation": self.profile.formation,
             "system_slug": self.profile.system_slug,
             "system_name": self.profile.system_name,
+            # Which squad this side was built from. Empty for a club playing its own stored rows; a
+            # career's round names the overlay here, so a signed player in the eleven is explained by
+            # the report itself rather than leaving a reader to notice he is not on the club's page.
+            "squad_label": self.profile.squad_label,
             "goals": self.goals,
             "possession_pct": round(self.possession * 100, 1),
             "shots": self.shots,
