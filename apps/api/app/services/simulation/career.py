@@ -40,6 +40,30 @@ CAREER_DISCLAIMER: Final = (
 )
 
 
+class WindowClosed(RuntimeError):
+    """A challenge run has used every round its scenario allowed.
+
+    Its own error rather than a bare `ValueError`, because the two answer differently on the wire: a
+    career that cannot play has a bad request behind it (409 `cannot_play`), while a closed window is
+    the scenario doing its job and answers 409 `window_closed` with the numbers that closed it.
+    """
+
+    def __init__(self, *, played: int, window: int, challenge_slug: str) -> None:
+        super().__init__(f"this challenge's window closed after {played} of {window} rounds")
+        self.played = played
+        self.window = window
+        self.challenge_slug = challenge_slug
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "code": "window_closed",
+            "message": str(self),
+            "challenge_slug": self.challenge_slug,
+            "rounds_played": self.played,
+            "window_rounds": self.window,
+        }
+
+
 def limitations() -> dict[str, str]:
     """What this layer does not claim, in the words the page prints."""
     return {
@@ -150,9 +174,17 @@ def create_career(
 
 
 def play_round(session: Session, career: Career) -> tuple[CareerFixture, SimulationMatch]:
-    """Play the next round through the engine and record it against the career."""
+    """Play the next round through the engine and record it against the career.
+
+    A career opened from a live challenge (spec §21) carries a round window, and this is the only path
+    that can play a round — so the window is enforced here rather than by a rule each caller is
+    trusted to remember. An open career stores a window of 0 and is never limited.
+    """
     if career.status != "active":
         raise ValueError("this career is retired; open a new one to keep playing")
+    window = int(career.challenge_window or 0)
+    if window and int(career.rounds_played) >= window:
+        raise WindowClosed(played=int(career.rounds_played), window=window, challenge_slug=career.challenge_slug)
     plan = next_fixture_plan(session, career)
     if not plan["available"]:
         raise ValueError(str(plan["reason"]))
@@ -331,6 +363,8 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
             "budget_units": career.budget_units,
             "rounds_played": career.rounds_played,
             "status": career.status,
+            "challenge_slug": career.challenge_slug,
+            "challenge_window": career.challenge_window,
             "data_origin": career.data_origin,
             "is_demo_data": career.is_demo_data,
         },
@@ -384,6 +418,7 @@ __all__ = [
     "CAREER_DISCLAIMER",
     "OBJECTIVE_FORMULA",
     "POINTS_FOR",
+    "WindowClosed",
     "career_view",
     "competition_clubs",
     "create_career",

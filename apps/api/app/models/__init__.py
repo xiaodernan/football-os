@@ -880,6 +880,10 @@ class SimulationMatch(Base, TimestampMixin):
 # follows for one match.
 CAREER_STATUSES: Final[tuple[str, ...]] = ("active", "retired")
 CAREER_PHLOSOPHIES: Final[tuple[str, ...]] = ("possession", "direct", "pressing", "counter", "balanced")
+# A career may be played under an authored scenario (spec §21). The scenario's name and its round
+# window are the only two things stored: the goal, the reward and the verdict are recomputed from the
+# run's own fixtures, so a challenge cannot be edited into having been won.
+CHALLENGE_WINDOW_OPEN: Final[int] = 0
 OBJECTIVE_KINDS: Final[tuple[str, ...]] = ("wins", "points", "goal_difference", "unbeaten")
 OBJECTIVE_FORMULA: Final[dict[str, str]] = {
     "wins": "count of career_fixtures where outcome = W",
@@ -912,6 +916,10 @@ class Career(Base, TimestampMixin):
     objectives: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     rounds_played: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     status: Mapped[str] = mapped_column(String(12), default="active", nullable=False)
+    # Set when the career was opened from a live challenge (spec §21). Empty for an open career, which
+    # has no window and can be played for as long as its manager likes.
+    challenge_slug: Mapped[str] = mapped_column(String(80), default="", nullable=False)
+    challenge_window: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 

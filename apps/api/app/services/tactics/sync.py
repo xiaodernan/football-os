@@ -105,7 +105,7 @@ def _validate(planned: Any) -> list[str]:
         problems.append(f"{slug}: temperament_key longer than 40")
     for key in ("press_line_y", "block_depth", "defensive_narrowing"):
         value = payload.get(key)
-        if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+        if not isinstance(value, int | float) or not math.isfinite(value) or value < 0:
             problems.append(f"{slug}: {key} = {value!r} is not a finite non-negative number")
     for phase in ("phase_in", "phase_out"):
         positions = payload.get(phase)

@@ -10,7 +10,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) — world 3.2 (2026-09-23) added the sixth §65 gate item, 100 training sessions, browsed at `/world/training` |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 6 of 6 topics on all 50 systems (2 were refused until the corpus gained the missing passages); 3D pitch and board sharing beyond one owner are open follow-ups |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ✅ verified 2026-09-22 ([pipeline](docs/M5_VERIFICATION.md) · [web](docs/M5_WEB_VERIFICATION.md)) — upload, report, detection timeline and owner-only byte-range playback proven in the browser |
-| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log and **Career Mode including its page** all browser-verified 2026-09-23 ([engine+career backend](docs/M6_VERIFICATION.md) §10 · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md)); manager challenges (§21) and transfers (§22) outstanding |
+| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log and **Career Mode including its page** all browser-verified 2026-09-23 ([engine+career backend](docs/M6_VERIFICATION.md) §10 · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md)); **manager live challenges (§21) backend verified on both engines 2026-09-24** ([docs/M6_VERIFICATION.md](docs/M6_VERIFICATION.md) §11) — 6 scenarios, window enforced in `play_round`, verdicts recomputed; its page and the transfer market (§22) outstanding |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ |
 | **M8 Club OS / Academy** | organisations, teams, coaches, IDP, curriculum, permissions, multi-tenant | B2B tenant isolation proven | ⬜ |
 | **M9 Community** | feed, posts, comments, likes, follows, shared boards/plans | creator→content→feedback loop | ⬜ |
@@ -161,6 +161,13 @@ contract the web tier codes against.
 [`docs/M6_VERIFICATION.md`](docs/M6_VERIFICATION.md) (engine + storage + reads) ·
 [`docs/M6_WEB_VERIFICATION.md`](docs/M6_WEB_VERIFICATION.md) (browser).
 
+**Manager live challenges (§21) — backend verified, both engines, 2026-09-24**
+(`docs/M6_VERIFICATION.md` §11). Six authored scenarios, each time-limited by a window the engine
+enforces, goal-based on objectives the caller cannot lower, and reward-based on a verdict recomputed
+from the run's own rows. 31 tests, a live pass on a seeded database, and every constraint publishing
+whether it binds — so "no transfers" and "academy players only" read as stated intent rather than as
+rules something applied. **No page for it yet.**
+
 Verified 2026-09-23 (317 API tests on both engines + a browser walk at 190/190):
 
 1. [x] `possession-block-v1@1.0.0`: a 90-minute match as fifteen six-minute blocks, each side measured from ten
@@ -189,10 +196,22 @@ Verified 2026-09-23 (317 API tests on both engines + a browser walk at 190/190):
    objectives that must be stated before a career can open, and 6 `/api/v1/careers/*` routes — 28 tests on both
    engines (`docs/M6_VERIFICATION.md` §10). **No page for it yet**, and the budget is stated intent nothing spends.
 
-Still open in M6: manager live challenges (§21), the transfer market
-(§22) — which is what would make a budget more than a stated number — squad and training carry-over between matches, a
-`sim_events` table so the timeline is stored rather than regenerated, and rendering the `training_log` the player detail
-route already returns.
+Still open in M6:
+
+1. [ ] **a page for the challenges** — the catalogue at `/challenges`, a start form, and a run page that
+   shows the verdict beside the fixtures it was summed from. Backend only today; `GET /challenges` is
+   public because the scenarios are this project's own fiction, while the run routes sit behind the
+   same session wall as careers, so a foreign run reads as 404
+2. [ ] the transfer market (§22) — which is what would make a budget more than a stated number, and
+   what would let `no_transfers` become an enforced constraint instead of a published one
+3. [ ] squad and training carry-over between matches
+4. [ ] a `sim_events` table so the timeline is stored rather than regenerated
+5. [ ] rendering the `training_log` the player detail route already returns
+6. [ ] **a per-run test database name** — `conftest.py` points every run at one fixed
+   `football_os_pytest` and its session fixture begins with `drop_all()`, so two overlapping runs make
+   the other's tables vanish. Caught while re-running §21: one spurious
+   `relation "training_drills" does not exist` in a test that never queries that table, green on rerun
+   (`docs/M6_VERIFICATION.md` §11). The fix is a run-scoped database name, not a retry.
 
 ## Cross-cutting gates (spec §80 SEO, §81 i18n)
 

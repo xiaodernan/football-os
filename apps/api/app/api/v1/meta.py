@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
 from app.providers import provider_status
+from app.services.simulation.challenges import CHALLENGE_DISCLAIMER, challenge_counts, challenge_ready
 from app.services.simulation.service import engine_description, sim_counts, sim_ready, sim_tables_present
 from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_ready, tactics_tables_present
 from app.services.video.status import video_readiness
@@ -68,6 +69,10 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
             "model_version": engine["version"],
             "disclaimer": engine["disclaimer"],
         },
+        # §21 reports like the rest: the flag is whether the catalogue is sound, the run columns exist
+        # and the world is there to choose a club from — not whether anyone has started a run.
+        "m6_manager_challenges": challenge_ready(db),
+        "m6_challenges": {"counts": challenge_counts(db), "disclaimer": CHALLENGE_DISCLAIMER},
         "m7_scouting": False,
         "m8_club_os": False,
         "m9_community": False,

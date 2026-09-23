@@ -4089,7 +4089,7 @@
           "career"
         ],
         "summary": "Play Next",
-        "description": "Play the career's next round with the engine, then re-derive everything the page shows.",
+        "description": "Play the career's next round with the engine, then re-derive everything the page shows.\n\nA career opened from a live challenge stops here once its window is used. That is the scenario\nworking, not a failure, so it answers `window_closed` with the rounds that closed it rather than a\ngeneric refusal — and the run's own view is beside it, so the page can show the final verdict\ninstead of an error with nothing to read.",
         "operationId": "play_next_api_v1_careers__ident__play_post",
         "security": [
           {
@@ -4163,6 +4163,165 @@
                 "schema": {
                   "type": "object",
                   "title": "Response Retire Api V1 Careers  Ident  Retire Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/challenges": {
+      "get": {
+        "tags": [
+          "challenges"
+        ],
+        "summary": "Read Catalogue",
+        "description": "The six scenarios, what each one asks of you, and how a verdict is decided.\n\n`objective_formulas` is shipped beside the scenarios rather than left to the reader, so a target of\n\"thirty points\" comes with the sentence that will be compared against it.",
+        "operationId": "read_catalogue_api_v1_challenges_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Catalogue Api V1 Challenges Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/challenges/{slug}/start": {
+      "post": {
+        "tags": [
+          "challenges"
+        ],
+        "summary": "Start",
+        "description": "Open a run of a scenario: the weakest club in a competition, or a club you name.",
+        "operationId": "start_api_v1_challenges__slug__start_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Start Api V1 Challenges  Slug  Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/challenges/runs": {
+      "get": {
+        "tags": [
+          "challenges"
+        ],
+        "summary": "List Runs",
+        "description": "This account's runs, each with the verdict recomputed from its own rows.",
+        "operationId": "list_runs_api_v1_challenges_runs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response List Runs Api V1 Challenges Runs Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/challenges/runs/{ident}": {
+      "get": {
+        "tags": [
+          "challenges"
+        ],
+        "summary": "Read Run",
+        "description": "One run in full: the scenario, the club it gave you, the verdict, and the fixtures behind it.",
+        "operationId": "read_run_api_v1_challenges_runs__ident__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Run Api V1 Challenges Runs  Ident  Get"
                 }
               }
             }
@@ -5495,6 +5654,64 @@
           "away_team"
         ],
         "title": "SimulateIn"
+      },
+      "StartIn": {
+        "properties": {
+          "manager_name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "Manager Name"
+          },
+          "club": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club"
+          },
+          "competition": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competition"
+          },
+          "system": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System"
+          },
+          "season": {
+            "type": "string",
+            "maxLength": 12,
+            "title": "Season",
+            "default": "2026"
+          }
+        },
+        "type": "object",
+        "required": [
+          "manager_name"
+        ],
+        "title": "StartIn",
+        "description": "What a caller may choose. The window, the budget, the objectives and the philosophy are not here."
       },
       "TokenPair": {
         "properties": {

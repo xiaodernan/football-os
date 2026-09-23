@@ -164,12 +164,12 @@ code contains.
 ```bash
 cd apps/api
 python -m ruff check app tests           # All checks passed!
-python -m mypy app                       # Success: no issues found in 67 source files
-python -m pytest -q                      # 308 passed
+python -m mypy app                       # Success: no issues found in 71 source files
+python -m pytest -q                      # 376 passed
 FOOTBALL_OS_TEST_DATABASE_URL=postgresql+psycopg2://football:football@127.0.0.1:54321/football_os_pytest \
-  python -m pytest -q                    # 308 passed — same tests, both engines
+  python -m pytest -q                    # 376 passed — same tests, both engines
 alembic upgrade head && alembic check    # no new upgrade operations detected
-python scripts/export_openapi.py         # repo root: 63 paths / 73 operations
+python scripts/export_openapi.py         # repo root: 73 paths / 85 operations
 ```
 
 A live pass against the running server (registered account → options → play → detail → replay →
@@ -179,9 +179,10 @@ counts in this document are the counts on the machine.
 
 ## 9. Not claimed by this milestone
 
-* **Manager live challenges (§21) and the transfer market (§22)** — they do not exist yet. Career
-  Mode (§20) landed after this section was written, as a schedule of these matches with a record and
-  objectives read off them; §10 says exactly which parts of that sentence are true and which are not.
+* **The transfer market (§22)** does not exist yet. Manager live challenges (§21) landed after this
+  section was written — §11 says what they are and which of their constraints bind. Career
+  Mode (§20) landed as a schedule of these matches with a record and objectives read off them;
+  §10 says exactly which parts of that sentence are true and which are not.
 * **Finance.** A career carries a stated budget and nothing spends it: with no transfer market, no
   fixture was affected by a large or a small number, and `limitations()` on every career response says
   so instead of letting the figure look like a constraint that was tested.
@@ -228,3 +229,100 @@ What a career is, and what it deliberately is not:
   the account chose to play.
 * **Ceilings are enforced where they are checked:** 5 careers per account (`409 career_limit`), 90
   minutes per round, and every route rate-limited under its own scope.
+
+## 11. Manager Live Challenges (added 2026-09-23, backend)
+
+`app/services/simulation/challenges.py` + `app/api/v1/challenges.py` + migration `0010`. **There is no
+page for it yet**, so nothing in this section is browser-verified; the evidence is 31 tests
+(`tests/test_challenges.py`) green on both engines, plus a live pass on a seeded database quoted below.
+
+§21 asks for three properties of a challenge. This is what each one actually is:
+
+* **Time limited.** Every scenario names a `window_rounds`, stored on the career the run opens in
+  (`challenge_window`, migration `0010`). The window is enforced inside `career.play_round` — the only
+  path that can play a round — which raises `WindowClosed`, and the route answers `409 window_closed`
+  with the rounds that closed it **and the run's final verdict beside it**, so the page has something
+  to show rather than a dead end. An open career stores `0` and is never limited.
+* **Goal based.** The scenario fixes its objectives and the start endpoint accepts none, so a target
+  cannot be lowered once the run is open. Verdicts reuse `OBJECTIVE_FORMULA`, the same table Career
+  Mode judges open careers with, and every objective prints the formula it was compared with.
+  `in_progress` while rounds remain, `met` only when the window closed *and* every objective was
+  reached, `missed` when the window closed short.
+* **Reward based.** The reward is earned by `met` and by nothing else — including the suspicious case:
+  every objective reached with rounds still to play earns nothing, because the window has not closed.
+  Nothing consumes a reward yet; the response says there is no wallet behind the number.
+
+Two further rules keep it consistent with the rest of M6:
+
+* **A run is a career, not a second container.** Starting a challenge opens a normal `careers` row; its
+  rounds are `career_fixtures`; each round is decided by `run_simulation`. One match model, one fixture
+  store, one play path — which is precisely why the window needs enforcing in only one place.
+* **Constraints publish whether they bind.** §21's own examples are mostly rules the build cannot apply
+  yet, so each constraint ships `enforced: true|false` and the sentence that says what it does. The
+  window and the fixed goal are enforced; the budget is enforced as a number that cannot be raised and
+  says that nothing spends it; `no_transfers` and `academy_only` are published and **not** applied,
+  because there is no transfer market and the eleven has no age filter. A test asserts they say so.
+
+The weakest club a scenario hands you is chosen by **measurement**, not by an adjective:
+`resolve_challenge_club` builds every club in the named competition with `profile.team_profile` — the
+same reader the engine uses — ranks them by selected-eleven rating, and takes the lowest. The whole
+ranking and the gap to the runner-up travel with the choice.
+
+| Route | Auth | Notes |
+| --- | --- | --- |
+| `GET /api/v1/challenges` | public | 6 scenarios, integrity, fingerprint, objective formulas, how a verdict is decided, limitations |
+| `POST /api/v1/challenges/{slug}/start` | session | 201; the club choice and the live verdict |
+| `GET /api/v1/challenges/runs` | session | this account's runs, each with its verdict recomputed |
+| `GET /api/v1/challenges/runs/{ident}` | session | one run: scenario, verdict, fixtures, limitations |
+
+Playing goes through `POST /api/v1/careers/{ident}/play`, which now also returns `challenge_verdict`
+(a run) or `null` (an open career). `GET /api/v1/capabilities` gained `m6_manager_challenges`, derived
+from the catalogue being sound, the run columns being present and the world being there — not from
+someone having started a run.
+
+Live pass on a seeded database (SQLite, 2026-09-23), after which the run and its account were removed:
+
+```text
+competition 'Thornford Superleague' holds 5 clubs
+catalogue 6 scenarios · integrity clean: True · fingerprint 1345294b922361f9
+start 201 · club chosen: Thorndera Town overall 0.4982
+  field: Cordale Town 0.6791 · Corgard Town 0.6727 · Ildwick Athletic 0.6627 ·
+         Ostford Wanderers 0.5891 · Thorndera Town 0.4982
+  window 6 · budget 100000 · objectives [('wins', 4)]
+round 1/6 -> in_progress remaining 5   …   round 6/6 -> missed remaining 0
+7th round: 409 window_closed | this challenge's window closed after 6 of 6 rounds
+  verdict carried by the refusal: missed · reward earned False
+final verdict: missed · objectives [('wins', 0, 4, False)]
+  reward: Homegrown earned False | 0 of 1 objectives met after 6 of 6 rounds
+capabilities: m6_manager_challenges = True · {'runs': 1, 'scenarios': 6}
+```
+
+**Both engine legs re-run 2026-09-24, and the second one reported a defect worth recording.**
+`alembic upgrade head` applied `0010` on PostgreSQL+pgvector and `alembic check` reported no drift;
+`ruff check app tests` and `mypy app` (71 files) are clean; the full suite is **376 tests green on
+SQLite and 376 green on PostgreSQL+pgvector**.
+
+The first PostgreSQL run of the full suite was **not** green: it reported one error,
+`tests/test_knowledge_rag.py::test_ingest_endpoint_is_staff_only` —
+`UndefinedTable: relation "training_drills" does not exist` — in a test that asserts a 403 and never
+queries that table, on a file that passes alone and passes again in the full run. The honest reading is
+that the throwaway database is a **single shared resource** whose session fixture starts with
+`Base.metadata.drop_all()`: two runs against `football_os_pytest` overlap, and one drops the schema
+under the other. Nothing in §21 caused it and nothing here should pretend the leg was clean on the
+first attempt — it was clean on the second. The follow-up is a per-run database name, recorded in
+ROADMAP rather than fixed silently.
+
+## 12. Defects found while building this section
+
+1. **A pre-existing lint failure the docs claimed was clean.** `ruff check app tests` reported
+   `UP038` in `app/services/tactics/sync.py` — a file untouched since M4 — so the committed tree did
+   not pass the gate that §8 and the M4 and M6 documents say passes. Fixed by writing the isinstance
+   tuple as `int | float`. Finding it is why `ruff check app tests migrations` (a wider target than
+   either document quotes) was run rather than the quoted command alone.
+2. **Three tests that asserted the wrong thing**, each caught by the first run: a crafted run with a
+   two-round window was expected `met` when four wins were asked for and two were played (`missed` is
+   correct); the window loop asserted `in_progress` on the round that closes the window; and the
+   open-career test read `challenge_verdict` off a `POST /careers` response, which only `play` sets.
+   The implementation was right in all three; the tests were wrong.
+3. **The OpenAPI counts in §8 were stale.** Career Mode (§10) had already taken the contract from
+   63 paths / 73 operations to 69, and §8 was not updated with it. Corrected to the live figure.

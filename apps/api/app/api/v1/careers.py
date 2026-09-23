@@ -22,7 +22,16 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.security import current_user, limit, ownership_or_admin
 from app.models import CAREER_PHLOSOPHIES, OBJECTIVE_FORMULA, OBJECTIVE_KINDS, Career, User
-from app.services.simulation.career import CAREER_DISCLAIMER, career_view, create_career, next_fixture_plan, play_round, resolve_club
+from app.services.simulation.career import (
+    CAREER_DISCLAIMER,
+    WindowClosed,
+    career_view,
+    create_career,
+    next_fixture_plan,
+    play_round,
+    resolve_club,
+)
+from app.services.simulation.challenges import run_view as challenge_run_view
 from app.services.simulation.service import options, system_options
 from app.services.tactics.plan import system_by_slug
 
@@ -165,7 +174,13 @@ def read_career(ident: str, request: Request, db: Session = Depends(get_db), use
 
 @router.post("/{ident}/play")
 def play_next(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
-    """Play the career's next round with the engine, then re-derive everything the page shows."""
+    """Play the career's next round with the engine, then re-derive everything the page shows.
+
+    A career opened from a live challenge stops here once its window is used. That is the scenario
+    working, not a failure, so it answers `window_closed` with the rounds that closed it rather than a
+    generic refusal — and the run's own view is beside it, so the page can show the final verdict
+    instead of an error with nothing to read.
+    """
     limit(request, 20, 60, scope="career_play")
     career = _career(db, user, ident)
     plan = next_fixture_plan(db, career)
@@ -173,6 +188,11 @@ def play_next(ident: str, request: Request, db: Session = Depends(get_db), user:
         raise HTTPException(status.HTTP_409_CONFLICT, detail={"code": "no_fixture", "message": str(plan["reason"])})
     try:
         fixture, match = play_round(db, career)
+    except WindowClosed as error:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail={**error.to_dict(), "verdict": _challenge_verdict(db, career)},
+        ) from None
     except ValueError as error:
         raise HTTPException(status.HTTP_409_CONFLICT, detail={"code": "cannot_play", "message": str(error)}) from None
     return {
@@ -180,7 +200,15 @@ def play_next(ident: str, request: Request, db: Session = Depends(get_db), user:
         "fixture_id": fixture.id,
         "match": {"slug": match.slug, "path": f"/simulate/{match.slug}", "digest": match.digest, "seed": match.seed, "model_version": match.model_version},
         **career_view(db, career),
+        "challenge_verdict": _challenge_verdict(db, career),
     }
+
+
+def _challenge_verdict(db: Session, career: Career) -> dict[str, Any] | None:
+    """The live verdict, but only for a career that is actually playing a scenario."""
+    if not career.challenge_slug:
+        return None
+    return challenge_run_view(db, career, include_fixtures=False)["verdict"]
 
 
 @router.post("/{ident}/retire")

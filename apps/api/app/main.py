@@ -15,6 +15,7 @@ from app.api.v1 import (
     auth,
     boards,
     careers,
+    challenges,
     coach,
     knowledge,
     meta,
@@ -126,6 +127,7 @@ def create_app() -> FastAPI:
     app.include_router(boards.router, prefix=api)
     app.include_router(video.router, prefix=api)
     app.include_router(careers.router, prefix=api)
+    app.include_router(challenges.router, prefix=api)
     app.include_router(simulations.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)

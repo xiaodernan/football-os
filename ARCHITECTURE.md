@@ -77,6 +77,22 @@ M3 builds the world locally rather than reading a provider: `WORLD_SEED` → `pl
 A news provider is still the plan for real headlines (spec §45); until a key exists, `source_name` is
 `synthetic-world` and the desk is a role, not a person.
 
+M6 plays fictional matches: `run_simulation` decides one with `possession-block-v1`, `sim_matches` stores
+its inputs and its digest (`POST /simulate/{ident}/replay` re-derives and compares, so a page prints
+`Identical.` rather than asking to be believed), `careers` + `career_fixtures` give it a season to be
+played in, and rows are `data_origin='simulation'` / `is_demo_data=true` with the §19 disclaimer on the
+payload rather than in a page's strings.
+
+Manager live challenges (spec §21) add **two columns, not two tables**: `careers.challenge_slug` and
+`careers.challenge_window`. A run *is* a career — same rounds, same engine, same fixture store — which is
+why its window can be enforced in exactly one place (`career.play_round`, the only path that plays a
+round). The scenario's goal, reward and verdict are **never stored**: they are recomputed from the run's
+own `career_fixtures` on every read, so a challenge cannot be edited into having been won. The six
+scenarios are an authored catalogue in `app/services/simulation/challenges.py`, and each constraint
+publishes `enforced: true|false` with the sentence naming what it does — §21's own examples ("no
+transfers", "academy players only") are rules the build has no mechanism to apply, and saying so is
+better than letting a scenario read as a constraint that was tested.
+
 M4 adds `tactical_systems` — 50 project-authored coaching structures, one row per shape × temperament.
 The same shape discipline applies, with two differences worth stating: these rows are
 `data_origin='project-authored'`, `is_demo_data=False` (they are a design artefact of this repository,
