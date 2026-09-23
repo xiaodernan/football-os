@@ -5,8 +5,9 @@ Three claims carry this module, and each is tested where it is made:
 * **The arithmetic is the product.** Every fee, clause, wage, loan cost and sale proceeds is the number
   the published formula prints, recomputed here from the player's stored row — if the code and the
   sentence ever disagree, one of these tests goes red rather than the reader finding out.
-* **The budget is a sum of rows.** A balance is `career.budget` plus what the move rows brought in minus
-  what they took out, and each row stores the standing at its own point in the history.
+* **The budget is a sum of rows.** A balance is `career.budget` plus what the ledger brought in minus
+  what it took out — the four squad-move kinds and one wage charge per round played — and each row stores
+  the standing at its own point in the history.
 * **A deal reaches the engine.** A signed or released player changes the eleven `team_profile` selects,
   the round played after it is decided by that eleven, and a replay rebuilds the squad *as of that
   round* — so a later deal must never rewrite an older match.
@@ -23,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
 from app.core.security import hash_password, new_public_id
-from app.models import BUDGET_FORMULA, MOVE_EFFECT, Career, CareerSquadMove, RealPlayer, Team, TransferListing, User
+from app.models import BUDGET_FORMULA, MOVE_EFFECT, WAGE_EFFECT, Career, CareerSquadMove, CareerWageCharge, RealPlayer, Team, TransferListing, User
 from app.services.simulation import career as career_service
 from app.services.simulation import market
 from app.services.simulation import squad as squad_service
@@ -33,7 +34,7 @@ from app.services.simulation.service import replay_is_identical, run_simulation
 from app.services.world import sync_world
 
 BUDGET = 4_000_000
-RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "budget", "squad"}
+RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "budget", "squad"}
 
 
 def _round5(value: float) -> int:
@@ -313,7 +314,7 @@ class TestOpeningTheMarket:
 
 
 class TestLedger:
-    def test_the_balance_is_the_sum_of_the_move_rows(self, session, world) -> None:  # type: ignore[no-untyped-def]
+    def test_the_balance_is_the_sum_of_the_ledger(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
         _sign(session, world, career, band="attack")
         career_service.play_round(session, career)
@@ -323,17 +324,23 @@ class TestLedger:
         market.release(session, career, ident=_players_of(session, career.club_id or "")[1].id)
 
         rows = list(session.scalars(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id).order_by(CareerSquadMove.round_index, CareerSquadMove.created_at)).all())
+        charges = list(session.scalars(select(CareerWageCharge).where(CareerWageCharge.career_id == career.id).order_by(CareerWageCharge.round_index)).all())
         assert sorted(row.kind for row in rows) == ["buy", "loan", "release", "sell"]
+        assert [row.round_index for row in charges] == [1, 2], "one charge per round played, in the round it was for"
+        # The reader's arithmetic: one column, one sign per row, and each row's stored standing has to be
+        # what the running total says at that point. This is the whole reason `budget_after` is stored.
+        ledger = market.ledger_of([market.move_row(row) for row in rows], [market.wage_row(row) for row in charges])
         standing = BUDGET
-        for row in rows:
-            standing = standing - row.fee if row.kind in squad_service.IN_KINDS else standing + row.fee
-            assert row.budget_after == standing, "each row stores the standing it left behind, in the order the ledger is read"
+        for entry in ledger:
+            standing = standing - entry["fee"] if entry["cash"] == "out" else standing + entry["fee"]
+            assert entry["budget_after"] == standing, "each row stores the standing it left behind, in the order the ledger is read"
         position = market.budget_position(session, career)
         assert position["remaining"] == standing
         assert position["spent"] == sum(row.fee for row in rows if row.kind in ("buy", "loan")) > 0
         assert position["received"] == sum(row.fee for row in rows if row.kind == "sell") > 0
-        assert position["budget"] + position["received"] - position["spent"] == position["remaining"]
-        assert position["formula"] == BUDGET_FORMULA
+        assert position["wages_paid"] == sum(row.fee for row in charges) > 0
+        assert position["budget"] + position["received"] - position["spent"] - position["wages_paid"] == position["remaining"]
+        assert position["formula"] == BUDGET_FORMULA and "wage_charges" in BUDGET_FORMULA
         assert position["units"] == career.budget_units
 
     def test_a_deal_the_balance_cannot_cover_refuses_with_its_numbers(self, session, world) -> None:  # type: ignore[no-untyped-def]
@@ -361,6 +368,96 @@ class TestLedger:
         assert buyer.name == detail["buyer"] and detail["proceeds_formula"] == market.SELL_FORMULA
         assert move.counterparty_name == buyer.name
         assert move.weekly_wage > 0 and 1 <= move.contract_years <= 5, "a deal stores the contract terms it was struck on"
+
+
+class TestWageBill:
+    """§22's *Contract* verb, charged: every round a career plays costs it what its deals agreed.
+
+    The claim these tests exist to hold is narrow and expensive: a wage that is only recorded is a rate
+    nobody pays, so the budget a manager reads would be a starting figure rather than a balance. Each
+    played round writes one `career_wage_charges` row, and the ledger the page adds up is both tables.
+    """
+
+    def test_a_round_with_no_deal_of_this_career_own_writes_no_charge(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career_service.play_round(session, career)
+        assert session.scalar(select(CareerWageCharge.id).where(CareerWageCharge.career_id == career.id)) is None, (
+            "the club's own stored squad came with the job; only deals this career made are charged"
+        )
+        position = market.budget_position(session, career)
+        assert position["remaining"] == BUDGET and position["wages_paid"] == 0 and position["wage_committed_per_week"] == 0
+        assert position["wage_rounds"] == [] and position["wage_rows"] == 0
+
+    def test_the_round_a_deal_is_struck_for_is_the_round_it_starts_costing(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _best_of(session, [world["outsider_id"]], band="midfield")
+        listing = _listed(session, career, player)
+        move, _ = market.buy(session, career, ident=listing.id)
+        wage = market.valuation(player)["weekly_wage"]
+        assert move.weekly_wage == wage, "the deal stores the wage the valuation printed"
+        standing = market.budget_position(session, career)
+        assert standing["wage_committed_per_week"] == wage and standing["wage_players"] == 1, "the rate is published before it is ever charged"
+        assert standing["wages_paid"] == 0 and standing["remaining"] == BUDGET - move.fee, "agreeing a wage does not spend it; playing the round does"
+        career_service.play_round(session, career)
+        charge = session.scalar(select(CareerWageCharge).where(CareerWageCharge.career_id == career.id))
+        assert charge is not None and charge.round_index == 1 and charge.fee == wage and charge.players == 1
+        assert charge.fee == standing["wage_committed_per_week"], "the row charged exactly the rate the page had printed"
+        after = market.budget_position(session, career)
+        assert after["remaining"] == BUDGET - move.fee - wage and after["wages_paid"] == wage and after["wage_rounds"] == [1]
+        assert charge.budget_after == after["remaining"]
+
+    def test_a_sold_player_stops_costing_and_a_loan_stops_when_its_rounds_do(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        signed = _best_of(session, [world["outsider_id"]], band="midfield")
+        rental = _best_of(session, [world["outsider_id"]], band="attack")
+        bought = market.buy(session, career, ident=_listed(session, career, signed).id)[0]
+        loaned = market.loan(session, career, ident=_listed(session, career, rental).id, rounds=1)[0]
+        assert bought.weekly_wage > 0 and loaned.weekly_wage > 0
+        career_service.play_round(session, career)
+        first = session.scalar(select(CareerWageCharge).where(CareerWageCharge.career_id == career.id, CareerWageCharge.round_index == 1))
+        assert first is not None and first.fee == bought.weekly_wage + loaned.weekly_wage and first.players == 2
+        career_service.play_round(session, career)
+        second = session.scalar(select(CareerWageCharge).where(CareerWageCharge.career_id == career.id, CareerWageCharge.round_index == 2))
+        assert second is not None and second.fee == bought.weekly_wage, "the loan covered one round, and its wage with it — no row was written to end it"
+        market.sell(session, career, ident=signed.id)
+        career_service.play_round(session, career)
+        rounds = [int(row.round_index) for row in session.scalars(select(CareerWageCharge).where(CareerWageCharge.career_id == career.id)).all()]
+        assert rounds == [1, 2], "a career holding nothing of its own is charged nothing and writes no row"
+
+    def test_a_charge_names_every_player_it_was_raised_on(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        midfield = _best_of(session, [world["outsider_id"]], band="midfield")
+        attack = _best_of(session, [world["outsider_id"]], band="attack")
+        market.buy(session, career, ident=_listed(session, career, midfield).id)
+        market.buy(session, career, ident=_listed(session, career, attack).id)
+        career_service.play_round(session, career)
+        charge = session.scalar(select(CareerWageCharge).where(CareerWageCharge.career_id == career.id))
+        assert charge is not None and charge.players == 2
+        parts = [part.rsplit(" ", 1) for part in charge.detail.split(" · ")]
+        assert sorted(name for name, _ in parts) == sorted([midfield.name, attack.name]), "the row says who, not merely how much"
+        assert sum(int(value.replace(",", "")) for _, value in parts) == charge.fee, "the names add up to the fee the balance lost"
+
+    def test_the_wage_bill_is_what_makes_the_next_offer_unaffordable(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        market.open_market(session, career)
+        rows = market.market_view(session, career)["listings"]
+        first, second = rows[0], rows[1]
+        # Budgeted to one credit short of two deals, with a wage in between: the only thing that can tip
+        # the second offer from buyable to refused is the round the first deal costs.
+        career.budget = first["price_to_pay"] + first["weekly_wage"] + second["price_to_pay"] - 5
+        session.commit()
+        market.buy(session, career, ident=first["id"], use_clause=first["clause_required"])
+        before = market.market_view(session, career)
+        assert next(row for row in before["listings"] if row["id"] == second["id"])["affordable"] is True
+        career_service.play_round(session, career)
+        after = market.market_view(session, career)
+        target = next(row for row in after["listings"] if row["id"] == second["id"])
+        assert after["budget"]["wages_paid"] == first["weekly_wage"]
+        assert target["affordable"] is False, "affordability is judged on the balance the rounds have already cost"
+        with pytest.raises(market.MarketRefusal) as refused:
+            market.buy(session, career, ident=second["id"], use_clause=target["clause_required"])
+        assert refused.value.code == "insufficient_budget"
+        assert refused.value.detail["remaining"] == after["budget"]["remaining"] == second["price_to_pay"] - 5
 
 
 class TestDeals:
@@ -598,7 +695,7 @@ class TestMarketView:
         assert "generated clubs" in view["disclaimer"]
         assert view["career"]["slug"] == career.slug and view["career"]["market_round"] == 1
         assert view["transfers_allowed"]["ok"] is True
-        assert view["totals"] == {"listed": market.MARKET_SIZE, "signed": 0, "withdrawn": 0, "moves": 0}
+        assert view["totals"] == {"listed": market.MARKET_SIZE, "signed": 0, "withdrawn": 0, "moves": 0, "wage_rows": 0}
 
     def test_an_offer_says_what_it_costs_who_must_be_paid_and_whether_you_can(self, session, world) -> None:  # type: ignore[no-untyped-def]
         poor = _career(session, world, budget=5_000)
@@ -627,5 +724,6 @@ class TestMarketView:
         limits = career_service.limitations()
         assert set(limits) == {"budget", "wages", "scouting", "philosophy", "table", "objectives"}
         assert "spent, not stated" in limits["budget"] and "/api/v1/transfers" in limits["budget"]
-        assert "not deducted" in limits["wages"]
+        assert "career_wage_charges" in limits["wages"] and "not charged is the club's own" in limits["wages"]
+        assert "no default" in limits["wages"], "the wage bill's own limit is named rather than left out"
         assert "AI Scout" in limits["scouting"] and "not built" in limits["scouting"]

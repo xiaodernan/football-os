@@ -176,6 +176,47 @@ function squadRows(page) {
   );
 }
 
+/** The ledger, read as a reader reads it: one row per thing the career did or owed, in the order printed.
+ * The cells come back as text and are parsed here, because a helper defined in Node does not exist inside
+ * the page. */
+async function ledgerRows(page) {
+  const cells = await page.$$eval('[data-testid="ledger"] tbody tr', (list) =>
+    list.map((row) => [...row.querySelectorAll('td')].map((cell) => cell.innerText.replace(/\s+/g, ' ').trim())),
+  );
+  return cells.map((row) => ({
+    round: Number((row[0] ?? '0').replace(/[^\d]/g, '')),
+    kind: (row[1] ?? '').toUpperCase(),
+    player: row[2] ?? '',
+    fee: amount(row[4]),
+    paid: (row[4] ?? '').startsWith('−') || (row[4] ?? '').startsWith('-'),
+    after: Number((row[5] ?? '0').replace(/[^\d]/g, '')),
+  }));
+}
+
+/** A button with no hook of its own is found by the words on it, which is what a visitor has. */
+function clickText(page, want) {
+  return page.evaluate((label) => {
+    const button = [...document.querySelectorAll('button')].find((node) => node.innerText.replace(/\s+/g, ' ').trim() === label);
+    if (!button) return 'missing';
+    if (button.disabled) return 'disabled';
+    button.click();
+    return 'clicked';
+  }, want);
+}
+
+/**
+ * The wage sentence, read the way a reader reads it:
+ * `… {rate} {units} a week across {players} deals stands charged; {paid} {units} has left the balance over {rows} rounds …`
+ *
+ * Matched as a sentence rather than scraped for every `[\d,]+` run: the note's own punctuation contains
+ * commas, and a comma parsed as a figure is a zero that looks like a number. `parsed: false` is how the
+ * walk says the sentence moved, so the checks that read it can fail loudly instead of reading silence.
+ */
+function wageFigures(line) {
+  const found = String(line).match(/([\d,]+) [a-z ]+ a week across (\d+) deals? stands charged; ([\d,]+) [a-z ]+ has left the balance over (\d+) rounds?/);
+  return { parsed: Boolean(found), rate: amount(found?.[1]), players: Number(found?.[2] ?? -1), paid: amount(found?.[3]), rows: Number(found?.[4] ?? -1) };
+}
+
 /** The line the page printed for the last thing it did. */
 async function lineWith(page, needle) {
   const body = await text(page);
@@ -237,7 +278,7 @@ async function main() {
   const options = await call(page, 'GET', '/api/v1/careers/options');
   check('the clubs on offer come from the generated world', options.status === 200 && options.json?.clubs?.length > 0, `${options.json?.clubs?.length ?? 0} clubs`);
   const rules = await call(page, 'GET', '/api/v1/transfers/rules');
-  check('the market publishes its arithmetic to anyone, no session required', rules.status === 200 && Object.keys(rules.json?.rules ?? {}).length === 10, `${Object.keys(rules.json?.rules ?? {}).length} expressions`);
+  check('the market publishes its arithmetic to anyone, no session required', rules.status === 200 && Object.keys(rules.json?.rules ?? {}).length === 11, `${Object.keys(rules.json?.rules ?? {}).length} expressions`);
   check('the public rules are labelled fictional', rules.json?.data_origin === 'simulation' && rules.json?.is_demo_data === true, String(rules.json?.disclaimer).slice(0, 60));
 
   const weakest = [...(options.json?.clubs ?? [])].sort((a, b) => a.overall - b.overall || String(a.slug).localeCompare(String(b.slug)));
@@ -283,7 +324,7 @@ async function main() {
       check('the four balance figures are printed before anything is spent', readout.length === 4, readout.map((row) => `${row.label}=${row.value}`).join(' '));
       check('a career that has not traded still has everything it was given', (await stat(page, 'Stated budget')) === BUDGET && (await stat(page, 'Remaining')) === BUDGET && (await stat(page, 'Spent on arrivals')) === 0, gb(BUDGET));
       check('the balance names the arithmetic it is summed from', has(empty, rules.json?.rules?.budget), String(rules.json?.rules?.budget).slice(0, 70));
-      check('the wage figure is published and says it is not deducted', has(empty, 'not deducted'), await lineWith(page, 'committed by the deals'));
+      check('the wage rule says a round is charged, and an empty ledger has charged nothing', has(empty, 'charged every round') && has(empty, 'has left the balance over 0 rounds'), await lineWith(page, 'stands charged'));
       check('the weakest band is named with its four indices', /attack\s*[\d.]+/.test(empty) && /midfield\s*[\d.]+/.test(empty), await lineWith(page, 'attack'));
       check('the need says what it judged on and which squad it read', has(empty, 'Judged on') && has(empty, 'Squad the reading used'));
       const expressions = Object.entries(rules.json?.rules ?? {});
@@ -294,7 +335,7 @@ async function main() {
       const missing = expressions.map(([key]) => key).filter((key) => !found.includes(key));
       check(
         'the rules panel prints every published expression, none of them paraphrased',
-        expressions.length === 10 && missing.length === 0,
+        expressions.length === 11 && missing.length === 0,
         `${found.length}/${expressions.length} found${missing.length ? ` — missing ${missing.join(', ')}` : ''}`,
       );
       check('the age curve is stated as bands rather than fitted', empty.includes('16-20→×0.6'), await lineWith(page, '32-99'));
@@ -493,6 +534,71 @@ async function main() {
   const href = await page.evaluate((want) => [...document.querySelectorAll('a')].find((link) => link.innerText.replace(/\s+/g, ' ').trim() === want)?.getAttribute('href') ?? '', 'the market spends it');
   check('the link is this career’s market, not a generic page', href === `/career/${ident}/market`, href);
 
+  // --- the wage bill: play a round on the season page, then come back and read what it cost --------------
+  // The rate is read off the market page *before* the round and the charge off the ledger *after* it, so the
+  // walk is asking whether the page charged what it had promised, not whether two readings of one response
+  // agree with each other.
+  await open(page, marketPath);
+  await until(page, 'stands charged');
+  const standing = wageFigures(await lineWith(page, 'stands charged'));
+  const remainingBefore = await stat(page, 'Remaining');
+  const ledgerBefore = await ledgerRows(page);
+  check('the standing wage rate is a sentence the walk can read before it plays', standing.parsed, await lineWith(page, 'stands charged'));
+  check('the round the walk plays is one its deals cost something in', standing.rate > 0 && standing.players > 0, `${gb(standing.rate)} a week across ${standing.players} deal(s), ${gb(standing.paid)} paid over ${standing.rows} round(s)`);
+
+  await open(page, `/career/${encodeURIComponent(ident)}`);
+  await until(page, 'Play the next round');
+  const played = await clickText(page, 'Play the next round');
+  check('the season page’s own button plays a round', played === 'clicked', played);
+  const roundLanded = await until(page, 'Round 1 played:');
+  check('the round arrives on the page that asked for it', roundLanded, await lineWith(page, 'Round 1 played'));
+
+  await open(page, marketPath);
+  await until(page, 'stands charged');
+  body = await text(page);
+  const afterRound = wageFigures(await lineWith(page, 'stands charged'));
+  const ledger = await ledgerRows(page);
+  const charges = ledger.filter((row) => row.kind === 'WAGE');
+  const remainingAfter = await stat(page, 'Remaining');
+  check('a played round is a row in the ledger, not a sentence about one', charges.length === 1 && ledger.length === ledgerBefore.length + 1, `${charges.length} wage row(s) of ${ledger.length} ledger rows`);
+  check('the wage row is stamped for the round that was played', charges[0]?.round === 1, `round ${charges[0]?.round ?? '—'}`);
+  check('the round charged exactly the rate printed before it', afterRound.parsed && charges[0]?.fee === standing.rate && standing.rate > 0, `${gb(standing.rate)} agreed · ${gb(charges[0]?.fee ?? 0)} charged`);
+  check('the wage row takes money out and names nobody', charges[0]?.paid === true && /^\d+ players? on wages/.test(charges[0]?.player ?? ''), (charges[0]?.player ?? '').slice(0, 60));
+  check('the wage row spells out the deals it was raised on', /[A-Z][a-z]+ [A-Z][a-z]+ [\d,]+/.test(charges[0]?.player ?? ''), (charges[0]?.player ?? '').slice(-90));
+  check('the balance falls by the wage and by nothing else', remainingBefore - remainingAfter === standing.rate, `${gb(remainingBefore)} − ${gb(standing.rate)} = ${gb(remainingAfter)}`);
+  check('the wage row prints the balance the round left', charges[0]?.after === remainingAfter, `${gb(charges[0]?.after ?? 0)} beside a Remaining of ${gb(remainingAfter)}`);
+  check(
+    'the paid-in-wages figure is the sum of the wage rows',
+    afterRound.parsed && afterRound.paid === standing.paid + (charges[0]?.fee ?? 0) && afterRound.paid === charges.reduce((total, row) => total + row.fee, 0),
+    `${gb(standing.paid)} + ${gb(charges[0]?.fee ?? 0)} = ${gb(afterRound.paid)}`,
+  );
+  check('the rate the round cost is still the rate standing after it', afterRound.rate === standing.rate && afterRound.rows === standing.rows + 1, `${gb(standing.rate)} a week over ${standing.rows} round(s) before · ${gb(afterRound.rate)} over ${afterRound.rows} after`);
+  // The reader's arithmetic, done in the browser: the column adds up from the stated budget to the last row.
+  let running = await stat(page, 'Stated budget');
+  const brokeAt = ledger.find((row) => {
+    running += row.paid ? -row.fee : row.fee;
+    return row.after !== running;
+  });
+  check('every row of the ledger prints the standing its predecessors left', !brokeAt, brokeAt ? `${brokeAt.kind} at round ${brokeAt.round} says ${gb(brokeAt.after)}, adding up gives ${gb(running)}` : `${ledger.length} rows, one running total`);
+  const sumLine = (await lineWith(page, 'stated')).replace(/\s+/g, ' ');
+  // The sentence is the whole budget as a reader is told to check it, so the walk checks it that way: the
+  // four figures it prints, added by hand, have to land on the balance it prints.
+  const sum = sumLine.match(/([\d,]+) stated(?: \+ ([\d,]+) received)?(?: − ([\d,]+) spent)?(?: − ([\d,]+) in wages)? = ([\d,]+)/);
+  const credits = (figure) => Number(String(figure ?? 0).replace(/,/g, ''));
+  check(
+    'the balance sentence names the wages it netted and adds up to its own answer',
+    Boolean(sum) && credits(sum?.[1]) + credits(sum?.[2]) - credits(sum?.[3]) - credits(sum?.[4]) === credits(sum?.[5]) && credits(sum?.[4]) === afterRound.paid,
+    sumLine.slice(0, 170),
+  );
+  check('the rule that charged the round is on the page', has(body, 'wage charge for a round'), await lineWith(page, 'wage charge for a round'));
+  await shot(page, 'market-after-round');
+
+  // The walk allows one browser habit in its console gate, and this is the check that pays for it: the icon
+  // the document declares is really served, so a legacy `/favicon.ico` probe missing is not an asset lost.
+  const iconHref = await page.evaluate(() => document.querySelector('link[rel="icon"]')?.getAttribute('href') ?? '');
+  const icon = iconHref ? await call(page, 'GET', iconHref.split('?')[0]) : { status: 0 };
+  check('the icon the page declares is the icon the server answers', iconHref.includes('icon.svg') && icon.status === 200, `${iconHref || '(none declared)'} → HTTP ${icon.status}`);
+
   // --- the wall ---------------------------------------------------------------------------------------
   const ownerContext = await browser.createBrowserContext();
   const rival = await ownerContext.newPage();
@@ -544,6 +650,10 @@ async function main() {
     /\/api\/v1\/transfers\/[^/]+\/buy: HTTP 409/,
     /\/career\/[^/]+\/market: Failed to load resource: the server responded with a status of 404/,
     /\/career\/[^/]+\/market: HTTP 404/,
+    // Chrome asks for the legacy `/favicon.ico` beside the icon this app declares, whatever the answer is.
+    // The allowance above is paid for by the check that the declared icon is really served — without that
+    // check this line would be hiding a missing asset rather than naming a browser habit.
+    /\/favicon\.ico: Failed to load resource: the server responded with a status of 404/,
   ];
   const unexpected = [...new Set(consoleErrors)].filter((line) => !provoked.some((pattern) => pattern.test(line)));
   check('every browser console error was one this walk provoked on purpose', unexpected.length === 0, unexpected.length ? unexpected.slice(0, 3).join(' | ') : `${consoleErrors.length} seen, all deliberate`);

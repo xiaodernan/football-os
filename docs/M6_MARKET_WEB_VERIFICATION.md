@@ -8,14 +8,16 @@ the round-scoped squad overlay that reaches the eleven without rewriting the wor
 hold those claims on both engines. What they could not hold is the sentence §22 is really about: that a
 *manager* can sit down and do this. That needs a browser.
 
-Date: 2026-09-24, run stamp `202609231918`. Built into a throwaway dist directory
+Date: 2026-09-24. The page walk ran as `202609231918` (86 checks) and the same walk with the wage bill
+landed as `202609232047` (103). Built into a throwaway dist directory
 (`NEXT_DIST_DIR=.next-market SITE_URL=http://127.0.0.1:3212 npx next build`), served by
 `next start -p 3212` with `API_INTERNAL_URL=http://127.0.0.1:8734` against a private uvicorn on 8734,
 and driven by `apps/web/scripts/qa-market.mjs` (system Chrome, puppeteer-core). The private ports and the
 private dist directory are deliberate: `.next` and 3210/3211 belong to runs already in flight on this
 machine, and a walk that rebuilt them would be measuring someone else's page.
 
-**Total: 86 checks, exit 0, 4 screenshots, 3 browser console errors, and all three provoked on purpose.**
+**Total: 103 checks, exit 0, 5 screenshots, 3 browser console errors, and all three provoked on purpose.**
+(The walk ran first at 86 checks, on the page alone; §5 below is the wage increment that took it to 103.)
 
 ## 1. One page, and the wall it sits behind
 
@@ -159,26 +161,106 @@ QA_BASE=http://127.0.0.1:3212 node scripts/qa-market.mjs
 The walk registers its own account (`market-qa-<stamp>@footballos.test`), opens its own career at
 Braeford Athletic with the §22 budget ceiling, and deletes that career at the end; the throwaway account
 stays in the dev database. Screenshots land in `docs/screenshots/` under
-`202609231918-market-{before,after-signing,traded,mobile}.png`, the last at 375px with
+`202609232047-market-{before,after-signing,traded,after-round,mobile}.png`, the last at 375px with
 `0px of horizontal overflow` asserted.
 
 It is a separate script from `visual-qa.mjs` on purpose: that file is another milestone's live working
-copy and cannot be edited underneath its author. Folding these 86 checks into it — and `lib/market.ts`
+copy and cannot be edited underneath its author. Folding these checks into it — and `lib/market.ts`
 into `lib/types.ts` — is the follow-up, not a defect in this increment.
 
-## 5. What this increment does not claim
+## 5. The wage bill: what changed after the first version of this document (ROADMAP item 8, closed)
 
-- **Wages are agreed and published but never charged.** The page prints
-  `budget.wage_committed_per_week` with the note beside it, and `limitations()["wages"]` says a career
-  with a 300k-a-week squad has the same balance as one with a 3k squad. ROADMAP item 8; making it true
-  changes every `budget_after` figure in this walk's arithmetic checks, so it belongs here rather than as
-  a quiet patch.
+The first version of this document closed with a limitation: *wages are agreed and published but never
+charged*, so a career with a 300k-a-week squad and one with a 3k squad finished the season with the same
+balance. That sentence is gone, and with it ROADMAP item 8.
+
+**The rule.** Each round the engine plays costs the career the weekly wage of every deal it holds at the
+start of that round — a buy until it is sold or released, a loan until `loan_until_round`. The charge is
+one row, and the balance is a sum of rows:
+
+```text
+career.budget + sum(moves.fee where kind = sell) − sum(moves.fee where kind in (buy, loan)) − sum(wage_charges.fee)
+```
+
+**Why its own table.** A wage is money that moves with no player attached. `career_squad_moves.player_id`
+is a non-null foreign key to `real_players`, because every row in it is about a person and the eleven is
+composed out of those rows; a fifth kind there would either break that constraint or have to be filtered
+out of squad maths everywhere the table is read. `career_wage_charges` (migration `0012`) keeps each table
+meaning one thing, and the ledger both the page and the walk read is the two of them in round order — each
+row carrying the `budget_after` its predecessors left, which is exactly the property that made a stored
+charge better than a derived one.
+
+**Where it is charged.** `career.play_round` is the only path that plays a round, and it calls
+`market.pay_wages` after the fixture is stored: a match a career never played is a match it never paid
+for. A career holding no deal of its own writes no row.
+
+Seventeen of the walk's 103 checks now belong to this, printed verbatim from run `202609232047`:
+
+```text
+PASS  the wage rule says a round is charged, and an empty ledger has charged nothing
+PASS  the standing wage rate is a sentence the walk can read before it plays
+PASS  the round the walk plays is one its deals cost something in — 2,100 a week across 1 deal(s), 0 paid over 0 round(s)
+PASS  the season page’s own button plays a round — clicked
+PASS  the round arrives on the page that asked for it — Round 1 played: BRAA 1–1 DUNT (home, Braeford Yard) …
+PASS  a played round is a row in the ledger, not a sentence about one — 1 wage row(s) of 4 ledger rows
+PASS  the wage row is stamped for the round that was played — round 1
+PASS  the round charged exactly the rate printed before it — 2,100 agreed · 2,100 charged
+PASS  the wage row takes money out and names nobody — 1 player on wages Loror Fennmann 2,100
+PASS  the wage row spells out the deals it was raised on — 1 player on wages Loror Fennmann 2,100
+PASS  the balance falls by the wage and by nothing else — 9,691,440 − 2,100 = 9,689,340
+PASS  the wage row prints the balance the round left — 9,689,340 beside a Remaining of 9,689,340
+PASS  the paid-in-wages figure is the sum of the wage rows — 0 + 2,100 = 2,100
+PASS  the rate the round cost is still the rate standing after it — 2,100 a week over 0 round(s) before · 2,100 over 1 after
+PASS  every row of the ledger prints the standing its predecessors left — 4 rows, one running total
+PASS  the balance sentence names the wages it netted and adds up to its own answer — 10,000,000 stated + 1,395,000 received − 1,703,560 spent − 2,100 in wages = 9,689,340 career credits
+PASS  the rule that charged the round is on the page — wage charge for a round = Σ weekly_wage of the deals this career holds at the start of that round …
+```
+
+Three of those are worth separating. **The rate is read before the round and the charge after it**, both
+out of the page's own sentence, so the walk asks whether the product charged what it had promised rather
+than whether two readings of one response agree. **The row names its players** — `1 player on wages
+Lorar Fennmann 2,100` — because a fee the reader cannot decompose is a fee they cannot check; the walk
+pulls the name and the number out of the cell and asserts they add up. And **the whole ledger column is
+added up in the browser**, from the stated budget to the last row's stored standing, which is the check
+that a *derived* wage (computed at read time, never written) could never pass: the balance would move
+between two rows with no row to explain it.
+
+The parse that reads the sentence is itself a lesson. An earlier version scraped `[\d,]+` runs from the
+paragraph and took the first two as rate and paid. The note's own punctuation — "…weekly wage, and each
+round's…" — contains a comma, `[\d,]+` matched it alone, `Number('')` was `NaN`, and `|| 0` turned the
+missing figure into a **zero that looked like a number**: the walk then reported "0 agreed · 2,100
+charged" against a page that was printing 2,100 correctly. The check failed, which is the only reason the
+bug is known. The sentence is now matched *as a sentence*, and when it does not match, `parsed: false`
+fails the walk loudly instead of feeding it a zero.
+
+Five service tests hold the same claims where they are made (`tests/test_transfers.py::TestWageBill`): no
+deals means no row; the round a deal is struck for is the round it starts costing; a sold player stops
+costing and an expired loan never starts again (`[1, 2]` charged, round 3 writes nothing); the row's
+`detail` names the players and adds up to its own fee; and — the causal one — a budget cut to
+`price₁ + wage₁ + price₂ − 5` makes the second offer affordable before the round is played and refused
+with `remaining = price₂ − 5` after it, which is the whole point of charging.
+
+What the wage bill still does not do is said in `limitations()["wages"]`: it charges the deals this
+career made and not the club's stored squad (those players came with the job), and a negative balance
+carries no consequence beyond the market refusing to spend from it — no default, no board reaction, no
+embargo.
+
+## 6. What this increment does not claim
+
 - **`no_transfers` now binds but is still advertised as merely stated.** `transferable()` refuses every
   move for a career whose scenario carries the rule and says `enforced: true` in the refusal;
   `challenges.py:133`, `tests/test_challenges.py:155` and `visual-qa.mjs:2042` still say otherwise and
   have to move together. ROADMAP item 7.
+- **The career form's budget caveat moved, and one gate has not caught up.** The form used to print
+  "Nothing spends this budget yet — there is no transfer market in this build". That sentence became
+  false when §22 landed and `components/CareerForm.tsx` now states what the budget does. `visual-qa.mjs`
+  asserts the old wording at line 1766; its owner has to re-point that needle, which this run did not do
+  from under them.
 - **The board is a fresh dozen per round, not a market with a memory.** There is no asking-price drift
   between rounds, no agents competing for the same player across careers, and no injury or suspension
   affecting value. §22's seven verbs are covered; its economy is one round deep.
+- **A wage charge is one week per round.** The engine's round is treated as a week for billing, which is
+  a stated convention rather than a fact about the calendar; there is no contract expiry, so a five-year
+  deal and a six-month one cost the same until the player is sold or released.
 - Nothing here is observed. Every figure is a fictional world's arithmetic, badged `DEMO DATA` with the
   disclaimer the walk reads back off the page.

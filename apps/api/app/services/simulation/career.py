@@ -77,8 +77,12 @@ def limitations() -> dict[str, str]:
             "not do is constrain the fixtures by itself — only a deal that was actually made changes the squad."
         ),
         "wages": (
-            "A deal records a weekly wage and a contract length, and the totals are published, but wages are not "
-            "deducted from the budget: there is no wage bill in this build, only a transfer fee."
+            "A deal's weekly wage is now charged: each round the engine plays writes one "
+            "career_wage_charges row whose fee is the sum of the wages of the deals this career holds at "
+            "the start of that round, and the balance drops by it. What is not charged is the club's own "
+            "stored squad — those players came with the job. And nothing follows a missed payment: there is "
+            "no default, no board reaction and no transfer embargo, only a balance that goes negative and "
+            "stops the market spending from it."
         ),
         "scouting": (
             "The market offers the best-rated players in each band with this club's weakest band filled first. It is a "
@@ -247,6 +251,12 @@ def play_round(session: Session, career: Career) -> tuple[CareerFixture, Simulat
     session.commit()
     session.refresh(fixture)
     session.refresh(career)
+    # The round is played, so the deals held for it are paid for (spec §22). A local import because
+    # `market` reaches through `challenges`, which imports this module — the cycle is the layering, not
+    # an accident: a challenge is a career, and a career's money is the market's business.
+    from app.services.simulation.market import pay_wages
+
+    pay_wages(session, career, round_index=int(plan["round_index"]))
     return fixture, match
 
 

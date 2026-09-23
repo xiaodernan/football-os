@@ -928,6 +928,7 @@ class Career(Base, TimestampMixin):
     fixtures: Mapped[list[CareerFixture]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerFixture.round_index")
     listings: Mapped[list[TransferListing]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="TransferListing.listed_round")
     moves: Mapped[list[CareerSquadMove]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSquadMove.round_index")
+    wage_charges: Mapped[list[CareerWageCharge]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerWageCharge.round_index")
 
 
 class CareerFixture(Base, TimestampMixin):
@@ -978,8 +979,12 @@ MOVE_EFFECT: Final[dict[str, str]] = {
     "sell": "the player leaves this career's club and the fee arrives",
     "release": "the player leaves this career's club for nothing",
 }
+# A wage row is the one ledger entry with no player attached to it, so its sentence names the round.
+WAGE_EFFECT: Final = "the wages this career agreed are paid: every deal it holds costs its weekly wage for the round it was held"
 # Stored so the number on a page and the rows behind it can be checked against each other by anyone.
-BUDGET_FORMULA: Final = "career.budget + sum(moves.fee where kind = sell) - sum(moves.fee where kind in (buy, loan))"
+BUDGET_FORMULA: Final = (
+    "career.budget + sum(moves.fee where kind = sell) - sum(moves.fee where kind in (buy, loan)) - sum(wage_charges.fee)"
+)
 
 
 class TransferListing(Base, TimestampMixin):
@@ -1061,3 +1066,32 @@ class CareerSquadMove(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     career: Mapped[Career] = relationship(back_populates="moves")
+
+
+class CareerWageCharge(Base, TimestampMixin):
+    """What one played round cost a career in wages (spec §22).
+
+    Its own table rather than another `career_squad_moves` kind because a wage is money that moves with
+    no player attached to it: that table's `player_id` is a foreign key a charge has no honest value
+    for, and the eleven is composed out of those rows. The ledger a reader adds up is both tables in
+    round order, which is why the running `budget_after` is stored on each row of both.
+
+    One row per round, written when the round is played, with the players it was charged for spelled out
+    in `detail` so the figure can be checked against the deals without running the code again.
+    """
+
+    __tablename__ = "career_wage_charges"
+    __table_args__ = (Index("ix_wage_charge_career_round", "career_id", "round_index"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    round_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    fee: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    fee_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    players: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    detail: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="wage_charges")

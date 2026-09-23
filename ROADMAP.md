@@ -260,11 +260,21 @@ Still open in M6:
    1 STATED ONLY*), so the walk has to be re-run on a production build with it. The direction of the error is
    an under-claim — a binding rule advertised as merely stated — so nothing the product promises is false
    meanwhile (`docs/M6_VERIFICATION.md` §14 — the market)
-8. [ ] **a wage bill.** §22's deals agree a weekly wage and publish the sum
-    (`/api/v1/transfers/{career}` → `budget.wage_committed_per_week`), but nothing deducts it: a career with a
-    300k-a-week squad and a career with a 3k one have the same balance. `limitations()["wages"]` says so; making
-    it true needs a per-round wage charge on the ledger, which changes every `budget_after` figure and so belongs
-    with the market's page rather than as a quiet patch.
+8. [x] **a wage bill** (2026-09-24, §22 continued): each round the engine plays now costs the career the
+   weekly wage of every deal it holds at the start of that round, written as one `career_wage_charges` row
+   (migration `0012`) with the players it was raised on named in `detail` and the balance it left in
+   `budget_after`. A wage is money that moves with no player, so it is its own table rather than a fifth
+   `career_squad_moves` kind whose `player_id` is a non-null foreign key the eleven is composed from — and
+   the ledger the page and the walk read is both tables in round order, which is the property a *derived*
+   charge could never satisfy. `BUDGET_FORMULA` gained its fourth term, `limitations()["wages"]` says what
+   still is not charged (the club's own stored squad; any consequence of a negative balance), and the
+   market walk grew from 86 checks to 103 with the rate read before the round and the charge read after it
+   (`docs/M6_MARKET_WEB_VERIFICATION.md` §5)
+9. [ ] **one needle in `visual-qa.mjs` still asserts a sentence this project no longer tells.** The career
+   form used to print "Nothing spends this budget yet — there is no transfer market in this build", which
+   became false when §22's page and wage bill landed; `components/CareerForm.tsx` now says what the budget
+   does. `apps/web/scripts/visual-qa.mjs:1766` tests the old wording, so that walk is red on that one check
+   until its owner re-points it — deliberately left to them rather than edited from under a live run
 
 ## Cross-cutting gates (spec §80 SEO, §81 i18n)
 

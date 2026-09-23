@@ -45,10 +45,17 @@ export type MarketBudget = {
   budget: number;
   spent: number;
   received: number;
+  /** What the rounds already played have cost in wages — a sum of `career_wage_charges` rows. */
+  wages_paid: number;
   remaining: number;
   units: string;
   moves: number;
+  wage_rows: number;
+  wage_rounds: number[];
+  /** The standing rate: what the next round would cost with the deals held right now. */
   wage_committed_per_week: number;
+  wage_players: number;
+  wage_detail: string;
   wage_note: string;
   formula: string;
 };
@@ -127,7 +134,10 @@ export type Move = {
   id: string;
   round_index: number;
   kind: string;
+  /** Which way the *player* moved. A wage row has no player, so it says `out` and means the money. */
   side: "in" | "out";
+  /** Which way the *money* moved, which is what signs the fee column. */
+  cash: "in" | "out";
   player_id: string;
   player_slug: string | null;
   player_name: string | null;
@@ -141,6 +151,8 @@ export type Move = {
   counterparty_name: string | null;
   budget_after: number;
   effect: string;
+  /** A wage row names the players it was raised on; a squad move row has nothing to add. */
+  detail: string;
   created_at: string | null;
 };
 
@@ -178,7 +190,7 @@ export type MarketView = {
   listings: Listing[];
   deals: Listing[];
   moves: Move[];
-  totals: { listed: number; signed: number; withdrawn: number; moves: number };
+  totals: { listed: number; signed: number; withdrawn: number; moves: number; wage_rows: number };
   rules: Record<string, string>;
   constants: {
     market_size: number;

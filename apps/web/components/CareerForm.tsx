@@ -125,8 +125,9 @@ export function CareerForm({ options }: { options: CareerOptions }) {
           <input aria-label="Budget" min={0} onChange={(event) => setBudget(event.target.value)} type="number" value={budget} />
         </label>
         <p className="muted" role="note">
-          Nothing spends this budget yet — there is no transfer market in this build, so a large number and a small
-          one have no effect on a fixture.
+          This is what the transfer market gets to spend: an offer priced above the balance left is refused, and every
+          round played charges the wages of the deals the club holds. A budget still changes no fixture by itself — only
+          a deal that was actually made changes the eleven.
         </p>
       </div>
 

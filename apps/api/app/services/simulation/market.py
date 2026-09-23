@@ -9,17 +9,20 @@ is answered below by a number that was *measured from stored rows* and a formula
   market moves those rows' players; it never writes a player of its own.
 * **Need** — the weakest of the four band indices the engine would play with, so what the market
   offers follows from the club's actual squad rather than from a mood.
-* **Budget** — `budget_position` sums this career's own move rows and publishes the arithmetic; a fee
-  that is not on the ledger cannot be spent, and a balance that does not add up is a defect.
+* **Budget** — `budget_position` sums this career's own ledger and publishes the arithmetic: the four
+  squad-move kinds, and one wage charge per round it played. A fee that is not on the ledger cannot be
+  spent, and a balance that does not add up is a defect.
 * **Tactical Fit, Role** — the player's band index (the same (mean−28)/68 measurement the engine
   reports for that band) blended with whether that band is the one the club is short in.
 * **Contract, Negotiation, Clauses** — a valuation that yields a wage, a length of deal and a release
   clause, a seller that answers an offer by a published rule, and a clause that is the only way into a
   rival's squad.
 
-Two things this module deliberately does not pretend to do. Wages are agreed and recorded but not
-deducted — there is no wage budget, and `limitations` says so. And a deal is not an opinion about a
-real transfer window: these are generated clubs, and every response carries the fiction disclaimer.
+Two things this module deliberately does not pretend to do. The wage bill it charges is the bill for the
+deals *this career made* — the players on the club's stored rows are not charged, because their contracts
+belong to the world every career shares, and this is stated rather than left implied. And a deal is not an
+opinion about a real transfer window: these are generated clubs, and every response carries the fiction
+disclaimer.
 """
 
 from __future__ import annotations
@@ -30,7 +33,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
-from app.models import BUDGET_FORMULA, MOVE_EFFECT, Career, CareerSquadMove, RealPlayer, Team, TransferListing
+from app.models import (
+    BUDGET_FORMULA,
+    MOVE_EFFECT,
+    WAGE_EFFECT,
+    Career,
+    CareerSquadMove,
+    CareerWageCharge,
+    RealPlayer,
+    Team,
+    TransferListing,
+)
 from app.services.simulation.challenges import challenge_by_slug
 from app.services.simulation.profile import BAND_ATTRIBUTES, BANDS, band_index, band_of_position, team_profile
 from app.services.simulation.squad import (
@@ -97,6 +110,11 @@ SELL_FORMULA: Final = (
     "the counterparty is the highest-rated club in the career's competition other than the career's own, ties broken by slug"
 )
 RELEASE_FORMULA: Final = "release pays no fee and takes the player out of the squad; the contract is not bought out and nothing arrives in the budget"
+WAGE_FORMULA: Final = (
+    "wage charge for a round = Σ weekly_wage of the deals this career holds at the start of that round "
+    "(a buy until it is sold or released, a loan until loan_until_round), written as one row when the round is played; "
+    "a career holding no deal of its own is charged nothing and writes no row"
+)
 
 RULES: Final[dict[str, str]] = {
     "valuation": VALUATION_FORMULA,
@@ -107,6 +125,7 @@ RULES: Final[dict[str, str]] = {
     "loan": LOAN_FORMULA,
     "sell": SELL_FORMULA,
     "release": RELEASE_FORMULA,
+    "wages": WAGE_FORMULA,
     "budget": BUDGET_FORMULA,
     "squad": "the eleven is then selected from the club's stored squad with these moves applied, so a signing changes the indices the engine plays with (app/services/simulation/squad.py)",
 }
@@ -407,27 +426,104 @@ def _record_move(
     return move
 
 
+def held_deals(session: Session, career_id: str, round_index: int) -> list[CareerSquadMove]:
+    """The deals this career stands behind in one round, one row per player, in the order they were made.
+
+    The last move for a player is the one that binds: a signing sold on again is not held, and a loan
+    whose rounds have run out is not either — `effective_kind` says so without editing the history.
+    """
+    latest: dict[str, CareerSquadMove] = {}
+    for move in moves_as_of(session, career_id, round_index):
+        latest[move.player_id] = move
+    return [move for player_id, move in latest.items() if effective_kind(move, round_index) in IN_KINDS]
+
+
+def wages_as_of(session: Session, career_id: str, round_index: int) -> list[CareerWageCharge]:
+    """Every wage row this career had been charged by the end of `round_index`, oldest round first."""
+    return list(
+        session.scalars(
+            select(CareerWageCharge)
+            .where(CareerWageCharge.career_id == career_id, CareerWageCharge.round_index <= round_index)
+            .order_by(CareerWageCharge.round_index, CareerWageCharge.created_at, CareerWageCharge.id)
+        ).all()
+    )
+
+
+def wage_bill(session: Session, career: Career, *, round_index: int) -> dict[str, Any]:
+    """What the deals this career holds would cost for one round, named player by player.
+
+    The same figure is published twice over: as the standing rate beside the budget, and as the `fee` of
+    the row written when a round is played. Both come out of this one function, so a page that printed
+    one and charged the other would be caught by a test rather than by a reader.
+    """
+    held = held_deals(session, career.id, round_index)
+    names = [f"{move.player_name} {move.weekly_wage:,}" for move in sorted(held, key=lambda move: (-move.weekly_wage, move.player_name))]
+    return {
+        "players": len(held),
+        "fee": sum(int(move.weekly_wage) for move in held),
+        "detail": " · ".join(names),
+        "units": career.budget_units,
+        "formula": WAGE_FORMULA,
+    }
+
+
 def budget_position(session: Session, career: Career) -> dict[str, Any]:
     """The budget as an arithmetic: what was stated, what left, what arrived, and what is standing."""
     round_index = int(career.rounds_played) + 1
     moves = moves_as_of(session, career.id, round_index)
     spent = sum(move.fee for move in moves if move.kind in IN_KINDS)
     received = sum(move.fee for move in moves if move.kind == "sell")
-    latest: dict[str, CareerSquadMove] = {}
-    for move in moves:
-        latest[move.player_id] = move
-    wages = sum(move.weekly_wage for move in latest.values() if effective_kind(move, round_index) in IN_KINDS)
+    charges = wages_as_of(session, career.id, round_index)
+    wages_paid = sum(int(row.fee) for row in charges)
+    standing = wage_bill(session, career, round_index=round_index)
     return {
         "budget": int(career.budget),
         "spent": spent,
         "received": received,
-        "remaining": int(career.budget) + received - spent,
+        "wages_paid": wages_paid,
+        "remaining": int(career.budget) + received - spent - wages_paid,
         "units": career.budget_units,
         "moves": len(moves),
-        "wage_committed_per_week": wages,
-        "wage_note": "agreed wages are recorded beside each deal and are not deducted — there is no wage budget in this build",
+        "wage_rows": len(charges),
+        "wage_rounds": sorted({int(row.round_index) for row in charges}),
+        "wage_committed_per_week": standing["fee"],
+        "wage_players": standing["players"],
+        "wage_detail": standing["detail"],
+        "wage_note": (
+            "charged every round this career plays: the deals it holds cost their agreed weekly wage, and each "
+            "round's charge is a row of its own below"
+        ),
         "formula": BUDGET_FORMULA,
     }
+
+
+def pay_wages(session: Session, career: Career, *, round_index: int) -> CareerWageCharge | None:
+    """Charge one played round what its deals cost, and write the row that says so.
+
+    Called from the only path that can play a round, after the fixture is stored, so a match a career
+    never played is a match it never paid for. A career that holds no deal of its own writes nothing:
+    an empty row beside an empty charge would put a figure on the ledger that no deal produced.
+    """
+    standing = wage_bill(session, career, round_index=round_index)
+    if standing["fee"] <= 0:
+        return None
+    balance = budget_position(session, career)
+    charge = CareerWageCharge(
+        id=new_public_id("wage"),
+        career_id=career.id,
+        round_index=round_index,
+        fee=int(standing["fee"]),
+        fee_units=career.budget_units,
+        players=int(standing["players"]),
+        detail=str(standing["detail"]),
+        budget_after=int(balance["remaining"]) - int(standing["fee"]),
+        data_origin="simulation",
+        is_demo_data=True,
+    )
+    session.add(charge)
+    session.commit()
+    session.refresh(charge)
+    return charge
 
 
 def buy(session: Session, career: Career, *, ident: str, use_clause: bool = False) -> tuple[CareerSquadMove, dict[str, Any]]:
@@ -696,6 +792,9 @@ def move_row(row: CareerSquadMove) -> dict[str, Any]:
         "round_index": int(row.round_index),
         "kind": row.kind,
         "side": "in" if row.kind in IN_KINDS else "out",
+        # Which way the *money* went. A squad move and a wage charge share one ledger, and a reader adds
+        # the fee column up, so the sign cannot be left to the reader's guess about `side`.
+        "cash": "in" if row.kind == "sell" else "out",
         "player_id": row.player_id,
         "player_slug": row.player_slug,
         "player_name": row.player_name,
@@ -709,10 +808,51 @@ def move_row(row: CareerSquadMove) -> dict[str, Any]:
         "counterparty_name": row.counterparty_name,
         "budget_after": int(row.budget_after),
         "effect": MOVE_EFFECT.get(row.kind, ""),
+        "detail": "",
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "data_origin": row.data_origin,
         "is_demo_data": row.is_demo_data,
     }
+
+
+def wage_row(charge: CareerWageCharge) -> dict[str, Any]:
+    """A wage charge in the ledger's own shape, so one table on the page can print both kinds of row.
+
+    There is no player to link, so the row names what was charged rather than whom. A page that invented
+    a player for this row would be printing a person who was never signed.
+    """
+    return {
+        "id": charge.id,
+        "round_index": int(charge.round_index),
+        "kind": "wage",
+        "side": "out",
+        "cash": "out",
+        "player_id": "",
+        "player_slug": "",
+        "player_name": f"{charge.players} player{'s' if charge.players != 1 else ''} on wages",
+        "player_path": None,
+        "position": "",
+        "fee": int(charge.fee),
+        "fee_units": charge.fee_units,
+        "contract_years": 0,
+        "weekly_wage": int(charge.fee),
+        "loan_until_round": 0,
+        "counterparty_name": "",
+        "budget_after": int(charge.budget_after),
+        "effect": WAGE_EFFECT,
+        "detail": charge.detail,
+        "created_at": charge.created_at.isoformat() if charge.created_at else None,
+        "data_origin": charge.data_origin,
+        "is_demo_data": charge.is_demo_data,
+    }
+
+
+def ledger_of(moves: list[dict[str, Any]], charges: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The two money tables as one ledger, in the order a reader has to add them up."""
+    return sorted(
+        [*moves, *charges],
+        key=lambda entry: (int(entry["round_index"]), str(entry["created_at"] or ""), str(entry["id"])),
+    )
 
 
 def market_view(session: Session, career: Career) -> dict[str, Any]:
@@ -725,6 +865,9 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
         ).all()
     )
     rows = list(session.scalars(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id).order_by(CareerSquadMove.round_index, CareerSquadMove.created_at)).all())
+    charges = list(session.scalars(select(CareerWageCharge).where(CareerWageCharge.career_id == career.id).order_by(CareerWageCharge.round_index, CareerWageCharge.created_at)).all())
+    move_rows = [move_row(row) for row in rows]
+    wage_rows = [wage_row(row) for row in charges]
     squad, account = current_squad(session, career)
     balance = budget_position(session, career)
     open_rows = [row for row in listings if row.status == "open"]
@@ -752,12 +895,13 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
         "squad": {"account": account, "players": squad_rows(squad), "fielding": can_field_side(squad)},
         "listings": [listing_row(session, career, row, balance) for row in open_rows],
         "deals": [listing_row(session, career, row, balance) for row in listings if row.status == "signed"],
-        "moves": [move_row(row) for row in rows],
+        "moves": ledger_of(move_rows, wage_rows),
         "totals": {
             "listed": len(open_rows),
             "signed": sum(1 for row in listings if row.status == "signed"),
             "withdrawn": sum(1 for row in listings if row.status == "withdrawn"),
             "moves": len(rows),
+            "wage_rows": len(charges),
         },
         "rules": RULES,
         "constants": {
@@ -789,10 +933,13 @@ __all__ = [
     "RULES",
     "SELL_FORMULA",
     "VALUATION_FORMULA",
+    "WAGE_FORMULA",
     "age_curve",
     "budget_position",
     "buy",
     "club_need",
+    "held_deals",
+    "ledger_of",
     "listing_row",
     "loan",
     "market_pool",
@@ -801,10 +948,14 @@ __all__ = [
     "move_row",
     "negotiate",
     "open_market",
+    "pay_wages",
     "release",
     "sell",
     "squad_rows",
     "tactical_fit",
     "transferable",
     "valuation",
+    "wage_bill",
+    "wage_row",
+    "wages_as_of",
 ]

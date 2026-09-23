@@ -69,7 +69,11 @@ export default async function CareerMarketPage({ params }: Props) {
       <p className="muted">
         <span className="mono">{budget.formula}</span>
       </p>
-      <p className="notice notice--warn">{budget.wage_note} {money(budget.wage_committed_per_week)} {budget.units} a week is committed by the deals on file.</p>
+      <p className="notice notice--warn">
+        {budget.wage_note} {money(budget.wage_committed_per_week)} {budget.units} a week across{" "}
+        {budget.wage_players} deal{budget.wage_players === 1 ? "" : "s"} stands charged; {money(budget.wages_paid)} {budget.units} has
+        left the balance over {budget.wage_rows} round{budget.wage_rows === 1 ? "" : "s"}, each one a row in the ledger below.
+      </p>
 
       <Panel eyebrow={`${view.listings.length} priced offers · need: ${need.needed_band}`} title="Buying">
         <MarketTools
@@ -152,7 +156,7 @@ export default async function CareerMarketPage({ params }: Props) {
           </div>
         ) : (
           <div className="world-tablewrap">
-            <table className="table">
+            <table className="table" data-testid="ledger">
               <thead>
                 <tr>
                   <th scope="col">Round</th>
@@ -181,15 +185,20 @@ export default async function CareerMarketPage({ params }: Props) {
                       ) : (
                         move.player_name
                       )}
+                      {move.detail ? (
+                        <p className="muted" key={move.id}>
+                          {move.detail}
+                        </p>
+                      ) : null}
                     </td>
                     <td>{move.counterparty_name || "—"}</td>
                     <td className="num">
-                      {move.side === "in" ? "−" : "+"}
+                      {move.cash === "out" ? "−" : "+"}
                       {money(move.fee)} {move.fee_units}
                     </td>
                     <td className="num mono">{money(move.budget_after)}</td>
                     <td className="num">{move.weekly_wage ? `${money(move.weekly_wage)}/wk` : "—"}</td>
-                    <td className="num">{move.contract_years}y{move.loan_until_round ? ` · until r${move.loan_until_round}` : ""}</td>
+                    <td className="num">{move.kind === "wage" ? "—" : `${move.contract_years}y${move.loan_until_round ? ` · until r${move.loan_until_round}` : ""}`}</td>
                     <td className="muted">{move.effect}</td>
                   </tr>
                 ))}
@@ -199,7 +208,9 @@ export default async function CareerMarketPage({ params }: Props) {
         )}
         <p className="muted">
           {budget.budget.toLocaleString("en-GB")} stated {budget.received ? `+ ${money(budget.received)} received ` : ""}
-          {budget.spent ? `− ${money(budget.spent)} spent ` : ""}= <strong className="mono">{money(budget.remaining)} {budget.units}</strong>, and the same number is printed beside every offer as the
+          {budget.spent ? `− ${money(budget.spent)} spent ` : ""}
+          {budget.wages_paid ? `− ${money(budget.wages_paid)} in wages ` : ""}={" "}
+          <strong className="mono">{money(budget.remaining)} {budget.units}</strong>, and the same number is printed beside every offer as the
           balance a deal has to fit inside.
         </p>
       </Panel>

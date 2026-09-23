@@ -395,7 +395,7 @@ formula printed beside it — none by an adjective:
 | --- | --- |
 | Player / Club / Age / Potential | the world's own `real_players` and `teams` rows; the market never writes a player of its own |
 | Need | the weakest of the **four band indices the engine itself reports**, computed over this career's squad with its transfers applied as of the round |
-| Budget | `career.budget + Σ sell fees − Σ (buy + loan) fees`, summed out of `career_squad_moves`; a fee that is not a row cannot be spent |
+| Budget | `career.budget + Σ sell fees − Σ (buy + loan) fees − Σ wage charges`, summed out of `career_squad_moves` and `career_wage_charges`; a fee that is not a row cannot be spent |
 | Tactical Fit | `0.5 ×` the player's own band index (`(mean − 28) / 68`, the same measurement) `+ 0.5 ×` one when his band is the band the club is short in |
 | Role | the band a position staffs (`BANDS`), which is also what the market's per-band selection fills |
 | Contract / Negotiation | valuation → weekly wage (`round_5(asking ÷ 500)`, never below the 5-credit round) and length (`5 − max(0, age − 27)`, clamped 1–5); a seller that answers by a published ladder |
@@ -517,10 +517,16 @@ locations named.
 What is still not claimed, and is said out loud in `career.limitations()` (whose `budget` entry now
 points at this API instead of apologising for it):
 
-* **Wages are agreed, not deducted.** There is no wage bill in this build, only a transfer fee.
+* **The wage bill covers this career's deals, not the club's history.** Each round played charges the
+  weekly wage of the deals this career holds (`career_wage_charges`, migration `0012`, and the fourth term
+  of `BUDGET_FORMULA`); the players on the world's stored rows came with the job and cost nothing. And
+  nothing follows a balance that goes negative — no default, no board reaction, no embargo — only a market
+  that will not let the career spend from it. Verified in
+  [`M6_MARKET_WEB_VERIFICATION.md`](M6_MARKET_WEB_VERIFICATION.md) §5.
 * **The market is a rule, not an opinion.** It offers the best-rated players per band with the weakest
   band filled first; searching for a player who matches a description is the AI Scout (§23) and is not built.
 * **Nothing here is a real transfer.** Generated clubs, generated players, arithmetic this project runs
   on its own rows — `MARKET_DISCLAIMER` rides on every response, including the public one.
-* **There is no page yet.** The market is an API tier; `/career/{slug}` still shows a budget it cannot
-  spend, which is the next task rather than a claim this one makes.
+* **The page is a separate increment.** `/career/{slug}/market` landed after this section was written and
+  is verified in [`M6_MARKET_WEB_VERIFICATION.md`](M6_MARKET_WEB_VERIFICATION.md); the walk in
+  `apps/web/scripts/qa-market.mjs` is what re-derives these figures in a browser.
