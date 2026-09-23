@@ -309,8 +309,7 @@ queries that table, on a file that passes alone and passes again in the full run
 that the throwaway database is a **single shared resource** whose session fixture starts with
 `Base.metadata.drop_all()`: two runs against `football_os_pytest` overlap, and one drops the schema
 under the other. Nothing in §21 caused it and nothing here should pretend the leg was clean on the
-first attempt — it was clean on the second. The follow-up is a per-run database name, recorded in
-ROADMAP rather than fixed silently.
+first attempt — it was clean on the second. The race itself is fixed in §13.
 
 ## 12. Defects found while building this section
 
@@ -326,3 +325,54 @@ ROADMAP rather than fixed silently.
    The implementation was right in all three; the tests were wrong.
 3. **The OpenAPI counts in §8 were stale.** Career Mode (§10) had already taken the contract from
    63 paths / 73 operations to 69, and §8 was not updated with it. Corrected to the live figure.
+4. **`str(sqlalchemy.URL)` is not the URL.** While isolating the test database (§13), the first
+   provisioning attempt died with `password authentication failed for user "football"` — against a
+   server the same credentials had been connecting to all morning. `str()` on a `URL` renders through
+   `hide_password=True`, so the connection string handed to `create_engine` carried a literal `***`
+   where the secret belongs. The repr in the traceback even showed `football:***@…`, which reads as
+   SQLAlchemy being considerate rather than as the bug. Use `render_as_string(hide_password=False)` or
+   pass the `URL` object itself.
+
+## 13. The server-backed test run got its own database (2026-09-24)
+
+The defect §11 records is structural, not a one-off: `tests/conftest.py` pointed every run at one
+fixed `football_os_pytest`, and its session fixture began with `Base.metadata.drop_all()`. Two
+overlapping runs therefore emptied the schema on each other mid-flight, and the failure surfaced in
+whichever query happened to run next — which is why it looked unrelated to anything. Retrying,
+serialising runs, or declaring the leg flaky would all have been lies. So:
+
+* `_run_scoped_url()` rewrites a non-SQLite `FOOTBALL_OS_TEST_DATABASE_URL` at **import** time, because
+  a test module that imports an app module binds `app.core.db.engine` to `DATABASE_URL` at that moment —
+  doing it in the fixture would have left the engine pointed at the old name. It keeps the
+  "must contain `test`" guard, insists the name be a plain identifier (it has to create and drop it),
+  and appends a run uuid.
+* The session fixture then `CREATE DATABASE`s that name on the server's `postgres` maintenance database
+  (AUTOCOMMIT, `NullPool` — neither optional), installs `vector` in it because the extension is not in
+  `template1` on this server, and `DROP DATABASE … WITH (FORCE)`s it afterwards. A failure after
+  creation releases the database too, so a red run leaves no residue.
+* The SQLite leg is untouched: the rewrite returns early and `--collect-only` creates nothing at all.
+
+Measured on this host (PostgreSQL 16.0.15, role `football` holding `CREATEDB`), two full suites started
+at once against the same server:
+
+```text
+--- databases live mid-run ---
+football_os_pytest_493a0a
+football_os_pytest_4e6d2b
+run A rc=0 tests=376
+run B rc=0 tests=376
+--- leftovers after both runs ---
+0
+```
+
+The two names are the point: the runs could not have touched each other's schema even if they wanted
+to, both reported green, and the server was left as it was found. That is the shape of proof the rest
+of this milestone has used — the claim is the thing you can run, and the numbers above are the counts
+on the machine, not an expectation about them.
+
+The same path was then run against a stem that exists nowhere on the server —
+`…/football_os_ci_simulated_test`, 45 world tests, green, zero databases left behind — because that is
+the shape CI hands it: `.github/workflows/ci.yml` names `football_os_test` and used to create it and
+its extension by hand immediately before `python -m pytest`. Those two `psql` steps are now gone, since
+a run that provisions its own database does not need a pre-made one, and a pre-made one is exactly the
+shared resource that caused this section.

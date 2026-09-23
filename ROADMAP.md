@@ -207,11 +207,12 @@ Still open in M6:
 3. [ ] squad and training carry-over between matches
 4. [ ] a `sim_events` table so the timeline is stored rather than regenerated
 5. [ ] rendering the `training_log` the player detail route already returns
-6. [ ] **a per-run test database name** — `conftest.py` points every run at one fixed
-   `football_os_pytest` and its session fixture begins with `drop_all()`, so two overlapping runs make
-   the other's tables vanish. Caught while re-running §21: one spurious
-   `relation "training_drills" does not exist` in a test that never queries that table, green on rerun
-   (`docs/M6_VERIFICATION.md` §11). The fix is a run-scoped database name, not a retry.
+6. [x] **a per-run test database** — `conftest.py` pointed every run at one fixed `football_os_pytest`
+   and its session fixture began with `drop_all()`, so two overlapping runs made the other's tables
+   vanish. Caught while re-running §21: one spurious `relation "training_drills" does not exist` in a
+   test that never queries that table, green on rerun. Fixed by creating, provisioning (`vector`) and
+   dropping a uuid-suffixed database per server-backed run — proved by **two full 376-test suites
+   running concurrently, both green, nothing left behind** (`docs/M6_VERIFICATION.md` §13)
 
 ## Cross-cutting gates (spec §80 SEO, §81 i18n)
 

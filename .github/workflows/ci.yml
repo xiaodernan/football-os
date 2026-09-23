@@ -49,8 +49,8 @@ jobs:
           DATABASE_URL: postgresql+psycopg2://football:football@localhost:5432/football_os
           FOOTBALL_OS_TEST_DATABASE_URL: postgresql+psycopg2://football:football@localhost:5432/football_os_test
         run: |
-          psql "postgresql://football:football@localhost:5432/postgres" -c "create database football_os_test owner football"
-          psql "postgresql://football:football@localhost:5432/football_os_test" -c "create extension if not exists vector"
+          # The name is a stem, not a database: conftest creates `<name>_<run uuid>` on this server,
+          # installs `vector` in it and drops it afterwards, so two runs can never share a schema.
           python -m pytest
       # Spec §64: the RAG benchmark is the reviewer for any change to retrieval, chunking or the
       # corpus. It fails the build when a gate drops, so an answer-quality regression cannot merge.
