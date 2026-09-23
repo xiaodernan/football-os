@@ -87,7 +87,13 @@ export default async function CareerDetailPage({ params }: Props) {
               ],
               ["Longest unbeaten run", `${record.unbeaten_run}`],
               ["Form (oldest first)", record.form.join(" ") || "—"],
-              ["Budget (stated, unspent)", `${career.budget.toLocaleString("en-GB")} ${career.budget_units}`],
+              ["Budget (as it was stated)", `${career.budget.toLocaleString("en-GB")} ${career.budget_units}`],
+              [
+                "What is left of it",
+                <Link className="world-link" href={`/career/${encodeURIComponent(career.slug)}/market`} key="market">
+                  the market spends it
+                </Link>,
+              ],
             ]}
           />
         </Panel>

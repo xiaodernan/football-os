@@ -70,7 +70,7 @@ AGE_CURVE: Final = ((16, 20, 0.60), (21, 23, 0.90), (24, 27, 1.00), (28, 31, 0.7
 VALUATION_FORMULA: Final = (
     "asking = round_5( ((overall − 40) × 45,000 + max(0, potential − overall) × 25,000) × age_curve ); "
     "age_curve = 0.60 at 16–20, 0.90 at 21–23, 1.00 at 24–27, 0.75 at 28–31, 0.45 at 32 and over; "
-    "release_clause = asking × 1.5; weekly_wage = asking ÷ 500; "
+    "release_clause = round_5(asking × 1.5); weekly_wage = round_5(asking ÷ 500), and never below the 5-credit round; "
     "contract_years = 5 − max(0, age − 27), clamped to 1–5"
 )
 NEED_FORMULA: Final = (

@@ -171,7 +171,8 @@ rules something applied. `/challenges` and `/challenges/runs/{slug}` put it on s
 holds it to the arithmetic: 17 checks over the measured club, the four-field form, the summed verdict and the
 `409 window_closed` the route answers for a seventh round.
 
-**The transfer market (§22) — API tier verified 2026-09-24** (`docs/M6_VERIFICATION.md` §14 — the market). A budget
+**The transfer market (§22) — API tier and page verified 2026-09-24** (`docs/M6_VERIFICATION.md` §14 — the
+market, [`docs/M6_MARKET_WEB_VERIFICATION.md`](docs/M6_MARKET_WEB_VERIFICATION.md) — the browser). A budget
 became a sum of rows: `transfer_listings` priced by a formula the response prints, `career_squad_moves`
 as the only thing that moves money, a club's need read as its weakest engine band, a fit that reuses that
 same band measurement, a seller that answers an offer by a published ladder, and a release clause that is
@@ -180,8 +181,10 @@ so the generated world's player rows are never rewritten and a later signing can
 match — `replay_is_identical` rebuilds the squad *as of* the round and refuses rather than blaming the
 engine for an input change. 8 routes, 49 tests, both engines, and the match report now carries
 `squad_label` so an unfamiliar name in a club's eleven explains itself. That paragraph above about
-"no transfers" being stated intent is superseded: since this landed, the rule binds. No page yet —
-`/career/{slug}` still shows a budget it cannot spend from, which is the next task.
+"no transfers" being stated intent is superseded: since this landed, the rule binds.
+`/career/{slug}/market` is the page: 86 checks against a production build, the clause and wage arithmetic
+re-derived from the DOM, the ladder driven by clicking a row, and a signing sold straight back on so that
+the ledger's two fees and the squad's net counts are reconciled against each other in the same walk.
 
 Verified 2026-09-23 → 2026-09-24 (377 API tests on both engines + a browser walk at 226/226):
 
@@ -226,7 +229,15 @@ Still open in M6:
    way into a rival, and a round-scoped squad overlay that reaches the eleven without editing the world.
    Eight routes, 49 tests, and the engine now prints `squad_label` in a match report so a player who is
    not on the club's page is explained by the report itself (`docs/M6_VERIFICATION.md` §14 — the market).
-   **Still open: the page.** `/career/{slug}` shows a budget it cannot spend from; the market is only an API
+   **The page landed the same day**: `/career/{slug}/market` — the dozen offers with their clause and wage
+   arithmetic re-derived in the browser, the negotiation ladder driven by clicking a row, the signing that
+   joins the eleven, the loan with its end round, the sale whose proceeds arrive, and the ledger the balance
+   is summed from, all behind the `/career` session wall. 86 checks, quoted in
+   [`docs/M6_MARKET_WEB_VERIFICATION.md`](docs/M6_MARKET_WEB_VERIFICATION.md). It also caught a published
+   formula the code does not run: §22's own rule text said `weekly_wage = asking ÷ 500` and
+   `release_clause = asking × 1.5` while both are rounded to the 5-credit step — the 49 backend tests asserted
+   the rounded values, so only the sentence shown to a manager was false. The wage bill is still not
+   deducted (item 8) and `no_transfers` is still advertised as merely stated (item 7).
 3. [ ] squad and training carry-over between matches
 4. [ ] a `sim_events` table so the timeline is stored rather than regenerated
 5. [ ] rendering the `training_log` the player detail route already returns

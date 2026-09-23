@@ -19,12 +19,15 @@ export type ApiResult<T> = { ok: true; status: number; data: T } | { ok: false; 
 function normalizeError(status: number, payload: unknown): ApiError {
   const detail = payload && typeof payload === "object" && "detail" in payload ? (payload as { detail: unknown }).detail : payload;
   if (typeof detail === "string") return { code: "error", message: detail };
-  if (detail && typeof detail === "object") {
+  if (detail && typeof detail === "object" && !Array.isArray(detail)) {
     const d = detail as Record<string, unknown>;
+    // A refusal that arrives flat — `{code, message, fee, remaining}` — carries its figures beside the
+    // sentence, and the sentence is only checkable if the figures survive the trip to the browser.
+    const figures = Object.fromEntries(Object.entries(d).filter(([key]) => key !== "code" && key !== "message"));
     return {
       code: typeof d.code === "string" ? d.code : "error",
       message: typeof d.message === "string" ? d.message : "Request failed",
-      details: d.details ?? d.detail,
+      details: d.details ?? d.detail ?? (Object.keys(figures).length ? figures : undefined),
     };
   }
   return { code: "error", message: `Request failed with status ${status}` };

@@ -398,8 +398,8 @@ formula printed beside it — none by an adjective:
 | Budget | `career.budget + Σ sell fees − Σ (buy + loan) fees`, summed out of `career_squad_moves`; a fee that is not a row cannot be spent |
 | Tactical Fit | `0.5 ×` the player's own band index (`(mean − 28) / 68`, the same measurement) `+ 0.5 ×` one when his band is the band the club is short in |
 | Role | the band a position staffs (`BANDS`), which is also what the market's per-band selection fills |
-| Contract / Negotiation | valuation → weekly wage (`asking ÷ 500`) and length (`5 − max(0, age − 27)`, clamped 1–5); a seller that answers by a published ladder |
-| Clauses | `release_clause = asking × 1.5`, and the only way into a rival's squad |
+| Contract / Negotiation | valuation → weekly wage (`round_5(asking ÷ 500)`, never below the 5-credit round) and length (`5 − max(0, age − 27)`, clamped 1–5); a seller that answers by a published ladder |
+| Clauses | `release_clause = round_5(asking × 1.5)`, and the only way into a rival's squad |
 | Buy / Sell / Loan / Release | four `career_squad_moves` kinds, each with a `MOVE_EFFECT` sentence, each putting or taking a player in the eleven |
 
 The valuation is arithmetic on a row, not a market estimate:
