@@ -10,7 +10,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) — world 3.2 (2026-09-23) added the sixth §65 gate item, 100 training sessions, browsed at `/world/training` |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 6 of 6 topics on all 50 systems (2 were refused until the corpus gained the missing passages); 3D pitch and board sharing beyond one owner are open follow-ups |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ✅ verified 2026-09-22 ([pipeline](docs/M5_VERIFICATION.md) · [web](docs/M5_WEB_VERIFICATION.md)) — upload, report, detection timeline and owner-only byte-range playback proven in the browser |
-| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log, **Career Mode including its page**, **manager live challenges including their page**, the **§22 transfer market including its page** and the **§20 squad carry-over including its panel** ([engine+career backend](docs/M6_VERIFICATION.md) §10–§11 · [market backend](docs/M6_VERIFICATION.md) §14 — the market · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md) · [challenge web](docs/M6_CHALLENGES_WEB_VERIFICATION.md) · [carry-over](docs/M6_CARRY_OVER_VERIFICATION.md)); 226/226 walk checks on a production build 2026-09-24, 45/45 on the §20 carry walk the same day, 450 API tests on both engines — `sim_events` and the §23 AI Scout outstanding |
+| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log, **Career Mode including its page**, **manager live challenges including their page**, the **§22 transfer market including its page** and the **§20 squad carry-over including its panel** and the **stored timeline (`sim_events`, its rows re-read by the report page)** ([engine+career backend](docs/M6_VERIFICATION.md) §10–§11 · [market backend](docs/M6_VERIFICATION.md) §14 — the market · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md) · [challenge web](docs/M6_CHALLENGES_WEB_VERIFICATION.md) · [carry-over](docs/M6_CARRY_OVER_VERIFICATION.md) · [timeline rows](docs/M6_SIM_EVENTS_VERIFICATION.md)); 226/226 walk checks on a production build 2026-09-24, 45/45 on the §20 carry walk, 29/29 on the `sim_events` timeline walk the same day, 476 API tests on both engines — the §23 AI Scout and a cross-match ledger over the new rows are outstanding |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ — the §22 market landed early inside M6, so `GET /api/v1/transfers/rules` and a career's need/fit/budget arithmetic are already the published numbers an AI Scout (§23) would have to reason over |
 | **M8 Club OS / Academy** | organisations, teams, coaches, IDP, curriculum, permissions, multi-tenant | B2B tenant isolation proven | ⬜ |
 | **M9 Community** | feed, posts, comments, likes, follows, shared boards/plans | creator→content→feedback loop | ⬜ |
@@ -256,7 +256,29 @@ Still open in M6:
    season page's own button, every printed condition re-derived from the constants the page itself
    publishes, and the report page checked against the season page for the same two expressions. Player
    growth, resting a tired player and substitutions are still not implemented and the module says so.
-4. [ ] a `sim_events` table so the timeline is stored rather than regenerated
+4. [x] **`sim_events`: the timeline as rows** (2026-09-24, migration `0014`) — and the premise the line
+   itself carried is wrong, so the module's first section says so: nothing was being regenerated.
+   `simulate_match` builds the event list once, `run_simulation` stores the whole report — events included
+   — in `sim_matches.report`, and the detail route reads that JSON back without asking the engine anything;
+   only `/replay` re-derives, deliberately. What the rows add is **addressability**: "who scored most in
+   this career", "how many sendings-off in this competition" and "which keeper faced the biggest chances"
+   stop meaning unrolling every report in the world, and the two composite indexes are the shapes those
+   questions take. Two rules, both tested rather than asserted in prose: *the rows are a copy, not a second
+   opinion* (written in the report's own transaction, never fed back to the engine, and a disagreement is
+   reported field-by-field **in the report's favour** — `test_a_moved_minute_is_caught_even_though_the_length_is_unchanged`
+   is why the check is per field and not per count); and *a name is not an identity* (`lineup` is inside
+   every stored match's digest, so it cannot gain ids — identity is the name looked back up in the same
+   eleven, and a shared name yields `ambiguous` and claims no player rather than writing one man's record
+   under another's name). The writer's own docstring promised idempotence the code did not have: with
+   `SessionLocal(autoflush=False)` a `SELECT` cannot see rows queued earlier in the same transaction, so
+   the second call deleted nothing and hit `UNIQUE constraint failed: sim_events.match_id, sim_events.ordinal`
+   — two load-bearing flushes, one test. `GET /simulate/{ident}` and a fresh play now carry a `timeline`
+   whose `source` a page **has** to print, because "read from sim_events rows" and "this match predates the
+   table" are different claims; nothing was backfilled, and the fallback says so in its own sentence.
+   26 tests in `tests/test_sim_events.py` — **476 API tests green on both engines** — measured against the
+   code with a one-line mutation (5 of 26 red), and the panel is **29/29 walk checks** on a production build
+   ([`docs/M6_SIM_EVENTS_VERIFICATION.md`](docs/M6_SIM_EVENTS_VERIFICATION.md)).
+   No cross-match ledger reads these rows yet — that is item 10.
 5. [ ] rendering the `training_log` the player detail route already returns
 6. [x] **a per-run test database** — `conftest.py` pointed every run at one fixed `football_os_pytest`
    and its session fixture began with `drop_all()`, so two overlapping runs made the other's tables
@@ -292,6 +314,14 @@ Still open in M6:
    became false when §22's page and wage bill landed; `components/CareerForm.tsx` now says what the budget
    does. `apps/web/scripts/visual-qa.mjs:1766` tests the old wording, so that walk is red on that one check
    until its owner re-points it — deliberately left to them rather than edited from under a live run
+10. [ ] **nothing aggregates these rows across matches yet.** `sim_events` (item 4) turned "who scored most
+   in this career" into a query, and no code runs that query: the seasons a career plays are still only
+   readable one report at a time. The next increment is a per-player ledger over a career's own fixtures —
+   goals, shots and bookings grouped by `player_id` and by `team_id`, since a fixture's home side is not
+   always the career's club and an event belongs to the side that printed it — reached by joining
+   `sim_events` to `career_fixtures`, with the `ambiguous` share stated in the same
+   panel rather than hidden: a name two players of one club share contributes nothing to either of them,
+   so a top-scorer list is only honest next to the count of events that could not be attributed.
 
 ## Cross-cutting gates (spec §80 SEO, §81 i18n)
 

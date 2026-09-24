@@ -63,6 +63,11 @@ export default async function SimulationReportPage({ params }: Props) {
   const home = report.sides.home;
   const away = report.sides.away;
   const scored = report.events.filter((event) => event.type === "goal");
+  // The timeline is read from `sim_events` where the server has rows, and from the report where it does
+  // not — and the panel prints which of the two it did, because "one query per event" and "this match
+  // predates the table" are different claims about the same list of minutes.
+  const timeline = match.timeline;
+  const shown = timeline?.events ?? report.events;
 
   return (
     <div className="container page stack">
@@ -119,8 +124,43 @@ export default async function SimulationReportPage({ params }: Props) {
         <SideComparison report={report} />
       </Panel>
 
-      <Panel eyebrow={`${report.events.length} events · in minute order`} title="Timeline">
-        <EventTimeline events={report.events} />
+      <Panel eyebrow={timeline ? `${timeline.count} events · read from ${timeline.source}` : `${report.events.length} events · in minute order`} title="Timeline">
+        <div className="stack">
+          <EventTimeline events={shown} />
+          {timeline && (
+            <div className="stack-sm" data-testid="timeline-provenance">
+              <p className="tac-formula">{timeline.attribution_formula}</p>
+              <div className="tag-list">
+                {Object.entries(timeline.by_type).map(([type, count]) => (
+                  <span className="chip mono" key={type}>
+                    {type} {count}
+                  </span>
+                ))}
+                <span className="chip num" title={timeline.formula}>
+                  {timeline.stored_rows} stored rows
+                </span>
+                <span className="chip num" title="An event names a player only when that side's eleven holds the name once.">
+                  {timeline.identified} of {timeline.count} traced to a player
+                </span>
+              </div>
+              {timeline.ambiguous_names.length > 0 && (
+                <p className="notice notice--warn">
+                  {timeline.ambiguous_names.length} name{timeline.ambiguous_names.length > 1 ? "s" : ""} on this timeline belong to
+                  two players in the same eleven ({timeline.ambiguous_names.join(", ")}), so those events are kept without a player
+                  rather than guessed at.
+                </p>
+              )}
+              {timeline.unnamed_names.length > 0 && (
+                <p className="muted world-section-note">
+                  {timeline.unnamed_names.length} event{timeline.unnamed_names.length > 1 ? "s" : ""} named the club rather than a
+                  player ({timeline.unnamed_names.join(", ")}), which is what the engine prints when a side has no eleven to name
+                  from.
+                </p>
+              )}
+              <p className="muted world-section-note">{timeline.consistency}</p>
+            </div>
+          )}
+        </div>
       </Panel>
 
       <Panel eyebrow={`${report.blocks.length} blocks · the model rolls inside a block, not minute by minute`} title="Block by block">

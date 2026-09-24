@@ -33,6 +33,7 @@ from app.services.simulation.engine import (
     MatchInputs,
     simulate_match,
 )
+from app.services.simulation.events import timeline_view, write_timeline
 from app.services.simulation.profile import SideProfile, SquadOverlay, team_profile
 from app.services.simulation.squad import replay_squads
 from app.services.tactics.plan import tactical_systems
@@ -142,6 +143,10 @@ def run_simulation(
         is_demo_data=True,
     )
     session.add(match)
+    # The timeline is written in the same transaction as the report it was copied from: a match on file
+    # with no rows therefore means it predates the table, and nothing else.
+    session.flush()
+    session.add_all(write_timeline(session, match, sides={"home": home, "away": away}))
     session.commit()
     session.refresh(match)
     return match
@@ -254,8 +259,13 @@ def _as_mapping(value: object) -> dict[str, Any]:
     return dict(value) if isinstance(value, dict) else {}
 
 
-def row(match: SimulationMatch, *, full: bool = False) -> dict[str, Any]:
-    """The API shape of a stored match. A list row is a summary; a detail carries the whole report."""
+def row(match: SimulationMatch, *, full: bool = False, session: Session | None = None) -> dict[str, Any]:
+    """The API shape of a stored match. A list row is a summary; a detail carries the whole report.
+
+    A detail with a session also carries `timeline`: the same event list, re-read from `sim_events` where
+    the rows exist, with the sentence saying whether they do. Without a session there is nothing to query,
+    so the field is simply absent rather than rebuilt out of the report and called something else.
+    """
     report = _as_mapping(match.report)
     payload: dict[str, Any] = {
         "id": match.id,
@@ -291,6 +301,8 @@ def row(match: SimulationMatch, *, full: bool = False) -> dict[str, Any]:
         }
     if full:
         payload["report"] = report
+        if session is not None:
+            payload["timeline"] = timeline_view(session, match)
     return payload
 
 

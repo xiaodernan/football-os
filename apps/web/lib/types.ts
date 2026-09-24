@@ -1245,7 +1245,32 @@ export type SimSummary = {
   expected_goals: number;
 };
 
-/** `GET /simulate` rows carry no `report`; `GET /simulate/{ident}` and a fresh play do. */
+/**
+ * The match's event list as the `sim_events` table answers with it: the same events the report holds,
+ * read one row per event, plus the three sentences that say where they came from and how far the names
+ * in them can be trusted. Optional because it is the server that decides — a detail from an API that
+ * predates the table simply has no rows to answer with.
+ */
+export type SimTimeline = {
+  events: SimEvent[];
+  count: number;
+  stored_rows: number;
+  report_events: number;
+  source: string;
+  source_note: string;
+  consistency: string;
+  by_type: Record<string, number>;
+  identified: number;
+  ambiguous_names: string[];
+  unnamed_names: string[];
+  formula: string;
+  attribution_formula: string;
+  disclaimer: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** `GET /simulate` rows carry neither `report` nor `timeline`; `GET /simulate/{ident}` and a fresh play carry both. */
 export type SimRow = {
   id: string;
   slug: string;
@@ -1267,6 +1292,7 @@ export type SimRow = {
   home_summary: SimSummary;
   away_summary: SimSummary;
   report?: SimReport;
+  timeline?: SimTimeline;
 };
 
 export type SimList = {

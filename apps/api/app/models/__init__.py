@@ -870,6 +870,10 @@ class SimulationMatch(Base, TimestampMixin):
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    # The engine's event list as rows (ROADMAP item 4): written in the same transaction as the report, so
+    # a match and its timeline appear together or not at all.
+    events: Mapped[list[SimulationEvent]] = relationship(back_populates="match", cascade="all, delete-orphan", order_by="SimulationEvent.ordinal")
+
 
 # --- Career Mode (M6, spec §20) -------------------------------------------------------------------
 # A career is the container a season is played in: one account's fictional manager, one club borrowed
@@ -1143,3 +1147,64 @@ class CareerAppearance(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     career: Mapped[Career] = relationship(back_populates="appearances")
+
+
+# --- The stored timeline (M6, ROADMAP item 4) -------------------------------------------------------
+# `sim_matches.report` already carries the engine's event list, so this table is not the only copy of
+# the timeline — it is the copy that can be *asked a question of*. A report is one JSON blob per match:
+# reading "who scored most in this career" or "how many sendings-off in this competition" out of it
+# means loading every report in the world. These rows answer both with one query, and they are what a
+# later module (a scout, a scoring chart, a disciplinary balance) will be built on.
+#
+# `ordinal` is the event's position in the report's own list, and `(match_id, ordinal)` is unique
+# because the pair is the whole identity of an event: the report is sorted by minute with ties broken
+# by the order the engine appended them, so two events in the same minute are only distinguishable by
+# which of them came first. That is also why the timeline check compares rows against the report field
+# by field rather than by count — a rewritten report that kept its length would pass a `len` test.
+EVENT_SIDES: Final[tuple[str, ...]] = ("home", "away")
+EVENT_TYPES: Final[tuple[str, ...]] = ("goal", "shot_saved", "shot_off_target", "yellow_card", "red_card", "injury")
+# How an event's player was matched to a row. The engine names a scorer out of the side's eleven and
+# the report prints names only — `lineup` is inside a stored match's digest, so it cannot be changed to
+# carry ids — and the identity is recovered by looking the name back up in the same eleven. A squad
+# with two players of one name is therefore `ambiguous` and keeps no id: guessing between them would
+# put a real row's record down for the wrong person.
+EVENT_ATTRIBUTION: Final[dict[str, str]] = {
+    "identified": "the name the engine printed matches exactly one player in that side's selected eleven",
+    "ambiguous": "two or more of that side's selected eleven share the name, so no player row is claimed",
+    "unnamed": "the event names the side rather than a player, which is what the engine prints with no lineup",
+}
+
+
+class SimulationEvent(Base, TimestampMixin):
+    """One engine event as its own row: the minute, what happened, and who the report named."""
+
+    __tablename__ = "sim_events"
+    __table_args__ = (
+        Index("ix_sim_event_match", "match_id"),
+        UniqueConstraint("match_id", "ordinal", name="uq_sim_event_position"),
+        Index("ix_sim_event_player_type", "player_id", "event_type"),
+        Index("ix_sim_event_type_minute", "event_type", "minute"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    match_id: Mapped[str] = mapped_column(ForeignKey("sim_matches.id", ondelete="CASCADE"), nullable=False)
+    match_slug: Mapped[str] = mapped_column(String(80), default="", nullable=False)
+    ordinal: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    minute: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(24), default="", nullable=False)
+    side: Mapped[str] = mapped_column(String(5), default="home", nullable=False)
+    team: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    player_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    player_id: Mapped[str | None] = mapped_column(ForeignKey("real_players.id", ondelete="SET NULL"), nullable=True)
+    player_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    position: Mapped[str] = mapped_column(String(16), default="", nullable=False)
+    chance: Mapped[str] = mapped_column(String(24), default="", nullable=False)
+    expected_goals: Mapped[float | None] = mapped_column(Float, nullable=True)
+    score: Mapped[str] = mapped_column(String(16), default="", nullable=False)
+    detail: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    attribution: Mapped[str] = mapped_column(String(12), default="unnamed", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    match: Mapped[SimulationMatch] = relationship(back_populates="events")

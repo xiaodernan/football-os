@@ -137,7 +137,7 @@ def play(
         )
     except LookupError as error:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "no_such_input", "message": str(error)}) from error
-    return row(match, full=True)
+    return row(match, full=True, session=db)
 
 
 @router.get("")
@@ -175,7 +175,7 @@ def read_simulation(
     user: User = Depends(current_user),
 ) -> dict[str, Any]:
     limit(request, 60, 60, scope="simulate_read")
-    return row(_one(db, user, ident), full=True)
+    return row(_one(db, user, ident), full=True, session=db)
 
 
 @router.get("/{ident}/replay")
