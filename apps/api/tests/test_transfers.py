@@ -724,7 +724,7 @@ class TestMarketView:
 
     def test_the_career_layer_says_what_the_market_still_does_not_do(self) -> None:  # type: ignore[no-untyped-def]
         limits = career_service.limitations()
-        assert set(limits) == {"budget", "wages", "carry_over", "scouting", "philosophy", "table", "objectives"}
+        assert set(limits) == {"budget", "wages", "carry_over", "ledger", "scouting", "philosophy", "table", "objectives"}
         assert "spent, not stated" in limits["budget"] and "/api/v1/transfers" in limits["budget"]
         assert "career_wage_charges" in limits["wages"] and "not charged is the club's own" in limits["wages"]
         assert "no default" in limits["wages"], "the wage bill's own limit is named rather than left out"

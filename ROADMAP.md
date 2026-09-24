@@ -279,7 +279,8 @@ quality"
    26 tests in `tests/test_sim_events.py` — **476 API tests green on both engines** — measured against the
    code with a one-line mutation (5 of 26 red), and the panel is **29/29 walk checks** on a production build
    ([`docs/M6_SIM_EVENTS_VERIFICATION.md`](docs/M6_SIM_EVENTS_VERIFICATION.md)).
-   No cross-match ledger reads these rows yet — that is item 10.
+   Item 10 has since read them across matches — the career page carries a season ledger
+   ([`docs/M6_SIM_LEDGER_VERIFICATION.md`](docs/M6_SIM_LEDGER_VERIFICATION.md)).
 5. [ ] rendering the `training_log` the player detail route already returns
 6. [x] **a per-run test database** — `conftest.py` pointed every run at one fixed `football_os_pytest`
    and its session fixture began with `drop_all()`, so two overlapping runs made the other's tables
@@ -315,14 +316,25 @@ quality"
    became false when §22's page and wage bill landed; `components/CareerForm.tsx` now says what the budget
    does. `apps/web/scripts/visual-qa.mjs:1766` tests the old wording, so that walk is red on that one check
    until its owner re-points it — deliberately left to them rather than edited from under a live run
-10. [ ] **nothing aggregates these rows across matches yet.** `sim_events` (item 4) turned "who scored most
-   in this career" into a query, and no code runs that query: the seasons a career plays are still only
-   readable one report at a time. The next increment is a per-player ledger over a career's own fixtures —
-   goals, shots and bookings grouped by `player_id` and by `team_id`, since a fixture's home side is not
-   always the career's club and an event belongs to the side that printed it — reached by joining
-   `sim_events` to `career_fixtures`, with the `ambiguous` share stated in the same
-   panel rather than hidden: a name two players of one club share contributes nothing to either of them,
-   so a top-scorer list is only honest next to the count of events that could not be attributed.
+10. [x] **a season ledger over those rows** (2026-09-25, §20+ continued): `app/services/simulation/ledger.py`
+   runs the query item 4 left unwritten — every goal, attempt, booking and injury of a career's own
+   fixtures, grouped by `player_id` *and* filtered to the career's `team_id`, because a fixture's home side
+   is not always that club and an event belongs to the side that printed it. Nothing is backfilled or
+   cached: the figures are summed from `sim_events` on the request, and a read writes nothing back (one
+   test asserts it). The panel `/career/{slug}` prints keeps the company that makes a count checkable —
+   `scope` says whose side was counted, `source` says whether any traced fixture existed at all,
+   `truncated` says when the 40-name cap bit, the `ambiguous` and `unnamed` shares are printed with the
+   repeated names beside them rather than quietly folded into somebody's row, and `consistency` sets the
+   rows' goal figure against `career_fixtures.club_goals` over the same matches, naming both numbers when
+   they disagree instead of preferring either. A goalkeeper gets no credit for a save, and the limitation
+   says why: a chance event names the player who took the shot. Measured: 22 tests in
+   `tests/test_sim_ledger.py` and **498 API tests green on both engines**, four API gates, `tsc` clean, and
+   a **39/39** browser walk (`scripts/qa-ledger.mjs`) that re-counts each fixture's stored report twice more
+   — by type for the club, and per name against the row it prints — on a production build. Three mutations
+   came back red, and one of them (a cap cut to 4 names) caught a check that was over-claiming, since an
+   honestly-labelled cut is the design working rather than failing ([`docs/M6_SIM_LEDGER_VERIFICATION.md`](docs/M6_SIM_LEDGER_VERIFICATION.md)).
+   Still open: no cross-career or league-wide aggregate reads these rows, and a season's
+   ledger is only as complete as the rounds whose reports are still stored.
 
 ## Cross-cutting gates (spec §80 SEO, §81 i18n)
 

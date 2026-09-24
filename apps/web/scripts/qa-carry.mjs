@@ -329,5 +329,8 @@ function finish() {
 
 main().catch((error) => {
   console.log(`WALK CRASHED: ${error?.stack ?? error}`);
+  // A walk that died halfway must not report the checks it managed to run as the whole story: the checks before
+  // the crash are all green and `finish()` would exit 0 on them alone.
+  check('the walk ran through to its last check', false, String(error?.message ?? error).slice(0, 160));
   finish();
 });

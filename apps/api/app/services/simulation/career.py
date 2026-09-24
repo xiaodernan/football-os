@@ -31,6 +31,7 @@ from sqlalchemy.orm import Session
 from app.core.security import new_public_id
 from app.models import OBJECTIVE_FORMULA, Career, CareerFixture, Competition, SimulationMatch, Team
 from app.services.simulation.carry_over import carry_over_view, record_appearances
+from app.services.simulation.ledger import ledger_view
 from app.services.simulation.profile import SquadOverlay, team_profile
 from app.services.simulation.service import run_simulation
 from app.services.simulation.squad import squad_as_of
@@ -93,6 +94,16 @@ def limitations() -> dict[str, str]:
             "form index, which is the number the engine's fatigue term already reads. What does not carry is "
             "growth: a season of fixtures changes no player's stored attributes, nothing rests a tired player, and "
             "a club nobody manages has no trace, so its side is measured off its rows exactly as it always was."
+        ),
+        "ledger": (
+            "The season ledger sums this career's own `sim_events` rows: goals, attempts, cards and injuries per "
+            "player, each event credited to the side that printed it. Two things keep it honest and one keeps it "
+            "short. It is recomputed from the rows on every read, never stored as a counter; it prints its goal "
+            "total beside the fixture list's own `club_goals` for the same matches and names both when they disagree; "
+            "and a match simulated before the events table has no rows, so its fixture is reported as untraced "
+            "rather than as a scoreless appearance. What the ledger does not do is rank players across clubs or "
+            "compare a season against a league table, and it cannot credit a save to a goalkeeper: every chance "
+            "event names the player who took the shot, not the one who stopped it."
         ),
         "scouting": (
             "The market offers the best-rated players in each band with this club's weakest band filled first. It is a "
@@ -467,6 +478,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "demo_data": True,
     }
     if include_fixtures:
+        view["ledger"] = ledger_view(session, career)
         view["fixtures"] = [
             {
                 "round_index": row.round_index,

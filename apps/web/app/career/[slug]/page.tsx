@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { Panel } from "@/components/ui";
 import { CareerTools } from "@/components/CareerTools";
+import { LEDGER_COLUMNS, type SeasonLedger } from "@/lib/ledger";
 import { KeyValueGrid, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import { absolute } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
@@ -259,6 +260,8 @@ export default async function CareerDetailPage({ params }: Props) {
         </div>
       </Panel>
 
+      {view.ledger ? <LedgerPanel ledger={view.ledger} limitation={view.limitations.ledger} /> : null}
+
       <Panel eyebrow={view.limitations.table} title="Table of the clubs this career has met">
         <div className="world-tablewrap">
           <table className="table">
@@ -316,4 +319,92 @@ export default async function CareerDetailPage({ params }: Props) {
 function objectivesSummary(view: CareerView): string {
   const met = view.objectives.filter((objective) => objective.met).length;
   return `${met} of ${view.objectives.length} met`;
+}
+
+/**
+ * The season as `sim_events` answers for it: one row per name the rows could attribute, and the club's
+ * totals set beside the figure they have to agree with. Rendered only when the API returned the block —
+ * an older server answers a career detail without it, and an empty table would then read as a season of
+ * nobody doing anything.
+ */
+function LedgerPanel({ ledger, limitation }: { ledger: SeasonLedger; limitation: string }) {
+  const unattributed = ledger.unattributed.events.ambiguous + ledger.unattributed.events.unnamed;
+  return (
+    <Panel eyebrow={`${ledger.players_shown} of ${ledger.players_with_events} name(s) · ${ledger.fixtures_traced} of ${ledger.fixtures_played} round(s) traced`} title="Who did it, counted off the event rows">
+      <div className="stack-sm">
+        <KeyValueGrid
+          rows={[
+            ["Goals / attempts / xG for the club", `${ledger.totals.goals} · ${ledger.totals.attempts} · ${ledger.totals.expected_goals.toFixed(3)}`],
+            ["Booked / sent off / injured", `${ledger.totals.yellow_cards} · ${ledger.totals.red_cards} · ${ledger.totals.injuries}`],
+            [
+              "Events with no player behind the name",
+              unattributed ? `${unattributed} (${ledger.unattributed.events.ambiguous} ambiguous, ${ledger.unattributed.events.unnamed} naming nobody) — ${ledger.unattributed.ambiguous_names.join(", ") || "no repeated name"}` : "none: every event the club printed found exactly one player",
+            ],
+            [
+              "How far the count reaches",
+              ledger.scope,
+            ],
+          ]}
+        />
+        {ledger.players.length === 0 ? (
+          <div className="empty">
+            <strong>No name to count yet</strong>
+            <p className="muted">
+              {ledger.source === "no traced fixture"
+                ? "None of this career’s rounds has event rows on file, so there is nothing to group. Play a round and the rows arrive with its report."
+                : `Every event of the ${ledger.fixtures_traced} traced round(s) named a player more than once in the same eleven, so no row could claim an identity.`}
+            </p>
+          </div>
+        ) : (
+          <div className="world-tablewrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Player</th>
+                  <th scope="col">Position</th>
+                  {LEDGER_COLUMNS.map((column) => (
+                    <th key={column.key} scope="col" title={column.hint}>
+                      {column.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {ledger.players.map((entry) => (
+                  <tr key={entry.player_id}>
+                    <td>
+                      {entry.player_path ? (
+                        <Link className="world-link" href={entry.player_path}>
+                          {entry.name}
+                        </Link>
+                      ) : (
+                        <span>{entry.name}</span>
+                      )}
+                    </td>
+                    <td className="muted">{entry.position || "—"}</td>
+                    {LEDGER_COLUMNS.map((column) => (
+                      <td className="num mono" key={column.key}>
+                        {column.key === "expected_goals" ? entry[column.key].toFixed(3) : entry[column.key]}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {ledger.truncated ? (
+              <p className="muted">
+                The list is cut at {ledger.players_shown} names of {ledger.players_with_events}: the rest played their part without printing an event big enough to reach the top.
+              </p>
+            ) : null}
+          </div>
+        )}
+        <p className="notice">{ledger.consistency}</p>
+        <p className="muted mono">{ledger.formula}</p>
+        <p className="muted mono">{ledger.consistency_formula}</p>
+        <p className="muted mono">{ledger.attribution_formula}</p>
+        <p className="notice notice--warn">{limitation}</p>
+        <p className="muted">{ledger.disclaimer}</p>
+      </div>
+    </Panel>
+  );
 }

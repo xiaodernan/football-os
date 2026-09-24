@@ -1459,7 +1459,9 @@ export type CareerView = {
   model_versions: string[];
   /** §20: what this career's played rounds left on its players, summed from `career_appearances`. */
   carry_over: import("./carryOver").CarryOverView;
-  limitations: { budget: string; wages: string; carry_over: string; philosophy: string; table: string; objectives: string };
+  /** ROADMAP item 10: this season per player, counted off `sim_events`. Absent on a list row or run view. */
+  ledger?: import("./ledger").SeasonLedger;
+  limitations: { budget: string; wages: string; carry_over: string; ledger: string; philosophy: string; table: string; objectives: string };
   next_fixture?: CareerNextFixture;
   played?: boolean;
   match?: { slug: string; path: string; digest: string; seed: number; model_version: string };
