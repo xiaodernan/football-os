@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
 from app.core.security import hash_password, new_public_id
-from app.models import Career, CareerAppearance, CareerFixture, RealPlayer, RealTrainingSession, SimulationMatch, Team, User
+from app.models import Career, CareerAppearance, CareerFixture, RealPlayer, RealTrainingSession, Team, User
 from app.services.simulation import career as career_service
 from app.services.simulation import carry_over
 from app.services.simulation.profile import team_profile
@@ -186,7 +186,7 @@ class TestConditionCarriesIntoTheNextRound:
         played = team_profile(session, career.club_id or "", squad=overlay)
         assert played.lineup == plain.lineup, "the same eleven is selected: carry-over changes how long they go, not who is picked"
         assert played.form < plain.form, "the eleven that played a round comes into the next one with less in it"
-        weighted = [max(0.0, min(1.0, (player.form - 0.8) / 0.4)) * (0.5 + 0.5 * overlay.condition[entry[0]]) for entry, player in zip(played.selected, _eleven(session, played))]
+        weighted = [max(0.0, min(1.0, (player.form - 0.8) / 0.4)) * (0.5 + 0.5 * overlay.condition[entry[0]]) for entry, player in zip(played.selected, _eleven(session, played), strict=True)]
         assert played.form == pytest.approx(sum(weighted) / len(weighted)), "the index is the mean of the eleven's weighted form, and the condition it reads is the one on file"
         lines = {entry.key: entry for entry in played.factors}
         assert all(key in lines for key in LINES)
@@ -309,7 +309,6 @@ class TestCarryOverView:
         assert "1 played round" in view["note"] and "measured without them" in view["note"]
 
     def test_the_limitation_the_page_prints_covers_what_does_not_carry(self, session, world) -> None:  # type: ignore[no-untyped-def]
-        career = _career(session, world)
         limits = career_service.limitations()
         assert "carry_over" in limits
         text = limits["carry_over"]

@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
 from app.providers import provider_status
+from app.services.scouting.requirements import SCOUT_DISCLAIMER, vocabulary_problems
+from app.services.scouting.search import scout_counts, scout_ready, search_problems
 from app.services.simulation.challenges import CHALLENGE_DISCLAIMER, challenge_counts, challenge_ready
 from app.services.simulation.service import engine_description, sim_counts, sim_ready, sim_tables_present
 from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_ready, tactics_tables_present
@@ -73,7 +75,14 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
         # and the world is there to choose a club from — not whether anyone has started a run.
         "m6_manager_challenges": challenge_ready(db),
         "m6_challenges": {"counts": challenge_counts(db), "disclaimer": CHALLENGE_DISCLAIMER},
-        "m7_scouting": False,
+        # §23 reports the way §21 does: the flag is whether the vocabulary agrees with itself and the search
+        # can answer every requirement kind the parser emits — not whether anyone has run a search.
+        "m7_scouting": scout_ready(db),
+        "m7_scout": {
+            "counts": scout_counts(db),
+            "problems": [*vocabulary_problems(), *search_problems(db)],
+            "disclaimer": SCOUT_DISCLAIMER,
+        },
         "m8_club_os": False,
         "m9_community": False,
         "locales": ["en"],

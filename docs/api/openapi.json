@@ -4986,6 +4986,120 @@
           }
         }
       }
+    },
+    "/api/v1/scout/rules": {
+      "get": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Read Rules",
+        "description": "The vocabulary and the arithmetic: what a sentence may say, and what each saying does to the pool.\n\nThe integrity block is published rather than kept in a test because it is the part a reader has to trust:\nthe vocabulary agreeing with itself, and the search answering every requirement kind the parser emits.",
+        "operationId": "read_rules_api_v1_scout_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Rules Api V1 Scout Rules Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scout/parse": {
+      "post": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Parse",
+        "description": "Read a scout's sentence without searching: what would be filtered, what was refused, what was ignored.",
+        "operationId": "parse_api_v1_scout_parse_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Parse Api V1 Scout Parse Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scout/search": {
+      "post": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Run Search",
+        "description": "Search the stored world with a sentence, stated fields, or both, optionally judged against a career.",
+        "operationId": "run_search_api_v1_scout_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Run Search Api V1 Scout Search Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -5789,6 +5903,21 @@
         ],
         "title": "OutIn"
       },
+      "ParseIn": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 400,
+            "minLength": 1,
+            "title": "Query"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "ParseIn"
+      },
       "PlanIn": {
         "properties": {
           "horizon_days": {
@@ -6085,6 +6214,158 @@
           "accepts_data_policy"
         ],
         "title": "RegisterIn"
+      },
+      "SearchIn": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 400,
+            "title": "Query",
+            "default": ""
+          },
+          "max_age": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 60.0,
+                "minimum": 10.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Age"
+          },
+          "min_age": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 60.0,
+                "minimum": 10.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Age"
+          },
+          "foot": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Foot"
+          },
+          "positions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Positions"
+          },
+          "bands": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 4
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bands"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "attributes": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object",
+                "maxProperties": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attributes"
+          },
+          "max_fee": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Fee"
+          },
+          "sort": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 24
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort"
+          },
+          "career": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Career"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 20
+          }
+        },
+        "type": "object",
+        "title": "SearchIn",
+        "description": "A sentence, stated fields, or both. Where both speak, both cuts apply and the response says so."
       },
       "SimulateIn": {
         "properties": {

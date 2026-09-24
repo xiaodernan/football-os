@@ -21,6 +21,7 @@ from app.api.v1 import (
     meta,
     players,
     progress,
+    scout,
     simulations,
     tactics,
     trainings,
@@ -131,6 +132,7 @@ def create_app() -> FastAPI:
     app.include_router(challenges.router, prefix=api)
     app.include_router(simulations.router, prefix=api)
     app.include_router(transfers.router, prefix=api)
+    app.include_router(scout.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:
