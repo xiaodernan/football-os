@@ -40,6 +40,8 @@ export default async function CareerDetailPage({ params }: Props) {
   const record = view.record;
   const fixtures = view.fixtures ?? [];
   const next = view.next_fixture;
+  const carry = view.carry_over;
+  const unit = carry.rows.length > 0 ? carry.rows[carry.rows.length - 1].minutes_units : "match minutes";
 
   return (
     <div className="container page stack">
@@ -182,6 +184,79 @@ export default async function CareerDetailPage({ params }: Props) {
           </div>
         )}
         <p className="muted">{view.consistency}</p>
+      </Panel>
+
+      <Panel eyebrow={`${carry.carrying_load} player(s) carry load into round ${carry.next_round}`} title="What the played rounds left on the players">
+        <div className="stack-sm">
+          <KeyValueGrid
+            rows={[
+              ["Rounds played / traced", `${carry.rounds_played} / ${carry.rounds_traced}`],
+              ["Trace rows on file", `${carry.appearances} for ${carry.players_traced} player(s)`],
+              [
+                "Window the load is measured over",
+                <span key="win">
+                  {carry.window_rounds} rounds at {carry.decay_per_round} decay ·{" "}
+                  <span className="mono">{carry.load_formula}</span>
+                </span>,
+              ],
+              [
+                "Mean condition of the last round's eleven",
+                <span key="cond">
+                  {carry.mean_condition_of_last_xi.toFixed(3)} · <span className="mono">{carry.condition_formula}</span>
+                </span>,
+              ],
+              [
+                "Sessions found for these players",
+                `${carry.training_records_found} of ${carry.carrying_load} traced players · ${carry.reserve_formula}`,
+              ],
+            ]}
+          />
+          {carry.carrying_load === 0 ? (
+            <div className="empty">
+              <strong>No load to carry yet</strong>
+              <p className="muted">
+                This career’s next side will be measured off its club’s stored rows, at the form the world wrote — {carry.form_formula}
+              </p>
+            </div>
+          ) : (
+            <div className="world-tablewrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Player</th>
+                    <th scope="col">Position</th>
+                    <th scope="col">Rounds in window</th>
+                    <th scope="col">Minutes, last traced</th>
+                    <th scope="col">Load units</th>
+                    <th scope="col">Training load</th>
+                    <th scope="col">Condition</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {carry.most_loaded.map((entry) => (
+                    <tr key={entry.player_id}>
+                      <td>{entry.player_name}</td>
+                      <td className="muted">{entry.position}</td>
+                      <td className="num">{entry.rounds_in_window}</td>
+                      <td className="num">
+                        {entry.minutes_recent} <span className="muted">{unit}</span>
+                      </td>
+                      <td className="num">{entry.load_units}</td>
+                      <td className="num">{entry.training_load_units}</td>
+                      <td className="num mono">
+                        {entry.condition.toFixed(3)}
+                        {entry.condition <= carry.condition_floor ? <span className="badge badge--demo"> at the floor</span> : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="notice">{carry.note}</p>
+          <p className="notice notice--warn">{view.limitations.carry_over}</p>
+          <p className="muted">{carry.disclaimer}</p>
+        </div>
       </Panel>
 
       <Panel eyebrow={view.limitations.table} title="Table of the clubs this career has met">

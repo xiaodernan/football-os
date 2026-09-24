@@ -10,7 +10,7 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 | **M3 Football World** | RealPlayer/Team/Competition/Match/Stats/News + unified search + SEO routes | 20 teams / 300 players / 130 matches / 500 articles synthetic world, public pages for all five entities | ✅ verified 2026-09-22 ([backend](docs/M3_VERIFICATION.md) · [web surface](docs/M3_WEB_VERIFICATION.md)) — world 3.2 (2026-09-23) added the sixth §65 gate item, 100 training sessions, browsed at `/world/training` |
 | **M4 Tactical Lab** | interactive board, formations, in/out possession, roles, animation, AI tactical analysis | 50 tactical systems + drag/draw/save/share + analysis with evidence | ✅ verified 2026-09-22 ([backend](docs/M4_VERIFICATION.md) · [web](docs/M4_WEB_VERIFICATION.md)) — analysis cites the corpus for 6 of 6 topics on all 50 systems (2 were refused until the corpus gained the missing passages); 3D pitch and board sharing beyond one owner are open follow-ups |
 | **M5 Video Analysis** | upload → storage → transcode job → frame extraction → vision provider → events → report | demo vision provider behind real interface | ✅ verified 2026-09-22 ([pipeline](docs/M5_VERIFICATION.md) · [web](docs/M5_WEB_VERIFICATION.md)) — upload, report, detection timeline and owner-only byte-range playback proven in the browser |
-| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log, **Career Mode including its page**, **manager live challenges including their page** and the **§22 transfer market's API tier** ([engine+career backend](docs/M6_VERIFICATION.md) §10–§11 · [market backend](docs/M6_VERIFICATION.md) §14 — the market · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md) · [challenge web](docs/M6_CHALLENGES_WEB_VERIFICATION.md)); 226/226 walk checks on a production build 2026-09-24, 426 API tests on both engines — the market's **page**, squad carry-over and `sim_events` outstanding |
+| **M6 Football Simulation** | simulation engine, Career Mode, manager challenges, squad/training/finance | results labelled fictional; engine deterministic-testable | 🟡 in progress — engine, `/simulate`, the §65 training log, **Career Mode including its page**, **manager live challenges including their page**, the **§22 transfer market including its page** and the **§20 squad carry-over including its panel** ([engine+career backend](docs/M6_VERIFICATION.md) §10–§11 · [market backend](docs/M6_VERIFICATION.md) §14 — the market · [simulator+log](docs/M6_WEB_VERIFICATION.md) · [career web](docs/M6_CAREER_WEB_VERIFICATION.md) · [challenge web](docs/M6_CHALLENGES_WEB_VERIFICATION.md) · [carry-over](docs/M6_CARRY_OVER_VERIFICATION.md)); 226/226 walk checks on a production build 2026-09-24, 45/45 on the §20 carry walk the same day, 450 API tests on both engines — `sim_events` and the §23 AI Scout outstanding |
 | **M7 Scouting + Recruitment** | scout search, shortlists, comparison, AI scout reports, transfer market | structured reports with role/team fit + risk | ⬜ — the §22 market landed early inside M6, so `GET /api/v1/transfers/rules` and a career's need/fit/budget arithmetic are already the published numbers an AI Scout (§23) would have to reason over |
 | **M8 Club OS / Academy** | organisations, teams, coaches, IDP, curriculum, permissions, multi-tenant | B2B tenant isolation proven | ⬜ |
 | **M9 Community** | feed, posts, comments, likes, follows, shared boards/plans | creator→content→feedback loop | ⬜ |
@@ -238,7 +238,8 @@ Still open in M6:
    `release_clause = asking × 1.5` while both are rounded to the 5-credit step — the 49 backend tests asserted
    the rounded values, so only the sentence shown to a manager was false. The wage bill is still not
    deducted (item 8) and `no_transfers` is still advertised as merely stated (item 7).
-3. [x] **squad and training carry-over between matches** (2026-09-24, §20 backend): `career_appearances`
+3. [x] **squad and training carry-over between matches** (2026-09-24, §20 backend **and its panel on the
+   season page**): `career_appearances`
    (migration `0013`) records one row per player the engine selected per round, at the fixture's full
    length; the round after it reads a decayed three-round window off those rows — `load = Σ minutes ×
    0.5^rounds-since`, over a window that holds 157.5 units — plus a training reserve of at most 0.15
@@ -250,8 +251,11 @@ Still open in M6:
    print as the engine disagreeing with itself — and `play_round` refuses to attribute a round whose
    rebuilt eleven does not match its own report. 17 new tests in `tests/test_carry_over.py`, **450 API
    tests green on both engines**, quoted with the four published formulas in
-   [`docs/M6_CARRY_OVER_VERIFICATION.md`](docs/M6_CARRY_OVER_VERIFICATION.md). Player growth, resting a
-   tired player and substitutions are still not implemented and the module says so.
+   [`docs/M6_CARRY_OVER_VERIFICATION.md`](docs/M6_CARRY_OVER_VERIFICATION.md). The page side is
+   **45/45 walk checks** on a production build (§8 of the same document): two rounds played through the
+   season page's own button, every printed condition re-derived from the constants the page itself
+   publishes, and the report page checked against the season page for the same two expressions. Player
+   growth, resting a tired player and substitutions are still not implemented and the module says so.
 4. [ ] a `sim_events` table so the timeline is stored rather than regenerated
 5. [ ] rendering the `training_log` the player detail route already returns
 6. [x] **a per-run test database** — `conftest.py` pointed every run at one fixed `football_os_pytest`

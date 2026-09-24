@@ -135,3 +135,59 @@ The new module's tests are the ones to read first: `tests/test_carry_over.py` is
 classes — the ledger's rows, the condition reaching the next round, the published arithmetic against the
 numbers, and the view's own sums — and the last class includes the two refusals in §4, each reached by
 deleting a round's trace and asking the engine what it makes of it now.
+
+## 8. The panel on the season page, walked in a browser
+
+`apps/web/app/career/[slug]/page.tsx` renders the §5 block as a panel between the fixture list and the
+table: the rounds-played/rounds-traced pair, the window and its capacity, the mean condition of the last
+eleven and the trace count, then one row per player carrying load — position, rounds in the window,
+minutes with their unit, `load_units`, `training_load_units`, and `condition` to three places, badged
+`at the floor` when it sits on the published bound. Below it the module's own limiter and the condition
+disclaimer. The match report at `/simulate/{slug}` shows the two factors §3 emitted, and the walk
+checks that the report's two formula sentences are the *same strings* the season page printed — a
+reader who follows the link should not meet a second dialect.
+
+`apps/web/scripts/qa-carry.mjs` drives it against a production build, 45/45 on 2026-09-24:
+
+| what the walk insists on | what it found |
+| --- | --- |
+| it plays both rounds through the page's own button, never through `POST /play` | round 1 and round 2 each announce themselves, and the fixture list grows |
+| the eleven rows the API traces are the eleven rows the page prints | 11 rows after one round, 22 trace rows for the same 11 players after two |
+| every printed condition is re-derived from the constants the page itself publishes | `depth 0.45 · window 157.5 · reserve 0.15/1200 · floor 0.6` scraped out of the sentence, then `0.743 vs 0.7429` row by row |
+| the window decays rather than doubles | `load 90 → 135`, `condition 0.7429 → 0.614`, nobody on the floor after one match |
+| the panel's mean is the table's own mean | `mean_condition_of_last_xi = 0.7489` against the eleven derived rows |
+| the units are the server's, not the page's | `match minutes`, compared with `rows[].minutes_units` |
+| a phone still gets the table | 11 rows and its headers at 375×812 |
+| nothing is blamed on the engine when the ledger has a hole | `untraced_rounds = []`, and the server's own re-check sentence is printed verbatim (`2 of 2 … all agree`) |
+
+**Three of the walk's first failures were the walk's, not the page's**, and they are worth writing down
+because each is a way a browser check can lie while the code is correct:
+
+* `careers/options` publishes no competition field, so the walk's first club filter tested a property
+  that does not exist and found nothing. It now opens careers from the weakest club upward and asks the
+  career view whether a round is actually scheduled — the honest question — and it takes the budget off
+  `budget_ceiling` rather than hard-coding 50,000,000, which that ceiling (10,000,000) would have
+  refused.
+* `CareerTools` calls `router.refresh()` *after* the play response lands, so scraping at the
+  `Round 1 played:` line read the pre-round server render: no load rows, `0 / 0`. The row-wise checks
+  that walked over an empty scrape **passed vacuously** — `every(...)` is true of nothing — which is the
+  same fake green a `sum` over an empty list gives. The walk now waits for `Next up: round 2`, a
+  sentence only a re-render can produce, and each per-row check carries its own row count in its
+  condition.
+* eyebrows and table headers are upper-cased by the stylesheet, and `innerText` reports what is painted
+  rather than what was written. `has(body, 'carry load into round 2')` and the `dt` label lookup were
+  comparing against text the browser never displays; both now match with the case taken out.
+
+One figure is deliberately *not* corrected: the report prints the traced-player count as `11.00 count`.
+Every metric on this platform goes through one formatter, three other `count` metrics predate this
+module, and their labels are frozen into `sim_matches.digest` — so the walk asserts the string the page
+prints instead of asking for a number it would have to special-case to get.
+
+```bash
+cd apps/web
+NEXT_DIST_DIR=.next-carry npm run build                     # the walk runs a production build
+NEXT_DIST_DIR=.next-carry API_INTERNAL_URL=http://127.0.0.1:8734 npx next start -p 3214
+QA_BASE=http://127.0.0.1:3214 node scripts/qa-carry.mjs     # 45/45; PNGs to docs/screenshots/
+```
+
+Do not run this at the same time as `pytest`: both write careers into the same development database.
