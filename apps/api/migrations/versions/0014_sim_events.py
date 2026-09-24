@@ -11,11 +11,12 @@ back without asking the engine anything. The only path that re-derives a timelin
 one does so deliberately, to prove the engine still agrees with itself.
 
 So the reason to store these rows is not duplication, it is *addressability*. A report is one blob per
-match: "who scored most in this career", "how many sendings-off across this competition", "which keeper
-has faced the biggest chances" all currently mean loading every report in the world and picking JSON out
+match: "who scored most in this career", "how many sendings-off across this competition", "who took the
+most attempts and at what quality" all currently mean loading every report in the world and picking JSON out
 of it in Python. One row per event answers all three in a query, and gives the next module — a scoring
 chart, a disciplinary balance, an AI scout (§23) that has to reason over a season rather than a match —
-something to read.
+something to read. Not every question, though: `shot_saved` names the shooter, because that is what the
+engine draws, so a goalkeeper's record is not among the things these rows can be asked.
 
 Two decisions the row shape carries. `ordinal` is the event's index in the report's own list, and
 `(match_id, ordinal)` is unique, because that pair is an event's whole identity: the report is sorted by

@@ -261,7 +261,8 @@ Still open in M6:
    `simulate_match` builds the event list once, `run_simulation` stores the whole report — events included
    — in `sim_matches.report`, and the detail route reads that JSON back without asking the engine anything;
    only `/replay` re-derives, deliberately. What the rows add is **addressability**: "who scored most in
-   this career", "how many sendings-off in this competition" and "which keeper faced the biggest chances"
+   this career", "how many sendings-off in this competition" and "who took the most attempts, and at what
+quality"
    stop meaning unrolling every report in the world, and the two composite indexes are the shapes those
    questions take. Two rules, both tested rather than asserted in prose: *the rows are a copy, not a second
    opinion* (written in the report's own transaction, never fed back to the engine, and a disagreement is

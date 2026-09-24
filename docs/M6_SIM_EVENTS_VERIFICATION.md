@@ -28,9 +28,9 @@ So this table is not a performance fix and not a duplication of the blob. Its va
 | --- | --- | --- |
 | who scored most in this career | load every match row and pick the JSON apart in Python | `GROUP BY player_id WHERE event_type = 'goal'` |
 | how many sendings-off in this competition | same | `WHERE event_type = 'red_card'` on an indexed column |
-| which keeper faced the biggest chances | same | `event_type + player_id`, both indexed together |
+| who took the most attempts, and at what quality | same | three `event_type`s grouped by `player_id`, `SUM(expected_goals)` alongside |
 
-The third column of that table is why `ix_sim_event_player_type (player_id, event_type)` and
+The third column is why `ix_sim_event_player_type (player_id, event_type)` and
 `ix_sim_event_type_minute (event_type, minute)` exist: they are the shapes the next modules (a scoring
 chart, a disciplinary balance, the §23 AI scout reasoning over a *season* rather than a match) will ask,
 not decorations on every column.
@@ -211,6 +211,11 @@ catch.
   engine printed against a different stored name, and it does not carry an id across clubs: an event's
   `player_id` is the row it was selected from, so a transfer between rounds can produce two ids for one
   printed name in one competition. `ambiguous_names` covers the collision the other way round.
+* **A `shot_saved` row names the shooter, not the keeper.** That is what the engine draws and prints, and
+  the keeper appears only inside `detail` as prose. So "which goalkeeper faced the biggest chances" is
+  *not* one of the questions these rows answer — written down here because the tempting reading of
+  `event_type='shot_saved' + player_id` is exactly that, and a chart built on it would credit saves to
+  the men who took the shots.
 * **No minutes played, no assists, no goal kinds.** The engine does not record them, so a row cannot
   publish them.
 
