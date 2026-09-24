@@ -16,6 +16,10 @@ Three rules:
    bought back is in. `career_squad_moves` stays an append-only history and the squad is derived.
 3. **A loan expires.** A loaned player is in the squad for the rounds the deal covered and gone
    afterwards, without a row being written when the calendar passes them by.
+4. **The same read carries the load.** §20's condition map is composed beside the arrivals and
+   departures from the career's appearance rows for the rounds *before* this one, so a replay rebuilds
+   the tiredness the side actually had as well as the personnel it actually had. A round 1 with no
+   history is the one case where both are empty and the club is its stored self.
 
 Nothing here invents a player: the arrivals are the stored `real_players` rows themselves, so the
 attributes the engine reads are the ones on file, and a signed player whose row has vanished is named
@@ -30,6 +34,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Career, CareerFixture, CareerSquadMove, RealPlayer, Team
+from app.services.simulation.carry_over import condition_map
 from app.services.simulation.profile import SquadOverlay
 
 # Which kinds bring a player in and which take them out. Kept as data so the overlay and the refusal
@@ -39,8 +44,7 @@ OUT_KINDS: Final = ("sell", "release")
 MIN_PLAYERS_FOR_XI: Final = 11
 MIN_KEEPERS: Final = 1
 SQUARD_RULE: Final = (
-    "a career keeps a side on the pitch only while its squad holds at least 11 players and at least 1 of them is a goalkeeper; "
-    "the counts beside this rule are the ones that decided it"
+    "a career keeps a side on the pitch only while its squad holds at least 11 players and at least 1 of them is a goalkeeper; the counts beside this rule are the ones that decided it"
 )
 
 
@@ -80,11 +84,13 @@ def squad_state(session: Session, career: Career, round_index: int) -> dict[str,
 def squad_as_of(session: Session, career: Career, round_index: int) -> SquadOverlay | None:
     """The overlay that turns the club's stored rows into the squad this career plays with.
 
-    `None` when the career has changed nothing by that round, which is the same thing as a club's
-    stored squad — so an open career that never used the market behaves exactly as it did before §22.
+    `None` when the career has changed nothing by that round: no move applied, and no played round to
+    carry load from. Either half of that can hold on its own — a career that never used the market still
+    gets an overlay from round 2 onwards, because §20's carry-over is a change to the side too.
     """
     if not career.club_id:
         return None
+    condition = condition_map(session, career.id, round_index=round_index)
     stored = {player.id: player for player in session.scalars(select(RealPlayer).where(RealPlayer.team_id == career.club_id))}
     added: list[RealPlayer] = []
     removed: set[str] = set()
@@ -100,16 +106,16 @@ def squad_as_of(session: Session, career: Career, round_index: int) -> SquadOver
             added.append(player)
         elif player_id in stored:
             removed.add(player_id)
-    if not added and not removed and not missing:
+    if not added and not removed and not missing and not condition:
         return None
-    label = (
-        f"{career.slug} squad as of round {round_index}: {len(added)} signed in, {len(removed)} departed"
-        + (f", {len(missing)} signed player(s) no longer stored" if missing else "")
-    )
+    label = ""
+    if added or removed or missing:
+        label = f"{career.slug} squad as of round {round_index}: {len(added)} signed in, {len(removed)} departed" + (f", {len(missing)} signed player(s) no longer stored" if missing else "")
     return SquadOverlay(
         added=tuple(sorted(added, key=lambda player: (-player.overall, player.slug))),
         removed=frozenset(removed),
         label=label,
+        condition=condition,
     )
 
 
@@ -183,18 +189,22 @@ def replay_squads(session: Session, match_id: str, home_team_id: str, away_team_
         return None, None, {"note": f"career {career.slug} records this match but manages neither club in it"}
     overlay = squad_as_of(session, career, int(fixture.round_index))
     if overlay is None:
-        return None, None, {
-            "career_slug": career.slug,
-            "round_index": fixture.round_index,
-            "note": f"career {career.slug} had made no squad move before round {fixture.round_index}, so both sides are their clubs' stored squads",
-        }
+        return (
+            None,
+            None,
+            {
+                "career_slug": career.slug,
+                "round_index": fixture.round_index,
+                "note": f"career {career.slug} had made no squad move before round {fixture.round_index}, so both sides are their clubs' stored squads",
+            },
+        )
     side = "home" if career.club_id == home_team_id else "away"
     detail = {
         "career_slug": career.slug,
         "round_index": fixture.round_index,
         "side": side,
-        "applied": overlay.label,
-        "note": f"replayed with {overlay.label}",
+        "applied": overlay.summary,
+        "note": f"replayed with {overlay.summary}",
     }
     return (overlay, None, detail) if side == "home" else (None, overlay, detail)
 

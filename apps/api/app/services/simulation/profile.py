@@ -14,6 +14,11 @@ Two rules shape this module:
    removes players on top of the club's stored rows, and the two counts are published as factors so a
    reader sees that the eleven was adjusted rather than read. Nothing else about how a side is built
    changes — the overlay only decides which rows are in the pool.
+4. **A round leaves the side it selected carrying it.** The same overlay can carry a `condition` figure
+   per player, which is the only way §20's carry-over reaches the engine: it scales each selected
+   player's stored form before the eleven's mean is taken, and the engine's fatigue term already reads
+   that mean. With no condition on file — every club nobody manages, and a career's first round — the
+   scaling is exactly 1 and the numbers are the ones this module has always produced.
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import RealPlayer, Team
+from app.services.simulation.carry_over import CARRY_DISCLAIMER, CONDITION_FORMULA, FORM_FORMULA, LOAD_FORMULA
 from app.services.tactics.analysis import Metric, Shape, metrics_of
 from app.services.tactics.plan import PlannedSystem, system_by_slug
 
@@ -58,20 +64,43 @@ TACTICAL_METRICS = ("width", "depth", "coverage", "balance", "spacing", "isolati
 
 @dataclass(frozen=True)
 class SquadOverlay:
-    """Players one career put into, or took out of, a club's stored squad before a given round.
+    """What one career put into, or took out of, a club's stored squad before a given round.
 
     Carried as rows rather than as numbers: `added` holds the player records themselves, so the
     attributes the engine reads are the ones that were on file when the deal was struck, and `removed`
     holds ids so a sold player cannot be selected by any formation.
+
+    `condition` (spec §20) is the other half of the same idea: player id → how fit that player is
+    coming into this round, read from the career's own appearance ledger. It is a mapping rather than a
+    side-wide number because a round tires the eleven it selected and not the squad, and because
+    folding it in here is what keeps a club with no career behind it exactly what the rows say it is —
+    an empty map leaves every index bit-for-bit as it was.
     """
 
     added: tuple[RealPlayer, ...] = ()
     removed: frozenset[str] = field(default_factory=frozenset)
     label: str = ""
+    condition: Mapping[str, float] = field(default_factory=dict)
 
     @property
     def empty(self) -> bool:
         return not self.added and not self.removed
+
+    @property
+    def carries_load(self) -> bool:
+        return bool(self.condition)
+
+    @property
+    def summary(self) -> str:
+        """One sentence for both halves of what the overlay changed, for a replay to print.
+
+        `label` stays about transfers alone, because that is what the market's `squad_applied` column
+        means; a reader of a replay needs the load clause too, and the two are named apart here.
+        """
+        parts = [self.label] if self.label else []
+        if self.condition:
+            parts.append(f"{len(self.condition)} player(s) carry load from rounds this career already played")
+        return "; ".join(parts)
 
 
 @dataclass(frozen=True)
@@ -94,6 +123,10 @@ class SideProfile:
     squad_label: str = ""
     tactics: Mapping[str, float] = field(default_factory=dict)
     lineup: tuple[tuple[str, str, str], ...] = ()
+    # The same eleven with its identities: (player id, slug, name, position, band). `lineup` is what the
+    # report prints and therefore what a stored match's digest covers, so it stays names; this is for the
+    # caller that has to write a row per player rather than match a surname out of a report.
+    selected: tuple[tuple[str, str, str, str, str], ...] = ()
     factors: tuple[Metric, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
@@ -205,9 +238,7 @@ def _metrics_of_system(system: PlannedSystem) -> dict[str, float]:
     return {metric.key: metric.value for metric in metrics_of(shape) if metric.key in TACTICAL_METRICS}
 
 
-def team_profile(
-    session: Session, team_id: str, *, system_slug: str | None = None, squad: SquadOverlay | None = None
-) -> SideProfile:
+def team_profile(session: Session, team_id: str, *, system_slug: str | None = None, squad: SquadOverlay | None = None) -> SideProfile:
     """Read one club's rows and build the side the engine will play.
 
     `squad` is the career's own transfer history applied to those rows; with none the club is its
@@ -237,10 +268,27 @@ def team_profile(
     defence = _band_index(bands["defence"], BAND_ATTRIBUTES["defence"])
     keeper = _band_index(bands["keeper"], BAND_ATTRIBUTES["keeper"])
     press = _band_index(eleven, PRESS_ATTRIBUTES)
-    form = mean(max(0.0, min(1.0, (player.form - 0.8) / 0.4)) for player in eleven) if eleven else 0.5
+    # Stored form is what the world generator wrote; condition (§20) is what this career's played rounds
+    # left on it. An empty map — every club nobody manages, and a career's first round — scales by 1, so
+    # the mean below is the number this function has always returned.
+    condition = squad.condition if squad is not None else {}
+    tired = [player for player in eleven if player.id in condition]
+
+    def _conditioned_form(player: RealPlayer) -> float:
+        stored = max(0.0, min(1.0, (player.form - 0.8) / 0.4))
+        weight = 0.5 + 0.5 * condition.get(player.id, 1.0)
+        return max(0.0, min(1.0, stored * weight))
+
+    form = mean(_conditioned_form(player) for player in eleven) if eleven else 0.5
     overall = mean(player.overall for player in eleven) / 100.0 if eleven else 0.0
 
     tactics = _metrics_of_system(system) if system else {}
+    form_explanation = (
+        "mean of the selected eleven's stored form, rescaled from 0.8–1.2 to 0–1."
+        if not tired
+        else f"{FORM_FORMULA}; {len(tired)} of the {len(eleven)} players this shape selected carry a trace of rounds "
+        "this career has already played, so the eleven's form is weighted by their condition rather than read straight off the rows"
+    )
     factors = [
         Metric(
             "attack_index",
@@ -277,7 +325,7 @@ def team_profile(
             "0-1",
             f"mean of {', '.join(PRESS_ATTRIBUTES)} across the selected eleven, rescaled (x−28)/68.",
         ),
-        Metric("form_index", "Form index", form, "0-1", "mean of the selected eleven's stored form, rescaled from 0.8–1.2 to 0–1."),
+        Metric("form_index", "Form index", form, "0-1", form_explanation),
         Metric(
             "squad_index",
             "Selected-eleven rating",
@@ -327,6 +375,31 @@ def team_profile(
             ),
         ]
 
+    # The condition rows are emitted only for a side that has some, so a club nobody manages reports
+    # exactly the factors it always did — and a career's page can point at the two expressions that
+    # moved its form index instead of asking the reader to run the code.
+    load_factors = (
+        [
+            Metric(
+                "condition_index",
+                "Condition index",
+                mean(condition[player.id] for player in tired),
+                "0-1",
+                f"mean condition of the {len(tired)} selected players who carry a trace of this career's played rounds; {CONDITION_FORMULA}. {LOAD_FORMULA}.",
+            ),
+            Metric(
+                "players_carrying_load",
+                "Selected players with a trace",
+                float(len(tired)),
+                "count",
+                f"{CARRY_DISCLAIMER} The other {max(0, len(eleven) - len(tired))} of the selected eleven are read straight off their stored rows.",
+            ),
+        ]
+        if tired
+        else []
+    )
+
+    ordered = [(player, band) for band in ("keeper", "defence", "midfield", "attack") for player in bands[band]]
     return SideProfile(
         team_id=team.id,
         name=team.name,
@@ -343,8 +416,9 @@ def team_profile(
         overall=overall,
         squad_label=squad.label if squad is not None else "",
         tactics=tactics,
-        lineup=tuple((player.name, player.position, band) for band in ("keeper", "defence", "midfield", "attack") for player in bands[band]),
-        factors=tuple([*factors, *shortfalls, *squad_factors]),
+        lineup=tuple((player.name, player.position, band) for player, band in ordered),
+        selected=tuple((player.id, player.slug, player.name, player.position, band) for player, band in ordered),
+        factors=tuple([*factors, *shortfalls, *squad_factors, *load_factors]),
     )
 
 

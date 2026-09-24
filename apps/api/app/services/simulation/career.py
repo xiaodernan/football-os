@@ -30,6 +30,8 @@ from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
 from app.models import OBJECTIVE_FORMULA, Career, CareerFixture, Competition, SimulationMatch, Team
+from app.services.simulation.carry_over import carry_over_view, record_appearances
+from app.services.simulation.profile import SquadOverlay, team_profile
 from app.services.simulation.service import run_simulation
 from app.services.simulation.squad import squad_as_of
 from app.services.world.names import slugify
@@ -83,6 +85,14 @@ def limitations() -> dict[str, str]:
             "stored squad — those players came with the job. And nothing follows a missed payment: there is "
             "no default, no board reaction and no transfer embargo, only a balance that goes negative and "
             "stops the market spending from it."
+        ),
+        "carry_over": (
+            "A played round now carries into the next one. Every player the engine selected is traced in "
+            "career_appearances at the fixture's full length, and the round after it reads a condition figure off "
+            "those rows plus the world's training sessions for each player; that condition weights the eleven's "
+            "form index, which is the number the engine's fatigue term already reads. What does not carry is "
+            "growth: a season of fixtures changes no player's stored attributes, nothing rests a tired player, and "
+            "a club nobody manages has no trace, so its side is measured off its rows exactly as it always was."
         ),
         "scouting": (
             "The market offers the best-rated players in each band with this club's weakest band filled first. It is a "
@@ -192,6 +202,40 @@ def create_career(
     return career
 
 
+def _trace_round(
+    session: Session,
+    career: Career,
+    *,
+    round_index: int,
+    match: SimulationMatch,
+    overlay: SquadOverlay | None,
+    opponent_name: str,
+) -> None:
+    """Write one appearance row per player this round selected (spec §20).
+
+    The eleven is rebuilt from the same rows the engine played with — the club's squad, the career's
+    moves as of this round, the system that staffed the formation — and then checked against the names
+    in the stored report. If the two disagree the round is left untraced rather than recorded: a load
+    attributed to players who may not have played it would corrupt every round after it. `carry_over`
+    reports a played round with no rows as the defect it is, so refusing here cannot go unnoticed.
+    """
+    side = "home" if match.home_team_id == career.club_id else "away"
+    profile = team_profile(session, career.club_id or "", system_slug=career.system_slug or None, squad=overlay)
+    recorded = [str(row.get("player", "")) for row in list(match.report.get("sides", {}).get(side, {}).get("lineup", [])) if isinstance(row, dict)]
+    selected = [name for _player_id, _slug, name, _position, _band in profile.selected]
+    if recorded and recorded != selected:
+        return
+    record_appearances(
+        session,
+        career,
+        round_index=round_index,
+        lineup=list(profile.selected),
+        side=side,
+        minutes=int(match.minutes),
+        opponent_name=opponent_name,
+    )
+
+
 def play_round(session: Session, career: Career) -> tuple[CareerFixture, SimulationMatch]:
     """Play the next round through the engine and record it against the career.
 
@@ -251,6 +295,17 @@ def play_round(session: Session, career: Career) -> tuple[CareerFixture, Simulat
     session.commit()
     session.refresh(fixture)
     session.refresh(career)
+    # The round is played, so it leaves a trace: who was selected, at how many minutes (spec §20). This
+    # is what the next round's condition is read from, and what makes a career's ninth fixture differ
+    # from its first when nothing else about the squad changed.
+    _trace_round(
+        session,
+        career,
+        round_index=int(plan["round_index"]),
+        match=match,
+        overlay=overlay,
+        opponent_name=str(plan["opponent_name"]),
+    )
     # The round is played, so the deals held for it are paid for (spec §22). A local import because
     # `market` reaches through `challenges`, which imports this module — the cycle is the layering, not
     # an accident: a challenge is a career, and a career's money is the market's business.
@@ -403,6 +458,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "objectives": objectives_of(career, record),
         "table": mini_table(rows, career),
         "consistency": _consistency(session, rows),
+        "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1),
         "model_versions": sorted({row.model_version for row in rows if row.model_version}),
         "limitations": limitations(),
         "disclaimer": CAREER_DISCLAIMER,

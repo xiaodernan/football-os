@@ -929,6 +929,7 @@ class Career(Base, TimestampMixin):
     listings: Mapped[list[TransferListing]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="TransferListing.listed_round")
     moves: Mapped[list[CareerSquadMove]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSquadMove.round_index")
     wage_charges: Mapped[list[CareerWageCharge]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerWageCharge.round_index")
+    appearances: Mapped[list[CareerAppearance]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerAppearance.round_index")
 
 
 class CareerFixture(Base, TimestampMixin):
@@ -982,9 +983,7 @@ MOVE_EFFECT: Final[dict[str, str]] = {
 # A wage row is the one ledger entry with no player attached to it, so its sentence names the round.
 WAGE_EFFECT: Final = "the wages this career agreed are paid: every deal it holds costs its weekly wage for the round it was held"
 # Stored so the number on a page and the rows behind it can be checked against each other by anyone.
-BUDGET_FORMULA: Final = (
-    "career.budget + sum(moves.fee where kind = sell) - sum(moves.fee where kind in (buy, loan)) - sum(wage_charges.fee)"
-)
+BUDGET_FORMULA: Final = "career.budget + sum(moves.fee where kind = sell) - sum(moves.fee where kind in (buy, loan)) - sum(wage_charges.fee)"
 
 
 class TransferListing(Base, TimestampMixin):
@@ -1095,3 +1094,52 @@ class CareerWageCharge(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     career: Mapped[Career] = relationship(back_populates="wage_charges")
+
+
+APPEARANCE_NOTE: Final = (
+    "one row per player the engine selected for a career's side in one round. The engine models no "
+    "substitutions, so a selected player plays the whole fixture and `minutes` is the match length it was "
+    "played at — the row states what was picked, not what was observed."
+)
+
+
+class CareerAppearance(Base, TimestampMixin):
+    """One player's place in one career round: the trace a played round leaves behind (spec §20).
+
+    This is what makes a career carry over rather than reset. `career_fixtures` records the score of a
+    round and `career_squad_moves` records who the career bought, but neither says who actually played —
+    so without these rows the eleven in round 9 is built from exactly the same inputs as the eleven in
+    round 1, and no amount of minutes or training could reach the engine.
+
+    Minutes are stored rather than re-read out of `sim_matches.report`, because the match report is the
+    engine's output and can be deleted by its owner: the load a round put on a squad is a fact about the
+    career, not about a report that happens to still be on file.
+
+    `player_id` follows `career_squad_moves` in being a real foreign key with a cascade — if the world is
+    regenerated and a player's row goes, the trace of him goes with it rather than pointing at nobody.
+    """
+
+    __tablename__ = "career_appearances"
+    __table_args__ = (
+        UniqueConstraint("career_id", "round_index", "player_id", name="uq_career_appearance_round_player"),
+        Index("ix_appearance_career_round", "career_id", "round_index"),
+        Index("ix_appearance_player", "player_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    round_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    player_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    player_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    position: Mapped[str] = mapped_column(String(8), default="", nullable=False)
+    band: Mapped[str] = mapped_column(String(10), default="", nullable=False)
+    side: Mapped[str] = mapped_column(String(5), default="home", nullable=False)
+    minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    minutes_units: Mapped[str] = mapped_column(String(40), default="match minutes", nullable=False)
+    opponent_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    note: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="appearances")

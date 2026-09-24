@@ -620,7 +620,9 @@ class TestSquadReachesTheEngine:
         career_service.play_round(session, career)
         market.sell(session, career, ident=player.id)
         assert squad_service.squad_state(session, career, 2)[player.id] == "sell"
-        assert squad_service.squad_as_of(session, career, 2) is None, "in and out by round 2 leaves the club's own squad"
+        composed = squad_service.squad_as_of(session, career, 2)
+        assert composed is not None and composed.empty and composed.label == "", "in and out by round 2 leaves the club's own squad rows"
+        assert composed.carries_load, "but the played round is carried: the same eleven comes into round 2 with load on it"
         rows = list(session.scalars(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id).order_by(CareerSquadMove.round_index)).all())
         assert [row.kind for row in rows] == ["buy", "sell"] and [row.round_index for row in rows] == [1, 2]
         squad, _account = squad_service.current_squad(session, career)
@@ -722,7 +724,7 @@ class TestMarketView:
 
     def test_the_career_layer_says_what_the_market_still_does_not_do(self) -> None:  # type: ignore[no-untyped-def]
         limits = career_service.limitations()
-        assert set(limits) == {"budget", "wages", "scouting", "philosophy", "table", "objectives"}
+        assert set(limits) == {"budget", "wages", "carry_over", "scouting", "philosophy", "table", "objectives"}
         assert "spent, not stated" in limits["budget"] and "/api/v1/transfers" in limits["budget"]
         assert "career_wage_charges" in limits["wages"] and "not charged is the club's own" in limits["wages"]
         assert "no default" in limits["wages"], "the wage bill's own limit is named rather than left out"

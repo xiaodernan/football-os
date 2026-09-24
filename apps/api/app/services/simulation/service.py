@@ -155,6 +155,11 @@ def replay_is_identical(session: Session, match: SimulationMatch) -> dict[str, A
     round*, so a signing made afterwards cannot quietly rewrite an older result. When the eleven that
     comes out differs from the eleven the report says was picked, the answer is a refusal — replaying
     a different squad and reporting the engine disagreed would blame the model for an input change.
+
+    The same reasoning covers the indices the report printed. `form` is an input the engine reads, and
+    since carry-over it reads the appearance trace as of the round being replayed, so a trace row
+    deleted or a training applied after the match moves it without the model changing. A match whose
+    rebuilt side prints a different index is therefore refused, with both figures named.
     """
     if not match.home_team_id or not match.away_team_id:
         return {"possible": False, "reason": "one of the clubs is no longer in the generated world"}
@@ -167,8 +172,24 @@ def replay_is_identical(session: Session, match: SimulationMatch) -> dict[str, A
         return {
             "possible": False,
             "reason": (
-                f"the {' and '.join(changed)} side's selected eleven is no longer the eleven this match picked, "
-                "so replaying it would compare two different fixtures rather than re-deriving this one"
+                f"the {' and '.join(changed)} side's selected eleven is no longer the eleven this match picked, so replaying it would compare two different fixtures rather than re-deriving this one"
+            ),
+            "squad": squad_note,
+            "model_version": match.model_version,
+        }
+    sides = {"home": home, "away": away}
+    moves = {side: _indices_changed(stored, side, profile) for side, profile in sides.items()}
+    moved = [(side, keys) for side, keys in moves.items() if keys]
+    if moved:
+        figures = "; ".join(f"the {side} side's " + " and ".join(f"{key} index ({_fmt(on_file)} on file, {_fmt(rebuilt)} rebuilt)" for key, on_file, rebuilt in keys) for side, keys in moved)
+        return {
+            "possible": False,
+            "reason": (
+                f"{figures} no longer match what this match printed — an index the engine reads is an input, not a "
+                "result, and it can move without the engine changing: a side's form index is built from each selected "
+                "player's stored form and from the condition his load trace gives him *as of the round being replayed*, "
+                "so a training applied after this match or a trace row deleted since it was played rebuilds a different "
+                "side. Replaying that would compare two different inputs rather than re-derive this one"
             ),
             "squad": squad_note,
             "model_version": match.model_version,
@@ -197,6 +218,31 @@ def _lineup_changed(stored: dict[str, Any], side: str, profile: SideProfile) -> 
         return False
     before = [str(row.get("player", "")) for row in recorded if isinstance(row, dict)]
     return before != [name for name, _, _ in profile.lineup]
+
+
+def _indices_changed(stored: dict[str, Any], side: str, profile: SideProfile) -> tuple[tuple[str, float, float], ...]:
+    """Which of the six indices the report printed differ from the ones the rebuilt side now carries.
+
+    The same discipline as the eleven: a match whose report prints no indices is treated as unchanged
+    rather than as a mismatch. This is where carry-over shows up — `form` is the only index that reads
+    the appearance trace, so a round whose trace rows were deleted after it was played rebuilds a
+    fresher, sharper side than the one that actually kicked off.
+    """
+    recorded = _as_mapping(_as_mapping(_as_mapping(stored.get("sides")).get(side)).get("indices"))
+    printed = _as_mapping(profile.to_dict()["indices"])
+    moves: list[tuple[str, float, float]] = []
+    for key, rebuilt in printed.items():
+        if key not in recorded:
+            continue
+        on_file = float(recorded[key])
+        if float(rebuilt) != on_file:
+            moves.append((key, on_file, float(rebuilt)))
+    return tuple(moves)
+
+
+def _fmt(value: object) -> str:
+    """A figure for prose: a missing index reads as `?` rather than as a number invented here."""
+    return "?" if not isinstance(value, (int, float)) else f"{float(value):.3f}".rstrip("0").rstrip(".")
 
 
 def _as_mapping(value: object) -> dict[str, Any]:

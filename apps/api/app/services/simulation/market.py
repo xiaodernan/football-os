@@ -202,7 +202,7 @@ def club_need(session: Session, career: Career, *, round_index: int) -> dict[str
         "judged_on": list(BAND_ATTRIBUTES[needed]),
         "formation": profile.formation,
         "system_slug": profile.system_slug,
-        "squad_applied": overlay.label if overlay else "",
+        "squad_applied": overlay.summary if overlay else "",
         "formula": NEED_FORMULA,
     }
 

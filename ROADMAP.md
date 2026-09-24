@@ -238,7 +238,20 @@ Still open in M6:
    `release_clause = asking × 1.5` while both are rounded to the 5-credit step — the 49 backend tests asserted
    the rounded values, so only the sentence shown to a manager was false. The wage bill is still not
    deducted (item 8) and `no_transfers` is still advertised as merely stated (item 7).
-3. [ ] squad and training carry-over between matches
+3. [x] **squad and training carry-over between matches** (2026-09-24, §20 backend): `career_appearances`
+   (migration `0013`) records one row per player the engine selected per round, at the fixture's full
+   length; the round after it reads a decayed three-round window off those rows — `load = Σ minutes ×
+   0.5^rounds-since`, over a window that holds 157.5 units — plus a training reserve of at most 0.15
+   given back by the player's own rows in `real_training_sessions`, and the resulting `condition`
+   weights each selected player's stored form before the eleven's mean is taken. That last step is why
+   no digest moved: `form` is an index the fatigue term already reads, an empty condition map is
+   bit-for-bit the old number, and the two new Metrics appear only on a side that actually carries load.
+   `replay_is_identical` grew a second refusal for exactly this reason — a deleted trace would otherwise
+   print as the engine disagreeing with itself — and `play_round` refuses to attribute a round whose
+   rebuilt eleven does not match its own report. 17 new tests in `tests/test_carry_over.py`, **450 API
+   tests green on both engines**, quoted with the four published formulas in
+   [`docs/M6_CARRY_OVER_VERIFICATION.md`](docs/M6_CARRY_OVER_VERIFICATION.md). Player growth, resting a
+   tired player and substitutions are still not implemented and the module says so.
 4. [ ] a `sim_events` table so the timeline is stored rather than regenerated
 5. [ ] rendering the `training_log` the player detail route already returns
 6. [x] **a per-run test database** — `conftest.py` pointed every run at one fixed `football_os_pytest`
