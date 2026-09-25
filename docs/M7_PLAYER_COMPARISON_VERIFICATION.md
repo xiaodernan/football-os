@@ -96,11 +96,13 @@ by that subset. Both scout test files now take `def session(world)`, so a subset
 
 ## 5. §27's own flow, and where this tier stops
 
-§27's list also asks for scouting shortlists and for a comparison that feeds a transfer decision. Neither is
-here, and the gap is stated rather than hidden:
+§27's list also asks for a saved shortlist and for a comparison that feeds a transfer decision. The second is not
+here, and the first is not here *in this tier* — both gaps are stated rather than hidden:
 
-* **no shortlist yet.** A saved list of compared candidates needs storage, and this tier adds none —
-  `alembic upgrade head` stays at `0014` for §24 and §27 both. The shortlist table is the next migration.
+* **this tier stores nothing.** §27 adds no table and no migration; a comparison is computed from two stored rows
+  on the request that asks for one. §23's shortlist — the saved list §27's flow points at — landed beside it in
+  migration `0015`, and it stores membership and the manager's words rather than any of these measures
+  ([docs/M7_SHORTLIST_VERIFICATION.md](M7_SHORTLIST_VERIFICATION.md)).
 * **no offer is made.** A comparison reads §22's valuation through `asking_fee` on each brief, but it does not
   touch the market: no listing is created, no budget moves. `limitations()` says so.
 * **Progression is thinner than the other three event dimensions, and says which parts came from where.** This

@@ -1,6 +1,6 @@
 """Scout endpoints (M7, spec §23–§27).
 
-Five doors, and the wall is the one §61 puts on everything else in this project:
+Twelve doors, and the wall is the one §61 puts on everything else in this project:
 
 * `GET /scout/rules` is public. The vocabulary, the money reading, the sortings and the two band
   vocabularies this project disagrees with itself about are authored fiction about generated rows, and a
@@ -21,6 +21,12 @@ Five doors, and the wall is the one §61 puts on everything else in this project
   dimension whose measures disagree is called `split` instead of being resolved into a winner. Asking for a
   player against themself is a 422 that says a pair has to be two players, because the alternative is a
   payload of forty even lines that looks like a verdict.
+* `GET|POST /scout/shortlists`, `GET|PATCH|DELETE /scout/shortlists/{ident}` and
+  `POST|DELETE /scout/shortlists/{ident}/items[/{player}]` are §23's 建立 shortlist, and they need an account for
+  the ordinary reason: a list is one account's own words. What is deliberate about them is what they do not store
+  — no figure about a player is saved anywhere, so no list can go on claiming a rating the world has moved away
+  from. A read takes every number from the stored rows again and re-applies the stored sentence, so a list ages
+  in the open rather than going quiet.
 
 A search never hides what it could not understand. The `refused` list from the parser rides along on the
 response beside the candidates the filters produced, so a page cannot present "12 left-footed strikers" when
@@ -80,6 +86,30 @@ from app.services.scouting.requirements import (
     vocabulary_problems,
 )
 from app.services.scouting.search import DEFAULT_LIMIT, MAX_LIMIT, SORT_KEYS, SearchRefusal, limitations, scout_counts, scout_ready, search, search_problems, world_account
+from app.services.scouting.shortlist import (
+    NOT_FOUND_CODES as SHORTLIST_NOT_FOUND,
+)
+from app.services.scouting.shortlist import (
+    UNPROCESSABLE_CODES as SHORTLIST_UNPROCESSABLE,
+)
+from app.services.scouting.shortlist import (
+    ShortlistRefusal,
+    add_player,
+    create_shortlist,
+    delete_list,
+    drop_player,
+    list_shortlists,
+    shortlist_counts,
+    shortlist_ready,
+    shortlist_view,
+    update_list,
+)
+from app.services.scouting.shortlist import (
+    limitations as shortlist_limitations,
+)
+from app.services.scouting.shortlist import (
+    rules as shortlist_rules,
+)
 from app.services.simulation.market import MarketRefusal
 
 router = APIRouter(prefix="/scout", tags=["scouting"])
@@ -129,6 +159,40 @@ class CompareIn(BaseModel):
 
     left: str = Field(min_length=1, max_length=80)
     right: str = Field(min_length=1, max_length=80)
+
+
+class ShortlistIn(BaseModel):
+    """§23's list: a name, the sentence it was built from, and the two links a read needs.
+
+    No figure belongs here. A list carries words and links; the players' numbers come back on every read from
+    the stored rows, which is what lets a list go stale about its own question instead of lying about a player.
+
+    The length caps are deliberately not pydantic constraints. A transport-level 422 names a field and a rule;
+    the service's refusal names the length it was handed and the limit it tripped over, which is the answer a
+    reader can check their own request against. So the cap lives in one place, and it is the service's.
+    """
+
+    name: str = ""
+    query: str = ""
+    role: str | None = Field(default=None, max_length=16)
+    career: str | None = Field(default=None, max_length=80)
+
+
+class ShortlistPatchIn(BaseModel):
+    """The same four fields, all optional: a list can be renamed, re-questioned, or re-pointed at a career."""
+
+    name: str | None = None
+    query: str | None = None
+    role: str | None = Field(default=None, max_length=16)
+    career: str | None = Field(default=None, max_length=80)
+
+
+class ShortlistItemIn(BaseModel):
+    """Which player, and the manager's own words about him — the note is the only other thing stored, and the
+    service is the one that says how long a note may be."""
+
+    player: str = Field(min_length=1, max_length=80)
+    note: str = ""
 
 
 def _career(db: Session, user: User, ident: str) -> Career:
@@ -237,12 +301,32 @@ def read_rules(request: Request, db: Session = Depends(get_db)) -> dict[str, Any
             },
             "note": "§27's ten dimensions, each answered measure by measure out of the two stored rows: a dimension whose measures disagree is called `split`, an event rate with no lines behind it is `unknown`, and the two overall columns are printed without being made the answer",
         },
+        "shortlists": {
+            **shortlist_rules(),
+            "ready": shortlist_ready(db),
+            "counts": shortlist_counts(db),
+            "limitations": shortlist_limitations(),
+            "refusals": {
+                "no_such_shortlist": "404 — no list of yours answers to that id, and another account's id is answered the same way",
+                "no_such_player": "404 — the player is not in the pool, so nothing can be listed under that name",
+                "no_such_career": "404 — no career of yours bears that slug, so no squad need can be judged against it",
+                "already_listed": "409 — he is already on that list, and a second row would make the list's own count lie",
+                "shortlist_full": "409 — the list holds as many players as one list may",
+                "too_many_shortlists": "409 — the account holds as many lists as one account may",
+                "not_listed": "409 — he is not on that list, so there is nothing there to take off it",
+                "name_taken": "409 — the account already has a list under that name, and two lists of one name cannot be asked which is which",
+            },
+            "note": "§23's 建立 shortlist, stored as membership only: the read prints the search's own candidate projection for each member, re-parses the stored sentence against every row on it, and calls a stale list what it is",
+        },
         "example_parse": parse_requirements("找一个 22 岁以下、左脚、能踢 Inverted Fullback、预算 €20m 的球员").to_dict(),
         "routes": {
             "parse": "POST /api/v1/scout/parse — a sentence in, requirements and refusals out, no rows read",
             "search": "POST /api/v1/scout/search — needs an account; the only route here that reads the stored player table",
             "report": "POST /api/v1/scout/report — needs an account; §24's structured report for one stored player",
             "comparison": "POST /api/v1/scout/compare — needs an account; §27's ten dimensions for a pair of stored players, with no composite score to decide between them",
+            "shortlists": "GET|POST /api/v1/scout/shortlists — needs an account; §23's lists, which store a name, a sentence and membership, and nothing else about a player",
+            "shortlist": "GET|PATCH|DELETE /api/v1/scout/shortlists/{ident} — one list read live: every figure re-taken from the stored rows, the stored sentence re-applied to every member",
+            "shortlist_items": "POST|DELETE /api/v1/scout/shortlists/{ident}/items[/{player}] — put a stored player on a list, or take him off it",
         },
     }
 
@@ -360,3 +444,88 @@ def compare(payload: CompareIn, request: Request, db: Session = Depends(get_db),
 
 
 __all__ = ["router"]
+
+
+# --- §23's shortlist (建立 shortlist) ---------------------------------------------------------------
+
+
+def _shortlist_refusal(error: ShortlistRefusal) -> HTTPException:
+    """Which answer a list refusal deserves: a thing that is not there, a sentence that cannot be stored, or a
+    state the request would have to break. The code and its figures travel together, as §22's refusals do."""
+    detail = error.to_dict()
+    if error.code in SHORTLIST_NOT_FOUND:
+        return HTTPException(status.HTTP_404_NOT_FOUND, detail=detail)
+    if error.code in SHORTLIST_UNPROCESSABLE:
+        return HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+    return HTTPException(status.HTTP_409_CONFLICT, detail=detail)
+
+
+@router.get("/shortlists")
+def read_shortlists(request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """This account's lists and how many players each holds — counts of membership, because nothing else is stored."""
+    limit(request, 30, 60, scope="scout_shortlists")
+    return {**list_shortlists(db, user), "demo_data": True}
+
+
+@router.post("/shortlists")
+def open_shortlist(payload: ShortlistIn, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Name a list, and keep the sentence it came out of beside it. No player is looked up here."""
+    limit(request, 20, 60, scope="scout_shortlist_write")
+    try:
+        created = create_shortlist(db, user, name=payload.name, query=payload.query, role=payload.role or "", career=payload.career)
+    except ShortlistRefusal as error:
+        raise _shortlist_refusal(error) from None
+    return {**created, "demo_data": True}
+
+
+@router.get("/shortlists/{ident}")
+def read_shortlist(ident: str, request: Request, round_index: int | None = None, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """§23's shortlist read live: every figure re-taken from the stored rows, and the stored sentence re-applied
+    to each member so a list that no longer answers its own question says so. `round_index` moves the career's
+    need to a round the manager names, exactly as §24's report takes it."""
+    limit(request, 20, 60, scope="scout_shortlist_read")
+    try:
+        view = shortlist_view(db, user, ident, round_index=round_index)
+    except ShortlistRefusal as error:
+        raise _shortlist_refusal(error) from None
+    return view
+
+
+@router.patch("/shortlists/{ident}")
+def rename_shortlist(payload: ShortlistPatchIn, ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Change a list's words. The players on it are not touched, because they were never stored in the words."""
+    limit(request, 20, 60, scope="scout_shortlist_write")
+    try:
+        return {**update_list(db, user, ident, name=payload.name, query=payload.query, role=payload.role, career=payload.career), "demo_data": True}
+    except ShortlistRefusal as error:
+        raise _shortlist_refusal(error) from None
+
+
+@router.delete("/shortlists/{ident}")
+def remove_shortlist(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Delete a list. Its membership rows go by the schema's cascade, and no player row is written back to."""
+    limit(request, 20, 60, scope="scout_shortlist_write")
+    try:
+        return {**delete_list(db, user, ident), "demo_data": True}
+    except ShortlistRefusal as error:
+        raise _shortlist_refusal(error) from None
+
+
+@router.post("/shortlists/{ident}/items")
+def put_on_list(payload: ShortlistItemIn, ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Put a stored player on a list. The slug is looked up first, so a wrong name never becomes a row."""
+    limit(request, 30, 60, scope="scout_shortlist_write")
+    try:
+        return {**add_player(db, user, ident, player=payload.player, note=payload.note), "demo_data": True}
+    except ShortlistRefusal as error:
+        raise _shortlist_refusal(error) from None
+
+
+@router.delete("/shortlists/{ident}/items/{player}")
+def take_off_list(ident: str, player: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Take a player off a list. The rows that stay keep the positions they had, which is the only order kept."""
+    limit(request, 30, 60, scope="scout_shortlist_write")
+    try:
+        return {**drop_player(db, user, ident, player=player), "demo_data": True}
+    except ShortlistRefusal as error:
+        raise _shortlist_refusal(error) from None

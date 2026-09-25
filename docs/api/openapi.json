@@ -5196,6 +5196,366 @@
           }
         ]
       }
+    },
+    "/api/v1/scout/shortlists": {
+      "get": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Read Shortlists",
+        "description": "This account's lists and how many players each holds — counts of membership, because nothing else is stored.",
+        "operationId": "read_shortlists_api_v1_scout_shortlists_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Shortlists Api V1 Scout Shortlists Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Open Shortlist",
+        "description": "Name a list, and keep the sentence it came out of beside it. No player is looked up here.",
+        "operationId": "open_shortlist_api_v1_scout_shortlists_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShortlistIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Open Shortlist Api V1 Scout Shortlists Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/scout/shortlists/{ident}": {
+      "get": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Read Shortlist",
+        "description": "§23's shortlist read live: every figure re-taken from the stored rows, and the stored sentence re-applied\nto each member so a list that no longer answers its own question says so. `round_index` moves the career's\nneed to a round the manager names, exactly as §24's report takes it.",
+        "operationId": "read_shortlist_api_v1_scout_shortlists__ident__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "round_index",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Round Index"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Shortlist Api V1 Scout Shortlists  Ident  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Rename Shortlist",
+        "description": "Change a list's words. The players on it are not touched, because they were never stored in the words.",
+        "operationId": "rename_shortlist_api_v1_scout_shortlists__ident__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShortlistPatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Rename Shortlist Api V1 Scout Shortlists  Ident  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Remove Shortlist",
+        "description": "Delete a list. Its membership rows go by the schema's cascade, and no player row is written back to.",
+        "operationId": "remove_shortlist_api_v1_scout_shortlists__ident__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Remove Shortlist Api V1 Scout Shortlists  Ident  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scout/shortlists/{ident}/items": {
+      "post": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Put On List",
+        "description": "Put a stored player on a list. The slug is looked up first, so a wrong name never becomes a row.",
+        "operationId": "put_on_list_api_v1_scout_shortlists__ident__items_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShortlistItemIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Put On List Api V1 Scout Shortlists  Ident  Items Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scout/shortlists/{ident}/items/{player}": {
+      "delete": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Take Off List",
+        "description": "Take a player off a list. The rows that stay keep the positions they had, which is the only order kept.",
+        "operationId": "take_off_list_api_v1_scout_shortlists__ident__items__player__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "player",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Player"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Take Off List Api V1 Scout Shortlists  Ident  Items  Player  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6550,6 +6910,121 @@
         "type": "object",
         "title": "SearchIn",
         "description": "A sentence, stated fields, or both. Where both speak, both cuts apply and the response says so."
+      },
+      "ShortlistIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "default": ""
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "career": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Career"
+          }
+        },
+        "type": "object",
+        "title": "ShortlistIn",
+        "description": "§23's list: a name, the sentence it was built from, and the two links a read needs.\n\nNo figure belongs here. A list carries words and links; the players' numbers come back on every read from\nthe stored rows, which is what lets a list go stale about its own question instead of lying about a player.\n\nThe length caps are deliberately not pydantic constraints. A transport-level 422 names a field and a rule;\nthe service's refusal names the length it was handed and the limit it tripped over, which is the answer a\nreader can check their own request against. So the cap lives in one place, and it is the service's."
+      },
+      "ShortlistItemIn": {
+        "properties": {
+          "player": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Player"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "player"
+        ],
+        "title": "ShortlistItemIn",
+        "description": "Which player, and the manager's own words about him — the note is the only other thing stored, and the\nservice is the one that says how long a note may be."
+      },
+      "ShortlistPatchIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "career": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Career"
+          }
+        },
+        "type": "object",
+        "title": "ShortlistPatchIn",
+        "description": "The same four fields, all optional: a list can be renamed, re-questioned, or re-pointed at a career."
       },
       "SimulateIn": {
         "properties": {

@@ -117,10 +117,15 @@ export default async function ScoutPage() {
         </div>
       </Panel>
 
-      <Panel eyebrow="§24 · thirteen fields · §27 · ten dimensions" title="What the report and the comparison promise">
+      <Panel eyebrow="§23 · a list that stores membership · §24 · thirteen fields · §27 · ten dimensions" title="What the shortlist, the report and the comparison promise">
         <div className="stack-sm">
           <KeyValueGrid
             rows={[
+              ["Shortlist caps", `${data.shortlists.max_shortlists_per_user} lists per account · ${data.shortlists.max_items_per_shortlist} players each · ${data.shortlists.name_max}-character names · ${data.shortlists.note_max}-character notes`],
+              ["A list stores", data.shortlists.stored],
+              ["A list does not store", data.shortlists.not_stored],
+              ["Why not", data.shortlists.why_not],
+              ["Re-read on every visit", data.shortlists.rechecked_on_read],
               ["Report fields", data.report.fields.join(" · ")],
               ["Verdicts the ladder can produce", data.report.verdicts.join(" · ")],
               ["Report refusals", Object.entries(data.report.refusals).map(([code, sentence]) => `${code}: ${sentence}`).join(" · ")],
@@ -133,7 +138,7 @@ export default async function ScoutPage() {
           <p className="notice">{data.comparison.no_single_score}</p>
           <p className="muted">{data.report.note}</p>
           <ul className="stack-sm" style={{ listStyle: "none", padding: 0 }}>
-            {[...data.search.limits, ...data.report.limitations, ...data.comparison.limitations].map((line) => (
+            {[...data.search.limits, ...data.shortlists.limitations, ...data.report.limitations, ...data.comparison.limitations].map((line) => (
               <li className="muted" key={line}>
                 {line}
               </li>

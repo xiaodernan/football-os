@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ScoutComparePanel } from "@/components/ScoutComparePanel";
+import { ScoutShortlistPanel } from "@/components/ScoutShortlistPanel";
 import { ScoutReportPanel } from "@/components/ScoutReportPanel";
 import { Panel } from "@/components/ui";
 import { browserFetch, errorMessage } from "@/lib/api";
@@ -274,6 +275,9 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
               )}
             </div>
           </Panel>
+
+          {/* The list is where a search ends up, so it sits after the comparison rather than before it. */}
+          <ScoutShortlistPanel candidates={searched.candidates} rules={rules.shortlists} searchedQuery={searched.query ?? ""} />
         </>
       )}
     </div>

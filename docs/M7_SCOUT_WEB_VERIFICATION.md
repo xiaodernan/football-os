@@ -5,7 +5,7 @@ against the API's own answers — and that a visitor can check each of them with
 
 * **API tier:** `uvicorn app.main:app --port 8734`, the development PostgreSQL world (300 stored players, 20 clubs).
 * **Web tier:** `API_INTERNAL_URL=http://127.0.0.1:8734 next start -p 3213`, `next build` compiled in 67 s.
-* **Walk:** `QA_BASE=http://127.0.0.1:3213 node scripts/qa-scout.mjs` → **68/68 checks passed**, 6 screenshots in `docs/screenshots/`, exit 0. Run on 2026-09-25 at 00:24 local time against this tree.
+* **Walk:** `QA_BASE=http://127.0.0.1:3213 node scripts/qa-scout.mjs` → **68/68 checks passed** at 00:24, then **97/97** at 02:57 local time on 2026-09-25 after §23's shortlist panel joined the screen; 7 screenshots in `docs/screenshots/`, exit 0. Both runs against this tree.
 
 The walk is its own script (`apps/web/scripts/qa-scout.mjs`) rather than a section of `visual-qa.mjs`, for the
 same reason `qa-market.mjs` is: that walk is another milestone's live working copy, and a page cannot be folded
@@ -20,6 +20,7 @@ into it without editing underneath its author.
 | `apps/web/lib/scout.ts` | The response shapes of `/scout/{rules,parse,search,report,compare}`, read off the JSON those routes return. Types only: no derived figure, no re-implementation of an API formula. |
 | `apps/web/app/scout/page.tsx` | The server half. `force-dynamic`, `noindex`, a session or a redirect to `/login`, one `serverFetch` of `/scout/rules`, and the two vocabulary panels the workbench reasons over. |
 | `apps/web/components/ScoutWorkbench.tsx` | The client half: the sentence box, the candidate table, the waterfall, and the A/B slots. |
+| `apps/web/components/ScoutShortlistPanel.tsx` | §23's shortlist on the same screen: open a list from the sentence just typed, add a player the search returned, read the list back, refuse a duplicate, take a player off, delete the list. |
 | `apps/web/components/ScoutReportPanel.tsx` | §24's thirteen fields, each with the sentence that produced its figure. |
 | `apps/web/components/ScoutComparePanel.tsx` | §27's ten dimensions and 47 measures, and no summary figure. |
 | `apps/web/app/robots.ts`, `components/Nav.tsx` | `/scout` disallowed for crawlers; "Scouting" added to the nav. |
@@ -41,6 +42,10 @@ Each one exists because the API already prints the evidence, and the page's job 
    re-adds each row from the DOM rather than trusting the figure beside it.
 4. **A comparison has no winner.** The panel prints ten leaders and 47 measures; the walk asserts the payload's
    own refusal sentence is on screen *and* that no composite figure was added in the browser.
+5. **A list stores membership, so the page shows today's numbers or says nothing.** The shortlist panel prints
+   the search's own candidate projection for each member and never a figure of its own; the walk compares the
+   two tables cell by cell, and checks that a refusal (`already_listed`, with its figures) stays on screen after
+   the re-read that follows it.
 
 ## 3. What the walk measured
 
@@ -116,10 +121,22 @@ Six failures on the first two runs, and each one moved a real fact into the open
   now say `A AHEAD` / `B AHEAD`; the payload's own sentence, which explains the words `left` and `right`, is
   printed unchanged in the same panel.
 
+* `ScoutShortlistPanel` erased the refusal it had just printed. The panel re-reads the list after every write,
+  and the re-read's success cleared `fault` — so `already_listed` appeared and vanished in the same tick, leaving
+  the table quietly unchanged and the reader with no sentence explaining why. A re-read now reports its own
+  failure but never overwrites the refusal that made it necessary. The walk asserts both halves: the notice stays,
+  and the count it complains about is still the old one.
+* Two more of that panel's checks were wrong before any of its code was: the eyebrow is uppercase in rendered
+  text (`0 MEMBERSHIP ROWS STORED`), and `left` is not a number, so a cell-by-cell comparison of the list table
+  against the search table read a matching pair as a mismatch. Both assertions now compare like with like, and
+  one waits for the row's own button to stop being disabled rather than sleeping.
+
 ## 5. Where this tier stops
 
-* **No shortlist yet.** Nothing on this page is stored: a search, a report and a comparison are recomputed per
-  request. The stored shortlist behind migration `0015` is the next item in M7 (task #38).
+* **A shortlist is stored; nothing else here is.** The page now has one persistent object — §23's list, behind
+  migration `0015` — and it holds membership and the manager's own words, never a figure; the search, the report
+  and the comparison on the same screen stay recomputed per request. The list's own evidence is
+  [docs/M7_SHORTLIST_VERIFICATION.md](M7_SHORTLIST_VERIFICATION.md).
 * **`team_fit` needs a career slug typed by hand.** The report answers §24's team field only when the reader
   names a career; the walk deliberately left it `null` and asserted that the null is printed with its reason.
 * **Rate limits are the server's.** 20 searches, reports and comparisons a minute; a `429` prints the API's own

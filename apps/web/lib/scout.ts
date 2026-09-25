@@ -370,6 +370,7 @@ export type ScoutRulesView = {
     note: string;
   };
   example_parse: Record<string, unknown>;
+  shortlists: ShortlistRulesBlock;
   routes: Record<string, string>;
 };
 
@@ -395,3 +396,113 @@ export function money(value: number): string {
 export function figure(value: number | string | null | undefined): string {
   return value === null || value === undefined ? "—" : String(value);
 }
+
+/**
+ * §23's shortlist, as `GET|POST /api/v1/scout/shortlists` and its item routes return it.
+ *
+ * The types below are only as wide as the API's own answers, and one of the API's answers is worth saying out
+ * loud here because it shapes this half of the screen: a list row stores a name, a sentence, an optional role
+ * and career link, and which players are on it. Every figure a list prints arrives inside `player` — the same
+ * candidate projection `POST /scout/search` returns — so a page has nothing to recompute and nothing to
+ * remember from the last read.
+ */
+export type ShortlistRules = {
+  max_shortlists_per_user: number;
+  max_items_per_shortlist: number;
+  name_max: number;
+  note_max: number;
+  query_max: number;
+  stored: string;
+  not_stored: string;
+  why_not: string;
+  rechecked_on_read: string;
+  position: string;
+  visibility: string;
+  rule: string;
+  codes: string[];
+};
+
+/**
+ * What `GET /api/v1/scout/rules` publishes about the tier is the same block with two things added: the
+ * limitations, and the eight codes a client has to branch on written out as sentences. A single list's read
+ * echoes the plain block, so the wider shape is its own type rather than optional fields on the narrow one.
+ */
+export type ShortlistRulesBlock = ShortlistRules & { limitations: string[]; refusals: Record<string, string> };
+
+/** One of the account's lists, as the list route prints it: words, counts of membership, and room left. */
+export type ShortlistRow = {
+  id: string;
+  name: string;
+  query: string;
+  role: string;
+  career_id: string | null;
+  career: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  stored: string[];
+  not_stored: string;
+  players_listed: number;
+  room_left: number;
+};
+
+export type ShortlistList = {
+  items: ShortlistRow[];
+  total: number;
+  limit: number;
+  items_limit: number;
+  room_left: number;
+  rule: string;
+  integrity: { clean: boolean; problems: string[]; checked: { shortlists: number; membership_rows: number; players_in_pool: number }; rule: string };
+  demo_data: boolean;
+};
+
+/** The stored sentence, parsed and applied again to one member on this very request. */
+export type ShortlistRecheck = {
+  asked: string | null;
+  answers: { phrase: string; kind: string }[];
+  no_longer_answers: { phrase: string; kind: string }[];
+  refused?: { phrase: string; code: string; message: string }[];
+  unaccounted?: string[];
+  filters_applied: number;
+  note: string;
+};
+
+export type ShortlistItem = {
+  position: number;
+  note: string;
+  added_at: string | null;
+  player: Candidate;
+  recheck: ShortlistRecheck;
+};
+
+/** The career's own need, in §22's words — printed beside a list that was opened against a career. */
+export type ShortlistNeed = {
+  needed_band?: string;
+  bands?: Record<string, number>;
+  positions_in_band?: string[];
+  judged_on?: string[];
+  formation?: string;
+  system_slug?: string;
+  refused?: { code: string; message: string };
+};
+
+export type ShortlistView = {
+  shortlist: ShortlistRow;
+  career: { slug: string; club_name: string; rounds_played: number } | null;
+  need: ShortlistNeed | null;
+  items: ShortlistItem[];
+  gone_from_the_world: { player_id: string; position: number; note: string }[];
+  counts: { membership_rows: number; printed: number; answered_everything: number; answered_nothing: number; no_sentence_to_answer: number };
+  room_left: number;
+  figures_from: string;
+  rules: ShortlistRules;
+  limitations: string[];
+  data_origin: string;
+  is_demo_data: boolean;
+  account_content: string;
+  disclaimer: string;
+  demo_data: boolean;
+};
+
+/** What the list routes answer with when they refuse: the code, the sentence, and the figures behind it. */
+export type ShortlistRefusal = { code?: string; message?: string; held?: number; limit?: number; length?: number; max?: number; name?: string; player?: string; ident?: string; shortlist?: string; listed?: string[]; career?: string };

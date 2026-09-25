@@ -13,6 +13,8 @@ from app.services.scouting.compare import DIMENSIONS, comparison_counts, compari
 from app.services.scouting.report import REPORT_FIELDS, report_counts, report_ready
 from app.services.scouting.requirements import SCOUT_DISCLAIMER, vocabulary_problems
 from app.services.scouting.search import scout_counts, scout_ready, search_problems
+from app.services.scouting.shortlist import MAX_ITEMS as SHORTLIST_ITEMS
+from app.services.scouting.shortlist import MAX_SHORTLISTS, shortlist_counts, shortlist_ready
 from app.services.simulation.challenges import CHALLENGE_DISCLAIMER, challenge_counts, challenge_ready
 from app.services.simulation.service import engine_description, sim_counts, sim_ready, sim_tables_present
 from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_ready, tactics_tables_present
@@ -94,6 +96,15 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
         # beside each other. Its dimension gate — every leader equal to the measures beneath it, no composite
         # score smuggled in under another name — rides on `/scout/rules` for the reason just stated.
         "m7_player_comparison": {"ready": comparison_ready(db), "dimensions": list(DIMENSIONS), "counts": comparison_counts(db)},
+        # §23's shortlist is a storage tier, so its flag is not "has anybody made a list" — it is ready when
+        # there is a pool to list players from. What is interesting about the count beside it is that both sides
+        # are membership rows: no figure about a player is stored anywhere in this tier.
+        "m7_shortlist": {
+            "ready": shortlist_ready(db),
+            "counts": {**shortlist_counts(db), "lists_per_user": MAX_SHORTLISTS, "players_per_list": SHORTLIST_ITEMS},
+            "stores": "a name, a sentence, an optional role and career link, and which players are on which list",
+            "stores_no_figures": True,
+        },
         "m8_club_os": False,
         "m9_community": False,
         "locales": ["en"],

@@ -182,7 +182,7 @@ in 39 s on the clean module, `1 failed` with `>= 9` planted, and the file back t
 | SQLite (default `python -m pytest`) | **729 passed, 1 skipped in 811.58 s** |
 | PostgreSQL (`FOOTBALL_OS_TEST_DATABASE_URL=…54321/football_os_pytest`) | **729 passed, 1 skipped in 1045.72 s** |
 
-730 items in all, of which the scout tier holds 233: `test_scout_search.py` 100 (§23's vocabulary, parser and
+730 items in all at this commit (§24 and §27; §23's shortlist brings the totals to 780 — see `docs/M7_SHORTLIST_VERIFICATION.md` §8), of which the scout tier held 233: `test_scout_search.py` 100 (§23's vocabulary, parser and
 waterfall), `test_scout_report.py` 60 (§24, including the swept threshold this probe added), and
 `test_scout_compare.py` 73 (§27). The contract in `docs/api/openapi.json` was compared against the running
 server rather than trusted: 86 paths / 98 operations, byte-identical to the committed file.

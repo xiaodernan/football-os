@@ -1208,3 +1208,50 @@ class SimulationEvent(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     match: Mapped[SimulationMatch] = relationship(back_populates="events")
+
+
+# --- Scouting shortlists (M7, spec §23's "建立 shortlist") ---------------------------------------
+# A shortlist stores membership and the manager's own words, never a figure. §22's market listings do
+# snapshot prices, and rightly: a listing is the record of an offer that was made, so the number has to
+# stay what it was when it was refused. A shortlist is the opposite kind of object — a live question about
+# who to watch — so a rating copied in at add-time would keep answering after the row behind it had moved.
+# Every figure a shortlist prints is read off the stored players again on the request that shows it.
+class ScoutShortlist(Base, TimestampMixin):
+    """One named list of players a manager is following, plus the sentence and role it was built against."""
+
+    __tablename__ = "scout_shortlists"
+    __table_args__ = (
+        Index("ix_shortlist_owner", "owner_id"),
+        UniqueConstraint("owner_id", "name", name="uq_shortlist_owner_name"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # The career whose squad need the list is read against, if one was named. Only the link is stored: the
+    # need band, the fit figures and §24's team fit are recomputed from the career's own round on every read.
+    career_id: Mapped[str | None] = mapped_column(ForeignKey("careers.id", ondelete="SET NULL"), nullable=True)
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    query: Mapped[str] = mapped_column(String(400), default="", nullable=False)
+    role: Mapped[str] = mapped_column(String(16), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    items: Mapped[list[ScoutShortlistItem]] = relationship(back_populates="shortlist", cascade="all, delete-orphan", order_by="ScoutShortlistItem.position")
+
+
+class ScoutShortlistItem(Base, TimestampMixin):
+    """One player on one list. The only number here is `position`, which is a fact about the list, not the player."""
+
+    __tablename__ = "scout_shortlist_items"
+    __table_args__ = (
+        UniqueConstraint("shortlist_id", "player_id", name="uq_shortlist_player"),
+        Index("ix_shortlist_item_order", "shortlist_id", "position"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    shortlist_id: Mapped[str] = mapped_column(ForeignKey("scout_shortlists.id", ondelete="CASCADE"), nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    note: Mapped[str] = mapped_column(String(240), default="", nullable=False)
+    position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    shortlist: Mapped[ScoutShortlist] = relationship(back_populates="items")
