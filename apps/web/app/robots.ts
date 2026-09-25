@@ -36,6 +36,10 @@ const DISALLOWED = [
   // A challenge run is a career: which scenario an account took on, and the verdict its own rounds
   // produced. Nothing here is a real competition, so nothing here should be crawlable as one.
   "/challenges",
+  // The scouting screen reads the whole stored player table on an account, and a report or a comparison is
+  // one manager's opinion-shaped cut of generated rows. `/scout/rules` is public JSON, but the page itself is
+  // session-gated, so it is disallowed rather than noindexed alone.
+  "/scout",
 ];
 
 export default function robots(): MetadataRoute.Robots {

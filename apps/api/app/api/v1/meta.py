@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
 from app.providers import provider_status
+from app.services.scouting.compare import DIMENSIONS, comparison_counts, comparison_ready
+from app.services.scouting.report import REPORT_FIELDS, report_counts, report_ready
 from app.services.scouting.requirements import SCOUT_DISCLAIMER, vocabulary_problems
 from app.services.scouting.search import scout_counts, scout_ready, search_problems
 from app.services.simulation.challenges import CHALLENGE_DISCLAIMER, challenge_counts, challenge_ready
@@ -83,6 +85,15 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
             "problems": [*vocabulary_problems(), *search_problems(db)],
             "disclaimer": SCOUT_DISCLAIMER,
         },
+        # §24's report answers about the same stored pool the search cuts, so it is listed the same way. Its
+        # structure gate — a report built here whose group means are re-averaged from the attributes they
+        # print — is published on `/scout/rules`, where a reader is about to type, rather than recomputed on
+        # every capability call from a route the pages hit on load.
+        "m7_scout_report": {"ready": report_ready(db), "fields": list(REPORT_FIELDS), "counts": report_counts(db)},
+        # §27's comparison is the same kind of flag: it is ready when the stored pool has two rows to put
+        # beside each other. Its dimension gate — every leader equal to the measures beneath it, no composite
+        # score smuggled in under another name — rides on `/scout/rules` for the reason just stated.
+        "m7_player_comparison": {"ready": comparison_ready(db), "dimensions": list(DIMENSIONS), "counts": comparison_counts(db)},
         "m8_club_os": False,
         "m9_community": False,
         "locales": ["en"],

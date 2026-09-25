@@ -4993,7 +4993,7 @@
           "scouting"
         ],
         "summary": "Read Rules",
-        "description": "The vocabulary and the arithmetic: what a sentence may say, and what each saying does to the pool.\n\nThe integrity block is published rather than kept in a test because it is the part a reader has to trust:\nthe vocabulary agreeing with itself, and the search answering every requirement kind the parser emits.",
+        "description": "The vocabulary and the arithmetic: what a sentence may say, and what each saying does to the pool.\n\nThe integrity block is published rather than kept in a test because it is the part a reader has to trust:\nthe vocabulary agreeing with itself, the search answering every requirement kind the parser emits, a\nreport building over the stored pool that answers every field §24 lists with a figure that recomputes\nfrom the attributes printed beside it, and a comparison whose every dimension is the leader its own\nmeasures give it.",
         "operationId": "read_rules_api_v1_scout_rules_get",
         "responses": {
           "200": {
@@ -5079,6 +5079,102 @@
                 "schema": {
                   "type": "object",
                   "title": "Response Run Search Api V1 Scout Search Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/scout/report": {
+      "post": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Read Report",
+        "description": "§24's structured report for one stored player: thirteen fields, each one arithmetic over that row.\n\nA career is optional, and its absence stays visible in the payload rather than being papered over:\n`team_fit` is null and the risk list simply carries one factor fewer. A comparison behaves the same way —\n§24 lists `Comparison`, and answering that field with nobody beside it would be a line that looks\nmeasured and is not. The player is looked up before the role, so a wrong slug and a wrong role produce\nthe one refusal that is about the world rather than the one that is about this project's vocabulary.",
+        "operationId": "read_report_api_v1_scout_report_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Report Api V1 Scout Report Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/scout/compare": {
+      "post": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Compare",
+        "description": "§27's ten dimensions for a pair of stored players, with no figure in the answer that ranks them as a whole.\n\nThe route is deliberately narrower than the report: no career, no role, no round. Each of those is a way\nof judging one player against a context, and §27 asks for a comparison of two players instead — the\nmoment a context is allowed in, the payload starts carrying a figure that is about a club rather than\nabout the pair, which is the report's job. Both sides are looked up before anything is computed, and the\nleft is answered first when neither exists, so a typo says which half of the request it was.",
+        "operationId": "compare_api_v1_scout_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Compare Api V1 Scout Compare Post"
                 }
               }
             }
@@ -5397,6 +5493,29 @@
           "question"
         ],
         "title": "CoachAskIn"
+      },
+      "CompareIn": {
+        "properties": {
+          "left": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Left"
+          },
+          "right": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Right"
+          }
+        },
+        "type": "object",
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CompareIn",
+        "description": "§27's pair. Both sides are required: a comparison of one player is the refusal, not an empty answer."
       },
       "CompleteIn": {
         "properties": {
@@ -6214,6 +6333,71 @@
           "accepts_data_policy"
         ],
         "title": "RegisterIn"
+      },
+      "ReportIn": {
+        "properties": {
+          "player": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Player"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "career": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Career"
+          },
+          "compare_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compare To"
+          },
+          "round_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 380.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Round Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "player"
+        ],
+        "title": "ReportIn",
+        "description": "One player, optionally judged for a role and against one career, optionally measured beside another."
       },
       "SearchIn": {
         "properties": {

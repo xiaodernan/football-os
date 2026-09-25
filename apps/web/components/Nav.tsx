@@ -14,6 +14,7 @@ const LINKS: { href: string; label: string }[] = [
   { href: "/knowledge", label: "Knowledge" },
   { href: "/world", label: "Football World" },
   { href: "/tactics", label: "Tactical Lab" },
+  { href: "/scout", label: "Scouting" },
   { href: "/training", label: "Training" },
   { href: "/progress", label: "Progress" },
   { href: "/history", label: "History" },
