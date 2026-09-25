@@ -142,9 +142,15 @@ def competition_clubs(session: Session, competition_id: str | None, *, exclude_i
     return list(session.scalars(select(Team).where(Team.competition_id == competition_id, Team.id != exclude_id).order_by(Team.slug)).all())
 
 
-def next_fixture_plan(session: Session, career: Career) -> dict[str, Any]:
-    """Which club is next, on which side, and where it is played."""
-    round_index = career.rounds_played + 1
+def next_fixture_plan(session: Session, career: Career, *, round_index: int | None = None) -> dict[str, Any]:
+    """Which club is next, on which side, and where it is played.
+
+    `round_index` lets a caller ask about a round it has not reached yet — the rotation is a pure function of
+    the round number, so §M7's transfer simulation can look at the next three fixtures without pretending a
+    round has been played. Left out, it is the round after the last one this career actually played, which is
+    what every caller here has always meant.
+    """
+    round_index = career.rounds_played + 1 if round_index is None else max(1, int(round_index))
     opponents = competition_clubs(session, career.competition_id, exclude_id=career.club_id or "")
     if not opponents:
         return {"available": False, "reason": "the career's club has no competition to rotate through", "round_index": round_index}

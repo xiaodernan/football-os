@@ -5556,6 +5556,54 @@
           }
         }
       }
+    },
+    "/api/v1/scout/simulate-transfer": {
+      "post": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Simulate A Transfer",
+        "description": "M7's transfer simulation: what would be different if this career signed this player.\n\nRead-only by design. §22's `POST /transfers/{career}/buy` is the door that moves a player, charges the budget\nand writes a move row; this route calls none of it. It prices the player from the valuation of his stored row,\nrebuilds the career's side with and without him through the selector the engine plays, and replays the next few\nfixtures at the same seeds — so the only difference between the two scorelines is the eleven.",
+        "operationId": "simulate_a_transfer_api_v1_scout_simulate_transfer_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferSimIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Simulate A Transfer Api V1 Scout Simulate Transfer Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -7175,6 +7223,34 @@
           "demo_mode"
         ],
         "title": "TokenPair"
+      },
+      "TransferSimIn": {
+        "properties": {
+          "career": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Career"
+          },
+          "player": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Player"
+          },
+          "rounds": {
+            "type": "integer",
+            "title": "Rounds",
+            "default": 3
+          }
+        },
+        "type": "object",
+        "required": [
+          "career",
+          "player"
+        ],
+        "title": "TransferSimIn",
+        "description": "A career, a player, and how many future fixtures to look at.\n\n`rounds` carries no pydantic bound on purpose: a transport 422 would name a field and a rule, while the\nservice's own refusal names the number it was handed and the window it falls outside of — and the cap exists\nbecause reading too far ahead would quietly assume a squad that has since moved on, which is worth saying."
       },
       "UserOut": {
         "properties": {

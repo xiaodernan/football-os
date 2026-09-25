@@ -110,6 +110,21 @@ from app.services.scouting.shortlist import (
 from app.services.scouting.shortlist import (
     rules as shortlist_rules,
 )
+from app.services.scouting.transfer_sim import (
+    DEFAULT_ROUNDS,
+    TransferRefusal,
+    simulate_transfer,
+    transfer_sim_counts,
+    transfer_sim_ready,
+)
+from app.services.scouting.transfer_sim import (
+    NOT_FOUND_CODES as SIM_NOT_FOUND,
+)
+from app.services.scouting.transfer_sim import (
+    UNPROCESSABLE_CODES as SIM_UNPROCESSABLE,
+)
+from app.services.scouting.transfer_sim import limitations as transfer_sim_limitations
+from app.services.scouting.transfer_sim import rules as transfer_sim_rules
 from app.services.simulation.market import MarketRefusal
 
 router = APIRouter(prefix="/scout", tags=["scouting"])
@@ -185,6 +200,19 @@ class ShortlistPatchIn(BaseModel):
     query: str | None = None
     role: str | None = Field(default=None, max_length=16)
     career: str | None = Field(default=None, max_length=80)
+
+
+class TransferSimIn(BaseModel):
+    """A career, a player, and how many future fixtures to look at.
+
+    `rounds` carries no pydantic bound on purpose: a transport 422 would name a field and a rule, while the
+    service's own refusal names the number it was handed and the window it falls outside of — and the cap exists
+    because reading too far ahead would quietly assume a squad that has since moved on, which is worth saying.
+    """
+
+    career: str = Field(min_length=1, max_length=80)
+    player: str = Field(min_length=1, max_length=80)
+    rounds: int = DEFAULT_ROUNDS
 
 
 class ShortlistItemIn(BaseModel):
@@ -318,6 +346,20 @@ def read_rules(request: Request, db: Session = Depends(get_db)) -> dict[str, Any
             },
             "note": "§23's 建立 shortlist, stored as membership only: the read prints the search's own candidate projection for each member, re-parses the stored sentence against every row on it, and calls a stale list what it is",
         },
+        "transfer_simulation": {
+            **transfer_sim_rules(),
+            "ready": transfer_sim_ready(db),
+            "counts": transfer_sim_counts(db),
+            "limitations": transfer_sim_limitations(),
+            "refusals": {
+                "no_such_player": "404 — the player is not in the pool, so there is no row to price and no attributes to select with",
+                "already_at_this_club": "404 — he is already on this club's books, so the answer would be a report of a no-op",
+                "no_opponent": "404 — the career has no fixture left to project, so there is no future round to replay",
+                "retired_career": "422 — a retired career has no future round, and this route will not invent one",
+                "window_closed": "409 — the challenge's window has closed, so the next fixture will not be played",
+            },
+            "note": "a projection, not a transaction: nothing is written, no offer is made, and every round is replayed at the seed the career would have used anyway",
+        },
         "example_parse": parse_requirements("找一个 22 岁以下、左脚、能踢 Inverted Fullback、预算 €20m 的球员").to_dict(),
         "routes": {
             "parse": "POST /api/v1/scout/parse — a sentence in, requirements and refusals out, no rows read",
@@ -327,6 +369,7 @@ def read_rules(request: Request, db: Session = Depends(get_db)) -> dict[str, Any
             "shortlists": "GET|POST /api/v1/scout/shortlists — needs an account; §23's lists, which store a name, a sentence and membership, and nothing else about a player",
             "shortlist": "GET|PATCH|DELETE /api/v1/scout/shortlists/{ident} — one list read live: every figure re-taken from the stored rows, the stored sentence re-applied to every member",
             "shortlist_items": "POST|DELETE /api/v1/scout/shortlists/{ident}/items[/{player}] — put a stored player on a list, or take him off it",
+            "transfer_simulation": "POST /api/v1/scout/simulate-transfer — needs an account; what would be different if this career signed this player, with nothing written to say so",
         },
     }
 
@@ -529,3 +572,29 @@ def take_off_list(ident: str, player: str, request: Request, db: Session = Depen
         return {**drop_player(db, user, ident, player=player), "demo_data": True}
     except ShortlistRefusal as error:
         raise _shortlist_refusal(error) from None
+
+
+@router.post("/simulate-transfer")
+def simulate_a_transfer(payload: TransferSimIn, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """M7's transfer simulation: what would be different if this career signed this player.
+
+    Read-only by design. §22's `POST /transfers/{career}/buy` is the door that moves a player, charges the budget
+    and writes a move row; this route calls none of it. It prices the player from the valuation of his stored row,
+    rebuilds the career's side with and without him through the selector the engine plays, and replays the next few
+    fixtures at the same seeds — so the only difference between the two scorelines is the eleven.
+    """
+    limit(request, 10, 60, scope="scout_transfer_simulation")
+    career = _career(db, user, payload.career)
+    try:
+        return {
+            **simulate_transfer(db, career, player=payload.player, rounds=payload.rounds),
+            "asked_for": {"career": payload.career, "player": payload.player, "rounds": payload.rounds},
+            "demo_data": True,
+        }
+    except TransferRefusal as error:
+        detail = error.to_dict()
+        if error.code in SIM_NOT_FOUND:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=detail) from None
+        if error.code in SIM_UNPROCESSABLE:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail) from None
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=detail) from None

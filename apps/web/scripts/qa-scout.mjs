@@ -547,6 +547,76 @@ async function main() {
   check('after the delete the account holds no list of that name', !(await page.evaluate((want) => (document.body?.innerText ?? '').includes(want), listName)), listName);
   await shot(page, 'scout-shortlist');
 
+  // --- M7's transfer simulation: a projection the page cannot cheat at ---------------------------
+  const clubs = await call(page, "GET", "/api/v1/careers/options");
+  check("a club exists to open a career against", clubs.status === 200 && (clubs.json?.clubs?.length ?? 0) > 0, `${clubs.json?.clubs?.length ?? 0} clubs`);
+  const opened = await call(page, "POST", "/api/v1/careers", {
+    // The options route names its clubs by `team_id`; the career route accepts that id or the slug.
+    club: clubs.json.clubs[0].team_id,
+    manager_name: `Sim QA ${stamp.slice(-4)}`,
+    philosophy: "balanced",
+    budget: 6_000_000,
+    objectives: [{ kind: "wins", target: 1, label: "win once" }],
+  });
+  check("the walk opens a career of its own to simulate against", opened.status === 200, `HTTP ${opened.status}`);
+  const simCareer = String(opened.json?.career?.slug ?? "");
+  check("the career the walk opened is addressable by its slug", simCareer.length > 0, simCareer);
+
+  check("the simulation panel is on the page", has(await text(page), "What if this career signed him?"), "panel title");
+  check("the simulation panel publishes the engine's own seed rule", has(await text(page), "the only thing that differs between the two scorelines is the eleven"), (await lineWith(page, "each future round is played twice")).slice(0, 160));
+  check("the career field takes the slug", (await setInput(page, 'input[aria-label="Career to simulate for"]', simCareer)) === "set");
+  await page.select('select[aria-label="Player to simulate signing"]', printed[0].slug);
+  check("the fixtures field takes a number", (await setInput(page, 'input[aria-label="Fixtures to project"]', "2")) === "set");
+  check("simulating is a button the page offers", (await clickText(page, "Simulate the signing")) === "clicked");
+  check("the projection arrives with two rounds", await untilDom(page, () => document.querySelectorAll("[data-sim-round]").length === 2));
+
+  const simGrid = await page.$$eval('[data-testid="scout-transfer"] .world-kv__row', (rows) =>
+    Object.fromEntries(rows.map((row) => [(row.querySelector("dt")?.innerText ?? "").replace(/\s+/g, " ").trim().toLowerCase(), (row.querySelector("dd")?.innerText ?? "").replace(/\s+/g, " ").trim()])),
+  );
+  const simFee = amount(simGrid["asking fee"]);
+  const simWeekly = amount(simGrid["weekly wage"]);
+  const simSeason = amount(simGrid["season wage"]);
+  check("the season wage printed is fifty-two printed weeks", simSeason === simWeekly * 52 && simWeekly > 0, `${simWeekly} × 52 = ${simSeason}`);
+  const simLeftover = amount(simGrid["left in the budget"]);
+  const headroomLine = simGrid["affordable by the fee"] ?? "";
+  check("the headroom after the fee is the balance minus the fee", amount(headroomLine) === Math.abs(simLeftover - simFee) || headroomLine.includes(Math.abs(simLeftover - simFee).toLocaleString("en-GB")), `${simLeftover} − ${simFee} → ${headroomLine.slice(0, 80)}`);
+  check("the rounds the leftovers pay for divide the leftovers by the wage", Number(simGrid["rounds the leftovers pay for"] ?? "-1") === Math.floor(Math.max(simLeftover - simFee, 0) / Math.max(simWeekly, 1)), simGrid["rounds the leftovers pay for"]);
+  check("the fit figure is printed with the formula that made it", /÷|×|=|formula|0\.\d/.test(simGrid["tactical fit for that need"] ?? ""), simGrid["tactical fit for that need"]);
+  check("the squad line says a row is added, not a player invented", /\d+ → \d+/.test(simGrid["squad"] ?? ""), simGrid["squad"]);
+
+  const simRounds = await page.$$eval("[data-sim-round]", (rows) =>
+    rows.map((row) => ({
+      round: row.dataset.simRound,
+      text: row.innerText.replace(/\s+/g, " ").trim(),
+      oneSeed: (row.querySelector("td:last-child .badge")?.innerText ?? "").trim().toUpperCase(),
+    })),
+  );
+  check("every projected round is played twice at one seed", simRounds.length === 2 && simRounds.every((row) => row.oneSeed === "ONE SEED"), simRounds.map((row) => `${row.round}:${row.oneSeed}`).join(" · "));
+  check("each round names the opponent and the seed it used", simRounds.every((row) => /vs |at /.test(row.text) && /\b\d{6,}\b/.test(row.text)), simRounds[0]?.text.slice(0, 150));
+  check("each line prints the digest the engine produced", simRounds.every((row) => /poss 0\.\d+ · [0-9a-f]{8}/.test(row.text)), simRounds[0]?.text.slice(-90));
+  const totalsGrid = Object.entries(simGrid).filter(([label]) => /without him|with him|difference/.test(label));
+  const pointsOf = (label) => Number((simGrid[label] ?? "").match(/(\d+) points/)?.[1] ?? NaN);
+  check("the printed totals add up to the printed difference", pointsOf("with him") - pointsOf("without him") === Number((simGrid["difference"] ?? "").match(/points ([+-]?\d+)/)?.[1] ?? NaN), totalsGrid.map(([k, v]) => `${k}=${v}`).join(" · "));
+  const elevenLine = await page.evaluate(() => document.querySelector('[data-sim="eleven"]')?.innerText ?? "");
+  check("the panel states whether the eleven moved at all", /the eleven does not change|the eleven changes:/.test(elevenLine), elevenLine.slice(0, 150));
+  if (/the eleven does not change/.test(elevenLine)) {
+    check("a bench addition still grows the squad by one", /\b(\d+) rows become/.test(elevenLine.replace(/\s+/g, " ")), elevenLine.slice(0, 160));
+  }
+  const notDoing = await page.evaluate(() => document.body?.innerText ?? "");
+  check("the panel prints what the simulation does not do", notDoing.includes("does not write a row") && notDoing.includes("is not called here"), "the five lines are on the page");
+  check("the panel prints the limits it worked under", notDoing.includes("a fixture is one draw from a stochastic model"), "the one-sample notice");
+
+  check("asking for too many fixtures is refused with its figures", (await setInput(page, 'input[aria-label="Fixtures to project"]', "99")) === "set");
+  check("the button is clickable again", (await clickText(page, "Simulate the signing")) === "clicked");
+  check("the refusal arrives", await untilDom(page, () => /bad_rounds/.test(document.querySelector('[data-sim="refusal"]')?.innerText ?? "")));
+  const simRefusal = await page.evaluate(() => document.querySelector('[data-sim="refusal"]')?.innerText ?? "");
+  check("the refusal carries the window it fell outside", /"max":\s*6/.test(simRefusal) && /99/.test(simRefusal), simRefusal.replace(/\s+/g, " ").slice(0, 160));
+  check("the projection that worked is still on the page", (await page.$$eval("[data-sim-round]", (rows) => rows.length)) === 2, "a refusal does not erase the last good answer");
+
+  const deletedCareer = await call(page, "DELETE", `/api/v1/careers/${simCareer}`);
+  check("the walk deletes the career it opened", deletedCareer.status === 200 && deletedCareer.json?.deleted === true, `HTTP ${deletedCareer.status}`);
+  await shot(page, "scout-transfer");
+
   // --- the same screen at 375px ---------------------------------------------------------------------------
   await page.setViewport(MOBILE);
   await untilText(page, 'Player A against Player B');
@@ -564,6 +634,11 @@ async function main() {
     // The shortlist walk posts the same player twice on purpose, so its 409 is expected twice over.
     /\/api\/v1\/scout\/shortlists\/[^/]+\/items: Failed to load resource: the server responded with a status of 409/,
     /\/api\/v1\/scout\/shortlists\/[^/]+\/items: HTTP 409/,
+    // The projection's own refusal check asks for 99 fixtures on purpose.
+    /\/api\/v1\/scout\/simulate-transfer: Failed to load resource: the server responded with a status of 422/,
+    /\/api\/v1\/scout\/simulate-transfer: HTTP 422/,
+    /\/api\/v1\/careers\/[^/]+: Failed to load resource: the server responded with a status of 40[39]/,
+    /\/api\/v1\/careers: Failed to load resource/
   ];
   const unexpected = [...new Set(consoleErrors)].filter((line) => !provoked.some((pattern) => pattern.test(line)));
   check('every browser console error was one this walk provoked on purpose', unexpected.length === 0, unexpected.length ? unexpected.slice(0, 3).join(' | ') : `${consoleErrors.length} seen, all deliberate`);

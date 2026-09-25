@@ -371,6 +371,7 @@ export type ScoutRulesView = {
   };
   example_parse: Record<string, unknown>;
   shortlists: ShortlistRulesBlock;
+  transfer_simulation: SimRulesBlock;
   routes: Record<string, string>;
 };
 
@@ -506,3 +507,133 @@ export type ShortlistView = {
 
 /** What the list routes answer with when they refuse: the code, the sentence, and the figures behind it. */
 export type ShortlistRefusal = { code?: string; message?: string; held?: number; limit?: number; length?: number; max?: number; name?: string; player?: string; ident?: string; shortlist?: string; listed?: string[]; career?: string };
+
+/**
+ * M7's transfer simulation, as `POST /api/v1/scout/simulate-transfer` returns it.
+ *
+ * The shapes below exist because the route's answer is a projection with evidence attached to it: every round
+ * carries the seed it was replayed at and the digest the engine produced, so the two lines of a round can be
+ * compared by a reader rather than trusted. Nothing here is computed in the browser — the page prints the
+ * figures the route printed, beside the formulas the route printed with them.
+ */
+export type SimLine = { seed: number; for: number; against: number; outcome: string; possession: number; digest: string };
+
+export type SimRound = {
+  round_index: number;
+  side: string;
+  opponent: string;
+  venue: string;
+  seed: number;
+  same_seed: boolean;
+  without: SimLine;
+  with_signing: SimLine;
+};
+
+export type SimTotals = { goals: number; against: number; points: number };
+
+export type SimProjection = {
+  rounds_asked: number;
+  rounds_projected: number;
+  rounds: SimRound[];
+  totals: { without: SimTotals; with_signing: SimTotals };
+  points_delta: number;
+  goals_for_delta: number;
+  goals_against_delta: number;
+  better: number;
+  same: number;
+  worse: number;
+  stopped_at: { round_index: number; reason: string } | null;
+  rule: string;
+  one_sample: string;
+};
+
+export type SimCost = {
+  asking_fee: number;
+  release_clause: number;
+  weekly_wage: number;
+  season_wage: number;
+  contract_years: number;
+  units: string;
+  remaining_now: number;
+  affordable_by_fee: boolean;
+  headroom_after_fee: number;
+  wage_committed_per_week: number;
+  wage_after_this_player_per_week: number;
+  season_wage_after: number;
+  rounds_the_wage_bills_for: number;
+  budget_formula: string;
+  valuation_note: string;
+  note: string;
+};
+
+export type SimElevenRow = { player_id: string; slug: string; name: string; position: string; band: string };
+
+export type SimSide = {
+  before: { indices: Record<string, number>; eleven: SimElevenRow[] };
+  after: { indices: Record<string, number>; eleven: SimElevenRow[] };
+  indices_delta: Record<string, number>;
+  comes_in: SimElevenRow[];
+  goes_out: SimElevenRow[];
+  eleven_unchanged: boolean;
+  rule: string;
+};
+
+export type SimPlayer = {
+  slug: string;
+  name: string;
+  path: string;
+  age: number;
+  position: string;
+  positions: string[];
+  band: string;
+  preferred_foot: string;
+  overall: number;
+  potential: number;
+  headroom: number;
+  archetype: string;
+  from_club: { name: string; slug: string; path: string } | null;
+  season: { appearances: number; minutes: number; goals: number; assists: number; rating: number } | null;
+  observed: boolean;
+};
+
+export type SimRules = {
+  default_rounds: number;
+  max_rounds: number;
+  writes: string;
+  price_from: string;
+  side_from: string;
+  fixtures_from: string;
+  seed_rule: string;
+  refusals: string[];
+};
+
+/** The `/scout/rules` block adds the explanations and the live counts to the same shape. */
+export type SimRulesBlock = SimRules & {
+  ready: boolean;
+  counts: { players_in_pool: number; careers_stored: number; default_rounds: number; max_rounds: number; rows_written_by_a_simulation: number; rule: string };
+  limitations: string[];
+  refusals: Record<string, string>;
+  note: string;
+};
+
+export type TransferSimView = {
+  career: { slug: string; club_name: string; club_id: string; rounds_played: number; system_slug: string; formation: string; challenge_slug: string; window: number | null },
+  player: SimPlayer,
+  need: { needed_band: string; this_player_fills_it: boolean; bands: Record<string, number>; positions_in_band: string[]; judged_on: string[]; formation: string; as_of_round: number; rule: string },
+  fit: { fit: number; formula: string } & Record<string, unknown>,
+  cost: SimCost,
+  squad: { size_before: number; size_after: number; fielding_before: Record<string, unknown>; fielding_after: Record<string, unknown>; rule: string },
+  side: SimSide,
+  projection: SimProjection,
+  what_this_does_not_do: string[],
+  rules: SimRules,
+  limitations: string[],
+  data_origin: string;
+  is_demo_data: boolean;
+  disclaimer: string;
+  demo_data: boolean;
+  asked_for: { career: string; player: string; rounds: number };
+};
+
+/** The index names the side block reports, in the order a reader expects them. */
+export const SIM_INDEX_ORDER: string[] = ["attack", "midfield", "defence", "keeper", "press", "form", "overall"];

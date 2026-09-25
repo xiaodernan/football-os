@@ -15,6 +15,8 @@ from app.services.scouting.requirements import SCOUT_DISCLAIMER, vocabulary_prob
 from app.services.scouting.search import scout_counts, scout_ready, search_problems
 from app.services.scouting.shortlist import MAX_ITEMS as SHORTLIST_ITEMS
 from app.services.scouting.shortlist import MAX_SHORTLISTS, shortlist_counts, shortlist_ready
+from app.services.scouting.transfer_sim import MAX_ROUNDS as SIM_MAX_ROUNDS
+from app.services.scouting.transfer_sim import transfer_sim_counts, transfer_sim_ready
 from app.services.simulation.challenges import CHALLENGE_DISCLAIMER, challenge_counts, challenge_ready
 from app.services.simulation.service import engine_description, sim_counts, sim_ready, sim_tables_present
 from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_ready, tactics_tables_present
@@ -104,6 +106,13 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
             "counts": {**shortlist_counts(db), "lists_per_user": MAX_SHORTLISTS, "players_per_list": SHORTLIST_ITEMS},
             "stores": "a name, a sentence, an optional role and career link, and which players are on which list",
             "stores_no_figures": True,
+        },
+        # M7's last verb. The flag is whether a projection can be made at all — a pool to draw from and a career
+        # to project for — and the counts say the thing that matters about the tier: a simulation writes no rows.
+        "m7_transfer_simulation": {
+            "ready": transfer_sim_ready(db),
+            "counts": {**transfer_sim_counts(db), "max_rounds": SIM_MAX_ROUNDS},
+            "writes": "nothing",
         },
         "m8_club_os": False,
         "m9_community": False,

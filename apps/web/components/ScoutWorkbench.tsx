@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { ScoutComparePanel } from "@/components/ScoutComparePanel";
 import { ScoutShortlistPanel } from "@/components/ScoutShortlistPanel";
+import { ScoutTransferPanel } from "@/components/ScoutTransferPanel";
 import { ScoutReportPanel } from "@/components/ScoutReportPanel";
 import { Panel } from "@/components/ui";
 import { browserFetch, errorMessage } from "@/lib/api";
@@ -278,6 +279,9 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
 
           {/* The list is where a search ends up, so it sits after the comparison rather than before it. */}
           <ScoutShortlistPanel candidates={searched.candidates} rules={rules.shortlists} searchedQuery={searched.query ?? ""} />
+
+          {/* The simulation is what a scouted name is for: the last panel, after the search, the report, the pair and the list. */}
+          <ScoutTransferPanel candidates={searched.candidates} career={career} rules={rules.transfer_simulation} />
         </>
       )}
     </div>
