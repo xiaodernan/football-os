@@ -156,7 +156,13 @@ class TestTotalsAreTheRows:
         assert view["totals"]["attempts"] == sum(counted[kind] for kind in CHANCE_TYPES)
         assert view["totals"]["events"] == sum(counted.values())
         assert view["fixtures_played"] == view["fixtures_traced"] == 2
-        assert view["by_type"]["goal"]["events"] == counted["goal"]
+        # `by_type` is built from the rows that exist, so a kind with no row has no key rather than a zero
+        # entry. Two fixtures at an average club can legitimately hold no goal — the PostgreSQL leg found
+        # exactly that — and a line that indexed `["goal"]` outright was asserting the world's contents
+        # rather than the ledger's arithmetic. What has to hold either way is the pairing: a key appears
+        # precisely when the rows count it, and its figure is that count.
+        assert ("goal" in view["by_type"]) is (counted["goal"] > 0)
+        assert view["by_type"].get("goal", {}).get("events", 0) == counted["goal"]
 
     def test_a_players_goal_count_is_that_players_goal_rows(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _season_with_a_goal(session, world)
