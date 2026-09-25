@@ -1255,3 +1255,109 @@ class ScoutShortlistItem(Base, TimestampMixin):
     position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     shortlist: Mapped[ScoutShortlist] = relationship(back_populates="items")
+
+
+# --- Club OS: organisations, members, teams (M8, spec §39 and §41) ---------------------------------
+# The B2B spine. Two decisions are built into these four tables and are worth stating where the schema is,
+# because they are the opposite of what a first pass would do.
+#
+# First, membership is a row and not a column. `users.organization_id` has existed since the initial
+# migration and stays exactly that: a single id, and a constraint that says a scout works for one academy.
+# §41 lists Coach and Scout among the tenant kinds, and the same person coaching a club team and scouting
+# for an academy is the ordinary case, so `organization_members` is the source of truth. The old column is
+# left in place rather than dropped, and the tier's own gate reports any user it points at who is not a
+# member — so it can go stale, but it cannot go unnoticed.
+#
+# Second, a role is a string on a membership row and the permission set it grants lives in code, published
+# by the API. Storing permissions per row would let one member's rights drift away from their role with no
+# record of who changed what; the matrix in `services/club/access.py` is printed instead, so a member can
+# be told which of their rights come from where.
+class Organization(Base, TimestampMixin):
+    """One tenant: an academy, an amateur club, a school, or an independent scout's desk."""
+
+    __tablename__ = "organizations"
+    __table_args__ = (Index("ix_organization_kind", "kind"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    slug: Mapped[str] = mapped_column(String(96), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+    # `kind` is what §41 asks for, and it is a free label rather than an enum in the database: the difference
+    # between an academy and a school changes which reports a parent may see, not which rows exist.
+    kind: Mapped[str] = mapped_column(String(32), default="club", nullable=False)
+    country: Mapped[str] = mapped_column(String(2), default="", nullable=False)
+    # What a report's visibility defaults to when an author does not choose. The column holds the default,
+    # not a permission: an explicit choice on a report still overrides it.
+    visibility_default: Mapped[str] = mapped_column(String(16), default="members", nullable=False)
+    created_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    members: Mapped[list[OrganizationMember]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    # An organisation's teams go with it: a tenant is deleted, its team sheets and its squad rows with it.
+    teams: Mapped[list[ClubTeam]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+
+
+class OrganizationMember(Base, TimestampMixin):
+    """One person's standing in one organisation, and the role that standing is read through."""
+
+    __tablename__ = "organization_members"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "user_id", name="uq_organization_member"),
+        Index("ix_organization_member_user", "user_id", "status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    role: Mapped[str] = mapped_column(String(24), default="member", nullable=False)
+    # `invited` exists so a membership can be offered before it is accepted, and `revoked` so a departure
+    # leaves a row behind: deleting a member would erase the record of who could see what while they were in.
+    status: Mapped[str] = mapped_column(String(12), default="active", nullable=False)
+    invited_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="members")
+
+
+class ClubTeam(Base, TimestampMixin):
+    """One of an organisation's own teams. It is not the fictional world's club, and does not borrow its rows."""
+
+    __tablename__ = "club_teams"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "name", name="uq_club_team_name"),
+        Index("ix_club_team_organization", "organization_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    # An age band is the whole point of an academy's team list, and it is what §40's data-minimisation rules
+    # later key off: a squad with anyone under 18 in it is handled as a minors' squad by the reporting tier.
+    age_group: Mapped[str] = mapped_column(String(24), default="open", nullable=False)
+    stage: Mapped[str] = mapped_column(String(16), default="youth", nullable=False)
+    world_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="teams")
+    squad: Mapped[list[ClubTeamMember]] = relationship(back_populates="team", cascade="all, delete-orphan")
+
+
+class ClubTeamMember(Base, TimestampMixin):
+    """A stored player on an organisation's team sheet: membership, and a note of the coach's own words."""
+
+    __tablename__ = "club_team_members"
+    __table_args__ = (
+        UniqueConstraint("team_id", "player_id", name="uq_club_team_player"),
+        Index("ix_club_team_member_player", "player_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    team_id: Mapped[str] = mapped_column(ForeignKey("club_teams.id", ondelete="CASCADE"), nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    note: Mapped[str] = mapped_column(String(240), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    team: Mapped[ClubTeam] = relationship(back_populates="squad")

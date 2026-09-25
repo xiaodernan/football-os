@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
 from app.providers import provider_status
+from app.services.club import organizations as club_service
 from app.services.scouting.compare import DIMENSIONS, comparison_counts, comparison_ready
 from app.services.scouting.report import REPORT_FIELDS, report_counts, report_ready
 from app.services.scouting.requirements import SCOUT_DISCLAIMER, vocabulary_problems
@@ -114,7 +115,15 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
             "counts": {**transfer_sim_counts(db), "max_rounds": SIM_MAX_ROUNDS},
             "writes": "nothing",
         },
-        "m8_club_os": False,
+        # §39's spine exists now: tenants, memberships and the matrix that reads them. The flag is
+        # whether that storage is reachable, not whether anyone has opened a tenant yet.
+        "m8_club_os": {
+            "ready": club_service.club_ready(db),
+            "counts": club_service.club_counts(db),
+            "roles": list(club_service.rules()["matrix"]["roles"]),
+            "permissions": len(club_service.rules()["matrix"]["permissions"]),
+            "isolation": club_service.rules()["matrix"]["rule"],
+        },
         "m9_community": False,
         "locales": ["en"],
         "locales_planned": ["en", "zh", "zh-TW"],

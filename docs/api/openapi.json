@@ -4987,6 +4987,932 @@
         }
       }
     },
+    "/api/v1/club/capabilities": {
+      "get": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Read Capabilities",
+        "description": "The published rulebook: which roles exist, what each holds, and how many tenants are on the platform.",
+        "operationId": "read_capabilities_api_v1_club_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Capabilities Api V1 Club Capabilities Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/invitations": {
+      "get": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Read Invitations",
+        "description": "Invitations addressed to this account. They grant nothing until accepted here, which is the point of `invited`.",
+        "operationId": "read_invitations_api_v1_club_invitations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Invitations Api V1 Club Invitations Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/club": {
+      "get": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Read My Organizations",
+        "description": "The tenants this account stands in, with the role it holds in each.",
+        "operationId": "read_my_organizations_api_v1_club_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read My Organizations Api V1 Club Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Open Organization",
+        "description": "Open a tenant. The account that opens it is its owner, in the same transaction as the tenant itself.",
+        "operationId": "open_organization_api_v1_club_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Open Organization Api V1 Club Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/club/{ident}": {
+      "get": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Read Organization",
+        "description": "One tenant as its member sees it: standing, staff, teams and sheets, with the matrix beside it.",
+        "operationId": "read_organization_api_v1_club__ident__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Organization Api V1 Club  Ident  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Rename Organization",
+        "description": "Change a tenant's name, kind, country or report default. Its slug stays: that is how others address it.",
+        "operationId": "rename_organization_api_v1_club__ident__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationPatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Rename Organization Api V1 Club  Ident  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Close Organization",
+        "description": "Delete a tenant. Its memberships and sheets go with it; the players it listed belong to the world and stay.",
+        "operationId": "close_organization_api_v1_club__ident__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Close Organization Api V1 Club  Ident  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/invites": {
+      "post": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Invite To Organization",
+        "description": "Offer a standing to an existing account. Nothing is emailed: an invitation is a row that waits.",
+        "operationId": "invite_to_organization_api_v1_club__ident__invites_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Invite To Organization Api V1 Club  Ident  Invites Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/accept": {
+      "post": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Accept Invitation",
+        "description": "Take up an invitation addressed to you, and hold the rights of the role it names from now on.",
+        "operationId": "accept_invitation_api_v1_club__ident__accept_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Accept Invitation Api V1 Club  Ident  Accept Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/decline": {
+      "post": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Decline Invitation",
+        "description": "Turn an invitation down. The row is deleted rather than revoked, because nothing was ever granted.",
+        "operationId": "decline_invitation_api_v1_club__ident__decline_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Decline Invitation Api V1 Club  Ident  Decline Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/members": {
+      "patch": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Set Member Role",
+        "description": "Change a member's role, which is the only way their rights change.",
+        "operationId": "set_member_role_api_v1_club__ident__members_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Set Member Role Api V1 Club  Ident  Members Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/members/{email}": {
+      "delete": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Revoke Membership",
+        "description": "Revoke a membership. The row stays and grants nothing, so who stood where remains answerable later.",
+        "operationId": "revoke_membership_api_v1_club__ident__members__email__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Revoke Membership Api V1 Club  Ident  Members  Email  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/teams": {
+      "post": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Create Team",
+        "description": "Name a team of the tenant, optionally placing it against a club in the generated world's ladder.",
+        "operationId": "create_team_api_v1_club__ident__teams_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Create Team Api V1 Club  Ident  Teams Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/teams/{team}": {
+      "patch": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Edit Team",
+        "description": "Change a team's name, age band or stage. `age_group` is what later tiers read to decide minors are involved.",
+        "operationId": "edit_team_api_v1_club__ident__teams__team__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "team",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Team"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamPatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Edit Team Api V1 Club  Ident  Teams  Team  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Remove Team",
+        "description": "Delete a team sheet. The players on it are untouched rows of the generated world.",
+        "operationId": "remove_team_api_v1_club__ident__teams__team__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "team",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Team"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Remove Team Api V1 Club  Ident  Teams  Team  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/teams/{team}/players": {
+      "get": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Read Squad",
+        "description": "One sheet, read live: every figure on it comes from the player's row on this request.",
+        "operationId": "read_squad_api_v1_club__ident__teams__team__players_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "team",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Team"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Squad Api V1 Club  Ident  Teams  Team  Players Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Add Player To Squad",
+        "description": "Put a player on a sheet — a pointer to the world's row, and the coach's own note, and nothing else.",
+        "operationId": "add_player_to_squad_api_v1_club__ident__teams__team__players_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "team",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Team"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SquadIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Add Player To Squad Api V1 Club  Ident  Teams  Team  Players Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/teams/{team}/players/{player}": {
+      "delete": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Drop Player From Squad",
+        "description": "Take a player off a sheet. His other sheets, and every other tenant's, are unaffected.",
+        "operationId": "drop_player_from_squad_api_v1_club__ident__teams__team__players__player__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "team",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Team"
+            }
+          },
+          {
+            "name": "player",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Player"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Drop Player From Squad Api V1 Club  Ident  Teams  Team  Players  Player  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/scout/rules": {
       "get": {
         "tags": [
@@ -6108,6 +7034,24 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "InviteIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "title": "Email",
+            "default": ""
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 24,
+            "title": "Role",
+            "default": "coach"
+          }
+        },
+        "type": "object",
+        "title": "InviteIn"
+      },
       "KnowledgeAskIn": {
         "properties": {
           "mode": {
@@ -6414,6 +7358,91 @@
           "offer"
         ],
         "title": "OfferIn"
+      },
+      "OrganizationIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 224,
+            "title": "Name",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "maxLength": 32,
+            "title": "Kind",
+            "default": "club"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 8,
+            "title": "Country",
+            "default": ""
+          },
+          "visibility_default": {
+            "type": "string",
+            "maxLength": 16,
+            "title": "Visibility Default",
+            "default": "members"
+          }
+        },
+        "type": "object",
+        "title": "OrganizationIn",
+        "description": "A tenant's identity. The slug is derived from the name here and never accepted from a caller.\n\n`max_length` here is a body guard, not the rule: the published cap is `rules()[\"name_max\"]`, and the\nservice answers an over-long name with `name_required` *and the two figures* (`length`, `max`) that a\npage needs to show why. A request validator one character earlier would answer with a schema error that\ncarries neither, so the guard sits well above the cap the API advertises."
+      },
+      "OrganizationPatchIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 224
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "visibility_default": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visibility Default"
+          }
+        },
+        "type": "object",
+        "title": "OrganizationPatchIn"
       },
       "OutIn": {
         "properties": {
@@ -6807,6 +7836,28 @@
         "title": "ReportIn",
         "description": "One player, optionally judged for a role and against one career, optionally measured beside another."
       },
+      "RoleIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 1,
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 24,
+            "minLength": 1,
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "role"
+        ],
+        "title": "RoleIn"
+      },
       "SearchIn": {
         "properties": {
           "query": {
@@ -7138,6 +8189,27 @@
         ],
         "title": "SimulateIn"
       },
+      "SquadIn": {
+        "properties": {
+          "player": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Player"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 304,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "player"
+        ],
+        "title": "SquadIn"
+      },
       "StartIn": {
         "properties": {
           "manager_name": {
@@ -7195,6 +8267,84 @@
         ],
         "title": "StartIn",
         "description": "What a caller may choose. The window, the budget, the objectives and the philosophy are not here."
+      },
+      "TeamIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 184,
+            "title": "Name",
+            "default": ""
+          },
+          "age_group": {
+            "type": "string",
+            "maxLength": 24,
+            "title": "Age Group",
+            "default": "open"
+          },
+          "stage": {
+            "type": "string",
+            "maxLength": 16,
+            "title": "Stage",
+            "default": "youth"
+          },
+          "world_team": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 96
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "World Team"
+          }
+        },
+        "type": "object",
+        "title": "TeamIn"
+      },
+      "TeamPatchIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 184
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "age_group": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 24
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Group"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          }
+        },
+        "type": "object",
+        "title": "TeamPatchIn"
       },
       "TokenPair": {
         "properties": {
