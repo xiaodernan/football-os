@@ -354,7 +354,7 @@ serialising runs, or declaring the leg flaky would all have been lies. So:
   (AUTOCOMMIT, `NullPool` — neither optional), installs `vector` in it because the extension is not in
   `template1` on this server, and `DROP DATABASE … WITH (FORCE)`s it afterwards. A failure after
   creation releases the database too, so a red run leaves no residue.
-* The SQLite leg is untouched: the rewrite returns early and `--collect-only` creates nothing at all.
+* The SQLite leg had the same hazard and got the same treatment on 2026-09-24 (see §15).
 
 Measured on this host (PostgreSQL 16.0.15, role `football` holding `CREATEDB`), two full suites started
 at once against the same server:
@@ -530,3 +530,60 @@ points at this API instead of apologising for it):
 * **The page is a separate increment.** `/career/{slug}/market` landed after this section was written and
   is verified in [`M6_MARKET_WEB_VERIFICATION.md`](M6_MARKET_WEB_VERIFICATION.md); the walk in
   `apps/web/scripts/qa-market.mjs` is what re-derives these figures in a browser.
+
+
+## 15. The file-backed test run got its own file too (2026-09-24)
+
+§13 fixed the server leg and left a sentence in the bullet list claiming the SQLite leg was untouched.
+That sentence was wrong in the direction that matters: the default leg had the same defect, and I found
+it by reading my own fixture again after writing the fix rather than by being told.
+
+`tests/conftest.py` had, at module scope:
+
+```python
+_DB_PATH = Path(tempfile.gettempdir()) / "football_os_tests.db"   # one name, every run
+...
+if os.environ["DATABASE_URL"].startswith("sqlite") and _DB_PATH.exists():
+    _DB_PATH.unlink()
+```
+
+Three things were wrong in three lines:
+
+* **It deleted a file the run might not be using.** The condition tested `DATABASE_URL` and the body
+  unlinked `_DB_PATH` — so a run pointed by `FOOTBALL_OS_TEST_DATABASE_URL` at its own SQLite file
+  deleted the *default* one instead, which is another run's live database, while leaving its own cleared
+  by nothing.
+* **It ran at import time,** so `--collect-only` — the command this milestone used to measure test
+  counts for the README — destroyed the shared file while collecting nothing.
+* **It only ever applied to the default leg,** and the default leg is every contributor's and this
+  agent's local run, so it was the more frequently dangerous half.
+
+The fix follows §13's rule rather than inventing one: the run names its own file
+(`football_os_tests_{uuid}.db`) at import, and no module-scope unlink survives. Cleaning up moved into
+the session fixture's teardown and is gated on `_OWNED_SQLITE_FILE`, which is set **only** when the
+effective URL still equals the path this run generated. A run pointed at a file it did not name does not
+get to delete it. `init_db()` is `create_all`, not `drop_all`, so a fresh name needs no clearing —
+which is why removing the unlink costs nothing.
+
+Measured by running the two full suites at once, each in its own throwaway `--detach` worktree at the
+same commit — so neither saw the repo's other in-flight edits — with the patched `tests/conftest.py`
+copied into both, against the same temporary directory, watching the shared default's mtime:
+
+```text
+TEMP=/tmp
+shared-before-mtime=1790186323
+per-run-files-before=0
+--- mid-run: database files this pair owns ---
+/tmp/football_os_tests_539f5f.db
+/tmp/football_os_tests_f2cd15.db
+shared-after-mtime=1790186323
+per-run-files-after=0
+A: A-EXIT=0 / 0 failed lines
+B: B-EXIT=0 / 0 failed lines
+```
+
+Both legs green, 377 tests each (counted from the progress characters in each log, and matching the
+`--collect-only -q` total measured in a third throwaway worktree at the same commit), two files that
+could not have been each other's, the shared file's mtime unchanged to the second, and nothing left in
+`%TEMP%` afterwards. Under the old code this exact pair was a race the second run lost mid-flight.
+

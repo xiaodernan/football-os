@@ -50,11 +50,21 @@ export default async function PlayerDetailPage({ params }: Props) {
     return <WorldUnavailable message={result.message} />;
   }
 
-  const { player, season_stats: season, recent_form: recentForm, stat_lines: statLines, method } = result.data;
+  const {
+    player,
+    season_stats: season,
+    recent_form: recentForm,
+    stat_lines: statLines,
+    training_log: trainingLog,
+    method,
+  } = result.data;
   const attributes = Object.entries(player.attributes).sort(([, a], [, b]) => b - a);
   const radar = attributes.slice(0, 6).map(([key, value]) => ({ key, label: key.replace(/_/g, " "), value }));
   const path = `/player/${player.slug}`;
   const consistent = season.consistency_check.startsWith("totals equal");
+  const trainedMinutes = trainingLog.items.reduce((sum, row) => sum + row.duration_min, 0);
+  const trainedLoad = trainingLog.items.reduce((sum, row) => sum + row.load_units, 0);
+  const trainingConsistent = trainedMinutes === trainingLog.total_minutes && trainedLoad === trainingLog.total_load;
 
   return (
     <div className="container page stack">
@@ -198,6 +208,75 @@ export default async function PlayerDetailPage({ params }: Props) {
           )}
         </Panel>
       </div>
+
+      <Panel eyebrow={`${trainingLog.sessions} sessions · ${trainingLog.total_minutes} min`} title="Training log">
+        <div className="stack">
+          <KeyValueGrid
+            rows={[
+              ["Sessions", trainingLog.sessions],
+              ["Minutes", trainingLog.total_minutes],
+              ["Load units", trainingLog.total_load],
+              ["Mean RPE", trainingLog.sessions === 0 ? "—" : trainingLog.mean_rpe],
+              ["Focus areas", trainingLog.categories.length === 0 ? "—" : trainingLog.categories.join(", ")],
+              ["Drills used", trainingLog.drills.length],
+            ]}
+          />
+          {trainingLog.items.length > 0 ? (
+            <div className="world-tablewrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Drill</th>
+                    <th scope="col">Focus</th>
+                    <th scope="col">Diff</th>
+                    <th scope="col">Min</th>
+                    <th scope="col">RPE</th>
+                    <th scope="col">Load</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trainingLog.items.map((row) => (
+                    <tr key={row.id}>
+                      <td className="muted mono">{row.date}</td>
+                      <td>
+                        <Link className="world-link" href={row.drill_path}>
+                          {row.drill_title}
+                        </Link>
+                      </td>
+                      <td className="muted">{row.category}</td>
+                      <td className="num">{row.difficulty}</td>
+                      <td className="num">{row.duration_min}</td>
+                      <td className="num">{row.rpe}</td>
+                      <td className="num">{row.load_units}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <span className="unavailable">No session recorded for this player.</span>
+          )}
+          <div className={`notice ${trainingConsistent ? "" : "notice--warn"}`}>
+            <span className="eyebrow">Consistency</span>
+            <p>
+              <span className="mono">{trainingLog.load_formula}</span> —{" "}
+              {trainingConsistent
+                ? `the totals above equal the ${trainingLog.items.length} rows printed here`
+                : `totals and rows disagree: ${trainingLog.total_minutes}/${trainedMinutes} minutes, ${trainingLog.total_load}/${trainedLoad} load`}.
+            </p>
+          </div>
+          <p className="muted world-section-note">
+            These rows are this entry in{" "}
+            <Link className="world-link" href="/world/training">
+              the training log for the whole world
+            </Link>
+            , newest first. Nothing here is tracked data: a session is a catalogue drill the generator assigned to a synthetic player, and the
+            load figure is the minutes and RPE in the two columns beside it multiplied. Drill names link into the Training Academy, which asks
+            for an account; nothing else on this page does.
+          </p>
+        </div>
+      </Panel>
 
       <Panel eyebrow={`${attributes.length} attributes, 1–99`} title="Full attribute list">
         <div className="grid grid-2">

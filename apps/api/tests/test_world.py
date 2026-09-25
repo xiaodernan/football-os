@@ -329,6 +329,18 @@ class TestReads:
         assert log["total_minutes"] == sum(row["duration_min"] for row in listed["items"]) > 0
         assert log["load_formula"] == "load_units = duration_min x rpe"
 
+    def test_a_player_with_no_session_reports_an_empty_log_not_a_zeroed_average(self, client) -> None:  # type: ignore[no-untyped-def]
+        """Most generated players were never picked by the 100 sessions, and their page has to say *none*
+        rather than render the arithmetic identity `mean of nothing = 0` as a measured average."""
+        trained = {row["player_slug"] for row in client.get(f"{API}/training", params={"page_size": 200}).json()["items"]}
+        listed = [p["slug"] for page in (1, 2) for p in client.get(f"{API}/players", params={"page": page, "page_size": 200}).json()["items"]]
+        untrained = next((slug for slug in listed if slug not in trained), None)
+        assert untrained is not None, f"{len(listed)} players cannot all be covered by {len(trained)} trained slugs"
+        log = client.get(f"{API}/players/{untrained}").json()["training_log"]
+        assert log["sessions"] == 0 and log["items"] == [] and log["total_load"] == 0 and log["total_minutes"] == 0
+        assert log["categories"] == [] and log["drills"] == []
+        assert log["mean_rpe"] == 0, "the page renders this as no data, not as an RPE of nil"
+
     def test_stat_lines_carry_the_match_path_too(self, client) -> None:  # type: ignore[no-untyped-def]        """A line without its fixture's path would force the client to rebuild `/match/{slug}`."""
         played = client.get(f"{API}/matches", params={"status": "completed", "page_size": 1}).json()["items"][0]
         detail = client.get(f"{API}/matches/{played['slug']}").json()

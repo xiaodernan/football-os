@@ -405,6 +405,8 @@ class TestWageBill:
         after = market.budget_position(session, career)
         assert after["remaining"] == BUDGET - move.fee - wage and after["wages_paid"] == wage and after["wage_rounds"] == [1]
         assert charge.budget_after == after["remaining"]
+        # A wage row has no player to name, so the sentence is what tells a reader what was charged.
+        assert market.wage_row(charge)["effect"] == WAGE_EFFECT
 
     def test_a_sold_player_stops_costing_and_a_loan_stops_when_its_rounds_do(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)

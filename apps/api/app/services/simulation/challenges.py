@@ -132,8 +132,12 @@ _FIXED_GOAL: Final = Constraint(
 _NO_TRANSFERS: Final = Constraint(
     key="no_transfers",
     label="No transfers",
-    enforced=False,
-    how="there is no transfer market yet (spec §22), so no signing is possible with or without this rule; it is a stated intent the engine has nothing to enforce.",
+    enforced=True,
+    how=(
+        "market.transferable() refuses every deal for a career whose scenario carries this rule (409 "
+        "transfers_forbidden), so the market that would break it is closed rather than merely discouraged. "
+        "Published as enforced since §22 landed; before that it was stated intent with nothing to apply it."
+    ),
 )
 _ACADEMY_ONLY: Final = Constraint(
     key="academy_only",

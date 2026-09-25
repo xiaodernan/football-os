@@ -720,7 +720,83 @@ async function run() {
       (await page.evaluate(() => document.querySelectorAll('svg[role="img"]').length)) > 0 && !!athlete,
       `${Object.keys(playerDetail.player.attributes).length} attributes`,
     );
+
+    // The player route has always returned `training_log`; these checks are for the page showing it.
+    // Read with textContent, not innerText, because `.eyebrow` is upper-cased by CSS and `.notice` prints a formula.
+    const readTrainingPanel = () => {
+      const panel = [...document.querySelectorAll('.panel')].find((node) =>
+        (node.querySelector('.panel__title')?.textContent ?? '').includes('Training log'),
+      );
+      if (!panel) return null;
+      return {
+        kv: Object.fromEntries(
+          [...panel.querySelectorAll('.world-kv__row')].map((row) => [
+            row.querySelector('dt')?.textContent.trim() ?? '',
+            row.querySelector('dd')?.textContent.trim() ?? '',
+          ]),
+        ),
+        rows: [...(panel.querySelector('table')?.querySelectorAll('tbody tr') ?? [])].map((tr) =>
+          [...tr.querySelectorAll('td')].map((td) => td.textContent.trim()),
+        ),
+        formula: panel.querySelector('.notice .mono')?.textContent.trim() ?? '',
+        consistency: panel.querySelector('.notice p')?.textContent.trim() ?? '',
+        empty: panel.querySelector('.unavailable')?.textContent.trim() ?? '',
+        drills: [...panel.querySelectorAll('a[href^="/training/"]')].map((a) => a.getAttribute('href') ?? ''),
+        accountNote: /asks for an account/u.test(panel.textContent ?? ''),
+        worldLink: panel.querySelectorAll('a[href="/world/training"]').length,
+      };
+    };
+
+    const untrained = await page.evaluate(readTrainingPanel);
+    check(
+      'a player the log never picked is told so, and an empty set prints no average',
+      playerDetail.training_log.sessions === 0 &&
+        (untrained?.rows.length ?? -1) === 0 &&
+        /No session recorded/u.test(untrained?.empty ?? '') &&
+        untrained?.kv['Sessions'] === '0' &&
+        untrained?.kv['Mean RPE'] === '—' &&
+        untrained?.kv['Focus areas'] === '—',
+      `${worldPlayer.slug} · rows ${untrained?.rows.length ?? 'no panel'} · mean RPE cell "${untrained?.kv['Mean RPE'] ?? '?'}"`,
+    );
     await shot(page, '26-world-player-desktop');
+
+    const trainedLog = (await worldApi('/training?page_size=200')).items;
+    const sessionsOf = new Map();
+    for (const row of trainedLog) sessionsOf.set(row.player_slug, [...(sessionsOf.get(row.player_slug) ?? []), row]);
+    const [trainedSlug, trainedRows] = [...sessionsOf.entries()].sort((a, b) => b[1].length - a[1].length)[0];
+    await open(page, `/player/${trainedSlug}`);
+    await waitForText(page, 'Training log');
+    const training = await page.evaluate(readTrainingPanel);
+    const sumOf = (rows, key) => rows.reduce((total, row) => total + row[key], 0);
+    check(
+      'the player page prints the training log its route has always returned',
+      (training?.rows.length ?? 0) === trainedRows.length &&
+        training?.kv['Sessions'] === String(trainedRows.length) &&
+        training?.kv['Drills used'] === String(new Set(trainedRows.map((row) => row.drill_slug)).size) &&
+        training?.formula === 'load_units = duration_min x rpe',
+      `${trainedSlug} · ${trainedRows.length} sessions · ${training?.formula ?? 'no formula printed'}`,
+    );
+    const printedMinutes = (training?.rows ?? []).reduce((total, row) => total + Number.parseInt(row[4] ?? '', 10), 0);
+    const printedLoad = (training?.rows ?? []).reduce((total, row) => total + Number.parseInt(row[6] ?? '', 10), 0);
+    check(
+      'the training figures on the page are the arithmetic of the rows printed under them',
+      printedMinutes === sumOf(trainedRows, 'duration_min') &&
+        printedLoad === sumOf(trainedRows, 'load_units') &&
+        training?.kv['Minutes'] === String(printedMinutes) &&
+        training?.kv['Load units'] === String(printedLoad) &&
+        /totals above equal the \d+ rows/u.test(training?.consistency ?? ''),
+      `sum(min)=${printedMinutes} sum(load)=${printedLoad} of ${trainedRows.length} rows · ${training?.consistency.slice(0, 44) ?? ''}`,
+    );
+    const trainedPaths = new Set(trainedRows.map((row) => row.drill_path));
+    check(
+      'each session row links to the catalogue drill it names, and says that page needs an account',
+      (training?.drills.length ?? 0) === trainedRows.length &&
+        training?.drills.every((href) => trainedPaths.has(href)) &&
+        training?.accountNote === true &&
+        training?.worldLink === 1,
+      `${training?.drills.length ?? 0} drill links · ${training?.drills[0] ?? '—'}`,
+    );
+    await shot(page, '26b-world-player-training-desktop');
 
     await open(page, worldLeague.path);
     await waitForText(page, 'Table');
@@ -1687,14 +1763,24 @@ async function run() {
       return {
         clubs: clubSelect?.options.length ?? 0,
         objectiveKinds: document.querySelector('select[aria-label^="objective"]')?.options.length ?? 0,
-        budgetCaveat: /nothing spends this budget yet/iu.test(body),
+        // §22 landed a market that spends this budget and a wage bill that charges it, so the sentence
+        // "nothing spends this budget yet" became false; the form now says both what it buys and what it
+        // still cannot do, and this check holds it to the newer pair.
+        budgetSpends: /what the transfer market gets to spend/iu.test(body),
+        budgetCaveat: /a budget still changes no fixture by itself/iu.test(body),
+        wageSentence: /every round played charges the wages/iu.test(body),
         engineSentence: /labelled simulation engine/iu.test(body),
       };
     });
     check(
       'the career form offers the world clubs and the four objective kinds, and admits what a budget does not do',
-      formShape.clubs >= 20 && formShape.objectiveKinds === 4 && formShape.budgetCaveat && formShape.engineSentence,
-      `${formShape.clubs} clubs · ${formShape.objectiveKinds} objective kinds · budget caveat ${formShape.budgetCaveat} · engine ${formShape.engineSentence}`,
+      formShape.clubs >= 20 &&
+        formShape.objectiveKinds === 4 &&
+        formShape.budgetSpends &&
+        formShape.budgetCaveat &&
+        formShape.wageSentence &&
+        formShape.engineSentence,
+      `${formShape.clubs} clubs · ${formShape.objectiveKinds} objective kinds · spends ${formShape.budgetSpends} · caveat ${formShape.budgetCaveat} · wages ${formShape.wageSentence} · engine ${formShape.engineSentence}`,
     );
 
     await page.type('input[aria-label="Manager name"]', 'QA Season Keeper');

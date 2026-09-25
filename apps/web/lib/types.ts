@@ -737,6 +737,9 @@ export type TeamDetail = WorldEnvelope & {
   squad_notes: string[];
 };
 
+/** One player's log: the sessions summed into the totals above them, newest first. */
+export type PlayerTrainingLog = WorldTrainingTotals & { items: WorldTrainingRow[] };
+
 export type PlayerDetail = WorldEnvelope & {
   player: PlayerRow & {
     club: TeamBrief | null;
@@ -776,6 +779,7 @@ export type PlayerDetail = WorldEnvelope & {
     rating: number;
   }[];
   stat_lines: StatLine[];
+  training_log: PlayerTrainingLog;
   method: Record<string, string>;
 };
 

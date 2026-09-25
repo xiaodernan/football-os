@@ -71,6 +71,8 @@ class _Fixture:
 class _Career:
     challenge_window: int
     challenge_slug: str = SHORT
+    status: str = "active"
+    rounds_played: int = 0
 
 
 def _rows(sequence: str) -> list[_Fixture]:
@@ -148,13 +150,22 @@ def test_every_scenario_declares_an_enforced_window_and_a_fixed_goal() -> None:
 
 
 def test_constraints_that_nothing_can_apply_say_so() -> None:
-    """The honesty test: a rule the build has no mechanism for must not read as applied."""
+    """The honesty test runs in both directions, because under-claiming is as wrong as over-claiming.
+
+    `no_transfers` used to sit beside `academy_only` as published-but-not-applied. That became false
+    when §22 landed: the market now refuses every deal for a career carrying this rule, so a catalogue
+    that still advertised it as merely stated was telling a manager their hands were free when they
+    were tied. The rule is asserted enforced here, and `tests/test_transfers.py` proves the refusal.
+    """
     for challenge in CHALLENGES:
         for constraint in challenge.constraints:
             assert constraint.how, f"{challenge.slug}/{constraint.key} does not say what it does"
-            if constraint.key in ("no_transfers", "academy_only"):
+            if constraint.key == "academy_only":
                 assert constraint.enforced is False, f"{challenge.slug}/{constraint.key} claims to be enforced"
-                assert "no transfer market" in constraint.how or "no age filter" in constraint.how
+                assert "no age filter" in constraint.how
+            if constraint.key == "no_transfers":
+                assert constraint.enforced is True, f"{challenge.slug}/{constraint.key} is applied but advertised as stated"
+                assert "market.transferable()" in constraint.how
             if constraint.key == "budget":
                 # The value binds (the caller cannot raise it) and the sentence says the effect does not.
                 assert constraint.enforced is True
@@ -187,6 +198,35 @@ def test_a_problem_in_the_catalogue_is_reported_rather_than_ignored() -> None:
     assert "not_a_kind" in joined
     assert "no key/label" in joined
     assert challenge_problems() == []  # the real catalogue is untouched by the probe
+
+
+def test_the_catalogue_and_the_market_agree_about_whether_a_rule_binds() -> None:
+    """The invariant that actually drifted, and the test that would have caught it.
+
+    `challenges.py` and `market.transferable()` publish the same flag about the same rule from two
+    places. §22 landed the market, updated its own flag to `enforced: True` and left the catalogue
+    saying `False` — so a manager reading the scenario was told their hands were free while the market
+    was already refusing every deal. Neither module is wrong on its own; the disagreement is the bug.
+    """
+    from app.services.simulation.market import transferable
+
+    session = SessionLocal()
+    try:
+        checked = 0
+        for challenge in CHALLENGES:
+            constraint = next((item for item in challenge.constraints if item.key == "no_transfers"), None)
+            if constraint is None:
+                continue
+            career = _Career(challenge_window=challenge.window_rounds, challenge_slug=challenge.slug)
+            verdict = transferable(session, career)  # type: ignore[arg-type]
+            assert verdict["ok"] is False and verdict["code"] == "transfers_forbidden", challenge.slug
+            assert verdict["enforced"] == constraint.enforced, (
+                f"{challenge.slug}: the catalogue publishes enforced={constraint.enforced} and the market publishes {verdict['enforced']} for the same rule"
+            )
+            checked += 1
+        assert checked >= 2, "the two no-transfers scenarios must both be cross-checked"
+    finally:
+        session.close()
 
 
 def test_the_fingerprint_moves_when_the_catalogue_does() -> None:
