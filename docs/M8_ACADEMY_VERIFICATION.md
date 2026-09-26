@@ -128,6 +128,33 @@ land in a redirected log — `apps/api/pyproject.toml` sets `addopts = "-q"`, so
 line runs the suite at `-qq`, which is what suppresses the summary. Pass `-o addopts=` and read the last
 line, rather than counting progress characters and trusting `rc` alone.
 
+## Six rules planted wrong, on purpose
+
+A green suite is a claim about the tests as much as about the code, so six values in this tier were mutated one
+at a time and the whole 196-item club pair re-run against each — never a filtered subset, for the reason above.
+The control (`rc=0`, `196 passed`) ran first and last.
+
+| planted defect | what would go wrong for a reader | verdict |
+| --- | --- | --- |
+| `MINOR_AGE` 18 → 17 | a seventeen-year-old treated as an adult: no consent needed, no `is_minor` anywhere | **caught by 34 tests** |
+| the minors' scope gate made to never fire | a plan, review, note or clip on a child nobody answered for | **caught by 5 tests** |
+| one review allowed to yield a direction | `overall_change: 0` printed as "flat" where nothing is measurable | caught nothing — **a hole** |
+| an axis rated at one end left in the direction list | a change claimed for a figure only one review ever held | **caught by 1 test** |
+| the withheld-note count pinned to zero | a parent told nothing is hidden while a note is | **caught by 1 test** |
+| the plans listing's published formula removed | a derived figure printed with no account of where it came from | **caught by 1 test** |
+
+The survivor is the interesting one, and it is the same shape as the tier's other findings: the door's
+`one_review_is_not_a_direction` flag *was* asserted, and the field that actually claims a direction —
+`overall_change` — was not, at exactly the moment it should have been `None`. Two assertions were added
+(`test_club_academy.py`, in the cadence and the deleted-review tests), the mutation was re-planted and is now
+caught by those two tests, and the pair is green again behind them. **A flag that agrees with a number nobody
+checks is not a rule.**
+
+Probes live in `.scratch/` (untracked, like this tree's other harnesses): the anchor is a literal string that
+must appear exactly once, the file is rewritten in a `finally`, the restore is proved by comparing the text back
+rather than by trusting the write, and one anchor in the first round matched nothing — which the harness prints
+as "not evidence either way" instead of letting a skipped probe count as a catch.
+
 ## How to re-run
 
 ```text

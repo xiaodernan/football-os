@@ -908,7 +908,10 @@ class TestProgressIsArithmetic:
         plan = _plan(owner, ident, _adult(5), **{"review_weeks": 4})["id"]
         _review(owner, ident, plan, PAST[2], {**FULL_RATINGS, "technique": 61})
         single = _read(owner, ident, plan)["progress"]
+        # The claim that matters is the direction field itself: with one review there is nothing to subtract,
+        # and a zero printed here would read as "flat" rather than "not measurable".
         assert single["one_review_is_not_a_direction"] is True and single["axis_change"] == {}
+        assert single["overall_change"] is None and single["overall_first"] == single["overall_last"], "one review is not a direction"
         _review(owner, ident, plan, PAST[4], {**FULL_RATINGS, "technique": 68, "tactics": 44})
         progress = _read(owner, ident, plan)["progress"]
         assert progress["assessments"] == 2 and progress["one_review_is_not_a_direction"] is False
@@ -987,6 +990,7 @@ class TestProgressIsArithmetic:
             session.close()
         after = _read(owner, ident, plan)["progress"]
         assert after["assessments"] == 1 and after["one_review_is_not_a_direction"] is True and after["axis_change"] == {}
+        assert after["overall_change"] is None, "the door must not report a change it cannot measure"
 
     def test_a_review_is_refused_before_it_can_become_the_newest_number(self) -> None:
         owner, ident = _tenant("Back Date Academy")
