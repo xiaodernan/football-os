@@ -13,16 +13,32 @@ The rules this file holds:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from tests.test_club_academy import _detail, _grant as grant_other, _joined, session, world  # noqa: F401
+from app.core.db import SessionLocal
+from tests.test_club_academy import _detail, _joined, world  # noqa: F401
+from tests.test_club_academy import _grant as grant_other
 
 CLUB = "/api/v1/club"
 ACADEMY = f"{CLUB}/academy"
+
+
+@pytest.fixture()
+# `world` is imported above so both files read the world §40 seeded; the parameter of the same name is
+# pytest requesting that fixture, not a redefinition of it.
+def session(world: dict[str, Any]) -> Iterator[Session]:  # noqa: F811
+    """The same shape as §40's: one session per test, closed afterwards, over the world that file seeded."""
+    row = SessionLocal()
+    try:
+        yield row
+    finally:
+        row.close()
 
 
 def _tenant(name: str) -> tuple[TestClient, str]:

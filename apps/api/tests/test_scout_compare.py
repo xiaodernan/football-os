@@ -116,7 +116,7 @@ def stored_lines(session: Any, slug: str) -> dict[str, int]:
 def expected_leader(left: Any, right: Any, direction: str) -> str:
     if direction == "none":
         return "not_scorable"
-    if not isinstance(left, (int, float)) or not isinstance(right, (int, float)):
+    if not isinstance(left, int | float) or not isinstance(right, int | float):
         return "unknown"
     if left == right:
         return "even"

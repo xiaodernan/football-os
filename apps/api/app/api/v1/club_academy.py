@@ -33,9 +33,9 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
+from app.services import entitlements as ent_status
 from app.services.club import academy as edu
 from app.services.club import organizations as club
-from app.services import entitlements as ent_status
 from app.services.club import reports as rep
 from app.services.club import sessions as sess
 from app.services.club.organizations import ClubRefusal

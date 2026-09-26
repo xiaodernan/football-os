@@ -13,15 +13,18 @@ The rules this file holds:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import date, timedelta
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.db import SessionLocal
 from app.models import RealPlayer
-from tests.test_club_academy import _detail, _validation, session, world  # noqa: F401 — the same fixtures §40 drives, so both files see one generated world
+from tests.test_club_academy import _detail, _validation, world  # noqa: F401 — the world §40 seeds, so both files see one generated world
 
 CLUB = "/api/v1/club"  # the same door prefix §39 and §40 test through
 
@@ -41,6 +44,18 @@ def _email_of(client: TestClient) -> str:
     from tests.test_club_academy import _email_of as shared
 
     return shared(client)
+
+
+@pytest.fixture()
+# `world` is imported above so both files read the world §40 seeded; the parameter of the same name is
+# pytest requesting that fixture, not a redefinition of it.
+def session(world: dict[str, Any]) -> Iterator[Session]:  # noqa: F811
+    """The same shape as §40's: one session per test, closed afterwards, over the world that file seeded."""
+    row = SessionLocal()
+    try:
+        yield row
+    finally:
+        row.close()
 
 
 def _tenant(name: str) -> tuple[TestClient, str]:
@@ -104,6 +119,9 @@ class TestRecordingASession:
         away = _pick(session, minor=False, count=1)[0]
         refused = _post(owner, ident, attendees=[away.id])
         assert refused.status_code in (404, 422), refused.text
+        # The sheet exists and is the one being posted to, so the refusal above is about the attendee
+        # standing outside it — which is the only thing this test claims.
+        assert team["id"] and owner.get(f"{ACADEMY}/{ident}/sessions").json()["total"] == 0
         assert _detail(refused)["code"] in {"not_on_sheet", "no_such_player"}
 
     def test_attendance_naming_two_players_when_the_sheet_holds_one_is_refused(self, client: TestClient, session: Session) -> None:
@@ -117,7 +135,7 @@ class TestRecordingASession:
 
     def test_an_empty_attendance_list_is_refused_rather_than_recorded_as_a_quiet_session(self, client: TestClient) -> None:
         owner, ident = _tenant("Nobody Came")
-        _team_of(owner, ident, "Under 16s")
+        _team_of(owner, ident, "Under 16s")  # the sheet has to exist for the refusal to be about the list
         refused = _post(owner, ident, attendees=[])
         assert refused.status_code == 422 and _detail(refused)["code"] == "no_attendees"
 

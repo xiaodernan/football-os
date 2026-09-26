@@ -49,9 +49,7 @@ def upgrade() -> None:
         sa.Column("is_demo_data", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["player_id"], ["real_players.id"], name=op.f("fk_real_training_sessions_player_id_real_players"), ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["player_id"], ["real_players.id"], name=op.f("fk_real_training_sessions_player_id_real_players"), ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["team_id"], ["teams.id"], name=op.f("fk_real_training_sessions_team_id_teams"), ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_real_training_sessions")),
         sa.UniqueConstraint("natural_key", name="uq_world_training_natural_key"),

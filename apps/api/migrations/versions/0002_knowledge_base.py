@@ -103,10 +103,7 @@ def upgrade() -> None:
 
     if is_postgres:
         # HNSW on cosine: the index the pgvector `<=>` ORDER BY in retrieval.py uses.
-        op.execute(
-            "create index if not exists ix_chunk_embedding_hnsw on knowledge_chunks "
-            "using hnsw (embedding vector_cosine_ops) with (m = 16, ef_construction = 64)"
-        )
+        op.execute("create index if not exists ix_chunk_embedding_hnsw on knowledge_chunks using hnsw (embedding vector_cosine_ops) with (m = 16, ef_construction = 64)")
 
 
 def downgrade() -> None:

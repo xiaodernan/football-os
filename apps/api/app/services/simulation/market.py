@@ -104,7 +104,9 @@ RIVAL_FORMULA: Final = (
     "a club in the career's own competition will not sell to a rival: only the release clause in the player's contract moves them "
     f"(clause = asking × {RELEASE_CLAUSE_SHARE}). A loan is a temporary deal the selling club agrees to, so the clause rule binds a permanent move only"
 )
-LOAN_FORMULA: Final = f"loan fee = round_5(current price × {LOAN_FEE_SHARE}); a loaned player is in the squad until loan_until_round and out of it afterwards, with no row written when the loan simply ends"
+LOAN_FORMULA: Final = (
+    f"loan fee = round_5(current price × {LOAN_FEE_SHARE}); a loaned player is in the squad until loan_until_round and out of it afterwards, with no row written when the loan simply ends"
+)
 SELL_FORMULA: Final = (
     f"proceeds = round_5(asking × {SELL_PROCEEDS_SHARE}) — the market pays 90% of what it lists a player at, because a seller does not set the price of its own exit; "
     "the counterparty is the highest-rated club in the career's competition other than the career's own, ties broken by slug"
@@ -209,11 +211,7 @@ def club_need(session: Session, career: Career, *, round_index: int) -> dict[str
 
 def market_pool(session: Session, career: Career, *, round_index: int) -> tuple[list[RealPlayer], dict[str, Any]]:
     """Who could be bought: every stored player at another club, minus the ones this career already has."""
-    rows = list(
-        session.scalars(
-            select(RealPlayer).where(RealPlayer.team_id.is_not(None), RealPlayer.team_id != (career.club_id or "")).order_by(RealPlayer.slug)
-        ).all()
-    )
+    rows = list(session.scalars(select(RealPlayer).where(RealPlayer.team_id.is_not(None), RealPlayer.team_id != (career.club_id or "")).order_by(RealPlayer.slug)).all())
     mine = {player_id for player_id, kind in squad_state(session, career, round_index).items() if kind in IN_KINDS}
     pool = [player for player in rows if player.id not in mine]
     unstaffed = [player.name for player in pool if not band_of_position(player.position)]
@@ -325,9 +323,9 @@ def open_market(session: Session, career: Career) -> dict[str, Any]:
 
 
 def _listing(session: Session, career: Career, ident: str) -> TransferListing:
-    row = session.scalar(
-        select(TransferListing).where(TransferListing.career_id == career.id, TransferListing.id == ident)
-    ) or session.scalar(select(TransferListing).where(TransferListing.career_id == career.id, TransferListing.player_slug == ident))
+    row = session.scalar(select(TransferListing).where(TransferListing.career_id == career.id, TransferListing.id == ident)) or session.scalar(
+        select(TransferListing).where(TransferListing.career_id == career.id, TransferListing.player_slug == ident)
+    )
     if row is None:
         raise MarketRefusal("no_such_listing", f"{ident!r} is not a listing this career was given", career_slug=career.slug)
     return row
@@ -489,10 +487,7 @@ def budget_position(session: Session, career: Career) -> dict[str, Any]:
         "wage_committed_per_week": standing["fee"],
         "wage_players": standing["players"],
         "wage_detail": standing["detail"],
-        "wage_note": (
-            "charged every round this career plays: the deals it holds cost their agreed weekly wage, and each "
-            "round's charge is a row of its own below"
-        ),
+        "wage_note": ("charged every round this career plays: the deals it holds cost their agreed weekly wage, and each round's charge is a row of its own below"),
         "formula": BUDGET_FORMULA,
     }
 
@@ -554,9 +549,7 @@ def buy(session: Session, career: Career, *, ident: str, use_clause: bool = Fals
     player = session.get(RealPlayer, row.player_id)
     if player is None:
         raise MarketRefusal("player_gone", f"the row for {row.player_name} is no longer stored, so there is nobody to sign", listing_id=row.id)
-    move = _record_move(
-        session, career, player, kind="buy", fee=fee, round_index=int(career.rounds_played) + 1, balance=balance, listing=row
-    )
+    move = _record_move(session, career, player, kind="buy", fee=fee, round_index=int(career.rounds_played) + 1, balance=balance, listing=row)
     row.status = "signed"
     # The listing keeps the price it was offered at. What actually left the balance is the move row's
     # `fee`, and paying a clause rather than the asking price would otherwise print a *higher* current
@@ -588,9 +581,7 @@ def loan(session: Session, career: Career, *, ident: str, rounds: int = DEFAULT_
     if player is None:
         raise MarketRefusal("player_gone", f"the row for {row.player_name} is no longer stored, so there is nobody to loan", listing_id=row.id)
     until = round_index + rounds - 1
-    move = _record_move(
-        session, career, player, kind="loan", fee=fee, round_index=round_index, balance=balance, listing=row, loan_until=until
-    )
+    move = _record_move(session, career, player, kind="loan", fee=fee, round_index=round_index, balance=balance, listing=row, loan_until=until)
     row.status = "signed"
     session.commit()
     session.refresh(move)
@@ -621,9 +612,7 @@ def sell(session: Session, career: Career, *, ident: str) -> tuple[CareerSquadMo
         raise MarketRefusal("would_not_field_a_side", f"selling {player.name} would leave this career unable to field a side", **fielding)
     price = valuation(player)
     fee = _credits(int(price["asking_fee"]) * SELL_PROCEEDS_SHARE)
-    counterparty = session.scalars(
-        select(Team).where(Team.competition_id == (career.competition_id or ""), Team.id != (career.club_id or "")).order_by(Team.overall.desc(), Team.slug)
-    ).first()
+    counterparty = session.scalars(select(Team).where(Team.competition_id == (career.competition_id or ""), Team.id != (career.club_id or "")).order_by(Team.overall.desc(), Team.slug)).first()
     if counterparty is None:
         raise MarketRefusal("no_buyer", "this career's club has no competition to sell into", competition_id=career.competition_id)
     move = _record_move(
@@ -636,11 +625,7 @@ def sell(session: Session, career: Career, *, ident: str) -> tuple[CareerSquadMo
         balance=budget_position(session, career),
         counterparty=counterparty,
     )
-    for row in session.scalars(
-        select(TransferListing).where(
-            TransferListing.career_id == career.id, TransferListing.player_id == player.id, TransferListing.status == "open"
-        )
-    ):
+    for row in session.scalars(select(TransferListing).where(TransferListing.career_id == career.id, TransferListing.player_id == player.id, TransferListing.status == "open")):
         row.status = "withdrawn"
     session.commit()
     session.refresh(move)
@@ -663,11 +648,7 @@ def release(session: Session, career: Career, *, ident: str) -> tuple[CareerSqua
         round_index=int(career.rounds_played) + 1,
         balance=budget_position(session, career),
     )
-    for row in session.scalars(
-        select(TransferListing).where(
-            TransferListing.career_id == career.id, TransferListing.player_id == player.id, TransferListing.status == "open"
-        )
-    ):
+    for row in session.scalars(select(TransferListing).where(TransferListing.career_id == career.id, TransferListing.player_id == player.id, TransferListing.status == "open")):
         row.status = "withdrawn"
     session.commit()
     session.refresh(move)

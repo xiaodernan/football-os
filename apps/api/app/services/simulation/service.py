@@ -247,7 +247,7 @@ def _indices_changed(stored: dict[str, Any], side: str, profile: SideProfile) ->
 
 def _fmt(value: object) -> str:
     """A figure for prose: a missing index reads as `?` rather than as a number invented here."""
-    return "?" if not isinstance(value, (int, float)) else f"{float(value):.3f}".rstrip("0").rstrip(".")
+    return "?" if not isinstance(value, int | float) else f"{float(value):.3f}".rstrip("0").rstrip(".")
 
 
 def _as_mapping(value: object) -> dict[str, Any]:

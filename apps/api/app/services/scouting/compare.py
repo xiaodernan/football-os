@@ -155,7 +155,7 @@ def _measure(key: str, left: Any, right: Any, direction: str, source: str, **ext
     leader = "unknown"
     if direction == "none":
         leader = "not_scorable"
-    elif isinstance(left, (int, float)) and isinstance(right, (int, float)):
+    elif isinstance(left, int | float) and isinstance(right, int | float):
         delta = round(float(left) - float(right), 4)
         if left == right:
             leader = "even"

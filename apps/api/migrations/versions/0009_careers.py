@@ -52,9 +52,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["owner_id"], ["users.id"], name=op.f("fk_careers_owner_id_users"), ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["club_id"], ["teams.id"], name=op.f("fk_careers_club_id_teams"), ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(
-            ["competition_id"], ["competitions.id"], name=op.f("fk_careers_competition_id_competitions"), ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["competition_id"], ["competitions.id"], name=op.f("fk_careers_competition_id_competitions"), ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_careers")),
         sa.UniqueConstraint("slug"),
     )
@@ -85,9 +83,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["career_id"], ["careers.id"], name=op.f("fk_career_fixtures_career_id_careers"), ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["match_id"], ["sim_matches.id"], name=op.f("fk_career_fixtures_match_id_sim_matches"), ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(
-            ["opponent_team_id"], ["teams.id"], name=op.f("fk_career_fixtures_opponent_team_id_teams"), ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["opponent_team_id"], ["teams.id"], name=op.f("fk_career_fixtures_opponent_team_id_teams"), ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_career_fixtures")),
         sa.UniqueConstraint("career_id", "round_index", name="uq_career_round"),
     )

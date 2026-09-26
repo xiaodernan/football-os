@@ -67,12 +67,8 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["career_id"], ["careers.id"], name=op.f("fk_transfer_listings_career_id_careers"), ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(
-            ["player_id"], ["real_players.id"], name=op.f("fk_transfer_listings_player_id_real_players"), ondelete="CASCADE"
-        ),
-        sa.ForeignKeyConstraint(
-            ["from_team_id"], ["teams.id"], name=op.f("fk_transfer_listings_from_team_id_teams"), ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["player_id"], ["real_players.id"], name=op.f("fk_transfer_listings_player_id_real_players"), ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["from_team_id"], ["teams.id"], name=op.f("fk_transfer_listings_from_team_id_teams"), ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_transfer_listings")),
         sa.UniqueConstraint("career_id", "player_id", name="uq_listing_career_player"),
     )
@@ -102,15 +98,9 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["career_id"], ["careers.id"], name=op.f("fk_career_squad_moves_career_id_careers"), ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(
-            ["player_id"], ["real_players.id"], name=op.f("fk_career_squad_moves_player_id_real_players"), ondelete="CASCADE"
-        ),
-        sa.ForeignKeyConstraint(
-            ["listing_id"], ["transfer_listings.id"], name=op.f("fk_career_squad_moves_listing_id_transfer_listings"), ondelete="SET NULL"
-        ),
-        sa.ForeignKeyConstraint(
-            ["counterparty_team_id"], ["teams.id"], name=op.f("fk_career_squad_moves_counterparty_team_id_teams"), ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["player_id"], ["real_players.id"], name=op.f("fk_career_squad_moves_player_id_real_players"), ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["listing_id"], ["transfer_listings.id"], name=op.f("fk_career_squad_moves_listing_id_transfer_listings"), ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["counterparty_team_id"], ["teams.id"], name=op.f("fk_career_squad_moves_counterparty_team_id_teams"), ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_career_squad_moves")),
     )
     op.create_index("ix_squad_move_career_round", "career_squad_moves", ["career_id", "round_index"], unique=False)

@@ -60,7 +60,14 @@ def _signed_in() -> Iterator[TestClient]:
 def _career(auth_client: TestClient, club: str, **kwargs: Any) -> str:
     response = auth_client.post(
         CAREERS,
-        json={"club": club, "manager_name": "Market Manager", "philosophy": "balanced", "budget": kwargs.pop("budget", BUDGET), "objectives": [{"kind": "wins", "target": 1, "label": "win once"}], **kwargs},
+        json={
+            "club": club,
+            "manager_name": "Market Manager",
+            "philosophy": "balanced",
+            "budget": kwargs.pop("budget", BUDGET),
+            "objectives": [{"kind": "wins", "target": 1, "label": "win once"}],
+            **kwargs,
+        },
     )
     assert response.status_code == 200, response.text
     return str(response.json()["career"]["slug"])

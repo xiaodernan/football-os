@@ -51,9 +51,7 @@ def upgrade() -> None:
         sa.Column("is_demo_data", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["career_id"], ["careers.id"], name=op.f("fk_career_wage_charges_career_id_careers"), ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["career_id"], ["careers.id"], name=op.f("fk_career_wage_charges_career_id_careers"), ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_career_wage_charges")),
     )
     op.create_index("ix_wage_charge_career_round", "career_wage_charges", ["career_id", "round_index"], unique=False)

@@ -120,7 +120,7 @@ def build_rows(match: SimulationMatch, report: Mapping[str, Any], sides: Mapping
                 player_slug=player_slug,
                 position=str(event.get("position", "")),
                 chance=str(event.get("chance", "")),
-                expected_goals=float(xg) if isinstance(xg, (int, float)) else None,
+                expected_goals=float(xg) if isinstance(xg, int | float) else None,
                 score=str(event.get("score", "")),
                 detail=str(event.get("detail", "")),
                 attribution=attribution,

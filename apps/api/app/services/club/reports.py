@@ -22,7 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
-from app.models import ClubReport, ClubSession, ClubTeam, ClubTeamMember, DevelopmentPlan, GuardianConsent, Organization, PlanAssessment, RealPlayer, User
+from app.models import ClubReport, ClubSession, ClubTeam, ClubTeamMember, GuardianConsent, Organization, RealPlayer, User
 from app.services import entitlements as ent
 from app.services.club import access
 from app.services.club.academy import _iso, _today
