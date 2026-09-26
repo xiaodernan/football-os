@@ -35,6 +35,7 @@ from app.core.security import current_user, limit
 from app.models import User
 from app.services.club import academy as edu
 from app.services.club import organizations as club
+from app.services.club import sessions as sess
 from app.services.club.organizations import ClubRefusal
 
 router = APIRouter(prefix="/club/academy", tags=["youth-academy"])
@@ -51,6 +52,12 @@ _ANSWERS: dict[str, int] = {
     **dict.fromkeys(edu.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
     **dict.fromkeys(edu.CONFLICT_CODES, status.HTTP_409_CONFLICT),
     **dict.fromkeys(edu.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
+    # A session code answers where the tier put it: an absence is a 404, a figure the caller can correct is
+    # a 422, a collision on a date and slot is a 409. Anything unregistered would fall through to a 400.
+    **dict.fromkeys(sess.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
+    **dict.fromkeys(sess.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
+    **dict.fromkeys(sess.CONFLICT_CODES, status.HTTP_409_CONFLICT),
+    **dict.fromkeys(sess.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
 }
 
 
@@ -62,6 +69,12 @@ def _refusal(error: ClubRefusal) -> HTTPException:
 #: page is handed one complete list of the tenant's doors rather than two halves it has to discover separately.
 ROUTE_GUIDE: Final = (
     {"methods": ["GET"], "path": "/api/v1/club/academy/capabilities", "purpose": "the academy rulebook: axes, scopes, the columns this tier writes, and what it never holds"},
+    {"methods": ["GET", "POST"], "path": "/api/v1/club/academy/{ident}/sessions", "purpose": "the training log of this tenant, and recording a session one team actually ran"},
+    {
+        "methods": ["GET", "DELETE"],
+        "path": "/api/v1/club/academy/{ident}/sessions/{session_ident}",
+        "purpose": "one session: its derived load beside the two columns it comes from, and erasing the row",
+    },
     {"methods": ["GET", "POST"], "path": "/api/v1/club/academy/{ident}/curricula", "purpose": "the tenant's training curricula, and writing one"},
     {"methods": ["PATCH", "DELETE"], "path": "/api/v1/club/academy/{ident}/curricula/{curriculum}", "purpose": "change or remove a curriculum; a plan that used it keeps existing and says so"},
     {"methods": ["GET", "POST"], "path": "/api/v1/club/academy/{ident}/plans", "purpose": "the plans this account may read — all of them for staff, a guardian's own children only for a parent"},
@@ -204,10 +217,17 @@ def read_academy_capabilities(request: Request, db: Session = Depends(get_db)) -
     limit(request, 60, 60, scope="academy_capabilities")
     return {
         **edu.rules(),
-        "counts": edu.academy_counts(db),
+        "counts": {**edu.academy_counts(db), **sess.session_counts(db, ready=edu.academy_ready(db))},
         "ready": edu.academy_ready(db),
+        # The session codes join the same table, and the answer map below decides which HTTP status each
+        # one earns — so a code that forgot to register there would silently be announced as a 400.
+        "session_limits": dict(sess.CAPS),
         "refusal_answers": {code: _ANSWERS.get(code, status.HTTP_400_BAD_REQUEST) for code in (*edu.REFUSALS, *edu.SHARED_REFUSALS)},
-        "limitations": edu.limitations(),
+        # §41's codes are published beside §40's rather than folded into them. The academy tier's own claim is
+        # that its table has exactly one row per code it can answer with, and a merged table would break that
+        # arithmetic while still looking complete to a reader. Codes §40 already answers with are not claimed twice.
+        "session_refusals": {code: _ANSWERS.get(code, status.HTTP_400_BAD_REQUEST) for code in sess.PUBLISHED},
+        "limitations": [*edu.limitations(), sess.LIMITATION],
         "consent_scopes": {
             "scopes": list(edu.SCOPES),
             "default_granted": list(edu.DEFAULT_SCOPES),
@@ -441,5 +461,81 @@ def erase_player_data(ident: str, player: str, request: Request, confirm: bool =
     limit(request, 10, 60, scope="academy_write")
     try:
         return {**edu.erase_player_data(db, user, ident, player, confirm=confirm), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+class SessionIn(BaseModel):
+    """Record one training session. The caps live in the service, whose refusal prints the figure it tripped over."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    team: str = Field(min_length=1, max_length=160)
+    scheduled_on: str = Field(min_length=8, max_length=10)
+    duration_min: int
+    rpe: int
+    slot: int = 1
+    focus: list[str] = Field(default_factory=list)
+    drill_slugs: list[str] = Field(default_factory=list)
+    attendees: list[str] = Field(default_factory=list)
+    plan: str | None = Field(default=None, max_length=96)
+    curriculum: str | None = Field(default=None, max_length=96)
+    note: str = Field(default="", max_length=400)
+
+
+@router.get("/{ident}/sessions")
+def read_sessions(ident: str, request: Request, team: str | None = None, since: str | None = None, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """The tenant's session log, newest first, with the load summed from the rows it shows."""
+    limit(request, 30, 60, scope="academy_read")
+    try:
+        return {**sess.list_sessions(db, user, ident, team=team, since=since), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.post("/{ident}/sessions")
+def write_session(payload: SessionIn, ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Record what the team did: the sheet decides who may be named, and a child's guardian decides whether they are."""
+    limit(request, 15, 60, scope="academy_write")
+    try:
+        return {
+            **sess.create_session(
+                db,
+                user,
+                ident,
+                team=payload.team,
+                scheduled_on=payload.scheduled_on,
+                duration_min=payload.duration_min,
+                rpe=payload.rpe,
+                slot=payload.slot,
+                focus=payload.focus,
+                drill_slugs=payload.drill_slugs,
+                attendees=payload.attendees,
+                plan=payload.plan,
+                curriculum=payload.curriculum,
+                note=payload.note,
+            ),
+            "demo_data": False,
+        }
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.get("/{ident}/sessions/{session_ident}")
+def read_one_session(ident: str, session_ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """One session, with the load figure beside the two columns it is computed from."""
+    limit(request, 30, 60, scope="academy_read")
+    try:
+        return {**sess.session_detail(db, user, ident, session_ident), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.delete("/{ident}/sessions/{session_ident}")
+def erase_one_session(ident: str, session_ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Remove one session row. The sheet, the plan and any clip it cited are untouched by it."""
+    limit(request, 10, 60, scope="academy_write")
+    try:
+        return {**sess.delete_session(db, user, ident, session_ident), "demo_data": False}
     except ClubRefusal as error:
         raise _refusal(error) from None

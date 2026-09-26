@@ -80,6 +80,13 @@ DOORS: tuple[tuple[str, str, dict[str, Any]], ...] = (
     ("delete", "/academy/{ident}/curricula/{curriculum}", {}),
     ("get", "/academy/{ident}/plans", {}),
     ("post", "/academy/{ident}/plans", {"player": "whoever"}),
+    # §41's Sessions doors name a tenant the same way, so the walk reaches them from this list too. A stranger is
+    # refused before any session id or team name is looked up, which is the only order in which the answer cannot
+    # confirm that some other tenant holds the row they asked for.
+    ("get", "/academy/{ident}/sessions", {}),
+    ("post", "/academy/{ident}/sessions", {"team": "Under 18s", "scheduled_on": "2020-01-01", "duration_min": 60, "rpe": 5, "attendees": ["whoever"]}),
+    ("get", "/academy/{ident}/sessions/{session_ident}", {}),
+    ("delete", "/academy/{ident}/sessions/{session_ident}", {}),
     ("get", "/academy/{ident}/plans/{plan}", {}),
     ("patch", "/academy/{ident}/plans/{plan}", {"status": "paused"}),
     ("delete", "/academy/{ident}/plans/{plan}", {}),
@@ -97,7 +104,15 @@ DOORS: tuple[tuple[str, str, dict[str, Any]], ...] = (
 #: The concrete values those templates are filled with when a door is knocked on. The academy keys are ids
 #: shaped like §40's and belonging to nothing, because a door that reached a row would be a different defect
 #: than the one this walk is about.
-PROBE = {"team": "Under 18s", "email": "somebody@example.test", "player": "whoever", "plan": "idp_nobody_s_plan", "curriculum": "acu_nobody_s_block", "evidence": "pve_nobody_s_citation"}
+PROBE = {
+    "team": "Under 18s",
+    "email": "somebody@example.test",
+    "player": "whoever",
+    "plan": "idp_nobody_s_plan",
+    "curriculum": "acu_nobody_s_block",
+    "evidence": "pve_nobody_s_citation",
+    "session_ident": "ses_nobody_s_session",
+}
 
 
 @pytest.fixture(scope="module")
@@ -513,8 +528,8 @@ class TestIsolationAcrossTenants:
         living = _tenant_naming_doors()
         assert living == declared, sorted(living ^ declared)
         assert (
-            len(declared) == 32
-        ), "this class is the isolation proof for every door that names a tenant: §39's fourteen plus §40's eighteen academy doors, counted from the route table above rather than remembered"
+            len(declared) == 36
+        ), "this class is the isolation proof for every door that names a tenant: §39's fourteen, §40's eighteen academy doors and §41's four session doors, counted from the route table above rather than remembered"
 
     def test_an_unaccepted_invitation_and_a_revoked_standing_are_both_not_a_foothold(self) -> None:
         owner = _account("Suspender")

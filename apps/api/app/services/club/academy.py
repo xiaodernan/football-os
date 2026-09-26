@@ -176,6 +176,28 @@ _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 #: without reading a migration. The suite compares this against the live tables in both directions.
 STORED_FIELDS: Final[dict[str, tuple[str, ...]]] = {
     "academy_curricula": ("age_group", "created_at", "data_origin", "id", "is_demo_data", "name", "organization_id", "phases", "updated_at", "weekly_minutes"),
+    # The sessions table joins the published column set rather than sitting beside it: the list *is* the
+    # minimisation rule, and a table this tier writes without naming its columns would be an unpoliced one.
+    "club_sessions": (
+        "attendees",
+        "coach_user_id",
+        "created_at",
+        "curriculum_id",
+        "data_origin",
+        "drill_slugs",
+        "duration_min",
+        "focus",
+        "id",
+        "is_demo_data",
+        "note",
+        "organization_id",
+        "plan_id",
+        "rpe",
+        "scheduled_on",
+        "slot",
+        "team_id",
+        "updated_at",
+    ),
     "development_plans": (
         "age_at_open",
         "author_user_id",

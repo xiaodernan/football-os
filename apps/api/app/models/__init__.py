@@ -1301,6 +1301,7 @@ class Organization(Base, TimestampMixin):
     curricula: Mapped[list[AcademyCurriculum]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     plans: Mapped[list[DevelopmentPlan]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     consents: Mapped[list[GuardianConsent]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    sessions: Mapped[list["ClubSession"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
 
 
 class OrganizationMember(Base, TimestampMixin):
@@ -1538,3 +1539,49 @@ class GuardianConsent(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     organization: Mapped[Organization] = relationship(back_populates="consents")
+
+
+class ClubSession(Base, TimestampMixin):
+    """§41's Sessions: one team's training block on one date, recorded by the coach who ran it.
+
+    The row stores what happened — who was there, how long it lasted, how hard it felt — and not what it cost.
+    `load_units` is `duration_min × rpe ÷ 60` over these columns, recomputed on every read with its formula
+    printed beside it, for the same reason §40 refuses a stored `progress`: a figure derived from rows that can
+    still be corrected is a figure that goes out of date in silence.
+
+    `plan_id` and `curriculum_id` are SET NULL. Erasing a child's plan, or retiring a curriculum, must not delete
+    the record that a team trained on a Tuesday — that record is the tenant's own history, not a file on the
+    child, and §40's erasure right is about the second thing.
+    """
+
+    __tablename__ = "club_sessions"
+    __table_args__ = (
+        # Two sessions on one date is a normal thing — morning and evening — so the pair that must be unique
+        # carries the slot, and a collision says which of the three coordinates is already taken.
+        UniqueConstraint("organization_id", "team_id", "scheduled_on", "slot", name="uq_club_session_slot"),
+        Index("ix_club_session_org_date", "organization_id", "scheduled_on"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    team_id: Mapped[str] = mapped_column(ForeignKey("club_teams.id", ondelete="CASCADE"), nullable=False)
+    plan_id: Mapped[str | None] = mapped_column(ForeignKey("development_plans.id", ondelete="SET NULL"), nullable=True)
+    curriculum_id: Mapped[str | None] = mapped_column(ForeignKey("academy_curricula.id", ondelete="SET NULL"), nullable=True)
+    coach_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # An ISO date as text, exactly as `plan_assessments.assessed_on` keeps it: the string compares in order,
+    # prints as it is stored, and does not depend on a driver's notion of a date.
+    scheduled_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    slot: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    duration_min: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    rpe: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    focus: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    # Drills are named by catalogue slug and never copied, the way a curriculum names them: the catalogue is the
+    # project's, and a session that duplicated a drill could disagree with it.
+    drill_slugs: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    # Player ids, not rows: attendance is a selection over the sheet, and the sheet is what owns the grouping.
+    attendees: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    note: Mapped[str] = mapped_column(String(280), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="sessions")
