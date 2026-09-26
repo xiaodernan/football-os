@@ -322,6 +322,37 @@ class Entitlement(Base):
     period: Mapped[str] = mapped_column(String(20), default="day", nullable=False)
 
 
+class UsageEvent(Base):
+    """§42's Usage: one row per act, in the period that act counted toward. Never a running total.
+
+    A stored counter is the number that goes wrong twice — once when a row is deleted underneath it, once when two
+    writers increment at the same time — and it is the same mistake §40 refused for `progress` and §41 refused for
+    a report's figures. The ceiling is compared against *this* table, counted at read time, and the period key is
+    part of the row so yesterday's acts cannot spend today's allowance.
+    """
+
+    __tablename__ = "usage_events"
+    __table_args__ = (
+        # One act counts once: the same session, plan or report cannot be made to spend a ceiling twice by being
+        # recorded twice, and a duplicate insert is the sound of a caller retrying rather than a second act.
+        UniqueConstraint("subject_id", "feature", "period_key", "source_id", name="uq_usage_act_once"),
+        Index("ix_usage_subject_feature", "subject_id", "feature", "period_key"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    #: An account or a tenant, whichever the feature is metered against. `subject_kind` says which, because the
+    #: two id namespaces are different tables and a count across them would be meaningless.
+    subject_id: Mapped[str] = mapped_column(String(40), nullable=False)
+    subject_kind: Mapped[str] = mapped_column(String(12), default="user", nullable=False)
+    feature: Mapped[str] = mapped_column(String(60), nullable=False)
+    plan: Mapped[str] = mapped_column(String(20), default="free", nullable=False)
+    period_key: Mapped[str] = mapped_column(String(7), nullable=False)
+    #: The row that made the act, so the same act is never counted twice.
+    source_id: Mapped[str] = mapped_column(String(40), nullable=False)
+    units: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    recorded_on: Mapped[str] = mapped_column(String(10), nullable=False)
+
+
 class RevokedToken(Base):
     __tablename__ = "revoked_tokens"
 

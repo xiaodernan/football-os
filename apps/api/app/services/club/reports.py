@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
 from app.models import ClubReport, ClubSession, ClubTeam, ClubTeamMember, DevelopmentPlan, GuardianConsent, Organization, PlanAssessment, RealPlayer, User
+from app.services import entitlements as ent
 from app.services.club import access
 from app.services.club.academy import _iso, _today
 from app.services.club.organizations import ClubRefusal, require, resolve_team, standing
@@ -168,6 +169,8 @@ def _span(start: str, end: str) -> int:
 def create_report(session: Session, user: User, ident: str, *, kind: str, window_from: str, window_to: str, team: str | None = None) -> dict[str, Any]:
     """Ask a question of the tenant and save it. The answer is never the thing that gets stored."""
     organization, _ = require(session, user, ident, "plan.read_all")
+    # §42's ceiling is checked before the row exists, and against the tenant's plan — nothing grants a plan
+    # yet, so that is `free`, and the refusal prints the number it tripped over rather than a silent no.
     if kind not in KINDS:
         raise ClubRefusal("unknown_kind", f"{kind!r} is not a reading this tier can produce; it knows {list(KINDS)}", kind=kind, kinds=list(KINDS))
     start = _iso(window_from, label="a report window start")
@@ -191,7 +194,14 @@ def create_report(session: Session, user: User, ident: str, *, kind: str, window
             ClubReport.team_id == (team_row.id if team_row else None),
         )
     )
+    created = existing is None
     if existing is None:
+        # A new act spends the ceiling, so the meter is consulted here — after every validation of the request
+        # itself, so a caller who sent an unknown kind or a reversed window is told about that rather than about
+        # a plan, and after the dedupe lookup, so re-asking the same question does not spend twice. The key is
+        # the report's own natural key, which is what `uq_club_report_window` enforces: meter and row agree by
+        # construction rather than by two lists kept in step.
+        ent.guard(session, subject_id=organization.id, feature="reports_saved", plan="free", source_id=f"{kind}:{start}:{end}:{team or 'tenant'}")
         existing = ClubReport(
             id=new_public_id("rep"), organization_id=organization.id, asked_by_user_id=user.id, kind=kind, team_id=(team_row.id if team_row else None), window_from=start, window_to=end
         )
@@ -200,6 +210,10 @@ def create_report(session: Session, user: User, ident: str, *, kind: str, window
         # Re-asking the same question is not a new document; the row is kept and the read below recomputes.
         existing.updated_at = _now()
     session.commit()
+    # The spend is recorded after the row exists: a report that failed to be written did not use anybody's
+    # allowance, and an allowance charged for a write that never happened is a meter that lies the other way.
+    if created:
+        ent.record(session, subject_id=organization.id, subject_kind="organization", feature="reports_saved", plan="free", source_id=f"{kind}:{start}:{end}:{team or 'tenant'}")
     _, member = standing(session, user, ident)
     return {
         "report": report_view(session, organization, existing, staff=access.may(member.role, "plan.read_all"), user=user),

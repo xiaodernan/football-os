@@ -35,6 +35,7 @@ from app.core.security import current_user, limit
 from app.models import User
 from app.services.club import academy as edu
 from app.services.club import organizations as club
+from app.services import entitlements as ent_status
 from app.services.club import reports as rep
 from app.services.club import sessions as sess
 from app.services.club.organizations import ClubRefusal
@@ -62,7 +63,12 @@ _ANSWERS: dict[str, int] = {
     **dict.fromkeys(rep.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
     **dict.fromkeys(rep.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
     **dict.fromkeys(rep.CONFLICT_CODES, status.HTTP_409_CONFLICT),
-    **dict.fromkeys(rep.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
+    # §42's codes can be answered at a club door, because that is where a ceiling is checked: a
+    # refusal that reached its own answer map would be a 400 claiming the request was malformed.
+    **dict.fromkeys(ent_status.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
+    **dict.fromkeys(ent_status.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
+    **dict.fromkeys(ent_status.CONFLICT_CODES, status.HTTP_409_CONFLICT),
+    **dict.fromkeys(ent_status.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
 }
 
 
