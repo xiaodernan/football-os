@@ -6347,6 +6347,226 @@
         }
       }
     },
+    "/api/v1/club/academy/{ident}/reports": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Reports",
+        "description": "The questions this tenant has saved. What each one answers is computed as you read it.",
+        "operationId": "read_reports_api_v1_club_academy__ident__reports_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Reports Api V1 Club Academy  Ident  Reports Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Write Report",
+        "description": "Save a reading of the tenant's rows — a kind, a window and an optional team, and no figures at all.",
+        "operationId": "write_report_api_v1_club_academy__ident__reports_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__v1__club_academy__ReportIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Write Report Api V1 Club Academy  Ident  Reports Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/reports/{report_ident}": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read One Report",
+        "description": "One report, answered now: the figures, their formulas and the row counts they came from.",
+        "operationId": "read_one_report_api_v1_club_academy__ident__reports__report_ident__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "report_ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Report Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read One Report Api V1 Club Academy  Ident  Reports  Report Ident  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Erase One Report",
+        "description": "Remove the question. Nothing the report was asking about is touched by it.",
+        "operationId": "erase_one_report_api_v1_club_academy__ident__reports__report_ident__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "report_ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Report Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase One Report Api V1 Club Academy  Ident  Reports  Report Ident  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/club/capabilities": {
       "get": {
         "tags": [
@@ -7399,7 +7619,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReportIn"
+                "$ref": "#/components/schemas/app__api__v1__scout__ReportIn"
               }
             }
           },
@@ -9444,71 +9664,6 @@
         ],
         "title": "RegisterIn"
       },
-      "ReportIn": {
-        "properties": {
-          "player": {
-            "type": "string",
-            "maxLength": 80,
-            "minLength": 1,
-            "title": "Player"
-          },
-          "role": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 16
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Role"
-          },
-          "career": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 80
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Career"
-          },
-          "compare_to": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 80
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Compare To"
-          },
-          "round_index": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 380.0,
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Round Index"
-          }
-        },
-        "type": "object",
-        "required": [
-          "player"
-        ],
-        "title": "ReportIn",
-        "description": "One player, optionally judged for a role and against one career, optionally measured beside another."
-      },
       "RoleIn": {
         "properties": {
           "email": {
@@ -10308,6 +10463,114 @@
         ],
         "title": "PlanIn",
         "description": "Open a plan for one child. `player` is the only identity here: age and minority are read from the world's row."
+      },
+      "app__api__v1__club_academy__ReportIn": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 3,
+            "title": "Kind"
+          },
+          "window_from": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 8,
+            "title": "Window From"
+          },
+          "window_to": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 8,
+            "title": "Window To"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "window_from",
+          "window_to"
+        ],
+        "title": "ReportIn",
+        "description": "Ask a question of the tenant. The window is the only scope a report accepts, and no figure is sent in."
+      },
+      "app__api__v1__scout__ReportIn": {
+        "properties": {
+          "player": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Player"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "career": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Career"
+          },
+          "compare_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compare To"
+          },
+          "round_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 380.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Round Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "player"
+        ],
+        "title": "ReportIn",
+        "description": "One player, optionally judged for a role and against one career, optionally measured beside another."
       },
       "app__schemas__PlanIn": {
         "properties": {

@@ -165,6 +165,18 @@ FOOTBALL_OS_TEST_DATABASE_URL="postgresql+psycopg2://football:football@127.0.0.1
   ../../.venv/Scripts/python.exe -m pytest tests/test_club_academy.py tests/test_club_organizations.py -q -o addopts=
 ```
 
+**§41's Reports is the last noun of §41's tenant model, and it stores the question and no answer:** `club_reports`
+(migration `0019`, 11 columns, none of them a figure), four doors, 13 tests in `tests/test_club_reports.py`. A
+squad-load report re-sums the sessions in its window at read time and prints each formula beside the row counts it
+came from; a consent-gap report names the children on the sheets whom nobody has answered for. The same saved row,
+read by a director and by one guardian, returns different numbers — the scope is applied when you read, not when it
+was written — and a window with nothing in it says it is empty and prints no mean, because a mean over nothing is
+not zero. Its codes (`unknown_kind`, `window_reversed`, `window_too_wide`, `report_limit`, `no_such_report`) are
+published in `report_refusals`, beside §40's table, so that tier's one-row-per-code claim still means something.
+The isolation walk reaches **40** doors; the club suite stands at **240 items green on both database legs** (SQLite
+192s, PostgreSQL 251s) and mypy is clean across 93 files. An empty-window rule worth repeating: absence prints as
+absence, never as a zero that a reader would call a measurement.
+
 §41's Sessions tier landed after this document: `club_sessions` (migration `0018`, 18 columns, which moves
 the published minimisation set to **87 columns across 7 tables**), four doors, and `tests/test_club_sessions.py`'
 **16 tests** — the load computed rather than stored, attendance bounded by the sheet, a minor present needing the
@@ -192,15 +204,15 @@ errors out wholesale is a dead dependency, and the first thing to read is the co
 
 ## The published contract
 
-The whole spec is now **118 paths / 147 operations** in `docs/api/openapi.json`, up from §39's 104/124 and
-from the 116/143 §40 left behind; the academy's share is now **14 paths** after §41's Sessions added two doors and
-four operations. Each re-export is taken from a scratch server started from the tree being documented —
+The whole spec is now **120 paths / 151 operations** in `docs/api/openapi.json`, up from §39's 104/124, from
+§40's 116/143 and from the 118/147 §41 Sessions left behind; the academy's share is **16 paths** after Reports
+added two more doors. Each re-export is taken from a scratch server started from the tree being documented —
 port 8737 for §40, 8735 for §41 — never from the shared dev API. **Why the number was wrong once
 already:** the first export in this increment printed 104/124 and zero academy paths, because a scratch
 server started hours earlier on port 8736 was still listening and answered the request. A contract
 artifact exported from a process that predates the code it documents is a lie with a timestamp, so the
 check is now part of the walk, and it moves with the tier: the same command printed **12** at §40's close and
-prints **14** after §41's two session doors, and a re-export that changes the number is read as a changed contract
+prints **16** after §41's session and report doors, and a re-export that changes the number is read as a changed contract
 rather than as noise.
 
 ## Deliberately not here

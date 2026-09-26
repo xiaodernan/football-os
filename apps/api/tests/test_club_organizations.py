@@ -87,6 +87,10 @@ DOORS: tuple[tuple[str, str, dict[str, Any]], ...] = (
     ("post", "/academy/{ident}/sessions", {"team": "Under 18s", "scheduled_on": "2020-01-01", "duration_min": 60, "rpe": 5, "attendees": ["whoever"]}),
     ("get", "/academy/{ident}/sessions/{session_ident}", {}),
     ("delete", "/academy/{ident}/sessions/{session_ident}", {}),
+    ("get", "/academy/{ident}/reports", {}),
+    ("post", "/academy/{ident}/reports", {"kind": "squad_load", "window_from": "2020-01-01", "window_to": "2020-12-31"}),
+    ("get", "/academy/{ident}/reports/{report_ident}", {}),
+    ("delete", "/academy/{ident}/reports/{report_ident}", {}),
     ("get", "/academy/{ident}/plans/{plan}", {}),
     ("patch", "/academy/{ident}/plans/{plan}", {"status": "paused"}),
     ("delete", "/academy/{ident}/plans/{plan}", {}),
@@ -112,6 +116,7 @@ PROBE = {
     "curriculum": "acu_nobody_s_block",
     "evidence": "pve_nobody_s_citation",
     "session_ident": "ses_nobody_s_session",
+    "report_ident": "rep_nobody_s_report",
 }
 
 
@@ -528,8 +533,8 @@ class TestIsolationAcrossTenants:
         living = _tenant_naming_doors()
         assert living == declared, sorted(living ^ declared)
         assert (
-            len(declared) == 36
-        ), "this class is the isolation proof for every door that names a tenant: §39's fourteen, §40's eighteen academy doors and §41's four session doors, counted from the route table above rather than remembered"
+            len(declared) == 40
+        ), "this class is the isolation proof for every door that names a tenant: §39's fourteen, §40's eighteen academy doors and §41's eight session and report doors, counted from the route table above rather than remembered"
 
     def test_an_unaccepted_invitation_and_a_revoked_standing_are_both_not_a_foothold(self) -> None:
         owner = _account("Suspender")

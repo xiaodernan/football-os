@@ -35,6 +35,7 @@ from app.core.security import current_user, limit
 from app.models import User
 from app.services.club import academy as edu
 from app.services.club import organizations as club
+from app.services.club import reports as rep
 from app.services.club import sessions as sess
 from app.services.club.organizations import ClubRefusal
 
@@ -58,6 +59,10 @@ _ANSWERS: dict[str, int] = {
     **dict.fromkeys(sess.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
     **dict.fromkeys(sess.CONFLICT_CODES, status.HTTP_409_CONFLICT),
     **dict.fromkeys(sess.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
+    **dict.fromkeys(rep.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
+    **dict.fromkeys(rep.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
+    **dict.fromkeys(rep.CONFLICT_CODES, status.HTTP_409_CONFLICT),
+    **dict.fromkeys(rep.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
 }
 
 
@@ -74,6 +79,16 @@ ROUTE_GUIDE: Final = (
         "methods": ["GET", "DELETE"],
         "path": "/api/v1/club/academy/{ident}/sessions/{session_ident}",
         "purpose": "one session: its derived load beside the two columns it comes from, and erasing the row",
+    },
+    {
+        "methods": ["GET", "POST"],
+        "path": "/api/v1/club/academy/{ident}/reports",
+        "purpose": "the questions this tenant has saved, and asking a new one of the rows a report may read",
+    },
+    {
+        "methods": ["GET", "DELETE"],
+        "path": "/api/v1/club/academy/{ident}/reports/{report_ident}",
+        "purpose": "one report, answered now from the rows that exist now, and removing the question",
     },
     {"methods": ["GET", "POST"], "path": "/api/v1/club/academy/{ident}/curricula", "purpose": "the tenant's training curricula, and writing one"},
     {"methods": ["PATCH", "DELETE"], "path": "/api/v1/club/academy/{ident}/curricula/{curriculum}", "purpose": "change or remove a curriculum; a plan that used it keeps existing and says so"},
@@ -217,17 +232,20 @@ def read_academy_capabilities(request: Request, db: Session = Depends(get_db)) -
     limit(request, 60, 60, scope="academy_capabilities")
     return {
         **edu.rules(),
-        "counts": {**edu.academy_counts(db), **sess.session_counts(db, ready=edu.academy_ready(db))},
+        "counts": {**edu.academy_counts(db), **sess.session_counts(db, ready=edu.academy_ready(db)), **rep.report_counts(db, ready=edu.academy_ready(db))},
         "ready": edu.academy_ready(db),
         # The session codes join the same table, and the answer map below decides which HTTP status each
         # one earns — so a code that forgot to register there would silently be announced as a 400.
         "session_limits": dict(sess.CAPS),
+        "report_kinds": list(rep.KINDS),
+        "report_limits": {"max_reports_per_organization": rep.MAX_REPORTS_PER_ORGANIZATION, "window_max_days": rep.WINDOW_MAX_DAYS},
         "refusal_answers": {code: _ANSWERS.get(code, status.HTTP_400_BAD_REQUEST) for code in (*edu.REFUSALS, *edu.SHARED_REFUSALS)},
         # §41's codes are published beside §40's rather than folded into them. The academy tier's own claim is
         # that its table has exactly one row per code it can answer with, and a merged table would break that
         # arithmetic while still looking complete to a reader. Codes §40 already answers with are not claimed twice.
         "session_refusals": {code: _ANSWERS.get(code, status.HTTP_400_BAD_REQUEST) for code in sess.PUBLISHED},
-        "limitations": [*edu.limitations(), sess.LIMITATION],
+        "report_refusals": {code: _ANSWERS.get(code, status.HTTP_400_BAD_REQUEST) for code in rep.REFUSALS},
+        "limitations": [*edu.limitations(), sess.LIMITATION, rep.LIMITATION],
         "consent_scopes": {
             "scopes": list(edu.SCOPES),
             "default_granted": list(edu.DEFAULT_SCOPES),
@@ -537,5 +555,59 @@ def erase_one_session(ident: str, session_ident: str, request: Request, db: Sess
     limit(request, 10, 60, scope="academy_write")
     try:
         return {**sess.delete_session(db, user, ident, session_ident), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+class ReportIn(BaseModel):
+    """Ask a question of the tenant. The window is the only scope a report accepts, and no figure is sent in."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str = Field(min_length=3, max_length=32)
+    window_from: str = Field(min_length=8, max_length=10)
+    window_to: str = Field(min_length=8, max_length=10)
+    team: str | None = Field(default=None, max_length=160)
+
+
+@router.get("/{ident}/reports")
+def read_reports(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """The questions this tenant has saved. What each one answers is computed as you read it."""
+    limit(request, 30, 60, scope="academy_read")
+    try:
+        return {**rep.list_reports(db, user, ident), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.post("/{ident}/reports")
+def write_report(payload: ReportIn, ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Save a reading of the tenant's rows — a kind, a window and an optional team, and no figures at all."""
+    limit(request, 10, 60, scope="academy_write")
+    try:
+        return {
+            **rep.create_report(db, user, ident, kind=payload.kind, window_from=payload.window_from, window_to=payload.window_to, team=payload.team),
+            "demo_data": False,
+        }
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.get("/{ident}/reports/{report_ident}")
+def read_one_report(ident: str, report_ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """One report, answered now: the figures, their formulas and the row counts they came from."""
+    limit(request, 30, 60, scope="academy_read")
+    try:
+        return {**rep.report_detail(db, user, ident, report_ident), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.delete("/{ident}/reports/{report_ident}")
+def erase_one_report(ident: str, report_ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Remove the question. Nothing the report was asking about is touched by it."""
+    limit(request, 10, 60, scope="academy_write")
+    try:
+        return {**rep.delete_report(db, user, ident, report_ident), "demo_data": False}
     except ClubRefusal as error:
         raise _refusal(error) from None

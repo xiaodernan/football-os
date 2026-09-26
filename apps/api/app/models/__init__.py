@@ -1302,6 +1302,7 @@ class Organization(Base, TimestampMixin):
     plans: Mapped[list[DevelopmentPlan]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     consents: Mapped[list[GuardianConsent]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     sessions: Mapped[list["ClubSession"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    reports: Mapped[list["ClubReport"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
 
 
 class OrganizationMember(Base, TimestampMixin):
@@ -1585,3 +1586,37 @@ class ClubSession(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     organization: Mapped[Organization] = relationship(back_populates="sessions")
+
+
+class ClubReport(Base, TimestampMixin):
+    """§41's Reports: a saved *question* about a tenant, whose answers are re-summed from the rows each reader may see.
+
+    The row stores a window and a scope — which team, which date range, which kind of reading was asked for — and
+    no figure at all. Every number a report prints is summed from `club_sessions`, `guardian_consents`,
+    `plan_assessments` and the sheets at read time, which is what lets the same saved report answer honestly a
+    week later, to a different reader, after rows were added or erased. A stored payload would be a document that
+    quietly keeps saying something the tenant no longer holds true — and to a guardian it would say more than
+    their own read is allowed to see.
+    """
+
+    __tablename__ = "club_reports"
+    __table_args__ = (
+        # The same question, on the same window, for the same team is one report. Re-asking it updates the row
+        # rather than stacking copies a reader would then have to tell apart.
+        UniqueConstraint("organization_id", "kind", "team_id", "window_from", "window_to", name="uq_club_report_window"),
+        Index("ix_club_report_org_kind", "organization_id", "kind"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    asked_by_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    #: Which reading of the tenant was asked for. §41 names Reports without a schema, so the vocabulary is this
+    #: tier's own and is published by the door rather than inferred by a reader.
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    team_id: Mapped[str | None] = mapped_column(ForeignKey("club_teams.id", ondelete="CASCADE"), nullable=True)
+    window_from: Mapped[str] = mapped_column(String(10), nullable=False)
+    window_to: Mapped[str] = mapped_column(String(10), nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="reports")
