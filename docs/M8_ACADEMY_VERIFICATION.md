@@ -139,8 +139,10 @@ FOOTBALL_OS_TEST_DATABASE_URL="postgresql+psycopg2://football:football@127.0.0.1
 ```
 
 `test_club_academy.py` is **83 tests** (measured: `83 passed, 1 warning in 94.98s`), and the pair is
-**196 items green on both legs** on 2026-09-26 — SQLite in the same hour, PostgreSQL behind it. The whole API
-suite on the SQLite leg: _(measured at close)_.
+**196 items green on both legs** on 2026-09-26 (`196 passed in 156.37s` on SQLite, `196 passed in 199.61s` on
+PostgreSQL, both `rc=0`, both re-run after the door-shape fix below). The whole API suite, this tree:
+**1010 passed and 1 skipped on the SQLite leg (640.39s) and the same 1010 + 1 on PostgreSQL (668.35s)**. Another
+session's uncommitted work is in the tree, so the figure is the worktree's, not this milestone's alone.
 
 **Two environmental facts that read as product failures, and how each was separated from one.** First: the
 first run of the pair reported six isolation tests red, and the traceback was
