@@ -165,6 +165,14 @@ FOOTBALL_OS_TEST_DATABASE_URL="postgresql+psycopg2://football:football@127.0.0.1
   ../../.venv/Scripts/python.exe -m pytest tests/test_club_academy.py tests/test_club_organizations.py -q -o addopts=
 ```
 
+§41's Sessions tier landed after this document: `club_sessions` (migration `0018`, 18 columns, which moves
+the published minimisation set to **87 columns across 7 tables**), four doors, and `tests/test_club_sessions.py`'
+**16 tests** — the load computed rather than stored, attendance bounded by the sheet, a minor present needing the
+same consent that opens their plan, a future date refused, a guardian scoped to the sessions their own child was
+at, and a slot collision answered with the slot it tripped on. The isolation walk now reaches **36** doors that
+name a tenant. Evidence: [the club web document](M8_CLUB_WEB_VERIFICATION.md) for the page tier and the commit
+message for the tier's own reasoning.
+
 `test_club_academy.py` is **83 tests** (measured: `83 passed, 1 warning in 94.98s`), and the pair is
 **196 items green on both legs** on 2026-09-26 (`196 passed in 156.37s` on SQLite, `196 passed in 199.61s` on
 PostgreSQL, both `rc=0`, both re-run after the door-shape fix below). The whole API suite, this tree:
@@ -184,13 +192,16 @@ errors out wholesale is a dead dependency, and the first thing to read is the co
 
 ## The published contract
 
-The whole spec is now **116 paths / 143 operations** in `docs/api/openapi.json`, up from §39's 104/124;
-the academy's share is the 12 paths / 19 operations above, and `docs/api/openapi.json` was regenerated
-from a scratch server on port 8737 — not from the shared dev API. **Why the number was wrong once
+The whole spec is now **118 paths / 147 operations** in `docs/api/openapi.json`, up from §39's 104/124 and
+from the 116/143 §40 left behind; the academy's share is now **14 paths** after §41's Sessions added two doors and
+four operations. Each re-export is taken from a scratch server started from the tree being documented —
+port 8737 for §40, 8735 for §41 — never from the shared dev API. **Why the number was wrong once
 already:** the first export in this increment printed 104/124 and zero academy paths, because a scratch
 server started hours earlier on port 8736 was still listening and answered the request. A contract
 artifact exported from a process that predates the code it documents is a lie with a timestamp, so the
-check is now part of the walk: `grep -c "club/academy" docs/api/openapi.json` must print **12**.
+check is now part of the walk, and it moves with the tier: the same command printed **12** at §40's close and
+prints **14** after §41's two session doors, and a re-export that changes the number is read as a changed contract
+rather than as noise.
 
 ## Deliberately not here
 

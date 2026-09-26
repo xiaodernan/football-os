@@ -6095,6 +6095,258 @@
         }
       }
     },
+    "/api/v1/club/academy/{ident}/sessions": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Sessions",
+        "description": "The tenant's session log, newest first, with the load summed from the rows it shows.",
+        "operationId": "read_sessions_api_v1_club_academy__ident__sessions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "team",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Team"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Sessions Api V1 Club Academy  Ident  Sessions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Write Session",
+        "description": "Record what the team did: the sheet decides who may be named, and a child's guardian decides whether they are.",
+        "operationId": "write_session_api_v1_club_academy__ident__sessions_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Write Session Api V1 Club Academy  Ident  Sessions Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/sessions/{session_ident}": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read One Session",
+        "description": "One session, with the load figure beside the two columns it is computed from.",
+        "operationId": "read_one_session_api_v1_club_academy__ident__sessions__session_ident__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "session_ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read One Session Api V1 Club Academy  Ident  Sessions  Session Ident  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Erase One Session",
+        "description": "Remove one session row. The sheet, the plan and any clip it cited are untouched by it.",
+        "operationId": "erase_one_session_api_v1_club_academy__ident__sessions__session_ident__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "session_ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase One Session Api V1 Club Academy  Ident  Sessions  Session Ident  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/club/capabilities": {
       "get": {
         "tags": [
@@ -9430,6 +9682,96 @@
         "type": "object",
         "title": "SearchIn",
         "description": "A sentence, stated fields, or both. Where both speak, both cuts apply and the response says so."
+      },
+      "SessionIn": {
+        "properties": {
+          "team": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Team"
+          },
+          "scheduled_on": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 8,
+            "title": "Scheduled On"
+          },
+          "duration_min": {
+            "type": "integer",
+            "title": "Duration Min"
+          },
+          "rpe": {
+            "type": "integer",
+            "title": "Rpe"
+          },
+          "slot": {
+            "type": "integer",
+            "title": "Slot",
+            "default": 1
+          },
+          "focus": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Focus"
+          },
+          "drill_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Drill Slugs"
+          },
+          "attendees": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attendees"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 96
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan"
+          },
+          "curriculum": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 96
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curriculum"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 400,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "team",
+          "scheduled_on",
+          "duration_min",
+          "rpe"
+        ],
+        "title": "SessionIn",
+        "description": "Record one training session. The caps live in the service, whose refusal prints the figure it tripped over."
       },
       "ShortlistIn": {
         "properties": {
