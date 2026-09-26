@@ -40,11 +40,21 @@ const DISALLOWED = [
   // one manager's opinion-shaped cut of generated rows. `/scout/rules` is public JSON, but the page itself is
   // session-gated, so it is disallowed rather than noindexed alone.
   "/scout",
+  // A tenant's members, sheets and children's plans. `/club/rules` is excepted below on purpose: the
+  // permission matrix, the caps and the refusal table are the terms of the service, and §39 publishes them
+  // at a door that needs no account — a rule an account holder cannot read until they have agreed to it is
+  // not a rule.
+  "/club",
 ];
+
+/** The one `/club` path that is not a person's data. */
+const ALLOWED = ["/club/rules"];
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: "*", disallow: DISALLOWED }],
+    // A longer `Allow` match wins over a `Disallow` prefix in the standard, which is what makes the
+    // rulebook indexable while everything under `/club` that names a real tenant is not.
+    rules: [{ userAgent: "*", allow: ALLOWED, disallow: DISALLOWED }],
     sitemap: absolute("/sitemap.xml"),
     host: absolute("/"),
   };

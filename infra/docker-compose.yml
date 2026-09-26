@@ -4,6 +4,9 @@ services:
   db:
     image: pgvector/pgvector:pg16
     container_name: football_os_db
+    # Docker Desktop restarts leave a container with no policy down, and the second database leg fails
+    # with "connection refused" hours later with nothing in the repo to explain it.
+    restart: unless-stopped
     environment:
       POSTGRES_DB: football_os
       POSTGRES_USER: football

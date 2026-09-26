@@ -1295,6 +1295,12 @@ class Organization(Base, TimestampMixin):
     members: Mapped[list[OrganizationMember]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     # An organisation's teams go with it: a tenant is deleted, its team sheets and its squad rows with it.
     teams: Mapped[list[ClubTeam]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    # §40's academy rows hang off the same spine, and the ORM is told so rather than left to the database's
+    # cascade: a tenant's curriculum, its development plans and the consents recorded inside it are deleted by
+    # the code that deletes the tenant, on every engine, whether or not that engine enforces foreign keys.
+    curricula: Mapped[list[AcademyCurriculum]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    plans: Mapped[list[DevelopmentPlan]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    consents: Mapped[list[GuardianConsent]] = relationship(back_populates="organization", cascade="all, delete-orphan")
 
 
 class OrganizationMember(Base, TimestampMixin):
@@ -1361,3 +1367,174 @@ class ClubTeamMember(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     team: Mapped[ClubTeam] = relationship(back_populates="squad")
+
+
+# --- Youth academy (M8, spec §40) ---------------------------------------------------------
+#
+# §40 asks for seven things — Player Development, Individual Development Plan, Training Curriculum, Assessment,
+# Coach Feedback, Video Evidence, Progress — and for six rules about minors: parental consent, privacy, data
+# minimisation, access controls, deletion, age-appropriate design. The shape below is those rules as columns.
+#
+# **Minimisation is a table, not a promise.** Every column here is named in the published allowlist
+# (`services/club/academy.py`'s `STORED_FIELDS`), and there is no column for an address, a telephone number, an
+# email, a birthday, a location, a medical note or a school: the tier cannot store what it has nowhere to put.
+# The request bodies are `extra="forbid"`, so a caller offering one of those is refused before the service reads
+# the payload, and the answer names the field it rejected and the fields it accepts.
+#
+# **A minor's plan needs a consent row, and the consent row is the access control too.** `guardian_consents`
+# links one account to one player inside one tenant and carries the scopes the guardian agreed to. It is
+# self-declared — nothing in this project can verify guardianship — and `limitations()` says so rather than
+# implying a check that does not exist. A plan for a player under 18 cannot be opened without a granted row, and
+# the same row is what lets that guardian read *that child's* plan and no other.
+#
+# **An assessment keeps its own numbers; progress is arithmetic over those rows.** `overall_observed` and
+# `ratings` are a measurement taken on the day, copied from the world's row at that moment, because an
+# assessment's whole purpose is to be the record of what was seen then. Progress is therefore never stored: it
+# is the difference between the first and last assessment of a plan, recomputed on every read with its formula
+# printed beside it.
+#
+# **`player_id` cascades from `real_players`.** A plan points at the generated world's row for that person, the
+# same row a team sheet points at, so a rating cannot go stale on a plan any more than on a sheet. The cost is
+# stated in `limitations()`: regenerating the world deletes those rows, and every plan of every tenant goes with
+# them. A copy would have survived; a copy would also have disagreed with the player it claimed to describe.
+class AcademyCurriculum(Base, TimestampMixin):
+    """§40's Training Curriculum: what one age band of one tenant trains, and how much of a week it takes."""
+
+    __tablename__ = "academy_curricula"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "name", name="uq_academy_curriculum_name"),
+        Index("ix_academy_curriculum_org", "organization_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    age_group: Mapped[str] = mapped_column(String(24), default="open", nullable=False)
+    weekly_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # Phases are ordered and few: `[{label, focus, minutes}]`. Drills are named by their catalogue slug and never
+    # copied, so a curriculum points at the project-authored catalogue the way a sheet points at a player.
+    phases: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="curricula")
+
+
+class DevelopmentPlan(Base, TimestampMixin):
+    """§40's Individual Development Plan: one player, one tenant, the focus they agreed to work on."""
+
+    __tablename__ = "development_plans"
+    __table_args__ = (
+        Index("ix_development_plan_org", "organization_id"),
+        Index("ix_development_plan_player", "player_id", "status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    curriculum_id: Mapped[str | None] = mapped_column(ForeignKey("academy_curricula.id", ondelete="SET NULL"), nullable=True)
+    team_id: Mapped[str | None] = mapped_column(ForeignKey("club_teams.id", ondelete="SET NULL"), nullable=True)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    author_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    status: Mapped[str] = mapped_column(String(12), default="active", nullable=False)
+    focus: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    goals: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+    review_weeks: Mapped[int] = mapped_column(Integer, default=6, nullable=False)
+    # The age the plan was opened at, and whether that age made the player a minor. `real_players` carries an
+    # integer age for a season, so a plan written in spring must still be able to say which rule applied to it
+    # when it was written — the live age is read too, and the two are printed side by side when they disagree.
+    age_at_open: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    minor_at_open: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="plans")
+    assessments: Mapped[list[PlanAssessment]] = relationship(back_populates="plan", cascade="all, delete-orphan")
+    feedback: Mapped[list[CoachFeedback]] = relationship(back_populates="plan", cascade="all, delete-orphan")
+    evidence: Mapped[list[PlanVideoEvidence]] = relationship(back_populates="plan", cascade="all, delete-orphan")
+
+
+class PlanAssessment(Base, TimestampMixin):
+    """§40's Assessment: the five development axes rated on a day, and what the coach saw then."""
+
+    __tablename__ = "plan_assessments"
+    __table_args__ = (Index("ix_plan_assessment_plan", "plan_id", "assessed_on"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    plan_id: Mapped[str] = mapped_column(ForeignKey("development_plans.id", ondelete="CASCADE"), nullable=False)
+    assessor_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # An ISO `YYYY-MM-DD` string rather than a DATE column: the tests run on two engines, a review date is
+    # ordered and compared as text at day resolution, and nothing here needs date arithmetic in SQL.
+    assessed_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    ratings: Mapped[dict[str, int]] = mapped_column(JSON, default=dict, nullable=False)
+    strengths: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    areas: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    overall_observed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    next_focus: Mapped[str] = mapped_column(String(120), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    plan: Mapped[DevelopmentPlan] = relationship(back_populates="assessments")
+
+
+class CoachFeedback(Base, TimestampMixin):
+    """§40's Coach Feedback: one sentence the coach wrote to one player, and whether the guardian may read it."""
+
+    __tablename__ = "coach_feedback"
+    __table_args__ = (Index("ix_coach_feedback_plan", "plan_id", "created_at"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    plan_id: Mapped[str] = mapped_column(ForeignKey("development_plans.id", ondelete="CASCADE"), nullable=False)
+    coach_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    message: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    # Default true, and only for a plan that was already gated on a consent row: feedback is the least sensitive
+    # of §40's artefacts and a guardian who consented to the plan expects to see what they are being told.
+    shared_with_guardian: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    plan: Mapped[DevelopmentPlan] = relationship(back_populates="feedback")
+
+
+class PlanVideoEvidence(Base, TimestampMixin):
+    """§40's Video Evidence: a window of a clip that was uploaded to M5, cited by an assessment."""
+
+    __tablename__ = "plan_video_evidence"
+    __table_args__ = (Index("ix_plan_evidence_plan", "plan_id"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    plan_id: Mapped[str] = mapped_column(ForeignKey("development_plans.id", ondelete="CASCADE"), nullable=False)
+    assessment_id: Mapped[str | None] = mapped_column(ForeignKey("plan_assessments.id", ondelete="SET NULL"), nullable=True)
+    # SET NULL, and deliberately so: a clip is a person's upload and may be deleted while a tenant still cites
+    # it. The citation then survives with its own measured window and reports `clip_present=False`, which is a
+    # truthful record of what was seen; a cascade would have quietly rewritten the assessment's history.
+    asset_id: Mapped[str | None] = mapped_column(ForeignKey("video_assets.id", ondelete="SET NULL"), nullable=True)
+    label: Mapped[str] = mapped_column(String(120), default="", nullable=False)
+    t_start: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    t_end: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    plan: Mapped[DevelopmentPlan] = relationship(back_populates="evidence")
+
+
+class GuardianConsent(Base, TimestampMixin):
+    """§40's parental consent, and the only foothold a parent has: one account, one child, one tenant, one scope set."""
+
+    __tablename__ = "guardian_consents"
+    __table_args__ = (
+        UniqueConstraint("organization_id", "guardian_user_id", "player_id", name="uq_guardian_consent"),
+        Index("ix_guardian_consent_player", "player_id", "state"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    guardian_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    # `withdrawn` keeps the row: a consent that was in force for a season was in force, and the record of what
+    # was seen under it is the reason a tenant can answer for it afterwards. Withdrawal stops new reads.
+    state: Mapped[str] = mapped_column(String(12), default="granted", nullable=False)
+    scopes: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="consents")

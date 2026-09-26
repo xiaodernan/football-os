@@ -28,6 +28,8 @@ const PUBLIC: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["ch
   { path: "/knowledge", changeFrequency: "weekly", priority: 0.9 },
   { path: "/world", changeFrequency: "daily", priority: 0.9 },
   { path: "/tactics", changeFrequency: "weekly", priority: 0.9 },
+  // The only /club page a signed-out visitor may see: the rulebook both capability doors publish.
+  { path: "/club/rules", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/competitions", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/teams", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/players", changeFrequency: "weekly", priority: 0.8 },

@@ -980,7 +980,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlanIn"
+                "$ref": "#/components/schemas/app__schemas__PlanIn"
               }
             }
           }
@@ -4987,13 +4987,1121 @@
         }
       }
     },
+    "/api/v1/club/academy/capabilities": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Academy Capabilities",
+        "description": "The published academy rulebook: what may be recorded, what must be consented to, and what is never held.",
+        "operationId": "read_academy_capabilities_api_v1_club_academy_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Academy Capabilities Api V1 Club Academy Capabilities Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/curricula": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Curricula",
+        "description": "The tenant's curricula, each with its phases totalled against its own weekly figure.",
+        "operationId": "read_curricula_api_v1_club_academy__ident__curricula_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Curricula Api V1 Club Academy  Ident  Curricula Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Write Curriculum",
+        "description": "Write a curriculum: what an age band trains, in blocks, and how many minutes a week it costs.",
+        "operationId": "write_curriculum_api_v1_club_academy__ident__curricula_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CurriculumIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Write Curriculum Api V1 Club Academy  Ident  Curricula Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/curricula/{curriculum}": {
+      "patch": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Edit Curriculum",
+        "description": "Change a curriculum. Plans that were written under it keep their own record of what they used.",
+        "operationId": "edit_curriculum_api_v1_club_academy__ident__curricula__curriculum__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "curriculum",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Curriculum"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CurriculumPatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Edit Curriculum Api V1 Club Academy  Ident  Curricula  Curriculum  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Remove Curriculum",
+        "description": "Delete a curriculum, and report how many plans it had to let go of rather than deleting with it.",
+        "operationId": "remove_curriculum_api_v1_club_academy__ident__curricula__curriculum__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "curriculum",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Curriculum"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Remove Curriculum Api V1 Club Academy  Ident  Curricula  Curriculum  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/plans": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Plans",
+        "description": "The plans this account may read: the tenant's for staff, a guardian's own children for a parent.",
+        "operationId": "read_plans_api_v1_club_academy__ident__plans_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Plans Api V1 Club Academy  Ident  Plans Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Open Plan",
+        "description": "Open a development plan. For a child under the published age this is refused until a consent row says otherwise.",
+        "operationId": "open_plan_api_v1_club_academy__ident__plans_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__v1__club_academy__PlanIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Open Plan Api V1 Club Academy  Ident  Plans Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/plans/{plan}": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Plan",
+        "description": "One plan, redacted by the right that opened it, with the rows that were withheld counted rather than hidden.",
+        "operationId": "read_plan_api_v1_club_academy__ident__plans__plan__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Plan Api V1 Club Academy  Ident  Plans  Plan  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Edit Plan",
+        "description": "Change a plan. A closed one is not rewritten — the next season opens a new row.",
+        "operationId": "edit_plan_api_v1_club_academy__ident__plans__plan__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanPatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Edit Plan Api V1 Club Academy  Ident  Plans  Plan  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Erase One Plan",
+        "description": "Erase one plan and its rows. Without `confirm` this is a dry run that prints the counts it would remove.",
+        "operationId": "erase_one_plan_api_v1_club_academy__ident__plans__plan__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan"
+            }
+          },
+          {
+            "name": "confirm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Confirm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase One Plan Api V1 Club Academy  Ident  Plans  Plan  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/plans/{plan}/assessments": {
+      "post": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Write Assessment",
+        "description": "Record a review: the axes rated, what was strong, what to work on, and the progress the new row makes.",
+        "operationId": "write_assessment_api_v1_club_academy__ident__plans__plan__assessments_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessmentIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Write Assessment Api V1 Club Academy  Ident  Plans  Plan  Assessments Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/plans/{plan}/feedback": {
+      "post": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Write Feedback",
+        "description": "Say a thing to the player. `shared_with_guardian` decides whether the family's copy shows it.",
+        "operationId": "write_feedback_api_v1_club_academy__ident__plans__plan__feedback_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Write Feedback Api V1 Club Academy  Ident  Plans  Plan  Feedback Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/plans/{plan}/evidence": {
+      "post": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Cite Evidence",
+        "description": "Cite a window of a clip you uploaded. The clip must be yours, and the window must fit inside it.",
+        "operationId": "cite_evidence_api_v1_club_academy__ident__plans__plan__evidence_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Cite Evidence Api V1 Club Academy  Ident  Plans  Plan  Evidence Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/plans/{plan}/evidence/{evidence}": {
+      "delete": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Drop Evidence",
+        "description": "Remove one citation. The upload it pointed at is a different person's file and is never touched here.",
+        "operationId": "drop_evidence_api_v1_club_academy__ident__plans__plan__evidence__evidence__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan"
+            }
+          },
+          {
+            "name": "evidence",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Evidence"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Drop Evidence Api V1 Club Academy  Ident  Plans  Plan  Evidence  Evidence  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/consents": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Consents",
+        "description": "Which children have a yes on file: the tenant's rows for staff, this account's own claims for a guardian.",
+        "operationId": "read_consents_api_v1_club_academy__ident__consents_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Consents Api V1 Club Academy  Ident  Consents Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Grant Consent",
+        "description": "A guardian's yes for one child, scope by scope. Nothing here is emailed, checked or proved.",
+        "operationId": "grant_consent_api_v1_club_academy__ident__consents_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Grant Consent Api V1 Club Academy  Ident  Consents Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/consents/{player}": {
+      "delete": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Withdraw Consent",
+        "description": "Take the yes back. New writes stop at once; what was already written stays until somebody erases it.",
+        "operationId": "withdraw_consent_api_v1_club_academy__ident__consents__player__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "player",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Player"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Withdraw Consent Api V1 Club Academy  Ident  Consents  Player  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/{ident}/players/{player}/data": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Player Data",
+        "description": "What this tenant holds about one child, counted per table, with the column list and the never-held list.",
+        "operationId": "read_player_data_api_v1_club_academy__ident__players__player__data_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "player",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Player"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Player Data Api V1 Club Academy  Ident  Players  Player  Data Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Erase Player Data",
+        "description": "Erase every row this tenant holds about one child. Without `confirm` this prints the counts and removes nothing.",
+        "operationId": "erase_player_data_api_v1_club_academy__ident__players__player__data_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "player",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Player"
+            }
+          },
+          {
+            "name": "confirm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Confirm"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase Player Data Api V1 Club Academy  Ident  Players  Player  Data Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/club/capabilities": {
       "get": {
         "tags": [
           "club-os"
         ],
         "summary": "Read Capabilities",
-        "description": "The published rulebook: which roles exist, what each holds, and how many tenants are on the platform.",
+        "description": "The published rulebook: which roles exist, what each holds, and how many tenants are on the platform.\n\n`routes` is the door guide of the whole `/api/v1/club` surface, §40's academy doors included. A page handed\nhalf a list cannot tell the difference between a door it was not told about and one that does not exist, and\n§39's own test holds this list against the route table in both directions — so the guide has to be the union\nor the test is measuring half the tier.",
         "operationId": "read_capabilities_api_v1_club_capabilities_get",
         "responses": {
           "200": {
@@ -6534,6 +7642,48 @@
   },
   "components": {
     "schemas": {
+      "AssessmentIn": {
+        "properties": {
+          "assessed_on": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Assessed On"
+          },
+          "ratings": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Ratings"
+          },
+          "strengths": {
+            "type": "string",
+            "maxLength": 800,
+            "title": "Strengths",
+            "default": ""
+          },
+          "areas": {
+            "type": "string",
+            "maxLength": 800,
+            "title": "Areas",
+            "default": ""
+          },
+          "next_focus": {
+            "type": "string",
+            "maxLength": 160,
+            "title": "Next Focus",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "assessed_on"
+        ],
+        "title": "AssessmentIn",
+        "description": "A review. The axes are the published five and the ratings are 0 to 100; `ratings` is a dict of those, so a\nsixth axis has nowhere to be written and the service refuses it by name."
+      },
       "BoardIn": {
         "properties": {
           "name": {
@@ -6892,6 +8042,125 @@
         ],
         "title": "CompleteIn"
       },
+      "ConsentIn": {
+        "properties": {
+          "player": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Player"
+          },
+          "scopes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scopes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "player"
+        ],
+        "title": "ConsentIn",
+        "description": "A guardian's claim about one child, and the purposes it covers. There is no free-text field, on purpose.\n\n`scopes` is optional rather than defaulted to a list, because the two empty-looking cases mean different\nthings: leaving the field out takes the published default set, and sending `[]` is refused rather than\nread as a yes for three purposes nobody ticked."
+      },
+      "CurriculumIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 184,
+            "title": "Name",
+            "default": ""
+          },
+          "age_group": {
+            "type": "string",
+            "maxLength": 32,
+            "title": "Age Group",
+            "default": "open"
+          },
+          "weekly_minutes": {
+            "type": "integer",
+            "title": "Weekly Minutes",
+            "default": 0
+          },
+          "phases": {
+            "items": {
+              "$ref": "#/components/schemas/PhaseIn"
+            },
+            "type": "array",
+            "title": "Phases"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CurriculumIn",
+        "description": "A curriculum's own fields. Bound above the published caps so the service answers first, with its figures."
+      },
+      "CurriculumPatchIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 184
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "age_group": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Group"
+          },
+          "weekly_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weekly Minutes"
+          },
+          "phases": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PhaseIn"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phases"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CurriculumPatchIn"
+      },
       "DrillOut": {
         "properties": {
           "id": {
@@ -7020,6 +8289,95 @@
           "xp_base"
         ],
         "title": "DrillOut"
+      },
+      "EvidenceIn": {
+        "properties": {
+          "clip": {
+            "type": "string",
+            "maxLength": 96,
+            "minLength": 1,
+            "title": "Clip"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 160,
+            "title": "Label",
+            "default": ""
+          },
+          "t_start": {
+            "type": "number",
+            "title": "T Start",
+            "default": 0.0
+          },
+          "t_end": {
+            "type": "number",
+            "title": "T End",
+            "default": 0.0
+          },
+          "assessment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 96
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessment"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "clip"
+        ],
+        "title": "EvidenceIn",
+        "description": "A citation of a clip: the caller's own upload, a window, and optionally the review that prompted it."
+      },
+      "FeedbackIn": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 800,
+            "title": "Message",
+            "default": ""
+          },
+          "shared_with_guardian": {
+            "type": "boolean",
+            "title": "Shared With Guardian",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FeedbackIn"
+      },
+      "GoalIn": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "title": "Title",
+            "default": ""
+          },
+          "measure": {
+            "type": "string",
+            "maxLength": 160,
+            "title": "Measure",
+            "default": ""
+          },
+          "by": {
+            "type": "string",
+            "maxLength": 32,
+            "title": "By",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "GoalIn",
+        "description": "One goal the child agreed to. `title`, `measure`, `by` — and the academy's answer to a fourth key is a refusal."
       },
       "HTTPValidationError": {
         "properties": {
@@ -7474,37 +8832,100 @@
         ],
         "title": "ParseIn"
       },
-      "PlanIn": {
+      "PhaseIn": {
         "properties": {
-          "horizon_days": {
-            "type": "integer",
-            "maximum": 90.0,
-            "minimum": 1.0,
-            "title": "Horizon Days",
-            "default": 7
+          "label": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Label",
+            "default": ""
           },
-          "available_minutes": {
-            "type": "integer",
-            "maximum": 180.0,
-            "minimum": 5.0,
-            "title": "Available Minutes",
-            "default": 25
+          "focus": {
+            "type": "string",
+            "maxLength": 88,
+            "title": "Focus",
+            "default": ""
           },
-          "days_per_week": {
+          "minutes": {
             "type": "integer",
-            "maximum": 7.0,
-            "minimum": 1.0,
-            "title": "Days Per Week",
-            "default": 4
-          },
-          "has_pitch": {
-            "type": "boolean",
-            "title": "Has Pitch",
-            "default": true
+            "title": "Minutes",
+            "default": 0
           }
         },
+        "additionalProperties": false,
         "type": "object",
-        "title": "PlanIn"
+        "title": "PhaseIn",
+        "description": "One block of a curriculum week. The shape is the limit: three keys, and no place to put anything else."
+      },
+      "PlanPatchIn": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "focus": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focus"
+          },
+          "goals": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/GoalIn"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Goals"
+          },
+          "review_weeks": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Weeks"
+          },
+          "curriculum": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 96
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curriculum"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PlanPatchIn"
       },
       "PlanSessionIn": {
         "properties": {
@@ -8479,6 +9900,104 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "app__api__v1__club_academy__PlanIn": {
+        "properties": {
+          "player": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Player"
+          },
+          "focus": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Focus"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/GoalIn"
+            },
+            "type": "array",
+            "title": "Goals"
+          },
+          "review_weeks": {
+            "type": "integer",
+            "title": "Review Weeks",
+            "default": 6
+          },
+          "curriculum": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 96
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curriculum"
+          },
+          "team": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 96
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 16,
+            "title": "Status",
+            "default": "active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "player"
+        ],
+        "title": "PlanIn",
+        "description": "Open a plan for one child. `player` is the only identity here: age and minority are read from the world's row."
+      },
+      "app__schemas__PlanIn": {
+        "properties": {
+          "horizon_days": {
+            "type": "integer",
+            "maximum": 90.0,
+            "minimum": 1.0,
+            "title": "Horizon Days",
+            "default": 7
+          },
+          "available_minutes": {
+            "type": "integer",
+            "maximum": 180.0,
+            "minimum": 5.0,
+            "title": "Available Minutes",
+            "default": 25
+          },
+          "days_per_week": {
+            "type": "integer",
+            "maximum": 7.0,
+            "minimum": 1.0,
+            "title": "Days Per Week",
+            "default": 4
+          },
+          "has_pitch": {
+            "type": "boolean",
+            "title": "Has Pitch",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "PlanIn"
       }
     },
     "securitySchemes": {

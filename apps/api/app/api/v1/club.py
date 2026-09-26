@@ -18,6 +18,11 @@ the answers:
 
 The literal paths (`/capabilities`, `/invitations`) are declared before `/club/{ident}` so a tenant cannot be
 shadowed by a slug that happens to be spelled `invitations`.
+
+This module also publishes §40's door guide. The academy's doors are routed in `club_academy.py` under
+`/club/academy/…`, and `GET /club/capabilities` prints both lists as one `routes` array, because §39's test
+holds that array against the whole `/api/v1/club` route table — and a guide that covered only the tier writing
+it would pass that test while a page still could not find the plans doors.
 """
 
 from __future__ import annotations
@@ -28,6 +33,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.api.v1.club_academy import ROUTE_GUIDE as ACADEMY_ROUTES
 from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
@@ -131,7 +137,13 @@ ROUTE_GUIDE: Final = (
 
 @router.get("/capabilities")
 def read_capabilities(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
-    """The published rulebook: which roles exist, what each holds, and how many tenants are on the platform."""
+    """The published rulebook: which roles exist, what each holds, and how many tenants are on the platform.
+
+    `routes` is the door guide of the whole `/api/v1/club` surface, §40's academy doors included. A page handed
+    half a list cannot tell the difference between a door it was not told about and one that does not exist, and
+    §39's own test holds this list against the route table in both directions — so the guide has to be the union
+    or the test is measuring half the tier.
+    """
     limit(request, 60, 60, scope="club_capabilities")
     return {
         **club.rules(),
@@ -142,7 +154,7 @@ def read_capabilities(request: Request, db: Session = Depends(get_db)) -> dict[s
         "data_origin": "project-authored",
         "is_demo_data": False,
         "demo_data": False,
-        "routes": [dict(line) for line in ROUTE_GUIDE],
+        "routes": [dict(line) for line in (*ROUTE_GUIDE, *ACADEMY_ROUTES)],
     }
 
 

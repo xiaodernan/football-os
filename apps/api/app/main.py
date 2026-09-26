@@ -17,6 +17,7 @@ from app.api.v1 import (
     careers,
     challenges,
     club,
+    club_academy,
     coach,
     knowledge,
     meta,
@@ -133,6 +134,10 @@ def create_app() -> FastAPI:
     app.include_router(challenges.router, prefix=api)
     app.include_router(simulations.router, prefix=api)
     app.include_router(transfers.router, prefix=api)
+    # The academy router is mounted before §39's own `/club/{ident}` door. Neither can actually shadow the
+    # other — every academy path is two segments below `/club` and the tenant door is one — but the order
+    # keeps the promise checkable by eye: no slug, `academy` included, can be read as a path segment.
+    app.include_router(club_academy.router, prefix=api)
     app.include_router(club.router, prefix=api)
     app.include_router(scout.router, prefix=api)
 

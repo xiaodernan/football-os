@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json as _json
 import logging
+from collections.abc import Iterable
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, status
@@ -23,6 +24,19 @@ def _serialisable(details: Any) -> Any:
         return str(details)
 
 
+def _rejected(details: Iterable[Any]) -> list[dict[str, Any]]:
+    """Each error as *which field, what rule* — and never the value that failed it.
+
+    Pydantic v2 puts the offending input into every entry (`input`, and `ctx` for a custom validator), so the
+    default 422 body repeats back whatever a client typed. For most tiers that is only unkind. §40's academy
+    tier is the case that makes it a bug: its whole promise is that a home address or a telephone number is
+    held nowhere, and the door that refuses such a field would be the one that prints it — into the response,
+    into whatever logged the response, and into the browser history of the guardian who typed it. A page can
+    still say which box was wrong and why, which is all a validation error is for.
+    """
+    return [{"type": item.get("type"), "loc": list(item.get("loc") or []), "msg": item.get("msg")} for item in details]
+
+
 def _envelope(code: str, message: str, details: Any = None) -> dict[str, Any]:
     body: dict[str, Any] = {"error": {"code": code, "message": message}}
     if details is not None:
@@ -38,11 +52,11 @@ class AppError(HTTPException):
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def _validation(_request: Request, exc: RequestValidationError) -> JSONResponse:
-        return JSONResponse(_envelope("validation_error", "Request validation failed", exc.errors()), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return JSONResponse(_envelope("validation_error", "Request validation failed", _rejected(exc.errors())), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     @app.exception_handler(ValidationError)
     async def _pydantic(_request: Request, exc: ValidationError) -> JSONResponse:
-        return JSONResponse(_envelope("validation_error", "Request validation failed", exc.errors()), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return JSONResponse(_envelope("validation_error", "Request validation failed", _rejected(exc.errors())), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     @app.exception_handler(IntegrityError)
     async def _integrity(_request: Request, exc: IntegrityError) -> JSONResponse:

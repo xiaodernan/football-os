@@ -71,10 +71,33 @@ DOORS: tuple[tuple[str, str, dict[str, Any]], ...] = (
     ("get", "/{ident}/teams/{team}/players", {}),
     ("post", "/{ident}/teams/{team}/players", {"player": "whoever", "note": ""}),
     ("delete", "/{ident}/teams/{team}/players/{player}", {}),
+    # §40's academy doors name a tenant exactly the same way, so the isolation walk has to reach them too.
+    # Every id in them belongs to nobody: the tenant is refused before any of them is looked up, which is the
+    # whole point — a plan door that leaked "that plan is in another tenant" would leak the tenant.
+    ("get", "/academy/{ident}/curricula", {}),
+    ("post", "/academy/{ident}/curricula", {"name": "A Block They Cannot Write"}),
+    ("patch", "/academy/{ident}/curricula/{curriculum}", {"weekly_minutes": 30}),
+    ("delete", "/academy/{ident}/curricula/{curriculum}", {}),
+    ("get", "/academy/{ident}/plans", {}),
+    ("post", "/academy/{ident}/plans", {"player": "whoever"}),
+    ("get", "/academy/{ident}/plans/{plan}", {}),
+    ("patch", "/academy/{ident}/plans/{plan}", {"status": "paused"}),
+    ("delete", "/academy/{ident}/plans/{plan}", {}),
+    ("post", "/academy/{ident}/plans/{plan}/assessments", {"assessed_on": "2026-01-09", "ratings": {"technique": 60}}),
+    ("post", "/academy/{ident}/plans/{plan}/feedback", {"message": "a line for a child they cannot reach"}),
+    ("post", "/academy/{ident}/plans/{plan}/evidence", {"clip": "vid_somebody_elses", "t_start": 1, "t_end": 4}),
+    ("delete", "/academy/{ident}/plans/{plan}/evidence/{evidence}", {}),
+    ("get", "/academy/{ident}/consents", {}),
+    ("post", "/academy/{ident}/consents", {"player": "whoever"}),
+    ("delete", "/academy/{ident}/consents/{player}", {}),
+    ("get", "/academy/{ident}/players/{player}/data", {}),
+    ("delete", "/academy/{ident}/players/{player}/data", {}),
 )
 
-#: The concrete values those templates are filled with when a door is knocked on.
-PROBE = {"team": "Under 18s", "email": "somebody@example.test", "player": "whoever"}
+#: The concrete values those templates are filled with when a door is knocked on. The academy keys are ids
+#: shaped like §40's and belonging to nothing, because a door that reached a row would be a different defect
+#: than the one this walk is about.
+PROBE = {"team": "Under 18s", "email": "somebody@example.test", "player": "whoever", "plan": "idp_nobody_s_plan", "curriculum": "acu_nobody_s_block", "evidence": "pve_nobody_s_citation"}
 
 
 @pytest.fixture(scope="module")
@@ -489,7 +512,9 @@ class TestIsolationAcrossTenants:
         declared = {(method, path) for method, path, _ in DOORS}
         living = _tenant_naming_doors()
         assert living == declared, sorted(living ^ declared)
-        assert len(declared) == 14, "this class is the isolation proof for every door that names a tenant"
+        assert (
+            len(declared) == 32
+        ), "this class is the isolation proof for every door that names a tenant: §39's fourteen plus §40's eighteen academy doors, counted from the route table above rather than remembered"
 
     def test_an_unaccepted_invitation_and_a_revoked_standing_are_both_not_a_foothold(self) -> None:
         owner = _account("Suspender")
@@ -630,8 +655,13 @@ class TestStandingAndTheMatrix:
         assert rules["default"].startswith("deny")
         assert rules["stored"] == "role and status on the membership row"
         assert rules["rule"] == "one rule sits under all of it: a member of one organisation can read and change nothing in another"
-        assert rules["meaning"]["parent"].startswith("grants nothing yet")
-        assert set(rules["matrix"]["parent"]) == set()
+        assert rules["meaning"]["parent"].startswith("reads and writes only what a granted consent row")
+        # The row is short, not empty. Two of its three rights are scoped by a consent row rather than by the
+        # tenant — a `parent` who is nobody's guardian holds them and opens nothing — and the third is the
+        # age-band curriculum, which names no child at all and so is deliberately outside the scoped set.
+        assert set(rules["matrix"]["parent"]) == {"curriculum.read", "plan.read_own_child", "consent.grant_own"}
+        assert set(rules["matrix"]["parent"]) & set(access.SCOPED_PERMISSIONS) == {"plan.read_own_child", "consent.grant_own"}
+        assert "curriculum.read" not in access.SCOPED_PERMISSIONS
         assert all(set(row) <= set(access.PERMISSIONS) for row in rules["matrix"].values())
 
     def test_a_permission_nobody_holds_would_be_caught_because_the_matrix_covers_its_own_vocabulary(self) -> None:
@@ -949,7 +979,9 @@ class TestTeamsAndSheets:
         assert response.status_code == 422, response.text
         detail = _detail(response)
         assert detail["code"] == "squad_full" and detail["held"] == MAX_SQUAD_PER_TEAM and detail["limit"] == MAX_SQUAD_PER_TEAM
-        assert owner.post(f"{CLUB}/{ident}/teams/{empty['id']}/players", json={"player": world["spare"], "note": ""}).status_code == 200, "the cap is per sheet, and one player may stand for two of them"
+        assert (
+            owner.post(f"{CLUB}/{ident}/teams/{empty['id']}/players", json={"player": world["spare"], "note": ""}).status_code == 200
+        ), "the cap is per sheet, and one player may stand for two of them"
         assert _sheet(_read(owner, ident), "Empty Sheet")["squad_size"] == 1
 
     def test_minors_are_counted_from_the_rows_and_not_from_the_team_name(self, world: dict[str, Any]) -> None:
@@ -1069,9 +1101,10 @@ class TestPublishedSelfDescription:
 
     def test_the_rulebook_names_the_two_things_this_tier_deliberately_does_not_have(self) -> None:
         limitations = club.limitations()
-        assert any("no report, development plan" in text for text in limitations), "39's other rows are named as missing"
+        assert any("no match report, training session or message" in text for text in limitations), "§39's other rows are named as missing"
+        assert any("/club/academy" in text for text in limitations), "the sentence has to say where the plans did go, not just that §39 lacks them"
         assert any("not a message" in text for text in limitations), "an invitation that is not an email is stated, not implied"
-        assert any("parent" in text and "grants nothing yet" in text for text in limitations)
+        assert any("parent" in text and "scoped by a consent row" in text for text in limitations), "a parent's three rights are scoped, and the rulebook says so"
         assert any("rewrites nothing about a player" in text for text in limitations)
         assert any("give their seat back" in text for text in limitations)
         rules = club.rules()

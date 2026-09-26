@@ -40,26 +40,51 @@ PERMISSIONS: Final = (
     "squad.write",
     "plan.read_all",
     "plan.write",
+    "plan.erase",
+    "plan.read_own_child",
+    "consent.grant_own",
+    "curriculum.read",
+    "curriculum.write",
 )
 
-#: What each role holds. `parent` holds nothing yet: §40 gives it a right scoped to one child's own plan, and
-#: until that tier exists an empty row is the honest answer rather than a claim about it.
+#: What each role holds. `parent` is §40's row: it holds three rights and every one of them is scoped to a
+#: single child by the consent row that names it, which is why the row is short and not empty.
 _MATRIX: Final[dict[str, tuple[str, ...]]] = {
     "owner": PERMISSIONS,
-    "director": ("org.rename", "org.member.invite", "org.member.role", "org.member.revoke", "team.create", "team.edit", "team.delete", "squad.read", "squad.write", "plan.read_all"),
-    "coach": ("team.edit", "squad.read", "squad.write", "plan.read_all", "plan.write"),
-    "analyst": ("squad.read", "plan.read_all", "plan.write"),
-    "scout": ("squad.read",),
-    "parent": (),
+    "director": (
+        "org.rename",
+        "org.member.invite",
+        "org.member.role",
+        "org.member.revoke",
+        "team.create",
+        "team.edit",
+        "team.delete",
+        "squad.read",
+        "squad.write",
+        "plan.read_all",
+        "plan.erase",
+        "curriculum.read",
+        "curriculum.write",
+    ),
+    "coach": ("team.edit", "squad.read", "squad.write", "plan.read_all", "plan.write", "curriculum.read", "curriculum.write"),
+    "analyst": ("squad.read", "plan.read_all", "plan.write", "curriculum.read"),
+    "scout": ("squad.read", "curriculum.read"),
+    "parent": ("curriculum.read", "plan.read_own_child", "consent.grant_own"),
 }
+
+#: The three rights that are not enough on their own, and the second question each one asks. `require()` can
+#: only ask about a role; these depend on a row outside the membership, and a route that forgot to ask would
+#: read a child who is not the caller's. The set is published by `matrix()` and the suite holds it against
+#: the doors that actually consult it.
+SCOPED_PERMISSIONS: Final = frozenset({"plan.read_own_child", "consent.grant_own", "plan.erase"})
 
 ROLE_MEANING: Final[dict[str, str]] = {
     "owner": "the account that opened the organisation, and the one that cannot be revoked while it stands alone",
-    "director": "runs the whole tenant's roster and staffing, but cannot delete the tenant or hand over ownership",
+    "director": "runs the whole tenant's roster and staffing, reads every plan, and may erase one — but does not write a player's focus",
     "coach": "works with the teams they are staffed on: selection, squad notes, and the plans of their own players",
     "analyst": "reads the squad and writes reports and plans, and does not touch staffing or teams",
-    "scout": "sees a squad list and nothing else — the §23 tools a scout uses are their own account's, not the tenant's",
-    "parent": "grants nothing yet; §40 replaces this row with a right scoped to one named child",
+    "scout": "sees a squad list and the age-band curriculum, and no plan — a scout's §23 tools are their own account's, not the tenant's",
+    "parent": "reads and writes only what a granted consent row ties to their own child: that child's plan, their own consents, and the curriculum of the age band",
 }
 
 
@@ -107,6 +132,15 @@ def matrix() -> dict[str, Any]:
         "matrix": {role: list(permissions_of(role)) for role in ROLES},
         "meaning": dict(ROLE_MEANING),
         "statuses": ["active", "invited", "revoked"],
+        # The rights a role alone does not settle. A `parent` holding `plan.read_own_child` still has to be the
+        # guardian of the child the plan names, and only a consent row says that — so the door consults the row
+        # after the matrix, and the page printing this list is what keeps the second question visible.
+        "scoped": {
+            "plan.read_own_child": "the caller's own granted consent row must name the plan's player",
+            "consent.grant_own": "only a `parent` standing may claim a child, and the claim is self-declared",
+            "plan.erase": "a guardian may erase their own child's rows without holding this right at all",
+        },
+        "scoped_permissions": sorted(SCOPED_PERMISSIONS),
         "default": "deny — a role that is not in this matrix, and a membership that is not active, hold nothing",
         "stored": "role and status on the membership row",
         "not_stored": "permissions — they are read from this table every time, so a role change cannot be half-applied",

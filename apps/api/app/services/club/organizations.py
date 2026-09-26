@@ -149,6 +149,27 @@ def require(session: Session, user: User, ident: str, permission: str) -> tuple[
     return organization, membership
 
 
+def standing(session: Session, user: User, ident: str) -> tuple[Organization, OrganizationMember]:
+    """Resolve a tenant and prove this account stands in it, without asking which right it holds.
+
+    §40's reads need this instead of `require()`: a parent listing their own child's plans is entitled to the
+    answer and holds none of the staff permissions, so a permission-based door would refuse them for the right
+    they do not need. The scoping happens in the academy service, against the consent row — which is why this
+    returns the membership rather than hiding it. A foreign or unknown tenant answers with the same 404
+    `require()` gives, and a revoked or unaccepted standing is not a foothold here either.
+    """
+    organization = _organization(session, ident)
+    person = membership_of(session, organization, user)
+    if person is None or person.status != "active":
+        raise ClubRefusal("no_such_organization", f"no organisation of yours answers to {str(ident)!r}", ident=str(ident), rule="a standing that grants nothing is answered as a stranger's")
+    return organization, person
+
+
+def resolve_team(session: Session, organization: Organization, ident: str) -> ClubTeam:
+    """A tenant's own team, by id or by name — the §40 doors take a sheet a plan is written against."""
+    return _team(session, organization, ident)
+
+
 def _member_row(session: Session, member: OrganizationMember) -> dict[str, Any]:
     person = session.get(User, member.user_id)
     return {
@@ -683,11 +704,11 @@ def rules() -> dict[str, Any]:
 
 def limitations() -> list[str]:
     return [
-        "no report, development plan, session or message exists in this tier yet — §39's other rows arrive in the ones after it, and this one only decides who may see them",
+        "no match report, training session or message exists in this tier — §39's remaining rows arrive in the ones after it, and this one only decides who may see them; §40's development plans are a separate service, read through /club/academy",
         "an organisation's teams point at the generated world's players, not at copies of them: a tenant's sheet is a selection over the same rows the scout searches, so a rating cannot go stale on a sheet any more than on a shortlist",
         "the invitation is a row and not a message: no mail transport exists in this project, and none is claimed by it",
         "revoked memberships keep their rows for the record and grant nothing, and they give their seat back to `member_limit`; there is no audit trail of who did what before the revocation, only of who stood where",
-        "a parent's role grants nothing yet, and says so: §40's scoped right over one child's own plan is the tier that fills that row",
+        "a parent's row in the matrix holds three rights and every one of them is scoped by a consent row, not by the tenant: `plan.read_own_child` opens one named child's plan and no other, which is why the row is short rather than empty",
         "deleting a tenant removes its memberships and sheets, and rewrites nothing about a player, a club, or a career in the generated world",
     ]
 
