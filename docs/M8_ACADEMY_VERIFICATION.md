@@ -128,6 +128,25 @@ land in a redirected log — `apps/api/pyproject.toml` sets `addopts = "-q"`, so
 line runs the suite at `-qq`, which is what suppresses the summary. Pass `-o addopts=` and read the last
 line, rather than counting progress characters and trusting `rc` alone.
 
+## §41's two tiers, probed the same way
+
+Six more mutations, this time across `sessions.py` and `reports.py`, each against the whole 240-item club quintet,
+control green first. **All six were caught and none survived** — which is the point: a rule nobody can break
+without a test failing is the only kind of rule a document may claim.
+
+| planted defect | what a reader would have been told | caught by |
+| --- | --- | --- |
+| `rpe` dropped out of the derived load | a heavy session recorded as a light one | 1 test |
+| the future-date guard made to never fire | work that has not happened, printed as a record | 1 test |
+| attendance no longer bounded by the sheet | a session widening who a tenant trains | 2 tests |
+| a report computed at staff scope for everybody | a guardian shown rows another family's data comprises | 2 tests |
+| an empty window's mean switched from `null` to `0` | a measurement inferred over nothing | 1 test |
+| the unknown-kind refusal made dead | a reading this tier cannot produce, answered with the nearest one | 1 test |
+
+The first run reported one mutation as NOT APPLIED — its anchor had been reflowed by `ruff format` after the probe
+was written. It was re-anchored from the current text and re-run rather than counted as a catch, and then caught:
+**an anchor that matches nothing is not evidence**, in either direction.
+
 ## Six rules planted wrong, on purpose
 
 A green suite is a claim about the tests as much as about the code, so six values in this tier were mutated one
