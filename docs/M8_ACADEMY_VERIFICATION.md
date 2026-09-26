@@ -207,8 +207,8 @@ message for the tier's own reasoning.
 
 `test_club_academy.py` is **83 tests** (measured: `83 passed, 1 warning in 94.98s`), and the pair is
 **196 items green on both legs** on 2026-09-26 (`196 passed in 156.37s` on SQLite, `196 passed in 199.61s` on
-PostgreSQL, both `rc=0`, both re-run after the door-shape fix below). The whole API suite, this tree, after §41 closed: **1054 passed and 1 skipped on both legs** — SQLite in 418.43s,
-PostgreSQL/pgvector in 632.63s. Another session's uncommitted work is in the tree, so the figure is the worktree's,
+PostgreSQL, both `rc=0`, both re-run after the door-shape fix below). The whole API suite, this tree, after §41 and §42 closed: **1063 passed and 1 skipped on both legs** — SQLite in
+407.70s, PostgreSQL/pgvector in 561.42s. Another session's uncommitted work is in the tree, so the figure is the worktree's,
 not this milestone's alone; the milestone's own share is the **240** items in the five `tests/test_club_*.py` files.
 
 **Two environmental facts that read as product failures, and how each was separated from one.** First: the
