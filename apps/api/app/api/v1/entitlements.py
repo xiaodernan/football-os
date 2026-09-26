@@ -11,7 +11,6 @@ from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
 from app.services import entitlements as ent
-from app.services.club import access
 from app.services.club.organizations import ClubRefusal
 
 # main.py mounts every router under /api/v1, so the prefix here is only the last segment: a full path

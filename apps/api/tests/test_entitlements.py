@@ -1,3 +1,5 @@
+# ruff: noqa: F811 — `session` and `world` are imported to expose §40's fixtures, and a test's parameter
+# of the same name is how pytest hands them over; the shadowing is the mechanism, not a redefinition.
 """§42: a plan is a ceiling read from data, usage is counted from acts, and no payment appears anywhere.
 
 What this file holds the tier to: the matrix is the table rather than a constant; a ceiling refuses before the row
@@ -16,7 +18,7 @@ from sqlalchemy import select
 
 from app.models import Entitlement, Organization, UsageEvent
 from app.services import entitlements as ent
-from tests.test_club_academy import session, world  # noqa: F401 — one generated world, the same fixture §40/§41 use
+from tests.test_club_academy import session, world  # noqa: F401 — one generated world, the fixture §40/§41 use
 from tests.test_club_reports import ACADEMY, _ask, _team_of, _tenant
 
 ENTITLEMENTS = "/api/v1/entitlements"
@@ -29,7 +31,7 @@ def _organization_id(session: Any, slug: str) -> str:  # noqa: ANN001 - the fixt
 
 
 class TestTheMatrixIsData:
-    def test_every_plan_times_every_feature_is_stored_and_the_door_reports_the_stored_number(self, client: TestClient, session: Any) -> None:  # noqa: ANN001, E501
+    def test_every_plan_times_every_feature_is_stored_and_the_door_reports_the_stored_number(self, client: TestClient, session: Any) -> None:  # noqa: E501
         body = client.get(f"{ENTITLEMENTS}/capabilities").json()
         assert body["plans"] == list(ent.PLANS) and len(body["plans"]) == 7
         assert set(body["features"]) == set(ent.FEATURES)
@@ -75,7 +77,7 @@ class TestTheMatrixIsData:
 
 
 class TestCeilingsAndUsage:
-    def test_an_act_past_the_ceiling_is_refused_before_the_row_exists_and_prints_its_figures(self, client: TestClient, session: Any) -> None:  # noqa: ANN001, E501
+    def test_an_act_past_the_ceiling_is_refused_before_the_row_exists_and_prints_its_figures(self, client: TestClient, session: Any) -> None:  # noqa: E501
         owner, ident = _tenant("Ceiling Bites")
         _team_of(owner, ident, "Under 16s")
         assert _ask(owner, ident).status_code == 200
@@ -96,7 +98,7 @@ class TestCeilingsAndUsage:
         rows = list(session.scalars(select(UsageEvent).where(UsageEvent.subject_id == _organization_id(session, ident), UsageEvent.feature == "reports_saved")))
         assert len(rows) == 1 and rows[0].units == 1, "one act, one row — an update is not a second spend"
 
-    def test_a_ceiling_spent_today_is_free_again_tomorrow_because_the_period_is_part_of_the_row(self, client: TestClient, session: Any) -> None:  # noqa: ANN001, E501
+    def test_a_ceiling_spent_today_is_free_again_tomorrow_because_the_period_is_part_of_the_row(self, client: TestClient, session: Any) -> None:  # noqa: E501
         subject = "org_period_probe"
         today = date.today()
         assert ent.guard(session, subject_id=subject, feature="reports_saved", plan="free", source_id="act-one")["remaining"] == 1
