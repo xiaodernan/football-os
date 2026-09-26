@@ -45,7 +45,7 @@ def upgrade() -> None:
         sa.Column("subject_kind", sa.String(length=12), nullable=False),
         sa.Column("feature", sa.String(length=60), nullable=False),
         sa.Column("plan", sa.String(length=20), nullable=False),
-        sa.Column("period_key", sa.String(length=7), nullable=False),
+        sa.Column("period_key", sa.String(length=10), nullable=False),
         sa.Column("source_id", sa.String(length=40), nullable=False),
         sa.Column("units", sa.Integer(), nullable=False),
         sa.Column("recorded_on", sa.String(length=10), nullable=False),

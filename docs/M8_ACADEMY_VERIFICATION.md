@@ -224,7 +224,7 @@ errors out wholesale is a dead dependency, and the first thing to read is the co
 
 ## The published contract
 
-The whole spec is now **120 paths / 151 operations** in `docs/api/openapi.json`, up from §39's 104/124, from
+The whole spec is now **122 paths / 153 operations** in `docs/api/openapi.json`, up from §39's 104/124, from
 §40's 116/143 and from the 118/147 §41 Sessions left behind; the academy's share is **16 paths** after Reports
 added two more doors. Each re-export is taken from a scratch server started from the tree being documented —
 port 8737 for §40, 8735 for §41 — never from the shared dev API. **Why the number was wrong once

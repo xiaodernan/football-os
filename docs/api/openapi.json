@@ -6567,6 +6567,57 @@
         }
       }
     },
+    "/api/v1/entitlements/capabilities": {
+      "get": {
+        "tags": [
+          "entitlements"
+        ],
+        "summary": "Read Capabilities",
+        "description": "The rulebook, answerable before anybody signs in — §41's buyer asks what a plan means first.",
+        "operationId": "read_capabilities_api_v1_entitlements_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Capabilities Api V1 Entitlements Capabilities Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entitlements/me": {
+      "get": {
+        "tags": [
+          "entitlements"
+        ],
+        "summary": "Read Mine",
+        "description": "What this account's plan is entitled to, and what it has spent in the current period.",
+        "operationId": "read_mine_api_v1_entitlements_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Mine Api V1 Entitlements Me Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/club/capabilities": {
       "get": {
         "tags": [

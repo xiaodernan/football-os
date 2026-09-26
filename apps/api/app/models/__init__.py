@@ -346,7 +346,10 @@ class UsageEvent(Base):
     subject_kind: Mapped[str] = mapped_column(String(12), default="user", nullable=False)
     feature: Mapped[str] = mapped_column(String(60), nullable=False)
     plan: Mapped[str] = mapped_column(String(20), default="free", nullable=False)
-    period_key: Mapped[str] = mapped_column(String(7), nullable=False)
+    # `YYYY-MM` for a monthly ceiling, `YYYY-MM-DD` for a daily one — the width has to hold the longer of
+    # the two, which is the whole reason this leg is run twice: SQLite stores what it is given and Postgres
+    # refuses it at the column, so a too-narrow key is invisible on one engine and a DataError on the other.
+    period_key: Mapped[str] = mapped_column(String(10), nullable=False)
     #: The row that made the act, so the same act is never counted twice.
     source_id: Mapped[str] = mapped_column(String(40), nullable=False)
     units: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
@@ -1332,8 +1335,8 @@ class Organization(Base, TimestampMixin):
     curricula: Mapped[list[AcademyCurriculum]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     plans: Mapped[list[DevelopmentPlan]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     consents: Mapped[list[GuardianConsent]] = relationship(back_populates="organization", cascade="all, delete-orphan")
-    sessions: Mapped[list["ClubSession"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
-    reports: Mapped[list["ClubReport"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    sessions: Mapped[list[ClubSession]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    reports: Mapped[list[ClubReport]] = relationship(back_populates="organization", cascade="all, delete-orphan")
 
 
 class OrganizationMember(Base, TimestampMixin):
