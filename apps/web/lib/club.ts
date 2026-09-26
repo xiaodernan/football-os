@@ -131,6 +131,8 @@ export type ClubCapabilities = ClubRules & {
   refusal_answers: Record<string, number>;
   limitations: string[];
   ready: boolean;
+  /** The two conditions the flag stands on, in the API's own sentence — one constant shared with §40's door. */
+  ready_rule: string;
   routes: Door[];
 };
 
@@ -249,13 +251,19 @@ export type AcademyCapabilities = {
   plan_statuses: string[];
   rating_range: [number, number];
   ready: boolean;
+  ready_rule: string;
   refusal_answers: Record<string, number>;
   refusals: string[];
   refusals_shared_with_club_tier: string[];
+  report_kinds: string[];
+  report_limits: ReportLimits;
+  report_refusals: Record<string, number>;
   review_weeks_range: [number, number];
   routes: Door[];
   scoped_rights: Record<string, string>;
   scopes: string[];
+  session_limits: SessionLimits;
+  session_refusals: Record<string, number>;
   stored_fields: Record<string, string[]>;
   video: string;
 };
@@ -443,6 +451,173 @@ export type ChildDataView = {
   player: ChildRef;
   seen_as: string;
   total_rows: number;
+};
+
+/**
+ * §41's session log — what the tenant actually did, and the load summed from the rows printed beside it.
+ *
+ * `load_units` is derived, never stored: the API recomputes `duration_min × rpe ÷ 60` per row and the
+ * page re-adds the printed column to check the total, which is why both the row figure and the formula
+ * have to arrive here rather than one being inferred from the other.
+ */
+export type SessionRow = {
+  attendees: ChildRef[];
+  attendees_gone: number;
+  coach: { display_name: string; role: string } | null;
+  curriculum: string | null;
+  drill_slugs: string[];
+  duration_min: number;
+  focus: string[];
+  id: string;
+  load_units: number;
+  note: string;
+  planned_for: string | null;
+  recorded_on: string | null;
+  rpe: number;
+  scheduled_on: string;
+  slot: number;
+  team: { age_group: string; id: string; name: string } | null;
+};
+
+export type SessionList = {
+  attendance_counts: Record<string, number>;
+  demo_data: boolean;
+  formulas: Record<string, string>;
+  items: SessionRow[];
+  mean_rpe: number | null;
+  most_attended: string | null;
+  organization: string;
+  read_through: string;
+  role: string;
+  today: string;
+  today_rule: string;
+  total: number;
+  total_load_units: number;
+  total_minutes: number;
+};
+
+/** One saved question. `body` is the answer as computed for *this* reader, and it holds no stored figure. */
+export type ReportBody = {
+  appearances?: Record<string, number>;
+  empty_window?: boolean;
+  formulas: Record<string, string>;
+  most_worked?: string | null;
+  mean_rpe?: number | null;
+  missing?: string[];
+  scoped_to: string;
+  sessions?: number;
+  total_load_units?: number;
+  total_minutes?: number;
+  with_consent?: number;
+};
+
+export type ReportRow = {
+  asked_by: { display_name: string } | null;
+  asked_on: string | null;
+  body: ReportBody;
+  id: string;
+  kind: string;
+  path: string;
+  team: { id: string; name: string } | null;
+  window_days?: number;
+  window_from: string;
+  window_to: string;
+};
+
+export type ReportList = {
+  demo_data: boolean;
+  items: ReportRow[];
+  kinds: string[];
+  limit: number;
+  organization: string;
+  role: string;
+  rule: string;
+  total: number;
+};
+
+/** `GET …/reports/{report}` — the same row, read on its own, with the date it was answered. */
+export type ReportView = {
+  demo_data: boolean;
+  generated_on: string;
+  report: ReportRow;
+  role: string;
+  rule: string;
+};
+
+/**
+ * One metered feature, as the tenant's own read reports it: the ceiling the plan holds, what the tenant has
+ * spent against it in the period, and whether a door actually refuses on it today. `remaining` arrives from the
+ * API, and the page re-subtracts the two columns beside it rather than printing a third figure on trust.
+ */
+export type EntitlementRow = {
+  acts: number;
+  enforced: boolean;
+  feature: string;
+  limit: number;
+  period: string;
+  plan: string;
+  remaining: number;
+  used: number;
+};
+
+/**
+ * `GET /club/{ident}/entitlements` — §42's ceiling, read through §39's standing.
+ *
+ * `tier_limits` is here because the two kinds of number would otherwise be blended on the page: a plan ceiling
+ * is a row somebody can edit and only the enforced one refuses a write, while `members` and `teams` are §39's
+ * own constants and are what its doors check today.
+ */
+export type TenantEntitlements = {
+  account_door: string;
+  as_of: string;
+  capabilities_door: string;
+  demo_data: boolean;
+  enforced_rule: string;
+  formula: string;
+  items: EntitlementRow[];
+  no_payment: string;
+  organization: string;
+  plan: string;
+  plan_rule: string;
+  read_through: string;
+  role: string;
+  rule: string;
+  subject_id: string;
+  subject_kind: string;
+  tier_limits: { members: number; rule: string; teams: number };
+};
+
+/** `GET /entitlements/me` — the same rows for the account itself, which is a different subject from its tenant. */
+export type AccountEntitlements = {
+  as_of: string;
+  demo_data: boolean;
+  display_name: string;
+  formula: string;
+  items: EntitlementRow[];
+  plan: string;
+  rule: string;
+  subject_kind: string;
+};
+
+/**
+ * The session caps `GET /club/academy/capabilities` publishes, so a form prints the number the door will
+ * compare against instead of one this file chose. The refusal carries the same figure, which is the only
+ * way a page can be checked against the rule it was refused by.
+ */
+export type SessionLimits = {
+  attendance_max: number;
+  duration_range: [number, number];
+  max_sessions_per_organization: number;
+  rpe_range: [number, number];
+  session_drills_max: number;
+  session_focus_max: number;
+  session_note_max: number;
+  slot_range: [number, number];
+};
+
+export type ReportLimits = {
+  max_reports_per_organization: number;
+  window_max_days: number;
 };
 
 /**

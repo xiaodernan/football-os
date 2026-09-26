@@ -6896,6 +6896,55 @@
         }
       }
     },
+    "/api/v1/club/{ident}/entitlements": {
+      "get": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Read Organization Entitlements",
+        "description": "What this tenant is entitled to and what it has spent — §42's ceiling read on §39's standing.\n\nGated the way `GET /club/{ident}` is, because a ceiling is not a staff right: a member who cannot see the\nnumber their own write will be measured against is left to discover it as a refusal.",
+        "operationId": "read_organization_entitlements_api_v1_club__ident__entitlements_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Organization Entitlements Api V1 Club  Ident  Entitlements Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/club/{ident}/invites": {
       "post": {
         "tags": [

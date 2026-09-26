@@ -211,6 +211,18 @@ PostgreSQL, both `rc=0`, both re-run after the door-shape fix below). The whole 
 407.70s, PostgreSQL/pgvector in 561.42s. Another session's uncommitted work is in the tree, so the figure is the worktree's,
 not this milestone's alone; the milestone's own share is the **240** items in the five `tests/test_club_*.py` files.
 
+**Both of those numbers are a step, not a present.** The web tier's own run (the `/club` pages for the session,
+report and entitlement doors) came with tests of its own — a door answering a guardian with a different key set
+than it answers staff, and a caller-relative count printed under a sentence that named the other caller — so the
+five club files now stand at **258 items — 131 organisations, 83 academy, 18 sessions, 12
+reports, 14 entitlements — measured green as a group** (`258 passed in 558.98s` on the SQLite leg)
+and the whole API suite at **1072 passed + 1 skipped, green on both legs**: 1813.58s (0:30:13) on
+the per-run SQLite file, 1562.41s (0:26:02) against PostgreSQL + pgvector, each exit code 0, collected as **1073
+items across 29 files**. `--collect-only` is what makes the skip countable rather than assumed: it is one
+PostgreSQL-only case, and it is the same single skip on both legs. The 1063 above is not superseded by an
+accounting change — the two worktrees simply held different in-flight work, which is why a suite figure in this
+project carries its date and its file count beside it.
+
 **Two environmental facts that read as product failures, and how each was separated from one.** First: the
 first run of the pair reported six isolation tests red, and the traceback was
 `ValueError: [common libcrypto routines] malloc failure` inside `hashlib.scrypt` in `app/core/security.py` —
@@ -243,6 +255,9 @@ rather than as noise.
   finished: the plans door answered a guardian with a key set it did not answer a coach with — which turned the
   tenant page into a 500 for exactly the members §40 exists to serve — and the plan page printed a caller-relative
   withheld count under the words "withheld from the guardian". Both are closed, held from both sides by tests, and
-  walked in [the browser evidence](M8_CLUB_WEB_VERIFICATION.md): **146/146 checks on a production build**.
-* **No message, training session or match report** — §39's `limitations()` still says so, and now says
-  where the plans did go.
+  walked in [the browser evidence](M8_CLUB_WEB_VERIFICATION.md): **194/194 checks on a production build**.
+* **No message or match report** — §39's `limitations()` says so, and says where the plans did go. Corrected
+  2026-09-27: the sentence used to claim a training session was missing too, which §41's `club_sessions` had
+  already falsified; it now names `/club/academy` as the service holding §41's sessions and saved reports, and
+  `tests/test_club_organizations.py` holds the old wording out of the list rather than only asserting the new one
+  is in it.

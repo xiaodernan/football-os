@@ -25,7 +25,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
-from app.models import Entitlement, UsageEvent
+from app.models import Entitlement, UsageEvent, utc_today
 
 #: §42's seven plan names, in the order the spec lists them. Nothing here implies a price or a payment.
 PLANS: Final = ("free", "player", "pro", "coach", "club", "academy", "enterprise")
@@ -69,6 +69,10 @@ DEFAULT_MATRIX: Final[dict[str, dict[str, tuple[int, str]]]] = {
 #: The features a write is actually refused on. §41's Reports is the first door metered this way; the rest are
 #: published as ceilings and enforced by the tiers that own them as each is wired.
 ENFORCED: Final = ("reports_saved",)
+
+#: The plan a subject holds when nothing has granted it anything else. Named once because three tiers read it:
+#: the meter that refuses, the door that prints the ceiling, and the `free` row of the matrix above.
+DEFAULT_PLAN: Final = "free"
 
 NO_PAYMENT: Final = "no price, no currency, no payment provider and no checkout appears anywhere in this tier: a plan is a ceiling read from the entitlements table, and §42 says the architecture comes before any payment"
 
@@ -123,7 +127,7 @@ def ceiling(session: Session, plan: str, feature: str) -> tuple[int, str] | None
 def used(session: Session, subject_id: str, feature: str, *, on: date | None = None) -> int:
     limit_row = _require_feature(feature)
     period = limit_row[1]
-    day = on or date.today()
+    day = on or utc_today()
     total = session.scalar(
         select(func.coalesce(func.sum(UsageEvent.units), 0)).where(UsageEvent.subject_id == subject_id, UsageEvent.feature == feature, UsageEvent.period_key == period_key(period, day))
     )
@@ -135,12 +139,12 @@ def _require_feature(feature: str) -> tuple[int, str]:
         from app.services.club.organizations import ClubRefusal
 
         raise ClubRefusal("no_such_feature", f"{feature!r} is not a feature this tier meters; it knows {sorted(FEATURES)}", feature=feature, features=sorted(FEATURES))
-    return DEFAULT_MATRIX["free"][feature]
+    return DEFAULT_MATRIX[DEFAULT_PLAN][feature]
 
 
 def record(session: Session, *, subject_id: str, subject_kind: str, feature: str, plan: str, source_id: str, units: int = 1, on: date | None = None) -> dict[str, Any]:
     """Note the act. Counting it twice is prevented by the row, not by a caller's care."""
-    day = on or date.today()
+    day = on or utc_today()
     limit_row = ceiling(session, plan, feature) or _require_feature(feature)
     existing = session.scalar(
         select(UsageEvent).where(UsageEvent.subject_id == subject_id, UsageEvent.feature == feature, UsageEvent.period_key == period_key(limit_row[1], day), UsageEvent.source_id == source_id)
@@ -167,15 +171,15 @@ def record(session: Session, *, subject_id: str, subject_kind: str, feature: str
 def guard(session: Session, *, subject_id: str, feature: str, plan: str, source_id: str) -> dict[str, Any]:
     """Refuse the act that would spend past the ceiling, printing both figures. Called before the write."""
     limit_value, period = ceiling(session, plan, feature) or _require_feature(feature)
-    key = period_key(period, date.today())
+    key = period_key(period, utc_today())
     # Re-asking the same act is not a second spend: the row carrying this `source_id` already paid for it, so the
     # ceiling is compared only against a genuinely new act. Without this, an update would be refused by the very
     # meter the original act consumed.
     already_paid = session.scalar(select(UsageEvent.id).where(UsageEvent.subject_id == subject_id, UsageEvent.feature == feature, UsageEvent.period_key == key, UsageEvent.source_id == source_id))
     if already_paid is not None:
-        spent = used(session, subject_id, feature, on=date.today())
+        spent = used(session, subject_id, feature, on=utc_today())
         return {"used": spent, "limit": limit_value, "period": period, "remaining": max(0, limit_value - spent), "counted": "already"}
-    already = used(session, subject_id, feature, on=date.today())
+    already = used(session, subject_id, feature, on=utc_today())
     if already >= limit_value:
         from app.services.club.organizations import ClubRefusal
 
@@ -193,7 +197,7 @@ def guard(session: Session, *, subject_id: str, feature: str, plan: str, source_
 
 
 def entitlements_view(session: Session, subject_id: str, *, plan: str, subject_kind: str) -> dict[str, Any]:
-    today = date.today()
+    today = utc_today()
     rows = []
     for feature, kind in FEATURES.items():
         if kind != subject_kind:
@@ -234,7 +238,7 @@ def rules() -> dict[str, Any]:
         "enforced": list(ENFORCED),
         "published_not_enforced": [feature for feature in FEATURES if feature not in ENFORCED],
         "periods": [DAY, MONTH],
-        "default_plan": "free",
+        "default_plan": DEFAULT_PLAN,
         "no_payment": NO_PAYMENT,
         "usage_rule": "one row per act; the ceiling is compared against a count taken at read time, so deleting an act removes its spend",
         "refusals": list(REFUSALS),

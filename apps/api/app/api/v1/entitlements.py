@@ -65,7 +65,7 @@ def read_mine(request: Request, db: Session = Depends(get_db), user: User = Depe
     try:
         # Nothing grants a plan yet — that is the part §42 says to leave for later — so every account
         # is read against `free`, the plan the matrix holds for an ungranted subject.
-        plan = "free"
+        plan = ent.DEFAULT_PLAN
         view = ent.entitlements_view(db, str(user.id), plan=plan, subject_kind="user")
         return {**view, "display_name": user.display_name, "demo_data": False}
     except ClubRefusal as error:

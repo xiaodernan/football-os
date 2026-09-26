@@ -1,8 +1,10 @@
 # M8 — the club tier in a browser: `/club`, the tenant page and the plan page
 
-Walk: `apps/web/scripts/qa-club.mjs` — **146 checks, 146 passed, exit 0**, 2026-09-26, against a production
+Walk: `apps/web/scripts/qa-club.mjs` — **194 checks, 194 passed, exit 0**, 2026-09-26, against a production
 build (`NEXT_DIST_DIR=.next-club npx next build`) served on port 3214 by `next start`, with the API a scratch
-`uvicorn app.main:app --port 8734` started **from this tree** (`API_INTERNAL_URL` points the web tier at it).
+`uvicorn app.main:app --port 8734` started **from this tree** (`API_INTERNAL_URL` points the web tier at it) and
+running on a database `scripts/qa_db.py` created for the run rather than on anything a person works in. The count
+grew from 146 as §41's sessions and reports and §42's meters were added to the walk.
 
 **Why a scratch API rather than the dev one on 8731:** that server has been up since before the academy router
 existed, and its `/api/v1/club/academy/capabilities` answers **404**. A page verified against a server that
@@ -12,14 +14,14 @@ being committed — and the run prints the served webpack chunk and compares it 
 
 ## What the walk insists on
 
-It is not a screenshot pass. Four properties carry it.
+It is not a screenshot pass. These properties carry it.
 
 * **A stranger gets the answer a stranger gets.** `/club` with no session is a redirect that names where you
   were going (`/login?next=%2Fclub`); `/club/rules` is 200 and indexable; `robots.txt` Disallows `/club` and
   Allows `/club/rules`; the sitemap carries the rules page and no other `/club` address. Another tenant's
-  address — page, plan page, tenant door, academy door — answers **404** to an account that was never invited,
-  to an account whose invitation it has not answered yet, and to a third account that never was. A 403 there
-  would confirm the tenant exists.
+  address — page, plan page, tenant door, academy door, and §42's ceiling door — answers **404** to an account
+  that was never invited, to an account whose invitation it has not answered yet, and to a third account that
+  never was. A 403 there would confirm the tenant exists.
 * **The page's own controls do the writing.** Every create, invite, accept, consent, plan, review and note is
   a click or a keystroke on a rendered control, not JSON posted by the walk: a button that never fires, a
   select that offers nobody, or a refresh that never re-reads fails here.
@@ -34,10 +36,22 @@ It is not a screenshot pass. Four properties carry it.
   the note rows. An empty table is not allowed to stand in for a refused read, so each academy panel's
   `data-refused` marker is compared with the HTTP status of the door behind it.
 
-## Two live defects the walk found, and what each one was
+* **A ceiling that is painted is a ceiling that bites.** §42's meter table is read out of the DOM positionally
+  (`tr[data-entitlement]`, one row per item the door sent), so `limit − used = remaining` is checked across the
+  columns a reader actually compares rather than against a payload the walk fetched itself. The walk then spends
+  the allowance for real: one saved report from the page is one act on the meter, the second is refused with the
+  feature's own code, the refusal files no row and spends nothing, erasing the question gives the ceiling back
+  **on the page and on the door in one assertion**, and the row it deletes is named. An account's own seat
+  ceiling is not in that table, because it is not a tenant figure.
+* **Nothing is invented by the walk.** The recorded session, the opened plan, the saved question and the meter
+  row are all re-read from the doors afterwards; where a figure exists only because the door computed it —
+  `span_days`, `load_units`, `appearances`, `days_since_review` — the check re-derives it from the rows beside it
+  and prints the arithmetic it used.
 
-Both were in code this milestone had already called finished, and both are the same class: **one fact, stated
-two ways, disagreeing.**
+## Live defects the walk found, and what each one was
+
+Numbered through the whole page: §41's run found 1 and 2, §42's found 3, 4 and 5. The first two are the same
+class — **one fact, stated two ways, disagreeing** — and so is the third.
 
 **1. The plans door answered with two different shapes, and the page crashed for guardians.**
 `GET /club/academy/{ident}/plans` had a special early return for a caller with no consent claim: `items`,
@@ -83,6 +97,54 @@ The register route is rate-limited per address, and a walk that cannot sign in p
 `register()` waits out a 429 and retries; if it still ends blocked, the check prints the status rather than
 letting an unrelated cascade read as a page defect.
 
+The same lesson came back bigger with §42's pages. A tenant page re-reads several doors every time
+`router.refresh()` lands, the walk drives three accounts from one address, and the walk's own `untilTrue` polls
+add up — so `GET /club/{ident}` began answering **429**, and one check then crashed the run on
+`Cannot read properties of undefined (reading 'permissions')` while the rest of the walk never executed. The
+retry therefore moved from `register()` into `call()` itself: it honours the `Retry-After` the door prints, is
+bounded, and still reports a 429 if the address really is blocked. The checks that were written against bare
+JSON got the same treatment — an assertion that throws takes the remaining hundred checks with it, so
+`my_grant?.permissions?.length` now prints `?` and fails that one check instead.
+
+## What §42's session, report and entitlement pages found
+
+Three product defects, and the first and third are the same sentence read two ways.
+
+**3. A session recorded from the page named nobody.** `create_session` stored *the string the caller typed* in
+`attendees`, while the read path resolves each entry by primary key to print a player's slug, age and
+`is_minor`. The tenant page addresses players by slug — the same way every other door on this platform is
+addressed — so a session recorded by clicking names on a sheet came back with empty attendance, and the two
+figures built from that column inherited it: `most_attended` was `null`, a saved report's `appearances` was
+`{}`, and `GET …/sessions` through `plan.read_own_child` told a guardian their own child had attended nothing.
+The write now stores the id each address *resolved to*, so the write, the read and the scope all speak about one
+person; `attendance_counts` and `most_attended` are keyed by the slug a reader can follow, because a figure
+about a person is printed as the person. Held in
+`tests/test_club_sessions.py::TestRecordingASession::test_an_attendee_addressed_by_slug_is_stored_as_the_player_that_every_later_reader_resolves`,
+which asserts the slug round-trip, that one player written two ways is one attendee, and that the listing's
+count and top name both answer in slugs.
+
+**4. A capacity guard that counted spellings rather than players.** Found by the test above, on the way: with
+one child on the sheet, `attendees=[slug, id]` for that same child was refused `not_on_sheet` — *"the session
+names 2"*, which is false about a session that names one. The guard ran over the typed list before resolution,
+so the fix moves it after: the sheet's ceiling is compared against the **distinct players the list resolves
+to**. Both sides are now held — the mixed-spelling write files one attendee, and the existing test that names
+two real players against a one-player sheet still refuses with `named: 2, on_sheet: 1`.
+
+**5. `ready` was a flag with no sentence, and the rulebook paraphrased it wrongly.** Both §39's and §40's
+capabilities doors carry `ready`, and the rulebook page described it as "whether their tables exist". The
+actual rule is two conditions — the tables *and* at least one account — so the page's sentence was wrong about
+the flag next to which it sat, and a freshly provisioned database honestly answers `false` while the page
+implied a fault. The rule is now a published constant, `organizations.READY_RULE`, printed by **both** doors as
+`ready_rule` (so the two cannot drift into two sentences), rendered on the rulebook page instead of the
+paraphrase, and asserted as the same object on both sides of the API tier. The walk holds the flag from both
+sides of its own run: `false` on the scratch database it just created, `true` after the first account it
+registers, and the two doors' sentences byte-equal.
+
+*(One more, on the walk's side rather than the product's: the erase check waited on the door and then read the
+painted table, so it was measuring the walk's own race — `router.refresh()` repaints later than the note
+lands. It now waits on the table and compares page **and** door in one assertion.)*
+
+
 **One pattern left open on purpose.** The review, goal and rename forms still hold several fields in one
 `useState` object and update it as `setForm({ ...form, field })`, which is the shape that lost the share
 checkbox's value when two inputs arrived inside one React batch. The two controls that the walk drives faster
@@ -92,24 +154,54 @@ forms should make the whole object functional at once rather than leave it half-
 
 ## How to re-run
 
+One command, from the repository root: `bash .scratch/qa-club-run.sh`. It is the only honest shape on this host,
+and it does five things in one shell:
+
 ```text
-# apps/api: a scratch server from this tree, never the shared dev one
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8734
-# apps/web
-npx tsc --noEmit && npm run lint
-NEXT_DIST_DIR=.next-club SITE_URL=http://127.0.0.1:3214 npx next build
-NEXT_DIST_DIR=.next-club SITE_URL=http://127.0.0.1:3214 API_INTERNAL_URL=http://127.0.0.1:8734 \
-  node node_modules/next/dist/bin/next start -p 3214
+python scripts/qa_db.py --name football_os_qa        # provision (and refuse to touch anything the URL names)
+NEXT_DIST_DIR=.next-club SITE_URL=… npx next build   # a production build from this tree
+uvicorn app.main:app --port 8734                    # DATABASE_URL = the scratch database, never the dev one
+next start -p 3214                                  # API_INTERNAL_URL points the web tier at that server
 QA_BASE=http://127.0.0.1:3214 node scripts/qa-club.mjs
 ```
-Start the server, wait for the chunk to match and run the walk **inside one shell invocation**: a backgrounded
-`next start` does not reliably survive this host, and a walk that talks to a dead port reports 25 failures
-rather than one environmental fact. Screenshots land in `docs/screenshots/` (untracked).
+
+`SKIP_BUILD=1` reuses `.next-club` when only the walk changed — but a run that is going to be cited as evidence
+should build, because the page it verifies has to be the page this tree compiles to. After the servers answer,
+the runner also prints the schema drift over the freshly provisioned database and regenerates
+`docs/api/openapi.json` **from the scratch API** rather than the dev one: the process on 8731 has an older tree
+loaded, and a route table exported from it would publish a door this build does not have.
+
+Two things this host does not tolerate: a backgrounded `next start` (it does not reliably survive, and a walk
+that talks to a dead port reports 25 failures rather than one environmental fact), and a shared database. The
+walk now provisions its own, because `ready` is read from data — on a long-lived development database the flag
+is true before the walk registers anything, and the check would only ever prove that a door answers. Screenshots
+land in `docs/screenshots/` (untracked).
 
 ## Deliberately not here
 
 * No erasure button. `DELETE …/players/{child}/data` wants a `confirm` echo of the row count it is about to
   destroy, which is not a decision a page should make in one click.
 * No video evidence: the walk files no clip, and the plan page says so — a citation is a label and a window.
-* No payment, and no `Sessions`/`Reports` (§41's next items) — the tenant page prints the API's own
-  `limitations()` sentences rather than paraphrasing them away.
+* No payment. §42's door prints the matrix it reads and the one feature today's plan actually costs; it does not
+  print a price, because no price exists in this project to print.
+* No `Matches`. §39's training, match, tactics, video and message rows are still the tier's own
+  `limitations()` sentences rather than pages — and the page prints those sentences rather than paraphrasing
+  them away.
+
+## What stands behind this run
+
+Every figure below was read off a command's own last line on the tree this document describes, on 2026-09-27.
+
+* Browser walk: **194/194 checks** on a production build (`NEXT_DIST_DIR=.next-club npx next build`, then
+  `node scripts/qa-club.mjs` against a scratch API and a scratch database of its own).
+* Whole API suite: **1072 passed, 1 skipped** — `1813.58s (0:30:13)` on the per-run SQLite file and
+  `1562.41s (0:26:02)` against PostgreSQL + pgvector, both `rc=0`; `--collect-only` reports **1073 items across
+  29 files**, which is what makes the single skip a countable thing rather than a gap in the progress rows.
+* Club tier alone, as a group: **258 passed in 558.98s**.
+* `mypy app`: **no issues found in 95 source files**. `ruff check .`: **All checks passed**.
+* `ruff format --check`: **5 files would be reformatted, 145 already formatted** — `seed.py`,
+  `evals/run_rag_eval.py`, `tests/test_challenges.py`, `tests/test_sim_ledger.py`, `tests/test_transfers.py`.
+  All five are unmodified at `HEAD` and belong to earlier milestones, so this run left them alone: the gate
+  states what is dirty rather than formatting somebody else's file to print a cleaner number.
+* `npx tsc --noEmit`: exit `0`. `npm run lint`: **No ESLint warnings or errors**.
+* Contract: **123 paths / 154 operations**, 30 of them under `/api/v1/club`, regenerated from the scratch API.

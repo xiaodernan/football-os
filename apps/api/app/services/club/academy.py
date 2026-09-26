@@ -30,7 +30,7 @@ academy door exactly as it does at a team door — which is what the isolation w
 from __future__ import annotations
 
 import re
-from datetime import UTC, date, datetime
+from datetime import date
 from typing import Any, Final
 
 from sqlalchemy import func, inspect, select
@@ -51,6 +51,7 @@ from app.models import (
     RealPlayer,
     User,
     VideoAsset,
+    utc_today,
 )
 from app.services.club import access
 from app.services.club.organizations import ClubRefusal, require, resolve_team, standing
@@ -267,7 +268,9 @@ RESTRICTED_FIELDS: Final = (
 
 
 def _today() -> date:
-    return datetime.now(UTC).date()
+    # One clock for a whole tenant page: §42's period key reads this same shared UTC day, so a daily ceiling and
+    # a session's own date rule cannot roll over at two different instants on one host.
+    return utc_today()
 
 
 def _is_minor(age: int) -> bool:

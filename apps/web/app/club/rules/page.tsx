@@ -268,7 +268,7 @@ export default async function ClubRulesPage() {
           </table>
         </div>
         <p className="muted" style={{ fontSize: "0.84rem" }}>
-          Both tiers say whether their tables exist: §39 <span className="mono">ready: {String(rules.ready)}</span>, §40 <span className="mono">ready: {String(edu.ready)}</span>. {rules.counts.rule} {edu.counts.rule}
+          Both tiers answer a stranger with a <span className="mono">ready</span> flag: §39 <span className="mono">ready: {String(rules.ready)}</span>, §40 <span className="mono">ready: {String(edu.ready)}</span>. What the flag stands on, in the door’s own words — and §40 prints the identical sentence rather than its own paraphrase, which the walk holds the two against: {rules.ready_rule} {rules.counts.rule} {edu.counts.rule}
         </p>
       </Panel>
 

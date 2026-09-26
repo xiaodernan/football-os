@@ -251,6 +251,8 @@ class TestThePublishedRulebook:
         assert sorted(body["stored_fields"]) == sorted(edu.STORED_FIELDS)
         assert body["refusals"] == list(edu.REFUSALS)
         assert body["refusals_shared_with_club_tier"] == list(edu.SHARED_REFUSALS)
+        assert body["ready_rule"] == club.READY_RULE, "one flag means one thing at both doors, so the sentence is the same object rather than two that a reader must trust"
+        assert isinstance(body["ready"], bool), "the flag is a measurement of this database, never a claim the deployment configures"
 
     def test_the_rulebook_names_the_two_things_consent_cannot_do(self) -> None:
         body = TestClient(app).get(CAPABILITIES).json()

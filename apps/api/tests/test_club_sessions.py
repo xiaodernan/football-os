@@ -23,15 +23,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
-from app.models import RealPlayer
+from app.models import RealPlayer, utc_today
 from tests.test_club_academy import _detail, _validation, world  # noqa: F401 — the world §40 seeds, so both files see one generated world
 
 CLUB = "/api/v1/club"  # the same door prefix §39 and §40 test through
 
 ACADEMY = f"{CLUB}/academy"
-YESTERDAY = (date.today() - timedelta(days=1)).isoformat()
-TODAY = date.today().isoformat()
-TOMORROW = (date.today() + timedelta(days=1)).isoformat()
+# The app's own day, not the host's: the door these constants probe answers from `utc_today()`, and a test that
+# read `date.today()` would disagree with the code under test for the hours a local-ahead host sits behind UTC.
+YESTERDAY = (utc_today() - timedelta(days=1)).isoformat()
+TODAY = utc_today().isoformat()
+TOMORROW = (utc_today() + timedelta(days=1)).isoformat()
 
 
 def _account(name: str) -> TestClient:
@@ -102,6 +104,34 @@ class TestRecordingASession:
         assert "duration_min × rpe ÷ 60" in body["formulas"]["load_units"]
         assert body["sessions"] == 1 and body["minors_present"] == 0
 
+    def test_an_attendee_addressed_by_slug_is_stored_as_the_player_that_every_later_reader_resolves(self, client: TestClient, session: Session) -> None:  # noqa: E501
+        """A page ticks a name off the sheet and sends its slug, exactly as every other door here is addressed.
+
+        The defect this holds: the row used to store whatever string the caller typed, while the read path resolves
+        each attendee by primary key. A session recorded from the tenant page therefore came back naming nobody —
+        and the two figures that read the same column inherited it: a guardian's scoped log found no session for
+        their own child, and a saved report's `appearances` was empty. Storing the resolved id is what makes the
+        write, the read and the scope agree, and one player written two ways is still one attendee.
+        """
+        owner, ident = _tenant("Slug Addressed Attendance")
+        team = _team_of(owner, ident, "Under 16s")
+        adult = _pick(session, minor=False, count=1)[0]
+        _add(owner, ident, team["id"], adult.slug)
+
+        made = _post(owner, ident, attendees=[adult.slug])
+        assert made.status_code == 200, made.text
+        row = made.json()["session"]
+        assert [item["slug"] for item in row["attendees"]] == [adult.slug], "the log has to say who was there"
+        assert row["attendees_gone"] == 0, "an attendee the read path cannot resolve is a silently missing player"
+
+        twice = _post(owner, ident, slot=2, attendees=[adult.slug, adult.id])
+        assert twice.status_code == 200, twice.text
+        assert len(twice.json()["session"]["attendees"]) == 1, "one player named two ways is one attendee, not two"
+
+        listing = owner.get(f"{ACADEMY}/{ident}/sessions").json()
+        assert listing["total"] == 2 and listing["attendance_counts"] == {adult.slug: 2}, "the count keys on the reader's address, not on the spelling stored"
+        assert listing["most_attended"] == adult.slug, "a figure about a person is printed as the person"
+
     def test_a_date_in_the_future_is_refused_because_a_session_is_a_record_not_a_plan(self, client: TestClient, session: Session) -> None:
         owner, ident = _tenant("Tomorrow Never")
         team = _team_of(owner, ident, "Under 16s")
@@ -112,6 +142,28 @@ class TestRecordingASession:
         assert _detail(refused)["code"] == "date_in_future"
         assert _detail(refused)["scheduled_on"] == TOMORROW
         assert owner.get(f"{ACADEMY}/{ident}/sessions").json()["total"] == 0, "a refusal is not a write"
+
+    def test_the_day_a_form_should_open_on_is_published_by_the_door_that_would_refuse_it(self, client: TestClient, session: Session) -> None:  # noqa: E501
+        """The listing prints the date the write rule compares against, and that date is writable.
+
+        Two directions, because a published date that only agrees with itself proves nothing: the value the door
+        prints accepts a session (`today` is a day that has happened), and the day after it is refused printing
+        the *same* value. A page that pre-fills from this field cannot be refused for a reason the door knew
+        already — which is the difference between a rule and a surprise.
+        """
+        owner, ident = _tenant("Published Today")
+        team = _team_of(owner, ident, "Under 16s")
+        adult = _pick(session, minor=False, count=1)[0]
+        _add(owner, ident, team["id"], adult.slug)
+        listing = owner.get(f"{ACADEMY}/{ident}/sessions").json()
+        assert listing["today"] == TODAY, "the door's day is the day the app's clock says it is"
+        assert "date_in_future" in listing["today_rule"]
+
+        on_the_published_day = _post(owner, ident, attendees=[adult.id], scheduled_on=listing["today"])
+        assert on_the_published_day.status_code == 200, on_the_published_day.text
+        the_day_after = _post(owner, ident, attendees=[adult.id], scheduled_on=(date.fromisoformat(listing["today"]) + timedelta(days=1)).isoformat())
+        assert the_day_after.status_code == 422, the_day_after.text
+        assert _detail(the_day_after)["today"] == listing["today"], "the refusal and the listing name one date, not two clocks"
 
     def test_outside_the_sheet_is_outside_the_tenant_no_matter_who_names_them(self, client: TestClient, session: Session) -> None:
         owner, ident = _tenant("Sheet Only")

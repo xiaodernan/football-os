@@ -240,6 +240,9 @@ def read_academy_capabilities(request: Request, db: Session = Depends(get_db)) -
         **edu.rules(),
         "counts": {**edu.academy_counts(db), **sess.session_counts(db, ready=edu.academy_ready(db)), **rep.report_counts(db, ready=edu.academy_ready(db))},
         "ready": edu.academy_ready(db),
+        # The same flag means the same thing at both doors, so the sentence is one constant rather than two that
+        # a reader has to trust agree.
+        "ready_rule": club.READY_RULE,
         # The session codes join the same table, and the answer map below decides which HTTP status each
         # one earns — so a code that forgot to register there would silently be announced as a 400.
         "session_limits": dict(sess.CAPS),

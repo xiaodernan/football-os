@@ -123,6 +123,7 @@ ROUTE_GUIDE: Final = (
     {"methods": ["GET"], "path": "/api/v1/club/capabilities", "purpose": "the published rulebook, readable before anybody signs in"},
     {"methods": ["GET"], "path": "/api/v1/club/invitations", "purpose": "the invitations addressed to this account, which grant nothing until accepted"},
     {"methods": ["GET", "PATCH", "DELETE"], "path": "/api/v1/club/{ident}", "purpose": "one tenant: its standing, its staff, its teams and its sheets"},
+    {"methods": ["GET"], "path": "/api/v1/club/{ident}/entitlements", "purpose": "the tenant's own ceilings and what it has spent this period — a standing reads them, they are not a staff right"},
     {"methods": ["POST"], "path": "/api/v1/club/{ident}/invites", "purpose": "offer a standing to an existing account; nothing is emailed"},
     {"methods": ["POST"], "path": "/api/v1/club/{ident}/accept", "purpose": "take up an invitation addressed to you"},
     {"methods": ["POST"], "path": "/api/v1/club/{ident}/decline", "purpose": "turn an invitation down, which deletes the row rather than revoking it"},
@@ -149,6 +150,7 @@ def read_capabilities(request: Request, db: Session = Depends(get_db)) -> dict[s
         **club.rules(),
         "counts": club.club_counts(db),
         "ready": club.club_ready(db),
+        "ready_rule": club.READY_RULE,
         "refusal_answers": {code: _ANSWERS[code] for code in club.REFUSALS},
         "limitations": club.limitations(),
         "data_origin": "project-authored",
@@ -188,6 +190,20 @@ def read_organization(ident: str, request: Request, db: Session = Depends(get_db
     limit(request, 30, 60, scope="club_read")
     try:
         return {**club.organization_by_identifier(db, user, ident), "integrity": club.access_problems(db, user), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.get("/{ident}/entitlements")
+def read_organization_entitlements(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """What this tenant is entitled to and what it has spent — §42's ceiling read on §39's standing.
+
+    Gated the way `GET /club/{ident}` is, because a ceiling is not a staff right: a member who cannot see the
+    number their own write will be measured against is left to discover it as a refusal.
+    """
+    limit(request, 30, 60, scope="club_read")
+    try:
+        return {**club.organization_entitlements(db, user, ident), "demo_data": False}
     except ClubRefusal as error:
         raise _refusal(error) from None
 

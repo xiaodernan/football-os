@@ -185,26 +185,39 @@ def create_session(
     names = _attendee_ids(attendees)
     if not names:
         raise ClubRefusal("no_attendees", "a session needs at least one player on the sheet; attendance left empty is not a session", attendees=0)
-    if len(names) > _sheet_size(session, sheet_team):
-        raise ClubRefusal(
-            "not_on_sheet",
-            f"this team's sheet holds {_sheet_size(session, sheet_team)} player(s) and the session names {len(names)}",
-            team=sheet_team.name,
-            named=len(names),
-            on_sheet=_sheet_size(session, sheet_team),
-        )
+    on_sheet = _sheet_size(session, sheet_team)
+    # The row stores the id each address *resolved to*, not the string the caller typed: the read path looks an
+    # attendee up by primary key to print their slug, age and `is_minor`, so a session recorded from a page — which
+    # addresses players by slug, the same way every other door here is addressed — would otherwise come back with
+    # empty attendance, and a guardian reading their own child's log would be told their child was at nothing.
+    # Two spellings of one player are one attendee.
+    present: list[str] = []
     minors = 0
     for player_id in names:
         person = _player_of(session, organization, player_id, on_sheet=False)
         _require_scope(session, organization, person, "plan")
+        if person.id in present:
+            continue
+        present.append(person.id)
         if _is_minor(int(person.age)):
             minors += 1
+    # The ceiling is counted over the players the list names, not over the strings that named them: a sheet of one
+    # child and an attendance of `slug, id` for that same child is one attendee, and refusing it would print a
+    # figure — "the session names 2" — that is false about the session in front of it.
+    if len(present) > on_sheet:
+        raise ClubRefusal(
+            "not_on_sheet",
+            f"this team's sheet holds {on_sheet} player(s) and the session names {len(present)}",
+            team=sheet_team.name,
+            named=len(present),
+            on_sheet=on_sheet,
+        )
 
     items = _focus_list(focus)
     drills = _string_list(drill_slugs, cap=DRILLS_MAX, label="drill slugs")
     text = _clip(note, NOTE_MAX, label="a session note")
     plan_row = _optional_plan(session, organization, plan)
-    if plan_row is not None and plan_row.player_id not in names:
+    if plan_row is not None and plan_row.player_id not in present:
         raise ClubRefusal("plan_attends", "the plan this session is filed under belongs to a child who is not on the attendance list", plan=plan_row.id)
     curriculum_id = _optional_curriculum(session, organization, curriculum)
 
@@ -221,7 +234,7 @@ def create_session(
         rpe=effort,
         focus=items,
         drill_slugs=drills,
-        attendees=names,
+        attendees=present,
         note=text,
     )
     session.add(row)
@@ -259,10 +272,14 @@ def list_sessions(session: Session, user: User, ident: str, *, team: str | None 
 
     total_load = round(sum(load_units(int(row.duration_min), int(row.rpe)) for row in rows), 1)
     minutes = sum(int(row.duration_min) for row in rows)
+    # Counted under the slug a reader can follow, not the internal id the row stores: `most_attended` is printed
+    # as a figure about a person, and a person on this platform is addressed by slug.
     by_player: dict[str, int] = {}
     for row in rows:
         for player_id in list(row.attendees or []):
-            by_player[str(player_id)] = by_player.get(str(player_id), 0) + 1
+            person = session.get(RealPlayer, str(player_id))
+            key = person.slug if person is not None else str(player_id)
+            by_player[key] = by_player.get(key, 0) + 1
     return {
         "organization": organization.slug,
         "items": [session_view(session, row) for row in rows],
@@ -274,12 +291,17 @@ def list_sessions(session: Session, user: User, ident: str, *, team: str | None 
         "attendance_counts": by_player,
         "role": member.role,
         "read_through": ("plan.read_all" if staff else "plan.read_own_child"),
+        # The day the write rule will judge against, printed by the read rule's own door. A page that pre-fills a
+        # date from its host clock can be a day ahead of this one — opened before midnight, used after — and a
+        # form default is worth nothing if the door refuses it for a reason it could have said in advance.
+        "today": _today().isoformat(),
         "formulas": {
             "total_load_units": LOAD_FORMULA + ", summed over the rows in this list",
             "total_minutes": "sum of `duration_min` over the rows in this list",
             "mean_rpe": "sum of `rpe` divided by the number of rows shown; null when there are none",
         },
         "rule": "a listing and a read agree: every session here is one this caller may open, and none of these figures is stored — they are summed from the rows on screen",
+        "today_rule": "`today` is the date a `scheduled_on` is compared against: a later one is refused with date_in_future, so a form should open on this value rather than on the reader's own clock",
         "demo_data": False,
     }
 

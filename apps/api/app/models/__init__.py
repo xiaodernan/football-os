@@ -6,7 +6,7 @@ and the SQLite dev fallback (ADR-002).
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any, Final
 
 from sqlalchemy import (
@@ -58,6 +58,15 @@ DATA_ORIGINS = ("synthetic", "licensed", "open", "user", "project-authored")
 
 def utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+def utc_today() -> date:
+    """The one day the platform counts in: UTC, so a period key and a date rule cannot disagree by a timezone.
+
+    A daily ceiling that rolls at the host's midnight and a record rule that reads a UTC date are two ceilings,
+    and a page that prints both would be holding two calendars. Nothing in this app stores a local date.
+    """
+    return datetime.now(UTC).date()
 
 
 class TimestampMixin:

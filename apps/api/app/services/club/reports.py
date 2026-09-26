@@ -22,7 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
-from app.models import ClubReport, ClubSession, ClubTeam, ClubTeamMember, GuardianConsent, Organization, RealPlayer, User
+from app.models import ClubReport, ClubSession, ClubTeam, ClubTeamMember, GuardianConsent, Organization, RealPlayer, UsageEvent, User
 from app.services import entitlements as ent
 from app.services.club import access
 from app.services.club.academy import _iso, _today
@@ -198,13 +198,13 @@ def create_report(session: Session, user: User, ident: str, *, kind: str, window
     if existing is None:
         # A new act spends the ceiling, so the meter is consulted here — after every validation of the request
         # itself, so a caller who sent an unknown kind or a reversed window is told about that rather than about
-        # a plan, and after the dedupe lookup, so re-asking the same question does not spend twice. The key is
-        # the report's own natural key, which is what `uq_club_report_window` enforces: meter and row agree by
-        # construction rather than by two lists kept in step.
-        ent.guard(session, subject_id=organization.id, feature="reports_saved", plan="free", source_id=f"{kind}:{start}:{end}:{team or 'tenant'}")
-        existing = ClubReport(
-            id=new_public_id("rep"), organization_id=organization.id, asked_by_user_id=user.id, kind=kind, team_id=(team_row.id if team_row else None), window_from=start, window_to=end
-        )
+        # a plan, and after the dedupe lookup, so re-asking the same question does not spend twice. The act's key
+        # is the report's own id, minted before either row exists: the question and its spend are then one act,
+        # and erasing the question can find the spend again without rebuilding a natural key from whichever
+        # spelling of a team name the caller happened to type.
+        report_id = new_public_id("rep")
+        ent.guard(session, subject_id=organization.id, feature="reports_saved", plan=ent.DEFAULT_PLAN, source_id=report_id)
+        existing = ClubReport(id=report_id, organization_id=organization.id, asked_by_user_id=user.id, kind=kind, team_id=(team_row.id if team_row else None), window_from=start, window_to=end)
         session.add(existing)
     else:
         # Re-asking the same question is not a new document; the row is kept and the read below recomputes.
@@ -213,7 +213,7 @@ def create_report(session: Session, user: User, ident: str, *, kind: str, window
     # The spend is recorded after the row exists: a report that failed to be written did not use anybody's
     # allowance, and an allowance charged for a write that never happened is a meter that lies the other way.
     if created:
-        ent.record(session, subject_id=organization.id, subject_kind="organization", feature="reports_saved", plan="free", source_id=f"{kind}:{start}:{end}:{team or 'tenant'}")
+        ent.record(session, subject_id=organization.id, subject_kind="organization", feature="reports_saved", plan=ent.DEFAULT_PLAN, source_id=report_id)
     _, member = standing(session, user, ident)
     return {
         "report": report_view(session, organization, existing, staff=access.may(member.role, "plan.read_all"), user=user),
@@ -269,13 +269,21 @@ def delete_report(session: Session, user: User, ident: str, report_ident: str) -
     organization, _ = require(session, user, ident, "plan.read_all")
     row = _one(session, organization, report_ident)
     held = len(_rows(session, organization))
+    # The act goes with the question: `ent.rules()["usage_rule"]` promises that deleting an act removes its
+    # spend, and a tenant that erased its only report would otherwise be refused the next one by a meter
+    # counting a row it no longer has. What survives is the sessions and sheets the report was asking about —
+    # this erases a reading of them, never a reading subject.
+    spent = list(session.scalars(select(UsageEvent).where(UsageEvent.subject_id == organization.id, UsageEvent.feature == "reports_saved", UsageEvent.source_id == row.id)))
     session.delete(row)
+    for act in spent:
+        session.delete(act)
     session.commit()
     return {
         "deleted": True,
         "id": report_ident,
         "reports": held - 1,
-        "rule": "deleting a report removes the question, not one row of what it was asking about",
+        "usage_rows_removed": len(spent),
+        "rule": "deleting a report removes the question and the act it spent, and not one row of what it was asking about",
         "demo_data": False,
     }
 

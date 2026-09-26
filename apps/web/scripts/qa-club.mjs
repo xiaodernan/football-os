@@ -140,7 +140,7 @@ async function untilTrue(read, timeout = 60_000) {
 }
 
 /** A call from inside the page, so the httpOnly cookie the proxy minted is the one being used. */
-function call(page, method, path, body) {
+function askOnce(page, method, path, body) {
   return page.evaluate(
     async (verb, url, payload) => {
       const response = await fetch(url, {
@@ -155,12 +155,27 @@ function call(page, method, path, body) {
       } catch {
         json = null;
       }
-      return { status: response.status, json };
+      return { status: response.status, json, retry: Number(response.headers.get('retry-after')) || null };
     },
     method,
     path,
     body ?? null,
   );
+}
+
+/** A 429 is the per-minute limiter answering the walk's own polling rate — the walk drives a page faster than a
+ *  person can, and every `router.refresh()` a write triggers re-reads the doors the page paints. So a call waits
+ *  out the `Retry-After` the door printed and tries again, bounded: a server that limits forever still reports 429
+ *  rather than hanging the walk.
+ */
+async function call(page, method, path, body) {
+  let last = null;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    last = await askOnce(page, method, path, body);
+    if (last.status !== 429) return last;
+    await new Promise((done) => setTimeout(done, Math.min(Math.max(last.retry ?? 2, 2), 20) * 1000));
+  }
+  return last;
 }
 
 /** Real keystrokes: React only sees a value that arrived through an input event. */
@@ -174,6 +189,60 @@ async function clearField(page, selector) {
   await page.waitForSelector(selector, { visible: true, timeout: 20_000 });
   await page.click(selector, { clickCount: 3 });
   await page.keyboard.press('Backspace');
+}
+
+/**
+ * Press a write control and read the note *that* press paints, waiting the tier's own rate door out.
+ *
+ * The walk drives a page faster than a person can, and the club writes are limited per minute, so a 429 here is
+ * a fact about the walk's speed rather than about the feature: the press is retried after a wait. The note is
+ * matched against the one painted *after* the press, because the component keeps the previous answer on screen
+ * and a stale note would otherwise answer for a later call. `ok` is true only when a fresh note arrived *and it
+ */
+async function pressWrite(page, button, action, want = '', tries = 4) {
+  const sel = `[data-note="${action}"]`;
+  const read = () => page.$eval(sel, (node) => node.innerText.replace(/\s+/g, ' ').trim()).catch(() => '');
+  for (let attempt = 1; attempt <= tries; attempt += 1) {
+    const before = await read();
+    const pressed = await press(page, button);
+    if (pressed !== 'clicked') return { ok: false, pressed, note: `(the button ${pressed})`, attempts: attempt };
+    let note = '';
+    let changed = false;
+    let matched = squeeze(want).length === 0;
+    const deadline = Date.now() + 30_000;
+    while (Date.now() < deadline) {
+      note = await read();
+      if (note.length > 0 && note !== before) {
+        changed = true;
+        matched = squeeze(want).length === 0 || squeeze(note).toUpperCase().includes(squeeze(want).toUpperCase());
+        // A fresh note that is not the rate door is the answer either way — a refusal is not a pass, and
+        // waiting the deadline out for a note that already arrived would only slow the red down.
+        if (matched || !/429/.test(note)) break;
+      }
+      await new Promise((done) => setTimeout(done, 300));
+    }
+    if (!/429/.test(note)) return { ok: matched && changed, pressed, note: note === before ? '(no fresh note painted)' : note, attempts: attempt };
+    await new Promise((done) => setTimeout(done, 25_000));
+  }
+  return { ok: false, pressed: 'limited', note: '(every attempt was answered 429 by the rate door)', attempts: tries };
+}
+
+/**
+ * The "Plan and limits" table exactly as the page paints it: feature → the figures in its own columns.
+ *
+ * The columns are read positionally rather than by matching prose, because the point of the check is that the
+ * arithmetic holds *across* the columns a reader sees: ceiling minus used, the remainder printed beside them.
+ */
+async function meterOf(page) {
+  const rows = await page.$$eval('tr[data-entitlement]', (nodes) => nodes.map((node) => Array.from(node.querySelectorAll('td')).map((cell) => cell.innerText.trim())));
+  return Object.fromEntries(rows.map((cells) => [cells[0], { limit: Number(cells[1]), used: Number(cells[2]), remaining: Number(cells[3]), period: cells[4], acts: Number(cells[5]), enforced: cells[6] }]));
+}
+
+/** Every key name a JSON payload carries, however deep — the shape a payment would have to live in. */
+function keyNames(node) {
+  if (Array.isArray(node)) return node.flatMap(keyNames);
+  if (node && typeof node === 'object') return Object.keys(node).flatMap((key) => [key, ...keyNames(node[key])]);
+  return [];
 }
 
 function press(page, testid) {
@@ -246,9 +315,13 @@ async function main() {
   // ----------------------------------------------------------- a stranger, with no cookie at all
   const rulesDoor = await fetch(`${BASE}/api/v1/club/capabilities`, { headers: { accept: 'application/json' } });
   const clubRules = rulesDoor.ok ? await rulesDoor.json() : null;
-  check('the §39 capabilities door answers a caller with no session', rulesDoor.status === 200 && clubRules?.ready === true, `HTTP ${rulesDoor.status}`);
+  const readyRule = squeeze(String(clubRules?.ready_rule ?? ''));
+  check('the §39 capabilities door answers a caller with no session and prints the two conditions its ready flag stands on', rulesDoor.status === 200 && typeof clubRules?.ready === 'boolean' && shouts(readyRule, 'tables') && shouts(readyRule, 'at least one'), `HTTP ${rulesDoor.status}; rule ${readyRule.slice(0, 70)}`);
   const eduDoor = await (await fetch(`${BASE}/api/v1/club/academy/capabilities`, { headers: { accept: 'application/json' } })).json();
-  check('the §40 door answers the same way and names the same threshold', eduDoor?.minor_age === 18 && eduDoor?.ready === true, `minor_age ${eduDoor?.minor_age}`);
+  check('the §40 door answers the same way, names the same threshold, and prints the one sentence rather than its own', eduDoor?.minor_age === 18 && typeof eduDoor?.ready === 'boolean' && squeeze(String(eduDoor?.ready_rule ?? '')) === readyRule, `minor_age ${eduDoor?.minor_age}; identical sentence: ${squeeze(String(eduDoor?.ready_rule ?? '')) === readyRule}`);
+  // The flag is read from data, so the walk holds it from both sides: false on the empty database it provisions,
+  // and true once its own first account exists. One-sided, this check would only ever prove the door answers.
+  check('and on the empty database this walk just provisioned both doors answer false instead of implying a tenant layer is up', clubRules?.ready === false && eduDoor?.ready === false, `club ${JSON.stringify(clubRules?.ready)}, academy ${JSON.stringify(eduDoor?.ready)}`);
   const anonymousList = await fetch(`${BASE}/api/v1/club`, { headers: { accept: 'application/json' } });
   check('but a stranger may not read a tenant list', anonymousList.status === 401, `HTTP ${anonymousList.status}`);
 
@@ -289,12 +362,19 @@ async function main() {
   const neverPrinted = await attributeValues(page, 'li[data-never]', 'data-never');
   check('the never-stored list is printed item by item, in the API’s own words', neverPrinted.length === (eduDoor.never_stored ?? []).length && (eduDoor.never_stored ?? []).every((line) => neverPrinted.includes(line)), `${neverPrinted.length} of ${(eduDoor.never_stored ?? []).length} fields`);
   check('the door lines both counts and the ready flag', shouts(rulesBody, `curricula ${eduDoor.counts?.curricula ?? '?'} · plans ${eduDoor.counts?.plans ?? '?'}`) || shouts(rulesBody, 'ready'), JSON.stringify(eduDoor.counts ?? null).slice(0, 90));
+  check('and the rulebook page carries the ready rule as the door wrote it, so a flag on a page has the sentence beside it', shouts(rulesBody, readyRule), `${shouts(rulesBody, readyRule) ? 'printed' : 'absent'} · ${readyRule.slice(0, 60)}…`);
   await shot(page, 'rulebook-signed-out');
 
   // ----------------------------------------------------------- register and read the index
   await open(page, '/login');
   const registered = await register(page, OWNER, 'Club QA Owner', 'coach');
   check('an owner registers through the cookie proxy', registered.status === 201, `HTTP ${registered.status} ${JSON.stringify(registered.json ?? null).slice(0, 80)}`);
+  // The other half of the flag the rulebook page prints: the same two doors, re-read now that this walk's own
+  // first account exists in the database it provisioned. One-sided, the earlier check would only ever prove that
+  // a door answers.
+  const readyAfter = await (await fetch(`${BASE}/api/v1/club/capabilities`, { headers: { accept: 'application/json' } })).json();
+  const readyAfterAcademy = await (await fetch(`${BASE}/api/v1/club/academy/capabilities`, { headers: { accept: 'application/json' } })).json();
+  check('and both doors flip to true on that one account, which is all the printed rule asks for', readyAfter?.ready === true && readyAfterAcademy?.ready === true, `club ${JSON.stringify(readyAfter?.ready)}, academy ${JSON.stringify(readyAfterAcademy?.ready)}`);
 
   await open(page, '/club');
   const indexRobots = await metaRobots(page);
@@ -539,6 +619,138 @@ async function main() {
   check('and carries its own limits, not a copy of the tenant’s', (afterTwo.json.limitations ?? []).length > 0 && has(squeeze(fbody), squeeze(afterTwo.json.limitations[0])), `${(afterTwo.json.limitations ?? []).length} sentences`);
   check('it prints where the figures came from', has(squeeze(fbody), squeeze(afterTwo.json.progress.measured_from)), String(afterTwo.json.progress.measured_from).slice(0, 60));
 
+  // ----------------------------------------------------------- §41's session log, written from the page
+  await open(page, tenant.path);
+  const sessionsPath = `/api/v1/club/academy/${encodeURIComponent(ident)}/sessions`;
+  const reportsPath = `/api/v1/club/academy/${encodeURIComponent(ident)}/reports`;
+  const firstLog = await call(page, 'GET', sessionsPath);
+  // The day the write rule judges against, read from the door that owns the rule rather than from this host's
+  // clock: a walk runs for minutes, and every figure below is the date the server says it is.
+  const doorToday = firstLog.json?.today ?? '(the session door printed no today)';
+  check('the sessions door publishes the day it refuses a future date against, in its own sentence', /^\d{4}-\d{2}-\d{2}$/.test(doorToday) && has(String(firstLog.json?.today_rule ?? ''), 'date_in_future'), `today ${doorToday}; rule ${String(firstLog.json?.today_rule ?? '(none)').slice(0, 60)}`);
+  const paintedDate = await page.$eval('input[aria-label="Session date"]', (node) => node.value).catch(() => '(no field on the page)');
+  check('and the form the page paints is open on that day, not on a day it worked out for itself', paintedDate === doorToday, `the field holds ${paintedDate}; the door says ${doorToday}`);
+  check('the session door answers an empty log, with a zero and not a missing mean', firstLog.status === 200 && firstLog.json.total === 0 && firstLog.json.total_load_units === 0 && firstLog.json.mean_rpe === null, `${firstLog.json.total} row(s), load ${firstLog.json.total_load_units}, mean rpe ${JSON.stringify(firstLog.json.mean_rpe)}`);
+  check('and the panel says the same thing instead of painting an empty table', (await page.$('[data-load-check]')) !== null && shouts(await text(page), '0 session(s)'), 'an empty log is a zero, not a refusal');
+  check('the recorder prints the caps the door publishes rather than its own', shouts(await text(page), `(${eduDoor.session_limits.duration_range[0]}–${eduDoor.session_limits.duration_range[1]} minutes)`) && shouts(await text(page), `(${eduDoor.session_limits.rpe_range[0]}–${eduDoor.session_limits.rpe_range[1]})`) && shouts(await text(page), `at most ${eduDoor.session_limits.session_focus_max})`) && shouts(await text(page), `at most ${eduDoor.session_limits.attendance_max} may be`), JSON.stringify(eduDoor.session_limits).slice(0, 130));
+  check('and the report form, for the window the tier enforces', shouts(await text(page), `at most ${eduDoor.report_limits.window_max_days} days after the start`), `window_max_days ${eduDoor.report_limits.window_max_days}`);
+
+  const durationBox = 'input[aria-label="Session duration"]';
+  const rpeBox = 'input[aria-label="Session RPE"]';
+  await clearField(page, durationBox);
+  await typeInto(page, durationBox, '75');
+  await clearField(page, rpeBox);
+  await typeInto(page, rpeBox, '6');
+  await typeInto(page, 'input[aria-label="Session focus"]', 'pressing, transitions');
+  await typeInto(page, 'input[aria-label="Session note"]', `QA session ${stamp.slice(-4)}.`);
+  check('the attendance boxes are the players on that sheet, and nobody else', (await attributeValues(page, '[data-testid^="attendee-"]', 'data-testid')).join(',') === `attendee-${child.slug}`, `the sheet holds ${sheet.squad_size} row(s)`);
+  check('and the page will not record a session with nobody named before it asks the door', (await page.$eval('[data-testid="session-record"]', (node) => node.disabled)) === true, 'the button is disabled until an attendee is ticked');
+  check('ticking a player is what arms the write', (await press(page, `attendee-${child.slug}`)) === 'clicked' && (await page.$eval('[data-testid="session-record"]', (node) => !node.disabled)) === true);
+  const written = await pressWrite(page, 'session-record', 'session-record', 'answered');
+  check('the page records the session from its own controls', written.ok && (await untilTrue(async () => (await call(page, 'GET', sessionsPath)).json?.total === 1, 90_000)), `the button ${written.pressed} after ${written.attempts} attempt(s); the page's own note: ${written.note}`);
+
+  const logged = await call(page, 'GET', sessionsPath);
+  const session = (logged.json.items ?? [])[0] ?? {};
+  const expectedLoad = Math.round((75 * 6) / 60 * 10) / 10;
+  check('the row it wrote keeps the figures the form held', session.duration_min === 75 && session.rpe === 6 && session.slot === 1 && session.team?.id === team.id && (session.focus ?? []).join(',') === 'pressing,transitions', `${session.duration_min} min at rpe ${session.rpe}, slot ${session.slot}, focus ${(session.focus ?? []).join('/')}`);
+  check('and the date is the day the door calls today, not one the page guessed for itself', session.scheduled_on === doorToday, `${session.scheduled_on} vs the door’s own ${doorToday} (the day this walk began, from the plan door, was ${serverToday})`);
+  check('the attendee is the child the walk put on the sheet, read back from the world', (session.attendees ?? []).length === 1 && session.attendees[0].slug === child.slug && session.attendees[0].is_minor === true, JSON.stringify((session.attendees ?? []).map((row) => row.slug)));
+  check('the load is the published formula over the row’s own two columns, and the total is the same arithmetic', session.load_units === expectedLoad && logged.json.total_load_units === expectedLoad && shouts(await text(page), logged.json.formulas?.total_load_units ?? 'no formula published'), `expected ${expectedLoad}; the door says ${session.load_units}`);
+  const logRows = await waitRows(page, 'session');
+  check('the printed row shows the minutes, the rpe and the load the door computed', logRows.length === 1 && logRows[0].cells[4]?.text === '75 min' && logRows[0].cells[5]?.text === '6' && Number(logRows[0].cells[6]?.text) === expectedLoad, logRows[0]?.cells.map((cell) => cell.text).join(' | ').slice(0, 150));
+  const columnSum = logRows.reduce((sum, row) => sum + Number(row.cells[6]?.text ?? 0), 0);
+  check('the page adds its own printed column up before believing the total beside it', (await page.$eval('[data-load-check]', (node) => node.getAttribute('data-load-check'))) === 'agrees' && Math.abs(columnSum - logged.json.total_load_units) < 0.05, `column ${columnSum.toFixed(2)} vs door ${logged.json.total_load_units}`);
+
+  await press(page, `attendee-${child.slug}`);
+  await clearField(page, durationBox);
+  await typeInto(page, durationBox, String(eduDoor.session_limits.duration_range[1] + 1));
+  const tooLong = await pressWrite(page, 'session-record', 'session-record', 'refused with');
+  check('a duration outside the published range is refused with the figure it tripped over', tooLong.ok && /refused with 4\d\d/.test(tooLong.note) && has(tooLong.note, 'duration_range') && has(squeeze(tooLong.note), squeeze(String(eduDoor.session_limits.duration_range[1]))), `${tooLong.note.slice(0, 170)} (after ${tooLong.attempts} attempt(s), the button ${tooLong.pressed})`);
+  await clearField(page, durationBox);
+  await typeInto(page, durationBox, '60');
+  const clashed = await pressWrite(page, 'session-record', 'session-record', 'refused with');
+  check('a second session in the same date and slot is a conflict, not an overwrite', clashed.ok && /refused with 409/.test(clashed.note) && has(clashed.note, 'slot_taken'), `${clashed.note.slice(0, 170)} (the button ${clashed.pressed})`);
+  const afterRefusals = await call(page, 'GET', sessionsPath);
+  check('and neither refusal is a write: one row, still at 75 minutes', afterRefusals.json.total === 1 && afterRefusals.json.items[0].duration_min === 75, `${afterRefusals.json.total} row(s), ${afterRefusals.json.items[0]?.duration_min} min`);
+
+  // ----------------------------------------------------------- §41's saved question, answered on read
+  const reportsDoor = await call(page, 'GET', reportsPath);
+  check('the report door answers an empty list of questions and names the kinds it can produce', reportsDoor.status === 200 && reportsDoor.json.total === 0 && reportsDoor.json.kinds.join(',') === eduDoor.report_kinds.join(','), `${reportsDoor.json.total} saved; kinds ${reportsDoor.json.kinds.join(', ')}`);
+  check('and the form offers those kinds as a choice, not as free text', (await page.$$eval('select[aria-label="Report kind"] option', (nodes) => nodes.map((node) => node.value))).join(',') === eduDoor.report_kinds.join(','), eduDoor.report_kinds.join(', '));
+  const windowStart = 'input[aria-label="Report window start"]';
+  const windowEnd = 'input[aria-label="Report window end"]';
+  await clearField(page, windowStart);
+  await typeInto(page, windowStart, doorToday);
+  await clearField(page, windowEnd);
+  await typeInto(page, windowEnd, doorToday);
+  const savedQuestion = await pressWrite(page, 'report-save', 'report-save', 'answered');
+  check('the page saves the question from its own controls', savedQuestion.ok && (await untilTrue(async () => (await call(page, 'GET', reportsPath)).json?.total === 1, 90_000)), `the button ${savedQuestion.pressed} after ${savedQuestion.attempts} attempt(s); the page's own note: ${savedQuestion.note}`);
+  const saved = await call(page, 'GET', reportsPath);
+  const report = (saved.json.items ?? [])[0] ?? {};
+  check('a report stores the question — a kind, a window and a sheet — and no figure at all', report.kind === 'squad_load' && report.window_from === doorToday && report.window_to === doorToday && report.team === null, `${report.kind} ${report.window_from}→${report.window_to}, team ${JSON.stringify(report.team)}`);
+  check('the window length is arithmetic over the two dates it stored', report.window_days === 1, `${report.window_days} day(s)`);
+  check('and the answer is the rows that exist now: the session the walk just recorded', report.body?.sessions === 1 && report.body.total_load_units === expectedLoad && report.body.mean_rpe === 6 && report.body.most_worked === child.slug, JSON.stringify({ sessions: report.body?.sessions, load: report.body?.total_load_units, mean: report.body?.mean_rpe, most: report.body?.most_worked }));
+  const reportRows = await waitRows(page, 'report');
+  check('the row prints the figures the door computed beside the question it keeps', reportRows.length === 1 && reportRows[0].cells[5]?.text === '1' && Number(reportRows[0].cells[6]?.text) === expectedLoad, reportRows[0]?.cells.map((cell) => cell.text).join(' | ').slice(0, 150));
+  // ----------------------------------------------------------- §42's meter, on the page that just spent it
+  const meterPath = `/api/v1/club/${encodeURIComponent(ident)}/entitlements`;
+  const meterDoor = await call(page, 'GET', meterPath);
+  const capabilities = await call(page, 'GET', '/api/v1/entitlements/capabilities');
+  const storedCeiling = capabilities.json?.matrix?.free?.reports_saved?.[0] ?? -1;
+  check('the tenant’s own ceiling door answers the owner, names the plan it is metered against, and stores nothing of its own', meterDoor.status === 200 && meterDoor.json.plan === 'free' && meterDoor.json.organization === ident && typeof meterDoor.json.role === 'string', `HTTP ${meterDoor.status} plan ${JSON.stringify(meterDoor.json?.plan)} role ${JSON.stringify(meterDoor.json?.role)}`);
+  await untilTrue(async () => {
+    const spent = (await call(page, 'GET', meterPath)).json?.items?.find((row) => row.feature === 'reports_saved');
+    return spent?.used === 1 && spent?.acts === 1;
+  }, 90_000);
+  const meter = await meterOf(page);
+  const spentMeter = meter.reports_saved ?? {};
+  check('the ceiling the page prints is the ceiling the matrix stores, read through the public door', spentMeter.limit === storedCeiling && storedCeiling > 0, `page ${spentMeter.limit}, matrix ${storedCeiling}`);
+  check('one report saved from the page is one act on the meter, and the act row is named', spentMeter.used === 1 && spentMeter.acts === 1 && spentMeter.period === 'day', JSON.stringify(saved));
+  check('the remainder is the subtraction the two printed columns imply, not a figure anybody stored', spentMeter.remaining === Math.max(0, spentMeter.limit - spentMeter.used) && (await page.$eval('[data-meter-check]', (node) => node.getAttribute('data-meter-check'))) === 'agrees', `limit ${spentMeter.limit} − used ${spentMeter.used} vs printed ${spentMeter.remaining}`);
+  const refusedColumn = Object.entries(meter).filter(([, row]) => /^yes/.test(row.enforced ?? '')).map(([feature]) => feature);
+  check('exactly one feature is refused on today, the table holds one row per item the door sent, and an account’s own ceiling is not among them', refusedColumn.join(',') === 'reports_saved' && Object.keys(meter).length === (meterDoor.json.items ?? []).length && !('organizations' in meter), `${refusedColumn.join(',')} of ${Object.keys(meter).length} row(s), door sent ${(meterDoor.json.items ?? []).length}`);
+  const meterBody = await text(page);
+  const paymentShaped = keyNames(meterDoor.json).filter((key) => /price|currency|amount|fee|billing|provider|checkout|trial/i.test(key));
+  check('no payment-shaped field is in the door an account reads, and the panel prints the sentence that says so', paymentShaped.length === 0 && has(squeeze(meterBody), squeeze(meterDoor.json.no_payment)), `${paymentShaped.length} key(s): ${paymentShaped.slice(0, 3).join(',')}`);
+  check('the account that owns the tenant is a separate subject, and the page says which one it is showing', (await page.$eval('[data-account-meter]', (node) => node.getAttribute('data-account-meter'))).split(',').includes('organizations'), `tenant rows: ${Object.keys(meter).join(', ')}`);
+
+  const dayBefore = new Date(Date.parse(`${doorToday}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+  await clearField(page, windowEnd);
+  await typeInto(page, windowEnd, dayBefore);
+  const reversed = await pressWrite(page, 'report-save', 'report-save', 'refused with');
+  check('a window that ends before it starts is refused, and the sentence names both dates', reversed.ok && /refused with 4\d\d/.test(reversed.note) && has(reversed.note, 'window_reversed') && has(reversed.note, dayBefore) && has(reversed.note, doorToday), `${reversed.note.slice(0, 170)} (the button ${reversed.pressed})`);
+  check('and a refused question is not a row: the list still holds one', (await call(page, 'GET', reportsPath)).json?.total === 1, 'one before and after the refusal');
+  const afterRefusal = (await call(page, 'GET', meterPath)).json?.items?.find((row) => row.feature === 'reports_saved') ?? {};
+  check('and it spends nothing on the meter either: the same act, the same used figure', afterRefusal.used === 1 && afterRefusal.acts === 1, JSON.stringify(afterRefusal));
+
+  const familyLog = await call(pageB, 'GET', sessionsPath);
+  check('a guardian reads the sessions their own child was at, through the right the door names', familyLog.status === 200 && familyLog.json.total === 1 && familyLog.json.read_through === 'plan.read_own_child', `${familyLog.json?.total} row(s) via ${familyLog.json?.read_through}`);
+  check('while staff read the tenant’s whole log through the other right', logged.json.read_through === 'plan.read_all', logged.json.read_through);
+  const familyMeter = await call(pageB, 'GET', meterPath);
+  check('a guardian reads the tenant’s ceiling too, because it is the standing they hold rather than a staff right', familyMeter.status === 200 && familyMeter.json.role === 'parent' && has(String(familyMeter.json?.read_through ?? ''), 'standing'), `HTTP ${familyMeter.status}, role ${JSON.stringify(familyMeter.json?.role)}, through ${JSON.stringify(familyMeter.json?.read_through)}`);
+  const familyReport = await call(pageB, 'GET', reportsPath);
+  check('and the same saved question is cut to their child for them, on the row nobody rewrote', familyReport.status === 200 && familyReport.json.items[0].body.sessions === 1 && familyReport.json.items[0].body.appearances?.[child.slug] === 1 && Object.keys(familyReport.json.items[0].body.appearances ?? {}).join(',') === child.slug, JSON.stringify(familyReport.json?.items?.[0]?.body?.appearances ?? null));
+
+  await open(page, tenant.path);
+  const erasedQuestion = await pressWrite(page, '[data-act="report-erase"]', 'report-erase', 'erased');
+  check('the page erases a question from the row control it printed', erasedQuestion.ok && (await untilTrue(async () => (await call(page, 'GET', reportsPath)).json?.total === 0, 90_000)), `${erasedQuestion.note.slice(0, 140)} (after ${erasedQuestion.attempts} attempt(s), the button ${erasedQuestion.pressed})`);
+  const erasedSession = await pressWrite(page, '[data-act="session-erase"]', 'session-erase', 'erased');
+  check('and the session row likewise', erasedSession.ok && (await untilTrue(async () => (await call(page, 'GET', sessionsPath)).json?.total === 0, 90_000)), `${erasedSession.note.slice(0, 140)} (after ${erasedSession.attempts} attempt(s), the button ${erasedSession.pressed})`);
+  check('the door answers the erased session as an absence rather than an empty row', (await call(page, 'GET', `${sessionsPath}/${encodeURIComponent(session.id)}`)).status === 404, 'no_such_session');
+  check('and erasing a session left the sheet and the child on it alone', (await call(page, 'GET', `/api/v1/club/academy/${encodeURIComponent(ident)}/plans`)).json?.total === 1, 'the plan the walk opened is still the plan the walk opened');
+  // The allowance a saved report spent comes back with the report: the act row is deleted beside the question,
+  // so a tenant that erased its only report has tomorrow's ceiling today. Wait on the painted table itself, not on
+  // the door — the refresh the erase triggers repaints later than the note lands, and a check that read the table
+  // the moment the door agreed was measuring the walk's own race rather than the product's.
+  await untilTrue(async () => {
+    const painted = (await meterOf(page)).reports_saved;
+    return painted?.used === 0 && painted?.acts === 0;
+  }, 90_000);
+  const refunded = await meterOf(page);
+  const refundedDoor = (await call(page, 'GET', meterPath)).json?.items?.find((item) => item.feature === 'reports_saved') ?? {};
+  check('erasing the question gives the ceiling back, on the page and on the door alike', (refunded.reports_saved ?? {}).used === 0 && (refunded.reports_saved ?? {}).acts === 0 && (refunded.reports_saved ?? {}).remaining === (refunded.reports_saved ?? {}).limit && refundedDoor.used === 0 && refundedDoor.acts === 0, JSON.stringify({ page: refunded.reports_saved ?? {}, door: { used: refundedDoor.used, acts: refundedDoor.acts, remaining: refundedDoor.remaining, limit: refundedDoor.limit } }));
+  await shot(page, 'sessions-and-reports');
+
   // ----------------------------------------------------------- an account that was never invited at all
   const strangerContext = await browser.createBrowserContext();
   const pageC = await strangerContext.newPage();
@@ -549,7 +761,7 @@ async function main() {
   check('a third account registers and is invited to nothing', registerC.status === 201, `HTTP ${registerC.status} ${JSON.stringify(registerC.json ?? null).slice(0, 80)}`);
   check('the tenant page is a 404 for them, and never a 403', (await pageC.goto(`${BASE}${tenant.path}`, { waitUntil: 'domcontentloaded' })).status() === 404 && !shouts(await text(pageC), 'forbidden'), tenant.path);
   check('so is the child’s plan page — the address worth guessing, if any was', (await pageC.goto(`${BASE}${plan.path}`, { waitUntil: 'domcontentloaded' })).status() === 404, plan.path);
-  check('and both doors behind those pages answer absent too', (await call(pageC, 'GET', `/api/v1/club/${encodeURIComponent(ident)}`)).status === 404 && (await call(pageC, 'GET', `/api/v1/club/academy/${encodeURIComponent(ident)}/plans`)).status === 404, 'page, plan, tenant door, academy door');
+  check('and both doors behind those pages answer absent too, including the ceiling one nobody may read on somebody else’s tenant', (await call(pageC, 'GET', `/api/v1/club/${encodeURIComponent(ident)}`)).status === 404 && (await call(pageC, 'GET', `/api/v1/club/academy/${encodeURIComponent(ident)}/plans`)).status === 404 && (await call(pageC, 'GET', meterPath)).status === 404, 'page, plan, tenant door, academy door, meter door');
   const parentRights = clubRules.matrix.matrix.parent;
   check('a guardian holds three rights, and the matrix publishes those three', parentRights.length === 3 && parentRights.includes('consent.grant_own'), parentRights.join(', '));
 
@@ -565,8 +777,9 @@ async function main() {
   }
   const asMember = await call(pageB, 'GET', `/api/v1/club/${encodeURIComponent(ident)}`);
   const memberBody = await text(pageB);
-  check('the rights a guardian holds are printed from their own grant, not the owner’s', shouts(memberBody, `${asMember.json.my_grant.permissions.length} of ${clubRules.matrix.permissions.length} rights`) && asMember.json.my_grant.role === 'parent' && asMember.json.my_grant.permissions.length === parentRights.length, `parent holds ${asMember.json?.my_grant?.permissions.length} of ${clubRules.matrix.permissions.length}`);
-  check('their grant says why, in the door’s sentence', has(squeeze(memberBody), squeeze(asMember.json.my_grant.why)), String(asMember.json.my_grant.why ?? '(none)').slice(0, 60));
+  const memberGrant = asMember.json?.my_grant ?? null;
+  check('the rights a guardian holds are printed from their own grant, not the owner’s', shouts(memberBody, `${memberGrant?.permissions?.length ?? '?'} of ${clubRules.matrix.permissions.length} rights`) && memberGrant?.role === 'parent' && memberGrant?.permissions?.length === parentRights.length, `door HTTP ${asMember.status}, parent holds ${JSON.stringify(memberGrant?.permissions?.length ?? null)} of ${clubRules.matrix.permissions.length}`);
+  check('their grant says why, in the door’s sentence', memberGrant !== null && has(squeeze(memberBody), squeeze(memberGrant.why ?? '')), String(memberGrant?.why ?? '(none)').slice(0, 60));
   check('a page does not disable a write control by guessing their role', (await pageB.$$eval('[data-testid="consent-grant"],[data-testid="plan-open"]', (nodes) => [nodes.length, nodes.every((node) => !node.disabled)]))[0] === 2 && (await pageB.$$eval('[data-testid="consent-grant"],[data-testid="plan-open"]', (nodes) => nodes.every((node) => !node.disabled))) === true, 'both buttons are live for a member; the API decides what they may write');
   await open(page, tenant.path);
   const ownerView = await call(page, 'GET', `/api/v1/club/${encodeURIComponent(ident)}`);

@@ -171,20 +171,31 @@ and writing one is the coach's and analyst's act.
 
 ## 8. Where this tier stops
 
-Published in six sentences by `limitations()`, and repeated here so the ROADMAP row cannot overclaim:
+Published in seven sentences by `limitations()` — six at this tier's landing, the seventh added when §42's
+ceiling door and its pages went in — and repeated here so the ROADMAP row cannot overclaim:
 
-* **no report, development plan, session or message exists yet** — §39's Development, Training, Matches,
-  Communication rows and §41's `Sessions`/`Reports` rows arrive in the tiers after this one, which is why only
-  `Permissions` and the addressing of everything else are settled here;
-* **§40's minors' regime is not here**: the sheet reports `is_minor` from the stored age and a team carries
-  `age_group`, and that is all — parental consent, data minimisation, erasure and the parent's scoped right are
-  task #41;
+* **no match report or message exists in this tier** — §39's remaining rows (`Matches`, `Tactics`, `Video`,
+  `Communication`) arrive in the milestones after this one, which is why only `Permissions` and the addressing of
+  everything else are settled here; §40's development plans, §41's sessions and saved reports and §42's ceilings
+  are separate services, the first three read through `/club/academy`. The tenant page prints this list, so a row
+  that has landed and a sentence saying it has not are read together by everybody who opens `/club/{ident}` —
+  which is why the wording has been corrected twice: once 2026-09-27, when the shipped sentence still called a
+  training session missing after §41 had written one — the code was stale then — and once in this document, which
+  listed `Development` as unwritten several hours after §40 had written exactly that row, while `limitations()`
+  above was already right. A page that rewrites the door's sentences has to be re-read when the door moves;
+* **§40's minors' regime is not in §39's own tables**: the sheet reports `is_minor` from the stored age and a
+  team carries `age_group`, and that is all §39 stores — parental consent, data minimisation, erasure and the
+  parent's scoped right are §40's rows in the academy tier, landed 2026-09-26;
 * an invitation is a row and not a message; no mail transport exists in this project and none is claimed;
 * a revoked membership keeps its row for the record and grants nothing; there is no audit trail of *what* anybody
   did, only of who stood where;
 * teams point at the generated world's players, not copies — a tenant's sheet is a selection over the rows the
   scout already searches;
-* deleting a tenant removes its memberships and sheets and rewrites nothing about a player, a club or a career.
+* deleting a tenant removes its memberships and sheets and rewrites nothing about a player, a club or a career;
+* **the per-minute ceilings are counted per client address over one path**, so behind a proxy that forwards from
+  a single address every tenant shares one bucket — a 429 says the address is busy, not which account tripped it,
+  and the ceilings themselves are code at each door rather than a published figure. The browser walk found this
+  by tripping it: three accounts, one address, and the tenant door answering 429 in the middle of a check.
 
 ## 9. Measured
 
@@ -194,6 +205,12 @@ Published in six sentences by `limitations()`, and repeated here so the ROADMAP 
   per-run SQLite leg and on the PostgreSQL + pgvector leg (each exit code 0; the `-q` summary line is swallowed in
   a whole-suite run, so the totals here were read off the progress rows and cross-checked against
   `--collect-only`, which reports the same 892). 77 of those 892 are this tier's; M7 closed at 814.
+  **That figure is §39's step, and it is kept here because the sentence above is about the tier this file
+  verifies.** §40's academy tables, §41's Sessions and Reports, and §42's entitlement meter have since widened
+  the suite to **1073 items across 29 files — 1072 passed, 1 skipped, 0 failed on both legs**: 1813.58s
+  (0:30:13) on the per-run SQLite file and 1562.41s (0:26:02) against PostgreSQL + pgvector, each with exit code 0.
+  The 1 skip is the same PostgreSQL-only case in both runs, and the two summary lines were read off the two
+  transcript files rather than inferred from a progress row this time.
 * `mypy` clean on the four owned source files; `ruff format` and `ruff check` clean on `app/` and `migrations/`
   files this milestone owns; `alembic upgrade head` over the whole chain on a scratch database and
   `alembic check` reporting **no drift** between `0016` and the models.
@@ -214,5 +231,27 @@ Published in six sentences by `limitations()`, and repeated here so the ROADMAP 
 | P8 | a real door is dropped from the guide the page is handed | RED — 1 assertion, the two-way route test |
 | P9 | a published method is not the method the route takes | RED — 1 assertion, the two-way route test |
 
-* The web surface (`/club`, `/club/{slug}`) and its browser walk are task #42; nothing in this document claims
-  them.
+* The web surface (`/club`, `/club/{slug}`) and its browser walk were task #42 at the time this was written; the
+  counts above are §39's own landing, and §40's, §41's and §42's work is recorded in the sections below and in
+  `M8_ACADEMY_VERIFICATION.md` / `M8_CLUB_WEB_VERIFICATION.md`.
+
+## 10. What the later tiers of this milestone changed in §39's own code
+
+§39's tier was already called finished when §41's pages and §42's ceiling door started reading it in a browser.
+Four things moved, each because a reader disagreed with a writer:
+
+* **One clock.** `utc_today()` in `app/models/__init__.py` is now the single day the tier reasons from: §41's
+  `date_in_future` rule, §42's `period_key` and a report's `generated_on` all read it. Before this, a host ahead
+  of UTC could be told yesterday's session was in the future while the meter stamped today, and the tests agreed
+  with the host rather than with the code. `tests/test_entitlements.py` holds the two doors to one day:
+  a tenant's `sessions.today` must equal its meter's `as_of`, and the usage row the meter counted must be keyed on
+  the day the tenant's own doors publish. Mutating `entitlements_view` back to `date.today()` turns that test red
+  (`.scratch/one_clock_probe.py`, restored by checksum).
+* **`ready` grew a sentence.** `organizations.READY_RULE` is published as `ready_rule` by *both* capability doors,
+  so the flag cannot mean one thing at §39 and another at §40; the rulebook page prints the constant instead of
+  paraphrasing it, and both API tests assert they were handed the same object.
+* **Attendance stores the person, not the spelling.** `create_session` used to write the string the caller typed
+  into `attendees`, while every read resolves each entry by primary key. It now stores the resolved id, dedup on
+  the resolved id, and `list_sessions` counts under the slug a reader can follow. See §42's walk document, defect 3.
+* **The sheet's ceiling counts players.** The `not_on_sheet` guard moved after resolution, so a one-child sheet
+  and an attendance of `slug, id` for that child is one attendee rather than a refusal that claims there were two.

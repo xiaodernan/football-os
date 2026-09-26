@@ -71,6 +71,8 @@ DOORS: tuple[tuple[str, str, dict[str, Any]], ...] = (
     ("get", "/{ident}/teams/{team}/players", {}),
     ("post", "/{ident}/teams/{team}/players", {"player": "whoever", "note": ""}),
     ("delete", "/{ident}/teams/{team}/players/{player}", {}),
+    # §42's tenant meter is a §39 door — it names a tenant and asks its standing — so the walk reaches it here.
+    ("get", "/{ident}/entitlements", {}),
     # §40's academy doors name a tenant exactly the same way, so the isolation walk has to reach them too.
     # Every id in them belongs to nobody: the tenant is refused before any of them is looked up, which is the
     # whole point — a plan door that leaked "that plan is in another tenant" would leak the tenant.
@@ -533,8 +535,8 @@ class TestIsolationAcrossTenants:
         living = _tenant_naming_doors()
         assert living == declared, sorted(living ^ declared)
         assert (
-            len(declared) == 40
-        ), "this class is the isolation proof for every door that names a tenant: §39's fourteen, §40's eighteen academy doors and §41's eight session and report doors, counted from the route table above rather than remembered"
+            len(declared) == 41
+        ), "this class is the isolation proof for every door that names a tenant: §39's fourteen, §40's eighteen academy doors, §41's eight session and report doors and §42's one tenant-meter door, counted from the route table above rather than remembered"
 
     def test_an_unaccepted_invitation_and_a_revoked_standing_are_both_not_a_foothold(self) -> None:
         owner = _account("Suspender")
@@ -1094,6 +1096,8 @@ class TestPublishedSelfDescription:
         assert published["refusals"] == list(REFUSALS)
         assert set(published["refusal_answers"]) == set(REFUSALS)
         assert published["data_origin"] == "project-authored" and published["is_demo_data"] is False
+        assert published["ready_rule"] == club.READY_RULE, "the flag's rule is a published constant, so the page prints this sentence and not one written at the route"
+        assert "at least one" in club.READY_RULE, "the rule says what turns the flag true, which is the question a fresh deployment asks"
         assert all(isinstance(limitation, str) and len(limitation) > 40 for limitation in published["limitations"])
         assert all(len(line["purpose"]) > 20 for line in published["routes"]), "a door guide a page prints has to say what the door is for"
 
@@ -1121,12 +1125,21 @@ class TestPublishedSelfDescription:
 
     def test_the_rulebook_names_the_two_things_this_tier_deliberately_does_not_have(self) -> None:
         limitations = club.limitations()
-        assert any("no match report, training session or message" in text for text in limitations), "§39's other rows are named as missing"
+        joined = " ".join(limitations)
+        assert any("no match report or message" in text for text in limitations), "§39's other rows are named as missing"
+        # §41 landed `club_sessions` and `club_reports`, so the sentence that called a training session missing
+        # became false while the tier it describes was being written — and the tenant page prints this list.
+        assert "training session or message" not in joined, "a training session exists at /club/academy/{ident}/sessions; the rulebook may not still call it missing"
+        assert any("sessions and saved reports are separate services" in text for text in limitations), "the sentence has to say where they went, not just that §39 lacks them"
         assert any("/club/academy" in text for text in limitations), "the sentence has to say where the plans did go, not just that §39 lacks them"
         assert any("not a message" in text for text in limitations), "an invitation that is not an email is stated, not implied"
         assert any("parent" in text and "scoped by a consent row" in text for text in limitations), "a parent's three rights are scoped, and the rulebook says so"
         assert any("rewrites nothing about a player" in text for text in limitations)
         assert any("give their seat back" in text for text in limitations)
+        # The browser walk found this by tripping it: every account it drives connects from one address, so the
+        # doors it re-reads share a bucket. An operator meeting a 429 in that shape has to be able to read the
+        # rule somewhere other than in the error.
+        assert any("per client address" in text and "proxy" in text for text in limitations), "the limiter counts an address, not an account, and the rulebook says which"
         rules = club.rules()
         assert rules["founder"].startswith("the account that opens a tenant")
         assert rules["addressing"].startswith("a tenant is reached by its slug")

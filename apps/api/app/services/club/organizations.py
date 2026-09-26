@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 from app.core.security import new_public_id
 from app.models import ClubTeam, ClubTeamMember, Organization, OrganizationMember, RealPlayer, User
 from app.models import Team as WorldTeam
+from app.services import entitlements as ent
 from app.services.club import access
 from app.services.world.names import slugify
 
@@ -299,6 +300,42 @@ def organization_view(session: Session, organization: Organization, user: User, 
 def organization_by_identifier(session: Session, user: User, ident: str) -> dict[str, Any]:
     """Resolve a tenant by slug or id and read it as this account sees it — a foreign one answers as absent."""
     return organization_view(session, _organization(session, ident), user, ident=ident)
+
+
+def organization_entitlements(session: Session, user: User, ident: str) -> dict[str, Any]:
+    """What this tenant is entitled to and what it has spent, in the current period.
+
+    Gated on *standing* rather than on a permission for the same reason `organization_view` is: a ceiling is the
+    tenant's contract with the platform, not a staff right, so a coach — or a `parent`, who holds none of them —
+    is entitled to read the number their own write will be measured against. A foreign or unknown tenant answers
+    with §39's absence here too, before any plan row is looked up.
+
+    Two figures a page must not blend are printed apart on purpose. `items[].limit` is the *plan's* ceiling, and
+    only the feature whose `enforced` is true is refused on today by a door that checks it; the tier's own
+    constants (`counts.member_limit`, `sessions`' `limit`) come from the code that holds the rows and are printed
+    by the doors that own them. And nothing grants a plan in this build, so every tenant is metered against the
+    row `free` holds — which is a row somebody can edit, not a number chosen here.
+    """
+    organization, membership = standing(session, user, ident)
+    view = ent.entitlements_view(session, organization.id, plan=ent.DEFAULT_PLAN, subject_kind="organization")
+    return {
+        **view,
+        "organization": organization.slug,
+        "subject_id": organization.id,
+        "role": membership.role,
+        "read_through": "standing — every active member of the tenant reads its own ceiling, whoever holds which permission",
+        "plan_rule": f"nothing in this build grants a plan, so every tenant is metered against {ent.DEFAULT_PLAN!r}: that row is data an operator edits in the entitlements table, not a constant this function holds",
+        "enforced_rule": "only a feature whose `enforced` is true is refused today by a door that checks it; the others are the plan's promise, and the tier that owns each wires it",
+        "tier_limits": {
+            "members": MAX_MEMBERS_PER_ORGANIZATION,
+            "teams": MAX_TEAMS_PER_ORGANIZATION,
+            "rule": "these two are the constants §39's own writes are refused on, printed beside the plan ceilings so a page can show which is which rather than choosing between them",
+        },
+        "no_payment": ent.NO_PAYMENT,
+        "capabilities_door": "/api/v1/entitlements/capabilities",
+        "account_door": "/api/v1/entitlements/me",
+        "demo_data": False,
+    }
 
 
 def my_organizations(session: Session, user: User) -> dict[str, Any]:
@@ -704,12 +741,13 @@ def rules() -> dict[str, Any]:
 
 def limitations() -> list[str]:
     return [
-        "no match report, training session or message exists in this tier — §39's remaining rows arrive in the ones after it, and this one only decides who may see them; §40's development plans are a separate service, read through /club/academy",
+        "no match report or message exists in this tier — §39's remaining rows arrive in the ones after it, and this one only decides who may see them; §40's development plans and §41's sessions and saved reports are separate services, read through /club/academy",
         "an organisation's teams point at the generated world's players, not at copies of them: a tenant's sheet is a selection over the same rows the scout searches, so a rating cannot go stale on a sheet any more than on a shortlist",
         "the invitation is a row and not a message: no mail transport exists in this project, and none is claimed by it",
         "revoked memberships keep their rows for the record and grant nothing, and they give their seat back to `member_limit`; there is no audit trail of who did what before the revocation, only of who stood where",
         "a parent's row in the matrix holds three rights and every one of them is scoped by a consent row, not by the tenant: `plan.read_own_child` opens one named child's plan and no other, which is why the row is short rather than empty",
         "deleting a tenant removes its memberships and sheets, and rewrites nothing about a player, a club, or a career in the generated world",
+        "the per-minute ceilings on these doors are counted per client address over one path, so a deployment behind a proxy that forwards from a single address gives every tenant it serves the same bucket: a 429 says the address is busy, not which account tripped it, and the ceilings themselves are code at each door rather than a published figure",
     ]
 
 
@@ -725,6 +763,13 @@ def club_tables_present(session: Session) -> bool:
 
 def club_ready(session: Session) -> bool:
     return club_tables_present(session) and bool(session.scalar(select(User.id).limit(1)))
+
+
+READY_RULE = (
+    "`ready` is two conditions and no third: this database holds the tables this tier writes to, and it holds at least one "
+    "account. A freshly created database therefore answers false here, which is the honest answer rather than a fault a caller "
+    "works around — and the first account registered is what turns it true."
+)
 
 
 def club_counts(session: Session) -> dict[str, Any]:

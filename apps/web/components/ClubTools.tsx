@@ -17,7 +17,7 @@ type Note = { text: string; figures: string[]; refused: boolean; action: string 
  * page, so what appears on screen is what a `GET` says the tenant now is. That is the difference between
  * a form that shows a write and a form that shows a lie the server never kept.
  */
-function useClubCall() {
+export function useClubCall() {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<Note | null>(null);

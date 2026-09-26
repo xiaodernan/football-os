@@ -10,16 +10,17 @@ payload, because §42 asks for the architecture before any payment.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import timedelta
 from typing import Any
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.models import Entitlement, Organization, UsageEvent
+from app.models import Entitlement, Organization, UsageEvent, utc_today
 from app.services import entitlements as ent
-from tests.test_club_academy import session, world  # noqa: F401 — one generated world, the fixture §40/§41 use
-from tests.test_club_reports import ACADEMY, _ask, _team_of, _tenant
+from app.services.club import organizations as club
+from tests.test_club_academy import _joined, session, world  # noqa: F401 — one generated world, the fixture §40/§41 use
+from tests.test_club_reports import ACADEMY, CLUB, _account, _ask, _team_of, _tenant
 
 ENTITLEMENTS = "/api/v1/entitlements"
 
@@ -100,7 +101,7 @@ class TestCeilingsAndUsage:
 
     def test_a_ceiling_spent_today_is_free_again_tomorrow_because_the_period_is_part_of_the_row(self, client: TestClient, session: Any) -> None:  # noqa: E501
         subject = "org_period_probe"
-        today = date.today()
+        today = utc_today()
         assert ent.guard(session, subject_id=subject, feature="reports_saved", plan="free", source_id="act-one")["remaining"] == 1
         ent.record(session, subject_id=subject, subject_kind="organization", feature="reports_saved", plan="free", source_id="act-one", on=today)
         assert ent.used(session, subject, "reports_saved", on=today) == 1
@@ -127,8 +128,88 @@ class TestTheOwnReading:
         assert {row["feature"] for row in body["items"]} == {"organizations"}, "an account is metered on its own features only"
         assert all(row["limit"] == 1 and row["period"] == "month" for row in body["items"])
         assert "sum of `units`" in body["formula"]
-        assert body["as_of"] == date.today().isoformat()
+        assert body["as_of"] == utc_today().isoformat(), "the meter and the ceiling it measures roll over on one clock"
 
     def test_a_stranger_is_not_handed_somebody_elses_usage(self, client: TestClient) -> None:
         refused = client.get(f"{ENTITLEMENTS}/me")
         assert refused.status_code == 401, refused.text
+
+
+class TestTheTenantsOwnMeter:
+    """`GET /club/{ident}/entitlements` — §42's ceiling read through §39's standing rather than a permission.
+
+    The door exists because the enforced ceiling is the tenant's, not the caller's: `/entitlements/me` answers
+    for an account and can only ever show `organizations`, so without this door a coach could be refused a
+    report by a meter nobody in the tenant could see.
+    """
+
+    def test_the_meter_is_the_tenant_s_own_subject_and_holds_every_feature_of_its_kind(self, client: TestClient, session: Any) -> None:  # noqa: E501
+        owner, ident = _tenant("Metered Tenant")
+        body = owner.get(f"{CLUB}/{ident}/entitlements").json()
+        assert body["plan"] == ent.DEFAULT_PLAN and body["subject_kind"] == "organization"
+        assert body["subject_id"] == _organization_id(session, ident), "the meter counts the tenant's acts, not the reader's"
+        assert {row["feature"] for row in body["items"]} == {
+            feature for feature, kind in ent.FEATURES.items() if kind == "organization"
+        }, "an account's own feature does not belong on a tenant's meter"
+        assert all(
+            row["plan"] == ent.DEFAULT_PLAN and row["limit"] == ent.DEFAULT_MATRIX[ent.DEFAULT_PLAN][row["feature"]][0] for row in body["items"]
+        ), "the ceiling printed is the stored row of the plan named"
+        assert all(row["enforced"] is (row["feature"] in ent.ENFORCED) for row in body["items"]), "what the page may call a rule is exactly what a door refuses on"
+        assert (
+            body["tier_limits"]["members"] == club.MAX_MEMBERS_PER_ORGANIZATION and body["tier_limits"]["teams"] == club.MAX_TEAMS_PER_ORGANIZATION
+        ), "the two kinds of limit are printed apart rather than blended"
+        assert body["no_payment"] == ent.NO_PAYMENT
+
+    def test_the_spend_rises_with_the_act_and_falls_back_when_the_act_is_deleted(self, client: TestClient, session: Any) -> None:  # noqa: E501
+        owner, ident = _tenant("Spend And Meter")
+        _team_of(owner, ident, "Under 16s")
+
+        def reports_row() -> dict[str, Any]:
+            return next(row for row in owner.get(f"{CLUB}/{ident}/entitlements").json()["items"] if row["feature"] == "reports_saved")
+
+        before = reports_row()
+        assert before["used"] == 0 and before["remaining"] == before["limit"] and before["acts"] == 0
+        asked = _ask(owner, ident)
+        assert asked.status_code == 200, asked.text
+        spent = reports_row()
+        assert spent["used"] == 1 and spent["remaining"] == spent["limit"] - 1 and spent["acts"] == 1, "a write is a row, and the count is taken from the rows"
+        refused = _ask(owner, ident, window_from="2022-01-01", window_to="2022-12-31")
+        assert refused.status_code == 409 and refused.json()["detail"]["code"] == "entitlement_limit"
+        assert reports_row()["used"] == 1, "a refusal spends nothing"
+        assert owner.delete(f"{ACADEMY}/{ident}/reports/{asked.json()['report']['id']}").status_code == 200
+        assert reports_row()["used"] == 0, "the published rule says deleting an act removes its spend, so it had better"
+
+    def test_a_parent_holding_no_staff_permission_is_still_told_what_their_tenant_is_entitled_to(self, client: TestClient) -> None:
+        owner, ident = _tenant("Parent Reads The Ceiling")
+        guest = _joined(owner, ident, "parent", "Waiting Parent")
+        answer = guest.get(f"{CLUB}/{ident}/entitlements")
+        assert answer.status_code == 200, answer.text
+        body = answer.json()
+        assert body["role"] == "parent" and body["read_through"].startswith("standing"), "the door's own sentence names the gate it used"
+        assert {row["feature"] for row in body["items"]} == {row["feature"] for row in owner.get(f"{CLUB}/{ident}/entitlements").json()["items"]}, "a ceiling is not a per-role figure"
+
+    def test_a_stranger_hears_the_same_absence_as_at_every_other_door_that_names_a_tenant(self, client: TestClient) -> None:
+        owner, ident = _tenant("Metered From Outside")
+        nosy = _account("Nosy Neighbour")
+        refused = nosy.get(f"{CLUB}/{ident}/entitlements")
+        assert refused.status_code == 404 and refused.json()["detail"]["code"] == "no_such_organization"
+        assert "limit" not in refused.text, "a plan ceiling of another tenant is not an answer to a stranger"
+        assert owner.get(f"{CLUB}/{ident}/entitlements").status_code == 200, "the tenant itself is untouched by the refusal"
+
+    def test_the_day_the_meter_stamps_and_the_day_the_session_door_refuses_on_are_one_day(self, client: TestClient, session: Any) -> None:  # noqa: E501
+        """§41's date rule and §42's period key are read by two doors that must not run on two clocks.
+
+        The defect this test exists for: the session door compared `datetime.now(UTC).date()` while the meter
+        stamped `date.today()`, so on a host ahead of UTC a tenant's daily report allowance rolled over up to a
+        day away from the day its own sessions could be dated — and both figures print on one page. One shared
+        `utc_today()` is the fix; this is the witness that keeps the doors from drifting apart silently again.
+        """
+        owner, ident = _tenant("One Clock Tenant")
+        meter = owner.get(f"{CLUB}/{ident}/entitlements").json()
+        listing = owner.get(f"{ACADEMY}/{ident}/sessions").json()
+        assert listing["today"] == meter["as_of"], "a period key and a date rule printed on one page must name one day"
+
+        saved = _ask(owner, ident)
+        assert saved.status_code == 200, saved.text
+        row = session.scalar(select(UsageEvent).where(UsageEvent.subject_id == _organization_id(session, ident), UsageEvent.feature == "reports_saved"))  # noqa: E501
+        assert row is not None and row.period_key == listing["today"], "the row the meter counted is keyed on the day the tenant's own doors publish"
