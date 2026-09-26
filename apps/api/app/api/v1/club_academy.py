@@ -26,15 +26,15 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
-from app.services import entitlements as ent_status
 from app.services.club import academy as edu
+from app.services.club import answers
 from app.services.club import organizations as club
 from app.services.club import reports as rep
 from app.services.club import sessions as sess
@@ -42,38 +42,16 @@ from app.services.club.organizations import ClubRefusal
 
 router = APIRouter(prefix="/club/academy", tags=["youth-academy"])
 
-#: The answer each refusal code deserves, assembled from both tiers' own sets — §39's four and §40's four.
-#: The two sets are held disjoint by the suite, so one code can never mean two answers, and a code in neither
-#: falls through to 400 rather than being silently mapped to the nearest-looking 4xx.
-_ANSWERS: dict[str, int] = {
-    **dict.fromkeys(club.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
-    **dict.fromkeys(club.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
-    **dict.fromkeys(club.CONFLICT_CODES, status.HTTP_409_CONFLICT),
-    **dict.fromkeys(club.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
-    **dict.fromkeys(edu.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
-    **dict.fromkeys(edu.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
-    **dict.fromkeys(edu.CONFLICT_CODES, status.HTTP_409_CONFLICT),
-    **dict.fromkeys(edu.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
-    # A session code answers where the tier put it: an absence is a 404, a figure the caller can correct is
-    # a 422, a collision on a date and slot is a 409. Anything unregistered would fall through to a 400.
-    **dict.fromkeys(sess.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
-    **dict.fromkeys(sess.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
-    **dict.fromkeys(sess.CONFLICT_CODES, status.HTTP_409_CONFLICT),
-    **dict.fromkeys(sess.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
-    **dict.fromkeys(rep.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
-    **dict.fromkeys(rep.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
-    **dict.fromkeys(rep.CONFLICT_CODES, status.HTTP_409_CONFLICT),
-    # §42's codes can be answered at a club door, because that is where a ceiling is checked: a
-    # refusal that reached its own answer map would be a 400 claiming the request was malformed.
-    **dict.fromkeys(ent_status.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
-    **dict.fromkeys(ent_status.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
-    **dict.fromkeys(ent_status.CONFLICT_CODES, status.HTTP_409_CONFLICT),
-    **dict.fromkeys(ent_status.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
-}
+#: Which answer each code earns lives in `services/club/answers.py`, assembled over every part of the tier's own
+#: sets — including §42's, because a ceiling is checked at a club door and a refusal that reached an answer map
+#: which had not listed it would be a 400 claiming the request was malformed. §39's router reads the same object,
+#: so one code cannot mean two statuses depending on which of the two doors a request entered; and `assemble()`
+#: refuses a code two tiers register with different answers, rather than letting the last layer win.
+_ANSWERS: Final[dict[str, int]] = answers.ANSWERS
 
 
 def _refusal(error: ClubRefusal) -> HTTPException:
-    return HTTPException(_ANSWERS.get(error.code, status.HTTP_400_BAD_REQUEST), detail=error.to_dict())
+    return answers.refusal(error)
 
 
 #: The door guide this module publishes, and which `GET /club/capabilities` prints beside §39's own doors so a
@@ -248,12 +226,12 @@ def read_academy_capabilities(request: Request, db: Session = Depends(get_db)) -
         "session_limits": dict(sess.CAPS),
         "report_kinds": list(rep.KINDS),
         "report_limits": {"max_reports_per_organization": rep.MAX_REPORTS_PER_ORGANIZATION, "window_max_days": rep.WINDOW_MAX_DAYS},
-        "refusal_answers": {code: _ANSWERS.get(code, status.HTTP_400_BAD_REQUEST) for code in (*edu.REFUSALS, *edu.SHARED_REFUSALS)},
+        "refusal_answers": answers.published(edu.REFUSALS, edu.SHARED_REFUSALS),
         # §41's codes are published beside §40's rather than folded into them. The academy tier's own claim is
         # that its table has exactly one row per code it can answer with, and a merged table would break that
         # arithmetic while still looking complete to a reader. Codes §40 already answers with are not claimed twice.
-        "session_refusals": {code: _ANSWERS.get(code, status.HTTP_400_BAD_REQUEST) for code in sess.PUBLISHED},
-        "report_refusals": {code: _ANSWERS.get(code, status.HTTP_400_BAD_REQUEST) for code in rep.REFUSALS},
+        "session_refusals": answers.published(sess.PUBLISHED),
+        "report_refusals": answers.published(rep.REFUSALS),
         "limitations": [*edu.limitations(), sess.LIMITATION, rep.LIMITATION],
         "consent_scopes": {
             "scopes": list(edu.SCOPES),

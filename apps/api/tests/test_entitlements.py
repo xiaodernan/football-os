@@ -113,7 +113,7 @@ class TestCeilingsAndUsage:
         refused = client.post(f"{ENTITLEMENTS}/me", json={})
         assert refused.status_code in (404, 405), refused.text
         body = client.get(f"{ENTITLEMENTS}/capabilities").json()
-        assert "no_such_feature" in body["refusals"] and "no_such_plan" in body["refusals"], "a ceiling nobody can mistype is not published"
+        assert "no_such_feature" in body["refusals"] and "no_such_entitlement_plan" in body["refusals"], "a ceiling nobody can mistype is not published"
 
 
 class TestTheOwnReading:

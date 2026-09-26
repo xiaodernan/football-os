@@ -2,32 +2,31 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Final
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
 from app.services import entitlements as ent
+from app.services.club import answers
 from app.services.club.organizations import ClubRefusal
 
 # main.py mounts every router under /api/v1, so the prefix here is only the last segment: a full path
 # here would double it and the door would answer 404 while looking correctly written.
 router = APIRouter(prefix="/entitlements", tags=["entitlements"])
 
-#: Which HTTP answer each refusal earns. An exceeded ceiling is a 409: the request is well-formed and repeatable
-#: once the period turns, so it is not a 422, and it is not a 403 — §39 reserved that for a missing standing.
-_ANSWERS: dict[str, int] = {
-    **dict.fromkeys(ent.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
-    **dict.fromkeys(ent.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
-    **dict.fromkeys(ent.CONFLICT_CODES, status.HTTP_409_CONFLICT),
-}
+#: §42's codes are answered from the tier's one table, not a copy written here. An exceeded ceiling is a 409:
+#: the request is well-formed and repeatable once the period turns, so it is not a 422, and it is not a 403 —
+#: §39 reserved that for a missing standing. A door that assembled its own map is how `no_such_entitlement_plan` came to
+#: answer 404 at one club door and 400 at another, and the same code would have grown a third answer here.
+_ANSWERS: Final[dict[str, int]] = answers.ANSWERS
 
 
 def _refusal(error: ClubRefusal) -> HTTPException:
-    return HTTPException(_ANSWERS.get(error.code, status.HTTP_400_BAD_REQUEST), detail=error.to_dict())
+    return answers.refusal(error)
 
 
 ROUTE_GUIDE = (

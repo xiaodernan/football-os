@@ -76,8 +76,8 @@ DEFAULT_PLAN: Final = "free"
 
 NO_PAYMENT: Final = "no price, no currency, no payment provider and no checkout appears anywhere in this tier: a plan is a ceiling read from the entitlements table, and §42 says the architecture comes before any payment"
 
-REFUSALS: Final = ("no_such_plan", "no_such_feature", "entitlement_limit", "usage_period_shape")
-NOT_FOUND_CODES: Final[frozenset[str]] = frozenset({"no_such_plan", "no_such_feature"})
+REFUSALS: Final = ("no_such_entitlement_plan", "no_such_feature", "entitlement_limit", "usage_period_shape")
+NOT_FOUND_CODES: Final[frozenset[str]] = frozenset({"no_such_entitlement_plan", "no_such_feature"})
 CONFLICT_CODES: Final[frozenset[str]] = frozenset({"entitlement_limit"})
 UNPROCESSABLE_CODES: Final[frozenset[str]] = frozenset({"usage_period_shape"})
 # §42 has no refusal of its own that is about standing: an exceeded ceiling is a 409, and 403 stays §39's.

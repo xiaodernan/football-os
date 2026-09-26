@@ -141,7 +141,7 @@ class TestWhatAReportRefuses:
     def test_a_reading_this_tier_cannot_produce_is_refused_by_name_with_the_ones_it_can_printed(self, client: TestClient) -> None:
         owner, ident = _tenant("No Such Reading")
         refused = _ask(owner, ident, kind="xg_by_halfspace")
-        assert refused.status_code == 422 and _detail(refused)["code"] == "unknown_kind"
+        assert refused.status_code == 422 and _detail(refused)["code"] == "unknown_report_kind"
         assert refused.json() and set(_detail(refused)["kinds"]) == {"squad_load", "consent_gap"}
         assert _detail(refused)["kind"] == "xg_by_halfspace"
 
@@ -162,7 +162,7 @@ class TestWhatAReportRefuses:
         assert "club_reports" in rules["stored_fields"] and len(rules["stored_fields"]["club_reports"]) == 11
         assert not [name for name in rules["stored_fields"]["club_reports"] if "figure" in name or "body" in name or "payload" in name]
         assert rules["report_kinds"] == ["squad_load", "consent_gap"]
-        assert rules["report_refusals"]["no_such_report"] == 404 and rules["report_refusals"]["unknown_kind"] == 422
+        assert rules["report_refusals"]["no_such_report"] == 404 and rules["report_refusals"]["unknown_report_kind"] == 422
         assert any("report stores the question" in line for line in rules["limitations"])
 
 

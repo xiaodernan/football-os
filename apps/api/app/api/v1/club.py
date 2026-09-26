@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -37,26 +37,21 @@ from app.api.v1.club_academy import ROUTE_GUIDE as ACADEMY_ROUTES
 from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
+from app.services.club import answers
 from app.services.club import organizations as club
 from app.services.club.organizations import ClubRefusal
 
 router = APIRouter(prefix="/club", tags=["club-os"])
 
-#: The refusal's code decides the answer, and the sets are the service's own — a code the route had to guess at
-#: would be a second policy, and the suite asserts the sets are closed instead.
-#: Which answer each code deserves, assembled from the service's own four sets: a route that mapped codes by
-#: hand would be a second policy, and the suite below asserts the sets are closed rather than trusting this.
-_ANSWERS: dict[str, int] = {
-    **dict.fromkeys(club.NOT_FOUND_CODES, status.HTTP_404_NOT_FOUND),
-    **dict.fromkeys(club.UNPROCESSABLE_CODES, status.HTTP_422_UNPROCESSABLE_ENTITY),
-    **dict.fromkeys(club.CONFLICT_CODES, status.HTTP_409_CONFLICT),
-    **dict.fromkeys(club.FORBIDDEN_CODES, status.HTTP_403_FORBIDDEN),
-}
+#: Which answer each code earns is decided once, in `services/club/answers.py`, over every part of the tier's own
+#: sets. A table assembled per router is how §39's door came to answer §42's `no_such_plan` with a 400 while the
+#: academy door answered the same code with a 404; `answers.assemble` additionally refuses a code two tiers claim
+#: with different statuses, so the ordering of the list cannot settle a disagreement in silence.
+_ANSWERS: Final[dict[str, int]] = answers.ANSWERS
 
 
 def _refusal(error: ClubRefusal) -> HTTPException:
-    code = _ANSWERS.get(error.code, status.HTTP_400_BAD_REQUEST)
-    return HTTPException(code, detail=error.to_dict())
+    return answers.refusal(error)
 
 
 class OrganizationIn(BaseModel):
@@ -151,7 +146,7 @@ def read_capabilities(request: Request, db: Session = Depends(get_db)) -> dict[s
         "counts": club.club_counts(db),
         "ready": club.club_ready(db),
         "ready_rule": club.READY_RULE,
-        "refusal_answers": {code: _ANSWERS[code] for code in club.REFUSALS},
+        "refusal_answers": answers.published(club.REFUSALS),
         "limitations": club.limitations(),
         "data_origin": "project-authored",
         "is_demo_data": False,

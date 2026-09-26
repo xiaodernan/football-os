@@ -37,7 +37,7 @@ MAX_REPORTS_PER_ORGANIZATION: Final = 60
 WINDOW_MAX_DAYS: Final = 366
 
 NOT_FOUND_CODES: Final[frozenset[str]] = frozenset({"no_such_report"})
-UNPROCESSABLE_CODES: Final[frozenset[str]] = frozenset({"unknown_kind", "window_shape", "window_reversed", "window_too_wide"})
+UNPROCESSABLE_CODES: Final[frozenset[str]] = frozenset({"unknown_report_kind", "window_shape", "window_reversed", "window_too_wide"})
 CONFLICT_CODES: Final[frozenset[str]] = frozenset({"report_limit"})
 FORBIDDEN_CODES: Final[frozenset[str]] = frozenset()
 REFUSALS: Final = tuple(sorted(NOT_FOUND_CODES | UNPROCESSABLE_CODES | CONFLICT_CODES))
@@ -172,7 +172,7 @@ def create_report(session: Session, user: User, ident: str, *, kind: str, window
     # §42's ceiling is checked before the row exists, and against the tenant's plan — nothing grants a plan
     # yet, so that is `free`, and the refusal prints the number it tripped over rather than a silent no.
     if kind not in KINDS:
-        raise ClubRefusal("unknown_kind", f"{kind!r} is not a reading this tier can produce; it knows {list(KINDS)}", kind=kind, kinds=list(KINDS))
+        raise ClubRefusal("unknown_report_kind", f"{kind!r} is not a reading this tier can produce; it knows {list(KINDS)}", kind=kind, kinds=list(KINDS))
     start = _iso(window_from, label="a report window start")
     end = _iso(window_to, label="a report window end")
     span = _span(start, end)

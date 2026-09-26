@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 from app.core.db import SessionLocal
 from app.main import app
 from app.models import ClubTeam, ClubTeamMember, Organization, OrganizationMember, RealPlayer, Team, User
-from app.services.club import access
+from app.services.club import access, answers
 from app.services.club import organizations as club
 from app.services.club.organizations import (
     MAX_MEMBERS_PER_ORGANIZATION,
@@ -706,7 +706,13 @@ class TestStandingAndTheMatrix:
             for second in groups[index + 1 :]:
                 assert not first & second, first & second
         assert club.FORBIDDEN_CODES == frozenset({"insufficient_role"}), "403 is only ever a member over-reaching"
-        assert set(_ANSWERS) == set(REFUSALS)
+        # `#51` moved the answer table out of this router and into `services/club/answers.py`, where every part of
+        # the tier registers its codes — so this door answers §40's, §41's and §42's codes too, and equality with
+        # §39's own list would now be false rather than protective. What stays true, and what this asserts: every
+        # code this tier can refuse with has an answer here, and the table is the shared object rather than a copy.
+        assert _ANSWERS is answers.ANSWERS, "this door assembled its own answer table again"
+        assert set(REFUSALS) <= set(_ANSWERS), {code for code in REFUSALS if code not in _ANSWERS}
+
         assert all(_ANSWERS[code] == 404 for code in club.NOT_FOUND_CODES)
         assert all(_ANSWERS[code] == 422 for code in club.UNPROCESSABLE_CODES)
         assert all(_ANSWERS[code] == 409 for code in club.CONFLICT_CODES)
