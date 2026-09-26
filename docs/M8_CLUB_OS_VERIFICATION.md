@@ -211,6 +211,15 @@ ceiling door and its pages went in — and repeated here so the ROADMAP row cann
   (0:30:13) on the per-run SQLite file and 1562.41s (0:26:02) against PostgreSQL + pgvector, each with exit code 0.
   The 1 skip is the same PostgreSQL-only case in both runs, and the two summary lines were read off the two
   transcript files rather than inferred from a progress row this time.
+* **§51's measurement, over the commit that unified the answer table.** A whole-suite run on `cefd1c6`:
+  **1157 passed, 2 skipped, 0 failed on both engines** — 2278.85s (0:37:58) on the per-run SQLite file and
+  1198.56s (0:19:58) against PostgreSQL + pgvector, each with exit code 0, both summary lines read off their own
+  transcript file. The collected count went from 1073 to **1159 items**, which is §51's own file (86 tests, read
+  off `--collect-only`) added to the previous total with nothing else moving. The skips went from 1 to 2 and both
+  are named rather than counted: §51's `test_the_fixture_tier_registers_every_code_it_raises` carries a
+  `skipif` while §39's `Matches` tier is unwritten (`tests/test_club_answers.py:162`), and the other is the same
+  case it has been since §45 — `tests/test_scout_search.py:498`, `need_fit is ranked against a career and tested
+  with one`, read off `-rs` rather than inferred from a count.
 * `mypy` clean on the four owned source files; `ruff format` and `ruff check` clean on `app/` and `migrations/`
   files this milestone owns; `alembic upgrade head` over the whole chain on a scratch database and
   `alembic check` reporting **no drift** between `0016` and the models.
@@ -255,3 +264,25 @@ Four things moved, each because a reader disagreed with a writer:
   the resolved id, and `list_sessions` counts under the slug a reader can follow. See §42's walk document, defect 3.
 * **The sheet's ceiling counts players.** The `not_on_sheet` guard moved after resolution, so a one-child sheet
   and an attendance of `slug, id` for that child is one attendee rather than a refusal that claims there were two.
+* **§51 took the answer tables away from the routers.** Three routers each assembled a code→status map by hand,
+  so a code raised at a door that had not listed it was answered 400 while the same sentence earned 404 or 422 a
+  path away. `services/club/answers.py` now owns the one table, assembled from each tier's own four code sets —
+  a new tier appends its module to `TIERS` rather than editing a literal in a router — and `assemble()` raises at
+  import when two tiers register one code with two different statuses, so the disagreement cannot be settled by
+  dictionary order. Both club doors read the same object (`test_the_two_club_doors…` asserts identity, not
+  equality), and both rulebooks print their rows through `answers.published()`, so a page cannot be shown a
+  status its door does not use. Assembling the table is also what found two codes the tier had been
+  double-claiming: §41's reading is now `unknown_report_kind` beside §39's `unknown_kind`, and §42's ceiling row
+  is `no_such_entitlement_plan` beside §40's child's `no_such_plan`. Both renames are payload-visible and nothing
+  else — no path, field or schema moved, so the contract still measures 123 paths / 154 operations.
+* **§51's owed probe, run 2026-09-27.** The commit that landed the table said the whole-suite legs and the
+  planted-defect probe were not yet run, so both are now, over `cefd1c6`. The plant is the mistake the tier
+  exists to prevent: unregister one renamed code from its tier's own status set and the door falls through to
+  400. Each plant was applied alone, after an unmutated control on the same slice, and restored from the bytes
+  read before the probe (`.scratch/answers_plant_probe.py`):
+
+| Probe | Mutation | Caught? |
+| --- | --- | --- |
+| control | neither code unregistered | GREEN — 97 passed + 1 skipped, and 99 passed + 1 skipped on the two slices |
+| S1 | `unknown_report_kind` dropped from `reports.UNPROCESSABLE_CODES` | RED — 2 assertions, first the report door's own refusal test, which sees the HTTP status change |
+| S2 | `no_such_entitlement_plan` dropped from `entitlements.NOT_FOUND_CODES` | RED — 3 assertions, first `test_a_published_code_has_an_answer_everywhere_it_can_be_raised[no_such_entitlement_plan]` |
