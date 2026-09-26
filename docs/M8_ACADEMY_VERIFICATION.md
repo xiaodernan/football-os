@@ -174,7 +174,8 @@ was written — and a window with nothing in it says it is empty and prints no m
 not zero. Its codes (`unknown_kind`, `window_reversed`, `window_too_wide`, `report_limit`, `no_such_report`) are
 published in `report_refusals`, beside §40's table, so that tier's one-row-per-code claim still means something.
 The isolation walk reaches **40** doors; the club suite stands at **240 items green on both database legs** (SQLite
-192s, PostgreSQL 251s) and mypy is clean across 93 files. An empty-window rule worth repeating: absence prints as
+192s, PostgreSQL 251s), mypy is clean across 93 files, and the whole API suite stands at **1054 passed + 1 skipped
+on each of the two legs**. An empty-window rule worth repeating: absence prints as
 absence, never as a zero that a reader would call a measurement.
 
 §41's Sessions tier landed after this document: `club_sessions` (migration `0018`, 18 columns, which moves
@@ -187,9 +188,9 @@ message for the tier's own reasoning.
 
 `test_club_academy.py` is **83 tests** (measured: `83 passed, 1 warning in 94.98s`), and the pair is
 **196 items green on both legs** on 2026-09-26 (`196 passed in 156.37s` on SQLite, `196 passed in 199.61s` on
-PostgreSQL, both `rc=0`, both re-run after the door-shape fix below). The whole API suite, this tree:
-**1010 passed and 1 skipped on the SQLite leg (640.39s) and the same 1010 + 1 on PostgreSQL (668.35s)**. Another
-session's uncommitted work is in the tree, so the figure is the worktree's, not this milestone's alone.
+PostgreSQL, both `rc=0`, both re-run after the door-shape fix below). The whole API suite, this tree, after §41 closed: **1054 passed and 1 skipped on both legs** — SQLite in 418.43s,
+PostgreSQL/pgvector in 632.63s. Another session's uncommitted work is in the tree, so the figure is the worktree's,
+not this milestone's alone; the milestone's own share is the **240** items in the five `tests/test_club_*.py` files.
 
 **Two environmental facts that read as product failures, and how each was separated from one.** First: the
 first run of the pair reported six isolation tests red, and the traceback was
