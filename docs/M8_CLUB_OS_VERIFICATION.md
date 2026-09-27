@@ -408,3 +408,71 @@ the same three arms behind an unmutated control (`rc=0`, 22 passed, 0 red):
 
 **3 of 3 arms reddened the assertion named for them**, and no arm was credited with a red the control did not
 already have. Each file was restored from the bytes read before the run and re-read to prove the restore.
+
+## 12. §57: Communication is a board, and its readership is arithmetic (2026-09-28)
+
+§39 named four nouns for a club and three of them had landed. The fourth — `Communication` — is now a tier of
+its own, and the one sentence that decides its shape is that **a notice is posted to an audience and never to a
+person**. There is no `recipient` column in either table it writes. A reader therefore does not appear on a
+notice; a reader is what a predicate over the tenant's memberships selects at the moment of the read.
+
+Three consequences were written as rules first and as code second, and each is held by a named case in
+`apps/api/tests/test_club_announcements.py` (19 cases, five classes):
+
+| The rule | The case that holds it |
+| --- | --- |
+| The denominator is the roster as it stands, so a revoked member leaves it at once and their receipt leaves `read_by` with it — without being deleted | `test_a_revoked_reader_leaves_the_denominator_without_deleting_their_receipt` reads the board after the revocation and gets `recipients == 0`, `read_by == 0`, `unread == 0` and `receipts_on_row == 1`, then asks the database itself whether the receipt row is still there |
+| One receipt per account and notice, because the constraint says so rather than because a code path happens to check | `test_marking_a_notice_twice_is_one_receipt_and_the_second_answer_says_so` reads the same notice twice and asks for `recorded_now` on both answers as well as the row count |
+| A notice cannot name a child, so §40's minimisation rule is the door's shape rather than a validation inside it | `test_a_notice_selects_its_readers_from_the_roster_and_stores_nobody` reads the stored row and asserts it has no `recipients` and no `user_id` attribute at all |
+| One ceiling, published, guarded and refused with the same number (§49's rule, applied before it could recur) | the board's two edges: `..._at_the_published_ceiling_is_accepted` and `..._one_over_the_ceiling_is_refused_with_both_figures`, filled to `MAX - 1` through the model because two hundred notices is far too many to post over HTTP inside a test, while the refusal under test still comes from the door |
+| A pin is capped **per board**, because three pinned notices to `staff` and three to `parents` are two boards | `test_the_pin_cap_is_counted_over_the_audience_and_not_the_whole_board` prints `pinned_by_audience` and asks for `{members: 0, staff: 3, parents: 1}` |
+
+Two more classes hold the tier's vocabulary: the text bounds (a blank title, a title at `TITLE_MAX` and one over
+it, a body at `BODY_MAX` and one over it, each refusal printing `length` beside `max`), and the answer table —
+`test_every_notice_refusal_means_one_http_answer_in_the_assembled_table` asks that all seven of this tier's codes
+mean exactly one HTTP status in the table `services/club/answers.py` assembles from every tier's four sets, and
+that the set registers no forbidden code, since 403 stays the permission matrix's single meaning. Isolation is
+proven at all five notice doors at once: a stranger and another tenant's director are both answered
+`no_such_organization`, and the board of the tenant they knocked on still holds exactly what it held before.
+
+### The matrix grew by three rights, and the first run's one red was mine
+
+`access.PERMISSIONS` is twenty-three entries now: `announce.read`, `announce.write`, `announce.erase`. Director
+holds all three, coach read and write, analyst and scout read, and `parent` gains `announce.read` — a guardian in a
+youth academy receives what an audience selects, which is the reason that row exists rather than an exception to
+the minimisation rule. Its row is now four rights, of which two are scoped by a consent row and two
+(`curriculum.read`, `announce.read`) name no child at all.
+
+The club group's first run over this tree was `372 passed, 1 failed`, and the failure was **not a defect in the
+tier**: `tests/test_club_organizations.py:704` pinned the parent row at exactly three rights, and §57 had just
+given it a fourth. The same count needed re-writing in the rulebook's own `limitations()` sentence, which the page
+prints verbatim, so the fix was to the two places that had to follow the matrix rather than the matrix following
+them. The group was not re-run as a group — the two classes the fix touches were (11 cases and 5 cases, both
+green), and the whole suite then carried every club file on both legs, which is where the group's total comes from.
+Two things were then checked rather than assumed — the sentence the tenant page prints has to count the row as it
+now is, so
+`test_the_rulebook_names_the_two_things_this_tier_deliberately_does_not_have` gained an assertion that the
+limitation says `four rights` and names the two that tie to no child, and the door table grew from forty-six
+entries to fifty-one, which is five notice doors × two parametrized isolation legs.
+
+### The figures, with the plane each was measured on
+
+* `mypy app` — clean over **98 source files** (97 before §57, plus `services/club/announcements.py`); `ruff check .` — clean over the whole API package.
+* The new file alone, on the committed tree: **19 passed** in 123.27s. Its first run over the same tier was `18 passed, 1 failed`, and the failure was again the draft's expectation rather than the code's: it asked `?audience=members` to return every notice a member *receives*, while the shipped door filters the board by the audience a notice was **posted to** and answers the other question in a separate field, `sees`. The case now holds both readings and names the difference.
+* The club group (announcements, organizations, answers, academy, sessions, reports): **372 passed, 1 failed** in 666.58s, and the failure is the matrix pin above.
+* SQLite leg, whole suite: **1229 passed, 1 skipped** in **2051.13s**, `rc=0`. That is `1200 + 19 + 10`, and each addend is named: nineteen new cases, and the five new doors counted by the two isolation legs that parametrize over `DOORS`.
+* PostgreSQL leg over the same commit (the pgvector container on 127.0.0.1:54321, one database per run): **still running when this section was written**, at 2026-09-27 21:00 UTC, and its summary line is being collected in `.scratch/leg57_pg.log`. The number is not guessed here; the next commit to this document replaces this sentence with the total and the time it printed.
+* `docs/api/openapi.json` — **126 paths / 159 operations → 129 / 164**, and the diff is `325 insertions(+), 0 deletions(-)`: three paths, five operations, nothing else moved.
+* `alembic upgrade head` reaches `0022_club_announcements` and `alembic check` answers `No new upgrade operations detected` — both on a scratch database under `.scratch/`, never against the shared dev one.
+
+The contract line is the one measurement that went wrong before it went right, and the reason is worth keeping.
+`scripts/export_openapi.py` does not read the tree — it scrapes `{base}/api/v1/openapi.json` from a **running**
+server, and its default base is the shared dev API on `8731`, which is an older build that has no club tier at all.
+The first export therefore wrote 86 paths / 98 operations over the committed contract and deleted 4535 lines. It
+was restored from `HEAD` (which answers 126/159), the current tree was served on a temporary port of this run's
+own, and only then was the export re-run. A contract that is scraped rather than generated has to be told which
+build it came from, and a figure that shrinks by 95% is the sound of the wrong build being read.
+
+### What §57 does not claim
+
+The notice board has no web surface yet, and the walk's guardian check still counts three rights.
