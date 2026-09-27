@@ -86,6 +86,22 @@ def _players_with_keeper(count: int = 11) -> list[str]:
     return [keepers[0], *others[: count - 1]]
 
 
+def _outfield_names(count: int = 11, *, exclude: list[str] | frozenset[str] = frozenset()) -> list[str]:
+    """`count` adults with no goalkeeper among them, and none of them the world club's own squad.
+
+    The sheet the fixtures door judges is the point: eleven names that reach the engine's own head count but hold
+    no keeper is the only shape that separates `needs_players` from `needs_keepers` in the printed figures.
+    """
+    session = SessionLocal()
+    try:
+        rows = [str(slug) for slug in session.scalars(select(RealPlayer.slug).where(RealPlayer.position != "GK", RealPlayer.age >= 20).order_by(RealPlayer.slug)).all()]
+    finally:
+        session.close()
+    picked = [slug for slug in rows if slug not in set(exclude)]
+    assert len(picked) >= count, "the world has to hold eleven outfield adults outside the tenant's own club for the keeper rule to be testable"
+    return picked[:count]
+
+
 def _tenant(name: str) -> tuple[TestClient, str]:
     owner = _account(f"Matches Owner {name}")
     return owner, str(_opened(owner, name, kind="club", country="en")["organization"]["slug"])
@@ -239,12 +255,50 @@ class TestPlaying:
             ).all()
         )
         assert len(rows) == 11
+        assert "appearances_refused" not in played.json(), "a writing answer must not carry the refusal key"
         assert {row[0] for row in rows} <= named, "an appearance row for a player nobody on the tenant's sheet named"
         # The keeper is judged from the door's own printed figure, not from the engine's position label: the
         # sheet holds exactly one adult goalkeeper and `_can_field` counts the player rows, so the arithmetic is
         # this tier's claim to test. What the engine calls a position in its report is the sim tier's vocabulary.
         assert played.json()["fielding"]["keepers"] == 1 and played.json()["fielding"]["ok"] is True
         assert {row[1] for row in rows} & {"GK", "Goalkeeper"}, "the eleven that played had no keeper in it at all"
+
+    def test_the_attribution_rule_answers_for_every_shape_it_can_be_handed(self) -> None:
+        # §48's probe turned this rule up as untested: an arm that wrote appearance rows whatever the report said
+        # left the suite green. The comparison now lives in `_appearance_agreement` so both sides of it are
+        # knockable — and the two refusals are different sentences, because a caller has to be told which shape
+        # it hit: a report with no lineup is not the same fact as a report that names somebody else.
+        agree = mat._appearance_agreement(["a", "b", "c"], ["a", "b", "c"])
+        assert agree == (True, ""), "an eleven that matches the report has to be the shape that writes"
+        differ = mat._appearance_agreement(["a", "b", "z"], ["a", "b", "c"])
+        assert differ[0] is False and differ[1]
+        reorder = mat._appearance_agreement(["c", "a", "b"], ["a", "b", "c"])
+        assert reorder[0] is False, "the same names in a different order are not the same eleven as the engine recorded"
+        empty = mat._appearance_agreement([], ["a", "b", "c"])
+        assert empty[0] is False and empty[1] and empty[1] != differ[1], "an empty lineup and a different lineup say different things"
+
+    def test_a_report_that_disagrees_leaves_the_result_standing_and_the_appearances_unwritten(self, side: dict[str, Any], db: Session, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The play door must not write a load it cannot attribute, and must not hide the fact either.
+
+        No door reaches this shape today: the same overlay feeds both sides of the comparison, so the two elevens
+        are the same list by construction. The rule is therefore handed a refusal at the seam the code itself uses
+        — the same value space the real function returns, a `bool` and a sentence — and what is asserted is the
+        call site's consequence: the engine's row stands, the appearance rows do not, and the answer prints which
+        of the two happened. The rule's own table is the test above.
+        """
+        owner, ident = _tenant("Disagreement Club")
+        team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        monkeypatch.setattr(mat, "_appearance_agreement", lambda recorded, selected: (False, "the stored report names an eleven this sheet does not"))
+        played = _played(owner, ident, arranged["fixture"]["id"])
+        assert played.status_code == 200, played.text
+        body = played.json()
+        assert body["appearances_written"] == 0
+        assert body["appearances_refused"] == "the stored report names an eleven this sheet does not"
+        assert body["fixture"]["status"] == "played" and (body["fixture"]["match"] or {}).get("slug") == body["match_slug"], "the match the engine played survives a disagreement about who played it"
+        rows = list(db.execute(select(mat.ClubMatchAppearance.id).where(mat.ClubMatchAppearance.fixture_id == arranged["fixture"]["id"])).all())
+        assert rows == [], "an appearance row was written for an eleven the report does not name"
+        assert body["fixture"]["appearances"] == 0, "the listing counted a load the tier refused to record"
 
     def test_a_fixture_answers_once_and_the_refusal_prints_the_first_answer(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Twice Played")
@@ -336,6 +390,33 @@ class TestFielding:
         assert detail["code"] == "can_not_field"
         assert detail["players"] == 5 and detail["needs_players"] == 11 and detail["needs_keepers"] == 1
         assert detail["rule"].startswith("a side is fielded only while"), "the tier's own sentence, not the career's"
+
+    def test_the_head_count_is_held_at_its_own_boundary_and_not_only_far_below_it(self, side: dict[str, Any]) -> None:
+        # §48's planted-defect probe found this case missing by mutation, not by reading: an arm that lowered the
+        # requirement from eleven names to ten stayed green, because the case above names five. A gate tested only
+        # far from its boundary proves the boundary is somewhere, not where the tier says it is.
+        owner, ident = _tenant("Ten Trying")
+        team = _bind(owner, ident, "Reserves", side["world_team"], *side["eleven"][:10])
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        assert arranged["fielding"]["ok"] is False and arranged["fielding"]["players"] == 10
+        played = _played(owner, ident, arranged["fixture"]["id"])
+        assert played.status_code == 422, played.text
+        detail = _detail(played)
+        assert detail["code"] == "can_not_field"
+        assert detail["players"] == 10 and detail["needs_players"] == 11, "one name short of the engine's own eleven, said in figures"
+
+    def test_eleven_names_reach_the_head_count_and_still_cannot_field_without_a_keeper(self, side: dict[str, Any]) -> None:
+        # The other half of the same rule: a full head count with no goalkeeper must print `keepers: 0` beside
+        # `players: 11`, so the refusal says which of the two counts it failed on rather than both at once.
+        owner, ident = _tenant("No Keeper Club")
+        team = _bind(owner, ident, "Outfield Eleven", side["world_team"], *_outfield_names(11, exclude=side["base"]))
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        assert arranged["fielding"]["players"] == 11 and arranged["fielding"]["keepers"] == 0
+        played = _played(owner, ident, arranged["fixture"]["id"])
+        assert played.status_code == 422, played.text
+        detail = _detail(played)
+        assert detail["code"] == "can_not_field"
+        assert detail["keepers"] == 0 and detail["needs_keepers"] == 1 and detail["players"] == 11
 
     def test_a_name_that_is_not_on_the_sheet_cannot_be_walked_onto_a_fixture(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Crash Party")

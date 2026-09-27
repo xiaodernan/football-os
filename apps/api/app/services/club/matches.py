@@ -218,6 +218,22 @@ def _can_field(players: list[RealPlayer]) -> dict[str, Any]:
     }
 
 
+def _appearance_agreement(recorded: list[str], selected: list[str]) -> tuple[bool, str]:
+    """Whether the engine's stored report and this tenant's rebuilt eleven name the same side.
+
+    The comparison is the whole of the tier's attribution rule: a load may be written against a name only while
+    the eleven the report names is the eleven the tenant's rows select. `career._trace_round` writes when
+    `recorded` is empty as well, because a match stored before lineups were written must still carry its load —
+    this tier is newer than that backlog and has no rows to rescue, so an empty lineup is a disagreement rather
+    than a permission. Two shapes, two sentences, because a caller reading the answer has to know which one it is.
+    """
+    if not recorded:
+        return False, "the engine's stored report names no lineup for this side, so no appearance can be attributed to it"
+    if recorded != selected:
+        return False, "the eleven this tenant's rows select does not match the eleven the stored report names, so no appearance was recorded"
+    return True, ""
+
+
 def fixture_view(session: Session, row: ClubFixture) -> dict[str, Any]:
     team = session.get(ClubTeam, row.team_id)
     world = session.get(WorldTeam, row.opponent_team_id) if row.opponent_team_id else None
@@ -454,12 +470,10 @@ def play_fixture(session: Session, user: User, ident: str, fixture_ident: str, *
     )
     recorded = [str(entry.get("player", "")) for entry in list(match.report.get("sides", {}).get(row.side, {}).get("lineup", [])) if isinstance(entry, dict)]
     selected = [name for _pid, _slug, name, _position, _band in profile.selected]
+    agreed, disagreement = _appearance_agreement(recorded, selected)
     written = 0
     reason = ""
-    if recorded and recorded == selected:
-        # `career._trace_round` writes when `recorded` is empty as well, because a match stored before lineups
-        # were written must still carry its load. This tier is newer than that backlog and has no rows to
-        # rescue, so an empty lineup is treated as a disagreement rather than as permission.
+    if agreed:
         for player_id, slug, name, position, band in profile.selected:
             session.add(
                 ClubMatchAppearance(
@@ -479,8 +493,9 @@ def play_fixture(session: Session, user: User, ident: str, fixture_ident: str, *
         written = len(profile.selected)
     else:
         # The result stands — the engine's row is the truth about the match — but the appearance rows do not, and
-        # the answer says so. §20 already refused to attribute a load to players who may not have played it.
-        reason = "the eleven this tenant's rows select does not match the eleven the stored report names, so no appearance was recorded"
+        # the answer says which of the two shapes it is. §20 already refused to attribute a load to players who
+        # may not have played it.
+        reason = disagreement
     row.status = "played"
     row.match_id = match.id
     row.match_slug = match.slug
