@@ -1,10 +1,11 @@
 # M8 — the club tier in a browser: `/club`, the tenant page and the plan page
 
-Walk: `apps/web/scripts/qa-club.mjs` — **194 checks, 194 passed, exit 0**, 2026-09-26, against a production
-build (`NEXT_DIST_DIR=.next-club npx next build`) served on port 3214 by `next start`, with the API a scratch
+Walk: `apps/web/scripts/qa-club.mjs` — **215 checks, 215 passed, exit 0** on 2026-09-27, the latest run adding
+§39's fixtures panel to the **194/194** of 2026-09-26 (which had itself grown from 146 as §41's sessions and
+reports and §42's meters were added). Both runs went against a production build (`NEXT_DIST_DIR=.next-club
+npx next build`, then `.next-fx` for the fixtures run) served on port 3214 by `next start`, with the API a scratch
 `uvicorn app.main:app --port 8734` started **from this tree** (`API_INTERNAL_URL` points the web tier at it) and
-running on a database `scripts/qa_db.py` created for the run rather than on anything a person works in. The count
-grew from 146 as §41's sessions and reports and §42's meters were added to the walk.
+running on a database `scripts/qa_db.py` created for the run rather than on anything a person works in.
 
 **Why a scratch API rather than the dev one on 8731:** that server has been up since before the academy router
 existed, and its `/api/v1/club/academy/capabilities` answers **404**. A page verified against a server that
@@ -152,6 +153,57 @@ than a person can — untick a box, then type — are now functional updates; th
 here demonstrates them losing a field and rewriting fifteen handlers is not evidence. Anyone who extends these
 forms should make the whole object functional at once rather than leave it half-converted.
 
+## What §39's fixtures panel added (2026-09-27, `215/215`)
+
+The tier's last page: an arrangement form and the tenant's calendar, mounted on `/club/{ident}` between the members
+panel and the academy's consent table. Twenty-one checks, all through the page's own controls — the walk types the
+opponent, picks the side, presses *Arrange the fixture*, then presses the row's *Play it* and *Erase*.
+
+What it holds that an API test cannot:
+
+* **no figure of its own.** The side list is read back as `select option` values and compared with
+  `fixture_caps.sides` from `/club/capabilities`; the ceiling sentence with the listing's own `limit`; the block
+  lengths and the eleven-and-a-keeper counts with the published caps. `caps` is a required prop of the panel, so a
+  page that could not read the rulebook renders **no form** rather than one built on numbers chosen in TSX.
+* **the day comes from the door.** The date field opens on the listing's `today`, and the walk asserts both the
+  field's value and the `data-fixture-date` the page carries, because §41 already learned that a date read from the
+  server process's clock at render time can be yesterday by the time somebody presses the button.
+* **a refusal is not a write, and the page cannot make one look like the other.** An unknown opponent slug is
+  answered 404 with `no_such_world_club` and the slug printed back; a date in 2099 is answered 422 with
+  `date_in_future` beside the door's own today; after each, the calendar is read again server-side and is still
+  empty. Pressing *Play it* on a side the tenant has not placed in the world's ladder is answered
+  `no_world_side`, and the fixture stays `scheduled` with `match: null` and zero appearance rows.
+* **the arithmetic is checked against the rows the page painted.** The appearances column is summed in the
+  browser and compared with the door's total before either is quoted; the competition tally printed under the
+  table has to be the one counted from the rows, not one typed beside them.
+* **the erase is witnessed on both sides.** The button removes the row from the door's count *and* the table
+  repaints to its own empty-state sentence.
+
+**Deliberately not claimed here:** the walk never plays a fixture successfully, so this page has not been shown
+producing an eleven's appearance rows. The tenant the walk builds has one child on its sheet and no world binding,
+which is exactly the state the refusals above are about; a successful play needs an eleven of adults placed in the
+ladder, and that path is held by §48's own suite (28 items, plus the eleven-arm planted-defect sweep in
+`M8_CLUB_OS_VERIFICATION.md` §9). The panel prints that it does not narrow the named list, so the reader is not
+left to infer where the arithmetic was proved.
+
+## Three things this walk had to learn about itself
+
+* **`typeInto` appends.** The first run arranged against `united-of-nowhere<real-slug>` because the ghost-opponent
+  refusal above left its text in the field; the door's 404 was correct and the walk called it a defect. Every field
+  a check re-uses is cleared first.
+* **a painted row is not the same event as a written row.** `router.refresh()` re-reads on its own clock, so six
+  checks failed against a page that was simply still showing the pre-write render. The fixtures section now waits
+  on `waitRows(page, 'fixture')` before it presses anything a row owns — the same helper §41's panels use.
+* **`innerText` is the rendered text.** A badge whose copy says "adds up to the total the door printed" is matched
+  through `shouts()`, the walk's own case-folding helper, because a CSS `text-transform` uppercases it in the
+  browser and not in the source.
+
+Attribution of the build, since this run did not print the served webpack chunk the way §40's did: the panel's
+controls exist only in `.next-fx` (`data-testid="fixture-arrange"`, `data-fixture=<id>` rows, the
+`fixture-count-agrees` badge), port 3214 was verified free before `next start`, and both tiers were started and
+stopped inside the same shell call that ran the walk — a server predating the code could not have answered the
+presses that produced 215 passes.
+
 ## How to re-run
 
 One command, from the repository root: `bash .scratch/qa-club-run.sh`. It is the only honest shape on this host,
@@ -192,8 +244,9 @@ land in `docs/screenshots/` (untracked).
 
 Every figure below was read off a command's own last line on the tree this document describes, on 2026-09-27.
 
-* Browser walk: **194/194 checks** on a production build (`NEXT_DIST_DIR=.next-club npx next build`, then
-  `node scripts/qa-club.mjs` against a scratch API and a scratch database of its own).
+* Browser walk: **215/215 checks** on a production build (the 2026-09-26 run was 194/194; §39's fixtures panel
+  added 21), built with `NEXT_DIST_DIR=.next-fx npx next build` and walked by `node scripts/qa-club.mjs` against a
+  scratch API and a scratch database of its own. `npx tsc --noEmit` exit `0`; `npm run lint` clean on the same tree.
 * Whole API suite: **1072 passed, 1 skipped** — `1813.58s (0:30:13)` on the per-run SQLite file and
   `1562.41s (0:26:02)` against PostgreSQL + pgvector, both `rc=0`; `--collect-only` reports **1073 items across
   29 files**, which is what makes the single skip a countable thing rather than a gap in the progress rows.

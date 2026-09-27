@@ -692,6 +692,76 @@ async function main() {
   check('and the answer is the rows that exist now: the session the walk just recorded', report.body?.sessions === 1 && report.body.total_load_units === expectedLoad && report.body.mean_rpe === 6 && report.body.most_worked === child.slug, JSON.stringify({ sessions: report.body?.sessions, load: report.body?.total_load_units, mean: report.body?.mean_rpe, most: report.body?.most_worked }));
   const reportRows = await waitRows(page, 'report');
   check('the row prints the figures the door computed beside the question it keeps', reportRows.length === 1 && reportRows[0].cells[5]?.text === '1' && Number(reportRows[0].cells[6]?.text) === expectedLoad, reportRows[0]?.cells.map((cell) => cell.text).join(' | ').slice(0, 150));
+  // ----------------------------------------------------------- §39's fixtures: arranged here, played by the engine
+  const fixturesPath = `/api/v1/club/${encodeURIComponent(ident)}/fixtures`;
+  const rulebook = (await call(page, 'GET', '/api/v1/club/capabilities')).json ?? {};
+  const caps = rulebook.fixture_caps ?? {};
+  const sideField = 'select[aria-label="Fixture side"]';
+  const dateField = 'input[aria-label="Fixture date"]';
+  const opponentField = 'input[aria-label="Fixture opponent"]';
+  const competitionField = 'input[aria-label="Fixture competition"]';
+  const calendar0 = await call(page, 'GET', fixturesPath);
+  check('the fixtures door answers the owner with an empty calendar, its own ceiling and the day it compares against', calendar0.status === 200 && calendar0.json?.total === 0 && calendar0.json?.limit === caps.max_fixtures_per_organization && typeof calendar0.json?.today === 'string', `HTTP ${calendar0.status} · limit ${calendar0.json?.limit} · today ${calendar0.json?.today}`);
+  check('the form offers exactly the sides the rulebook publishes, in its order', (await page.$$eval(`${sideField} option`, (nodes) => nodes.map((node) => node.value))).join(',') === (caps.sides ?? []).join(','), (caps.sides ?? []).join(', '));
+  const openedOn = await page.$eval(dateField, (node) => node.value);
+  check('and its date field opens on the door’s own today, not on a day the page guessed for itself', openedOn === calendar0.json?.today && (await page.$eval(dateField, (node) => node.getAttribute('data-fixture-date'))) === calendar0.json?.today, `the field holds ${openedOn}; the door says ${calendar0.json?.today}`);
+  check('the panel prints the arithmetic it counted from, rather than a number it made up', has(await text(page), `fielded only while the sheet reaches ${caps.needs_players}`) && has(await text(page), `${caps.minute_choices.join(', ')}`), `needs_players ${caps.needs_players}, block lengths ${caps.minute_choices.join('/')}`);
+  check('the arrange button waits for an opponent before it will write', (await page.$eval('[data-testid="fixture-arrange"]', (node) => node.disabled)) === true, 'no opponent typed yet');
+
+  await typeInto(page, opponentField, 'united-of-nowhere');
+  const ghost = await pressWrite(page, 'fixture-arrange', 'fixture-arrange', 'refused with');
+  check('a club that is not in the generated world is answered 404, and the page prints the slug it was handed', ghost.ok && /refused with 404/.test(ghost.note) && has(ghost.note, 'no_such_world_club') && has(ghost.note, 'united-of-nowhere'), ghost.note.slice(0, 170));
+  check('and a refusal is not a write: the calendar is still empty', (await call(page, 'GET', fixturesPath)).json?.total === 0, JSON.stringify((await call(page, 'GET', fixturesPath)).json?.total));
+
+  await clearField(page, dateField);
+  await typeInto(page, dateField, '2099-01-01');
+  const future = await pressWrite(page, 'fixture-arrange', 'fixture-arrange', 'refused with');
+  check('a day that has not happened is refused with the door’s own today beside the sentence', /refused with 422/.test(future.note) && has(future.note, 'date_in_future') && has(squeeze(future.note), squeeze(String(calendar0.json?.today))), future.note.slice(0, 170));
+
+  const clubs = (await call(page, 'GET', '/api/v1/world/teams?page_size=8')).json?.items ?? [];
+  const opponent = clubs.find((row) => row.slug !== (team.world_team?.slug ?? '')) ?? {};
+  check('the walk has a real club in the ladder to arrange against', Boolean(opponent.slug), `${clubs.length} club(s) read from /world/teams`);
+  const yesterday = new Date(Date.parse(`${calendar0.json?.today}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+  // The field still holds the slug from the refusal above: `typeInto` appends, so a walk that does not clear it
+  // first arranges against `united-of-nowhere<slug>` and reads the door's correct 404 as a product defect.
+  await clearField(page, opponentField);
+  await typeInto(page, opponentField, opponent.slug ?? 'no-club-in-the-ladder');
+  await clearField(page, dateField);
+  await typeInto(page, dateField, yesterday);
+  await clearField(page, competitionField);
+  await typeInto(page, competitionField, `QA Riverside Cup ${stamp.slice(-4)}`);
+  const arranged = await pressWrite(page, 'fixture-arrange', 'fixture-arrange', 'answered');
+  check('the page arranges a fixture from its own controls', arranged.ok && (await untilTrue(async () => (await call(page, 'GET', fixturesPath)).json?.total === 1, 90_000)), `the button ${arranged.pressed} after ${arranged.attempts} attempt(s); note: ${arranged.note.slice(0, 120)}`);
+
+  const calendar1 = await call(page, 'GET', fixturesPath);
+  const row0 = (calendar1.json?.items ?? [])[0] ?? {};
+  const named = row0.named ?? [];
+  // The door answered the write long before the page paints it: the runner's `router.refresh()` re-read lands on
+  // its own clock, so every control the next six checks press has to be waited for rather than assumed.
+  const fxRows = await waitRows(page, 'fixture');
+  check('and the page paints the row it was told about', fxRows.length === 1 && fxRows[0].key === row0.id, `${fxRows.length} painted row(s) against ${calendar1.json?.total} the door counts`);
+  check('the arrangement is a promise: scheduled, unplayed, with no engine row behind it yet', row0.status === 'scheduled' && row0.match === null && row0.appearances === 0 && row0.scheduled_on === yesterday && row0.opponent?.slug === opponent.slug, `${row0.status} ${row0.scheduled_on} vs ${JSON.stringify(row0.opponent?.slug)} · match ${JSON.stringify(row0.match)}`);
+  check('it keeps the side and the competition the form held, and the sheet the door named by default', row0.side === (caps.sides ?? [])[0] && row0.competition === `QA Riverside Cup ${stamp.slice(-4)}` && named.length === (team.squad_size ?? 0) + 1, `side ${row0.side}, ${named.length} named, ${(team.squad_size ?? 0) + 1} expected`);
+  const printedTotals = await text(page);
+  check('the panel prints the ceiling as one held of the door’s own maximum', shouts(printedTotals, `1 of ${calendar1.json?.limit} allowed`), `the door’s limit is ${calendar1.json?.limit}`);
+  check('and the competition tally it prints is counted from the rows, not typed in', shouts(printedTotals, `QA Riverside Cup ${stamp.slice(-4)} 1`), JSON.stringify(calendar1.json?.by_competition));
+  const agreeBadge = await page.$eval('[data-testid="fixture-count-agrees"]', (node) => node.innerText);
+  check('the appearances column agrees with the total the door printed before either is believed', shouts(agreeBadge, 'adds up to the total'), `column and door over ${calendar1.json?.items?.length} row(s): ${agreeBadge.slice(0, 120)}`);
+
+  const played = await pressWrite(page, `fixture-play-${row0.id}`, `fixture-play-${row0.id}`, 'refused with');
+  const unplaced = !(team.world_team?.slug ?? '');
+  check('the play button asks the engine, and the answer is the door’s own reason', played.ok && /refused with 4\d\d/.test(played.note) && has(played.note, unplaced ? 'no_world_side' : 'can_not_field'), `team placed in the world: ${unplaced ? 'no' : team.world_team.slug} · ${played.note.slice(0, 150)}`);
+  const calendar2 = await call(page, 'GET', fixturesPath);
+  check('a refused play leaves the fixture unplayed and stores no result', calendar2.json?.items?.[0]?.status === 'scheduled' && calendar2.json?.items?.[0]?.match === null && calendar2.json?.appearances === 0, `${JSON.stringify(calendar2.json?.items?.[0]?.status)} · ${calendar2.json?.appearances} appearance rows`);
+
+  const erased = await pressWrite(page, `fixture-erase-${row0.id}`, `fixture-erase-${row0.id}`, 'answered');
+  check('the page erases the arrangement from its own control', erased.ok && (await untilTrue(async () => (await call(page, 'GET', fixturesPath)).json?.total === 0, 90_000)), `the button ${erased.pressed}; note: ${erased.note.slice(0, 120)}`);
+  const calendar3 = await call(page, 'GET', fixturesPath);
+  const emptied = await untilTrue(async () => (await page.$$('[data-fixture]')).length === 0, 60_000);
+  check('and the empty calendar says so in the page’s own words, with the door’s rule under it', calendar3.json?.total === 0 && emptied === true && shouts(await text(page), 'Nothing arranged yet'), `${calendar3.json?.total} row(s) server-side, the table repainted: ${emptied}`);
+  check('the panel prints the tier’s own limitation sentence rather than a paraphrase of it', has(await text(page), String(rulebook.fixture_limitation ?? '<<no limitation published>>>').slice(0, 60)), String(rulebook.fixture_limitation ?? '').slice(0, 120));
+  await shot(page, 'fixtures-after-the-erase');
+
   // ----------------------------------------------------------- §42's meter, on the page that just spent it
   const meterPath = `/api/v1/club/${encodeURIComponent(ident)}/entitlements`;
   const meterDoor = await call(page, 'GET', meterPath);

@@ -129,6 +129,10 @@ export type ClubCapabilities = ClubRules & {
   is_demo_data: boolean;
   /** `code → HTTP status`, published so a page never has to guess what a refusal will look like. */
   refusal_answers: Record<string, number>;
+  /** §39's Matches vocabulary: the sides, the engine's own block lengths and the counts a side must reach. */
+  fixture_caps: FixtureCaps;
+  /** The tier's own sentence about what a club fixture does *not* carry, printed rather than paraphrased. */
+  fixture_limitation: string;
   limitations: string[];
   ready: boolean;
   /** The two conditions the flag stands on, in the API's own sentence — one constant shared with §40's door. */
@@ -618,6 +622,89 @@ export type SessionLimits = {
 export type ReportLimits = {
   max_reports_per_organization: number;
   window_max_days: number;
+};
+
+/**
+ * §39's Matches tier, as its five doors answer.
+ *
+ * Every field here is a key a door printed — `fixture_view`, the listing's own counts, the arrangement's and
+ * play's answers, and the caps `GET /club/capabilities` publishes as `fixture_caps`. The scoreline is
+ * deliberately **not** typed: the club tier stores no result, and the report lives behind `match.path` on
+ * `/simulations/{slug}`, which is the door that can explain its own numbers.
+ */
+export type FixtureCaps = {
+  block_minutes: number;
+  competition_max: number;
+  default_minutes: number;
+  fixture_note_max: number;
+  max_fixtures_per_organization: number;
+  minute_choices: number[];
+  named_max: number;
+  needs_keepers: number;
+  needs_players: number;
+  sides: string[];
+};
+
+export type FieldingAnswer = {
+  keepers: number;
+  needs_keepers: number;
+  needs_players: number;
+  ok: boolean;
+  players: number;
+  rule: string;
+};
+
+export type FixtureNamed = { age: number; is_minor: boolean; name: string; position: string; slug: string };
+
+export type FixtureRow = {
+  appearances: number;
+  competition: string;
+  id: string;
+  match: { digest: string; minutes: number; model_version: string; path: string; seed: number; slug: string } | null;
+  named: FixtureNamed[];
+  named_gone: number;
+  note: string;
+  opponent: { id: string; name: string; path: string; slug: string } | null;
+  opponent_name: string;
+  recorded_on: string | null;
+  scheduled_on: string;
+  side: string;
+  status: string;
+  team: { age_group: string; id: string; name: string; world_team: { name: string; slug: string } | null } | null;
+};
+
+export type FixtureList = {
+  appearances: number;
+  by_competition: Record<string, number>;
+  demo_data: boolean;
+  fixtures_held: number;
+  formulas: Record<string, string>;
+  items: FixtureRow[];
+  limit: number;
+  organization: string;
+  played: number;
+  read_through: string;
+  role: string;
+  rule: string;
+  today: string;
+  total: number;
+  unplayed: number;
+};
+
+export type FixtureArranged = { demo_data: boolean; fielding: FieldingAnswer; fixture: FixtureRow; fixtures: number; limit: number; rule: string };
+
+export type FixturePlayed = {
+  appearances_refused?: string;
+  appearances_written: number;
+  demo_data: boolean;
+  digest: string;
+  fielding: FieldingAnswer;
+  fixture: FixtureRow;
+  formulas: Record<string, string>;
+  match_slug: string;
+  model_version: string;
+  rule: string;
+  seed: number;
 };
 
 /**

@@ -5,14 +5,17 @@ import { notFound, redirect } from "next/navigation";
 import { AcademyTools, ConsentTable } from "@/components/AcademyTools";
 import { TenantTools } from "@/components/ClubTools";
 import { EraseRow, ReportSaver, SessionRecorder } from "@/components/SessionReportTools";
+import { FixtureArranger } from "@/components/MatchTools";
 import { Panel } from "@/components/ui";
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import {
   refusalFigures,
   type AcademyCapabilities,
   type AccountEntitlements,
+  type ClubCapabilities,
   type ConsentList,
   type CurriculumList,
+  type FixtureList,
   type OrganizationView,
   type PlanList,
   type ReportList,
@@ -97,7 +100,7 @@ export default async function ClubTenantPage({ params }: Props) {
 
   // The academy doors are read after the tenant itself resolves: a stranger never reaches them, and the
   // caller's standing decides which of them answer at all.
-  const [consents, curricula, plans, academyRules, sessions, reports, entitlements, mine] = await Promise.all([
+  const [consents, curricula, plans, academyRules, sessions, reports, entitlements, mine, fixtures, rulebook] = await Promise.all([
     serverFetch<ConsentList>(`/club/academy/${encodeURIComponent(ident)}/consents`),
     serverFetch<CurriculumList>(`/club/academy/${encodeURIComponent(ident)}/curricula`),
     serverFetch<PlanList>(`/club/academy/${encodeURIComponent(ident)}/plans`),
@@ -106,6 +109,10 @@ export default async function ClubTenantPage({ params }: Props) {
     serverFetch<ReportList>(`/club/academy/${encodeURIComponent(ident)}/reports`),
     serverFetch<TenantEntitlements>(`/club/${encodeURIComponent(ident)}/entitlements`),
     serverFetch<AccountEntitlements>("/entitlements/me"),
+    // §39's calendar and the rulebook that publishes its vocabulary: the arrangement form takes its sides, its
+    // block lengths and the counts a side must reach from `fixture_caps`, and its day from the listing itself.
+    serverFetch<FixtureList>(`/club/${encodeURIComponent(ident)}/fixtures`),
+    serverFetch<ClubCapabilities>("/club/capabilities"),
   ]);
 
   const minors = view.teams.reduce((sum, team) => sum + team.minors_on_sheet, 0);
@@ -189,6 +196,28 @@ export default async function ClubTenantPage({ params }: Props) {
 
       <Panel eyebrow={`${view.members.length} row(s) · a standing changes only here, and only a row can change it`} title="Members and standings">
         <TenantTools ident={view.organization.slug} members={view.members} rules={view.rules} teams={view.teams} />
+      </Panel>
+
+      <Panel
+        eyebrow={fixtures.ok ? `${fixtures.data.total} fixture(s) · ${fixtures.data.played} played · a fixture keeps a pointer, the engine keeps the result` : "the fixtures door did not answer"}
+        title="Fixtures and matchdays"
+      >
+        {fixtures.ok ? (
+          rulebook.ok ? (
+            <FixtureArranger caps={rulebook.data.fixture_caps} ident={view.organization.slug} list={fixtures.data} teams={view.teams} />
+          ) : (
+            // No form without the door's own vocabulary: a page that drew its own sides, block lengths or head
+            // count would be teaching a caller to be refused by a rule the page invented.
+            <p className="muted">The rulebook door did not answer, so this page has no published `fixture_caps` to build an arrangement from. The calendar above is unaffected — it is read through `match.read`.</p>
+          )
+        ) : (
+          <Refused figures={refusalFigures(fixtures.error.details)} label="fixtures" message={fixtures.error.message} status={fixtures.status} />
+        )}
+        {rulebook.ok && (
+          <p className="muted" style={{ fontSize: "0.82rem" }}>
+            {rulebook.data.fixture_limitation}
+          </p>
+        )}
       </Panel>
 
       <Panel eyebrow={consents.ok ? `${consents.data.total} consent row(s) · ${consents.data.under_18} child(ren) under ${academyRules.ok ? academyRules.data.minor_age : 18} on a sheet` : "the consent door did not answer"} title="Guardian consent">

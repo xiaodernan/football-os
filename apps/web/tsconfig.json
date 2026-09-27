@@ -34,13 +34,14 @@
     ".next-buildcheck/types/**/*.ts",
     ".next-carry/types/**/*.ts",
     ".next-ci/types/**/*.ts",
+    ".next-club/types/**/*.ts",
     ".next-ledger/types/**/*.ts",
     ".next-market/types/**/*.ts",
     ".next-timeline/types/**/*.ts",
     ".next-verify/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-club/types/**/*.ts"
+    ".next-fx/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
