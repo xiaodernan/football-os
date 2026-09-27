@@ -356,7 +356,17 @@ export default async function ClubTenantPage({ params }: Props) {
       <Panel eyebrow={sessions.ok ? `${sessions.data.total} session(s) · ${sessions.data.total_load_units} load units · read through ${sessions.data.read_through}` : "the session door did not answer"} title="Training sessions">
         {sessions.ok ? (
           <div className="stack">
-            <SessionRecorder ident={ident} limits={academyRules.ok ? academyRules.data.session_limits : null} teams={view.teams} today={sessionDay} />
+            {academyRules.ok ? (
+              <SessionRecorder formula={sessions.data.formulas.load_units} ident={ident} limits={academyRules.data.session_limits} teams={view.teams} today={sessionDay} />
+            ) : (
+              // No form without the door's own ceilings. This page used to fall back to a `60`, an `8`, a `280` and
+              // a `[1, 2, 3, 4]` of its own whenever the rulebook door did not answer, and every one of those was a
+              // number the API never published — a form that invites a caller past a cap it invented is worse here
+              // than a blank that says which door is missing.
+              <p className="muted" style={{ fontSize: "0.86rem" }}>
+                The academy rulebook door did not answer, so this page has no published `session_limits` to build a recorder from. The log below is still the door&apos;s own rows.
+              </p>
+            )}
             <p className="muted" data-session-day={sessions.data.today} style={{ fontSize: "0.86rem", margin: 0 }}>
               {`The date above is the one this door prints as its own today (${sessions.data.today}), not the one this page guessed at ${today}.`} {sessions.data.today_rule}
             </p>
@@ -420,14 +430,20 @@ export default async function ClubTenantPage({ params }: Props) {
       <Panel eyebrow={reports.ok ? `${reports.data.total} report(s) of ${reports.data.limit} allowed · ${reports.data.kinds.join(", ")}` : "the report door did not answer"} title="Saved questions (reports)">
         {reports.ok ? (
           <div className="stack">
-            <ReportSaver
-              defaultFrom={defaultFrom}
-              ident={ident}
-              kinds={reports.data.kinds}
-              limits={academyRules.ok ? academyRules.data.report_limits : null}
-              teams={view.teams}
-              today={today}
-            />
+            {academyRules.ok ? (
+              <ReportSaver
+                defaultFrom={defaultFrom}
+                ident={ident}
+                kinds={reports.data.kinds}
+                limits={academyRules.data.report_limits}
+                teams={view.teams}
+                today={today}
+              />
+            ) : (
+              <p className="muted" style={{ fontSize: "0.86rem" }}>
+                The academy rulebook door did not answer, so this page has no published `report_limits` to bound a window or a quota with. The questions below are still the door&apos;s own rows.
+              </p>
+            )}
             <div className="world-tablewrap">
               <table className="table">
                 <thead>

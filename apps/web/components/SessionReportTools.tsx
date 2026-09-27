@@ -10,7 +10,9 @@ import type { ReportLimits, SessionLimits, TeamView } from "@/lib/club";
  *
  * Both forms are built from figures the API publishes — `session_limits`, `report_kinds`, `report_limits` —
  * rather than from numbers chosen here, because a page whose own cap disagrees with the door's is a page that
- * teaches a caller to be refused. Where a write is refused, the figure behind the sentence is printed beside
+ * teaches a caller to be refused. Those props are therefore **required**: an earlier shape kept a `: 60`, a `: 8`,
+ * a `: 280`, a `: 366` and a `[1, 2, 3, 4]` as the fallback when the rulebook door did not answer, and each one was
+ * a number this tier invented and the API never published. The page now shows no form rather than a plausible one. Where a write is refused, the figure behind the sentence is printed beside
  * it by `CallNote`; and no form paints a written row as the new state, since the runner re-reads the panel
  * from the server instead.
  *
@@ -18,7 +20,7 @@ import type { ReportLimits, SessionLimits, TeamView } from "@/lib/club";
  * anybody else: a picker that could offer a player this tenant does not hold would be a form that cannot
  * succeed.
  */
-export function SessionRecorder({ ident, limits, teams, today }: { ident: string; limits: SessionLimits | null; teams: TeamView[]; today: string }) {
+export function SessionRecorder({ formula, ident, limits, teams, today }: { formula: string; ident: string; limits: SessionLimits; teams: TeamView[]; today: string }) {
   const { busy, call, note } = useClubCall();
   const [teamId, setTeamId] = useState(teams[0]?.id ?? "");
   const [date, setDate] = useState(today);
@@ -40,7 +42,7 @@ export function SessionRecorder({ ident, limits, teams, today }: { ident: string
 
   const team = teams.find((row) => row.id === teamId) ?? null;
   const squad = team?.squad ?? [];
-  const slots = limits ? Array.from({ length: limits.slot_range[1] - limits.slot_range[0] + 1 }, (_, index) => limits.slot_range[0] + index) : [1, 2, 3, 4];
+  const slots = Array.from({ length: limits.slot_range[1] - limits.slot_range[0] + 1 }, (_, index) => limits.slot_range[0] + index);
   const toggle = (slug: string) => setHeld((current) => (current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]));
 
   async function record() {
@@ -84,11 +86,11 @@ export function SessionRecorder({ ident, limits, teams, today }: { ident: string
         </label>
 
         <label className="field">
-          <span>Duration {limits ? `(${limits.duration_range[0]}–${limits.duration_range[1]} minutes)` : "(minutes)"}</span>
+          <span>Duration ({limits.duration_range[0]}–{limits.duration_range[1]} minutes)</span>
           <input aria-label="Session duration" disabled={busy !== null} onChange={(event) => setDuration(event.target.value)} type="text" value={duration} />
         </label>
         <label className="field">
-          <span>RPE {limits ? `(${limits.rpe_range[0]}–${limits.rpe_range[1]})` : ""}</span>
+          <span>RPE ({limits.rpe_range[0]}–{limits.rpe_range[1]})</span>
           <input aria-label="Session RPE" disabled={busy !== null} onChange={(event) => setRpe(event.target.value)} type="text" value={rpe} />
         </label>
         <label className="field">
@@ -102,18 +104,18 @@ export function SessionRecorder({ ident, limits, teams, today }: { ident: string
           </select>
         </label>
         <label className="field">
-          <span>Focus areas, comma separated (at most {limits ? limits.session_focus_max : 8})</span>
+          <span>Focus areas, comma separated (at most {limits.session_focus_max})</span>
           <input aria-label="Session focus" disabled={busy !== null} onChange={(event) => setFocus(event.target.value)} placeholder="pressing, transitions" type="text" value={focus} />
         </label>
       </div>
       <label className="field">
-        <span>Note (at most {limits ? limits.session_note_max : 280} characters)</span>
-        <input aria-label="Session note" disabled={busy !== null} maxLength={limits?.session_note_max} onChange={(event) => setText(event.target.value)} type="text" value={text} />
+        <span>Note (at most {limits.session_note_max} characters)</span>
+        <input aria-label="Session note" disabled={busy !== null} maxLength={limits.session_note_max} onChange={(event) => setText(event.target.value)} type="text" value={text} />
       </label>
 
       <div className="stack-sm">
         <span className="muted" style={{ fontSize: "0.84rem" }}>
-          Attendance — {held.length} of {squad.length} named, and at most {limits ? limits.attendance_max : 60} may be. A child on this
+          Attendance — {held.length} of {squad.length} named, and at most {limits.attendance_max} may be. A child on this
           sheet still needs their guardian&apos;s yes, which the door checks when the row is written.
         </span>
         <div className="row wrap">
@@ -148,7 +150,7 @@ export function SessionRecorder({ ident, limits, teams, today }: { ident: string
           {busy === "session-record" ? "Recording…" : "Record the session"}
         </button>
         <span className="muted" style={{ fontSize: "0.84rem" }}>
-          load_units = duration_min × rpe ÷ 60 — computed by the API on every read, and never sent from here.
+          {formula} — the door’s own sentence for the figure below, and never sent from here.
         </span>
       </div>
       <CallNote note={note} />
@@ -160,7 +162,7 @@ export function SessionRecorder({ ident, limits, teams, today }: { ident: string
  * Save a question about the tenant. No figure is sent, because none is stored: the row names a kind, a
  * window and (optionally) a sheet, and the answer is recomputed for whoever reads it afterwards.
  */
-export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }: { defaultFrom: string; ident: string; kinds: string[]; limits: ReportLimits | null; teams: TeamView[]; today: string }) {
+export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }: { defaultFrom: string; ident: string; kinds: string[]; limits: ReportLimits; teams: TeamView[]; today: string }) {
   const { busy, call, note } = useClubCall();
   const [kind, setKind] = useState(kinds[0] ?? "");
   const [from, setFrom] = useState(defaultFrom);
@@ -196,7 +198,7 @@ export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }:
           <input aria-label="Report window start" disabled={busy !== null} onChange={(event) => setFrom(event.target.value)} placeholder="2026-08-01" type="text" value={from} />
         </label>
         <label className="field">
-          <span>Window end — at most {limits ? limits.window_max_days : 366} days after the start</span>
+          <span>Window end — at most {limits.window_max_days} days after the start</span>
           <input aria-label="Report window end" disabled={busy !== null} onChange={(event) => setTo(event.target.value)} placeholder="2026-09-26" type="text" value={to} />
         </label>
       </div>
@@ -211,8 +213,8 @@ export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }:
           {busy === "report-save" ? "Saving the question…" : "Save the question"}
         </button>
         <span className="muted" style={{ fontSize: "0.84rem" }}>
-          {limits ? `${limits.max_reports_per_organization} reports per tenant` : ""} — and no figure is sent with it: the answer is
-          computed when somebody reads it.
+          {limits.max_reports_per_organization} reports per tenant — and no figure is sent with it: the answer is computed when
+          somebody reads it.
         </span>
       </div>
       <CallNote note={note} />

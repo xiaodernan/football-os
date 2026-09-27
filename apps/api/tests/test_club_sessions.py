@@ -344,6 +344,69 @@ class TestSlotsAndDeletion:
         assert refused.status_code == 422 and _detail(refused)["code"] == "plan_attends"
 
 
+class TestTheAttendanceCeiling:
+    """§49: one number, defined once, enforced at its own boundary and printed with the figure it enforced.
+
+    The ceiling used to be the literal `60` written three times in `sessions.py` — the published cap, the guard,
+    and the sentence — and nothing in this file knocked on any of them. A cap edited in one of the three rows
+    would have left the other two describing a rule the code no longer applied, which is the same defect §42's
+    meter was built to avoid. These cases are the reason the constant exists.
+    """
+
+    def test_the_ceiling_accepted_at_its_edge_is_refused_one_past_it_with_its_own_figures(self) -> None:
+        from app.services.club import sessions as sess
+
+        names = [f"player-{index}" for index in range(sess.MAX_ATTENDEES_PER_SESSION + 1)]
+        # Both sides, because a guard tested only far below its line proves the line is somewhere, not where the
+        # tier says it is — the mistake §48's planted-defect probe turned up in the fixtures tier.
+        assert sess._attendee_ids(names[: sess.MAX_ATTENDEES_PER_SESSION]) == names[: sess.MAX_ATTENDEES_PER_SESSION]
+        with pytest.raises(sess.ClubRefusal) as over:
+            sess._attendee_ids(names)
+        refusal = over.value
+        assert refusal.code == "attendance_limit"
+        assert refusal.figures["max"] == sess.CAPS["attendance_max"] == sess.MAX_ATTENDEES_PER_SESSION, "the figure the door prints is the figure it applied"
+        assert refusal.figures["named"] == sess.MAX_ATTENDEES_PER_SESSION + 1
+        assert str(sess.MAX_ATTENDEES_PER_SESSION) in refusal.message
+
+    def test_the_door_answers_the_ceiling_with_the_rulebook_status_and_writes_nothing(self, client: TestClient, session: Session) -> None:
+        from app.services.club import sessions as sess
+
+        owner, ident = _tenant("Crowded Register")
+        _team_of(owner, ident, "Under 16s")
+        crowd = _pick(session, minor=False, count=sess.MAX_ATTENDEES_PER_SESSION + 1)
+        refused = _post(owner, ident, attendees=[row.id for row in crowd])
+        assert refused.status_code == 422, refused.text
+        detail = _detail(refused)
+        assert detail["code"] == "attendance_limit" and detail["max"] == sess.CAPS["attendance_max"]
+        assert detail["named"] == sess.MAX_ATTENDEES_PER_SESSION + 1
+        listing = owner.get(f"{ACADEMY}/{ident}/sessions").json()
+        assert listing["total"] == 0, "a refusal that left a row behind would be a write with a different name"
+
+    def test_the_published_limit_is_the_number_the_session_form_opens_with(self, client: TestClient, session: Session) -> None:
+        # The web tier reads `session_limits` off the academy rulebook; if that key and this guard ever diverged,
+        # the page would invite a caller to be refused. One assertion, held from the API's own two doors.
+        from app.services.club import sessions as sess
+
+        rules = client.get(f"{CLUB}/academy/capabilities").json()
+        assert rules["session_limits"]["attendance_max"] == sess.MAX_ATTENDEES_PER_SESSION
+
+    def test_the_listing_publishes_the_per_row_formula_the_page_is_now_required_to_print(self, client: TestClient, session: Session) -> None:
+        """§50: the page used to carry its own `load_units = duration_min × rpe ÷ 60` sentence.
+
+        The door has always published that sentence (`formulas.load_units` on the write answer), so the page was
+        paraphrasing a figure rule it could have read. The listing now publishes it too — the read is the one the
+        page performs before anybody writes — and the form prints the string it was handed, which is what makes the
+        two impossible to drift apart.
+        """
+        from app.services.club import sessions as sess
+
+        owner, ident = _tenant("Published Arithmetic")
+        _team_of(owner, ident, "Under 16s")
+        listing = owner.get(f"{ACADEMY}/{ident}/sessions").json()
+        assert listing["formulas"]["load_units"] == sess.LOAD_FORMULA
+        assert listing["formulas"]["total_load_units"] == sess.LOAD_FORMULA + ", summed over the rows in this list"
+
+
 class TestTheRulebookKnowsAboutThisTier:
     def test_the_published_column_list_includes_the_session_table_and_the_door_guide_counts_it(self, client: TestClient) -> None:
         body = client.get(f"{ACADEMY}/capabilities").json()

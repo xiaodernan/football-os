@@ -40,6 +40,11 @@ SLOT_MAX: Final = 4
 FOCUS_ITEMS_MAX: Final = 8
 DRILLS_MAX: Final = 12
 NOTE_MAX: Final = 280
+#: A sheet is a register, not a crowd: this is the ceiling `CAPS` publishes, the guard below applies, and the
+#: refusal prints in figures. It was written as a bare `60` in all three places, which is the §42 class of defect
+#: waiting to happen — a cap edited in one row of the file would leave the other two describing a rule the code no
+#: longer enforces.
+MAX_ATTENDEES_PER_SESSION: Final = 60
 
 LOAD_FORMULA: Final = "duration_min × rpe ÷ 60, over this row's own two columns — recomputed on every read, never stored"
 
@@ -76,7 +81,7 @@ CAPS: Final = {
     "session_focus_max": FOCUS_ITEMS_MAX,
     "session_drills_max": DRILLS_MAX,
     "session_note_max": NOTE_MAX,
-    "attendance_max": 60,
+    "attendance_max": MAX_ATTENDEES_PER_SESSION,
 }
 
 LIMITATION: Final = (
@@ -296,6 +301,7 @@ def list_sessions(session: Session, user: User, ident: str, *, team: str | None 
         # form default is worth nothing if the door refuses it for a reason it could have said in advance.
         "today": _today().isoformat(),
         "formulas": {
+            "load_units": LOAD_FORMULA,
             "total_load_units": LOAD_FORMULA + ", summed over the rows in this list",
             "total_minutes": "sum of `duration_min` over the rows in this list",
             "mean_rpe": "sum of `rpe` divided by the number of rows shown; null when there are none",
@@ -336,8 +342,13 @@ def delete_session(session: Session, user: User, ident: str, session_ident: str)
 
 def _attendee_ids(value: Any) -> list[str]:
     items = list(value or [])
-    if len(items) > 60:
-        raise ClubRefusal("attendance_limit", f"attendance names {len(items)} players and a session lists at most 60", named=len(items), max=60)
+    if len(items) > MAX_ATTENDEES_PER_SESSION:
+        raise ClubRefusal(
+            "attendance_limit",
+            f"attendance names {len(items)} players and a session lists at most {MAX_ATTENDEES_PER_SESSION}",
+            named=len(items),
+            max=MAX_ATTENDEES_PER_SESSION,
+        )
     seen: list[str] = []
     for item in items:
         text = str(item).strip()
