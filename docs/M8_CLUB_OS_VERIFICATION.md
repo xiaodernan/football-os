@@ -343,3 +343,68 @@ Four things moved, each because a reader disagreed with a writer:
   could not answer twice, and an isolation entry whose empty body never reached `require()` — and two more were
   untested in ways only a mutation shows, which is what §9's eleven-arm table is for. The contract moved from 123
   paths / 154 operations to **126 / 159**.
+
+## 11. §49 and §50: one ceiling, and the page reads its numbers out of the door
+
+`sessions.py` enforced `attendance_max = 60` by writing the literal `60` three times — in the cap the rulebook
+publishes, in the guard, and inside the refusal's own sentence — and `tests/test_club_sessions.py` had no case that
+knocked on any of them. A figure written three times is a figure that can disagree with itself, which is the shape
+§42's meter exists to catch, so the number became one constant, `MAX_ATTENDEES_PER_SESSION`, and four cases were
+written against it:
+
+| case | what it holds |
+| --- | --- |
+| edge accepted, one past refused | `MAX` names accepted, `MAX+1` refused, and the refusal's `max` figure is `CAPS["attendance_max"]` is the constant |
+| the door writes nothing | 422 + `code: attendance_limit` + `named`/`max`, and the listing still reports `total == 0` |
+| the rulebook publishes the same number | `GET /club/academy/capabilities → session_limits.attendance_max` equals the constant |
+| the listing prints the per-row arithmetic | `formulas.load_units` is `LOAD_FORMULA`, and `total_load_units` is that string plus its own summation clause |
+
+§50 is the same complaint pointed at the web tier. `SessionRecorder` and `ReportSaver` took
+`limits: SessionLimits | null` and, on null, built the form from five numbers this tier invented — `[1, 2, 3, 4]`
+for the slots, `8` for focus areas, `280` for the note, `60` for attendance and `366` for the report window — and
+printed its own `load_units = duration_min × rpe ÷ 60` sentence beside a figure the door had always published.
+`limits` is now a required prop, both forms are gated on `academyRules.ok` with the missing door named in the blank,
+and the sentence is the string `formulas.load_units` handed over rather than a paraphrase of it.
+
+Measured over `22374b4`:
+
+- `ruff check .` clean, `mypy app` clean over 97 source files, `npx tsc --noEmit` clean, `npm run lint` with no
+  warnings or errors.
+- `tests/test_club_sessions.py` alone: **22 passed in 31.68s**; with `test_club_answers.py`: **108 passed**, and
+  **0 reds in 6 repeat runs of the identical command** (106.02s, 61.80s, 67.13s, 56.80s, 64.94s, 94.18s) — recorded
+  because one earlier run of that same pair printed `1 failed, 107 passed` in
+  `TestSlotsAndDeletion::test_a_plan_filed_under_a_child_who_is_not_present_is_refused` and six more could not
+  reproduce it. It is logged as unreproduced, not as explained: the machine was then in the memory pressure that had
+  just killed a probe child with an OpenSSL `malloc failure` inside `hashlib.scrypt` at `/auth/register`, and no
+  traceback was caught on the run itself.
+- Whole suite, both legs, each `rc=0`: **1200 passed + 1 skipped in 770.91s** on per-run SQLite and **1200 passed +
+  1 skipped in 1066.11s** on PostgreSQL + pgvector. 1200 is 1196 plus §49's four new cases, and the one skip is the
+  same line printed by `-rs` on both legs: `tests/test_scout_search.py:498: need_fit is ranked against a career and
+  tested with one`.
+- The §41 recorder panel's browser walk was re-run over the required props: **217/217 checks, exit 0** against a
+  production build, of which two are a concurrent run's uncommitted cookie checks — 215 is the count §48b left. Two
+  of those checks are the ones §50 exists for: the recorder's printed caps compared field by field with what
+  `session_limits` publishes, and the report form's `window_max_days`.
+
+### The planted defect, and the figures this section withdrew
+
+The first pass of the attendance probe printed *A1 caught by 5, A2 caught by 3, A3 caught by 4*. Those numbers are
+withdrawn, and the two flaws that produced them are worth naming because neither is in the code:
+
+* the scraper accepted any line starting `ERROR `, which the application's own captured log writes, so a red named
+  `ERROR` was counted as an assertion;
+* reds that the register-500 above was causing at the time were counted as catches, so a mutation was credited with
+  assertions that had nothing to do with it.
+
+`.scratch/mutate_attendance.py` now scrapes only pytest's short summary, prints the raw lines it matched, subtracts
+the control's red set from each arm's, and requires each arm to name the assertion that carries it. Re-judged over
+the same three arms behind an unmutated control (`rc=0`, 22 passed, 0 red):
+
+| Arm | Mutation — the drift the constant exists to prevent | Named witness | Result |
+| --- | --- | --- | --- |
+| A1 | publish a cap the guard does not apply: `attendance_max` in `CAPS` becomes `MAX - 1` | `test_the_published_limit_is_the_number_the_session_form_opens_with` | RED — 3 failed, witness among them, 19 passed |
+| A2 | print a figure the guard did not use: the refusal's `max` becomes `MAX - 1` | `test_the_ceiling_accepted_at_its_edge_is_refused_one_past_it_with_its_own_figures` | RED — 2 failed, witness among them, 20 passed |
+| A3 | move the guard one place off the line: `> MAX + 1` | `test_the_door_answers_the_ceiling_with_the_rulebook_status_and_writes_nothing` | RED — 2 failed, witness among them, 20 passed |
+
+**3 of 3 arms reddened the assertion named for them**, and no arm was credited with a red the control did not
+already have. Each file was restored from the bytes read before the run and re-read to prove the restore.

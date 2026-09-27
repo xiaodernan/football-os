@@ -11,10 +11,10 @@ import type { ReportLimits, SessionLimits, TeamView } from "@/lib/club";
  * Both forms are built from figures the API publishes — `session_limits`, `report_kinds`, `report_limits` —
  * rather than from numbers chosen here, because a page whose own cap disagrees with the door's is a page that
  * teaches a caller to be refused. Those props are therefore **required**: an earlier shape kept a `: 60`, a `: 8`,
- * a `: 280`, a `: 366` and a `[1, 2, 3, 4]` as the fallback when the rulebook door did not answer, and each one was
- * a number this tier invented and the API never published. The page now shows no form rather than a plausible one. Where a write is refused, the figure behind the sentence is printed beside
- * it by `CallNote`; and no form paints a written row as the new state, since the runner re-reads the panel
- * from the server instead.
+ * a `: 280`, a `: 366` and a `[1, 2, 3, 4]` as the fallback when the rulebook door did not answer, and every one
+ * of them was a number this tier invented and the API never published. The page now shows no form rather than a
+ * plausible one. Where a write is refused, the figure behind the sentence is printed beside it by `CallNote`; and
+ * no form paints a written row as the new state, since the runner re-reads the panel from the server instead.
  *
  * Attendance is a checkbox per player on *that* team's sheet, because the door refuses a session naming
  * anybody else: a picker that could offer a player this tenant does not hold would be a form that cannot

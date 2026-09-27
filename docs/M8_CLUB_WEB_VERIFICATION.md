@@ -186,7 +186,17 @@ ladder, and that path is held by §48's own suite (28 items, plus the eleven-arm
 `M8_CLUB_OS_VERIFICATION.md` §9). The panel prints that it does not narrow the named list, so the reader is not
 left to infer where the arithmetic was proved.
 
-## Three things this walk had to learn about itself
+## §50 took the five invented figures out of the recorder panel (2026-09-27, `217/217`)
+
+The §41 recorder panel's walk was re-run after `limits` became a required prop: **217/217 checks, exit 0** on a
+production build against its own scratch database. 217 is 215 plus two cookie checks a concurrent run had in flight
+on that tree — they are counted here so the row stays arithmetically honest, and they prove something else. The two
+checks §50 exists for are `the recorder prints the caps the door publishes rather than its own`, which compares
+`duration_range`, `rpe_range`, `session_focus_max` and `attendance_max` field by field with what `session_limits`
+answered, and `and the report form, for the window the tier enforces`, which does the same for `window_max_days`. That pair is the check that would have caught a fallback value shipping: before §50 the page
+could print `60` while the door said anything, and the sentence beside it was the page's own arithmetic. A blank
+rulebook door now paints no form at all, naming the door that failed.
+
 
 * **`typeInto` appends.** The first run arranged against `united-of-nowhere<real-slug>` because the ghost-opponent
   refusal above left its text in the field; the door's 404 was correct and the walk called it a defect. Every field
