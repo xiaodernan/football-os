@@ -7593,6 +7593,342 @@
         }
       }
     },
+    "/api/v1/club/{ident}/fixtures": {
+      "post": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Arrange Fixture",
+        "description": "Arrange one fixture against a club in the generated world, and name the eleven it will be played with.",
+        "operationId": "arrange_fixture_api_v1_club__ident__fixtures_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FixtureIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Arrange Fixture Api V1 Club  Ident  Fixtures Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Read Fixtures",
+        "description": "The tenant's calendar, newest first, with every figure on it counted from the rows this page names.",
+        "operationId": "read_fixtures_api_v1_club__ident__fixtures_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "team",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Team"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Fixtures Api V1 Club  Ident  Fixtures Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/fixtures/{fixture}": {
+      "get": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Read Fixture",
+        "description": "One fixture, and — once played — the engine's own report read back through the match row it points at.",
+        "operationId": "read_fixture_api_v1_club__ident__fixtures__fixture__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "fixture",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Fixture"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Fixture Api V1 Club  Ident  Fixtures  Fixture  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Erase Fixture",
+        "description": "Delete an arrangement and the record of who played it, leaving the match the engine played standing.",
+        "operationId": "erase_fixture_api_v1_club__ident__fixtures__fixture__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "fixture",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Fixture"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase Fixture Api V1 Club  Ident  Fixtures  Fixture  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/{ident}/fixtures/{fixture}/play": {
+      "post": {
+        "tags": [
+          "club-os"
+        ],
+        "summary": "Play One Fixture",
+        "description": "Play one fixture through the simulation engine, and record the eleven that actually played it.",
+        "operationId": "play_one_fixture_api_v1_club__ident__fixtures__fixture__play_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "fixture",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Fixture"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FixturePlayIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Play One Fixture Api V1 Club  Ident  Fixtures  Fixture  Play Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/scout/rules": {
       "get": {
         "tags": [
@@ -8924,6 +9260,87 @@
         "additionalProperties": false,
         "type": "object",
         "title": "FeedbackIn"
+      },
+      "FixtureIn": {
+        "properties": {
+          "team": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Team"
+          },
+          "opponent": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Opponent"
+          },
+          "scheduled_on": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 10,
+            "title": "Scheduled On"
+          },
+          "side": {
+            "type": "string",
+            "maxLength": 8,
+            "title": "Side",
+            "default": "home"
+          },
+          "competition": {
+            "type": "string",
+            "maxLength": 184,
+            "title": "Competition",
+            "default": ""
+          },
+          "named": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 60,
+            "title": "Named"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 344,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "team",
+          "opponent",
+          "scheduled_on"
+        ],
+        "title": "FixtureIn"
+      },
+      "FixturePlayIn": {
+        "properties": {
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "minutes": {
+            "type": "integer",
+            "title": "Minutes",
+            "default": 90
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FixturePlayIn"
       },
       "GoalIn": {
         "properties": {

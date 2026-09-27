@@ -153,36 +153,43 @@ red. Prose that no test reads is not a contract.
 
 ## 7. The matrix, as published
 
-| Role | Rights (12 in total) |
+| Role | Rights (20 in total) |
 | --- | --- |
-| `owner` | all twelve, including `org.delete` and handing roles over |
-| `director` | everything except `org.delete`, `plan.write` — runs the roster and staffing, cannot delete the tenant or own the plan |
-| `coach` | `team.edit`, `squad.read`, `squad.write`, `plan.read_all`, `plan.write` |
-| `analyst` | `squad.read`, `plan.read_all`, `plan.write` |
-| `scout` | `squad.read` — sees sheets, changes nothing |
-| `parent` | **nothing yet** |
+| `owner` | all twenty, including `org.delete` and handing roles over |
+| `director` | sixteen — everything except `org.delete`, `plan.write` and the two parent-only scoped rights: runs the roster, the staffing, the curriculum and the fixture calendar, may erase a plan, cannot write a player's focus |
+| `coach` | nine: `team.edit`, `squad.read`, `squad.write`, `plan.read_all`, `plan.write`, `curriculum.read`, `curriculum.write`, `match.read`, `match.write` |
+| `analyst` | five: `squad.read`, `plan.read_all`, `plan.write`, `curriculum.read`, `match.read` |
+| `scout` | two: `squad.read`, `curriculum.read` — sees sheets and the age-band curriculum, changes nothing |
+| `parent` | three: `curriculum.read`, `plan.read_own_child`, `consent.grant_own` — each one scoped by a consent row, not by the tenant |
 
-`parent`'s empty row is a stated position, not an oversight: §40 gives it a right scoped to one child's own plan,
-so an empty row is the honest answer and `limitations()` says which tier fills it. `plan.read_all` and `plan.write`
-are therefore already in the vocabulary and already covered by the matrix-completeness test, which is what lets §40
-land without re-cutting the permission names. `director` holding `plan.read_all` but not `plan.write` is the same
-decision §39's Communication row will be read against: a director runs the tenant's staffing and may read a plan,
-and writing one is the coach's and analyst's act.
+These counts were read out of `matrix()` rather than remembered, and saying so is part of the record: this table
+carried "12 in total" and `parent` — **nothing yet** for two milestones after both stopped being true, first when
+§40 filled the parent row and then when §41 wrote the curriculum rights. No test went red, because the table is
+prose and `matrix()` is the code; the door was right the whole time and the page describing it was not.
+`parent`'s row was empty at §39's landing as a stated position, not an oversight — §40 then gave it three rights,
+each scoped to one child by the consent row that names it, which is why the row is short and not empty.
+`plan.read_all` and `plan.write` were already in the vocabulary at that landing and already covered by the
+matrix-completeness test, which is what let §40 land without re-cutting the permission names. `director` holding
+`plan.read_all` but not `plan.write` is the same decision §39's Communication row will be read against: a director
+runs the tenant's staffing and may read a plan, and writing one is the coach's and analyst's act.
 
 ## 8. Where this tier stops
 
 Published in seven sentences by `limitations()` — six at this tier's landing, the seventh added when §42's
 ceiling door and its pages went in — and repeated here so the ROADMAP row cannot overclaim:
 
-* **no match report or message exists in this tier** — §39's remaining rows (`Matches`, `Tactics`, `Video`,
-  `Communication`) arrive in the milestones after this one, which is why only `Permissions` and the addressing of
-  everything else are settled here; §40's development plans, §41's sessions and saved reports and §42's ceilings
-  are separate services, the first three read through `/club/academy`. The tenant page prints this list, so a row
-  that has landed and a sentence saying it has not are read together by everybody who opens `/club/{ident}` —
-  which is why the wording has been corrected twice: once 2026-09-27, when the shipped sentence still called a
-  training session missing after §41 had written one — the code was stale then — and once in this document, which
-  listed `Development` as unwritten several hours after §40 had written exactly that row, while `limitations()`
-  above was already right. A page that rewrites the door's sentences has to be re-read when the door moves;
+* **a fixture keeps a pointer and a digest, not a result** — §39's `Matches` row landed on 2026-09-27: a tenant
+  arranges a fixture against a club in the generated world and plays it through the same engine every other match
+  row uses, with its own sheet applied over the world club its team is bound to, and the scoreline, the timeline
+  and every counted figure stay in `sim_matches` and `sim_events`. `Communication` is the one §39 noun still
+  unwritten; §40's development plans, §41's sessions and saved reports and §42's ceilings are separate services,
+  the first three read through `/club/academy`. The tenant page prints this list, so a row that has landed and a
+  sentence saying it has not are read together by everybody who opens `/club/{ident}` — which is why the wording
+  has been corrected three times: once when the shipped sentence still called a training session missing after
+  §41 had written one — the code was stale then — once in this document, which listed `Development` as unwritten
+  several hours after §40 had written exactly that row, and once for the fixtures, where the door's sentence, this
+  bullet and §7's matrix moved together rather than one at a time. A page that rewrites the door's sentences has
+  to be re-read when the door moves;
 * **§40's minors' regime is not in §39's own tables**: the sheet reports `is_minor` from the stored age and a
   team carries `age_group`, and that is all §39 stores — parental consent, data minimisation, erasure and the
   parent's scoped right are §40's rows in the academy tier, landed 2026-09-26;

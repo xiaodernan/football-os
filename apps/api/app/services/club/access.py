@@ -45,6 +45,9 @@ PERMISSIONS: Final = (
     "consent.grant_own",
     "curriculum.read",
     "curriculum.write",
+    "match.read",
+    "match.write",
+    "match.erase",
 )
 
 #: What each role holds. `parent` is §40's row: it holds three rights and every one of them is scoped to a
@@ -65,9 +68,12 @@ _MATRIX: Final[dict[str, tuple[str, ...]]] = {
         "plan.erase",
         "curriculum.read",
         "curriculum.write",
+        "match.read",
+        "match.write",
+        "match.erase",
     ),
-    "coach": ("team.edit", "squad.read", "squad.write", "plan.read_all", "plan.write", "curriculum.read", "curriculum.write"),
-    "analyst": ("squad.read", "plan.read_all", "plan.write", "curriculum.read"),
+    "coach": ("team.edit", "squad.read", "squad.write", "plan.read_all", "plan.write", "curriculum.read", "curriculum.write", "match.read", "match.write"),
+    "analyst": ("squad.read", "plan.read_all", "plan.write", "curriculum.read", "match.read"),
     "scout": ("squad.read", "curriculum.read"),
     "parent": ("curriculum.read", "plan.read_own_child", "consent.grant_own"),
 }
@@ -80,9 +86,9 @@ SCOPED_PERMISSIONS: Final = frozenset({"plan.read_own_child", "consent.grant_own
 
 ROLE_MEANING: Final[dict[str, str]] = {
     "owner": "the account that opened the organisation, and the one that cannot be revoked while it stands alone",
-    "director": "runs the whole tenant's roster and staffing, reads every plan, and may erase one — but does not write a player's focus",
+    "director": "runs the whole tenant's roster and staffing, reads every plan, may erase one, and arranges or erases the tenant's fixtures — but does not write a player's focus",
     "coach": "works with the teams they are staffed on: selection, squad notes, and the plans of their own players",
-    "analyst": "reads the squad and writes reports and plans, and does not touch staffing or teams",
+    "analyst": "reads the squad, writes reports and plans, reads the fixture calendar, and does not touch staffing, teams or arrangements",
     "scout": "sees a squad list and the age-band curriculum, and no plan — a scout's §23 tools are their own account's, not the tenant's",
     "parent": "reads and writes only what a granted consent row ties to their own child: that child's plan, their own consents, and the curriculum of the age band",
 }

@@ -1346,6 +1346,7 @@ class Organization(Base, TimestampMixin):
     consents: Mapped[list[GuardianConsent]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     sessions: Mapped[list[ClubSession]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     reports: Mapped[list[ClubReport]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    fixtures: Mapped[list[ClubFixture]] = relationship(back_populates="organization", cascade="all, delete-orphan")
 
 
 class OrganizationMember(Base, TimestampMixin):
@@ -1663,3 +1664,98 @@ class ClubReport(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     organization: Mapped[Organization] = relationship(back_populates="reports")
+
+
+class ClubFixture(Base, TimestampMixin):
+    """§39's Matches: one fixture a tenant arranged, and a pointer to the match that answered it.
+
+    The row is the *arrangement*: who was invited, which side this tenant's team was on, the date, the
+    competition, and the eleven the tenant named. Every number about the game itself lives in `sim_matches` and
+    `sim_events`, and what is kept here is the pointer that reaches them — `match_id`, the report's `digest`, the
+    `model_version` that produced it and the `seed` the caller chose. A stored scoreline would disagree with a
+    re-played match the moment the model is corrected, which is the mistake §40 refused for `progress` and §41
+    for `load_units`.
+
+    `opponent_name` is kept as text beside the id for the same reason `career_fixtures` keeps its opponent's: a
+    world regeneration that renames or drops a club must not rewrite what two sides agreed to. The id is
+    SET NULL, so the read prints the name it stored and says the club behind it is gone.
+    """
+
+    __tablename__ = "club_fixtures"
+    __table_args__ = (
+        # One side cannot be at home twice on a date; the same team playing the other side of a tie on the same
+        # day, or two different teams of one tenant at home, are both ordinary and both stay legal.
+        UniqueConstraint("organization_id", "team_id", "scheduled_on", "side", name="uq_club_fixture_day_side"),
+        Index("ix_club_fixture_org_date", "organization_id", "scheduled_on"),
+        Index("ix_club_fixture_team_date", "team_id", "scheduled_on"),
+        Index("ix_club_fixture_match", "match_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    team_id: Mapped[str] = mapped_column(ForeignKey("club_teams.id", ondelete="CASCADE"), nullable=False)
+    opponent_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    opponent_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    side: Mapped[str] = mapped_column(String(5), default="home", nullable=False)
+    competition: Mapped[str] = mapped_column(String(120), default="", nullable=False)
+    # An ISO date as text, exactly as `club_sessions.scheduled_on` keeps it.
+    scheduled_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    # `scheduled` or `played`. Nothing else: an arrangement and a result are the two states this noun has, and a
+    # third word would be a claim about a competition this tier does not run.
+    status: Mapped[str] = mapped_column(String(12), default="scheduled", nullable=False)
+    match_id: Mapped[str | None] = mapped_column(ForeignKey("sim_matches.id", ondelete="SET NULL"), nullable=True)
+    match_slug: Mapped[str] = mapped_column(String(80), default="", nullable=False)
+    digest: Mapped[str] = mapped_column(String(16), default="", nullable=False)
+    model_version: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    # Player ids, not rows, and resolved at write time the way §41's attendance is: a fixture may be arranged
+    # before an eleven is picked, so an empty list is allowed here where a session refuses one.
+    named: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    note: Mapped[str] = mapped_column(String(280), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="fixtures")
+    # The record of who played, deleted with the arrangement it belongs to — the relationship is where the
+    # CASCADE becomes visible to a reader of the model rather than only to the database.
+    appearances: Mapped[list[ClubMatchAppearance]] = relationship(back_populates="fixture", cascade="all, delete-orphan")
+
+
+class ClubMatchAppearance(Base, TimestampMixin):
+    """One player the engine selected for one of this tenant's fixtures.
+
+    A lineup is a *selection* — `club_fixtures.named`, the coach's words — and an appearance is a *record*: the
+    eleven the engine actually shaped, from the tenant's rows, checked name by name against the stored report
+    before a single row was written. The two cannot live in one column: the selection can still be edited and the
+    record must not move, and `simulation.squad.replay_squads` cannot rebuild this side from above because it
+    replays a *career's* overlays from move rows, which a tenant's fixture has none of.
+
+    The name and slug are copied forward from the player row, the way `career_appearances` does, so a person
+    renamed afterwards does not have their appearance re-titled; `player_id` stays the join. It is CASCADE, not
+    SET NULL: a child whose record a guardian erases takes their appearance rows with them, which is §40's
+    deletion right rather than a tenant's history going missing.
+    """
+
+    __tablename__ = "club_match_appearances"
+    __table_args__ = (
+        UniqueConstraint("fixture_id", "player_id", name="uq_club_match_appearance_player"),
+        Index("ix_club_match_appearance_fixture", "fixture_id"),
+        Index("ix_club_match_appearance_player", "player_id", "created_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    fixture_id: Mapped[str] = mapped_column(ForeignKey("club_fixtures.id", ondelete="CASCADE"), nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    player_slug: Mapped[str] = mapped_column(String(96), default="", nullable=False)
+    player_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    position: Mapped[str] = mapped_column(String(24), default="", nullable=False)
+    band: Mapped[str] = mapped_column(String(16), default="", nullable=False)
+    side: Mapped[str] = mapped_column(String(5), default="home", nullable=False)
+    # The fixture's length, not a count of what this player did: the engine makes no substitutions, so a minute
+    # column that could be edited per player would be a figure nothing produces.
+    minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    note: Mapped[str] = mapped_column(String(280), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    fixture: Mapped[ClubFixture] = relationship(back_populates="appearances")

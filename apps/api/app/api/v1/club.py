@@ -30,7 +30,7 @@ from __future__ import annotations
 from typing import Any, Final
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.api.v1.club_academy import ROUTE_GUIDE as ACADEMY_ROUTES
@@ -38,6 +38,7 @@ from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
 from app.services.club import answers
+from app.services.club import matches as mat
 from app.services.club import organizations as club
 from app.services.club.organizations import ClubRefusal
 
@@ -128,6 +129,9 @@ ROUTE_GUIDE: Final = (
     {"methods": ["PATCH", "DELETE"], "path": "/api/v1/club/{ident}/teams/{team}", "purpose": "change or remove a team; the tenant's own read prints its sheets, so there is no list route"},
     {"methods": ["GET", "POST"], "path": "/api/v1/club/{ident}/teams/{team}/players", "purpose": "read one sheet, or put a player on it"},
     {"methods": ["DELETE"], "path": "/api/v1/club/{ident}/teams/{team}/players/{player}", "purpose": "take a player off one sheet"},
+    {"methods": ["GET", "POST"], "path": "/api/v1/club/{ident}/fixtures", "purpose": "arrange one fixture against a club in the generated world, and read the tenant's calendar with every figure counted from the rows on the page"},
+    {"methods": ["GET", "DELETE"], "path": "/api/v1/club/{ident}/fixtures/{fixture}", "purpose": "one arrangement, and the engine's own report once it has been played; erasing it takes the appearance rows and leaves the match the engine played"},
+    {"methods": ["POST"], "path": "/api/v1/club/{ident}/fixtures/{fixture}/play", "purpose": "play it through the simulation engine and record the eleven that played"},
 )
 
 
@@ -143,10 +147,14 @@ def read_capabilities(request: Request, db: Session = Depends(get_db)) -> dict[s
     limit(request, 60, 60, scope="club_capabilities")
     return {
         **club.rules(),
-        "counts": club.club_counts(db),
+        "counts": {**club.club_counts(db), **mat.fixture_counts(db, ready=club.club_ready(db))},
         "ready": club.club_ready(db),
         "ready_rule": club.READY_RULE,
         "refusal_answers": answers.published(club.REFUSALS),
+        "fixture_caps": dict(mat.CAPS),
+        "fixture_formulas": dict(mat.FORMULAS),
+        "fixture_refusals": answers.published(mat.PUBLISHED),
+        "fixture_limitation": mat.LIMITATION,
         "limitations": club.limitations(),
         "data_origin": "project-authored",
         "is_demo_data": False,
@@ -329,5 +337,84 @@ def drop_player_from_squad(ident: str, team: str, player: str, request: Request,
     limit(request, 30, 60, scope="club_write")
     try:
         return {**club.remove_from_squad(db, user, ident, team, player=player), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+class FixtureIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    team: str = Field(min_length=1, max_length=64)
+    opponent: str = Field(min_length=1, max_length=80)
+    scheduled_on: str = Field(min_length=10, max_length=10)
+    side: str = Field(default="home", max_length=8)
+    # Bounds *above* the published caps, which is §39's own rule for a note: at the cap the schema answers a
+    # long value with a bare field error, while the rulebook prints `fixture_caps` and promises the refusal that
+    # carries `length`/`max`/`named` figures a page can show.
+    competition: str = Field(default="", max_length=mat.COMPETITION_MAX + 64)
+    named: list[str] = Field(default_factory=list, max_length=mat.NAMED_MAX + 20)
+    note: str = Field(default="", max_length=mat.NOTE_MAX + 64)
+
+
+class FixturePlayIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # `minutes` is unbounded here on purpose: the engine's own `MINUTES_CHOICES` is the rule, and a schema that
+    # restated it would be a second copy of a figure this tier does not own. `minutes_choice` is the service's
+    # answer, with the choices printed beside it.
+    seed: int | None = Field(default=None, ge=0, le=2_147_483_647)
+    minutes: int = Field(default=mat.DEFAULT_MINUTES)
+
+
+@router.post("/{ident}/fixtures")
+def arrange_fixture(payload: FixtureIn, ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Arrange one fixture against a club in the generated world, and name the eleven it will be played with."""
+    limit(request, 20, 60, scope="club_write")
+    try:
+        return mat.create_fixture(
+            db, user, ident, team=payload.team, opponent=payload.opponent, scheduled_on=payload.scheduled_on, side=payload.side, competition=payload.competition, named=payload.named, note=payload.note
+        )
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.get("/{ident}/fixtures")
+def read_fixtures(
+    ident: str, request: Request, team: str | None = None, status: str | None = None, since: str | None = None, db: Session = Depends(get_db), user: User = Depends(current_user)
+) -> dict[str, Any]:
+    """The tenant's calendar, newest first, with every figure on it counted from the rows this page names."""
+    limit(request, 30, 60, scope="club_read")
+    try:
+        return mat.list_fixtures(db, user, ident, team=team, status=status, since=since)
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.get("/{ident}/fixtures/{fixture}")
+def read_fixture(ident: str, fixture: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """One fixture, and — once played — the engine's own report read back through the match row it points at."""
+    limit(request, 30, 60, scope="club_read")
+    try:
+        return mat.fixture_detail(db, user, ident, fixture)
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.post("/{ident}/fixtures/{fixture}/play")
+def play_one_fixture(payload: FixturePlayIn, ident: str, fixture: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Play one fixture through the simulation engine, and record the eleven that actually played it."""
+    limit(request, 10, 60, scope="club_write")
+    try:
+        return mat.play_fixture(db, user, ident, fixture, seed=payload.seed, minutes=payload.minutes)
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.delete("/{ident}/fixtures/{fixture}")
+def erase_fixture(ident: str, fixture: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Delete an arrangement and the record of who played it, leaving the match the engine played standing."""
+    limit(request, 10, 60, scope="club_write")
+    try:
+        return mat.delete_fixture(db, user, ident, fixture)
     except ClubRefusal as error:
         raise _refusal(error) from None

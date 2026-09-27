@@ -741,7 +741,7 @@ def rules() -> dict[str, Any]:
 
 def limitations() -> list[str]:
     return [
-        "no match report or message exists in this tier — §39's remaining rows arrive in the ones after it, and this one only decides who may see them; §40's development plans and §41's sessions and saved reports are separate services, read through /club/academy",
+        "a club fixture is arranged against a club in the generated world and played through the same engine every other match row uses — the tenant's own sheet is applied over the world club its team is bound to, and the scoreline, the timeline and every counted figure stay in `sim_matches` and `sim_events`, so this tier keeps a pointer and a digest rather than a result. §39's Communication row is still unwritten; §40's development plans and §41's sessions and saved reports are separate services, read through /club/academy",
         "an organisation's teams point at the generated world's players, not at copies of them: a tenant's sheet is a selection over the same rows the scout searches, so a rating cannot go stale on a sheet any more than on a shortlist",
         "the invitation is a row and not a message: no mail transport exists in this project, and none is claimed by it",
         "revoked memberships keep their rows for the record and grant nothing, and they give their seat back to `member_limit`; there is no audit trail of who did what before the revocation, only of who stood where",

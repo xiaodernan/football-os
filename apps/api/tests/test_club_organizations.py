@@ -73,6 +73,16 @@ DOORS: tuple[tuple[str, str, dict[str, Any]], ...] = (
     ("delete", "/{ident}/teams/{team}/players/{player}", {}),
     # §42's tenant meter is a §39 door — it names a tenant and asks its standing — so the walk reaches it here.
     ("get", "/{ident}/entitlements", {}),
+    # §39's Matches doors name a tenant exactly the same way, so the walk has to reach them before any
+    # fixture id, team name or opponent slug is looked up at all.
+    ("post", "/{ident}/fixtures", {"team": "A Side They Do Not Run", "opponent": "whoever", "scheduled_on": "2020-01-01"}),
+    ("get", "/{ident}/fixtures", {}),
+    ("get", "/{ident}/fixtures/{fixture}", {}),
+    # The play door is the one POST in this list that reads a body, and `_at_door` sends one only where the
+    # tuple carries it: an empty dict here would reach the route with no body at all, and the framework's own
+    # 422 would arrive before `require()` ever saw the tenant — a green walk that proved nothing about isolation.
+    ("post", "/{ident}/fixtures/{fixture}/play", {"minutes": 90}),
+    ("delete", "/{ident}/fixtures/{fixture}", {}),
     # §40's academy doors name a tenant exactly the same way, so the isolation walk has to reach them too.
     # Every id in them belongs to nobody: the tenant is refused before any of them is looked up, which is the
     # whole point — a plan door that leaked "that plan is in another tenant" would leak the tenant.
@@ -535,8 +545,8 @@ class TestIsolationAcrossTenants:
         living = _tenant_naming_doors()
         assert living == declared, sorted(living ^ declared)
         assert (
-            len(declared) == 41
-        ), "this class is the isolation proof for every door that names a tenant: §39's fourteen, §40's eighteen academy doors, §41's eight session and report doors and §42's one tenant-meter door, counted from the route table above rather than remembered"
+            len(declared) == 46
+        ), "this class is the isolation proof for every door that names a tenant: §39's nineteen, §40's eighteen academy doors, §41's eight session and report doors and §42's one tenant-meter door, counted from the route table above rather than remembered"
 
     def test_an_unaccepted_invitation_and_a_revoked_standing_are_both_not_a_foothold(self) -> None:
         owner = _account("Suspender")
@@ -1132,7 +1142,10 @@ class TestPublishedSelfDescription:
     def test_the_rulebook_names_the_two_things_this_tier_deliberately_does_not_have(self) -> None:
         limitations = club.limitations()
         joined = " ".join(limitations)
-        assert any("no match report or message" in text for text in limitations), "§39's other rows are named as missing"
+        assert any(
+            "a club fixture is arranged against a club in the generated world" in text for text in limitations
+        ), "Matches has landed, so the rulebook has to say what a fixture is played against and where its figures live"
+        assert "no match report or message exists in this tier" not in joined, "§39's Matches row exists now, and the sentence that called it missing would be a lie the tenant page prints"
         # §41 landed `club_sessions` and `club_reports`, so the sentence that called a training session missing
         # became false while the tier it describes was being written — and the tenant page prints this list.
         assert "training session or message" not in joined, "a training session exists at /club/academy/{ident}/sessions; the rulebook may not still call it missing"
@@ -1216,3 +1229,10 @@ class TestTheUnmigratedDatabase:
         assert problems["clean"] is False and problems["problems"] == ["the tenant tables are not in this database"]
         assert problems["checked"] == {"organizations": 0, "memberships": 0, "teams": 0}
         assert problems["rule"].startswith("an un-migrated database is reported")
+
+
+# The walk formats every placeholder in a door's path from `PROBE`, and §39's fixture doors name a fixture
+# as well as a team and an email. The id belongs to nobody: a stranger is refused before it is looked up,
+# which is the only order in which the answer cannot confirm that another tenant holds the row.
+assert isinstance(PROBE, dict), "the door walk's placeholders are no longer a mapping, so the fixture doors are not being probed"
+PROBE.setdefault("fixture", "cfx-nobody-probed")
