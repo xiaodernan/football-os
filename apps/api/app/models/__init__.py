@@ -1347,6 +1347,7 @@ class Organization(Base, TimestampMixin):
     sessions: Mapped[list[ClubSession]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     reports: Mapped[list[ClubReport]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     fixtures: Mapped[list[ClubFixture]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    announcements: Mapped[list[ClubAnnouncement]] = relationship(back_populates="organization", cascade="all, delete-orphan")
 
 
 class OrganizationMember(Base, TimestampMixin):
@@ -1759,3 +1760,63 @@ class ClubMatchAppearance(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     fixture: Mapped[ClubFixture] = relationship(back_populates="appearances")
+
+
+# --- Club OS: §39's Communication row (M8, spec §39) ----------------------------------------------
+# A notice and its receipts. The decision worth reading before the columns is the missing one: there is
+# no recipient list, because an audience is a predicate over `organization_members` and the people it
+# selects are recomputed on every read. That is simultaneously the tier's data-minimisation rule (§40
+# forbids a row about one named child, and this table has no column that could hold one) and the reason
+# a revoked member leaves the denominator at once instead of haunting a stored count.
+class ClubAnnouncement(Base, TimestampMixin):
+    """One notice a member posts to an audience, with the role its author held when they posted it."""
+
+    __tablename__ = "club_announcements"
+    __table_args__ = (
+        Index("ix_club_announcement_org_date", "organization_id", "published_on"),
+        Index("ix_club_announcement_board", "organization_id", "audience", "pinned"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    # One of `announcements.AUDIENCES`, kept as text the way `role` and `status` are: the vocabulary is
+    # code's, and a new audience is a new predicate rather than a migration.
+    audience: Mapped[str] = mapped_column(String(24), default="members", nullable=False)
+    title: Mapped[str] = mapped_column(String(120), nullable=False)
+    body: Mapped[str] = mapped_column(String(2000), default="", nullable=False)
+    author_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    # The role at publish time, deliberately a copy rather than a join: a member whose role changes
+    # afterwards must not have a notice they wrote as a director re-titled under a different one.
+    author_role: Mapped[str] = mapped_column(String(24), default="", nullable=False)
+    pinned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # An ISO date as text, exactly as `club_sessions.scheduled_on` keeps it.
+    published_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    organization: Mapped[Organization] = relationship(back_populates="announcements")
+    # The receipts go with the notice: erasing a notice erases what anybody read of it, which is the
+    # tenant's `announce.erase` right and not a member's history.
+    reads: Mapped[list[ClubAnnouncementRead]] = relationship(back_populates="announcement", cascade="all, delete-orphan")
+
+
+class ClubAnnouncementRead(Base, TimestampMixin):
+    """One account's receipt for one notice: a fact, idempotent at the schema level and not only in the code path."""
+
+    __tablename__ = "club_announcement_reads"
+    __table_args__ = (
+        UniqueConstraint("announcement_id", "user_id", name="uq_club_announcement_read"),
+        Index("ix_club_announcement_read_user", "user_id", "read_on"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    announcement_id: Mapped[str] = mapped_column(ForeignKey("club_announcements.id", ondelete="CASCADE"), nullable=False)
+    # CASCADE, not SET NULL: a receipt that names no account answers no question, and §40's deletion
+    # right is that an account's records go when their account does.
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    read_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    announcement: Mapped[ClubAnnouncement] = relationship(back_populates="reads")

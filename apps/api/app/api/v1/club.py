@@ -37,6 +37,7 @@ from app.api.v1.club_academy import ROUTE_GUIDE as ACADEMY_ROUTES
 from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
+from app.services.club import announcements as ann
 from app.services.club import answers
 from app.services.club import matches as mat
 from app.services.club import organizations as club
@@ -129,9 +130,28 @@ ROUTE_GUIDE: Final = (
     {"methods": ["PATCH", "DELETE"], "path": "/api/v1/club/{ident}/teams/{team}", "purpose": "change or remove a team; the tenant's own read prints its sheets, so there is no list route"},
     {"methods": ["GET", "POST"], "path": "/api/v1/club/{ident}/teams/{team}/players", "purpose": "read one sheet, or put a player on it"},
     {"methods": ["DELETE"], "path": "/api/v1/club/{ident}/teams/{team}/players/{player}", "purpose": "take a player off one sheet"},
-    {"methods": ["GET", "POST"], "path": "/api/v1/club/{ident}/fixtures", "purpose": "arrange one fixture against a club in the generated world, and read the tenant's calendar with every figure counted from the rows on the page"},
-    {"methods": ["GET", "DELETE"], "path": "/api/v1/club/{ident}/fixtures/{fixture}", "purpose": "one arrangement, and the engine's own report once it has been played; erasing it takes the appearance rows and leaves the match the engine played"},
+    {
+        "methods": ["GET", "POST"],
+        "path": "/api/v1/club/{ident}/fixtures",
+        "purpose": "arrange one fixture against a club in the generated world, and read the tenant's calendar with every figure counted from the rows on the page",
+    },
+    {
+        "methods": ["GET", "DELETE"],
+        "path": "/api/v1/club/{ident}/fixtures/{fixture}",
+        "purpose": "one arrangement, and the engine's own report once it has been played; erasing it takes the appearance rows and leaves the match the engine played",
+    },
     {"methods": ["POST"], "path": "/api/v1/club/{ident}/fixtures/{fixture}/play", "purpose": "play it through the simulation engine and record the eleven that played"},
+    {
+        "methods": ["GET", "POST"],
+        "path": "/api/v1/club/{ident}/announcements",
+        "purpose": "read the tenant's notice board with each notice's readership counted from the roster as it stands, or post one notice to an audience",
+    },
+    {
+        "methods": ["GET", "DELETE"],
+        "path": "/api/v1/club/{ident}/announcements/{announcement}",
+        "purpose": "one notice, its readership and the caller's own receipt; erasing it takes the receipts with it",
+    },
+    {"methods": ["POST"], "path": "/api/v1/club/{ident}/announcements/{announcement}/read", "purpose": "record that the caller has read it, which is idempotent and answers with the figure it moved"},
 )
 
 
@@ -147,7 +167,7 @@ def read_capabilities(request: Request, db: Session = Depends(get_db)) -> dict[s
     limit(request, 60, 60, scope="club_capabilities")
     return {
         **club.rules(),
-        "counts": {**club.club_counts(db), **mat.fixture_counts(db, ready=club.club_ready(db))},
+        "counts": {**club.club_counts(db), **mat.fixture_counts(db, ready=club.club_ready(db)), **ann.announcement_counts(db, ready=club.club_ready(db))},
         "ready": club.club_ready(db),
         "ready_rule": club.READY_RULE,
         "refusal_answers": answers.published(club.REFUSALS),
@@ -155,6 +175,10 @@ def read_capabilities(request: Request, db: Session = Depends(get_db)) -> dict[s
         "fixture_formulas": dict(mat.FORMULAS),
         "fixture_refusals": answers.published(mat.PUBLISHED),
         "fixture_limitation": mat.LIMITATION,
+        "announcement_caps": dict(ann.CAPS),
+        "announcement_formulas": dict(ann.FORMULAS),
+        "announcement_refusals": answers.published(ann.PUBLISHED),
+        "announcement_limitation": ann.LIMITATION,
         "limitations": club.limitations(),
         "data_origin": "project-authored",
         "is_demo_data": False,
@@ -416,5 +440,69 @@ def erase_fixture(ident: str, fixture: str, request: Request, db: Session = Depe
     limit(request, 10, 60, scope="club_write")
     try:
         return mat.delete_fixture(db, user, ident, fixture)
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+class AnnouncementIn(BaseModel):
+    """A notice: its title, its body and the audience it is posted to. No field here could name a person."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    # Bounds above the published caps for §39's own reason: at the cap the schema would answer a long
+    # title with a bare field error, while the rulebook prints `announcement_caps` and promises the
+    # refusal that carries the `length` and `max` figures a page needs to show why.
+    title: str = Field(default="", max_length=ann.TITLE_MAX + 64)
+    body: str = Field(default="", max_length=ann.BODY_MAX + 400)
+    audience: str = Field(default="members", max_length=32)
+    pinned: bool = Field(default=False)
+
+
+@router.post("/{ident}/announcements")
+def post_announcement(payload: AnnouncementIn, ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Post one notice to an audience. The tier stores the words and the predicate, never a recipient."""
+    limit(request, 20, 60, scope="club_write")
+    try:
+        return ann.create_announcement(db, user, ident, title=payload.title, body=payload.body, audience=payload.audience, pinned=payload.pinned)
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.get("/{ident}/announcements")
+def read_announcements(ident: str, request: Request, audience: str | None = None, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """The tenant's board, newest first, with each notice's readership counted from the roster as it stands."""
+    limit(request, 30, 60, scope="club_read")
+    try:
+        return ann.list_announcements(db, user, ident, audience=audience)
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.get("/{ident}/announcements/{announcement}")
+def read_announcement(ident: str, announcement: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """One notice, its readership, and whether this account is among the audience that selects it."""
+    limit(request, 30, 60, scope="club_read")
+    try:
+        return ann.announcement_detail(db, user, ident, announcement)
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.post("/{ident}/announcements/{announcement}/read")
+def mark_announcement_read(ident: str, announcement: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Record that the caller has read it. Reading twice is one row, and the answer says which one it was."""
+    limit(request, 30, 60, scope="club_write")
+    try:
+        return ann.mark_announcement_read(db, user, ident, announcement)
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.delete("/{ident}/announcements/{announcement}")
+def erase_announcement(ident: str, announcement: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Erase a notice and the receipts on it; the roster they were counted over is untouched."""
+    limit(request, 10, 60, scope="club_write")
+    try:
+        return ann.delete_announcement(db, user, ident, announcement)
     except ClubRefusal as error:
         raise _refusal(error) from None

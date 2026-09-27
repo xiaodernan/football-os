@@ -83,6 +83,14 @@ DOORS: tuple[tuple[str, str, dict[str, Any]], ...] = (
     # 422 would arrive before `require()` ever saw the tenant — a green walk that proved nothing about isolation.
     ("post", "/{ident}/fixtures/{fixture}/play", {"minutes": 90}),
     ("delete", "/{ident}/fixtures/{fixture}", {}),
+    # §39's Communication doors name a tenant the same way, so the walk reaches them before any notice id,
+    # audience or author row is looked up: a board that leaked "that notice belongs to another tenant" would
+    # leak the tenant, which is exactly the hole §39's first walk closed at the accept door.
+    ("post", "/{ident}/announcements", {"title": "A notice they cannot post"}),
+    ("get", "/{ident}/announcements", {}),
+    ("get", "/{ident}/announcements/{announcement}", {}),
+    ("post", "/{ident}/announcements/{announcement}/read", {}),
+    ("delete", "/{ident}/announcements/{announcement}", {}),
     # §40's academy doors name a tenant exactly the same way, so the isolation walk has to reach them too.
     # Every id in them belongs to nobody: the tenant is refused before any of them is looked up, which is the
     # whole point — a plan door that leaked "that plan is in another tenant" would leak the tenant.
@@ -129,6 +137,8 @@ PROBE = {
     "evidence": "pve_nobody_s_citation",
     "session_ident": "ses_nobody_s_session",
     "report_ident": "rep_nobody_s_report",
+    # A notice id belonging to nobody, in the shape the tier mints them.
+    "announcement": "ann_somebodyelses0",
 }
 
 
@@ -545,8 +555,8 @@ class TestIsolationAcrossTenants:
         living = _tenant_naming_doors()
         assert living == declared, sorted(living ^ declared)
         assert (
-            len(declared) == 46
-        ), "this class is the isolation proof for every door that names a tenant: §39's nineteen, §40's eighteen academy doors, §41's eight session and report doors and §42's one tenant-meter door, counted from the route table above rather than remembered"
+            len(declared) == 51
+        ), "this class is the isolation proof for every door that names a tenant: §39's twenty-four (fourteen of §41's spine, five fixtures and five notices), §40's eighteen academy doors, §41's eight session and report doors and §42's one tenant-meter door, counted from the route table above rather than remembered"
 
     def test_an_unaccepted_invitation_and_a_revoked_standing_are_both_not_a_foothold(self) -> None:
         owner = _account("Suspender")
@@ -688,10 +698,11 @@ class TestStandingAndTheMatrix:
         assert rules["stored"] == "role and status on the membership row"
         assert rules["rule"] == "one rule sits under all of it: a member of one organisation can read and change nothing in another"
         assert rules["meaning"]["parent"].startswith("reads and writes only what a granted consent row")
-        # The row is short, not empty. Two of its three rights are scoped by a consent row rather than by the
-        # tenant — a `parent` who is nobody's guardian holds them and opens nothing — and the third is the
-        # age-band curriculum, which names no child at all and so is deliberately outside the scoped set.
-        assert set(rules["matrix"]["parent"]) == {"curriculum.read", "plan.read_own_child", "consent.grant_own"}
+        # The row is short, not empty. Two of its four rights are scoped by a consent row rather than by the
+        # tenant — a `parent` who is nobody's guardian holds them and opens nothing — and the other two name no
+        # child at all: the age-band curriculum, and the tenant's notice board, which is addressed to an
+        # audience and never to a person.
+        assert set(rules["matrix"]["parent"]) == {"curriculum.read", "plan.read_own_child", "consent.grant_own", "announce.read"}
         assert set(rules["matrix"]["parent"]) & set(access.SCOPED_PERMISSIONS) == {"plan.read_own_child", "consent.grant_own"}
         assert "curriculum.read" not in access.SCOPED_PERMISSIONS
         assert all(set(row) <= set(access.PERMISSIONS) for row in rules["matrix"].values())
@@ -1152,7 +1163,12 @@ class TestPublishedSelfDescription:
         assert any("sessions and saved reports are separate services" in text for text in limitations), "the sentence has to say where they went, not just that §39 lacks them"
         assert any("/club/academy" in text for text in limitations), "the sentence has to say where the plans did go, not just that §39 lacks them"
         assert any("not a message" in text for text in limitations), "an invitation that is not an email is stated, not implied"
-        assert any("parent" in text and "scoped by a consent row" in text for text in limitations), "a parent's three rights are scoped, and the rulebook says so"
+        assert any("parent" in text and "scoped by a consent row" in text for text in limitations), "a parent's rights are half scoped, and the rulebook says so"
+        # §57 gave `parent` a fourth right, and the sentence the tenant page prints had to be re-counted rather
+        # than left insisting on three — a limitation that miscounts the matrix is a lie on every club page.
+        assert any(
+            "four rights" in text and "`curriculum.read` and `announce.read` name no child" in text for text in limitations
+        ), "the rulebook counts the row as it is now, and names the two rights that tie to no child"
         assert any("rewrites nothing about a player" in text for text in limitations)
         assert any("give their seat back" in text for text in limitations)
         # The browser walk found this by tripping it: every account it drives connects from one address, so the

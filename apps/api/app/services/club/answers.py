@@ -31,6 +31,7 @@ from fastapi import HTTPException, status
 
 from app.services import entitlements as ent_status
 from app.services.club import academy as edu
+from app.services.club import announcements as ann
 from app.services.club import matches as mat
 from app.services.club import organizations as club
 from app.services.club import reports as rep
@@ -49,7 +50,7 @@ SETS: Final = (
 
 #: Every part of the tier whose refusals a club door can be the first to print. §48's `matches` joins this list
 #: and nothing else changes: both routers read the table assembled from it.
-TIERS: Final = (club, edu, mat, sess, rep, ent_status)
+TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status)
 
 
 def assemble(*tiers: Any) -> dict[str, int]:

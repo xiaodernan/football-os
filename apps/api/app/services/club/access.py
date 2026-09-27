@@ -48,10 +48,14 @@ PERMISSIONS: Final = (
     "match.read",
     "match.write",
     "match.erase",
+    "announce.read",
+    "announce.write",
+    "announce.erase",
 )
 
-#: What each role holds. `parent` is §40's row: it holds three rights and every one of them is scoped to a
-#: single child by the consent row that names it, which is why the row is short and not empty.
+#: What each role holds. `parent` is §40's row: it is short and not empty, and two of its rights are scoped
+#: to a single child by the consent row that names them. The other two name no child at all — a board of
+#: notices and the age-band curriculum — which is what lets a guardian receive anything.
 _MATRIX: Final[dict[str, tuple[str, ...]]] = {
     "owner": PERMISSIONS,
     "director": (
@@ -71,11 +75,14 @@ _MATRIX: Final[dict[str, tuple[str, ...]]] = {
         "match.read",
         "match.write",
         "match.erase",
+        "announce.read",
+        "announce.write",
+        "announce.erase",
     ),
-    "coach": ("team.edit", "squad.read", "squad.write", "plan.read_all", "plan.write", "curriculum.read", "curriculum.write", "match.read", "match.write"),
-    "analyst": ("squad.read", "plan.read_all", "plan.write", "curriculum.read", "match.read"),
-    "scout": ("squad.read", "curriculum.read"),
-    "parent": ("curriculum.read", "plan.read_own_child", "consent.grant_own"),
+    "coach": ("team.edit", "squad.read", "squad.write", "plan.read_all", "plan.write", "curriculum.read", "curriculum.write", "match.read", "match.write", "announce.read", "announce.write"),
+    "analyst": ("squad.read", "plan.read_all", "plan.write", "curriculum.read", "match.read", "announce.read"),
+    "scout": ("squad.read", "curriculum.read", "announce.read"),
+    "parent": ("curriculum.read", "plan.read_own_child", "consent.grant_own", "announce.read"),
 }
 
 #: The three rights that are not enough on their own, and the second question each one asks. `require()` can
@@ -86,11 +93,11 @@ SCOPED_PERMISSIONS: Final = frozenset({"plan.read_own_child", "consent.grant_own
 
 ROLE_MEANING: Final[dict[str, str]] = {
     "owner": "the account that opened the organisation, and the one that cannot be revoked while it stands alone",
-    "director": "runs the whole tenant's roster and staffing, reads every plan, may erase one, and arranges or erases the tenant's fixtures — but does not write a player's focus",
-    "coach": "works with the teams they are staffed on: selection, squad notes, and the plans of their own players",
-    "analyst": "reads the squad, writes reports and plans, reads the fixture calendar, and does not touch staffing, teams or arrangements",
-    "scout": "sees a squad list and the age-band curriculum, and no plan — a scout's §23 tools are their own account's, not the tenant's",
-    "parent": "reads and writes only what a granted consent row ties to their own child: that child's plan, their own consents, and the curriculum of the age band",
+    "director": "runs the whole tenant's roster and staffing, reads every plan, may erase one, arranges or erases the tenant's fixtures, and may post or erase a notice — but does not write a player's focus",
+    "coach": "works with the teams they are staffed on: selection, squad notes, the plans of their own players, and the notices they post to a board",
+    "analyst": "reads the squad, writes reports and plans, reads the fixture calendar and the notice board, and does not touch staffing, teams or arrangements",
+    "scout": "sees a squad list, the age-band curriculum and the notices addressed to the tenant, and no plan — a scout's §23 tools are their own account's, not the tenant's",
+    "parent": "reads and writes only what a granted consent row ties to their own child: that child's plan, their own consents, the curriculum of the age band, and the notices whose audience selects them",
 }
 
 
