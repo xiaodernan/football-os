@@ -284,9 +284,14 @@ ceiling door and its pages went in — and repeated here so the ROADMAP row cann
   **10 of 11 arms turned the suite red**, and two of the answers are worth reading twice: P8 was caught by the
   replay case rather than by the erasure case that names the same rule, so the erasure test on its own would not
   have noticed a deleted match row — the tier is covered, but not by the case a reader would expect. Over the same
-  commit the six club files stand at **368 passed in 1568.02s** under a concurrently running suite, and `ruff
-  check`, `ruff format --check` and `mypy app` (97 source files) are clean. The whole suite's two legs over
-  `99a94ee` are the next figures this section will quote, and until they are printed no sentence here claims them.
+  Over the same commit the six club files stand at **368 passed in 1568.02s** under a concurrently running suite,
+  and `ruff check`, `ruff format --check` and `mypy app` (97 source files) are clean. The two whole-suite legs then
+  ran over the docs commit `5e01714` — the first figures in this section measured over the fixtures tier *after*
+  its own probe fix — and both are `rc=0`: **1196 passed, 1 skipped in 1958.79s** on per-run SQLite and
+  **1196 passed, 1 skipped in 1531.97s** on PostgreSQL + pgvector. 1196 is 1192 plus §48's four new cases, and the
+  single skip is the same one named above, printed by `-rs` on both legs rather than inferred:
+  `tests/test_scout_search.py:498: need_fit is ranked against a career and tested with one`. Nothing in this
+  milestone's club tier is now unlegged.
 
 ## 10. What the later tiers of this milestone changed in §39's own code
 
