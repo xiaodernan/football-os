@@ -251,6 +251,43 @@ ceiling door and its pages went in — and repeated here so the ROADMAP row cann
   counts above are §39's own landing, and §40's, §41's and §42's work is recorded in the sections below and in
   `M8_ACADEMY_VERIFICATION.md` / `M8_CLUB_WEB_VERIFICATION.md`.
 
+* **§48's measurement, over the commit that landed the fixtures tier.** `06de944`, the whole suite on both legs,
+  each `rc=0`: **1192 passed, 1 skipped in 3229.89s** on per-run SQLite and **1192 passed, 1 skipped in 2626.82s**
+  on PostgreSQL + pgvector — 1193 items, of which §48's own file was 24 at that commit and the six club files 364
+  in 516.79s. The one skip is named from the printed summary rather than subtracted from a total:
+  `tests/test_scout_search.py:498: need_fit is ranked against a career and tested with one`. It fell from two skips
+  to one because §48 made `services/club/matches.py` importable, which is the condition a §51 tier-registration
+  case used to skip on — a skip that disappears is a gate that started working, and the two have to be tellable
+  apart, which is why the sentence is here.
+* **§48's probe, and the two holes it opened.** Eight arms over that commit, one value at a time, control first:
+  five turned the suite red. Two survivors were coverage, not design, and both were the same mistake in
+  different clothes — a rule tested far from its boundary, and a rule whose refusal state no case reaches. The fix
+  (`99a94ee`) moved the attribution decision into `_appearance_agreement` so its four shapes are a table, gave the
+  head count a case at ten names and the keeper rule a case at eleven-with-no-keeper, and handed the play door a
+  disagreement it can be caught ignoring. Eleven arms, re-measured over `99a94ee` with an unmutated control
+  (`rc=0`, 0 red, 108s):
+
+| Arm | Defect planted in `services/club/matches.py` | Verdict |
+| --- | --- | --- |
+| P1a | a report naming a different eleven writes appearances anyway | RED — `test_the_attribution_rule_answers_for_every_shape_it_can_be_handed` |
+| P1b | an empty lineup is treated as permission | RED — the same table case, on its empty-lineup shape |
+| P1c | the play door ignores the rule it just asked | RED — `test_a_report_that_disagrees_leaves_the_result_standing_and_the_appearances_unwritten` |
+| P2 | the world club's own squad stays on the pitch | RED — `test_the_eleven_that_played_is_the_tenants_sheet` |
+| P3 | a minor is no longer gated on the default selection | RED — `test_a_minor_on_the_default_selection_stops_the_arrangement_until_a_guardian_answers` |
+| P4 | a fixture may be played twice | RED — `test_a_fixture_answers_once_and_the_refusal_prints_the_first_answer` |
+| P5 | the block length drifts away from the engine's choices | RED — `test_a_block_length_the_engine_does_not_play_is_refused_with_its_choices` |
+| P6 | ten names field an eleven | RED — `test_the_head_count_is_held_at_its_own_boundary_and_not_only_far_below_it` |
+| P6b | the keeper half of the same rule is dropped | RED — `test_eleven_names_reach_the_head_count_and_still_cannot_field_without_a_keeper` |
+| P7 | the 200-fixture cap is raised where nobody looks | GREEN by design — reaching it means arranging two hundred fixtures, and the ceiling is held from the other side by the count the listing prints |
+| P8 | a fixture and the engine's match row are erased together | RED — `test_a_fixture_answers_once_and_the_refusal_prints_the_first_answer` |
+
+  **10 of 11 arms turned the suite red**, and two of the answers are worth reading twice: P8 was caught by the
+  replay case rather than by the erasure case that names the same rule, so the erasure test on its own would not
+  have noticed a deleted match row — the tier is covered, but not by the case a reader would expect. Over the same
+  commit the six club files stand at **368 passed in 1568.02s** under a concurrently running suite, and `ruff
+  check`, `ruff format --check` and `mypy app` (97 source files) are clean. The whole suite's two legs over
+  `99a94ee` are the next figures this section will quote, and until they are printed no sentence here claims them.
+
 ## 10. What the later tiers of this milestone changed in §39's own code
 
 §39's tier was already called finished when §41's pages and §42's ceiling door started reading it in a browser.
@@ -293,3 +330,11 @@ Four things moved, each because a reader disagreed with a writer:
 | control | neither code unregistered | GREEN — 97 passed + 1 skipped, and 99 passed + 1 skipped on the two slices |
 | S1 | `unknown_report_kind` dropped from `reports.UNPROCESSABLE_CODES` | RED — 2 assertions, first the report door's own refusal test, which sees the HTTP status change |
 | S2 | `no_such_entitlement_plan` dropped from `entitlements.NOT_FOUND_CODES` | RED — 3 assertions, first `test_a_published_code_has_an_answer_everywhere_it_can_be_raised[no_such_entitlement_plan]` |
+
+* **§48 changed**: two tables (`club_fixtures`, `club_match_appearances`, migration `0021`), five doors, three
+  permissions (`match.read`/`match.write`/`match.erase` — the matrix is 20 over six roles, and §7's table had been
+  stale at twelve for two milestones with nothing turning red), `limitations()`[0] rewritten rather than grown, and
+  `answers.TIERS` gained a member. Two of its drafted claims were wrong in ways only a run shows — a 422 the door
+  could not answer twice, and an isolation entry whose empty body never reached `require()` — and two more were
+  untested in ways only a mutation shows, which is what §9's eleven-arm table is for. The contract moved from 123
+  paths / 154 operations to **126 / 159**.
