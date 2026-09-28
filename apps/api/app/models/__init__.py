@@ -1928,3 +1928,79 @@ class CommunityFollow(Base, TimestampMixin):
     followed_on: Mapped[str] = mapped_column(String(10), nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+# --------------------------------------------------------------------------- M10's first noun: §36's creator tier
+#
+# Three tables and the rule §35 was built on: **a publication stores an address, never a copy**. A guide holds its
+# title, its section and the author's own notes; the passages it cites stay in `knowledge_chunks`, so re-ingesting
+# the corpus cannot leave a guide asserting text the document no longer carries.
+#
+# A citation keys on `document_id` plus the chunk's `ordinal` and stores the `text_hash` that sat at that address
+# when the citation was written — because `services/knowledge/ingest.py` mints a fresh `kch_…` id for every chunk on
+# each re-sync, so an id-keyed pointer dangles on the first corpus edit while (document, ordinal) keeps resolving.
+# The hash is not a link, it is a witness: it is what lets a read say *this passage has moved since it was cited*.
+#
+# `creator_profiles` is a **state, not a role**: its existence is what makes an account a creator, and `ROLES` stays
+# at seven, because a second home for that fact would have to be kept in step with the first. No column here can
+# hold money — §42's `entitlements` rows are the whole of the pricing architecture in this milestone.
+
+
+class CreatorProfile(Base, TimestampMixin):
+    """One account's creator state. There is no `is_creator` column: this row, or its absence, is the answer."""
+
+    __tablename__ = "creator_profiles"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_creator_profile_user"),
+        UniqueConstraint("slug", name="uq_creator_profile_slug"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    headline: Mapped[str] = mapped_column(String(160), nullable=False, default="")
+    bio: Mapped[str] = mapped_column(String(1500), nullable=False, default="")
+    since: Mapped[str] = mapped_column(String(10), nullable=False, default=utc_today)
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class CreatorGuide(Base, TimestampMixin):
+    """A guide is a title, a section, an ordering and the author's words — and no text of what it cites."""
+
+    __tablename__ = "creator_guides"
+    __table_args__ = (
+        UniqueConstraint("author_id", "slug", name="uq_creator_guide_slug"),
+        Index("ix_creator_guide_author_date", "author_id", "published_on"),
+        Index("ix_creator_guide_section", "section", "published_on"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary: Mapped[str] = mapped_column(String(600), nullable=False, default="")
+    section: Mapped[str] = mapped_column(String(16), nullable=False, default="plan")
+    visibility: Mapped[str] = mapped_column(String(12), nullable=False, default="public")
+    published_on: Mapped[str] = mapped_column(String(10), nullable=False, default=utc_today)
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class GuideCitation(Base, TimestampMixin):
+    """One passage, cited once per guide: `citations` is a count of these rows, never a number stored beside them."""
+
+    __tablename__ = "guide_citations"
+    __table_args__ = (
+        UniqueConstraint("guide_id", "document_id", "ordinal", name="uq_creator_citation"),
+        Index("ix_creator_citation_document", "document_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    guide_id: Mapped[str] = mapped_column(ForeignKey("creator_guides.id", ondelete="CASCADE"), nullable=False)
+    document_id: Mapped[str] = mapped_column(ForeignKey("knowledge_documents.id", ondelete="RESTRICT"), nullable=False)
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    cited_text_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    note: Mapped[str] = mapped_column(String(400), nullable=False, default="")
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
