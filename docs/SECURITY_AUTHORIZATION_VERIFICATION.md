@@ -115,20 +115,28 @@ constant rather than written twice. B5's extra red was
 `test_club_answers.py::test_no_tier_answers_403_with_a_code_outside_the_platform_vocabulary`, a clause this landing
 wrote and the prediction forgot: the same property is guarded from two files, one per plane.
 
-### The three cases no arm killed
+### The three cases the first probe left unkilled, and the arms that closed them
 
 Enumerated from the control XML rather than asserted: of the census's 11 cases, 8 appeared in at least one arm's
-red list. Three did not, and they are open items, not evidence of health:
+red list. Three did not, so their witnesses were unproven — not broken, just never knocked on. `0da4c85` is
+therefore not the end of the measurement: `.scratch/probe_c68c.py` ran three more arms on the same worktree plane
+(`DRIFT {}`, control 98 tests / 0 failures / 0 errors / rc=0 at 48.960s, same again after), and each killed exactly
+what it was written to kill:
 
-* `test_every_registered_forty_three_is_reachable_and_answered_as_one[account_inactive]` — its killer is
-  `core/security.py`'s `if user is None or not user.is_active:` → `if False:`, which lets a switched-off account
-  reach `/auth/me` and answer 200.
-* `test_the_door_asks_for_a_standing_the_vocabulary_has` — no single arm can kill it, because the shipped
-  `standing_check()` crashes the import before the case can run. It needs a **pair**: B1's disabled guard *plus*
-  `("admin", "staff")` in the tuple. That is the load-time-guard shape — the witness must come from an arm that
-  keeps the module importable.
-* `test_an_admin_reaches_the_door_that_refuses_everyone_else` — its killer is `if user.role not in
-  INGEST_STANDING:` → `if True:`, which leaves the 403 cases green and takes the admin's 200 away.
+| arm | mechanism destroyed | reds | predicted |
+| --- | --- | --- | --- |
+| C1 | `current_user`'s inactive guard (`if user is None or not user.is_active:` → `if False:`) | 1 | 1 |
+| C2 | **pair**: guard disabled *and* `INGEST_STANDING = standing_check(("admin", "staff"))` | 2 | 2 |
+| C3 | `if user.role not in INGEST_STANDING:` → `if True:` — the door refuses even an admin | 1 | 1 |
+
+Across both probes: **8 arms, 0 survivors, and 11 of 11 census cases appear in some arm's red list** (computed as
+the union of the arms' `actual` arrays against the case names collected from the control XML, not by hand).
+
+C2 is the one worth reading twice. A single-file arm cannot prove that case: with `standing_check` live, naming
+`staff` crashes the module at import, the test file never collects, and the arm reports *zero reds* — which looks
+identical to "the guard held" and means only "nothing ran". The mutation had to be disabled-first-and-then-invented,
+so the case is what fails rather than the import.
+
 
 ## 7. Open items, kept as items
 
