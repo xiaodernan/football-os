@@ -1,11 +1,31 @@
 import { NextResponse, type NextRequest } from "next/server";
-import createMiddleware from "next-intl/middleware";
-import { routing } from "@/i18n/navigation";
 import { ACCESS_COOKIE, REFRESH_COOKIE, REFRESH_COOKIE_PATH, REFRESH_PATH, apiBase } from "@/lib/api";
+import { defaultLocale, locales, type Locale } from "@/i18n/request";
 
-const intlMiddleware = createMiddleware(routing);
+/**
+ * The locale a request is answered in, decided **without touching the URL**.
+ *
+ * This file used to run next-intl's own middleware, which rewrites `/world` to `/en/world` internally. That
+ * rewrite expects an `app/[locale]/…` tree, and this app has none, so from the moment it landed (`9ba8178`,
+ * 2026-09-28) **every route answered 404** — including `/healthz`, `/robots.txt` and `/sitemap.xml`. The
+ * messages, the provider and the layout are all kept; only the URL rewriting is gone, so the URLs every page,
+ * sitemap and walk script already uses keep working.
+ *
+ * The choice, in order: the `fo_locale` cookie written below, the browser's `Accept-Language`, then English.
+ * A signed-in account's own locale is a column on its row (`users.locale`) and is what `/settings` prints.
+ */
+const LOCALE_COOKIE = "fo_locale";
+// next-intl's own header name, read by `app/layout.tsx` to pick the message bundle.
+const LOCALE_HEADER = "x-next-intl-locale";
+const LOCALE_TTL_SECONDS = 400 * 86400;
 
-const PUBLIC_PATHS = new Set(["/", "/login", "/register", "/healthz"]);
+/**
+ * The paths that need a token minted *before* they render, because they call the API during the render.
+ *
+ * This list is deliberately narrower than "everything session-gated": `/club`, `/community`, `/creator` and
+ * `/scout` redirect an anonymous visitor themselves, and `/club/rules` is a page a signed-out visitor may read —
+ * a prefix here would take that away. Only a surface that needs the cookie forwarded mid-render belongs.
+ */
 const PROTECTED_PREFIXES = [
   "/my-football",
   "/coach",
@@ -28,6 +48,21 @@ type Minted = { accessToken: string; expiresIn: number; refresh?: string };
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+function preferredLocale(request: NextRequest): Locale {
+  const stored = request.cookies.get(LOCALE_COOKIE)?.value;
+  if (stored && (locales as readonly string[]).includes(stored)) return stored as Locale;
+  for (const part of (request.headers.get("accept-language") ?? "").split(",")) {
+    const tag = part.split(";")[0]?.trim().toLowerCase() ?? "";
+    if (!tag) continue;
+    const exact = (locales as readonly string[]).find((locale) => locale.toLowerCase() === tag);
+    if (exact) return exact as Locale;
+    const base = tag.split("-")[0];
+    if (base === "zh") return /-(tw|hk|mo)/u.test(tag) ? "zh-TW" : "zh";
+    if (base === "en") return "en";
+  }
+  return defaultLocale;
 }
 
 function tokenIsFresh(token: string | null | undefined): boolean {
@@ -72,25 +107,26 @@ async function refreshSession(refreshToken: string): Promise<Minted | null> {
   }
 }
 
-function stripLocalePrefix(pathname: string): string {
-  const segments = pathname.split("/");
-  if (segments.length >= 2 && ["en", "zh", "zh-TW"].includes(segments[1])) {
-    return "/" + segments.slice(2).join("/") || "/";
+/** The headers the app renders against: the caller's own, plus the locale this middleware decided. */
+function forwardedHeaders(request: NextRequest, locale: Locale): Headers {
+  const headers = new Headers(request.headers);
+  headers.set(LOCALE_HEADER, locale);
+  return headers;
+}
+
+function rememberLocale(response: NextResponse, request: NextRequest, locale: Locale): NextResponse {
+  if (request.cookies.get(LOCALE_COOKIE)?.value !== locale) {
+    response.cookies.set(LOCALE_COOKIE, locale, { sameSite: "lax", path: "/", maxAge: LOCALE_TTL_SECONDS, secure: IS_SECURE });
   }
-  return pathname;
+  return response;
 }
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
-  const intlResponse = intlMiddleware(request);
-  if (intlResponse.status === 307 || intlResponse.status === 308) {
-    return intlResponse;
-  }
-
   const { pathname, search } = request.nextUrl;
-  const strippedPathname = stripLocalePrefix(pathname);
+  const locale = preferredLocale(request);
 
-  if (!isProtected(strippedPathname) || PUBLIC_PATHS.has(strippedPathname)) {
-    return intlResponse;
+  if (!isProtected(pathname)) {
+    return rememberLocale(NextResponse.next({ request: { headers: forwardedHeaders(request, locale) } }), request, locale);
   }
 
   const storedAccess = request.cookies.get(ACCESS_COOKIE)?.value ?? null;
@@ -113,7 +149,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   const refreshValue = minted?.refresh ?? storedRefresh;
-  const requestHeaders = new Headers(request.headers);
+  const requestHeaders = forwardedHeaders(request, locale);
   requestHeaders.set("cookie", refreshValue ? `${ACCESS_COOKIE}=${token}; ${REFRESH_COOKIE}=${refreshValue}` : `${ACCESS_COOKIE}=${token}`);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
@@ -135,7 +171,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       });
     }
   }
-  return response;
+  return rememberLocale(response, request, locale);
 }
 
 export const config = {
