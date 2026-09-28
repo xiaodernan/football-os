@@ -76,4 +76,19 @@ answer for the permission matrix, and a community door asks only whether the cal
 * **No moderation, reporting, blocking or DMs** — §35's community is a publication tier in this build.
 * Both legs of the test matrix are not yet closed for this milestone: the PostgreSQL leg has not been run over
   `8cbde7e`..`63161d2`, and the SQLite leg's count is unrecorded as described above. §42's payments remain the one
-  spec item the whole project has never implemented: no price, provider or checkout field exists anywhere.
+  spec item the whole project has never implemented: no currency column, payment provider or checkout field exists anywhere. The prices that *do* exist — §22's `transfer_listings.current_price` and the USD-per-token rates in `app/providers/__init__.py:129-130` — are a valuation and a cost measure, not a payment, and this milestone corrected the three sentences in this project's own records that said otherwise, in the section below.
+
+## A claim this milestone corrected
+
+A pre-flight census over 206 source files (`price`, `currency`, `checkout`, `vendor`, `payout`, `creator`, `program`,
+`guide`, `entitlement` — run 2026-09-28 to plan M10) falsified a sentence this project had written three times:
+*"no price, provider or checkout field exists anywhere in the project."* `TransferListing`
+(`apps/api/app/models/__init__.py:1034`) carries a `current_price: Mapped[int]` column, and
+`apps/api/app/providers/__init__.py:129-130` holds `_PRICE_IN` / `_PRICE_OUT` USD-per-token rates the cost meter
+multiplies. What is genuinely absent — and what `services/entitlements.py:77 NO_PAYMENT` has been saying correctly,
+scoped to its own tier — is a **payment**: no currency column, no provider, no checkout field. Four records were
+rewritten to say the narrow true thing: this file, `docs/M8_CLUB_OS_VERIFICATION.md` (§57's "does not claim"),
+`docs/M8_CLUB_WEB_VERIFICATION.md` (§42's bullet) and the §42 row of `docs/SPEC_COVERAGE_AUDIT.md`, plus the ROADMAP
+M8 cell. No test or script reads `docs/` (grep over `apps/api/tests` and `apps/web/scripts` returned no reader), so
+the correction moves no measured plane. The method is the point: a claim about *the whole project* has to be measured
+over the whole project, not inferred from the tier that wrote it.

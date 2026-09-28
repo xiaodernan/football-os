@@ -31,7 +31,7 @@ carries its noun; a service file with no door is **partial**.
 | 37 | Gamification | `services/achievements.py`, `progression.py`, `/api/v1/progress/{overview,timeline}`, `/progress` | M1 | landed |
 | **38** | **Football career portfolio** (10-section CV, public share link, PDF) | **no route, no page, no service.** `grep -rli portfolio apps/api/app apps/web/app` → 0 files. The data it would summarise all exists (career, scout, club, training, video) | **nobody** | **MISSING — no milestone owns it** |
 | 39–41 | Club OS / Youth Academy / B2B | 33 paths under `/api/v1/club*` incl. §48's `fixtures`, `services/club/{organizations,access,answers,academy,sessions,reports,matches}.py`, 5 `/club*` pages | M8 | landing now (§39's Communication noun + fixtures panel open) |
-| 42 | Subscription | `usage_events` (migration `0020`), `/api/v1/club/{ident}/entitlements`, `/entitlements/{me,capabilities}`, `services/entitlements.py`; **no price/currency/provider/checkout field anywhere** | M8 (architecture) / M10+ (pricing) | landed as data, payments deliberately absent |
+| 42 | Subscription | `usage_events` (migration `0020`), `/api/v1/club/{ident}/entitlements`, `/entitlements/{me,capabilities}`, `services/entitlements.py`; **no currency/provider/checkout field anywhere; §22's valuation price and the meter's token rates are not payments** | M8 (architecture) / M10+ (pricing) | landed as data, payments deliberately absent |
 
 ## B. Cross-cutting sections that a reader assumes are done
 

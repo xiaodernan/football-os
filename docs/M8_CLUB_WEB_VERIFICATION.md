@@ -310,7 +310,7 @@ the BUILD_ID it is reusing.
   destroy, which is not a decision a page should make in one click.
 * No video evidence: the walk files no clip, and the plan page says so — a citation is a label and a window.
 * No payment. §42's door prints the matrix it reads and the one feature today's plan actually costs; it does not
-  print a price, because no price exists in this project to print.
+  print a price, because the entitlement tier has none to print — the prices elsewhere in the project are §22's valuation figures and the meter's token rates, and neither is charged for a plan.
 * No direct message, and no way to draw one: §39's tier has no recipient column in either table, so the board
   cannot be narrowed to a named person from the page or from the door. The page that reads it therefore prints a
   selection ("2 of 3 listed select you right now"), never a list of who read it.

@@ -520,6 +520,4 @@ ports the runner verified free and against a scratch database of its own
 API suite one commit earlier. The page re-subtracts `unread = recipients − read_by` in the browser, so a
 readership that was ever stored rather than counted would be caught on the panel as well as in the suite.
 
-Still unclaimed after both runs: §42's payments. No price, provider or checkout field exists anywhere in the
-project, and the meter's `published_not_enforced` ceilings are still published as ceilings rather than enforced
-as invoices.
+Still unclaimed after both runs: §42's payments. No **currency column, payment provider or checkout field** exists anywhere in the project; the prices that do exist there are §22's valuation figures (`transfer_listings.current_price`, an Integer column on `TransferListing`) and the USD-per-token rates the cost meter multiplies (`app/providers/__init__.py:129-130`), and neither one takes money. The meter's `published_not_enforced` ceilings are still published as ceilings rather than enforced as invoices.
