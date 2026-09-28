@@ -125,7 +125,7 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
             "isolation": club_service.rules()["matrix"]["rule"],
         },
         "m9_community": False,
-        "locales": ["en"],
+        "locales": ["en", "zh", "zh-TW"],
         "locales_planned": ["en", "zh", "zh-TW"],
         "demo_mode": settings.is_demo_mode,
     }

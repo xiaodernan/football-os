@@ -1,40 +1,25 @@
-/**
- * Route protection and silent session refresh (ADR-003).
- *
- * Server components read the access token straight from the cookie jar, so a page rendered
- * after the 15-minute token expires would bounce the user to the login screen even though a
- * 30-day refresh cookie is still valid. Middleware is the only tier that can mint cookies
- * before rendering, so the rotation happens here; browser traffic is refreshed by the
- * /api/v1 proxy instead.
- */
-
 import { NextResponse, type NextRequest } from "next/server";
-
+import createMiddleware from "next-intl/middleware";
+import { routing } from "@/i18n/navigation";
 import { ACCESS_COOKIE, REFRESH_COOKIE, REFRESH_COOKIE_PATH, REFRESH_PATH, apiBase } from "@/lib/api";
+
+const intlMiddleware = createMiddleware(routing);
 
 const PUBLIC_PATHS = new Set(["/", "/login", "/register", "/healthz"]);
 const PROTECTED_PREFIXES = [
   "/my-football",
   "/coach",
   "/training",
-  // A season is an account's fiction about a generated club, so it is read only by its owner.
   "/career",
-  // A live challenge is a season too — the catalogue is public through the API, but the page that
-  // starts a run and lists this account's verdicts sits behind the same wall.
   "/challenges",
   "/progress",
   "/history",
   "/settings",
   "/onboarding",
-  // A user's own boards are theirs; `/tactics` and `/tactics/{slug}` stay public, and a shared
-  // board is reached through `/tactics/shared/{token}` precisely so it does NOT hit this wall.
   "/tactics/boards",
-  // Uploads are the most identifying files the platform can hold: no public read of a clip,
-  // a frame or a report, and no sitemap or robots allowance either.
   "/video",
 ];
 
-/** Re-authenticate slightly early so the token cannot expire mid-render. */
 const SKEW_SECONDS = 60;
 const REFRESH_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30);
 const IS_SECURE = process.env.NODE_ENV === "production";
@@ -45,7 +30,6 @@ function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-/** Access tokens are HS256 JWTs; only the payload's expiry is needed here, never the signature. */
 function tokenIsFresh(token: string | null | undefined): boolean {
   const payload = token?.split(".")[1];
   if (!payload) return false;
@@ -88,9 +72,26 @@ async function refreshSession(refreshToken: string): Promise<Minted | null> {
   }
 }
 
+function stripLocalePrefix(pathname: string): string {
+  const segments = pathname.split("/");
+  if (segments.length >= 2 && ["en", "zh", "zh-TW"].includes(segments[1])) {
+    return "/" + segments.slice(2).join("/") || "/";
+  }
+  return pathname;
+}
+
 export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const intlResponse = intlMiddleware(request);
+  if (intlResponse.status === 307 || intlResponse.status === 308) {
+    return intlResponse;
+  }
+
   const { pathname, search } = request.nextUrl;
-  if (!isProtected(pathname) || PUBLIC_PATHS.has(pathname)) return NextResponse.next();
+  const strippedPathname = stripLocalePrefix(pathname);
+
+  if (!isProtected(strippedPathname) || PUBLIC_PATHS.has(strippedPathname)) {
+    return intlResponse;
+  }
 
   const storedAccess = request.cookies.get(ACCESS_COOKIE)?.value ?? null;
   const storedRefresh = request.cookies.get(REFRESH_COOKIE)?.value ?? null;
