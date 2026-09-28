@@ -44,6 +44,7 @@ from app.services.club.organizations import ClubRefusal
 from app.services.community import posts as community
 from app.services.creator import publishing as creator
 from app.services.portfolio import cv as portfolio
+from app.services.portfolio import sharing as portfolio_share
 
 #: The four questions a tier answers, in the order a reader checks them: is it absent, is the request
 #: correctable, did it collide with a row that already exists, or does the caller simply not hold the right.
@@ -62,7 +63,7 @@ SETS: Final = (
 #: from another milestone can be listed without the club tier having to know anything about it. §38's `portfolio`
 #: joins with no code of its own: the tier prints its refusal table from this one, and an empty registration here is
 #: what keeps a code added by a later portfolio slice from being answered one way there and another at `/club`.
-TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio)
+TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio, portfolio_share)
 
 
 def assemble(*tiers: Any) -> dict[str, int]:

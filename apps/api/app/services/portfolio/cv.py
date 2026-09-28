@@ -122,12 +122,14 @@ LIMITATION: Final = (
 #: instead of letting a reader assume an omission means "not needed".
 PUBLIC_OUTPUTS: Final = {
     "public_player_profile": (
-        "not in this build: the `player` block is the account's own `user_players` row, and no door here serves it "
-        "to a caller without that account's session — a public profile is §35's reach applied to this read"
+        "built: GET /portfolio/share/{token} is the profile — the account's own player row as §38's sections "
+        "print it, with no account block and no identifying field, which is what makes it a profile rather than "
+        "the CV door behind a session"
     ),
     "share_link": (
-        "not in this build: a link must be revocable and carry §35's reach, and no table in this schema stores a "
-        "token for one — §17's revocable-share precedent is what a later slice builds on, not a flag here"
+        "built: POST /portfolio/share opens it and DELETE /portfolio/share/{token} closes it, on §17's "
+        "revocable-token precedent — one token per account, kept while the link is open, and a closed link "
+        "answers the same 404 as a token that never existed"
     ),
     "pdf": (
         "not in this build: no PDF renderer is a dependency of this project, and `build_cv` publishes every figure a "
@@ -135,18 +137,20 @@ PUBLIC_OUTPUTS: Final = {
     ),
 }
 
-#: This tier registers no refusal code, and that is a decision rather than an omission: a CV door asks only whether
+#: §38's own door still registers no refusal code, and that stays a decision rather than an omission: a CV door asks
+#: only whether
 #: the caller has a session, which `current_user` answers with a 401 before any row is read, and an account with no
-#: player row is answered by a CV whose player-backed sections say so. The tuple exists so `GET /portfolio/rules`
-#: prints its refusal table from the project's one answer table (`services/club/answers.py`) rather than from a
-#: literal written inside the router — the shape §51 was written for, kept even when the set is empty.
+#: player row is answered by a CV whose player-backed sections say so. The four codes this tier *does* answer with
+#: belong to `services/portfolio/sharing.py`, and this tuple exists so `GET /portfolio/rules` prints one refusal
+#: table from the project's one answer table (`services/club/answers.py`) rather than from a literal written inside
+#: the router — the shape §51 was written for, kept even when one of the tier's two sets is empty.
 REFUSALS: Final[tuple[str, ...]] = ()
 
 #: How many rows of a list-shaped section travel with the CV. The figures count everything; the list is a window.
 RECENT: Final = 5
 
 
-def _player(session: Session, user_id: str, player_id: str | None) -> UserPlayer | None:
+def player_of(session: Session, user_id: str, player_id: str | None) -> UserPlayer | None:
     """The account's player: the one it names, or its oldest one when it names none.
 
     Deterministic on purpose (`created_at, id`): a CV read twice must not pick a different player the second time
@@ -437,7 +441,7 @@ def build_cv(session: Session, user_id: str, *, player_id: str | None = None) ->
     that answered `404` would be telling the reader less than the payload can.
     """
     account = session.get(User, user_id)
-    player = _player(session, user_id, player_id)
+    player = player_of(session, user_id, player_id)
     sections: list[dict[str, Any]] = []
     for key in SECTIONS:
         if key in UNFILLED_REASONS:

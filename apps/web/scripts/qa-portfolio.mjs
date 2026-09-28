@@ -186,7 +186,7 @@ async function main() {
   const rulesResponse = await fetch(`${BASE}/api/v1/portfolio/rules`, {headers: {accept: 'application/json'}});
   const rules = rulesResponse.ok ? await rulesResponse.json() : null;
   check('the rules door answers a caller with no session', rulesResponse.status === 200, `HTTP ${rulesResponse.status}`);
-  check('and declares the two doors it owns', (rules?.routes ?? []).length === 2 && (rules?.routes ?? []).every((row) => row.method === 'GET'), `${(rules?.routes ?? []).length} route(s) published`);
+  check('and declares the doors it owns, including the four the share output added', (rules?.routes ?? []).length === 6 && (rules?.routes ?? []).every((row) => row.method && row.path) && (rules?.routes ?? []).some((row) => row.path === '/portfolio/share') && (rules?.routes ?? []).some((row) => row.method === 'GET' && row.path === '/portfolio/cv'), `${(rules?.routes ?? []).length} route(s) published`);
 
   const vocabulary = rules?.sections ?? [];
   check("§38's ten sections arrive in the spec order", vocabulary.map((row) => row.section).join(' → ') === SPEC_SECTIONS.join(' → '), vocabulary.map((row) => row.section).join(' → '));
@@ -195,8 +195,11 @@ async function main() {
   check('exactly two of the ten are marked as this build cannot fill them', notFillable.length === 2 && notFillable.includes('matches') && notFillable.includes('stats'), notFillable.join(', ') || '(none)');
   check('and each unfilled one names the tables it would read from', Object.keys(rules?.unfilled ?? {}).length === 2 && Object.keys(rules?.would_read_from ?? {}).length >= 2, `${Object.keys(rules?.unfilled ?? {}).length} reasons, ${Object.keys(rules?.would_read_from ?? {}).length} sources`);
   const outputs = rules?.public_outputs ?? {};
-  check('the three outputs §38 permits are all printed as absent from this build', Object.keys(outputs).length === 3 && Object.values(outputs).every((line) => String(line).startsWith('not in this build')), Object.keys(outputs).join(', '));
-  check('this tier registers no refusal code, and says so with an empty table', Object.keys(rules?.refusal_answers ?? {}).length === 0, `${Object.keys(rules?.refusal_answers ?? {}).length} code(s)`);
+  const declared = (rules?.routes ?? []).map((row) => String(row.path));
+  const namesADoor = (key) => declared.some((path) => String(outputs[key] ?? '').includes(path));
+  check('two of the three outputs §38 permits now name a door this tier declares, and the PDF still prints its own absence', Object.keys(outputs).length === 3 && namesADoor('public_player_profile') && namesADoor('share_link') && String(outputs.pdf ?? '').startsWith('not in this build'), Object.keys(outputs).map((key) => `${key}=${namesADoor(key) ? 'built' : 'absent'}`).join(', '));
+  const shareCodes = ['no_such_share', 'section_unknown', 'minor_section_blocked', 'share_already_revoked'];
+  check('and every refusal code this tier answers with arrives with its status, none of them a 400 or a 403', shareCodes.every((code) => [404, 422, 409].includes(rules?.refusal_answers?.[code])) && !Object.values(rules?.refusal_answers ?? {}).includes(400) && !Object.values(rules?.refusal_answers ?? {}).includes(403), JSON.stringify(rules?.refusal_answers ?? {}));
 
   const anonymous = await fetch(`${BASE}/api/v1/portfolio/cv`, {headers: {accept: 'application/json'}});
   const anonymousBody = await anonymous.json().catch(() => null);
@@ -267,7 +270,7 @@ async function main() {
     const painted = await pageText(page);
     check('the formulas panel prints every expression the CV door publishes', Object.keys(firstBody.formulas ?? {}).every((name) => has(painted, name)), `${Object.keys(firstBody.formulas ?? {}).length} expression(s)`);
     check('the outputs panel prints the three §38 permits with their state', Object.keys(outputs).every((name) => has(painted, name)), Object.keys(outputs).join(', '));
-    check('the doors panel lists the two doors the rules door declares', (rules?.routes ?? []).every((route) => has(painted, route.path)), `${(rules?.routes ?? []).length} door(s)`);
+    check('the doors panel lists every door the rules door declares, and none of them is an empty list', (rules?.routes ?? []).length >= 6 && (rules?.routes ?? []).every((route) => has(painted, route.path)), `${(rules?.routes ?? []).length} door(s)`);
     check('and the tier limitation travels with the page', has(painted, String(firstBody.limitation ?? '(no limitation sent)').slice(0, 60)), String(firstBody.limitation ?? '').slice(0, 90));
     const moneyKeys = keysOf(firstBody).filter((key) => /price|currency|amount|checkout|payment|provider|stripe|invoice/i.test(key));
     check('no money-shaped key is anywhere in the CV payload', moneyKeys.length === 0, moneyKeys.join(', ') || `${keysOf(firstBody).length} key(s) walked`);

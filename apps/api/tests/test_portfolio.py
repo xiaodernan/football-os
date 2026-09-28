@@ -19,6 +19,7 @@ The claims this file defends, in the order it attacks them:
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterator
 from typing import Any, Final
 from uuid import uuid4
@@ -31,7 +32,9 @@ from app.api.v1 import portfolio as portfolio_router
 from app.core.db import Base, SessionLocal
 from app.main import app
 from app.models import AttributeChange, User
+from app.services.club import answers
 from app.services.portfolio import cv as portfolio
+from app.services.portfolio import sharing
 
 CV = "/api/v1/portfolio/cv"
 RULES = "/api/v1/portfolio/rules"
@@ -311,7 +314,13 @@ class TestTheDoors:
         assert body["formulas"] == dict(portfolio.FORMULAS)
         assert body["public_outputs"] == dict(portfolio.PUBLIC_OUTPUTS)
         assert body["limitation"] == portfolio.LIMITATION
-        assert body["refusal_answers"] == {}, "this tier raises no code; one appearing here arrived without its status"
+        # §38's own door raises no code, but the share door this tier now also publishes raises four. Every one of them
+        # must arrive with its status: `published()` prints 400 for a code nobody registered, and that is the "arrived
+        # without its status" case this claim was written to catch.
+        assert body["refusal_answers"] == answers.published(portfolio.REFUSALS, sharing.REFUSALS)
+        assert set(body["refusal_answers"]) == set(portfolio.REFUSALS) | set(sharing.REFUSALS)
+        assert 400 not in body["refusal_answers"].values(), "a code printed here is registered by no tier"
+        assert 403 not in body["refusal_answers"].values(), "403 is reserved for insufficient_role project-wide"
         for key in ("account", "player", "user_id", "sections_filled"):
             assert key not in body
 
@@ -331,4 +340,5 @@ def test_no_answer_in_this_tier_is_money() -> None:
     _player(client)
     _complete_a_session(client)
     words = " ".join(_walk([TestClient(app).get(RULES).json(), client.get(CV).json()])).lower()
-    assert not [word for word in MONEY_WORDS if word in words], "§42 owns pricing; a CV is not a shop"
+    pattern = r"\b(?:" + "|".join(re.escape(word) for word in MONEY_WORDS) + r")\b"
+    assert not re.findall(pattern, words), "§42 owns pricing; a CV is not a shop"

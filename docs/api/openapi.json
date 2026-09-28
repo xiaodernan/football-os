@@ -9974,7 +9974,7 @@
           "portfolio"
         ],
         "summary": "Read Rules",
-        "description": "The rulebook door: no account, no player, no figure about anybody — only what a CV is made of.",
+        "description": "The rulebook door: no account, no player, no figure about anybody — only what a CV and a link are made of.",
         "operationId": "read_rules_api_v1_portfolio_rules_get",
         "responses": {
           "200": {
@@ -10017,6 +10017,174 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/api/v1/portfolio/share": {
+      "post": {
+        "tags": [
+          "portfolio"
+        ],
+        "summary": "Open Share",
+        "description": "Publish the sections the body names behind a fresh token, or re-point the link that is already open.\n\nThe body carries section names and nothing else: a link points at an account, so there is no id here whose\nownership a caller could probe. See `services/portfolio/sharing.py` for why that is a reach rule, not a shortcut.",
+        "operationId": "open_share_api_v1_portfolio_share_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Open Share Api V1 Portfolio Share Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/portfolio/shares": {
+      "get": {
+        "tags": [
+          "portfolio"
+        ],
+        "summary": "Read Shares",
+        "description": "The account's own link ledger: what is open now, and when each closed one shut.",
+        "operationId": "read_shares_api_v1_portfolio_shares_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Shares Api V1 Portfolio Shares Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/portfolio/share/{token}": {
+      "delete": {
+        "tags": [
+          "portfolio"
+        ],
+        "summary": "Close Share",
+        "description": "Take the link back. §38's output is revocable, which is the whole difference between a link and a leak.",
+        "operationId": "close_share_api_v1_portfolio_share__token__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Close Share Api V1 Portfolio Share  Token  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "portfolio"
+        ],
+        "summary": "Read Shared",
+        "description": "The public read. No `current_user` dependency: the token is the whole credential, as it is at §17's board door.\n\nRate-limited on its own scope, because a public door is the one a stranger can knock on. The answer carries no\naccount identity — `sharing.public_cv` subtracts the account block and the keys listed as private before the\npayload is built, so there is nothing here to scrub afterwards.",
+        "operationId": "read_shared_api_v1_portfolio_share__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Shared Api V1 Portfolio Share  Token  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },

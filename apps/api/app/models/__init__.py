@@ -2004,3 +2004,19 @@ class GuideCitation(Base, TimestampMixin):
     note: Mapped[str] = mapped_column(String(400), nullable=False, default="")
     data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
     is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class CvShare(Base, TimestampMixin):
+    """One public CV link (§38's share output): the token that opens it, the sections it names, and when it closed."""
+
+    __tablename__ = "cv_shares"
+    __table_args__ = (
+        UniqueConstraint("share_token", name="uq_cv_share_token"),
+        Index("ix_cv_share_owner_live", "user_id", "revoked_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    share_token: Mapped[str] = mapped_column(String(64), nullable=False)
+    sections: Mapped[list[str]] = mapped_column(JSON, default=list)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

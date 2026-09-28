@@ -19,8 +19,29 @@ Rule (spec §96): no milestone opens until the previous one is *running, tested 
 1069.88s wall**, and **postgres rc=0, the same 1326 / 0 / 0 / 1, 3005.326s junit over 3072.96s wall**. The runner's
 docstring holds the population predicted before the run (§36's 1293 + 19 creator-door cases + §38's 14 CV cases =
 1326), and both engines measured exactly that; the addends were then re-read from the runs' junit reports, not from
-the arithmetic. **Still not claimed**: §38's three permitted public outputs — a public player profile, a share link
-and a PDF do not exist, and the page prints that sentence instead of being one of them. |
+the arithmetic. **§38's share output then landed, at the API tier** (measured 2026-09-29): one table `cv_shares` behind
+migration `0025`, `services/portfolio/sharing.py`, and four doors so `/portfolio` declares **6** (five private, one
+that answers with no session). The sharing tier joined `answers.TIERS`, which is what gives its four codes a status
+instead of a 400 fall-through — `no_such_share` 404, `section_unknown` 422, `minor_section_blocked` 422,
+`share_already_revoked` 409, and no 403. **Two of §38's three permitted public outputs now name a door** — the public
+player profile and the share link are the same read, `GET /portfolio/share/{token}`, a subtraction of the private CV
+rather than a second assembler — and the PDF still prints its own absence. Measured over the bytes this row describes:
+`pytest tests/test_portfolio_share.py tests/test_portfolio.py` **38 tests / 0 failures / 0 errors / 0 skipped, rc=0**
+(24 new + §38's 14 re-run, because one of their claims went stale the moment the tier grew a second door);
+`alembic upgrade head` rc=0 through `0024 -> 0025` and `alembic check` rc=0 saying `No new upgrade operations detected`
+on a scratch database; `mypy app` clean over **108** source files; `ruff check app tests` rc=0 — its first pass found
+**1** error, an unsorted import block of mine, fixed and then re-measured rather than quoted forward; the contract at
+**149 paths / 193 operations / 63 schemas** with a **169 added / 1 deleted** diff whose single deletion is the reworded
+rules-door sentence; and a **6-arm planted-defect probe at SURVIVORS=0**, control 24/0 before and after every restore,
+each arm's red set equal to the set written into the script beforehand. The slice's first run turned up one production
+defect — `section_unknown` was unreachable because the ordering helper cleaned the name before the validator saw it,
+so asking for `wallet` minted a link instead of refusing — and five reds that were the test file's own fault, recorded
+in `docs/M10_PORTFOLIO_VERIFICATION.md` with the two probe notes (an arm that crashes the runner reports reds that
+prove nothing; a census reading the constant under test goes vacuous when that constant is emptied). **Still not
+claimed**: a **page** for either output — no browser surface drives the two write doors yet, so the
+press-a-button-moves-a-figure witness belongs to the web landing — the **PDF**, and the whole-suite legs over these
+bytes; the prediction written before that run is §38's recorded **1326** plus this slice's **24** = **1350**, and
+that is arithmetic, not a measurement. |
 | **M11 Multi-Agent Football AI** | orchestrator + research/data/tactical/training/scout/video/simulation/coach agents, agent memory | spec §33 and §87 composite tasks succeed on benchmark | ⬜ |
 | **M12 Production hardening** | security, performance, observability, cost, caching, rate limits, governance, backup/DR | load + pen test report clean; **account-level erasure implemented** (today only player data is deletable — `DATA_POLICY.md` §3) | ⬜ |
 
