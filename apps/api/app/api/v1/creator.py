@@ -110,10 +110,15 @@ def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
 
 @router.post("/profile")
 def publish_profile(payload: ProfileIn, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
-    """The creator state is written by the first publication; nothing switches it on with a flag."""
+    """The creator state is written by the first publication; nothing switches it on with a flag.
+
+    `exclude_unset` is what makes an amendment mean *the fields this caller sent*: without it every field the form
+    left out would arrive as the schema's own empty default, and a caller amending a headline would silently blank
+    the biography beside it. The fields that were not sent are not passed, and `ensure_profile` reads that absence.
+    """
     limit(request, 10, 60, scope="creator_write")
     try:
-        return cre.ensure_profile(db, user.id, slug=payload.slug, headline=payload.headline, bio=payload.bio)
+        return cre.ensure_profile(db, user.id, **payload.model_dump(exclude_unset=True))
     except cre.CreatorRefusal as error:
         raise _refusal(error) from None
 

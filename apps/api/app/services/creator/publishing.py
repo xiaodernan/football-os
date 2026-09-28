@@ -241,8 +241,14 @@ def _profile_shape(session: Session, row: CreatorProfile) -> dict[str, Any]:
     }
 
 
-def ensure_profile(session: Session, actor_id: str, *, slug: Any = "", headline: Any = "", bio: Any = "") -> dict[str, Any]:
-    """The first publication writes the creator state; it is never switched on by a flag."""
+def ensure_profile(session: Session, actor_id: str, *, slug: Any = None, headline: Any = None, bio: Any = None) -> dict[str, Any]:
+    """The first publication writes the creator state; a later one amends the two fields a reader can see change.
+
+    `None` means *this field was not sent*, and the route builds that distinction out of the request itself
+    (`model_dump(exclude_unset=True)`), so an amendment naming only a headline leaves the biography as it was rather
+    than blanking it. A slug is spent once, at the first publication: the address a reader already holds cannot move,
+    which is what `CAPS` and the page both say, and a second one would only be a way to lose a link.
+    """
     account = _account(session, actor_id)
     row = session.scalar(select(CreatorProfile).where(CreatorProfile.user_id == account.id))
     wanted = str(slug or "").strip().lower() or _slug_of(account.display_name)
@@ -263,7 +269,20 @@ def ensure_profile(session: Session, actor_id: str, *, slug: Any = "", headline:
         session.add(row)
         session.commit()
         session.refresh(row)
-    return {**_profile_shape(session, row), "created": True}
+        return {**_profile_shape(session, row), "created": True}
+    # Both fields are read for their refusal *before* either is written, so a biography one character too long
+    # cannot leave the headline of the same request half-applied in the session.
+    amended = {}
+    if headline is not None:
+        amended["headline"] = _text(headline, PROFILE_HEADLINE_MAX, "profile_headline", "headline", required=False)
+    if bio is not None:
+        amended["bio"] = _text(bio, PROFILE_BIO_MAX, "profile_bio", "biography", required=False)
+    for field, value in amended.items():
+        setattr(row, field, value)
+    if amended:
+        session.commit()
+        session.refresh(row)
+    return {**_profile_shape(session, row), "created": False}
 
 
 def publish_guide(session: Session, actor_id: str, *, section: Any, title: Any, summary: Any = "", visibility: Any = "public") -> dict[str, Any]:

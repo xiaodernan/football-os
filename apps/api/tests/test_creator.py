@@ -474,6 +474,30 @@ def test_every_code_a_door_can_refuse_with_is_answered_with_the_status_the_table
         assert _detail(response)["code"] == code, f"the door answered {published} for the wrong reason: {_detail(response)}"
 
 
+def test_amending_a_profile_writes_the_fields_that_were_sent_and_leaves_every_other_field_alone(voices: dict[str, TestClient]) -> None:
+    """The guide this tier prints says this door amends a headline and a biography, and the page offers the button.
+
+    The defect this holds: an account that had already published was answered 200 and no column was written, so
+    "Amend profile" reported a change to a row it had not touched. Three facts pin the repair — the field that was
+    sent moves, the field that was *not* sent keeps its value, and the address does not move at all.
+    """
+    ada = voices["ada"]
+    first = ada.post("/api/v1/creator/profile", json={"slug": f"amend-{TAG}", "headline": "as first published", "bio": "the biography it started with"})
+    assert first.status_code == 200, first.text
+    assert first.json()["created"] is True and first.json()["headline"] == "as first published"
+
+    amended = ada.post("/api/v1/creator/profile", json={"headline": "amended once"})
+    assert amended.status_code == 200, amended.text
+    assert amended.json()["created"] is False
+    assert amended.json()["headline"] == "amended once", "the one field the caller sent did not move"
+    assert amended.json()["bio"] == "the biography it started with", "a field the caller never named was blanked"
+    assert amended.json()["slug"] == f"amend-{TAG}", "the address moved on an amendment, so a reader link would break"
+
+    refused = ada.post("/api/v1/creator/profile", json={"headline": "half applied", "bio": "x" * (cre.PROFILE_BIO_MAX + 1)})
+    assert refused.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY and _detail(refused)["code"] == "profile_bio", refused.text
+    assert ada.get("/api/v1/creator/profile").json()["headline"] == "amended once", "a refused request still wrote the half of it that was valid"
+
+
 def test_erasing_a_guide_through_the_door_takes_its_citations_and_answers_absence_to_everybody_else(voices: dict[str, TestClient], session: Session) -> None:
     ada, bo = voices["ada"], voices["bo"]
     passage = _passage(session)

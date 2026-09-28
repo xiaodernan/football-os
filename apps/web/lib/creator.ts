@@ -27,11 +27,8 @@ export type CreatorRulesView = {
   refusals: string[];
   limitation: string;
   routes: { method: string; path: string; door: string }[];
-  refusal_answers: Record<string, { status: number; sentence: string }>;
+  refusal_answers: Record<string, number>;
   entitlement_features: string[];
-  data_origin: string;
-  is_demo_data: boolean;
-  disclaimer: string;
 };
 
 export type CreatorProfileView = {
@@ -117,3 +114,17 @@ export type CitationIn = {
   ordinal: number;
   note?: string;
 };
+
+/**
+ * The figures a refusal answered with, in the order the door sent them.
+ *
+ * §36's refusals carry the number that decided them — a cap and what is held against it, a length and the limit —
+ * so a page that printed the sentence and dropped the figures would be showing half of the answer. Each tier keeps
+ * its own copy of this, as §35's does, so a creator surface never depends on the club tier's module.
+ */
+export function refusalFigures(details: unknown): string[] {
+  if (!details || typeof details !== "object" || Array.isArray(details)) return [];
+  return Object.entries(details as Record<string, unknown>)
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .map(([key, value]) => `${key} ${Array.isArray(value) ? value.join(", ") || "none" : String(value)}`);
+}
