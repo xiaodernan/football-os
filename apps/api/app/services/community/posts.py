@@ -97,7 +97,7 @@ FORMULAS: Final = {
 
 REFUSALS: Final = (
     "no_such_post",
-    "no_such_member",
+    "no_such_account",
     "post_kind",
     "post_body",
     "post_pointer",
@@ -111,7 +111,10 @@ REFUSALS: Final = (
     "repost_of_own",
 )
 
-NOT_FOUND_CODES: Final = frozenset({"no_such_post", "no_such_member"})
+# `no_such_account`, not `no_such_member`: §39 owns that code for "no standing in this tenant", and a community
+# door has no tenant to stand in. Same status, different sentence — which is the one collision `assemble()` is
+# blind to, because it only refuses a code two tiers answer *differently*.
+NOT_FOUND_CODES: Final = frozenset({"no_such_post", "no_such_account"})
 UNPROCESSABLE_CODES: Final = frozenset(
     {
         "post_kind",
@@ -173,7 +176,7 @@ def community_counts(session: Session, *, ready: bool) -> dict[str, int]:
 def _member(session: Session, ident: str) -> User:
     row = session.get(User, str(ident))
     if row is None:
-        raise CommunityRefusal("no_such_member", f"no account answers to {str(ident)!r}", member=str(ident))
+        raise CommunityRefusal("no_such_account", f"no account answers to {str(ident)!r}", member=str(ident))
     return row
 
 
@@ -369,6 +372,22 @@ def read_post(session: Session, post_id: str, viewer_id: str) -> dict[str, Any]:
     return {**view(session, row, viewer_id), "liked_by_viewer": bool(_reacted(session, row.id, viewer_id))}
 
 
+def erase_post(session: Session, post_id: str, actor_id: str) -> dict[str, Any]:
+    """Erase your own post, and be told how many rows went with it.
+
+    Somebody else's post is answered as absence, not as a refusal: this tier has no tenant matrix to consult, so
+    the only distinction it can honestly draw is *reachable or not* — the same rule `read_post` applies to a
+    `followers` post, and the reason one code still means one status.
+    """
+    row = _post(session, post_id)
+    if row.author_id != actor_id:
+        raise CommunityRefusal("no_such_post", f"no post of yours answers to {post_id!r}", post=str(post_id))
+    gone = measures(session, row)
+    session.delete(row)
+    session.commit()
+    return {"erased": row.id, "author_id": actor_id, **gone}
+
+
 def add_comment(session: Session, post_id: str, actor_id: str, *, body: Any) -> dict[str, Any]:
     row = _post(session, post_id)
     words = _body(body, COMMENT_BODY_MAX, "comment_body", "comment")
@@ -460,7 +479,7 @@ def unfollow(session: Session, follower_id: str, followee_id: Any) -> dict[str, 
     target = _member(session, str(followee_id))
     row = session.scalar(select(CommunityFollow).where(CommunityFollow.follower_id == follower_id, CommunityFollow.followee_id == target.id))
     if row is None:
-        # Not a refusal, and not `no_such_member` wearing another meaning: withdrawing a follow you never made
+        # Not a refusal, and not `no_such_account` wearing another meaning: withdrawing a follow you never made
         # changes no row, which is the same answer the door gives for a second press of any other verb here.
         return {"follow": "was not followed", "removed": False, **profile(session, follower_id)}
     session.delete(row)

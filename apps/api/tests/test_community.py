@@ -13,7 +13,10 @@ The claims this file defends, in the order it attacks them:
   being deleted, and a post they cannot reach is answered as **absence**;
 * each ceiling is one constant that publishes, guards and refuses with the same number (§49), tested at its edge
   and one past it;
-* a refusal code means one HTTP status, and this tier registers no 403 of its own (§51).
+* a refusal code means one HTTP status, and this tier registers no 403 of its own (§51);
+* and the eleven private doors are the ones this module says it declares — each is routed, each asks a caller for
+  a session *before* it looks up a row, and each answers a refusal with the status the project's one table
+  publishes rather than a table written beside the route.
 """
 
 from __future__ import annotations
@@ -24,10 +27,14 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from fastapi import status
+from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.v1 import community as community_router
 from app.core.db import SessionLocal
+from app.main import app
 from app.models import (
     CommunityComment,
     CommunityFollow,
@@ -354,11 +361,18 @@ def test_a_profile_counts_both_sides_of_a_follow_and_its_own_post_rows(cast: dic
 def test_an_absent_post_or_account_is_answered_as_absence_by_its_own_address(cast: dict[str, User], session: Session) -> None:
     _refused(lambda: com.read_post(session, "post_never_written", cast["ada"].id), "no_such_post")
     _refused(lambda: com.add_comment(session, "post_never_written", cast["ada"].id, body="x"), "no_such_post")
-    _refused(lambda: com.profile(session, "usr_never_here"), "no_such_member")
+    _refused(lambda: com.profile(session, "usr_never_here"), "no_such_account")
 
 
-def test_every_code_this_tier_answers_with_means_exactly_one_status_in_the_project_table(cast: dict[str, User]) -> None:
-    table = project_answers.assemble(project_answers.club, com)
+def test_every_code_this_tier_answers_with_means_exactly_one_status_in_the_shipped_table(cast: dict[str, User]) -> None:
+    """Read off the object the doors answer from, not off a table assembled by hand for this case.
+
+    An earlier draft called `assemble(club, com)` here, which would have kept passing if the community tier were
+    never appended to `TIERS` — the subset assembled for the test would agree while the shipped door fell through
+    to a 400 for every code in it.
+    """
+    table = project_answers.ANSWERS
+    assert com in project_answers.TIERS, "the tier is not registered, so its own door would answer every code with a 400"
     assert set(com.REFUSALS) <= set(table)
     for code in com.REFUSALS:
         expected = 404 if code in com.NOT_FOUND_CODES else 422 if code in com.UNPROCESSABLE_CODES else 409 if code in com.CONFLICT_CODES else None
@@ -368,8 +382,196 @@ def test_every_code_this_tier_answers_with_means_exactly_one_status_in_the_proje
     assert len(com.REFUSALS) == len(set(com.REFUSALS))
 
 
+def test_no_other_tier_publishes_a_code_this_tier_publishes() -> None:
+    """One code, one *meaning* — and `assemble()` cannot see it when two tiers agree on the status.
+
+    This case exists because the first draft of the community tier registered `no_such_member`, which §39 already
+    owned for "no standing in this tenant". Both answered 404, so the collision check stayed silent and the two
+    sentences would have shipped behind one word. The check is over `answers.TIERS` rather than a list of modules
+    written here, so the next tier to join is measured too.
+    """
+    for tier in project_answers.TIERS:
+        if tier is com:
+            continue
+        name = tier.__name__.rpartition(".")[2]
+        held = set(getattr(tier, "PUBLISHED", getattr(tier, "REFUSALS", ())) or ())
+        shared = held & set(com.REFUSALS)
+        assert not shared, f"{sorted(shared)} is {name}'s sentence and this tier's; one code cannot mean two things"
+
+
 def test_the_tier_counts_its_own_tables_without_reading_a_missing_one(session: Session) -> None:
     held = com.community_counts(session, ready=True)
     assert set(held) == {"posts", "comments", "reactions", "reposts", "follows"}
     assert all(value >= 0 for value in held.values())
     assert com.community_counts(session, ready=False) == {name: 0 for name in held}
+
+
+# ------------------------------------------------------------------ the doors
+
+
+PASSWORD = "strong-pass-1234"
+
+#: The public surface, named once so a door added later is a private door until this line says otherwise.
+PUBLIC_DOORS = frozenset({"/community/rules"})
+
+
+def _account(name: str) -> TestClient:
+    """Its own client with its own registered account — a community is made of accounts, so a door needs two."""
+    client = TestClient(app)
+    response = client.post(
+        "/api/v1/auth/register",
+        json={"email": f"community-{uuid4().hex[:8]}@example.test", "password": PASSWORD, "display_name": name, "role": "player", "accepts_data_policy": True},
+    )
+    assert response.status_code == 201, response.text
+    client.headers.update({"Authorization": f"Bearer {response.json()['access_token']}"})
+    return client
+
+
+def _id_of(client: TestClient) -> str:
+    response = client.get("/api/v1/auth/me")
+    assert response.status_code == 200, response.text
+    return str(response.json()["id"])
+
+
+def _detail(response: Any) -> Any:
+    body = response.json()["detail"]
+    assert isinstance(body, dict), f"a refusal must answer with the tier's own payload and figures, and this door sent {body!r}"
+    return body
+
+
+@pytest.fixture()
+def voices() -> dict[str, TestClient]:
+    """A fresh pair of accounts per case: the feed and follower counts these cases assert are exact, and an account
+    shared across cases would make each figure a claim about two of them at once."""
+    return {"ada": _account("Ada Wall"), "bo": _account("Bo Reader")}
+
+
+def _live_doors() -> set[tuple[str, str]]:
+    routes: set[tuple[str, str]] = set()
+    for route in app.routes:
+        path = str(getattr(route, "path", ""))
+        if not path.startswith("/api/v1/community"):
+            continue
+        for method in set(getattr(route, "methods", ()) or ()) - {"HEAD", "OPTIONS"}:
+            routes.add((method, path))
+    return routes
+
+
+def test_the_guide_names_exactly_the_doors_that_are_routed() -> None:
+    """Both directions, because a guide is read by the page that has to reach the doors.
+
+    An entry with no route is a link to a 404; a route with no entry is a door the rulebook does not publish, and
+    `GET /community/rules` prints this list to the browser as the tier's own description of itself.
+    """
+    declared = {(entry["method"], f"/api/v1{entry['path']}") for entry in community_router.ROUTE_GUIDE}
+    assert len(community_router.ROUTE_GUIDE) == len(declared), "two entries describe one door"
+    live = _live_doors()
+    assert declared == live, f"only in the guide: {sorted(declared - live)}; only routed: {sorted(live - declared)}"
+
+
+def test_this_door_reads_the_same_object_the_club_doors_read() -> None:
+    assert community_router._ANSWERS is project_answers.ANSWERS, "the community door assembled its own answer table again"
+
+
+def test_the_one_public_door_prints_the_answers_it_will_give() -> None:
+    client = TestClient(app)
+    response = client.get("/api/v1/community/rules")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["routes"] == [dict(item) for item in community_router.ROUTE_GUIDE]
+    assert body["refusal_answers"] == {code: project_answers.ANSWERS[code] for code in com.REFUSALS}, "the rulebook printed a status the shipped table does not answer with"
+    assert body["caps"]["kinds"] == list(com.POST_KINDS)
+    # The three ceilings are a row count a caller cannot reach through HTTP in a test's budget; what a page can
+    # check is that they are published with the status they earn, which the line above holds for all thirteen.
+    assert all(body["refusal_answers"][code] == 409 for code in ("post_limit", "comment_limit", "following_limit"))
+    assert set(body["counts"]) == {"posts", "comments", "reactions", "reposts", "follows"}
+
+
+@pytest.mark.parametrize("door", [entry for entry in community_router.ROUTE_GUIDE if entry["path"] not in PUBLIC_DOORS], ids=lambda entry: f"{entry['method']} {entry['path']}")
+def test_a_caller_without_a_session_is_answered_401_before_any_row_is_consulted(door: dict[str, str]) -> None:
+    """401 for an id that does not exist is the point: a 404 would mean the service ran first.
+
+    Every private door is walked, derived from the guide rather than a list written here, so a door added to the
+    router cannot arrive unguarded — and none of them answers 403, which §51 reserves for the permission matrix.
+    """
+    path = door["path"].replace("{post}", "post_never_written").replace("{member}", "usr_never_here")
+    client = TestClient(app)
+    response = client.request(door["method"], f"/api/v1{path}", json={} if door["method"] == "POST" else None)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED, f"{door['method']} {path} answered {response.status_code}: {response.text}"
+    assert _detail(response)["code"] == "unauthenticated"
+
+
+def test_every_code_a_door_can_refuse_with_is_answered_with_the_status_the_table_publishes(voices: dict[str, TestClient]) -> None:
+    ada, bo = voices["ada"], voices["bo"]
+    ada_id = _id_of(ada)
+    theirs = ada.post("/api/v1/community/posts", json={"body": "a wall of one"}).json()["post"]["id"]
+
+    earned = [
+        ("post_kind", ada.post("/api/v1/community/posts", json={"kind": "my_secret", "body": "x"})),
+        ("post_body", ada.post("/api/v1/community/posts", json={"body": "   "})),
+        ("post_pointer", ada.post("/api/v1/community/posts", json={"kind": "my_tactic", "body": "press", "pointer": "/training/plan-1"})),
+        ("visibility_kind", ada.post("/api/v1/community/posts", json={"body": "x", "visibility": "nobody"})),
+        ("no_such_post", ada.get("/api/v1/community/posts/post_never_written")),
+        ("no_such_account", ada.get("/api/v1/community/members/usr_never_here")),
+        ("follow_self", ada.post(f"/api/v1/community/follows/{ada_id}")),
+        ("repost_of_own", ada.post(f"/api/v1/community/posts/{theirs}/reposts")),
+        ("reaction_kind", bo.post(f"/api/v1/community/posts/{theirs}/reactions", json={"reaction": "pity"})),
+        ("comment_body", bo.post(f"/api/v1/community/posts/{theirs}/comments", json={"body": "   "})),
+    ]
+    for code, response in earned:
+        published = project_answers.ANSWERS[code]
+        assert response.status_code == published, f"{code} is published as {published} and the door answered {response.status_code}: {response.text}"
+        assert _detail(response)["code"] == code, f"the door answered {published} for the wrong reason: {_detail(response)}"
+
+
+def test_following_through_a_door_is_what_opens_a_followers_post_to_that_reader(voices: dict[str, TestClient]) -> None:
+    """The wiring, not the arithmetic: the door has to pass the *caller* as the reader and the path as the other half."""
+    ada, bo = voices["ada"], voices["bo"]
+    bo_id = _id_of(bo)
+    secret = bo.post("/api/v1/community/posts", json={"body": "only for the people who follow me", "visibility": "followers"}).json()["post"]["id"]
+
+    closed = ada.get(f"/api/v1/community/posts/{secret}")
+    assert closed.status_code == 404 and _detail(closed)["code"] == "no_such_post", "a wall the reader cannot reach is answered as absence, not as a refusal"
+    assert ada.get("/api/v1/community/posts").json()["total"] == 0
+
+    opened = ada.post(f"/api/v1/community/follows/{bo_id}")
+    assert opened.status_code == 200, opened.text
+    assert opened.json()["recorded_now"] is True
+    assert ada.get(f"/api/v1/community/posts/{secret}").json()["id"] == secret
+    assert ada.get("/api/v1/community/posts").json()["total"] == 1, "the feed carries the author it now follows"
+    # Bo is an account this case created, so every follow row pointing at it is this case's row.
+    assert ada.get(f"/api/v1/community/members/{bo_id}").json()["followers"] == 1
+
+    withdrawn = ada.delete(f"/api/v1/community/follows/{bo_id}")
+    assert withdrawn.status_code == 200 and withdrawn.json()["removed"] is True
+    assert ada.get(f"/api/v1/community/posts/{secret}").status_code == 404, "reach is recomputed on the read, so withdrawing it is instant"
+    assert int(_row_count(CommunityPost, CommunityPost.id == secret)) == 1, "and it deletes nothing that was already published"
+
+
+def test_the_erase_door_takes_the_rows_on_your_own_post_down_and_answers_absence_for_everybody_else(voices: dict[str, TestClient], session: Session) -> None:
+    ada, bo = voices["ada"], voices["bo"]
+    post = ada.post("/api/v1/community/posts", json={"body": "here briefly", "kind": "my_career", "pointer": "/career/erase-me"}).json()["post"]["id"]
+    bo.post(f"/api/v1/community/posts/{post}/reactions", json={"reaction": "like"})
+    bo.post(f"/api/v1/community/posts/{post}/comments", json={"body": "noted"})
+    bo.post(f"/api/v1/community/posts/{post}/reposts")
+
+    stranger = bo.delete(f"/api/v1/community/posts/{post}")
+    assert stranger.status_code == 404 and _detail(stranger)["code"] == "no_such_post", "a post that is not yours is not confirmed to exist"
+    assert int(_row_count(CommunityPost, CommunityPost.id == post)) == 1, "and the refusal wrote nothing"
+
+    erased = ada.delete(f"/api/v1/community/posts/{post}")
+    assert erased.status_code == 200, erased.text
+    assert erased.json() == {"erased": post, "author_id": _id_of(ada), "likes": 1, "comments": 1, "reposts": 1}, "the answer says how many rows went with the post"
+
+    assert ada.get(f"/api/v1/community/posts/{post}").status_code == 404
+    for model, label in ((CommunityReaction, "reaction"), (CommunityComment, "comment"), (CommunityRepost, "repost")):
+        assert int(_row_count(model, model.post_id == post)) == 0, f"the {label} row outlived the post it was about"
+
+
+def _row_count(model: Any, *conditions: Any) -> int:
+    """Counted on its own session: the door's session is not the one the case holds."""
+    row = SessionLocal()
+    try:
+        return int(row.query(model).filter(*conditions).count())
+    finally:
+        row.close()

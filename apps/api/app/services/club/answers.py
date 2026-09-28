@@ -1,4 +1,8 @@
-"""One refusal code, one HTTP answer — at *every* door of the club tier.
+"""One refusal code, one HTTP answer — at *every* door, in any tier.
+
+This file opened as the club tier's, and §35's community tier registers here rather than assembling a table of
+its own: a table that lives inside one router is what let the same sentence earn two statuses, and a second
+project-wide table would do that again one milestone later.
 
 The rule §40 published for itself (*a code means one thing*) only holds if it means one **status** too. Until
 this module there were two answer tables, hand-assembled one per router, and they did not list the same codes:
@@ -37,6 +41,7 @@ from app.services.club import organizations as club
 from app.services.club import reports as rep
 from app.services.club import sessions as sess
 from app.services.club.organizations import ClubRefusal
+from app.services.community import posts as community
 
 #: The four questions a tier answers, in the order a reader checks them: is it absent, is the request
 #: correctable, did it collide with a row that already exists, or does the caller simply not hold the right.
@@ -48,9 +53,12 @@ SETS: Final = (
     ("FORBIDDEN_CODES", status.HTTP_403_FORBIDDEN),
 )
 
-#: Every part of the tier whose refusals a club door can be the first to print. §48's `matches` joins this list
-#: and nothing else changes: both routers read the table assembled from it.
-TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status)
+#: Every tier whose refusals a door can be the first to print. §48's `matches` joined this list and nothing else
+#: changed: both club routers read the table assembled from it. §35's `community` joins it for the same reason —
+#: a code means one status *project-wide*, and a second table assembled inside the community router is how the
+#: hole described above was made. Nothing here imports a router, and no service imports this module, so a tier
+#: from another milestone can be listed without the club tier having to know anything about it.
+TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community)
 
 
 def assemble(*tiers: Any) -> dict[str, int]:
