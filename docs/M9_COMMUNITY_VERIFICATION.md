@@ -91,9 +91,10 @@ answer for the permission matrix, and a community door asks only whether the cal
   account that has published nothing reachable is therefore not shown as followed, which the page says out loud
   rather than guessing at.
 * **No moderation, reporting, blocking or DMs** — §35's community is a publication tier in this build.
-* The test matrix is still half open: the PostgreSQL leg over `7d2ee6d` is **in flight** while this file is committed
-  (last progress line read at 33%), and §35 has had no mutation probe yet — `.scratch/probe_m9.py` holds four arms with their
-  predictions written down before any run, and it stays foreground because it edits `posts.py`. §42's payments remain the one
+* PostgreSQL leg over the same code, its own throwaway database on the pgvector container: **`tests=1275
+  failures=0 errors=0 skipped=1`, runner `rc=0`, junit `time=1323.95s` inside a wrapper wall of 1326.76s**. The two
+  legs therefore agree on the same three figures — 1275, zero failures, the one named skip — and on the same
+  arithmetic (45 community + 1230 rest), so the count is not an engine's accident. §42's payments remain the one
   spec item the whole project has never implemented: no currency column, payment provider or checkout field exists anywhere. The prices that *do* exist — §22's `transfer_listings.current_price` and the USD-per-token rates in `app/providers/__init__.py:129-130` — are a valuation and a cost measure, not a payment, and this milestone corrected the three sentences in this project's own records that said otherwise, in the section below.
 
 ## A claim this milestone corrected
@@ -110,3 +111,32 @@ rewritten to say the narrow true thing: this file, `docs/M8_CLUB_OS_VERIFICATION
 M8 cell. No test or script reads `docs/` (grep over `apps/api/tests` and `apps/web/scripts` returned no reader), so
 the correction moves no measured plane. The method is the point: a claim about *the whole project* has to be measured
 over the whole project, not inferred from the tier that wrote it.
+
+## The probe over §35's four load-bearing decisions
+
+`scripts/probe_m9.py`'s discipline was carried over from §57: an unmutated control has to be green before any arm
+counts, an arm has to change a *value or predicate* rather than break the syntax (a mutant that will not import
+produces zero reds and zero evidence), every red has to be named from the runner's own report, and the target is
+restored from a byte-exact copy with a hash check. Four arms, one per decision:
+
+| arm | what it deletes | predicted red | observed red | named case(s) |
+| --- | --- | --- | --- | --- |
+| A | the post-ceiling guard (`if held >= MAX_POSTS_PER_USER` → `if False and …`) | 1 | **1** | `test_the_post_ceiling_accepted_at_its_edge_is_refused_one_past_it_with_its_own_figures` |
+| B | the followers reach predicate in `read_post` | 2 | **2** | `test_a_followers_post_reaches_a_follower_and_answers_absence_to_everybody_else`, `test_following_through_a_door_is_what_opens_a_followers_post_to_that_reader` |
+| C | the pointer-prefix branch in `_pointer` | 2 | **2** | `test_a_post_that_is_not_a_note_must_point_at_its_own_kind`, `test_every_code_a_door_can_refuse_with_is_answered_with_the_status_the_table_publishes` |
+| D | the `note`-carries-no-pointer branch (a silent drop instead of a refusal) | 1 | **1** | `test_a_note_carries_words_and_refuses_a_pointer_it_could_not_explain` |
+
+`control rc=0 reds=0` first, then **`SUMMARY arms=4 survived=0 restored=True`**, and `git status --porcelain` for the
+target came back empty afterwards. Each arm was pre-checked in memory before it ran: anchor matched exactly once, the
+mutant still compiled, and exactly one `raise` ended up behind a constant-False guard — so a survivor would have
+meant a real hole rather than a broken edit. The predictions were written into the script before the first run, and
+every one of them landed: **six reds across four arms, each the predicted case, none extra**.
+
+Arm C is the one worth reading twice. It kills only the *prefix* branch, so the two cases that exercise `_pointer`'s
+other branches — a `note` carrying a pointer, and a pointer shaped wrong (`?`, `#`, trailing space, trailing slash) —
+stay green, and that is reported as **partial coverage** rather than counted as a catch. Arm D exists because of that
+reading: it aims at the note branch specifically, and it did turn exactly the case its prediction named.
+
+What the probe does not claim: it says nothing about the HTTP layer (the twelve doors are held by their own cases,
+including the eleven 401-before-any-row checks), and it does not touch `answers.ANSWERS`, whose collision blindness —
+two tiers, one code, the same status — is what `no_such_account` was renamed for and is now held by a test instead.
