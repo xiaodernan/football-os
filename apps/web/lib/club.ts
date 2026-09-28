@@ -133,6 +133,13 @@ export type ClubCapabilities = ClubRules & {
   fixture_caps: FixtureCaps;
   /** The tier's own sentence about what a club fixture does *not* carry, printed rather than paraphrased. */
   fixture_limitation: string;
+  /** §39's Communication vocabulary: the audiences, the two length ceilings and the per-audience pin ceiling. */
+  announcement_caps: AnnouncementCaps;
+  /** The sentences naming what each derived readership figure is made of, printed beside the figures. */
+  announcement_formulas: Record<string, string>;
+  /** `code → HTTP status` for the seven notice refusals, so the page never guesses what a knock answers with. */
+  announcement_refusals: Record<string, number>;
+  announcement_limitation: string;
   limitations: string[];
   ready: boolean;
   /** The two conditions the flag stands on, in the API's own sentence — one constant shared with §40's door. */
@@ -705,6 +712,58 @@ export type FixturePlayed = {
   model_version: string;
   rule: string;
   seed: number;
+};
+
+/**
+ * §39's Communication tier, as its five doors answer.
+ *
+ * A notice row carries **no recipient field**, and that is the tier's shape rather than an omission: an audience
+ * is a predicate over the tenant's active memberships, so `recipients`, `read_by`, `unread` and
+ * `receipts_on_row` are recomputed on every read and arrive inside `announcement_view` — which is why each row
+ * also carries its own `formulas`. `read` is the caller's receipt and is `null` when the door was asked without a
+ * caller to answer for. Every key below is one a door printed; nothing here is a field the page wished for.
+ */
+export type AnnouncementCaps = {
+  announcement_max: number;
+  audience_rule: string;
+  audiences: string[];
+  body_max: number;
+  pinned_max: number;
+  title_max: number;
+};
+
+export type AnnouncementRow = {
+  audience: string;
+  author: { name: string } | null;
+  author_role: string;
+  body: string;
+  formulas: Record<string, string>;
+  id: string;
+  pinned: boolean;
+  published_on: string;
+  read: boolean | null;
+  read_by: number;
+  receipts_on_row: number;
+  recipients: number;
+  title: string;
+  unread: number;
+};
+
+export type AnnouncementList = {
+  announcements_held: number;
+  caps: AnnouncementCaps;
+  demo_data: boolean;
+  formulas: Record<string, string>;
+  items: AnnouncementRow[];
+  limit: number;
+  organization: string;
+  pinned_by_audience: Record<string, number>;
+  read_through: string;
+  role: string;
+  rule: string;
+  sees: string[];
+  today: string;
+  total: number;
 };
 
 /**

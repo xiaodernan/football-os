@@ -6,12 +6,14 @@ import { AcademyTools, ConsentTable } from "@/components/AcademyTools";
 import { TenantTools } from "@/components/ClubTools";
 import { EraseRow, ReportSaver, SessionRecorder } from "@/components/SessionReportTools";
 import { FixtureArranger } from "@/components/MatchTools";
+import { NoticeBoard } from "@/components/NoticeBoardTools";
 import { Panel } from "@/components/ui";
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import {
   refusalFigures,
   type AcademyCapabilities,
   type AccountEntitlements,
+  type AnnouncementList,
   type ClubCapabilities,
   type ConsentList,
   type CurriculumList,
@@ -55,7 +57,7 @@ export const metadata: Metadata = {
   alternates: { canonical: absolute("/club") },
 };
 
-type Props = { params: Promise<{ ident: string }> };
+type Props = { params: Promise<{ ident: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 /**
  * The host's own calendar day, because the API's `today` is `date.today()` in this same process's timezone.
@@ -84,12 +86,16 @@ function Refused({ label, status, message, figures }: { label: string; status: n
   );
 }
 
-export default async function ClubTenantPage({ params }: Props) {
+export default async function ClubTenantPage({ params, searchParams }: Props) {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fclub");
 
-  const { ident } = await params;
+  const [{ ident }, query] = await Promise.all([params, searchParams]);
   if (!ident || ident.length > 160 || ident === "rules") notFound();
+  // The board's audience filter is the door's own query parameter, so the page hands it over untouched and prints
+  // whatever comes back — including the 422 that says the word selected nobody. Narrowing the rows here instead
+  // would publish a `total` the server never printed.
+  const audience = typeof query.audience === "string" && query.audience.trim() !== "" ? query.audience : null;
 
   const first = await serverFetch<OrganizationView>(`/club/${encodeURIComponent(ident)}`);
   if (!first.ok) {
@@ -100,7 +106,7 @@ export default async function ClubTenantPage({ params }: Props) {
 
   // The academy doors are read after the tenant itself resolves: a stranger never reaches them, and the
   // caller's standing decides which of them answer at all.
-  const [consents, curricula, plans, academyRules, sessions, reports, entitlements, mine, fixtures, rulebook] = await Promise.all([
+  const [consents, curricula, plans, academyRules, sessions, reports, entitlements, mine, fixtures, rulebook, notices] = await Promise.all([
     serverFetch<ConsentList>(`/club/academy/${encodeURIComponent(ident)}/consents`),
     serverFetch<CurriculumList>(`/club/academy/${encodeURIComponent(ident)}/curricula`),
     serverFetch<PlanList>(`/club/academy/${encodeURIComponent(ident)}/plans`),
@@ -113,6 +119,9 @@ export default async function ClubTenantPage({ params }: Props) {
     // block lengths and the counts a side must reach from `fixture_caps`, and its day from the listing itself.
     serverFetch<FixtureList>(`/club/${encodeURIComponent(ident)}/fixtures`),
     serverFetch<ClubCapabilities>("/club/capabilities"),
+    // §39's board. The listing carries its own `caps`, so the poster form is built from the door that answered
+    // rather than from a second leg that might not have.
+    serverFetch<AnnouncementList>(`/club/${encodeURIComponent(ident)}/announcements${audience ? `?audience=${encodeURIComponent(audience)}` : ""}`),
   ]);
 
   const minors = view.teams.reduce((sum, team) => sum + team.minors_on_sheet, 0);
@@ -216,6 +225,26 @@ export default async function ClubTenantPage({ params }: Props) {
         {rulebook.ok && (
           <p className="muted" style={{ fontSize: "0.82rem" }}>
             {rulebook.data.fixture_limitation}
+          </p>
+        )}
+      </Panel>
+
+      <Panel
+        eyebrow={
+          notices.ok
+            ? `${notices.data.total} listed · ${notices.data.announcements_held} of ${notices.data.limit} on the board${audience ? ` · filtered to ${audience}` : ""} · an audience is a predicate over the roster`
+            : "the notices door did not answer"
+        }
+        title="Notices to an audience"
+      >
+        {notices.ok ? (
+          <NoticeBoard audience={audience} caps={notices.data.caps} ident={view.organization.slug} list={notices.data} />
+        ) : (
+          <Refused figures={refusalFigures(notices.error.details)} label="notices" message={notices.error.message} status={notices.status} />
+        )}
+        {rulebook.ok && (
+          <p className="muted" style={{ fontSize: "0.82rem" }}>
+            {rulebook.data.announcement_limitation}
           </p>
         )}
       </Panel>

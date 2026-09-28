@@ -762,6 +762,117 @@ async function main() {
   check('the panel prints the tier’s own limitation sentence rather than a paraphrase of it', has(await text(page), String(rulebook.fixture_limitation ?? '<<no limitation published>>>').slice(0, 60)), String(rulebook.fixture_limitation ?? '').slice(0, 120));
   await shot(page, 'fixtures-after-the-erase');
 
+  // ------------------------------------------------- §39's board: an audience selects, it never names a person
+  const noticesPath = `/api/v1/club/${encodeURIComponent(ident)}/announcements`;
+  const noticeCaps = rulebook.announcement_caps ?? {};
+  const noticeAnswers = rulebook.announcement_refusals ?? {};
+  const audienceField = 'select[aria-label="Notice audience"]';
+  const titleField = 'input[aria-label="Notice title"]';
+  const bodyField = 'textarea[aria-label="Notice body"]';
+  const pinField = 'input[aria-label="Notice pinned"]';
+  const board0 = await call(page, 'GET', noticesPath);
+  check('the notices door answers the owner with an empty board, its own ceiling and the audiences it posts to', board0.status === 200 && board0.json?.total === 0 && board0.json?.limit === noticeCaps.announcement_max && board0.json?.caps?.audiences?.join(',') === (noticeCaps.audiences ?? []).join(','), `HTTP ${board0.status} · limit ${board0.json?.limit} against the cap ${noticeCaps.announcement_max} · audiences ${board0.json?.caps?.audiences?.join(', ')}`);
+  check('each of the seven published notice refusals means one HTTP answer, and none of them is a 403', Object.keys(noticeAnswers).length === 7 && Object.values(noticeAnswers).every((status) => [404, 409, 422].includes(status)) && noticeAnswers.announcement_limit === 409 && noticeAnswers.not_an_audience === 422, JSON.stringify(noticeAnswers));
+  // Painted before pressed: every selector below lives inside the panel, and a page that served `<Refused>` instead
+  // would otherwise answer with one crash that costs the rest of the walk its remaining checks.
+  const boardPainted = await untilTrue(async () => (await page.$$('[data-testid="notice-totals"]')).length === 1, 60_000);
+  check('the tenant page paints the notice board itself, so the controls below have a panel to belong to', boardPainted === true, `the panel's own totals row ${boardPainted ? 'is painted' : 'is absent — the page answered the door without mounting the board'}`);
+  check('the poster offers exactly the audiences the rulebook publishes, in its order', (await page.$$eval(`${audienceField} option`, (nodes) => nodes.map((node) => node.value))).join(',') === (noticeCaps.audiences ?? []).join(','), (noticeCaps.audiences ?? []).join(', '));
+  check('and its two text fields carry the door’s ceilings rather than a length the page chose', (await page.$eval(titleField, (node) => node.maxLength)) === noticeCaps.title_max && (await page.$eval(bodyField, (node) => node.maxLength)) === noticeCaps.body_max, `title ${noticeCaps.title_max}, body ${noticeCaps.body_max}`);
+
+  const blankTitle = await pressWrite(page, 'notice-post', 'notice-post', 'refused with');
+  check('a notice with no title is refused with the rule that names the field it tripped over', blankTitle.ok && /refused with 422/.test(blankTitle.note) && has(blankTitle.note, 'announcement_title'), blankTitle.note.slice(0, 170));
+  const wrongAudience = await call(page, 'GET', `${noticesPath}?audience=nobody`);
+  check('a filter naming no audience is answered by the door, not by a page that quietly narrowed its own rows', wrongAudience.status === 422 && has(JSON.stringify(wrongAudience.json ?? ''), 'announcement_audience'), `HTTP ${wrongAudience.status} · ${JSON.stringify(wrongAudience.json ?? '').slice(0, 120)}`);
+  check('and neither refusal is a write: the board is still empty', (await call(page, 'GET', noticesPath)).json?.total === 0, `${(await call(page, 'GET', noticesPath)).json?.total} row(s)`);
+
+  // The denominator this panel prints is a predicate over the roster, so the walk counts the roster from the
+  // tenant door and asks whether the notice board's figure means the same thing.
+  const roster = (await call(page, 'GET', `/api/v1/club/${encodeURIComponent(ident)}`)).json?.members ?? [];
+  const staffActive = roster.filter((row) => row.status === 'active' && row.role !== 'parent').length;
+  const parentActive = roster.filter((row) => row.status === 'active' && row.role === 'parent').length;
+  check('the walk has the roster it thinks it has, before it judges a readership', roster.length > 0 && staffActive === roster.filter((row) => row.status === 'active').length - parentActive, `${roster.length} row(s): ${staffActive} staff-side active, ${parentActive} guardian(s)`);
+
+  await typeInto(page, titleField, `QA training note ${stamp.slice(-4)}`);
+  await page.select(audienceField, 'staff');
+  const posted = await pressWrite(page, 'notice-post', 'notice-post', 'answered');
+  check('the page posts a notice from its own controls', posted.ok && (await untilTrue(async () => (await call(page, 'GET', noticesPath)).json?.total === 1, 90_000)), `the button ${posted.pressed} after ${posted.attempts} attempt(s); note: ${posted.note.slice(0, 120)}`);
+  const board1 = await call(page, 'GET', noticesPath);
+  const staffNotice = (board1.json?.items ?? [])[0] ?? {};
+  check('its readership is the roster the audience selects, counted now rather than stored at posting time', staffNotice.audience === 'staff' && staffNotice.recipients === staffActive && staffNotice.read_by === 0 && staffNotice.unread === staffNotice.recipients && staffNotice.receipts_on_row === 0, `recipients ${staffNotice.recipients} against ${staffActive} active non-guardian row(s) · read_by ${staffNotice.read_by} · ${staffNotice.receipts_on_row} receipt(s)`);
+  check('the door marks the notice as one the caller’s own standing selects', (board1.json?.sees ?? []).includes(staffNotice.id) && staffNotice.read === false, `sees ${(board1.json?.sees ?? []).length} of ${board1.json?.total} listed · caller's receipt ${JSON.stringify(staffNotice.read)}`);
+  const boardText1 = await text(page);
+  check('the panel prints the door’s own rule sentence and its formula lines, not a paraphrase written here', has(boardText1, String(board1.json?.rule ?? '<<no rule published>>>').slice(0, 60)) && has(boardText1, String(board1.json?.formulas?.recipients ?? '<<no formula published>>>').slice(0, 60)), `${String(board1.json?.rule ?? '').slice(0, 90)} / ${String(board1.json?.formulas?.recipients ?? '').slice(0, 70)}`);
+  check('the arithmetic badge subtracts the two figures it printed and finds the third holds', shouts(await page.$eval('[data-testid="notice-arithmetic-agrees"]', (node) => node.innerText), 'unread is recipients minus read_by'), await page.$eval('[data-testid="notice-arithmetic-agrees"]', (node) => node.innerText));
+  check('and the listing badge counts its own rows before believing the door’s total', shouts(await page.$eval('[data-testid="notice-listed-agrees"]', (node) => node.innerText), 'total is the number of rows it printed'), await page.$eval('[data-testid="notice-listed-agrees"]', (node) => node.innerText));
+  check('the notice stores no recipient anywhere in its answer', keyNames(board1.json ?? {}).filter((key) => /^recipient$|^user_id$|^to_user$|child_id|guardian/i.test(key)).length === 0, `${keyNames(board1.json ?? {}).length} key name(s) read, none of them a person`);
+
+  // Painted before pressed: the door answers the write long before the page receives it back, and the three
+  // checks below live inside a row the server component still has to deliver. An unpainted row would otherwise
+  // read as `the button missing` — a red that names the walk's own assumption rather than the tier's behaviour.
+  const noticeRows1 = await untilTrue(async () => (await page.$$('[data-notice]')).length === (board1.json?.total ?? 0), 60_000);
+  check('the page repaints the notice it was told about before anything is pressed inside its row', noticeRows1 === true, `${(await page.$$('[data-notice]')).length} row(s) painted against the ${board1.json?.total} the door counts`);
+  const readOnce = await pressWrite(page, `notice-read-${staffNotice.id}`, `notice-read-${staffNotice.id}`, 'answered');
+  const afterRead = await call(page, 'GET', noticesPath);
+  const readRow = (afterRead.json?.items ?? [])[0] ?? {};
+  check('one receipt from the page moves exactly the two figures a receipt can move', readOnce.ok && readRow.read_by === 1 && readRow.receipts_on_row === 1 && readRow.unread === readRow.recipients - 1, `the button ${readOnce.pressed} · read_by ${readRow.read_by} · ${readRow.receipts_on_row} receipt row(s) · unread ${readRow.unread}`);
+  const receiptCell = () => page.$eval(`tr[data-notice="${staffNotice.id}"]`, (node) => node.innerText).catch(() => '(the row is not on the page)');
+  const receiptPainted = await untilTrue(async () => shouts(await receiptCell(), 'you have read it'), 60_000);
+  check('and the row says the caller has read it, once the page has received its own receipt', receiptPainted === true, `notice ${staffNotice.id} · ${JSON.stringify((await receiptCell()).slice(0, 140))}`);
+  const readTwice = await pressWrite(page, `notice-read-${staffNotice.id}`, `notice-read-${staffNotice.id}`, 'answered');
+  const again = await call(page, 'POST', `${noticesPath}/${encodeURIComponent(staffNotice.id)}/read`);
+  const afterSecond = await call(page, 'GET', noticesPath);
+  const twiceRow = (afterSecond.json?.items ?? [])[0] ?? {};
+  // The door's own word is in its answer, not in the page's note: a note only carries a refusal's figures, so
+  // `already recorded` had one honest reader here and it is the door.
+  check('reading it again is the same one row, and the door says which figure did not move', readTwice.pressed === 'clicked' && again.json?.receipt === 'already recorded' && again.json?.recorded_now === false && twiceRow.receipts_on_row === 1 && twiceRow.read_by === 1, `the button ${readTwice.pressed}; the door's word ${JSON.stringify(again.json?.receipt)} for recorded_now ${JSON.stringify(again.json?.recorded_now)} · ${twiceRow.receipts_on_row} receipt row(s), read_by ${twiceRow.read_by}`);
+
+  const pinnedTitle = `QA pinned pitch closure ${stamp.slice(-4)}`;
+  await clearField(page, titleField);
+  await typeInto(page, titleField, pinnedTitle);
+  await page.click(pinField);
+  const pinnedPosted = await pressWrite(page, 'notice-post', 'notice-post', 'answered');
+  const board2 = await call(page, 'GET', noticesPath);
+  const pinnedRow = (board2.json?.items ?? []).find((row) => row.pinned) ?? {};
+  // A second post through the same control answers with a note that is byte-identical to the first one, so the
+  // fresh-note test pressWrite can offer is not evidence here; the row the door now holds, under the title typed
+  // into this form, is.
+  check('a pinned notice is pinned to its own audience, and the door counts them per audience', pinnedPosted.pressed === 'clicked' && pinnedRow.pinned === true && pinnedRow.title === pinnedTitle && board2.json?.pinned_by_audience?.staff === 1 && board2.json?.pinned_by_audience?.parents === 0, `the button ${pinnedPosted.pressed} · row ${JSON.stringify(pinnedRow.title)} pinned ${JSON.stringify(pinnedRow.pinned)} · pinned_by_audience ${JSON.stringify(board2.json?.pinned_by_audience)} of a ${noticeCaps.pinned_max} ceiling`);
+  const pinnedPainted = await untilTrue(async () => (await page.$$(`tr[data-notice="${pinnedRow.id}"]`)).length === 1, 60_000);
+  const pinnedCell = pinnedPainted === true ? await page.$eval(`tr[data-notice="${pinnedRow.id}"] td`, (node) => node.innerText) : '(the row the door pinned never painted)';
+  check('the page prints a pinned badge on the row the door pinned, and the door’s per-audience count is the board’s own rows counted again', pinnedPainted === true && pinnedCell.toLowerCase().includes('pinned') && shouts(await page.$eval('[data-testid="notice-pinned-agrees"]', (node) => node.innerText), 'pinned counts per audience are the board'), `row ${pinnedRow.id} opens with ${JSON.stringify(pinnedCell.slice(0, 40))}`);
+
+  const guardianTitle = `QA guardian notice ${stamp.slice(-4)}`;
+  await clearField(page, titleField);
+  await typeInto(page, titleField, guardianTitle);
+  await page.select(audienceField, 'parents');
+  const toGuardians = await pressWrite(page, 'notice-post', 'notice-post', 'answered');
+  const board3 = await call(page, 'GET', noticesPath);
+  const guardianRow = (board3.json?.items ?? []).find((row) => row.audience === 'parents') ?? {};
+  check('a notice posted to guardians selects the roster’s guardian rows and nobody else', toGuardians.pressed === 'clicked' && guardianRow.title === guardianTitle && guardianRow.recipients === parentActive && !(board3.json?.sees ?? []).includes(guardianRow.id), `the button ${toGuardians.pressed} · ${guardianRow.recipients} recipient(s) over ${parentActive} active guardian row(s); the director is not among them`);
+  const guardianPainted = await untilTrue(async () => (await page.$$(`tr[data-notice="${guardianRow.id}"]`)).length === 1, 60_000);
+  check('and the row the guardians were selected into is on the page, refused or not', guardianPainted === true, `row ${guardianRow.id} painted: ${guardianPainted}`);
+  const outside = await pressWrite(page, `notice-read-${guardianRow.id}`, `notice-read-${guardianRow.id}`, 'refused with');
+  check('and the button a caller is not addressed by stays live, answering the refusal rather than hiding it', outside.ok && /refused with 422/.test(outside.note) && has(outside.note, 'not_an_audience') && has(outside.note, 'parents'), outside.note.slice(0, 170));
+  check('the row is listed with its readership and says it was not addressed to this standing', shouts(await text(page), 'not addressed to your standing'), `notice ${guardianRow.id}`);
+  check('so the panel prints the selection it made for the caller, not a count of the rows on the board', shouts(await page.$eval('[data-testid="notice-sees"]', (node) => node.innerText), `${board3.json?.sees?.length ?? '?'} of ${board3.json?.total ?? '?'} listed select you right now`), await page.$eval('[data-testid="notice-sees"]', (node) => node.innerText));
+
+  const staffHeld = (board3.json?.items ?? []).filter((row) => row.audience === 'staff').length;
+  const boardHeld = board3.json?.announcements_held ?? 0;
+  await open(page, `${tenant.path}?audience=staff`);
+  const filtered = await call(page, 'GET', `${noticesPath}?audience=staff`);
+  check('the filter goes through the door: it narrows the rows, never what the tenant holds', filtered.status === 200 && filtered.json?.total === staffHeld && filtered.json?.announcements_held === boardHeld && shouts(await text(page), 'filtered to staff'), `${filtered.json?.total} listed against ${boardHeld} held, of which ${staffHeld} were posted to staff`);
+  check('and a filtered board still prints the readership of the rows it kept', (filtered.json?.items ?? []).every((row) => row.audience === 'staff' && row.recipients === staffActive), `${(filtered.json?.items ?? []).length} row(s), each over ${staffActive} selected member(s)`);
+  await open(page, tenant.path);
+  await untilTrue(async () => (await page.$$('[data-notice]')).length === boardHeld, 60_000);
+
+  const erasedNotice = await pressWrite(page, `notice-erase-${staffNotice.id}`, `notice-erase-${staffNotice.id}`, 'answered');
+  const board4 = await call(page, 'GET', noticesPath);
+  const erasedRead = await call(page, 'GET', `${noticesPath}/${encodeURIComponent(staffNotice.id)}`);
+  check('erasing a notice takes it off the board and answers its own address as absence, not as somebody else’s notice', erasedNotice.ok && erasedRead.status === 404 && has(JSON.stringify(erasedRead.json ?? ''), 'no_such_announcement') && board4.json?.total === boardHeld - 1 && (board4.json?.items ?? []).every((row) => row.id !== staffNotice.id), `HTTP ${erasedRead.status} at its own address · ${board4.json?.total} notice(s) left of ${boardHeld}`);
+  check('the panel prints the tier’s own limitation sentence rather than a paraphrase of it', has(await text(page), String(rulebook.announcement_limitation ?? '<<no limitation published>>>').slice(0, 60)), String(rulebook.announcement_limitation ?? '').slice(0, 120));
+  await shot(page, 'notices-after-the-erase');
+
   // ----------------------------------------------------------- §42's meter, on the page that just spent it
   const meterPath = `/api/v1/club/${encodeURIComponent(ident)}/entitlements`;
   const meterDoor = await call(page, 'GET', meterPath);
@@ -785,6 +896,11 @@ async function main() {
   check('the account that owns the tenant is a separate subject, and the page says which one it is showing', (await page.$eval('[data-account-meter]', (node) => node.getAttribute('data-account-meter'))).split(',').includes('organizations'), `tenant rows: ${Object.keys(meter).join(', ')}`);
 
   const dayBefore = new Date(Date.parse(`${doorToday}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+  // Both ends, not just the one being moved: the board's filter navigations remount this form, so an assertion
+  // that the *other* date still holds whatever an earlier section typed is the walk assuming a page state
+  // instead of setting one. A reversed window has to be a reversed window on its own terms.
+  await clearField(page, windowStart);
+  await typeInto(page, windowStart, doorToday);
   await clearField(page, windowEnd);
   await typeInto(page, windowEnd, dayBefore);
   const reversed = await pressWrite(page, 'report-save', 'report-save', 'refused with');
@@ -833,7 +949,7 @@ async function main() {
   check('so is the child’s plan page — the address worth guessing, if any was', (await pageC.goto(`${BASE}${plan.path}`, { waitUntil: 'domcontentloaded' })).status() === 404, plan.path);
   check('and both doors behind those pages answer absent too, including the ceiling one nobody may read on somebody else’s tenant', (await call(pageC, 'GET', `/api/v1/club/${encodeURIComponent(ident)}`)).status === 404 && (await call(pageC, 'GET', `/api/v1/club/academy/${encodeURIComponent(ident)}/plans`)).status === 404 && (await call(pageC, 'GET', meterPath)).status === 404, 'page, plan, tenant door, academy door, meter door');
   const parentRights = clubRules.matrix.matrix.parent;
-  check('a guardian holds three rights, and the matrix publishes those three', parentRights.length === 3 && parentRights.includes('consent.grant_own'), parentRights.join(', '));
+  check('a guardian holds four rights, and the fourth of them is the board they were added to read', parentRights.length === 4 && parentRights.includes('consent.grant_own') && parentRights.includes('announce.read'), parentRights.join(', '));
 
   const doors = [
     ['consents', `/api/v1/club/academy/${encodeURIComponent(ident)}/consents`],
@@ -859,6 +975,27 @@ async function main() {
   const memberClose = await call(pageB, 'DELETE', `/api/v1/club/${encodeURIComponent(ident)}`, { confirm: TENANT });
   check('a member may not close the tenant: the page’s own door answers them', memberClose.status === (clubRules.refusal_answers.insufficient_role ?? 403), `HTTP ${memberClose.status} ${JSON.stringify(memberClose.json ?? null).slice(0, 70)}`);
   check('and the tenant is still there to be read afterwards', (await call(page, 'GET', `/api/v1/club/${encodeURIComponent(ident)}`)).status === 200);
+
+  // ------------------------------------------------- §39's board, read by the standing the audience selects
+  // The guardian accepted their invitation after the notices above were posted, so the readership a notice carries
+  // is the figure that moved — which is the whole claim this tier makes about a predicate over the roster rather
+  // than a stored distribution list.
+  await open(pageB, tenant.path);
+  await untilTrue(async () => (await pageB.$$('[data-notice]')).length > 0, 60_000);
+  const guardianRowsNow = (ownerView.json?.members ?? []).filter((row) => row.status === 'active' && row.role === 'parent').length;
+  const staffRowsNow = (ownerView.json?.members ?? []).filter((row) => row.status === 'active' && row.role !== 'parent').length;
+  const ownerBoard = await call(page, 'GET', noticesPath);
+  const guardianBoard = await call(pageB, 'GET', noticesPath);
+  const addressedToGuardians = (guardianBoard.json?.items ?? []).find((row) => row.audience === 'parents') ?? {};
+  check('a notice posted to guardians selects the guardian who joined after it was posted, because its readership is the roster as it stands', ownerBoard.status === 200 && guardianBoard.status === 200 && addressedToGuardians.recipients === guardianRowsNow && (guardianBoard.json?.sees ?? []).join(',') === addressedToGuardians.id, `recipients ${addressedToGuardians.recipients} over ${guardianRowsNow} active guardian row(s); the guardian is addressed by ${(guardianBoard.json?.sees ?? []).length} of ${guardianBoard.json?.total} listed`);
+  check('both accounts are listed the same rows, and the only thing their standing changes is which of them select', (ownerBoard.json?.items ?? []).map((row) => row.id).join(',') === (guardianBoard.json?.items ?? []).map((row) => row.id).join(',') && (ownerBoard.json?.sees ?? []).length === (ownerBoard.json?.items ?? []).filter((row) => row.audience !== 'parents').length, `the director sees ${(ownerBoard.json?.sees ?? []).length} of ${(ownerBoard.json?.items ?? []).length} listed over ${staffRowsNow} staff-side row(s), the guardian sees ${(guardianBoard.json?.sees ?? []).length}`);
+  const guardianReads = await pressWrite(pageB, `notice-read-${addressedToGuardians.id}`, `notice-read-${addressedToGuardians.id}`, 'answered');
+  const readBack = await call(pageB, 'GET', `${noticesPath}/${encodeURIComponent(addressedToGuardians.id)}`);
+  check('the guardian’s own receipt lands as one read of one, and the detail door says the notice was addressed to them', guardianReads.ok && readBack.json?.announcement?.read_by === 1 && readBack.json?.announcement?.unread === 0 && readBack.json?.addressed_to_caller === true, `read_by ${readBack.json?.announcement?.read_by} · unread ${readBack.json?.announcement?.unread} · addressed ${JSON.stringify(readBack.json?.addressed_to_caller)}`);
+  const roleRefusal = clubRules.refusal_answers?.insufficient_role ?? 403;
+  const guardianPosts = await pressWrite(pageB, 'notice-post', 'notice-post', 'refused with');
+  check('a guardian who may read the board cannot post to it, and the answer comes from the matrix rather than a guess made here', guardianPosts.ok && has(guardianPosts.note, `refused with ${roleRefusal}`) && has(guardianPosts.note, 'insufficient_role'), `${guardianPosts.note.slice(0, 150)} (matrix answers ${roleRefusal})`);
+  await shot(pageB, 'notices-as-a-guardian');
 
   await page.setViewport(MOBILE);
   await open(page, plan.path);
