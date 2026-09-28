@@ -208,6 +208,11 @@ POST /knowledge/ingest       403  {"code":"forbidden","message":"Staff role requ
 POST /knowledge/search       401  anonymous
 ```
 
+The `ingest` line is a transcript of what that door answered when §29 landed, and §60 corrected it: `forbidden`
+was a code no answer table registered, and the allow-list beside it named `staff` and `operator`, standings no
+account can hold. A `player` caller is now refused `insufficient_role` with `held`/`required`/`roles` beside the
+message, and `tests/test_authorization_census.py` is what keeps both spellings reachable.
+
 The refusal is the interesting line: the system says *why* it stayed silent in terms a reviewer can
 check, instead of returning a confident sentence.
 

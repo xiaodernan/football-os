@@ -9,7 +9,7 @@ per-leg timings) travel with the results so a surprising ranking can be diagnose
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Final
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
-from app.core.security import current_user, limit, new_public_id
+from app.core.security import current_user, limit, new_public_id, role_refusal, standing_check
 from app.core.vector_type import EMBEDDING_DIM
 from app.models import AuditLog, KnowledgeChunk, KnowledgeDocument, User
 from app.providers import provider_status
@@ -31,6 +31,15 @@ DISCLAIMER = (
     "Answers are assembled from the cited football knowledge passages only. Coaching guidance, not medical "
     "advice or scouting certification; laws of the game are maintained by IFAB — check the current wording."
 )
+
+#: The standing `/knowledge/ingest` asks for, validated against the platform's own vocabulary *at import*.
+#: It used to read `("admin", "staff", "operator")`, and two of those three name nothing: `core/security.ROLES`
+#: holds seven account standings and `services/club/access.ROLES` holds six *tenant* standings, neither of which
+#: contains `staff` or `operator`. `staff` is real in §39 as an announcement **audience** — a predicate over a
+#: club roster — which is exactly the kind of word that reads like a role and answers a different question. The
+#: door was therefore policy for `admin` plus a sentence about two standings no account can hold, and the day
+#: somebody adds a `staff` role the sentence would start granting access without anybody editing the door.
+INGEST_STANDING: Final = standing_check(("admin",))
 
 
 def _budget_guard(db: Session) -> None:
@@ -208,8 +217,8 @@ def ingest(
 ) -> dict[str, Any]:
     """Re-run ingestion over the corpus. Self-hosted / admin surface, always authenticated."""
     limit(request, 6, 3600, scope="knowledge_ingest")
-    if user.role not in ("admin", "staff", "operator"):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": "forbidden", "message": "Staff role required"})
+    if user.role not in INGEST_STANDING:
+        raise role_refusal(held=user.role, required=INGEST_STANDING, message="Only an admin account may re-ingest the corpus")
     report = knowledge.sync_knowledge(db, body.root, force=body.force)
     audit = AuditLog(
         id=new_public_id("aud"),

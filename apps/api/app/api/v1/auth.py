@@ -16,6 +16,7 @@ from app.core.security import (
     create_access_token,
     current_user,
     hash_password,
+    inactive_refusal,
     limit,
     new_public_id,
     verify_password,
@@ -83,7 +84,7 @@ def login(payload: LoginIn, request: Request, response: Response, db: Session = 
         # identical error for unknown email and wrong password (no account enumeration)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "invalid_credentials", "message": "Email or password is incorrect"})
     if not user.is_active:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": "account_inactive", "message": "This account is disabled"})
+        raise inactive_refusal(message="This account is disabled")
     user.last_login_at = datetime.now(UTC)
     db.add(AuditLog(id=new_public_id("aud"), user_id=user.id, action="user.login", detail={}))
     refresh, _digest = _issue_refresh(db, user.id)
@@ -107,7 +108,7 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "refresh_invalid", "message": "Session expired, please sign in again"})
     user = db.get(User, stored.user_id)
     if user is None or not user.is_active:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": "account_inactive", "message": "This account is disabled"})
+        raise inactive_refusal(message="This account is disabled")
     now = now_utc()
     if stored.revoked_at is not None:
         # A refresh token is single-use, so a revoked one arriving back is either the same browser

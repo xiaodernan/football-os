@@ -307,7 +307,8 @@ capabilities: m6_manager_challenges = True · {'runs': 1, 'scenarios': 6}
 SQLite and 376 green on PostgreSQL+pgvector**.
 
 The first PostgreSQL run of the full suite was **not** green: it reported one error,
-`tests/test_knowledge_rag.py::test_ingest_endpoint_is_staff_only` —
+`tests/test_knowledge_rag.py::test_ingest_endpoint_is_staff_only` — the same case has been named
+`test_ingest_endpoint_is_an_admin_standing_only` since §60 registered the platform's own 403 codes —
 `UndefinedTable: relation "training_drills" does not exist` — in a test that asserts a 403 and never
 queries that table, on a file that passes alone and passes again in the full run. The honest reading is
 that the throwaway database is a **single shared resource** whose session fixture starts with

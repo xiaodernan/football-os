@@ -33,6 +33,7 @@ from typing import Any, Final
 
 from fastapi import HTTPException, status
 
+from app.core import security
 from app.services import entitlements as ent_status
 from app.services.club import academy as edu
 from app.services.club import announcements as ann
@@ -63,7 +64,14 @@ SETS: Final = (
 #: from another milestone can be listed without the club tier having to know anything about it. §38's `portfolio`
 #: joins with no code of its own: the tier prints its refusal table from this one, and an empty registration here is
 #: what keeps a code added by a later portfolio slice from being answered one way there and another at `/club`.
-TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio, portfolio_share)
+#:
+#: `core.security` is not a milestone tier and joins for a reason the others did not have: it answers 403 for
+#: *every* door — `current_user` refuses a switched-off account before any tier's code is reached — and until §60's
+#: census it did that with two codes (`account_inactive`, and the `forbidden` a router minted at `/knowledge/ingest`)
+#: that appeared nowhere in this table. A tier list assembled from the services alone is a ledger that cannot see
+#: the routers, and the routers were spending 403 freely. Registering the platform's own 403 codes here is what
+#: makes the ledger and the territory one fact.
+TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio, portfolio_share, security)
 
 
 def assemble(*tiers: Any) -> dict[str, int]:
@@ -92,7 +100,9 @@ def published(*codes: Any) -> dict[str, int]:
     it would teach a caller to expect an answer that never comes. An unregistered code publishes as the fall-through
     it would actually earn — measured at this landing, **every** code §39 through §42 publishes is registered, so no
     row of the printed table is a fall-through today; one appearing later is a bug in the tier that added it, and
-    `test_answers_agree.py` is what turns that bug red rather than a reader finding it.
+    `tests/test_club_answers.py::test_a_code_nobody_registered_is_answered_400_not_the_nearest_4xx` is what turns
+    that bug red rather than a reader finding it. (This sentence cited `test_answers_agree.py`, a file that has
+    never existed in this repository; the assertion it described is real and lives under the name above.)
     """
     return {str(code): ANSWERS.get(str(code), status.HTTP_400_BAD_REQUEST) for code in (item for group in codes for item in group)}
 

@@ -24,6 +24,7 @@ from fastapi import status
 from app.api.v1 import club as club_router
 from app.api.v1 import club_academy as academy_router
 from app.api.v1 import entitlements as entitlements_router
+from app.core import security
 from app.services import entitlements as ent
 from app.services.club import academy as edu
 from app.services.club import answers
@@ -89,14 +90,30 @@ def test_the_status_a_code_earns_is_the_tiers_own_claim_not_the_routers_guess() 
             assert answers.ANSWERS[code] == status.HTTP_409_CONFLICT, f"{code} collides with a row that already exists"
 
 
-def test_forty_three_is_still_the_matrixs_single_answer() -> None:
-    """§39 reserved 403 for `insufficient_role` and no other tier may spend it.
+def test_forty_three_names_one_right_per_matrix_and_the_table_knows_the_whole_vocabulary() -> None:
+    """Two claims, because the one this file made before was true only of a ledger that could not see the doors.
 
-    A second 403 would be a second policy about standing, and the page that prints the matrix answers "why can
-    this person see that?" by naming one right — which stops being a unique answer at the second code.
+    The previous version asserted `forbidden == ["insufficient_role"]` over the assembled table. That read as a
+    statement about 403 across the platform, and it was false when written: three sites raised an unregistered
+    `account_inactive` and two raised an unregistered `forbidden` at `/knowledge/ingest`, none of them visible to
+    a census over the club tiers alone. Registering the platform's own 403s (`app/core/security.py` is in `TIERS`)
+    makes the ledger tell the truth about the territory, and the truth is scoped, not single:
+
+    * every 403 the table answers with is in the platform's declared vocabulary — no third spelling is reachable;
+    * a tier that prints a role matrix spends 403 on `insufficient_role` alone, and the tiers that print no matrix
+      spend it on nothing.
     """
     forbidden = sorted(code for code, answer in answers.ANSWERS.items() if answer == status.HTTP_403_FORBIDDEN)
-    assert forbidden == ["insufficient_role"], f"403 was §39's one code and this tier now answers with {forbidden}"
+    assert forbidden == sorted(security.FORBIDDEN_CODES), f"403 was raised in words the table never registered: {sorted(set(forbidden) ^ set(security.FORBIDDEN_CODES))}"
+    assert club.FORBIDDEN_CODES == frozenset({security.INSUFFICIENT_ROLE}), "the matrix tier's one 403 is the standing sentence"
+    for name, module in {"edu": edu, "sess": sess, "rep": rep, "ent": ent}.items():
+        assert not module.FORBIDDEN_CODES, f"{name} answers 403 with {sorted(module.FORBIDDEN_CODES)}; only a door with a role matrix may spend 403"
+
+
+def test_no_tier_answers_403_with_a_code_outside_the_platform_vocabulary() -> None:
+    """A tier may only claim a 403 the platform has already named, so a fourth sentence cannot be minted locally."""
+    for module in (club, edu, sess, rep, ent):
+        assert module.FORBIDDEN_CODES <= security.FORBIDDEN_CODES, f"{module.__name__} claims 403 for {sorted(module.FORBIDDEN_CODES - security.FORBIDDEN_CODES)}, which is not a platform sentence"
 
 
 def test_no_code_is_claimed_by_two_modules_with_different_meanings() -> None:

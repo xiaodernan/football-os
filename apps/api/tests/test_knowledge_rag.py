@@ -14,10 +14,13 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.api.v1.knowledge import INGEST_STANDING
+from app.core import security
 from app.core.db import SessionLocal, has_pgvector
 from app.core.vector_type import EMBEDDING_DIM
 from app.models import KnowledgeChunk, KnowledgeDocument, KnowledgeQuery
 from app.services import knowledge
+from app.services.club import answers
 from app.services.knowledge.chunking import KnowledgeDocumentError, chunk_document, parse_document
 
 
@@ -259,7 +262,20 @@ def test_authenticated_search_and_ask_carry_the_ai_envelope(auth_client) -> None
     assert all(source["type"] == "knowledge_document" for source in answer["sources"])
 
 
-def test_ingest_endpoint_is_staff_only(auth_client) -> None:  # type: ignore[no-untyped-def]
+def test_ingest_endpoint_is_an_admin_standing_only(auth_client) -> None:  # type: ignore[no-untyped-def]
+    """The reachable half of §60's standing check: a `player` account is refused with the registered sentence.
+
+    This case used to assert `code == "forbidden"`, a word no table in the platform registered — the door minted
+    it on the spot, alongside a required list containing `staff` and `operator`, standings no account can hold.
+    The status and the code are read from the shipped objects here, not restated: `answers.ANSWERS` for the status
+    the platform gives that code, `INGEST_STANDING` for the list the door actually asks for. The admin-200 half
+    cannot live in this file (no door lets an account register itself as an admin), so it is
+    `tests/test_authorization_census.py::TestTheAdminStandingIsReachableSomewhere`.
+    """
     response = auth_client.post("/api/v1/knowledge/ingest", json={})
-    assert response.status_code == 403
-    assert response.json()["detail"]["code"] == "forbidden"
+    assert response.status_code == answers.ANSWERS[security.INSUFFICIENT_ROLE] == 403
+    detail = response.json()["detail"]
+    assert detail["code"] == security.INSUFFICIENT_ROLE
+    assert detail["held"] == "player"
+    assert detail["required"] == list(INGEST_STANDING)
+    assert set(detail["required"]) <= set(security.ROLES), "the door asks for a standing no account can hold"
