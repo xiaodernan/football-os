@@ -46,11 +46,28 @@ answer for the permission matrix, and a community door asks only whether the cal
   production build, attributed to its own tree by the `BUILD_ID` the served HTML carries, with the API this run
   started on `127.0.0.1:8740` over `.scratch/m9_qa_api.db`. Screenshots landed in `docs/screenshots/` (untracked,
   as every other milestone's are).
-* Whole-suite SQLite leg over `7d2ee6d`: **rc=0**, which is the runner's own statement that nothing failed. Its
-  final summary line was **not recorded** — the same lost-last-line behaviour of a bash file redirect that ate the
-  summary for the single-file run earlier in this session, three times now. So this milestone publishes no pass
-  count for that leg, and the next leg must be run with `--junitxml` rather than trusting a redirect's tail. The
-  arithmetic prediction made before it started (1229 + 45 = 1274) is not evidence and is not recorded as one.
+* Whole-suite SQLite leg, per-run database: **`tests=1275 failures=0 errors=0 skipped=1`, runner `rc=0`, junit
+  `time=633.98s` against the wrapper's own wall of 638.44s** — every one of those figures read out of
+  `.scratch/leg_m9_sqlite2.xml`, which is why this leg has a number and the leg before it did not. The tree at launch
+  was `7d2ee6d`; the only working-tree changes during the run were the docs commits `ff575a2` and `cfb6672`, and no
+  test reads `docs/` (grep over `apps/api/tests` and `apps/web/scripts` returned no reader), so the code measured is
+  `7d2ee6d`'s code. The one skip is
+  `tests/test_scout_search.py::TestPublishedArithmetic::test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]`,
+  named from the XML's own `skipped` element rather than counted.
+* The composition of that 1275, counted per test class from the same report: **45** cases in
+  `tests/test_community.py` and **1230** across the other 163 files. §57 recorded **1229** for that second population
+  (both `.scratch/leg57_sqlite.log` and `.scratch/leg57_pg.log` print `1229 passed, 1 skipped`), and
+  `git log --name-only cdd15b3..HEAD -- apps/api/tests` shows no commit touching the test tree except my two community
+  commits. So **one case appeared in the rest of the suite and this record does not claim to know where**: two
+  hypotheses were measured and rejected — nothing outside `test_community.py` mentions `answers.TIERS`, and the corpus
+  check at `tests/test_knowledge_rag.py:38` is a single case with a `>= 12` floor while
+  `git log cdd15b3..HEAD -- data/knowledge` is empty. Task #65 carries the remaining method. An enumeration that
+  silently gains a case is the same kind of enumeration that can silently lose one, which is why this stays a named
+  gap rather than becoming a rounding.
+* An earlier SQLite leg over the same commit is superseded: it printed **rc=0 and no summary line**, the third
+  occurrence of a bash file redirect swallowing pytest's last line, and it is the reason the legs now run with
+  `--junitxml`. The arithmetic prediction written down before either leg started (1229 + 45 = 1274) missed by one and
+  is recorded as a prediction that was wrong, not as a figure.
 
 ## The two defects the walk found, both in the page rather than the tier
 
@@ -74,8 +91,9 @@ answer for the permission matrix, and a community door asks only whether the cal
   account that has published nothing reachable is therefore not shown as followed, which the page says out loud
   rather than guessing at.
 * **No moderation, reporting, blocking or DMs** — §35's community is a publication tier in this build.
-* Both legs of the test matrix are not yet closed for this milestone: the PostgreSQL leg has not been run over
-  `8cbde7e`..`63161d2`, and the SQLite leg's count is unrecorded as described above. §42's payments remain the one
+* The test matrix is still half open: the PostgreSQL leg over `7d2ee6d` is **in flight** while this file is committed
+  (last progress line read at 33%), and §35 has had no mutation probe yet — `.scratch/probe_m9.py` holds four arms with their
+  predictions written down before any run, and it stays foreground because it edits `posts.py`. §42's payments remain the one
   spec item the whole project has never implemented: no currency column, payment provider or checkout field exists anywhere. The prices that *do* exist — §22's `transfer_listings.current_price` and the USD-per-token rates in `app/providers/__init__.py:129-130` — are a valuation and a cost measure, not a payment, and this milestone corrected the three sentences in this project's own records that said otherwise, in the section below.
 
 ## A claim this milestone corrected
