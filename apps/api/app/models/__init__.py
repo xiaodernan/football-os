@@ -1820,3 +1820,111 @@ class ClubAnnouncementRead(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     announcement: Mapped[ClubAnnouncement] = relationship(back_populates="reads")
+
+
+# --- Community: §35's publishing tier (M9, spec §35) ------------------------------------------------
+# Five tables and one rule that decides all five: **a post stores a pointer, never a copy**. The figures a
+# reader sees about a share — `likes`, `comments`, `reposts`, `followers` — are counted from the rows below at
+# read time, so no column here could hold a stale statistic, and none could hold a figure about a child.
+# The three pair-tables carry their idempotency as a unique constraint rather than as a code path, which is
+# §40's consent row and §57's receipt row carried over to a community; and `community_follows` is the only row
+# here that decides reach, so an unfollow withdraws a `followers` post at once and deletes nothing already read.
+# Every key out of a post CASCADEs — including `author_id`, unlike §57's notice: a post is its author's own
+# publication, and §40's erasure right is that an account's records go with the account.
+class CommunityPost(Base, TimestampMixin):
+    """One publication: the author's words, a kind, and the address of the artifact being shared."""
+
+    __tablename__ = "community_posts"
+    __table_args__ = (
+        Index("ix_community_post_author_date", "author_id", "shared_on"),
+        Index("ix_community_post_visibility", "visibility", "shared_on"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # One of `posts.POST_KINDS`, kept as text the way `audience` and `role` are: the vocabulary is code's, and a
+    # new kind is a new pointer prefix rather than a migration.
+    kind: Mapped[str] = mapped_column(String(24), default="note", nullable=False)
+    body: Mapped[str] = mapped_column(String(1500), nullable=False)
+    # The artifact's own path (`/tactics/boards/<slug>`, `/training/<slug>`, …), or empty for a `note`. Never a
+    # copy of anything the artifact reports about itself.
+    pointer: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    # One of `posts.VISIBILITIES`. A predicate, not a list: `followers` is answered by joining the follow table
+    # on read, which is §57's audience-as-predicate argument with the audience being an account's followers.
+    visibility: Mapped[str] = mapped_column(String(12), default="public", nullable=False)
+    # An ISO date as text, exactly as `club_announcements.published_on` keeps it.
+    shared_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+class CommunityComment(Base, TimestampMixin):
+    """One reply on a post — words only, and they go with either side of the exchange."""
+
+    __tablename__ = "community_comments"
+    __table_args__ = (Index("ix_community_comment_post_date", "post_id", "commented_on"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    post_id: Mapped[str] = mapped_column(ForeignKey("community_posts.id", ondelete="CASCADE"), nullable=False)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    body: Mapped[str] = mapped_column(String(600), nullable=False)
+    commented_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+class CommunityReaction(Base, TimestampMixin):
+    """One account's one reaction to one post: pressing twice is one row because the schema says so."""
+
+    __tablename__ = "community_reactions"
+    __table_args__ = (
+        UniqueConstraint("post_id", "user_id", "reaction", name="uq_community_reaction"),
+        Index("ix_community_reaction_user", "user_id", "reacted_on"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    post_id: Mapped[str] = mapped_column(ForeignKey("community_posts.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # The vocabulary is `posts.REACTIONS` — one word today — and a `String` rather than an enum so that adding a
+    # second feeling is a line in a tuple, not a migration with a rollback.
+    reaction: Mapped[str] = mapped_column(String(16), default="like", nullable=False)
+    reacted_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+class CommunityRepost(Base, TimestampMixin):
+    """One account carrying another's post. Its existence is the whole figure `reposts` counts."""
+
+    __tablename__ = "community_reposts"
+    __table_args__ = (
+        UniqueConstraint("post_id", "user_id", name="uq_community_repost"),
+        Index("ix_community_repost_user", "user_id", "reposted_on"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    post_id: Mapped[str] = mapped_column(ForeignKey("community_posts.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    reposted_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+class CommunityFollow(Base, TimestampMixin):
+    """One account's follow of another — the row that decides who a `followers` post reaches."""
+
+    __tablename__ = "community_follows"
+    __table_args__ = (
+        UniqueConstraint("follower_id", "followee_id", name="uq_community_follow"),
+        Index("ix_community_follow_followee", "followee_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    # Both sides CASCADE: a follow is a relation between two accounts and answers no question once either is
+    # gone, and the tier refuses self-follows in code because a row that is its own audience would make
+    # `followers` mean nobody.
+    follower_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    followee_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    followed_on: Mapped[str] = mapped_column(String(10), nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
