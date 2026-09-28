@@ -6,7 +6,7 @@ passages it cites stay in `knowledge_chunks`, and `citations`, `tokens` and `mov
 rows the formulas name at the moment of the read. That is the only way a guide can be honest after an operator edits
 the corpus, which `sync_knowledge` invites at any time.
 
-Three consequences, each held by a named case rather than by this paragraph:
+Four consequences, each held by a named case rather than by this paragraph:
 
 * **a citation keys on (document, ordinal) and remembers the hash.** `services/knowledge/ingest.py` keeps a
   document row across re-syncs but mints a fresh chunk id every time, so an id-keyed pointer dangles on the first
@@ -17,6 +17,11 @@ Three consequences, each held by a named case rather than by this paragraph:
 * **no money anywhere.** The pricing architecture is §42's `entitlements` rows — a feature, a plan, a ceiling, a
   period — and this tier adds features to that table rather than a currency, provider or checkout field, which is
   the narrow claim `docs/M9_COMMUNITY_VERIFICATION.md` now records.
+* **reach is §35's predicate, read from §35's one table.** `VISIBILITIES` arrives here "with the same meaning" as
+  §35's, so a `followers` guide reaches its author and the accounts whose `community_follows` rows point at that
+  author *right now* — the sentence `CAPS["visibility_rule"]` prints. The shelf, the single address and the
+  citations door all ask `visible_authors`, so the printed rule and the code cannot drift apart, and an unfollow
+  withdraws the guide without deleting anything.
 
 Every ceiling is one constant that `CAPS` publishes, that one guard below applies, and whose refusal prints it
 beside `held` — §49's rule, applied before it could recur.
@@ -138,7 +143,9 @@ LIMITATION: Final = (
     "text, so re-ingesting the corpus cannot leave a guide quoting words the document no longer holds; the passage "
     "is read where it lives, and a citation whose passage has changed says so through `moved`. Nothing in this tier "
     "carries money: the plan/feature/ceiling rows in `entitlements` are the whole pricing architecture here, and no "
-    "currency, provider or checkout field appears in any payload"
+    "currency, provider or checkout field appears in any payload; the two features this tier names in that table "
+    "(`creator_publish`, `creator_guide`) are ceilings the data holds and no door refuses on yet, so the caps "
+    "published above are what actually bites"
 )
 
 
@@ -318,13 +325,31 @@ def cite(session: Session, guide_id: str, actor_id: str, *, document: Any, ordin
         row.note = comment
     session.commit()
     session.refresh(row)
-    return {"citation": _citation_shape(row, passage), "recorded_now": True, **measures(session, guide), "formulas": dict(FORMULAS)}
+    return {"citation": _citation_shape(session, row, passage), "recorded_now": True, **measures(session, guide), "formulas": dict(FORMULAS)}
 
 
-def _citation_shape(row: GuideCitation, passage: KnowledgeChunk | None = None) -> dict[str, Any]:
+def _document_row(session: Session, document_id: str) -> KnowledgeDocument:
+    """The corpus document one citation names, by its own key.
+
+    `guide_citations.document_id` is RESTRICTed, so a cited document cannot be deleted out from under a guide and
+    this always resolves; the refusal is what the door would answer if that key were ever relaxed.
+    """
+    row = session.scalar(select(KnowledgeDocument).where(KnowledgeDocument.id == str(document_id)))
+    if row is None:
+        raise CreatorRefusal("no_such_document", f"the document this citation was written against ({document_id!r}) is no longer in the corpus", document=str(document_id))
+    return row
+
+
+def _citation_shape(session: Session, row: GuideCitation, passage: KnowledgeChunk | None = None) -> dict[str, Any]:
+    """One citation as the address a caller can use, not the key it happens to be stored under.
+
+    `cite` takes a document's **slug**, so a read that answered `document_id` would hand back an identifier no caller
+    can cite with — one key meaning one thing on the way in and another on the way out, which is the defect class §51
+    exists to prevent. The column stays `document_id`; only the answer changes.
+    """
     return {
         "id": row.id,
-        "document": row.document_id,
+        "document": _document_row(session, row.document_id).slug,
         "ordinal": row.ordinal,
         "note": row.note,
         "heading": passage.heading if passage is not None else None,
@@ -372,9 +397,26 @@ def view(session: Session, row: CreatorGuide, viewer_id: str) -> dict[str, Any]:
     }
 
 
+def visible_authors(session: Session, viewer_id: str) -> list[str]:
+    """The creators whose guides reach this reader: the account itself, and the ones its follow rows point at.
+
+    §35's predicate, read from §35's own table — a second follow table would be the same noun twice, and §36
+    publishes its three visibilities "with the same meaning". A follow row written through §35's door is therefore
+    what opens a `followers` guide here, and an unfollow closes it again without deleting the guide.
+    """
+    return [viewer_id, *[str(followee) for followee in session.scalars(select(CommunityFollow.followee_id).where(CommunityFollow.follower_id == viewer_id))]]
+
+
 def list_guides(session: Session, viewer_id: str, *, creator: Any = None, section: Any = None, limit: int = 20) -> dict[str, Any]:
-    """A listing of what reaches this reader: everybody's public shelf, one creator's shelf, or one section's."""
-    allowed = list(VISIBILITIES) if creator is not None and str(creator) == viewer_id else ["public"]
+    """A listing of what reaches this reader: everybody's public shelf, one creator's shelf, or one section's.
+
+    A stranger sees only `public`; the author sees their own shelf whole; an account that follows this creator right
+    now also sees their `followers` guides — the shelf half of the predicate `read_guide` applies to one address.
+    `unlisted` is in neither listing: its own address is the only door that shows it.
+    """
+    following = visible_authors(session, viewer_id)[1:]
+    own = creator is not None and str(creator) == viewer_id
+    allowed = list(VISIBILITIES) if own else (["public", "followers"] if (creator is not None and str(creator) in following) else ["public"])
     statement = select(CreatorGuide).where(CreatorGuide.visibility.in_(allowed))
     if creator is not None:
         statement = statement.where(CreatorGuide.author_id == str(creator))
@@ -393,22 +435,43 @@ def list_guides(session: Session, viewer_id: str, *, creator: Any = None, sectio
     }
 
 
+def _reachable(session: Session, guide_id: str, viewer_id: str) -> CreatorGuide:
+    """One guide, if this reader may reach it. A guide they may not reach is answered as **absence**.
+
+    The answer must not tell a stranger that somebody's `followers` guide exists, so the refusal is the one a row
+    that was never written earns — §35's answer to a post that is not yours to read.
+    """
+    row = _guide(session, guide_id)
+    if row.visibility == "followers" and row.author_id not in set(visible_authors(session, viewer_id)):
+        raise CreatorRefusal("no_such_guide", f"no guide answers to {str(guide_id)!r}", guide=str(guide_id))
+    return row
+
+
 def read_guide(session: Session, guide_id: str, viewer_id: str, *, with_citations: bool = True) -> dict[str, Any]:
     """One guide at its own address, and the passages it points at as they read right now."""
-    row = _guide(session, guide_id)
-    if row.visibility == "followers" and row.author_id != viewer_id:
-        raise CreatorRefusal("no_such_guide", f"no guide answers to {str(guide_id)!r}", guide=str(guide_id))
+    row = _reachable(session, guide_id, viewer_id)
     # `citations` stays the count the formula names, and the list of passages answers under its own key: one
     # key that meant a number on one read and a list on another is the defect class §51 exists to prevent.
     answer = {**view(session, row, viewer_id), "passages": citations_of(session, row) if with_citations else []}
     return answer
 
 
+def citations_view(session: Session, guide_id: str, viewer_id: str) -> dict[str, Any]:
+    """The citations of one guide, to a reader who may reach the guide at all.
+
+    The door this answers used to read the guide row directly, skipping the reach predicate: a stranger who knew a
+    `followers` guide's id could not read the guide but could read the addresses it cites. One predicate, asked by
+    every door that answers about a guide, is what keeps that from becoming a second rule.
+    """
+    row = _reachable(session, guide_id, viewer_id)
+    return {"items": citations_of(session, row), "total": measures(session, row)["citations"], "formulas": dict(FORMULAS)}
+
+
 def citations_of(session: Session, row: CreatorGuide) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     for citation in session.scalars(select(GuideCitation).where(GuideCitation.guide_id == row.id).order_by(GuideCitation.ordinal)):
         passage = session.scalar(select(KnowledgeChunk).where(KnowledgeChunk.document_id == citation.document_id, KnowledgeChunk.ordinal == citation.ordinal))
-        items.append(_citation_shape(citation, passage))
+        items.append(_citation_shape(session, citation, passage))
     return items
 
 

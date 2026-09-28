@@ -39,6 +39,11 @@ FEATURES: Final[dict[str, str]] = {
     "plans_open": "organization",
     "sessions_recorded": "organization",
     "reports_saved": "organization",
+    # §36's creator tier names these two in `GET /creator/rules` as the features it publishes into this table, so
+    # the rows have to exist: a rulebook that named a feature with no ceiling behind it would be a promise the data
+    # cannot keep. They belong to an account, not a tenant, because a guide is written by a person.
+    "creator_publish": "user",
+    "creator_guide": "user",
 }
 
 MONTH = "month"
@@ -46,6 +51,11 @@ DAY = "day"
 
 #: The seeded matrix. Every plan can do everything; the numbers rise with the plan. `free` is the plan an account
 #: holds when nothing has granted it anything else, so these are the ceilings that bite today.
+#:
+#: The last two positions are §36's monthly publishing allowances. They are published as data and refused on by no
+#: door yet — `/entitlements/capabilities` lists them under `published_not_enforced`, and the creator tier's own caps
+#: (a lifetime count of guides and of citations per guide) are what bites there today. A limit that no door checks
+#: is a ceiling the data holds, not a rule, and is disclosed as such rather than presented as one.
 DEFAULT_MATRIX: Final[dict[str, dict[str, tuple[int, str]]]] = {
     plan: {
         "organizations": (limits[0], MONTH),
@@ -54,15 +64,17 @@ DEFAULT_MATRIX: Final[dict[str, dict[str, tuple[int, str]]]] = {
         "plans_open": (limits[3], MONTH),
         "sessions_recorded": (limits[4], DAY),
         "reports_saved": (limits[5], DAY),
+        "creator_publish": (limits[6], MONTH),
+        "creator_guide": (limits[7], MONTH),
     }
     for plan, limits in {
-        "free": (1, 5, 1, 3, 5, 1),
-        "player": (1, 5, 1, 3, 10, 2),
-        "pro": (2, 10, 2, 10, 30, 5),
-        "coach": (3, 30, 4, 30, 60, 10),
-        "club": (5, 60, 8, 80, 150, 20),
-        "academy": (8, 120, 16, 200, 400, 40),
-        "enterprise": (40, 1000, 100, 2000, 5000, 200),
+        "free": (1, 5, 1, 3, 5, 1, 3, 10),
+        "player": (1, 5, 1, 3, 10, 2, 6, 20),
+        "pro": (2, 10, 2, 10, 30, 5, 15, 50),
+        "coach": (3, 30, 4, 30, 60, 10, 30, 100),
+        "club": (5, 60, 8, 80, 150, 20, 60, 200),
+        "academy": (8, 120, 16, 200, 400, 40, 120, 400),
+        "enterprise": (40, 1000, 100, 2000, 5000, 200, 500, 1000),
     }.items()
 }
 

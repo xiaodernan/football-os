@@ -17,6 +17,11 @@ The claims this file defends, in the order it attacks them:
   exists (§35's rule, and no 403 anywhere in this tier);
 * the codes this tier answers with belong to it alone — the check that exists because §35's `no_such_member`
   collided with §39's at the same status, which `assemble()` cannot see.
+* **reach is §35's predicate**, read from §35's table and not from a second one: a `followers` guide reaches its
+  author and the accounts whose follow rows point at that author right now — on the shelf, at its own address and
+  through its citations alike — and an unfollow withdraws it without deleting it;
+* **the doors are walked as doors**: every private one answers 401 before any row is consulted, every published
+  code is earned through a real request, and this tier answers no 403 anywhere.
 """
 
 from __future__ import annotations
@@ -26,12 +31,17 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from fastapi import status
+from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.v1 import creator as creator_router
 from app.core.db import SessionLocal
+from app.main import app
 from app.models import CommunityFollow, CreatorGuide, GuideCitation, KnowledgeChunk, KnowledgeDocument, User, utc_today
+from app.services import entitlements as ent
 from app.services.club import answers as project_answers
 from app.services.creator import publishing as cre
 
@@ -106,6 +116,8 @@ def test_citing_a_passage_stores_its_address_and_its_hash_and_none_of_its_words(
     answer = cre.cite(session, guide["id"], cast["ada"].id, document=document.slug, ordinal=passage.ordinal, note="the part that matters")
     row = session.get(GuideCitation, answer["citation"]["id"])
     assert row is not None and row.document_id == document.id and row.ordinal == passage.ordinal
+    assert answer["citation"]["document"] == document.slug, "the answer is the address `cite` accepts, not the key the row is filed under"
+    assert cre.read_guide(session, guide["id"], cast["ada"].id)["passages"][0]["document"] == document.slug, "and the list answers that same address"
     assert row.cited_text_hash == passage.text_hash, "the witness is the hash that was there at citation time"
     stored = " ".join(str(getattr(row, name)) for name in ("note",))
     assert passage.text[:60] not in stored and passage.text[:60] not in session.get(CreatorGuide, guide["id"]).summary
@@ -227,6 +239,39 @@ def test_an_unlisted_guide_is_readable_at_its_address_and_appears_in_no_listing(
     assert cre.read_guide(session, hidden["id"], cast["bo"].id)["id"] == hidden["id"], "its own address is the door"
 
 
+def test_a_followers_guide_reaches_exactly_the_accounts_whose_follow_rows_point_at_its_author(session: Session, cast: dict[str, User]) -> None:
+    """`CAPS["visibility_rule"]` promises this in words, so the rows are read back against the sentence.
+
+    Until this case existed the tier answered a `followers` guide to its author alone — a narrower rule than the one
+    it published, on the shelf and at the address both, and the citations door did not ask at all. §35's own follow
+    rows are the predicate, so the case writes one by hand and takes it away again.
+    """
+    ada, bo = cast["ada"], cast["bo"]
+    guide = _guide(session, ada, visibility="followers")
+    general = cre.list_guides(session, bo.id)["total"]
+
+    # A stranger reaches neither the guide nor the addresses it cites, and sees no shelf of ada's at all.
+    _refused(lambda: cre.read_guide(session, guide["id"], bo.id), "no_such_guide")
+    _refused(lambda: cre.citations_view(session, guide["id"], bo.id), "no_such_guide")
+    assert cre.list_guides(session, bo.id, creator=ada.id)["total"] == 0
+    assert cre.read_guide(session, guide["id"], ada.id)["id"] == guide["id"], "the author never loses their own guide"
+
+    row = CommunityFollow(id=cre.new_public_id("fol"), follower_id=bo.id, followee_id=ada.id, followed_on=utc_today().isoformat())
+    session.add(row)
+    session.commit()
+    assert cre.read_guide(session, guide["id"], bo.id)["id"] == guide["id"]
+    assert cre.citations_view(session, guide["id"], bo.id)["items"] == []
+    assert cre.list_guides(session, bo.id, creator=ada.id)["total"] == 1
+    assert cre.list_guides(session, bo.id)["total"] == general, "a follow row opens the author's shelf, not the general one"
+
+    session.delete(row)
+    session.commit()
+    _refused(lambda: cre.read_guide(session, guide["id"], bo.id), "no_such_guide")
+    assert cre.list_guides(session, bo.id, creator=ada.id)["total"] == 0
+    assert cre.list_guides(session, bo.id)["total"] == general, "and the general shelf never moved"
+    assert session.get(CreatorGuide, guide["id"]) is not None, "an unfollow withdraws the guide and deletes nothing"
+
+
 def test_a_guide_that_is_not_yours_is_answered_as_absence_rather_than_as_a_refusal(session: Session, cast: dict[str, User]) -> None:
     passage = _passage(session)
     document = _document(session, passage)
@@ -288,3 +333,189 @@ def test_the_rulebook_publishes_the_vocabulary_the_guards_apply(session: Session
     assert sorted(rules["refusals"]) == sorted(cre.PUBLISHED)
     assert rules["formulas"] == cre.FORMULAS and rules["limitation"] == cre.LIMITATION
     assert cre.rules(session, ready=False)["counts"] == {"profiles": 0, "guides": 0, "citations": 0}
+
+
+def test_the_features_the_rulebook_names_are_rows_this_platform_ships(session: Session) -> None:
+    """`GET /creator/rules` names the features this tier publishes into §42's table, so the rows have to be there.
+
+    A rulebook that named a feature the matrix does not carry would be a promise with no ceiling behind it, and the
+    entitlements door would not know the name at all. The other half matters as much: no door refuses on these yet,
+    so the meter must print them as ceilings the data holds rather than as rules.
+    """
+    body = TestClient(app).get("/api/v1/creator/rules").json()
+    named = body["entitlement_features"]
+    assert named == ["creator_publish", "creator_guide"]
+    assert set(named) <= set(ent.FEATURES), f"the tier names {sorted(set(named) - set(ent.FEATURES))}, which the matrix does not carry"
+    for plan in ent.PLANS:
+        for feature in named:
+            assert ent.DEFAULT_MATRIX[plan][feature][1] == ent.MONTH, f"{plan} has no monthly ceiling for {feature}"
+
+    printed = {row["feature"]: row for row in ent.entitlements_view(session, "usr_never_here", plan=ent.DEFAULT_PLAN, subject_kind="user")["items"]}
+    assert set(named) <= set(printed), "an account's own meter has to print the features this tier publishes into"
+    assert all(printed[feature]["enforced"] is False for feature in named), "no door refuses on them yet, and the meter must not say otherwise"
+    assert "no door refuses on yet" in body["limitation"], "the rulebook has to say which of its ceilings actually bites"
+
+
+# ------------------------------------------------------------------ the doors
+
+
+PASSWORD = "strong-pass-1234"
+
+#: The public surface, named once, so a door added later is a private door until this line says otherwise.
+PUBLIC_DOORS = frozenset({"/creator/rules"})
+
+
+def _client(name: str) -> TestClient:
+    """Its own client with its own registered account: this tier is made of accounts, so a door needs two."""
+    client = TestClient(app)
+    response = client.post(
+        "/api/v1/auth/register",
+        json={"email": f"creator-{uuid4().hex[:8]}@example.test", "password": PASSWORD, "display_name": name, "role": "player", "accepts_data_policy": True},
+    )
+    assert response.status_code == 201, response.text
+    client.headers.update({"Authorization": f"Bearer {response.json()['access_token']}"})
+    return client
+
+
+def _actor_id(client: TestClient) -> str:
+    response = client.get("/api/v1/auth/me")
+    assert response.status_code == 200, response.text
+    return str(response.json()["id"])
+
+
+def _detail(response: Any) -> Any:
+    body = response.json()["detail"]
+    assert isinstance(body, dict), f"a refusal must answer with the tier's own payload and figures, and this door sent {body!r}"
+    return body
+
+
+@pytest.fixture()
+def voices() -> dict[str, TestClient]:
+    """A fresh pair per case: the shelves and the reach these cases assert are exact, and an account shared between
+    two of them would make each figure a claim about both."""
+    return {"ada": _client("Ada Guide"), "bo": _client("Bo Reader")}
+
+
+def _live_doors() -> set[tuple[str, str]]:
+    routes: set[tuple[str, str]] = set()
+    for route in app.routes:
+        path = str(getattr(route, "path", ""))
+        if not path.startswith("/api/v1/creator"):
+            continue
+        for method in set(getattr(route, "methods", ()) or ()) - {"HEAD", "OPTIONS"}:
+            routes.add((method, path))
+    return routes
+
+
+def test_the_guide_names_exactly_the_doors_that_are_routed() -> None:
+    """Both directions, because the page that reaches these doors reads the guide to find them."""
+    declared = {(entry["method"], f"/api/v1{entry['path']}") for entry in creator_router.ROUTE_GUIDE}
+    assert len(creator_router.ROUTE_GUIDE) == len(declared), "two entries describe one door"
+    live = _live_doors()
+    assert declared == live, f"only in the guide: {sorted(declared - live)}; only routed: {sorted(live - declared)}"
+
+
+def test_this_door_reads_the_same_object_the_club_doors_read() -> None:
+    assert creator_router._ANSWERS is project_answers.ANSWERS, "the creator door assembled its own answer table again"
+
+
+def test_the_one_public_door_prints_the_answers_it_will_give() -> None:
+    response = TestClient(app).get("/api/v1/creator/rules")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["routes"] == [dict(item) for item in creator_router.ROUTE_GUIDE]
+    assert body["refusal_answers"] == {code: project_answers.ANSWERS[code] for code in cre.REFUSALS}, "the rulebook printed a status the shipped table does not answer with"
+    assert body["caps"]["sections"] == list(cre.GUIDE_SECTIONS) and body["caps"]["visibilities"] == list(cre.VISIBILITIES)
+    assert set(body["counts"]) == {"profiles", "guides", "citations"}
+    # The three ceilings behind these codes are row counts a caller cannot reach inside a test's budget; what a page
+    # can check is that they are published with the status they earn, which the line above holds for all fifteen.
+    assert all(body["refusal_answers"][code] == 409 for code in ("slug_taken", "guide_limit", "citation_limit"))
+
+
+@pytest.mark.parametrize("door", [entry for entry in creator_router.ROUTE_GUIDE if entry["path"] not in PUBLIC_DOORS], ids=lambda entry: f"{entry['method']} {entry['path']}")
+def test_a_caller_without_a_session_is_answered_401_before_any_row_is_consulted(door: dict[str, str]) -> None:
+    """401 for ids that do not exist is the point: a 404 would mean the service ran first.
+
+    Every private door is walked, derived from the guide rather than from a list written here, so a door added to the
+    router cannot arrive unguarded — and none of them answers 403, which §51 reserves for the permission matrix.
+    """
+    path = door["path"].replace("{guide}", "guide_never_written").replace("{citation}", "cit_never_written").replace("{account}", "usr_never_here")
+    client = TestClient(app)
+    response = client.request(door["method"], f"/api/v1{path}", json={} if door["method"] == "POST" else None)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED, f"{door['method']} {path} answered {response.status_code}: {response.text}"
+    assert _detail(response)["code"] == "unauthenticated"
+
+
+def test_every_code_a_door_can_refuse_with_is_answered_with_the_status_the_table_publishes(voices: dict[str, TestClient], session: Session) -> None:
+    ada, bo = voices["ada"], voices["bo"]
+    passage = _passage(session)
+    document = _document(session, passage)
+    mine = ada.post("/api/v1/creator/guides", json={"section": "plan", "title": "a frame the reader can reach"}).json()["guide"]["id"]
+    theirs = bo.post("/api/v1/creator/profile", json={}).json()["slug"]
+
+    earned = [
+        ("slug_taken", ada.post("/api/v1/creator/profile", json={"slug": theirs})),
+        ("profile_headline", ada.post("/api/v1/creator/profile", json={"headline": "x" * (cre.PROFILE_HEADLINE_MAX + 1)})),
+        ("profile_bio", ada.post("/api/v1/creator/profile", json={"bio": "x" * (cre.PROFILE_BIO_MAX + 1)})),
+        ("guide_section", ada.post("/api/v1/creator/guides", json={"section": "squad", "title": "a slice no page can open"})),
+        ("guide_title", ada.post("/api/v1/creator/guides", json={"section": "plan", "title": "   "})),
+        ("guide_summary", ada.post("/api/v1/creator/guides", json={"section": "plan", "title": "a frame", "summary": "x" * (cre.GUIDE_SUMMARY_MAX + 1)})),
+        ("guide_visibility", ada.post("/api/v1/creator/guides", json={"section": "plan", "title": "a frame", "visibility": "nobody"})),
+        ("no_such_document", ada.post(f"/api/v1/creator/guides/{mine}/citations", json={"document": "no-such-document", "ordinal": 0})),
+        ("citation_ordinal", ada.post(f"/api/v1/creator/guides/{mine}/citations", json={"document": document.slug, "ordinal": 10_000})),
+        ("citation_note", ada.post(f"/api/v1/creator/guides/{mine}/citations", json={"document": document.slug, "ordinal": passage.ordinal, "note": "x" * (cre.CITATION_NOTE_MAX + 1)})),
+        ("no_such_guide", ada.get("/api/v1/creator/guides/guide_never_written")),
+        ("no_such_creator", ada.get("/api/v1/creator/profiles/usr_never_here")),
+        ("no_such_citation", ada.delete(f"/api/v1/creator/guides/{mine}/citations/cit_never_written")),
+    ]
+    for code, response in earned:
+        published = project_answers.ANSWERS[code]
+        assert response.status_code == published, f"{code} is published as {published} and the door answered {response.status_code}: {response.text}"
+        assert _detail(response)["code"] == code, f"the door answered {published} for the wrong reason: {_detail(response)}"
+
+
+def test_erasing_a_guide_through_the_door_takes_its_citations_and_answers_absence_to_everybody_else(voices: dict[str, TestClient], session: Session) -> None:
+    ada, bo = voices["ada"], voices["bo"]
+    passage = _passage(session)
+    document = _document(session, passage)
+    guide = ada.post("/api/v1/creator/guides", json={"section": "plan", "title": "a frame with one citation"}).json()["guide"]["id"]
+    cited = ada.post(f"/api/v1/creator/guides/{guide}/citations", json={"document": document.slug, "ordinal": passage.ordinal})
+    assert cited.status_code == 200, cited.text
+    assert cited.json()["recorded_now"] is True and cited.json()["citations"] == 1
+    assert ada.get(f"/api/v1/creator/guides/{guide}/citations").json()["total"] == 1
+
+    theirs = bo.delete(f"/api/v1/creator/guides/{guide}")
+    assert theirs.status_code == 404 and _detail(theirs)["code"] == "no_such_guide", "somebody else's guide is answered as absence"
+    assert ada.get(f"/api/v1/creator/guides/{guide}").status_code == 200, "and the refusal erased nothing"
+
+    erased = ada.delete(f"/api/v1/creator/guides/{guide}")
+    assert erased.status_code == 200, erased.text
+    assert erased.json()["erased"] == guide and erased.json()["citations"] == 1, "the answer says how many rows went with it"
+    assert ada.get(f"/api/v1/creator/guides/{guide}").status_code == 404
+    assert session.get(CreatorGuide, guide) is None
+    assert list(session.scalars(select(GuideCitation).where(GuideCitation.guide_id == guide))) == []
+
+
+def test_a_followers_guide_reaches_through_the_door_only_the_accounts_whose_follow_rows_point_at_the_author(voices: dict[str, TestClient]) -> None:
+    """The wiring, not the arithmetic: the doors have to pass the caller as the reader — and §35's own follow door is
+    what opens the guide, on the shelf and at its address and through its citations alike."""
+    ada, bo = voices["ada"], voices["bo"]
+    bo_id = _actor_id(bo)
+    secret = bo.post("/api/v1/creator/guides", json={"section": "plan", "title": "only for the people who follow me", "visibility": "followers"}).json()["guide"]["id"]
+
+    closed = ada.get(f"/api/v1/creator/guides/{secret}")
+    assert closed.status_code == 404 and _detail(closed)["code"] == "no_such_guide", "a guide the reader cannot reach is answered as absence, not as a refusal"
+    assert ada.get(f"/api/v1/creator/guides/{secret}/citations").status_code == 404, "the citations door asks the same predicate"
+    assert ada.get(f"/api/v1/creator/guides?creator={bo_id}").json()["total"] == 0
+
+    followed = ada.post(f"/api/v1/community/follows/{bo_id}")
+    assert followed.status_code == 200, followed.text
+    assert ada.get(f"/api/v1/creator/guides/{secret}").json()["id"] == secret
+    assert ada.get(f"/api/v1/creator/guides/{secret}/citations").status_code == 200
+    assert ada.get(f"/api/v1/creator/guides?creator={bo_id}").json()["total"] == 1
+    assert bo.get(f"/api/v1/creator/guides/{secret}").status_code == 200, "the author never loses their own guide"
+
+    withdrawn = ada.delete(f"/api/v1/community/follows/{bo_id}")
+    assert withdrawn.status_code == 200, withdrawn.text
+    assert ada.get(f"/api/v1/creator/guides/{secret}").status_code == 404
+    assert bo.get(f"/api/v1/creator/guides/{secret}").status_code == 200

@@ -125,8 +125,13 @@ class TestTheOwnReading:
         assert mine.status_code == 200, mine.text
         body = mine.json()
         assert body["plan"] == "free", "nothing grants a plan yet, and the door says so rather than implying otherwise"
-        assert {row["feature"] for row in body["items"]} == {"organizations"}, "an account is metered on its own features only"
-        assert all(row["limit"] == 1 and row["period"] == "month" for row in body["items"])
+        # The features an *account* is metered on, read from the module rather than listed here: §36's creator tier
+        # added two of them, and a list written out by hand in this test would have called that a regression instead
+        # of the matrix it is. The tenant-kind features must still be absent — that is the claim being defended.
+        assert {row["feature"] for row in body["items"]} == {feature for feature, kind in ent.FEATURES.items() if kind == "user"}, "an account is metered on its own features only"
+        assert all(
+            row["limit"] == ent.DEFAULT_MATRIX[body["plan"]][row["feature"]][0] and row["period"] == ent.DEFAULT_MATRIX[body["plan"]][row["feature"]][1] for row in body["items"]
+        ), "every printed ceiling is the one the shipped matrix holds for this plan"
         assert "sum of `units`" in body["formula"]
         assert body["as_of"] == utc_today().isoformat(), "the meter and the ceiling it measures roll over on one clock"
 

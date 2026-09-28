@@ -191,8 +191,7 @@ def add_citation(guide: str, payload: CitationIn, request: Request, db: Session 
 def read_citations(guide: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
     limit(request, 60, 60, scope="creator_read")
     try:
-        row = cre._guide(db, guide)
-        return {"items": cre.citations_of(db, row), "total": cre.measures(db, row)["citations"], "formulas": dict(cre.FORMULAS)}
+        return cre.citations_view(db, guide, user.id)
     except cre.CreatorRefusal as error:
         raise _refusal(error) from None
 
