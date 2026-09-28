@@ -512,7 +512,7 @@ async function run() {
       fetch(`${BASE}/sitemap.xml`).then(async (response) => ({ status: response.status, text: await response.text() })),
     ]);
     check('robots.txt is served as plain text', robots.status === 200 && /text\/plain/iu.test(robots.type), `${robots.status} ${robots.type}`);
-    const disallowed = ['/api/', '/my-football', '/training', '/progress', '/settings'];
+    const disallowed = ['/api/', '/my-football', '/training', '/progress', '/settings', '/community', '/creator'];
     check(
       'robots.txt keeps every session-gated area out of the crawl',
       disallowed.every((path) => robots.text.includes(`Disallow: ${path}`)),

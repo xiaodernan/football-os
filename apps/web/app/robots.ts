@@ -45,6 +45,13 @@ const DISALLOWED = [
   // at a door that needs no account — a rule an account holder cannot read until they have agreed to it is
   // not a rule.
   "/club",
+  // A person's own feed (§35) and the guides an account writes (§36). Both pages redirect
+  // a signed-out visitor to `/login`, and this file's rule is that a session-gated route is
+  // disallowed rather than offered to the crawl as a redirect chain. Both carry their own
+  // `noindex` as well, and neither is in the sitemap; the tier behind them has no public page
+  // to except, the way `/club/rules` is.
+  "/community",
+  "/creator",
 ];
 
 /** The one `/club` path that is not a person's data. */
