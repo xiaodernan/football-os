@@ -75,8 +75,16 @@ corrected in the same commit rather than repeated: the row claimed `/creator` ha
 
 ## Not claimed here
 
-* **The whole-suite legs have not been run over this commit.** The 96-item figure above is three files, not the
-  suite; both engines still owe their own tallies for `471da30` and for this slice.
+* **The whole-suite legs ran over this commit, and they are recorded with their exit codes.**
+  `.scratch/run_legs_p38.py` ran `python -m pytest -q --junitxml=…` once per engine at `031a3c1` and appended its own
+  result line, so this time the per-leg `rc` survived the run:
+  **`sqlite leg rc=0 tests=1326 failures=0 errors=0 skipped=1 junit_time=1067.045 wall=1069.88s`** and
+  **`postgres leg rc=0 tests=1326 failures=0 errors=0 skipped=1 junit_time=3005.326 wall=3072.96s`**.
+  The population was predicted *before* the run — §36's recorded 1293, plus the 19 cases `test_creator.py` gained
+  after `2c0c5f2` (18 → 37), plus §38's 14 in `tests/test_portfolio.py`, = **1326** — and both engines measured
+  exactly that. The addends are then re-read from the runs' own junit reports rather than from that arithmetic:
+  1326 cases over 178 test classes, of which `tests.test_creator` is 37 and `tests.test_portfolio` is 14. Each leg
+  carries exactly one skip, the same count every leg has carried since §35 closed.
 * A **public player profile, a share link and a PDF** do not exist. `PUBLIC_OUTPUTS` prints each with its reason
   and the walk checks the page prints those reasons — the page is not one of those three things.
 * `Matches` and `Stats` remain **unfilled**. The walk proves the page says so honestly; it does not make the rows
