@@ -9436,6 +9436,537 @@
           }
         }
       }
+    },
+    "/api/v1/creator/rules": {
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Rules",
+        "description": "The rulebook door: no guide, no creator, no figure about anybody — only what may be published.\n\n`refusal_answers` is derived here from the same table `_refusal` reads, so the printed status and the raised\none cannot be written apart, and the limits are the shipped ones rather than a copy.",
+        "operationId": "read_rules_api_v1_creator_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Rules Api V1 Creator Rules Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/profile": {
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Own Profile",
+        "operationId": "read_own_profile_api_v1_creator_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Own Profile Api V1 Creator Profile Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Publish Profile",
+        "description": "The creator state is written by the first publication; nothing switches it on with a flag.",
+        "operationId": "publish_profile_api_v1_creator_profile_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Publish Profile Api V1 Creator Profile Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/creator/profiles/{account}": {
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Profile",
+        "description": "Another account as a creator. Somebody who has published nothing is answered as absence, not as a blank.",
+        "operationId": "read_profile_api_v1_creator_profiles__account__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Profile Api V1 Creator Profiles  Account  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/guides": {
+      "post": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Publish",
+        "description": "Frame a guide. The section and the title are the author's; the substance stays in the corpus.",
+        "operationId": "publish_api_v1_creator_guides_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuideIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Publish Api V1 Creator Guides Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Shelf",
+        "description": "The public shelf, one creator's shelf, or one section's — as far as this reader may reach.",
+        "operationId": "read_shelf_api_v1_creator_guides_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "creator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Creator"
+            }
+          },
+          {
+            "name": "section",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Section"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Shelf Api V1 Creator Guides Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/guides/{guide}": {
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Guide",
+        "description": "One guide at its own address, with each cited passage read fresh and `moved` beside the ones that changed.",
+        "operationId": "read_guide_api_v1_creator_guides__guide__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "guide",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Guide Api V1 Creator Guides  Guide  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Erase Guide",
+        "description": "Erase your own guide. Its citations go with it, and the answer says how many did.",
+        "operationId": "erase_guide_api_v1_creator_guides__guide__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "guide",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase Guide Api V1 Creator Guides  Guide  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/guides/{guide}/citations": {
+      "post": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Add Citation",
+        "description": "Cite one passage by address. The corpus row is read for its hash; none of its text is stored.",
+        "operationId": "add_citation_api_v1_creator_guides__guide__citations_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "guide",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CitationIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Add Citation Api V1 Creator Guides  Guide  Citations Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Citations",
+        "operationId": "read_citations_api_v1_creator_guides__guide__citations_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "guide",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Citations Api V1 Creator Guides  Guide  Citations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/guides/{guide}/citations/{citation}": {
+      "delete": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Remove Citation",
+        "operationId": "remove_citation_api_v1_creator_guides__guide__citations__citation__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "guide",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide"
+            }
+          },
+          {
+            "name": "citation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Citation"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Remove Citation Api V1 Creator Guides  Guide  Citations  Citation  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9765,6 +10296,30 @@
           "manager_name"
         ],
         "title": "CareerIn"
+      },
+      "CitationIn": {
+        "properties": {
+          "document": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Document",
+            "default": ""
+          },
+          "ordinal": {
+            "type": "integer",
+            "title": "Ordinal",
+            "default": 0
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CitationIn"
       },
       "CoachAskIn": {
         "properties": {
@@ -10301,6 +10856,37 @@
         "type": "object",
         "title": "GoalIn",
         "description": "One goal the child agreed to. `title`, `measure`, `by` — and the academy's answer to a fourth key is a refusal."
+      },
+      "GuideIn": {
+        "properties": {
+          "section": {
+            "type": "string",
+            "maxLength": 16,
+            "title": "Section",
+            "default": "plan"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": ""
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 700,
+            "title": "Summary",
+            "default": ""
+          },
+          "visibility": {
+            "type": "string",
+            "maxLength": 12,
+            "title": "Visibility",
+            "default": "public"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "GuideIn"
       },
       "HTTPValidationError": {
         "properties": {
@@ -11098,6 +11684,31 @@
         "additionalProperties": false,
         "type": "object",
         "title": "PostIn"
+      },
+      "ProfileIn": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Slug",
+            "default": ""
+          },
+          "headline": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Headline",
+            "default": ""
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 1600,
+            "title": "Bio",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProfileIn"
       },
       "ReactionIn": {
         "properties": {
