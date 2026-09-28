@@ -43,6 +43,7 @@ from app.services.club import sessions as sess
 from app.services.club.organizations import ClubRefusal
 from app.services.community import posts as community
 from app.services.creator import publishing as creator
+from app.services.portfolio import cv as portfolio
 
 #: The four questions a tier answers, in the order a reader checks them: is it absent, is the request
 #: correctable, did it collide with a row that already exists, or does the caller simply not hold the right.
@@ -58,8 +59,10 @@ SETS: Final = (
 #: changed: both club routers read the table assembled from it. §35's `community` joins it for the same reason —
 #: a code means one status *project-wide*, and a second table assembled inside the community router is how the
 #: hole described above was made. Nothing here imports a router, and no service imports this module, so a tier
-#: from another milestone can be listed without the club tier having to know anything about it.
-TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator)
+#: from another milestone can be listed without the club tier having to know anything about it. §38's `portfolio`
+#: joins with no code of its own: the tier prints its refusal table from this one, and an empty registration here is
+#: what keeps a code added by a later portfolio slice from being answered one way there and another at `/club`.
+TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio)
 
 
 def assemble(*tiers: Any) -> dict[str, int]:

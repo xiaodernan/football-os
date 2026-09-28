@@ -9491,7 +9491,7 @@
           "creator"
         ],
         "summary": "Publish Profile",
-        "description": "The creator state is written by the first publication; nothing switches it on with a flag.",
+        "description": "The creator state is written by the first publication; nothing switches it on with a flag.\n\n`exclude_unset` is what makes an amendment mean *the fields this caller sent*: without it every field the form\nleft out would arrive as the schema's own empty default, and a caller amending a headline would silently blank\nthe biography beside it. The fields that were not sent are not passed, and `ensure_profile` reads that absence.",
         "operationId": "publish_profile_api_v1_creator_profile_post",
         "requestBody": {
           "content": {
@@ -9966,6 +9966,57 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/portfolio/rules": {
+      "get": {
+        "tags": [
+          "portfolio"
+        ],
+        "summary": "Read Rules",
+        "description": "The rulebook door: no account, no player, no figure about anybody — only what a CV is made of.",
+        "operationId": "read_rules_api_v1_portfolio_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Rules Api V1 Portfolio Rules Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portfolio/cv": {
+      "get": {
+        "tags": [
+          "portfolio"
+        ],
+        "summary": "Read Cv",
+        "description": "The account's CV, ten sections in §38's order. Nothing here is stored and nothing is cached.",
+        "operationId": "read_cv_api_v1_portfolio_cv_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Cv Api V1 Portfolio Cv Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     }
   },
