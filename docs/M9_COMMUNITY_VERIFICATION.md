@@ -55,19 +55,30 @@ answer for the permission matrix, and a community door asks only whether the cal
   `tests/test_scout_search.py::TestPublishedArithmetic::test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]`,
   named from the XML's own `skipped` element rather than counted.
 * The composition of that 1275, counted per test class from the same report: **45** cases in
-  `tests/test_community.py` and **1230** across the other 163 files. §57 recorded **1229** for that second population
-  (both `.scratch/leg57_sqlite.log` and `.scratch/leg57_pg.log` print `1229 passed, 1 skipped`), and
+  `tests/test_community.py` and **1230** across the other **32** test modules. §57 recorded **1229** for that second
+  population (both `.scratch/leg57_sqlite.log` and `.scratch/leg57_pg.log` print `1229 passed, 1 skipped`), and
   `git log --name-only cdd15b3..HEAD -- apps/api/tests` shows no commit touching the test tree except my two community
-  commits. So **one case appeared in the rest of the suite and this record does not claim to know where**: two
-  hypotheses were measured and rejected — nothing outside `test_community.py` mentions `answers.TIERS`, and the corpus
-  check at `tests/test_knowledge_rag.py:38` is a single case with a `>= 12` floor while
-  `git log cdd15b3..HEAD -- data/knowledge` is empty. Task #65 carries the remaining method. An enumeration that
-  silently gains a case is the same kind of enumeration that can silently lose one, which is why this stays a named
-  gap rather than becoming a rounding.
+  commits. So this record first called the difference **one case that appeared in the rest of the suite** and refused
+  to say where: two hypotheses were measured and rejected — nothing outside `test_community.py` mentions
+  `answers.TIERS`, and the corpus check at `tests/test_knowledge_rag.py:38` is a single case with a `>= 12` floor while
+  `git log cdd15b3..HEAD -- data/knowledge` is empty.
+* **Task #65 closed that gap on 2026-09-29, and the case never existed: the two figures count different things.**
+  `pytest --collect-only -q` was run in a detached worktree at `cdd15b3`, after asserting `app.__file__` resolves
+  inside that worktree (the venv's editable install can answer for the main tree and quietly measure the wrong plane),
+  and it collects **1230 cases over 32 modules** at §57's own commit. Read the same way out of
+  `.scratch/leg_m9_sqlite2.xml`, the non-community population is **1230 over the same 32 modules**, and the two
+  per-file counts agree module for module — the comparison has exactly one difference in it, `test_community.py`
+  **0 → 45**. §57's 1229 is `passed`, and its own log prints the other half of that sentence, `1229 passed, 1 skipped`,
+  while M9's 1230 is `collected`: the same skip this file names above (`test_scout_search.py`'s
+  `…[need_fit]`) is the difference, so `1230 − 1 = 1229` and no enumeration gained or lost a case. What was genuinely
+  wrong is this file's own arithmetic prediction `1229 + 45 = 1274` — it mixed a *passed* count with a *collected*
+  one — and the prediction the two legs then measured is `1230 + 45 = 1275`. Keeping the gap named rather than
+  rounding it cost three commands to close; that is the argument for keeping it.
 * An earlier SQLite leg over the same commit is superseded: it printed **rc=0 and no summary line**, the third
   occurrence of a bash file redirect swallowing pytest's last line, and it is the reason the legs now run with
   `--junitxml`. The arithmetic prediction written down before either leg started (1229 + 45 = 1274) missed by one and
-  is recorded as a prediction that was wrong, not as a figure.
+  is recorded as a prediction that was wrong, not as a figure; the bullet above names why (a *passed* count used where
+  a *collected* one was needed).
 
 ## The two defects the walk found, both in the page rather than the tier
 

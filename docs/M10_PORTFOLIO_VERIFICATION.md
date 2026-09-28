@@ -152,9 +152,15 @@ dropping `unfilled_reasons`, the CV's "this section is empty because…" map, fr
 projection now carries that key through explicitly.
 
 **Not claimed by this slice.** There is no page at `/portfolio/share/{token}` and `/portfolio` still has no write
-control, so the press-a-button-moves-a-figure witness belongs to the web landing and is owed there. And the whole-suite
-legs have not run over these bytes: the prediction written before the run is §38's recorded **1326** plus this
-slice's **24** = **1350**, and that is arithmetic, not a measurement.
+control, so the press-a-button-moves-a-figure witness belongs to the web landing and is owed there. And no whole-suite
+leg has run over these bytes: the prediction written before the run was §38's recorded **1326** plus this slice's
+**24** = **1350**. That population is now measured on the *collection* plane — `pytest --collect-only -q` in a detached
+worktree at `e008ac3`, after asserting `app.__file__` resolves inside that worktree, collects **1350 cases over 36
+test modules**, `test_portfolio_share.py` contributing 24 and `test_portfolio.py` 14 — so the prediction held. What
+remains unmeasured is execution: pass/fail, the skip count and each leg's `rc` belong to the two legs, not to a
+collection, and 1350 is reported as a prediction that agreed with a same-kind measurement rather than as a leg figure.
+(The same collect-only method closed §35's one-case gap the same evening; see the task #65 bullet in
+`docs/M9_COMMUNITY_VERIFICATION.md`.)
 
 ## Not claimed here
 
