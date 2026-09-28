@@ -473,6 +473,32 @@ was restored from `HEAD` (which answers 126/159), the current tree was served on
 own, and only then was the export re-run. A contract that is scraped rather than generated has to be told which
 build it came from, and a figure that shrinks by 95% is the sound of the wrong build being read.
 
+### The probe over §57's three decisions, and the denominator that was wrong first
+
+§11's probe is the reason this one was run at all: it caught two green test files that were not testing anything.
+So each of §57's three load-bearing decisions was deleted in place, behaviourally, one at a time, and the two
+classes that answer them were run whole (`.scratch/probe57.py`, log `.scratch/probe57.out`, machine-readable
+`.scratch/probe57.json`). The unmutated control ran first and was green: **170 passed, 1 warning in 272.45s,
+rc=0** over `tests/test_club_announcements.py` and `tests/test_club_organizations.py`.
+
+| arm | what was deleted | red cases / 170 | which |
+| --- | --- | --- | --- |
+| A | the ceiling guard, made inert while staying a comparison (`if held >= MAX_ANNOUNCEMENTS_PER_ORGANIZATION:` → `if False and …`) | 1 | `test_the_ceiling_accepted_at_its_edge_is_refused_one_past_it_with_its_own_figures` |
+| B | the denominator's predicate (`read_by = len([member for member in recipients if … in held])` → `read_by = len(held)`) | 1 | `test_a_revoked_reader_leaves_the_denominator_without_deleting_their_receipt` |
+| C | the staff audience, made to select nothing it should (`return OrganizationMember.role != "parent"` → `return None`) | 3 | `test_staff_and_parents_are_two_predicates_over_the_one_roster`, `test_the_filter_selects_the_notices_posted_to_one_audience_and_sees_selects_for_the_caller`, `test_a_member_the_audience_does_not_select_cannot_leave_a_receipt_on_it` |
+
+`SUMMARY arms=3 survived=0`, and the target returned byte-identical (`sha256 72d95e87…`, `git status` clean after
+the run). A and B earning exactly one red each is the expected shape, not thin coverage: a ceiling and a
+denominator each hold one question that nothing else in the file can answer. C earns three because the audience
+predicate is read from four places at once — the roster split, the board's filter, the receipt door.
+
+The one defect this run found was in its own harness, and it is recorded rather than quietly re-measured. The
+first line of the log reads `170403 case(s) collected`: the population parser took **every digit on the line**
+from pytest's `170 tests collected in 40.32s`, so it concatenated the timing onto the count. The fix is
+`int(line.split()[0])`; the JSON still carries the bad denominator, which is why the table above counts out of
+**170** — the control's own summary line — and not out of the number the script printed. A probe that reports a
+fraction has to have measured the denominator, and this one had not.
+
 ### What §57 does not claim
 
 The tier publishes no reader list. A row answers `recipients`, `read_by`, `unread` and `receipts_on_row`, and all
