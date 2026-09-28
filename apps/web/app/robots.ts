@@ -52,6 +52,10 @@ const DISALLOWED = [
   // to except, the way `/club/rules` is.
   "/community",
   "/creator",
+  // §38's CV. The page redirects a signed-out visitor and every figure in it is one account's own rows, so it
+  // is disallowed on the same rule as the two above — and the tier behind it has no public page to except: its
+  // rulebook door answers JSON at `/api/v1/portfolio/rules`, not an HTML route.
+  "/portfolio",
 ];
 
 /** The one `/club` path that is not a person's data. */

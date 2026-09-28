@@ -96,8 +96,12 @@ browser plane for §36 is therefore not "unwalked yet" in the ordinary sense —
 
 ## Outstanding, and the next slice
 
-1. a walk for `/creator` (the page's controls, the citation table's `moved` figure, and its robots rule re-read
-   from a production build) — the missing half of this tier's evidence;
-2. §38 Football Career Portfolio — ten CV sections, a share link on §17's revocable-token precedent, and a PDF,
-   which M10 owns and M9's closed permission layer no longer blocks;
+1. ~~a walk for `/creator`~~ — landed after this section was written, in `ab2d4c8`, at **56 of 56 checks, exit 0**
+   on a production build; the figures it measured and the three defects it found are recorded in that commit and in
+   `docs/M10_CREATOR_VERIFICATION.md`'s own walk section, not re-derived here;
+2. §38 Football Career Portfolio — its read landed in `471da30` (ten sections, two doors, 14 cases) and its page in
+   the commit that strikes this line (`/portfolio`, **37 of 37 checks** — see
+   `docs/M10_PORTFOLIO_VERIFICATION.md`). What remains of §38 is its three permitted public outputs: a public
+   player profile, a share link on §17's revocable-token precedent, and a PDF. None of the three exists, and the
+   page prints that sentence rather than being one of them;
 3. §30 Knowledge Graph, still unowned by a milestone and proposed for M11 in `docs/SPEC_COVERAGE_AUDIT.md`.
