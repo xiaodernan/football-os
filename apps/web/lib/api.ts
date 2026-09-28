@@ -9,6 +9,18 @@ import type { ApiError, UserOut } from "@/lib/types";
 export const ACCESS_COOKIE = "fo_access";
 export const REFRESH_COOKIE = "fo_refresh";
 export const REFRESH_PATH = "/api/v1/auth/refresh";
+/**
+ * Where the browser keeps `fo_refresh` — `/`, not `/api/v1/auth`.
+ *
+ * The cookie's path is a browser-side filter: a cookie scoped to `/api/v1/auth` is only ever attached
+ * to requests under that prefix, so neither tier that refreshes could read it — the middleware on a
+ * page request, the proxy on `/api/v1/careers`. Both read it out of the incoming request's jar, both
+ * would find nothing, and a session older than the 15-minute access token ended at the login screen
+ * with a valid 30-day credential sitting in the jar. The token is httpOnly and `SameSite=Strict`
+ * either way, and the proxy already forwards it to the API on every call it makes, so widening the
+ * path exposes it to nothing it did not already travel to.
+ */
+export const REFRESH_COOKIE_PATH = "/";
 
 export function apiBase(): string {
   return process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8731";

@@ -9,7 +9,7 @@
 
 import { cookies } from "next/headers";
 
-import { ACCESS_COOKIE, REFRESH_COOKIE, apiBase } from "@/lib/api";
+import { ACCESS_COOKIE, REFRESH_COOKIE, REFRESH_COOKIE_PATH, apiBase } from "@/lib/api";
 
 type Params = { params: Promise<{ path: string[] }> };
 
@@ -96,7 +96,7 @@ async function refreshSession(refreshCookie: string | null): Promise<Captured | 
 function applyCookies(response: Response, captured: Captured, options: { clear?: boolean } = {}): Response {
   if (options.clear) {
     response.headers.append("set-cookie", `${ACCESS_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict`);
-    response.headers.append("set-cookie", `${REFRESH_COOKIE}=; Path=/api/v1/auth; Max-Age=0; HttpOnly; SameSite=Strict`);
+    response.headers.append("set-cookie", `${REFRESH_COOKIE}=; Path=${REFRESH_COOKIE_PATH}; Max-Age=0; HttpOnly; SameSite=Strict`);
     return response;
   }
   if (captured.accessToken) {
@@ -104,7 +104,7 @@ function applyCookies(response: Response, captured: Captured, options: { clear?:
     response.headers.append("set-cookie", `${ACCESS_COOKIE}=${captured.accessToken}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Strict`);
   }
   if (captured.refresh) {
-    response.headers.append("set-cookie", `${REFRESH_COOKIE}=${captured.refresh}; Path=/api/v1/auth; Max-Age=${REFRESH_TTL_DAYS * 86400}; HttpOnly; SameSite=Strict`);
+    response.headers.append("set-cookie", `${REFRESH_COOKIE}=${captured.refresh}; Path=${REFRESH_COOKIE_PATH}; Max-Age=${REFRESH_TTL_DAYS * 86400}; HttpOnly; SameSite=Strict`);
   }
   return response;
 }

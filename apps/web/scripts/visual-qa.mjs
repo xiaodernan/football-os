@@ -2339,11 +2339,46 @@ async function run() {
       await mobileSurface(surface);
     }
 
-    // 14. An authenticated visitor is bounced off the public auth pages, then signs out.
+    // 14. The session outlives the access token it was minted with.
+    // `fo_access` carries the 15-minute token. What a browser does when its Max-Age runs out is drop
+    // that cookie and keep `fo_refresh`, so both tiers have to be able to mint a new one from the
+    // refresh cookie alone: the middleware before it renders a protected page, the proxy before it
+    // forwards a call. Neither could, while the refresh cookie was path-scoped to `/api/v1/auth` —
+    // a filter browsers apply before the request exists, so the tier that refreshes never saw it.
+    // A reader was therefore at the login screen at minute 16 with a valid 30-day credential in
+    // their own jar, and this walk landed on `/login` partway through on any run past the quarter
+    // hour. The expiry is simulated rather than waited out.
+    await page.deleteCookie({ name: 'fo_access', url: BASE });
+    const expired = (await page.cookies(BASE)).map((cookie) => cookie.name).sort();
+    check(
+      'the access cookie is what goes when the token expires, and the refresh cookie stays',
+      !expired.includes('fo_access') && expired.includes('fo_refresh'),
+      expired.join(', ') || 'no cookies at all',
+    );
+
+    await open(page, '/my-football');
+    const renewed = (await page.cookies(BASE)).some((cookie) => cookie.name === 'fo_access' && cookie.value.length > 0);
+    check(
+      'the middleware mints a new access token instead of ending the session',
+      new URL(page.url()).pathname !== '/login' && renewed,
+      `${new URL(page.url()).pathname} · minted again: ${renewed}`,
+    );
+
+    const afterExpiry = await page.evaluate(async () => {
+      const response = await fetch('/api/v1/careers', { credentials: 'same-origin' });
+      return { status: response.status, body: (await response.text()).slice(0, 60) };
+    });
+    check(
+      'and the proxy mints one for a call the page makes after the token expired',
+      afterExpiry.status === 200,
+      `HTTP ${afterExpiry.status} ${afterExpiry.body}`,
+    );
+
+    // 15. An authenticated visitor is bounced off the public auth pages, then signs out.
     await open(page, '/login');
     check('signed-in visitor is redirected away from /login', new URL(page.url()).pathname !== '/login', new URL(page.url()).pathname);
 
-    // 15. Sign out clears the cookies; the login screen must still work at 375px.
+    // 16. Sign out clears the cookies; the login screen must still work at 375px.
     await open(page, '/settings');
     const signedOut = await page.evaluate(async () => {
       const response = await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'same-origin' });

@@ -13,6 +13,9 @@ something a test asserted about source.
 Walk total for the platform after this increment: **226/226 checks**, 70 screenshots, exit 0, 8 browser
 console errors and every one of them provoked on purpose by the walk itself.
 
+Re-measured 2026-09-28 on a production build, after §60's refresh fix added three checks of its own:
+**233/233 checks**, 71 screenshots, exit 0 — every figure below re-read rather than carried over.
+
 ## 1. Two pages, and the split between what is public and what is not
 
 | Route | What it is | Visibility |

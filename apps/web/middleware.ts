@@ -10,7 +10,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 
-import { ACCESS_COOKIE, REFRESH_COOKIE, REFRESH_PATH, apiBase } from "@/lib/api";
+import { ACCESS_COOKIE, REFRESH_COOKIE, REFRESH_COOKIE_PATH, REFRESH_PATH, apiBase } from "@/lib/api";
 
 const PUBLIC_PATHS = new Set(["/", "/login", "/register", "/healthz"]);
 const PROTECTED_PREFIXES = [
@@ -128,7 +128,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       response.cookies.set(REFRESH_COOKIE, minted.refresh, {
         httpOnly: true,
         sameSite: "strict",
-        path: "/api/v1/auth",
+        path: REFRESH_COOKIE_PATH,
         maxAge: REFRESH_TTL_DAYS * 86400,
         secure: IS_SECURE,
       });

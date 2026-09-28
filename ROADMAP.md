@@ -281,7 +281,13 @@ quality"
    ([`docs/M6_SIM_EVENTS_VERIFICATION.md`](docs/M6_SIM_EVENTS_VERIFICATION.md)).
    Item 10 has since read them across matches — the career page carries a season ledger
    ([`docs/M6_SIM_LEDGER_VERIFICATION.md`](docs/M6_SIM_LEDGER_VERIFICATION.md)).
-5. [ ] rendering the `training_log` the player detail route already returns
+5. [x] **the player page prints the `training_log` its route already returns** (2026-09-25, `f4c0bec`): the
+   sessions newest first with the drill linked into the Training Academy, the totals above them, and a
+   consistency notice that re-adds the printed minutes and load and sets them against those totals, so a reader
+   can see the two figures are the arithmetic of the rows under them rather than trusting either. A player the
+   generator never picked is told so, and prints an em-dash where a mean RPE would be, because `mean of nothing =
+   0` rendered as a measured average is a number this build does not have. Held by the walk's own check inside
+   the **233/233** production run of 2026-09-28.
 6. [x] **a per-run test database** — `conftest.py` pointed every run at one fixed `football_os_pytest`
    and its session fixture began with `drop_all()`, so two overlapping runs made the other's tables
    vanish. Caught while re-running §21: one spurious `relation "training_drills" does not exist` in a
@@ -292,15 +298,15 @@ quality"
    `DATABASE_URL`, and the unlink ran at import, so `--collect-only` deleted a database) and now names
    its own file and cleans only that up: **two full 377-test suites concurrent, both green, the shared
    default's mtime unchanged, nothing left in `%TEMP%`** (§15)
-7. [ ] **§11's constraint metadata now under-states `no_transfers`.** `app/services/simulation/challenges.py:133`
-   still says `enforced=False`, `how="there is no transfer market yet (spec §22), so no signing is possible
-   with or without this rule"`; since §22 that rule *does* bind — `market.transferable()` refuses every move
-   for a career whose scenario carries it, and says `enforced: true` in its own refusal. Three places move
-   together and none of them is a backend-only edit: that row, `tests/test_challenges.py:155` (which asserts
-   it stays false) and `apps/web/scripts/visual-qa.mjs:2042` (which asserts the run page reads *3 APPLIED /
-   1 STATED ONLY*), so the walk has to be re-run on a production build with it. The direction of the error is
-   an under-claim — a binding rule advertised as merely stated — so nothing the product promises is false
-   meanwhile (`docs/M6_VERIFICATION.md` §14 — the market)
+7. [x] **§11's constraint metadata under-stated `no_transfers`** (fixed 2026-09-25, `f4c0bec`): the catalogue
+   published `enforced=False` with `how="there is no transfer market yet (spec §22), so no signing is possible
+   with or without this rule"` while §22's `market.transferable()` had been refusing every move for a career
+   carrying the rule and saying `enforced: true` about it from the other side of the codebase. Three places move
+   together and none of them is a backend-only edit: that row, `tests/test_challenges.py` (which holds the
+   catalogue's flag to the market's own, for every scenario that carries the rule), and the walk's needle on the
+   run page. The direction of the error was an under-claim — a binding rule advertised as merely stated — so
+   nothing the product promised became false meanwhile. Measured on a production build **2026-09-28: 233/233,
+   exit 0**, with the run page reading *3 APPLIED / 1 STATED ONLY*.
 8. [x] **a wage bill** (2026-09-24, §22 continued): each round the engine plays now costs the career the
    weekly wage of every deal it holds at the start of that round, written as one `career_wage_charges` row
    (migration `0012`) with the players it was raised on named in `detail` and the balance it left in
@@ -311,11 +317,11 @@ quality"
    still is not charged (the club's own stored squad; any consequence of a negative balance), and the
    market walk grew from 86 checks to 103 with the rate read before the round and the charge read after it
    (`docs/M6_MARKET_WEB_VERIFICATION.md` §5)
-9. [ ] **one needle in `visual-qa.mjs` still asserts a sentence this project no longer tells.** The career
-   form used to print "Nothing spends this budget yet — there is no transfer market in this build", which
-   became false when §22's page and wage bill landed; `components/CareerForm.tsx` now says what the budget
-   does. `apps/web/scripts/visual-qa.mjs:1766` tests the old wording, so that walk is red on that one check
-   until its owner re-points it — deliberately left to them rather than edited from under a live run
+9. [x] **one needle in `visual-qa.mjs` asserted a sentence this project no longer tells** (re-pointed
+   2026-09-25, `f4c0bec`): the career form used to print "Nothing spends this budget yet — there is no transfer
+   market in this build", which became false when §22's page and wage bill landed. `components/CareerForm.tsx`
+   says what the budget does now, and the check holds the page to both halves of the claim — what the budget
+   buys *and* what it still cannot do. It passed in the same **233/233** run of 2026-09-28.
 10. [x] **a season ledger over those rows** (2026-09-25, §20+ continued): `app/services/simulation/ledger.py`
    runs the query item 4 left unwritten — every goal, attempt, booking and injury of a career's own
    fixtures, grouped by `player_id` *and* filtered to the career's `team_id`, because a fixture's home side
