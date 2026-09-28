@@ -1,8 +1,9 @@
-# Spec coverage audit — every product module in the master spec, mapped to measured evidence (2026-09-27)
+# Spec coverage audit — every product module in the master spec, mapped to measured evidence (2026-09-27, revised 2026-09-28)
 
-Method (all figures from the tree, not from memory): the committed contract `docs/api/openapi.json` (126 paths,
-listed), `find apps/web/app -name page.tsx` (47 routes), `ls apps/api/app/services[/**]`, and `grep` for the
-vocabulary each module is written in. A module is **landed** only when a route or page a caller can knock on
+Method (all figures from the tree, not from memory): the committed contract `docs/api/openapi.json` (126 paths when
+this audit was written, **144** re-read 2026-09-28), `find apps/web/app -name page.tsx` (47 routes then, **48** now),
+the 24 files in `apps/api/migrations/versions` (21 then), `ls apps/api/app/services[/**]`, and `grep` for the vocabulary
+each module is written in. A module is **landed** only when a route or page a caller can knock on
 carries its noun; a service file with no door is **partial**.
 
 ## A. The 30 product modules (spec §3's list, §4–§42)
@@ -27,10 +28,10 @@ carries its noun; a service file with no door is **partial**.
 | **30** | **Knowledge graph** | **no route, no table, no service.** `grep -rliE 'knowledge_graph|graph_edge' apps/api/app` → 0 files. Only the corpus's *edge vocabulary* in `data/knowledge` prose | **nobody** | **MISSING — no milestone owns it** |
 | 31–34 | Football AI agent / multi-agent / complex task / agent memory | `grep -rli agent apps/api/app` → `services/coach_engine.py` only. No `/api/v1/agents`, no orchestrator, no benchmark | M11 | owned, not started |
 | 35 | Community (feed, posts, comments, likes, follows) | five `community_*` tables (migration `0023`), `services/community/posts.py`, **8 paths / 12 operations** under `/api/v1/community` (contract 137/176), `/community` page with its own 38-check walk | M9 | **landed 2026-09-28** — posts/comments/reactions/reposts/follows and the pointer-to-artifact share; moderation, reporting and blocking are not in this build ([evidence](docs/M9_COMMUNITY_VERIFICATION.md)) |
-| 36 | Creator system | same | M10 | owned, not started |
+| 36 | Creator system | `creator_profiles`, `creator_guides` and `guide_citations` (migration `0024`), `services/creator/publishing.py`, **7 paths / 11 operations** under `/api/v1/creator` (11 doors, 1 public; contract 144/187), `/creator` + `components/CreatorWorkbench.tsx` | M10 | **landed 2026-09-28** — a guide publishes a title, a frame and *addresses* into the corpus, every figure about it is recomputed on read, and reach is §35's own follow predicate; the two features it publishes into §42's table are ceilings no door refuses on yet, and `/creator` still has no browser walk of its own ([evidence](docs/M10_CREATOR_VERIFICATION.md)) |
 | 37 | Gamification | `services/achievements.py`, `progression.py`, `/api/v1/progress/{overview,timeline}`, `/progress` | M1 | landed |
-| **38** | **Football career portfolio** (10-section CV, public share link, PDF) | **no route, no page, no service.** `grep -rli portfolio apps/api/app apps/web/app` → 0 files. The data it would summarise all exists (career, scout, club, training, video) | **nobody** | **MISSING — no milestone owns it** |
-| 39–41 | Club OS / Youth Academy / B2B | 33 paths under `/api/v1/club*` incl. §48's `fixtures`, `services/club/{organizations,access,answers,academy,sessions,reports,matches}.py`, 5 `/club*` pages | M8 | landing now (§39's Communication noun + fixtures panel open) |
+| **38** | **Football career portfolio** (10-section CV, public share link, PDF) | **no route, no page, no service.** `grep -rli portfolio apps/api/app apps/web/app` → 0 files. The data it would summarise all exists (career, scout, club, training, video) | **M10** (recorded 2026-09-28) | **MISSING — unstarted, and now M10's next slice**: the blocker this audit named is gone, because §35's permission layer landed 2026-09-28 |
+| 39–41 | Club OS / Youth Academy / B2B | 33 paths under `/api/v1/club*` incl. §48's `fixtures`, `services/club/{organizations,access,answers,academy,sessions,reports,matches}.py`, 5 `/club*` pages | M8 | landing — §48's fixtures panel landed `ae7fd82` and §39's Communication noun `cdd15b3`, both 2026-09-27; §39's remaining product verbs are open |
 | 42 | Subscription | `usage_events` (migration `0020`), `/api/v1/club/{ident}/entitlements`, `/entitlements/{me,capabilities}`, `services/entitlements.py`; **no currency/provider/checkout field anywhere; §22's valuation price and the meter's token rates are not payments** | M8 (architecture) / M10+ (pricing) | landed as data, payments deliberately absent |
 
 ## B. Cross-cutting sections that a reader assumes are done
@@ -70,7 +71,9 @@ carries its noun; a service file with no door is **partial**.
 3. *Sharing shape*: §17's board share token (`/boards/shared/{token}`, revocable) is the existing precedent for a
    public link; PDF is a rendering problem and should be its own door, not a claim inside the link.
 
-**Proposed assignment** (to write into `ROADMAP.md` once M8 closes): §30 → M11, because §33's composite agent task
-and §64's benchmark are exactly what a graph hop is measured against; §38 → M10 (creator/portfolio surface), with
-the minors' slice held back until §40's consent shape is read rather than duplicated. Neither may be started while
-M9 is open, since §35's permission layer is what a public portfolio link would otherwise bypass.
+**Assignment, recorded 2026-09-28 in `ROADMAP.md`** (this audit proposed it “to be written down once M8 closes”, and M8
+and M9 have both closed): §30 → M11, because §33's composite agent task and §64's benchmark are exactly what a graph
+hop is measured against; §38 → M10, whose §36 tier is landed and whose next slice this is, with the minors' slice
+still held back until §40's consent shape is read rather than duplicated. The condition this audit put on both —
+that §35's permission layer exist first — now holds, so a public portfolio link cannot bypass the tier that decides
+who may read a child's record.
