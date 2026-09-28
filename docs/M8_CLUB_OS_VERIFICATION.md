@@ -475,4 +475,25 @@ build it came from, and a figure that shrinks by 95% is the sound of the wrong b
 
 ### What §57 does not claim
 
-The notice board has no web surface yet, and the walk's guardian check still counts three rights.
+The tier publishes no reader list. A row answers `recipients`, `read_by`, `unread` and `receipts_on_row`, and all
+four are counts (`readership()` returns the four and nothing else; `receipts_on_row` is the length of the set of
+accounts holding a receipt, not that set). So neither the door nor the page can say *who* read a notice — the
+same minimisation §40 applies to a child's data, applied to a readership. The board that mounted on
+`/club/{ident}` prints a selection ("2 of 3 listed select you right now") and never a name beside a receipt.
+
+There is no edit door. Five routes exist over three paths — post, list, detail, read, erase — so a mistaken
+notice is corrected by erasing it and posting another, and that second posting is a second notice with its own
+audience predicate and its own receipts. Nothing in this tier rewrites a published statement.
+
+What this section said when it was written about the tier alone has since been overtaken by the web run, and the
+two figures it named are now false rather than merely early: the board does have a page, walked at **252/252
+checks, exit 0** on a production build attributed to its own tree by the `BUILD_ID` in the HTML it served, on
+ports the runner verified free and against a scratch database of its own
+(`docs/M8_CLUB_WEB_VERIFICATION.md`, §39's section); and the walk's guardian pin counts **four** rights and names
+`announce.read` among them (`apps/web/scripts/qa-club.mjs:978`), which is the same re-count §57 had to do in the
+API suite one commit earlier. The page re-subtracts `unread = recipients − read_by` in the browser, so a
+readership that was ever stored rather than counted would be caught on the panel as well as in the suite.
+
+Still unclaimed after both runs: §42's payments. No price, provider or checkout field exists anywhere in the
+project, and the meter's `published_not_enforced` ceilings are still published as ceilings rather than enforced
+as invoices.

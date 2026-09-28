@@ -214,6 +214,61 @@ controls exist only in `.next-fx` (`data-testid="fixture-arrange"`, `data-fixtur
 stopped inside the same shell call that ran the walk — a server predating the code could not have answered the
 presses that produced 215 passes.
 
+## §39's board mounted on the tenant page (2026-09-28, `252/252`)
+
+`/club/{ident}` gained its fourth write panel: `NoticeBoard` in `components/NoticeBoardTools.tsx`, fed by the
+tenant page's own `serverFetch` of `…/announcements` and typed by the `AnnouncementCaps / AnnouncementRow /
+AnnouncementList` trio in `lib/club.ts`. **252/252 checks, exit 0**, on a production build
+(`NEXT_DIST_DIR=.next-nt`) against a scratch API and a database `scripts/qa_db.py` created for the run. 252 is
+the run's own printed total, which is the figure to quote: the file at this commit holds 248 top-level
+`check(` sites versus 213 at `b6009a1`, so this section added 35, and a walk also executes checks that live
+inside loops and inside a concurrent run's in-flight hunks.
+
+What those 35 hold the page to:
+
+* the poster offers exactly `caps.audiences`, in the door's order, and its two length fields carry the door's
+  `title_max` / `body_max` as `maxLength` — a form gated on `announcement_caps`, not on a number typed in TSX;
+* a notice with no title is refused with the sentence naming the field, a filter naming no audience is answered
+  by the door's own 422, and **neither refusal is a write** (`total` still 0 after both);
+* every readership figure on a row is the door's arithmetic over the roster as it stands: `recipients` is
+  compared with a count the walk takes from the tenant door, `unread` is re-subtracted from the two printed
+  figures, and the badge says so only when the subtraction holds;
+* no recipient is stored anywhere in the payload — the check walks every key name, however deep, and refuses
+  any of `recipient`, `user_id`, `to_user`, `child_id`, `guardian`;
+* one receipt from the page moves exactly two figures (`read_by`, `receipts_on_row`) and the row's own words
+  change to "you have read it"; reading again is **the same one row**, and the door's word for it is
+  `already recorded` with `recorded_now: false`;
+* a pin is per audience: `pinned_by_audience` is compared with the board's own rows counted again, and that
+  reconciliation only claims agreement while no filter narrowed the rows — under a filter it prints
+  "tenant-wide" instead of inventing a mismatch;
+* `?audience=staff` narrows the rows and not the tenant: `total` falls, `announcements_held` does not;
+* the `I have read it` button stays **live** on a notice the caller's standing does not select, so
+  `not_an_audience` arrives as a sentence rather than as a disabled control, and §40's minimisation limitation
+  is printed as the tier's own sentence;
+* a second account on the same tenant sees the same rows and a different selection ("the director sees 1 of 2
+  listed over 1 staff-side row(s), the guardian sees 1"), the guardian's `announce.read` is the fourth of the
+  four rights the matrix publishes, a guardian who joined *after* a notice was posted is selected by it, and
+  that guardian's `POST …/announcements` is answered 403 `insufficient_role` — the only 403 in the tier.
+
+This section's first run printed **244/250** (quoted from the line that run printed; the runner deletes the
+previous run's log before it starts, so no file on this host still holds it), and all six reds traced to three
+assumptions of the walk's own rather than to the tier. Each is in the record because every one of them would
+otherwise have shipped as a silently weak check:
+
+* **a painted row is still not the same event as a written row**, and this section had ignored §48b's lesson:
+  three checks pressed controls inside a row the server component had not delivered yet, so the door reported
+  `read_by 0` while the page had no button to press. The section now waits on `[data-notice]` counts, on the
+  pinned row and on the receipt cell's own text, and each wait is a named check that says what it waited for.
+* **a note a repeat write cannot repaint is not evidence.** `useClubCall` prints a note keyed by the action, so
+  a second `notice-post` answers byte-identically and `pressWrite` can only report "no fresh note painted";
+  the door's `already recorded` lives in the response body, which a note never carries. Both checks now assert
+  `the button clicked` plus the row the door holds under the title typed into that form — a strictly stronger
+  claim than a string in a note.
+* **the reversed-window case had never knocked on its own boundary.** It set the window's end to yesterday and
+  assumed the start still held whatever an earlier section had typed; the board's filter navigations remount
+  that form, so the door was handed a *valid* window and rightly answered the day's `reports_saved` ceiling.
+  Setting both ends makes it the refusal the check names, which is what it now sees.
+
 ## How to re-run
 
 One command, from the repository root: `bash .scratch/qa-club-run.sh`. It is the only honest shape on this host,
@@ -239,6 +294,16 @@ walk now provisions its own, because `ready` is read from data — on a long-liv
 is true before the walk registers anything, and the check would only ever prove that a door answers. Screenshots
 land in `docs/screenshots/` (untracked).
 
+§39's board was walked by `.scratch/run-notices-walk.sh`, which is a stricter shape than the paragraph above and
+is the one to copy for a new panel, because the run it replaced had walked a *foreign* server and reported 181
+passes about a build that was not this one. It does four things before it trusts a single check: `node --check`s
+the walk (an identifier collision inside `main()`'s one scope costs a build, not a second), deletes the previous
+run's logs so a later reader cannot re-judge them, picks an API and a web port that had **no LISTENING socket**
+(scanning 8738-8746 and 3216-3229 and exiting rather than borrowing a neighbour), and aborts on `EADDRINUSE` in
+its own log. Then it attributes: the served HTML of `/login` must contain `cat $DIST/BUILD_ID`, and if it does
+not, the run stops rather than walking somebody else's page. `SKIP_BUILD=1` is for a walk-only change and prints
+the BUILD_ID it is reusing.
+
 ## Deliberately not here
 
 * No erasure button. `DELETE …/players/{child}/data` wants a `confirm` echo of the row count it is about to
@@ -246,25 +311,42 @@ land in `docs/screenshots/` (untracked).
 * No video evidence: the walk files no clip, and the plan page says so — a citation is a label and a window.
 * No payment. §42's door prints the matrix it reads and the one feature today's plan actually costs; it does not
   print a price, because no price exists in this project to print.
-* No `Matches`. §39's training, match, tactics, video and message rows are still the tier's own
-  `limitations()` sentences rather than pages — and the page prints those sentences rather than paraphrasing
-  them away.
+* No direct message, and no way to draw one: §39's tier has no recipient column in either table, so the board
+  cannot be narrowed to a named person from the page or from the door. The page that reads it therefore prints a
+  selection ("2 of 3 listed select you right now"), never a list of who read it.
+* No `Matches` play-through from the page. §39's fixtures panel arranges and erases, and refuses to play a
+  fixture for a tenant whose side is unplaced in the world — a successful play needs eleven adults in the ladder
+  and is held by §48's suite, and the page says so in one line.
 
 ## What stands behind this run
 
-Every figure below was read off a command's own last line on the tree this document describes, on 2026-09-27.
+Every figure below was read off a command's own last line on the tree this document describes. The web-tier
+figures are from 2026-09-28 at `b81e42d`; the API figures name the commit they were measured on, because a
+panel landing moves no test.
 
-* Browser walk: **215/215 checks** on a production build (the 2026-09-26 run was 194/194; §39's fixtures panel
-  added 21), built with `NEXT_DIST_DIR=.next-fx npx next build` and walked by `node scripts/qa-club.mjs` against a
-  scratch API and a scratch database of its own. `npx tsc --noEmit` exit `0`; `npm run lint` clean on the same tree.
-* Whole API suite: **1072 passed, 1 skipped** — `1813.58s (0:30:13)` on the per-run SQLite file and
-  `1562.41s (0:26:02)` against PostgreSQL + pgvector, both `rc=0`; `--collect-only` reports **1073 items across
-  29 files**, which is what makes the single skip a countable thing rather than a gap in the progress rows.
-* Club tier alone, as a group: **258 passed in 558.98s**.
-* `mypy app`: **no issues found in 95 source files**. `ruff check .`: **All checks passed**.
+* Browser walk: **252/252 checks, exit 0** on a production build — §50's run was 217/217 and §39's notice board
+  added 35 of this file's check sites (213 → 248 counted as top-level `check(` at each ref), with a concurrent
+  run's 2 in-flight checks also executing in the walked tree and loop-nested checks making the run's own printed
+  total the figure to quote. Built with `NEXT_DIST_DIR=.next-nt npx next build`, walked by
+  `node scripts/qa-club.mjs` against a scratch API and a scratch database of its own, on ports this run verified
+  free, and served-HTML attribution by BUILD_ID. `npx tsc --noEmit` exit `0`; `npm run lint` → "No ESLint
+  warnings or errors" on the same tree.
+* Contract, measured from `app.openapi()` at this tree: **129 paths / 164 operations**, 36 paths / 56 operations
+  under `/api/v1/club`, and 3 announcement paths carrying five operations (list, post, detail, read, erase).
+* Earlier walks of this same file, kept for the arithmetic: 215/215 at §48b's fixtures panel (194/194 before it,
+  the panel adding 21) and 217/217 over §50's recorder panel.
+* Whole API suite, measured over §57's own commits and unmoved by this panel (a web landing adds no test):
+  **1229 passed + 1 skipped in 2051.13s** on the per-run SQLite file and **1229 passed + 1 skipped in 4818.22s**
+  against PostgreSQL + pgvector, both `rc=0` — the same total and the same single named skip on each leg.
+  `docs/M8_CLUB_OS_VERIFICATION.md` §12 carries that run's own lines, including the arithmetic that makes 1229
+  a sum rather than a figure.
+* `mypy app`: **no issues found in 98 source files** at §57's step. `ruff check .`: **All checks passed**.
 * `ruff format --check`: **5 files would be reformatted, 145 already formatted** — `seed.py`,
   `evals/run_rag_eval.py`, `tests/test_challenges.py`, `tests/test_sim_ledger.py`, `tests/test_transfers.py`.
   All five are unmodified at `HEAD` and belong to earlier milestones, so this run left them alone: the gate
   states what is dirty rather than formatting somebody else's file to print a cleaner number.
 * `npx tsc --noEmit`: exit `0`. `npm run lint`: **No ESLint warnings or errors**.
-* Contract: **123 paths / 154 operations**, 30 of them under `/api/v1/club`, regenerated from the scratch API.
+* The committed contract, `docs/api/openapi.json` as written by §57's run at `cdd15b3`: **129 paths / 164
+  operations**, 36 of them under `/api/v1/club` — the same two figures this run measured in-process from
+  `app.openapi()` above, read off the file rather than quoted from the paragraph that describes it. This panel
+  mounts a page and moves no route, so it adds nothing to that count.
