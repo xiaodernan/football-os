@@ -105,3 +105,24 @@ browser plane for §36 is therefore not "unwalked yet" in the ordinary sense —
    player profile, a share link on §17's revocable-token precedent, and a PDF. None of the three exists, and the
    page prints that sentence rather than being one of them;
 3. §30 Knowledge Graph, still unowned by a milestone and proposed for M11 in `docs/SPEC_COVERAGE_AUDIT.md`.
+
+## The whole-suite legs over §36, recorded late
+
+Both engines were run over `2c0c5f2` — §36's noun, its doors and its contract — on 2026-09-28, and the tallies sat
+in `.scratch/` unread by any document until the §38 page was measured. They are recorded here, out of each leg's
+own `--junitxml` report:
+
+| leg | tests | failures | errors | skipped | junit-reported duration |
+| --- | --- | --- | --- | --- | --- |
+| per-run SQLite | **1293** | **0** | **0** | **1** | 791.252s |
+| PostgreSQL + pgvector | **1293** | **0** | **0** | **1** | 924.152s |
+
+1293 is §35's closeout population of **1275** plus the **18** cases `9c6c6af` added in `tests/test_creator.py`, so
+both legs agree with each other and with the arithmetic. The population has grown since (`§36`'s door cases and
+`tests/test_portfolio.py`), which is why the figure belongs to §36 and to nothing later.
+
+What these two legs do **not** record: an exit code. The wrapper printed one per leg and its own output belonged to
+a superseded background task, while each `.log` file has the same missing last line a bash redirect has now caused
+**four** times in this milestone — the junit `generated xml file` line is the last thing either log contains. The
+reports themselves say 0 failures and 0 errors over 1293 tests, which is the substance an `rc=0` would have
+reported, and the absence of the code is named rather than back-filled.
