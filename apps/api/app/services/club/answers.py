@@ -42,6 +42,7 @@ from app.services.club import reports as rep
 from app.services.club import sessions as sess
 from app.services.club.organizations import ClubRefusal
 from app.services.community import posts as community
+from app.services.creator import publishing as creator
 
 #: The four questions a tier answers, in the order a reader checks them: is it absent, is the request
 #: correctable, did it collide with a row that already exists, or does the caller simply not hold the right.
@@ -58,7 +59,7 @@ SETS: Final = (
 #: a code means one status *project-wide*, and a second table assembled inside the community router is how the
 #: hole described above was made. Nothing here imports a router, and no service imports this module, so a tier
 #: from another milestone can be listed without the club tier having to know anything about it.
-TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community)
+TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator)
 
 
 def assemble(*tiers: Any) -> dict[str, int]:

@@ -243,15 +243,19 @@ def test_every_code_this_tier_answers_with_means_exactly_one_status_and_no_other
     The disjointness half exists because `assemble()` only refuses a code two tiers answer *differently*: §35 first
     registered `no_such_member`, which §39 already owned at the same 404, and nothing said so.
     """
-    # Registration is the doors' commit: `creator` is not in `answers.TIERS` yet, so the shipped table
-    # cannot answer these codes today, and this case asserts only what is true now — the four sets partition the
-    # published list, no code is a 403, and no other registered tier owns a code published here.
+    # The table is read as shipped, not as a subset assembled for this case: `creator` is registered in
+    # `answers.TIERS` by the doors' commit, so a code that fell out of it would be answered 400 by omission.
+    assert cre in project_answers.TIERS, "the tier is not registered, so its own door would answer every code with a 400"
+    assert set(cre.REFUSALS) <= set(project_answers.ANSWERS)
     for code in cre.REFUSALS:
         expected = 404 if code in cre.NOT_FOUND_CODES else 422 if code in cre.UNPROCESSABLE_CODES else 409 if code in cre.CONFLICT_CODES else None
         assert expected is not None, f"{code} is published but in no set, so its status would be a fall-through"
+        assert project_answers.ANSWERS[code] == expected, f"{code} is published as {expected} and the shipped table answers {project_answers.ANSWERS[code]}"
     assert not cre.FORBIDDEN_CODES, "403 is the permission matrix's meaning and this tier has no matrix"
     assert len(cre.REFUSALS) == len(set(cre.REFUSALS))
     for tier in project_answers.TIERS:
+        if tier is cre:
+            continue  # the census includes the counter: this tier's own codes are not somebody else's
         held = set(getattr(tier, "PUBLISHED", getattr(tier, "REFUSALS", ())) or ())
         shared = held & set(cre.REFUSALS)
         assert not shared, f"{sorted(shared)} belongs to {tier.__name__.rpartition('.')[2]} as well as to this tier"

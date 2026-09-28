@@ -20,6 +20,7 @@ from app.api.v1 import (
     club_academy,
     coach,
     community,
+    creator,
     entitlements,
     knowledge,
     meta,
@@ -144,6 +145,7 @@ def create_app() -> FastAPI:
     app.include_router(club.router, prefix=api)
     app.include_router(scout.router, prefix=api)
     app.include_router(community.router, prefix=api)
+    app.include_router(creator.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:
