@@ -121,9 +121,10 @@ pgvector, the fused list recovers `when-to-press` to rank 4; with the in-process
 two legs leave it past slot 5, which makes `hybrid_delta` (hybrid recall minus keyword-only recall)
 negative. So ADR-002's promise that the ranking is reproducible without the extension is true of the two
 scored legs and **not** of the hybrid order, and the payload's `backend=` field is what tells a reader
-which of the two they are looking at. Repairing the fused leg is open work (§2.3a), and it is a
-production repair, not a gate repair: the answer a `/knowledge` visitor gets for that question is
-engine-dependent today.
+which of the two they are looking at. That difference was a production defect rather than a gate-tuning
+question — the answer a `/knowledge` visitor got for `when-to-press` depended on which database the
+deployment used — and it is repaired in §2.3b, the same day. Both readings above are the **before**
+numbers of that repair; no threshold moved for either of them.
 
 Rank detail: 16 of 18 golden questions put the expected document at rank 1 on **both** engines; `read-game`
 lands at rank 4 on both (its answer is genuinely spread over several documents), and `when-to-press` at
@@ -231,6 +232,69 @@ python -m pytest tests/test_knowledge_rag.py -k floors_sit_inside -q --junitxml=
 That case *is* the measurement: it reads `evals/golden_rag.json`, calls `knowledge.search(db, query,
 mode="hybrid", top_k=5)` once per question, and derives both extremes from the rows it just retrieved — so a
 corpus change moves the numbers the case checks instead of moving only the prose above it.
+
+### 2.3b The two semantic legs were not the same population (2026-09-30)
+
+§2.2 left off with an unexplained fact: keyword recall@5 and semantic recall@5 are identical on both
+engines (1.000 and 0.889), yet the hybrid order differed, and only on SQLite. The cause is in
+`retrieval._semantic_ranking`. The pgvector leg asks the index for a window —
+`LIMIT :leg_limit` with `leg_limit = max(top_k * 4, 20)` = **40 chunk ids** — while the in-process fallback
+built its `semantic_ranking` from **every** candidate above `MIN_SIMILARITY = 0.02`, which on this corpus is
+all 138. Both lists then go into `reciprocal_rank_fusion`, which is rank-based: a chunk ranked 137th still
+contributes a small positive amount, so the fallback leg's long tail of near-nothing matches was not merely
+extra information, it was competition for the same slots. For `when-to-press` that tail put four
+`squad-height-and-territory` chunks and one `pressing-evolution-notes` chunk ahead of the expected document,
+knocking recall to 0.9444 and `hybrid_delta` to −0.0556 — fusion scoring *worse* than keyword-only, which the
+`>= 0.0` gate exists to catch. The module docstring's promise that the fallback "computes the same ranking
+in-process" was therefore true of the metric and false of the population.
+
+The repair is one slice, applied where the fallback builds its ranking, so both legs hand the fusion the
+same-sized window:
+
+```
+semantic_ranking = [ … if similarities[cid] > MIN_SIMILARITY ][: max(top_k * 4, 20)]
+```
+
+Measured, `python -m evals.run_rag_eval` on two `git archive HEAD` planes, each with its own fresh SQLite
+file, prediction written before either ran:
+
+| plane | semantic leg | rc | recall_at_k | mrr_at_k | hybrid_delta | `when-to-press` |
+| --- | --- | --- | --- | --- | --- | --- |
+| control (HEAD) | every candidate above 0.02 — 138 ids | 1 | 0.9444 | 0.9028 | −0.0556 | MISS, outside the top 5 |
+| repaired | the same 40-id window the SQL leg asks for | **0** | **1.0** | 0.9213 | **0.0** | rank 3 |
+
+PostgreSQL is untouched by this and did not need to be: the slice sits in the branch that only runs when the
+extension is absent, and its leg was already windowed. Its five gate values stay as §2.2 prints them (recall
+1.0, mrr 0.9167, delta 0.0, rc=0); the repaired SQLite plane now prints the same five, with mrr 0.9213
+against 0.9167 — the residual gap is HNSW's approximate top-40 (migration 0002 builds
+`ix_chunk_embedding_hnsw … vector_cosine_ops`) against exact in-process cosine, and it moves no gate.
+
+The second half of the landing is the assertion that §2.3a had to leave as owed work: with
+`assert report.passed` (a bound method, always truthy) repaired to `assert report.passed()`, the suite reads
+`report.failures` for the first time. The two repairs are one mechanism — the ranking repair makes the gate
+passable, the assertion repair makes it observed — and the witness proves the pair rather than either half:
+
+| arm | change | eval gate case | floors-gap case |
+| --- | --- | --- | --- |
+| control | none | green | green |
+| X1 | delete the window slice | **red** — recall 0.9444 / delta −0.0556 enter `report.failures` | green |
+| X2 | X1 **and** the vacuous `assert report.passed` back | green — **expected**, this is the blindness the landing exists for | green |
+| X3 | `MIN_DISCRIMINATIVE_MATCHES` 2 → 3 | **red** — §2.3a's W3 re-judged: `read-game` refused | red |
+| X4 | `MIN_DISCRIMINATIVE_COVERAGE` 0.40 → 0.5 | **red** — §2.3a's W4 re-judged: `offside` refused | red |
+| X5 | `MIN_DISCRIMINATIVE_MATCHES` 2 → 1 | green — a lowered floor changes no verdict at the door | red |
+
+Six arms on a `git archive HEAD` plane with the two edited files overlaid, each arm re-based to pristine
+bytes, `collected=2` and both case names asserted from junit every arm, plane restored byte-identical
+(`b881c3195055`, `39d796c2e3e7`). **0 survivors, 0 prediction mismatches.** §2.3a's two missed predictions
+(W3, W4) are now exactly the predicted reds, which is what "recorded as owed work" was for.
+
+Module run on this landing: `tests/test_knowledge_rag.py` = **26 collected / 0 failures / 0 errors /
+0 skipped** on per-run SQLite in 36.831 s and the same 26/0/0/0 on the PostgreSQL plane in 98.647 s, rc=0 on
+both; `ruff check` clean. Still owed, and named so it does not quietly close: this witness ran on the SQLite
+plane only, so the pgvector leg's own `leg_limit` is unprobed — an arm that widens it must be judged on a
+PostgreSQL plane; and the two whole-suite legs over this commit (prediction unchanged at 1363 / 0 / 0 / 1
+skip, since the landing adds no case) are what §4 of this document requires before the number is called a
+baseline.
 
 ### 2.4 Unit / integration / API tests, dual database
 

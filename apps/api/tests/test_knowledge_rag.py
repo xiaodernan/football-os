@@ -211,7 +211,11 @@ def test_rag_eval_gates_pass_on_this_database(db: Session) -> None:
     from evals.run_rag_eval import evaluate
 
     report = evaluate(db)
-    assert report.passed, report.to_dict()
+    # `EvalReport.passed` is a plain method, not a property (`hybrid_delta` is the class's only
+    # `@property`). `assert report.passed` judged the bound method, which is always truthy, so this case
+    # never read `report.failures` and stayed green over two live retrieval failures. The call is what
+    # makes the gate exist; the message names the failures rather than the truthiness.
+    assert report.passed(), f"the shipped eval refused its own gates: {report.failures}"
     scores = report.scores()
     assert scores["citation_integrity"] == 1.0
     assert scores["refusal_accuracy"] == 1.0
@@ -242,9 +246,9 @@ def test_the_answerability_floors_sit_inside_the_measured_gap(db: Session) -> No
     `MIN_DISCRIMINATIVE_MATCHES` at 1 and with `MIN_DISCRIMINATIVE_COVERAGE` at 0.0, and `recall_at_k` is
     computed from the ranked passages rather than from answerability, so no threshold moves either. Behaviour
     alone cannot see either constant. The gap claim below can: it fails as soon as a floor leaves the
-    separation the golden set actually shows. Raising a floor past a golden question is visible to the eval —
-    through `report.failures`, which `test_rag_eval_gates_pass_on_this_database` does not currently read (it
-    asserts the bound method `report.passed`, always truthy; recorded as owed work).
+    separation the golden set actually shows. Raising a floor past a golden question is visible to the eval
+    too, through `report.failures`, which `test_rag_eval_gates_pass_on_this_database` now calls properly
+    (`report.passed()`); it read the bound method — always truthy — until 2026-09-30.
     """
     from app.services.knowledge.retrieval import MIN_DISCRIMINATIVE_COVERAGE, MIN_DISCRIMINATIVE_MATCHES
     from evals.run_rag_eval import GOLDEN_PATH

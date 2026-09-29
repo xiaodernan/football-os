@@ -4,8 +4,8 @@ Three interchangeable legs, all filtered by the same metadata predicate so rank 
 comparing like with like:
 
 * ``semantic`` — cosine distance. On PostgreSQL this is an indexed ``embedding <=> query``
-  ORDER BY executed by pgvector; on the SQLite fallback the same ranking is computed
-  in-process and the response says so.
+  ORDER BY executed by pgvector over the ``max(top_k * 4, 20)`` nearest; on the SQLite fallback the
+  same ranking is computed in-process over the same number of candidates and the response says so.
 * ``keyword``  — BM25 over the chunk's content words, computed here because corpus
   statistics (document frequency, average length) are query-scoped anyway.
 * ``hybrid``   — reciprocal rank fusion of the two, then a deterministic feature rerank.
@@ -321,7 +321,12 @@ def search(
         else:
             for chunk in chunks:
                 similarities[chunk.id] = cosine(query_vector, [float(v) for v in (chunk.embedding or [])][:EMBEDDING_DIM])
-            semantic_ranking = [cid for cid, _ in sorted(similarities.items(), key=lambda kv: (-kv[1], kv[0])) if similarities[cid] > MIN_SIMILARITY]
+            # The same window the SQL leg asks for, not every candidate above the similarity floor.
+            # Rank fusion is only comparable across engines if both legs hand it the same population:
+            # with all 138 ids fused, the tail (chunks at similarity 0.02) displaced the expected
+            # document for `when-to-press` out of the top 5 and drove `hybrid_delta` to -0.0556, while
+            # the pgvector leg over the same corpus kept it at rank 4 with delta 0.0.
+            semantic_ranking = [cid for cid, _ in sorted(similarities.items(), key=lambda kv: (-kv[1], kv[0])) if similarities[cid] > MIN_SIMILARITY][: max(top_k * 4, 20)]
             backend = "vector-python"
     timings["score"] = int((time.perf_counter() - score_started) * 1000)
 
