@@ -66,7 +66,15 @@ The mistake becomes a crash in the developer's face rather than a sentence in fr
 | `ANSWERS` rows | `0da4c85` tree, in-process import | 126 rows; the codes answering 403 are exactly `account_inactive`, `insufficient_role` |
 | `security.FORBIDDEN_CODES` vs the table's 403 set | same import | equal |
 | inline `"code": "…"}` literals | shared working copy at 05:19 | 79 literals over 18 modules; 53 distinct codes; 52 outside the table — see §7 |
-| whole-suite legs over `0da4c85` | `.scratch/wt_c60`, both engines, sequential | **running as this is written; no total published.** The prediction is in `.scratch/run_legs_c60.py`: 1362 tests / 0 failures / 0 errors / 1 skipped / rc=0 on each engine, where 1362 comes from `--collect-only -q` counted over 37 modules on this plane, and 1350 + 11 census cases + 1 extra `club_answers` case is the same number from the other direction |
+| whole-suite legs over `0da4c85` | `.scratch/wt_c60@0da4c85`, both engines, sequential | **met on both: 1362 tests / 0 failures / 0 errors / 1 skipped / rc=0 on each engine.** SQLite leg junit 2380.760 s (wall 2400.79 s), PostgreSQL leg junit 3039.332 s (wall 3047.96 s). Red case names per leg: none |
+
+Both legs came in exactly on the prediction the runner printed before it started: 1362 / 0 / 0 / 1 / rc=0
+per engine, where 1362 is what `--collect-only -q` counted over 37 modules on that plane and 1350 + 11 census
+cases + 1 extra `club_answers` case is the same number from the other direction. Nothing was adjusted to meet
+it. The single skip is the pre-existing
+`tests/test_scout_search.py::TestPublishedArithmetic::test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]`
+("need_fit is ranked against a career and tested with one"), and it is the same skip on both engines, so the
+two legs agree case name by case name on what ran, what was skipped, and what failed.
 
 The two subset readings are different populations, so both are listed rather than reconciled: the 123-test reading
 includes `test_knowledge_rag.py`, and was taken before the concurrent edit described below.
