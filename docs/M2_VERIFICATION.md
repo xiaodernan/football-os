@@ -79,29 +79,57 @@ portable column, so autogenerate would only ever propose dropping it. The index 
 
 ### 2.2 RAG evaluation gates (spec §64)
 
-`python -m evals.run_rag_eval` on **both** engines. PostgreSQL leg:
+`python -m evals.run_rag_eval` on **both** engines, over the corpus as it ships today (18 documents /
+138 chunks; 18 golden questions + 3 out-of-scope). PostgreSQL leg — one throwaway database created for
+the run on the project's own container, dropped afterwards — rc=0:
 
 ```
-corpus: 16 documents / 122 chunks / backend=hybrid-pgvector
+corpus: 18 documents / 138 chunks / backend=hybrid-pgvector
   recall_at_k        1.0      gate >= 0.85
-  mrr_at_k           0.9219   gate >= 0.6
+  mrr_at_k           0.9167   gate >= 0.6
   citation_integrity 1.0      gate >= 1.0
   refusal_accuracy   1.0      gate >= 1.0
   hybrid_delta       0.0      gate >= 0.0
-  keyword recall@5  1.000    semantic recall@5  0.938
-  citations checked: 64
+  keyword recall@5  1.000    semantic recall@5  0.889
+  citations checked: 72
 all gates passed
 ```
 
-The SQLite fallback prints the same five gate values with `backend=hybrid-vector-python`, which is
-the point of ADR-002: the ranking is reproducible without the extension, and the payload says which
-engine produced it.
+SQLite leg, fresh database file, **rc=1**. This is a 2026-09-30 correction: the version of this section
+claimed "the SQLite fallback prints the same five gate values", and that sentence is measured false.
+Three of the five move, and the report refuses itself:
 
-Rank detail: 14 of 16 golden questions put the expected document at rank 1; `when-to-press` lands at
-rank 2 and `read-game` at rank 4 (both still inside recall@5, and both are questions whose answer is
-genuinely spread over several documents).
+```
+corpus: 18 documents / 138 chunks / backend=hybrid-vector-python
+  recall_at_k        0.9444   gate >= 0.85
+  mrr_at_k           0.9028   gate >= 0.6
+  citation_integrity 1.0      gate >= 1.0
+  refusal_accuracy   1.0      gate >= 1.0
+  hybrid_delta       -0.0556  gate >= 0.0
+  keyword recall@5  1.000    semantic recall@5  0.889
+  citations checked: 72
+FAILURES:
+  - when-to-press: no acceptable document in top 5 — got ['squad-height-and-territory', 'pressing-evolution-notes', 'squad-height-and-territory', 'squad-height-and-territory', 'squad-height-and-territory']
+  - metric hybrid_delta=-0.0556 is below the 0.0 gate
+```
 
-`citation_integrity = 1.0` means all 64 emitted citation quotes are byte-for-byte substrings of the
+Two independent fresh SQLite files produced these identical numbers, so it is not a flake, and no
+threshold was loosened to accommodate the reading. What the two engines share is each individual leg:
+keyword recall@5 is 1.000 on both, semantic recall@5 is 0.889 on both — meaning the expected document is
+outside the *semantic* top 5 for `when-to-press` on either engine. What diverges is the **fusion**. With
+pgvector, the fused list recovers `when-to-press` to rank 4; with the in-process cosine fallback the same
+two legs leave it past slot 5, which makes `hybrid_delta` (hybrid recall minus keyword-only recall)
+negative. So ADR-002's promise that the ranking is reproducible without the extension is true of the two
+scored legs and **not** of the hybrid order, and the payload's `backend=` field is what tells a reader
+which of the two they are looking at. Repairing the fused leg is open work (§2.3a), and it is a
+production repair, not a gate repair: the answer a `/knowledge` visitor gets for that question is
+engine-dependent today.
+
+Rank detail: 16 of 18 golden questions put the expected document at rank 1 on **both** engines; `read-game`
+lands at rank 4 on both (its answer is genuinely spread over several documents), and `when-to-press` at
+rank 4 on PostgreSQL while the SQLite fallback drops it out of the five.
+
+`citation_integrity = 1.0` means all 72 emitted citation quotes are byte-for-byte substrings of the
 stored chunk text — an answer cannot cite a sentence the corpus does not contain.
 
 ### 2.3 The refusal gate, measured rather than guessed
@@ -179,7 +207,9 @@ truthy, so the suite never reads `report.failures`. Called properly, `evaluate()
 `passed=False` at the **shipped** floors with two live entries — `when-to-press: no acceptable document in
 top 5` (recall 17/18 = 0.9444) and `metric hybrid_delta=-0.0556 is below the 0.0 gate`, i.e. hybrid fusion
 ranked worse than keyword-only on the SQLite semantic fallback. The same probe on a PostgreSQL corpus with the
-same 18 documents and 138 chunks reported 0 failures, so the defect is engine-specific and the repair is owed
+same 18 documents and 138 chunks reported 0 failures, so the defect is engine-specific; both engines were then
+run through the shipped CLI end to end (2026-09-30, rc=1 on SQLite / rc=0 on PostgreSQL, full reports in §2.2),
+which pins the divergence to the fused leg: each single leg scores the same on both engines. The repair is owed
 with both legs measured (tracked as "RAG eval gate: assert reads a bound method"). A sweep of the five floor
 configurations through the repaired call, printed per arm, showed that a *lowered* floor adds no failure entry
 at all while a *raised* one adds exactly `… golden query was refused` — which is the line between what only the
