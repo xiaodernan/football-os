@@ -137,6 +137,71 @@ handball      top 0.660  rare ['arm','handball','hits']      matched all 3, cov 
 Every refusal carries the reason (`0/2 rare terms matched … coverage 0.33 …`), so a user or a
 reviewer can see *why* the system stayed silent instead of having to trust it.
 
+### 2.3a The two floors re-measured, and turned into a case (2026-09-30)
+
+The table above is a snapshot of a corpus that kept growing. Re-measured on the SQLite fixture database at
+`7581dad` (18 documents, 138 chunks, `knowledge.search` in hybrid mode over the top 5), the golden set is
+**18 in-scope + 3 out-of-scope = 21** questions, not 19, and the out-of-scope coverage peak is **0.20**, not
+0.33. The two figures the table and the `retrieval.py` comment both carried had both drifted; the constants
+themselves did not move (`MIN_DISCRIMINATIVE_MATCHES = 2`, `MIN_DISCRIMINATIVE_COVERAGE = 0.40`).
+
+| population | rare terms matched in the top passage | coverage |
+| --- | --- | --- |
+| 18 in-scope questions | min **2** (`read-game`, exactly at the floor), max 7 | min **0.4286** (`offside`, 3 of 7), max 1.0 |
+| 3 out-of-scope questions | max **1** (`xg-model`, 1 of 5; `boot-brand` 0 of 2; `cleat-sensor` carries no rare term) | max **0.20** (`xg-model`) |
+
+All three out-of-scope questions still retrieve five candidate passages, so their refusal is the floors' doing
+and not an empty result set. `tests/test_knowledge_rag.py::test_the_answerability_floors_sit_inside_the_measured_gap`
+now recomputes that separation from `evals/golden_rag.json` on every run and asserts, for each axis,
+`max(out) < floor <= min(in)`. The case exists because §2.3's other gate only proves *obedience*: with this
+population every in-scope question clears **both** floors and every out-of-scope one fails **both**, so lowering
+either constant alone changes no verdict at the door and moves no threshold — `recall_at_k` counts ranked
+passages, not answerability.
+
+Witness: six runs (a control plus five arms) on a plane built with `git archive HEAD` at `7581dad` and these
+two files overlaid byte-identically, each arm re-based to the pristine bytes before it is applied, the whole
+suite of the pair run per arm (`collected=2`, both case names asserted from the junit report).
+
+| arm | change | `…floors_sit_inside_the_measured_gap` | `test_rag_eval_gates_pass_on_this_database` |
+| --- | --- | --- | --- |
+| control | none | green (predicted green) | green (predicted green) |
+| W1 | matches 2 → 1 | **red** — `1 < 1` fails | green (predicted green) |
+| W2 | coverage 0.40 → 0.0 | **red** — `0.2 < 0.0` fails | green (predicted green) |
+| W3 | matches 2 → 3 | **red** — `3 <= 2` fails | green — **predicted red** |
+| W4 | coverage 0.40 → 0.5 | **red** — `0.5 <= 0.4286` fails | green — **predicted red** |
+| W5 | `answerable` stops consulting the coverage floor | green (predicted survivor, recorded as owed) | green (predicted green) |
+
+Restored byte-identical after the run (`6f886463e549`). The two misses were chased rather than accepted, and
+they are not a weakness of the new case — they are a defect in the existing one:
+`tests/test_knowledge_rag.py:214` reads `assert report.passed`, while `EvalReport.passed` is a plain method
+(`evals/run_rag_eval.py:68`; the class's only `@property` is `hybrid_delta` at :55). A bound method is always
+truthy, so the suite never reads `report.failures`. Called properly, `evaluate()` on this database reports
+`passed=False` at the **shipped** floors with two live entries — `when-to-press: no acceptable document in
+top 5` (recall 17/18 = 0.9444) and `metric hybrid_delta=-0.0556 is below the 0.0 gate`, i.e. hybrid fusion
+ranked worse than keyword-only on the SQLite semantic fallback. The same probe on a PostgreSQL corpus with the
+same 18 documents and 138 chunks reported 0 failures, so the defect is engine-specific and the repair is owed
+with both legs measured (tracked as "RAG eval gate: assert reads a bound method"). A sweep of the five floor
+configurations through the repaired call, printed per arm, showed that a *lowered* floor adds no failure entry
+at all while a *raised* one adds exactly `… golden query was refused` — which is the line between what only the
+new case can see (W1, W2, W5) and what the repaired eval will also see (W3, W4).
+
+The owed follow-up on the floors themselves: put an out-of-scope golden question in each single-floor shape —
+2 rare terms of which the top passage matches 1 (coverage 0.50 clears 0.40, matches 1 fails 2), and ≥ 6 rare
+terms of which it matches 2 (matches 2 clears 2, coverage 0.33 fails 0.40) — so that deleting either condition
+from `answerable` makes the door answer something it must refuse. Today W5 survives because no such question
+exists.
+
+Reproduce:
+
+```
+cd apps/api
+python -m pytest tests/test_knowledge_rag.py -k floors_sit_inside -q --junitxml=…
+```
+
+That case *is* the measurement: it reads `evals/golden_rag.json`, calls `knowledge.search(db, query,
+mode="hybrid", top_k=5)` once per question, and derives both extremes from the rows it just retrieved — so a
+corpus change moves the numbers the case checks instead of moving only the prose above it.
+
 ### 2.4 Unit / integration / API tests, dual database
 
 ```

@@ -7,8 +7,10 @@ queries must still answer through the in-process fallback.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from sqlalchemy import func, select
@@ -214,6 +216,91 @@ def test_rag_eval_gates_pass_on_this_database(db: Session) -> None:
     assert scores["citation_integrity"] == 1.0
     assert scores["refusal_accuracy"] == 1.0
     assert scores["recall_at_k"] >= 0.85
+
+
+def test_the_answerability_floors_sit_inside_the_measured_gap(db: Session) -> None:
+    """The comment above `MIN_DISCRIMINATIVE_*` says the floors come from the golden set; this recomputes it.
+
+    `test_rag_eval_gates_pass_on_this_database` proves the floors are *obeyed* (every in-scope question
+    answered, every out-of-scope one refused). Obedience is not derivation: drop a floor below the
+    out-of-scope population and that report is unchanged — green in the same places, with no new failure
+    entry — while the constant stops being a measurement of anything. What has to hold is that the floors sit
+    inside the separation the two populations actually show.
+
+    Measured on the SQLite arm at this landing (18 documents, 138 chunks; `knowledge.search` in hybrid
+    mode over the top 5): all **18** in-scope questions clear both floors, the weakest being `read-game`
+    at exactly 2 matched rare terms and `offside` at 3 of 7 = 0.4286 coverage; the **3** out-of-scope
+    questions peak at 1 match (`xg-model`) and 0.20 coverage (`xg-model`, 1 of 5), and all three still
+    retrieve five candidate passages — their refusal is the floors' doing, not an empty result set.
+    The floor pair (2 matches, 0.40 coverage) therefore has 0 headroom on the in-scope match axis and
+    0.0286 on the coverage axis, and 1 match / 0.20 coverage of headroom on the out-of-scope side.
+
+    One consequence worth stating, and the reason this case exists: on this population every in-scope
+    question clears both floors and every out-of-scope one fails both (`xg-model` 1 match of 5 rare terms,
+    `cleat-sensor` carries no rare term at all, `boot-brand` matches 0 of 2), so lowering either floor alone
+    changes no verdict at the door — measured, the eval's failure list is byte-identical with
+    `MIN_DISCRIMINATIVE_MATCHES` at 1 and with `MIN_DISCRIMINATIVE_COVERAGE` at 0.0, and `recall_at_k` is
+    computed from the ranked passages rather than from answerability, so no threshold moves either. Behaviour
+    alone cannot see either constant. The gap claim below can: it fails as soon as a floor leaves the
+    separation the golden set actually shows. Raising a floor past a golden question is visible to the eval —
+    through `report.failures`, which `test_rag_eval_gates_pass_on_this_database` does not currently read (it
+    asserts the bound method `report.passed`, always truthy; recorded as owed work).
+    """
+    from app.services.knowledge.retrieval import MIN_DISCRIMINATIVE_COVERAGE, MIN_DISCRIMINATIVE_MATCHES
+    from evals.run_rag_eval import GOLDEN_PATH
+
+    golden = json.loads(GOLDEN_PATH.read_text(encoding="utf-8"))
+    k = int(golden.get("recall_at", 5))
+
+    def peaks(cases: list[Any]) -> list[tuple[str, int, float, bool, int]]:
+        rows = []
+        for case in cases:
+            found = knowledge.search(db, case["query"], mode="hybrid", top_k=k)
+            rows.append(
+                (
+                    case["id"],
+                    len(found.discriminative_matches),
+                    found.discriminative_coverage,
+                    found.answerable,
+                    len(found.hits),
+                )
+            )
+        return rows
+
+    in_scope = peaks(golden["queries"])
+    out_of_scope = peaks(golden["out_of_scope"])
+    assert in_scope and out_of_scope, (
+        f"the golden set holds {len(in_scope)} in-scope and {len(out_of_scope)} out-of-scope questions; "
+        "a population of either size proves nothing about a floor"
+    )
+
+    in_matches = [row[1] for row in in_scope]
+    in_coverage = [row[2] for row in in_scope]
+    out_matches = [row[1] for row in out_of_scope]
+    out_coverage = [row[2] for row in out_of_scope]
+
+    cleared = [row[0] for row in in_scope if row[1] < MIN_DISCRIMINATIVE_MATCHES or row[2] < MIN_DISCRIMINATIVE_COVERAGE]
+    assert not cleared, (
+        f"{cleared} are golden in-scope questions the floors refuse: the match floor is "
+        f"{MIN_DISCRIMINATIVE_MATCHES} and the weakest in-scope question matched {min(in_matches)}, the "
+        f"coverage floor is {MIN_DISCRIMINATIVE_COVERAGE} and the weakest reached {min(in_coverage):.4f}"
+    )
+    answered = [row[0] for row in out_of_scope if row[3]]
+    assert not answered, f"{answered} out-of-scope questions are answerable, so the floors no longer refuse them"
+    accidental = [row[0] for row in out_of_scope if row[4] == 0]
+    assert not accidental, (
+        f"{accidental} out-of-scope questions retrieve no candidate passage at all, so their refusal proves "
+        "nothing about the floors — a floor that refuses an empty result set is not being tested"
+    )
+
+    assert max(out_matches) < MIN_DISCRIMINATIVE_MATCHES <= min(in_matches), (
+        f"the match floor {MIN_DISCRIMINATIVE_MATCHES} is outside the gap the golden set shows "
+        f"(out-of-scope peaks at {max(out_matches)} matched rare terms, in-scope bottoms out at {min(in_matches)})"
+    )
+    assert max(out_coverage) < MIN_DISCRIMINATIVE_COVERAGE <= min(in_coverage), (
+        f"the coverage floor {MIN_DISCRIMINATIVE_COVERAGE} is outside the gap the golden set shows "
+        f"(out-of-scope peaks at {max(out_coverage):.4f}, in-scope bottoms out at {min(in_coverage):.4f})"
+    )
 
 
 # --- HTTP surface ---------------------------------------------------------------------------
