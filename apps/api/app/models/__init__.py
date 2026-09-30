@@ -825,7 +825,12 @@ class TacticBoard(Base, TimestampMixin):
 # vision provider's output, and every detection row carries the provider, model and demo flag that
 # produced it so a report cannot present pixel statistics as football insight.
 class VideoAsset(Base, TimestampMixin):
-    """One uploaded clip, its container facts as ffprobe reported them, and its lifecycle state."""
+    """One uploaded clip, its container facts as ffprobe reported them, and its lifecycle state.
+
+    M5 item 3 (spec §14): a clip may be linked to the user's football identity (UserPlayer)
+    or to an M6 simulation match, and may carry a revocable share token for short
+    shareable clips — the same pattern §17 uses for tactical boards.
+    """
 
     __tablename__ = "video_assets"
     __table_args__ = (
@@ -854,6 +859,15 @@ class VideoAsset(Base, TimestampMixin):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # M5 item 3: optional links to the user's football identity or an M6 match
+    player_id: Mapped[str | None] = mapped_column(ForeignKey("user_players.id", ondelete="SET NULL"), nullable=True, index=True)
+    match_id: Mapped[str | None] = mapped_column(ForeignKey("sim_matches.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    # M5 item 3: revocable share token for short shareable clips (same pattern as §17 boards)
+    share_token: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    shared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    visibility: Mapped[str] = mapped_column(String(20), default="private", nullable=False)
 
 
 class VideoDetection(Base):
