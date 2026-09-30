@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AcademyTools, ConsentTable } from "@/components/AcademyTools";
 import { TenantTools } from "@/components/ClubTools";
-import { EraseRow, ReportSaver, SessionRecorder } from "@/components/SessionReportTools";
+import { EraseNotes, EraseRow, ReportSaver, SessionRecorder } from "@/components/SessionReportTools";
 import { FixtureArranger } from "@/components/MatchTools";
 import { NoticeBoard } from "@/components/NoticeBoardTools";
 import { Panel } from "@/components/ui";
@@ -399,6 +399,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
             <p className="muted" data-session-day={sessions.data.today} style={{ fontSize: "0.86rem", margin: 0 }}>
               {`The date above is the one this door prints as its own today (${sessions.data.today}), not the one this page guessed at ${today}.`} {sessions.data.today_rule}
             </p>
+            <EraseNotes id="session-erase-wall">
             <div className="world-tablewrap">
               <table className="table">
                 <thead>
@@ -443,6 +444,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                 </tbody>
               </table>
             </div>
+            </EraseNotes>
             <p className="muted" data-load-check={loadAgrees ? "agrees" : "mismatch"} style={{ fontSize: "0.82rem" }}>
               Load total: the {sessions.data.items.length} row(s) above add to {printedLoad.toFixed(2)} and the API&apos;s own figure for the same list
               is {sessions.data.total_load_units.toFixed(2)} — {loadAgrees ? "they agree" : "MISMATCH"}.
@@ -473,6 +475,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                 The academy rulebook door did not answer, so this page has no published `report_limits` to bound a window or a quota with. The questions below are still the door&apos;s own rows.
               </p>
             )}
+            <EraseNotes id="report-erase-wall">
             <div className="world-tablewrap">
               <table className="table">
                 <thead>
@@ -513,6 +516,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                 </tbody>
               </table>
             </div>
+            </EraseNotes>
             <p className="muted" style={{ fontSize: "0.82rem" }}>
               {reports.data.rule}
             </p>

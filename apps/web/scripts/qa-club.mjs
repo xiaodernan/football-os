@@ -36,7 +36,7 @@ import { fileURLToPath } from 'node:url';
 
 import puppeteer from 'puppeteer-core';
 
-const BASE = process.env.QA_BASE ?? 'http://127.0.0.1:3214';
+const BASE = (process.env.QA_BASE ?? 'http://127.0.0.1:3214').trim();
 const CHROME = process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const OUT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../../docs/screenshots');
 const DESKTOP = { width: 1440, height: 900, deviceScaleFactor: 1 };
@@ -375,6 +375,32 @@ async function main() {
   const readyAfter = await (await fetch(`${BASE}/api/v1/club/capabilities`, { headers: { accept: 'application/json' } })).json();
   const readyAfterAcademy = await (await fetch(`${BASE}/api/v1/club/academy/capabilities`, { headers: { accept: 'application/json' } })).json();
   check('and both doors flip to true on that one account, which is all the printed rule asks for', readyAfter?.ready === true && readyAfterAcademy?.ready === true, `club ${JSON.stringify(readyAfter?.ready)}, academy ${JSON.stringify(readyAfterAcademy?.ready)}`);
+
+  // ------------------------------------------------- the refresh cookie has to be reachable by its readers
+  //
+  // `fo_refresh` is the 30-day credential. Scoped to `/api/v1/auth` it was invisible to both things that
+  // read it — the middleware on a page request and the proxy on `/api/v1/careers` — so a session ended at
+  // the login screen the moment the 15-minute access token expired, with a perfectly good refresh token
+  // sitting unread in the jar. Two facts pin that down, and the second is the one that would have failed:
+  // the cookie's path, and a call made with no access token at all.
+  const jar = await page.cookies();
+  const refresh = jar.find((cookie) => cookie.name === 'fo_refresh');
+  check(
+    'the refresh credential is scoped to the whole site, so both readers can reach it',
+    !!refresh && refresh.path === '/',
+    refresh ? `path ${refresh.path} · httpOnly ${refresh.httpOnly} · sameSite ${refresh.sameSite}` : 'no fo_refresh in the jar',
+  );
+  await page.deleteCookie({ name: 'fo_access', url: BASE });
+  const withoutAccess = await page.evaluate(async () => {
+    const response = await fetch('/api/v1/club', { credentials: 'same-origin' });
+    return { status: response.status, body: await response.text() };
+  });
+  const regranted = (await page.cookies()).find((cookie) => cookie.name === 'fo_access');
+  check(
+    'a door called with no access token is refreshed from that cookie rather than answered 401',
+    withoutAccess.status === 200 && !!regranted && !/unauthor/i.test(withoutAccess.body.slice(0, 200)),
+    `HTTP ${withoutAccess.status} · access token ${regranted ? 're-minted' : 'not re-minted'}`,
+  );
 
   await open(page, '/club');
   const indexRobots = await metaRobots(page);

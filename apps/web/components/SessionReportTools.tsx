@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { CallNote, useClubCall } from "@/components/ClubTools";
 import type { ReportLimits, SessionLimits, TeamView } from "@/lib/club";
+
+/**
+ * The shape `useClubCall` answers with. Declared here rather than imported from `ClubTools`, whose own `Note`
+ * is private and whose callers do not need to share this one — §35's community tools made the same choice.
+ */
+type EraseNote = { text: string; figures: string[]; refused: boolean; action: string };
 
 /**
  * §41's two writes: the session a team ran, and the question a tenant keeps.
@@ -224,20 +230,55 @@ export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }:
 
 
 /**
- * One row's own erase door, with its answer painted in the cell.
+ * Where an erase's answer is kept, so the re-read that erases the row cannot erase the answer with it.
  *
- * A refusal is printed as the code and the figure the API answered with rather than a shrug, and a success
- * does not announce the row as deleted: the runner re-reads the table, so the row that is gone is gone
- * because the server says so.
+ * `EraseRow` painted its answer inside its own `<tr>`. The write succeeds, `router.refresh()` re-reads the
+ * table, the row is gone — and the sentence saying what happened unmounts with it. Whether a reader ever saw
+ * "erased" came down to whether the note painted before the refresh landed. The club walk caught this by
+ * failing on a *different* one of the two erase controls on two consecutive runs, which is the signature of a
+ * race rather than of a broken control. §35's wall met the same shape and solved it the same way: the answer is
+ * copied to a slot the table owns, above the rows, where the re-read cannot reach it.
+ *
+ * A table that renders no `EraseNotes` keeps the old row-scoped note, so this is additive rather than a
+ * rewrite of every caller.
+ */
+const EraseSlot = createContext<((note: EraseNote) => void) | null>(null);
+
+export function EraseNotes({ children, id }: { children: ReactNode; id: string }) {
+  const [note, setNote] = useState<EraseNote | null>(null);
+  return (
+    <EraseSlot.Provider value={setNote}>
+      {note && (
+        <p className={note.refused ? "notice notice--warn" : "muted"} data-note={note.action} data-testid={id} style={{ fontSize: "0.82rem", margin: 0 }}>
+          {note.text}
+        </p>
+      )}
+      {children}
+    </EraseSlot.Provider>
+  );
+}
+
+/**
+ * One row's own erase door.
+ *
+ * A refusal is printed as the code and the figure the API answered with rather than a shrug, and a success does
+ * not announce the row as deleted: the runner re-reads the table, so the row that is gone is gone because the
+ * server says so. Inside an `EraseNotes` the sentence is published upward and the row paints nothing of its own,
+ * because the row is about to stop existing.
  */
 export function EraseRow({ action, label, path, what }: { action: string; label: string; path: string; what: string }) {
   const { busy, call, note } = useClubCall();
+  const announce = useContext(EraseSlot);
+  useEffect(() => {
+    if (!note) return;
+    announce?.({ ...note, text: note.refused ? `${what} refused: ${note.figures[0] ?? note.text}` : `${what} erased — the table was re-read` });
+  }, [announce, note, what]);
   return (
     <span className="stack-sm">
       <button className="btn btn--sm btn--ghost" data-act={action} disabled={busy !== null} onClick={() => void call(action, path, { method: "DELETE" })} type="button">
         {busy === action ? "Erasing…" : label}
       </button>
-      {note && (
+      {note && !announce && (
         <span className="mono" data-note={action} style={{ display: "block", fontSize: "0.74rem" }}>
           {note.refused ? `refused: ${note.figures[0] ?? note.text}` : `${what} erased — the table was re-read`}
         </span>
