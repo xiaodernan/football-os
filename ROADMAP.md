@@ -493,3 +493,9 @@ Milestones do not own these; every public route must satisfy them as it lands.
   passes it as the `x-next-intl-locale` header the layout reads, so `<html lang>` follows the reader and every existing
   URL stands. The walk figure that commit quoted (**233/233**, `.scratch/vqa/walk.log` at 18:15) predates it by an hour
   and is corrected here: the walk over this fix has not been run yet, and its number is the one to believe.
+
+- [x] §74's other half (`2d3673e`): the four error handlers answer at `detail.code` like every door, so the
+  product's one reader (`normalizeError`) gets a code, a message and the field list instead of its fallback
+  string. `10` cases + a 7-arm probe (0 survivors, one arm's mismatch is prediction-side) and both
+  whole-suite legs at 1373 tests / 1 known portfolio FK red on each engine —
+  `docs/SECURITY_AUTHORIZATION_VERIFICATION.md` §9
