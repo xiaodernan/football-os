@@ -21,11 +21,19 @@ Full stack with Postgres + pgvector: `docker compose -f infra/docker-compose.yml
 
 ## Quality gates (CI enforces these)
 
+Run all of them at once with `bash scripts/check.sh`. That script and `.github/workflows/ci.yml` call the same
+commands on purpose — three different `ruff` targets have been used in this project's history, and a green local
+run against the narrow one was not evidence that CI would be green.
+
 - `pytest` suite green (unit + API integration, no network needed).
-- `ruff check` + `mypy app` clean for the API.
+- `python -m ruff check` + `python -m mypy app` clean for the API. **No path arguments** — ruff walks the whole
+  project, including `evals/` and `seed.py`, so the scope cannot drift from CI's. A planted unused import in
+  `evals/` passes `ruff check app tests` and fails this.
 - `npm run typecheck` and `npm run build` clean for the web app.
 - No `TODO`/`FIXME` placeholders in merged code (spec §89) — open an issue or a roadmap row instead.
-- Every new user-visible string lives in `apps/web/messages/*.json` for all three locales (spec §81).
+- Every new user-visible string lives in `apps/web/messages/*.json` for all three locales (spec §81). **The
+  catalogues do not exist yet** — the UI is English-only and `GET /capabilities` says so — so today this rule has
+  nowhere to put a string. Landing them is `PLAN.md` item 2; until then, do not add a second place strings live.
 - Every new page uses design tokens + `components/ui/*` only (spec §73).
 
 ## Definition of Done per feature (spec §88)

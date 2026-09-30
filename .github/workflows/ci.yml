@@ -29,7 +29,10 @@ jobs:
           cache: pip
       - run: pip install -r requirements-dev.txt
       - name: Lint
-        run: python -m ruff check app tests evals seed.py migrations
+        # Same command as `scripts/check.sh`, and deliberately without path arguments: ruff walks the whole
+        # project, so the local gate and this one cannot disagree about which files are in scope. An explicit
+        # list is what let a planted `evals/` error pass every local run while CI would have rejected it.
+        run: python -m ruff check
       - name: Types
         run: python -m mypy app
       - name: Tests (SQLite dev fallback)
