@@ -10,8 +10,15 @@
 
 .video-frames { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.35rem; }
 .video-frames__item { margin: 0; display: flex; flex-direction: column; gap: 0.2rem; flex: 0 0 auto; }
+.video-frames__frame { position: relative; display: block; line-height: 0; }
 .video-frames__item img { width: 128px; height: auto; border: 1px solid var(--line); border-radius: 8px; display: block; background: #000; }
 .video-frames__item figcaption { font-size: 0.7rem; color: var(--text-3); }
+
+/* The overlay: one ring per detection at the (x, y) the provider measured, drawn over the sample it
+   was measured on. The pixel file is untouched — the ring is a read-time mark, same colour as the
+   timeline ticks, with a dark halo so it survives both the dark and the bright parts of a frame. */
+.video-frame__mark { position: absolute; width: 13px; height: 13px; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid var(--warn); background: transparent; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(0, 0, 0, 0.45); }
+.video-frame__mark:hover { border-color: var(--accent); }
 
 @media (max-width: 640px) {
   .video-frames__item img { width: 104px; }

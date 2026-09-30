@@ -39,6 +39,20 @@ export default async function VideoReportPage({ params }: Props) {
   const frames = Array.from({ length: asset.frame_count }, (_, index) => index);
   const green = analysis?.green_fraction_mean;
 
+  /* A detection is measured at `t_s`, and the samples sit `frame_interval_s` apart, so the frame a
+     detection belongs to is the sample nearest its timestamp. Clamping covers only float edge cases
+     (a timestamp a hair past the last sample); a detection is never invented a frame of its own. */
+  const interval = asset.frame_interval_s || 0;
+  const overlays = new Map<number, typeof report.detections>();
+  if (interval > 0) {
+    for (const detection of report.detections) {
+      const index = Math.min(asset.frame_count - 1, Math.max(0, Math.round(detection.t_s / interval)));
+      const bucket = overlays.get(index);
+      if (bucket) bucket.push(detection);
+      else overlays.set(index, [detection]);
+    }
+  }
+
   return (
     <div className="container page stack">
       <WorldHead
@@ -200,17 +214,38 @@ export default async function VideoReportPage({ params }: Props) {
           <div className="video-frames" data-testid="video-frames">
             {frames.map((index) => (
               <figure className="video-frames__item" key={index}>
-                {/* Not next/image on purpose: the QA gate proves the pixels on screen are the bytes the
-                    pipeline decoded, so nothing may re-encode, resize or cache-transform them. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img alt={`Sampled frame ${index}`} height={asset.height} src={`/api/v1/video/${encodeURIComponent(asset.id)}/frames/${index}`} width={asset.width} />
+                {/* The overlay layer wraps the pixels rather than sitting on the figure: the figure
+                    also holds the caption, and a percentage offset against it would land the marker
+                    below the frame it belongs to. The image itself is never touched — the rings are
+                    drawn over it at read time, from the same coordinates the table prints. */}
+                <span className="video-frames__frame">
+                  {/* Not next/image on purpose: the QA gate proves the pixels on screen are the bytes the
+                      pipeline decoded, so nothing may re-encode, resize or cache-transform them. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img alt={`Sampled frame ${index}`} height={asset.height} src={`/api/v1/video/${encodeURIComponent(asset.id)}/frames/${index}`} width={asset.width} />
+                  {(overlays.get(index) ?? []).map((detection) => (
+                    <span
+                      className="video-frame__mark"
+                      data-detection={detection.id}
+                      data-frame={index}
+                      data-testid="video-frame-overlay"
+                      data-x={detection.x}
+                      data-y={detection.y}
+                      key={detection.id}
+                      style={{ left: `${detection.x * 100}%`, top: `${detection.y * 100}%` }}
+                      title={`${detection.t_s.toFixed(2)}s · ${detection.kind} · ${(detection.confidence * 100).toFixed(0)}% — ${detection.why}`}
+                    />
+                  ))}
+                </span>
                 <figcaption className="mono">{(index * (asset.frame_interval_s || 0)).toFixed(2)} s</figcaption>
               </figure>
             ))}
           </div>
           <p className="muted world-section-note">
             These are the same samples the provider read, converted to PNG for display only. Positions above are fractions of the frame
-            width and height, so they line up with what you see here.
+            width and height, so they line up with what you see here. Each ring marks one detection&apos;s (x, y) on the sample its
+            timestamp falls on — the centre of the non-pitch pixels that provider measured, not a player or a ball — and hovering it
+            prints the timestamp, the confidence and the sentence the measurement was called with.
           </p>
         </Panel>
       )}

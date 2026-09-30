@@ -125,7 +125,9 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
             "isolation": club_service.rules()["matrix"]["rule"],
         },
         "m9_community": False,
-        "locales": ["en", "zh", "zh-TW"],
+        # `zh` and `zh-TW` message files exist but are still copies of the English one, so no
+        # interface language but English is shipped — §81 flips this when translations exist (spec §81).
+        "locales": ["en"],
         "locales_planned": ["en", "zh", "zh-TW"],
         "demo_mode": settings.is_demo_mode,
     }

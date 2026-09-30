@@ -1347,6 +1347,69 @@ async function run() {
           analysed.frames > 0 && analysed.frames === Number(analysed.frameChip) && analysed.loadedFrames === analysed.frames,
           `${analysed.frames} shown / ${analysed.frameChip} sampled / ${analysed.loadedFrames} decoded by the browser`,
         );
+
+        // Every detection is two numbers in a table. The overlay draws them where they were measured, so
+        // this holds every ring against its own row: same x and y at the printed precision, the frame
+        // whose caption is the sample nearest its timestamp, and the sentence that called it carried on
+        // the marker itself. A ring without a row or a row without a ring fails — neither may be dropped.
+        // The key is time *and* point, because two detections may share a timestamp.
+        const overlay = await page.evaluate(() => {
+          // Table cells sit next to each other with no whitespace between them ("1.00 sx 0.399 · y
+          // 0.48467%"), so the pattern reads the printed precision rather than a spaced sentence.
+          // Non-finite parses come back as null, not NaN: JSON turns NaN into null anyway, and a null
+          // that reaches a .toFixed() call would abort the walk instead of failing one check.
+          const num = (value) => {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+          };
+          const rings = [...document.querySelectorAll('[data-testid="video-frame-overlay"]')].map((element) => ({
+            frame: num(element.getAttribute('data-frame')),
+            x: num(element.getAttribute('data-x')),
+            y: num(element.getAttribute('data-y')),
+            left: element.style.left,
+            top: element.style.top,
+            title: element.getAttribute('title') ?? '',
+          }));
+          const rows = [...document.querySelectorAll('[data-testid="video-detections"] tbody tr')].map((row) => {
+            const text = row.textContent.replace(/\s+/g, ' ').trim();
+            const cells = text.match(/^(\d+\.\d+) sx (\d+\.\d{3}) · y (\d+\.\d{3})/u);
+            return { t: num(cells?.[1]), x: num(cells?.[2]), y: num(cells?.[3]) };
+          });
+          const captions = [...document.querySelectorAll('[data-testid="video-frames"] figure figcaption')].map(
+            (caption) => num((caption.textContent ?? '').replace(' s', '')),
+          );
+          return { rings, rows, captions };
+        });
+        const finite = (value) => typeof value === 'number' && Number.isFinite(value);
+        const key = (t, x, y) =>
+          finite(t) && finite(x) && finite(y)
+            ? `${t.toFixed(2)}|${(Math.round(x * 1000) / 1000).toFixed(3)}|${(Math.round(y * 1000) / 1000).toFixed(3)}`
+            : '!unparsed';
+        const ringByKey = new Map(
+          overlay.rings.map((ring) => [key(Number(ring.title.match(/^([\d.]+)s/u)?.[1] ?? Number.NaN), ring.x, ring.y), ring]),
+        );
+        const unparsed = overlay.rows.filter((row) => !finite(row.t) || !finite(row.x) || !finite(row.y)).length;
+        const everyRowIsDrawn =
+          overlay.rows.length > 0 &&
+          unparsed === 0 &&
+          overlay.rings.length === overlay.rows.length &&
+          overlay.rows.every((row) => {
+            const ring = ringByKey.get(key(row.t, row.x, row.y));
+            if (!ring || !finite(ring.frame)) return false;
+            const placed = Math.abs(parseFloat(ring.left) / 100 - ring.x) < 1e-6 && Math.abs(parseFloat(ring.top) / 100 - ring.y) < 1e-6;
+            const nearest = overlay.captions.reduce(
+              (best, value) => (finite(value) && Math.abs(value - row.t) < Math.abs(best - row.t) ? value : best),
+              Number.POSITIVE_INFINITY,
+            );
+            const caption = overlay.captions[ring.frame];
+            const words = /^[\d.]+s · \S+ · \d+% — .{10,}/u.test(ring.title);
+            return placed && caption === nearest && words;
+          });
+        check(
+          'every detection is drawn on the frame it was measured from, at the x and y its row prints',
+          everyRowIsDrawn,
+          `${overlay.rings.length} rings / ${overlay.rows.length} rows / ${unparsed} unparsed · frame captions ${overlay.captions.join(', ')} s · ${overlay.rings[0]?.title.slice(0, 60) ?? 'no marker'}`,
+        );
         check(
           'playback and frames come from the owner-only API routes, not a public file path',
           /\/api\/v1\/video\/vid_[^/]+\/file$/u.test(analysed.player),

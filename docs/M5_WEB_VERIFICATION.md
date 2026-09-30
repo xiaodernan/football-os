@@ -119,3 +119,19 @@ re-encoding them (a deliberate `<img>` with the reason in a comment above it).
   content stays inside the account until M9's consent story exists.
 * **No real detector.** With a vision key configured the same seam would carry a different provider; without one
   the page labels itself `demo_mode True`, which the walk reads back off the payload.
+
+## 6. Frame overlay — detection rings on the sampled frames (verified 2026-09-29)
+
+Each detection the demo provider measures now carries a ring on the frame its timestamp falls on.
+The ring sits at the exact `(x, y)` the table prints, so the numbers point at the pixels they
+describe. Hovering the ring prints the timestamp, the kind, the confidence and the sentence the
+measurement was called with — the centre of the non-pitch pixels, not a player or a ball.
+
+Walk check added (check 234 of 234):
+
+- every detection is drawn on the frame it was measured from, at the x and y its row prints
+- the ring's `data-x` / `data-y` match the table to the printed precision (three decimals)
+- the frame whose caption time is the nearest sample to the detection's `t_s`
+- the ring's `title` carries the full sentence: `t_s · kind · confidence% — why`
+
+Screenshots: the `video-frames` panel now shows rings over the thumbnails. Exit 0, 234/234 checks.
