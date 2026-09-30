@@ -499,3 +499,9 @@ Milestones do not own these; every public route must satisfy them as it lands.
   string. `10` cases + a 7-arm probe (0 survivors, one arm's mismatch is prediction-side) and both
   whole-suite legs at 1373 tests / 1 known portfolio FK red on each engine —
   `docs/SECURITY_AUTHORIZATION_VERIFICATION.md` §9
+
+  A concurrent run owns `docs/SECURITY_AUTHORIZATION_VERIFICATION.md`, and its in-flight §7 text already
+  points at a §9 it has not landed yet — so the two sections collide by number. Nothing here renumbers or
+  rewrites that file: if `## 9.` ever disappears from it, the record is not lost, it is `7aa6e91`'s,
+  readable with `git show 7aa6e91:docs/SECURITY_AUTHORIZATION_VERIFICATION.md`, and the repair is to append
+  it back after whichever section landed beside it. Both are meant to survive; number them by order.
