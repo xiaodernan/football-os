@@ -416,6 +416,38 @@ Preflight, on the **working copy** and labelled as such: `tests/test_knowledge_r
 adds no case, so the whole-suite prediction over its commit is unchanged at **1363 / 0 / 0 / 1 skip / rc=0 on
 each engine**; those legs are what make the number attributable.
 
+The legs printed, both engines, from the detached worktree `.scratch/wt_rag76` (bytes at `ad7b6d7`, so the
+concurrent run's in-flight working-copy files are not in the measurement; preflight bound `app` to that plane):
+
+```
+sqlite   leg rc=1 tests=1363 failures=1 errors=0 skipped=1 junit_time=576.446 wall=587.53s
+postgres leg rc=1 tests=1363 failures=1 errors=0 skipped=1 junit_time=697.787 wall=703.58s
+```
+
+**1363 on each engine is exactly the predicted count**, and the skip is the predicted one
+(`test_scout_search.py::TestPublishedArithmetic::test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]`,
+the same single skip §2.3b lists). The `rc=0` half of the prediction missed on one case, and the miss is
+attributed rather than absorbed:
+
+* one case, red identically on both engines: `tests/test_portfolio.py::TestTheSectionsAreTheSpecs::test_the_reason_printed_for_matches_counts_the_schema_it_is_read_from`;
+* it fails at its *first* assert, which derives a tuple from `Base.metadata` (every table holding a
+  `ForeignKey("user_players.id")`) and compares it with the module's own pin of four names — the derived side
+  gained `video_assets`;
+* that clause arrived with **`7f481c2`** ("migration 2e197f085070: make it run on SQLite, and index each column
+  once", +15/−1 in `app/models/__init__.py`), which sits between the two whole-suite measurements this arc has
+  published: the count of such FK clauses is **4 at `496cdbd`** (§2.3b's all-green baseline) and **5 at
+  `7f481c2`** and at `ad7b6d7`. Nothing in `be9e392..ad7b6d7` touches `app/models`, the portfolio tier or that test;
+* the case's own message states the repair ("the printed sentence counts these tables; a new one moves both"),
+  and the two files it would move — the pin in `tests/test_portfolio.py` and the published sentence in
+  `app/services/portfolio/cv.py`, which says *four* and names four tables — are both being edited by the
+  concurrent run (`git status` shows them ` M`). This commit therefore does not touch them, and the red is left
+  for the owner of those files with the causal commit named.
+
+So `ad7b6d7` is recorded as **1363 tests / 1 failure / 0 errors / 1 skip on each engine**, and §2.3b's total
+stays the last green whole-suite reading. The RAG figures this section is about are unaffected: the two red
+arms' case names, the eval CLI's rc and the 18 + 5 population are all measured on this same plane (§2.3c table
+above), and the portfolio case reads no retrieval code.
+
 Reproduce:
 
 ```
