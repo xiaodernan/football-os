@@ -41,11 +41,14 @@ MIN_USEFUL_SCORE = 0.045
 DISCRIMINATIVE_DF_RATIO = 0.30
 # Both floors come from `evals/golden_rag.json` rather than from intuition, and
 # `tests/test_knowledge_rag.py::test_the_answerability_floors_sit_inside_the_measured_gap` recomputes that
-# derivation from the file on every run. Measured 2026-09-30 over the shipped corpus (18 documents, 138
-# chunks): all **18** in-scope questions match >=2 rare terms with coverage >=3/7 = 0.429 — `read-game`
-# binds the match axis at exactly 2 and `offside` the coverage axis — while the **3** out-of-scope ones
-# peak at 1 match / 1/5 = 0.20 coverage. The two figures this comment carried before (16 questions, a 0.33
-# peak) had both drifted from the file, which is the reason the claim is a gate now and not a comment.
+# derivation from the file on every run. Measured 2026-09-30 on both engines over the shipped corpus (18
+# documents, 138 chunks): all **18** in-scope questions match >=2 rare terms with coverage >=3/7 = 0.429 —
+# `read-game` binds the match axis at exactly 2 and `offside` the coverage axis. The **5** out-of-scope
+# questions carry one single-floor shape each: `weight-diet` matches 2 of 8 (coverage 0.25, so only the
+# coverage clause below refuses it) and `fee-winger` matches 1 of 2 (coverage 0.50, so only the match clause
+# refuses it), while `xg-model`, `boot-brand` and `cleat-sensor` fail both. Delete either clause and the door
+# answers a question it must refuse. The figures this comment carried before (16 questions, a 0.33 peak) had
+# both drifted from the file, which is the reason the claim is a gate now and not a comment.
 MIN_DISCRIMINATIVE_COVERAGE = 0.40
 MIN_DISCRIMINATIVE_MATCHES = 2
 

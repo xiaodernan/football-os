@@ -1,6 +1,6 @@
 {
   "version": "2026-09-22",
-  "note": "Golden retrieval set for the FOOTBALL OS knowledge base. Queries are phrased the way a player types them. expected_documents is the set of corpus slugs that legitimately answer the question.",
+  "note": "Golden retrieval set for the FOOTBALL OS knowledge base. Queries are phrased the way a player types them. expected_documents is the set of corpus slugs that legitimately answer the question. The out_of_scope list is not only a refusal test: it carries one question per single-floor shape (fee-winger clears the coverage floor and fails the match floor; weight-diet clears the match floor and fails the coverage floor), so deleting either clause from `answerable` answers something the door must refuse. That property is recomputed on every run by tests/test_knowledge_rag.py::test_the_answerability_floors_sit_inside_the_measured_gap.",
   "recall_at": 5,
   "queries": [
     {"id": "first-touch", "query": "my first touch keeps bouncing away from me what should I practise", "expected_documents": ["first-touch-receiving"]},
@@ -25,6 +25,8 @@
   "out_of_scope": [
     {"id": "xg-model", "query": "what is the best expected goals model for the 2019 champions league"},
     {"id": "cleat-sensor", "query": "how do I calibrate the torque sensor in my boots"},
-    {"id": "boot-brand", "query": "which boot brand does the number 10 wear"}
+    {"id": "boot-brand", "query": "which boot brand does the number 10 wear"},
+    {"id": "weight-diet", "query": "how do I get to a healthy playing weight without cutting meals during season"},
+    {"id": "fee-winger", "query": "what is a fair transfer fee for a nineteen year old winger and who pays the agent"}
   ]
 }

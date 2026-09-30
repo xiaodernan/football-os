@@ -22,7 +22,7 @@ Nothing else on this machine was touched.
 | Retrieval | `app/services/knowledge/retrieval.py` | semantic (pgvector `<=>` when the extension is live), keyword (BM25 computed here), and hybrid (reciprocal rank fusion) + deterministic feature rerank; metadata filters on category/position/difficulty/tag/slug; answerability gate; every score and reason returned. |
 | Answers | `app/services/knowledge/answer.py` | context assembly under a character budget, extractive digest in demo mode, LLM path only when a key exists, verbatim citations, confidence with human-readable reasons, query audit row. |
 | HTTP | `app/api/v1/knowledge.py` | `GET /knowledge/status`, `GET /knowledge/documents`, `GET /knowledge/documents/{slug}`, `POST /knowledge/search`, `POST /knowledge/ask`, `POST /knowledge/ingest` (staff only, audited). |
-| Evaluation | `apps/api/evals/{golden_rag.json,run_rag_eval.py}` | 16 in-scope golden queries + 3 out-of-scope questions, five hard gates, CLI and importable `evaluate()`. |
+| Evaluation | `apps/api/evals/{golden_rag.json,run_rag_eval.py}` | 18 in-scope golden queries + 5 out-of-scope questions (§2.3c; §2.3 keeps the 16 + 3 population the floors were first measured against), five hard gates, CLI and importable `evaluate()`. |
 | Migration | `migrations/versions/0002_knowledge_base.py` | three tables + indexes + conditional HNSW index + `CREATE EXTENSION vector` on PostgreSQL; full `downgrade()`. |
 
 ## 2. Backend evidence (all commands run on this host)
@@ -80,7 +80,8 @@ portable column, so autogenerate would only ever propose dropping it. The index 
 ### 2.2 RAG evaluation gates (spec §64)
 
 `python -m evals.run_rag_eval` on **both** engines, over the corpus as it ships today (18 documents /
-138 chunks; 18 golden questions + 3 out-of-scope). PostgreSQL leg — one throwaway database created for
+138 chunks; 18 golden questions + 3 out-of-scope — the population before §2.3c grew the second number to 5,
+see the re-measurement below). PostgreSQL leg — one throwaway database created for
 the run on the project's own container, dropped afterwards — rc=0:
 
 ```
@@ -126,6 +127,14 @@ question — the answer a `/knowledge` visitor got for `when-to-press` depended 
 deployment used — and it is repaired in §2.3b, the same day. Both readings above are the **before**
 numbers of that repair; no threshold moved for either of them.
 
+Re-measured the same CLI 2026-09-30 over the 5-question out-of-scope population §2.3c ships: PostgreSQL prints
+these five values unchanged (rc=0), and the repaired SQLite plane of §2.3b prints recall 1.0 / mrr 0.9213 /
+citation integrity 1.0 / refusal 1.0 / delta 0.0 with rc=0. `refusal_accuracy` reads 1.0 either way, but its
+denominator is `len(golden["out_of_scope"])`, so the same value now means 5 refusals out of 5 instead of 3 out
+of 3 — a stronger claim behind an unchanged number. `citations checked: 72` does not move either, because a
+refused question emits no citation. Both reports are in `.scratch/rag73_verify.log`, taken on the working copy
+before that landing was committed, and the attributed readings for the commit itself are §2.3c's.
+
 Rank detail: 16 of 18 golden questions put the expected document at rank 1 on **both** engines; `read-game`
 lands at rank 4 on both (its answer is genuinely spread over several documents), and `when-to-press` at
 rank 4 on PostgreSQL while the SQLite fallback drops it out of the five.
@@ -142,7 +151,8 @@ retrieval: take the question's rare terms (document frequency ≤ 30 % of the co
 excluded because `"10"` recurs in unrelated prose) and require the top passage to actually contain
 them.
 
-Thresholds were set from measurement over all 19 cases, not by intuition:
+Thresholds were set from measurement over all 19 cases, not by intuition (the population has been re-measured
+twice since — §2.3a at 18 + 3, §2.3c at 18 + 5 — and neither constant moved):
 
 | case group | rare terms matched in the top passage | coverage |
 | --- | --- | --- |
@@ -187,6 +197,10 @@ population every in-scope question clears **both** floors and every out-of-scope
 either constant alone changes no verdict at the door and moves no threshold — `recall_at_k` counts ranked
 passages, not answerability.
 
+*Superseded on the same day, deliberately left standing as the record of what was measured then:* the
+per-axis `max(out) < floor <= min(in)` pair became one `floor <= min(in-scope)` check per axis plus two
+non-emptiness checks that name the question which fails each floor alone — §2.3c.
+
 Witness: six runs (a control plus five arms) on a plane built with `git archive HEAD` at `7581dad` and these
 two files overlaid byte-identically, each arm re-based to the pristine bytes before it is applied, the whole
 suite of the pair run per arm (`collected=2`, both case names asserted from the junit report).
@@ -198,7 +212,7 @@ suite of the pair run per arm (`collected=2`, both case names asserted from the 
 | W2 | coverage 0.40 → 0.0 | **red** — `0.2 < 0.0` fails | green (predicted green) |
 | W3 | matches 2 → 3 | **red** — `3 <= 2` fails | green — **predicted red** |
 | W4 | coverage 0.40 → 0.5 | **red** — `0.5 <= 0.4286` fails | green — **predicted red** |
-| W5 | `answerable` stops consulting the coverage floor | green (predicted survivor, recorded as owed) | green (predicted green) |
+| W5 | `answerable` stops consulting the coverage floor | green (predicted survivor, recorded as owed; re-judged as C1/C2 in §2.3c) | green (predicted green) |
 
 Restored byte-identical after the run (`6f886463e549`). The two misses were chased rather than accepted, and
 they are not a weakness of the new case — they are a defect in the existing one:
@@ -221,6 +235,11 @@ The owed follow-up on the floors themselves: put an out-of-scope golden question
 terms of which it matches 2 (matches 2 clears 2, coverage 0.33 fails 0.40) — so that deleting either condition
 from `answerable` makes the door answer something it must refuse. Today W5 survives because no such question
 exists.
+
+**Closed by §2.3c the same day.** Both shapes exist in the shipped set now, and the second one came out
+*different* than sketched here: the coverage-decisive question that survives on both engines carries 8 rare
+terms with 2 matched (0.25), not 6 with 2 (0.33) — the 6/2 shape turned out to be the one that only holds on
+SQLite. §2.3c records the measurement that made that visible.
 
 Reproduce:
 
@@ -292,9 +311,118 @@ Module run on this landing: `tests/test_knowledge_rag.py` = **26 collected / 0 f
 0 skipped** on per-run SQLite in 36.831 s and the same 26/0/0/0 on the PostgreSQL plane in 98.647 s, rc=0 on
 both; `ruff check` clean. Still owed, and named so it does not quietly close: this witness ran on the SQLite
 plane only, so the pgvector leg's own `leg_limit` is unprobed — an arm that widens it must be judged on a
-PostgreSQL plane; and the two whole-suite legs over this commit (prediction unchanged at 1363 / 0 / 0 / 1
-skip, since the landing adds no case) are what §4 of this document requires before the number is called a
-baseline.
+PostgreSQL plane.
+
+The whole-suite legs over `496cdbd` have since been measured, on a detached worktree of that commit
+(`.scratch/wt_rag74`, `app.__file__` asserted inside it before either leg), prediction written first as
+1363 / 0 / 0 / 1 skip on each engine, artifact `.scratch/leg_rag74_summary.txt` with the numbers read back out
+of the two junit XMLs rather than out of the launcher's line:
+
+```
+sqlite   leg rc=0 tests=1363 failures=0 errors=0 skipped=1 junit_time=777.567 wall=785.09s
+postgres leg rc=0 tests=1363 failures=0 errors=0 skipped=1 junit_time=996.059 wall=1001.46s
+reds=none on both; the single skip is the same case on both engines:
+  tests.test_scout_search.TestPublishedArithmetic::
+  test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]
+```
+
+1363 = the 1362 collected at `0da4c85` (§60's close-out) plus
+`test_the_answerability_floors_sit_inside_the_measured_gap`, which is the case #72 added. The prediction came
+in, so **1363 / 0 / 0 / 1 skip is now a baseline for this commit on both engines**, and §4's requirement is met
+for `496cdbd` — the number that §2.3c's landing has to re-earn over its own commit.
+
+### 2.3c Each floor now has a question it alone refuses (2026-09-30)
+
+§2.3a ended with the floors' redundancy written down as owed work: all three out-of-scope questions failed
+**both** floors, so `answerable` could lose either clause and every verdict at the door would stay put — which
+is exactly what probe arm W5 measured. This landing pays that debt. `evals/golden_rag.json` now holds
+**18 in-scope + 5 out-of-scope**, the two new questions chosen so each floor is decisive by itself.
+
+| question | rare terms | matched in the top passage | coverage | floor that refuses it alone | top passage |
+| --- | --- | --- | --- | --- | --- |
+| `weight-diet` — "how do I get to a healthy playing weight without cutting meals during season" | 8 | 2 (`get`, `weight`) | 0.2500 | **coverage** — 2 matched clears the match floor | `passing-under-pressure`, both engines |
+| `fee-winger` — "what is a fair transfer fee for a nineteen year old winger and who pays the agent" | 2 | 1 | 0.5000 | **match count** — 0.50 clears the coverage floor | `warmup-structure` on SQLite, `width-in-attack` on PostgreSQL |
+| `xg-model` / `boot-brand` / `cleat-sensor` | 5 / 2 / 0 | 1 / 0 / 0 | 0.2000 / 0 / 0 | both floors, as in §2.3a | unchanged |
+
+Every row is measured, not asserted: `.scratch/rag73_final_measure.py`, driven on both engines by
+`.scratch/rag73_final_both.py` (fresh SQLite file in `%TEMP%`; throwaway database `football_os_pytest_rag73f`
+created and dropped by the driver — never the shared dev database), raw rows in `.scratch/rag73_final_both.txt`.
+That script recomputes `matched`/`coverage` from the corpus df table itself and asserts, per question, that its
+own verdict equals `result.answerable` — so the document and the gate are checked against each other rather
+than one of them being transcribed. `df_ceiling` on this corpus is 41 (138 chunks × 0.30), so "rare" means a
+query term in 1–41 chunks that is not a bare number. The in-scope minimum is 2 matched (`read-game`) and 0.4286
+coverage (`offside`, 3 of 7) on both engines, which is why the two floors stay where §2.3 put them.
+
+Two facts that only a both-engine measurement could produce:
+
+* `fee-winger` matches **one** rare term on each engine, but not the same one — `fair` against a warm-up
+  heading on SQLite, `winger` against an attack-width heading on PostgreSQL, because the pgvector leg ranks a
+  40-id window while the fallback ranks the fused shortlist (§2.3b). The *shape* is engine-stable, the *term*
+  is not, so the gate keys on counts and never on which terms matched.
+* The candidate that looked correct on one engine was rejected on the other. `gear-boots` measured 6 rare /
+  2 matched / 0.333 on SQLite — coverage-decisive — but 6 / 1 / 0.167 on PostgreSQL, i.e. it fails **both**
+  floors there. Shipping it would have left the PostgreSQL leg's refusal witnessing nothing, which is the same
+  class of hole W5 was.
+
+That rejection came out of a 30-question pool swept through the same hybrid path on both engines
+(`.scratch/rag73_cand_core.py`, `.scratch/rag73_cand_both.py`, artifact
+`.scratch/rag73_candidates_both.txt`, reconciliation section at the end). Its counts, from that file:
+**13 questions are answered on both engines** and must not be shipped as out-of-scope (`academy-parents`,
+`coach-qualification`, `gear-shinguards`, `med-concussion`, `med-ice`, `med-returns`, `nutrition-caffeine`,
+`psych-confidence`, `psych-shaking`, `referee-var`, `tickets`, `weather-cold`, `women-tactical`);
+**4 more are answered on exactly one engine** (`academy-scholar`, `positions-height`, `referee-cards`,
+`rules-sinus`) and are excluded for the same reason on that leg; **13 are refused on both**, and the two
+shipped questions are the pair inside that last group whose refusals fall on opposite floors. 7 of the 30
+disagree between engines in shape, matched terms or top passage. The practical reading: `out_of_scope` can
+only grow with questions the corpus genuinely does not answer on *both* engines, because `refusal_accuracy`
+takes its denominator from that list and a single-engine disagreement turns one leg red.
+
+The gate (`tests/test_knowledge_rag.py::test_the_answerability_floors_sit_inside_the_measured_gap`) replaces
+§2.3a's two per-axis `max(out) < floor <= min(in)` checks with four that together see both the door and the
+constants: `floor <= min(in-scope)` per axis (a floor that refuses a golden question is wrong in the other
+direction), plus `coverage_only` and `matches_only` non-empty — for each floor, some out-of-scope question has
+to clear the *other* floor and fail this one. §2.3a's three guards are kept unchanged (no in-scope question
+below a floor, no out-of-scope question answerable, and no out-of-scope question retrieving zero candidates —
+a floor that refuses an empty result set is not being tested).
+
+Witness: four arms on the plane `git archive HEAD` extracted to `.scratch/plane_rag73`, overlaid with this
+landing's three files (`evals/golden_rag.json`, `tests/test_knowledge_rag.py`,
+`app/services/knowledge/retrieval.py`) so the arms mutate the landing's bytes and never the shared working
+copy. Each arm re-bases from the overlay's pristine bytes, each mutation asserts exactly one textual hit, and
+the whole-tree sha256 is re-checked after restore. Two readers per arm: the shipped CLI (the door) and
+`pytest -k "floors_sit_inside or eval_gates_pass"` (`collected=2`, both case names read back from junit).
+Predictions were written to `.scratch/rag73_arms.out` before the first arm ran.
+
+| arm | change | CLI (the door) | module |
+| --- | --- | --- | --- |
+| control | none | rc=0, `all gates passed` | 2 collected / 0 failures |
+| C1 | `answerable` stops consulting the coverage floor | rc=1 — `weight-diet: out-of-scope question was answered with 4 citation(s)`, `metric refusal_accuracy=0.8 is below the 1.0 gate` | 2 / **2 failures** — floors case red at `assert not answered` naming `['weight-diet']`, eval case red at `assert report.passed()` |
+| C2 | `answerable` stops consulting the match floor | rc=1 — the same two entries naming `fee-winger` | 2 / **2 failures**, same first-red naming `fee-winger` |
+| C3 | production untouched; golden reverted to HEAD's 3-question set | rc=0 — all three old questions are still refused | 2 / **1 failure** — floors case red at the coverage-decisive assert |
+
+**0 survivors of 3 arms, 0 prediction mismatches** (`ARMS_EXIT=0`). W5's survival is now C1's and C2's red, the
+same way §2.3b re-judged W3 and W4. C3 is the reverse control that keeps this honest: with the door blind to
+the change (rc=0) the new clauses still go red, so the control row's two greens are not two things agreeing by
+accident. C1's `refusal_accuracy=0.8` is 4 refusals over the 5-question denominator — the first time this
+landing's own arithmetic is visible inside a failure string instead of in prose, and `weight-diet` answering
+with 4 citations is §2.3's original defect reproduced on command. The only per-arm drift was
+`.pytest_cache/README.md` (`None → 73fd6fccdd802c41`), the runner's own cache file, which is not in the
+archive; every tracked path hash-matched after restore.
+
+Preflight, on the **working copy** and labelled as such: `tests/test_knowledge_rag.py` = 26 collected /
+0 failures / 0 errors / 0 skipped, rc=0 on per-run SQLite in 45.158 s and the same 26/0/0/0 on PostgreSQL in
+44.068 s; `python -m evals.run_rag_eval` rc=0 on both engines over the 5-question set
+(`.scratch/rag73_verify.log`). The landing changes a golden JSON, a docstring, four asserts and a comment and
+adds no case, so the whole-suite prediction over its commit is unchanged at **1363 / 0 / 0 / 1 skip / rc=0 on
+each engine**; those legs are what make the number attributable.
+
+Reproduce:
+
+```
+cd apps/api
+python -m pytest tests/test_knowledge_rag.py -k "floors_sit_inside or eval_gates_pass" -q --junitxml=…
+python -m evals.run_rag_eval
+```
 
 ### 2.4 Unit / integration / API tests, dual database
 

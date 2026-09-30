@@ -158,6 +158,11 @@ keyword recall@5 1.000 · semantic recall@5 0.889 · citations checked: 72 → a
 `refusal_accuracy` staying at 1.0 matters here: the corpus grew, and the three out-of-scope questions are still
 refused, so the new passages did not turn the library into something that answers anything.
 
+*(2026-09-30: the population in that sentence was three at the time; `evals/golden_rag.json` now carries five
+out-of-scope questions — FOOTBALL OS M2 document §2.3c — and this same PostgreSQL reading stays at refusal 1.0.
+The value did not move but its denominator did, from 3 to 5, so the claim got stronger while the number looked
+identical; measured in `.scratch/rag73_verify.log`.)*
+
 Every cited statement also keeps its own measurement trail: `metric.formula` is the same string the metrics table
 prints, and `citation.ref` is an in-app anchor (`/knowledge/{slug}#{ordinal}`) which the browser walk fetches, so a
 citation that resolved to nothing would fail the run rather than quietly mislead. Closing the gap broke that check on

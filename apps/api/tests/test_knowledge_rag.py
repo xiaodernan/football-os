@@ -231,24 +231,29 @@ def test_the_answerability_floors_sit_inside_the_measured_gap(db: Session) -> No
     entry — while the constant stops being a measurement of anything. What has to hold is that the floors sit
     inside the separation the two populations actually show.
 
-    Measured on the SQLite arm at this landing (18 documents, 138 chunks; `knowledge.search` in hybrid
-    mode over the top 5): all **18** in-scope questions clear both floors, the weakest being `read-game`
-    at exactly 2 matched rare terms and `offside` at 3 of 7 = 0.4286 coverage; the **3** out-of-scope
-    questions peak at 1 match (`xg-model`) and 0.20 coverage (`xg-model`, 1 of 5), and all three still
-    retrieve five candidate passages — their refusal is the floors' doing, not an empty result set.
-    The floor pair (2 matches, 0.40 coverage) therefore has 0 headroom on the in-scope match axis and
-    0.0286 on the coverage axis, and 1 match / 0.20 coverage of headroom on the out-of-scope side.
+    Measured on both engines at this landing (18 documents, 138 chunks; `knowledge.search` in hybrid mode
+    over the top 5): all **18** in-scope questions clear both floors, the weakest being `read-game` at
+    exactly 2 matched rare terms and `offside` at 3 of 7 = 0.4286 coverage. The **5** out-of-scope questions
+    peak at 2 matched rare terms (`weight-diet`, 2 of 8 = 0.25 coverage) and at 0.50 coverage
+    (`fee-winger`, 1 of 2). Every one of them still retrieves five candidate passages, so their refusal is
+    the floors' doing and not an empty result set.
 
-    One consequence worth stating, and the reason this case exists: on this population every in-scope
-    question clears both floors and every out-of-scope one fails both (`xg-model` 1 match of 5 rare terms,
-    `cleat-sensor` carries no rare term at all, `boot-brand` matches 0 of 2), so lowering either floor alone
-    changes no verdict at the door — measured, the eval's failure list is byte-identical with
-    `MIN_DISCRIMINATIVE_MATCHES` at 1 and with `MIN_DISCRIMINATIVE_COVERAGE` at 0.0, and `recall_at_k` is
-    computed from the ranked passages rather than from answerability, so no threshold moves either. Behaviour
-    alone cannot see either constant. The gap claim below can: it fails as soon as a floor leaves the
-    separation the golden set actually shows. Raising a floor past a golden question is visible to the eval
-    too, through `report.failures`, which `test_rag_eval_gates_pass_on_this_database` now calls properly
-    (`report.passed()`); it read the bound method — always truthy — until 2026-09-30.
+    The two peaks are deliberately on opposite sides of the two floors, and that is the point: a floor is
+    only decisive if some question clears the *other* floor while failing it. `weight-diet` fails coverage
+    alone, `fee-winger` fails the match count alone, and `xg-model` / `boot-brand` / `cleat-sensor` fail
+    both. Before this landing all out-of-scope questions failed both floors, which made each floor
+    redundant — measured then, lowering either constant alone changed no verdict anywhere and the eval's
+    failure list stayed byte-identical (probe arm W5 survived for exactly that reason). Now deleting either
+    clause from `answerable` answers something the door must refuse, and this case names it.
+
+    One consequence of measuring on both engines: `fee-winger` matches 1 rare term on each, but not the
+    same one — the SQLite top passage is a warm-up heading ("fair"), the PostgreSQL one an attack-width
+    heading ("winger"), because the pgvector leg ranks a 40-id window while the fallback ranks the fused
+    shortlist. The clause below therefore keys on the counts, never on which terms matched.
+
+    Raising a floor past a golden question is visible to the eval too, through `report.failures`, which
+    `test_rag_eval_gates_pass_on_this_database` now calls properly (`report.passed()`); it read the bound
+    method — always truthy — until 2026-09-30.
     """
     from app.services.knowledge.retrieval import MIN_DISCRIMINATIVE_COVERAGE, MIN_DISCRIMINATIVE_MATCHES
     from evals.run_rag_eval import GOLDEN_PATH
@@ -280,8 +285,6 @@ def test_the_answerability_floors_sit_inside_the_measured_gap(db: Session) -> No
 
     in_matches = [row[1] for row in in_scope]
     in_coverage = [row[2] for row in in_scope]
-    out_matches = [row[1] for row in out_of_scope]
-    out_coverage = [row[2] for row in out_of_scope]
 
     cleared = [row[0] for row in in_scope if row[1] < MIN_DISCRIMINATIVE_MATCHES or row[2] < MIN_DISCRIMINATIVE_COVERAGE]
     assert not cleared, (
@@ -297,13 +300,31 @@ def test_the_answerability_floors_sit_inside_the_measured_gap(db: Session) -> No
         "nothing about the floors — a floor that refuses an empty result set is not being tested"
     )
 
-    assert max(out_matches) < MIN_DISCRIMINATIVE_MATCHES <= min(in_matches), (
-        f"the match floor {MIN_DISCRIMINATIVE_MATCHES} is outside the gap the golden set shows "
-        f"(out-of-scope peaks at {max(out_matches)} matched rare terms, in-scope bottoms out at {min(in_matches)})"
+    assert MIN_DISCRIMINATIVE_MATCHES <= min(in_matches), (
+        f"the match floor {MIN_DISCRIMINATIVE_MATCHES} sits above the weakest in-scope question "
+        f"({min(in_matches)} matched rare terms, from {[row[0] for row in in_scope if row[1] == min(in_matches)]}), "
+        "so it refuses a golden question the corpus does answer"
     )
-    assert max(out_coverage) < MIN_DISCRIMINATIVE_COVERAGE <= min(in_coverage), (
-        f"the coverage floor {MIN_DISCRIMINATIVE_COVERAGE} is outside the gap the golden set shows "
-        f"(out-of-scope peaks at {max(out_coverage):.4f}, in-scope bottoms out at {min(in_coverage):.4f})"
+    assert MIN_DISCRIMINATIVE_COVERAGE <= min(in_coverage), (
+        f"the coverage floor {MIN_DISCRIMINATIVE_COVERAGE} sits above the weakest in-scope question "
+        f"({min(in_coverage):.4f}, from {[row[0] for row in in_scope if row[2] == min(in_coverage)]}), "
+        "so it refuses a golden question the corpus does answer"
+    )
+
+    # Each floor has to be decisive on its own: some out-of-scope question must clear the OTHER floor and
+    # fail this one. Where every refusal is short of both, deleting one clause from `answerable` changes no
+    # verdict anywhere — the door cannot see the constant — which is how probe arm W5 survived at `be9e392`.
+    coverage_only = [row[0] for row in out_of_scope if row[1] >= MIN_DISCRIMINATIVE_MATCHES and row[2] < MIN_DISCRIMINATIVE_COVERAGE]
+    assert coverage_only, (
+        f"no out-of-scope question fails the coverage floor {MIN_DISCRIMINATIVE_COVERAGE} alone "
+        f"(measured {[(row[0], row[1], round(row[2], 4)) for row in out_of_scope]}); while every refusal is also "
+        f"short of {MIN_DISCRIMINATIVE_MATCHES} matched rare terms, the coverage clause is unobservable at the door"
+    )
+    matches_only = [row[0] for row in out_of_scope if row[1] < MIN_DISCRIMINATIVE_MATCHES and row[2] >= MIN_DISCRIMINATIVE_COVERAGE]
+    assert matches_only, (
+        f"no out-of-scope question fails the match floor {MIN_DISCRIMINATIVE_MATCHES} alone "
+        f"(measured {[(row[0], row[1], round(row[2], 4)) for row in out_of_scope]}); while every refusal is also "
+        f"under coverage {MIN_DISCRIMINATIVE_COVERAGE}, the match clause is unobservable at the door"
     )
 
 
