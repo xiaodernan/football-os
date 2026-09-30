@@ -110,16 +110,17 @@ def _email_of(client: TestClient) -> str:
 
 
 def _detail(response: Any) -> dict[str, Any]:
-    """A service refusal. The framework's own 422 arrives under `error` instead — see `_validation`."""
+    """A service refusal, printed at the one place every refusal is printed: `detail`."""
     body = response.json()
     assert "detail" in body, body
     return dict(body["detail"])
 
 
 def _validation(response: Any) -> dict[str, Any]:
+    """A schema refusal. Same `detail` shape as a service one; only the code differs (§51's one-shape rule)."""
     body = response.json()
-    assert "error" in body, body
-    return dict(body["error"])
+    assert "detail" in body, body
+    return dict(body["detail"])
 
 
 def _opened(client: TestClient, name: str, **body: Any) -> dict[str, Any]:

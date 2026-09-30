@@ -655,9 +655,9 @@ class TestReportRoute:
     def test_a_player_field_the_schema_rejects_never_reaches_the_pool(self, auth_client: TestClient) -> None:
         response = auth_client.post("/api/v1/scout/report", json={"player": "x" * 200})
         assert response.status_code == 422
-        error = response.json()["error"]
-        assert error["code"] == "validation_error"
-        assert any("player" in str(item.get("loc", "")) for item in error["details"])
+        detail = response.json()["detail"]
+        assert detail["code"] == "validation_error"
+        assert any("player" in str(item.get("loc", "")) for item in detail["details"])
 
     def test_a_foreign_career_is_a_404_that_never_names_its_owner(self, auth_client: TestClient, world: dict[str, Any]) -> None:
         foreign = _career_slug(world)

@@ -40,9 +40,10 @@ would be the unevidenced claim the spec forbids.
 * **422 `unknown_role`** — the word is not in the role catalogue, so the response prints `roles` (the fifteen
   board codes this project actually holds). This is a refusal about *vocabulary*, and the vocabulary is ours to
   correct, so it comes back with the alternatives.
-* **422 `validation_error`** — the house envelope, for a request body that never reached the service: an empty
-  or 200-character `player`, a `round_index` outside `0..380`. A domain refusal keeps a flat `detail`; a
-  schema refusal is wrapped in `error.code`, which is why the two are tested separately.
+* **422 `validation_error`** — the house answer, for a request body that never reached the service: an empty
+  or 200-character `player`, a `round_index` outside `0..380`. It prints at the same `detail.code` as a domain
+  refusal — one shape, so the page's one reader serves both — and the list under `detail.details` says which
+  field broke which rule while repeating none of the values that failed it.
 
 The player is looked up **before** the role. A wrong slug and a wrong role in one request is a question about
 the world and a question about our vocabulary at once, and the world answer is the one that does not change

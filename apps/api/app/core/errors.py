@@ -1,4 +1,11 @@
-"""Uniform error envelope + handlers (spec §74): stack traces never reach clients."""
+"""Uniform error *answer* + handlers (spec §74): stack traces never reach clients, and neither does a second shape.
+
+One shape, one place: every refusal this API answers — a door's `HTTPException(…, detail={"code", …})`, a
+service's `ClubRefusal.to_dict()`, or one of the four handlers below — puts its code at `detail.code`. The
+handlers used to wrap theirs at the top level as `{"error": …}`, which is a shape no client of this project
+reads: `normalizeError` in `apps/web/lib/api.ts` looks for `payload.detail`, and without it the user got the
+fallback string "Request failed" while the API had already produced the field-and-rule list behind it.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +14,7 @@ import logging
 from collections.abc import Iterable
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -37,33 +44,39 @@ def _rejected(details: Iterable[Any]) -> list[dict[str, Any]]:
     return [{"type": item.get("type"), "loc": list(item.get("loc") or []), "msg": item.get("msg")} for item in details]
 
 
-def _envelope(code: str, message: str, details: Any = None) -> dict[str, Any]:
-    body: dict[str, Any] = {"error": {"code": code, "message": message}}
+def _answer(code: str, message: str, details: Any = None) -> dict[str, Any]:
+    """The one body shape a refusal has project-wide: the code sits at `detail.code`, where every door puts it.
+
+    §51's doors all answer `{"detail": {"code", "message", …}}`. The four handlers below answered
+    `{"error": {…}}` — a second shape for the same kind of answer — and the product's only client reads the
+    first one: `normalizeError` in `apps/web/lib/api.ts` takes `payload.detail` when the key is present and
+    otherwise falls back to the whole payload, so a schema refusal arrived as `code: "error"`,
+    `message: "Request failed"` with the field list dropped. That drop is not cosmetic: `_rejected` exists to
+    say *which field broke which rule* while never echoing the value that failed (§40's minors' data promise),
+    and the page that renders `result.error.details` was receiving nothing. Wrapping here rather than at each
+    handler is what makes the shape impossible to half-apply.
+    """
+    body: dict[str, Any] = {"code": code, "message": message}
     if details is not None:
-        body["error"]["details"] = _serialisable(details)
-    return body
-
-
-class AppError(HTTPException):
-    def __init__(self, code: str, message: str, status_code: int = status.HTTP_400_BAD_REQUEST, details: Any = None) -> None:
-        super().__init__(status_code=status_code, detail=_envelope(code, message, details))
+        body["details"] = _serialisable(details)
+    return {"detail": body}
 
 
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def _validation(_request: Request, exc: RequestValidationError) -> JSONResponse:
-        return JSONResponse(_envelope("validation_error", "Request validation failed", _rejected(exc.errors())), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return JSONResponse(_answer("validation_error", "Request validation failed", _rejected(exc.errors())), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     @app.exception_handler(ValidationError)
     async def _pydantic(_request: Request, exc: ValidationError) -> JSONResponse:
-        return JSONResponse(_envelope("validation_error", "Request validation failed", _rejected(exc.errors())), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return JSONResponse(_answer("validation_error", "Request validation failed", _rejected(exc.errors())), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     @app.exception_handler(IntegrityError)
     async def _integrity(_request: Request, exc: IntegrityError) -> JSONResponse:
         logger.warning("integrity_error %s", type(exc.orig).__name__)
-        return JSONResponse(_envelope("conflict", "That record conflicts with existing data"), status_code=status.HTTP_409_CONFLICT)
+        return JSONResponse(_answer("conflict", "That record conflicts with existing data"), status_code=status.HTTP_409_CONFLICT)
 
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("unhandled_error path=%s", request.url.path)
-        return JSONResponse(_envelope("internal_error", "Unexpected server error"), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return JSONResponse(_answer("internal_error", "Unexpected server error"), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

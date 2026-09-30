@@ -36,7 +36,7 @@ def test_weak_password_and_missing_consent_are_rejected(client) -> None:  # type
     assert short.status_code == 422
     no_consent = client.post("/api/v1/auth/register", json={"email": "nc@example.test", "password": "strong-pass-1234", "display_name": "NC", "accepts_data_policy": False})
     assert no_consent.status_code == 422
-    assert no_consent.json()["error"]["code"] == "validation_error"
+    assert no_consent.json()["detail"]["code"] == "validation_error"
 
 
 def test_routes_require_authentication(client) -> None:  # type: ignore[no-untyped-def]

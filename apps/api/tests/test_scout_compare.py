@@ -497,12 +497,14 @@ class TestComparisonRoute:
         assert response.json()["detail"]["code"] == "no_such_player"
 
     @pytest.mark.parametrize("payload", [{"left": "only-one"}, {"right": "only-one"}, {}, {"left": "", "right": "x"}])
-    def test_a_request_that_is_not_a_pair_is_the_house_validation_envelope(self, auth_client: TestClient, payload: dict[str, str]) -> None:
+    def test_a_request_that_is_not_a_pair_is_the_house_validation_answer(self, auth_client: TestClient, payload: dict[str, str]) -> None:
         response = auth_client.post("/api/v1/scout/compare", json=payload)
         assert response.status_code == 422
-        error = response.json()["error"]
-        assert error["code"] == "validation_error"
-        assert error["message"] == "Request validation failed"
+        body = response.json()
+        assert "error" not in body, f"a schema refusal must print where a service one prints: {body}"
+        detail = body["detail"]
+        assert detail["code"] == "validation_error"
+        assert detail["message"] == "Request validation failed"
 
     def test_rules_publishes_the_dimension_list_it_answers_with(self, auth_client: TestClient, world: dict[str, Any]) -> None:
         body = auth_client.get("/api/v1/scout/rules").json()

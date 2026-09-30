@@ -64,7 +64,7 @@ missing it, and any rate for a side with no stored minutes is `unknown`. `_per_9
 |---|---|---|
 | `{"left": "not-a-player", "right": ...}` | `404` `{"code":"no_such_player", ...,"players_in_pool":N}` | the row genuinely is not in the pool; the count beside it tells the caller whether the pool itself is empty |
 | `{"left": x, "right": x}` (same row, by slug or by id) | `422` `{"code":"same_player", ...}` | every measure would print an `even` line, which is a payload that looks measured and says nothing |
-| `{"left": 12}` (missing field, or an over-long string) | `422` house envelope `{"error":{"code":"validation_error",...}}` | the request body itself was not well-formed, which is a different layer from a domain refusal |
+| `{"left": 12}` (missing field, or an over-long string) | `422` house answer `{"detail":{"code":"validation_error",…}}` | the request body itself was not well-formed, which is a different layer from a domain refusal; since the one-shape fix it prints at the same address as one |
 | no account | `401` | the route reads the stored player table, so it sits behind the same wall as §23's search and §24's report |
 
 A pair can be given by slug or by id, and both are resolved against the **same pool list** the search built —
