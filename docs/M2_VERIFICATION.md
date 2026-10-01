@@ -309,9 +309,9 @@ bytes, `collected=2` and both case names asserted from junit every arm, plane re
 
 Module run on this landing: `tests/test_knowledge_rag.py` = **26 collected / 0 failures / 0 errors /
 0 skipped** on per-run SQLite in 36.831 s and the same 26/0/0/0 on the PostgreSQL plane in 98.647 s, rc=0 on
-both; `ruff check` clean. Still owed, and named so it does not quietly close: this witness ran on the SQLite
-plane only, so the pgvector leg's own `leg_limit` is unprobed — an arm that widens it must be judged on a
-PostgreSQL plane.
+both; `ruff check` clean. Owed when this section was written, and named so it could not quietly close: the
+witness ran on the SQLite plane only, so the pgvector leg's own `leg_limit` was unprobed — an arm that widens
+it had to be judged on a PostgreSQL plane. §2.3d is that arm, and it went red.
 
 The whole-suite legs over `496cdbd` have since been measured, on a detached worktree of that commit
 (`.scratch/wt_rag74`, `app.__file__` asserted inside it before either leg), prediction written first as
@@ -454,6 +454,78 @@ Reproduce:
 cd apps/api
 python -m pytest tests/test_knowledge_rag.py -k "floors_sit_inside or eval_gates_pass" -q --junitxml=…
 python -m evals.run_rag_eval
+```
+
+### 2.3d The pgvector leg's window, probed on the plane that actually uses it (measured 2026-10-01)
+
+§2.3b closed with one clause of its own witness left unpaid: the six arms ran on a SQLite plane, so they
+proved the *fallback* leg's width and said nothing about the leg that gets its window from SQL. This is that
+arm. `retrieval._semantic_ranking`'s pgvector branch reads
+`apps/api/app/services/knowledge/retrieval.py:248`:
+
+```
+params["leg_limit"] = max(top_k * 4, 20)          # -> 40 ids at top_k=5
+```
+
+and the query takes that many rows by cosine distance from *all* 138 chunks before the caller intersects the
+result with `candidate_ids`.
+
+Prediction, written into `.scratch/pg_leglimit_arm.py` before the first arm ran: **SURVIVES** — 0 red. The
+reasoning recorded there was "widening a candidate pool can only add rows, and the shipped floors are lower
+bounds on accuracy figures, so no case should notice". That prediction is falsified, and chasing it is the
+point of this section: it was written from a general intuition about pools instead of from the mechanism
+§2.3b — the very section that owed the arm — had already published.
+
+Two arms on a `git archive HEAD` plane (`674df64`, extracted to `.scratch/plane_pgarm_041638`; the plane's
+own `app.services.knowledge.retrieval.__file__` was asserted before either run), engine
+`FOOTBALL_OS_TEST_DATABASE_URL` → the container at `127.0.0.1:54321`, per-run database created and dropped by
+`tests/conftest.py`. Each arm
+re-bases `retrieval.py` from HEAD's pristine bytes, asserts exactly one textual hit for the mutation, and
+compares the file byte-for-byte with those pristine bytes after each restore. Artifact:
+`.scratch/pg_leglimit_arm.out` plus one junit per arm.
+
+| arm | change | `tests/test_knowledge_rag.py` | rc |
+| --- | --- | --- | --- |
+| control | none | 26 collected / 0 failures / 0 errors / 0 skipped (junit 31.670 s) | 0 |
+| W1 | `leg_limit = max(top_k * 4, 20)` → `10_000` | 26 collected / **1 failure** / 0 / 0 (junit 27.262 s) | 1 |
+
+The one red is `tests.test_knowledge_rag.test_rag_eval_gates_pass_on_this_database`, failing at its
+`assert report.passed()` (`tests/test_knowledge_rag.py:218`) with two entries in `report.failures`:
+
+```
+when-to-press: no acceptable document in top 5 — got ['squad-height-and-territory',
+  'pressing-evolution-notes', 'squad-height-and-territory', 'squad-height-and-territory',
+  'squad-height-and-territory']
+metric hybrid_delta=-0.0556 is below the 0.0 gate
+```
+
+and the report the case was holding: `backend='hybrid-pgvector'`, `scanned=138`, `documents=18`,
+`chunks=138`, `recall_at_k=0.9444…`. So the leg really was the pgvector one, and `10_000` is a real widening
+rather than a no-op: the window stops cutting at all on this corpus (138 < 10_000), which hands RRF **138**
+semantic ids instead of 40.
+
+Read together with §2.2 and §2.3b, the numbers are the same failure from the opposite side. There, the
+*unwindowed* fallback leg on SQLite printed `recall_at_k 0.9444` / `hybrid_delta -0.0556` and the document
+list at line 113 above; here, unwindowing the *SQL* leg prints `recall_at_k=0.9444`,
+`hybrid_delta=-0.0556` and the same five documents in the same order. Two different engines, two different
+legs, one signature: what decides the verdict is the **population** each leg hands the fusion, not which
+engine computed the ranks. The tail is not extra information; it is competition for the same five slots, and
+§2.3b's repair (match the two legs' widths) is pinned from either side, not only the side that was broken.
+
+So the debt is closed as *pinned*, not as *unprobed*: `leg_limit` is load-bearing, the width is watched on
+both planes by one case name, and the hole §2.3b refused to let quietly close is the one that just paid for
+itself. Nothing in production changed here — this section is a measurement, adds no case and no line, so the
+whole-suite figures stand where they were: §2.3c's 1363 over `ad7b6d7`, and the §74 record's
+**1373 / 1 failure (the known portfolio FK pin) / 0 errors / 1 skip on each engine** over `2d3673e`;
+`tests/test_knowledge_rag.py` itself stays at 26 collected.
+
+Reproduce:
+
+```
+cd apps/api
+python -m pytest tests/test_knowledge_rag.py -q --junitxml=…      # per-run SQLite
+FOOTBALL_OS_TEST_DATABASE_URL=postgresql+psycopg2://football:football@127.0.0.1:54321/football_os_pytest \
+  python -m pytest tests/test_knowledge_rag.py -q --junitxml=…    # the pgvector leg
 ```
 
 ### 2.4 Unit / integration / API tests, dual database

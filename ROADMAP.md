@@ -512,3 +512,12 @@ Milestones do not own these; every public route must satisfy them as it lands.
   rewrites that file: if `## 9.` ever disappears from it, the record is not lost, it is `7aa6e91`'s,
   readable with `git show 7aa6e91:docs/SECURITY_AUTHORIZATION_VERIFICATION.md`, and the repair is to append
   it back after whichever section landed beside it. Both are meant to survive; number them by order.
+
+- [x] §2.3d of the M2 record: the pgvector leg's `leg_limit`, which §2.3b owed because its six arms all ran on a
+  SQLite plane, probed on a PostgreSQL plane (`git archive 674df64` → `.scratch/plane_pgarm_041638`). Two arms:
+  control 26 collected / 0 red, and `leg_limit = 10_000` → **1 red**, `test_rag_eval_gates_pass_on_this_database`,
+  with `recall_at_k=0.9444` / `hybrid_delta=-0.0556` and the same five documents §2.2 printed when the *fallback*
+  leg was unwindowed. My written-ahead prediction was a survivor and is falsified — §2.3b had already published the
+  mechanism (the tail competes for the same five slots) and I predicted from "widening only adds rows" instead. The
+  finding is that the window is load-bearing on **both** planes, so the width is now pinned by one case name on
+  each engine. No production line changed; `docs/M2_VERIFICATION.md` §2.3d.
