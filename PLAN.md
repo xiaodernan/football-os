@@ -7,7 +7,23 @@ every item names the files it touches, the gate it must pass, and the thing that
 Rule inherited from spec §96 and this project's own practice: **an item is done when its claim is measured, not
 when its code exists.** A number in a document that no command reproduces is not evidence.
 
-Last updated 2026-09-30.
+Last updated 2026-10-01.
+
+---
+
+## Done, and what it cost
+
+| Item | Landed | Evidence |
+| --- | --- | --- |
+| **0. one gate, not three** | ✅ 2026-09-30 | `scripts/check.sh` and CI both run `python -m ruff check` with no path arguments. Proven by planting an unused import in `evals/`: invisible to the old target, caught by the new one, and the script exits 1. |
+| **1. §13's 3D pitch** | ✅ 2026-09-30 | `components/pitch.tsx` projects the board's own metres isometrically; `237/237` walk checks on a production build, with a check that recomputes every dot from its metres and another that holds the projected lawn inside its `viewBox`. `docs/M4_WEB_VERIFICATION.md` §8. |
+| **2a. §81's `locales` claim** | ✅ 2026-10-01 | `tests/test_locale_claims.py` binds `locales` to the catalogues in both directions. Found that `zh.json`/`zh-TW.json` are 278/278 copies of English, so the field stays `["en"]` — and now cannot be moved without a translation or left unmoved with one. |
+| **— migration `2e197f085070`** | ✅ 2026-09-30 | Not on the plan; found by trying to run the SQLite leg it broke. Unadjusted autogenerate, PostgreSQL-only DDL, a `downgrade()` that could not run anywhere, and each new column indexed twice. |
+
+**The pattern worth naming.** Three of the four items above were *claims that had drifted from their evidence*,
+not missing features: a gate three targets wide, a `locales` field nobody checked, a migration that had never
+been run on the engine the docs tell you to use. The features in this project are in good shape. The documents
+and the fields are where the work is.
 
 ---
 
@@ -74,23 +90,39 @@ underlying metres unchanged, so the 3D view cannot quietly become a second sourc
 
 ---
 
-## Item 2 — §81 i18n: land the catalogues, then switch the field
+## Item 2a — §81 i18n: the claim, before the translation
 
-**Why.** The cross-cutting gate says the UI is English-only and `GET /capabilities` reports
-`locales: ["en"]` with `locales_planned` beside it. That is honest, and it is also unfinished work the spec asks
-for.
+**Why.** The cross-cutting gate says the UI is English-only and `GET /capabilities` reports `locales: ["en"]` with
+`locales_planned` beside it. That is honest, and it is also the only field in the project that nothing checked.
 
-**Do.** Land `messages/{en,zh,zh-TW}.json` covering the shell — navigation, page titles, buttons, the empty and
-error sentences — and a loader that resolves the active locale from the same place `/settings` already stores
-preferences. Switch `locales` in `/capabilities` **only** for the locales that are actually complete, and keep
-`locales_planned` for the rest. A half-translated page is worse than an English one.
+**Done 2026-10-01.** The catalogues exist with the full key set; `tests/test_locale_claims.py` now binds `locales`
+to them in both directions, so the field cannot be over-claimed or left stale. See the table above.
 
-**Evidence.** `/capabilities`' `locales` equals the set of catalogues whose keys are complete, asserted against
-the catalogues themselves rather than a hand-written list; the walk switches locale and re-reads a page, checking
-that the switched strings are the catalogue's, not the fallback's.
+**What it found.** The catalogues are copies, so the honest answer stays `["en"]` and the switch is now a
+mechanism rather than a note to a future reader. The translating itself is item 2b.
 
 **Files.** `apps/web/messages/*.json`, `apps/web/lib/i18n.ts`, `apps/web/app/settings/**`,
 `apps/api/app/api/v1/meta.py`.
+
+---
+
+## Item 2b — §81's actual translations
+
+**Why.** Item 2a bound the claim; the work the claim is about is not done. `messages/zh.json` and
+`messages/zh-TW.json` are copies of English, and the UI still renders literals on most pages rather than reading
+the catalogues at all.
+
+**Do.** Two separable halves, in this order. First, finish wiring the pages to the catalogues, so a translated
+value would actually appear — a catalogue nothing reads is a translation that ships to nobody. Then translate.
+Simplified Chinese first (the locale the response-language rule of this project's own tooling implies is most
+likely to be read), then `zh-TW`, which must be written as Traditional Chinese and not derived by character
+conversion.
+
+**Evidence.** The `locales` assertion from 2a moves from `["en"]` to including a translated locale — which is the
+assertion doing its job — plus a walk check that switches locale and reads a page, asserting the string it finds
+is the catalogue's and not the fallback's.
+
+**Watch for.** `apps/web/messages/README.md` is the file a translator will open first. Keep it true.
 
 ---
 
