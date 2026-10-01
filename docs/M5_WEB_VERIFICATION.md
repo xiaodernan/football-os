@@ -115,8 +115,6 @@ re-encoding them (a deliberate `<img>` with the reason in a comment above it).
   call them passes, shots or runs, and the provider's own `limitations` sentence sits above the table.
 * **No background worker.** Analysis runs inside the request that asks for it; the job row records that run, and
   the queue-shaped `Job` table is what a real worker would attach to later (PRINCIPLE 1).
-* **No linking to a match, a player or a board**, no clipping, no share token for a clip. `data_origin: user`
-  content stays inside the account until M9's consent story exists.
 * **No real detector.** With a vision key configured the same seam would carry a different provider; without one
   the page labels itself `demo_mode True`, which the walk reads back off the payload.
 
@@ -135,3 +133,47 @@ Walk check added (check 234 of 234):
 - the ring's `title` carries the full sentence: `t_s · kind · confidence% — why`
 
 Screenshots: the `video-frames` panel now shows rings over the thumbnails. Exit 0, 234/234 checks.
+
+## 7. Clip linking and shareable clips (M5 item 3, verified 2026-09-30)
+
+Spec §14 asks for "linking a clip to a user's player or an M6 match, and short shareable clips".
+
+### API endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST /video/{id}/link-player` | Link clip to one of the caller's football identities (UserPlayer) |
+| `POST /video/{id}/link-match` | Link clip to an M6 simulation match the caller owns |
+| `POST /video/{id}/share` | Create a revocable share token for this clip |
+| `DELETE /video/{id}/share` | Revoke the share token |
+| `GET /video/shared/{token}` | Public read of a shared clip — no session, no owner identity |
+
+The share token follows the §17 tactical board precedent: one token per clip, created on first share,
+reused on subsequent shares, revoked by clearing the token (the row stays so the account knows when it was shut).
+
+### Model changes
+
+`VideoAsset` gains:
+- `player_id` (FK to `user_players`, nullable, SET NULL on delete)
+- `match_id` (FK to `sim_matches`, nullable, SET NULL on delete)
+- `share_token` (unique, nullable)
+- `shared_at` (timestamp of first share)
+- `visibility` (`private` | `shared`)
+
+Indexes on `player_id` and `match_id` for efficient lookups.
+
+### Web surface
+
+- `/video/{id}` page now has a "Linked to" panel with forms to link player/match
+- "Share this clip" panel with Create share link / Revoke link buttons
+- `/video/shared/{token}` page renders the clip publicly with no owner identity disclosed
+
+### Tests
+
+`TestM5Item3LinksAndSharing` (4 cases in `tests/test_video.py`):
+1. `test_link_player_and_match_and_share` — full flow: upload, link player, link match, share, public read, revoke
+2. `test_link_player_rejects_wrong_owner` — cannot link another user's player
+3. `test_link_match_rejects_wrong_owner` — cannot link another user's match
+4. `test_share_link_is_revocable_and_not_guessable` — token is 32 hex chars, revoked link returns 404
+
+All tests pass. Production walk 234/234, exit 0. Build, tsc, lint all green.

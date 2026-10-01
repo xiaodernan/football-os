@@ -202,7 +202,14 @@ Still open in M5:
    measurement sentence, 234/234 green.
 2. [ ] event semantics (a real vision model or hand-labelled data) — mapping pixel movement to passes,
    shots or presses would be a claim this build cannot support
-3. [ ] linking a clip to a user's player or an M6 match, and short shareable clips
+3. [x] linking a clip to a user's player or an M6 match, and short shareable clips — verified 2026-09-30:
+   - POST /video/{id}/link-player — link to caller's football identity (UserPlayer)
+   - POST /video/{id}/link-match — link to caller's M6 simulation match
+   - POST /video/{id}/share + DELETE /video/{id}/share + GET /video/shared/{token} — revocable share
+     token (§17 pattern), public read without session or owner identity
+   - VideoAsset model gains player_id, match_id, share_token, shared_at, visibility
+   - tests/test_video.py: TestM5Item3LinksAndSharing (4 cases) all pass
+   - walk still 234/234, exit 0
 
 Verification harness to extend: `pytest` on both databases, `python -m evals.run_rag_eval`,
 `scripts/export_openapi.py`, `apps/web/scripts/visual-qa.mjs`. `docs/api/openapi.json` remains the
