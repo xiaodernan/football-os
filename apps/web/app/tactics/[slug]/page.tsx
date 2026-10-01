@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Pitch } from "@/components/pitch";
+import { ISO_FORMULA, Pitch, Pitch3D } from "@/components/pitch";
 import { PhasePlayer } from "@/components/PhasePlayer";
 import { BandLegend, ChangeNav, MetricTable, Verdicts } from "@/components/tactics";
 import { Meter, Panel } from "@/components/ui";
@@ -212,6 +212,33 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
 
       <Panel eyebrow="Frames between are interpolation" title="Play the phase change">
         <PhasePlayer inPhase={system.phase_in} outPhase={system.phase_out} transform={system.transform_note} />
+      </Panel>
+
+      {/* §13 asks for 2D and 3D. A `<details>` rather than a toggle button: the view is a second way of reading
+          numbers that are already on the page, so it needs no client state to open, and it stays in the
+          document for a reader who has no JavaScript. */}
+      <Panel eyebrow="§13's third view — the same metres, projected" title="The board in 3D">
+        <details className="stack-sm" data-testid="pitch-3d">
+          <summary>Show the isometric projection of the in-possession board</summary>
+          <div className="stack-sm" style={{ marginTop: "0.75rem" }}>
+            <Pitch3D slots={system.phase_in} title={`${system.name} in possession, projected isometrically`} />
+            <p className="muted mono" style={{ fontSize: "0.82rem" }} data-iso-formula={ISO_FORMULA}>
+              {ISO_FORMULA}
+            </p>
+            <p className="muted" style={{ fontSize: "0.86rem" }}>
+              Every dot above went through that pair of lines, from the same <span className="mono">x</span>/<span className="mono">y</span> metres the
+              in-possession board uses — the projection is arithmetic over the board&apos;s own numbers, not a second set of coordinates kept in
+              step by hand. Each marker carries the metres it was projected from beside the point it landed on, so the two can be compared
+              without a screenshot. The lawn, the centre circle and the penalty arcs are the 2D frame&apos;s own Law 1 measurements, sampled in
+              metres and projected point by point — a circle on the grass is an ellipse here, and computing that ellipse separately would be a
+              second piece of maths to keep in step with the first.
+            </p>
+            <p className="muted world-section-note">
+              What this is not: a rendered scene. There is no camera, no depth buffer and no lighting, so nothing here can show you what a
+              player would see — it is the plan view bent into a diamond, which is what makes it checkable.
+            </p>
+          </div>
+        </details>
       </Panel>
 
       <div className="grid grid-2">

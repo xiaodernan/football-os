@@ -156,3 +156,52 @@ curl -s http://127.0.0.1:3211/sitemap.xml | grep -c "<loc>"   # 1034 (983 + the 
   not tuned away by rewording a question until it scores well enough to cite an off-topic passage.
 * **Not real football.** No club, competition or match is represented; the coordinates were written here. Every page prints
   the disclaimer, and `/tactics/{slug}` has no image assets to license.
+
+## 8. §13's 3D pitch — the same metres, projected (2026-09-30)
+
+Spec §13 asks for 2D **and** 3D, and until this the roadmap carried "3D pitch" as an open item while only the 2D
+board shipped. The 3D view is a **projection, not a renderer**: every point goes through two lines of arithmetic
+applied to the same `x`/`y` metres the 2D board reads, and there is no scene graph, no camera and no dependency.
+
+```
+gx = x + 34          gy = 105 − y
+screen_x = (gx − gy) × cos30 + 105 × cos30
+screen_y = (gx + gy) × sin30
+```
+
+It is drawn as SVG, as a `<details>` on `/tactics/{slug}` beside the two phase boards, so it opens without client
+state and stays in the document for a reader with no JavaScript. The lawn, the centre circle and the penalty arcs
+are the 2D frame's own Law 1 measurements, sampled in metres and projected point by point — a circle on the grass
+is an ellipse in this projection, and computing that ellipse separately would be a second piece of maths to keep in
+step with the first.
+
+**The claim, and how it was measured.** Not that it looks three-dimensional — that every dot is the page's own
+printed formula applied to that dot's own metres. Each marker publishes the metres it was projected from
+(`data-metres-x`/`-y`) beside the point it landed on (`data-iso-x`/`-y`), and the `<svg>` publishes the constants
+it used (`data-iso-constants`); the walk recomputes each point from the metres and the constants and compares. A
+drawing that had drifted as a whole could not pass by agreeing with itself.
+
+Run on the production build of 2026-09-30, `QA_BASE=http://127.0.0.1:3218`:
+
+```
+237/237 checks passed. Screenshots: 71 -> docs/screenshots/
+
+PASS  a system page draws both phases from the same eleven roles — 2 phase boards · 22 dots, plus the player's own eleven
+PASS  the 3D board is the printed projection of the 2D board's own metres, dot by dot — 11 markers · every dot recomputed from its metres
+PASS  and it shows the same eleven the 2D board shows, in the same order — 11 roles match the API's own phase_in
+PASS  the projected lawn fits inside its own viewBox, so no part of the pitch is silently cut off — corners inside viewBox -6 -8 162 100
+```
+
+**Two bugs the arithmetic caught, one of them before any build.** The first draft's own comment claimed the
+projected diamond ran to `y 69.5`; recomputing the four corners from the transform gives `(0, 52.5)`,
+`(58.89, 86.5)`, `(149.82, 34)`, `(90.93, 0)` — so the `viewBox` as written clipped the bottom 8.5 units off the
+pitch. A clipped `viewBox` is invisible when it is wrong: it still renders, still looks like a pitch, and silently
+loses the far touchline. That is why the fourth check above exists — it holds the four projected corners inside
+the `viewBox`, which is a property of the arithmetic rather than of the picture. The second was the board count:
+the pre-existing check asserted `2` boards and `22` dots, and a third figure on the page moved both; it now
+excludes the projected view and counts the two phase boards, while the 3D view is held by its own three checks.
+
+**What this does not claim.** There is no camera, no depth buffer and no lighting, so nothing here shows what a
+player would see — it is the plan view bent into a diamond, and the page says so in a sentence of its own. The
+3D view is a second *reading* of the board, not a second source of truth: the metres it projects are the ones the
+2D board already carries.

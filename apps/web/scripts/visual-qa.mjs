@@ -1021,13 +1021,16 @@ async function run() {
     const detailBody = await bodyText(page);
     const detailHead = await pageHead(tactic.path);
     const staticBoards = await page.evaluate(() => {
-      const boards = [...document.querySelectorAll('.pitch svg')];
+      // The page now carries a third figure — §13's isometric projection — and it is checked by its own three
+      // assertions below. This one is about the two phase boards, so it excludes the projected one rather than
+      // having its count silently moved by it.
+      const boards = [...document.querySelectorAll('.pitch svg')].filter((svg) => !svg.closest('[data-testid="pitch-3d"]'));
       return { svgs: boards.length, dots: boards.reduce((total, svg) => total + svg.querySelectorAll('.pitch-dot').length, 0) };
     });
     check(
       'a system page draws both phases from the same eleven roles',
       staticBoards.svgs === 2 && staticBoards.dots === 22 && (await page.evaluate(() => document.querySelectorAll('.table tbody tr').length)) >= 11 + 8 + 8,
-      `${staticBoards.svgs} static boards · ${staticBoards.dots} dots, plus the player's own eleven`,
+      `${staticBoards.svgs} phase boards · ${staticBoards.dots} dots, plus the player's own eleven`,
     );
     check(
       'every measurement on the page repeats the rule that produced it',
@@ -1044,6 +1047,84 @@ async function run() {
       'the authored transform is stated with its own numbers, not presented as two drawings',
       detailBody.includes(`${tacticDetail.block_depth} m`) && /same eleven players rescaled/iu.test(detailBody),
       detailBody.match(/out-of-possession board is the same[^.]*\./iu)?.[0]?.slice(0, 120) ?? 'no transform note',
+    );
+
+    // §13 asks for 2D **and** 3D, and the 3D view is a projection rather than a renderer — so the claim worth
+    // checking is not that it looks three-dimensional. It is that every dot is the page's own printed formula
+    // applied to that dot's own metres. The walk does the arithmetic itself from the constants the `<svg>`
+    // publishes, which is why a drawing that drifted as a whole cannot pass by agreeing with itself.
+    await page.evaluate(() => {
+      const panel = document.querySelector('[data-testid="pitch-3d"]');
+      if (panel) panel.open = true;
+    });
+    const projected = await page.evaluate(() => {
+      const svg = document.querySelector('[data-testid="pitch-3d"] svg[data-iso-constants]');
+      const formulaNode = document.querySelector('[data-testid="pitch-3d"] [data-iso-formula]');
+      if (!svg) return null;
+      return {
+        constants: svg.getAttribute('data-iso-constants') ?? '',
+        formula: formulaNode?.getAttribute('data-iso-formula') ?? '',
+        markers: [...svg.querySelectorAll('g[data-metres-x]')].map((node) => ({
+          isoX: Number(node.getAttribute('data-iso-x')),
+          isoY: Number(node.getAttribute('data-iso-y')),
+          metresX: Number(node.getAttribute('data-metres-x')),
+          metresY: Number(node.getAttribute('data-metres-y')),
+          role: node.getAttribute('data-role') ?? '',
+        })),
+      };
+    });
+    const [isoCos, isoSin, isoOffset] = String(projected?.constants ?? '').split(',').map(Number);
+    const recomputed = (projected?.markers ?? []).map((marker) => {
+      const gx = marker.metresX + 34;
+      const gy = 105 - marker.metresY;
+      return { x: (gx - gy) * isoCos + isoOffset, y: (gx + gy) * isoSin };
+    });
+    const drifted = (projected?.markers ?? []).find(
+      (marker, index) => Math.abs(marker.isoX - recomputed[index].x) > 0.02 || Math.abs(marker.isoY - recomputed[index].y) > 0.02,
+    );
+    check(
+      'the 3D board is the printed projection of the 2D board’s own metres, dot by dot',
+      (projected?.markers.length ?? 0) === tacticDetail.phase_in.length &&
+        projected?.markers.length > 0 &&
+        !drifted &&
+        /cos30/u.test(projected?.formula ?? '') &&
+        /sin30/u.test(projected?.formula ?? '') &&
+        Number.isFinite(isoCos) &&
+        Number.isFinite(isoSin) &&
+        Number.isFinite(isoOffset),
+      `${projected?.markers.length ?? 'no'} markers · every dot recomputed from its metres${drifted ? ` · ${drifted.role} drifted` : ''}`,
+    );
+    const sameRoles = (projected?.markers ?? []).map((marker) => marker.role).join(',') === tacticDetail.phase_in.map((slot) => slot.role).join(',');
+    check(
+      'and it shows the same eleven the 2D board shows, in the same order',
+      sameRoles,
+      sameRoles ? `${projected?.markers.length ?? 0} roles match the API's own phase_in` : `page ${(projected?.markers ?? []).map((m) => m.role).join(',')}`,
+    );
+    // The four corners of the lawn are the extremes of the drawing, so if they fit the viewBox nothing on the
+    // grass is cut off. Worth checking because it is invisible when it is wrong: a viewBox that clips the far
+    // touchline still renders, still looks like a pitch, and silently loses the bottom of it. This check exists
+    // because the first draft of this view had exactly that bug — its own comment said the diamond ran to
+    // y 69.5 when the arithmetic says 86.5 — and only recomputing the corners caught it.
+    const viewBox = (await page.evaluate(() => document.querySelector('[data-testid="pitch-3d"] svg[data-iso-constants]')?.getAttribute('viewBox') ?? ''))
+      .split(/\s+/u)
+      .map(Number);
+    const corners = [
+      [-34, 0],
+      [34, 0],
+      [34, 105],
+      [-34, 105],
+    ].map(([x, y]) => {
+      const gx = x + 34;
+      const gy = 105 - y;
+      return { x: (gx - gy) * isoCos + isoOffset, y: (gx + gy) * isoSin };
+    });
+    const fits =
+      viewBox.length === 4 &&
+      corners.every((corner) => corner.x >= viewBox[0] && corner.x <= viewBox[0] + viewBox[2] && corner.y >= viewBox[1] && corner.y <= viewBox[1] + viewBox[3]);
+    check(
+      'the projected lawn fits inside its own viewBox, so no part of the pitch is silently cut off',
+      fits,
+      fits ? `corners inside viewBox ${viewBox.join(' ')}` : `viewBox ${viewBox.join(' ')} clips ${JSON.stringify(corners.map((c) => [Number(c.x.toFixed(1)), Number(c.y.toFixed(1))]))}`,
     );
     const tacticGraph = detailHead.jsonLd.find((node) => node['@type'] === 'Article');
     check(
