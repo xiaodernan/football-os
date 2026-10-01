@@ -1027,6 +1027,11 @@ export type VideoAssetSummary = {
   created_at: string | null;
   data_origin: string;
   is_demo_data: boolean;
+  player_id: string | null;
+  match_id: string | null;
+  share_token: string | null;
+  shared_at: string | null;
+  visibility: string;
 };
 
 export type VideoList = {
@@ -1063,6 +1068,11 @@ export type VideoReport = {
     frame_interval_s: number;
     sha256: string;
     error: string | null;
+    player_id: string | null;
+    match_id: string | null;
+    share_token: string | null;
+    shared_at: string | null;
+    visibility: string;
   };
   job: { id: string; type: string; status: string; progress: number; error: string | null; result: Record<string, unknown> | null } | null;
   stages: VideoStage[];

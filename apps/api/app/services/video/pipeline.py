@@ -90,7 +90,7 @@ def _frames_dir(asset_id: str) -> Path:
     return path
 
 
-def store_upload(session: Session, *, user_id: str, filename: str, data: bytes, max_bytes: int | None = None) -> VideoAsset:
+def store_upload(session: Session, *, user_id: str, filename: str, data: bytes, max_bytes: int | None = None, title: str | None = None) -> VideoAsset:
     """Validate, size-check, hash and persist an upload, then read its container facts."""
     if not data:
         raise UploadRejection("the upload was empty")
@@ -111,7 +111,7 @@ def store_upload(session: Session, *, user_id: str, filename: str, data: bytes, 
         asset = VideoAsset(
             id=asset_id,
             owner_id=user_id,
-            title=(filename or "clip")[:160],
+            title=(title or filename or "clip")[:160],
             filename=filename[:240],
             storage_key=key,
             content_type=container,
@@ -130,7 +130,7 @@ def store_upload(session: Session, *, user_id: str, filename: str, data: bytes, 
     asset = VideoAsset(
         id=asset_id,
         owner_id=user_id,
-        title=(filename or "clip")[:160],
+        title=(title or filename or "clip")[:160],
         filename=filename[:240],
         storage_key=key,
         content_type=container,
@@ -328,6 +328,11 @@ def report_for(
             "data_origin": asset.data_origin,
             "is_demo_data": asset.is_demo_data,
             "error": asset.error,
+            "player_id": asset.player_id,
+            "match_id": asset.match_id,
+            "share_token": asset.share_token,
+            "shared_at": asset.shared_at.isoformat() if asset.shared_at else None,
+            "visibility": asset.visibility,
         },
         "job": None if job is None else {"id": job.id, "type": job.type, "status": job.status, "progress": job.progress, "error": job.error, "result": job.result},
         "stages": stage_rows,

@@ -162,6 +162,64 @@ export default async function VideoReportPage({ params }: Props) {
         </Panel>
       </div>
 
+      {/* M5 item 3: link to player/match and share controls */}
+      <div className="tac-boards">
+        <Panel eyebrow={asset.player_id || asset.match_id ? "linked" : "not linked"} title="Linked to">
+          <div className="stack-sm" style={{ gap: "0.5rem" }}>
+            {asset.player_id ? (
+              <p className="muted" style={{ fontSize: "0.86rem" }}>
+                <span className="chip mono">player</span> {asset.player_id}
+              </p>
+            ) : (
+              <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/link-player`} method="POST" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <input name="player_id" placeholder="player id (from My Football)" className="mono" style={{ minWidth: "180px" }} type="text" required />
+                <button className="btn btn--primary" type="submit">Link player</button>
+              </form>
+            )}
+            {asset.match_id ? (
+              <p className="muted" style={{ fontSize: "0.86rem" }}>
+                <span className="chip mono">match</span> {asset.match_id}
+              </p>
+            ) : (
+              <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/link-match`} method="POST" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <input name="match_id" placeholder="match id (from Challenges or Career)" className="mono" style={{ minWidth: "180px" }} type="text" required />
+                <button className="btn btn--primary" type="submit">Link match</button>
+              </form>
+            )}
+            <p className="muted world-section-note">
+              Linking a clip to your football identity or an M6 match lets the clip appear in those contexts
+              and enables richer reports. Both links are optional and can be changed later.
+            </p>
+          </div>
+        </Panel>
+
+        <Panel eyebrow={asset.visibility === "shared" ? "public link active" : "private"} title="Share this clip">
+          <div className="stack-sm" style={{ gap: "0.5rem" }}>
+            {asset.visibility === "shared" && asset.share_token ? (
+              <div className="row wrap" style={{ alignItems: "center", gap: "0.75rem" }}>
+                <Link className="chip mono" href={`/video/shared/${asset.share_token}`} target="_blank" rel="noopener">
+                  /video/shared/{asset.share_token.slice(0, 12)}…
+                </Link>
+                <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/share`} method="DELETE" style={{ display: "inline" }}>
+                  <button className="btn btn--warn" type="submit">Revoke link</button>
+                </form>
+                <span className="muted" style={{ fontSize: "0.84rem" }}>
+                  Created {asset.shared_at ? new Date(asset.shared_at).toLocaleString() : "unknown"}
+                </span>
+              </div>
+            ) : (
+              <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/share`} method="POST" style={{ display: "inline" }}>
+                <button className="btn btn--primary" type="submit">Create share link</button>
+              </form>
+            )}
+            <p className="muted world-section-note">
+              A share link is a revocable token (§17 pattern). It opens a public read of this clip with no
+              session required and no owner identity disclosed. Revoking clears the token; the clip stays private.
+            </p>
+          </div>
+        </Panel>
+      </div>
+
       {report.detections.length > 0 && (
         <Panel eyebrow={`${report.detections.length} events · ${asset.frame_interval_s.toFixed(2)} s between samples`} title="Detection timeline">
           <div className="stack-sm">
