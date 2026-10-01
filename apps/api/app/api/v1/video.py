@@ -12,6 +12,7 @@ queue and no worker, and nothing in the response claims otherwise (spec §47, PR
 from __future__ import annotations
 
 import re
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Final
 
@@ -23,7 +24,7 @@ from starlette.responses import StreamingResponse
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import current_user, limit
-from app.models import Job, User, VideoAsset, VideoDetection
+from app.models import Job, User, UserPlayer, VideoAsset, VideoDetection
 from app.services.video import pipeline
 from app.services.video.media import MediaToolMissing, to_png
 
@@ -128,7 +129,7 @@ async def upload_clip(
     data = await file.read()
     try:
         # One place decides both limits — the route does not re-check the size, so it cannot disagree.
-        asset = pipeline.store_upload(db, user_id=user.id, filename=file.filename or "clip", data=data)
+        asset = pipeline.store_upload(db, user_id=user.id, filename=file.filename or "clip", data=data, title=title)
     except pipeline.UploadTooLarge as error:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail={"code": "too_large", "message": str(error)}) from error
     except pipeline.UploadRejection as error:
@@ -275,6 +276,112 @@ def clip_jobs(ident: str, request: Request, db: Session = Depends(get_db), user:
         "total": len(relevant),
         "detections": int(db.scalar(select(func.count()).select_from(VideoDetection).where(VideoDetection.asset_id == asset.id)) or 0),
         "note": "Recorded during the request that asked for the work; there is no queue and no worker behind these rows.",
+    }
+
+
+@router.post("/{ident}/link-player")
+def link_player(
+    ident: str,
+    request: Request,
+    player_id: str = Query(..., min_length=1, max_length=40),
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Link this clip to one of the caller's football identities (spec §14, M5 item 3)."""
+    limit(request, 20, 60, scope="video_link_player")
+    asset = _one(db, user, ident)
+    player = db.scalar(select(UserPlayer).where(UserPlayer.id == player_id, UserPlayer.user_id == user.id))
+    if player is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "not_found", "message": "No such football identity for this account"})
+    asset.player_id = player_id
+    db.commit()
+    return {"id": asset.id, "player_id": asset.player_id, "message": "Clip linked to player"}
+
+
+@router.post("/{ident}/link-match")
+def link_match(
+    ident: str,
+    request: Request,
+    match_id: str = Query(..., min_length=1, max_length=40),
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Link this clip to an M6 simulation match (spec §14, M5 item 3)."""
+    limit(request, 20, 60, scope="video_link_match")
+    asset = _one(db, user, ident)
+    from app.models import SimulationMatch
+    match = db.scalar(select(SimulationMatch).where(SimulationMatch.id == match_id, SimulationMatch.owner_id == user.id))
+    if match is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "not_found", "message": "No such match for this account"})
+    asset.match_id = match_id
+    db.commit()
+    return {"id": asset.id, "match_id": asset.match_id, "message": "Clip linked to match"}
+
+
+@router.post("/{ident}/share")
+def share_clip(
+    ident: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Create a revocable share link for this clip (spec §17 precedent, M5 item 3)."""
+    import secrets
+    limit(request, 10, 60, scope="video_share")
+    asset = _one(db, user, ident)
+    if not asset.share_token:
+        asset.share_token = secrets.token_hex(16)
+        asset.shared_at = datetime.now(UTC)
+    asset.visibility = "shared"
+    db.commit()
+    return {
+        "id": asset.id,
+        "share_token": asset.share_token,
+        "share_url": f"/video/shared/{asset.share_token}",
+        "visibility": asset.visibility,
+    }
+
+
+@router.delete("/{ident}/share")
+def revoke_share(
+    ident: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Revoke the share link for this clip (spec §17 precedent)."""
+    limit(request, 10, 60, scope="video_share_revoke")
+    asset = _one(db, user, ident)
+    asset.share_token = None
+    asset.shared_at = None
+    asset.visibility = "private"
+    db.commit()
+    return {"id": asset.id, "visibility": asset.visibility, "share_url": None}
+
+
+@router.get("/shared/{token}")
+def read_shared_clip(
+    token: str,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Public read of a shared clip — no session, no owner identity (spec §17 precedent)."""
+    limit(request, 60, 60, scope="video_shared_read")
+    asset = db.scalar(select(VideoAsset).where(VideoAsset.share_token == token, VideoAsset.visibility == "shared"))
+    if asset is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "not_found", "message": "This link no longer points at a clip"})
+    # Public read: no owner identity, no account link
+    return {
+        "id": asset.id,
+        "title": asset.title,
+        "filename": asset.filename,
+        "duration_s": asset.duration_s,
+        "width": asset.width,
+        "height": asset.height,
+        "status": asset.status,
+        "frame_count": asset.frame_count,
+        "data_origin": asset.data_origin,
+        "is_demo_data": asset.is_demo_data,
     }
 
 

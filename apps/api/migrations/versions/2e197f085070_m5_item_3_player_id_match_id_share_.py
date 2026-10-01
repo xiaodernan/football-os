@@ -24,9 +24,8 @@ Two things were also wrong beyond the dialect:
 
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = '2e197f085070'
 down_revision = '0025'

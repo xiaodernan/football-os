@@ -12,6 +12,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -20,13 +21,28 @@ from sqlalchemy import func, select
 from app.core.config import settings
 from app.core.db import SessionLocal
 from app.main import app
-from app.models import Job, ModelCall, VideoAsset, VideoDetection
+from app.models import Job, ModelCall, Team, VideoAsset, VideoDetection
 from app.services.video.media import MediaToolMissing, extract_frames, frame_interval, probe, to_png
 from app.services.video.pipeline import UploadRejection, UploadTooLarge, detect_container, store_upload
 from app.services.video.vision import DemoVisionProvider, frame_stats, motion_between, read_ppm
+from app.services.world import sync_world
 
 API = "/api/v1/video"
 HAS_FFMPEG = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
+
+
+@pytest.fixture(scope="module")
+def world() -> dict[str, Any]:  # type: ignore[no-untyped-def]
+    """Seed the world and return a few teams for simulations."""
+    session = SessionLocal()
+    try:
+        result = sync_world(session)
+        assert result.ok, result.errors[:5]
+        teams = list(session.scalars(select(Team).order_by(Team.name).limit(4)).all())
+        session.close()
+        return {"home": teams[0], "away": teams[1], "spare": teams[2]}
+    finally:
+        session.close()
 
 
 def _clip_count(owner_id: str) -> int:
@@ -269,6 +285,7 @@ class TestPipelineAndOwnership:
         assert head.headers["content-length"] == "100"
         tail = auth_client.get(f"{API}/{asset_id}/file", headers={"range": "bytes=-1024"})
         assert tail.status_code == 206 and tail.content == raw[-1024:]
+        assert tail.headers["content-range"] == f"bytes {len(raw) - 1024}-{len(raw) - 1}/{len(raw)}"
         open_ended = auth_client.get(f"{API}/{asset_id}/file", headers={"range": f"bytes={len(raw) - 10}-"})
         assert open_ended.content == raw[-10:]
         middle = auth_client.get(f"{API}/{asset_id}/file", headers={"range": "bytes=50-149"})
@@ -341,6 +358,148 @@ class TestPipelineAndOwnership:
         assert providers["vision"] == "demo-pixel-stats"
         assert providers["storage"] == "local-fs"
         assert providers["demo_mode"] is True
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="ffmpeg/ffprobe not installed")
+class TestM5Item3LinksAndSharing:
+    """M5 item 3: link clip to player/match, revocable share links (§17 pattern)."""
+
+    def test_link_player_and_match_and_share(self, auth_client, clips, world) -> None:  # type: ignore[no-untyped-def]
+        # Upload a clip
+        report = upload(auth_client, clips["moving"], title="Link test").json()
+        asset_id = report["asset"]["id"]
+
+        # Create a user player
+        player_resp = auth_client.post("/api/v1/players", json={
+            "name": "Link Test Player",
+            "position": "CM",
+            "age": 22,
+            "level": "beginner",
+            "preferred_foot": "right",
+            "goal": "improve_passing",
+        })
+        assert player_resp.status_code == 201, player_resp.text
+        player_id = player_resp.json()["id"]
+
+        # Create a simulation match (need valid teams from the world)
+        team1 = world["home"].id
+        team2 = world["away"].id
+        match_resp = auth_client.post("/api/v1/simulate", json={
+            "home_team": team1,
+            "away_team": team2,
+            "minutes": 90,
+        })
+        assert match_resp.status_code == 201, match_resp.text
+        match_id = match_resp.json()["id"]
+
+        # Initially no links
+        detail = auth_client.get(f"{API}/{asset_id}").json()
+        assert detail["asset"]["player_id"] is None
+        assert detail["asset"]["match_id"] is None
+        assert detail["asset"]["visibility"] == "private"
+        assert detail["asset"]["share_token"] is None
+
+        # Link player
+        link_p = auth_client.post(f"{API}/{asset_id}/link-player", params={"player_id": player_id})
+        assert link_p.status_code == 200, link_p.text
+        assert link_p.json()["player_id"] == player_id
+
+        # Link match
+        link_m = auth_client.post(f"{API}/{asset_id}/link-match", params={"match_id": match_id})
+        assert link_m.status_code == 200, link_m.text
+        assert link_m.json()["match_id"] == match_id
+
+        # Verify links persisted
+        detail = auth_client.get(f"{API}/{asset_id}").json()
+        assert detail["asset"]["player_id"] == player_id
+        assert detail["asset"]["match_id"] == match_id
+
+        # Share the clip
+        share = auth_client.post(f"{API}/{asset_id}/share")
+        assert share.status_code == 200, share.text
+        share_data = share.json()
+        assert share_data["share_token"] is not None
+        assert share_data["visibility"] == "shared"
+        assert share_data["share_url"] == f"/video/shared/{share_data['share_token']}"
+        token = share_data["share_token"]
+
+        # Public read works without auth
+        with TestClient(app) as anon:
+            shared = anon.get(f"/api/v1/video/shared/{token}")
+            assert shared.status_code == 200, shared.text
+            shared_data = shared.json()
+            assert shared_data["id"] == asset_id
+            assert shared_data["title"] == "Link test"
+            # No owner identity in shared view
+            assert "owner" not in shared_data
+
+        # Revoke share
+        revoke = auth_client.delete(f"{API}/{asset_id}/share")
+        assert revoke.status_code == 200, revoke.text
+        assert revoke.json()["visibility"] == "private"
+        assert revoke.json()["share_url"] is None
+
+        # Shared link now 404
+        with TestClient(app) as anon:
+            assert anon.get(f"/api/v1/video/shared/{token}").status_code == 404
+
+    def test_link_player_rejects_wrong_owner(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
+        report = upload(auth_client, clips["moving"]).json()
+        asset_id = report["asset"]["id"]
+
+        # Create another user's player
+        with TestClient(app) as other:
+            other_reg = other.post("/api/v1/auth/register", json={"email": "other@test.test", "password": "strong-pass-1234", "display_name": "Other", "role": "coach", "accepts_data_policy": True})
+            other.headers.update({"Authorization": f"Bearer {other_reg.json()['access_token']}"})
+            other_player = other.post("/api/v1/players", json={"name": "Other Player", "position": "GK", "age": 20, "level": "beginner", "preferred_foot": "right", "goal": "improve_passing"}).json()
+            other_player_id = other_player["id"]
+
+        # Try to link other user's player - should fail with 404
+        link = auth_client.post(f"{API}/{asset_id}/link-player", params={"player_id": other_player_id})
+        assert link.status_code == 404, link.text
+        assert link.json()["detail"]["code"] == "not_found"
+
+    def test_link_match_rejects_wrong_owner(self, auth_client, clips, world) -> None:  # type: ignore[no-untyped-def]
+        report = upload(auth_client, clips["moving"]).json()
+        asset_id = report["asset"]["id"]
+
+        # Create another user's match
+        with TestClient(app) as other:
+            other_reg = other.post("/api/v1/auth/register", json={"email": "other2@test.test", "password": "strong-pass-1234", "display_name": "Other2", "role": "coach", "accepts_data_policy": True})
+            other.headers.update({"Authorization": f"Bearer {other_reg.json()['access_token']}"})
+            match_resp = other.post("/api/v1/simulate", json={
+                "home_team": world["home"].id,
+                "away_team": world["away"].id,
+                "minutes": 90,
+            })
+            other_match_id = match_resp.json()["id"]
+
+        link = auth_client.post(f"{API}/{asset_id}/link-match", params={"match_id": other_match_id})
+        assert link.status_code == 404, link.text
+        assert link.json()["detail"]["code"] == "not_found"
+
+    def test_share_link_is_revocable_and_not_guessable(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
+        report = upload(auth_client, clips["moving"]).json()
+        asset_id = report["asset"]["id"]
+
+        share = auth_client.post(f"{API}/{asset_id}/share").json()
+        token = share["share_token"]
+
+        # Token is 32 hex chars
+        assert len(token) == 32
+        assert all(c in "0123456789abcdef" for c in token)
+
+        # Public read works
+        with TestClient(app) as anon:
+            shared = anon.get(f"/api/v1/video/shared/{token}")
+            assert shared.status_code == 200
+
+        # Revoke
+        auth_client.delete(f"{API}/{report['asset']['id']}/share")
+
+        # Now 404
+        with TestClient(app) as anon:
+            assert anon.get(f"/api/v1/video/shared/{token}").status_code == 404
 
 
 def test_media_tool_missing_is_its_own_kind_of_failure() -> None:
