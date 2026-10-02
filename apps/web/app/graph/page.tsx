@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { Panel } from "@/components/ui";
 import { WorldHead, WorldUnavailable } from "@/components/world";
 import { absolute } from "@/lib/site";
-import { serverFetch } from "@/lib/server";
+import { currentUser, serverFetch } from "@/lib/server";
 import type { GraphRules } from "@/lib/types";
 
 import "../../styles/tactics.css";
@@ -30,7 +31,7 @@ function RulesPanel({ rules }: { rules: GraphRules }) {
 
         <div className="row wrap" style={{ gap: "0.5rem" }}>
           <Panel className="grow" title="Node Kinds" eyebrow={rules.node_kinds.length.toString()}>
-            <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
+            <ul className="stack-sm" data-testid="graph-kinds" style={{ margin: 0, paddingLeft: "1.1rem" }}>
               {rules.node_kinds.map((kind) => (
                 <li key={kind}>
                   <Link className="world-link" href={`/graph/nodes/${kind}`}>
@@ -42,7 +43,7 @@ function RulesPanel({ rules }: { rules: GraphRules }) {
           </Panel>
 
           <Panel className="grow" title="Edge Verbs" eyebrow={rules.edge_verbs.length.toString()}>
-            <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
+            <ul className="stack-sm" data-testid="graph-verbs" style={{ margin: 0, paddingLeft: "1.1rem" }}>
               {rules.edge_verbs.map((verb) => (
                 <li key={verb}>
                   <Link className="world-link" href={`/graph/nodes/player?verb=${verb}`}>
@@ -105,6 +106,9 @@ function RulesPanel({ rules }: { rules: GraphRules }) {
 }
 
 async function GraphPage() {
+  const user = await currentUser();
+  if (!user) redirect("/login?next=%2Fgraph");
+
   const rulesResult = await serverFetch<GraphRules>("/graph/rules");
   if (!rulesResult.ok) {
     return <WorldUnavailable detail={rulesResult.error.message} message="The graph rules door did not answer." title="Knowledge Graph" />;

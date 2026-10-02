@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { Panel } from "@/components/ui";
 import { JsonLd, WorldHead, WorldUnavailable } from "@/components/world";
 import { absolute } from "@/lib/site";
-import { serverFetch } from "@/lib/server";
+import { currentUser, serverFetch } from "@/lib/server";
 import type { GraphNode, GraphLink, GraphNeighborhood } from "@/lib/types";
 
 import "../../styles/tactics.css";
@@ -36,7 +36,7 @@ function EdgesPanel({ links, verb, direction }: { links: GraphLink[]; verb: stri
 
   return (
     <Panel title={`edges: ${links.length}`} eyebrow={`verb: ${verb || "all"} · direction: ${direction}`}>
-      <div className="world-tablewrap">
+      <div className="world-tablewrap" data-testid="graph-edges">
         <table className="table">
           <thead>
             <tr>
@@ -78,7 +78,7 @@ function NeighborhoodPanel({ data }: { data: GraphNeighborhood }) {
       <p className="muted" style={{ fontSize: "0.85rem" }}>
         Breadth-first walk capped at depth {data.depth}, max {data.node_count} nodes, {data.edge_count} edges.
       </p>
-      <div className="world-tablewrap">
+      <div className="world-tablewrap" data-testid="graph-neighborhood">
         <table className="table">
           <thead>
             <tr>
@@ -111,6 +111,9 @@ function NeighborhoodPanel({ data }: { data: GraphNeighborhood }) {
 
 export default async function GraphNodeDetailPage({ params }: { params: Promise<{ kind: string; slug: string }> }) {
   const { kind, slug } = await params;
+
+  const user = await currentUser();
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/graph/nodes/${kind}/${slug}`)}`);
 
   const [nodeResult, edgesResult, neighborhoodResult] = await Promise.all([
     serverFetch<{ node: GraphNode; verb: string; direction: string; edges: GraphLink[]; outgoing_count: number; incoming_count: number; verbs_here: string[] }>(`/graph/nodes/${encodeURIComponent(kind)}/${encodeURIComponent(slug)}`),
@@ -155,7 +158,7 @@ export default async function GraphNodeDetailPage({ params }: { params: Promise<
         <dl className="world-kv">
           <div className="world-kv__row"><dt>Kind</dt><dd className="mono">{kind}</dd></div>
           <div className="world-kv__row"><dt>Slug</dt><dd className="mono">{slug}</dd></div>
-          <div className="world-kv__row"><dt>Label</dt><dd className="mono">{nodeData.node.label}</dd></div>
+          <div className="world-kv__row"><dt>Label</dt><dd className="mono" data-testid="graph-node-label">{nodeData.node.label}</dd></div>
           <div className="world-kv__row"><dt>Path</dt><dd className="mono">{nodeData.node.path}</dd></div>
           <div className="world-kv__row"><dt>Data origin</dt><dd className="mono">{nodeData.node.data_origin}</dd></div>
           <div className="world-kv__row"><dt>Demo data</dt><dd className="mono">{String(nodeData.node.is_demo_data)}</dd></div>

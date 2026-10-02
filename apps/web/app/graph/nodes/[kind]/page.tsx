@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { Panel } from "@/components/ui";
 import { WorldHead, WorldUnavailable } from "@/components/world";
-import { serverFetch } from "@/lib/server";
+import { currentUser, serverFetch } from "@/lib/server";
 import type { GraphRules } from "@/lib/types";
 
 import "../../styles/tactics.css";
@@ -60,6 +60,9 @@ function NodeListing({ kind, rules }: { kind: string; rules: GraphRules }) {
 
 async function GraphNodesKindPage({ params }: { params: Promise<{ kind: string }> }) {
   const { kind } = await params;
+
+  const user = await currentUser();
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/graph/nodes/${kind}`)}`);
 
   const rulesResult = await serverFetch<GraphRules>("/graph/rules");
   if (!rulesResult.ok) {

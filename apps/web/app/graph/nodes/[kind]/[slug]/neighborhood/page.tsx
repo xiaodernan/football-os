@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { Panel } from "@/components/ui";
 import { JsonLd, WorldHead, WorldUnavailable } from "@/components/world";
-import { serverFetch } from "@/lib/server";
+import { currentUser, serverFetch } from "@/lib/server";
 import type { GraphNeighborhood } from "@/lib/types";
 
 import "../../styles/tactics.css";
@@ -35,6 +35,9 @@ function EdgeRow({ edge, idx }: { edge: { hop: number; from: string; to: string;
 
 export default async function GraphNeighborhoodPage({ params }: { params: Promise<{ kind: string; slug: string }> }) {
   const { kind, slug } = await params;
+
+  const user = await currentUser();
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/graph/nodes/${kind}/${slug}/neighborhood`)}`);
 
   const result = await serverFetch<GraphNeighborhood>(`/graph/nodes/${encodeURIComponent(kind)}/${encodeURIComponent(slug)}/neighborhood`);
   if (!result.ok) {

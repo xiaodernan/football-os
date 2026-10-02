@@ -2434,6 +2434,70 @@ async function run() {
       `robots rule ${/^Disallow:\s*\/challenges$/mu.test(robotsChallenges)} · sitemap mentions ${sitemapChallenges.includes('/challenges')}`,
     );
 
+    // 12i. Knowledge graph (§30): the projection on screen, held against its own doors. The rules
+    // door is public, but the pages sit behind the session like the other reader surfaces, so the
+    // walk reads the door first (it names the vocabulary) and then holds the pages to it.
+    const graphRules = await page.evaluate(async () => {
+      const response = await fetch('/api/v1/graph/rules', { credentials: 'same-origin' });
+      return { status: response.status, body: await response.json() };
+    });
+    check(
+      'the graph rules door publishes the vocabulary the page walks',
+      graphRules.status === 200 &&
+        Array.isArray(graphRules.body.node_kinds) &&
+        graphRules.body.node_kinds.includes('team') &&
+        graphRules.body.node_kinds.includes('player') &&
+        Array.isArray(graphRules.body.edge_verbs) &&
+        graphRules.body.edge_verbs.length > 0,
+      `HTTP ${graphRules.status} · kinds ${(graphRules.body.node_kinds ?? []).join(',')} · ${(
+        graphRules.body.edge_verbs ?? []
+      ).length} verbs`,
+    );
+    await open(page, '/graph');
+    await waitForText(page, 'Knowledge Graph');
+    const graphHead = await page.evaluate(
+      () => document.head.querySelector('meta[name="robots"]')?.content ?? '',
+    );
+    check(
+      'the graph surface stays out of the crawl the way the other gated surfaces do',
+      /noindex/iu.test(graphHead),
+      graphHead || 'no robots meta',
+    );
+    const graphShown = await page.evaluate(() => ({
+      kinds: [...document.querySelectorAll('[data-testid="graph-kinds"] li')].map((node) =>
+        (node.textContent ?? '').trim(),
+      ),
+      verbs: [...document.querySelectorAll('[data-testid="graph-verbs"] li')].map((node) =>
+        (node.textContent ?? '').trim(),
+      ),
+      ceilings: document.body.innerText.replace(/\s+/g, ' '),
+    }));
+    check(
+      "the graph page prints the door's own vocabulary and ceilings",
+      graphRules.body.node_kinds.every((kind) => graphShown.kinds.includes(kind)) &&
+        graphShown.ceilings.includes(`depth ≤ ${graphRules.body.max_depth}`) &&
+        graphShown.ceilings.includes(`edges ≤ ${graphRules.body.max_edges}`),
+      `${graphShown.kinds.length} kinds / ${graphShown.verbs.length} verbs on screen`,
+    );
+    const teamSlug = String(worldTeam.path).split('/').pop();
+    await open(page, `/graph/nodes/team/${teamSlug}`);
+    await waitForText(page, 'Label');
+    const graphNode = await page.evaluate(() => {
+      const label = document.querySelector('[data-testid="graph-node-label"]')?.textContent?.trim() ?? '';
+      const rows = [...document.querySelectorAll('[data-testid="graph-edges"] tbody tr')];
+      return {
+        label,
+        rows: rows.length,
+        evidenced: rows.filter((row) => /carrier:/u.test(row.textContent ?? '')).length,
+      };
+    });
+    check(
+      'a team node prints its label and every edge names the carrier row it was read from',
+      graphNode.label.length > 0 && graphNode.rows > 0 && graphNode.evidenced === graphNode.rows,
+      `label "${graphNode.label.slice(0, 48)}" · ${graphNode.evidenced}/${graphNode.rows} rows with evidence`,
+    );
+    await shot(page, 'graph-node-desktop');
+
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
 
     await page.setViewport(MOBILE);
@@ -2478,6 +2542,7 @@ async function run() {
         : ['/tactics/compare', 'Pick two different systems', 'tactics-compare'],
       ['/simulate', 'Play a fixture', 'simulate'],
       ['/challenges', 'Start a run', 'challenges'],
+      ['/graph', 'Knowledge Graph', 'graph'],
       ['/settings', 'Data', 'settings'],
     ]) {
       await mobileSurface(surface);
@@ -2532,6 +2597,8 @@ async function run() {
     check('logout clears the session (protected route bounces to login)', signedOut === 204 && new URL(page.url()).pathname === '/login', `status ${signedOut}`);
     await open(page, '/tactics/boards');
     check('a signed-out visitor never reaches the boards area', new URL(page.url()).pathname === '/login', new URL(page.url()).pathname);
+    await open(page, '/graph');
+    check('a signed-out visitor never reaches the graph pages', new URL(page.url()).pathname === '/login', new URL(page.url()).pathname);
     await mobileSurface(['/login', 'Sign in', 'login-signed-out']);
   } catch (error) {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed
