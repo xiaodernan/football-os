@@ -1,0 +1,101 @@
+{
+  "_about": [
+    "§74's two halves, pinned in one file. Every entry here is either an answer this API actually produces",
+    "(producer.kind = handler | door, checked against the shipped tree by",
+    "apps/api/tests/test_error_answer_shape.py) or a payload a client can still meet from somewhere else",
+    "(producer.kind = reader-tolerance, with the reason stated in `why`).",
+    "",
+    "The web gate that reads this file is apps/web/scripts/qa-error-shape.mjs: it loads the shipped",
+    "apps/web/lib/api.ts, feeds each body through browserFetch -> readError -> normalizeError with fetch",
+    "stubbed, and asserts what survives the trip. What the API puts at detail.code must arrive as error.code;",
+    "before §74 the handlers answered {error: {…}} and the reader handed the user 'Request failed' instead of",
+    "a sentence the API had already written."
+  ],
+  "entries": [
+    {
+      "name": "handler-422-validation-error",
+      "producer": { "kind": "handler", "site": "app/core/errors.py::_validation", "code": "validation_error", "message": "Request validation failed" },
+      "status": 422,
+      "body": {
+        "content_type": "application/json",
+        "json": {
+          "detail": {
+            "code": "validation_error",
+            "message": "Request validation failed",
+            "details": [
+              { "type": "string_too_short", "loc": ["body", "display_name"], "msg": "String should have at least 2 characters" },
+              { "type": "too_short", "loc": ["body", "password"], "msg": "String should have at least 8 characters" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "handler-409-integrity-error",
+      "producer": { "kind": "handler", "site": "app/core/errors.py::_integrity", "code": "conflict", "message": "That record conflicts with existing data" },
+      "status": 409,
+      "body": { "content_type": "application/json", "json": { "detail": { "code": "conflict", "message": "That record conflicts with existing data" } } }
+    },
+    {
+      "name": "handler-500-unhandled",
+      "producer": { "kind": "handler", "site": "app/core/errors.py::_unhandled", "code": "internal_error", "message": "Unexpected server error" },
+      "status": 500,
+      "body": { "content_type": "application/json", "json": { "detail": { "code": "internal_error", "message": "Unexpected server error" } } }
+    },
+    {
+      "name": "door-422-careers-no-objectives",
+      "producer": { "kind": "door", "module": "app/api/v1/careers.py", "code": "no_objectives", "message": "a career needs at least one objective to be judged by" },
+      "status": 422,
+      "body": {
+        "content_type": "application/json",
+        "json": {
+          "detail": {
+            "code": "no_objectives",
+            "message": "a career needs at least one objective to be judged by",
+            "see": ["fitness", "tactics", "results", "finance", "development"]
+          }
+        }
+      }
+    },
+    {
+      "name": "door-409-coach-no-player",
+      "producer": { "kind": "door", "module": "app/api/v1/coach.py", "code": "no_player", "message": "Create your player profile first" },
+      "status": 409,
+      "body": { "content_type": "application/json", "json": { "detail": { "code": "no_player", "message": "Create your player profile first" } } }
+    },
+    {
+      "name": "door-404-boards-link-gone",
+      "producer": { "kind": "door", "module": "app/api/v1/boards.py", "code": "not_found", "message": "This link no longer points at a board" },
+      "status": 404,
+      "body": { "content_type": "application/json", "json": { "detail": { "code": "not_found", "message": "This link no longer points at a board" } } }
+    },
+    {
+      "name": "tolerance-plain-string-detail",
+      "producer": { "kind": "reader-tolerance", "why": "FastAPI's own default for an unanswered route answers detail as a string; the sentence must still reach the page." },
+      "status": 404,
+      "body": { "content_type": "application/json", "json": { "detail": "Not Found" } },
+      "expect": { "code": "error", "message": "Not Found" }
+    },
+    {
+      "name": "tolerance-array-detail",
+      "producer": { "kind": "reader-tolerance", "why": "An uninstalled 422 answers detail as a list; the reader must not call that list an object and print [object Object]." },
+      "status": 422,
+      "body": { "content_type": "application/json", "json": { "detail": [{ "loc": ["body", "email"], "msg": "field required", "type": "missing" }] } },
+      "expect": { "code": "error", "message": "Request failed with status 422" }
+    },
+    {
+      "name": "tolerance-not-json-body",
+      "producer": { "kind": "reader-tolerance", "why": "A proxy or a crashed worker can answer HTML on a JSON endpoint; readError must still yield a sentence." },
+      "status": 502,
+      "body": { "content_type": "text/html", "text": "<html><body>502 Bad Gateway</body></html>" },
+      "expect": { "code": "error", "message": "Request failed with status 502" }
+    },
+    {
+      "name": "tolerance-flat-refusal",
+      "producer": { "kind": "reader-tolerance", "why": "lib/api.ts keeps the pre-§74 flat spelling readable on purpose: a refusal that arrives with its figures beside the sentence must not lose them." },
+      "status": 402,
+      "body": { "content_type": "application/json", "json": { "code": "budget_exceeded", "message": "The wage bill would exceed the budget", "remaining": 120000, "requested": 300000 } },
+      "expect": { "code": "budget_exceeded", "message": "The wage bill would exceed the budget", "figure_keys": ["remaining", "requested"] }
+    }
+  ]
+}

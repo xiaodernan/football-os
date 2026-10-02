@@ -521,3 +521,14 @@ Milestones do not own these; every public route must satisfy them as it lands.
   mechanism (the tail competes for the same five slots) and I predicted from "widening only adds rows" instead. The
   finding is that the window is load-bearing on **both** planes, so the width is now pinned by one case name on
   each engine. No production line changed; `docs/M2_VERIFICATION.md` §2.3d.
+- [x] §74's web half is gated (`docs/ERROR_SHAPE_WEB_VERIFICATION.md`): `apps/web/scripts/qa-error-shape.mjs`
+  loads the shipped `apps/web/lib/api.ts` through this repo's TypeScript and feeds it
+  `apps/web/fixtures/refusals.json` — 10 bodies, the 6 producer ones held against the backend's own
+  bytes by `apps/api/tests/test_error_answer_shape.py` (+3 cases, 13 in the file). 54 of 54 checks
+  green, 6 arms + control on a plane with every red count predicted (0 survivors), exit-code probe 0/1,
+  both whole-suite legs on `50efc5e`+unit at 1430 tests / 27 reds, of which 26 are `50efc5e`'s own and 1
+  is the known portfolio FK pin / 0 errors / 2 skipped, i.e. +3 cases and +0 red over the same plane
+  without this unit. Wired into `scripts/check.sh` and CI's `web` job, because `apps/web` has no unit
+  runner and nothing reads a `.mjs`. Finding re-measured, not inherited: the archive-that-did-not-
+  collect hole this unit hit between `a7cf9c6` and `e07fcfb` was closed by `30e9d37`, so both whole-
+  suite legs here run over the current head `50efc5e` rather than an older baseline.

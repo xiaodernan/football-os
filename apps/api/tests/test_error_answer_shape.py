@@ -241,3 +241,101 @@ class TestTheCensusPopulationIsReal:
             elif {"code", "message"} <= keys and kind == "body":
                 offenders.append(f"{module}:{line} answers a refusal at the top level, with no `detail`")
         assert offenders == [], "a second shape is back: " + "; ".join(offenders)
+
+
+class TestTheWebReaderIsGatedOnAnswersThisApiProduces:
+    """§74's other end: `apps/web/lib/api.ts` is the product's only reader of a refusal, and its fixture file
+    is checked here rather than trusted.
+
+    `apps/web/scripts/qa-error-shape.mjs` drives the shipped reader over `fixtures/refusals.json`; this class
+    holds that file to the backend's own bytes. Without it the web gate could be green over payloads no door
+    and no handler answers, which is the failure mode where a reader test proves the test's own imagination.
+    """
+
+    @staticmethod
+    def _entries() -> list[dict[str, Any]]:
+        file = Path(__file__).resolve().parents[2] / "web" / "fixtures" / "refusals.json"
+        assert file.is_file(), f"{file} is where the web reader's fixtures live"
+        entries = json.loads(file.read_text(encoding="utf-8"))["entries"]
+        assert isinstance(entries, list) and len(entries) >= 8, f"the fixture file carries {entries!r}; a gate needs a real population"
+        return entries
+
+    def test_a_handler_fixture_is_what_the_wrapper_answers(self) -> None:
+        """For each handler entry, `errors._answer(code, message, details)` reproduces the body byte for byte.
+
+        The three shipped handlers must all be present, so the fixture set cannot quietly shrink to the one
+        answer that happens to have a field list.
+        """
+        entries = [entry for entry in self._entries() if entry["producer"]["kind"] == "handler"]
+        assert len(entries) >= 3, f"{len(entries)} handler fixtures; the installer has three answers to represent"
+        seen: set[str] = set()
+        for entry in entries:
+            detail = dict(entry["body"]["json"]["detail"])
+            code, message = detail.pop("code"), detail.pop("message")
+            assert detail in ({}, {"details": detail.get("details")}), f"{entry['name']}: a handler answers code, message and at most one details key"
+            answered = errors._answer(code, message, *([detail["details"]] if detail else []))
+            assert answered == entry["body"]["json"], f"{entry['name']} is not what `_answer` returns: {answered}"
+            seen.add(code)
+        assert {"validation_error", "conflict", "internal_error"} <= seen, sorted(seen)
+
+    def test_a_door_fixture_is_a_literal_the_named_module_raises(self) -> None:
+        """Each door entry names its module, and that module must actually answer this code and sentence.
+
+        Checked on the parsed tree, with the key names and (where the source states it as a constant or a
+        `status.HTTP_*` name) the status code compared too — a fixture that drifted from the door is a fixture
+        the reader gate is no longer testing against the product.
+        """
+        from fastapi import status as http_status
+
+        app_root = _app_root()
+        entries = [entry for entry in self._entries() if entry["producer"]["kind"] == "door"]
+        assert len(entries) >= 2, f"{len(entries)} door fixtures; two are the minimum for a census of one"
+        for entry in entries:
+            module = entry["producer"]["module"]
+            path = app_root.parent / module
+            assert path.is_file(), f"{entry['name']} cites {module}, which is not in this tree"
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            calls = [
+                node
+                for node in ast.walk(tree)
+                if isinstance(node, ast.Call)
+                and (getattr(node.func, "id", "") or getattr(node.func, "attr", "")) == "HTTPException"
+                and any(kw.arg == "detail" and isinstance(kw.value, ast.Dict) for kw in node.keywords)
+            ]
+            matches = []
+            for call in calls:
+                detail_node = next(kw.value for kw in call.keywords if kw.arg == "detail")
+                pairs = {k.value: v for k, v in zip(detail_node.keys, detail_node.values, strict=True) if isinstance(k, ast.Constant)}
+                if {"code", "message"} <= set(pairs) and all(isinstance(pairs[key], ast.Constant) for key in ("code", "message")):
+                    if (pairs["code"].value, pairs["message"].value) == (entry["producer"]["code"], entry["producer"]["message"]):
+                        matches.append((call, detail_node, pairs))
+            assert len(matches) >= 1, f"{module} never raises {entry['producer']['code']!r} with that sentence — the fixture drifted from the door"
+            call, detail_node, pairs = matches[0]
+            assert _keys(detail_node) == set(entry["body"]["json"]["detail"]), f"{entry['name']}'s figures are not the door's: {_keys(detail_node)}"
+            status_node = call.args[0] if call.args else None
+            resolved: Any = None
+            if isinstance(status_node, ast.Constant):
+                resolved = status_node.value
+            elif isinstance(status_node, ast.Attribute) and getattr(status_node.value, "id", "") == "status":
+                resolved = getattr(http_status, status_node.attr, None)
+            if resolved is not None:
+                assert resolved == entry["status"], f"{module}:{call.lineno} answers {resolved}, the fixture says {entry['status']}"
+
+    def test_the_two_halves_still_point_at_each_other(self) -> None:
+        """The reader gate must read this file, and the reader must still unwrap a `detail` key.
+
+        Either half can be rewritten out from under the other: a web gate that stops naming the fixture, or a
+        reader that stops looking under `detail`, leaves the API-side cases above green and a user still
+        holding a fallback string.
+        """
+        web = Path(__file__).resolve().parents[2] / "web"
+        gate = (web / "scripts" / "qa-error-shape.mjs").read_text(encoding="utf-8")
+        reader = (web / "lib" / "api.ts").read_text(encoding="utf-8")
+        assert len(gate) > 2000 and len(reader) > 500, (len(gate), len(reader))
+        for needle in ("refusals.json", "browserFetch", "normalizeError"):
+            assert needle in gate, f"the web gate no longer names {needle}, so this file is not its fixture"
+        assert '"detail" in payload' in reader, "normalizeError no longer unwraps a detail key"
+        assert "readError(response)" in reader, "browserFetch no longer sends a refusal answer through the reader"
+        tolerant = [entry for entry in self._entries() if entry["producer"]["kind"] == "reader-tolerance"]
+        assert len(tolerant) <= 5, f"{len(tolerant)} tolerance entries out of the set — a fixture file of inventions is not a contract"
+        assert all(len(str(entry["producer"].get("why", ""))) > 30 for entry in tolerant), [entry["name"] for entry in tolerant]

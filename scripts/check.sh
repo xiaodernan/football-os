@@ -30,6 +30,14 @@ else
   echo "skipped PostgreSQL leg (export DATABASE_URL to a PostgreSQL URL to run it)"
 fi
 
+echo "── Web: refusal-shape gate ───────────────────────────"
+# Not a browser walk: this one loads apps/web/lib/api.ts through the repo's own TypeScript and feeds it the
+# answer bodies pinned in apps/web/fixtures/refusals.json, every one of which apps/api/tests/test_error_answer_shape.py
+# holds against the backend's bytes. It needs no server and no port, so it belongs with the other gates and not in
+# a scheduled walk — and neither tsc (tsconfig excludes `scripts`) nor next lint (its dirs do not include `scripts`)
+# reads a .mjs, so a runner has to name it or nothing does.
+(cd apps/web && node scripts/qa-error-shape.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 

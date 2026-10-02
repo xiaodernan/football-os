@@ -75,6 +75,11 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
       - run: npm ci
+      - name: Refusal-shape gate (the shipped reader vs this API's own answers)
+        # Same command as `scripts/check.sh`; no server, no browser, so it can fail a build before `Types` does.
+        # The bodies it asserts are `apps/web/fixtures/refusals.json`, and the api job above proves each of those
+        # bodies is what `app/core/errors.py` and the named doors actually answer.
+        run: node scripts/qa-error-shape.mjs
       - name: Types
         run: npm run typecheck
       - name: Build
