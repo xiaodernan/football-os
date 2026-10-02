@@ -32,6 +32,7 @@ from app.services.simulation.career import (
     resolve_club,
 )
 from app.services.simulation.challenges import run_view as challenge_run_view
+from app.services.simulation.ledger import ledger_view
 from app.services.simulation.service import options, system_options
 from app.services.tactics.plan import system_by_slug
 
@@ -231,3 +232,21 @@ def delete_career(ident: str, request: Request, db: Session = Depends(get_db), u
     db.delete(career)
     db.commit()
     return {"deleted": True, "slug": slug, "matches_kept": True, "disclaimer": CAREER_DISCLAIMER}
+
+
+@router.get("/{ident}/ledger")
+def read_ledger(
+    ident: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """This career's season ledger, summed from sim_events of its fixtures.
+    
+    The ledger is a pure read: every figure is summed from sim_events rows at request
+    time, and the consistency check compares the same season's goals from the event
+    rows against the career's own fixture list.
+    """
+    limit(request, 60, 60, scope="career_ledger")
+    career = _career(db, user, ident)
+    return ledger_view(db, career)
