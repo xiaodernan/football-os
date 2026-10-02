@@ -1643,3 +1643,69 @@ export type ChallengeRunList = {
   demo_data: boolean;
   disclaimer: string;
 };
+
+/* ---------------------------------------------------------------------------
+ * Knowledge Graph (§30) — read-time projection over the schema's foreign keys
+ * ------------------------------------------------------------------------- */
+
+export type GraphNode = {
+  kind: string;
+  id: string;
+  slug: string;
+  label: string;
+  path: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+export type GraphLink = {
+  verb: string;
+  direction: "in" | "out";
+  other: GraphNode;
+  facts: Record<string, unknown>;
+  evidence: {
+    carrier: string;
+    row: string;
+    column: string;
+  };
+};
+
+export type GraphNeighborhood = {
+  node: GraphNode;
+  depth: number;
+  nodes: GraphNode[];
+  edges: {
+    from: string;
+    to: string;
+    hop: number;
+    verb: string;
+    direction: string;
+    other: GraphNode;
+    facts: Record<string, unknown>;
+    evidence: {
+      carrier: string;
+      row: string;
+      column: string;
+    };
+  }[];
+  node_count: number;
+  edge_count: number;
+};
+
+export type GraphRules = {
+  node_kinds: string[];
+  edge_verbs: string[];
+  edge_verbs_reverse: string[];
+  max_depth: number;
+  max_edges: number;
+  max_nodes: number;
+  routes: { method: string; path: string; what: string }[];
+  spec_verbs_declined: Record<string, string>;
+  refusal_answers: Record<string, number>;
+  world_ready: boolean;
+  public_clauses: number;
+  clauses_with_a_verb: number;
+  clauses_declined: number;
+  private_tables_excluded: number;
+  declined_clauses: { clause: string; reason: string }[];
+};
