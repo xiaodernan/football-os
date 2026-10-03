@@ -532,3 +532,15 @@ Milestones do not own these; every public route must satisfy them as it lands.
   runner and nothing reads a `.mjs`. Finding re-measured, not inherited: the archive-that-did-not-
   collect hole this unit hit between `a7cf9c6` and `e07fcfb` was closed by `30e9d37`, so both whole-
   suite legs here run over the current head `50efc5e` rather than an older baseline.
+- [x] §75's web-script census (`docs/WEB_SCRIPT_INVENTORY_VERIFICATION.md`): `apps/web/scripts/qa-gate-inventory.mjs`
+  accounts for every invocable file in that directory — 14 of them, 12 `.mjs` plus `verify-production.sh` plus the
+  census itself — and each is either invoked by a runner it reads or exempt for a reason re-proved from its own bytes
+  (`live-tier` needs a browser *and* a base URL, inherited through a delegation edge when the file is a wrapper;
+  `report-only` needs an exit status it never sets). 39 checks, all green; 16 runs (12 arms + a `.sh`-reach pair +
+  control) with the red *labels* predicted first came back 16/16 MATCHED, no survivors, exit code tracking `failed`
+  in every one. Two of its own draft defects were found and fixed before landing: a comment naming a script counted
+  as gating it (arm `A12` proves the call-anchored form does not), and a reason reading a fact key the row does not
+  carry silenced nothing — it reddened 22 named checks, and arm `A11` reinstates it to keep that loud. Two
+  predictions were wrong in the same run and are recorded rather than smoothed: `A5`'s and `A9`'s denominators, both
+  arithmetic, both landing on the clause each arm is about. No whole-suite leg is claimed: the changeset holds no
+  `.py` path, which is what that sentence is allowed to mean.

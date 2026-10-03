@@ -38,6 +38,13 @@ echo "── Web: refusal-shape gate ──────────────�
 # reads a .mjs, so a runner has to name it or nothing does.
 (cd apps/web && node scripts/qa-error-shape.mjs)
 
+echo "── Web: script-inventory gate ────────────────────────"
+# Who checks the checkers. Every invocable file in apps/web/scripts is either named by a runner this gate reads
+# (check.sh, ci.yml, the package manifest) or exempt for a reason re-proved from its own bytes on every run — so
+# "the browser walks are verified" cannot quietly become a claim carried by files nothing invokes. It reads files
+# only: no server, no browser, no port, which is why it runs here rather than joining the live-tier walks.
+(cd apps/web && node scripts/qa-gate-inventory.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 

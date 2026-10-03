@@ -80,6 +80,11 @@ jobs:
         # The bodies it asserts are `apps/web/fixtures/refusals.json`, and the api job above proves each of those
         # bodies is what `app/core/errors.py` and the named doors actually answer.
         run: node scripts/qa-error-shape.mjs
+      - name: Script-inventory gate (who checks the checkers)
+        # Same command as `scripts/check.sh`. Reads files only — no server, no browser — so it fails a build here
+        # rather than joining the live-tier walks. It is the reason a new file under apps/web/scripts cannot arrive
+        # unaccounted for: either a runner names it or its own bytes prove why no runner can.
+        run: node scripts/qa-gate-inventory.mjs
       - name: Types
         run: npm run typecheck
       - name: Build
