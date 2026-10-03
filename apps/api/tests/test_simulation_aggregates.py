@@ -5,22 +5,16 @@ These tests verify the new aggregate endpoints that span multiple careers.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from app.core.db import SessionLocal
-from app.main import app
-from app.models import Career, CareerFixture, CareerAppearance, Competition, Team
-from app.services.simulation.aggregates import league_ledger_view, player_career_aggregate_view
+from app.models import Team
 from app.services.world import sync_world
 
 API = "/api/v1/simulation/aggregates"
-
-
-def _clip_count(owner_id: str) -> int:
-    with SessionLocal() as session:
-        return int(session.scalar(select(func.count()).select_from(Career).where(Career.owner_id == owner_id)) or 0)
 
 
 @pytest.fixture(scope="module")
@@ -35,15 +29,6 @@ def world() -> dict[str, Any]:
             _ = team.competition
         session.close()
         return {"home": teams[0], "away": teams[1], "spare": teams[2]}
-    finally:
-        session.close()
-
-
-@pytest.fixture()
-def store() -> SessionLocal:
-    session = SessionLocal()
-    try:
-        yield session
     finally:
         session.close()
 
@@ -94,8 +79,6 @@ class TestSimulationAggregates:
             "minutes": 90,
         })
         assert match_resp.status_code == 201, match_resp.text
-        match_id = match_resp.json()["id"]
-
         career_resp = auth_client.post("/api/v1/careers", json={
             "club_id": team1,
             "philosophy": "balanced",

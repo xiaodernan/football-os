@@ -33,14 +33,13 @@ def read_rules() -> dict[str, Any]:
     Nothing here is typed by hand: the caps are the constants the walk guards with.
     """
     from app.services.simulation.aggregates import (
-        LEDGER_LIMIT,
         _CHANCE_TYPES,
         _LEDGER_TYPES,
-        LEDGER_FORMULA,
-        CONSISTENCY_FORMULA,
         ATTRIBUTION_FORMULA,
+        CONSISTENCY_FORMULA,
+        LEDGER_FORMULA,
+        LEDGER_LIMIT,
     )
-    from app.services.simulation.engine import SIMULATION_DISCLAIMER
     return {
         "node_kinds": ["competition", "player"],
         "edge_verbs": ["league_ledger", "player_aggregate"],
