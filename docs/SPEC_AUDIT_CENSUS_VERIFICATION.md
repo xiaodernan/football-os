@@ -101,10 +101,23 @@ operations — which is precisely the ambiguity C8 refuses to inherit.
 
 Two prediction-side defects were chased rather than smoothed: the hand-pinned floor of 10 (see §3) and a docstring
 first drafted as "four rows … three of those numbers matched neither", which the inventory above disproved (five rows,
-seven counts, two matched neither). A third defect was the landing script's own: its stand-down guard compared the
-40-hex `git rev-parse HEAD` against the 7-hex ref the witness planes were built from, so it refused a move that had
-not happened — the guard fired on the wrong side and was fixed to compare prefixes, which is the shape every later
-landing of this project should use (a guard that cannot pass is as blind as one that cannot fail).
+seven counts, two matched neither).
+
+The landing script itself contributed two more, both on the checking side rather than the landing side, and both are
+worth keeping because each is the kind of guard that can pass while proving nothing:
+
+* its stand-down guard compared the 40-hex `git rev-parse HEAD` against the 7-hex ref the witness planes were built
+  from, so it refused a HEAD move that had not happened. Fixed to compare prefixes — a guard that can never pass is as
+  blind as one that can never fail.
+* after the commit it compared `sha256(git show HEAD:ROADMAP.md)` with `sha256(ROADMAP.md on disk)` and refused. That
+  predicate is wrong on this machine, not the commit: with `core.autocrlf=true` the blob is LF and the worktree copy of
+  `ROADMAP.md` is CRLF, so the two byte strings differ by one byte per line (measured: blob 93 348, disk 93 961) while
+  `git diff HEAD -- ROADMAP.md` prints nothing. The other three paths matched byte-for-byte because their worktree
+  copies are LF. The commit is `cc8d1aa` with ROADMAP at `17 +++-` — my row and the gate-scope sentence, nothing else —
+  and the eight cases were then re-run through the git reader in the shared working copy: **collected 8, red 0**. A
+  post-commit check must therefore assert *content* equality (`git diff HEAD -- path` empty plus the pre-commit
+  cached-vs-worktree numstat, which the script already required), and the EOL claim has to name the plane it was
+  measured on.
 
 ## 6. What this unit does not claim
 
