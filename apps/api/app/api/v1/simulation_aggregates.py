@@ -17,13 +17,59 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.security import limit
-from app.models import Competition, Career, CareerFixture, CareerAppearance
+from app.models import Career, CareerAppearance, Competition
 from app.services.simulation.aggregates import league_ledger_view, player_career_aggregate_view
 from app.services.simulation.engine import SIMULATION_DISCLAIMER
 
 router = APIRouter(prefix="/simulation/aggregates", tags=["simulation-aggregates"])
 
 NOT_FOUND = {"code": "not_found", "message": "No such resource"}
+
+
+@router.get("/rules")
+def read_rules() -> dict[str, Any]:
+    """The vocabulary and ceilings for the simulation aggregates tier.
+
+    Nothing here is typed by hand: the caps are the constants the walk guards with.
+    """
+    from app.services.simulation.aggregates import (
+        LEDGER_LIMIT,
+        _CHANCE_TYPES,
+        _LEDGER_TYPES,
+        LEDGER_FORMULA,
+        CONSISTENCY_FORMULA,
+        ATTRIBUTION_FORMULA,
+    )
+    from app.services.simulation.engine import SIMULATION_DISCLAIMER
+    return {
+        "node_kinds": ["competition", "player"],
+        "edge_verbs": ["league_ledger", "player_aggregate"],
+        "max_depth": 1,
+        "max_edges": 1000,
+        "max_nodes": 5000,
+        "routes": [
+            {"method": "GET", "path": "/simulation/aggregates/league/{competition_slug}", "what": "league-wide ledger"},
+            {"method": "GET", "path": "/simulation/aggregates/player/{player_slug}", "what": "player career aggregate"},
+        ],
+        "spec_verbs_declined": {},
+        "refusal_answers": {},
+        "world_ready": True,
+        "public_clauses": 0,
+        "clauses_with_a_verb": 0,
+        "clauses_declined": 0,
+        "private_tables_excluded": 0,
+        "caps": {
+            "ledger_limit": LEDGER_LIMIT,
+            "chance_types": list(_CHANCE_TYPES),
+            "ledger_types": list(_LEDGER_TYPES),
+        },
+        "formulas": {
+            "ledger": LEDGER_FORMULA,
+            "consistency": CONSISTENCY_FORMULA,
+            "attribution": ATTRIBUTION_FORMULA,
+        },
+        "disclaimer": SIMULATION_DISCLAIMER,
+    }
 
 
 @router.get("/league/{competition_slug}")

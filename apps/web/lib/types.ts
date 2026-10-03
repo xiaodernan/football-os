@@ -1709,3 +1709,103 @@ export type GraphRules = {
   private_tables_excluded: number;
   declined_clauses: { clause: string; reason: string }[];
 };
+
+/* ---------------------------------------------------------------------------
+ * Simulation Aggregates (§30, M6 item 10) — cross-career & league-wide reads
+ * ------------------------------------------------------------------------- */
+
+export type SimAggLeagueLedger = {
+  competition: { id: string; slug: string; name: string };
+  players: SimAggPlayerRow[];
+  players_with_events: number;
+  players_shown: number;
+  truncated: boolean;
+  totals: {
+    events: number;
+    goals: number;
+    attempts: number;
+    expected_goals: number;
+    yellow_cards: number;
+    red_cards: number;
+    injuries: number;
+  };
+  by_type: Record<string, { events: number; identified: number; ambiguous: number; unnamed: number; expected_goals: number }>;
+  fixtures_played: number;
+  fixtures_traced: number;
+  fixtures_untraced: number;
+  club_goals_traced: number;
+  unattributed: { events: { ambiguous: number; unnamed: number }; ambiguous_names: string[]; unnamed_names: string[] };
+  consistency: string;
+  scope: string;
+  source: string;
+  formula: string;
+  consistency_formula: string;
+  attribution_formula: string;
+  disclaimer: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+export type SimAggPlayerRow = {
+  player_id: string;
+  slug: string;
+  player_path: string | null;
+  name: string;
+  position: string;
+  matches_with_events: number;
+  goals: number;
+  attempts: number;
+  expected_goals: number;
+  yellow_cards: number;
+  red_cards: number;
+  injuries: number;
+  events_by_type: Record<string, number>;
+};
+
+export type SimAggPlayerAggregate = {
+  player: { slug: string; name: string; position: string | null };
+  careers: { id: string; slug: string; club_name: string; club_short: string }[];
+  players: SimAggPlayerRow[];
+  players_with_events: number;
+  players_shown: number;
+  truncated: boolean;
+  totals: {
+    events: number;
+    goals: number;
+    attempts: number;
+    expected_goals: number;
+    yellow_cards: number;
+    red_cards: number;
+    injuries: number;
+  };
+  by_type: Record<string, { events: number; identified: number; ambiguous: number; unnamed: number; expected_goals: number }>;
+  fixtures_played: number;
+  fixtures_traced: number;
+  fixtures_untraced: number;
+  unattributed: { events: { ambiguous: number; unnamed: number }; ambiguous_names: string[]; unnamed_names: string[] };
+  consistency: string;
+  scope: string;
+  source: string;
+  formula: string;
+  consistency_formula: string;
+  attribution_formula: string;
+  disclaimer: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+export type SimAggLeagueRules = {
+  node_kinds: string[];
+  edge_verbs: string[];
+  max_depth: number;
+  max_edges: number;
+  max_nodes: number;
+  routes: { method: string; path: string; what: string }[];
+  spec_verbs_declined: Record<string, string>;
+  refusal_answers: Record<string, number>;
+  world_ready: boolean;
+  public_clauses: number;
+  clauses_with_a_verb: number;
+  clauses_declined: number;
+  private_tables_excluded: number;
+};
