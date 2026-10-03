@@ -106,3 +106,10 @@ mutation for the wrong reason.
     git archive 4b9f4b1 | tar -x -C /tmp/plane80
     cp apps/api/tests/test_spec_audit_currency.py docs/SPEC_COVERAGE_AUDIT.md ROADMAP.md # onto the plane, same paths
     (cd /tmp/plane80/apps/api && python -m pytest -q tests/test_spec_audit_currency.py)
+
+## Currency of this record
+
+The "5 passed / 0 failed" figures above describe the file as it stood at `862359e`. #81 added a sixth case to the same
+file — C6, every repository path the two verdict ledgers cite must resolve against the committed tree — and retired
+the §38 row this record's prose still quotes. Read `docs/SPEC_AUDIT_PATH_CURRENCY_VERIFICATION.md` for the sixth
+case, its 8-run witness and the §38 measurements; the five cases recorded here are unchanged and still green.

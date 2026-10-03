@@ -8,7 +8,7 @@ Two documents carry the project's own coverage claims, and until this file nothi
 * `ROADMAP.md` summarizes that audit and quotes its three headline figures, and counts the items the audit leaves
   unowned.
 
-Five claims, one case each, each killed by its own arm (`docs/SPEC_AUDIT_CURRENCY_VERIFICATION.md`):
+Six claims, one case each, each killed by its own arm (`docs/SPEC_AUDIT_CURRENCY_VERIFICATION.md`):
 
 * **C1** the audit's machine-readable `AUDIT_FIGURES` line equals the committed tree: contract paths come from
   `docs/api/openapi.json`, page routes from committed `apps/web/app/**/page.tsx`, migrations from committed
@@ -20,6 +20,11 @@ Five claims, one case each, each killed by its own arm (`docs/SPEC_AUDIT_CURRENC
 * **C4** the audit's §A table covers the section range its own heading declares, exactly once — no spec section
   silently unmapped, none mapped twice.
 * **C5** the ROADMAP's "…has a door except <count>" sentence counts the unchecked items in the section it introduces.
+* **C6** every repository path the two verdict ledgers cite — the audit's §A table and the ROADMAP's
+  "no milestone owns" section — resolves to a committed file or a committed directory. This is the case that retired
+  §38's `services/portfolio/pdf.py`: a citation of a file that has never been committed, in a row whose verdict said
+  *landed*. Brace groups expand member by member, a token carrying two groups is refused rather than guessed at, and
+  the population is derived from the claim (a repo path cited by its segment sequence), not from an exemption table.
 
 Everything is read from the committed tree: with a `.git` present that means `git show HEAD:…` /
 `git ls-tree HEAD`, and on an extracted plane (`git archive`, no `.git`) the walk *is* the committed state. One
@@ -49,6 +54,12 @@ DECLARED_RANGE = re.compile(r"spec §\d+'s list, §(\d+)[–-]§(\d+)")
 EXCEPT_WORD = re.compile(r"has a door\s+except\s+(\w+),")
 CARDINALS = {"none": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 SCAN_SKIP = "__pycache__"
+
+BACKTICK = re.compile(r"`([^`\n]+)`")
+BRACE_GROUP = re.compile(r"\{[^{}]*\}")
+# a `.git`-less plane walks the filesystem, and `.scratch` holds planes extracted from git; letting one resolve a
+# citation for another would be a false green, so the walk reads the repository's own directories only
+WALK_SKIP = {".git", ".scratch", ".next", ".venv", "node_modules", "__pycache__"}
 
 
 def _git(args: list[str]) -> bytes:
@@ -110,6 +121,67 @@ def unowned_section() -> str:
     doc = committed_text(MAP)
     assert UNOWNED_SECTION in doc, f"`{MAP}` has no {UNOWNED_SECTION!r} section"
     return doc.split(UNOWNED_SECTION, 1)[1].split("\n## ", 1)[0]
+
+
+def committed_tree() -> set[str]:
+    """Every committed path, or — on a `.git`-less plane — every file the extracted tree holds outside the scratch."""
+    if (ROOT / ".git").exists():
+        listing = _git(["ls-tree", "-r", "--name-only", "HEAD"]).decode("utf-8")
+        return {line for line in listing.splitlines() if line.strip()}
+    found = set()
+    for path in ROOT.rglob("*"):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        if any(part in WALK_SKIP for part in rel.split("/")[:-1]):
+            continue
+        found.add(rel)
+    return found
+
+
+def path_shaped(token: str) -> bool:
+    """A repository citation as these two ledgers write it: slash-separated, no prose, rooted inside the repo."""
+    if not token or " " in token or ":" in token or "@" in token or token.startswith("/"):
+        return False
+    if any(bracket in token for bracket in "()[`\"'"):
+        return False
+    return token.count("/") >= 1
+
+
+def cited_path_tokens(*sections: str) -> list[str]:
+    tokens = []
+    for section in sections:
+        for line in section.splitlines():
+            for raw in BACKTICK.findall(line):
+                for piece in re.split(r",\s+", raw):
+                    piece = piece.strip().strip("`").rstrip(".,;")
+                    if path_shaped(piece):
+                        tokens.append(piece)
+    return sorted(set(tokens))
+
+
+def expand_citation(token: str) -> list[str]:
+    groups = BRACE_GROUP.findall(token)
+    assert len(groups) <= 1, (
+        f"the citation `{token}` carries {len(groups)} brace groups — this case refuses to guess which member list "
+        "belongs to which segment"
+    )
+    if not groups:
+        return [token]
+    first = groups[0]
+    head, rest = token.split(first, 1)
+    members = []
+    for member in first.strip("{}").split(","):
+        members.extend(expand_citation(head + member.strip() + rest))
+    return members
+
+
+def resolves(token: str, tree: set[str]) -> bool:
+    token = token.rstrip("/")
+    if "**" in token:
+        prefix = token.split("/**", 1)[0].rstrip("/")
+        return any(p.startswith(prefix + "/") for p in tree)
+    return any(p == token or p.endswith("/" + token) or f"/{token}/" in f"/{p}" for p in tree)
 
 
 def test_the_audit_s_declared_figures_answer_for_the_committed_tree() -> None:
@@ -192,4 +264,20 @@ def test_the_roadmap_sentence_counts_the_items_it_introduces() -> None:
     assert claimed == unchecked, (
         f"the sentence says {claimed} module(s) lack a door; the section lists {unchecked} unchecked and "
         f"{checked} checked item(s)"
+    )
+
+
+def test_every_repository_path_the_verdict_ledgers_cite_is_committed() -> None:
+    tree = committed_tree()
+    assert AUDIT in tree, f"the committed-tree walk did not find `{AUDIT}` — the population it is checking against is wrong"
+    tokens = cited_path_tokens(table_section(), unowned_section())
+    assert tokens, (
+        "the audit's §A table and the ROADMAP's unowned-modules section cite no repository path — the scan read "
+        "nothing, which is not a pass"
+    )
+    candidates = sorted({c for token in tokens for c in expand_citation(token)})
+    unresolved = [c for c in candidates if not resolves(c, tree)]
+    assert not unresolved, (
+        f"{len(tokens)} cited path tokens expand to {len(candidates)} candidates; these name nothing in the "
+        f"committed tree: {unresolved}"
     )

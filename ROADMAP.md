@@ -51,7 +51,11 @@ no session opened the link, the payload carried **no** `user_id`, `email`, `disp
 and the HTML page answer **404**. Measured on the production plane: `tsc --noEmit` rc=0, `npm run lint` rc=0,
 `next build` rc=0 (`BUILD_ID` `EgWRUtYWNBIJkxIShsf8X`), and `QA_BASE=http://127.0.0.1:3219 node
 scripts/qa-portfolio.mjs` at **51/51 checks, exit 0**, **4** screenshots, **10** recorded knocks and **0** console
-errors. **§38's PDF output then landed** (measured 2026-09-29): `services/portfolio/pdf.py` renders the live
+errors. **§38's PDF output then landed** (measured 2026-09-29, **and re-read 2026-10-04 over `862359e`: the sentence
+below describes a working copy, not this repository — `git log -- apps/api/app/services/portfolio/pdf.py` answers no
+commit, the committed contract has no PDF door, HEAD's `apps/api/requirements.txt` names no renderer, and
+`PUBLIC_OUTPUTS["pdf"]` still starts "not in this build"; every figure in this paragraph therefore stands as a
+measurement of bytes that are not committed here**): `services/portfolio/pdf.py` renders the live
 `build_cv` result in memory with ReportLab, `GET /portfolio/cv.pdf` is owner-authenticated and rate-limited, and the
 Next proxy forwards `content-disposition`/`cache-control`, so the `/portfolio` download control returns a real
 non-cached document. `/portfolio` now declares **7 doors**; the focused portfolio pair collected **40 cases** and
@@ -455,8 +459,9 @@ Still open: a season's ledger is only as complete as the rounds whose reports ar
 ## Spec modules no milestone owns (audit 2026-09-27)
 
 `[docs/SPEC_COVERAGE_AUDIT.md](docs/SPEC_COVERAGE_AUDIT.md)` maps all 30 product modules to measured evidence (160 contract paths, 56 page
-routes, 26 migrations). Everything in §4–§42 has a door except one, and the row below is what that one still
-lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures and every cited file count:
+routes, 26 migrations). Everything in §4–§42 has a door except two, and the rows below are what each of those two
+still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every cited file count and
+every path the audit's §A table cites:
 
 - [ ] **§30 Knowledge Graph — the joint half.** The projection, its three `/api/v1/graph/*` doors and the `/graph`
     pages landed (mounted at `3651587`; 6 node kinds, 13 edges over stored foreign keys, walked by
@@ -467,12 +472,17 @@ lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures
     a graph hop must be measured against; a retrieval widening may not lower `retrieval.py`'s measurement-derived
     floors without the golden set re-measured first — and measured today, **0 of its 18 `queries` name a committed
     team or competition**, so the hop has no golden case to earn its keep until M11 writes one (2026-10-04).
-- [x] **§38 Football Career Portfolio** — landed under **M10**: ten live CV sections, a revocable public
-    link/public-player projection, and an owner-authenticated PDF rendered from the same read. See
-    `docs/M10_PORTFOLIO_VERIFICATION.md`; the minors' `videos` guard is built on §40's threshold and §17's
-    revocable-token precedent rather than a new one.
+- [ ] **§38 Football Career Portfolio — its third permitted output, the PDF.** The CV, its public projection and the
+    revocable link landed under **M10**: ten live sections read from stored rows, the two this read cannot fill printed
+    with the tables they would need, and a closed token answering the same 404 as one never issued. What this tree does
+    not hold is the PDF: `services/portfolio/cv.py`'s `PUBLIC_OUTPUTS["pdf"]` starts "not in this build",
+    `git log -- apps/api/app/services/portfolio/pdf.py` answers no commit, HEAD's `apps/api/requirements.txt` names no
+    renderer, and the committed contract's five portfolio paths contain no PDF door (re-read 2026-10-04 over
+    `862359e`). A working copy on this machine carries that file untracked, which is why the M10 row above can record a
+    PDF measurement this repository cannot reproduce. See `docs/M10_PORTFOLIO_VERIFICATION.md`; the minors' `videos`
+    guard is built on §40's threshold and §17's revocable-token precedent rather than a new one.
 
-The audit's condition is now satisfied and the §38 build is complete: §35's community permission layer landed
+The audit's condition is now satisfied and §38's CV-and-link half is complete: §35's community permission layer landed
 2026-09-28 (`docs/M9_COMMUNITY_VERIFICATION.md`), so the public CV projection does not bypass the tier that decides
 who may read a record, and the minors' `videos` guard uses §40's threshold. Broader minor-publication policy remains
 a follow-up rather than a claim of this slice. §30 still waits on M11's composite tasks and benchmark, since a graph
@@ -569,3 +579,22 @@ Milestones do not own these; every public route must satisfy them as it lands.
   contract is derived from the landing HEAD and staged index-only; another lane's uncommitted copy of that file is
   untouched. No whole-suite leg is claimed for the +4 cases — the leg figure in `.scratch/r78_leg_summary.txt` is
   measured over the commit before this test file exists.
+- [x] §81's path-currency gate (`docs/SPEC_AUDIT_PATH_CURRENCY_VERIFICATION.md`): C6 was written because the §38 row
+  this project shipped at `862359e` was false — it named `services/portfolio/pdf.py` and "an owner-authenticated PDF
+  built from the same read", while that ref's `git ls-tree` holds `__init__.py`/`cv.py`/`sharing.py`, `git log` for
+  `pdf.py` answers no commit, the committed contract holds 5 portfolio paths / 6 operations and no PDF door, HEAD's
+  requirements name no renderer, `cv.py`'s own `PUBLIC_OUTPUTS["pdf"]` opens "not in this build", and the evidence
+  document the row cites states the same absence. The case resolves every repository path the two *verdict* ledgers
+  cite (the audit's §A table, ROADMAP's unowned-modules section) against the committed tree — population derived from
+  the claim rather than from an exemption table, brace groups expanded one member list at a time, two groups in one
+  token refused, and two floors from the same scan (the walk must contain the audit, the token list must be non-empty)
+  so "nothing unresolved" can never mean "nothing read". Reverse control measured before the arms: HEAD's own bytes
+  give 23 tokens → 33 candidates → **1 survivor, `services/portfolio/pdf.py`**; the corrected ledgers give 26 → 35 →
+  **0**. Witness: 8 runs (control + 6 red arms + 1 designed-green) `runs=8 matched=8 not-matched=0`, and because five
+  arms redden the same single case each also predicted the *message fragment* the gate prints — the survivor token —
+  which is what keeps A1..A5 from being one arm five times. Two prediction-side defects recorded, not smoothed: A4's
+  first patch target hit twice (I had written the same phrase into two of my own inserts) and its guessed carrier
+  `apps/api/requirements-dev.txt` turned out to be committed, so its green was a true measurement and the wrong
+  prediction. The milestone narrative is deliberately **not** gated: measured whole-file, 11 of 73 candidates do not
+  resolve and 10 of those legitimately (`.scratch` witness artifacts, a mid-pattern glob, prose fragments), so a gate
+  there would need a hiding place. No door/route citation is gated yet — that is the next unit.
