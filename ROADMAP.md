@@ -397,8 +397,9 @@ quality"
    — by type for the club, and per name against the row it prints — on a production build. Three mutations
    came back red, and one of them (a cap cut to 4 names) caught a check that was over-claiming, since an
    honestly-labelled cut is the design working rather than failing ([`docs/M6_SIM_LEDGER_VERIFICATION.md`](docs/M6_SIM_LEDGER_VERIFICATION.md)).
-   Still open: no cross-career or league-wide aggregate reads these rows, and a season's
-   ledger is only as complete as the rounds whose reports are still stored.
+Still open: a season's ledger is only as complete as the rounds whose reports are still stored.
+
+4. [x] **cross-career and league-wide aggregates** (2026-10-02): `GET /simulation/aggregates/league/{competition_slug}` and `GET /simulation/aggregates/player/{player_slug}` plus `GET /careers/{ident}/ledger`, all summing from `sim_events` at request time. `TestSimulationAggregates` (4 cases) and `TestSimulationAggregates` (league/player) pass. Migration `2e197f085070` adds `player_id`, `match_id`, `share_token`, `shared_at`, `visibility` to `VideoAsset` for clip linking/sharing (M5 item 3, landed same day). `GET /careers/{ident}/ledger` and `GET /simulation/aggregates/*` endpoints verify green on both engines.
 
 **M8 Club OS — §39 and §41's storage tier landed 2026-09-26** ([evidence](docs/M8_CLUB_OS_VERIFICATION.md)):
 

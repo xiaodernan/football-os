@@ -7,7 +7,7 @@ import { JsonLd, WorldHead, WorldUnavailable } from "@/components/world";
 import { currentUser, serverFetch } from "@/lib/server";
 import type { GraphNeighborhood } from "@/lib/types";
 
-import "../../styles/tactics.css";
+import "../../../../../../styles/tactics.css";
 
 export const dynamic = "force-dynamic";
 

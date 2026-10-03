@@ -22,12 +22,14 @@ from app.api.v1 import (
     community,
     creator,
     entitlements,
+    graph,
     knowledge,
     meta,
     players,
     portfolio,
     progress,
     scout,
+    simulation_aggregates,
     simulations,
     tactics,
     trainings,
@@ -137,6 +139,7 @@ def create_app() -> FastAPI:
     app.include_router(careers.router, prefix=api)
     app.include_router(challenges.router, prefix=api)
     app.include_router(simulations.router, prefix=api)
+    app.include_router(simulation_aggregates.router, prefix=api)
     app.include_router(transfers.router, prefix=api)
     # The academy router is mounted before §39's own `/club/{ident}` door. Neither can actually shadow the
     # other — every academy path is two segments below `/club` and the tenant door is one — but the order
@@ -148,6 +151,7 @@ def create_app() -> FastAPI:
     app.include_router(community.router, prefix=api)
     app.include_router(creator.router, prefix=api)
     app.include_router(portfolio.router, prefix=api)
+    app.include_router(graph.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:

@@ -8,8 +8,8 @@ import { absolute } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
 import type { SimAggLeagueLedger } from "@/lib/types";
 
-import "../../styles/tactics.css";
-import "../../styles/simulate.css";
+import "../../../../../styles/tactics.css";
+import "../../../../../styles/simulate.css";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +42,7 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
         title={ledger.competition.name}
       >
         <div className="tag-list" style={{ marginTop: "0.7rem" }}>
-          <span className="chip mono" title="Competition slug">{ledger.competition.slug}</span>
+          <span className="chip mono" title="Competition slug" data-competition-slug>{ledger.competition.slug}</span>
           <span className="chip num">{ledger.fixtures_traced} traced / {ledger.fixtures_played} played</span>
           <span className="chip num">{ledger.players_with_events} players with events</span>
         </div>
@@ -60,7 +60,7 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
       />
 
       <div className="tac-boards">
-        <Panel eyebrow="Sum over all clubs in this competition" title="League totals">
+        <Panel eyebrow="Sum over all clubs in this competition" title="League totals" data-testid="league-totals">
           <div className="grid grid-3">
             <div className="stack-sm">
               <dt className="muted">Total events</dt>
@@ -105,11 +105,11 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
           <p className="notice notice--warn">{ledger.disclaimer}</p>
         </Panel>
 
-        <Panel eyebrow={`${ledger.fixtures_traced} fixtures traced · ${ledger.fixtures_untraced} untraced`} title="Consistency">
+        <Panel eyebrow={`${ledger.fixtures_traced} fixtures traced · ${ledger.fixtures_untraced} untraced`} title="Consistency" data-testid="league-consistency">
           <p className="muted">{ledger.consistency}</p>
         </Panel>
 
-        <Panel eyebrow={`${ledger.totals.events} events · ${ledger.players_with_events} players with events`} title="By event type">
+        <Panel eyebrow={`${ledger.totals.events} events · ${ledger.players_with_events} players with events`} title="By event type" data-testid="league-by-type">
           <div className="world-tablewrap">
             <table className="table">
               <thead>
@@ -138,7 +138,7 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
           </div>
         </Panel>
 
-        <Panel eyebrow={`${ledger.unattributed.events.ambiguous} ambiguous · ${ledger.unattributed.events.unnamed} unnamed`} title="Unattributed">
+        <Panel eyebrow={`${ledger.unattributed.events.ambiguous} ambiguous · ${ledger.unattributed.events.unnamed} unnamed`} title="Unattributed" data-testid="league-unattributed">
           {ledger.unattributed.ambiguous_names.length > 0 && (
             <p className="muted world-section-note">
               Ambiguous names: {ledger.unattributed.ambiguous_names.join(", ")}
@@ -154,7 +154,7 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
           )}
         </Panel>
 
-        <Panel eyebrow={`${ledger.players_with_events} players · ${ledger.players_shown} shown`} title="Top players">
+        <Panel eyebrow={`${ledger.players_with_events} players · ${ledger.players_shown} shown`} title="Top players" data-testid="league-players">
           <div className="world-tablewrap">
             <table className="table">
               <thead>

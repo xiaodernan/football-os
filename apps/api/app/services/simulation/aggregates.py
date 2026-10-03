@@ -17,12 +17,12 @@ aggregates, same scope/focus rules as the per-career ledger.
 
 from __future__ import annotations
 
-from typing import Any, Final
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Career, CareerFixture, Competition, SimulationEvent, SimulationMatch, Team
+from app.models import Career, CareerFixture, Competition, SimulationEvent, Team
 from app.services.simulation.engine import SIMULATION_DISCLAIMER
 from app.services.simulation.events import ATTRIBUTION_FORMULA
 
@@ -228,11 +228,12 @@ def league_ledger_view(session: Session, competition: Competition) -> dict[str, 
     fixtures = _league_fixtures(session, competition.id)
     played = [row for row in fixtures if row.match_id]
     match_ids = _match_ids_of_fixtures(played)
-    club_ids = _club_ids_of_careers(session, [str(row.career_id) for row in played])
-    
-    # Since a fixture belongs to one club, we sum across all clubs in the competition
-    # by not filtering to a single club_id (the per-fixture club_id is already the fixture's club)
-    totals = _totals_by_type(session, match_ids, club_id=None)  # no single club filter
+
+    # The club sum is deliberately not narrowed to one club: a league ledger is every club in the
+    # competition, and each fixture's own `club_id` decides the side an event is credited to — which is why
+    # there is no `club_ids` local here to narrow with. The assignment that used to sit on this line was
+    # never read (ruff: F841), and its presence suggested a filter the answer does not apply.
+    totals = _totals_by_type(session, match_ids, club_id=None)
     players = _player_rows(session, match_ids, club_id=None)
     names = _unattributed_names(session, match_ids, club_id=None)
     
@@ -294,7 +295,13 @@ def player_career_aggregate_view(session: Session, career_ids: list[str], player
     fixtures = _fixtures_of_careers(session, career_ids)
     played = [row for row in fixtures if row.match_id]
     match_ids = _match_ids_of_fixtures(played)
-    
+
+    # The rows this answer names. This is the line the door used to die on: the response below read a
+    # `careers` name that was never bound, which `ruff` reported as `F821` and `mypy` as `name-defined`, and
+    # which nothing caught because the one test that reached this door was skipped. A `select` over the ids
+    # the router resolved is what the list needs, ordered by id so one question answers the same way twice.
+    careers = list(session.scalars(select(Career).where(Career.id.in_(career_ids)).order_by(Career.id)))
+
     # Get the player's name/position from CareerAppearance
     from app.models import CareerAppearance
     sample_appearance = session.scalar(
@@ -304,29 +311,32 @@ def player_career_aggregate_view(session: Session, career_ids: list[str], player
     )
     player_name = sample_appearance.player_name if sample_appearance else player_slug
     player_position = sample_appearance.position if sample_appearance else None
-    
+
     totals = _totals_by_type(session, match_ids, club_id=None)
     players = _player_rows(session, match_ids, club_id=None)
-    # Filter to just this player
-    player_rows = [p for p in players if p["slug"] == player_slug]
+    # The player rows are cut to the player this view is about — the filter the module's own docstring names.
+    # The totals beside them are the *careers'* fixtures, which is what `scope` and `fixtures_played` say;
+    # a row per player is the other half of the answer, and leaving every other name in it made the table
+    # disagree with the sentence printed underneath it.
+    player_rows = [row for row in players if row["slug"] == player_slug]
     names = _unattributed_names(session, match_ids, club_id=None)
-    
+
     traced_ids = _traced_match_ids(session, match_ids)
     traced = len(traced_ids)
     untraced = len(fixtures) - traced
-    
+
     goals = int(totals.get("goal", {}).get("events", 0))
-    
-    shown = players[:LEDGER_LIMIT]
+
+    shown = player_rows[:LEDGER_LIMIT]
     unattributed_events = {kind: sum(int(entry.get(kind, 0)) for entry in totals.values()) for kind in ("ambiguous", "unnamed")}
-    
+
     return {
         "player": {"slug": player_slug, "name": player_name, "position": player_position},
         "careers": [{"id": c.id, "slug": c.slug, "club_name": c.club_name, "club_short": c.club_short} for c in careers],
         "players": shown,
-        "players_with_events": len(players),
+        "players_with_events": len(player_rows),
         "players_shown": len(shown),
-        "truncated": len(players) > len(shown),
+        "truncated": len(player_rows) > len(shown),
         "totals": {
             "events": sum(int(entry["events"]) for entry in totals.values()),
             "goals": goals,

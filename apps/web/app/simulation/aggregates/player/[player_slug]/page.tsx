@@ -8,8 +8,8 @@ import { absolute } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
 import type { SimAggPlayerAggregate } from "@/lib/types";
 
-import "../../styles/tactics.css";
-import "../../styles/simulate.css";
+import "../../../../../styles/tactics.css";
+import "../../../../../styles/simulate.css";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +46,8 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           <span className="chip mono" title="Position">{aggregate.player.position ?? "—"}</span>
           <span className="chip num">{aggregate.fixtures_played} fixtures</span>
           <span className="chip num">{aggregate.totals.goals} goals</span>
+          <span className="chip mono" data-player-slug>{aggregate.player.slug}</span>
+          <span className="chip mono" data-player-name>{aggregate.player.name}</span>
         </div>
       </WorldHead>
 
@@ -61,7 +63,7 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
       />
 
       <div className="tac-boards">
-        <Panel eyebrow={`${aggregate.careers.length} career${aggregate.careers.length === 1 ? "" : "s"}`} title="Careers">
+        <Panel eyebrow={`${aggregate.careers.length} career${aggregate.careers.length === 1 ? "" : "s"}`} title="Careers" data-testid="agg-careers">
           <div className="world-tablewrap">
             <table className="table">
               <thead>
@@ -84,7 +86,7 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           </div>
         </Panel>
 
-        <Panel eyebrow="Sum over all careers" title="Totals">
+        <Panel eyebrow="Sum over all careers" title="Totals" data-testid="player-totals">
           <div className="grid grid-3">
             <div className="stack-sm">
               <dt className="muted">Total events</dt>
@@ -133,7 +135,7 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           <p className="muted">{aggregate.consistency}</p>
         </Panel>
 
-        <Panel eyebrow={`${aggregate.totals.events} events · ${aggregate.players_with_events} players with events`} title="By event type">
+        <Panel eyebrow={`${aggregate.totals.events} events · ${aggregate.players_with_events} players with events`} title="By event type" data-testid="agg-by-type">
           <div className="world-tablewrap">
             <table className="table">
               <thead>
@@ -162,7 +164,7 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           </div>
         </Panel>
 
-        <Panel eyebrow={`${aggregate.unattributed.events.ambiguous} ambiguous · ${aggregate.unattributed.events.unnamed} unnamed`} title="Unattributed">
+        <Panel eyebrow={`${aggregate.unattributed.events.ambiguous} ambiguous · ${aggregate.unattributed.events.unnamed} unnamed`} title="Unattributed" data-testid="agg-unattributed">
           {aggregate.unattributed.ambiguous_names.length > 0 && (
             <p className="muted world-section-note">
               Ambiguous names: {aggregate.unattributed.ambiguous_names.join(", ")}
@@ -178,7 +180,7 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           )}
         </Panel>
 
-        <Panel eyebrow={`${aggregate.players_with_events} players with events · ${aggregate.players_shown} shown`} title="Players">
+        <Panel eyebrow={`${aggregate.players_with_events} players with events · ${aggregate.players_shown} shown`} title="Players" data-testid="agg-players">
           <div className="world-tablewrap">
             <table className="table">
               <thead>

@@ -44,6 +44,7 @@ from app.services.club import sessions as sess
 from app.services.club.organizations import ClubRefusal
 from app.services.community import posts as community
 from app.services.creator import publishing as creator
+from app.services.knowledge_graph import verbs as graph
 from app.services.portfolio import cv as portfolio
 from app.services.portfolio import sharing as portfolio_share
 
@@ -71,7 +72,12 @@ SETS: Final = (
 #: that appeared nowhere in this table. A tier list assembled from the services alone is a ledger that cannot see
 #: the routers, and the routers were spending 403 freely. Registering the platform's own 403 codes here is what
 #: makes the ledger and the territory one fact.
-TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio, portfolio_share, security)
+#:
+#: §30's knowledge graph joins last. Its `no_such_node` is the fifth code in the table that means *absent*, and it
+#: reaches here through `/graph/nodes/…` — a door with a router of its own, which is exactly the shape that let
+#: §51's two answer tables drift apart. A tier that reads the assembled table and registers its sets in one motion
+#: cannot make that hole again.
+TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio, portfolio_share, security, graph)
 
 
 def assemble(*tiers: Any) -> dict[str, int]:

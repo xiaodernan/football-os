@@ -8,7 +8,7 @@ import { absolute } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
 import type { GraphNode, GraphLink, GraphNeighborhood } from "@/lib/types";
 
-import "../../styles/tactics.css";
+import "../../../../../styles/tactics.css";
 
 export const dynamic = "force-dynamic";
 
