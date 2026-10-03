@@ -1,10 +1,17 @@
-# Spec coverage audit — every product module in the master spec, mapped to measured evidence (2026-09-27, revised 2026-09-28)
+# Spec coverage audit — every product module in the master spec, mapped to measured evidence (2026-09-27, revised 2026-09-28, 2026-10-04)
 
 Method (all figures from the tree, not from memory): the committed contract `docs/api/openapi.json` (126 paths when
-this audit was written, **144** re-read 2026-09-28), `find apps/web/app -name page.tsx` (47 routes then, **48** now),
-the 24 files in `apps/api/migrations/versions` (21 then), `ls apps/api/app/services[/**]`, and `grep` for the vocabulary
+this audit was written, **144** re-read 2026-09-28, **160** re-read 2026-10-04), `find apps/web/app -name page.tsx`
+(47 routes then, **48** re-read 2026-09-28, **56** re-read 2026-10-04), the committed files in
+`apps/api/migrations/versions` (21 then, **24** re-read 2026-09-28, **26** re-read 2026-10-04),
+`ls apps/api/app/services[/**]`, and `grep` for the vocabulary
 each module is written in. A module is **landed** only when a route or page a caller can knock on
 carries its noun; a service file with no door is **partial**.
+
+Every figure in this sentence is re-checked against the committed tree by
+`apps/api/tests/test_spec_audit_currency.py`, which reads the machine-readable line below rather than the prose:
+
+`AUDIT_FIGURES contract_paths=160 page_routes=56 migrations=26`
 
 ## A. The 30 product modules (spec §3's list, §4–§42)
 
@@ -25,12 +32,12 @@ carries its noun; a service file with no door is **partial**.
 | 27 | Player analytics | `/api/v1/scout/compare`, `/progress/timeline`, `/history`, `/my-football` | M6/M7 | landed |
 | 28 | Football knowledge base | `/api/v1/knowledge/{documents,search,ask,ingest,status}`, `/knowledge`, `/knowledge/[slug]` | M2 | landed |
 | 29 | RAG pipeline | `services/knowledge/{ingest,retrieval,answer}.py`, `apps/api/evals/{golden_rag.json,run_rag_eval.py}` (a CI step) | M2 | landed |
-| **30** | **Knowledge graph** | **no route, no table, no service.** `grep -rliE 'knowledge_graph|graph_edge' apps/api/app` → 0 files. Only the corpus's *edge vocabulary* in `data/knowledge` prose | **nobody** | **MISSING — no milestone owns it** |
+| **30** | **Knowledge graph** | **the projection, not a table.** `app/services/knowledge_graph/{verbs,project}.py` declares 6 node kinds and 13 edges over stored foreign keys; `git grep -li knowledge_graph -- apps/api/app` → 5 files (the two service modules, the package `__init__`, `app/api/v1/graph.py`, `services/club/answers.py`). Three committed doors — `/api/v1/graph/rules`, `/api/v1/graph/nodes/{kind}/{slug}`, `/api/v1/graph/nodes/{kind}/{slug}/neighborhood` — are mounted in `main.py` at `3651587`, and the `/graph` pages are walked by `apps/web/scripts/visual-qa.mjs` §12i. **§30's own clause is still open: joint retrieval.** `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 0 files, so `retrieval.py` never reads the graph; and 0 of the 18 `queries` in `apps/api/evals/golden_rag.json` names a committed team or competition (re-read 2026-10-04), which is why a recall-widening hop has no measured case to earn its keep | **M11** | **partial — doors landed, the joint clause did not** |
 | 31–34 | Football AI agent / multi-agent / complex task / agent memory | `grep -rli agent apps/api/app` → `services/coach_engine.py` only. No `/api/v1/agents`, no orchestrator, no benchmark | M11 | owned, not started |
 | 35 | Community (feed, posts, comments, likes, follows) | five `community_*` tables (migration `0023`), `services/community/posts.py`, **8 paths / 12 operations** under `/api/v1/community` (contract 137/176), `/community` page with its own 38-check walk | M9 | **landed 2026-09-28** — posts/comments/reactions/reposts/follows and the pointer-to-artifact share; moderation, reporting and blocking are not in this build ([evidence](docs/M9_COMMUNITY_VERIFICATION.md)) |
 | 36 | Creator system | `creator_profiles`, `creator_guides` and `guide_citations` (migration `0024`), `services/creator/publishing.py`, **7 paths / 11 operations** under `/api/v1/creator` (11 doors, 1 public; contract 144/187), `/creator` + `components/CreatorWorkbench.tsx` | M10 | **landed 2026-09-28** — a guide publishes a title, a frame and *addresses* into the corpus, every figure about it is recomputed on read, and reach is §35's own follow predicate; the two features it publishes into §42's table are ceilings no door refuses on yet, and `/creator` still has no browser walk of its own ([evidence](docs/M10_CREATOR_VERIFICATION.md)) |
 | 37 | Gamification | `services/achievements.py`, `progression.py`, `/api/v1/progress/{overview,timeline}`, `/progress` | M1 | landed |
-| **38** | **Football career portfolio** (10-section CV, public share link, PDF) | **no route, no page, no service.** `grep -rli portfolio apps/api/app apps/web/app` → 0 files. The data it would summarise all exists (career, scout, club, training, video) | **M10** (recorded 2026-09-28) | **MISSING — unstarted, and now M10's next slice**: the blocker this audit named is gone, because §35's permission layer landed 2026-09-28 |
+| **38** | **Football career portfolio** (10-section CV, public share link, PDF) | **landed under M10.** `git grep -li portfolio -- apps/api/app, apps/web/app` → 8 files: the `/api/v1/portfolio*` door, `services/portfolio/{cv,pdf,sharing}.py`, `main.py`'s mount, and `apps/web/app/portfolio/**`. Ten CV sections rendered from stored rows with a printed `limitations()` list, a revocable public link, and an owner-authenticated PDF built from the same read ([evidence](docs/M10_PORTFOLIO_VERIFICATION.md)) | **M10** | **landed** |
 | 39–41 | Club OS / Youth Academy / B2B | 33 paths under `/api/v1/club*` incl. §48's `fixtures`, `services/club/{organizations,access,answers,academy,sessions,reports,matches}.py`, 5 `/club*` pages | M8 | landing — §48's fixtures panel landed `ae7fd82` and §39's Communication noun `cdd15b3`, both 2026-09-27; §39's remaining product verbs are open |
 | 42 | Subscription | `usage_events` (migration `0020`), `/api/v1/club/{ident}/entitlements`, `/entitlements/{me,capabilities}`, `services/entitlements.py`; **no currency/provider/checkout field anywhere; §22's valuation price and the meter's token rates are not payments** | M8 (architecture) / M10+ (pricing) | landed as data, payments deliberately absent |
 

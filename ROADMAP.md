@@ -454,13 +454,19 @@ Still open: a season's ledger is only as complete as the rounds whose reports ar
 
 ## Spec modules no milestone owns (audit 2026-09-27)
 
-`[docs/SPEC_COVERAGE_AUDIT.md](docs/SPEC_COVERAGE_AUDIT.md)` maps all 30 product modules to measured evidence (126 contract paths, 47 page
-routes, 21 migrations). Everything in §4–§42 has a door except two, and neither has a milestone that would open one:
+`[docs/SPEC_COVERAGE_AUDIT.md](docs/SPEC_COVERAGE_AUDIT.md)` maps all 30 product modules to measured evidence (160 contract paths, 56 page
+routes, 26 migrations). Everything in §4–§42 has a door except one, and the row below is what that one still
+lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures and every cited file count:
 
-- [ ] **§30 Knowledge Graph** — no table, no route, no service; the spec asks for RAG + graph *joint* retrieval.
-    Proposed owner **M11**, whose §33 composite tasks and §64 benchmark are what a graph hop must be measured
-    against; a retrieval widening may not lower `retrieval.py`'s measurement-derived floors without the 19 golden
-    cases re-measured first.
+- [ ] **§30 Knowledge Graph — the joint half.** The projection, its three `/api/v1/graph/*` doors and the `/graph`
+    pages landed (mounted at `3651587`; 6 node kinds, 13 edges over stored foreign keys, walked by
+    `visual-qa.mjs` §12i), so the audit's older "no table, no route, no service" sentence is retired — a `graph_edges`
+    table is deliberately *not* what this build ships. What §30 asks for and the tree does not do is **RAG + graph
+    joint retrieval**: `git grep -li knowledge_graph -- apps/api/app/services/knowledge` answers 0 files, so
+    `retrieval.py` never reads the graph. Proposed owner **M11**, whose §33 composite tasks and §64 benchmark are what
+    a graph hop must be measured against; a retrieval widening may not lower `retrieval.py`'s measurement-derived
+    floors without the golden set re-measured first — and measured today, **0 of its 18 `queries` name a committed
+    team or competition**, so the hop has no golden case to earn its keep until M11 writes one (2026-10-04).
 - [x] **§38 Football Career Portfolio** — landed under **M10**: ten live CV sections, a revocable public
     link/public-player projection, and an owner-authenticated PDF rendered from the same read. See
     `docs/M10_PORTFOLIO_VERIFICATION.md`; the minors' `videos` guard is built on §40's threshold and §17's
