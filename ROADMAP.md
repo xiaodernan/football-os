@@ -460,8 +460,8 @@ Still open: a season's ledger is only as complete as the rounds whose reports ar
 
 `[docs/SPEC_COVERAGE_AUDIT.md](docs/SPEC_COVERAGE_AUDIT.md)` maps all 30 product modules to measured evidence (160 contract paths, 56 page
 routes, 26 migrations). Everything in §4–§42 has a door except two, and the rows below are what each of those two
-still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every cited file count and
-every path the audit's §A table cites:
+still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every cited file count,
+every path the audit's §A table cites and every door-and-page census that table publishes:
 
 - [ ] **§30 Knowledge Graph — the joint half.** The projection, its three `/api/v1/graph/*` doors and the `/graph`
     pages landed (mounted at `3651587`; 6 node kinds, 13 edges over stored foreign keys, walked by
@@ -598,3 +598,16 @@ Milestones do not own these; every public route must satisfy them as it lands.
   prediction. The milestone narrative is deliberately **not** gated: measured whole-file, 11 of 73 candidates do not
   resolve and 10 of those legitimately (`.scratch` witness artifacts, a mid-pattern glob, prose fragments), so a gate
   there would need a hiding place. No door/route citation is gated yet — that is the next unit.
+- [x] §82's census-currency gate (`docs/SPEC_AUDIT_CENSUS_VERIFICATION.md`): the §A table attached seven counts to
+  route families without saying whether each counted paths or operations, printed `33 paths under `/api/v1/club*``
+  beside a `/club*` page family of 4, and kept two whole-contract totals from past commits in a table whose heading is
+  present tense. C7 recomputes every `N paths / M operations under `/api/v1/…`` census and every page-family count
+  against the committed contract and committed `apps/web/app/**/page.tsx`; C8 refuses `(N doors)`, a bare `(N)` after a
+  route token, and a per-row `contract N/M`, because none of the three has a reader that could keep it honest. Both
+  floors come from the same scan (10 dual censuses, 3 page censuses, counted by the gate's own `published_censuses()` —
+  the hand-pinned 10 that measured 9 is what revealed §38's census was spelled outside the grammar, so that row was
+  canonicalized rather than the grammar widened). Reverse control over a plane holding `8b68b0f`'s unedited ledgers:
+  collected 8, red 2, with C7 naming its own floor and C8 naming `['6', '11']`. Witness 9 runs / 9 MATCHED / 0
+  mismatches, A8 moving the *producer* (one added operation, path count pinned at 160) so the ledger is shown to follow
+  the contract rather than merely quote it. Spelled numerals — row 30's "Three committed doors" — are outside this
+  grammar, and the designed-green A7 says so while staying green.

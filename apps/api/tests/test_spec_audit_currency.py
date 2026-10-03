@@ -26,6 +26,16 @@ Six claims, one case each, each killed by its own arm (`docs/SPEC_AUDIT_CURRENCY
   *landed*. Brace groups expand member by member, a token carrying two groups is refused rather than guessed at, and
   the population is derived from the claim (a repo path cited by its segment sequence), not from an exemption table.
 
+* **C7** every census the §A table publishes recomputes: `N paths / M operations under `/api/v1/…`` against the
+  committed contract, and a page-family count against committed `apps/web/app/**/page.tsx`. Measured before this case
+  existed: five rows printed one bare number beside a route family with no unit at all — seven counts, two of which
+  matched neither the path count nor the operation count the contract answers for that prefix — while a sixth row
+  published 33 paths where `/api/v1/club*` answers 36 and 5 pages where the family holds 4, and two rows carried a
+  whole-contract total that was a past commit's snapshot in present tense.
+* **C8** the table publishes no count that has no reader: a `(N doors)` whose unit is unstated, a bare `(N)` after a
+  `/api/v1/…` token, and a whole-contract total inside a module row are each refused. Spelled numerals — row 30's
+  "Three committed doors" — are outside this grammar and named as such in the record rather than left implied.
+
 Everything is read from the committed tree: with a `.git` present that means `git show HEAD:…` /
 `git ls-tree HEAD`, and on an extracted plane (`git archive`, no `.git`) the walk *is* the committed state. One
 policy, both planes — never the shared working copy's uncommitted edits.
@@ -54,6 +64,19 @@ DECLARED_RANGE = re.compile(r"spec §\d+'s list, §(\d+)[–-]§(\d+)")
 EXCEPT_WORD = re.compile(r"has a door\s+except\s+(\w+),")
 CARDINALS = {"none": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 SCAN_SKIP = "__pycache__"
+
+# C7/C8 — the censuses the §A table publishes. Each accepted shape names its own unit and its own referent; a count
+# that names neither is C8's business, because there is nothing to recompute it against. The two floors are the
+# counts this scan finds at `8b68b0f`; a drop means the grammar stopped matching the ledger's spelling, not that the
+# ledger got honest.
+CENSUS_DUAL = re.compile(r"(\d+)\s+paths\s*/\s*(\d+)\s+operations(?:\*\*)?\s+under\s+`(/api/v1/[^`]+)`")
+CENSUS_PAGES_BEFORE = re.compile(r"(\d+)\s+`(/[a-z][a-z0-9_*/-]*)`\s+pages")
+CENSUS_PAGES_AFTER = re.compile(r"`(/[a-z][a-z0-9_*/-]*)`\s+pages\s+\((\d+)\)")
+DOORS_WITHOUT_UNIT = re.compile(r"\(\s*(\d+)\s+doors?\b")
+COUNT_AFTER_ROUTE = re.compile(r"`(/api/v1/[^`]+)`\s+\((\d+)\)")
+WHOLE_CONTRACT_TOTAL = re.compile(r"contract\s+(\d+)\s*/\s*(\d+)", re.IGNORECASE)
+MIN_DUAL_CENSUSES = 10
+MIN_PAGE_CENSUSES = 3
 
 BACKTICK = re.compile(r"`([^`\n]+)`")
 BRACE_GROUP = re.compile(r"\{[^{}]*\}")
@@ -281,3 +304,64 @@ def test_every_repository_path_the_verdict_ledgers_cite_is_committed() -> None:
         f"{len(tokens)} cited path tokens expand to {len(candidates)} candidates; these name nothing in the "
         f"committed tree: {unresolved}"
     )
+
+
+def contract_census(prefix: str) -> tuple[int, int]:
+    paths = json.loads(committed_text(CONTRACT))["paths"]
+    chosen = [p for p in paths if p.startswith(prefix.rstrip("*"))]
+    return len(chosen), sum(len(paths[p]) for p in chosen)
+
+
+def page_family_count(family: str) -> int:
+    stem = family.strip("/").rstrip("*").rstrip("/")
+    routes = [p[len(WEB_APP) + 1:] for p in committed_paths(WEB_APP) if p.endswith("/page.tsx")]
+    return len([r for r in routes if r == f"{stem}/page.tsx" or r.startswith(f"{stem}/")])
+
+
+def published_censuses() -> tuple[list[tuple[int, int, str]], list[tuple[int, str]]]:
+    section = table_section()
+    duals = [(int(paths), int(ops), prefix) for paths, ops, prefix in CENSUS_DUAL.findall(section)]
+    pages = [(int(count), family) for count, family in CENSUS_PAGES_BEFORE.findall(section)]
+    pages += [(int(count), family) for family, count in CENSUS_PAGES_AFTER.findall(section)]
+    return duals, pages
+
+
+def test_every_door_and_page_census_in_the_module_table_recomputes() -> None:
+    duals, pages = published_censuses()
+    assert len(duals) >= MIN_DUAL_CENSUSES, (
+        f"the §A table yields {len(duals)} 'N paths / M operations under a /api/v1 prefix' censuses where `8b68b0f` "
+        f"yields {MIN_DUAL_CENSUSES} — the grammar stopped matching the ledger's spelling, so this case read less "
+        "than the ledger published"
+    )
+    for paths_claimed, operations_claimed, prefix in duals:
+        got = contract_census(prefix)
+        assert got == (paths_claimed, operations_claimed), (
+            f"`{prefix}` is published as {paths_claimed} paths / {operations_claimed} operations; the committed "
+            f"{CONTRACT} answers {got[0]} paths / {got[1]} operations under that prefix"
+        )
+    assert len(pages) >= MIN_PAGE_CENSUSES, (
+        f"the §A table yields {len(pages)} page-family censuses where `8b68b0f` yields {MIN_PAGE_CENSUSES} — the "
+        "grammar read less than the ledger published"
+    )
+    for count, family in pages:
+        got = page_family_count(family)
+        assert got == count, (
+            f"the table says {count} '{family}' pages; committed {WEB_APP} holds {got} page.tsx under that family"
+        )
+
+
+def test_the_module_table_publishes_no_count_that_has_no_reader() -> None:
+    section = table_section()
+    for rx, why in (
+        (DOORS_WITHOUT_UNIT,
+         "a '(N doors)' count: this ledger has used 'door' for one path in one row and for one operation in another, "
+         "so the number cannot be checked until the row says which"),
+        (COUNT_AFTER_ROUTE,
+         "a bare '(N)' after a /api/v1 route token, which names neither paths nor operations and so answers to "
+         "neither count the contract publishes"),
+        (WHOLE_CONTRACT_TOTAL,
+         "a whole-contract total inside a module row: the current triple is the AUDIT_FIGURES line, which C1 "
+         "recomputes, and a per-row total is a snapshot of a past commit no reader here can recompute"),
+    ):
+        found = rx.findall(section)
+        assert not found, f"the §A table still publishes {found} — {why}"
