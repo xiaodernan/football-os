@@ -3893,6 +3893,266 @@
         }
       }
     },
+    "/api/v1/video/{ident}/link-player": {
+      "post": {
+        "tags": [
+          "video"
+        ],
+        "summary": "Link Player",
+        "description": "Link this clip to one of the caller's football identities (spec §14, M5 item 3).",
+        "operationId": "link_player_api_v1_video__ident__link_player_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "player_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Link Player Api V1 Video  Ident  Link Player Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/video/{ident}/link-match": {
+      "post": {
+        "tags": [
+          "video"
+        ],
+        "summary": "Link Match",
+        "description": "Link this clip to an M6 simulation match (spec §14, M5 item 3).",
+        "operationId": "link_match_api_v1_video__ident__link_match_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "match_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "title": "Match Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Link Match Api V1 Video  Ident  Link Match Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/video/{ident}/share": {
+      "post": {
+        "tags": [
+          "video"
+        ],
+        "summary": "Share Clip",
+        "description": "Create a revocable share link for this clip (spec §17 precedent, M5 item 3).",
+        "operationId": "share_clip_api_v1_video__ident__share_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Share Clip Api V1 Video  Ident  Share Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "video"
+        ],
+        "summary": "Revoke Share",
+        "description": "Revoke the share link for this clip (spec §17 precedent).",
+        "operationId": "revoke_share_api_v1_video__ident__share_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Revoke Share Api V1 Video  Ident  Share Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/video/shared/{token}": {
+      "get": {
+        "tags": [
+          "video"
+        ],
+        "summary": "Read Shared Clip",
+        "description": "Public read of a shared clip — no session, no owner identity (spec §17 precedent).",
+        "operationId": "read_shared_clip_api_v1_video_shared__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Shared Clip Api V1 Video Shared  Token  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/careers/options": {
       "get": {
         "tags": [
@@ -4163,6 +4423,55 @@
                 "schema": {
                   "type": "object",
                   "title": "Response Retire Api V1 Careers  Ident  Retire Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/careers/{ident}/ledger": {
+      "get": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Read Ledger",
+        "description": "This career's season ledger, summed from sim_events of its fixtures.\n\nThe ledger is a pure read: every figure is summed from sim_events rows at request\ntime, and the consistency check compares the same season's goals from the event\nrows against the career's own fixture list.",
+        "operationId": "read_ledger_api_v1_careers__ident__ledger_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Ledger Api V1 Careers  Ident  Ledger Get"
                 }
               }
             }
@@ -4554,6 +4863,117 @@
                 "schema": {
                   "type": "object",
                   "title": "Response Replay Api V1 Simulate  Ident  Replay Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulation/aggregates/rules": {
+      "get": {
+        "tags": [
+          "simulation-aggregates"
+        ],
+        "summary": "Read Rules",
+        "description": "The vocabulary and ceilings for the simulation aggregates tier.\n\nNothing here is typed by hand: the caps are the constants the walk guards with.",
+        "operationId": "read_rules_api_v1_simulation_aggregates_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Rules Api V1 Simulation Aggregates Rules Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulation/aggregates/league/{competition_slug}": {
+      "get": {
+        "tags": [
+          "simulation-aggregates"
+        ],
+        "summary": "Read League Ledger",
+        "description": "League-wide ledger: all careers whose club is in this competition, summed together.\n\nPublic read: no session required. The club is the unit of aggregation — a club\nmay have multiple careers (one per account), and a fixture belongs to one club.",
+        "operationId": "read_league_ledger_api_v1_simulation_aggregates_league__competition_slug__get",
+        "parameters": [
+          {
+            "name": "competition_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Competition Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read League Ledger Api V1 Simulation Aggregates League  Competition Slug  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulation/aggregates/player/{player_slug}": {
+      "get": {
+        "tags": [
+          "simulation-aggregates"
+        ],
+        "summary": "Read Player Career Aggregate",
+        "description": "Player career aggregate: all careers with a player matching this slug, summed.\n\nPublic read: no session required. The player is identified by slug (which is\nunique per career, but a real player may have multiple careers — one per account).\nWe find all careers that have a player with this slug and sum their events.",
+        "operationId": "read_player_career_aggregate_api_v1_simulation_aggregates_player__player_slug__get",
+        "parameters": [
+          {
+            "name": "player_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Player Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Player Career Aggregate Api V1 Simulation Aggregates Player  Player Slug  Get"
                 }
               }
             }
@@ -10170,6 +10590,169 @@
                 "schema": {
                   "type": "object",
                   "title": "Response Read Shared Api V1 Portfolio Share  Token  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/graph/rules": {
+      "get": {
+        "tags": [
+          "knowledge-graph"
+        ],
+        "summary": "Read Rules",
+        "description": "The vocabulary, the ceilings and the relations the schema does not support.\n\nNothing here is typed by hand: the caps are the constants the walk guards with, the clause counts\ncome from the live metadata scan, and `refusal_answers` is the same table `_refusal` raises with.",
+        "operationId": "read_rules_api_v1_graph_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Rules Api V1 Graph Rules Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/graph/nodes/{kind}/{slug}": {
+      "get": {
+        "tags": [
+          "knowledge-graph"
+        ],
+        "summary": "Read Node",
+        "description": "One node and every typed edge touching it, read from the rows that carry those relations.",
+        "operationId": "read_node_api_v1_graph_nodes__kind___slug__get",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          },
+          {
+            "name": "verb",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 40,
+              "default": "",
+              "title": "Verb"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 8,
+              "default": "both",
+              "title": "Direction"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Node Api V1 Graph Nodes  Kind   Slug  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/graph/nodes/{kind}/{slug}/neighborhood": {
+      "get": {
+        "tags": [
+          "knowledge-graph"
+        ],
+        "summary": "Read Neighborhood",
+        "description": "A breadth-first walk, capped by the ceilings `/graph/rules` prints.\n\n`le=MAX_DEPTH + 2` is deliberate and not a guard: it lets a caller ask *past* the ceiling so the\nanswer is this tier's own refusal — with the ceiling named in it — rather than a framework 422\nabout a query parameter. `graph_depth_not_supported` is what refuses.",
+        "operationId": "read_neighborhood_api_v1_graph_nodes__kind___slug__neighborhood_get",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 4,
+              "minimum": 1,
+              "default": 1,
+              "title": "Depth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Neighborhood Api V1 Graph Nodes  Kind   Slug  Neighborhood Get"
                 }
               }
             }

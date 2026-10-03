@@ -545,3 +545,21 @@ Milestones do not own these; every public route must satisfy them as it lands.
   predictions were wrong in the same run and are recorded rather than smoothed: `A5`'s and `A9`'s denominators, both
   arithmetic, both landing on the clause each arm is about. No whole-suite leg is claimed: the changeset holds no
   `.py` path, which is what that sentence is allowed to mean.
+- [x] §79's contract-currency gate (`docs/OPENAPI_CONTRACT_VERIFICATION.md`): `docs/api/openapi.json` is the artifact
+  `ROADMAP.md:215` says the web tier codes against, and until this unit **nothing in `apps/api/tests` read it**.
+  Measured at `3651587`: the committed file listed 149 paths / 193 operations while the same commit's own
+  `app.openapi()` answered **160 / 205 / 63 schemas** — 12 operations added, 0 removed, schema-name sets identical, so
+  the drift was invisible to anything counting components. The 11 missing paths are `graph` ×3, `simulation/aggregates`
+  ×3, `video` ×4 (5 operations), `careers/{ident}/ledger` ×1 — six of them the tiers that commit itself wired up.
+  Cause: `scripts/export_openapi.py` fetched `{base}/api/v1/openapi.json` from a *running* service whose default port
+  (8731) is shared on this machine, which makes a committed contract a property of whoever holds a socket. It now
+  builds the spec in-process, proves the imported `app` package lives in this repository before trusting it, pins LF on
+  write, and takes `--out`. `apps/api/tests/test_openapi_contract_currency.py` gates four shapes separately — path set,
+  (path, verb) pairs, component schema names, and byte equality between the shipped exporter and the committed file —
+  so the first red names the kind of drift; `check.sh:20` and both CI pytest steps invoke it, 4 passed / 0 failed /
+  0 errors on the landing plane. Witness: `7` runs (control + 6 arms: stale contract, deleted verb, renamed schema,
+  restored scraper, dropped `newline`, unmounted router) against case-name predictions written first,
+  7/7 MATCHED, 0 survivors, with the artifact-side and app-side halves each carrying their own arm. The regenerated
+  contract is derived from the landing HEAD and staged index-only; another lane's uncommitted copy of that file is
+  untouched. No whole-suite leg is claimed for the +4 cases — the leg figure in `.scratch/r78_leg_summary.txt` is
+  measured over the commit before this test file exists.
