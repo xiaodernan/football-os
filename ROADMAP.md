@@ -630,3 +630,19 @@ Milestones do not own these; every public route must satisfy them as it lands.
   a `CONFLATED` refusal retires a token before its inner misspelling is read, and a citation with no `/api/v1` prefix
   is outside this population — which is why §9–12's `/trainings/…` row was rewritten into the grammar instead of
   being left to a case that cannot see it. No whole-suite leg is claimed by this unit.
+- [x] §84's joint-retrieval anchoring half (`docs/M11_JOINT_RETRIEVAL_VERIFICATION.md`). `retrieval.py` still never
+    reads the graph — that is the recall hop, and it stays open until §33's composite tasks and §64's benchmark
+    re-measure the floors — but `apps/api/app/services/knowledge/graph_join.py` now answers the other half of §30's
+    sentence, *which stored nodes does this sentence name*, and `apps/api/app/services/knowledge/answer.py` prints
+    those relations in `reasons`: the channel `/api/v1/knowledge/ask` already publishes and
+    `apps/web/app/knowledge/KnowledgeAsk.tsx` already renders, so no response key and no contract regeneration was
+    needed while `docs/api/openapi.json` is held dirty by another lane. Anchoring requires a node's whole label in
+    the question, so a football word or half a label anchors nothing; `apps/api/evals/golden_joint.json` (8 cases,
+    3 near misses, 1 refusal control) retires the audit's "0 files / 0 of 18 queries" measurement, re-taken on the
+    plane as 6 files under `apps/api/app` and 1 under `app/services/knowledge`. Nine cases green; three arms, each
+    red at exactly the predicted case: A1 partial-overlap anchoring, A2 the hop wired into the refusal branch, A3 a
+    demo fact printed without its disclosure. The refusal control is what makes A2 decisive — every ordinary
+    out-of-scope question anchors nothing, so only a question that names a stored club and still misses the corpus
+    can tell "not asked" from "asked and agreed". Plane baseline joint 9/0 red, regression over
+    `apps/api/tests/test_knowledge_rag.py`, `apps/api/tests/test_knowledge_graph_census.py`,
+    `apps/api/tests/test_world.py` 90/0 red (SQLite; the PostgreSQL engine on this machine is still dead).

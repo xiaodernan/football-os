@@ -1,0 +1,22 @@
+{
+  "version": "2026-10-05",
+  "note": "Golden set for spec §30's joint half: every query is phrased the way a player types AND names a node the committed world generator actually stores. `tests/test_knowledge_joint.py` re-resolves every (kind, slug) against the synced world on each run, so a label that stops being generated makes this file red rather than silent. The RAG floors stay owned by `golden_rag.json`: no question here widens recall, and a refusal here is expected to carry no `graph:` reason.",
+  "queries": [
+    {"id": "pressing-vireford", "query": "when should Vireford Miners press the keeper", "expected_nodes": [{"kind": "team", "slug": "vireford-miners", "label": "Vireford Miners"}]},
+    {"id": "height-braehaven", "query": "how high should Braehaven Elite League sides sit", "expected_nodes": [{"kind": "competition", "slug": "braehaven-elite-league", "label": "Braehaven Elite League"}]},
+    {"id": "low-block-corand", "query": "how do we use width to stretch a compact low block against Corand Ruceek", "expected_nodes": [{"kind": "player", "slug": "corand-ruceek", "label": "Corand Ruceek"}]},
+    {"id": "counterpress-cordale", "query": "we just lost the ball: what do Cordale Town do in the first five seconds", "expected_nodes": [{"kind": "team", "slug": "cordale-town", "label": "Cordale Town"}]},
+    {"id": "offside-peleth", "query": "is Peleth Sorith offside without touching the ball", "expected_nodes": [{"kind": "player", "slug": "peleth-sorith", "label": "Peleth Sorith"}]},
+    {"id": "buildout-lyndera", "query": "the keeper is being pressed how do Lyndera Superleague clubs build out", "expected_nodes": [{"kind": "competition", "slug": "lyndera-superleague", "label": "Lyndera Superleague"}]},
+    {"id": "warmup-ravhurst", "query": "what order should a warm up go in before a Ravhurst First Tier fixture", "expected_nodes": [{"kind": "competition", "slug": "ravhurst-first-tier", "label": "Ravhurst First Tier"}]},
+    {"id": "touch-dunmoor", "query": "how can Dunmoor Town pass faster under pressure with fewer touches", "expected_nodes": [{"kind": "team", "slug": "dunmoor-town", "label": "Dunmoor Town"}]}
+  ],
+  "refusal_controls": [
+    {"id": "boot-brand-vireford", "query": "what boot brand do Vireford Miners wear", "expected_nodes": [{"kind": "team", "slug": "vireford-miners", "label": "Vireford Miners"}], "why": "names a stored club and is still out of the corpus's scope: the anchor must find the node, and the answer must still refuse it without borrowing the node as evidence"}
+  ],
+  "near_misses": [
+    {"id": "generic-team-word", "query": "when should my team press", "why": "names a football word, not a node: 'team' is not any club's full label, so the anchor must refuse it"},
+    {"id": "half-a-label", "query": "how does Vireford press high", "why": "carries one term of the label 'Vireford Miners', which is a mention, not a naming"},
+    {"id": "no-world-vocabulary", "query": "what boot brand should I buy", "why": "out of scope for both halves"}
+  ]
+}

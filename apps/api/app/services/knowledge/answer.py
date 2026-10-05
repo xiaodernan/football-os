@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from app.core.security import new_public_id
 from app.models import KnowledgeQuery
 from app.providers import LlmResult, get_embedding_provider, get_llm_provider
-from app.services.knowledge import retrieval
+from app.services.knowledge import graph_join, retrieval
 from app.services.knowledge.chunking import strip_header
 from app.services.knowledge.retrieval import Filters, Hit
 from app.services.knowledge.text import content_words
@@ -168,6 +168,8 @@ def ask(
     context, digest, citations = assemble_context(usable) if usable else ("", [], [])
 
     reasons = [f"retrieval: {reason}" for reason in found.reasons] + confidence_reasons
+    if usable:
+        reasons += graph_join.reason_lines(graph_join.anchors(db, question))
     timings["ask_total"] = int((time.perf_counter() - started) * 1000)
 
     if not usable:
