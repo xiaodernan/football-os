@@ -461,7 +461,8 @@ Still open: a season's ledger is only as complete as the rounds whose reports ar
 `[docs/SPEC_COVERAGE_AUDIT.md](docs/SPEC_COVERAGE_AUDIT.md)` maps all 30 product modules to measured evidence (160 contract paths, 56 page
 routes, 26 migrations). Everything in §4–§42 has a door except two, and the rows below are what each of those two
 still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every cited file count,
-every path the audit's §A table cites and every door-and-page census that table publishes:
+every path the audit's §A table cites, every door-and-page census that table publishes and every
+`/api/v1/…` route citation in the ledger:
 
 - [ ] **§30 Knowledge Graph — the joint half.** The projection, its three `/api/v1/graph/*` doors and the `/graph`
     pages landed (mounted at `3651587`; 6 node kinds, 13 edges over stored foreign keys, walked by
@@ -597,7 +598,8 @@ Milestones do not own these; every public route must satisfy them as it lands.
   `apps/api/requirements-dev.txt` turned out to be committed, so its green was a true measurement and the wrong
   prediction. The milestone narrative is deliberately **not** gated: measured whole-file, 11 of 73 candidates do not
   resolve and 10 of those legitimately (`.scratch` witness artifacts, a mid-pattern glob, prose fragments), so a gate
-  there would need a hiding place. No door/route citation is gated yet — that is the next unit.
+  there would need a hiding place. Door/route citations are gated by §83's C9
+  (`docs/SPEC_AUDIT_ROUTE_CURRENCY_VERIFICATION.md`).
 - [x] §82's census-currency gate (`docs/SPEC_AUDIT_CENSUS_VERIFICATION.md`): the §A table attached seven counts to
   route families without saying whether each counted paths or operations, printed `33 paths under `/api/v1/club*``
   beside a `/club*` page family of 4, and kept two whole-contract totals from past commits in a table whose heading is
@@ -611,3 +613,20 @@ Milestones do not own these; every public route must satisfy them as it lands.
   mismatches, A8 moving the *producer* (one added operation, path count pinned at 160) so the ledger is shown to follow
   the contract rather than merely quote it. Spelled numerals — row 30's "Three committed doors" — are outside this
   grammar, and the designed-green A7 says so while staying green.
+- [x] §83's route-citation gate (`docs/SPEC_AUDIT_ROUTE_CURRENCY_VERIFICATION.md`): the audit cited API doors in
+  three spellings no reader could recompute — one brace group mixing door literals with a path parameter
+  (`/api/v1/video/{upload,{id},analyse,file,frames/{i},jobs}`), a group whose member carried a second brace
+  (`/api/v1/coach/{ask,plan,today,history,drills/{slug}/knowledge}`), and doors written as web routes
+  (`/progress/export`). C9 resolves every `/api/v1/…` citation in the ledger against the committed contract — exact
+  door, family for a `*` suffix, path-shape match for a parameterized door whose *parameter names* must be the
+  contract's own, and equal-or-under for a citation the prose introduces as absent — while a token that is the
+  referent of a C7/C8 census is skipped because there it is a prefix, not a path. Measured first: HEAD's ledger
+  answers 31 of its citations with 3 defects; the corrected ledger answers 49 with 0, which is where the four
+  floors come from (49 citations, 12 parameterized, 1 negated, 10 census referents
+  excluded — all read by the gate's own scan). Reverse control over `ad9b841`'s unedited ledger: collected 9, red 1,
+  C9 naming both `CONFLATED` groups and `PARAMETER-NAME /api/v1/video/{{id}}/jobs`. Witness 10 runs /
+  10 MATCHED, including an arm that moves the *producer* (the contract renames a path parameter) and one
+  designed-green arm that cites a committed door no row cited before. Two limits are recorded rather than smoothed:
+  a `CONFLATED` refusal retires a token before its inner misspelling is read, and a citation with no `/api/v1` prefix
+  is outside this population — which is why §9–12's `/trainings/…` row was rewritten into the grammar instead of
+  being left to a case that cannot see it. No whole-suite leg is claimed by this unit.

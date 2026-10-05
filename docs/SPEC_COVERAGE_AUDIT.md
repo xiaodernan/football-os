@@ -19,8 +19,8 @@ Every figure in this sentence is re-checked against the committed tree by
 | --- | --- | --- | --- | --- |
 | 4 | Football World | `/api/v1/world/{status,players,teams,competitions,matches,news,training,search}` + `/world/*` pages (8) | M3 | landed |
 | 5–8 | Player profile / archetype / real-vs-user / progression | `/players/{id}`, `/world/players/{ident}`, `/player/[slug]`, `services/attributes.py`, `progression.py` | M1/M3 | landed |
-| 9–12 | AI Coach / training academy / progression / plan | `/api/v1/coach/{ask,plan,today,history,drills/{slug}/knowledge}`, `/trainings/{drills,sessions/{id}/complete}`, `/coach`, `/training`, `/training/[slug]` | M2/M1 | landed |
-| 13–14 | Video analysis + output | `/api/v1/video/{upload,{id},analyse,file,frames/{i},jobs}`, `/video`, `/video/[id]` | M5 | landed, **vision provider labelled demo** |
+| 9–12 | AI Coach / training academy / progression / plan | `/api/v1/coach/{ask,plan,today,history}`, `/api/v1/coach/drills/{drill_slug}/knowledge`, `/api/v1/trainings/{drills,sessions}`, `/api/v1/trainings/drills/{drill_id}`, `/api/v1/trainings/sessions/{session_id}/complete`, `/coach`, `/training`, `/training/[slug]` | M2/M1 | landed |
+| 13–14 | Video analysis + output | `/api/v1/video`, `/api/v1/video/upload`, `/api/v1/video/{ident}/{analyse,file,jobs}`, `/api/v1/video/{ident}/frames/{index}`, `/video`, `/video/[id]` | M5 | landed, **vision provider labelled demo** |
 | 15 | Match analysis | `/match/[slug]`, `/world/matches`, `sim_events` | M6 | landed |
 | 16–18 | Tactical Lab / Tactical AI / Simulator | **7 paths / 7 operations** under `/api/v1/tactics*`, **5 paths / 8 operations** under `/api/v1/boards*`, **4 paths / 6 operations** under `/api/v1/simulate*`, 6 `/tactics/*` pages (every one of these four censuses re-read 2026-10-04 over `8b68b0f`; the row used to print one number per route family without saying whether it counted paths or operations, and neither figure answered for this repository) | M4/M6 | landed |
 | 19 | Football simulation | `/api/v1/simulate`, `/simulate/{id}/replay`, `services/simulation` | M6 | landed |
@@ -47,10 +47,10 @@ Every figure in this sentence is re-checked against the committed tree by
 | --- | --- | --- | --- |
 | 43–44 | Data/backend architecture | 21 migrations, `scripts/schema_drift.py` gate, `app/models`, layered routers | landed |
 | 45–46 | Provider abstraction / model router | `services/model_ledger.py`, `fallback` in `coach_engine.py` + `knowledge/retrieval.py`; no single router door | partial |
-| 47 | Async job system | `/api/v1/video/{id}/jobs` + `services/video/{pipeline,status}.py`; in-process, no queue | partial (labelled) |
+| 47 | Async job system | `/api/v1/video/{ident}/jobs` + `services/video/{pipeline,status}.py`; in-process, no queue | partial (labelled) |
 | 48–57 | Frontend/UX/home/board/match/player/search/mobile | 47 page routes; `visual-qa.mjs` walks 375px surfaces | landed |
 | 58–60 | Performance / observability / security | `core/security.py:142 limit(...)`, `logging.basicConfig` in `main.py:43`, ADRs in `docs/adr` (6) | partial — no metrics/tracing surface, M12's job |
-| 61–62 | Privacy / AI safety | `DATA_POLICY.md`, `AI_POLICY.md` at repo root, `/progress/export`, `/progress/player-data`; **account-level erasure is not built** | open → M12 |
+| 61–62 | Privacy / AI safety | `DATA_POLICY.md`, `AI_POLICY.md` at repo root, `/api/v1/progress/export`, `/api/v1/progress/player-data`; **account-level erasure is not built** | open → M12 |
 | 63–64 | Testing / agent evaluation | 29 test files, both database legs; `evals/` covers **RAG only**, §64's agent benchmark does not exist | partial → M11 |
 | 65 | Demo data | world generator incl. the 100-training-session gate item | landed |
 | 75–80 | Event model, cost control, provider failure, citations, SEO | `sim_events`, `model_ledger`, refusal paths, `docs/SEO_VERIFICATION.md` | landed |

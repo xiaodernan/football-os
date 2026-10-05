@@ -8,7 +8,7 @@ Two documents carry the project's own coverage claims, and until this file nothi
 * `ROADMAP.md` summarizes that audit and quotes its three headline figures, and counts the items the audit leaves
   unowned.
 
-Six claims, one case each, each killed by its own arm (`docs/SPEC_AUDIT_CURRENCY_VERIFICATION.md`):
+Nine claims, one case each, each killed by its own arm (`docs/SPEC_AUDIT_CURRENCY_VERIFICATION.md`):
 
 * **C1** the audit's machine-readable `AUDIT_FIGURES` line equals the committed tree: contract paths come from
   `docs/api/openapi.json`, page routes from committed `apps/web/app/**/page.tsx`, migrations from committed
@@ -35,6 +35,16 @@ Six claims, one case each, each killed by its own arm (`docs/SPEC_AUDIT_CURRENCY
 * **C8** the table publishes no count that has no reader: a `(N doors)` whose unit is unstated, a bare `(N)` after a
   `/api/v1/…` token, and a whole-contract total inside a module row are each refused. Spelled numerals — row 30's
   "Three committed doors" — are outside this grammar and named as such in the record rather than left implied.
+* **C9** every `/api/v1/…` route citation in the audit — both its verdict tables, not just §A — names a door the
+  committed contract publishes, or a family that holds at least one, or a parameterized path whose *parameter names*
+  are the contract's own, or an explicitly negated absence. A token that is the referent of a C7/C8 census is skipped:
+  there it is a prefix, and `/api/v1/community` / `/api/v1/creator` are families with no bare door, so resolving a
+  census referent as a path would red a token another case already reads. This is the case that retired
+  `/api/v1/video/{upload,{id},analyse,file,frames/{i},jobs}` — one brace group mixing door literals with a path
+  parameter whose name the contract had already chosen (`{ident}`, `{index}`) — and `/progress/export`, which is
+  spelled like a web page and means an API door. A third row's `/trainings/{drills,sessions/{id}/complete}` carries
+  both defects at once (no prefix *and* a brace inside a brace), so it sits outside this population until it is
+  rewritten into it — the case cannot retire a citation it cannot see, which is why the record names that limit.
 
 Everything is read from the committed tree: with a `.git` present that means `git show HEAD:…` /
 `git ls-tree HEAD`, and on an extracted plane (`git archive`, no `.git`) the walk *is* the committed state. One
@@ -77,6 +87,20 @@ COUNT_AFTER_ROUTE = re.compile(r"`(/api/v1/[^`]+)`\s+\((\d+)\)")
 WHOLE_CONTRACT_TOTAL = re.compile(r"contract\s+(\d+)\s*/\s*(\d+)", re.IGNORECASE)
 MIN_DUAL_CENSUSES = 10
 MIN_PAGE_CENSUSES = 3
+
+# C9 — the route citations the audit publishes. These four floors are the counts this scan finds over the ledger as
+# §83 lands it (all four malformed citations rewritten into the grammar); a drop means the grammar stopped matching
+# the ledger's spelling (or a citation was deleted) rather than the ledger getting shorter, which is exactly when a
+# reader is worth having. The label names the unit, not a commit: the corrected ledger is the one this case arrives
+# with, so the ref that holds these bytes is this file's own commit.
+ROUTE_CITATION = re.compile(r"`(/api/v1/[^`]+)`")
+BRACE_INNER = re.compile(r"\{([^{}]*)\}")
+PARAMETER = re.compile(r"\{[A-Za-z_][A-Za-z0-9_]*\}")
+NEGATION = re.compile(r"(?:[Nn]o|never)\s+\*{0,2}`$")
+MIN_ROUTE_CITATIONS = 49
+MIN_PARAMETER_CITATIONS = 12
+MIN_NEGATED_CITATIONS = 1
+MIN_CENSUS_REFERENTS_SKIPPED = 10
 
 BACKTICK = re.compile(r"`([^`\n]+)`")
 BRACE_GROUP = re.compile(r"\{[^{}]*\}")
@@ -365,3 +389,125 @@ def test_the_module_table_publishes_no_count_that_has_no_reader() -> None:
     ):
         found = rx.findall(section)
         assert not found, f"the §A table still publishes {found} — {why}"
+
+
+def census_referent_spans(doc: str) -> list[tuple[int, int]]:
+    """Spans C7/C8 already recompute. Inside one of them a `/api/v1/…` token is a *prefix*, not a door."""
+    spans: list[tuple[int, int]] = []
+    for rx in (CENSUS_DUAL, CENSUS_PAGES_BEFORE, CENSUS_PAGES_AFTER):
+        spans += [m.span() for m in rx.finditer(doc)]
+    return spans
+
+
+def route_shape(candidate: str) -> re.Pattern[str]:
+    parts = re.split(r"(\{[A-Za-z_][A-Za-z0-9_]*\}|\*)", candidate)
+    out = []
+    for part in parts:
+        if PARAMETER.fullmatch(part):
+            out.append("[^/]+")
+        elif part == "*":
+            out.append(".*")
+        else:
+            out.append(re.escape(part))
+    return re.compile("^" + "".join(out) + "$")
+
+
+def cite_refusal(token: str) -> str | None:
+    """Why this citation is not a citation at all — reported as a defect, never raised, because a case that stops at
+    the first malformed token leaves the other malformed tokens published and unread."""
+    groups = BRACE_INNER.findall(token)
+    if token.count("{") != len(groups):
+        return (f"CONFLATED `{token}` carries a brace inside a brace: it mixes a path parameter with the door "
+                "literals beside it, so no reader can tell which segment each member lives under")
+    commas = [g for g in groups if "," in g]
+    if len(commas) > 1:
+        return (f"MULTIPLE-ENUMERATIONS `{token}` carries {len(commas)} comma-bearing groups; this case refuses to "
+                "guess which segment each list belongs to")
+    if commas and any("{" in member for member in commas[0].split(",")):
+        return f"CONFLATED `{token}` enumerates a path parameter alongside door literals"
+    return None
+
+
+def cite_candidates(token: str) -> list[str]:
+    groups = BRACE_INNER.findall(token)
+    commas = [g for g in groups if "," in g]
+    if not commas:
+        return [token]
+    head, tail = token.split("{" + commas[0] + "}", 1)
+    return [f"{head}{member.strip()}{tail}" for member in commas[0].split(",")]
+
+
+def test_every_api_route_citation_in_the_verdict_ledger_resolves() -> None:
+    doc = committed_text(AUDIT)
+    doors = json.loads(committed_text(CONTRACT))["paths"]
+    spans = census_referent_spans(doc)
+    assert spans, f"no census phrase was found in `{AUDIT}` — C9 excluded nothing, so it read nothing"
+
+    resolved: list[str] = []
+    parameterized: list[str] = []
+    negated: list[str] = []
+    defects: list[str] = []
+    skipped = 0
+    for match in ROUTE_CITATION.finditer(doc):
+        if any(start <= match.start() < end for start, end in spans):
+            skipped += 1
+            continue
+        token = match.group(1)
+        refused = cite_refusal(token)
+        if refused is not None:
+            defects.append(refused)
+            continue
+        is_absence = bool(NEGATION.search(doc[max(0, match.start() - 30):match.start() + 1]))
+        for candidate in cite_candidates(token):
+            if is_absence:
+                # "No `/api/v1/community`" is false while eight doors live under that prefix, whether or not the
+                # family has a bare collection door — an absence claim is about the family, not about one path
+                stem = candidate.rstrip("*").rstrip("/")
+                hits = sorted(p for p in doors if p == stem or p.startswith(stem + "/"))
+                negated.append(candidate)
+                if hits:
+                    defects.append(f"CLAIMED-ABSENT `{candidate}` is cited as not existing but the contract "
+                                   f"publishes {len(hits)} door(s) under it: {hits[:4]}")
+                continue
+            if candidate.endswith("*"):
+                hits = sorted(p for p in doors if p.startswith(candidate[:-1]))
+            elif PARAMETER.search(candidate):
+                hits = sorted(p for p in doors if route_shape(candidate).match(p))
+            else:
+                hits = [candidate] if candidate in doors else []
+            if not hits:
+                defects.append(f"NO-SUCH-DOOR `{candidate}` (from `{token}`) is cited as landed; the committed "
+                               f"{CONTRACT} publishes nothing at or under it")
+                continue
+            if PARAMETER.search(candidate):
+                cited = PARAMETER.findall(candidate)
+                spellings = {tuple(PARAMETER.findall(h)) for h in hits}
+                if spellings != {tuple(cited)}:
+                    defects.append(f"PARAMETER-NAME `{candidate}` names {cited} where the contract spells that door "
+                                   f"{sorted(spellings)}")
+                    continue
+                parameterized.append(candidate)
+            resolved.append(candidate)
+
+    assert not defects, (
+        f"{len(resolved)} of the ledger's route citations resolve; these name a door the committed contract does not "
+        f"answer for:\n  " + "\n  ".join(defects)
+    )
+    assert len(resolved) >= MIN_ROUTE_CITATIONS, (
+        f"the audit yields {len(resolved)} resolvable route citations where `§83` yields {MIN_ROUTE_CITATIONS} — "
+        "either a citation was deleted or the grammar stopped matching the ledger's spelling; both mean this case "
+        "read less than the ledger published"
+    )
+    assert len(parameterized) >= MIN_PARAMETER_CITATIONS, (
+        f"the audit yields {len(parameterized)} parameterized citations where `§83` yields "
+        f"{MIN_PARAMETER_CITATIONS}; without one the parameter-name clause above has nothing to check"
+    )
+    assert len(negated) >= MIN_NEGATED_CITATIONS, (
+        f"the audit yields {len(negated)} citations the prose introduces as absent "
+        f"(floor {MIN_NEGATED_CITATIONS}); the absence clause would be measuring an empty set"
+    )
+    assert skipped >= MIN_CENSUS_REFERENTS_SKIPPED, (
+        f"C9 skipped {skipped} census-referent tokens where `§83` skips {MIN_CENSUS_REFERENTS_SKIPPED} — the "
+        "exclusion moved, so either a census left the grammar or a family prefix is now being read as a door"
+    )
+
