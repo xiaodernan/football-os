@@ -460,16 +460,20 @@ Still open: a season's ledger is only as complete as the rounds whose reports ar
 
 `[docs/SPEC_COVERAGE_AUDIT.md](docs/SPEC_COVERAGE_AUDIT.md)` maps all 30 product modules to measured evidence (160 contract paths, 56 page
 routes, 26 migrations). Everything in §4–§42 has a door except two, and the rows below are what each of those two
-still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every cited file count,
-every path the audit's §A table cites, every door-and-page census that table publishes and every
+still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every `→ N file(s)` count any
+committed markdown publishes — here, in the audit and in a verification record alike, every path the audit's §A table
+cites, every door-and-page census that table publishes and every
 `/api/v1/…` route citation in the ledger:
 
 - [ ] **§30 Knowledge Graph — the joint half.** The projection, its three `/api/v1/graph/*` doors and the `/graph`
     pages landed (mounted at `3651587`; 6 node kinds, 13 edges over stored foreign keys, walked by
     `visual-qa.mjs` §12i), so the audit's older "no table, no route, no service" sentence is retired — a `graph_edges`
-    table is deliberately *not* what this build ships. What §30 asks for and the tree does not do is **RAG + graph
-    joint retrieval**: `git grep -li knowledge_graph -- apps/api/app/services/knowledge` answers 0 files, so
-    `retrieval.py` never reads the graph. Proposed owner **M11**, whose §33 composite tasks and §64 benchmark are what
+    table is deliberately *not* what this build ships. The anchoring half landed since that sentence was first written:
+    `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 1 file, and that file is
+    `apps/api/app/services/knowledge/graph_join.py` (`e61ff07`), which answers *which stored nodes does this sentence
+    name* and prints them in the answer's `reasons`. What §30 asks for and the tree still does not do is the **recall
+    hop**: `retrieval.py` is the file that does not appear in that scan, so the retriever never consults an edge.
+    Proposed owner **M11**, whose §33 composite tasks and §64 benchmark are what
     a graph hop must be measured against; a retrieval widening may not lower `retrieval.py`'s measurement-derived
     floors without the golden set re-measured first — and measured today, **0 of its 18 `queries` name a committed
     team or competition**, so the hop has no golden case to earn its keep until M11 writes one (2026-10-04).
@@ -639,10 +643,24 @@ Milestones do not own these; every public route must satisfy them as it lands.
     needed while `docs/api/openapi.json` is held dirty by another lane. Anchoring requires a node's whole label in
     the question, so a football word or half a label anchors nothing; `apps/api/evals/golden_joint.json` (8 cases,
     3 near misses, 1 refusal control) retires the audit's "0 files / 0 of 18 queries" measurement, re-taken on the
-    plane as 6 files under `apps/api/app` and 1 under `app/services/knowledge`. Nine cases green; three arms, each
+    plane as `git grep -li knowledge_graph -- apps/api/app` → 6 files and
+    `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 1 file. Nine cases green; three arms, each
     red at exactly the predicted case: A1 partial-overlap anchoring, A2 the hop wired into the refusal branch, A3 a
     demo fact printed without its disclosure. The refusal control is what makes A2 decisive — every ordinary
     out-of-scope question anchors nothing, so only a question that names a stored club and still misses the corpus
     can tell "not asked" from "asked and agreed". Plane baseline joint 9/0 red, regression over
     `apps/api/tests/test_knowledge_rag.py`, `apps/api/tests/test_knowledge_graph_census.py`,
     `apps/api/tests/test_world.py` 90/0 red (SQLite; the PostgreSQL engine on this machine is still dead).
+- [x] §85's file-count reader for every ledger that publishes one (`docs/SPEC_FILE_CITATION_CURRENCY_VERIFICATION.md`).
+    C3 had read a single document; its population now comes from the walk — every committed markdown file carrying a
+    `→ N file(s)` citation is a carrier and must be registered with a floor — beside two new clauses: a refusal (a
+    file count printed next to a grep command in a shape the grammar cannot read) and a void-directory belt (a
+    citation naming a directory that holds no committed file is not a measurement of absence). The two claims this
+    unit retired were stale *and* unreadable: the §30 bullet above still said the knowledge-package scan answered no
+    file at all, and the joint record published the same zero in bold, where `e61ff07` answers one file,
+    `graph_join.py`. Nine cases; floors 3 / 3 / 4 read out of the gate's own scan over the landed bytes; six arms
+    plus a reverse control and a restored control — nine plane runs, nine MATCHED, no mismatches — each judged on the
+    case name and the failure message, because four of them predict which sentence of the one case fires: count,
+    refusal, belt, floor. One prediction missed on its own arithmetic and the record says so: stranding the singular
+    spelling strands five counts, not the three I had written down — the scan's population was right, my mental count
+    was not. No whole-suite leg is claimed by this unit.

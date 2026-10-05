@@ -1,11 +1,11 @@
 # M11 §30 — joint retrieval: the graph half of an answer (verification record)
 
 Spec §30 asks for "RAG + Knowledge Graph joint retrieval". The audit had retired the older "no table,
-no route, no service" sentence for the projection and its doors and left exactly one clause open,
-measured two ways: `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → **0 files**
-(re-read 2026-10-04), and **0 of the 18** `queries` in `apps/api/evals/golden_rag.json` naming a
-committed team or competition. This unit lands the **anchoring half** of that clause and retires both
-measurements by re-taking them.
+no route, no service" sentence for the projection and its doors and left exactly one clause open, measured two ways
+at 2026-10-04: `git grep -li knowledge_graph -- apps/api/app/services/knowledge` answered nothing at all, and
+**0 of the 18** `queries` in `apps/api/evals/golden_rag.json` naming a committed team or competition. This unit lands
+the **anchoring half** of that clause and retires both measurements by re-taking them — the scan the first one cites
+now answers `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 1 file, `graph_join.py`.
 
 ## What shipped
 
@@ -31,8 +31,13 @@ is already published and already rendered — `apps/web/app/knowledge/KnowledgeA
 * Probe over the 8 joint cases through `answer.ask(persist=False)`: **answered = 8/8**,
   **answered with a graph line = 8/8**. The first case's anchor (team `vireford-miners`) reads
   **258 stored relations** and reports **4 fact lines**.
-* Census re-taken on the plane, `*.py` under `apps/api/app` naming `knowledge_graph`: **6** where HEAD
-  measures **5**; under `app/services/knowledge`: **1** (`graph_join.py`) where HEAD measures **0**.
+* Census re-taken on the plane: `git grep -li knowledge_graph -- apps/api/app` → 6 files, one more than the same
+  scan answered at `2f3007a`, and `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 1 file, the
+  new `graph_join.py`, where `2f3007a` answered none.
+* `git grep -li golden_joint -- apps/api/app` → 0 files: no door, service or model under the app tier names the joint
+  golden set, so `apps/api/tests/test_knowledge_joint.py` is its only reader. Stated as a measurement rather than a
+  complaint — an eval that gates a seam does not need a door to earn its keep, and §30's recall hop is the half that
+  would put one there.
 * No whole-suite leg is claimed here, and no PostgreSQL leg: the engine on this machine is still dead
   (`docker version` fails on the `dockerDesktopLinuxEngine` pipe), so every figure above is SQLite.
 

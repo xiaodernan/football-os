@@ -14,9 +14,14 @@ Nine claims, one case each, each killed by its own arm (`docs/SPEC_AUDIT_CURRENC
   `docs/api/openapi.json`, page routes from committed `apps/web/app/**/page.tsx`, migrations from committed
   `apps/api/migrations/versions/*.py`.
 * **C2** the ROADMAP's quoted triple is that same triple — not an older snapshot of it.
-* **C3** every `git grep -li … → N file(s)` citation the audit publishes recomputes to N over the committed tree.
-  This is the case that turns "measured" from a style into a check. It reads the singular spelling too: a count of
-  1 written "→ 1 file" is otherwise a citation no reader ever sees.
+* **C3** every `git grep -li … → N file(s)` citation the committed markdown carries recomputes to N over the
+  committed tree — the audit's rows, the ROADMAP's and a verification record's alike. The population comes from the
+  walk, and a carrier that is not registered with a floor below goes red, so narrowing this reader cannot hide a
+  count. It reads the singular spelling too: a count of 1 written "→ 1 file" is otherwise a citation no reader ever
+  sees — which is how §85 found two stale ones (`ROADMAP.md`'s §30 bullet and `docs/M11_JOINT_RETRIEVAL_VERIFICATION.md`
+  both published "0 files" for a scan that had answered 1 since `e61ff07`). A published count next to a `git grep`
+  command in a shape this grammar cannot read is **refused, not guessed**, and every directory a citation names must
+  hold at least one committed file, so a `→ 0 files` row can never mean "the reader found nothing to read".
 * **C4** the audit's §A table covers the section range its own heading declares, exactly once — no spec section
   silently unmapped, none mapped twice.
 * **C5** the ROADMAP's "…has a door except <count>" sentence counts the unchecked items in the section it introduces.
@@ -56,11 +61,13 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+from functools import cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 AUDIT = "docs/SPEC_COVERAGE_AUDIT.md"
 MAP = "ROADMAP.md"
+JOINT_DOC = "docs/M11_JOINT_RETRIEVAL_VERIFICATION.md"
 CONTRACT = "docs/api/openapi.json"
 WEB_APP = "apps/web/app"
 MIGRATIONS = "apps/api/migrations/versions"
@@ -74,6 +81,15 @@ DECLARED_RANGE = re.compile(r"spec §\d+'s list, §(\d+)[–-]§(\d+)")
 EXCEPT_WORD = re.compile(r"has a door\s+except\s+(\w+),")
 CARDINALS = {"none": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 SCAN_SKIP = "__pycache__"
+
+# C3 — the ledgers that publish a file count, and how many counts each publishes. These three floors are what this
+# scan finds over the markdown as §85 lands it (10 citations: 3 audit rows, 3 ROADMAP, 4 in the joint record), so a
+# drop means a claim left the grammar rather than the ledger getting shorter — which is precisely when a reader is
+# worth having. The *carrier* set is derived from the walk instead of from this table, so a new document that starts
+# publishing counts cannot slip past unregistered, and dropping a row from this table goes red rather than quiet.
+FILE_CITATION_FLOORS: dict[str, int] = {AUDIT: 3, MAP: 3, JOINT_DOC: 4}
+FILE_COUNT = re.compile(r"\d+\s+files?\b")
+GREP_COMMAND = re.compile(r"`git grep[^`]*`")
 
 # C7/C8 — the censuses the §A table publishes. Each accepted shape names its own unit and its own referent; a count
 # that names neither is C8's business, because there is nothing to recompute it against. The two floors are the
@@ -115,6 +131,7 @@ def _git(args: list[str]) -> bytes:
     return done.stdout
 
 
+@cache
 def committed_text(rel: str) -> str:
     if (ROOT / ".git").exists():
         return _git(["show", f"HEAD:{rel}"]).decode("utf-8")
@@ -143,6 +160,38 @@ def scan_count(pattern: str, directories: list[str]) -> int:
             if rx.search(body):
                 hits.add(rel)
     return len(hits)
+
+
+def directory_is_committed(directory: str, paths: set[str]) -> bool:
+    """Some committed file lives under this path — so a published `0` is a count, not a reader that saw nothing."""
+    prefix = directory.strip().rstrip("/") + "/"
+    return any(path.startswith(prefix) for path in paths)
+
+
+def file_count_claims() -> tuple[dict[str, list[tuple[str, str, str]]], list[str]]:
+    """Walk the committed markdown once: which files publish `→ N file(s)` counts, and which counts no grammar reads.
+
+    A line holding a `git grep` command and a file count is a published measurement. If the parsed citation does not
+    cover that count's own characters, the number is left in prose shape ("answers 0 files", "→ **0 files**") and no
+    reader can recompute it, so it comes back here as a refusal rather than being guessed at.
+    """
+    carriers: dict[str, list[tuple[str, str, str]]] = {}
+    unreadable: list[str] = []
+    for rel in sorted(committed_tree()):
+        if not rel.endswith(".md") or any(part in WALK_SKIP for part in rel.split("/")[:-1]):
+            continue
+        text = committed_text(rel)
+        found = CITED_SCAN.findall(text)
+        if found:
+            carriers[rel] = found
+        for number, line in enumerate(text.splitlines(), start=1):
+            if not GREP_COMMAND.search(line):
+                continue
+            covered = {index for match in CITED_SCAN.finditer(line) for index in range(*match.span())}
+            for count in FILE_COUNT.finditer(line):
+                if count.start() not in covered:
+                    unreadable.append(f"{rel}:{number} publishes {count.group(0)!r} beside a `git grep` command")
+    return carriers, unreadable
 
 
 def table_section() -> str:
@@ -264,16 +313,34 @@ def test_the_roadmap_quotes_the_audit_s_current_figures_not_an_older_snapshot() 
     assert got == want, f"{MAP} quotes {got[0]}/{got[1]}/{got[2]} where the audit declares {want[0]}/{want[1]}/{want[2]}"
 
 
-def test_every_cited_scan_in_the_audit_answers_with_the_count_its_row_publishes() -> None:
-    doc = committed_text(AUDIT)
-    cites = CITED_SCAN.findall(doc)
-    assert cites, "the audit publishes no `git grep -li … → N file(s)` citations — 'measured' has no carrier to check"
-    for pattern, dirs, claimed in cites:
-        directories = [d.strip() for d in dirs.split(",")]
-        found = scan_count(pattern, directories)
-        assert found == int(claimed), (
-            f"`git grep -li {pattern} -- {dirs}` recomputes to {found} committed files; the row publishes {claimed}"
+def test_every_cited_scan_in_either_ledger_answers_with_the_count_its_row_publishes() -> None:
+    carriers, unreadable = file_count_claims()
+    assert not unreadable, (
+        f"{len(unreadable)} published file count(s) sit beside a `git grep` command in a shape no reader can recompute "
+        "— rewrite each as `git grep -li <pattern> -- <dir>` → N file(s): " + " | ".join(unreadable)
+    )
+    unregistered = sorted(set(carriers) - set(FILE_CITATION_FLOORS))
+    assert not unregistered, (
+        f"markdown file(s) publish `→ N file(s)` counts with no floor here, so nobody recomputes them: {unregistered}"
+    )
+    paths = committed_tree()
+    for ledger, floor in FILE_CITATION_FLOORS.items():
+        cites = carriers.get(ledger, [])
+        assert len(cites) >= floor, (
+            f"`{ledger}` parses to {len(cites)} `→ N file(s)` citation(s); this case arrived reading {floor} of them, "
+            "so a count was re-worded out of the grammar — spelling it back is the fix, not lowering this number"
         )
+        for pattern, dirs, claimed in cites:
+            directories = [d.strip() for d in dirs.split(",")]
+            for directory in directories:
+                assert directory_is_committed(directory, paths), (
+                    f"`git grep -li {pattern} -- {directory}` names no committed file under that path, so the row's "
+                    f"{claimed} is not a count of anything: the directory is not in the tree"
+                )
+            found = scan_count(pattern, directories)
+            assert found == int(claimed), (
+                f"`git grep -li {pattern} -- {dirs}` recomputes to {found} committed file(s); the row publishes {claimed}"
+            )
 
 
 def test_the_module_table_covers_its_declared_section_range_exactly_once() -> None:
