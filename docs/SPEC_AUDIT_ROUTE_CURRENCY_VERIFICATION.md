@@ -166,3 +166,33 @@ cd apps/api && ../../.venv/Scripts/python.exe -m pytest tests/test_spec_audit_cu
 ../../.venv/Scripts/python.exe .scratch/r83_runs.py 1
 ../../.venv/Scripts/python.exe .scratch/r83_runs.py 2
 ```
+
+## §83's own record corrected — the landing script's byte check measured across two EOL planes
+
+The commit landed as `c44b2b3` (4 paths, +340/−7, `docs/SPEC_COVERAGE_AUDIT.md` exactly 4/4), and the script then
+**refused** on its last check: `HEAD:ROADMAP.md is not the bytes I wrote`. Measured, that refusal was the script's
+defect, not the landing's:
+
+* `git show HEAD:ROADMAP.md` is the **blob** plane: 632 lines, **0** CRLF.
+* the worktree copy was at that moment 632 lines, **632** CRLF — because the script appended its row with
+  `Path.write_text(...)`, and text mode on this host translates every `\n` to the platform line ending. The
+  `clean` filter (`core.autocrlf=true`, no `.gitattributes` in the repo) then normalized it back on the way in, so
+  the committed bytes are exactly what the script meant to write.
+
+So the check compared an LF plane against a CRLF plane and called the difference a content difference. The fix is
+the same one §82's record names: compare on one plane and say which.
+
+```
+HEAD blob vs worktree raw      → equal for the other three paths (all LF on disk), unequal for ROADMAP.md
+HEAD blob vs worktree (CRLF→LF) → equal for all four
+```
+
+Two further notes, both measured after the fact rather than claimed before it:
+
+* The refusal stopped the script **after** the commit, so its last two steps ran by hand: the gate through the git
+  reader (`tests/test_spec_audit_currency.py`, 9 collected / 0 red, `.scratch/junit_r83_postcommit.xml`) and the
+  worktree review. `git diff -- ROADMAP.md` after restoring the LF bytes is empty — the ` M` flag that appears is
+  git's `LF will be replaced by CRLF` advisory on a stat-dirty file, not a content change.
+* The script's `write_text` had also flipped the *whole shared* `ROADMAP.md` to CRLF on disk. Restoring
+  `git show HEAD:ROADMAP.md` byte-for-byte puts the file back as the other lanes left it; that restore touches only
+  a file whose content equals HEAD, which `git diff` confirms.
