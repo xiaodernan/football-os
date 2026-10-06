@@ -1,7 +1,7 @@
 # Spec coverage audit — every product module in the master spec, mapped to measured evidence (2026-09-27, revised 2026-09-28, 2026-10-04)
 
 Method (all figures from the tree, not from memory): the committed contract `docs/api/openapi.json` (126 paths when
-this audit was written, **144** re-read 2026-09-28, **160** re-read 2026-10-04), `find apps/web/app -name page.tsx`
+this audit was written, **144** re-read 2026-09-28, **160** re-read 2026-10-04, **162** re-read 2026-10-06), `find apps/web/app -name page.tsx`
 (47 routes then, **48** re-read 2026-09-28, **56** re-read 2026-10-04), the committed files in
 `apps/api/migrations/versions` (21 then, **24** re-read 2026-09-28, **26** re-read 2026-10-04),
 `ls apps/api/app/services[/**]`, and `grep` for the vocabulary
@@ -11,7 +11,7 @@ carries its noun; a service file with no door is **partial**.
 Every figure in this sentence is re-checked against the committed tree by
 `apps/api/tests/test_spec_audit_currency.py`, which reads the machine-readable line below rather than the prose:
 
-`AUDIT_FIGURES contract_paths=160 page_routes=56 migrations=26`
+`AUDIT_FIGURES contract_paths=162 page_routes=56 migrations=26`
 
 ## A. The 30 product modules (spec §3's list, §4–§42)
 
@@ -37,7 +37,7 @@ Every figure in this sentence is re-checked against the committed tree by
 | 35 | Community (feed, posts, comments, likes, follows) | five `community_*` tables (migration `0023`), `services/community/posts.py`, **8 paths / 12 operations** under `/api/v1/community`, `/community` page with its own 38-check walk | M9 | **landed 2026-09-28** — posts/comments/reactions/reposts/follows and the pointer-to-artifact share; moderation, reporting and blocking are not in this build ([evidence](docs/M9_COMMUNITY_VERIFICATION.md)) |
 | 36 | Creator system | `creator_profiles`, `creator_guides` and `guide_citations` (migration `0024`), `services/creator/publishing.py`, **7 paths / 11 operations** under `/api/v1/creator`, one of them public, `/creator` + `components/CreatorWorkbench.tsx` | M10 | **landed 2026-09-28** — a guide publishes a title, a frame and *addresses* into the corpus, every figure about it is recomputed on read, and reach is §35's own follow predicate; the two features it publishes into §42's table are ceilings no door refuses on yet, and `/creator` still has no browser walk of its own ([evidence](docs/M10_CREATOR_VERIFICATION.md)) |
 | 37 | Gamification | `services/achievements.py`, `progression.py`, `/api/v1/progress/{overview,timeline}`, `/progress` | M1 | landed |
-| **38** | **Football career portfolio** (10-section CV, public share link, PDF) | **landed under M10 for two of its three outputs.** `git grep -li portfolio -- apps/api/app, apps/web/app` → 8 files: **5 paths / 6 operations** under `/api/v1/portfolio*`, `services/portfolio/{__init__,cv,sharing}.py`, `main.py`'s mount, and the web tier's `apps/web/app/portfolio/page.tsx` and `app/robots.ts`. Ten CV sections rendered from stored rows, the two this read cannot fill printed with the tables they would need (`UNFILLED_REASONS`) beside the build's own `LIMITATION` sentence, and one revocable public link whose closed token answers the same 404 as a token never issued. **The PDF output has no door here**: `services/portfolio/cv.py`'s `PUBLIC_OUTPUTS["pdf"]` starts "not in this build", `git log -- apps/api/app/services/portfolio/pdf.py` answers no commit at all, HEAD's `apps/api/requirements.txt` names no PDF renderer, and the evidence doc this row links states the same absence in its own words ([evidence](docs/M10_PORTFOLIO_VERIFICATION.md)) | **M10** | **partial — CV, projection and share link landed; the PDF output did not** |
+| **38** | **Football career portfolio** (10-section CV, public share link, PDF) | **all three outputs landed.** `git grep -li portfolio -- apps/api/app, apps/web/app` → 10 files: **6 paths / 7 operations** under `/api/v1/portfolio*`, `services/portfolio/{__init__,cv,sharing,pdf}.py`, `main.py`'s mount, and the web tier's `apps/web/app/portfolio/page.tsx`, `app/portfolio/shared/[token]/page.tsx` and `app/robots.ts`. Ten CV sections rendered from stored rows, the two this read cannot fill printed with the tables they would need (`UNFILLED_REASONS`) beside the build's own `LIMITATION` sentence, one revocable public link whose closed token answers the same 404 as a token never issued, and the PDF output at `/api/v1/portfolio/cv.pdf` ([evidence](docs/M10_PORTFOLIO_VERIFICATION.md)) | **M10** | **landed — CV, projection, share link and PDF all present** |
 | 39–41 | Club OS / Youth Academy / B2B | **36 paths / 56 operations** under `/api/v1/club*` incl. §48's `fixtures`, `services/club/{organizations,access,answers,academy,sessions,reports,matches}.py`, 4 `/club*` pages (both re-read 2026-10-04 over `8b68b0f` — the row's 33 matched neither number the contract now prints for `/api/v1/club*`, and its 5 counted a `/club*` family of 4) | M8 | landing — §48's fixtures panel landed `ae7fd82` and §39's Communication noun `cdd15b3`, both 2026-09-27; §39's remaining product verbs are open |
 | 42 | Subscription | `usage_events` (migration `0020`), `/api/v1/club/{ident}/entitlements`, `/entitlements/{me,capabilities}`, `services/entitlements.py`; **no currency/provider/checkout field anywhere; §22's valuation price and the meter's token rates are not payments** | M8 (architecture) / M10+ (pricing) | landed as data, payments deliberately absent |
 
@@ -50,7 +50,7 @@ Every figure in this sentence is re-checked against the committed tree by
 | 47 | Async job system | `/api/v1/video/{ident}/jobs` + `services/video/{pipeline,status}.py`; in-process, no queue | partial (labelled) |
 | 48–57 | Frontend/UX/home/board/match/player/search/mobile | 47 page routes; `visual-qa.mjs` walks 375px surfaces | landed |
 | 58–60 | Performance / observability / security | `core/security.py:142 limit(...)`, `logging.basicConfig` in `main.py:43`, ADRs in `docs/adr` (6) | partial — no metrics/tracing surface, M12's job |
-| 61–62 | Privacy / AI safety | `DATA_POLICY.md`, `AI_POLICY.md` at repo root, `/api/v1/progress/export`, `/api/v1/progress/player-data`; **account-level erasure is not built** | open → M12 |
+| 61–62 | Privacy / AI safety | `DATA_POLICY.md`, `AI_POLICY.md` at repo root, `/api/v1/progress/export`, `/api/v1/progress/player-data`; **account-level erasure is built** at `/api/v1/auth/me/account` (preview + delete, requires typing a confirmation phrase) | **landed 2026-10-06** |
 | 63–64 | Testing / agent evaluation | 29 test files, both database legs; `evals/` covers **RAG only**, §64's agent benchmark does not exist | partial → M11 |
 | 65 | Demo data | world generator incl. the 100-training-session gate item | landed |
 | 75–80 | Event model, cost control, provider failure, citations, SEO | `sim_events`, `model_ledger`, refusal paths, `docs/SEO_VERIFICATION.md` | landed |
