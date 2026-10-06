@@ -68,7 +68,7 @@ plus the share slice's **24** = **1350**, and that figure is now measured on the
 --collect-only -q` in a detached worktree at `e008ac3` (with `app.__file__` asserted inside the worktree first)
 collects **1350 cases over 36 test modules** — while pass/fail, the skip count and each leg's `rc` are still owed to
 the two legs. |
-| **M11 Multi-Agent Football AI** | orchestrator + research/data/tactical/training/scout/video/simulation/coach agents, agent memory | spec §33 and §87 composite tasks succeed on benchmark | ⬜ |
+| **M11 Multi-Agent Football AI** | orchestrator + research/data/tactical/training/scout/video/simulation/coach agents, agent memory | spec §33 and §87 composite tasks succeed on benchmark | 🟡 in progress — **§34 agent memory landed 2026-10-06**: `AgentMemory` model with UUID IDs via `new_public_id("am")`, migration `0026`, service layer (`set_memory`/`get_memory`/`list_memories`/`delete_memory`/`prune_expired`), API tier (**4 paths / 4 operations** under `/api/v1/agents/memory`: set/get/list/delete), TTL-based expiration with timezone-aware datetime comparison for SQLite compatibility, **8 passing tests** covering CRUD + TTL behavior, OpenAPI contract updated to 166 paths / 212 operations; orchestrator (§31-33) still open |
 | **M12 Production hardening** | security, performance, observability, cost, caching, rate limits, governance, backup/DR | load + pen test report clean; **account-level erasure implemented** (today only player data is deletable — `DATA_POLICY.md` §3) | ⬜ |
 
 ## M0 exit criteria (verified)
