@@ -123,12 +123,20 @@ commit as the words.
 
 ## Item 2c — §81's remaining half: wire the pages to the catalogues
 
-**Why next.** A complete catalogue that two components read is a library, not an interface. `grep -r
-"useTranslations\|getTranslations" apps/web --include=*.tsx` returns `Nav.tsx` and `LocaleSwitcher.tsx` and
-nothing else — every page body still renders English literals, so the switcher repaints the nav bar above a
-page that cannot change. The catalogue is now the *easy* part; this item is the long tail.
+**Done (auth batch) 2026-10-06.** The nav stopped being the only reader: `app/login/page.tsx`,
+`app/register/page.tsx` and both forms now read `auth.*` (the register form reuses `settings.displayName`
+rather than duplicating it), and `metadata` became `generateMetadata` so even the tab titles follow the cookie.
+31 keys were added across the three files for this. The locale walk gained five assertions that open the auth
+pages and read their `h1` in both languages — `登录` / `创建你的账号` — and passed **254/254** on the production
+build (was 249), including a screenshot of the Chinese login page. `test_locale_claims.py` 4/4, `tsc` clean.
 
-**Do.** One namespace at a time, in the order a reader meets them: `auth` (login/register forms), `settings`
+**Why next.** A complete catalogue that two components read is a library, not an interface. After the auth batch,
+`grep -r "useTranslations\|getTranslations" apps/web --include=*.tsx` still returns mostly `Nav.tsx`,
+`LocaleSwitcher.tsx` and the four auth files — every other page body still renders English literals, so the
+switcher repaints the nav bar above a page that cannot change. The catalogue is now the *easy* part; this item is
+the long tail.
+
+**Do.** One namespace at a time, in the order a reader meets them: ~~`auth`~~ done, then `settings`
 (the page that also carries the delete-account panel), `common` (shared verbs), then the big feature pages
 (`scout`, `career`, `validation`, `disclaimer`). Each page wired is a page the walk can read in Chinese —
 extend `scripts/visual-qa-locale.mjs` to assert one translated string per wired page rather than trusting the
@@ -139,7 +147,9 @@ assert it equals the catalogue's value. The `useTranslations` caller count moves
 
 **Watch for.** `middleware.ts` resolves the locale server-side; a client component reading `useTranslations`
 needs the locale in its provider — `app/layout.tsx` already passes it, so the trap is only forgetting
-`getTranslations` on server components (it is async; `Nav.tsx` is the client-side worked example).
+`getTranslations` on server components (it is async; `Nav.tsx` is the client-side worked example). Found during
+the auth batch: a long walk can outlive a `next start` process on this machine — mid-walk `ERR_CONNECTION_REFUSED`
+means restart the web process and rerun, not debug the page.
 
 ---
 

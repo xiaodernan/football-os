@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { browserFetch, errorMessage } from "@/lib/api";
 import type { TokenPair } from "@/lib/types";
 
 export function LoginForm() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,14 +30,14 @@ export function LoginForm() {
       return;
     }
     setPending(false);
-    setError(errorMessage(result.error, "We could not sign you in. Check your email and password."));
+    setError(errorMessage(result.error, t("signInFailed")));
   }
 
   return (
     <form className="panel" onSubmit={onSubmit} style={{ display: "grid", gap: "1rem", padding: "1.15rem" }}>
       <div className="field">
         <label className="field__label" htmlFor="email">
-          Email
+          {t("email")}
         </label>
         <input
           id="email"
@@ -51,7 +53,7 @@ export function LoginForm() {
 
       <div className="field">
         <label className="field__label" htmlFor="password">
-          Password
+          {t("password")}
         </label>
         <input
           id="password"
@@ -72,13 +74,13 @@ export function LoginForm() {
       )}
 
       <button className="btn btn--primary" type="submit" disabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? t("signingIn") : t("signIn")}
       </button>
 
       <p className="muted" style={{ fontSize: "0.88rem" }}>
-        No account yet?{" "}
+        {t("noAccountYet")}{" "}
         <Link href="/register" style={{ color: "var(--accent)" }}>
-          Create one
+          {t("createOne")}
         </Link>
       </p>
 

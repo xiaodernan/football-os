@@ -5,8 +5,8 @@ Three files, one per locale (`apps/api/app/api/v1/meta.py` publishes them as `lo
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 287 of 288 keys in Simplified Chinese (`scout.placeholder` is a Chinese sentence in the English file already, so its falling back is the honest state) | **yes** |
-| `zh-TW.json` | 288 of 288 keys, written in Traditional Chinese, not converted from the `zh` file | **yes** |
+| `zh.json` | 318 of 319 keys in Simplified Chinese (`scout.placeholder` is a Chinese sentence in the English file already, so its falling back is the honest state) | **yes** |
+| `zh-TW.json` | 319 of 319 keys, written in Traditional Chinese, not converted from the `zh` file | **yes** |
 
 ## What a reader gets today
 
@@ -16,6 +16,9 @@ Chinese interface now. Before 2026-10-01 the two Chinese files were **byte-for-b
 Chinese filenames, and nothing read a catalogue anyway — the interface was English literals from top to bottom,
 so the locale the middleware had always resolved was invisible. `apps/api/tests/test_locale_claims.py` is what
 stopped that being invisible: it holds `locales` to these files in both directions.
+
+The nav and the auth pages read the catalogue (`components/Nav.tsx`, `app/login/*`, `app/register/*`); the rest of
+the interface still carries English literals and is wired namespace by namespace (PLAN.md, Item 2c).
 
 ## The rule
 

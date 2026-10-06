@@ -3,23 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { browserFetch, errorMessage } from "@/lib/api";
 import type { TokenPair } from "@/lib/types";
 
-const ROLES: { value: string; label: string }[] = [
-  { value: "fan", label: "Fan — I follow the game" },
-  { value: "player", label: "Player — I want to train" },
-  { value: "coach", label: "Coach" },
-  { value: "manager", label: "Manager" },
-  { value: "scout", label: "Scout" },
-  { value: "academy", label: "Academy" },
-];
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const CONSENT =
-  "I understand FOOTBALL OS stores the details I enter to build my profile, that all content in this build is synthetic demo data, and that AI coach output is an estimate — not a performance, medical or scouting certification.";
 
 function detailMessages(details: unknown): string[] {
   if (!Array.isArray(details)) return [];
@@ -35,6 +24,8 @@ function detailMessages(details: unknown): string[] {
 }
 
 export function RegisterForm() {
+  const t = useTranslations("auth");
+  const settingsT = useTranslations("settings");
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,13 +35,22 @@ export function RegisterForm() {
   const [errors, setErrors] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
 
+  const ROLES: { value: string; label: string }[] = [
+    { value: "fan", label: t("roleFan") },
+    { value: "player", label: t("rolePlayer") },
+    { value: "coach", label: t("roleCoach") },
+    { value: "manager", label: t("roleManager") },
+    { value: "scout", label: t("roleScout") },
+    { value: "academy", label: t("roleAcademy") },
+  ];
+
   function validate(): string[] {
     const found: string[] = [];
-    if (!EMAIL_RE.test(email.trim())) found.push("Enter a valid email address.");
-    if (password.length < 10) found.push("Password must be at least 10 characters.");
-    if (!displayName.trim()) found.push("Enter a display name.");
-    if (!role) found.push("Choose what best describes you.");
-    if (!consent) found.push("You must accept the data policy to continue.");
+    if (!EMAIL_RE.test(email.trim())) found.push(t("errEmail"));
+    if (password.length < 10) found.push(t("errPasswordLength"));
+    if (!displayName.trim()) found.push(t("errDisplayName"));
+    if (!role) found.push(t("errRole"));
+    if (!consent) found.push(t("errConsent"));
     return found;
   }
 
@@ -82,8 +82,8 @@ export function RegisterForm() {
     const detail = detailMessages(result.error.details);
     const headline =
       result.error.code === "email_taken"
-        ? "That email is already registered. Try signing in instead."
-        : errorMessage(result.error, "We could not create your account.");
+        ? t("emailTaken")
+        : errorMessage(result.error, t("registerFailed"));
     setErrors(detail.length ? [headline, ...detail] : [headline]);
   }
 
@@ -91,7 +91,7 @@ export function RegisterForm() {
     <form className="panel" onSubmit={onSubmit} style={{ display: "grid", gap: "1rem", padding: "1.15rem" }}>
       <div className="field">
         <label className="field__label" htmlFor="email">
-          Email
+          {t("email")}
         </label>
         <input
           id="email"
@@ -102,12 +102,12 @@ export function RegisterForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
         />
-        <span className="field__hint">We only use this to sign you in.</span>
+        <span className="field__hint">{t("emailHint")}</span>
       </div>
 
       <div className="field">
         <label className="field__label" htmlFor="password">
-          Password
+          {t("password")}
         </label>
         <input
           id="password"
@@ -118,25 +118,25 @@ export function RegisterForm() {
           onChange={(e) => setPassword(e.target.value)}
           minLength={10}
         />
-        <span className="field__hint">At least 10 characters.</span>
+        <span className="field__hint">{t("passwordHint")}</span>
       </div>
 
       <div className="field">
         <label className="field__label" htmlFor="display_name">
-          Display name
+          {settingsT("displayName")}
         </label>
         <input
           id="display_name"
           className="input"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="What should we call you?"
+          placeholder={t("displayNamePlaceholder")}
         />
       </div>
 
       <div className="field">
         <label className="field__label" htmlFor="role">
-          I am a…
+          {t("rolePrompt")}
         </label>
         <select id="role" className="select" value={role} onChange={(e) => setRole(e.target.value)}>
           {ROLES.map((option) => (
@@ -154,7 +154,7 @@ export function RegisterForm() {
           checked={consent}
           onChange={(e) => setConsent(e.target.checked)}
         />
-        <span>{CONSENT}</span>
+        <span>{t("consent")}</span>
       </label>
 
       {errors.length > 0 && (
@@ -170,13 +170,13 @@ export function RegisterForm() {
       )}
 
       <button className="btn btn--primary" type="submit" disabled={pending}>
-        {pending ? "Creating account…" : "Create account"}
+        {pending ? t("creatingAccount") : t("createAccount")}
       </button>
 
       <p className="muted" style={{ fontSize: "0.88rem" }}>
-        Already registered?{" "}
+        {t("alreadyRegistered")}{" "}
         <Link href="/login" style={{ color: "var(--accent)" }}>
-          Sign in
+          {t("signIn")}
         </Link>
       </p>
     </form>

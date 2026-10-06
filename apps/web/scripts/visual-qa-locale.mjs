@@ -2655,6 +2655,32 @@ async function run() {
   const backToEnglish = await navBecomes('Home');
   check('switching back returns the English catalogue, so the choice is not one-way', backToEnglish, JSON.stringify(await navHome()));
 
+  // Item 2c: the pages themselves now read the catalogue, not just the shell. The auth pages are the
+  // first wired, so this reads their headings in both languages before the walk ends. The visitor is
+  // signed out at this point, which is exactly what /login and /register require.
+  const pageH1 = async (path) => {
+    await open(page, path);
+    try {
+      return await page.$eval('h1', (node) => (node.textContent ?? '').trim());
+    } catch {
+      return '(no h1)';
+    }
+  };
+  const enLoginH1 = await pageH1('/login');
+  check('the login page heading reads the English catalogue', enLoginH1 === 'Sign in', JSON.stringify(enLoginH1));
+  await setSelect(page, '.nav__locale', 'zh');
+  const zhShellAgain = await navBecomes('首页');
+  check('choosing 简体中文 repaints the shell while on a wired page', zhShellAgain, JSON.stringify(await navHome()));
+  const zhLoginH1 = await pageH1('/login');
+  check('the login page heading follows the locale switch', zhLoginH1 === '登录', JSON.stringify(zhLoginH1));
+  await shot(page, 'login-zh');
+  const zhRegisterH1 = await pageH1('/register');
+  check('and the register page heading does too', zhRegisterH1 === '创建你的账号', JSON.stringify(zhRegisterH1));
+  await setSelect(page, '.nav__locale', 'en');
+  const enShellBack = await navBecomes('Home');
+  const enRegisterH1 = await pageH1('/register');
+  check('switching back restores the English heading on the register page', enShellBack && enRegisterH1 === 'Create your account', JSON.stringify(enRegisterH1));
+
   } catch (error) {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed
     // check, capture what the browser was actually looking at, and fall through to the summary.
