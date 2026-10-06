@@ -31,6 +31,7 @@ const LINKS: { href: string; key: string }[] = [
   { href: "/knowledge", key: "knowledge" },
   { href: "/world", key: "world" },
   { href: "/tactics", key: "tactics" },
+  { href: "/agents", key: "agents" },
   { href: "/scout", key: "scout" },
   { href: "/training", key: "training" },
   { href: "/progress", key: "progress" },
