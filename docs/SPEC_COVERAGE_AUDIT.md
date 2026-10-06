@@ -54,7 +54,7 @@ Every figure in this sentence is re-checked against the committed tree by
 | 63–64 | Testing / agent evaluation | 29 test files, both database legs; `evals/` covers **RAG only**, §64's agent benchmark does not exist | partial → M11 |
 | 65 | Demo data | world generator incl. the 100-training-session gate item | landed |
 | 75–80 | Event model, cost control, provider failure, citations, SEO | `sim_events`, `model_ledger`, refusal paths, `docs/SEO_VERIFICATION.md` | landed |
-| 81 | Internationalization | `en`-only copy; a `country="en"` argument in the club tier, no message catalogue | open |
+| 81 | Internationalization | `en`, `zh`, `zh-TW` all shipped since 2026-10-06 (`meta.py:137`); `middleware.ts` negotiates from cookie/Accept-Language/account column; `LocaleSwitcher` + `LocaleProvider` UI components; `test_locale_claims.py` gates the API's claim against the actual catalogues in both directions (over-claiming and under-claiming) | **landed 2026-10-06** |
 
 ## C. The two orphaned modules need three decisions each, not a code drop
 

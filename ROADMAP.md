@@ -509,19 +509,16 @@ Milestones do not own these; every public route must satisfy them as it lands.
   `SEO_ROUTES`/`web_path()` in `app/services/world/plan.py` emits, with the same `pageMetadata()` helper, and
   `sitemap.ts` lists all 983 of them from the API's own `path` fields (`docs/M3_WEB_VERIFICATION.md` §3)
 - [x] §81 messages: `messages/{en,zh,zh-TW}.json` are landed and `GET /capabilities` reports
-  `locales: ["en"]` with `locales_planned: ["en","zh","zh-TW"]` beside it. The flip to the full set
-  is deliberately withheld: `zh` and `zh-TW` are still byte-copies of the English file, and §81's own
-  condition is "when translations actually exist" — `9ba8178` flipped it anyway, the walk caught it
-  2026-09-29 as a settings row claiming three shipped languages over one translated file, and it was
-  put back to `["en"]` (`meta.py`). The interface *language* is still English
-  in every component — the three files are one copy of the same strings until translation happens — and **no URL
-  prefix exists**: `9ba8178` also wired next-intl's middleware, which rewrites `/world` to `/en/world` internally and
-  therefore answered **404 for every route** (`/world`, `/healthz`, `/robots.txt`, `/sitemap.xml`) in dev and in a fresh
-  production build while `next build`, `tsc` and `lint` all stayed green. `f8034c0` removed the rewrite and kept the
-  messages: `middleware.ts` now decides the locale from the `fo_locale` cookie and the caller's `Accept-Language` and
-  passes it as the `x-next-intl-locale` header the layout reads, so `<html lang>` follows the reader and every existing
-  URL stands. The walk figure that commit quoted (**233/233**, `.scratch/vqa/walk.log` at 18:15) predates it by an hour
-  and is corrected here: the walk over this fix has not been run yet, and its number is the one to believe.
+  `locales: ["en", "zh", "zh-TW"]` — all three shipped since **2026-10-06** when both Chinese catalogues
+  carried the full key set translated (`zh-TW` 288/288; `zh` 287/288, the search example sentence being Chinese
+  in the English file already, so its falling back is the honest state). The history: until 2026-10-01 the files
+  were byte-copies of the English one and `meta.py` correctly reported `["en"]`; `9ba8178` flipped it early, the walk
+  caught it 2026-09-29 as a settings row claiming three shipped languages over one translated file, and it was put
+  back to `["en"]`. Then on 2026-10-06 the translations actually arrived and the flag was flipped for real.
+  `middleware.ts` now decides the locale from the `fo_locale` cookie, the caller's `Accept-Language` and the account's
+  own column, passing it as the `x-next-intl-locale` header the layout reads, so `<html lang>` follows the reader and
+  every existing URL stands. `test_locale_claims.py` gates the API's claim against the actual catalogues in both
+  directions (over-claiming and under-claiming), plus duplicate-key detection and catalogue-length checks.
 
 - [x] §74's other half (`2d3673e`): the four error handlers answer at `detail.code` like every door, so the
   product's one reader (`normalizeError`) gets a code, a message and the field list instead of its fallback
