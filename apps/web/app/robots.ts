@@ -52,9 +52,9 @@ const DISALLOWED = [
   // to except, the way `/club/rules` is.
   "/community",
   "/creator",
-  // §38's CV. The page redirects a signed-out visitor and every figure in it is one account's own rows, so it
-  // is disallowed on the same rule as the two above — and the tier behind it has no public page to except: its
-  // rulebook door answers JSON at `/api/v1/portfolio/rules`, not an HTML route.
+  // §38's CV and its shared links. The private page redirects a signed-out visitor and every figure in it is one
+  // account's own rows. A shared link is public to the person holding it, but it is still user content and is not
+  // offered to crawlers, on the same rule as §17's shared tactical boards.
   "/portfolio",
 ];
 

@@ -139,13 +139,20 @@ async function run() {
   const browser = await puppeteer.launch({
     headless: 'new',
     executablePath: CHROME,
-    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+    // The walk asserts English sentences all the way through, and the app answers in the language the browser
+    // asks for — `middleware.ts` reads `Accept-Language`, resolves it to the best locale it carries, and writes
+    // `fo_locale` so the choice sticks. Chrome derives that header from the host's own locale, so on a machine
+    // whose OS is Chinese the whole walk rendered in Chinese and every English-text assertion failed at once.
+    // Nothing noticed before this because no component read the catalogues: the UI was English literals and the
+    // locale it had always resolved was invisible. A walk has to fix the language it is asserting in.
+    args: ['--no-sandbox', '--disable-dev-shm-usage', '--lang=en-US'],
     // A walk of ~1,100 navigations and 46 full-page captures on a busy host needs more than the
     // default 30s per waiter; without this a slow-but-fine render aborts the whole run.
     protocolTimeout: 300_000,
   });
   const page = await browser.newPage();
   page.setDefaultTimeout(120_000);
+  await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
   /** Where an error was seen matters more than the minified React code Chrome prints. */
   const note = (line, where = new URL(page.url()).pathname) => consoleErrors.push(`${line} @ ${where}`);
   page.on('console', (message) => {
@@ -1829,6 +1836,7 @@ async function run() {
     try {
       const otherPage = await other.newPage();
       otherPage.setDefaultTimeout(120_000);
+      await otherPage.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
       await otherPage.goto(`${BASE}/register`, { waitUntil: 'networkidle2', timeout: 90_000 });
       await otherPage.type('#email', `visual-qa-other-${stamp}@footballos.test`);
       await otherPage.type('#password', PASSWORD);
@@ -2384,6 +2392,7 @@ async function run() {
     try {
       const rivalPage = await rivalCtx.newPage();
       rivalPage.setDefaultTimeout(120_000);
+      await rivalPage.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
       await rivalPage.goto(`${BASE}/register`, { waitUntil: 'networkidle2', timeout: 90_000 });
       await rivalPage.type('#email', `visual-qa-challenger-${stamp}@footballos.test`);
       await rivalPage.type('#password', PASSWORD);
@@ -2497,6 +2506,58 @@ async function run() {
       `label "${graphNode.label.slice(0, 48)}" · ${graphNode.evidenced}/${graphNode.rows} rows with evidence`,
     );
     await shot(page, 'graph-node-desktop');
+
+    // 12j. M6 Simulation Aggregates (spec §30, item 10): cross-career & league-wide aggregates.
+    // The API tier already serves GET /simulation/aggregates/league/{competition_slug} and
+    // GET /simulation/aggregates/player/{player_slug}. The walk reads the rules door first
+    // (which publishes the vocabulary and ceilings), then exercises both public endpoints.
+    const aggRules = await page.evaluate(async () => {
+      const response = await fetch('/api/v1/simulation/aggregates/rules', { credentials: 'same-origin' });
+      return { status: response.status, body: await response.json() };
+    });
+    check(
+      'the simulation aggregates rules door publishes the vocabulary and ceilings',
+      aggRules.status === 200 &&
+        Array.isArray(aggRules.body.node_kinds) &&
+        aggRules.body.node_kinds.includes('competition') &&
+        aggRules.body.node_kinds.includes('player') &&
+        Array.isArray(aggRules.body.edge_verbs) &&
+        aggRules.body.edge_verbs.includes('league_ledger') &&
+        aggRules.body.edge_verbs.includes('player_aggregate'),
+      `HTTP ${aggRules.status} · kinds ${(aggRules.body.node_kinds ?? []).join(',')} · verbs ${(aggRules.body.edge_verbs ?? []).join(', ')}`,
+    );
+
+    // League ledger: pick a competition from the world
+    const compSlug = worldCompetition.path.split('/').pop();
+    await open(page, `/simulation/aggregates/league/${compSlug}`);
+    await waitForText(page, 'League Ledger');
+    const leagueBody2 = await page.evaluate(() => ({
+      competition: document.querySelector('[data-competition-slug]')?.textContent?.trim() ?? '',
+      totals: document.querySelector('[data-testid="league-totals"]')?.textContent ?? '',
+      players: [...document.querySelectorAll('[data-testid="league-players"] tbody tr')].length,
+    }));
+    check(
+      'the league ledger page renders the competition and totals',
+      leagueBody2.competition.length > 0 && leagueBody2.totals.includes('goals') && leagueBody2.players >= 0,
+      `comp ${leagueBody2.competition} · totals ${leagueBody2.totals.slice(0, 60)} · ${leagueBody2.players} players`,
+    );
+    await shot(page, 'league-ledger-desktop');
+
+    // Player aggregate: find a player from a career in the world
+    const playerSlug = String(worldPlayer.path).split('/').pop();
+    await open(page, `/simulation/aggregates/player/${playerSlug}`);
+    await waitForText(page, 'Player Career Aggregate');
+    const playerBody = await page.evaluate(() => ({
+      name: document.querySelector('[data-player-name]')?.textContent?.trim() ?? '',
+      careers: [...document.querySelectorAll('[data-testid="agg-careers"] tbody tr')].length,
+      totals: document.querySelector('[data-testid="player-totals"]')?.textContent ?? '',
+    }));
+    check(
+      'the player aggregate page renders the player and careers',
+      playerAggBody.name.length > 0 && playerAggBody.careers >= 0 && playerAggBody.totals.includes('goals'),
+      `name "${playerBody.name.slice(0, 48)}" · ${playerBody.careers} careers · totals ${playerBody.totals.slice(0, 60)}`,
+    );
+    await shot(page, 'player-aggregate-desktop');
 
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
 

@@ -28,10 +28,10 @@ function parseRefreshCookie(setCookie: string | null): string | undefined {  if 
   return pair.slice(index + 1).trim();
 }
 
-/** The headers that describe a byte range survive only if the proxy copies them across. */
+/** The headers that describe a byte range or downloaded file survive only if the proxy copies them across. */
 function byteRangeHeaders(response: Response): Record<string, string> {
   const copied: Record<string, string> = {};
-  for (const header of ["content-range", "accept-ranges", "content-length"] as const) {
+  for (const header of ["content-range", "accept-ranges", "content-length", "content-disposition", "cache-control"] as const) {
     const value = response.headers.get(header);
     if (value) copied[header] = value;
   }
@@ -156,6 +156,7 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
   });
 
   if (path.join("/") === "auth/logout" && response.status === 204) return applyCookies(out, {}, { clear: true });
+  if (path.join("/") === "auth/account" && method === "DELETE" && response.ok) return applyCookies(out, {}, { clear: true });
   if (path.join("/") === "auth/refresh" && !response.ok) return applyCookies(out, {}, { clear: true });
   return applyCookies(out, { ...mintedCookies, ...captured });
 }

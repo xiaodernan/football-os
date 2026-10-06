@@ -50,6 +50,45 @@ export type PortfolioRules = {
   would_read_from: Record<string, string>;
   formulas: Record<string, string>;
   public_outputs: Record<string, string>;
+  share: {
+    publishable: string[];
+    minor_blocked: string[];
+    minor_age: number;
+    token_shape: string;
+    private_keys_dropped: string[];
+  };
+  limitation: string;
+};
+
+/** One row in the account's own share ledger. A closed row carries no token back to the browser. */
+export type PortfolioShareRecord = {
+  share: string;
+  token: string | null;
+  sections: string[];
+  opened_at: string | null;
+  revoked_at: string | null;
+  live: boolean;
+};
+
+export type PortfolioShareLedger = {
+  shares: PortfolioShareRecord[];
+  counts: { opened: number; live: number; revoked: number };
+  publishable: string[];
+  minor_blocked: string[];
+  minor_age: number;
+};
+
+/** The token door's projection: no account, no token, no unpublished section, and no stored copy of a figure. */
+export type PortfolioPublicCv = {
+  player: { name: string; position: string; data_origin: string } | null;
+  has_player: boolean;
+  sections: PortfolioSection[];
+  withheld: { section: string; title: string; reason: string }[];
+  unfilled_reasons: Record<string, string>;
+  counts: { sections: number; filled: number; unfilled: string[] };
+  published_sections: string[];
+  formulas: Record<string, string>;
+  opened_at: string | null;
   limitation: string;
 };
 

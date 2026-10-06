@@ -67,6 +67,13 @@ class UserOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class AccountDeleteIn(BaseModel):
+    """The destructive account-removal request: an explicit phrase and the current password."""
+
+    confirm: str = Field(default="", max_length=32)
+    password: str = Field(default="", max_length=200)
+
+
 class PlayerIn(BaseModel):
     name: str = Field(min_length=2, max_length=60)
     position: str

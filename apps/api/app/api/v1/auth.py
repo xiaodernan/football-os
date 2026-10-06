@@ -19,11 +19,13 @@ from app.core.security import (
     inactive_refusal,
     limit,
     new_public_id,
+    password_refusal,
     verify_password,
 )
 from app.core.timeutil import as_utc, is_expired, now_utc
 from app.models import AuditLog, RefreshSession, User
-from app.schemas import LoginIn, RegisterIn, TokenPair, UserOut
+from app.schemas import AccountDeleteIn, LoginIn, RegisterIn, TokenPair, UserOut
+from app.services import account_deletion
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -107,7 +109,14 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
     if stored is None or is_expired(stored.expires_at):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "refresh_invalid", "message": "Session expired, please sign in again"})
     user = db.get(User, stored.user_id)
-    if user is None or not user.is_active:
+    if user is None:
+        # `refresh_sessions.user_id` cascades with the account, so an erased account takes this row with it
+        # and lands on `refresh_invalid` above. A row that survived its own account is therefore a database
+        # that disagrees with itself, and the honest answer is the same 401 rather than a 403 describing an
+        # account that is not there — §60's census named both this site and `current_user`; see
+        # `docs/SECURITY_AUTHORIZATION_VERIFICATION.md` §9.
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "refresh_invalid", "message": "Session expired, please sign in again"})
+    if not user.is_active:
         raise inactive_refusal(message="This account is disabled")
     now = now_utc()
     if stored.revoked_at is not None:
@@ -157,3 +166,48 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(current_user)) -> UserOut:
     return UserOut.model_validate(user)
+
+
+@router.get("/account")
+def account_deletion_preview(db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, object]:
+    """Print the full deletion inventory without changing a row."""
+    return account_deletion.preview(db, user)
+
+
+@router.delete("/account")
+def delete_account(
+    payload: AccountDeleteIn,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, object]:
+    """Erase the account after a phrase and password check; blocked before any write when a tenant would be orphaned."""
+    limit(request, 3, 3600, scope="account_delete")
+    if payload.confirm != account_deletion.ACCOUNT_DELETE_PHRASE:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "account_delete_confirmation",
+                "message": f'Type {account_deletion.ACCOUNT_DELETE_PHRASE!r} exactly to delete this account',
+                "confirm_required": True,
+                "expected": account_deletion.ACCOUNT_DELETE_PHRASE,
+            },
+        )
+    if not verify_password(payload.password, user.password_hash):
+        raise password_refusal(message="The current password is incorrect")
+    try:
+        result = account_deletion.erase(db, user)
+    except account_deletion.AccountDeletionBlocked as error:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail={
+                "code": "organization_owner_required",
+                "message": "This account is the last active owner of an organisation with other active members",
+                "organisations": error.organizations,
+            },
+        ) from error
+    except account_deletion.AccountDeletionStorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail={"code": "private_media_not_erased", "message": str(error)}) from error
+    response.delete_cookie(REFRESH_COOKIE, path="/api/v1/auth")
+    return result

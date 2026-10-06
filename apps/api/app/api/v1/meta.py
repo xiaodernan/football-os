@@ -125,12 +125,15 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
             "isolation": club_service.rules()["matrix"]["rule"],
         },
         "m9_community": False,
-        # `zh` and `zh-TW` message files exist but are still copies of the English one, so no
-        # interface language but English is shipped — §81 flips this when translations exist (spec §81).
-        # This is not a hand-edit anybody has to remember: `tests/test_locale_claims.py` reads the
-        # catalogues and fails in both directions — a locale advertised without a translation, and a
-        # translation landed without the field moving. See `apps/web/messages/README.md`.
-        "locales": ["en"],
+        # The languages this app will answer in — `middleware.ts` picks one of these from the `fo_locale` cookie,
+        # the browser's `Accept-Language` and the account's own column, so a catalogue that is not a copy of
+        # English is a language a reader can already be served. `zh` and `zh-TW` are **partial**: the shell, the
+        # nav and the auth sentences are translated and the rest falls back to English key by key, which is the
+        # honest description of what a Chinese browser receives today. Until 2026-10-01 they were byte-for-byte
+        # copies of the English file, and this field said `["en"]` — the true answer then, because the app served
+        # English to everyone. `tests/test_locale_claims.py` holds this list to the catalogues in both
+        # directions; `apps/web/messages/README.md` explains the switch.
+        "locales": ["en", "zh", "zh-TW"],
         "locales_planned": ["en", "zh", "zh-TW"],
         "demo_mode": settings.is_demo_mode,
     }

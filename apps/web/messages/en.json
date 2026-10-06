@@ -19,7 +19,12 @@
     "myFootball": "My Football",
     "onboarding": "Onboarding",
     "login": "Sign in",
-    "register": "Sign up"
+    "register": "Sign up",
+    "knowledge": "Knowledge",
+    "myBoards": "My boards",
+    "videoShort": "Video",
+    "footballCv": "Football CV",
+    "simulator": "Simulator"
   },
   "common": {
     "loading": "Loading…",
@@ -57,11 +62,8 @@
     "as": "as",
     "is": "is",
     "not": "not",
-    "no": "No",
-    "yes": "Yes",
     "ok": "OK",
     "done": "Done",
-    "close": "Close",
     "open": "Open",
     "view": "View",
     "hide": "Hide",
@@ -118,8 +120,10 @@
     "info": "Info",
     "notice": "Notice",
     "alert": "Alert",
-    "error": "Error",
-    "critical": "Critical"
+    "critical": "Critical",
+    "demoMode": "DEMO MODE",
+    "demoModeTitle": "No AI provider key configured — outputs come from the rule engine.",
+    "language": "Language"
   },
   "auth": {
     "signIn": "Sign in",
@@ -140,7 +144,9 @@
     "accountCreated": "Account created successfully",
     "checkEmail": "Check your email for next steps",
     "sessionExpired": "Your session has expired. Please sign in again.",
-    "signedOut": "You have been signed out"
+    "signedOut": "You have been signed out",
+    "signingOut": "Signing out…",
+    "createAccount": "Create account"
   },
   "scout": {
     "title": "AI Scout",

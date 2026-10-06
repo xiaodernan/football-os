@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { PortfolioSectionPanel } from "@/components/PortfolioSection";
+import { PortfolioSharePanel } from "@/components/PortfolioSharePanel";
 import { Panel } from "@/components/ui";
 import { WorldHead, WorldUnavailable } from "@/components/world";
-import { figureText, itemColumns, type PortfolioCv, type PortfolioRules, type PortfolioSection } from "@/lib/portfolio";
+import type { PortfolioCv, PortfolioRules, PortfolioShareLedger } from "@/lib/portfolio";
 import { absolute } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
 
@@ -27,8 +29,8 @@ export const dynamic = "force-dynamic";
  * * a figure is the door's value at the moment of the read. `null` stays `null`, because that is the tier saying
  *   the formula had no rows to fold, and the page re-reads both doors on every request (`force-dynamic`), so a
  *   number cannot go stale here — there is nothing to cache it in;
- * * the three outputs §38 permits publicly are listed with their state, which in this build is *absent* for all
- *   three. Nothing on this screen is a public profile, a share link or a PDF.
+ * * the three outputs §38 permits publicly are listed with the state the rules door publishes. Each now names the
+ *   door that serves it, including the owner-authenticated PDF rendered from this same live read.
  */
 export const metadata: Metadata = {
   title: "Football CV",
@@ -37,95 +39,14 @@ export const metadata: Metadata = {
   alternates: { canonical: absolute("/portfolio") },
 };
 
-function SectionPanel({ section }: { section: PortfolioSection }) {
-  const figures = section.figures ?? {};
-  const names = Object.keys(figures);
-  const formulas = section.formulas ?? {};
-  const items = section.items ?? [];
-  const columns = itemColumns(items);
-  return (
-    <Panel
-      eyebrow={`${section.source || "no source published"} · origin ${section.data_origin}`}
-      title={section.title}
-    >
-      <div data-available={String(section.available)} data-section={section.section}>
-        {section.available ? (
-          names.length === 0 && items.length === 0 ? (
-            <p className="muted" style={{ fontSize: "0.85rem" }}>This section is filled and its source answers with no rows and no figure yet.</p>
-          ) : (
-            <>
-              {names.length > 0 && (
-                <div className="world-tablewrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Figure</th>
-                        <th scope="col">Value</th>
-                        <th scope="col">Formula</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {names.map(name => (
-                        <tr data-figure={name} key={name}>
-                          <td className="mono">{name}</td>
-                          <td className="num">{figureText(figures[name])}</td>
-                          <td className="muted">{formulas[name] ?? "printed by the CV door for the section as a whole"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {columns.length > 0 && (
-                <div className="world-tablewrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        {columns.map(column => (
-                          <th scope="col" key={column}>
-                            {column}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((row, index) => (
-                        <tr data-item={index} key={index}>
-                          {columns.map(column => (
-                            <td className="mono" key={column}>
-                              {figureText(row[column])}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )
-        ) : (
-          <div className="stack-sm">
-            <p className="muted" style={{ fontSize: "0.86rem" }}>
-              <strong>Not filled in this build.</strong> {section.missing_because ?? ""}
-            </p>
-            <p className="muted" style={{ fontSize: "0.84rem" }}>
-              Would be read from: <span className="mono">{section.would_be_read_from ?? "no table published"}</span>
-            </p>
-          </div>
-        )}
-      </div>
-    </Panel>
-  );
-}
-
 export default async function PortfolioPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fportfolio");
 
-  const [rules, cv] = await Promise.all([
+  const [rules, cv, shares] = await Promise.all([
     serverFetch<PortfolioRules>("/portfolio/rules"),
     serverFetch<PortfolioCv>("/portfolio/cv"),
+    serverFetch<PortfolioShareLedger>("/portfolio/shares"),
   ]);
   if (!rules.ok) return <WorldUnavailable detail={rules.error.message} message="The CV rulebook door did not answer, so this page has no vocabulary to render against." title="Football CV" />;
   if (!cv.ok) return <WorldUnavailable detail={cv.error.message} message="The CV door did not answer, so there is nothing to print." title="Football CV" />;
@@ -162,6 +83,23 @@ export default async function PortfolioPage() {
         )}
       </Panel>
 
+      <PortfolioSharePanel
+        initialFault={shares.ok ? "" : `${shares.error.code}: ${shares.error.message}`}
+        initialLedger={shares.ok ? shares.data : null}
+        rules={rules.data}
+      />
+
+      <Panel eyebrow="rendered on demand · no document or figure is stored" title="PDF">
+        <div className="row wrap" style={{ alignItems: "center", gap: "0.75rem" }}>
+          <a className="btn btn--primary" data-portfolio-cv-pdf download href="/api/v1/portfolio/cv.pdf">
+            Download Football CV
+          </a>
+          <span className="muted" style={{ fontSize: "0.84rem" }}>
+            The PDF is rendered from the live read above and returned without a stored copy.
+          </span>
+        </div>
+      </Panel>
+
       <Panel eyebrow={`${cv.data.counts.sections} sections · ${cv.data.counts.filled} filled · ${cv.data.counts.unfilled.length} not filled · ${origins.join(" · ")}`} title="Order, and what is missing">
         <p className="muted" style={{ fontSize: "0.85rem" }}>
           {orderAgrees
@@ -177,7 +115,7 @@ export default async function PortfolioPage() {
       </Panel>
 
       {cv.data.sections.map(section => (
-        <SectionPanel key={section.section} section={section} />
+        <PortfolioSectionPanel key={section.section} section={section} />
       ))}
 
       <Panel eyebrow={`${Object.keys(rules.data.public_outputs).length} outputs §38 permits · ${Object.values(rules.data.public_outputs).filter(line => line.startsWith("not in this build")).length} absent from this build`} title="What §38 allows to be public">

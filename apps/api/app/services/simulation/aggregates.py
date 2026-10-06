@@ -240,7 +240,6 @@ def league_ledger_view(session: Session, competition: Competition) -> dict[str, 
     traced_ids = _traced_match_ids(session, match_ids)
     traced = len(traced_ids)
     untraced = len(fixtures) - traced
-    
     goals = int(totals.get("goal", {}).get("events", 0))
     # club_goals: sum of club_goals for traced fixtures of all clubs in this competition
     club_goals = sum(int(row.club_goals) for row in played if str(row.match_id) in traced_ids)

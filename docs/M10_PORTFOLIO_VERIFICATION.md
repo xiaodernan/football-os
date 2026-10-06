@@ -9,7 +9,8 @@ on named beside it. Where a figure could not be read, the row says so rather tha
 | --- | --- |
 | `471da30` | `services/portfolio/cv.py` (the ten sections and their formulas), `api/v1/portfolio.py` (two doors, no code registered), `tests/test_portfolio.py` 14 cases, the contract at 146 paths / 189 operations |
 | this one | `lib/portfolio.ts`, `app/portfolio/page.tsx`, the `Football CV` nav arm, `/portfolio` in `robots.ts`'s disallow list, and `scripts/qa-portfolio.mjs` — §38's read on the browser plane |
-| the next section | `models/CvShare` + migration `0025` + `services/portfolio/sharing.py` + four doors + `tests/test_portfolio_share.py` 24 cases — §38's **second permitted public output**, the revocable share link, at the API tier |
+| the share slice | `models/CvShare` + migration `0025` + `services/portfolio/sharing.py` + four doors + `tests/test_portfolio_share.py` 24 cases — §38's **second permitted public output**, the revocable share link, at the API tier |
+| the PDF slice | `services/portfolio/pdf.py` + `GET /portfolio/cv.pdf` + the download control and proxy header pass-through — §38's **third permitted public output**, rendered from the same live read |
 
 The tier owns no table and the page owns no figure: the CV is assembled at the moment of the read from rows the
 other tiers write, which is why the walk's central witness is a *moved count* rather than a stored one.
@@ -162,6 +163,35 @@ collection, and 1350 is reported as a prediction that agreed with a same-kind me
 (The same collect-only method closed §35's one-case gap the same evening; see the task #65 bullet in
 `docs/M9_COMMUNITY_VERIFICATION.md`.)
 
+## §38's share surface — browser tier (measured 2026-09-29)
+
+**What landed.** `apps/web/components/PortfolioSharePanel.tsx` turns the account's own share ledger into a section
+selector and three actions: open or re-point the link, open/copy it, and close it. `PortfolioSection.tsx` is the one
+renderer used by both the private CV and the token page, so the same door shape cannot be painted two different
+ways. `app/portfolio/shared/[token]/page.tsx` performs the sessionless read, renders only the published sections and
+names every withheld section without rendering it. `app/portfolio/page.tsx` now fetches `/portfolio/shares` with the
+CV and rules, while `robots.ts` keeps both the private and shared CV surfaces out of the crawl.
+
+**What the browser proves.** The walk was run against a fresh SQLite database migrated to `0025`, API on `8743` and
+production Next on `3219`:
+
+* `npm run typecheck` -> **rc=0**, `npm run lint` -> **rc=0**, `npm run build` -> **rc=0**. The served page's
+  `BUILD_ID` was `EgWRUtYWNBIJkxIShsf8X`.
+* `QA_BASE=http://127.0.0.1:3219 node scripts/qa-portfolio.mjs` -> **51/51 checks, exit 0**, **4** screenshots,
+  **10** recorded door knocks, statuses `200, 201, 401, 404`, and **0 console errors**.
+* The section selector painted all ten names in §38's order. Its safer initial selection left `videos` off; the walk
+  then selected only `position` and `training`, and the live ledger row came back in exactly that spec order.
+* The public JSON answered without a session and carried **none** of `user_id`, `email`, `display_name`, `account`,
+  `id` or `visibility`. Its projection contained exactly two sections and named the other eight only as withheld.
+* A second browser context with no cookie opened `/portfolio/shared/{token}` at **HTTP 200**, painted exactly the two
+  published sections, and did not print the owner's display name.
+* After `DELETE /portfolio/share/{token}`, the ledger read `{opened: 1, live: 0, revoked: 1}`, the JSON door answered
+  **404**, and the HTML token page answered **404 with 0 rendered sections**.
+
+The first run was **50/51**: the revoked-page navigation correctly produced a browser console 404, but the walk had
+attached the console-error collector to that page. The harness now checks the revoked page in a separate unobserved
+page, then the full run above produced 51/51. That was a harness correction, not a product correction.
+
 ## Not claimed here
 
 * **The whole-suite legs ran over this commit, and they are recorded with their exit codes.**
@@ -174,21 +204,53 @@ collection, and 1350 is reported as a prediction that agreed with a same-kind me
   exactly that. The addends are then re-read from the runs' own junit reports rather than from that arithmetic:
   1326 cases over 178 test classes, of which `tests.test_creator` is 37 and `tests.test_portfolio` is 14. Each leg
   carries exactly one skip, the same count every leg has carried since §35 closed.
-* Of §38's three permitted public outputs, **the PDF still does not exist**, and neither does a **page** for the two
-  that landed. `PUBLIC_OUTPUTS` now prints `public_player_profile` and `share_link` as built, and both name
-  `GET /portfolio/share/{token}` — the same door is the profile and what the link shows, which is why one read covers
-  two of the three outputs. `pdf` still starts "not in this build". The page renders these sentences from the door
-  rather than holding its own copy, and the walk's page-level check asserts each output's *name* appears in the
-  painted text, so it does not re-type a sentence the tier owns.
-  What is *not* claimed is a browser surface: the share doors are answerable, not reachable from `/portfolio` yet.
+* Of §38's three permitted public outputs, **all three now name a door that exists**. `public_player_profile` and
+  `share_link` share `GET /portfolio/share/{token}`, and `pdf` names the owner-authenticated
+  `GET /portfolio/cv.pdf`. `/portfolio` drives the write doors and the PDF download; `/portfolio/shared/{token}`
+  renders the public read. Public PDF delivery through a share token is deliberately not enabled.
 * `Matches` and `Stats` remain **unfilled**. The walk proves the page says so honestly; it does not make the rows
   exist. Filling them needs a table that records *this* account's player appearing in a match, which §39's
   `club_match_appearances` is not: that one belongs to a tenant and points at world players.
-* The page the **37 of 37** walk ran over has **no write control**, so that walk carries no
-  press-a-button-moves-a-figure witness of its own; the only write it drives is §7's player row through its own door.
-  This slice adds two write **doors** (`POST /portfolio/share`, `DELETE /portfolio/share/{token}`) that no page drives
-  yet, so that witness is still owed and belongs to the web landing. `apps/web/app/portfolio/page.tsx` line 31's
-  comment — "Nothing on this screen is a public profile, a share link or a PDF" — was true at `471da30` and is now
-  stale on the door plane: the sentences it renders changed, the file itself was not touched here.
+* The earlier **37 of 37** walk measured the read-only CV page before the share controls landed. It is superseded by
+  the **53 of 53** PDF-and-share walk recorded below, which drives both write doors from the browser, reads their
+  rows back from the ledger, and fetches the rendered PDF through the Next proxy.
 * `robots.ts` gained `/portfolio` and the page carries `index: false, follow: false`; no crawl test was re-run
   beyond the build and the lint above.
+
+## §38's third public output — the owner-authenticated PDF (measured 2026-09-29)
+
+**What landed.** `app/services/portfolio/pdf.py` renders the exact `build_cv` result to bytes in memory with
+ReportLab 4.4.4: ASCII prose uses Helvetica, text containing non-ASCII characters switches to `STSong-Light`, and
+`pageCompression=0` keeps the rendered text inspectable by the focused tests. `GET /portfolio/cv.pdf` is protected by
+`current_user`, rate-limited to 20 reads per minute, and returns `application/pdf` with an attachment filename plus
+`Cache-Control: private, no-store`. The Next proxy now forwards `content-disposition` and `cache-control`, and
+`/portfolio` exposes a download control pointing at that proxy route. `/portfolio` therefore declares **7 doors**.
+
+The PDF is not a second assembler and not a stored artifact. It calls `portfolio.build_cv(session, user_id)` at the
+moment of the request, renders that answer, returns the bytes and writes no file, PDF row, share row or cached copy.
+The route is owner-authenticated first; the public share output remains JSON/HTML and does not expose the PDF.
+
+**The figures, each read out of the command named beside it:**
+
+* `pytest tests/test_portfolio.py tests/test_portfolio_share.py` collected **40 cases** and exited **0**. The pair
+  adds two PDF cases to the previous 38; one asserts the 401-before-read boundary, `%PDF-`/`%%EOF`, the exact
+  attachment and no-store headers, a document over 5,000 bytes, all ten section titles and the account's `CM`
+  player row, while the other asserts that the route adds no PDF table and opens no share.
+* `ruff check` over the changed API modules and tests -> `All checks passed!`; `mypy` over
+  `portfolio.py`, `cv.py` and `pdf.py` -> `Success: no issues found in 3 source files`.
+* `docs/api/openapi.json` regenerated from the tree -> **150 paths / 194 operations / 63 schemas**. The new path
+  publishes `application/pdf` and the HTTP bearer security requirement.
+* `npm run typecheck` -> **rc=0**; `npm run lint` -> **rc=0**, `No ESLint warnings or errors`; `npm run build` ->
+  **rc=0**, `BUILD_ID` **`qFs0RdZcehJ5lv9ZjqWXr`**.
+* A fresh SQLite database was migrated through `0024 -> 0025`, then the production build was served on `3221` with
+  the API on `8745`. `QA_BASE=http://127.0.0.1:3221 node scripts/qa-portfolio.mjs` -> **53/53 checks, exit 0**,
+  **4** screenshots, **11** recorded knocks, statuses `200, 201, 401, 404`, and **0** console errors.
+* From inside the authenticated browser the PDF download returned **HTTP 200**, `application/pdf`,
+  `attachment; filename="football-cv.pdf"`, `private, no-store`, **38,769 bytes**, `%PDF-` through `%%EOF`, and
+  **10 of 10** section titles after a player row had moved the CV from 0 to 3 filled sections.
+* The walk also held the PDF control's href to `/api/v1/portfolio/cv.pdf`, proving the browser path goes through the
+  Next proxy rather than to a hard-coded backend origin.
+
+**Not claimed by this slice.** There is no public PDF door behind a share token. Whole-suite execution over these
+bytes is also still outstanding; the collection-plane prediction remains **1350** cases and is recorded above as a
+prediction, not as a pass/fail leg.

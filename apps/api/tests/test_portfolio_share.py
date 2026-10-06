@@ -357,15 +357,15 @@ class TestTheDoors:
         emptied or extended `PRIVATE_KEYS` a red rather than a quieter pass."""
         assert set(sharing.PRIVATE_KEYS) == set(FORBIDDEN_KEYS), "the projection's subtraction and its census drifted"
 
-    def test_both_share_outputs_the_spec_permits_now_name_a_door_that_exists_and_pdf_still_says_it_is_absent(self) -> None:
-        """§38 permits three outputs. Two are built now, and the third must not be allowed to read as built."""
+    def test_all_three_outputs_the_spec_permits_now_name_a_door_that_exists(self) -> None:
+        """§38 permits three outputs. Each public sentence must name a door the tier actually declares."""
         body = _anonymous().get(RULES).json()
         paths = {row["path"] for row in body["routes"]}
-        for key in ("public_player_profile", "share_link"):
+        for key in ("public_player_profile", "share_link", "pdf"):
             sentence = body["public_outputs"][key]
             assert "not in this build" not in sentence, sentence
             assert any(path in sentence for path in paths), f"{key} names no door this tier actually declares: {sentence}"
-        assert "not in this build" in body["public_outputs"]["pdf"]
+        assert "/portfolio/cv.pdf" in body["public_outputs"]["pdf"]
 
 
 def _figure(payload: dict[str, Any], section: str, name: str) -> Any:

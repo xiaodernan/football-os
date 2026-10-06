@@ -1,9 +1,11 @@
 import { getRequestConfig } from "next-intl/server";
 
-export const locales = ["en", "zh", "zh-TW"] as const;
-export const defaultLocale = "en" as const;
+import { defaultLocale, locales, type Locale } from "@/i18n/locales";
 
-export type Locale = (typeof locales)[number];
+// Re-exported so the existing importers (`middleware.ts`, the layout) keep working: the list itself now lives in
+// a module with no server-only imports, because the language switcher is a client component and needs it.
+export { defaultLocale, locales };
+export type { Locale };
 
 import enMessages from "@/messages/en.json";
 import zhMessages from "@/messages/zh.json";

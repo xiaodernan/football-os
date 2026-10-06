@@ -35,13 +35,15 @@
     ".next-carry/types/**/*.ts",
     ".next-ci/types/**/*.ts",
     ".next-club/types/**/*.ts",
+    ".next-fx/types/**/*.ts",
     ".next-ledger/types/**/*.ts",
     ".next-market/types/**/*.ts",
+    ".next-tac/types/**/*.ts",
     ".next-timeline/types/**/*.ts",
     ".next-verify/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-fx/types/**/*.ts"
+    ".next-i18n/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -34,11 +34,15 @@ Three findings this file settles rather than assumes:
 
 The census proved itself against territory rather than against my own edits, within the hour. A second agent's
 account-deletion route was written into `auth.py` while this file's mutation probe was mid-leg, and the case that
-bans a third holder went red on it: that route spends 403 on `invalid_password`, a code no answer table registers.
+bans a third holder went red on it: that route spent 403 on `invalid_password`, a code no answer table registers.
 Nothing had to be taught about it and no allow-list had to be widened — the population is read off the tree, so a
-router that never writes to the ledger is in the census the moment it is saved. The route is not part of this
-commit, so this commit ships green, and the named gap is open for whoever lands it: register the code with a
-builder in `core/security.py`, or raise through a builder that already exists.
+router that never writes to the ledger is in the census the moment it is saved. That read was left open here rather
+than papered over, and the erasure route has since landed, so the gap is closed in the direction this file named:
+`invalid_password` is a third constant in `core/security.py`, raised through `password_refusal()`, and the
+reachability case below now earns all three codes at three different doors. The same landing made
+`current_user` stop answering for an erased account: with the row gone it raised `account_inactive`, a 403 whose one
+meaning is "this account is switched off" — describing an account that is not there. A missing row is now the same
+401 an undecodable token earns, which is what `test_account_deletion.py` asserts after a confirmed erasure.
 """
 
 from __future__ import annotations
@@ -129,13 +133,16 @@ class TestFortyThreeIsRaisedFromTheTable:
         """Each code is not merely listed — a door answers with it, and answers 403, and only that.
 
         A registry nobody can reach is a wish. `insufficient_role` is earned at `/knowledge/ingest` by a caller
-        whose standing is below it; `account_inactive` is earned at `/auth/me` by an account switched off.
+        whose standing is below it; `account_inactive` is earned at `/auth/me` by an account switched off; and
+        `invalid_password` is earned at `DELETE /auth/account` by a signed-in account that typed its own password
+        wrong. The three branches are the three codes, so a fourth one added to `FORBIDDEN_CODES` fails here
+        until somebody shows the door it is answered at.
         """
         if code == security.INSUFFICIENT_ROLE:
             response = client.post("/api/v1/auth/register", json={"email": "census-insufficient@example.test", "password": "strong-pass-1234", "display_name": "Census", "role": "player", "accepts_data_policy": True})
             token = response.json()["access_token"]
             refused = client.post("/api/v1/knowledge/ingest", json={}, headers={"Authorization": f"Bearer {token}"})
-        else:
+        elif code == security.ACCOUNT_INACTIVE:
             email = "census-inactive@example.test"
             registered = client.post("/api/v1/auth/register", json={"email": email, "password": "strong-pass-1234", "display_name": "Census", "role": "player", "accepts_data_policy": True})
             token = registered.json()["access_token"]
@@ -147,6 +154,15 @@ class TestFortyThreeIsRaisedFromTheTable:
             finally:
                 session.close()
             refused = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+        else:
+            registered = client.post("/api/v1/auth/register", json={"email": "census-password@example.test", "password": "strong-pass-1234", "display_name": "Census", "role": "player", "accepts_data_policy": True})
+            token = registered.json()["access_token"]
+            refused = client.request(
+                "DELETE",
+                "/api/v1/auth/account",
+                json={"confirm": "DELETE", "password": "not-the-stored-password"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
         assert refused.status_code == FORBIDDEN, f"{code} was answered {refused.status_code}, not 403: {refused.text}"
         detail = refused.json()["detail"]
         assert detail["code"] == code

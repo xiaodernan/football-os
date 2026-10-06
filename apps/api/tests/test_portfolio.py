@@ -37,6 +37,7 @@ from app.services.portfolio import cv as portfolio
 from app.services.portfolio import sharing
 
 CV = "/api/v1/portfolio/cv"
+PDF = "/api/v1/portfolio/cv.pdf"
 RULES = "/api/v1/portfolio/rules"
 PASSWORD = "strong-pass-1234"
 
@@ -55,9 +56,9 @@ SPEC_38_TITLES: Final = (
     "Development History",
 )
 
-#: The four tables in this schema whose rows reference `user_players` — measured below, and the count the `matches`
-#: section prints as part of the reason it is empty. A fifth table would have to move both numbers together.
-USER_PLAYER_TABLES: Final = ("attribute_changes", "training_plans", "training_sessions", "xp_events")
+#: The tables in this schema whose rows reference `user_players` — measured below, and the count the `matches`
+#: section prints as part of the reason it is empty. A sixth table would have to move both numbers together.
+USER_PLAYER_TABLES: Final = ("attribute_changes", "training_plans", "training_sessions", "video_assets", "xp_events")
 
 #: §42 owns pricing. The AI Reports section names the model's provider, which is data origin rather than a vendor,
 #: so the words hunted here are the ones that only ever mean money.
@@ -166,7 +167,7 @@ class TestTheSectionsAreTheSpecs:
         referencing = tuple(sorted(table.name for table in Base.metadata.tables.values() if any(fk.target_fullname == "user_players.id" for column in table.columns for fk in column.foreign_keys)))
         assert referencing == USER_PLAYER_TABLES, "the printed sentence counts these tables; a new one moves both"
         sentence = portfolio.UNFILLED_REASONS["matches"]
-        assert "four" in sentence, "the sentence counts the tables it found, in words"
+        assert "five" in sentence, "the sentence counts the tables it found, in words"
         assert all(name in sentence for name in USER_PLAYER_TABLES), "the reason has to name the tables it counted"
         assert "career_appearances.player_id" in sentence
         targets = {fk.target_fullname for column in Base.metadata.tables["career_appearances"].columns for fk in column.foreign_keys}
@@ -333,6 +334,34 @@ class TestTheDoors:
         body = response.json()
         assert body["counts"]["sections"] == 10
         assert body["player"]["position"] == "CM"
+
+    def test_the_pdf_door_renders_the_live_sections_for_its_owner_and_refuses_a_stranger(self) -> None:
+        assert TestClient(app).get(PDF).status_code == 401
+        client = _client("Dee PDF")
+        assert _player(client)["position"] == "CM"
+
+        response = client.get(PDF)
+        assert response.status_code == 200, response.text
+        assert response.headers["content-type"].startswith("application/pdf")
+        assert response.headers["content-disposition"] == 'attachment; filename="football-cv.pdf"'
+        assert response.headers["cache-control"] == "private, no-store"
+        assert response.content.startswith(b"%PDF-") and response.content.rstrip().endswith(b"%%EOF")
+        assert len(response.content) > 5_000, "the rendered document is implausibly small"
+        for title in SPEC_38_TITLES:
+            assert title.encode() in response.content, f"the PDF does not carry the {title!r} section title"
+        assert b"CM" in response.content, "the PDF was not rendered from this account's player row"
+
+    def test_the_pdf_door_adds_no_pdf_table_and_opens_no_share(self) -> None:
+        client = _client("Dee Storage")
+        _player(client)
+        tables_before = set(Base.metadata.tables)
+        shares_before = client.get("/api/v1/portfolio/shares").json()["counts"]["opened"]
+
+        assert client.get(PDF).status_code == 200
+
+        assert set(Base.metadata.tables) == tables_before
+        assert not any("pdf" in table for table in tables_before)
+        assert client.get("/api/v1/portfolio/shares").json()["counts"]["opened"] == shares_before
 
 
 def test_no_answer_in_this_tier_is_money() -> None:

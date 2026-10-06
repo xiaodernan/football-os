@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { browserFetch, errorMessage } from "@/lib/api";
 
@@ -12,6 +12,7 @@ import "./settings.css";
  *
  * `mode="export"`  → download the raw JSON the API returns for this account.
  * `mode="delete"`  → destructive: remove players, sessions, XP and attribute history.
+ * `mode="account"` → destructive: erase the account, its private media and its owned data.
  */
 
 type ExportPayload = {
@@ -24,7 +25,36 @@ type ExportPayload = {
 
 type DeletePayload = { deleted_players: number; message: string };
 
-type Mode = "export" | "delete";
+type OrganizationRow = { slug: string; name: string; other_active_members?: number; other_active_owners?: number; reason?: string };
+
+type AccountPreview = {
+  can_delete: boolean;
+  confirmation: { phrase: string; password_required: boolean };
+  deletes: {
+    rows: Record<string, number>;
+    rows_total: number;
+    video_assets: number;
+    video_bytes: number;
+    organizations: OrganizationRow[];
+  };
+  retained_anonymized: { rows: Record<string, number>; identity_removed: boolean; basis: string };
+  organizations_left: OrganizationRow[];
+  blocking_organizations: OrganizationRow[];
+};
+
+type AccountDeletePayload = {
+  deleted: boolean;
+  rows_erased: number;
+  video_assets_erased: number;
+  files_removed: number;
+  bytes_removed: number;
+  organizations_deleted: string[];
+  organizations_left: string[];
+  identity_retained: boolean;
+  message: string;
+};
+
+type Mode = "export" | "delete" | "account";
 
 const CONFIRM_WORD = "DELETE";
 
@@ -35,6 +65,29 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
   const [exportSummary, setExportSummary] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const [deleted, setDeleted] = useState<DeletePayload | null>(null);
+  const [accountPreview, setAccountPreview] = useState<AccountPreview | null>(null);
+  const [accountPassword, setAccountPassword] = useState("");
+  const [accountDeleted, setAccountDeleted] = useState<AccountDeletePayload | null>(null);
+
+  useEffect(() => {
+    if (mode !== "account") return;
+    let cancelled = false;
+    browserFetch<AccountPreview>("/auth/account").then((result) => {
+      if (cancelled) return;
+      if (!result.ok) {
+        if (result.status === 401) {
+          router.push("/login");
+          return;
+        }
+        setError(errorMessage(result.error, "The deletion preview failed."));
+        return;
+      }
+      setAccountPreview(result.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, router]);
 
   async function downloadExport() {
     setBusy(true);
@@ -90,6 +143,32 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
     }, 3500);
   }
 
+  async function deleteAccount() {
+    if (!accountPreview?.can_delete || confirmText.trim() !== CONFIRM_WORD || !accountPassword || busy) return;
+    setBusy(true);
+    setError(null);
+    const result = await browserFetch<AccountDeletePayload>("/auth/account", {
+      method: "DELETE",
+      body: { confirm: CONFIRM_WORD, password: accountPassword },
+    });
+    if (!result.ok) {
+      setBusy(false);
+      if (result.status === 401) {
+        router.push("/login");
+        return;
+      }
+      setError(errorMessage(result.error, "The account deletion failed."));
+      return;
+    }
+    setAccountDeleted(result.data);
+    setAccountPassword("");
+    setConfirmText("");
+    window.setTimeout(() => {
+      router.replace("/");
+      router.refresh();
+    }, 3500);
+  }
+
   if (mode === "export") {
     return (
       <div className="st-copy">
@@ -105,6 +184,101 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
           <span className="muted mono">footballos-export.json</span>
         </div>
         {exportSummary && <div className="notice st-result">{exportSummary}</div>}
+        {error && <div className="notice notice--warn st-result">{error}</div>}
+      </div>
+    );
+  }
+
+  if (mode === "account") {
+    const blocking = accountPreview?.blocking_organizations ?? [];
+    const deletedRows = Object.entries(accountPreview?.deletes.rows ?? {}).filter(([, count]) => count > 0);
+    return (
+      <div className="st-danger">
+        <div className="st-danger__title">Delete my entire account</div>
+        <p>
+          This removes the account, its player and training records, AI history, boards, simulations, community
+          posts, shares and uploaded video originals and frames. Tenant records remain only when another active
+          owner still holds the tenant. Audit records stay as aggregate actions with no account id.
+        </p>
+        {!accountDeleted ? (
+          <>
+            {accountPreview ? (
+              <div className="st-result">
+                <strong>{accountPreview.deletes.rows_total} account-linked row(s) and {accountPreview.deletes.video_assets} video asset(s) are in scope.</strong>
+                {deletedRows.length > 0 && (
+                  <span className="muted mono" style={{ fontSize: "0.78rem" }}>
+                    {deletedRows.map(([table, count]) => `${table}: ${count}`).join(" · ")}
+                  </span>
+                )}
+                {accountPreview.organizations_left.length > 0 && (
+                  <span>
+                    {accountPreview.organizations_left.length} tenant(s) keep their rows because another active owner remains.
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="notice st-result">Reading the deletion inventory…</div>
+            )}
+            {blocking.length > 0 && (
+              <div className="notice notice--warn st-result">
+                <strong>Tenant ownership blocks deletion.</strong>
+                <span>
+                  {blocking.map((row) => `${row.name} (${row.slug})`).join(", ")} would be left without an owner.
+                  Delete the tenant or transfer ownership first.
+                </span>
+              </div>
+            )}
+            <div className="field">
+              <label className="field__label" htmlFor="st-account-password">
+                Current password
+              </label>
+              <input
+                id="st-account-password"
+                className="input"
+                type="password"
+                value={accountPassword}
+                onChange={(event) => setAccountPassword(event.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="st-account-confirm">
+                Type {CONFIRM_WORD} to confirm
+              </label>
+              <input
+                id="st-account-confirm"
+                className="input"
+                value={confirmText}
+                onChange={(event) => setConfirmText(event.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                placeholder={CONFIRM_WORD}
+              />
+              <span className="field__hint">The password and phrase are both required. Nothing is removed if either is wrong.</span>
+            </div>
+            <div className="st-confirm">
+              <button
+                className="btn btn--danger"
+                type="button"
+                onClick={deleteAccount}
+                disabled={!accountPreview?.can_delete || confirmText !== CONFIRM_WORD || !accountPassword || busy}
+              >
+                {busy ? "Deleting account…" : "Delete account permanently"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="notice st-result">
+            <strong>{accountDeleted.rows_erased} row(s) erased; {accountDeleted.files_removed} private file(s) removed.</strong>
+            <span>{accountDeleted.message}</span>
+            <span className="muted mono" style={{ fontSize: "0.78rem" }}>
+              identity_retained={String(accountDeleted.identity_retained)}
+            </span>
+            <span className="muted" style={{ fontSize: "0.82rem" }}>
+              Returning to the signed-out home page…
+            </span>
+          </div>
+        )}
         {error && <div className="notice notice--warn st-result">{error}</div>}
       </div>
     );

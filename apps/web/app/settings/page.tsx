@@ -262,6 +262,19 @@ export default async function SettingsPage() {
         >
           <PrivacyPanel mode="delete" />
         </Panel>
+
+        <Panel
+          eyebrow="Account"
+          title="Delete account permanently"
+          footer={
+            <span className="muted" style={{ fontSize: "0.82rem" }}>
+              <span className="mono">DELETE /auth/account</span> — requires your current password and the
+              confirmation phrase.
+            </span>
+          }
+        >
+          <PrivacyPanel mode="account" />
+        </Panel>
       </div>
     </div>
   );

@@ -23,20 +23,27 @@ if TYPE_CHECKING:
 
 ROLES = ("fan", "player", "coach", "manager", "scout", "academy", "admin")
 
-#: The two sentences this platform answers 403 with, registered as a tier's set so `services/club/answers.py`
+#: The three sentences this platform answers 403 with, registered as a tier's set so `services/club/answers.py`
 #: assembles them into the one table every door answers from. Until this landing the table knew one 403
 #: (`insufficient_role`, §39's) while three sites raised a second (`account_inactive`) and two raised a third
 #: (`forbidden`) without registering either: the ledger said one thing and the territory said three, which is how
 #: a test could assert "403 is the matrix's single answer" truthfully while a router minted an off-table 403 a few
 #: files away. Each code here still means one thing — `insufficient_role` is "your standing is below this door",
-#: `account_inactive` is "this account is switched off" — and the claim that 403 names *one* right belongs to the
-#: club matrix's own set, not to this one.
+#: `account_inactive` is "this account is switched off", `invalid_password` is "the password you just typed for
+#: this act is not the one on the account" — and the claim that 403 names *one* right belongs to the club matrix's
+#: own set, not to this one.
+#:
+#: `invalid_password` is the third code, and §60's census named the gap before the route that needed it landed:
+#: `DELETE /auth/account` spells a confirmation password and answered 403 from `auth.py` itself, a module that
+#: registers nothing. The census case that bans a third 403 holder went red on it while that route was being
+#: written, so the code is registered here with its own builder rather than the door keeping the literal.
 #:
 #: Written as constants because §49 asks for one name that publishes the code, guards the door that uses it and
 #: builds the answer, so no raise site can spell a third.
 INSUFFICIENT_ROLE: Final = "insufficient_role"
 ACCOUNT_INACTIVE: Final = "account_inactive"
-FORBIDDEN_CODES: Final[frozenset[str]] = frozenset({INSUFFICIENT_ROLE, ACCOUNT_INACTIVE})
+INVALID_PASSWORD: Final = "invalid_password"
+FORBIDDEN_CODES: Final[frozenset[str]] = frozenset({INSUFFICIENT_ROLE, ACCOUNT_INACTIVE, INVALID_PASSWORD})
 
 _SCRYPT_N = 1 << 14
 _SCRYPT_R = 8
@@ -116,7 +123,14 @@ def current_user(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "unauthenticated", "message": "Authentication required"})
     payload = decode_token(credentials.credentials, "access")
     user = db.get(User, payload["sub"])
-    if user is None or not user.is_active:
+    if user is None:
+        # The row is gone: the account was erased, or the token was minted for an id that never existed.
+        # There is no identity here to be forbidden from anything, so this is the same 401 an undecodable
+        # token earns — answering 403 `account_inactive` described a switched-off account that is not there,
+        # and §51 gives that code one meaning. `tests/test_account_deletion.py::
+        # test_confirmed_deletion_erases_rows_media_and_identity` is what read the difference.
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "unauthenticated", "message": "Authentication required"})
+    if not user.is_active:
         raise inactive_refusal(message="Account is not active")
     return user
 
@@ -151,6 +165,15 @@ def role_refusal(*, held: str, required: Sequence[str], message: str) -> HTTPExc
 def inactive_refusal(*, message: str) -> HTTPException:
     """The one way this platform turns 'this account is switched off' into an answer."""
     return HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": ACCOUNT_INACTIVE, "message": message})
+
+
+def password_refusal(*, message: str) -> HTTPException:
+    """The one way this platform answers a re-typed password that does not match the stored hash.
+
+    §60's census reserves a status literal to the two modules that own the codes; a door that spells 403
+    is a door whose refusal is missing from the assembled table, so account erasure raises through here.
+    """
+    return HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": INVALID_PASSWORD, "message": message})
 
 
 class RateLimiter:
@@ -198,9 +221,11 @@ __all__ = [
     "ACCOUNT_INACTIVE",
     "FORBIDDEN_CODES",
     "INSUFFICIENT_ROLE",
+    "INVALID_PASSWORD",
     "ROLES",
     "hash_password",
     "inactive_refusal",
+    "password_refusal",
     "role_refusal",
     "standing_check",
     "verify_password",

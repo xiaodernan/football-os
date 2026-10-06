@@ -186,7 +186,7 @@ async function main() {
   const rulesResponse = await fetch(`${BASE}/api/v1/portfolio/rules`, {headers: {accept: 'application/json'}});
   const rules = rulesResponse.ok ? await rulesResponse.json() : null;
   check('the rules door answers a caller with no session', rulesResponse.status === 200, `HTTP ${rulesResponse.status}`);
-  check('and declares the doors it owns, including the four the share output added', (rules?.routes ?? []).length === 6 && (rules?.routes ?? []).every((row) => row.method && row.path) && (rules?.routes ?? []).some((row) => row.path === '/portfolio/share') && (rules?.routes ?? []).some((row) => row.method === 'GET' && row.path === '/portfolio/cv'), `${(rules?.routes ?? []).length} route(s) published`);
+  check('and declares the seven doors it owns, including the share and PDF outputs', (rules?.routes ?? []).length === 7 && (rules?.routes ?? []).every((row) => row.method && row.path) && (rules?.routes ?? []).some((row) => row.path === '/portfolio/share') && (rules?.routes ?? []).some((row) => row.method === 'GET' && row.path === '/portfolio/cv.pdf'), `${(rules?.routes ?? []).length} route(s) published`);
 
   const vocabulary = rules?.sections ?? [];
   check("§38's ten sections arrive in the spec order", vocabulary.map((row) => row.section).join(' → ') === SPEC_SECTIONS.join(' → '), vocabulary.map((row) => row.section).join(' → '));
@@ -197,7 +197,7 @@ async function main() {
   const outputs = rules?.public_outputs ?? {};
   const declared = (rules?.routes ?? []).map((row) => String(row.path));
   const namesADoor = (key) => declared.some((path) => String(outputs[key] ?? '').includes(path));
-  check('two of the three outputs §38 permits now name a door this tier declares, and the PDF still prints its own absence', Object.keys(outputs).length === 3 && namesADoor('public_player_profile') && namesADoor('share_link') && String(outputs.pdf ?? '').startsWith('not in this build'), Object.keys(outputs).map((key) => `${key}=${namesADoor(key) ? 'built' : 'absent'}`).join(', '));
+  check('all three outputs §38 permits now name a door this tier declares', Object.keys(outputs).length === 3 && ['public_player_profile', 'share_link', 'pdf'].every(namesADoor), Object.keys(outputs).map((key) => `${key}=${namesADoor(key) ? 'built' : 'absent'}`).join(', '));
   const shareCodes = ['no_such_share', 'section_unknown', 'minor_section_blocked', 'share_already_revoked'];
   check('and every refusal code this tier answers with arrives with its status, none of them a 400 or a 403', shareCodes.every((code) => [404, 422, 409].includes(rules?.refusal_answers?.[code])) && !Object.values(rules?.refusal_answers ?? {}).includes(400) && !Object.values(rules?.refusal_answers ?? {}).includes(403), JSON.stringify(rules?.refusal_answers ?? {}));
 
@@ -270,7 +270,7 @@ async function main() {
     const painted = await pageText(page);
     check('the formulas panel prints every expression the CV door publishes', Object.keys(firstBody.formulas ?? {}).every((name) => has(painted, name)), `${Object.keys(firstBody.formulas ?? {}).length} expression(s)`);
     check('the outputs panel prints the three §38 permits with their state', Object.keys(outputs).every((name) => has(painted, name)), Object.keys(outputs).join(', '));
-    check('the doors panel lists every door the rules door declares, and none of them is an empty list', (rules?.routes ?? []).length >= 6 && (rules?.routes ?? []).every((route) => has(painted, route.path)), `${(rules?.routes ?? []).length} door(s)`);
+    check('the doors panel lists every door the rules door declares, and none of them is an empty list', (rules?.routes ?? []).length === 7 && (rules?.routes ?? []).every((route) => has(painted, route.path)), `${(rules?.routes ?? []).length} door(s)`);
     check('and the tier limitation travels with the page', has(painted, String(firstBody.limitation ?? '(no limitation sent)').slice(0, 60)), String(firstBody.limitation ?? '').slice(0, 90));
     const moneyKeys = keysOf(firstBody).filter((key) => /price|currency|amount|checkout|payment|provider|stripe|invoice/i.test(key));
     check('no money-shaped key is anywhere in the CV payload', moneyKeys.length === 0, moneyKeys.join(', ') || `${keysOf(firstBody).length} key(s) walked`);
@@ -303,7 +303,89 @@ async function main() {
       }
     }
     check('and every figure of the second read is still the door value, cell for cell', secondMismatches.length === 0, secondMismatches.slice(0, 3).join(' | ') || `${secondPainted.filter((row) => row.available === 'true').length} section(s) re-compared`);
+
+    const pdfControl = await page.$eval('[data-portfolio-cv-pdf]', (node) => ({href: node.getAttribute('href'), downloads: node.hasAttribute('download')}));
+    check('the page offers the owner-authenticated PDF as a download', pdfControl.href === '/api/v1/portfolio/cv.pdf' && pdfControl.downloads, JSON.stringify(pdfControl));
+    const pdf = await page.evaluate(async (titles) => {
+      const response = await fetch('/api/v1/portfolio/cv.pdf', {credentials: 'same-origin'});
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const text = new TextDecoder('latin1').decode(bytes);
+      return {
+        status: response.status,
+        type: response.headers.get('content-type') ?? '',
+        disposition: response.headers.get('content-disposition') ?? '',
+        cache: response.headers.get('cache-control') ?? '',
+        size: bytes.length,
+        magic: text.startsWith('%PDF-'),
+        eof: text.trimEnd().endsWith('%%EOF'),
+        titles: titles.filter((title) => text.includes(title)),
+      };
+    }, SPEC_TITLES);
+    knocks.push({method: 'GET', path: '/api/v1/portfolio/cv.pdf', status: pdf.status});
+    check('and the PDF door returns a non-cached document rendered from all ten live sections', pdf.status === 200 && pdf.magic && pdf.eof && pdf.size > 5_000 && pdf.type.startsWith('application/pdf') && pdf.disposition.includes('football-cv.pdf') && pdf.cache === 'private, no-store' && pdf.titles.length === SPEC_TITLES.length, `HTTP ${pdf.status} · ${pdf.size} bytes · ${pdf.titles.length}/${SPEC_TITLES.length} titles`);
     await shot(page, 'cv-with-player');
+
+    // ---------------------------------------------------------------- the public link, opened and taken back
+    const shareBoxes = await page.$$eval('input[data-portfolio-share-section]', (nodes) =>
+      nodes.map((node) => ({key: node.getAttribute('data-portfolio-share-section'), checked: node.checked})),
+    );
+    check('the CV page offers one checkbox for every section the rules door permits a link to carry', shareBoxes.map((row) => row.key).join(' → ') === SPEC_SECTIONS.join(' → '), shareBoxes.map((row) => row.key).join(', '));
+    check('and the safer default withholds the section a minor may not publish', !shareBoxes.find((row) => row.key === 'videos')?.checked, shareBoxes.filter((row) => row.checked).map((row) => row.key).join(', '));
+
+    const wanted = ['position', 'training'];
+    await page.$$eval(
+      'input[data-portfolio-share-section]',
+      (nodes, keep) => {
+        for (const node of nodes) {
+          const key = node.getAttribute('data-portfolio-share-section');
+          if (node.checked !== keep.includes(key)) node.click();
+        }
+      },
+      wanted,
+    );
+    await page.click('[data-portfolio-share-open]');
+    await page.waitForFunction(() => document.querySelectorAll('[data-portfolio-share-row]').length > 0, { timeout: 30_000 });
+
+    const ledger = await call(page, 'GET', '/api/v1/portfolio/shares');
+    const live = (ledger.json?.shares ?? []).find((row) => row.live);
+    check('opening a link writes one live ledger row', ledger.status === 200 && ledger.json?.counts?.live === 1 && typeof live?.token === 'string', `HTTP ${ledger.status} · ${JSON.stringify(ledger.json?.counts ?? {})}`);
+    check('and the live row carries only the two sections that were selected, in §38 order', live?.sections?.join(' → ') === wanted.join(' → '), (live?.sections ?? []).join(', '));
+    check('the page names the live link and offers the controls that act on it', await page.$('[data-portfolio-share-view]') !== null && await page.$('[data-portfolio-share-copy]') !== null && await page.$('[data-portfolio-share-revoke]') !== null, String(live?.token ?? '').slice(0, 8));
+
+    const publicPath = `/portfolio/shared/${encodeURIComponent(live.token)}`;
+    const publicApi = await fetch(`${BASE}/api/v1/portfolio/share/${encodeURIComponent(live.token)}`, {headers: {accept: 'application/json'}});
+    const publicBody = await publicApi.json().catch(() => null);
+    knocks.push({method: 'GET', path: `/api/v1/portfolio/share/${live.token}`, status: publicApi.status});
+    const leakedKeys = ['user_id', 'email', 'display_name', 'account', 'id', 'visibility'].filter((key) => keysOf(publicBody ?? {}).includes(key));
+    check('the public JSON answers without a session and carries no identifying key', publicApi.status === 200 && leakedKeys.length === 0, `HTTP ${publicApi.status} · leaked ${leakedKeys.join(', ') || 'none'}`);
+    check('and its projection carries exactly the published sections', (publicBody?.sections ?? []).map((row) => row.section).join(' → ') === wanted.join(' → ') && publicBody?.counts?.sections === wanted.length, `${(publicBody?.sections ?? []).length} section(s)`);
+    check('while every other section is named only as withheld', (publicBody?.withheld ?? []).length === SPEC_SECTIONS.length - wanted.length, `${(publicBody?.withheld ?? []).length} withheld`);
+
+    const publicContext = await browser.createBrowserContext();
+    const publicPage = await publicContext.newPage();
+    await publicPage.setViewport({width: 1440, height: 1000});
+    watch(publicPage, 'public-cv');
+    const publicResponse = await publicPage.goto(`${BASE}${publicPath}`, {waitUntil: 'networkidle2', timeout: 90_000});
+    const publicPainted = await sectionsOf(publicPage);
+    const publicText = await pageText(publicPage);
+    check('a browser with no session opens the shared page', publicResponse?.status() === 200 && publicPainted.map((row) => row.key).join(' → ') === wanted.join(' → '), `HTTP ${publicResponse?.status()} · ${publicPainted.length} painted`);
+    check('the public page does not name the account behind the link', !has(publicText, 'QA CV Owner'), publicText.slice(0, 120));
+    check('and its painted sections are exactly the sections the public JSON answered', publicPainted.every((row) => (publicBody?.sections ?? []).some((section) => section.section === row.key)), `${publicPainted.length} painted against ${(publicBody?.sections ?? []).length} answered`);
+    await shot(publicPage, 'shared-cv');
+
+    await open(page, '/portfolio');
+    await page.click('[data-portfolio-share-revoke]');
+    await page.waitForFunction(() => !document.querySelector('[data-portfolio-share-view]'), { timeout: 30_000 });
+    const revoked = await call(page, 'GET', '/api/v1/portfolio/shares');
+    check('closing the link leaves one revoked row and no live row', revoked.json?.counts?.live === 0 && revoked.json?.counts?.revoked === 1, JSON.stringify(revoked.json?.counts ?? {}));
+    const closedApi = await fetch(`${BASE}/api/v1/portfolio/share/${encodeURIComponent(live.token)}`, {headers: {accept: 'application/json'}});
+    knocks.push({method: 'GET', path: `/api/v1/portfolio/share/${live.token}`, status: closedApi.status});
+    check('the revoked token answers the same 404 a stranger gets', closedApi.status === 404, `HTTP ${closedApi.status}`);
+    const revokedPage = await publicContext.newPage();
+    const closedPage = await revokedPage.goto(`${BASE}${publicPath}`, {waitUntil: 'networkidle2', timeout: 90_000});
+    const closedSections = await revokedPage.$$eval('div[data-section]', (nodes) => nodes.length);
+    check('and the public page stops rendering once the token is closed', closedPage?.status() === 404 && closedSections === 0, `HTTP ${closedPage?.status()} · ${closedSections} section(s)`);
+    await publicContext.close();
 
     // ---------------------------------------------------------------- mobile, and the census over the knocks
     await page.setViewport(MOBILE);

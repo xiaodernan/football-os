@@ -236,3 +236,8 @@ h1, h2, h3, h4, p { margin: 0; }
   .nav__links { order: 3; width: 100%; padding-bottom: 0.1rem; }
   .page { padding: 1.25rem 0 3rem; }
 }
+
+/* The language control in the nav. It is the only cookie-backed preference a reader sets directly, so it lives
+   where the reader is rather than behind a settings page they would have to find first. */
+.nav__locale { padding: 0.3rem 0.45rem; border-radius: 8px; font-size: 0.85rem; color: var(--text-2); background: var(--bg-panel-2); border: 0; }
+.nav__locale:hover { color: var(--text); }

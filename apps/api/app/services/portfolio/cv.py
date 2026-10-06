@@ -67,8 +67,8 @@ UNFILLED_REASONS: Final = {
     "matches": (
         "nothing in this build records this player appearing in a match: `real_player_match_stats` is about generated "
         "world players, and `career_appearances.player_id` is a foreign key to `real_players` \u2014 the squad a career's "
-        "manager selected, not this player. Of the 66 tables in the schema, four reference `user_players` at all "
-        "(`training_sessions`, `training_plans`, `xp_events`, `attribute_changes`) and none of them is a match"
+        "manager selected, not this player. Of the 67 tables in the schema, five reference `user_players` at all "
+        "(`attribute_changes`, `training_plans`, `training_sessions`, `video_assets`, `xp_events`) and none of them is a match"
     ),
     "stats": (
         "every counted output of a match \u2014 appearances, minutes, goals, assists \u2014 needs the same rows `Matches` "
@@ -132,8 +132,8 @@ PUBLIC_OUTPUTS: Final = {
         "answers the same 404 as a token that never existed"
     ),
     "pdf": (
-        "not in this build: no PDF renderer is a dependency of this project, and `build_cv` publishes every figure a "
-        "renderer would need, so a PDF is a later slice over this same read rather than a second source of truth"
+        "built: GET /portfolio/cv.pdf renders the same live ten-section read as an owner-authenticated download. The "
+        "document is returned from memory and is not stored, so it cannot become a second source of truth"
     ),
 }
 

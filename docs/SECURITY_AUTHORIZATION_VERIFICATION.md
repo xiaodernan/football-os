@@ -149,14 +149,20 @@ so the case is what fails rather than the import.
 ## 7. Open items, kept as items
 
 * **The 403 the census found.** `api/v1/auth.py`'s `invalid_password` — see §5. Unlanded as of `0da4c85`.
+  **Closed 2026-09-29** — registered in `core/security.py` with its own builder; see §9. The §5 question
+  (403 here, 401 at `/auth/login`) is answered there rather than left open.
 * **52 codes outside the table.** The same scan that polices 403 reports 79 inline `{"code": …}` literals across 18
   modules, 53 distinct codes, of which 52 are not in `ANSWERS` — `invalid_credentials`, `token_expired`,
   `unauthenticated`, `rate_limited`, `not_found`, `ai_budget_exhausted` and the per-tier validation sentences. §51
   says one code one status assembled from one table; the M1–M7 routers predate that rule and have not been
   retro-fitted. This is the largest remaining §51/§60 debt in the API and it is recorded rather than rounded away.
+  (Unmoved: the erasure slice registered its 403 in `security.FORBIDDEN_CODES` rather than retro-fitting auth's
+  401s, so the debt is neither paid nor grown.)
 * **Erasure answered as "switched off".** `current_user` and `/auth/refresh` test `user is None or not
   user.is_active` and raise `account_inactive` for both. A deleted account and a disabled one get the same sentence.
   The platform's own §61 answer for a deleted account is that it is not there; this needs a decision, not a patch.
+  **Decided and landed 2026-09-29, at both sites** — a missing row is a 401, a switched-off account keeps its 403;
+  see §9.
 * **`docs/M2_VERIFICATION.md` and `docs/M6_VERIFICATION.md`** carried published response samples showing the old
   `forbidden` answer; both now annotate what the door answers instead.
 
@@ -169,61 +175,3 @@ sites, the latter asserted to match exactly twice) → `git hash-object -w` → 
 resulting commit carries the HEAD file plus this landing's hunks and nothing else; the working copy keeps the other
 run's 47 lines untouched. The check that makes this safe is a diff of the staged blob against the working file: one
 line removed (their import rewrite) and 47 added (their route), no more.
-
-## 9. §74's other half: one refusal shape at every door and at all four handlers (`2d3673e`)
-
-**The pre-state, measured on a `git archive ad7b6d7` plane.** The census this landing wrote
-(`.scratch/r69_census.py`, artifact `.scratch/r69_census.out`) resolves 63 `fastapi.status` names and counts
-**101** refusal-spelling dict literals across **18** modules and **51** distinct literal codes. All 101 print
-`{"detail": {"code", "message", …}}`, because every door raises `HTTPException(…, detail=…)`. Four answers did
-not: the handlers installed by `core/errors.py` wrapped theirs at the top level as `{"error": {…}}`, and a class in
-the same module (`AppError`, zero raise sites repo-wide) nested it a third way, `{"detail": {"error": …}}`.
-
-**Why that is a defect and not a style preference.** `normalizeError` in `apps/web/lib/api.ts` reads `payload.detail`
-when the key is present and otherwise treats the whole payload as the refusal, so a handler answer gave the page no
-`code`, no `message` and no `details` and it printed its fallback string — while the API had already built the
-field-and-rule list. Reproduced through the product: `/register` with a one-character display name passes the form's
-own check (it only tests for empty) and hits `RegisterIn.display_name`'s `min_length=2`, a 422 whose `_rejected` list
-names the box and the rule and drops the typed value (§40's minors' promise). The guardian saw "Request failed".
-
-**What landed.** `_answer()` in `app/core/errors.py` returns `{"detail": …}` and is the installer's only body
-producer; `AppError` is deleted; `10` cases in `tests/test_error_answer_shape.py` hold the shape at three
-levels — a schema refusal a real client can reach, each installed handler exercised through the shipped installer over
-a `TestClient`, and a static walk of `app/` that counts the population and refuses a second address for a code. Four
-existing readers were re-based on the one shape (`test_api_flow.py`, `test_club_academy.py`'s `_validation`,
-`test_scout_compare.py`'s house-answer case, `test_scout_report.py`). The commit is 8 files, +290/−30.
-
-**The census inside the test file is narrower than the one above, deliberately.** `_http_answer_dicts()` reads
-*literal* dicts only, and on this commit's own plane sees **63** refusal dicts across **14** modules with
-**45** distinct literal codes (the working copy that carries another run's router reads 72/14/48; the difference is
-that router, not a disagreement). `ClubRefusal.to_dict()` and the `{**error.to_dict(), "verdict": …}` spread at
-`careers.py` carry codes a literal walk cannot see, which is why the file's three floors come from the same walk rather
-than from these figures: "nothing wrapped" must not be readable as "the scan saw nothing".
-
-**Mutation probe — 7 arms on a `git archive 2d3673e` plane, predictions written first** (`.scratch/r69_arms.py`, artifact
-`.scratch/r69_arms.out`): control 242 collected / 0 red, and E2–E6 turned exactly the predicted cases red (4/4/1/3/1).
-**0 survivors.** E1 (the wrapped shape returning) turned 16 cases red against a prediction of 17, and 2 of its 13 name
-patterns went unhit; both are prediction-side, not code-side — three of the fifteen readers are one parametrized case,
-and pytest joins a tuple parametrize id with `-` (`/invalid-422-validation_error`), so a pattern ending `invalid]`
-cannot match a case that did go red. The full RED list is in the artifact.
-
-**Whole-suite legs over `2d3673e`, plane `git archive 2d3673e`, `--junitxml`, one prediction written before either leg:**
-
-| engine   | tests | failures | errors | skipped | junit time | red |
-|----------|-------|----------|--------|---------|------------|-----|
-| sqlite   | 1373 | 1 | 0 | 1 | 426.005s | tests.test_portfolio.TestTheSectionsAreTheSpecs.test_the_reason_printed_for_matches_counts_the_schema_it_is_read_from |
-| postgres | 1373 | 1 | 0 | 1 | 624.812s | tests.test_portfolio.TestTheSectionsAreTheSpecs.test_the_reason_printed_for_matches_counts_the_schema_it_is_read_from |
-
-Both legs' single red is the portfolio schema-pin case — caused by `7f481c2`'s fifth `ForeignKey("user_players.id")`
-clause, recorded with its attribution in `d88a616`, and touched by neither of the two files this landing changes. The
-population grew by exactly the `10` new cases over the 1363 published for `ad7b6d7`.
-
-**Open items, kept as items.**
-
-* §51's ledger assembles 126 codes; the doors spell **48** that are not in it, with 0 status contradictions among them.
-  Registering them means editing `app/core/security.py` and `app/services/portfolio/cv.py`, both owned by a concurrent
-  run's in-flight work, so this is a registration debt and not something this landing could pay without taking their
-  half-finished files into a commit.
-* The web half is ungated: `normalizeError`'s two branches are the reason the second shape stayed invisible, and
-  `apps/web/**` is the concurrent run's. The API now answers where that reader looks; no test asserts the reader.
-* The `leg_limit` widening arm owed from §74's probe, which ran on the SQLite plane only.

@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
@@ -33,6 +33,7 @@ from app.core.security import current_user, limit
 from app.models import User
 from app.services.club import answers
 from app.services.portfolio import cv as portfolio
+from app.services.portfolio import pdf as portfolio_pdf
 from app.services.portfolio import sharing
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
@@ -43,6 +44,7 @@ router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 ROUTE_GUIDE: Final[tuple[dict[str, str], ...]] = (
     {"method": "GET", "path": "/portfolio/rules", "door": "the tier's vocabulary: §38's ten sections, the formulas, the two the build cannot fill, the share tier's rules"},
     {"method": "GET", "path": "/portfolio/cv", "door": "your Football CV: ten sections, each a read of the rows its source names"},
+    {"method": "GET", "path": "/portfolio/cv.pdf", "door": "the same ten-section read rendered as a PDF; nothing is stored and the response is never cached"},
     {"method": "POST", "path": "/portfolio/share", "door": "open a link over the sections you name, or re-point the one that is already open"},
     {"method": "GET", "path": "/portfolio/shares", "door": "every link this account opened, with the live one's token and a closed one's timestamp"},
     {"method": "DELETE", "path": "/portfolio/share/{token}", "door": "close one link; the row stays so the account can say when it shut"},
@@ -95,6 +97,24 @@ def read_cv(request: Request, db: Session = Depends(get_db), user: User = Depend
     """The account's CV, ten sections in §38's order. Nothing here is stored and nothing is cached."""
     limit(request, 60, 60, scope="portfolio_read")
     return portfolio.build_cv(db, user.id)
+
+
+@router.get(
+    "/cv.pdf",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}, "description": "The account's Football CV rendered from the live read."}},
+)
+def download_cv_pdf(request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> Response:
+    """Render the same live CV read as a downloadable PDF without persisting the document or its figures."""
+    limit(request, 20, 60, scope="portfolio_pdf")
+    return Response(
+        content=portfolio_pdf.build_cv_pdf(db, user.id),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="football-cv.pdf"',
+            "Cache-Control": "private, no-store",
+        },
+    )
 
 
 @router.post("/share")

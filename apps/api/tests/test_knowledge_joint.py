@@ -15,10 +15,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
 from app.services.knowledge import graph_join, retrieval
+from app.services.knowledge.text import content_words
 from app.services.knowledge_graph import project
 
 GOLDEN_PATH = Path(__file__).resolve().parents[1] / "evals" / "golden_joint.json"
@@ -160,6 +162,88 @@ class TestFloorsUntouched:
             assert not answer["graph_lines"], (
                 f"refusal {case['id']!r} carried a graph line ({answer['graph_lines']}); the hop widened a response the floors refused"
             )
+
+
+class TestHopSubstrate:
+    """Why spec §30's *recall* half is not built: the corpus and the world share no name to hop on.
+
+    A hop needs one more thing than the anchoring half does. `graph_join` can report a node because the
+    *question* names it; widening retrieval has to reach a **passage** through a node, which is only
+    possible if some stored passage carries that node's label. Measured over the committed corpus and the
+    synced world: no chunk body carries a player, team or competition label at all, and only two of the
+    330 labels share even one word with any body — the two populations are near-disjoint vocabularies. So
+    the substrate the recall half asks for is a missing relation (nothing in `verbs` links a knowledge
+    document to a world entity), not a threshold to widen, and the floors in `retrieval.py` are not what
+    is holding it back.
+
+    `match` is excluded from the label population on measurement, not preference: its stored label is
+    composed from `round_label` and `status`, so the only "entity" vocabulary it contributes is the words
+    *match* and *game* — which is exactly what pulled a passage in when the hop was attempted, in prose
+    about warm-ups. `article` and `drill` are excluded because the anchor half cannot speak through them:
+    `graph_join.ANCHOR_TYPES` is the world-search sources whose rows are nodes, and neither is one.
+    """
+
+    #: The floors below are counts the scan itself reports; a population that narrows to nothing must go
+    #: red here rather than turn the absence claim into a reading of an empty set.
+    SUBSTRATE_KINDS = ("player", "team", "competition")
+    #: Both floors are the counts the scan above reported at this landing, read out of its own failure
+    #: message with the floors set above them: 330 labels over 138 passages.
+    MIN_SUBSTRATE_LABELS = 330
+    MIN_SUBSTRATE_CHUNKS = 138
+
+    def test_no_committed_passage_carries_a_stored_entity_label(self, session: Session) -> None:
+        from app.models import KnowledgeChunk
+        from app.services.knowledge import sync_knowledge
+        from app.services.knowledge.chunking import strip_header
+        from app.services.knowledge_graph import project, verbs
+        from app.services.world import sync_world
+
+        sync_knowledge(session)
+        sync_world(session)
+        specs = [spec for spec in verbs.NODES if spec.kind in self.SUBSTRATE_KINDS]
+        assert len(specs) == len(self.SUBSTRATE_KINDS), f"{verbs.NODES} declares no spec for {self.SUBSTRATE_KINDS}"
+
+        labels = {
+            project.node(spec.kind, row).label
+            for spec in specs
+            for row in session.scalars(select(spec.model)).all()
+        }
+        chunks = [(row.id, strip_header(row.text)) for row in session.scalars(select(KnowledgeChunk)).all()]
+        assert len(labels) >= self.MIN_SUBSTRATE_LABELS, (
+            f"the label scan read {len(labels)} entity label(s) from kinds {self.SUBSTRATE_KINDS} against "
+            f"{len(chunks)} passage(s), floor {self.MIN_SUBSTRATE_LABELS}: an absence measured against almost no "
+            "labels is not a measurement"
+        )
+        assert len(chunks) >= self.MIN_SUBSTRATE_CHUNKS, (
+            f"the passage scan read {len(chunks)} chunk(s), floor {self.MIN_SUBSTRATE_CHUNKS}: an absence "
+            "measured against almost no passages is not a measurement either"
+        )
+
+        chunk_terms = [(chunk_id, set(content_words(body))) for chunk_id, body in chunks]
+        carried: list[str] = []
+        shared_one_word: list[str] = []
+        for label in sorted(labels):
+            terms = set(content_words(label))
+            if not terms:
+                continue
+            hits = [f"{label} in {chunk_id}" for chunk_id, in_body in chunk_terms if terms <= in_body]
+            if hits:
+                carried.extend(hits)
+            elif any(terms & in_body for _, in_body in chunk_terms):
+                shared_one_word.append(label)
+        print(
+            f"SUBSTRATE labels={len(labels)} chunks={len(chunks)} whole_label_hits={len(carried)} "
+            f"labels_sharing_one_word={len(shared_one_word)} {sorted(shared_one_word)}"
+        )
+        assert not carried, (
+            f"{len(carried)} passage(s) now carry a stored entity label ({carried[:3]}): the §30 recall hop has "
+            "substrate it did not have when this case was written — build it against those rows, and re-measure the "
+            "floors this case's docstring says it does not touch"
+        )
+        assert shared_one_word, (
+            "not one entity label shares even a single word with a passage body, so this scan is comparing two "
+            "populations that do not overlap at all and the absence above proves nothing about naming"
+        )
 
 
 def graph_join_anchored(session: Session, question: str) -> dict[str, Any]:
