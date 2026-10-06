@@ -75,11 +75,22 @@ apart from "the hop was asked and agreed". With A2 applied the answer still refu
 ## Still open in §30
 
 The hop that **widens recall** — a graph edge bringing a passage into the context that BM25 and cosine
-missed — is not built, deliberately: it is the half that has to move `MIN_DISCRIMINATIVE_MATCHES = 2`
-or `MIN_DISCRIMINATIVE_COVERAGE = 0.40`, and those floors are derived from `golden_rag.json` by
-`test_the_answerability_floors_sit_inside_the_measured_gap`. Widening them means re-measuring that
-file, which is §33's composite task and §64's benchmark work; §30's row stays `partial` for that
-reason, not because the anchoring half is missing.
+missed — is not built, but the blocker is no longer the retriever's floors. It is structural: the corpus
+and the world share almost no name vocabulary. Measured at `ba947e0` by the new gate case
+`TestHopSubstrate::test_no_committed_passage_carries_a_stored_entity_label`: **330** player/team/competition
+labels, **138** chunk bodies (heading stripped), **0** whole-label containment hits, and only **2** labels
+sharing even one word with any body ("Braehaven Elite League", "Ravhull FC" — both generic terms like
+"league"/"fc"). A draft hop (kept in `.scratch/r86_graph_recall_draft.py`, never shipped) produced 4 pulls
+over the 8 joint questions; every one was attributed to the neighbour `match "Matchday 1 game 1 · not played"`,
+whose label is composed of generic words. With deterministic sorted neighbour ordering, the population is
+**0 of 8**. The feature was reverted rather than landed with an over-claiming disclosure.
+
+Building the hop requires either a corpus ingestion pipeline that tags passages with entity IDs (a new column
+on `KnowledgeChunk` populated by a named-entity linker), or a separate index mapping entity labels to chunk IDs.
+Until such a substrate exists, the anchoring half (#84) is the full extent of §30's joint clause: the graph adds
+facts to an answer the retriever already cleared, and adds nothing to a refusal. See
+[SPEC_30_RECALL_HOP_SUBSTRATE_VERIFICATION.md](SPEC_30_RECALL_HOP_SUBSTRATE_VERIFICATION.md) for the measured
+numbers and the six-run witness.
 
 ## Reproduce
 

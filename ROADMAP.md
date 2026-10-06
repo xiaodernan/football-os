@@ -664,3 +664,23 @@ Milestones do not own these; every public route must satisfy them as it lands.
     refusal, belt, floor. One prediction missed on its own arithmetic and the record says so: stranding the singular
     spelling strands five counts, not the three I had written down — the scan's population was right, my mental count
     was not. No whole-suite leg is claimed by this unit.
+- [x] §86 M11 §30 recall hop substrate measured, falsified, and gated (`docs/SPEC_30_RECALL_HOP_SUBSTRATE_VERIFICATION.md`).
+    The recall hop — an edge widening the answer's context beyond what BM25/cosine retrieved — is blocked on corpus-world
+    naming substrate, not on the retriever's floors. Measured at `ba947e0` by the new gate case
+    `TestHopSubstrate::test_no_committed_passage_carries_a_stored_entity_label`: **330** player/team/competition labels,
+    **138** chunk bodies (heading stripped), **0** whole-label containment hits, and only **2** labels sharing even one
+    word with any body ("Braehaven Elite League", "Ravhull FC" — both generic terms like "league"/"fc"). A draft hop
+    (kept in `.scratch/r86_graph_recall_draft.py`, never shipped) produced 4 pulls over the 8 joint questions; every one
+    was attributed to the neighbour `match "Matchday 1 game 1 · not played"`, whose label is composed of generic words.
+    With deterministic sorted neighbour ordering, the population is **0 of 8**. Six-run witness **6/6 MATCHED**: BASE
+    (10 collected, 0 red), REV (HEAD's pristine file, `-k TestHopSubstrate`, 0 collected), A1 any-word predicate
+    (`terms <= in_body` → `bool(terms & in_body)`) → exactly one red with message `now carry a stored entity label`
+    (42 false hits under any-word), A2 kinds narrowed to `("team",)` → `floor 330`, A3 chunk scan `.limit(1)` →
+    `passage scan read 1 chunk(s)`, A4 delete the shared-word belt branch → `do not overlap at all`. The feature was
+    reverted rather than landed with an over-claiming disclosure. Building the hop requires either a corpus ingestion
+    pipeline that tags passages with entity IDs (a new column on `KnowledgeChunk` populated by a named-entity linker),
+    or a separate index mapping entity labels to chunk IDs. Until such a substrate exists, the anchoring half (#84) is
+    the full extent of §30's joint clause: the graph adds facts to an answer the retriever already cleared, and adds
+    nothing to a refusal. Plane group regression over `test_knowledge_joint.py` + `test_knowledge_rag.py` +
+    `test_knowledge_graph_census.py` + `test_world.py`: **109 collected / 0 red** (SQLite; the PostgreSQL engine on this
+    machine is still dead).
