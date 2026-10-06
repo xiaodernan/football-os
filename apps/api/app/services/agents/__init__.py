@@ -11,12 +11,14 @@ from sqlalchemy.orm import Session
 from app.services.agents.base import BaseAgent
 from app.services.agents.coach import CoachAgent
 from app.services.agents.research import ResearchAgent
+from app.services.agents.scout import ScoutAgent
 from app.services.agents.tactical import TacticalAgent
 
 AGENT_REGISTRY: dict[str, type[BaseAgent]] = {
     "research": ResearchAgent,
     "coach": CoachAgent,
     "tactical": TacticalAgent,
+    "scout": ScoutAgent,
 }
 
 

@@ -220,3 +220,65 @@ class TestAgentOrchestrator:
         assert resp2.status_code == 200
         data2 = resp2.json()
         assert data2["from_cache"] is True
+
+    def test_list_includes_scout(self) -> None:
+        """Agent list should include scout agent."""
+        client = _client()
+        resp = client.get("/api/v1/agents/list")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "scout" in data["available_agents"]
+
+    def test_run_scout_agent_no_requirements(self) -> None:
+        """Scout agent should handle unparseable queries gracefully."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={"query": "find me a good player", "agent_type": "scout"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "answer" in data
+        # Should indicate no requirements understood
+        assert "couldn't understand" in data["answer"].lower() or "no players found" in data["answer"].lower()
+        assert data["confidence"] == 0.0
+
+    def test_run_scout_agent_with_requirements(self) -> None:
+        """Scout agent should parse and search for players."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={
+                "query": "Find me a left-footed striker under 25 years old with budget €30m",
+                "agent_type": "scout",
+            },
+        )
+        assert resp.status_code == 200, f"Scout agent failed: {resp.json()}"
+        data = resp.json()
+        assert "answer" in data
+        assert len(data["answer"]) > 0
+        # Should mention either candidates found or no matches
+        assert "found" in data["answer"].lower() or "no players" in data["answer"].lower()
+
+    def test_run_scout_agent_cached(self) -> None:
+        """Second identical scout query should return cached result."""
+        client = _client()
+        query = "Find young midfielders with high potential"
+
+        # First call
+        resp1 = client.post(
+            "/api/v1/agents/run",
+            json={"query": query, "agent_type": "scout"},
+        )
+        assert resp1.status_code == 200
+        data1 = resp1.json()
+        assert data1["from_cache"] is False
+
+        # Second call (should be cached)
+        resp2 = client.post(
+            "/api/v1/agents/run",
+            json={"query": query, "agent_type": "scout"},
+        )
+        assert resp2.status_code == 200
+        data2 = resp2.json()
+        assert data2["from_cache"] is True
