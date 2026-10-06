@@ -11072,6 +11072,147 @@
           }
         }
       }
+    },
+    "/api/v1/agents/list": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agents List",
+        "description": "List all registered agent types.",
+        "operationId": "agents_list_api_v1_agents_list_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agents/run": {
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Run",
+        "description": "Execute one agent turn. The agent reads its memories, processes the query, and persists results.",
+        "operationId": "agent_run_api_v1_agents_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRunResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/agents/context": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Context",
+        "description": "List all non-expired memories for this agent+session.",
+        "operationId": "agent_context_api_v1_agents_context_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "agent_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "research",
+              "title": "Agent Type"
+            }
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "title": "Response Agent Context Api V1 Agents Context Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -11094,6 +11235,108 @@
         "type": "object",
         "title": "AccountDeleteIn",
         "description": "The destructive account-removal request: an explicit phrase and the current password."
+      },
+      "AgentListResponse": {
+        "properties": {
+          "available_agents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Available Agents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available_agents"
+        ],
+        "title": "AgentListResponse"
+      },
+      "AgentRunRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "agent_type": {
+            "type": "string",
+            "title": "Agent Type",
+            "default": "research"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "AgentRunRequest"
+      },
+      "AgentRunResponse": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "citations": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citations"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "from_cache": {
+            "type": "boolean",
+            "title": "From Cache",
+            "default": false
+          },
+          "stored_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stored Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "title": "AgentRunResponse"
       },
       "AnnouncementIn": {
         "properties": {
