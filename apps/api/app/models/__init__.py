@@ -24,6 +24,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
+from app.core.security import new_public_id
 from app.core.vector_type import EMBEDDING_DIM, EmbeddingVector
 
 ATTRIBUTES: dict[str, tuple[str, ...]] = {
@@ -2034,3 +2035,26 @@ class CvShare(Base, TimestampMixin):
     share_token: Mapped[str] = mapped_column(String(64), nullable=False)
     sections: Mapped[list[str]] = mapped_column(JSON, default=list)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AgentMemory(Base, TimestampMixin):
+    """One persisted fact or context fragment for an M11 agent (spec §34 agent memory).
+
+    Each row stores a named key/value pair scoped to a user and agent type, with optional
+    session binding and TTL-based expiration. Agents read their own memories at startup
+    and write new ones as they work; expired rows are pruned by a background sweep.
+    """
+
+    __tablename__ = "agent_memories"
+    __table_args__ = (
+        Index("ix_agent_memories_user_agent", "user_id", "agent_type"),
+        Index("ix_agent_memories_expires", "expires_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=lambda: new_public_id("am"))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    agent_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    session_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    key: Mapped[str] = mapped_column(String(256), nullable=False)
+    value_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
