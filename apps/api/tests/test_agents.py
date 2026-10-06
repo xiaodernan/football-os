@@ -282,3 +282,60 @@ class TestAgentOrchestrator:
         assert resp2.status_code == 200
         data2 = resp2.json()
         assert data2["from_cache"] is True
+
+    def test_list_includes_simulation(self) -> None:
+        """Agent list should include simulation agent."""
+        client = _client()
+        resp = client.get("/api/v1/agents/list")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "simulation" in data["available_agents"]
+
+    def test_run_simulation_agent_engine(self) -> None:
+        """Simulation agent should explain how the engine works."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={"query": "How does the simulation engine work?", "agent_type": "simulation"},
+        )
+        assert resp.status_code == 200, f"Simulation agent failed: {resp.json()}"
+        data = resp.json()
+        assert "answer" in data
+        assert len(data["answer"]) > 0
+        # Should mention engine or simulation
+        assert "engine" in data["answer"].lower() or "simulation" in data["answer"].lower()
+
+    def test_run_simulation_agent_xg(self) -> None:
+        """Simulation agent should explain xG modeling."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={"query": "Explain expected goals in the simulation", "agent_type": "simulation"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "answer" in data
+        assert "xg" in data["answer"].lower() or "expected goal" in data["answer"].lower()
+
+    def test_run_simulation_agent_cached(self) -> None:
+        """Second identical simulation query should return cached result."""
+        client = _client()
+        query = "What does the simulation not model?"
+
+        # First call
+        resp1 = client.post(
+            "/api/v1/agents/run",
+            json={"query": query, "agent_type": "simulation"},
+        )
+        assert resp1.status_code == 200
+        data1 = resp1.json()
+        assert data1["from_cache"] is False
+
+        # Second call (should be cached)
+        resp2 = client.post(
+            "/api/v1/agents/run",
+            json={"query": query, "agent_type": "simulation"},
+        )
+        assert resp2.status_code == 200
+        data2 = resp2.json()
+        assert data2["from_cache"] is True
