@@ -76,10 +76,10 @@ def agent_composite(
     needs_coach = any(word in query_lower for word in ["train", "improve", "practice", "drill", "plan", "session"])
     needs_simulation = any(word in query_lower for word in ["simulate", "predict", "what if", "match outcome"])
     needs_video = any(word in query_lower for word in ["video", "clip", "footage", "upload", "analyse"])
-    needs_research = not (needs_tactics or needs_scout or needs_coach or needs_simulation or needs_video)
-
+    needs_research = any(word in query_lower for word in ["research", "history", "evolution", "origin", "explain", "concept", "principle"])
+    
     # If nothing specific matched, default to research
-    if not any([needs_tactics, needs_scout, needs_coach, needs_simulation, needs_video]):
+    if not any([needs_tactics, needs_scout, needs_coach, needs_simulation, needs_video, needs_research]):
         needs_research = True
 
     # Step 2: Execute agents in sequence, passing context between them

@@ -119,14 +119,15 @@ class ScoutAgent(BaseAgent):
             answer_lines = [f"**Found {len(candidates)} candidates. Top {limit}:**"]
 
             for i, candidate in enumerate(candidates[:limit], 1):
-                player = candidate.player
-                name = player.display_name
-                age = player.age
-                position = player.position
-                overall = player.overall
-                potential = player.potential
-                value = candidate.market_value
-                fee = candidate.transfer_fee
+                # candidates are dicts from search().to_dict(), not ORM objects
+                name = candidate.get("name", "Unknown")
+                age = candidate.get("age", "?")
+                position = candidate.get("position", "?")
+                overall = candidate.get("overall", 0)
+                potential = candidate.get("potential", 0)
+                # Market value and transfer fee are computed by valuation formula
+                value = candidate.get("valuation", {}).get("market_value", 0) if isinstance(candidate.get("valuation"), dict) else 0
+                fee = candidate.get("valuation", {}).get("asking_fee", 0) if isinstance(candidate.get("valuation"), dict) else 0
 
                 answer_lines.append(
                     f"\n{i}. **{name}** ({age}yo, {position})"
@@ -143,7 +144,7 @@ class ScoutAgent(BaseAgent):
             if waterfall:
                 answer_lines.append(f"\n**Filter breakdown:**")
                 for step in waterfall:
-                    answer_lines.append(f"- {step['requirement']}: {step['before']} → {step['after']}")
+                    answer_lines.append(f"- {step.get('phrase', step.get('kind', '?'))}: {step.get('rows_in', '?')} → {step.get('rows_out', '?')}")
 
             if problems:
                 answer_lines.append(f"\n**Ignored (not understood):**")

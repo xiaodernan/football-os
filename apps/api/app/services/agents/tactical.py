@@ -94,7 +94,7 @@ class TacticalAgent(BaseAgent):
             answer = self._explain_concept(systems, topic)
 
         confidence = 0.85 if len(systems) >= 3 else 0.7
-        citations = [{"type": "tactical_system", "count": len(systems)}]
+        citations = [{"type": "tactical_system", "count": str(len(systems))}]
 
         return {"answer": answer, "citations": citations, "confidence": confidence}
 

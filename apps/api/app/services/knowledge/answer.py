@@ -111,7 +111,7 @@ def assemble_context(hits: list[Hit]) -> tuple[str, list[dict[str, Any]], list[d
         passages.append(f"[{index}] {hit.title} — {hit.heading}\n{body}")
         digest.append({"ref": index, "title": hit.title, "section": hit.heading, "sentences": _sentences(body, 3)})
         citation = hit.citation()
-        citation["ref"] = index
+        citation["ref"] = str(index)
         citations.append(citation)
     return "\n\n".join(passages), digest, citations
 
