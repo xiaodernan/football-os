@@ -11073,6 +11073,53 @@
         }
       }
     },
+    "/api/v1/agents/composite": {
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Composite",
+        "description": "Execute a composite task that chains multiple agents.\n\nExample: 'Analyze Arsenal's recent matches, identify their attacking patterns,\ncompare with my player profile, and recommend training to bridge the gap.'\n\nThis orchestrates: TacticalAgent (patterns) → ScoutAgent (match data) →\nCoachAgent (training recommendations).",
+        "operationId": "agent_composite_api_v1_agents_composite_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompositeTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositeTaskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/agents/list": {
       "get": {
         "tags": [
@@ -11805,6 +11852,69 @@
           "execution"
         ],
         "title": "CompleteIn"
+      },
+      "CompositeTaskRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "CompositeTaskRequest",
+        "description": "Complex multi-step query requiring multiple agent types."
+      },
+      "CompositeTaskResponse": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "steps": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "from_cache": {
+            "type": "boolean",
+            "title": "From Cache",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer",
+          "steps"
+        ],
+        "title": "CompositeTaskResponse",
+        "description": "Result from orchestrating multiple agents."
       },
       "ConsentIn": {
         "properties": {
