@@ -6,7 +6,7 @@
 
 ```
                     ┌──────────────────────────────┐
-   browser / mobile │  apps/web  Next.js 15 (TS)   │  SSR + BFF + SEO metadata (§81 i18n: not built)
+   browser / mobile │  apps/web  Next.js 15 (TS)   │  SSR + BFF + SEO metadata (§81 i18n: shell + catalogues)
                     │  design tokens · PWA-ready   │
                     └───────────────┬──────────────┘
                                     │ HTTP/JSON (typed: lib/api.ts client · lib/server.ts server)
@@ -125,7 +125,10 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
 - Football World pages never construct a URL. The API hands out `path` for every row (`SEO_ROUTES`/`web_path()` in
   `app/services/world/plan.py`), so a §80 route exists in exactly one place across both tiers, and `sitemap.ts` builds its
   983 entries from the same fields the pages link with.
-- i18n (spec §81): **not built yet** — the UI is English-only. Target shape when it lands: `messages/{en,zh,zh-TW}.json`, no literal strings inside components.
+- i18n (spec §81): the routing/lookup mechanism is **built** (2026-10-06) — `middleware.ts` resolves `fo_locale`/`Accept-Language`,
+  `i18n/request.ts` loads the matching catalogue, the nav switcher writes the cookie, and both Chinese catalogues carry the
+  full key set (`zh` 287/288, `zh-TW` 288/288 Traditional). The target shape is reached on the shell; page **bodies** still
+  render literals until each one is wired with `useTranslations`/`getTranslations` (`PLAN.md` item 2c).
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.

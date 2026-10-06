@@ -7,7 +7,7 @@ every item names the files it touches, the gate it must pass, and the thing that
 Rule inherited from spec §96 and this project's own practice: **an item is done when its claim is measured, not
 when its code exists.** A number in a document that no command reproduces is not evidence.
 
-Last updated 2026-10-01.
+Last updated 2026-10-06.
 
 ---
 
@@ -18,7 +18,11 @@ Last updated 2026-10-01.
 | **0. one gate, not three** | ✅ 2026-09-30 | `scripts/check.sh` and CI both run `python -m ruff check` with no path arguments. Proven by planting an unused import in `evals/`: invisible to the old target, caught by the new one, and the script exits 1. |
 | **1. §13's 3D pitch** | ✅ 2026-09-30 | `components/pitch.tsx` projects the board's own metres isometrically; `237/237` walk checks on a production build, with a check that recomputes every dot from its metres and another that holds the projected lawn inside its `viewBox`. `docs/M4_WEB_VERIFICATION.md` §8. |
 | **2a. §81's `locales` claim** | ✅ 2026-10-01 | `tests/test_locale_claims.py` binds `locales` to the catalogues in both directions. Found that `zh.json`/`zh-TW.json` are 278/278 copies of English, so the field stays `["en"]` — and now cannot be moved without a translation or left unmoved with one. |
+| **2b. §81's translations + the switcher** | ✅ 2026-10-06 | `LocaleSwitcher` writes the `fo_locale` cookie middleware has always read; `locales` moved to `["en","zh","zh-TW"]`; both Chinese catalogues carry the full key set (`zh` 287/288, `zh-TW` 288/288 written as Traditional, not converted). `test_locale_claims.py` 4/4 on the new catalogues; the locale walk drives the real switcher and reads the repainted shell. Remaining half: wiring page bodies to the catalogues (only `Nav` and the switcher read them today). |
+| **4. §61 account erasure end to end** | ✅ 2026-10-06 | `GET/DELETE /auth/account`: preview inventories every row and byte, one confirmed transaction, media containment refused before any write, last-owner blocking (409), §60's third 403 code (`invalid_password`) registered. 4 tests including the escaping-storage-key case a planted-defect probe demanded. |
+| **§38/§60 portfolio share + PDF** | ✅ 2026-10-06 | `POST/GET/DELETE /portfolio/share[/{token}]`, `/portfolio/cv.pdf` (reportlab), robots keeps both off crawlers. Committed with the two above because all three share one contract file. |
 | **— migration `2e197f085070`** | ✅ 2026-09-30 | Not on the plan; found by trying to run the SQLite leg it broke. Unadjusted autogenerate, PostgreSQL-only DDL, a `downgrade()` that could not run anywhere, and each new column indexed twice. |
+| **— the OpenAPI contract and autocrlf** | ✅ 2026-10-06 | Not on the plan. The working copy of `docs/api/openapi.json` had been checked out CRLF while `scripts/export_openapi.py` writes LF, so the byte gate failed with *equal byte counts* — a host newline policy, not an artifact defect. Regenerated from the tree (162 paths / 208 operations, LF). Windows checkouts of this repo will do this again; the remedy is the exporter, never hand-editing. |
 
 **The pattern worth naming.** Three of the four items above were *claims that had drifted from their evidence*,
 not missing features: a gate three targets wide, a `locales` field nobody checked, a migration that had never
@@ -33,11 +37,11 @@ and the fields are where the work is.
 | --- | --- | --- |
 | M0–M7 | ✅ verified | `ROADMAP.md` gate table |
 | M8 Club OS | ✅ verified 2026-09-28 — only §42's **payments** open, and spec §42 says not to rush them | `docs/M8_CLUB_OS_VERIFICATION.md` |
-| M9 Community | 🟡 §35 (posts, reactions, follows, feed) landed 2026-09-28 | `docs/M9_COMMUNITY_VERIFICATION.md` |
-| M10 Creator Economy | 🟡 §38 portfolio landed; §60 authorization census landed | `docs/M10_PORTFOLIO_VERIFICATION.md` |
+| M9 Community | 🟡 §35 (posts, reactions, follows, feed) landed 2026-09-28; §36/§37 verbs still absent | `docs/M9_COMMUNITY_VERIFICATION.md` |
+| M10 Creator Economy | 🟡 §38 portfolio landed, share links + CV PDF landed 2026-10-06 | `docs/M10_PORTFOLIO_VERIFICATION.md` |
 | M11 Multi-Agent | ⬜ not started — and §30 Knowledge Graph waits on it by decision | `docs/SPEC_COVERAGE_AUDIT.md` |
-| M12 Hardening | ⬜ not started | `ROADMAP.md` |
-| §81 i18n | 🟡 the UI is English-only and `/capabilities` says so | `ROADMAP.md` cross-cutting gates |
+| M12 Hardening | 🟡 §61 account erasure landed 2026-10-06; the rest of M12 (load, ops) untouched | `docs/SECURITY_AUTHORIZATION_VERIFICATION.md` |
+| §81 i18n | 🟡 catalogues full, switcher works, shell switches — page bodies are still English literals | the grep that counts `useTranslations` callers |
 
 Three cross-cutting defects have now been found and fixed **three separate times** (M4's `tactics/sync.py`, M7's
 scouting modules, M8's academy tier): *the committed tree does not pass the gate its own documents quote.* The
@@ -108,21 +112,34 @@ mechanism rather than a note to a future reader. The translating itself is item 
 
 ## Item 2b — §81's actual translations
 
-**Why.** Item 2a bound the claim; the work the claim is about is not done. `messages/zh.json` and
-`messages/zh-TW.json` are copies of English, and the UI still renders literals on most pages rather than reading
-the catalogues at all.
+**Done 2026-10-06 (two commits: `2671102` mechanism, `56d524c` words).** The switcher writes the cookie,
+middleware answers in it, and both Chinese catalogues carry the full key set — `zh` 287/288 (the search example
+sentence is Chinese in the English file already, so its one fallback is the honest state), `zh-TW` 288/288
+written as Traditional with Taiwan usage, not converted. `test_locale_claims.py` 4/4 on the new catalogues; the
+full locale walk (`node scripts/visual-qa-locale.mjs`, production build at `56d524c`) passed **249/249**, including
+driving the switcher, surviving a reload and reading the repainted shell. The claims in `meta.py`,
+`messages/README.md`, `CONTRIBUTING.md`, `ARCHITECTURE.md` and `M3_WEB_VERIFICATION.md` were corrected in the same
+commit as the words.
 
-**Do.** Two separable halves, in this order. First, finish wiring the pages to the catalogues, so a translated
-value would actually appear — a catalogue nothing reads is a translation that ships to nobody. Then translate.
-Simplified Chinese first (the locale the response-language rule of this project's own tooling implies is most
-likely to be read), then `zh-TW`, which must be written as Traditional Chinese and not derived by character
-conversion.
+## Item 2c — §81's remaining half: wire the pages to the catalogues
 
-**Evidence.** The `locales` assertion from 2a moves from `["en"]` to including a translated locale — which is the
-assertion doing its job — plus a walk check that switches locale and reads a page, asserting the string it finds
-is the catalogue's and not the fallback's.
+**Why next.** A complete catalogue that two components read is a library, not an interface. `grep -r
+"useTranslations\|getTranslations" apps/web --include=*.tsx` returns `Nav.tsx` and `LocaleSwitcher.tsx` and
+nothing else — every page body still renders English literals, so the switcher repaints the nav bar above a
+page that cannot change. The catalogue is now the *easy* part; this item is the long tail.
 
-**Watch for.** `apps/web/messages/README.md` is the file a translator will open first. Keep it true.
+**Do.** One namespace at a time, in the order a reader meets them: `auth` (login/register forms), `settings`
+(the page that also carries the delete-account panel), `common` (shared verbs), then the big feature pages
+(`scout`, `career`, `validation`, `disclaimer`). Each page wired is a page the walk can read in Chinese —
+extend `scripts/visual-qa-locale.mjs` to assert one translated string per wired page rather than trusting the
+absence of literals.
+
+**Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,
+assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.
+
+**Watch for.** `middleware.ts` resolves the locale server-side; a client component reading `useTranslations`
+needs the locale in its provider — `app/layout.tsx` already passes it, so the trap is only forgetting
+`getTranslations` on server components (it is async; `Nav.tsx` is the client-side worked example).
 
 ---
 
@@ -142,16 +159,14 @@ the answer-table collision check extended to the new codes.
 
 ## Item 4 — M12's first slice: account-level erasure end to end
 
-**Why.** `ROADMAP.md`'s M12 gate names it as the thing that is missing: *today only player data is deletable*.
-`DATA_POLICY.md` §3 says so, and a product that can create an account but not erase it is a promise it cannot
-keep. It is also the one M12 item that needs no load test to verify.
-
-**Do.** Implement the erasure `DATA_POLICY.md` already describes, against the tables that exist now, and make the
-page say what it removed and what it kept, with reasons — the pattern §40's child-data view already uses.
-
-**Evidence.** A test that creates an account with rows in every table that names a user, erases it, and asserts
-each table's state afterwards against a written expectation — including the rows that must *survive* because
-another account's record refers to them.
+**Done 2026-10-06 (`2671102`, found as a finished uncommitted tree from 10-03, verified then committed).**
+`GET /auth/account` previews the full inventory; `DELETE /auth/account` takes the phrase and the password,
+erases in one transaction, refuses an escaping storage key **before** any write (503 `private_media_not_erased`),
+and blocks a last owner with other active members (409). Rows that must survive (`SET NULL` model calls) do; the
+audit row names no erased identity. The census gained its third 403 code (`invalid_password`) and an erased
+account answers 401 `unauthenticated` again rather than 403 describing somebody who is not there. Evidence:
+`tests/test_account_deletion.py` (4 cases, including the escape probe), full suite green except the contract
+byte gate this same landing fixed.
 
 ---
 

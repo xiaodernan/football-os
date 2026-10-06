@@ -122,7 +122,13 @@ FOOTBALL_OS_TEST_DATABASE_URL="postgresql+psycopg2://football:football@127.0.0.1
 - Seasons do not progress. `2027` fixtures exist as scheduled rows; nothing plays them forward, and no page pretends otherwise.
 - `/training/{slug}` is still session-gated, so it is not in the sitemap even though §80 lists the route shape; making it
   public is a product decision, not an SEO one.
-- §81 i18n is not built. Every string here is English-only literal text — the same debt `README` and `ARCHITECTURE` §6 name,
-  and this increment widened it by ~120 new strings.
+- §81 i18n: the **mechanism** is built as of 2026-10-06 — `middleware.ts` resolves `fo_locale`/`Accept-Language`,
+  the nav carries the switcher, both Chinese catalogues carry the full key set (`zh` 287/288, `zh-TW` 288/288
+  written as Traditional), and `/capabilities` publishes `locales: ["en","zh","zh-TW"]`, held there in both
+  directions by `tests/test_locale_claims.py`. The page **bodies** are still English literals — only `Nav.tsx`
+  and `LocaleSwitcher.tsx` read a catalogue, and wiring them is `PLAN.md` item 2c. Evidence:
+  `node scripts/visual-qa-locale.mjs` against the production build at commit `56d524c` — **249/249 checks
+  passed**, including choosing 简体中文 and reading the repainted shell, the choice surviving a reload, switching
+  back, and settings listing exactly the shipped locales with no pending chips.
 - The 46 PNGs under `docs/screenshots/` are gitignored (the pre-commit hook rejects them), so they are evidence for a
   human on this machine, not artefacts in the repository.

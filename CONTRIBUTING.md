@@ -31,9 +31,10 @@ run against the narrow one was not evidence that CI would be green.
   `evals/` passes `ruff check app tests` and fails this.
 - `npm run typecheck` and `npm run build` clean for the web app.
 - No `TODO`/`FIXME` placeholders in merged code (spec §89) — open an issue or a roadmap row instead.
-- Every new user-visible string lives in `apps/web/messages/*.json` for all three locales (spec §81). **The
-  catalogues do not exist yet** — the UI is English-only and `GET /capabilities` says so — so today this rule has
-  nowhere to put a string. Landing them is `PLAN.md` item 2; until then, do not add a second place strings live.
+- Every new user-visible string lives in `apps/web/messages/*.json` for all three locales (spec §81). The
+  catalogues exist and both Chinese ones carry the full key set (2026-10-06); a string added to `en.json`
+  without its `zh`/`zh-TW` values falls back to English on those pages until translated — add all three in the
+  same commit.
 - Every new page uses design tokens + `components/ui/*` only (spec §73).
 
 ## Definition of Done per feature (spec §88)
