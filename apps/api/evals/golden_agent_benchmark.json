@@ -1,0 +1,254 @@
+{
+  "version": "2026-10-07",
+  "note": "Agent evaluation benchmark per spec §64. Each category tests a different agent capability with expected behaviors and measurable outcomes. The benchmark covers Football Research, Player Comparison, Match Analysis, Training Plan, Tactical Analysis, Scouting, News Research, RAG, and Multi-step Tool Use.",
+  "categories": [
+    {
+      "name": "Football Research",
+      "agent_type": "research",
+      "cases": [
+        {
+          "id": "pressing-evolution",
+          "query": "How has pressing evolved in modern football from Catenaccio to Gegenpressing?",
+          "expected_topics": ["catenaccio", "gegenpressing", "pressing evolution"],
+          "min_confidence": 0.6,
+          "requires_citations": true
+        },
+        {
+          "id": "tiki-taka-origin",
+          "query": "What are the tactical principles of tiki-taka and where did it originate?",
+          "expected_topics": ["tiki-taka", "Barcelona", "possession"],
+          "min_confidence": 0.6,
+          "requires_citations": true
+        },
+        {
+          "id": "false-nine-role",
+          "query": "Explain the false nine role and its advantages in modern football",
+          "expected_topics": ["false nine", "dropping deep", "overloading midfield"],
+          "min_confidence": 0.5,
+          "requires_citations": true
+        }
+      ]
+    },
+    {
+      "name": "Player Comparison",
+      "agent_type": "research",
+      "cases": [
+        {
+          "id": "compare-strikers",
+          "query": "Compare two strikers: one is fast but weak in the air, another is slow but strong physically",
+          "expected_topics": ["striker", "pace", "aerial ability", "physicality"],
+          "min_confidence": 0.5,
+          "requires_citations": false
+        },
+        {
+          "id": "midfielder-profiles",
+          "query": "What makes a box-to-box midfielder different from a defensive midfielder?",
+          "expected_topics": ["box-to-box", "defensive midfielder", "work rate", "positioning"],
+          "min_confidence": 0.6,
+          "requires_citations": true
+        }
+      ]
+    },
+    {
+      "name": "Match Analysis",
+      "agent_type": "simulation",
+      "cases": [
+        {
+          "id": "match-engine-xg",
+          "query": "How does the match simulation engine calculate expected goals?",
+          "expected_topics": ["xG", "big chance", "normal chance", "long range"],
+          "min_confidence": 0.7,
+          "requires_citations": false
+        },
+        {
+          "id": "possession-mechanics",
+          "query": "Explain how possession ball-minutes work in the simulation",
+          "expected_topics": ["ball-minute", "possession", "passes"],
+          "min_confidence": 0.7,
+          "requires_citations": false
+        },
+        {
+          "id": "engine-limitations",
+          "query": "What does the match engine deliberately NOT model?",
+          "expected_topics": ["substitutions", "dynamic possession", "limitations"],
+          "min_confidence": 0.8,
+          "requires_citations": false
+        }
+      ]
+    },
+    {
+      "name": "Training Plan",
+      "agent_type": "coach",
+      "cases": [
+        {
+          "id": "improve-first-touch",
+          "query": "My first touch keeps bouncing away. Create a training plan to improve it.",
+          "expected_topics": ["first touch", "receiving", "training", "drill"],
+          "min_confidence": 0.6,
+          "requires_recommendation": true
+        },
+        {
+          "id": "defender-1v1-training",
+          "query": "I keep getting beaten in 1v1 situations as a defender. What should I practice?",
+          "expected_topics": ["1v1 defending", "posture", "timing", "jockeying"],
+          "min_confidence": 0.6,
+          "requires_recommendation": true
+        },
+        {
+          "id": "weekly-sprint-load",
+          "query": "How many sprint sessions per week are safe for injury prevention?",
+          "expected_topics": ["sprint", "load", "recovery", "injury"],
+          "min_confidence": 0.7,
+          "requires_recommendation": true
+        }
+      ]
+    },
+    {
+      "name": "Tactical Analysis",
+      "agent_type": "tactical",
+      "cases": [
+        {
+          "id": "formation-433",
+          "query": "What are the characteristics of a 4-3-3 formation?",
+          "expected_topics": ["4-3-3", "formation", "width", "pressing"],
+          "min_confidence": 0.6,
+          "requires_formation_data": true
+        },
+        {
+          "id": "compare-formations",
+          "query": "Compare 4-4-2 and 3-5-2 formations in terms of pressing and width",
+          "expected_topics": ["4-4-2", "3-5-2", "comparison"],
+          "min_confidence": 0.5,
+          "requires_comparison": true
+        },
+        {
+          "id": "tactical-concept",
+          "query": "Explain what gegenpressing means tactically",
+          "expected_topics": ["gegenpressing", "counter-press", "transition"],
+          "min_confidence": 0.6,
+          "requires_concept_explanation": true
+        }
+      ]
+    },
+    {
+      "name": "Scouting",
+      "agent_type": "scout",
+      "cases": [
+        {
+          "id": "find-left-winger",
+          "query": "Find left-footed wingers under 23 years old with high pace",
+          "expected_filter_count": 3,
+          "min_candidates": 0,
+          "requires_ranking": true
+        },
+        {
+          "id": "central-midfielder-value",
+          "query": "Search for central midfielders aged 20-25 with good passing",
+          "expected_filter_count": 3,
+          "min_candidates": 0,
+          "requires_market_value": true
+        },
+        {
+          "id": "young-striker-potential",
+          "query": "Find young strikers under 21 with high potential",
+          "expected_filter_count": 3,
+          "min_candidates": 0,
+          "requires_potential_rating": true
+        }
+      ]
+    },
+    {
+      "name": "News Research",
+      "agent_type": "research",
+      "cases": [
+        {
+          "id": "transfer-news",
+          "query": "What are the latest transfer rumors about top clubs?",
+          "expected_topics": ["transfer", "rumor", "club"],
+          "min_confidence": 0.4,
+          "requires_citations": true
+        },
+        {
+          "id": "injury-updates",
+          "query": "Are there any recent injury updates for key players?",
+          "expected_topics": ["injury", "player", "recovery"],
+          "min_confidence": 0.4,
+          "requires_citations": true
+        }
+      ]
+    },
+    {
+      "name": "RAG Integration",
+      "agent_type": "research",
+      "cases": [
+        {
+          "id": "rag-pressing-triggers",
+          "query": "When should a team press according to the knowledge base?",
+          "expected_documents": ["pressing-triggers"],
+          "min_confidence": 0.6,
+          "requires_citations": true,
+          "requires_chunk_quotes": true
+        },
+        {
+          "id": "rag-warmup-structure",
+          "query": "What order should a warmup go in before training?",
+          "expected_documents": ["warmup-structure"],
+          "min_confidence": 0.7,
+          "requires_citations": true,
+          "requires_chunk_quotes": true
+        }
+      ]
+    },
+    {
+      "name": "Multi-step Tool Use",
+      "agent_type": "composite",
+      "cases": [
+        {
+          "id": "tactics-to-training",
+          "query": "Analyze our team's pressing patterns and recommend training drills to improve them",
+          "expected_agents": ["tactical", "coach"],
+          "min_steps": 2,
+          "requires_aggregation": true
+        },
+        {
+          "id": "scout-and-compare",
+          "query": "Find three young defenders and compare their market values",
+          "expected_agents": ["scout"],
+          "min_steps": 1,
+          "requires_comparison": true
+        },
+        {
+          "id": "full-analysis-chain",
+          "query": "Research the history of pressing tactics, analyze our current formation's pressing strength, and suggest improvements",
+          "expected_agents": ["research", "tactical"],
+          "min_steps": 2,
+          "requires_aggregation": true
+        }
+      ]
+    }
+  ],
+  "refusal_cases": [
+    {
+      "id": "non-football-question",
+      "query": "What is the best programming language for web development?",
+      "should_refuse": true
+    },
+    {
+      "id": "unavailable-data",
+      "query": "Show me live Premier League scores right now",
+      "should_refuse": true
+    },
+    {
+      "id": "prediction-request",
+      "query": "Who will win the next World Cup?",
+      "should_refuse": true
+    }
+  ],
+  "thresholds": {
+    "overall_answer_rate": 0.80,
+    "avg_confidence": 0.55,
+    "citation_integrity": 0.90,
+    "refusal_accuracy": 1.0,
+    "multi_step_completion": 0.75
+  }
+}
