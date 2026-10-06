@@ -5,20 +5,17 @@ Three files, one per locale (`apps/api/app/api/v1/meta.py` publishes them as `lo
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | the shell, nav and auth sentences in Simplified Chinese; the rest still English | **yes** — partially |
-| `zh-TW.json` | the same in Traditional Chinese | **yes** — partially |
+| `zh.json` | 287 of 288 keys in Simplified Chinese (`scout.placeholder` is a Chinese sentence in the English file already, so its falling back is the honest state) | **yes** |
+| `zh-TW.json` | 288 of 288 keys, written in Traditional Chinese, not converted from the `zh` file | **yes** |
 
 ## What a reader gets today
 
-32 of 287 keys are translated in each Chinese catalogue — the navigation, the sign-in and sign-out sentences, the
-language control and the demo-mode badge. Everything else falls back to English key by key. So a Chinese browser
-gets a Chinese nav bar above English page bodies. That is the honest description, and it is why
-`GET /capabilities` says `locales: ["en", "zh", "zh-TW"]` while the pages are mostly English.
-
-Before 2026-10-01 the two Chinese files were **byte-for-byte the English values** with Chinese filenames, and
-nothing read a catalogue anyway — the interface was English literals from top to bottom, so the locale the
-middleware had always resolved was invisible. `apps/api/tests/test_locale_claims.py` is what stopped that being
-invisible: it holds `locales` to these files in both directions.
+Both Chinese catalogues cover every key the interface publishes. A new string added to `en.json` without
+translations falls back per key until it is translated — which is the one way a page can show English inside a
+Chinese interface now. Before 2026-10-01 the two Chinese files were **byte-for-byte the English values** with
+Chinese filenames, and nothing read a catalogue anyway — the interface was English literals from top to bottom,
+so the locale the middleware had always resolved was invisible. `apps/api/tests/test_locale_claims.py` is what
+stopped that being invisible: it holds `locales` to these files in both directions.
 
 ## The rule
 

@@ -127,12 +127,13 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
         "m9_community": False,
         # The languages this app will answer in — `middleware.ts` picks one of these from the `fo_locale` cookie,
         # the browser's `Accept-Language` and the account's own column, so a catalogue that is not a copy of
-        # English is a language a reader can already be served. `zh` and `zh-TW` are **partial**: the shell, the
-        # nav and the auth sentences are translated and the rest falls back to English key by key, which is the
-        # honest description of what a Chinese browser receives today. Until 2026-10-01 they were byte-for-byte
-        # copies of the English file, and this field said `["en"]` — the true answer then, because the app served
-        # English to everyone. `tests/test_locale_claims.py` holds this list to the catalogues in both
-        # directions; `apps/web/messages/README.md` explains the switch.
+        # English is a language a reader can already be served. Since 2026-10-06 both Chinese catalogues carry
+        # the full key set translated (`zh-TW` 288/288; `zh` 287/288, the search example sentence being Chinese
+        # in the English file already, so its falling back is the honest state); a key added to `en.json`
+        # without translations falls back per key until translated. Until 2026-10-01 the files were
+        # byte-for-byte copies of the English one, and this field said `["en"]` — the true answer then.
+        # `tests/test_locale_claims.py` holds this list to the catalogues in both directions;
+        # `apps/web/messages/README.md` explains the switch.
         "locales": ["en", "zh", "zh-TW"],
         "locales_planned": ["en", "zh", "zh-TW"],
         "demo_mode": settings.is_demo_mode,
