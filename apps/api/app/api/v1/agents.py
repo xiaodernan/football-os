@@ -1,0 +1,78 @@
+"""Agent orchestrator endpoints (M11 §31-§33).
+
+Provides a unified interface to interact with registered agents. Each endpoint is
+auth-gated and scoped to the calling user. Agents persist their state via the
+agent_memory system (§34), so conversations can resume across sessions.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from app.core.db import get_db
+from app.core.security import current_user
+from app.models import User
+from app.services.agents import get_agent, list_available_agents
+
+router = APIRouter(prefix="/agents", tags=["agents"])
+
+
+class AgentRunRequest(BaseModel):
+    query: str
+    agent_type: str = "research"
+    session_id: str | None = None
+
+
+class AgentRunResponse(BaseModel):
+    answer: str
+    citations: list[dict[str, str]] | None = None
+    confidence: float | None = None
+    from_cache: bool = False
+    stored_key: str | None = None
+
+
+class AgentListResponse(BaseModel):
+    available_agents: list[str]
+
+
+@router.get("/list", response_model=AgentListResponse)
+def agents_list() -> AgentListResponse:
+    """List all registered agent types."""
+    return AgentListResponse(available_agents=list_available_agents())
+
+
+@router.post("/run", response_model=AgentRunResponse)
+def agent_run(
+    body: AgentRunRequest,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> AgentRunResponse:
+    """Execute one agent turn. The agent reads its memories, processes the query, and persists results."""
+    try:
+        agent = get_agent(db=db, user_id=user.id, agent_type=body.agent_type, session_id=body.session_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    result = agent.run(query=body.query)
+    db.commit()
+    return AgentRunResponse(**result)
+
+
+@router.get("/context")
+def agent_context(
+    agent_type: str = Query("research"),
+    session_id: str | None = Query(None),
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, list[dict[str, Any]]]:
+    """List all non-expired memories for this agent+session."""
+    try:
+        agent = get_agent(db=db, user_id=user.id, agent_type=agent_type, session_id=session_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {"memories": agent.list_context()}

@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.v1 import (
     agent_memory,
+    agents,
     auth,
     boards,
     careers,
@@ -154,6 +155,7 @@ def create_app() -> FastAPI:
     app.include_router(portfolio.router, prefix=api)
     app.include_router(graph.router, prefix=api)
     app.include_router(agent_memory.router, prefix=api)
+    app.include_router(agents.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:
