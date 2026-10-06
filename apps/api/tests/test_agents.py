@@ -161,3 +161,62 @@ class TestAgentOrchestrator:
         assert "answer" in data
         # Should have some content in the answer
         assert len(data["answer"]) > 0
+
+    def test_list_includes_tactical(self) -> None:
+        """Agent list should include tactical agent."""
+        client = _client()
+        resp = client.get("/api/v1/agents/list")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "tactical" in data["available_agents"]
+
+    def test_run_tactical_agent_formation(self) -> None:
+        """Tactical agent should analyze formations."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={"query": "What are the characteristics of a 4-3-3 formation?", "agent_type": "tactical"},
+        )
+        assert resp.status_code == 200, f"Tactical agent failed: {resp.json()}"
+        data = resp.json()
+        assert "answer" in data
+        assert len(data["answer"]) > 0
+        # Should mention formation or indicate no data
+        assert "4-3-3" in data["answer"] or "don't have data" in data["answer"].lower()
+
+    def test_run_tactical_agent_concept(self) -> None:
+        """Tactical agent should explain tactical concepts."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={"query": "Explain pressing in football tactics", "agent_type": "tactical"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "answer" in data
+        assert len(data["answer"]) > 0
+        # Should mention pressing or provide general guidance
+        assert "pressing" in data["answer"].lower() or "tactical" in data["answer"].lower()
+
+    def test_run_tactical_agent_cached(self) -> None:
+        """Second identical tactical query should return cached result."""
+        client = _client()
+        query = "What is a high defensive line?"
+
+        # First call
+        resp1 = client.post(
+            "/api/v1/agents/run",
+            json={"query": query, "agent_type": "tactical"},
+        )
+        assert resp1.status_code == 200
+        data1 = resp1.json()
+        assert data1["from_cache"] is False
+
+        # Second call (should be cached)
+        resp2 = client.post(
+            "/api/v1/agents/run",
+            json={"query": query, "agent_type": "tactical"},
+        )
+        assert resp2.status_code == 200
+        data2 = resp2.json()
+        assert data2["from_cache"] is True
