@@ -50,7 +50,7 @@ Every figure in this sentence is re-checked against the committed tree by
 | 47 | Async job system | `/api/v1/video/{ident}/jobs` + `services/video/{pipeline,status}.py`; in-process, no queue | partial (labelled) |
 | 48–57 | Frontend/UX/home/board/match/player/search/mobile | 47 page routes; `visual-qa.mjs` walks 375px surfaces | landed |
 | 58–60 | Performance / observability / security | `core/security.py:142 limit(...)`, `logging.basicConfig` in `main.py:43`, ADRs in `docs/adr` (6) | partial — no metrics/tracing surface, M12's job |
-| 61–62 | Privacy / AI safety | `DATA_POLICY.md`, `AI_POLICY.md` at repo root, `/api/v1/progress/export`, `/api/v1/progress/player-data`; **account-level erasure is built** at `/api/v1/auth/me/account` (preview + delete, requires typing a confirmation phrase) | **landed 2026-10-06** |
+| 61–62 | Privacy / AI safety | `DATA_POLICY.md`, `AI_POLICY.md` at repo root, `/api/v1/progress/export`, `/api/v1/progress/player-data`; **account-level erasure is built** (preview + delete, requires typing a confirmation phrase; the contract has not been regenerated to publish these doors) | **landed 2026-10-06** |
 | 63–64 | Testing / agent evaluation | 29 test files, both database legs; `evals/` covers **RAG only**, §64's agent benchmark does not exist | partial → M11 |
 | 65 | Demo data | world generator incl. the 100-training-session gate item | landed |
 | 75–80 | Event model, cost control, provider failure, citations, SEO | `sim_events`, `model_ledger`, refusal paths, `docs/SEO_VERIFICATION.md` | landed |
