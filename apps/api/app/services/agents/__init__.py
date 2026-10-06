@@ -9,10 +9,12 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.services.agents.base import BaseAgent
+from app.services.agents.coach import CoachAgent
 from app.services.agents.research import ResearchAgent
 
 AGENT_REGISTRY: dict[str, type[BaseAgent]] = {
     "research": ResearchAgent,
+    "coach": CoachAgent,
 }
 
 

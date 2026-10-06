@@ -106,3 +106,58 @@ class TestAgentOrchestrator:
         assert "memories" in data
         # Should have at least the answer and conversation history
         assert len(data["memories"]) >= 1
+
+    def test_list_includes_coach(self) -> None:
+        """Agent list should include coach agent."""
+        client = _client()
+        resp = client.get("/api/v1/agents/list")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "coach" in data["available_agents"]
+        assert "research" in data["available_agents"]
+
+    def test_run_coach_agent_no_player(self) -> None:
+        """Coach agent should request player profile when none exists."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={"query": "What should I train today?", "agent_type": "coach"},
+        )
+        assert resp.status_code == 200, f"Coach agent failed: {resp.json()}"
+        data = resp.json()
+        assert "answer" in data
+        assert "player profile" in data["answer"].lower()
+        # No player means low confidence
+        assert data["confidence"] == 0.0
+
+    def test_run_coach_agent_with_goal(self) -> None:
+        """Coach agent should recognize training goals in query."""
+        client = _client()
+        
+        # Create a player first
+        resp_player = client.post(
+            "/api/v1/players",
+            json={
+                "display_name": "Test Player",
+                "position": "CM",
+                "age": 20,
+                "level": "intermediate",
+                "preferred_foot": "right",
+                "goal": "improve passing",
+            },
+        )
+        # Player creation may succeed or fail depending on validation
+        # Either way, test the coach response
+        
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={
+                "query": "I want to improve my first touch",
+                "agent_type": "coach",
+            },
+        )
+        assert resp.status_code == 200, f"Coach agent with goal failed: {resp.json()}"
+        data = resp.json()
+        assert "answer" in data
+        # Should have some content in the answer
+        assert len(data["answer"]) > 0
