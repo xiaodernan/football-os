@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { DataUnavailable, KeyValue, Panel, Stat } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
@@ -10,10 +11,10 @@ import { PrivacyPanel } from "./PrivacyPanel";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Settings",
-  description: "Account, data rights, honest platform status and the danger zone.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("settings");
+  return { title: t("title"), description: t("tagline") };
+}
 
 /** Only the boolean switches may be listed as milestones, so a data block (`m3_world`) cannot be
  * rendered as a "Live / Not built" row by accident. */
@@ -41,6 +42,7 @@ function describeProvider(value: unknown): string {
 }
 
 export default async function SettingsPage() {
+  const t = await getTranslations("settings");
   const [meResult, healthResult, capsResult] = await Promise.all([
     serverFetch<UserOut>("/auth/me"),
     serverFetch<HealthResponse>("/healthz"),
@@ -59,53 +61,50 @@ export default async function SettingsPage() {
       <div className="stack">
         <div className="between wrap" style={{ alignItems: "flex-start", gap: "1rem" }}>
           <div className="stack-sm">
-            <span className="eyebrow">Settings</span>
-            <h1 className="h1">Account &amp; platform</h1>
-            <p className="lede">
-              What we store about you, what the platform can actually do today, and the two buttons that change it.
-            </p>
+            <span className="eyebrow">{t("title")}</span>
+            <h1 className="h1">{t("heading")}</h1>
+            <p className="lede">{t("lede")}</p>
           </div>
           {health && (
             <span className={`badge ${health.status === "ok" ? "badge--live" : "badge--demo"}`}>
-              API {health.status}
+              {t("apiBadge", { status: health.status })}
             </span>
           )}
         </div>
 
         {!meResult.ok && (
           <div className="notice notice--warn">
-            {errorMessage(meResult.error, "Account data is unavailable right now.")}
+            {errorMessage(meResult.error, t("accountUnavailable"))}
           </div>
         )}
 
         <Panel
-          eyebrow="Account"
-          title="Your profile"
+          eyebrow={t("profileEyebrow")}
+          title={t("profileTitle")}
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              Read-only on purpose: the API exposes no profile-edit endpoint yet, so this screen does not pretend to have
-              one. Email and password changes arrive with that endpoint.
+              {t("profileFooter")}
             </span>
           }
         >
           {!me ? (
-            <DataUnavailable metric="Account details" />
+            <DataUnavailable metric={t("accountDetails")} />
           ) : (
             <>
               <div className="st-stats">
-                <Stat label="Streak" value={<span className="num">{me.streak_days}</span>} hint="days in a row" />
-                <Stat label="Role" value={<span className="upper">{me.role}</span>} />
-                <Stat label="Plan" value={<span className="upper">{me.plan}</span>} />
+                <Stat label={t("streak")} value={<span className="num">{me.streak_days}</span>} hint={t("streakHint")} />
+                <Stat label={t("role")} value={<span className="upper">{me.role}</span>} />
+                <Stat label={t("plan")} value={<span className="upper">{me.plan}</span>} />
               </div>
               <div style={{ marginTop: "1.1rem" }}>
                 <KeyValue
                   rows={[
-                    ["Display name", me.display_name],
-                    ["Email", <span className="mono" key="email">{me.email}</span>],
-                    ["Locale", me.locale],
-                    ["Role", <span className="upper" key="role">{me.role}</span>],
-                    ["Plan", <span className="upper" key="plan">{me.plan}</span>],
-                    ["User ID", <span className="mono" key="id">{me.id}</span>],
+                    [t("displayName"), me.display_name],
+                    [t("email"), <span className="mono" key="email">{me.email}</span>],
+                    [t("locale"), me.locale],
+                    [t("role"), <span className="upper" key="role">{me.role}</span>],
+                    [t("plan"), <span className="upper" key="plan">{me.plan}</span>],
+                    [t("userId"), <span className="mono" key="id">{me.id}</span>],
                   ]}
                 />
               </div>
@@ -114,47 +113,46 @@ export default async function SettingsPage() {
         </Panel>
 
         <Panel
-          eyebrow="Data & privacy"
-          title="Export what we hold"
+          eyebrow={t("dataPrivacy")}
+          title={t("exportTitle")}
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              <span className="mono">GET /progress/export</span> returns plain JSON; the file is assembled and saved by
-              your browser.
+              {t("exportFooter")}
             </span>
           }
         >
           <PrivacyPanel mode="export" />
         </Panel>
 
-        <Panel eyebrow="Platform status" title="What this deployment really is">
+        <Panel eyebrow={t("platformEyebrow")} title={t("platformTitle")}>
           {!health ? (
             <div className="stack-sm">
-              <DataUnavailable metric="Health check" />
+              <DataUnavailable metric={t("healthCheck")} />
               <div className="notice notice--warn">
-                {errorMessage(healthResult.ok ? undefined : healthResult.error, "The API did not answer /healthz.")}
+                {errorMessage(healthResult.ok ? undefined : healthResult.error, t("noHealthz"))}
               </div>
             </div>
           ) : (
             <div className="stack" style={{ gap: "1rem" }}>
               <KeyValue
                 rows={[
-                  ["Environment", <span className="upper" key="env">{health.environment}</span>],
-                  ["Database dialect", <span className="mono" key="dialect">{health.database_dialect}</span>],
+                  [t("environment"), <span className="upper" key="env">{health.environment}</span>],
+                  [t("dialect"), <span className="mono" key="dialect">{health.database_dialect}</span>],
                   [
                     "pgvector",
                     health.pgvector ? (
-                      <span className="badge badge--live" key="pg">enabled</span>
+                      <span className="badge badge--live" key="pg">{t("pgOn")}</span>
                     ) : (
-                      <span className="chip" key="pg">false — vector search is off</span>
+                      <span className="chip" key="pg">{t("pgOff")}</span>
                     ),
                   ],
-                  ["API status", <span className="upper" key="status">{health.status}</span>],
+                  [t("apiStatusRow"), <span className="upper" key="status">{health.status}</span>],
                 ]}
               />
               <div className="stack-sm">
-                <span className="eyebrow">Provider wiring</span>
+                <span className="eyebrow">{t("providerWiring")}</span>
                 {Object.keys(health.providers ?? {}).length === 0 ? (
-                  <DataUnavailable metric="Providers" />
+                  <DataUnavailable metric={t("providers")} />
                 ) : (
                   <div className="tag-list">
                     {Object.entries(health.providers).map(([key, value]) => (
@@ -167,7 +165,7 @@ export default async function SettingsPage() {
               </div>
               {(health.notes ?? []).length > 0 && (
                 <div className="stack-sm">
-                  <span className="eyebrow">Operator notes</span>
+                  <span className="eyebrow">{t("operatorNotes")}</span>
                   <ul className="reasons">
                     {health.notes.map((note, index) => (
                       <li className="reasons__item" key={`${note}-${index}`}>
@@ -182,20 +180,19 @@ export default async function SettingsPage() {
         </Panel>
 
         <Panel
-          eyebrow="Feature map"
-          title="Built vs. not built"
+          eyebrow={t("featureMapEyebrow")}
+          title={t("featureMapTitle")}
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              These switches come straight from <span className="mono">GET /capabilities</span>. Anything marked “not
-              built” has no endpoint behind it yet, so no screen fakes it.
+              {t("featureMapFooter")}
             </span>
           }
         >
           {!capabilities ? (
             <div className="stack-sm">
-              <DataUnavailable metric="Capabilities" />
+              <DataUnavailable metric={t("capabilities")} />
               <div className="notice notice--warn">
-                {errorMessage(capsResult.ok ? undefined : capsResult.error, "Capabilities could not be read.")}
+                {errorMessage(capsResult.ok ? undefined : capsResult.error, t("capsUnreadable"))}
               </div>
             </div>
           ) : (
@@ -206,30 +203,30 @@ export default async function SettingsPage() {
                   <div className="st-status-row" key={milestone.key}>
                     <span className="st-status-row__label">{milestone.label}</span>
                     {live ? (
-                      <span className="badge badge--live">Live</span>
+                      <span className="badge badge--live">{t("live")}</span>
                     ) : (
-                      <span className="badge badge--demo">Not built</span>
+                      <span className="badge badge--demo">{t("notBuilt")}</span>
                     )}
                   </div>
                 );
               })}
               <div className="st-status-row">
-                <span className="st-status-row__label">Demo mode (no live AI provider key)</span>
+                <span className="st-status-row__label">{t("demoModeRow")}</span>
                 {capabilities.demo_mode === true ? (
                   <span className="badge badge--demo" key="demo">
-                    Demo data
+                    {t("demoData")}
                   </span>
                 ) : (
                   <span className="badge badge--live" key="demo">
-                    Live provider
+                    {t("liveProvider")}
                   </span>
                 )}
               </div>
               <div className="st-status-row">
-                <span className="st-status-row__label">Locales shipped</span>
+                <span className="st-status-row__label">{t("localesShipped")}</span>
                 <span className="row wrap" style={{ gap: "0.3rem", justifyContent: "flex-end" }}>
                   {(capabilities.locales ?? []).length === 0 ? (
-                    <DataUnavailable metric="Locales" />
+                    <DataUnavailable metric={t("localesShipped")} />
                   ) : (
                     (capabilities.locales ?? []).map((locale) => (
                       <span className="chip mono" key={locale}>
@@ -240,8 +237,8 @@ export default async function SettingsPage() {
                   {(capabilities.locales_planned ?? [])
                     .filter((locale) => !(capabilities.locales ?? []).includes(locale))
                     .map((locale) => (
-                      <span className="chip mono muted" key={`planned-${locale}`} title="Planned, not shipped">
-                        {locale} · planned
+                      <span className="chip mono muted" key={`planned-${locale}`} title={t("plannedTitle")}>
+                        {t("plannedChip", { locale })}
                       </span>
                     ))}
                 </span>
@@ -251,12 +248,11 @@ export default async function SettingsPage() {
         </Panel>
 
         <Panel
-          eyebrow="Danger zone"
-          title="Remove training history"
+          eyebrow={t("dangerEyebrow")}
+          title={t("deleteHistoryTitle")}
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              <span className="mono">DELETE /progress/player-data</span> — your sign-in and this page stay available
-              afterwards.
+              {t("deleteHistoryFooter")}
             </span>
           }
         >
@@ -264,12 +260,11 @@ export default async function SettingsPage() {
         </Panel>
 
         <Panel
-          eyebrow="Account"
-          title="Delete account permanently"
+          eyebrow={t("profileEyebrow")}
+          title={t("deleteAccountTitle")}
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              <span className="mono">DELETE /auth/account</span> — requires your current password and the
-              confirmation phrase.
+              {t("deleteAccountFooter")}
             </span>
           }
         >

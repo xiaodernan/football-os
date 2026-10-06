@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { browserFetch, errorMessage } from "@/lib/api";
@@ -59,6 +60,7 @@ type Mode = "export" | "delete" | "account";
 const CONFIRM_WORD = "DELETE";
 
 export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
+  const t = useTranslations("settings");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
           router.push("/login");
           return;
         }
-        setError(errorMessage(result.error, "The deletion preview failed."));
+        setError(errorMessage(result.error, t("previewFailed")));
         return;
       }
       setAccountPreview(result.data);
@@ -100,7 +102,7 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
         router.push("/login");
         return;
       }
-      setError(errorMessage(result.error, "The export request failed."));
+      setError(errorMessage(result.error, t("exportFailed")));
       return;
     }
     const payload = result.data;
@@ -114,9 +116,12 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
     anchor.remove();
     URL.revokeObjectURL(url);
     setExportSummary(
-      `Downloaded footballos-export.json — ${payload.players?.length ?? 0} player(s), ${
-        payload.sessions?.length ?? 0
-      } session(s), ${payload.xp_events?.length ?? 0} XP event(s), format v${payload.format_version ?? 1}.`,
+      t("exportSummary", {
+        players: payload.players?.length ?? 0,
+        sessions: payload.sessions?.length ?? 0,
+        events: payload.xp_events?.length ?? 0,
+        version: payload.format_version ?? 1,
+      }),
     );
   }
 
@@ -131,7 +136,7 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
         router.push("/login");
         return;
       }
-      setError(errorMessage(result.error, "The delete request failed."));
+      setError(errorMessage(result.error, t("deleteFailed")));
       return;
     }
     setDeleted(result.data);
@@ -157,7 +162,7 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
         router.push("/login");
         return;
       }
-      setError(errorMessage(result.error, "The account deletion failed."));
+      setError(errorMessage(result.error, t("accountDeleteFailed")));
       return;
     }
     setAccountDeleted(result.data);
@@ -172,14 +177,10 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
   if (mode === "export") {
     return (
       <div className="st-copy">
-        <p>
-          Export hands you the raw JSON the API holds for this account: profile fields, players with their attribute
-          records, training sessions and XP events. No PDF or report generator exists server-side, so the file is saved
-          by your browser.
-        </p>
+        <p>{t("exportDescription")}</p>
         <div className="st-actions">
           <button className="btn" type="button" onClick={downloadExport} disabled={busy}>
-            {busy ? "Preparing export…" : "Export my data"}
+            {busy ? t("preparingExport") : t("exportData")}
           </button>
           <span className="muted mono">footballos-export.json</span>
         </div>
@@ -194,43 +195,41 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
     const deletedRows = Object.entries(accountPreview?.deletes.rows ?? {}).filter(([, count]) => count > 0);
     return (
       <div className="st-danger">
-        <div className="st-danger__title">Delete my entire account</div>
-        <p>
-          This removes the account, its player and training records, AI history, boards, simulations, community
-          posts, shares and uploaded video originals and frames. Tenant records remain only when another active
-          owner still holds the tenant. Audit records stay as aggregate actions with no account id.
-        </p>
+        <div className="st-danger__title">{t("deleteAccountHeading")}</div>
+        <p>{t("accountDescription")}</p>
         {!accountDeleted ? (
           <>
             {accountPreview ? (
               <div className="st-result">
-                <strong>{accountPreview.deletes.rows_total} account-linked row(s) and {accountPreview.deletes.video_assets} video asset(s) are in scope.</strong>
+                <strong>
+                  {t("inScope", { rows: accountPreview.deletes.rows_total, assets: accountPreview.deletes.video_assets })}
+                </strong>
                 {deletedRows.length > 0 && (
                   <span className="muted mono" style={{ fontSize: "0.78rem" }}>
                     {deletedRows.map(([table, count]) => `${table}: ${count}`).join(" · ")}
                   </span>
                 )}
                 {accountPreview.organizations_left.length > 0 && (
-                  <span>
-                    {accountPreview.organizations_left.length} tenant(s) keep their rows because another active owner remains.
-                  </span>
+                  <span>{t("tenantsKept", { count: accountPreview.organizations_left.length })}</span>
                 )}
               </div>
             ) : (
-              <div className="notice st-result">Reading the deletion inventory…</div>
+              <div className="notice st-result">{t("readingInventory")}</div>
             )}
             {blocking.length > 0 && (
               <div className="notice notice--warn st-result">
-                <strong>Tenant ownership blocks deletion.</strong>
+                <strong>{t("tenantBlocks")}</strong>
                 <span>
-                  {blocking.map((row) => `${row.name} (${row.slug})`).join(", ")} would be left without an owner.
-                  Delete the tenant or transfer ownership first.
+                  {t(
+                    "blockedBy",
+                    { names: blocking.map((row) => `${row.name} (${row.slug})`).join(", ") },
+                  )}
                 </span>
               </div>
             )}
             <div className="field">
               <label className="field__label" htmlFor="st-account-password">
-                Current password
+                {t("currentPassword")}
               </label>
               <input
                 id="st-account-password"
@@ -243,7 +242,7 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
             </div>
             <div className="field">
               <label className="field__label" htmlFor="st-account-confirm">
-                Type {CONFIRM_WORD} to confirm
+                {t("typeConfirm", { word: CONFIRM_WORD })}
               </label>
               <input
                 id="st-account-confirm"
@@ -254,7 +253,7 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
                 spellCheck={false}
                 placeholder={CONFIRM_WORD}
               />
-              <span className="field__hint">The password and phrase are both required. Nothing is removed if either is wrong.</span>
+              <span className="field__hint">{t("confirmHint")}</span>
             </div>
             <div className="st-confirm">
               <button
@@ -263,19 +262,19 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
                 onClick={deleteAccount}
                 disabled={!accountPreview?.can_delete || confirmText !== CONFIRM_WORD || !accountPassword || busy}
               >
-                {busy ? "Deleting account…" : "Delete account permanently"}
+                {busy ? t("deletingAccount") : t("deleteAccountTitle")}
               </button>
             </div>
           </>
         ) : (
           <div className="notice st-result">
-            <strong>{accountDeleted.rows_erased} row(s) erased; {accountDeleted.files_removed} private file(s) removed.</strong>
+            <strong>{t("rowsErased", { rows: accountDeleted.rows_erased, files: accountDeleted.files_removed })}</strong>
             <span>{accountDeleted.message}</span>
             <span className="muted mono" style={{ fontSize: "0.78rem" }}>
               identity_retained={String(accountDeleted.identity_retained)}
             </span>
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              Returning to the signed-out home page…
+              {t("returningSignedOut")}
             </span>
           </div>
         )}
@@ -286,16 +285,17 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
 
   return (
     <div className="st-danger">
-      <div className="st-danger__title">Delete my player data</div>
+      <div className="st-danger__title">{t("deletePlayerHeading")}</div>
       <p>
-        This removes your <strong>players, training sessions, XP events and attribute history</strong>. It keeps the
-        account itself (email, role, plan) — account deletion is a separate API action and is not wired into this screen.
+        {t.rich("playerDescription", {
+          strong: (chunks) => <strong>{chunks}</strong>,
+        })}
       </p>
       {!deleted ? (
         <>
           <div className="field">
             <label className="field__label" htmlFor="st-delete-confirm">
-              Type {CONFIRM_WORD} to confirm
+              {t("typeConfirm", { word: CONFIRM_WORD })}
             </label>
             <input
               id="st-delete-confirm"
@@ -306,7 +306,7 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
               spellCheck={false}
               placeholder={CONFIRM_WORD}
             />
-            <span className="field__hint">Irreversible on this demo database. The button stays disabled until it matches.</span>
+            <span className="field__hint">{t("playerConfirmHint")}</span>
           </div>
           <div className="st-confirm">
             <button
@@ -315,16 +315,16 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
               onClick={deletePlayerData}
               disabled={busy || confirmText !== CONFIRM_WORD}
             >
-              {busy ? "Deleting…" : "Delete player data"}
+              {busy ? t("deleting") : t("deletePlayerButton")}
             </button>
           </div>
         </>
       ) : (
         <div className="notice st-result">
-          <strong>{deleted.deleted_players} player profile(s) deleted.</strong>
+          <strong>{t("playersDeleted", { count: deleted.deleted_players })}</strong>
           <span>{deleted.message}</span>
           <span className="muted" style={{ fontSize: "0.82rem" }}>
-            Returning to home…
+            {t("returningHome")}
           </span>
         </div>
       )}

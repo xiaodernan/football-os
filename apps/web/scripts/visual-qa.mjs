@@ -2547,7 +2547,7 @@ async function run() {
     const playerSlug = String(worldPlayer.path).split('/').pop();
     await open(page, `/simulation/aggregates/player/${playerSlug}`);
     await waitForText(page, 'Player Career Aggregate');
-    const playerBody = await page.evaluate(() => ({
+    const playerAggBody = await page.evaluate(() => ({
       name: document.querySelector('[data-player-name]')?.textContent?.trim() ?? '',
       careers: [...document.querySelectorAll('[data-testid="agg-careers"] tbody tr')].length,
       totals: document.querySelector('[data-testid="player-totals"]')?.textContent ?? '',
@@ -2555,7 +2555,7 @@ async function run() {
     check(
       'the player aggregate page renders the player and careers',
       playerAggBody.name.length > 0 && playerAggBody.careers >= 0 && playerAggBody.totals.includes('goals'),
-      `name "${playerBody.name.slice(0, 48)}" · ${playerBody.careers} careers · totals ${playerBody.totals.slice(0, 60)}`,
+      `name "${playerAggBody.name.slice(0, 48)}" · ${playerAggBody.careers} careers · totals ${playerAggBody.totals.slice(0, 60)}`,
     );
     await shot(page, 'player-aggregate-desktop');
 

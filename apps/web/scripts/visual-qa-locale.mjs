@@ -2681,6 +2681,36 @@ async function run() {
   const enRegisterH1 = await pageH1('/register');
   check('switching back restores the English heading on the register page', enShellBack && enRegisterH1 === 'Create your account', JSON.stringify(enRegisterH1));
 
+  // Item 2c settings: the account screen is protected, so the walk signs the freshly registered
+  // account back in through the cookie proxy and reads the wired page and client-panel labels in
+  // both languages. The danger-zone titles come from PrivacyPanel (useTranslations), the h1 from
+  // the server component (getTranslations) — one check per read path.
+  const signedBackIn = await page.evaluate(async ({ email, password }) => {
+    const response = await fetch('/api/v1/auth/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    return response.status;
+  }, { email: EMAIL, password: PASSWORD });
+  check('the walk can sign back in through the proxy to reach /settings', signedBackIn === 200, `HTTP ${signedBackIn}`);
+  const enSettingsH1 = await pageH1('/settings');
+  check('the settings page heading reads the English catalogue', enSettingsH1 === 'Account & platform', JSON.stringify(enSettingsH1));
+  await setSelect(page, '.nav__locale', 'zh');
+  const zhSettingsH1 = await pageH1('/settings');
+  check('and the settings page heading follows the locale switch', zhSettingsH1 === '账号与平台', JSON.stringify(zhSettingsH1));
+  const zhDangerTitles = await page.$$eval('.st-danger__title', (nodes) => nodes.map((node) => (node.textContent ?? '').trim()));
+  check(
+    'the client privacy panel switches too (useTranslations, not just the shell)',
+    zhDangerTitles.includes('删除我的整个账号') && zhDangerTitles.includes('删除我的球员数据'),
+    JSON.stringify(zhDangerTitles),
+  );
+  await shot(page, 'settings-zh');
+  await setSelect(page, '.nav__locale', 'en');
+  const enSettingsBack = await pageH1('/settings');
+  check('switching back restores the English settings heading', enSettingsBack === 'Account & platform', JSON.stringify(enSettingsBack));
+
   } catch (error) {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed
     // check, capture what the browser was actually looking at, and fall through to the summary.
