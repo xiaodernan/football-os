@@ -10,7 +10,7 @@ confidence: high
 last_reviewed: 2026-10-07
 ---
 
-# Real-World Football Entities Reference
+## Overview
 
 This document bridges the knowledge corpus with the demo world's stored entities by naming real clubs, competitions, and players. It enables the knowledge graph recall hop to connect tactical concepts with actual football organizations.
 
@@ -165,6 +165,26 @@ Working-class club with strong identity. Hard-working, never-say-die attitude re
 
 ### Wyrford Naval
 Tactically flexible team adapting to opponents. Against stronger sides: compact low-block, counter-attacks. Against weaker sides: patient possession, positional rotation. Coaching staff emphasizes preparation and opponent-specific game plans.
+
+## Demo World Competitions (stored leagues and their member clubs)
+
+The demo world stores four league competitions alongside the clubs above. Each league's membership below mirrors the stored rows of the world database; the same clubs appear in the Demo World Teams section.
+
+### Braehaven Elite League
+
+Braehaven Elite League — member clubs: Braeford Athletic, Dunmoor Town, Durgard Metropolitan, Elnwick Athletic, Haldwick Sporting.
+
+### Lyndera Superleague
+
+Lyndera Superleague — member clubs: Elndera Naval, Obrhaven Union, Ostmont Albion, Quernmoor Town, Vireford Miners.
+
+### Ravhurst First Tier
+
+Ravhurst First Tier — member clubs: Cormoor Rovers, Haldhaven Albion, Obrmont Albion, Thorndale Wanderers, Wyrford Naval.
+
+### Thornford Superleague
+
+Thornford Superleague — member clubs: Cordale Town, Corgard Town, Ildwick Athletic, Ostford Wanderers, Thorndera Town.
 
 ## Data Sources and Verification
 

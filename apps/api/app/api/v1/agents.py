@@ -224,6 +224,11 @@ def agent_run(
 
     result = agent.run(query=body.query)
     db.commit()
+    # AgentRunResponse declares string-valued citations; the knowledge layer's citation objects
+    # carry numbers (ordinal, score) — coerce at this boundary, not in the shared citation shape,
+    # which the /knowledge endpoints and the web types read as numbers.
+    if result.get("citations"):
+        result["citations"] = [{key: str(value) for key, value in citation.items()} for citation in result["citations"]]
     return AgentRunResponse(**result)
 
 

@@ -14,7 +14,7 @@ now answers `git grep -li knowledge_graph -- apps/api/app/services/knowledge` �
 | `apps/api/app/services/knowledge/graph_join.py` | the seam: `anchors(db, question)` returns the committed nodes whose **full label** the sentence names, each with the relations the projection reads for it; `reason_lines()` renders them |
 | `apps/api/app/services/knowledge/answer.py` | one `if usable:` block appends those lines to `reasons` — the graph is consulted **only on the branch the retriever already cleared** |
 | `apps/api/evals/golden_joint.json` | 8 joint cases (each names a stored node), 3 near misses (a football word, half a label, no world vocabulary), 1 refusal control |
-| `apps/api/tests/test_knowledge_joint.py` | 9 cases over those three populations |
+| `apps/api/tests/test_knowledge_joint.py` | 18 cases: the three populations above plus §87's `TestRecallHop` over the landed hop |
 
 The channel is `reasons`, not a new response key. `docs/api/openapi.json` is held uncommitted by
 another lane (+116/−0 at this writing) and #79's gate reads that file against the in-process app, so a
@@ -31,9 +31,9 @@ is already published and already rendered — `apps/web/app/knowledge/KnowledgeA
 * Probe over the 8 joint cases through `answer.ask(persist=False)`: **answered = 8/8**,
   **answered with a graph line = 8/8**. The first case's anchor (team `vireford-miners`) reads
   **258 stored relations** and reports **4 fact lines**.
-* Census re-taken on the plane: `git grep -li knowledge_graph -- apps/api/app` → 6 files, one more than the same
-  scan answered at `2f3007a`, and `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 1 file, the
-  new `graph_join.py`, where `2f3007a` answered none.
+* Census re-taken on the plane: `git grep -li knowledge_graph -- apps/api/app` → 7 files (6 at this record's writing; §87's `services/knowledge/recall.py` is the seventh), and
+  `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 2 files (`graph_join.py` plus §87's
+  `recall.py`), where `2f3007a` answered none.
 * `git grep -li golden_joint -- apps/api/app` → 0 files: no door, service or model under the app tier names the joint
   golden set, so `apps/api/tests/test_knowledge_joint.py` is its only reader. Stated as a measurement rather than a
   complaint — an eval that gates a seam does not need a door to earn its keep, and §30's recall hop is the half that
@@ -72,25 +72,18 @@ apart from "the hop was asked and agreed". With A2 applied the answer still refu
 * **Every line discloses the world as synthetic.** `reason()` ends in `[synthetic demo world]`, the
   rule §80 already puts on every world row, because a graph fact is a demo number just as a stat is.
 
-## Still open in §30
+## §30 closed: the hop landed
 
-The hop that **widens recall** — a graph edge bringing a passage into the context that BM25 and cosine
-missed — is not built, but the blocker is no longer the retriever's floors. It is structural: the corpus
-and the world share almost no name vocabulary. Measured at `ba947e0` by the new gate case
-`TestHopSubstrate::test_no_committed_passage_carries_a_stored_entity_label`: **330** player/team/competition
-labels, **138** chunk bodies (heading stripped), **0** whole-label containment hits, and only **2** labels
-sharing even one word with any body ("Braehaven Elite League", "Ravhull FC" — both generic terms like
-"league"/"fc"). A draft hop (kept in `.scratch/r86_graph_recall_draft.py`, never shipped) produced 4 pulls
-over the 8 joint questions; every one was attributed to the neighbour `match "Matchday 1 game 1 · not played"`,
-whose label is composed of generic words. With deterministic sorted neighbour ordering, the population is
-**0 of 8**. The feature was reverted rather than landed with an over-claiming disclosure.
-
-Building the hop requires either a corpus ingestion pipeline that tags passages with entity IDs (a new column
-on `KnowledgeChunk` populated by a named-entity linker), or a separate index mapping entity labels to chunk IDs.
-Until such a substrate exists, the anchoring half (#84) is the full extent of §30's joint clause: the graph adds
-facts to an answer the retriever already cleared, and adds nothing to a refusal. See
-[SPEC_30_RECALL_HOP_SUBSTRATE_VERIFICATION.md](SPEC_30_RECALL_HOP_SUBSTRATE_VERIFICATION.md) for the measured
-numbers and the six-run witness.
+At this record's writing the recall hop was deliberately not built, blocked on naming substrate — the
+[falsification record](SPEC_30_RECALL_HOP_SUBSTRATE_VERIFICATION.md) keeps that measurement as taken. Both gaps
+have since closed: `1dd375c` created the corpus-world naming substrate, and **§87 landed the hop** —
+`apps/api/app/services/knowledge/recall.py` walks each anchored node's stored edges and pulls the first passage
+that carries the neighbour's full label, rendered by a two-phase `assemble_context` whose first segment is
+bit-identical to this record's single-phase render. The substrate re-measured after §87's corpus bridge: 330
+labels, 155 chunks, 46 whole-label hits across 24 labels; 10 hops across 7 of the 8 golden questions; 44
+knowledge tests green on both engine legs (including the PostgreSQL leg this record could not take). Full
+measurements, the twelve witness arms and the two pre-existing reds fixed alongside:
+[SPEC_30_HOP_VERIFICATION.md](SPEC_30_HOP_VERIFICATION.md).
 
 ## Reproduce
 

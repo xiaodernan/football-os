@@ -1,15 +1,16 @@
 """spec §30's joint half: a question is answered by the passages and *named* by the graph.
 
-Every case here is aimed at the clause the audit still records as open — that `retrieval.py` never
-reads the graph, and that no golden retrieval question named a committed team or competition. The
-shape being protected is narrow on purpose: the graph adds facts to an answer the retriever already
-cleared, and adds nothing at all to a refusal. If the hop could rescue a refusal, it would be moving
-`MIN_DISCRIMINATIVE_MATCHES` / `MIN_DISCRIMINATIVE_COVERAGE` without re-measuring them.
+The cases here protect one shape twice: the graph half adds facts to an answer the retriever already
+cleared (TestSeam, TestFloorsUntouched) and — once §87 landed the hop — it may widen an answered
+context with stored passages (TestRecallHop), while still adding nothing at all to a refusal. If a
+hop could rescue a refusal, it would be moving `MIN_DISCRIMINATIVE_MATCHES` /
+`MIN_DISCRIMINATIVE_COVERAGE` without re-measuring them.
 """
 
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -185,8 +186,8 @@ class TestHopSubstrate:
     #: The floors below are counts the scan itself reports; a population that narrows to nothing must go
     #: red here rather than turn the absence claim into a reading of an empty set.
     SUBSTRATE_KINDS = ("player", "team", "competition")
-    #: Updated 2026-10-07 after adding real-world-football-entities.md: 330 labels still valid,
-    #: chunks increased from 138 to 154 due to new document.
+    #: Updated 2026-10-07 (§87): 330 labels unchanged; chunks 138 → 155 after the substrate document
+    #: and its Demo World Competitions bridge section.
     MIN_SUBSTRATE_LABELS = 330
     MIN_SUBSTRATE_CHUNKS = 138
 
@@ -258,6 +259,193 @@ class TestHopSubstrate:
             "not one entity label shares even a single word with a passage body, so this scan is comparing two "
             "populations that do not overlap at all and the presence above proves nothing about naming depth"
         )
+
+
+class TestRecallHop:
+    """§30's hop half (landed with §87): a stored edge pulls a passage into an answered context.
+
+    The contract these cases pin: the hop runs only after the retriever answered (the refusal side
+    is witnessed in TestFloorsUntouched), no pull duplicates a passage the first pass already
+    renders, the hole is capped and ordered by document position, and every hop reason names an
+    edge whose neighbour label the pulled passage *actually carries* — the rule the substrate was
+    built for, checked against the passages themselves rather than against one fixture.
+    """
+
+    #: This question names a stored competition whose five has_team edges reach demo-team passages
+    #: the retriever's top-5 does not render — the hop is where those passages come from.
+    HOP_QUERY = "how high should Braehaven Elite League sides sit"
+    LEAGUE_SLUG = "braehaven-elite-league"
+
+    def _synced(self, session: Session) -> None:
+        from app.services.knowledge import sync_knowledge
+        from app.services.world import sync_world
+
+        sync_knowledge(session)
+        sync_world(session)
+
+    def _usable(self, session: Session, query: str) -> list[Any]:
+        from app.services.knowledge import answer as answer_module
+
+        found = retrieval.search(session, query)
+        return [h for h in found.hits if h.score >= answer_module.ANSWER_SCORE_FLOOR] if found.answerable else []
+
+    def test_a_hopped_answer_publishes_its_pulls_in_all_three_places(self, session: Session) -> None:
+        from app.services.knowledge import recall
+
+        self._synced(session)
+        payload = graph_join_anchored(session, self.HOP_QUERY)
+        assert payload["answered"], "the hop's witness query stopped being answered; re-measure the golden set"
+        hops = _hop_citations(payload)
+        assert hops, f"the answered context carried no pulled passage — reasons: {payload['reasons']}"
+        first_pass = {c["chunk_id"] for c in payload["citations"] if c.get("via") is None}
+        assert first_pass, "the first pass rendered nothing, so this answer has no passages half at all"
+        hop_ids = {c["chunk_id"] for c in hops}
+        assert hop_ids.isdisjoint(first_pass), f"a pull duplicated a first-pass passage: {sorted(hop_ids & first_pass)}"
+        digest_marked = {entry["ref"] for entry in payload["digest"] if entry.get("via") == recall.VIA_GRAPH}
+        assert digest_marked == {c["ref"] for c in hops}, "the digest does not mirror exactly the hop's citations"
+        lines = [line for line in payload["reasons"] if line.startswith(recall.HOP_PREFIX)]
+        assert len(lines) == len(hops), f"{len(hops)} pull(s) but {len(lines)} hop reason line(s): {lines}"
+        for citation in hops:
+            assert f"[{citation['ref']}]" in payload["answer"], f"pull [{citation['ref']}] is cited but its marker is missing from the answer"
+            assert any(f"passage [{citation['ref']}]" in line for line in lines), f"no hop line points at passage [{citation['ref']}]"
+        for line in lines:
+            assert graph_join.DEMO_MARK in line, f"a hop line disclosed no synthetic provenance: {line}"
+            assert "“Braehaven Elite League”" in line, f"a hop line does not name the anchored competition: {line}"
+
+    def test_the_first_pass_of_a_hopped_answer_is_the_single_phase_render(self, session: Session) -> None:
+        from app.services.knowledge import answer as answer_module
+
+        self._synced(session)
+        usable = self._usable(session, self.HOP_QUERY)
+        assert usable, "the witness query no longer answers; re-measure before trusting the identity claim"
+        _, first_digest, first_cites = answer_module.assemble_context(usable)
+        payload = graph_join_anchored(session, self.HOP_QUERY)
+        assert _hop_citations(payload), "the witness query stopped hopping, so first-pass identity would be vacuous here"
+        plain = [c for c in payload["citations"] if c.get("via") is None]
+        assert [(c["chunk_id"], c["ref"]) for c in plain] == [(c["chunk_id"], c["ref"]) for c in first_cites]
+        assert [entry for entry in payload["digest"] if entry.get("via") is None] == first_digest
+
+    def test_the_hop_is_capped_at_what_this_fixture_saturates(self, session: Session) -> None:
+        from app.services.knowledge import recall
+
+        self._synced(session)
+        _, links = project.edges_of(session, "competition", self.LEAGUE_SLUG)
+        neighbours = {(link.other.kind, link.other.label) for link in links if link.other.kind == "team"}
+        assert len(neighbours) > recall.MAX_HOP_CHUNKS, "the anchor offers no more neighbours than the cap, so the cap is untested"
+        hops = _hop_citations(graph_join_anchored(session, self.HOP_QUERY))
+        assert len(hops) <= recall.MAX_HOP_CHUNKS, f"{len(hops)} pull(s) exceeded the cap {recall.MAX_HOP_CHUNKS}"
+        assert len(hops) == 2, f"measured: this fixture saturates the cap with 2 pulls; got {len(hops)} — re-measure cap and corpus"
+
+    def test_the_reserve_admits_every_pull_where_the_bare_budget_evicts(self, session: Session) -> None:
+        from app.services.knowledge import answer as answer_module
+        from app.services.knowledge import recall
+        from app.services.knowledge.chunking import strip_header
+
+        self._synced(session)
+        usable = self._usable(session, self.HOP_QUERY)
+        assert usable
+        _, _, first_cites = answer_module.assemble_context(usable)
+        anchors = graph_join.anchors(session, self.HOP_QUERY)
+        pulls = recall.pulls(session, anchors, exclude={c["chunk_id"] for c in first_cites}, scored=usable)
+        assert pulls, "the witness query stopped pulling; re-measure the reserve case"
+        hits = usable + [pull.hit for pull in pulls]
+        reserve = sum(len(strip_header(pull.hit.text)) for pull in pulls)
+        _, _, bare = answer_module.assemble_context(hits, main=len(usable), extra_budget=0)
+        _, _, paid = answer_module.assemble_context(hits, main=len(usable), extra_budget=reserve)
+        pull_ids = {pull.hit.chunk_id for pull in pulls}
+        rendered_bare = {c["chunk_id"] for c in bare}
+        rendered_paid = {c["chunk_id"] for c in paid}
+        assert len(pull_ids & rendered_bare) < len(pull_ids), "the bare budget rendered every pull after all, so this fixture no longer exercises the reserve"
+        assert pull_ids <= rendered_paid, f"the reserve still evicted a pull: {sorted(pull_ids - rendered_paid)}"
+        first_prefix = [c["chunk_id"] for c in paid][: len(first_cites)]
+        assert first_prefix == [c["chunk_id"] for c in first_cites], "granting the reserve changed what the first pass renders"
+
+    def test_every_pull_reason_names_an_edge_whose_label_the_passage_carries(self, session: Session) -> None:
+        from app.models import KnowledgeChunk
+        from app.services.knowledge import recall
+        from app.services.knowledge.chunking import strip_header
+
+        self._synced(session)
+        checked = 0
+        hopped = 0
+        for case in _golden()["queries"]:
+            payload = graph_join_anchored(session, case["query"])
+            hops = _hop_citations(payload)
+            if hops:
+                hopped += 1
+            lines = [line for line in payload["reasons"] if line.startswith(recall.HOP_PREFIX)]
+            pairs: list[tuple[str, str]] = []
+            for citation in hops:
+                line = next((item for item in lines if f"passage [{citation['ref']}]" in item), None)
+                assert line is not None, f"{case['id']!r}: pull [{citation['ref']}] has no hop line"
+                match = re.search(r"reaches (\w+) “([^”]+)”", line)
+                assert match, f"{case['id']!r}: hop line names no neighbour: {line}"
+                kind, neighbour = match.group(1), match.group(2)
+                pairs.append((kind, neighbour))
+                chunk = session.get(KnowledgeChunk, citation["chunk_id"])
+                assert chunk is not None, f"{case['id']!r}: pulled chunk {citation['chunk_id']} is not stored"
+                body = " ".join(strip_header(chunk.text).casefold().split())
+                assert " ".join(neighbour.casefold().split()) in body, (
+                    f"{case['id']!r}: the hop attributes passage [{citation['ref']}] to {kind} “{neighbour}”, whose name the passage does not carry"
+                )
+                checked += 1
+            assert len(pairs) == len(set(pairs)), f"{case['id']!r}: one neighbour was pulled through two edges: {pairs}"
+        assert hopped >= 5, f"only {hopped} of {len(_golden()['queries'])} golden answers hopped; re-measure the corpus bridge"
+        assert checked >= 5, f"only {checked} pull(s) were rule-checked, floor 5: the rule claim would rest on almost nothing"
+
+    def test_no_golden_answer_cites_a_passage_twice_and_the_hop_still_reaches_the_set(self, session: Session) -> None:
+        self._synced(session)
+        hopped = 0
+        for case in _golden()["queries"]:
+            payload = graph_join_anchored(session, case["query"])
+            ids = [c["chunk_id"] for c in payload["citations"]]
+            assert len(ids) == len(set(ids)), f"{case['id']!r} cites a passage twice: {ids}"
+            assert [c["ref"] for c in payload["citations"]] == list(range(1, len(ids) + 1)), (
+                f"{case['id']!r} citation refs are not the 1-based [n] sequence: {[c['ref'] for c in payload['citations']]}"
+            )
+            if _hop_citations(payload):
+                hopped += 1
+        assert hopped >= 5, f"only {hopped} of {len(_golden()['queries'])} golden answers hopped; the corpus bridge must keep half the set hoppable"
+
+    def test_pull_choice_survives_reingestion_that_rotates_chunk_ids(self, session: Session) -> None:
+        from app.services.knowledge import recall, sync_knowledge
+
+        self._synced(session)
+        anchors = graph_join.anchors(session, self.HOP_QUERY)
+        assert anchors, "the witness query anchors nothing; the determinism claim has no subject"
+        before = recall.pulls(session, anchors, limit=2)
+        assert before, "the scan returned nothing before reingestion, so stability would be measured on an empty set"
+        positions = [(pull.hit.document_slug, pull.hit.ordinal) for pull in before]
+        ids_before = {pull.hit.chunk_id for pull in before}
+        sync_knowledge(session, force=True)
+        after = recall.pulls(session, graph_join.anchors(session, self.HOP_QUERY), limit=2)
+        assert [(pull.hit.document_slug, pull.hit.ordinal) for pull in after] == positions, (
+            "reingestion moved which passage the hop picks — ordering must key on document position, not chunk id"
+        )
+        assert {pull.hit.chunk_id for pull in after} != ids_before, "reingestion produced identical chunk ids, so the stability claim above was vacuous"
+
+    def test_the_scan_respects_its_exclude_and_reuses_a_scored_hit(self, session: Session) -> None:
+        from app.services.knowledge import recall
+
+        self._synced(session)
+        anchors = graph_join.anchors(session, self.HOP_QUERY)
+        assert anchors
+        assert recall.pulls(session, []) == []
+        one = recall.pulls(session, anchors, limit=1)
+        assert len(one) == 1, f"the cap of 1 returned {len(one)} pulls"
+        excluded = recall.pulls(session, anchors, exclude={one[0].hit.chunk_id}, limit=1)
+        assert excluded and excluded[0].hit.chunk_id != one[0].hit.chunk_id, (
+            "the exclude set was ignored: the scan returned the passage it was told the reader already sees"
+        )
+        handoff = excluded[0].hit
+        rescored = recall.pulls(session, anchors, exclude={one[0].hit.chunk_id}, scored=[handoff], limit=1)
+        assert rescored and rescored[0].hit is handoff, "a scored hit the hop re-crossed was re-synthesized instead of reused"
+
+
+def _hop_citations(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    from app.services.knowledge import recall
+
+    return [c for c in payload["citations"] if c.get("via") == recall.VIA_GRAPH]
 
 
 def graph_join_anchored(session: Session, question: str) -> dict[str, Any]:

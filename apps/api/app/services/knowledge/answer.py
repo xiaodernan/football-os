@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from app.core.security import new_public_id
 from app.models import KnowledgeQuery
 from app.providers import LlmResult, get_embedding_provider, get_llm_provider
-from app.services.knowledge import graph_join, retrieval
+from app.services.knowledge import graph_join, recall, retrieval
 from app.services.knowledge.chunking import strip_header
 from app.services.knowledge.retrieval import Filters, Hit
 from app.services.knowledge.text import content_words
@@ -97,22 +97,40 @@ def _lead_body(hit: Hit) -> str:
     return strip_header(hit.text)
 
 
-def assemble_context(hits: list[Hit]) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
-    """Numbered passages + the extractive digest + citation objects, all from the same rows."""
+def assemble_context(
+    hits: list[Hit],
+    *,
+    main: int | None = None,
+    extra_budget: int = 0,
+) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
+    """Numbered passages + the extractive digest + citation objects, all from the same rows.
+
+    Two-phase assembly: `hits[:main]` render under the plain character budget — bit-identical to
+    the single-phase render this function has always done — and the remainder (the recall hop's
+    pulls) render under `budget + extra_budget`, where extra_budget is the summed pull body
+    length, so a budget can never evict a passage it was explicitly widened for. The default
+    (main=None) renders one segment.
+    """
     passages: list[str] = []
     digest: list[dict[str, Any]] = []
     citations: list[dict[str, Any]] = []
     used = 0
-    for index, hit in enumerate(hits[:MAX_CONTEXT_CHUNKS], start=1):
-        body = _lead_body(hit)
-        if used + len(body) > CONTEXT_CHAR_BUDGET and passages:
-            break
-        used += len(body)
-        passages.append(f"[{index}] {hit.title} — {hit.heading}\n{body}")
-        digest.append({"ref": index, "title": hit.title, "section": hit.heading, "sentences": _sentences(body, 3)})
-        citation = hit.citation()
-        citation["ref"] = str(index)
-        citations.append(citation)
+    window = len(hits) if main is None else main
+    segments: list[tuple[list[Hit], int]] = [(hits[: min(window, MAX_CONTEXT_CHUNKS)], CONTEXT_CHAR_BUDGET)]
+    if window < len(hits):
+        segments.append((hits[window:], CONTEXT_CHAR_BUDGET + extra_budget))
+    for segment, budget in segments:
+        for hit in segment:
+            body = _lead_body(hit)
+            if used + len(body) > budget and passages:
+                break
+            ref = len(digest) + 1
+            used += len(body)
+            passages.append(f"[{ref}] {hit.title} — {hit.heading}\n{body}")
+            digest.append({"ref": ref, "title": hit.title, "section": hit.heading, "sentences": _sentences(body, 3)})
+            citation = hit.citation()
+            citation["ref"] = ref
+            citations.append(citation)
     return "\n\n".join(passages), digest, citations
 
 
@@ -169,7 +187,32 @@ def ask(
 
     reasons = [f"retrieval: {reason}" for reason in found.reasons] + confidence_reasons
     if usable:
-        reasons += graph_join.reason_lines(graph_join.anchors(db, question))
+        anchors = graph_join.anchors(db, question)
+        reasons += graph_join.reason_lines(anchors)
+        # The recall hop widens the context only after the floors have answered. `exclude` is
+        # what the first pass already renders, so a pull can never duplicate a visible passage.
+        hopped = recall.pulls(
+            db,
+            anchors,
+            filters=filters,
+            exclude={citation["chunk_id"] for citation in citations},
+            scored=usable,
+        )
+        if hopped:
+            context, digest, citations = assemble_context(
+                usable + [pull.hit for pull in hopped],
+                main=len(usable),
+                extra_budget=sum(len(_lead_body(pull.hit)) for pull in hopped),
+            )
+            refs = {citation["chunk_id"]: citation["ref"] for citation in citations}
+            hopped_ids = {pull.hit.chunk_id for pull in hopped}
+            hopped_refs = {refs[chunk_id] for chunk_id in hopped_ids if chunk_id in refs}
+            citations = [
+                {**citation, "via": recall.VIA_GRAPH} if citation["chunk_id"] in hopped_ids else citation
+                for citation in citations
+            ]
+            digest = [{**entry, "via": recall.VIA_GRAPH} if entry["ref"] in hopped_refs else entry for entry in digest]
+            reasons += [pull.reason(refs[pull.hit.chunk_id]) for pull in hopped if pull.hit.chunk_id in refs]
     timings["ask_total"] = int((time.perf_counter() - started) * 1000)
 
     if not usable:

@@ -631,17 +631,18 @@ Milestones do not own these; every public route must satisfy them as it lands.
   a `CONFLATED` refusal retires a token before its inner misspelling is read, and a citation with no `/api/v1` prefix
   is outside this population — which is why §9–12's `/trainings/…` row was rewritten into the grammar instead of
   being left to a case that cannot see it. No whole-suite leg is claimed by this unit.
-- [x] §84's joint-retrieval anchoring half (`docs/M11_JOINT_RETRIEVAL_VERIFICATION.md`). `retrieval.py` still never
-    reads the graph — that is the recall hop, and it stays open until §33's composite tasks and §64's benchmark
-    re-measure the floors — but `apps/api/app/services/knowledge/graph_join.py` now answers the other half of §30's
-    sentence, *which stored nodes does this sentence name*, and `apps/api/app/services/knowledge/answer.py` prints
+- [x] §84's joint-retrieval anchoring half (`docs/M11_JOINT_RETRIEVAL_VERIFICATION.md`). `retrieval.py` itself never
+    reads the graph (the hop landed later in `apps/api/app/services/knowledge/recall.py`, §87) — but
+    `apps/api/app/services/knowledge/graph_join.py` answers the other half of §30's sentence, *which stored nodes
+    does this sentence name*, and `apps/api/app/services/knowledge/answer.py` prints
     those relations in `reasons`: the channel `/api/v1/knowledge/ask` already publishes and
     `apps/web/app/knowledge/KnowledgeAsk.tsx` already renders, so no response key and no contract regeneration was
     needed while `docs/api/openapi.json` is held dirty by another lane. Anchoring requires a node's whole label in
     the question, so a football word or half a label anchors nothing; `apps/api/evals/golden_joint.json` (8 cases,
     3 near misses, 1 refusal control) retires the audit's "0 files / 0 of 18 queries" measurement, re-taken on the
-    plane as `git grep -li knowledge_graph -- apps/api/app` → 6 files and
-    `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 1 file. Nine cases green; three arms, each
+    plane as `git grep -li knowledge_graph -- apps/api/app` → 7 files and
+    `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 2 files (both re-read after §87 added
+    `recall.py`). Nine cases green; three arms, each
     red at exactly the predicted case: A1 partial-overlap anchoring, A2 the hop wired into the refusal branch, A3 a
     demo fact printed without its disclosure. The refusal control is what makes A2 decisive — every ordinary
     out-of-scope question anchors nothing, so only a question that names a stored club and still misses the corpus
@@ -680,4 +681,33 @@ Milestones do not own these; every public route must satisfy them as it lands.
     the full extent of §30's joint clause: the graph adds facts to an answer the retriever already cleared, and adds
     nothing to a refusal. Plane group regression over `test_knowledge_joint.py` + `test_knowledge_rag.py` +
     `test_knowledge_graph_census.py` + `test_world.py`: **109 collected / 0 red** (SQLite; the PostgreSQL engine on this
-    machine is still dead).
+    machine is still dead). Superseded within the day: `1dd375c` created the substrate this row measured absent, and
+    §87 (below) landed the hop that pulls on it.
+- [x] §87's recall hop (`docs/SPEC_30_HOP_VERIFICATION.md`). The half §84 left open — a stored edge pulling a
+    passage into an answered context — now ships as `apps/api/app/services/knowledge/recall.py` plus a two-phase
+    `answer.assemble_context(hits, main=…, extra_budget=…)`: first-pass hits render under the unchanged 4-chunk /
+    3200-char budget (bit-identical to the single-phase render on every measured query, asserted by a test that
+    compares the two renders), and hop pulls render in a second segment whose budget is that budget plus the summed
+    pull body length, so the reserve can never evict the pull it was granted. A neighbour is hoppable only when the
+    passage carries the full label string (the looser content-word rule measured degenerate — match labels collapse
+    to generic words and attribute any passage that says "final"); pulls exclude exactly what the first pass
+    renders, are capped at 2, dedup per neighbour per anchor, and order by (document slug, ordinal) because chunk
+    ids rotate per ingestion (asserted by a re-ingestion case). The hop runs only on the branch the retriever
+    already answered — the refusal side stays witnessed by `TestFloorsUntouched`. Measured on both engine legs:
+    **44 knowledge tests green** (18 joint + 26 rag; PostgreSQL took these legs for the first time on this machine —
+    61.3s vs SQLite 46.6s); the golden-set probe shows **10 hops across 7 of 8 answers**, every hop rendered, first
+    pass bit-identical everywhere. Substrate re-measured after this commit's corpus bridge section: 330 labels,
+    **155 chunks**, **46 whole-label hits across 24 labels** (20 demo teams + their 4 leagues). Twelve witness arms
+    (mutations of the shipped scan and the answer integration, predictions written before the run): ten red exactly
+    the predicted cases; two under-predictions chased rather than smoothed — A2's unexcluded duplicate also reds the
+    rule case (the duplicate carries the via mark, so its first-pass ref has no hop line), and A5b's digest unmark
+    also reds the first-pass identity case, which reads digest marks; two designed survivors confirmed — the
+    casefold and the header-strip in the scan are currently unexercised by the label population and are kept for
+    body-authoring variance. Two pre-existing HEAD reds were fixed in this landing because they sit in its files:
+    `e00e87d` had stringified the citation `ordinal`/`score`/`similarity` and the `[n]` `ref` to satisfy the agents'
+    response model — against `apps/web/lib/types.ts` and the test that already read them as numbers — so the numbers
+    are restored and `app/api/v1/agents.py` stringifies at its own boundary; and `real-world-football-entities.md`'s
+    lead section chunked without a ` — ` heading line, reddening the corpus contract since `1dd375c`, fixed by making
+    the lead an `## Overview` section. Three agent-lane reds are pre-existing and NOT fixed here, measured on planes
+    at `e00e87d`, `dab6b50` and HEAD without any of this work: `test_run_cached_answer`, the benchmark overall and
+    confidence gates — named in the commit, owed a follow-up unit. No whole-suite leg is claimed.

@@ -125,12 +125,12 @@ class Hit:
             "slug": self.document_slug,
             "title": self.title,
             "section": self.heading,
-            "ordinal": str(self.ordinal),
+            "ordinal": self.ordinal,
             "category": self.category,
             "source": self.source,
             "quote": self.quote(),
-            "score": str(round(self.score, 4)),
-            "similarity": str(round(self.similarity, 4)),
+            "score": round(self.score, 4),
+            "similarity": round(self.similarity, 4),
             "ref": f"/knowledge/{self.document_slug}#{self.ordinal}",
         }
 

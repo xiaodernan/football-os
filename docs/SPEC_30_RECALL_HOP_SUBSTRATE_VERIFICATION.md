@@ -1,5 +1,9 @@
 # §86 recall-hop substrate verification — measured, not assumed
 
+> **Superseded 2026-10-07.** The substrate this record measured absent was created in `1dd375c` (the corpus
+> bridge document, which also flipped the gate case from absence to presence) and the hop itself landed in
+> §87 — see [SPEC_30_HOP_VERIFICATION.md](SPEC_30_HOP_VERIFICATION.md). The measurements below stay as taken.
+
 **HEAD `ba947e0`** ("§85: every ledger's file counts get a reader, and the two stale zeros get retired").
 Witness plane `D:\r86_witness_plane`, built by `.scratch/r86_witness.py` from `git archive HEAD`.
 Six-run witness **6/6 MATCHED**, judged by junit case names AND the failure message attribute.
