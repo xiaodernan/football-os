@@ -12,7 +12,8 @@
     {"id": "touch-dunmoor", "query": "how can Dunmoor Town pass faster under pressure with fewer touches", "expected_nodes": [{"kind": "team", "slug": "dunmoor-town", "label": "Dunmoor Town"}]}
   ],
   "refusal_controls": [
-    {"id": "boot-brand-vireford", "query": "what boot brand do Vireford Miners wear", "expected_nodes": [{"kind": "team", "slug": "vireford-miners", "label": "Vireford Miners"}], "why": "names a stored club and is still out of the corpus's scope: the anchor must find the node, and the answer must still refuse it without borrowing the node as evidence"}
+    {"id": "boot-brand-nonexistent", "query": "what boot brand does Team Nonexistent FC wear", "expected_nodes": [], "why": "names a club the world does not store and the corpus does not cover: neither half can anchor, so the answer must refuse without any graph lines"},
+    {"id": "medical-records-vireford", "query": "show me Vireford Miners' medical records and injury history", "expected_nodes": [{"kind": "team", "slug": "vireford-miners", "label": "Vireford Miners"}], "why": "names a stored club but asks for data the corpus explicitly refuses on (minors' data minimisation, medical privacy): the anchor finds the node, but the answer must still refuse without borrowing the node as evidence"}
   ],
   "near_misses": [
     {"id": "generic-team-word", "query": "when should my team press", "why": "names a football word, not a node: 'team' is not any club's full label, so the anchor must refuse it"},

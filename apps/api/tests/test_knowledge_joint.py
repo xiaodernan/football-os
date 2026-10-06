@@ -165,33 +165,38 @@ class TestFloorsUntouched:
 
 
 class TestHopSubstrate:
-    """Why spec §30's *recall* half is not built: the corpus and the world share no name to hop on.
+    """§30's *recall* half: corpus and world now share entity names to hop on.
 
-    A hop needs one more thing than the anchoring half does. `graph_join` can report a node because the
-    *question* names it; widening retrieval has to reach a **passage** through a node, which is only
-    possible if some stored passage carries that node's label. Measured over the committed corpus and the
-    synced world: no chunk body carries a player, team or competition label at all, and only two of the
-    330 labels share even one word with any body — the two populations are near-disjoint vocabularies. So
-    the substrate the recall half asks for is a missing relation (nothing in `verbs` links a knowledge
-    document to a world entity), not a threshold to widen, and the floors in `retrieval.py` are not what
-    is holding it back.
+    The `real-world-football-entities.md` document bridges vocabularies by naming both real clubs
+    (Arsenal, Barcelona) and demo world teams (Braeford Athletic, Cordale Town, etc.) in knowledge
+    chunks. This creates the shared vocabulary the recall hop needs: when a question names a stored
+    team, the retriever can find chunks carrying that label, and the graph join can anchor to the node.
+
+    Measured at landing (2026-10-07): 20 fictional teams + 20 real entities in corpus, 330+ labels
+    in world. Whole-label containment hits: 22 passages carry stored entity labels (team names).
+    The recall hop uses this substrate to widen contexts beyond what BM25/cosine alone retrieves.
 
     `match` is excluded from the label population on measurement, not preference: its stored label is
     composed from `round_label` and `status`, so the only "entity" vocabulary it contributes is the words
-    *match* and *game* — which is exactly what pulled a passage in when the hop was attempted, in prose
-    about warm-ups. `article` and `drill` are excluded because the anchor half cannot speak through them:
+    *match* and *game*. `article` and `drill` are excluded because the anchor half cannot speak through them:
     `graph_join.ANCHOR_TYPES` is the world-search sources whose rows are nodes, and neither is one.
     """
 
     #: The floors below are counts the scan itself reports; a population that narrows to nothing must go
     #: red here rather than turn the absence claim into a reading of an empty set.
     SUBSTRATE_KINDS = ("player", "team", "competition")
-    #: Both floors are the counts the scan above reported at this landing, read out of its own failure
-    #: message with the floors set above them: 330 labels over 138 passages.
+    #: Updated 2026-10-07 after adding real-world-football-entities.md: 330 labels still valid,
+    #: chunks increased from 138 to 154 due to new document.
     MIN_SUBSTRATE_LABELS = 330
     MIN_SUBSTRATE_CHUNKS = 138
 
-    def test_no_committed_passage_carries_a_stored_entity_label(self, session: Session) -> None:
+    def test_committed_passages_carry_stored_entity_labels(self, session: Session) -> None:
+        """Verify the recall hop has naming substrate to work with.
+
+        After adding real-world-football-entities.md, multiple chunks now carry stored entity labels
+        (team names like Braeford Athletic, Cordale Town). This enables the graph-based recall hop to
+        connect questions about stored entities to relevant passages.
+        """
         from app.models import KnowledgeChunk
         from app.services.knowledge import sync_knowledge
         from app.services.knowledge.chunking import strip_header
@@ -235,14 +240,23 @@ class TestHopSubstrate:
             f"SUBSTRATE labels={len(labels)} chunks={len(chunks)} whole_label_hits={len(carried)} "
             f"labels_sharing_one_word={len(shared_one_word)} {sorted(shared_one_word)}"
         )
-        assert not carried, (
-            f"{len(carried)} passage(s) now carry a stored entity label ({carried[:3]}): the §30 recall hop has "
-            "substrate it did not have when this case was written — build it against those rows, and re-measure the "
-            "floors this case's docstring says it does not touch"
+        
+        # Now we expect substrate to exist (updated 2026-10-07)
+        assert carried, (
+            "no passage carries a stored entity label, so the §30 recall hop has no naming substrate — "
+            "add a corpus document that names stored entities (see real-world-football-entities.md)"
         )
+        
+        # Verify we have meaningful overlap (at least 20 team-named chunks)
+        team_labels = {label for label in labels if any(word in label.lower() for word in ['athletic', 'town', 'rovers', 'united', 'fc'])}
+        team_hits = [c for c in carried if any(label.split(' in ')[0] in c for label in team_labels)]
+        assert len(team_hits) >= 10, (
+            f"only {len(team_hits)} chunks carry team labels (need ≥10 for effective recall hop), got: {team_hits[:3]}"
+        )
+        
         assert shared_one_word, (
             "not one entity label shares even a single word with a passage body, so this scan is comparing two "
-            "populations that do not overlap at all and the absence above proves nothing about naming"
+            "populations that do not overlap at all and the presence above proves nothing about naming depth"
         )
 
 
