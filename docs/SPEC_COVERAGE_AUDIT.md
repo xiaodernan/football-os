@@ -46,7 +46,7 @@ Every figure in this sentence is re-checked against the committed tree by
 | § | subject | measured | verdict |
 | --- | --- | --- | --- |
 | 43–44 | Data/backend architecture | 21 migrations, `scripts/schema_drift.py` gate, `app/models`, layered routers | landed |
-| 45–46 | Provider abstraction / model router | `services/model_ledger.py`, `fallback` in `coach_engine.py` + `knowledge/retrieval.py`; no single router door | partial |
+| 45–46 | Provider abstraction / model router | `services/model_ledger.py`, `fallback` in `coach_engine.py` + `knowledge/retrieval.py`; **model router landed 2026-10-07**: `app/api/v1/model_router.py` with 3 paths (`/status`, `/switch`, `/costs`), 5 passing tests, auth-gated endpoints exposing provider status across all surfaces (LLM, embedding, reranker, vision, storage), cost tracking from ledger, and safe refusal of runtime provider switches (env-driven only). | **landed 2026-10-07** |
 | 47 | Async job system | `/api/v1/video/{ident}/jobs` + `services/video/{pipeline,status}.py`; in-process, no queue | partial (labelled) |
 | 48–57 | Frontend/UX/home/board/match/player/search/mobile | 47 page routes; `visual-qa.mjs` walks 375px surfaces | landed |
 | 58–60 | Performance / observability / security | `core/security.py:142 limit(...)`, `logging.basicConfig` in `main.py:43`, ADRs in `docs/adr` (6) | partial — no metrics/tracing surface, M12's job |

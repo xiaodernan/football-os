@@ -27,6 +27,7 @@ from app.api.v1 import (
     graph,
     knowledge,
     meta,
+    model_router,
     players,
     portfolio,
     progress,
@@ -156,6 +157,7 @@ def create_app() -> FastAPI:
     app.include_router(graph.router, prefix=api)
     app.include_router(agent_memory.router, prefix=api)
     app.include_router(agents.router, prefix=api)
+    app.include_router(model_router.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:
