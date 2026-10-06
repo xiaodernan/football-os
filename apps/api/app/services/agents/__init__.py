@@ -14,6 +14,7 @@ from app.services.agents.research import ResearchAgent
 from app.services.agents.scout import ScoutAgent
 from app.services.agents.simulation import SimulationAgent
 from app.services.agents.tactical import TacticalAgent
+from app.services.agents.video import VideoAgent
 
 AGENT_REGISTRY: dict[str, type[BaseAgent]] = {
     "research": ResearchAgent,
@@ -21,6 +22,7 @@ AGENT_REGISTRY: dict[str, type[BaseAgent]] = {
     "tactical": TacticalAgent,
     "scout": ScoutAgent,
     "simulation": SimulationAgent,
+    "video": VideoAgent,
 }
 
 

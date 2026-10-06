@@ -339,3 +339,60 @@ class TestAgentOrchestrator:
         assert resp2.status_code == 200
         data2 = resp2.json()
         assert data2["from_cache"] is True
+
+    def test_list_includes_video(self) -> None:
+        """Agent list should include video agent."""
+        client = _client()
+        resp = client.get("/api/v1/agents/list")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "video" in data["available_agents"]
+
+    def test_run_video_agent_pipeline(self) -> None:
+        """Video agent should explain the analysis pipeline."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={"query": "How does the video analysis pipeline work?", "agent_type": "video"},
+        )
+        assert resp.status_code == 200, f"Video agent failed: {resp.json()}"
+        data = resp.json()
+        assert "answer" in data
+        assert len(data["answer"]) > 0
+        # Should mention pipeline or stages
+        assert "pipeline" in data["answer"].lower() or "stage" in data["answer"].lower()
+
+    def test_run_video_agent_limitations(self) -> None:
+        """Video agent should explain limitations of demo provider."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/run",
+            json={"query": "What are the limitations of video analysis?", "agent_type": "video"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "answer" in data
+        assert "limitation" in data["answer"].lower() or "demo" in data["answer"].lower()
+
+    def test_run_video_agent_cached(self) -> None:
+        """Second identical video query should return cached result."""
+        client = _client()
+        query = "Explain frame sampling strategy"
+
+        # First call
+        resp1 = client.post(
+            "/api/v1/agents/run",
+            json={"query": query, "agent_type": "video"},
+        )
+        assert resp1.status_code == 200
+        data1 = resp1.json()
+        assert data1["from_cache"] is False
+
+        # Second call (should be cached)
+        resp2 = client.post(
+            "/api/v1/agents/run",
+            json={"query": query, "agent_type": "video"},
+        )
+        assert resp2.status_code == 200
+        data2 = resp2.json()
+        assert data2["from_cache"] is True
