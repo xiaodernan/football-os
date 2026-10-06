@@ -396,3 +396,50 @@ class TestAgentOrchestrator:
         assert resp2.status_code == 200
         data2 = resp2.json()
         assert data2["from_cache"] is True
+
+    def test_composite_task_single_agent(self) -> None:
+        """Composite task with research-only query should invoke single agent."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/composite",
+            json={"query": "What is the offside rule?"},
+        )
+        assert resp.status_code == 200, f"Composite task failed: {resp.json()}"
+        data = resp.json()
+        assert "answer" in data
+        assert "steps" in data
+        assert len(data["steps"]) >= 1
+        # Should have used research agent
+        step_types = [s["agent_type"] for s in data["steps"]]
+        assert "research" in step_types
+
+    def test_composite_task_multi_agent(self) -> None:
+        """Composite task with multi-domain query should invoke multiple agents."""
+        client = _client()
+        resp = client.post(
+            "/api/v1/agents/composite",
+            json={"query": "Analyze tactical pressing patterns and recommend training drills to improve pressing"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "answer" in data
+        assert "steps" in data
+        # Should have invoked at least tactical and coach agents
+        step_types = [s["agent_type"] for s in data["steps"]]
+        assert "tactical" in step_types
+        assert "coach" in step_types
+        assert len(data["steps"]) >= 2
+
+    def test_composite_task_error_handling(self) -> None:
+        """Composite task should handle unknown agent types gracefully."""
+        client = _client()
+        # This query shouldn't trigger any specific agent, falling back to research
+        resp = client.post(
+            "/api/v1/agents/composite",
+            json={"query": "xyz nonesense query that matches nothing"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        # Should still return a response even if no agents matched well
+        assert "answer" in data
+        assert "steps" in data
