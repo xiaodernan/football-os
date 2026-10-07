@@ -500,12 +500,22 @@ async function run() {
       if (!row) return null;
       return [...row.querySelectorAll('.chip')].map((chip) => [chip.textContent.trim(), chip.getAttribute('title') ?? '']);
     });
+    // The row is compared with the door's own answer rather than with a list typed in here. `locales` names the
+    // languages the app will answer in — `middleware.ts` picks one of them from the cookie, `Accept-Language` and
+    // the account's column — and `locales_planned` names the ones it carries no catalogue for yet. Until
+    // 2026-10-01 this check pinned the literal claim `locales: ["en"]`, which was true then: the Chinese
+    // catalogues were byte-for-byte copies of the English file and no component read a catalogue at all. It
+    // stopped being true when the shell was actually translated and served.
+    const caps = await (await fetch(`${BASE}/api/v1/capabilities`, { headers: { accept: 'application/json' } })).json();
+    const shippedLocales = caps.locales ?? [];
+    const pendingLocales = (caps.locales_planned ?? []).filter((locale) => !shippedLocales.includes(locale));
     check(
-      'settings ships only English and labels every other locale planned (spec §81)',
+      'settings lists exactly the locales the capabilities door publishes as shipped (spec §81)',
       !!localeChips &&
-        localeChips.filter(([, title]) => title === '').map(([text]) => text).join(',') === 'en' &&
-        localeChips.filter(([, title]) => title !== '').every(([text, title]) => /planned/iu.test(title) && text.includes('planned')),
-      JSON.stringify(localeChips),
+        localeChips.length === shippedLocales.length &&
+        shippedLocales.every((locale) => localeChips.some(([text]) => text === locale || text.startsWith(`${locale} `))) &&
+        pendingLocales.every((locale) => localeChips.some(([text, title]) => (text.includes(locale) && /planned/iu.test(title)) || /planned/iu.test(text))),
+      `shipped ${JSON.stringify(shippedLocales)} · pending ${JSON.stringify(pendingLocales)} · chips ${JSON.stringify(localeChips)}`,
     );
     await shot(page, '18-settings-desktop');
 
@@ -2661,6 +2671,49 @@ async function run() {
     await open(page, '/graph');
     check('a signed-out visitor never reaches the graph pages', new URL(page.url()).pathname === '/login', new URL(page.url()).pathname);
     await mobileSurface(['/login', 'Sign in', 'login-signed-out']);
+
+    // §81's language control. It has to run *here*, inside the try: the first version of this block sat after
+    // the summary, which is after `browser.close()` in the `finally` below, so every run aborted on the last
+    // step with "Attempted to use detached Frame" and recorded it as an unhandled error.
+    //
+    // The chain it exercises was fully built and completely unexercised: `middleware.ts` resolved a locale from
+    // the `fo_locale` cookie, `Accept-Language` and the account's own column; `i18n/request.ts` loaded the
+    // matching catalogue; `app/layout.tsx` handed it to `NextIntlClientProvider` — and not one component called
+    // `useTranslations`, so the catalogue was loaded into the tree and read by nobody. Nothing in the app wrote
+    // the cookie either, which meant the one explicit signal the middleware understood could not be produced by
+    // a reader at all. The nav now reads `nav.*` and carries the switcher, so this drives the real control.
+    //
+    // `router.refresh()` replaces the RSC tree, and a `$eval` that lands while it is in flight throws
+    // "Attempted to use detached Frame", so the reader's own experience is what is polled: a label that changes
+    // a moment later.
+    const navHome = async () => {
+      try {
+        return await page.$eval('.nav__link[href="/"]', (node) => (node.textContent ?? '').trim());
+      } catch {
+        return '(frame detached)';
+      }
+    };
+    const navBecomes = async (expected, timeout = 30_000) => {
+      const deadline = Date.now() + timeout;
+      while (Date.now() < deadline) {
+        if ((await navHome()) === expected) return true;
+        await sleep(250);
+      }
+      return false;
+    };
+    await open(page, '/');
+    const beforeLocale = await navHome();
+    check('the shell reads the English catalogue when nobody has chosen a language', beforeLocale === 'Home', JSON.stringify(beforeLocale));
+    check('and the control that sets one is in the shell', (await page.$('.nav__locale')) !== null, 'a <select> named by common.language');
+    await setSelect(page, '.nav__locale', 'zh');
+    const toChinese = await navBecomes('首页');
+    check('choosing 简体中文 repaints the shell from the Chinese catalogue', toChinese, JSON.stringify(await navHome()));
+    await open(page, '/');
+    const afterReload = await navHome();
+    check('and the choice survives a reload, because it is the cookie the middleware reads', afterReload === '首页', JSON.stringify(afterReload));
+    await setSelect(page, '.nav__locale', 'en');
+    const backToEnglish = await navBecomes('Home');
+    check('switching back returns the English catalogue, so the choice is not one-way', backToEnglish, JSON.stringify(await navHome()));
   } catch (error) {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed
     // check, capture what the browser was actually looking at, and fall through to the summary.
@@ -2702,47 +2755,6 @@ async function run() {
     unexpected.length === 0,
     unexpected.length ? unexpected.slice(0, 3).join(' | ').slice(0, 220) : `${consoleErrors.length} seen, all of them deliberate`,
   );
-
-  // §81's language control, checked last so that switching locale cannot disturb any check above it.
-  //
-  // The chain this exercises was fully built and completely unexercised: `middleware.ts` resolved a locale from
-  // the `fo_locale` cookie, `Accept-Language` and the account's own column; `i18n/request.ts` loaded the matching
-  // catalogue; `app/layout.tsx` handed it to `NextIntlClientProvider` — and not one component called
-  // `useTranslations`, so the catalogue was loaded into the tree and read by nobody. Nothing in the app wrote the
-  // cookie either, which meant the one explicit signal the middleware understood could not be produced by a
-  // reader at all. The nav now reads `nav.*` and carries the switcher, so this drives the real control and reads
-  // the real labels.
-  // `router.refresh()` replaces the RSC tree, and a `$eval` that lands while it is in flight throws
-  // "Attempted to use detached Frame" — which aborted this run the first time it was written. The reader's own
-  // experience is a label that changes a moment later, so the check polls and tolerates the frame going away.
-  const navHome = async () => {
-    try {
-      return await page.$eval('.nav__link[href="/"]', (node) => (node.textContent ?? '').trim());
-    } catch {
-      return '(frame detached)';
-    }
-  };
-  const navBecomes = async (expected, timeout = 30_000) => {
-    const deadline = Date.now() + timeout;
-    while (Date.now() < deadline) {
-      if ((await navHome()) === expected) return true;
-      await sleep(250);
-    }
-    return false;
-  };
-  await open(page, '/');
-  const beforeLocale = await navHome();
-  check('the shell reads the English catalogue when nobody has chosen a language', beforeLocale === 'Home', JSON.stringify(beforeLocale));
-  check('and the control that sets one is in the shell', (await page.$('.nav__locale')) !== null, 'a <select> named by common.language');
-  await setSelect(page, '.nav__locale', 'zh');
-  const toChinese = await navBecomes('首页');
-  check('choosing 简体中文 repaints the shell from the Chinese catalogue', toChinese, JSON.stringify(await navHome()));
-  await open(page, '/');
-  const afterReload = await navHome();
-  check('and the choice survives a reload, because it is the cookie the middleware reads', afterReload === '首页', JSON.stringify(afterReload));
-  await setSelect(page, '.nav__locale', 'en');
-  const backToEnglish = await navBecomes('Home');
-  check('switching back returns the English catalogue, so the choice is not one-way', backToEnglish, JSON.stringify(await navHome()));
 
   const failed = results.filter((result) => !result.ok);  console.log(`\n${results.length - failed.length}/${results.length} checks passed. Screenshots: ${shots.length} -> docs/screenshots/`);
   if (consoleErrors.length) {
