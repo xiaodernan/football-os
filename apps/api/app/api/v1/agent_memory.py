@@ -9,9 +9,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.core.security import current_user, limit
+from app.core.security import current_user
 from app.models import User
-from app.services.agent_memory import delete_memory, get_memory, list_memories, prune_expired, set_memory
+from app.services.agent_memory import delete_memory, get_memory, list_memories, set_memory
 
 router = APIRouter(prefix="/agents/memory", tags=["agent-memory"])
 

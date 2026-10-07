@@ -30,7 +30,6 @@ from app.services.knowledge_graph import verbs
 from app.services.knowledge_graph.types import GraphRefusal, Link, Node
 from app.services.world.plan import web_path
 
-
 _SPEC_BY_KIND: Final[dict[str, verbs.NodeSpec]] = {spec.kind: spec for spec in verbs.NODES}
 _MODEL_BY_TABLE: Final[dict[str, Any]] = verbs.EDGE_MODEL_BY_TABLE
 

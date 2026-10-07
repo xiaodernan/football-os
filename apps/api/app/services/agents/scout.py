@@ -9,8 +9,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy.orm import Session
-
 from app.services.agents.base import BaseAgent
 from app.services.scouting.requirements import parse_requirements
 from app.services.scouting.search import search
@@ -100,13 +98,13 @@ class ScoutAgent(BaseAgent):
 
         # Build answer
         if not candidates:
-            answer_lines = [f"**No players found matching your criteria.**"]
-            answer_lines.append(f"\n**Requirements parsed:**")
+            answer_lines = ["**No players found matching your criteria.**"]
+            answer_lines.append("\n**Requirements parsed:**")
             for req in parsed.requirements:
                 answer_lines.append(f"- {req.kind}: {req.value}")
 
             if problems:
-                answer_lines.append(f"\n**Unrecognized requirements:**")
+                answer_lines.append("\n**Unrecognized requirements:**")
                 for prob in problems:
                     answer_lines.append(f"- {prob}")
 
@@ -136,18 +134,18 @@ class ScoutAgent(BaseAgent):
                 answer_lines.append(f"   Value: €{value/1_000_000:.1f}M, Fee: €{fee/1_000_000:.1f}M")
 
             # Add requirement breakdown
-            answer_lines.append(f"\n\n**Search criteria:**")
+            answer_lines.append("\n\n**Search criteria:**")
             for req in parsed.requirements:
                 answer_lines.append(f"- {req.kind}: {req.value}")
 
             # Add waterfall if available
             if waterfall:
-                answer_lines.append(f"\n**Filter breakdown:**")
+                answer_lines.append("\n**Filter breakdown:**")
                 for step in waterfall:
                     answer_lines.append(f"- {step.get('phrase', step.get('kind', '?'))}: {step.get('rows_in', '?')} → {step.get('rows_out', '?')}")
 
             if problems:
-                answer_lines.append(f"\n**Ignored (not understood):**")
+                answer_lines.append("\n**Ignored (not understood):**")
                 for prob in problems:
                     answer_lines.append(f"- {prob}")
 

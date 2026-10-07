@@ -78,7 +78,7 @@ class TestMetricsEndpoints:
         assert "avg_latency_ms" in data
         assert "demo_mode_percentage" in data
         assert isinstance(data["calls_by_provider"], dict)
-        assert isinstance(data["total_cost_usd"], (int, float))
+        assert isinstance(data["total_cost_usd"], int | float)
         assert 0.0 <= data["demo_mode_percentage"] <= 100.0
 
     def test_provider_breakdown(self) -> None:

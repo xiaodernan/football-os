@@ -60,7 +60,10 @@ class TestAgentOrchestrator:
     def test_run_cached_answer(self) -> None:
         """Second identical query should return cached result."""
         client = _client()
-        query = "What is a penalty kick?"
+        # The cache only stores answers the RAG answered (confidence >= 0.3); "What is a penalty kick?"
+        # has no passage in the corpus, so every call took the uncached fallback path. This is a golden
+        # question that answers at 0.79 on the seeded test corpus.
+        query = "how do I stop getting beaten in 1v1 as a defender"
 
         # First call
         resp1 = client.post(
@@ -135,7 +138,7 @@ class TestAgentOrchestrator:
         client = _client()
         
         # Create a player first
-        resp_player = client.post(
+        client.post(
             "/api/v1/players",
             json={
                 "display_name": "Test Player",

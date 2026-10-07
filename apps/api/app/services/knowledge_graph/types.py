@@ -39,7 +39,7 @@ class Link:
 
     verb: str
     direction: str
-    other: "Node"
+    other: Node
     facts: dict[str, Any]
     evidence: dict[str, Any]
 

@@ -9,11 +9,29 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from app.models import TrainingSession, UserPlayer
 from app.services.agents.base import BaseAgent
 from app.services.coach_engine import GOAL_FOCUS, _drill_rows
+
+#: `TrainingDrill.difficulty` is an integer column (1/2/3), not the "beginner" word the answer
+#: formatting below used to call `.title()` on — with stored rows every recommendation raised.
+_DIFFICULTY_LABELS: dict[int, str] = {1: "Beginner", 2: "Intermediate", 3: "Advanced"}
+
+
+def _difficulty_rank(drill: dict[str, Any]) -> int:
+    """Sort key: easier first, accepting both the stored int and a legacy string shape."""
+    value = drill.get("difficulty", 2)
+    if isinstance(value, int):
+        return value
+    return {"beginner": 1, "intermediate": 2, "advanced": 3}.get(str(value).lower(), 2)
+
+
+def _difficulty_label(drill: dict[str, Any]) -> str:
+    value = drill.get("difficulty", 2)
+    if isinstance(value, int):
+        return _DIFFICULTY_LABELS.get(value, str(value))
+    return str(value).title()
 
 
 class CoachAgent(BaseAgent):
@@ -77,19 +95,19 @@ class CoachAgent(BaseAgent):
         if primary_drill:
             answer_lines = [
                 f"**Today's Training: {primary_drill.get('title', 'Unknown Drill')}**",
-                f"",
+                "",
                 f"Goal: {goal.replace('_', ' ').title()}",
                 f"Duration: {primary_drill.get('duration_min', 20)} minutes",
-                f"Difficulty: {primary_drill.get('difficulty', 'intermediate').title()}",
-                f"",
-                f"**Why this drill:**",
+                f"Difficulty: {_difficulty_label(primary_drill)}",
+                "",
+                "**Why this drill:**",
             ]
             for reason in reasons:
                 answer_lines.append(f"- {reason}")
 
             if alternatives:
-                answer_lines.append(f"")
-                answer_lines.append(f"**Alternative drills:**")
+                answer_lines.append("")
+                answer_lines.append("**Alternative drills:**")
                 for alt in alternatives:
                     answer_lines.append(f"- {alt.get('title')} ({alt.get('category')})")
 
@@ -151,7 +169,6 @@ class CoachAgent(BaseAgent):
         """Infer training goal from player's weakest attributes."""
         # Simple heuristic: focus on lowest-rated core attributes
         # In a real implementation, this would use the full attribute set
-        archetype = getattr(player, 'archetype', None) or "general"
 
         # Default to general improvement
         return "improve_first_touch"
@@ -173,8 +190,7 @@ class CoachAgent(BaseAgent):
         ]
 
         # Sort by difficulty (easier first for progression)
-        difficulty_order = {"beginner": 0, "intermediate": 1, "advanced": 2}
-        matching.sort(key=lambda d: difficulty_order.get(d.get("difficulty", "intermediate"), 1))
+        matching.sort(key=_difficulty_rank)
 
         return matching[:5]
 

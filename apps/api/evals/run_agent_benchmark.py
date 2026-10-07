@@ -132,13 +132,28 @@ def evaluate(db: Any, *, persist: bool = False) -> BenchmarkReport:
     from uuid import uuid4
 
     from fastapi.testclient import TestClient
-    from sqlalchemy import func, select
+    from sqlalchemy import select
 
     from app.main import app
     from app.models import KnowledgeChunk
 
     golden = _golden()
     report = BenchmarkReport()
+
+    # The docstring promises "corpus and world data", but only a server lifespan normally provides
+    # the world half: a TestClient never runs lifespan, so a fresh per-run database reached the
+    # tactical cases with an empty `tactical_systems` and answered with the 0.3 "database is being
+    # expanded" fallback, and the scouting cases with no `real_players` and answered with the 0.5
+    # "no matches" fallback — the §64 green measured on a database the app itself had booted. Both
+    # syncs commit internally and re-run against an unchanged plan is create 0 / update 0, so this
+    # is the boot's own call, made where the benchmark's prerequisites belong.
+    from app.seed_data import seed_catalogue
+    from app.services.tactics import sync_tactics
+    from app.services.world import sync_world
+
+    seed_catalogue(db)
+    sync_world(db)
+    sync_tactics(db)
 
     # Create authenticated client
     client = TestClient(app)
@@ -157,6 +172,22 @@ def evaluate(db: Any, *, persist: bool = False) -> BenchmarkReport:
     if reg_resp.status_code != 201:
         raise RuntimeError(f"Benchmark registration failed: {reg_resp.json()}")
     client.headers.update({"Authorization": f"Bearer {reg_resp.json()['access_token']}"})
+
+    # CoachAgent answers from the caller's own player row; a benchmark user without a profile
+    # returns "create your profile first" at confidence 0.0 for all three training-plan cases.
+    player_resp = client.post(
+        "/api/v1/players",
+        json={
+            "name": "Benchmark Player",
+            "position": "CM",
+            "age": 24,
+            "level": "intermediate",
+            "preferred_foot": "right",
+            "goal": "become_box_to_box",
+        },
+    )
+    if player_resp.status_code != 201:
+        raise RuntimeError(f"Benchmark player creation failed: {player_resp.json()}")
 
     # Build chunk text map for citation verification
     text_by_chunk = {row[0]: row[1] for row in db.execute(select(KnowledgeChunk.id, KnowledgeChunk.text)).all()}
@@ -177,6 +208,7 @@ def evaluate(db: Any, *, persist: bool = False) -> BenchmarkReport:
         cases = category_data["cases"]
 
         cat_report = CategoryReport(name=cat_name, total_cases=len(cases))
+        cat_confidence_sum = 0.0
         report.categories.append(cat_report)
 
         for case in cases:
@@ -232,6 +264,7 @@ def evaluate(db: Any, *, persist: bool = False) -> BenchmarkReport:
                 total_answered += 1
                 cat_report.answered += 1
                 total_confidence_sum += confidence
+                cat_confidence_sum += confidence
 
             # Track topic coverage
             expected_topics = case.get("expected_topics", [])
@@ -292,7 +325,7 @@ def evaluate(db: Any, *, persist: bool = False) -> BenchmarkReport:
 
         # Category-level metrics
         if cat_report.total_cases > 0:
-            cat_report.avg_confidence = total_confidence_sum / max(1, cat_report.answered)
+            cat_report.avg_confidence = cat_confidence_sum / max(1, cat_report.answered)
             cat_report.topic_coverage = total_topic_matches / max(1, total_topic_cases) if total_topic_cases > 0 else 0.0
 
     # Process refusal cases
@@ -371,7 +404,7 @@ def main() -> int:
     if args.json:
         print(json.dumps(report.to_dict(), indent=2, ensure_ascii=False))
     else:
-        print(f"Agent Benchmark Report (spec §64)")
+        print("Agent Benchmark Report (spec §64)")
         print(f"Backend: {report.backend}")
         print()
         print("Overall Metrics:")

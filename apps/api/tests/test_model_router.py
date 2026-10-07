@@ -81,7 +81,7 @@ class TestModelRouter:
         assert "budget_limit_usd" in data
         assert "remaining_usd" in data
         assert "budget_exhausted" in data
-        assert isinstance(data["spent_today_usd"], (int, float))
+        assert isinstance(data["spent_today_usd"], int | float)
         assert isinstance(data["budget_exhausted"], bool)
 
     def test_budget_not_exhausted_in_test(self) -> None:

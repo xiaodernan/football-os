@@ -9,9 +9,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy.orm import Session
-
-from app.services.agent_memory import list_memories
 from app.services.agents.base import BaseAgent
 from app.services.knowledge.answer import ask
 

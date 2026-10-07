@@ -7,9 +7,6 @@ leakage while allowing administrators to monitor system health.
 
 from __future__ import annotations
 
-import time
-from typing import Any
-
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import func, select
@@ -55,7 +52,7 @@ def system_metrics(
     db: Session = Depends(get_db),
 ) -> SystemMetricsResponse:
     """Report system-level metrics including uptime, request counts, and latency."""
-    from datetime import UTC, datetime, timedelta
+    from datetime import UTC, datetime
 
     now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
