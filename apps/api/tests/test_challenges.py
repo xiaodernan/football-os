@@ -15,9 +15,10 @@ where it can actually break:
   because the window has not closed.
 
 The remaining question is the one §21's own examples raise: are the constraints real? The catalogue is
-tested to publish, for every constraint, whether it binds — and the scenarios that state "no transfers"
-or "academy players only" must say `enforced=False`, because there is no transfer market and the
-selection has no age filter. A constraint that read as applied would be the one dishonest thing here.
+tested to publish, for every constraint, whether it binds — and the answer moved when §22 landed: "no
+transfers" is enforced now (the market refuses every deal for a career carrying the rule, and
+`tests/test_transfers.py` proves it), while "academy players only" still says `enforced=False`, because
+the selection has no age filter. A constraint that read as applied would be the one dishonest thing here.
 """
 
 from __future__ import annotations

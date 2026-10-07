@@ -1962,22 +1962,24 @@ async function run() {
     );
 
     await open(page, '/career');
-    await waitForText(page, 'Open this career');
-    const formShape = await page.evaluate(() => {
+    await waitForText(page, englishMessages.career.startCareer);
+    const formShape = await page.evaluate((labels) => {
       const body = document.body.innerText;
-      const clubSelect = document.querySelector('select[aria-label="Club"]');
+      const clubSelect = document.querySelector(`select[aria-label="${labels.club}"]`);
       return {
         clubs: clubSelect?.options.length ?? 0,
-        objectiveKinds: document.querySelector('select[aria-label^="objective"]')?.options.length ?? 0,
+        objectiveKinds: document.querySelector(`select[aria-label^="${labels.objectiveKind}"]`)?.options.length ?? 0,
         // §22 landed a market that spends this budget and a wage bill that charges it, so the sentence
         // "nothing spends this budget yet" became false; the form now says both what it buys and what it
-        // still cannot do, and this check holds it to the newer pair.
+        // still cannot do, and this check holds it to the newer pair. Since §81's 2c slice that pair is
+        // the catalogue's copy, so the two expressions below are the walk's own words — a rewrite of
+        // budgetHelp has to keep both claims — while the wage sentence is the catalogue value itself.
         budgetSpends: /what the transfer market gets to spend/iu.test(body),
         budgetCaveat: /a budget still changes no fixture by itself/iu.test(body),
-        wageSentence: /every round played charges the wages/iu.test(body),
+        wageSentence: body.includes(labels.wageBillHelp) && /weekly wage of every deal/iu.test(body),
         engineSentence: /labelled simulation engine/iu.test(body),
       };
-    });
+    }, { club: englishMessages.career.club, objectiveKind: englishMessages.career.objectiveKind, wageBillHelp: englishMessages.career.wageBillHelp });
     check(
       'the career form offers the world clubs and the four objective kinds, and admits what a budget does not do',
       formShape.clubs >= 20 &&
@@ -1989,14 +1991,14 @@ async function run() {
       `${formShape.clubs} clubs · ${formShape.objectiveKinds} objective kinds · spends ${formShape.budgetSpends} · caveat ${formShape.budgetCaveat} · wages ${formShape.wageSentence} · engine ${formShape.engineSentence}`,
     );
 
-    await page.type('input[aria-label="Manager name"]', 'QA Season Keeper');
-    await page.evaluate(() => {
-      const target = document.querySelector('input[aria-label="target"]');
+    await page.type(`input[aria-label="${englishMessages.career.managerName}"]`, 'QA Season Keeper');
+    await page.evaluate((targetLabel) => {
+      const target = document.querySelector(`input[aria-label="${targetLabel}"]`);
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
       setter?.call(target, '3');
       target?.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    await clickByText(page, 'button', 'Open this career');
+    }, englishMessages.career.target);
+    await clickByText(page, 'button', englishMessages.career.startCareer);
     await page.waitForFunction(() => location.pathname.startsWith('/career/'), { timeout: 60_000 });
     const seasonUrl = new URL(page.url()).pathname;
     const opened = await page.evaluate(() => {
@@ -2144,6 +2146,49 @@ async function run() {
       'a season stays out of the crawl: robots disallows it and the sitemap does not list it',
       /Disallow:\s*\/career$/mu.test(robotsCareer) && !sitemapCareer.includes('/career'),
       `robots rule ${/Disallow:\s*\/career$/mu.test(robotsCareer)} · sitemap mentions ${sitemapCareer.includes('/career')}`,
+    );
+
+    // 12g-bis. §81 2c: the career screen reads its own catalogue now, so this drives the `fo_locale`
+    // cookie the middleware has always read and reads the repainted page back against messages/zh.json
+    // from disk — the same three-way read the scout screen gets in 10b. The h1 is compared on its own
+    // because the zh nav item and the zh page title are the same words, so a body-level includes would
+    // pass on the nav bar alone; the English-absent check is what catches a Chinese shell painted over
+    // English copy.
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    await open(page, '/career');
+    await waitForText(page, chineseMessages.career.startCareer);
+    const careerZh = await page.evaluate(() => ({
+      h1: document.querySelector('h1')?.textContent.trim() ?? '',
+      body: document.body.innerText.replace(/\s+/gu, ' '),
+    }));
+    check(
+      'the career screen in Chinese renders the catalogue: heading and form strings come from messages/zh.json',
+      careerZh.h1 === chineseMessages.career.title &&
+        careerZh.body.includes(chineseMessages.career.startCareer) &&
+        careerZh.body.includes(chineseMessages.career.addObjective) &&
+        careerZh.body.includes(chineseMessages.career.budgetHelp) &&
+        careerZh.body.includes(chineseMessages.career.wageBillHelp),
+      `h1 ${careerZh.h1} · start ${careerZh.body.includes(chineseMessages.career.startCareer)} · add ${careerZh.body.includes(chineseMessages.career.addObjective)} · budget ${careerZh.body.includes(chineseMessages.career.budgetHelp)} · wages ${careerZh.body.includes(chineseMessages.career.wageBillHelp)}`,
+    );
+    check(
+      'and the English copy is gone from the Chinese page: neither the English budget sentence nor the English button appears',
+      !careerZh.body.includes(englishMessages.career.budgetHelp) && !careerZh.body.includes(englishMessages.career.startCareer),
+      `en budgetHelp present ${careerZh.body.includes(englishMessages.career.budgetHelp)} · en startCareer present ${careerZh.body.includes(englishMessages.career.startCareer)}`,
+    );
+    await shot(page, '31b-career-chinese');
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+    await open(page, '/career');
+    await waitForText(page, englishMessages.career.startCareer);
+    const careerBackEn = await page.evaluate(() => ({
+      h1: document.querySelector('h1')?.textContent.trim() ?? '',
+      body: document.body.innerText.replace(/\s+/gu, ' '),
+    }));
+    check(
+      'switching back to English restores the catalogue values and the English heading',
+      careerBackEn.h1 === englishMessages.career.title &&
+        careerBackEn.body.includes(englishMessages.career.budgetHelp) &&
+        !careerBackEn.body.includes(chineseMessages.career.budgetHelp),
+      `h1 ${careerBackEn.h1} · en budget ${careerBackEn.body.includes(englishMessages.career.budgetHelp)} · zh budget still present ${careerBackEn.body.includes(chineseMessages.career.budgetHelp)}`,
     );
 
     // 12h. M6 manager live challenges (spec §21). The promise is three properties — a window that is time

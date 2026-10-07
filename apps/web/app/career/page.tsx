@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { CareerForm } from "@/components/CareerForm";
@@ -20,19 +21,23 @@ export const dynamic = "force-dynamic";
  * the sitemap — while the clubs and systems the form offers are already public under `/world` and
  * `/tactics`.
  */
-export const metadata: Metadata = {
-  title: "Career mode",
-  description: "Take charge of a generated club, state an objective, and play the season through the labelled simulation engine.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/career") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("career");
+  return {
+    title: t("title"),
+    description: "Take charge of a generated club, state an objective, and play the season through the labelled simulation engine.",
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/career") },
+  };
+}
 
 export default async function CareerIndexPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fcareer");
 
+  const t = await getTranslations("career");
   const [choices, owned] = await Promise.all([serverFetch<CareerOptions>("/careers/options"), serverFetch<CareerList>("/careers")]);
-  if (!choices.ok) return <WorldUnavailable message={choices.error.message} title="Career mode" />;
+  if (!choices.ok) return <WorldUnavailable message={choices.error.message} title={t("title")} />;
   const options = choices.data;
 
   return (
@@ -42,10 +47,10 @@ export default async function CareerIndexPage() {
         eyebrow={`${user.display_name} · careers are private to this account`}
         lede="One club out of the generated world, one tactical system out of the fifty authored here, and an objective you set before the first round. Each fixture is decided by the same engine the simulator uses, and every figure on the season page is a sum of the rounds it lists."
         provenance={{ data_origin: "simulation", is_demo_data: true, disclaimer: options.disclaimer }}
-        title="Career mode"
+        title={t("title")}
       />
 
-      <Panel eyebrow={`${options.clubs.length} clubs · ${options.systems.length} authored systems · ${options.objective_kinds.points ? "4 objective kinds" : "no objective kinds"}`} title="Open a career">
+      <Panel eyebrow={`${options.clubs.length} clubs · ${options.systems.length} authored systems · ${options.objective_kinds.points ? "4 objective kinds" : "no objective kinds"}`} title={t("createCareer")}>
         <CareerForm options={options} />
       </Panel>
 

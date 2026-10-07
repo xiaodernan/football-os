@@ -7,7 +7,7 @@ every item names the files it touches, the gate it must pass, and the thing that
 Rule inherited from spec §96 and this project's own practice: **an item is done when its claim is measured, not
 when its code exists.** A number in a document that no command reproduces is not evidence.
 
-Last updated 2026-10-06.
+Last updated 2026-10-08.
 
 ---
 
@@ -18,8 +18,8 @@ Last updated 2026-10-06.
 | **0. one gate, not three** | ✅ 2026-09-30 | `scripts/check.sh` and CI both run `python -m ruff check` with no path arguments. Proven by planting an unused import in `evals/`: invisible to the old target, caught by the new one, and the script exits 1. |
 | **1. §13's 3D pitch** | ✅ 2026-09-30 | `components/pitch.tsx` projects the board's own metres isometrically; `237/237` walk checks on a production build, with a check that recomputes every dot from its metres and another that holds the projected lawn inside its `viewBox`. `docs/M4_WEB_VERIFICATION.md` §8. |
 | **2a. §81's `locales` claim** | ✅ 2026-10-01 | `tests/test_locale_claims.py` binds `locales` to the catalogues in both directions. Found that `zh.json`/`zh-TW.json` are 278/278 copies of English, so the field stays `["en"]` — and now cannot be moved without a translation or left unmoved with one. |
-| **2b. §81's translations + the switcher** | ✅ 2026-10-06 | `LocaleSwitcher` writes the `fo_locale` cookie middleware has always read; `locales` moved to `["en","zh","zh-TW"]`; both Chinese catalogues are now **complete** — 394 keys each, 393 of them translated, `zh-TW` written as Traditional rather than converted. `test_locale_claims.py` 4/4; the locale walk drives the real switcher and reads the repainted shell. |
-| **2c. the catalogue is reachable from 9 files** | 🟡 started 2026-10-07 | **The scouting screen is done** — `ScoutWorkbench`'s panel titles, buttons, placeholders, eleven column headers and row buttons now come from the `scout` namespace (99 keys nothing had read), verified by three new walk checks that compare the rendered page against `messages/{en,zh}.json` read from disk. **That screen had no walk coverage at all**, which is how the gap survived: every other private page is walked and this one was not. Still literals: world, tactics, training, progress, history, coach, knowledge, club, community, video, simulate, market, challenges. | 394 translated strings, and **8 files read a catalogue**: `Nav`, `LocaleSwitcher`, login, register, settings and the privacy panel. Every content page — world, tactics, scout, training, progress, history, coach, knowledge, club, community, video, simulate, market, challenges — still renders literals, so the Chinese a reader gets today is a translated nav and auth flow above English bodies. The biggest single gap is the `scout` namespace: **99 keys, fully translated, read by nobody**, all of them mapping onto `components/ScoutWorkbench.tsx`. |
+| **2b. §81's translations + the switcher** | ✅ 2026-10-06 | `LocaleSwitcher` writes the `fo_locale` cookie middleware has always read; `locales` moved to `["en","zh","zh-TW"]`; both Chinese catalogues are now **complete** — `zh` 392/394 translated (fallbacks: `scout.placeholder` already Chinese in the English file, `settings.apiBadge` = 'API {status}'), `zh-TW` 393/394 (`settings.apiBadge` only), `zh-TW` written as Traditional rather than converted. `test_locale_claims.py` 4/4; the locale walk drives the real switcher and reads the repainted shell. |
+| **2c. the catalogue is reachable from 11 files** | ✅ 2026-10-08 | Scout + career are wired — `ScoutWorkbench` reads the `scout` namespace (99 keys) and `/career` + `CareerForm` read `career` (17 of 23 keys, including the corrected `budgetHelp`). **11 files now read a catalogue**: `Nav`, `LocaleSwitcher`, login, register, settings, privacy panel, scout workbench, career page, career form. Still literals: world, tactics, training, progress, history, coach, knowledge, club, community, video, simulate, market, challenges — all content pages have no namespace at all. Validation (8 keys) and disclaimer (3 keys) remain unwired. Evidence: walk PASS 195/195 on a production build (parent was 192/192; 3 new checks in 12g-bis block), probe 10/10 reverse control, `test_locale_claims.py` 4/4. Citation fixed: `scripts/visual-qa.mjs` (not `visual-qa-locale.mjs`, a scratch copy committed in 2671102 and deleted in 3f50ce6). |
 | **4. §61 account erasure end to end** | ✅ 2026-10-06 | `GET/DELETE /auth/account`: preview inventories every row and byte, one confirmed transaction, media containment refused before any write, last-owner blocking (409), §60's third 403 code (`invalid_password`) registered. 4 tests including the escaping-storage-key case a planted-defect probe demanded. |
 | **§38/§60 portfolio share + PDF** | ✅ 2026-10-06 | `POST/GET/DELETE /portfolio/share[/{token}]`, `/portfolio/cv.pdf` (reportlab), robots keeps both off crawlers. Committed with the two above because all three share one contract file. |
 | **— migration `0026`** | ✅ 2026-10-07 | Not on the plan. `alembic upgrade head` did not run at all: `0026` and `2e197f085070` both revised `0025`, so the graph had **two heads** and every fresh database, gate run and deploy failed at the first step — invisible because `python -m seed` builds its schema from the models. Behind that: `sa.Index` inside `create_table` (invalid SQL), `now()` (not a SQLite function), and a table declaring `id INTEGER` where the model says `String(40)`, with no `updated_at`. Verified: `0025 → 2e197f085070 → 0026`, `rc=0`, `alembic check` clean. |
@@ -139,10 +139,10 @@ build (was 249), including a screenshot of the Chinese login page. `test_locale_
 switcher repaints the nav bar above a page that cannot change. The catalogue is now the *easy* part; this item is
 the long tail.
 
-**Do.** One namespace at a time, in the order a reader meets them: ~~`auth`~~ done, then `settings`
+**Do.** One namespace at a time, in the order a reader meets them: ~~`auth`~~ done, ~~`scout`~~ done, ~~`career`~~ done, then `settings`
 (the page that also carries the delete-account panel), `common` (shared verbs), then the big feature pages
-(`scout`, `career`, `validation`, `disclaimer`). Each page wired is a page the walk can read in Chinese —
-extend `scripts/visual-qa-locale.mjs` to assert one translated string per wired page rather than trusting the
+(`validation`, `disclaimer`). Each page wired is a page the walk can read in Chinese —
+extend `scripts/visual-qa.mjs` to assert one translated string per wired page rather than trusting the
 absence of literals.
 
 **Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,

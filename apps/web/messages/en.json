@@ -302,7 +302,7 @@
     "selectPhilosophy": "Select philosophy",
     "selectSystem": "Select tactical system",
     "enterBudget": "Enter budget",
-    "budgetHelp": "What the budget buys: wages, fees, agents. What it still cannot do: there is no transfer market in this build.",
+    "budgetHelp": "This is what the transfer market gets to spend: an offer priced above the balance left is refused. A budget still changes no fixture by itself — only a deal that was actually made changes the eleven.",
     "wageBill": "Wage bill",
     "wageBillHelp": "Each round the engine plays now costs the career the weekly wage of every deal it holds at the start of that round."
   },

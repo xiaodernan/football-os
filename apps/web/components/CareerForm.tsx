@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { browserFetch } from "@/lib/api";
@@ -22,6 +23,10 @@ type ObjectiveDraft = { kind: string; target: string; label: string };
 
 export function CareerForm({ options }: { options: CareerOptions }) {
   const router = useRouter();
+  // The `career` namespace was fully translated and read by nobody — this form and its page were English
+  // literals under a translated nav. Each string below comes from the catalogue now, so the reader's
+  // chosen language reaches the form itself, not just the bar above it.
+  const t = useTranslations("career");
   const [club, setClub] = useState(options.clubs[0]?.slug ?? "");
   const [manager, setManager] = useState("");
   const [philosophy, setPhilosophy] = useState(options.philosophies.includes("balanced") ? "balanced" : options.philosophies[0] ?? "");
@@ -84,8 +89,8 @@ export function CareerForm({ options }: { options: CareerOptions }) {
     <div className="stack">
       <div className="grid grid-2">
         <label className="field">
-          <span>Club (generated)</span>
-          <select aria-label="Club" onChange={(event) => setClub(event.target.value)} value={club}>
+          <span>{t("club")}</span>
+          <select aria-label={t("club")} onChange={(event) => setClub(event.target.value)} value={club}>
             {options.clubs.map((row) => (
               <option key={row.slug} value={row.slug}>
                 {row.name} · {row.formation} · {row.overall}
@@ -94,12 +99,12 @@ export function CareerForm({ options }: { options: CareerOptions }) {
           </select>
         </label>
         <label className="field">
-          <span>Manager name</span>
-          <input aria-label="Manager name" onChange={(event) => setManager(event.target.value)} placeholder="How the season is signed" type="text" value={manager} />
+          <span>{t("managerName")}</span>
+          <input aria-label={t("managerName")} onChange={(event) => setManager(event.target.value)} placeholder={t("enterManagerName")} type="text" value={manager} />
         </label>
         <label className="field">
-          <span>Philosophy (stated intent)</span>
-          <select aria-label="Philosophy" onChange={(event) => setPhilosophy(event.target.value)} value={philosophy}>
+          <span>{t("philosophy")} (stated intent)</span>
+          <select aria-label={t("philosophy")} onChange={(event) => setPhilosophy(event.target.value)} value={philosophy}>
             {options.philosophies.map((row) => (
               <option key={row} value={row}>
                 {row}
@@ -108,8 +113,8 @@ export function CareerForm({ options }: { options: CareerOptions }) {
           </select>
         </label>
         <label className="field">
-          <span>Tactical system — the part the engine reads</span>
-          <select aria-label="Tactical system" onChange={(event) => setSystem(event.target.value)} value={system}>
+          <span>{t("tacticalSystem")} — the part the engine reads</span>
+          <select aria-label={t("tacticalSystem")} onChange={(event) => setSystem(event.target.value)} value={system}>
             <option value="">Club default ({clubFormation || "no shape"})</option>
             {systems.map((row) => (
               <option key={row.slug} value={row.slug}>
@@ -120,47 +125,45 @@ export function CareerForm({ options }: { options: CareerOptions }) {
         </label>
         <label className="field">
           <span>
-            Budget ({options.budget_units})
+            {t("budget")} ({options.budget_units})
           </span>
-          <input aria-label="Budget" min={0} onChange={(event) => setBudget(event.target.value)} type="number" value={budget} />
+          <input aria-label={t("budget")} min={0} onChange={(event) => setBudget(event.target.value)} type="number" value={budget} />
         </label>
         <p className="muted" role="note">
-          This is what the transfer market gets to spend: an offer priced above the balance left is refused, and every
-          round played charges the wages of the deals the club holds. A budget still changes no fixture by itself — only
-          a deal that was actually made changes the eleven.
+          {t("budgetHelp")} {t("wageBillHelp")}
         </p>
       </div>
 
       <div className="stack-sm">
-        <span className="eyebrow">Objectives · at least one</span>
+        <span className="eyebrow">{t("objectives")} · at least one</span>
         {objectives.map((row, index) => (
           <div className="row wrap sim-row" key={`objective-${index}`}>
-            <select aria-label={`objective ${index + 1} kind`} onChange={(event) => setObjective(index, { kind: event.target.value })} value={row.kind}>
+            <select aria-label={`${t("objectiveKind")} ${index + 1}`} onChange={(event) => setObjective(index, { kind: event.target.value })} value={row.kind}>
               {KIND_ORDER.filter((kind) => options.objective_kinds[kind]).map((kind) => (
                 <option key={kind} value={kind}>
                   {kind}
                 </option>
               ))}
             </select>
-            <input aria-label="target" onChange={(event) => setObjective(index, { target: event.target.value })} placeholder="target" size={6} type="number" value={row.target} />
-            <input aria-label="label" onChange={(event) => setObjective(index, { label: event.target.value })} placeholder={options.objective_kinds[row.kind]} type="text" value={row.label} />
+            <input aria-label={t("target")} onChange={(event) => setObjective(index, { target: event.target.value })} placeholder={t("target")} size={6} type="number" value={row.target} />
+            <input aria-label={t("label")} onChange={(event) => setObjective(index, { label: event.target.value })} placeholder={options.objective_kinds[row.kind]} type="text" value={row.label} />
             {index > 0 && (
               <button className="btn btn--ghost btn--sm" onClick={() => setObjectives((current) => current.filter((_, at) => at !== index))} type="button">
-                Remove
+                {t("removeObjective")}
               </button>
             )}
           </div>
         ))}
         {objectives.length < 4 && (
           <button className="btn btn--ghost btn--sm" onClick={() => setObjectives((current) => [...current, { kind: "wins", target: "", label: "" }])} type="button">
-            Add an objective
+            {t("addObjective")}
           </button>
         )}
       </div>
 
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <button className="btn" disabled={busy} onClick={submit} type="button">
-          {busy ? "Opening…" : "Open this career"}
+          {busy ? "Opening…" : t("startCareer")}
         </button>
         <span className="muted">Up to {options.max_careers_per_user} per account. Every fixture is decided by the labelled simulation engine.</span>
       </div>
