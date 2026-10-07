@@ -5,7 +5,7 @@ no route, no service" sentence for the projection and its doors and left exactly
 at 2026-10-04: `git grep -li knowledge_graph -- apps/api/app/services/knowledge` answered nothing at all, and
 **0 of the 18** `queries` in `apps/api/evals/golden_rag.json` naming a committed team or competition. This unit lands
 the **anchoring half** of that clause and retires both measurements by re-taking them — the scan the first one cites
-now answers `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 1 file, `graph_join.py`.
+now answers `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 2 files (`graph_join.py`, plus §87's `recall.py`).
 
 ## What shipped
 

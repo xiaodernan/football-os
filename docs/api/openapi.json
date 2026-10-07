@@ -11260,6 +11260,482 @@
           }
         }
       }
+    },
+    "/api/v1/model-router/status": {
+      "get": {
+        "tags": [
+          "model-router"
+        ],
+        "summary": "Router Status",
+        "description": "Report which provider serves each surface and today's spending.",
+        "operationId": "router_status_api_v1_model_router_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/model-router/switch": {
+      "post": {
+        "tags": [
+          "model-router"
+        ],
+        "summary": "Router Switch",
+        "description": "Switch a provider type at runtime (requires valid credentials).\n\nThis is a configuration change that affects all users. Only admins should be able to do this.\nFor now, we refuse all switches since provider selection is driven by environment variables.",
+        "operationId": "router_switch_api_v1_model_router_switch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderSwitchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSwitchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/model-router/costs": {
+      "get": {
+        "tags": [
+          "model-router"
+        ],
+        "summary": "Router Costs",
+        "description": "Report today's AI spending from the model call ledger.",
+        "operationId": "router_costs_api_v1_model_router_costs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Router Costs Api V1 Model Router Costs Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics/system": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "System Metrics",
+        "description": "Report system-level metrics including uptime, request counts, and latency.",
+        "operationId": "system_metrics_api_v1_metrics_system_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemMetricsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics/database": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Database Metrics",
+        "description": "Report database-level metrics including table sizes and query performance.",
+        "operationId": "database_metrics_api_v1_metrics_database_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatabaseMetricsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics/providers": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Provider Metrics",
+        "description": "Report AI provider usage metrics including costs and latency.",
+        "operationId": "provider_metrics_api_v1_metrics_providers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderMetricsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/jobs": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "List Jobs",
+        "description": "List jobs with optional filtering by status and type.",
+        "operationId": "list_jobs_api_v1_jobs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status (QUEUED, RUNNING, COMPLETED, FAILED)",
+              "title": "Status"
+            },
+            "description": "Filter by status (QUEUED, RUNNING, COMPLETED, FAILED)"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by job type",
+              "title": "Type"
+            },
+            "description": "Filter by job type"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Per Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Create Job",
+        "description": "Create a new job. In production, this would trigger a worker to process it.",
+        "operationId": "create_job_api_v1_jobs_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get Job Status",
+        "description": "Get detailed status of a specific job including result or error.",
+        "operationId": "get_job_status_api_v1_jobs__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Delete Job",
+        "description": "Delete a completed or failed job. Cannot delete running jobs.",
+        "operationId": "delete_job_api_v1_jobs__job_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Delete Job Api V1 Jobs  Job Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/cancel": {
+      "post": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Cancel Job",
+        "description": "Cancel a queued or running job.",
+        "operationId": "cancel_job_api_v1_jobs__job_id__cancel_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Cancel Job Api V1 Jobs  Job Id  Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -12035,6 +12511,39 @@
         "type": "object",
         "title": "CurriculumPatchIn"
       },
+      "DatabaseMetricsResponse": {
+        "properties": {
+          "total_model_calls": {
+            "type": "integer",
+            "title": "Total Model Calls"
+          },
+          "model_calls_today": {
+            "type": "integer",
+            "title": "Model Calls Today"
+          },
+          "total_video_assets": {
+            "type": "integer",
+            "title": "Total Video Assets"
+          },
+          "avg_model_call_latency_ms": {
+            "type": "number",
+            "title": "Avg Model Call Latency Ms"
+          },
+          "success_rate": {
+            "type": "number",
+            "title": "Success Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_model_calls",
+          "model_calls_today",
+          "total_video_assets",
+          "avg_model_call_latency_ms",
+          "success_rate"
+        ],
+        "title": "DatabaseMetricsResponse"
+      },
       "DrillOut": {
         "properties": {
           "id": {
@@ -12395,6 +12904,164 @@
         },
         "type": "object",
         "title": "InviteIn"
+      },
+      "JobCreateRequest": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "payload": {
+            "type": "object",
+            "title": "Payload",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "JobCreateRequest"
+      },
+      "JobCreateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "status",
+          "created_at"
+        ],
+        "title": "JobCreateResponse"
+      },
+      "JobListResponse": {
+        "properties": {
+          "jobs": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Jobs"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "per_page": {
+            "type": "integer",
+            "title": "Per Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "jobs",
+          "total",
+          "page",
+          "per_page"
+        ],
+        "title": "JobListResponse"
+      },
+      "JobStatusResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "payload": {
+            "type": "object",
+            "title": "Payload"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "status",
+          "payload",
+          "result",
+          "error",
+          "created_at",
+          "updated_at",
+          "completed_at"
+        ],
+        "title": "JobStatusResponse"
       },
       "KnowledgeAskIn": {
         "properties": {
@@ -13268,6 +13935,168 @@
         "type": "object",
         "title": "ProfileIn"
       },
+      "ProviderMetricsResponse": {
+        "properties": {
+          "total_calls": {
+            "type": "integer",
+            "title": "Total Calls"
+          },
+          "calls_by_provider": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Calls By Provider"
+          },
+          "total_cost_usd": {
+            "type": "number",
+            "title": "Total Cost Usd"
+          },
+          "cost_today_usd": {
+            "type": "number",
+            "title": "Cost Today Usd"
+          },
+          "avg_latency_ms": {
+            "type": "number",
+            "title": "Avg Latency Ms"
+          },
+          "demo_mode_percentage": {
+            "type": "number",
+            "title": "Demo Mode Percentage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_calls",
+          "calls_by_provider",
+          "total_cost_usd",
+          "cost_today_usd",
+          "avg_latency_ms",
+          "demo_mode_percentage"
+        ],
+        "title": "ProviderMetricsResponse"
+      },
+      "ProviderStatusResponse": {
+        "properties": {
+          "demo_mode": {
+            "type": "boolean",
+            "title": "Demo Mode"
+          },
+          "llm": {
+            "type": "string",
+            "title": "Llm"
+          },
+          "embedding": {
+            "type": "string",
+            "title": "Embedding"
+          },
+          "reranker": {
+            "type": "string",
+            "title": "Reranker"
+          },
+          "vision": {
+            "type": "string",
+            "title": "Vision"
+          },
+          "storage": {
+            "type": "string",
+            "title": "Storage"
+          },
+          "football_data": {
+            "type": "string",
+            "title": "Football Data"
+          },
+          "news": {
+            "type": "string",
+            "title": "News"
+          },
+          "budget_spent_today": {
+            "type": "number",
+            "title": "Budget Spent Today"
+          },
+          "budget_limit": {
+            "type": "number",
+            "title": "Budget Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "demo_mode",
+          "llm",
+          "embedding",
+          "reranker",
+          "vision",
+          "storage",
+          "football_data",
+          "news",
+          "budget_spent_today",
+          "budget_limit"
+        ],
+        "title": "ProviderStatusResponse"
+      },
+      "ProviderSwitchRequest": {
+        "properties": {
+          "provider_type": {
+            "type": "string",
+            "title": "Provider Type"
+          },
+          "provider_name": {
+            "type": "string",
+            "title": "Provider Name"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider_type",
+          "provider_name"
+        ],
+        "title": "ProviderSwitchRequest"
+      },
+      "ProviderSwitchResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "new_provider": {
+            "type": "string",
+            "title": "New Provider"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "new_provider"
+        ],
+        "title": "ProviderSwitchResponse"
+      },
       "ReactionIn": {
         "properties": {
           "reaction": {
@@ -13849,6 +14678,56 @@
         ],
         "title": "StartIn",
         "description": "What a caller may choose. The window, the budget, the objectives and the philosophy are not here."
+      },
+      "SystemMetricsResponse": {
+        "properties": {
+          "uptime_seconds": {
+            "type": "number",
+            "title": "Uptime Seconds"
+          },
+          "request_count": {
+            "type": "integer",
+            "title": "Request Count"
+          },
+          "error_count": {
+            "type": "integer",
+            "title": "Error Count"
+          },
+          "avg_latency_ms": {
+            "type": "number",
+            "title": "Avg Latency Ms"
+          },
+          "p95_latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Latency Ms"
+          },
+          "active_users_today": {
+            "type": "integer",
+            "title": "Active Users Today"
+          },
+          "total_users": {
+            "type": "integer",
+            "title": "Total Users"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uptime_seconds",
+          "request_count",
+          "error_count",
+          "avg_latency_ms",
+          "p95_latency_ms",
+          "active_users_today",
+          "total_users"
+        ],
+        "title": "SystemMetricsResponse"
       },
       "TeamIn": {
         "properties": {
