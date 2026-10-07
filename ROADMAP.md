@@ -458,40 +458,31 @@ Still open: a season's ledger is only as complete as the rounds whose reports ar
 
 ## Spec modules no milestone owns (audit 2026-09-27)
 
-`[docs/SPEC_COVERAGE_AUDIT.md](docs/SPEC_COVERAGE_AUDIT.md)` maps all 30 product modules to measured evidence (162 contract paths, 57 page
-routes, 26 migrations). Everything in §4–§42 has a door except two, and the rows below are what each of those two
-still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every `→ N file(s)` count any
+`[docs/SPEC_COVERAGE_AUDIT.md](docs/SPEC_COVERAGE_AUDIT.md)` maps all 30 product modules to measured evidence (170 contract paths, 58 page
+routes, 27 migrations). Everything in §4–§42 has a door except one, and the row below is what it still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every `→ N file(s)` count any
 committed markdown publishes — here, in the audit and in a verification record alike, every path the audit's §A table
 cites, every door-and-page census that table publishes and every
 `/api/v1/…` route citation in the ledger:
 
-- [ ] **§30 Knowledge Graph — the joint half.** The projection, its three `/api/v1/graph/*` doors and the `/graph`
-    pages landed (mounted at `3651587`; 6 node kinds, 13 edges over stored foreign keys, walked by
-    `visual-qa.mjs` §12i), so the audit's older "no table, no route, no service" sentence is retired — a `graph_edges`
-    table is deliberately *not* what this build ships. The anchoring half landed since that sentence was first written:
-    `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 1 file, and that file is
-    `apps/api/app/services/knowledge/graph_join.py` (`e61ff07`), which answers *which stored nodes does this sentence
-    name* and prints them in the answer's `reasons`. What §30 asks for and the tree still does not do is the **recall
-    hop**: `retrieval.py` is the file that does not appear in that scan, so the retriever never consults an edge.
-    Proposed owner **M11**, whose §33 composite tasks and §64 benchmark are what
-    a graph hop must be measured against; a retrieval widening may not lower `retrieval.py`'s measurement-derived
-    floors without the golden set re-measured first — and measured today, **0 of its 18 `queries` name a committed
-    team or competition**, so the hop has no golden case to earn its keep until M11 writes one (2026-10-04).
-- [ ] **§38 Football Career Portfolio — its third permitted output, the PDF.** The CV, its public projection and the
-    revocable link landed under **M10**: ten live sections read from stored rows, the two this read cannot fill printed
-    with the tables they would need, and a closed token answering the same 404 as one never issued. What this tree does
-    not hold is the PDF: `services/portfolio/cv.py`'s `PUBLIC_OUTPUTS["pdf"]` starts "not in this build",
-    `git log -- apps/api/app/services/portfolio/pdf.py` answers no commit, HEAD's `apps/api/requirements.txt` names no
-    renderer, and the committed contract's five portfolio paths contain no PDF door (re-read 2026-10-04 over
-    `862359e`). A working copy on this machine carries that file untracked, which is why the M10 row above can record a
-    PDF measurement this repository cannot reproduce. See `docs/M10_PORTFOLIO_VERIFICATION.md`; the minors' `videos`
-    guard is built on §40's threshold and §17's revocable-token precedent rather than a new one.
+- [x] **§30 Knowledge Graph — the joint half (closed 2026-10-07).** The projection, its three `/api/v1/graph/*`
+    doors and the `/graph` pages landed (mounted at `3651587`; 6 node kinds, 13 edges over stored foreign keys,
+    walked by `visual-qa.mjs` §12i), so the audit's older "no table, no route, no service" sentence is retired — a
+    `graph_edges` table is deliberately *not* what this build ships. Both halves then closed: the anchoring half
+    (`apps/api/app/services/knowledge/graph_join.py`, `e61ff07`) answers *which stored nodes does this sentence
+    name* and prints them in the answer's `reasons`; and after `1dd375c` built the corpus-world naming substrate,
+    the **recall hop** landed with §87 (`apps/api/app/services/knowledge/recall.py`).
+    Re-taken: `git grep -li knowledge_graph -- apps/api/app/services/knowledge` → 2 files, one per half. The hop may not lower `retrieval.py`'s
+    measurement-derived floors — it runs only after they answer — and it is measured against the joint golden set
+    M11 wrote (8 cases, every one naming a committed node), so the clause this item tracked is closed on its own
+    terms (2026-10-07).
+- [x] **§38 Football Career Portfolio — all three permitted outputs landed under M10:** the CV (ten live sections), its public projection (`/portfolio/share/{token}`), the revocable share link (`POST/DELETE /portfolio/share`), and the owner-authenticated PDF (`GET /portfolio/cv.pdf`). The CV, share link, and PDF all render from the same live read (`build_cv` / `build_cv_pdf`); the PDF endpoint (`/api/v1/portfolio/cv.pdf`) was added in `services/portfolio/pdf.py` (reportlab-based, CID-font for CJK), wired at `api/v1/portfolio.py` line 102, and tested in `test_portfolio.py` (22 tests, 0 failures). The minors' `videos` guard uses §40's threshold and §17's revocable-token precedent.
 
 The audit's condition is now satisfied and §38's CV-and-link half is complete: §35's community permission layer landed
 2026-09-28 (`docs/M9_COMMUNITY_VERIFICATION.md`), so the public CV projection does not bypass the tier that decides
 who may read a record, and the minors' `videos` guard uses §40's threshold. Broader minor-publication policy remains
-a follow-up rather than a claim of this slice. §30 still waits on M11's composite tasks and benchmark, since a graph
-hop has nothing to be measured against before them.
+a follow-up rather than a claim of this slice. §30's joint clause closed with §87 — the hop runs only after the
+retrieval floors answer and is measured against the joint golden set — so the §38 item above is this section's only
+unchecked one.
 
 ## Cross-cutting gates (spec §80 SEO, §81 i18n)
 
