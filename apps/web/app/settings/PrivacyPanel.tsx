@@ -89,7 +89,7 @@ export function PrivacyPanel({ mode = "export" }: { mode?: Mode }) {
     return () => {
       cancelled = true;
     };
-  }, [mode, router]);
+  }, [mode, router, t]);
 
   async function downloadExport() {
     setBusy(true);
