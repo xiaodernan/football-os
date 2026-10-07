@@ -139,11 +139,11 @@ build (was 249), including a screenshot of the Chinese login page. `test_locale_
 switcher repaints the nav bar above a page that cannot change. The catalogue is now the *easy* part; this item is
 the long tail.
 
-**Do.** One namespace at a time, in the order a reader meets them: ~~`auth`~~ done, ~~`scout`~~ done, ~~`career`~~ done, ~~`disclaimer`~~ done (2/3 keys — `demoData` + `aiEstimate`; `fictionalResults` has no reader), then `settings`
-(the page that also carries the delete-account panel), `common` (shared verbs). The `validation` namespace
-(8 keys) waits for a form that displays custom error messages — no component uses these yet. Each page wired
-is a page the walk can read in Chinese — extend `scripts/visual-qa.mjs` to assert one translated string per
-wired page rather than trusting the absence of literals.
+**Do.** One namespace at a time, in the order a reader meets them: ~~`auth`~~ done, ~~`scout`~~ done, ~~`career`~~ done, ~~`disclaimer`~~ done (2/3 keys — `demoData` + `aiEstimate`; `fictionalResults` has no reader), ~~`settings`~~ done (86 keys — page + PrivacyPanel fully wired), then `common`
+(shared verbs used across many components). The `validation` namespace (8 keys) waits for a form that
+displays custom error messages — no component uses these yet. Each page wired is a page the walk can read
+in Chinese — extend `scripts/visual-qa.mjs` to assert one translated string per wired page rather than
+trusting the absence of literals.
 
 **Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,
 assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.
