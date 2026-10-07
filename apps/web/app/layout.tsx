@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { Nav } from "@/components/Nav";
 import { LocaleProvider } from "@/components/LocaleProvider";
 import { SITE_NAME, absolute, siteOrigin } from "@/lib/site";
@@ -43,9 +44,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const localeHeader = headersList.get("x-next-intl-locale") ?? headersList.get("next-intl-locale");
   const locale = (locales as readonly string[]).includes(localeHeader ?? "") ? (localeHeader as typeof locales[number]) : defaultLocale;
 
-  const [user, capabilities] = await Promise.all([
+  const [user, capabilities, t] = await Promise.all([
     currentUser().catch(() => null),
     serverFetch<CapabilitiesResponse>("/capabilities").then((result) => (result.ok ? result.data : null)),
+    getTranslations("disclaimer"),
   ]);
   const messages = messagesMap[locale];
   const demoMode = capabilities?.demo_mode ?? true;
@@ -73,11 +75,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <footer className="container" style={{ padding: "2rem 0 3rem", borderTop: "1px solid var(--line-soft)" }}>
             <div className="between wrap" style={{ gap: "0.75rem" }}>
               <span className="muted" style={{ fontSize: "0.82rem" }}>
-                FOOTBALL OS — every figure is synthetic, project-authored or entered by you. No club, league or player
-                imagery is licensed here.
+                {t("demoData")}
               </span>
               <span className="muted" style={{ fontSize: "0.82rem" }}>
-                AI output is an estimate, not a performance, medical or scouting certification.
+                {t("aiEstimate")}
               </span>
             </div>
           </footer>

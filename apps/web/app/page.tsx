@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Empty, Panel, Stat } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
@@ -16,8 +17,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const user = await currentUser();
-  const capabilitiesResult = await serverFetch<CapabilitiesResponse>("/capabilities");
+  const [user, capabilitiesResult, t] = await Promise.all([
+    currentUser(),
+    serverFetch<CapabilitiesResponse>("/capabilities"),
+    getTranslations("disclaimer"),
+  ]);
   const capabilities = capabilitiesResult.ok ? capabilitiesResult.data : null;
 
   let players: Player[] | null = null;
@@ -193,8 +197,7 @@ export default async function HomePage() {
           </Panel>
           <Panel title="AI is an estimate">
             <p className="muted">
-              Coach and AI output is an estimate produced by a labelled engine, not a performance,
-              medical or scouting certification. Reasons and confidence always travel with it.
+              {t("aiEstimate")}
             </p>
           </Panel>
         </div>
