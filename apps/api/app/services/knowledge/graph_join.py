@@ -25,10 +25,10 @@ from sqlalchemy.orm import Session
 
 # Bound to the module, not to its names: `world.search` imports `knowledge.text`, so a package that
 # is entered from either side finds the other half-executed.
+import app.services.knowledge_graph.project as project
 import app.services.world.search as world_search
 from app.services.knowledge.text import content_words
-from app.services.knowledge_graph import project
-from app.services.knowledge_graph.project import Link
+from app.services.knowledge_graph.types import Link
 
 #: The world-search sources whose result type is also a graph node kind. `news` is left out: the
 #: graph's `article` nodes are `NewsArticle` rows, and a KB chunk is not one of them.

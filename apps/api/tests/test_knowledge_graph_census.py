@@ -194,7 +194,7 @@ class TestSpecVerbsAreAccountedFor:
         )
         for name, carriers in verbs.SPEC_VERBS.items():
             assert set(carriers) <= shipped, f"{name} is answered by verbs the graph does not carry"
-        assert landed == {"plays_for", "played_for", "participated_in", "competes_in", "plays"}, (
+        assert landed == {"plays_for", "played_for", "participated_in", "competes_in", "plays", "has_role", "scored"}, (
             f"the landed set moved to {sorted(landed)}; §30's own list is what this case pins"
         )
 

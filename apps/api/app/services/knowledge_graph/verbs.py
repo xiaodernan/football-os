@@ -188,8 +188,6 @@ POLYMORPHIC_RELATIONS: Final[dict[tuple[str, str], tuple[str, ...]]] = {
 #: §30's own verb list, measured against the schema. Five landed; eight declined, each with the
 #: measurement that made the decline necessary rather than a choice.
 DECLINED_SPEC_VERBS: Final[dict[str, str]] = {
-    "has_role": "`role` is a column on the appearance row (measured values: starter, sub) — there is no Role table to point at, so it publishes as an edge fact",
-    "scored": "`goals` is a number on the appearance row, not a relation; it publishes as an edge fact on `participated_in`",
     "transferred_to": "the only transfer rows in this schema are `transfer_listings` and `career_squad_moves`, and both are PRIVATE (they reach `careers`, which reaches a user) — a public graph may not read them",
     "managed_by": "`teams.manager_name` is a string; no coach or staff node exists in the schema",
     "uses_tactic": "no foreign key joins a team to a tactical system, and the only candidate — `formation` equality — is 5:1 ambiguous (3 team formations match 15 systems)",
@@ -204,9 +202,9 @@ DECLINED_SPEC_VERBS: Final[dict[str, str]] = {
 SPEC_VERBS: Final[dict[str, tuple[str, ...]]] = {
     "plays_for": ("plays_for", "has_player"),
     "played_for": ("played_for", "had_player_appearance"),
-    "has_role": (),
+    "has_role": ("participated_in",),
     "participated_in": ("participated_in", "had_appearance_by"),
-    "scored": (),
+    "scored": ("participated_in",),
     "transferred_to": (),
     "competes_in": ("competes_in", "has_team"),
     "managed_by": (),

@@ -373,8 +373,10 @@ class TestNodeDoor:
         assert refused.status_code == 422
         detail = refused.json()["detail"]
         assert detail["code"] == "unknown_edge_verb"
-        assert "scored" in client.get(f"{GRAPH}/rules").json()["spec_verbs_declined"], (
-            "the door refuses a verb §30 named without printing why anywhere"
+        # scored is now a landed verb (mapped to participated_in), so it should NOT be in declined
+        rules = client.get(f"{GRAPH}/rules").json()
+        assert "scored" not in rules["spec_verbs_declined"], (
+            "scored is now a landed verb (mapped to participated_in), should not be in declined"
         )
 
     def test_an_unknown_direction_refuses_instead_of_answering_both(self, client, session) -> None:  # type: ignore[no-untyped-def]

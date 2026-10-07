@@ -14,14 +14,12 @@ drifts from the rows it describes.
 from __future__ import annotations
 
 from app.services.knowledge_graph.project import (
-    GraphRefusal,
-    Link,
-    Node,
     edges_of,
     links,
     neighborhood,
     resolve,
 )
+from app.services.knowledge_graph.types import GraphRefusal, Link, Node
 from app.services.knowledge_graph.verbs import (
     EDGE_MODEL_BY_TABLE,
     EDGES,
