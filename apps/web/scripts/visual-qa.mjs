@@ -18,6 +18,7 @@
  */
 
 import { execFile } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { mkdir, stat, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -29,6 +30,16 @@ const BASE = process.env.QA_BASE ?? 'http://127.0.0.1:3210';
 const CHROME =
   process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const OUT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../../docs/screenshots');
+
+/**
+ * The catalogues themselves, so a check can assert the page printed a *catalogue's* string rather than a
+ * literal that happens to read the same. Read from disk rather than imported, because a JSON import needs an
+ * assertion clause this Node version only accepts in one syntax.
+ */
+const catalogue = (locale) =>
+  JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), 'utf8'));
+const englishMessages = catalogue('en');
+const chineseMessages = catalogue('zh');
 
 const DESKTOP = { width: 1440, height: 900, deviceScaleFactor: 1 };
 const MOBILE = { width: 375, height: 812, deviceScaleFactor: 2, isMobile: true };
@@ -518,6 +529,39 @@ async function run() {
       `shipped ${JSON.stringify(shippedLocales)} · pending ${JSON.stringify(pendingLocales)} · chips ${JSON.stringify(localeChips)}`,
     );
     await shot(page, '18-settings-desktop');
+
+    // 10b. The scouting screen (spec §23–§27) — which had no coverage here at all until this. That is how a
+    // whole surface (99 catalogue keys, four sub-panels, its own API tier) could sit behind English literals
+    // above a fully translated catalogue with nothing to notice: every other private page is walked, and this
+    // one was not.
+    //
+    // The check is deliberately a *language* check rather than a text check. The component's literals and the
+    // catalogue's English values were the same words, so comparing English with English would pass whether the
+    // component read a catalogue or not. A Chinese panel title can only appear if it does.
+    await open(page, '/scout');
+    await waitForText(page, 'Ask the scout in your own words');
+    const scoutEnglish = await bodyText(page);
+    check(
+      'the scouting screen renders the English catalogue',
+      scoutEnglish.includes(englishMessages.scout.askTitle) && scoutEnglish.includes(englishMessages.scout.searchWorld) && scoutEnglish.includes(englishMessages.scout.checkWords),
+      `${englishMessages.scout.askTitle} · ${englishMessages.scout.searchWorld} · ${englishMessages.scout.checkWords}`,
+    );
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    await open(page, '/scout');
+    const scoutChinese = await bodyText(page);
+    check(
+      'and the Chinese one when the reader asks for it — which a literal could not do',
+      scoutChinese.includes(chineseMessages.scout.askTitle) && scoutChinese.includes(chineseMessages.scout.searchWorld) && scoutChinese.includes(chineseMessages.scout.checkWords),
+      `${chineseMessages.scout.askTitle} · ${chineseMessages.scout.searchWorld} · ${chineseMessages.scout.checkWords}`,
+    );
+    await shot(page, '18b-scout-desktop');
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+    await open(page, '/scout');
+    check(
+      'and the switch back leaves the screen in English, so the check is not one-way',
+      (await bodyText(page)).includes(englishMessages.scout.askTitle),
+      englishMessages.scout.askTitle,
+    );
 
     // 12. SEO surface (spec §80): robots, sitemap, canonical, OpenGraph and structured data.
     const [robots, sitemap] = await Promise.all([
@@ -2538,7 +2582,12 @@ async function run() {
     );
 
     // League ledger: pick a competition from the world
-    const compSlug = worldCompetition.path.split('/').pop();
+    // `worldLeague` is the competition this section means — a league ledger is a league's. It is declared with
+    // the rest of the world fixtures near the top of the walk. The first draft of this section named a
+    // `worldCompetition` that was never declared anywhere, which threw `worldCompetition is not defined` and
+    // aborted the whole run at this line: 192 checks recorded instead of 249, with the abort itself appearing
+    // only as the "completed without an unhandled error" check going red.
+    const compSlug = worldLeague.path.split('/').pop();
     await open(page, `/simulation/aggregates/league/${compSlug}`);
     await waitForText(page, 'League Ledger');
     const leagueBody2 = await page.evaluate(() => ({

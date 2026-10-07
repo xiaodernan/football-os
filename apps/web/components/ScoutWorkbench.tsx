@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { ScoutComparePanel } from "@/components/ScoutComparePanel";
@@ -36,6 +37,10 @@ type Busy = "search" | "parse" | "report" | "compare" | null;
  * with the API's own sentence rather than retried quietly.
  */
 export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
+  // The `scout` namespace is 99 keys and was read by nobody: this whole screen was English literals above a
+  // fully translated catalogue, so a Chinese reader got a Chinese nav bar and an English page. Every string
+  // below already had a key — this component was the largest single gap §81 had left.
+  const t = useTranslations("scout");
   const [query, setQuery] = useState("");
   const [career, setCareer] = useState("");
   const [role, setRole] = useState("");
@@ -115,7 +120,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
 
   return (
     <div className="stack">
-      <Panel eyebrow={`${String(rules.integrity.counts.players_stored)} stored players · ${rules.attributes.length} attributes · ${Object.keys(rules.roles).length} roles`} title="Ask the scout in your own words">
+      <Panel eyebrow={`${String(rules.integrity.counts.players_stored)} stored players · ${rules.attributes.length} attributes · ${Object.keys(rules.roles).length} roles`} title={t("askTitle")}>
         <div className="stack-sm">
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             <input
@@ -126,11 +131,11 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
               onKeyDown={(event) => {
                 if (event.key === "Enter") void runSearch();
               }}
-              placeholder="e.g. 找一个 22 岁以下、左脚、能踢 CM、预算 2000 万以下的球员"
+              placeholder={t("placeholder")}
               value={query}
             />
-            <input aria-label="Role to judge the fit against" className="mono" list="scout-roles" maxLength={16} onChange={(event) => setRole(event.target.value)} placeholder="role (optional)" value={role} />
-            <input aria-label="Career slug" className="mono" maxLength={80} onChange={(event) => setCareer(event.target.value)} placeholder="career slug (optional)" value={career} />
+            <input aria-label="Role to judge the fit against" className="mono" list="scout-roles" maxLength={16} onChange={(event) => setRole(event.target.value)} placeholder={t("roleLabel")} value={role} />
+            <input aria-label="Career slug" className="mono" maxLength={80} onChange={(event) => setCareer(event.target.value)} placeholder={t("careerLabel")} value={career} />
           </div>
           <datalist id="scout-roles">
             {Object.entries(rules.roles).map(([code, entry]) => (
@@ -141,15 +146,12 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
           </datalist>
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             <button className="btn btn--primary" disabled={busy !== null || !query.trim()} onClick={() => void runSearch()} type="button">
-              {busy === "search" ? "Searching…" : "Search the world"}
+              {busy === "search" ? t("searching") : t("searchWorld")}
             </button>
             <button className="btn" disabled={busy !== null || !query.trim()} onClick={() => void checkWords()} type="button">
-              {busy === "parse" ? "Reading…" : "Check my words first"}
+              {busy === "parse" ? t("parsing") : t("checkWords")}
             </button>
-            <span className="muted">
-              <span className="mono">career</span> lets a search rank against the band this club is thinnest in; <span className="mono">role</span> adds a fit column and is quoted by the report. Neither is a guess about
-              who you are.
-            </span>
+            <span className="muted">{t("careerHelps")}</span>
           </div>
           {fault && (
             <p className="notice notice--warn">
@@ -168,7 +170,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
       </Panel>
 
       {parsed && (
-        <Panel eyebrow={`POST /scout/parse · ${parsed.filters_applied} filter${parsed.filters_applied === 1 ? "" : "s"} · no row read`} title="What your sentence would filter">
+        <Panel eyebrow={`POST /scout/parse · ${parsed.filters_applied} filter${parsed.filters_applied === 1 ? "" : "s"} · no row read`} title={t("parseTitle")}>
           <div data-testid="scout-parse" className="stack-sm">
             <RequirementList requirements={parsed.requirements} />
             <RefusalBlock refused={parsed.refused} assumptions={parsed.assumptions} unaccounted={parsed.unaccounted} />
@@ -179,7 +181,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
 
       {searched && (
         <>
-          <Panel eyebrow={`${searched.total_matches} match${searched.total_matches === 1 ? "" : "es"} of ${searched.rows_examined} rows examined · sorted by ${searched.sort.key}`} title="Candidates">
+          <Panel eyebrow={`${searched.total_matches} match${searched.total_matches === 1 ? "" : "es"} of ${searched.rows_examined} rows examined · sorted by ${searched.sort.key}`} title={t("resultsTitle")}>
             <div className="stack-sm">
               <RefusalBlock refused={searched.refused} assumptions={searched.assumptions} unaccounted={searched.unaccounted} />
               {searched.truncated && <p className="notice">Only the first {searched.returned} of {searched.total_matches} are printed — `truncated` is the API saying so, not the pool being that size.</p>}
@@ -187,17 +189,17 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
                 <table className="table">
                   <thead>
                     <tr>
-                      <th scope="col">Player</th>
-                      <th scope="col">Age</th>
-                      <th scope="col">Band</th>
-                      <th scope="col">Foot</th>
-                      <th scope="col" className="num">Overall</th>
-                      <th scope="col" className="num">Potential</th>
-                      <th scope="col" className="num">Headroom</th>
-                      <th scope="col" className="num">Asking fee</th>
-                      <th scope="col">Answers</th>
-                      <th scope="col">Report</th>
-                      <th scope="col">Compare</th>
+                      <th scope="col">{t("player")}</th>
+                      <th scope="col">{t("age")}</th>
+                      <th scope="col">{t("band")}</th>
+                      <th scope="col">{t("foot")}</th>
+                      <th scope="col" className="num">{t("overall")}</th>
+                      <th scope="col" className="num">{t("potential")}</th>
+                      <th scope="col" className="num">{t("headroom")}</th>
+                      <th scope="col" className="num">{t("askingFee")}</th>
+                      <th scope="col">{t("answers")}</th>
+                      <th scope="col">{t("report")}</th>
+                      <th scope="col">{t("compare")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -218,7 +220,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
             </div>
           </Panel>
 
-          <Panel eyebrow={`${searched.waterfall.length} cuts · applied in the order the request stated them`} title="How the pool was cut">
+          <Panel eyebrow={`${searched.waterfall.length} cuts · applied in the order the request stated them`} title={t("waterfallTitle")}>
             <div className="world-tablewrap">
               <table className="table">
                 <thead>
@@ -252,18 +254,18 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
           </Panel>
 
           {report?.data && (
-            <Panel eyebrow={`POST /scout/report · ${report.data.fields.length} fields · ${report.data.player.name}`} title="Scouting report">
+            <Panel eyebrow={`POST /scout/report · ${report.data.fields.length} fields · ${report.data.player.name}`} title={t("reportTitle")}>
               <div data-testid="scout-report">
                 <ScoutReportPanel report={report.data} />
               </div>
             </Panel>
           )}
 
-          <Panel eyebrow={slots.length === 2 ? `${slots[0]} against ${slots[1]}` : "choose two candidates with the A and B buttons"} title="Player A against Player B">
+          <Panel eyebrow={slots.length === 2 ? `${slots[0]} against ${slots[1]}` : t("chooseTwo")} title={t("compareTitle")}>
             <div className="stack-sm">
               <div className="row wrap" style={{ gap: "0.6rem" }}>
                 <button className="btn btn--primary" disabled={busy !== null || slots.length !== 2} onClick={() => void runCompare()} type="button">
-                  {busy === "compare" ? "Comparing…" : "Compare the pair"}
+                  {busy === "compare" ? t("comparing") : t("comparePair")}
                 </button>
                 <span className="muted mono">A: {sides.left ?? "—"} · B: {sides.right ?? "—"}</span>
               </div>
@@ -301,6 +303,7 @@ function CandidateRow({
   onReport: () => void;
   onCompare: () => void;
 }) {
+  const t = useTranslations("scout");
   const slot = slots.indexOf(candidate.slug);
   return (
     <tr data-candidate={candidate.slug}>
@@ -329,7 +332,7 @@ function CandidateRow({
       </td>
       <td>
         <button className="btn btn--sm" data-report={candidate.slug} disabled={busy !== null} onClick={onReport} type="button">
-          Report
+          {t("report")}
         </button>
       </td>
       <td>
@@ -343,7 +346,8 @@ function CandidateRow({
 
 /** Every requirement the request produced, with the rule it will cut or rank on and where it came from. */
 function RequirementList({ requirements }: { requirements: ParseView["requirements"] }) {
-  if (!requirements.length) return <p className="muted">No filter came from this sentence — a search over it would rank the whole stored pool.</p>;
+  const t = useTranslations("scout");
+  if (!requirements.length) return <p className="muted">{t("noFilter")}</p>;
   return (
     <ul className="stack-sm" style={{ listStyle: "none", padding: 0 }}>
       {requirements.map((item) => (
