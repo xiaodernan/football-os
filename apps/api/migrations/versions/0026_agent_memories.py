@@ -21,9 +21,8 @@ context fragment for a specific user and agent type, with optional TTL-based exp
    disagreement — which never ran, because `upgrade head` never finished.
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = '0026'
 down_revision = '2e197f085070'
