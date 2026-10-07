@@ -43,4 +43,5 @@ var/
 
 # local scratch logs from agents working in this tree (never committed)
 .scratch/
+.qoder/
 *.log
