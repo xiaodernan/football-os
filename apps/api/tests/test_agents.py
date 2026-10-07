@@ -5,11 +5,15 @@ Verifies that agents can be listed, invoked, and that they persist state via age
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
+from app.core.db import SessionLocal
 from app.main import app
+from app.models import TrainingDrill, TrainingSession, User, UserPlayer
+from app.services.agents.coach import CoachAgent
 
 PASSWORD = "TestPass1234!"  # Must be at least 10 characters
 
@@ -446,3 +450,87 @@ class TestAgentOrchestrator:
         # Should still return a response even if no agents matched well
         assert "answer" in data
         assert "steps" in data
+
+
+class TestCoachStoredSessions:
+    """`_get_recent_sessions` read `s.drill_slug` — an attribute `TrainingSession` never had.
+
+    The CI gate said it in types (`"TrainingSession" has no attribute "drill_slug"`); the runtime said it
+    louder: with any stored session row the coach run raised AttributeError (measured 2026-10-08 via
+    `.scratch/r89_mypy_probe.py`), and no test had ever seeded a session, which is how it survived. The
+    slug is the relationship the FK points at, and a row never completed is not "last trained".
+    """
+
+    def _drill(self, tag: str) -> TrainingDrill:
+        return TrainingDrill(
+            id=f"dr-{tag}",
+            slug=f"stored-drill-{tag}",
+            title="First Touch",
+            category="technical",
+            objective="pin the crash fix",
+            setup="pin the crash fix",
+            difficulty=1,
+            duration_min=20,
+        )
+
+    def _seed_account(self, db, tag: str) -> tuple[str, str]:
+        user = User(
+            id=f"coach-user-{tag}",
+            email=f"coach-{tag}@example.test",
+            password_hash="x",
+            display_name="Coach Tester",
+        )
+        player = UserPlayer(
+            id=f"coach-player-{tag}",
+            user_id=user.id,
+            name="Stored Session Player",
+            position="CM",
+            age=22,
+        )
+        db.add_all([user, player])
+        return user.id, player.id
+
+    def test_a_completed_session_names_its_drills_slug(self) -> None:
+        tag = uuid4().hex[:8]
+        with SessionLocal() as db:
+            user_id, player_id = self._seed_account(db, tag)
+            drill = self._drill(tag)
+            db.add(drill)
+            db.commit()
+            db.add(
+                TrainingSession(
+                    id=f"ts-{tag}",
+                    user_id=user_id,
+                    player_id=player_id,
+                    drill_id=drill.id,
+                    status="completed",
+                    planned_date="2026-01-10",
+                    completed_at=datetime.now(UTC),
+                )
+            )
+            db.commit()
+            rows = CoachAgent(db=db, user_id=user_id, agent_type="coach")._get_recent_sessions()
+        assert [row["drill_slug"] for row in rows] == [f"stored-drill-{tag}"]
+        assert rows[0]["completed_at"] is not None
+
+    def test_a_planned_session_is_not_last_trained(self) -> None:
+        tag = uuid4().hex[:8]
+        with SessionLocal() as db:
+            user_id, player_id = self._seed_account(db, tag)
+            drill = self._drill(tag)
+            db.add(drill)
+            db.commit()
+            db.add(
+                TrainingSession(
+                    id=f"ts-{tag}",
+                    user_id=user_id,
+                    player_id=player_id,
+                    drill_id=drill.id,
+                    status="planned",
+                    planned_date="2026-01-20",
+                    completed_at=None,
+                )
+            )
+            db.commit()
+            rows = CoachAgent(db=db, user_id=user_id, agent_type="coach")._get_recent_sessions()
+        assert rows == [], "a session never completed cannot be the answer's 'Last trained'"

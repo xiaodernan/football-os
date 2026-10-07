@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import time
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
+from app.core.db import SessionLocal
 from app.main import app
+from app.models import AgentMemory, User
+from app.services.agent_memory import prune_expired, set_memory
 
 PASSWORD = "testpass123"
 
@@ -137,3 +142,36 @@ class TestAgentMemoryTtl:
         resp = client.get("/api/v1/agents/memory/get?key=long_lived")
         assert resp.status_code == 200
         assert resp.json()["value"]["persists"] is True
+
+
+class TestPruneExpired:
+    """`prune_expired` must delete exactly what the read side refuses — measured at a pinned clock.
+
+    Before the fix (frozen 2026-01-15 12:00 UTC, measured via `.scratch/r89_mypy_probe.py`) the SQLite
+    bind processor stored `expires_at` as `"2026-01-15 14:00:00.000000"` while the raw-`text()` bound
+    passed `"2026-01-15T12:00:00+00:00"`; lexicographic ' ' < 'T' made a row expiring later *today*
+    compare smaller than now, and prune removed it (removed=2, nothing left). The red this case paints on
+    that code is SQLite-format-specific: PostgreSQL coerces the isoformat string to timestamptz and was
+    already right.
+    """
+
+    def test_prune_removes_only_rows_the_read_side_refuses(self, monkeypatch) -> None:
+        frozen = datetime(2026, 1, 15, 12, 0, 0, tzinfo=UTC)
+        monkeypatch.setattr("app.services.agent_memory._now", lambda: frozen)
+        user = f"prune-{uuid4().hex[:8]}"
+        with SessionLocal() as db:
+            db.add(User(id=user, email=f"{user}@example.test", password_hash="x", display_name="Prune Tester"))
+            db.commit()
+            set_memory(db, user_id=user, agent_type="coach", key="live", value={"a": 1}, ttl_seconds=7200)
+            set_memory(db, user_id=user, agent_type="coach", key="dead", value={"b": 2}, ttl_seconds=-60)
+            db.commit()
+            removed = prune_expired(db)
+            db.commit()
+            remaining = {
+                row.key
+                for row in db.scalars(select(AgentMemory).where(AgentMemory.user_id == user)).all()
+            }
+        assert removed == 1, (
+            "a memory expiring later today was pruned — the comparison bound's format no longer matches storage"
+        )
+        assert remaining == {"live"}

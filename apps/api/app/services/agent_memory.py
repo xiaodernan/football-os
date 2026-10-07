@@ -126,7 +126,12 @@ def delete_memory(db: Session, *, user_id: str, agent_type: str, key: str) -> bo
 
 def prune_expired(db: Session) -> int:
     """Delete all expired rows. Returns count of rows removed."""
-    # Use database-level comparison to avoid timezone issues
-    from sqlalchemy import text
-    result = db.execute(text("DELETE FROM agent_memories WHERE expires_at IS NOT NULL AND expires_at < :now"), {"now": _now().isoformat()})
+    # One comparison, both engines: the bound renders through the same column type that wrote the rows. The
+    # isoformat string this used to pass (a raw `text()` parameter) never lexicographically matched the SQLite
+    # storage format — ' ' < 'T' made every row expiring *later today* compare smaller than now and get pruned.
+    stmt = delete(AgentMemory).where(
+        AgentMemory.expires_at.is_not(None),
+        AgentMemory.expires_at < _now(),
+    )
+    result = db.execute(stmt)
     return result.rowcount

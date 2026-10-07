@@ -90,6 +90,8 @@ class TacticalAgent(BaseAgent):
         elif formation:
             answer = self._describe_formation(systems, formation)
         else:
+            # the guard above returned when both were absent, so topic alone is set here
+            assert topic is not None
             answer = self._explain_concept(systems, topic)
 
         confidence = 0.85 if len(systems) >= 3 else 0.7

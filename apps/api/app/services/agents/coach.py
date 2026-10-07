@@ -198,7 +198,10 @@ class CoachAgent(BaseAgent):
         """Get recent completed training sessions."""
         stmt = (
             select(TrainingSession)
-            .where(TrainingSession.user_id == self.user_id)
+            .where(
+                TrainingSession.user_id == self.user_id,
+                TrainingSession.completed_at.is_not(None),
+            )
             .order_by(TrainingSession.completed_at.desc())
             .limit(limit)
         )
@@ -206,7 +209,7 @@ class CoachAgent(BaseAgent):
         return [
             {
                 "id": s.id,
-                "drill_slug": s.drill_slug,
+                "drill_slug": s.drill.slug,
                 "completed_at": s.completed_at.isoformat() if s.completed_at else None,
                 "execution_rating": s.execution_rating,
             }

@@ -186,7 +186,6 @@ def cancel_job(
         )
 
     job.status = "CANCELLED"
-    job.completed_at = datetime.now(UTC)
     db.commit()
 
     return {"message": f"Job {job_id} cancelled"}
