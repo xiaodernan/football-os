@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import {
@@ -19,22 +20,26 @@ import type { MatchList, NewsList, PlayerList, CompetitionList, WorldStatus } fr
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Football World",
-  description:
-    "Browse the generated football world: competitions, clubs, players, fixtures and match reports — every row labelled synthetic, with the seed and method that produced it.",
-  path: "/world",
-});
-
-const SECTIONS: { href: string; label: string; note: string; countKey: string }[] = [
-  { href: "/world/competitions", label: "Competitions", note: "leagues and cups, with tables built from stored results", countKey: "competitions" },
-  { href: "/world/teams", label: "Clubs", note: "squad, stadium, manager, formation", countKey: "teams" },
-  { href: "/world/players", label: "Players", note: "attributes, season totals, per-match lines", countKey: "players" },
-  { href: "/world/matches", label: "Fixtures & results", note: "match centre with the statistics behind the score", countKey: "matches" },
-  { href: "/world/news", label: "Reports & notes", note: "fact / analysis / speculation, always labelled", countKey: "articles" },
-];
+export async function generateMetadata() {
+  const t = await getTranslations("world");
+  return pageMetadata({
+    title: t("title"),
+    description: t("description"),
+    path: "/world",
+  });
+}
 
 export default async function WorldIndexPage() {
+  const t = await getTranslations("world");
+  
+  const sections = [
+    { href: "/world/competitions", label: t("sectionCompetitionsLabel"), note: t("sectionCompetitionsNote"), countKey: "competitions" },
+    { href: "/world/teams", label: t("sectionClubsLabel"), note: t("sectionClubsNote"), countKey: "teams" },
+    { href: "/world/players", label: t("sectionPlayersLabel"), note: t("sectionPlayersNote"), countKey: "players" },
+    { href: "/world/matches", label: t("sectionFixturesLabel"), note: t("sectionFixturesNote"), countKey: "matches" },
+    { href: "/world/news", label: t("sectionReportsLabel"), note: t("sectionReportsNote"), countKey: "articles" },
+  ];
+
   const [status, competitions, fixtures, news, players] = await Promise.all([
     readWorld<WorldStatus>("/world/status"),
     readWorld<CompetitionList>("/world/competitions", { page_size: 12 }),
@@ -44,7 +49,7 @@ export default async function WorldIndexPage() {
   ]);
 
   if (!status.ok) {
-    return <WorldUnavailable message={status.message} detail="Start the API with scripts/dev.sh, then reload." />;
+    return <WorldUnavailable message={status.message} detail={t("unavailableDetail")} />;
   }
 
   const world = status.data;
@@ -53,10 +58,11 @@ export default async function WorldIndexPage() {
   if (total === 0) {
     return (
       <div className="container page stack">
-        <WorldHead eyebrow="Synthetic dataset" title="Football World" lede="Nothing has been generated yet." provenance={world} />
+        <WorldHead eyebrow={t("eyebrow")} title={t("title")} lede={t("emptyLede")} provenance={world} />
         <div className="notice notice--warn">
-          The world tables are empty. Generate them with <span className="mono">python -m seed</span> in <span className="mono">apps/api</span>, or
-          set <span className="mono">WORLD_AUTO_SYNC=true</span>. This page shows nothing rather than placeholder rows.
+          {t.rich("emptyNotice", {
+            mono: (chunks) => <span className="mono">{chunks}</span>,
+          })}
         </div>
       </div>
     );
@@ -65,22 +71,22 @@ export default async function WorldIndexPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        eyebrow="Synthetic dataset · generated, not scraped"
-        title="Football World"
-        lede="One locally generated football world — clubs, squads, fixtures, statistics and reports. Public, browsable, and honest about being invented."
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        lede={t("lede")}
         provenance={world}
       >
         <form action="/world/search" method="get" className="world-search" style={{ marginTop: "1rem" }} role="search">
           <input
-            aria-label="Search the generated world"
+            aria-label={t("searchAriaLabel")}
             className="input"
             maxLength={120}
             name="q"
-            placeholder="Search clubs, players, fixtures, reports…"
+            placeholder={t("searchPlaceholder")}
             type="search"
           />
           <button className="btn btn--primary" type="submit">
-            Search
+            {t("searchButton")}
           </button>
         </form>
       </WorldHead>
@@ -104,20 +110,20 @@ export default async function WorldIndexPage() {
         <Panel
           action={
             <Link className="btn btn--ghost btn--sm" href="/world/training">
-              Training log
+              {t("trainingLogLink")}
             </Link>
           }
-          eyebrow="What is actually in the tables"
-          title="Contents, counted on this request"
+          eyebrow={t("contentsEyebrow")}
+          title={t("contentsTitle")}
         >
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Table</th>
-                  <th scope="col">Rows</th>
-                  <th scope="col">Gate (spec §65)</th>
-                  <th scope="col">State</th>
+                  <th scope="col">{t("tableHeaderTable")}</th>
+                  <th scope="col">{t("tableHeaderRows")}</th>
+                  <th scope="col">{t("tableHeaderGate")}</th>
+                  <th scope="col">{t("tableHeaderState")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,11 +136,11 @@ export default async function WorldIndexPage() {
                       <td className="num muted">{gate === undefined ? "—" : gate.toLocaleString("en-GB")}</td>
                       <td>
                         {gate === undefined ? (
-                          <span className="muted">not gated</span>
+                          <span className="muted">{t("stateNotGated")}</span>
                         ) : count >= gate ? (
-                          <span className="badge badge--live">MEETS</span>
+                          <span className="badge badge--live">{t("badgeMeets")}</span>
                         ) : (
-                          <span className="badge badge--demo">BELOW</span>
+                          <span className="badge badge--demo">{t("badgeBelow")}</span>
                         )}
                       </td>
                     </tr>
@@ -145,32 +151,31 @@ export default async function WorldIndexPage() {
           </div>
         </Panel>
 
-        <Panel eyebrow="How it was made" title="Generation method">
+        <Panel eyebrow={t("generationEyebrow")} title={t("generationTitle")}>
           <dl className="world-kv">
             <div className="world-kv__row">
-              <dt>dataset version</dt>
+              <dt>{t("labelDatasetVersion")}</dt>
               <dd className="mono">{world.version}</dd>
             </div>
             <div className="world-kv__row">
-              <dt>seed</dt>
+              <dt>{t("labelSeed")}</dt>
               <dd className="mono">{world.seed}</dd>
             </div>
             <div className="world-kv__row">
-              <dt>auto-sync</dt>
+              <dt>{t("labelAutoSync")}</dt>
               <dd className="mono">{String(world.auto_sync)}</dd>
             </div>
             <div className="world-kv__row">
-              <dt>seasons</dt>
+              <dt>{t("labelSeasons")}</dt>
               <dd>{world.seasons.join(" · ")}</dd>
             </div>
             <div className="world-kv__row">
-              <dt>positions</dt>
+              <dt>{t("labelPositions")}</dt>
               <dd>{world.positions.join(" · ")}</dd>
             </div>
           </dl>
           <p className="muted world-section-note" style={{ marginTop: "0.75rem" }}>
-            Same seed ⇒ same world. Re-running the generator changes rows that were edited upstream, never the ones that were not,
-            because each row is keyed by a natural key rather than a random identifier.
+            {t("generationNote")}
           </p>
           <div style={{ marginTop: "0.75rem" }}>
             <Provenance provenance={world} />
@@ -179,13 +184,13 @@ export default async function WorldIndexPage() {
       </div>
 
       <section className="stack">
-        <h2 className="h2">Browse</h2>
+        <h2 className="h2">{t("browseTitle")}</h2>
         <div className="world-cards">
-          {SECTIONS.map((section) => (
+          {sections.map((section) => (
             <Link className="world-card" href={section.href} key={section.href}>
               <span className="world-card__title">{section.label}</span>
               <span className="world-card__meta">{section.note}</span>
-              <span className="chip mono">{(world.counts[section.countKey] ?? 0).toLocaleString("en-GB")} rows</span>
+              <span className="chip mono">{(world.counts[section.countKey] ?? 0).toLocaleString("en-GB")} {t("rowsUnit")}</span>
             </Link>
           ))}
         </div>
@@ -193,11 +198,11 @@ export default async function WorldIndexPage() {
 
       <div className="grid grid-2">
         <Panel
-          eyebrow="Tier 1 first"
-          title="Competitions"
+          eyebrow={t("panelCompetitionsEyebrow")}
+          title={t("panelCompetitionsTitle")}
           action={
             <Link className="btn btn--ghost btn--sm" href="/world/competitions">
-              All
+              {t("panelCompetitionsAction")}
             </Link>
           }
         >
@@ -213,7 +218,7 @@ export default async function WorldIndexPage() {
                     <CompetitionLink competition={{ id: row.id, slug: row.slug, name: row.name, kind: row.kind, path: row.path }} />
                   </div>
                   <div className="world-fixture__score">
-                    <span className="num muted">{row.team_count} clubs</span>
+                    <span className="num muted">{row.team_count} {t("clubsUnit")}</span>
                   </div>
                 </li>
               ))}
@@ -224,11 +229,11 @@ export default async function WorldIndexPage() {
         </Panel>
 
         <Panel
-          eyebrow="Next up"
-          title="Fixtures & recent results"
+          eyebrow={t("panelFixturesEyebrow")}
+          title={t("panelFixturesTitle")}
           action={
             <Link className="btn btn--ghost btn--sm" href="/world/matches">
-              All
+              {t("panelFixturesAction")}
             </Link>
           }
         >
@@ -246,11 +251,11 @@ export default async function WorldIndexPage() {
 
       <div className="grid grid-2">
         <Panel
-          eyebrow="Highest rated"
-          title="Players"
+          eyebrow={t("panelPlayersEyebrow")}
+          title={t("panelPlayersTitle")}
           action={
             <Link className="btn btn--ghost btn--sm" href="/world/players">
-              All
+              {t("panelPlayersAction")}
             </Link>
           }
         >
@@ -280,11 +285,11 @@ export default async function WorldIndexPage() {
         </Panel>
 
         <Panel
-          eyebrow="Latest"
-          title="Reports & notes"
+          eyebrow={t("panelReportsEyebrow")}
+          title={t("panelReportsTitle")}
           action={
             <Link className="btn btn--ghost btn--sm" href="/world/news">
-              All
+              {t("panelReportsAction")}
             </Link>
           }
         >
@@ -312,9 +317,10 @@ export default async function WorldIndexPage() {
       </div>
 
       <p className="muted world-section-note">
-        Nothing on this page came from a feed or a scrape: <span className="mono">source: synthetic-world</span>, generated from seed{" "}
-        <span className="mono">{world.seed}</span> by <span className="mono">apps/api/app/services/world</span>. No real club, league or person is
-        represented.
+        {t.rich("footerNote", {
+          seed: world.seed,
+          mono: (chunks) => <span className="mono">{chunks}</span>,
+        })}
       </p>
     </div>
   );
