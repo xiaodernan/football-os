@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { CallNote, useClubCall } from "@/components/ClubTools";
@@ -169,6 +170,7 @@ export function SessionRecorder({ formula, ident, limits, teams, today }: { form
  * window and (optionally) a sheet, and the answer is recomputed for whoever reads it afterwards.
  */
 export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }: { defaultFrom: string; ident: string; kinds: string[]; limits: ReportLimits; teams: TeamView[]; today: string }) {
+  const t = useTranslations("common");
   const { busy, call, note } = useClubCall();
   const [kind, setKind] = useState(kinds[0] ?? "");
   const [from, setFrom] = useState(defaultFrom);
@@ -216,7 +218,7 @@ export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }:
           onClick={() => void call("report-save", `/club/academy/${encodeURIComponent(ident)}/reports`, { body: { kind, window_from: from.trim(), window_to: to.trim(), team: team === "" ? null : team } })}
           type="button"
         >
-          {busy === "report-save" ? "Saving the question…" : "Save the question"}
+          {busy === "report-save" ? `${t("save")} the question…` : `${t("save")} the question`}
         </button>
         <span className="muted" style={{ fontSize: "0.84rem" }}>
           {limits.max_reports_per_organization} reports per tenant — and no figure is sent with it: the answer is computed when
