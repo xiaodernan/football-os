@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { browserFetch, errorMessage } from "@/lib/api";
@@ -13,6 +14,7 @@ import { browserFetch, errorMessage } from "@/lib/api";
  */
 export function BoardsNew({ systems }: { systems: { slug: string; name: string }[] }) {
   const router = useRouter();
+  const t = useTranslations("common");
   const [origin, setOrigin] = useState(systems[0]?.slug ?? "");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -74,7 +76,7 @@ export function BoardsNew({ systems }: { systems: { slug: string; name: string }
       </div>
       <div>
         <button className="btn btn--primary btn--sm" disabled={busy || !origin} onClick={create} type="button">
-          {busy ? "Creating…" : "Create and edit"}
+          {busy ? `${t("create")}…` : `${t("create")} and edit`}
         </button>
       </div>
       <p className="muted world-section-note">
