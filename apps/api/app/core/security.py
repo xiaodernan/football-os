@@ -45,6 +45,17 @@ ACCOUNT_INACTIVE: Final = "account_inactive"
 INVALID_PASSWORD: Final = "invalid_password"
 FORBIDDEN_CODES: Final[frozenset[str]] = frozenset({INSUFFICIENT_ROLE, ACCOUNT_INACTIVE, INVALID_PASSWORD})
 
+#: The answers this module mints that are not 403, registered for the same reason the 403s are: it is the
+#: platform's own tier, and the codes above are raised *here* (`decode_token`, `current_user`, the limiter,
+#: `ownership_or_admin`). Measured before this landing, the answer table knew none of them while six raise
+#: sites did — 401 for a session that proves nothing, 429 for a budget or a burst, 404 for an owner check that
+#: answers absence rather than refusal (§51's shape: `ownership_or_admin` is a 404 by design, so an id another
+#: account holds is not discoverable through it). `tests/test_answer_census.py` reads the tree and holds each
+#: of these sites to the row registered here.
+UNAUTHORIZED_CODES: Final[frozenset[str]] = frozenset({"token_expired", "token_invalid", "token_wrong_type", "unauthenticated"})
+TOO_MANY_REQUESTS_CODES: Final[frozenset[str]] = frozenset({"rate_limited"})
+NOT_FOUND_CODES: Final[frozenset[str]] = frozenset({"not_found"})
+
 _SCRYPT_N = 1 << 14
 _SCRYPT_R = 8
 _SCRYPT_P = 1
@@ -222,7 +233,10 @@ __all__ = [
     "FORBIDDEN_CODES",
     "INSUFFICIENT_ROLE",
     "INVALID_PASSWORD",
+    "NOT_FOUND_CODES",
     "ROLES",
+    "TOO_MANY_REQUESTS_CODES",
+    "UNAUTHORIZED_CODES",
     "hash_password",
     "inactive_refusal",
     "password_refusal",

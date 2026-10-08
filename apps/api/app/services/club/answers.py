@@ -34,6 +34,7 @@ from typing import Any, Final
 from fastapi import HTTPException, status
 
 from app.core import security
+from app.services import door_codes
 from app.services import entitlements as ent_status
 from app.services.club import academy as edu
 from app.services.club import announcements as ann
@@ -51,11 +52,23 @@ from app.services.portfolio import sharing as portfolio_share
 #: The four questions a tier answers, in the order a reader checks them: is it absent, is the request
 #: correctable, did it collide with a row that already exists, or does the caller simply not hold the right.
 #: A tier that has no such set omits it; `assemble` reads the attributes that are there.
+#:
+#: The last six pairs exist because the tree raised statuses the first four could not describe, and the
+#: codes answering them therefore lived *outside* the table: a 401 session refusal, a 413/415/416 upload
+#: rejection, a 429 budget or rate refusal, a 503 dependency refusal. One attribute still binds exactly
+#: one status — the assembly is unchanged — and `tests/test_answer_census.py` is what holds every raise
+#: site to the row it registered.
 SETS: Final = (
     ("NOT_FOUND_CODES", status.HTTP_404_NOT_FOUND),
     ("UNPROCESSABLE_CODES", status.HTTP_422_UNPROCESSABLE_ENTITY),
     ("CONFLICT_CODES", status.HTTP_409_CONFLICT),
     ("FORBIDDEN_CODES", status.HTTP_403_FORBIDDEN),
+    ("UNAUTHORIZED_CODES", status.HTTP_401_UNAUTHORIZED),
+    ("TOO_LARGE_CODES", status.HTTP_413_REQUEST_ENTITY_TOO_LARGE),
+    ("UNSUPPORTED_MEDIA_CODES", status.HTTP_415_UNSUPPORTED_MEDIA_TYPE),
+    ("RANGE_NOT_SATISFIABLE_CODES", status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE),
+    ("TOO_MANY_REQUESTS_CODES", status.HTTP_429_TOO_MANY_REQUESTS),
+    ("SERVICE_UNAVAILABLE_CODES", status.HTTP_503_SERVICE_UNAVAILABLE),
 )
 
 #: Every tier whose refusals a door can be the first to print. §48's `matches` joined this list and nothing else
@@ -77,7 +90,13 @@ SETS: Final = (
 #: reaches here through `/graph/nodes/…` — a door with a router of its own, which is exactly the shape that let
 #: §51's two answer tables drift apart. A tier that reads the assembled table and registers its sets in one motion
 #: cannot make that hole again.
-TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio, portfolio_share, security, graph)
+#:
+#: `services.door_codes` joins after it for the reason `core.security` joined: the ledger assembled from the
+#: services cannot see codes that only a router raises, and §60's second census measured 47 of them at 58 raise
+#: sites answering from a literal in the raise rather than from any table. It is a constants module — it imports
+#: nothing and nothing raises through it — so registering it widens what the table *knows* without creating a
+#: second way to refuse.
+TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio, portfolio_share, security, graph, door_codes)
 
 
 def assemble(*tiers: Any) -> dict[str, int]:
