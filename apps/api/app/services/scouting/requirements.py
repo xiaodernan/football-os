@@ -317,6 +317,27 @@ class RequirementError(ValueError):
         return {"code": self.code, "message": str(self), **self.detail}
 
 
+#: §51's sets for this tier: a stated requirement this vocabulary does not contain is always the
+#: caller's own words — a position, role, band, foot or field this world does not store — so every
+#: code answers 422, the same answer `/api/v1/scout/parse` already spelled at the door.
+UNPROCESSABLE_CODES: Final = frozenset(
+    {
+        "attribute_out_of_range",
+        "no_request",
+        "unknown_attribute",
+        "unknown_band",
+        "unknown_field",
+        "unknown_foot",
+        "unknown_position",
+        "unknown_role",
+        "unknown_sort",
+        "unparseable_fee",
+        "unstaffed_position",
+        "unstaffed_role",
+    }
+)
+
+
 @dataclass
 class Requirement:
     """One filter the database can run, with the words that produced it."""

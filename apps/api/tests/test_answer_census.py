@@ -62,10 +62,16 @@ def _resolve_status(node: ast.AST) -> int | None:
     return None
 
 
-def _code_from_dict(node: ast.Dict) -> str | None:
+def _code_from_dict(node: ast.Dict, const_strings: dict[str, str] | None = None) -> str | None:
     for key, value in zip(node.keys, node.values, strict=False):
         if key is not None and _const_str(key) == "code":
-            return _const_str(value)
+            found = _const_str(value)
+            if found is not None:
+                return found
+            #: `{"code": INSUFFICIENT_ROLE}` — the value is a Name bound to a module-level string constant
+            #: rather than a literal, and the three 403 builders in `core.security` are all this shape.
+            if const_strings and isinstance(value, ast.Name):
+                return const_strings.get(value.id)
     return None
 
 
@@ -76,11 +82,27 @@ class _Census(ast.NodeVisitor):
         self.path = path
         self.tree = ast.parse(path.read_text(encoding="utf-8"))
         self.const_dicts: dict[str, ast.Dict] = {}
+        #: The sibling of a const dict is a const *string* — `INSUFFICIENT_ROLE: Final = "insufficient_role"`
+        #: in `core.security`, which three 403 builders carry into `{"code": INSUFFICIENT_ROLE}`. A visitor
+        #: that only resolves `ast.Constant` reads those three dicts as code-less and counts them as debt
+        #: the file does not have.
+        self.const_strings: dict[str, str] = {}
         for node in self.tree.body:
+            #: `NOT_FOUND = {...}` and `NOT_FOUND: Final = {...}` are the same constant wearing different
+            #: clothes; a visitor that only reads plain assignments silently misses the annotated half,
+            #: which is what every `detail=NOT_FOUND` site in `boards`/`tactics`/`video`/`world` uses.
             if isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         self.const_dicts[target.id] = node.value
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.value, ast.Dict) and isinstance(node.target, ast.Name):
+                self.const_dicts[node.target.id] = node.value
+            elif isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        self.const_strings[target.id] = node.value.value
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str) and isinstance(node.target, ast.Name):
+                self.const_strings[node.target.id] = node.value.value
         self.sites: list[tuple[str, int, str, int]] = []
         self.table_driven = 0
         self.unresolved = 0
@@ -109,11 +131,11 @@ class _Census(ast.NodeVisitor):
                     detail = arg
                     break
         if isinstance(detail, ast.Dict):
-            code = _code_from_dict(detail)
+            code = _code_from_dict(detail, self.const_strings)
         elif isinstance(detail, ast.Name):
             const = self.const_dicts.get(detail.id)
             if const is not None:
-                code = _code_from_dict(const)
+                code = _code_from_dict(const, self.const_strings)
         if raise_status is None:
             # The status comes from an expression — if it is a table lookup, that is the table driving.
             self.table_driven += 1
@@ -153,15 +175,49 @@ def test_every_code_the_tree_raises_is_registered_with_that_status() -> None:
     assert not offenders, "the tree and the ledger disagree (fix the raise or register the code):\n" + "\n".join(offenders)
 
 
+def test_no_router_keeps_a_local_status_routing_set() -> None:
+    """§51's one table, enforced against the way this debt came back.
+
+    `/scout` and `/transfers` did not answer from `ANSWERS` — they each kept a module-level set of the
+    codes that deserved 404 (`NOT_FOUND_CODES`, `POOL_NOT_FOUND_CODES`) and spelled the other statuses
+    beside the raise. The scan before this landing measured that pattern as *drift already*: the two
+    copies named different memberships, so `no_such_listing` answered 404 at `/transfers` and 409 at
+    `/scout` for the same word. Registering the codes turns both raises into one lookup, which leaves
+    nothing for such a set to be right about — so a router that declares one again is this debt being
+    re-spent, and the census refuses the file rather than waiting for the next divergence.
+    """
+
+    offenders: list[str] = []
+    for path in sorted((APP_ROOT / "api").rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in tree.body:
+            targets: list[ast.expr] = []
+            value: ast.expr | None = None
+            if isinstance(node, ast.Assign):
+                targets = list(node.targets)
+                value = node.value
+            elif isinstance(node, ast.AnnAssign):
+                targets = [node.target]
+                value = node.value
+            if not isinstance(value, ast.Set | ast.SetComp | ast.Dict):
+                continue
+            for target in targets:
+                if isinstance(target, ast.Name) and target.id.endswith("_CODES"):
+                    offenders.append(f"{path.name}:{node.lineno} declares {target.id} — status routing belongs to answers.ANSWERS")
+    assert not offenders, "a router kept its own status-routing set:\n" + "\n".join(offenders)
+
+
 def test_the_census_actually_saw_the_tree() -> None:
     """A scanner that parses nothing would find no disagreement; these floors make that red."""
     sites, table_driven, unresolved = _tree_sites()
-    assert len(sites) >= 60, f"only {len(sites)} resolvable raise sites — the walk stopped early"
-    assert len(ANSWERS) >= 181, f"the answer table shrank to {len(ANSWERS)} rows"
+    assert len(sites) >= 85, f"only {len(sites)} resolvable raise sites — the walk stopped early"
+    assert len(ANSWERS) >= 221, f"the answer table shrank to {len(ANSWERS)} rows"
     # The refusal-class builders (`_ANSWERS.get(error.code, …)`) and the `to_dict()` shapes resolve to
     # neither bucket's assertion above, so each bucket is counted here: a sudden collapse to zero means
-    # the extraction changed shape, not that the debt was paid.
-    assert table_driven + unresolved + len(sites) >= 69
+    # the extraction changed shape, not that the debt was paid. The scouting and market landing moved
+    # twelve raises from the unresolved bucket into this one by asking the table for the status.
+    assert table_driven >= 12, f"the table-driven pattern vanished: {table_driven} builders"
+    assert table_driven + unresolved + len(sites) >= 95
 
 
 def test_the_table_is_assembled_from_tiers_without_collisions() -> None:

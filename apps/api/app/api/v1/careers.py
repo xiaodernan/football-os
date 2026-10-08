@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.security import current_user, limit, ownership_or_admin
 from app.models import CAREER_PHLOSOPHIES, OBJECTIVE_FORMULA, OBJECTIVE_KINDS, Career, User
+from app.services.club import answers
 from app.services.simulation.career import (
     CAREER_DISCLAIMER,
     WindowClosed,
@@ -191,7 +192,7 @@ def play_next(ident: str, request: Request, db: Session = Depends(get_db), user:
         fixture, match = play_round(db, career)
     except WindowClosed as error:
         raise HTTPException(
-            status.HTTP_409_CONFLICT,
+            answers.ANSWERS.get(error.code, status.HTTP_409_CONFLICT),
             detail={**error.to_dict(), "verdict": _challenge_verdict(db, career)},
         ) from None
     except ValueError as error:
@@ -242,7 +243,7 @@ def read_ledger(
     user: User = Depends(current_user),
 ) -> dict[str, Any]:
     """This career's season ledger, summed from sim_events of its fixtures.
-    
+
     The ledger is a pure read: every figure is summed from sim_events rows at request
     time, and the consistency check compares the same season's goals from the event
     rows against the career's own fixture list.

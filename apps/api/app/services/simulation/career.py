@@ -54,6 +54,11 @@ class WindowClosed(RuntimeError):
     the scenario doing its job and answers 409 `window_closed` with the numbers that closed it.
     """
 
+    #: §51's rule made visible on the class: the one code this error answers with, registered in
+    #: `answers.ANSWERS` by the market and transfer-sim tiers, so a router reads the status from the
+    #: table rather than spelling it beside the raise.
+    code: Final = "window_closed"
+
     def __init__(self, *, played: int, window: int, challenge_slug: str) -> None:
         super().__init__(f"this challenge's window closed after {played} of {window} rounds")
         self.played = played
@@ -62,7 +67,7 @@ class WindowClosed(RuntimeError):
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "code": "window_closed",
+            "code": self.code,
             "message": str(self),
             "challenge_slug": self.challenge_slug,
             "rounds_played": self.played,

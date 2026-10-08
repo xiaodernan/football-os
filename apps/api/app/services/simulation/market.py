@@ -150,6 +150,29 @@ class MarketRefusal(RuntimeError):
         return {"code": self.code, "message": str(self), **self.detail}
 
 
+#: §51's sets for this tier. The status each code answers was, until this landing, decided *in the
+#: routers* by membership tests over local copies of exactly these lists — two copies, and they had
+#: already drifted: `/transfers` answered `no_such_listing`/`player_gone` 404 while `/scout`'s catch
+#: answered the same two 409, because its local set named only `no_club`. `answers.ANSWERS` is now
+#: the one copy: the routers look a code up, and a verdict code minted by `transferable()` —
+#: `career_retired`, `window_closed`, `transfers_forbidden` — arrives here rather than nowhere.
+NOT_FOUND_CODES: Final = frozenset({"no_club", "no_such_listing", "player_gone"})
+CONFLICT_CODES: Final = frozenset(
+    {
+        "career_retired",
+        "insufficient_budget",
+        "negotiation_closed",
+        "no_buyer",
+        "not_on_sale",
+        "not_your_player",
+        "rival_will_not_sell",
+        "transfers_forbidden",
+        "window_closed",
+        "would_not_field_a_side",
+    }
+)
+
+
 def _credits(value: float) -> int:
     """Round a fee to the nearest 5 credits so a printed figure is the stored figure."""
     return int(round(value / CREDIT_ROUND) * CREDIT_ROUND)
@@ -909,8 +932,10 @@ __all__ = [
     "MARKET_SIZE",
     "MAX_NEGOTIATION_ROUNDS",
     "MOVE_EFFECT",
+    "CONFLICT_CODES",
     "MarketRefusal",
     "NEGOTIATION_FORMULA",
+    "NOT_FOUND_CODES",
     "RULES",
     "SELL_FORMULA",
     "VALUATION_FORMULA",

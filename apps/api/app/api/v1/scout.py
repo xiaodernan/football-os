@@ -46,6 +46,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.security import current_user, limit, ownership_or_admin
 from app.models import Career, User
+from app.services.club import answers
 from app.services.scouting.compare import (
     DIMENSION_LEADERS,
     DIMENSIONS,
@@ -87,12 +88,6 @@ from app.services.scouting.requirements import (
 )
 from app.services.scouting.search import DEFAULT_LIMIT, MAX_LIMIT, SORT_KEYS, SearchRefusal, limitations, scout_counts, scout_ready, search, search_problems, world_account
 from app.services.scouting.shortlist import (
-    NOT_FOUND_CODES as SHORTLIST_NOT_FOUND,
-)
-from app.services.scouting.shortlist import (
-    UNPROCESSABLE_CODES as SHORTLIST_UNPROCESSABLE,
-)
-from app.services.scouting.shortlist import (
     ShortlistRefusal,
     add_player,
     create_shortlist,
@@ -117,24 +112,14 @@ from app.services.scouting.transfer_sim import (
     transfer_sim_counts,
     transfer_sim_ready,
 )
-from app.services.scouting.transfer_sim import (
-    NOT_FOUND_CODES as SIM_NOT_FOUND,
-)
-from app.services.scouting.transfer_sim import (
-    UNPROCESSABLE_CODES as SIM_UNPROCESSABLE,
-)
 from app.services.scouting.transfer_sim import limitations as transfer_sim_limitations
 from app.services.scouting.transfer_sim import rules as transfer_sim_rules
 from app.services.simulation.market import MarketRefusal
 
 router = APIRouter(prefix="/scout", tags=["scouting"])
 
+_ANSWERS = answers.ANSWERS
 NOT_FOUND = {"code": "not_found", "message": "No such career for this account"}
-NOT_FOUND_CODES: Final = {"no_club"}
-#: The §24 report and the §27 comparison both read the stored pool, and both refuse a name that is not in it
-#: with 404 — the row genuinely is not there. A refusal that is about this project's vocabulary instead (an
-#: unknown role, a pair that is one player) answers 422, because that one is the caller's word, not the world's.
-POOL_NOT_FOUND_CODES: Final = {"no_such_player"}
 MAX_QUERY_CHARS: Final = 400
 
 
@@ -381,7 +366,7 @@ def parse(payload: ParseIn, request: Request) -> dict[str, Any]:
     try:
         parsed = parse_requirements(payload.query)
     except RequirementError as error:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error.to_dict()) from None
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_422_UNPROCESSABLE_ENTITY), detail=error.to_dict()) from None
     return {
         "query": payload.query,
         **parsed.to_dict(),
@@ -409,13 +394,11 @@ def run_search(payload: SearchIn, request: Request, db: Session = Depends(get_db
         plan = _plan(payload)
         result = search(db, plan, career=career, limit=int(payload.limit))
     except RequirementError as error:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error.to_dict()) from None
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_422_UNPROCESSABLE_ENTITY), detail=error.to_dict()) from None
     except SearchRefusal as error:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=error.to_dict()) from None
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_422_UNPROCESSABLE_ENTITY), detail=error.to_dict()) from None
     except MarketRefusal as error:
-        detail = error.to_dict()
-        http = status.HTTP_404_NOT_FOUND if str(detail["code"]) in NOT_FOUND_CODES else status.HTTP_409_CONFLICT
-        raise HTTPException(http, detail=detail) from None
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_409_CONFLICT), detail=error.to_dict()) from None
     return {
         **result,
         "duplicate_fields": _duplicates(plan),
@@ -446,13 +429,9 @@ def read_report(payload: ReportIn, request: Request, db: Session = Depends(get_d
     try:
         report = build_report(db, payload.player, role=payload.role, career=career, compare_to=payload.compare_to, round_index=payload.round_index)
     except ReportRefusal as error:
-        detail = error.to_dict()
-        http = status.HTTP_404_NOT_FOUND if str(detail["code"]) in POOL_NOT_FOUND_CODES else status.HTTP_422_UNPROCESSABLE_ENTITY
-        raise HTTPException(http, detail=detail) from None
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_422_UNPROCESSABLE_ENTITY), detail=error.to_dict()) from None
     except MarketRefusal as error:
-        detail = error.to_dict()
-        http = status.HTTP_404_NOT_FOUND if str(detail["code"]) in NOT_FOUND_CODES else status.HTTP_409_CONFLICT
-        raise HTTPException(http, detail=detail) from None
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_409_CONFLICT), detail=error.to_dict()) from None
     return {
         **report,
         "asked_for": {
@@ -480,9 +459,7 @@ def compare(payload: CompareIn, request: Request, db: Session = Depends(get_db),
     try:
         comparison = build_comparison(db, payload.left, payload.right)
     except ReportRefusal as error:
-        detail = error.to_dict()
-        http = status.HTTP_404_NOT_FOUND if str(detail["code"]) in POOL_NOT_FOUND_CODES else status.HTTP_422_UNPROCESSABLE_ENTITY
-        raise HTTPException(http, detail=detail) from None
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_422_UNPROCESSABLE_ENTITY), detail=error.to_dict()) from None
     return {**comparison, "asked_for": {"left": payload.left, "right": payload.right}, "demo_data": True}
 
 
@@ -493,14 +470,10 @@ __all__ = ["router"]
 
 
 def _shortlist_refusal(error: ShortlistRefusal) -> HTTPException:
-    """Which answer a list refusal deserves: a thing that is not there, a sentence that cannot be stored, or a
-    state the request would have to break. The code and its figures travel together, as §22's refusals do."""
-    detail = error.to_dict()
-    if error.code in SHORTLIST_NOT_FOUND:
-        return HTTPException(status.HTTP_404_NOT_FOUND, detail=detail)
-    if error.code in SHORTLIST_UNPROCESSABLE:
-        return HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
-    return HTTPException(status.HTTP_409_CONFLICT, detail=detail)
+    """Which answer a list refusal deserves, read from `answers.ANSWERS` rather than from a set the router
+    keeps beside the raise: a thing that is not there, a sentence that cannot be stored, or a state the
+    request would have to break — three answers the table already holds, one lookup per refusal."""
+    return HTTPException(_ANSWERS.get(str(error.code), status.HTTP_409_CONFLICT), detail=error.to_dict())
 
 
 @router.get("/shortlists")
@@ -592,9 +565,4 @@ def simulate_a_transfer(payload: TransferSimIn, request: Request, db: Session = 
             "demo_data": True,
         }
     except TransferRefusal as error:
-        detail = error.to_dict()
-        if error.code in SIM_NOT_FOUND:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=detail) from None
-        if error.code in SIM_UNPROCESSABLE:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail) from None
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=detail) from None
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_409_CONFLICT), detail=error.to_dict()) from None

@@ -94,6 +94,7 @@ SERVICE_UNAVAILABLE_CODES: Final = frozenset(
     {
         "media_tools_missing",  # video
         "private_media_not_erased",  # auth (§61's erasure refuses before any write)
+        "tactics_not_synced",  # tactics (the catalogue has not been stored on this database yet)
     }
 )
 

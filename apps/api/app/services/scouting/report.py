@@ -90,6 +90,14 @@ class ReportRefusal(ValueError):
         return {"code": self.code, "message": self.message, **self.extra}
 
 
+#: §51's sets for this tier — the split `/scout`'s report and compare doors used to keep in a local
+#: constant (`POOL_NOT_FOUND_CODES`): a name that is not in the stored pool is a 404 (the row is
+#: genuinely not there) while a word this catalogue does not hold answers 422. Registered here the
+#: split is one fact, and `answers.ANSWERS` is the only copy the routers read.
+NOT_FOUND_CODES: Final = frozenset({"no_such_player"})
+UNPROCESSABLE_CODES: Final = frozenset({"no_such_measure", "same_player", "unknown_role"})
+
+
 @dataclass
 class GroupScore:
     """One of §24's four group lines, with the keys that produced the mean."""

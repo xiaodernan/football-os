@@ -98,6 +98,11 @@ class SearchRefusal(RuntimeError):
         return {"code": self.code, "message": str(self), **self.detail}
 
 
+#: §51's sets for this tier: every search refusal is the caller's own ask being unrunnable — a sort
+#: this build cannot rank by, or `need_fit` without a career to answer it — so every code answers 422.
+UNPROCESSABLE_CODES: Final = frozenset({"need_fit_needs_career", "unknown_sort"})
+
+
 @dataclass
 class Step:
     """One filter's effect on the pool, in the order the request stated it."""

@@ -16,7 +16,7 @@ keeper counts: a market a reader cannot check is a market a reader has to trust.
 
 from __future__ import annotations
 
-from typing import Any, Final
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.security import current_user, limit, ownership_or_admin
 from app.models import MOVE_EFFECT, Career, User
+from app.services.club import answers
 from app.services.simulation.market import (
     MARKET_DISCLAIMER,
     RULES,
@@ -44,8 +45,6 @@ from app.services.simulation.market import (
 router = APIRouter(prefix="/transfers", tags=["transfers"])
 
 NOT_FOUND = {"code": "not_found", "message": "No such career for this account"}
-# Which refusals are really "that is not a thing" rather than "you may not do that right now".
-NOT_FOUND_CODES: Final = {"no_such_listing", "player_gone", "no_club"}
 
 
 class OfferIn(BaseModel):
@@ -77,8 +76,7 @@ def _career(db: Session, user: User, ident: str) -> Career:
 
 def _refusal(error: MarketRefusal) -> HTTPException:
     payload = error.to_dict()
-    http = status.HTTP_404_NOT_FOUND if str(payload["code"]) in NOT_FOUND_CODES else status.HTTP_409_CONFLICT
-    return HTTPException(http, detail=payload)
+    return HTTPException(answers.ANSWERS.get(str(payload["code"]), status.HTTP_409_CONFLICT), detail=payload)
 
 
 @router.get("/rules")
@@ -109,7 +107,7 @@ def open_the_market(ident: str, request: Request, db: Session = Depends(get_db),
     career = _career(db, user, ident)
     verdict = transferable(db, career)
     if not verdict["ok"]:
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=verdict)
+        raise HTTPException(answers.ANSWERS.get(str(verdict["code"]), status.HTTP_409_CONFLICT), detail=verdict)
     report = open_market(db, career)
     return {"opened": True, "listing_report": report, **market_view(db, career)}
 

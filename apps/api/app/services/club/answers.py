@@ -48,6 +48,12 @@ from app.services.creator import publishing as creator
 from app.services.knowledge_graph import verbs as graph
 from app.services.portfolio import cv as portfolio
 from app.services.portfolio import sharing as portfolio_share
+from app.services.scouting import report as scout_report
+from app.services.scouting import requirements as scout_requirements
+from app.services.scouting import search as scout_search
+from app.services.scouting import shortlist as scout_shortlist
+from app.services.scouting import transfer_sim as scout_transfer_sim
+from app.services.simulation import market as market
 
 #: The four questions a tier answers, in the order a reader checks them: is it absent, is the request
 #: correctable, did it collide with a row that already exists, or does the caller simply not hold the right.
@@ -96,7 +102,35 @@ SETS: Final = (
 #: sites answering from a literal in the raise rather than from any table. It is a constants module — it imports
 #: nothing and nothing raises through it — so registering it widens what the table *knows* without creating a
 #: second way to refuse.
-TIERS: Final = (club, edu, mat, sess, rep, ann, ent_status, community, creator, portfolio, portfolio_share, security, graph, door_codes)
+#:
+#: The six scouting and market tiers join last, and their registration *removes* a set of local tables rather
+#: than adding one: `/scout` and `/transfers` decided each `MarketRefusal`'s status with membership tests over
+#: their own copies of the not-found list, and the copies had drifted — `/transfers` answered
+#: `no_such_listing`/`player_gone` 404 while `/scout` answered the same two 409. The sets now live on the
+#: services that mint the codes (§40's rule, applied to a tier that predates it), the routers look a code up
+#: in this table, and `tests/test_answer_census.py` holds every raise site to the row that lookup reads.
+TIERS: Final = (
+    club,
+    edu,
+    mat,
+    sess,
+    rep,
+    ann,
+    ent_status,
+    community,
+    creator,
+    portfolio,
+    portfolio_share,
+    security,
+    graph,
+    door_codes,
+    market,
+    scout_report,
+    scout_requirements,
+    scout_search,
+    scout_shortlist,
+    scout_transfer_sim,
+)
 
 
 def assemble(*tiers: Any) -> dict[str, int]:
