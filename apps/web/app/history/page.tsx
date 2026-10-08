@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AiBadge, DataUnavailable, Empty, Panel } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
@@ -87,6 +88,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   const playerId = first(params.player_id);
   const page = clampPage(first(params.page));
   const days = clampDays(first(params.days));
+  const tc = await getTranslations("common");
 
   const sessionsResult = await serverFetch<SessionList>("/trainings/sessions", {
     query: { status: "completed", page, page_size: PAGE_SIZE },
@@ -160,20 +162,20 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
             <div className="row" style={{ gap: "0.4rem" }}>
               {hasPrev ? (
                 <Link className="btn btn--ghost btn--sm" href={query(sessions.page - 1)}>
-                  ← Previous
+                  ← {tc("previousPage")}
                 </Link>
               ) : (
                 <span className="btn btn--sm btn--ghost" aria-disabled="true" style={{ opacity: 0.45 }}>
-                  ← Previous
+                  ← {tc("previousPage")}
                 </span>
               )}
               {hasNext ? (
                 <Link className="btn btn--sm" href={query(sessions.page + 1)}>
-                  Next →
+                  {tc("nextPage")} →
                 </Link>
               ) : (
                 <span className="btn btn--sm btn--ghost" aria-disabled="true" style={{ opacity: 0.45 }}>
-                  Next →
+                  {tc("nextPage")} →
                 </span>
               )}
             </div>

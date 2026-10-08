@@ -109,7 +109,7 @@ export default async function HomePage() {
               title="Sign in to see your football"
               body="Your OVR, streak and completed sessions appear here once you have an account and a player profile."
               href="/login"
-              cta="Sign in"
+              cta={ta("signIn")}
             />
           ) : myFootballNotice ? (
             <div className="notice notice--warn">{myFootballNotice}</div>
