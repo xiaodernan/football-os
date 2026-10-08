@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { browserFetch } from "@/lib/api";
@@ -17,6 +18,7 @@ import type { CareerView } from "@/lib/types";
  */
 export function CareerTools({ ident, status, available }: { ident: string; status: string; available: boolean }) {
   const router = useRouter();
+  const t = useTranslations("common");
   const [busy, setBusy] = useState<null | "play" | "retire" | "delete">(null);
   const [error, setError] = useState<string | null>(null);
   const [played, setPlayed] = useState<CareerView | null>(null);
@@ -60,7 +62,7 @@ export function CareerTools({ ident, status, available }: { ident: string; statu
           {busy === "retire" ? "Updating…" : status === "active" ? "Retire from this club" : "Take charge again"}
         </button>
         <button className="btn btn--ghost" disabled={busy !== null} onClick={remove} type="button">
-          {busy === "delete" ? "Deleting…" : "Delete this career"}
+          {busy === "delete" ? `${t("delete")}…` : `${t("delete")} this career`}
         </button>
       </div>
 
