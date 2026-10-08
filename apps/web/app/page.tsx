@@ -17,10 +17,13 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [user, capabilitiesResult, t] = await Promise.all([
+  const [user, capabilitiesResult, t, ta, tn, tc] = await Promise.all([
     currentUser(),
     serverFetch<CapabilitiesResponse>("/capabilities"),
     getTranslations("disclaimer"),
+    getTranslations("auth"),
+    getTranslations("nav"),
+    getTranslations("common"),
   ]);
   const capabilities = capabilitiesResult.ok ? capabilitiesResult.data : null;
 
@@ -64,11 +67,11 @@ export default async function HomePage() {
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             {user ? (
               <Link className="btn btn--primary" href="/my-football">
-                Go to My Football
+                {tc("goTo")} {tn("myFootball")}
               </Link>
             ) : (
               <Link className="btn btn--primary" href="/register">
-                Create your account
+                {ta("createTitle")}
               </Link>
             )}
             <Link className="btn btn--ghost" href="/training">
@@ -128,7 +131,7 @@ export default async function HomePage() {
                 <Stat label="Sessions" value={<span className="num">{overview.training.sessions_completed}</span>} hint="completed" />
               </div>
               <Link className="btn btn--sm" href="/my-football">
-                Open My Football
+                {tc("open")} {tn("myFootball")}
               </Link>
             </div>
           ) : (

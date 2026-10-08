@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Fragment, useState, type ReactNode } from "react";
 
@@ -26,6 +27,7 @@ function withRefs(text: string): ReactNode[] {
 }
 
 function CitationCard({ citation, index }: { citation: KnowledgeCitation; index: number }) {
+  const t = useTranslations("common");
   return (
     <div className="kn-cite" id={`cite-${index + 1}`}>
       <div className="between wrap" style={{ gap: "0.5rem" }}>
@@ -40,7 +42,7 @@ function CitationCard({ citation, index }: { citation: KnowledgeCitation; index:
       <p className="kn-cite__quote">&ldquo;{citation.quote}&rdquo;</p>
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <Link className="kn-ref" href={`/knowledge/${encodeURIComponent(citation.slug)}#${citation.ordinal}`}>
-          Open this passage →
+          {t("open")} this passage →
         </Link>
         <span className="kn-prov__text grow">{citation.source}</span>
       </div>
