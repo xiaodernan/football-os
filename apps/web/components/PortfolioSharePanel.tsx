@@ -142,7 +142,7 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
           {live?.token && (
             <>
               <Link className="btn" data-portfolio-share-view href={publicPath(live.token)} rel="noreferrer" target="_blank">
-                View public page
+                {t("view")} public page
               </Link>
               <button className="btn" data-portfolio-share-copy disabled={busy !== null} onClick={() => void copyLink(live.token as string)} type="button">
                 Copy link
