@@ -149,11 +149,16 @@ trusting the absence of literals.
 `useTranslations("common")`. `Nav.tsx` and `LocaleSwitcher.tsx` already did; the ten that joined are
 `ScoutShortlistPanel`, `CareerTools`, `VideoTools`, `SimTools`, `BoardEditor`, `SessionReportTools`, `BoardsNew`,
 `PortfolioSharePanel`, `ClubTools` (both `TenantTools` and `InvitationTools`) and `CreatorWorkbench`. What gets wired is
-the shared **verb**, not page copy — `delete` in four files, `open` in three, `save` and `close` in two each, then
-`create`, `apply`, `remove`, `view`. Two keys the namespace did not carry were added in all three catalogues at once
-(`accept`, `decline`), because the parity rule below refuses to let one locale hold a key another lacks. A busy state
-appends `…` to the base verb rather than declaring a progressive form: the catalogue has none, and `deleting`/`saving`
-per locale would be maintenance debt for a word the button already shows.
+the shared **verb**, not page copy, counted by grepping each verb back to the files that read it: `delete` in five files
+(`BoardEditor`, `CareerTools`, `ScoutShortlistPanel`, `SimTools`, `VideoTools`), `save`, `close`, `open` and
+`accept`/`decline` in two files or two uses each — `save` (`BoardEditor`, `SessionReportTools`), `close` (`ClubTools`,
+`PortfolioSharePanel`), `open` (`CreatorWorkbench`, `ScoutShortlistPanel`), `accept`+`decline` (`ClubTools`' invitation
+row) — and `create`, `apply`, `remove`, `view` in one each. `Nav.tsx` and `LocaleSwitcher.tsx` read the namespace for
+its nouns and labels rather than its verbs, which is why the file count (12) is above the number of files this batch
+touched (10). Two keys the namespace did not carry were added in all three catalogues at once (`accept`, `decline`),
+because the parity rule below refuses to let one locale hold a key another lacks. A busy state appends `…` to the base
+verb rather than declaring a progressive form: the catalogue has none, and `deleting`/`saving` per locale would be
+maintenance debt for a word the button already shows.
 
 **Attribution — `db34fec` carries work that is not §81's.** Its message says "added two new keys"; its numstat says 82
 lines per catalogue file. `messages/{en,zh,zh-TW}.json` were **already modified** when this run started — a concurrent
@@ -168,7 +173,9 @@ adopts: any file dirty **before** this run touched it is staged hunk-wise (`git 
 with `git add <path>`.
 
 **Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,
-assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.**Watch for.** `middleware.ts` resolves the locale server-side; a client component reading `useTranslations`
+assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.
+
+**Watch for.** `middleware.ts` resolves the locale server-side; a client component reading `useTranslations`
 needs the locale in its provider — `app/layout.tsx` already passes it, so the trap is only forgetting
 `getTranslations` on server components (it is async; `Nav.tsx` is the client-side worked example). Found during
 the auth batch: a long walk can outlive a `next start` process on this machine — mid-walk `ERR_CONNECTION_REFUSED`
