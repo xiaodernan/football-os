@@ -158,6 +158,11 @@ so the case is what fails rather than the import.
   retro-fitted. This is the largest remaining §51/§60 debt in the API and it is recorded rather than rounded away.
   (Unmoved: the erasure slice registered its 403 in `security.FORBIDDEN_CODES` rather than retro-fitting auth's
   401s, so the debt is neither paid nor grown.)
+  **Paid 2026-10-09, in three landings** — the debt is zero, and the census that measured it now reads 95
+  statically-resolvable raise sites with 0 disagreements against a 228-row table. See §9 for what each landing
+  moved, and for the two drift findings it picked up on the way: this item's measurement counted *literals
+  carrying a code*, so the ten sites answering with a bare string detail (no code at all) were outside its
+  population and surfaced only when the census was taught to require a code.
 * **Erasure answered as "switched off".** `current_user` and `/auth/refresh` test `user is None or not
   user.is_active` and raise `account_inactive` for both. A deleted account and a disabled one get the same sentence.
   The platform's own §61 answer for a deleted account is that it is not there; this needs a decision, not a patch.
@@ -175,3 +180,58 @@ sites, the latter asserted to match exactly twice) → `git hash-object -w` → 
 resulting commit carries the HEAD file plus this landing's hunks and nothing else; the working copy keeps the other
 run's 47 lines untouched. The check that makes this safe is a diff of the staged blob against the working file: one
 line removed (their import rewrite) and 47 added (their route), no more.
+
+## 9. The §51 debt, paid
+
+Three landings closed §7's second item. Each kept the rule the census is built on — **the population is read off
+the source tree, not off the declaration that the declaration was supposed to police** — and each widened the census
+before it widened the table, because a census that cannot see a shape keeps calling it debt until somebody converts
+the shape by hand.
+
+**`313dcd0` — the routers' codes join the table.** The scan behind §7's numbers was turned into
+`tests/test_answer_census.py`: every `HTTPException` in `app/` whose status and code are statically resolvable must
+find its code registered and answering the very status it spells, and the floors pin the population so a scanner
+that parses nothing passes on nothing. New module `services/door_codes.py` registers the codes only routers raised
+(the `answers.TIERS` assembly had been service-only, and that is the half of the ledger §7's 52 measured), plus
+`core.security`'s own 401/429/404 mints.
+
+**`c23e1c8` — the tiers that mint codes register their own.** The scouting and market modules raised refusal
+*classes* whose codes answered no table, so each router kept a membership set to decide the status — and the two
+copies had drifted: `/transfers` answered `no_such_listing`/`player_gone` 404 while `/scout` answered the same two
+409, because its set named only `no_club`. Two answers to one code is §51's first clause, broken in daylight. The
+sets moved onto the services that mint the codes (market, report, search, requirements — shortlist and transfer_sim
+already had theirs), the routers replaced their membership tests with `ANSWERS.get(code, fallback)`, and the census
+gained the case that refuses a router to declare another `*_CODES` routing set. It also learned to read
+`NOT_FOUND: Final = {...}` (an `AnnAssign`, which the first visitor missed — four routers' constants had read as
+unresolved debt they did not have) and module-level string constants (`{"code": INSUFFICIENT_ROLE}`).
+
+**`14083cb` — the sites answering without a code.** Ten raises survived every pass above by printing a bare string
+or an f-string as the whole `detail` — `agent_memory`'s `no_such_memory` was the literal code used as a sentence,
+jobs spelled its ids into prose, two doors spent 403 on a capability refusal, two answered an unknown agent type
+with `str(exc)`. A census of *codes* is blind to a door that prints none, which is why §7's count — 79 literals
+carrying a code — never saw them. They now carry the coded dict with the caller's own figures beside the sentence:
+`no_such_memory` (404, twice), `no_such_job` (404, through one `_job_or_404` helper replacing three copies),
+`job_not_deletable`/`job_not_cancellable` (409), `unknown_agent_type` (422), `provider_switch_unavailable` (503).
+
+Two of those ended in a status change rather than a same-status registration, and the reason is the census, not
+taste: an unregistered code's 400 is §51's fall-through for a bug in the door that raised it, so `unknown_agent_type`
+answered 422 like every other vocabulary refusal (`unknown_role`), and `test_authorization_census.py` holds 403 to
+the permission matrix's single meaning — every other tier declares `FORBIDDEN_CODES` empty — so a door that refuses
+a verb for *every* standing earns 503, the table's capability answer, rather than buying itself a second meaning.
+The door now reads its row from `ANSWERS` and spells no status at all, as the model_router test's 403 → 503 records.
+
+The census's population after the three landings, all read off the tree at `14083cb`:
+
+| measurement | result |
+| --- | --- |
+| statically-resolvable raise sites vs the table | **95 sites, 0 disagreements** |
+| `ANSWERS` rows | 228 |
+| table-driven raises (`ANSWERS.get(...)`) | 18 |
+| raise sites answering without a readable code | **0** (`test_no_raise_site_is_unreadable`) |
+| 403 status literals outside the two allowed holders | 0 |
+| routers declaring a local `*_CODES` routing set | 0 (`test_no_router_keeps_a_local_status_routing_set`) |
+
+The floors in `test_the_census_actually_saw_the_tree` are set a hair under today's counts, and every count in this
+table is one that test prints at failure. A debt that comes back in any of these shapes — a literal status beside
+an unregistered code, a router's own routing set, a detail with no code in it — fails here with its `file:line`
+before a human has to remember to look.

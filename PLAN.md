@@ -156,17 +156,36 @@ means restart the web process and rerun, not debug the page.
 
 ---
 
-## Item 3 — §36/§37's remaining community verbs
+## Item 3 — §35's three content nouns, not §36/§37
 
-**Why.** §35 landed the wall. Spec §36 and §37 ask for more than a flat feed.
+**The claim as written was false.** "§36/§37's remaining community verbs" read §35's module numbers as one list and asked
+for verbs that do not exist. §35 is the community wall — landed 2026-09-28 at M9
+(`docs/M9_COMMUNITY_VERIFICATION.md`; the audit's §35 row reads "moderation, reporting and blocking are not in this
+build", and this spec has no other place that asks for them). §36 is the **creator** system — landed
+2026-09-28 at M10 (`docs/M10_CREATOR_VERIFICATION.md`; the audit's §36 row records `services/creator/publishing.py`,
+7 paths / 11 operations under `/api/v1/creator`, all landed 2026-09-28). §37 is the **gamification** module — `services/
+achievements.py`, `progression.py`, `/api/v1/progress/*`, `/progress`, landed at M1. Neither spec module asks for a
+community verb, and the M9 done-set's content nouns are all landed; there is no moderation, reporting or blocking
+work in this spec at all.
 
-**Do.** Read `docs/SPEC_COVERAGE_AUDIT.md` for which §36/§37 verbs are still absent, then land them the way §35
-was landed: one table per noun, counts recomputed at read rather than stored, no 403 anywhere in the tier (what a
-caller may not reach is answered as absence), and the tier appended to `answers.TIERS` so a new refusal code
-cannot silently mean two things.
+**What is actually open** is in §35's own noun list, which the wall landed only half of. Doors exist for Posts,
+Comments, Likes, Reposts, Follow and the profile nouns (`app/api/v1/community.py`: rules, posts, comments, reactions,
+reposts, follows, members). Three of §35's nouns have no table and no door: **Tactical Boards, Training Plans and
+Video Highlights**. Each is a user-authored content noun the wall's follow predicate already reaches, so the shape is
+one table per noun pointing at the stored board / plan / frame the wall's post can then carry — not a new tier.
+
+**Do.** Land them the way §35 was landed: one table per noun, counts recomputed at read rather than stored, no 403
+anywhere in the tier (what a caller may not reach is answered as absence), and the tier appended to `answers.TIERS`
+so a new refusal code cannot silently mean two things — and read `tests/test_answer_census.py` first, because the
+community tier's refusals are registered there and a new door joins the population the moment it is saved. Boards
+point at §16's stored tactical boards (`app/api/v1/boards.py`), plans at §12's training plans (the coach plan
+builder), highlights at §13's stored video frames (`app/api/v1/video.py`); the pointer is the noun's whole content,
+so a deleted board takes its wall row's subject with it — pick and record the behaviour (snapshot the fields, or
+answer absence) rather than letting it happen by accident.
 
 **Evidence.** The tier's own test file green on both database legs, a planted-defect probe with no survivors, and
-the answer-table collision check extended to the new codes.
+the answer-table collision check extended to the new codes — plus the census reading the new doors, which
+`test_no_raise_site_is_unreadable` fails if any of them answers without a code.
 
 ---
 
