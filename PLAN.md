@@ -172,12 +172,38 @@ never see a key no component reads. "Catalogue complete" and "catalogue wired" r
 adopts: any file dirty **before** this run touched it is staged hunk-wise (`git apply --cached` on my own hunks), never
 with `git add <path>`.
 
+**Done (common batch, continued) 2026-10-09, three commits `e7567d7`..`a9f43a1`.** Seventeen files now read
+`common` (`grep -rl 'Translations("common")' apps/web/components apps/web/app`), counted per verb by grepping the
+call back to its carriers: `open` six (`AcademyTools`, `ChallengeStartForm`, `CreatorWorkbench`,
+`ScoutShortlistPanel`, `app/knowledge/KnowledgeAsk`, `app/page`), `delete` six (`BoardEditor`, `CareerTools`,
+`ClubTools`, `ScoutShortlistPanel`, `SimTools`, `VideoTools`), `close`/`save`/`create` two each, and
+`apply`/`remove`/`view`/`accept`/`decline`/`goTo`/`previousPage`/`nextPage` one each. Three of these landed on
+**Server Components**, and two findings came out of doing it:
+
+- `useTranslations` works in a **non-async** Server Component. `components/world.tsx`'s `WorldPager` is one, and it
+  rendered the reader's locale with no provider change. The async rule below is about `async` components only —
+  converting `WorldPager` to `getTranslations` would have meant awaiting it in every `/world` page.
+- A shared verb can be **wrong in the other language**. `common.previous`/`common.next` carry 上一步/下一步 — step
+  words — so the pager could not reuse them; `previousPage`/`nextPage` were added (en keeps "Previous"/"Next" so the
+  fallback locale's HTML is unchanged, zh 上一页/下一页, zh-TW 上一頁/下一頁), in all three catalogues in one commit
+  because the parity gate compares the catalogues to *each other*. `previous`/`next` stay, unreferenced, for the
+  stepper that will want them.
+
+Because a build cannot see a locale, each of these three commits was verified by **asking the running app in each
+locale**: production `next start` on a fresh port, `GET` with the `fo_locale` cookie set, and read the label out of
+the response (`← 上一页 / 下一页 →` on `/world/players?page=2`; the landing hero CTA `前往 我的足球` signed in, after
+registering a throwaway account and player through the shipped cookie proxy — the same route `visual-qa` takes).
+`test_locale_claims.py` 4/4 on every new key.
+
 **Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,
 assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.
 
 **Watch for.** `middleware.ts` resolves the locale server-side; a client component reading `useTranslations`
-needs the locale in its provider — `app/layout.tsx` already passes it, so the trap is only forgetting
-`getTranslations` on server components (it is async; `Nav.tsx` is the client-side worked example). Found during
+needs the locale in its provider — `app/layout.tsx` already passes it. The trap is `getTranslations` on **async**
+Server Components (`app/page.tsx`, `app/settings/page.tsx`): a hook cannot be called after an `await`, so those
+pages bind their translators in one `Promise.all` up front. Non-async Server Components take `useTranslations`
+directly — measured at `f5460d5`, where `WorldPager` answered in the cookie's locale. `Nav.tsx` is the client-side
+worked example. Found during
 the auth batch: a long walk can outlive a `next start` process on this machine — mid-walk `ERR_CONNECTION_REFUSED`
 means restart the web process and rerun, not debug the page.
 
