@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { CallNote, useClubCall } from "@/components/ClubTools";
 import { Panel } from "@/components/ui";
@@ -41,6 +42,7 @@ function shelfEyebrow(shelf: GuideShelfView | null): string {
  *   something the server never said.
  */
 export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; creator: string }) {
+  const t = useTranslations("common");
   const profileCall = useClubCall();
   const guideCall = useClubCall();
   const citationCall = useClubCall();
@@ -243,7 +245,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
                       <td className="mono">{guide.published_on}</td>
                       <td>
                         <button className="btn btn--sm" data-creator-guide-open disabled={guideCall.busy !== null} onClick={() => void openGuide(guide)} type="button">
-                          Open
+                          {t("open")}
                         </button>
                       </td>
                       <td>
@@ -302,7 +304,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
                         <td className="muted">{citation.note || <span className="mono">—</span>}</td>
                         <td>
                           <button className="btn btn--sm" data-creator-citation-remove disabled={citationCall.busy !== null} onClick={() => void removeCitation(citation.id)} type="button">
-                            Remove
+                            {t("remove")}
                           </button>
                         </td>
                       </tr>
