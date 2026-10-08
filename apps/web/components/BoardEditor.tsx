@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
 import { PITCH_VIEWBOX, PitchFrame, PlayerMarker, snapToGrass } from "@/components/pitch";
@@ -25,6 +26,7 @@ function zoneOf(x: number, y: number): string {
 
 export function BoardEditor({ board: initial }: { board: BoardDetail }) {
   const router = useRouter();
+  const t = useTranslations("common");
   const svg = useRef<SVGSVGElement | null>(null);
   const [board, setBoard] = useState(initial);
   const [phase, setPhase] = useState<Phase>("in");
@@ -176,7 +178,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
 
           <div className="row wrap" style={{ gap: "0.4rem" }}>
             <button className="btn btn--primary btn--sm" disabled={busy || !dirty} onClick={save} type="button">
-              {busy ? "Saving…" : dirty ? "Save board" : "Saved"}
+              {busy ? `${t("save")}…` : dirty ? `${t("save")} board` : t("save") + "d"}
             </button>
             <button className="btn btn--sm" disabled={busy} onClick={derive} type="button">
               Derive the block from this
@@ -218,7 +220,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
               </button>
             )}
             <button className="btn btn--danger btn--sm" disabled={busy} onClick={remove} type="button">
-              Delete board
+              {t("delete")} board
             </button>
           </div>
 
