@@ -145,10 +145,30 @@ displays custom error messages — no component uses these yet. Each page wired 
 in Chinese — extend `scripts/visual-qa.mjs` to assert one translated string per wired page rather than
 trusting the absence of literals.
 
-**Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,
-assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.
+**Done (common batch) 2026-10-09, twelve commits `1b206a5`..`db34fec`.** Twelve files now read
+`useTranslations("common")`. `Nav.tsx` and `LocaleSwitcher.tsx` already did; the ten that joined are
+`ScoutShortlistPanel`, `CareerTools`, `VideoTools`, `SimTools`, `BoardEditor`, `SessionReportTools`, `BoardsNew`,
+`PortfolioSharePanel`, `ClubTools` (both `TenantTools` and `InvitationTools`) and `CreatorWorkbench`. What gets wired is
+the shared **verb**, not page copy — `delete` in four files, `open` in three, `save` and `close` in two each, then
+`create`, `apply`, `remove`, `view`. Two keys the namespace did not carry were added in all three catalogues at once
+(`accept`, `decline`), because the parity rule below refuses to let one locale hold a key another lacks. A busy state
+appends `…` to the base verb rather than declaring a progressive form: the catalogue has none, and `deleting`/`saving`
+per locale would be maintenance debt for a word the button already shows.
 
-**Watch for.** `middleware.ts` resolves the locale server-side; a client component reading `useTranslations`
+**Attribution — `db34fec` carries work that is not §81's.** Its message says "added two new keys"; its numstat says 82
+lines per catalogue file. `messages/{en,zh,zh-TW}.json` were **already modified** when this run started — a concurrent
+writer was mid-`coach` (`app/coach/page.tsx`, `CoachAsk.tsx`, `PlanBuilder.tsx`, `scripts/visual-qa.mjs` are still
+uncommitted) — and whole-path `git add` swept that writer's 80-key `coach` namespace into my commit. The keys are
+theirs; the commit is mine, and this record is the correction rather than a rewrite: moving a commit another writer may
+be building on is not reversible. HEAD is not broken by the extra namespace, measured not assumed — `test_locale_claims.py`
+is **4/4**, and `git show HEAD:apps/web/app/coach/page.tsx` reads no namespace at all, so those 80 keys sit unreferenced
+until that writer's components land. Worth naming: the parity gate compares the catalogues *to each other*, so it can
+never see a key no component reads. "Catalogue complete" and "catalogue wired" remain different claims. The rule this run
+adopts: any file dirty **before** this run touched it is staged hunk-wise (`git apply --cached` on my own hunks), never
+with `git add <path>`.
+
+**Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,
+assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.**Watch for.** `middleware.ts` resolves the locale server-side; a client component reading `useTranslations`
 needs the locale in its provider — `app/layout.tsx` already passes it, so the trap is only forgetting
 `getTranslations` on server components (it is async; `Nav.tsx` is the client-side worked example). Found during
 the auth batch: a long walk can outlive a `next start` process on this machine — mid-walk `ERR_CONNECTION_REFUSED`
@@ -156,7 +176,7 @@ means restart the web process and rerun, not debug the page.
 
 ---
 
-## Item 3 — §35's three content nouns, not §36/§37
+## Item 3 — §35's pointer promise (landed 2026-10-09, `d18d4c1` was the paper; the tier's own landing is the community resolver)
 
 **The claim as written was false.** "§36/§37's remaining community verbs" read §35's module numbers as one list and asked
 for verbs that do not exist. §35 is the community wall — landed 2026-09-28 at M9
@@ -168,24 +188,21 @@ achievements.py`, `progression.py`, `/api/v1/progress/*`, `/progress`, landed at
 community verb, and the M9 done-set's content nouns are all landed; there is no moderation, reporting or blocking
 work in this spec at all.
 
-**What is actually open** is in §35's own noun list, which the wall landed only half of. Doors exist for Posts,
-Comments, Likes, Reposts, Follow and the profile nouns (`app/api/v1/community.py`: rules, posts, comments, reactions,
-reposts, follows, members). Three of §35's nouns have no table and no door: **Tactical Boards, Training Plans and
-Video Highlights**. Each is a user-authored content noun the wall's follow predicate already reaches, so the shape is
-one table per noun pointing at the stored board / plan / frame the wall's post can then carry — not a new tier.
+**What was actually open** is the promise the wall's nouns make. §35's Tactical Boards, Training Plans and Video
+Highlights are already landed as the wall's `my_tactic`/`my_training`/`my_analysis` kinds — pointer, never a copy —
+so there was no missing table and no missing door. What no door held was the tier's own sentence: *the kinds a user
+may publish all point at artifacts that are the author's own to share*. An address was checked for **shape** and not
+for its **referent**, so a public post naming another account's clip published the existence of a private row.
 
-**Do.** Land them the way §35 was landed: one table per noun, counts recomputed at read rather than stored, no 403
-anywhere in the tier (what a caller may not reach is answered as absence), and the tier appended to `answers.TIERS`
-so a new refusal code cannot silently mean two things — and read `tests/test_answer_census.py` first, because the
-community tier's refusals are registered there and a new door joins the population the moment it is saved. Boards
-point at §16's stored tactical boards (`app/api/v1/boards.py`), plans at §12's training plans (the coach plan
-builder), highlights at §13's stored video frames (`app/api/v1/video.py`); the pointer is the noun's whole content,
-so a deleted board takes its wall row's subject with it — pick and record the behaviour (snapshot the fields, or
-answer absence) rather than letting it happen by accident.
-
-**Evidence.** The tier's own test file green on both database legs, a planted-defect probe with no survivors, and
-the answer-table collision check extended to the new codes — plus the census reading the new doors, which
-`test_no_raise_site_is_unreadable` fails if any of them answers without a code.
+**Landed.** `create_post` resolves the address before the row is stored: five kinds read the author's own rows
+(`my_match` → `sim_matches`, `my_tactic` → `tactic_boards`, `my_analysis` → `video_assets`, `my_career` → `careers`,
+`my_goal` → the *windowed* career the run prefix names) and `my_training` reads the project's drill catalogue. Both
+failures answer one code (`post_artifact`, 404, in the tier's `NOT_FOUND_CODES`), with the author's own words as
+figures — a sentence that told a guessed address apart from someone else's row would be an oracle, which is the
+disclosure `ownership_or_admin` refuses with a 404. Evidence: five new cases in `tests/test_community.py` (50 in the
+file), a green file on the SQLite leg, and one probe arm whose reds are named in
+`docs/M9_COMMUNITY_VERIFICATION.md` — along with the finding that `scripts/probe_m9.py`, cited by that same file, is
+not in the tree.
 
 ---
 

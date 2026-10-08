@@ -19,6 +19,13 @@ Three consequences follow, and each is held by a named case rather than by this 
 * **There is no private channel in this tier.** No column can name a recipient, no door takes one, and the six
   kinds a user may publish all point at artifacts that are the author's own to share. §40's minimisation rule is
   the shape of the table rather than a validation inside it.
+* **A pointer is a promise, and the row behind it answers.** The shape of an address is checked at the door, and
+  so is the artifact: five kinds resolve to rows the author owns (a run and a career in `careers`, a played match
+  in `sim_matches`, a drawn board in `tactic_boards`, an uploaded clip in `video_assets`) and one resolves to the
+  project's own drill catalogue. A missing row and another account's row answer one sentence — a message that
+  told them apart would let a caller learn which guessed ids are rows that exist — and the figures carry the
+  author's own words only, never the row's. `_artifact` is the whole rule, and `test_community.py` holds both
+  halves: the live artifact publishes, and every other address answers `post_artifact` (404).
 
 Every ceiling is one constant that `CAPS` publishes, that one guard below applies, and that its own refusal
 prints with `held` beside `limit` — §49's rule, applied before it could recur.
@@ -28,17 +35,23 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.db import Base
 from app.core.security import new_public_id
 from app.models import (
+    Career,
     CommunityComment,
     CommunityFollow,
     CommunityPost,
     CommunityReaction,
     CommunityRepost,
+    SimulationMatch,
+    TacticBoard,
+    TrainingDrill,
     User,
+    VideoAsset,
     utc_today,
 )
 
@@ -101,6 +114,7 @@ REFUSALS: Final = (
     "post_kind",
     "post_body",
     "post_pointer",
+    "post_artifact",
     "visibility_kind",
     "reaction_kind",
     "comment_body",
@@ -114,7 +128,7 @@ REFUSALS: Final = (
 # `no_such_account`, not `no_such_member`: §39 owns that code for "no standing in this tenant", and a community
 # door has no tenant to stand in. Same status, different sentence — which is the one collision `assemble()` is
 # blind to, because it only refuses a code two tiers answer *differently*.
-NOT_FOUND_CODES: Final = frozenset({"no_such_post", "no_such_account"})
+NOT_FOUND_CODES: Final = frozenset({"no_such_post", "no_such_account", "post_artifact"})
 UNPROCESSABLE_CODES: Final = frozenset(
     {
         "post_kind",
@@ -234,8 +248,50 @@ def _pointer(kind: str, pointer: Any) -> str:
     if len(text) > POINTER_MAX:
         raise CommunityRefusal("post_pointer", f"a pointer is at most {POINTER_MAX} characters and this one is {len(text)}", length=len(text), max=POINTER_MAX)
     if text.endswith("/") or any(character.isspace() for character in text) or "?" in text or "#" in text:
-        raise CommunityRefusal("post_pointer", "a pointer is one path — no query, no fragment, no trailing slash, and nothing else hanging off it", sent=text)
+        raise CommunityRefusal("post_pointer", "a pointer is one path — no query, no fragment, no trailing slash", pointer=text)
     return text
+
+
+def _artifact(session: Session, kind: str, actor_id: str, address: str) -> None:
+    """The promise the pointer makes, honoured: something answers at that address, and it is the author's.
+
+    Five kinds name rows an account owns — a challenge run and a career (`careers`), a played match
+    (`sim_matches`), a drawn board (`tactic_boards`), an uploaded clip (`video_assets`) — and one names the
+    project's own drill catalogue (`training_drills`), which has no owner to check and answers to every
+    account. A run is a career whose window the scenario set, so `/challenges/runs/` refuses an open career
+    on the same rule: it is the windowed artifact that prefix names.
+
+    Both failures answer one code, and the code's figures are the author's own words. A sentence that told
+    a guessed address apart from a row the caller does not own would be an oracle — a caller could learn
+    which ids are rows that exist by which refusal came back, which is the disclosure `ownership_or_admin`
+    makes with a 404 and this tier makes with the same answer. So a missing row and someone else's row are
+    one sentence, and     the row's own facts (whose it is, what it is called) never travel.
+    """
+    if kind == "note":
+        # A note points at nothing, and `_pointer` has already refused it a pointer — there is no address
+        # to resolve, and an empty tail would otherwise read as a missing row in some other kind's table.
+        return
+    tail = address.rsplit("/", 1)[-1]
+    found: Base | None = None
+    if kind == "my_training":
+        found = session.scalar(select(TrainingDrill).where(TrainingDrill.slug == tail))
+    elif kind == "my_analysis":
+        found = session.scalar(select(VideoAsset).where(VideoAsset.id == tail, VideoAsset.owner_id == actor_id))
+    elif kind == "my_match":
+        found = session.scalar(select(SimulationMatch).where(SimulationMatch.slug == tail, SimulationMatch.owner_id == actor_id))
+    elif kind == "my_career":
+        found = session.scalar(select(Career).where(Career.slug == tail, Career.owner_id == actor_id, Career.challenge_slug == ""))
+    elif kind == "my_goal":
+        found = session.scalar(select(Career).where(Career.slug == tail, Career.owner_id == actor_id, Career.challenge_slug != ""))
+    else:
+        found = session.scalar(select(TacticBoard).where(or_(TacticBoard.id == tail, TacticBoard.slug == tail), TacticBoard.owner_id == actor_id))
+    if found is None:
+        raise CommunityRefusal(
+            "post_artifact",
+            "that address answers to nothing this account may point at",
+            kind=kind,
+            pointer=address,
+        )
 
 
 def _body(body: Any, maximum: int, code: str, field: str) -> str:
@@ -308,6 +364,7 @@ def create_post(session: Session, actor_id: str, *, kind: Any, body: Any, pointe
             limit=MAX_POSTS_PER_USER,
         )
     address = _pointer(chosen, pointer)
+    _artifact(session, chosen, actor_id, address)
     row = CommunityPost(
         id=new_public_id("post"),
         author_id=actor_id,

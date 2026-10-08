@@ -93,6 +93,40 @@ answer for the permission matrix, and a community door asks only whether the cal
    `recorded_now`, `removed`) and the wall keeps a copy of its own under `data-note="wall"`. Two walk iterations
    (28/37 then 35/38) were spent finding out that the harness, not the tier, was the one lying.
 
+## The pointer's promise, landed 2026-10-09
+
+The wall shipped with the pointer's **shape** checked and its **referent** unchecked: `_pointer` held the prefix,
+the length and the one-path rule, and a `my_analysis` post naming another account's clip published the existence of
+a private row to whoever read the feed — the one sentence in the tier's own docstring ("all point at artifacts that
+are the author's own to share") that no door held. `create_post` now resolves the address before the row is stored:
+five kinds read the author's own rows (`my_match` → `sim_matches`, `my_tactic` → `tactic_boards`, `my_analysis` →
+`video_assets`, `my_career` → `careers` without a window, `my_goal` → the *windowed* career the run prefix names),
+and `my_training` reads the project's own drill catalogue, which has no owner to check.
+
+Both failures answer one code, `post_artifact` (404, registered in the tier's `NOT_FOUND_CODES` next to
+`no_such_post`), and the figures are the author's own words: a sentence that told a guessed address apart from a row
+the caller does not own would be an oracle — a caller could learn which ids are rows that exist by which refusal
+came back, which is the disclosure `ownership_or_admin` refuses by answering 404. So the door makes one answer, and
+a case asserts the figure set is exactly `{kind, pointer}`.
+
+Evidence, all on the SQLite leg (`D:\足球项目\.venv\Scripts\python.exe -m pytest tests/test_community.py -q --tb=line`,
+`rc=0`, the whole file — **50 cases**, up from the 45 this document's legs counted, the five new ones below plus the
+`press-high`/`erase-me` fixtures the two older cases needed once a pointer had to resolve):
+
+* `test_a_pointer_publishes_only_when_its_artifact_answers_for_it` — one live artifact per kind, each address stored byte-exact.
+* `test_a_pointer_to_an_address_nothing_answers_is_refused` — all six kinds with a dead tail.
+* `test_a_pointer_to_another_accounts_artifact_answers_exactly_as_nothing_does` — five owned kinds, another author's row, figure set asserted.
+* `test_a_run_is_a_career_with_a_window_and_a_point_at_an_open_career_is_refused` — `/challenges/runs/` refuses an open career, `/career/` takes it.
+* `test_a_pointer_a_drill_a_board_and_a_clip_answer_from_their_own_table` — a tail from the right prefix and the wrong table is the same answer.
+
+One probe arm, run by hand because the `scripts/probe_m9.py` this file cites **is not in the tree** (the gap is
+recorded rather than assumed away): with `_artifact(...)` commented out in `create_post`
+(`apps/api/app/services/community/posts.py`, restored from a byte-exact copy, hash
+`8CF426b5…6e69` before and after), the second, third, fourth and fifth cases above go red by name and the
+positive-control case stays green — a live pointer still publishes, which is what a positive control is for.
+The answer table grows by one row to **229**; the census's floors hold and `test_answer_census.py` is unread of this
+landing, because a `CommunityRefusal` is not an `HTTPException` site.
+
 ## What M9 does not claim
 
 * **No entitlement gate.** The meter has no community feature, so publishing costs nothing and the ceilings are row

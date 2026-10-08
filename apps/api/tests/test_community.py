@@ -36,12 +36,17 @@ from app.api.v1 import community as community_router
 from app.core.db import SessionLocal
 from app.main import app
 from app.models import (
+    Career,
     CommunityComment,
     CommunityFollow,
     CommunityPost,
     CommunityReaction,
     CommunityRepost,
+    SimulationMatch,
+    TacticBoard,
+    TrainingDrill,
     User,
+    VideoAsset,
     utc_today,
 )
 from app.services.club import answers as project_answers
@@ -119,8 +124,9 @@ def test_a_post_that_is_not_a_note_must_point_at_its_own_kind(cast: dict[str, Us
     _refused(lambda: com.create_post(session, cast["ada"].id, kind="my_tactic", body="my press"), "post_pointer")
     wrong = _refused(lambda: com.create_post(session, cast["ada"].id, kind="my_tactic", body="my press", pointer="/training/plan-1"), "post_pointer")
     assert wrong.figures["expected"] == "/tactics/boards/"
-    shared = _post(session, cast["ada"], kind="my_tactic", pointer="/tactics/boards/press-high")
-    assert shared["pointer"] == "/tactics/boards/press-high" and shared["has_pointer"] is True
+    board = _board(session, cast["ada"], f"press-high-{uuid4().hex[:8]}")
+    shared = _post(session, cast["ada"], kind="my_tactic", pointer=f"/tactics/boards/{board.slug}")
+    assert shared["pointer"] == f"/tactics/boards/{board.slug}" and shared["has_pointer"] is True
 
 
 def test_a_note_carries_words_and_refuses_a_pointer_it_could_not_explain(cast: dict[str, User], session: Session) -> None:
@@ -134,6 +140,146 @@ def test_a_pointer_is_one_path_not_a_query(cast: dict[str, User], session: Sessi
         # Bound as a default so the lambda holds *this* iteration's pointer rather than whatever the loop
         # variable ends up being by the time the call runs.
         _refused(lambda sent=pointer: com.create_post(session, cast["ada"].id, kind="my_career", body="x", pointer=sent), "post_pointer")
+
+
+# ------------------------------------------- a pointer is a promise, and the artifact answers for it
+
+
+def _board(session: Session, owner: User, slug: str) -> TacticBoard:
+    row = TacticBoard(id=f"tac_{slug}"[:40], owner_id=owner.id, slug=slug, name=slug.replace("-", " "))
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+def _clip(session: Session, owner: User, ident: str) -> VideoAsset:
+    row = VideoAsset(id=ident[:40], owner_id=owner.id, storage_key=f"videos/{ident}", content_type="video/mp4")
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+def _match(session: Session, owner: User, slug: str) -> SimulationMatch:
+    row = SimulationMatch(id=f"sim_{slug}"[:40], owner_id=owner.id, slug=slug, model_version="pointer-promise")
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+def _career_for(session: Session, owner: User, slug: str, *, run: bool = False) -> Career:
+    """A career, or a challenge run — which is a career whose window the scenario set."""
+    row = Career(id=f"car_{slug}"[:40], slug=slug, owner_id=owner.id, challenge_slug="window-test" if run else "")
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+def _drill(session: Session, slug: str) -> TrainingDrill:
+    row = TrainingDrill(
+        id=f"drill_{slug}"[:40],
+        slug=slug,
+        title=slug.replace("-", " "),
+        category="pressing",
+        objective="hold the first line",
+        setup="two gates, four cones, one ball",
+    )
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+#: The address each kind publishes with, built per call: the run's database persists from case to case, so a
+#: second call re-using one tag would collide on the unique slugs the artifacts hold.
+
+
+def _live_pointers(session: Session, owner: User) -> dict[str, str]:
+    """One live artifact per kind, owned by `owner`, each with its own address."""
+    tag = uuid4().hex[:8]
+    drill = _drill(session, f"press-{tag}")
+    match = _match(session, owner, f"braeford-press-{tag}")
+    board = _board(session, owner, f"my-press-{tag}")
+    clip = _clip(session, owner, f"vid_{tag}")
+    career = _career_for(session, owner, f"ada-career-{tag}")
+    run = _career_for(session, owner, f"ada-run-{tag}", run=True)
+    return {
+        "my_training": f"/training/{drill.slug}",
+        "my_match": f"/match/{match.slug}",
+        "my_tactic": f"/tactics/boards/{board.slug}",
+        "my_analysis": f"/video/{clip.id}",
+        "my_career": f"/career/{career.slug}",
+        "my_goal": f"/challenges/runs/{run.slug}",
+    }
+
+
+def test_a_pointer_publishes_only_when_its_artifact_answers_for_it(cast: dict[str, User], session: Session) -> None:
+    """Every kind's address resolves to a row: five the author owns, one the project authored."""
+    ada = cast["ada"]
+    for kind, pointer in _live_pointers(session, ada).items():
+        published = _post(session, ada, kind=kind, body=f"sharing {kind}", pointer=pointer)
+        assert published["pointer"] == pointer and published["has_pointer"] is True, f"{kind} published nothing at its own address"
+
+
+def test_a_pointer_to_an_address_nothing_answers_is_refused(cast: dict[str, User], session: Session) -> None:
+    """The wall's own claim: a pointer is a promise. An address with no row behind it is not one."""
+    ada = cast["ada"]
+    for kind, pointer in {
+        "my_training": "/training/no-such-drill",
+        "my_match": "/match/no-such-match",
+        "my_tactic": "/tactics/boards/no-such-board",
+        "my_analysis": "/video/vid_nothing_here",
+        "my_career": "/career/no-such-career",
+        "my_goal": "/challenges/runs/no-such-run",
+    }.items():
+        _refused(lambda sent=pointer, which=kind: com.create_post(session, ada.id, kind=which, body="x", pointer=sent), "post_artifact")
+
+
+def test_a_run_is_a_career_with_a_window_and_a_point_at_an_open_career_is_refused(cast: dict[str, User], session: Session) -> None:
+    """`/challenges/runs/` names the windowed kind; an open career is a different artifact and a different prefix."""
+    ada = cast["ada"]
+    open_career = _career_for(session, ada, f"open-not-a-run-{uuid4().hex[:8]}")
+    _refused(lambda: com.create_post(session, ada.id, kind="my_goal", body="x", pointer=f"/challenges/runs/{open_career.slug}"), "post_artifact")
+    posted = _post(session, ada, kind="my_career", body="my season", pointer=f"/career/{open_career.slug}")
+    assert posted["pointer"] == f"/career/{open_career.slug}"
+
+
+def test_a_pointer_to_another_accounts_artifact_answers_exactly_as_nothing_does(cast: dict[str, User], session: Session) -> None:
+    """One answer for a guessed id and for a row the caller does not own, and the answer names no row.
+
+    A sentence that told the two apart would be an oracle — a caller could learn which guessed ids are
+    rows that exist, which is the disclosure `ownership_or_admin` refuses by answering 404. So the figures
+    are the author's own words: the kind, and the address they sent. This is §35's "artifacts that are
+    the author's own to share" held by the door rather than asserted in a paragraph.
+    """
+    ada, bo = cast["ada"], cast["bo"]
+    tag = uuid4().hex[:8]
+    owned = {
+        "my_match": f"/match/{_match(session, ada, f'ada-match-{tag}').slug}",
+        "my_tactic": f"/tactics/boards/{_board(session, ada, f'ada-board-{tag}').slug}",
+        "my_analysis": f"/video/{_clip(session, ada, f'vid_ada_only_{tag}').id}",
+        "my_career": f"/career/{_career_for(session, ada, f'ada-season-{tag}').slug}",
+        "my_goal": f"/challenges/runs/{_career_for(session, ada, f'ada-window-{tag}', run=True).slug}",
+    }
+    for kind, pointer in owned.items():
+        error = _refused(lambda sent=pointer, which=kind: com.create_post(session, bo.id, kind=which, body="x", pointer=sent), "post_artifact")
+        assert set(error.figures) == {"kind", "pointer"}, f"{kind} named facts about a row it did not reach: {sorted(error.figures)}"
+        assert error.figures["pointer"] == pointer
+
+
+def test_a_pointer_a_drill_a_board_and_a_clip_answer_from_their_own_table(cast: dict[str, User], session: Session) -> None:
+    """Each resolver reads its own table, so a tail from the right prefix and the wrong table is refused on the same rule."""
+    ada = cast["ada"]
+    tag = uuid4().hex[:8]
+    board = _board(session, ada, f"wrong-table-board-{tag}")
+    match = _match(session, ada, f"wrong-table-match-{tag}")
+    _refused(lambda: com.create_post(session, ada.id, kind="my_training", body="x", pointer=f"/training/{board.slug}"), "post_artifact")
+    _refused(lambda: com.create_post(session, ada.id, kind="my_tactic", body="x", pointer=f"/tactics/boards/{match.slug}"), "post_artifact")
+    own = _post(session, ada, kind="my_tactic", body="the real one", pointer=f"/tactics/boards/{board.slug}")
+    assert own["pointer"] == f"/tactics/boards/{board.slug}"
 
 
 # ------------------------------------------------------------------ a post stores no figure
@@ -550,7 +696,11 @@ def test_following_through_a_door_is_what_opens_a_followers_post_to_that_reader(
 
 def test_the_erase_door_takes_the_rows_on_your_own_post_down_and_answers_absence_for_everybody_else(voices: dict[str, TestClient], session: Session) -> None:
     ada, bo = voices["ada"], voices["bo"]
-    post = ada.post("/api/v1/community/posts", json={"body": "here briefly", "kind": "my_career", "pointer": "/career/erase-me"}).json()["post"]["id"]
+    tag = uuid4().hex[:8]
+    owner = session.get(User, _id_of(ada))
+    assert owner is not None, "the voice fixture registered the account this door runs as"
+    career = _career_for(session, owner, f"erase-me-{tag}")
+    post = ada.post("/api/v1/community/posts", json={"body": "here briefly", "kind": "my_career", "pointer": f"/career/{career.slug}"}).json()["post"]["id"]
     bo.post(f"/api/v1/community/posts/{post}/reactions", json={"reaction": "like"})
     bo.post(f"/api/v1/community/posts/{post}/comments", json={"body": "noted"})
     bo.post(f"/api/v1/community/posts/{post}/reposts")
