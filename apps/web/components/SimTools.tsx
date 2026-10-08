@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { browserFetch } from "@/lib/api";
@@ -16,6 +17,7 @@ import type { SimReplay } from "@/lib/types";
  */
 export function SimTools({ ident, digest }: { ident: string; digest: string }) {
   const router = useRouter();
+  const t = useTranslations("common");
   const [busy, setBusy] = useState<null | "replay" | "delete">(null);
   const [error, setError] = useState<string | null>(null);
   const [replay, setReplay] = useState<SimReplay | null>(null);
@@ -49,7 +51,7 @@ export function SimTools({ ident, digest }: { ident: string; digest: string }) {
           {busy === "replay" ? "Replaying…" : "Replay and compare"}
         </button>
         <button className="btn btn--ghost" disabled={busy !== null} onClick={remove} type="button">
-          {busy === "delete" ? "Deleting…" : "Delete this match"}
+          {busy === "delete" ? `${t("delete")}…` : `${t("delete")} this match`}
         </button>
       </div>
 
