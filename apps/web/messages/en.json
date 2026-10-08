@@ -44,6 +44,8 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
+    "previousPage": "Previous",
+    "nextPage": "Next",
     "submit": "Submit",
     "confirm": "Confirm",
     "yes": "Yes",

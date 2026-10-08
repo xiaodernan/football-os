@@ -7,6 +7,7 @@
  * ever comes from a licensed provider flips the badge on its own.
  */
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -186,6 +187,7 @@ export function WorldPager({
   total: number;
   build: (page: number) => string;
 }) {
+  const t = useTranslations("common");
   if (pages <= 1) return <p className="muted world-pageinfo">{total.toLocaleString("en-GB")} rows.</p>;
   return (
     <nav className="between wrap world-pageinfo" aria-label="Pagination">
@@ -195,12 +197,12 @@ export function WorldPager({
       <div className="row" style={{ gap: "0.4rem" }}>
         {page > 1 && (
           <Link className="btn btn--sm" href={build(page - 1)}>
-            ← Previous
+            ← {t("previousPage")}
           </Link>
         )}
         {page < pages && (
           <Link className="btn btn--sm" href={build(page + 1)}>
-            Next →
+            {t("nextPage")} →
           </Link>
         )}
       </div>
