@@ -20,7 +20,7 @@ import type { MatchList, NewsList, PlayerList, CompetitionList, WorldStatus } fr
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata() {
+export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("world");
   return pageMetadata({
     title: t("title"),
