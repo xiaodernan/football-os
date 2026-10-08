@@ -119,6 +119,7 @@ export function ClubCreateForm({ rules, roomLeft }: { rules: ClubRules; roomLeft
 
 /** An invitation is a row that waits; accepting it is the moment a role starts granting anything. */
 export function InvitationTools({ items }: { items: InvitationItem[] }) {
+  const t = useTranslations("common");
   const { busy, call, note } = useClubCall();
   return (
     <div className="stack">
@@ -143,10 +144,10 @@ export function InvitationTools({ items }: { items: InvitationItem[] }) {
                 <td>
                   <div className="row wrap">
                     <button className="btn btn--sm" data-act="accept" disabled={busy !== null} onClick={() => void call(`accept-${row.organization}`, `/club/${encodeURIComponent(row.organization)}/accept`, { body: {} })} type="button">
-                      Accept
+                      {t("accept")}
                     </button>
                     <button className="btn btn--sm btn--ghost" data-act="decline" disabled={busy !== null} onClick={() => void call(`decline-${row.organization}`, `/club/${encodeURIComponent(row.organization)}/decline`, { body: {} })} type="button">
-                      Decline
+                      {t("decline")}
                     </button>
                   </div>
                 </td>
