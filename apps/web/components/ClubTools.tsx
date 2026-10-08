@@ -305,7 +305,7 @@ export function TenantTools({ ident, members, teams, rules }: { ident: string; m
               </span>
               <span className="chip mono">{team.minors_on_sheet} under 18</span>
               <button className="btn btn--sm btn--ghost" data-act="team-delete" disabled={busy !== null} onClick={() => void call(`team-${team.id}`, `/club/${encodeURIComponent(ident)}/teams/${encodeURIComponent(team.id)}`, { method: "DELETE" })} type="button">
-                Delete sheet
+                {t("delete")} sheet
               </button>
             </div>
           </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -113,6 +114,7 @@ export function ConsentTable({ consents, ident }: { consents: ConsentList; ident
 
 /** A guardian's yes, and a coach's first plan for a child that yes permits. */
 export function AcademyTools({ ident, scopes, sheets }: { ident: string; scopes: Scopes; sheets: SheetChild[] }) {
+  const t = useTranslations("common");
   const { busy, call, note } = useAcademyCall();
   const [child, setChild] = useState(sheets[0]?.slug ?? "");
   const [agreed, setAgreed] = useState<string[]>(scopes.default_granted);
@@ -196,7 +198,7 @@ export function AcademyTools({ ident, scopes, sheets }: { ident: string; scopes:
           </div>
           <div className="row wrap">
             <button className="btn btn--sm" data-testid="plan-open" disabled={busy !== null || child === ""} onClick={() => void call("plan", `/club/academy/${encodeURIComponent(ident)}/plans`, { body: { player: child, review_weeks: Number(reviewWeeks), focus: focus.split(",").map((row) => row.trim()).filter(Boolean), goals: goal.title ? [goal] : [] } })} type="button">
-              {busy === "plan" ? "Opening…" : "Open plan"}
+              {busy === "plan" ? `${t("open")}…` : `${t("open")} plan`}
             </button>
             <span className="muted" style={{ fontSize: "0.82rem" }}>
               A second open plan for the same child is refused by name: `plan_already_open` says which plan holds the seat.

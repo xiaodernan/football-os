@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -166,6 +167,7 @@ function ScenarioSummary({ scenario }: { scenario: ChallengeEntry }) {
 
 /** The measurement the club came from, printed in the response that carried it. */
 function OpenedRun({ opened }: { opened: ChallengeRunView }) {
+  const t = useTranslations("common");
   const choice = opened.club_choice;
   const ranking = (choice?.ranking ?? []).filter((row) => row.measurable && typeof row.overall === "number");
   const lowest = ranking.reduce<number | null>((min, row) => (min === null || Number(row.overall) < min ? Number(row.overall) : min), null);
@@ -206,7 +208,7 @@ function OpenedRun({ opened }: { opened: ChallengeRunView }) {
       </div>
       <p className="muted">{opened.verdict?.closed_by} {opened.verdict?.judged_on}</p>
       <Link className="btn btn--sm" href={`/challenges/runs/${encodeURIComponent(opened.career.slug)}`}>
-        Open the run
+        {t("open")} the run
       </Link>
     </div>
   );
