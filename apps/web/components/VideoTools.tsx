@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 /**
@@ -12,6 +13,7 @@ import { useState } from "react";
  */
 export function VideoTools({ assetId, status }: { assetId: string; status: string }) {
   const router = useRouter();
+  const t = useTranslations("common");
   const [busy, setBusy] = useState<null | "analyse" | "delete">(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +51,7 @@ export function VideoTools({ assetId, status }: { assetId: string; status: strin
           {busy === "analyse" ? "Measuring frames…" : status === "analysed" ? "Analyse again" : "Analyse this clip"}
         </button>
         <button className="btn btn--danger btn--sm" disabled={busy !== null} onClick={() => call("delete")} type="button">
-          {busy === "delete" ? "Deleting…" : "Delete clip and file"}
+          {busy === "delete" ? `${t("delete")}…` : `${t("delete")} clip and file`}
         </button>
       </div>
       <p className="muted world-section-note">
