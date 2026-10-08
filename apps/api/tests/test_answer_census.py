@@ -175,6 +175,21 @@ def test_every_code_the_tree_raises_is_registered_with_that_status() -> None:
     assert not offenders, "the tree and the ledger disagree (fix the raise or register the code):\n" + "\n".join(offenders)
 
 
+def test_no_raise_site_is_unreadable() -> None:
+    """Every raise the tree answers with is either a resolved code+status pair or drives its status from the table.
+
+    The ten sites that lingered in the unresolved bucket (agent_memory x2, agents x2, jobs x5,
+    model_router x1) all answered with a bare string or an f-string detail — no code at all — which is
+    the shape that let them dodge the first census: a census of *codes* sees nothing at a door that
+    prints none. Each now carries §51's coded dict, and the model_router door reads its 403 from
+    `answers.ANSWERS` instead of spelling it. Zero is the floor because the next landing's debt will
+    be one of these shapes, and this is the case that will name its file:line.
+    """
+
+    _sites, _table_driven, unresolved = _tree_sites()
+    assert unresolved == 0, f"{unresolved} raise sites answer without a code the census can read"
+
+
 def test_no_router_keeps_a_local_status_routing_set() -> None:
     """§51's one table, enforced against the way this debt came back.
 
@@ -210,14 +225,15 @@ def test_no_router_keeps_a_local_status_routing_set() -> None:
 def test_the_census_actually_saw_the_tree() -> None:
     """A scanner that parses nothing would find no disagreement; these floors make that red."""
     sites, table_driven, unresolved = _tree_sites()
-    assert len(sites) >= 85, f"only {len(sites)} resolvable raise sites — the walk stopped early"
-    assert len(ANSWERS) >= 221, f"the answer table shrank to {len(ANSWERS)} rows"
+    assert len(sites) >= 95, f"only {len(sites)} resolvable raise sites — the walk stopped early"
+    assert len(ANSWERS) >= 228, f"the answer table shrank to {len(ANSWERS)} rows"
     # The refusal-class builders (`_ANSWERS.get(error.code, …)`) and the `to_dict()` shapes resolve to
     # neither bucket's assertion above, so each bucket is counted here: a sudden collapse to zero means
     # the extraction changed shape, not that the debt was paid. The scouting and market landing moved
     # twelve raises from the unresolved bucket into this one by asking the table for the status.
-    assert table_driven >= 12, f"the table-driven pattern vanished: {table_driven} builders"
-    assert table_driven + unresolved + len(sites) >= 95
+    assert table_driven >= 15, f"the table-driven pattern vanished: {table_driven} builders"
+    assert unresolved == 0
+    assert table_driven + unresolved + len(sites) >= 110
 
 
 def test_the_table_is_assembled_from_tiers_without_collisions() -> None:

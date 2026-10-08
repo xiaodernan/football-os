@@ -88,13 +88,14 @@ class TestAgentOrchestrator:
         assert data2["from_cache"] is True
 
     def test_run_unknown_agent(self) -> None:
-        """Should return 400 for unregistered agent type."""
+        """An unregistered agent type answers 422 with a code the table knows."""
         client = _client()
         resp = client.post(
             "/api/v1/agents/run",
             json={"query": "test", "agent_type": "nonexistent"},
         )
-        assert resp.status_code == 400
+        assert resp.status_code == 422
+        assert resp.json()["detail"]["code"] == "unknown_agent_type"
 
     def test_agent_context(self) -> None:
         """Should list memories persisted by the agent."""

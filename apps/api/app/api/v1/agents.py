@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -220,7 +220,10 @@ def agent_run(
     try:
         agent = get_agent(db=db, user_id=user.id, agent_type=body.agent_type, session_id=body.session_id)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        #: §51's shape: the message is the registry's own sentence (it already names what it holds),
+        #: and the code is what the answer table binds to 422 — a caller's own word for a type this
+        #: catalogue does not have, the same answer `unknown_role` gives an unknown tactical role.
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"code": "unknown_agent_type", "message": str(exc)}) from exc
 
     result = agent.run(query=body.query)
     db.commit()
@@ -243,6 +246,6 @@ def agent_context(
     try:
         agent = get_agent(db=db, user_id=user.id, agent_type=agent_type, session_id=session_id)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail={"code": "unknown_agent_type", "message": str(exc)}) from exc
 
     return {"memories": agent.list_context()}

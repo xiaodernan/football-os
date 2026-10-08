@@ -99,7 +99,7 @@ class TestAgentMemoryCrud:
 
         resp = client.get("/api/v1/agents/memory/get?key=nonexistent")
         assert resp.status_code == 404
-        assert resp.json()["detail"] == "no_such_memory"
+        assert resp.json()["detail"]["code"] == "no_such_memory"
 
     def test_delete_missing_returns_404(self) -> None:
         client = _client()

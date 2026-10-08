@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -61,7 +61,7 @@ def memory_get(
     """Retrieve one named fact."""
     value = get_memory(db, user_id=user.id, agent_type="research", key=key)
     if value is None:
-        raise HTTPException(status_code=404, detail="no_such_memory")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "no_such_memory", "message": f"no stored memory answers to {key!r} for this agent", "key": key})
     return MemoryGetResponse(key=key, value=value)
 
 
@@ -86,5 +86,5 @@ def memory_delete(
     removed = delete_memory(db, user_id=user.id, agent_type="research", key=key)
     db.commit()
     if not removed:
-        raise HTTPException(status_code=404, detail="no_such_memory")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "no_such_memory", "message": f"no stored memory answers to {key!r} for this agent", "key": key})
     return {"status": "deleted"}

@@ -21,6 +21,7 @@ from app.core.db import get_db
 from app.core.security import current_user
 from app.models import User
 from app.providers import provider_status
+from app.services.club import answers
 from app.services.model_ledger import spend_today_usd
 
 router = APIRouter(prefix="/model-router", tags=["model-router"])
@@ -87,10 +88,18 @@ def router_switch(
     # Providers are selected by environment variables (settings.*) at startup.
     # Runtime switching would require hot-reloading config and invalidating caches,
     # which violates PRINCIPLE 1 (no premature infrastructure).
+    #: The status is read from `answers.ANSWERS` rather than spelled: this door refuses the verb
+    #: categorically — provider selection is read from the environment at startup, so no standing can
+    #: earn it, which is why it is not 403 (the permission matrix's single meaning) but the table's
+    #: capability answer. The door registers the code and asks for its row.
     raise HTTPException(
-        status_code=403,
-        detail="Provider switching requires environment variable changes and server restart. "
-        f"Current {body.provider_type} provider: {provider_status().get(body.provider_type, 'unknown')}",
+        answers.ANSWERS["provider_switch_unavailable"],
+        detail={
+            "code": "provider_switch_unavailable",
+            "message": "Provider switching requires environment variable changes and server restart.",
+            "provider_type": body.provider_type,
+            "current_provider": provider_status().get(body.provider_type, "unknown"),
+        },
     )
 
 

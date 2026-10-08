@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -121,6 +121,14 @@ def create_job(
     )
 
 
+def _job_or_404(db: Session, job_id: str) -> Job:
+    """The row, or §51's coded 404: the message keeps the id the caller holds, beside the code."""
+    job = db.get(Job, job_id)
+    if not job:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "no_such_job", "message": f"Job {job_id} not found", "job_id": job_id})
+    return job
+
+
 @router.get("/{job_id}", response_model=JobStatusResponse)
 def get_job_status(
     job_id: str,
@@ -128,9 +136,7 @@ def get_job_status(
     db: Session = Depends(get_db),
 ) -> JobStatusResponse:
     """Get detailed status of a specific job including result or error."""
-    job = db.get(Job, job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    job = _job_or_404(db, job_id)
 
     return JobStatusResponse(
         id=job.id,
@@ -152,14 +158,17 @@ def delete_job(
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
     """Delete a completed or failed job. Cannot delete running jobs."""
-    job = db.get(Job, job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    job = _job_or_404(db, job_id)
 
     if job.status in ("RUNNING", "QUEUED"):
         raise HTTPException(
-            status_code=409,
-            detail=f"Cannot delete {job.status.lower()} job. Cancel or wait for completion first.",
+            status.HTTP_409_CONFLICT,
+            detail={
+                "code": "job_not_deletable",
+                "message": f"Cannot delete {job.status.lower()} job. Cancel or wait for completion first.",
+                "job_id": job_id,
+                "status": job.status,
+            },
         )
 
     db.delete(job)
@@ -175,14 +184,17 @@ def cancel_job(
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
     """Cancel a queued or running job."""
-    job = db.get(Job, job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    job = _job_or_404(db, job_id)
 
     if job.status in ("COMPLETED", "FAILED"):
         raise HTTPException(
-            status_code=409,
-            detail=f"Cannot cancel {job.status.lower()} job. It is already terminal.",
+            status.HTTP_409_CONFLICT,
+            detail={
+                "code": "job_not_cancellable",
+                "message": f"Cannot cancel {job.status.lower()} job. It is already terminal.",
+                "job_id": job_id,
+                "status": job.status,
+            },
         )
 
     job.status = "CANCELLED"

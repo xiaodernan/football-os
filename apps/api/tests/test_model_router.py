@@ -67,9 +67,10 @@ class TestModelRouter:
             "/api/v1/model-router/switch",
             json={"provider_type": "llm", "provider_name": "openai"},
         )
-        assert resp.status_code == 403
+        assert resp.status_code == 503
         data = resp.json()
-        assert "environment variable" in data["detail"].lower()
+        assert data["detail"]["code"] == "provider_switch_unavailable"
+        assert "environment variable" in data["detail"]["message"].lower()
 
     def test_costs_endpoint(self) -> None:
         """Should report today's spending and budget."""

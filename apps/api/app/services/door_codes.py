@@ -30,6 +30,8 @@ NOT_FOUND_CODES: Final = frozenset(
         "no_such_club",  # careers
         "no_such_frame",  # video
         "no_such_input",  # simulations
+        "no_such_job",  # jobs — the id in the message is a figure the caller holds, so it travels as one
+        "no_such_memory",  # agent_memory — one named fact, per account
         "no_such_system",  # careers, challenges, simulations
         "wrong_path",  # tactics
     }
@@ -43,6 +45,8 @@ CONFLICT_CODES: Final = frozenset(
         "cannot_play",  # careers (and `WindowClosed`'s `window_closed` reaches this answer at careers:195)
         "career_limit",  # careers
         "email_taken",  # auth
+        "job_not_cancellable",  # jobs — cancelling a job that already finished is a state refusal, not a typo
+        "job_not_deletable",  # jobs — deleting a job still running would take its row mid-flight
         "missing_records",  # trainings
         "no_fixture",  # careers
         "no_player",  # coach, progress, tactics, trainings
@@ -70,6 +74,7 @@ UNPROCESSABLE_CODES: Final = frozenset(
         "no_objectives",  # careers
         "same_team",  # simulations
         "unknown_change",  # tactics
+        "unknown_agent_type",  # agents — the catalogue's own word for a type `AGENT_REGISTRY` does not hold
     }
 )
 
@@ -88,12 +93,13 @@ UNAUTHORIZED_CODES: Final = frozenset(
 #: platform's own and sits there; this is the application's budget refusal at `/knowledge/ask`.
 TOO_MANY_REQUESTS_CODES: Final = frozenset({"ai_budget_exhausted"})  # knowledge
 
-#: A dependency the answer needs is not running — 503, and the two codes answer with `held`/`limit` style
+#: A dependency the answer needs is not running — 503, and the codes answer with `held`/`limit` style
 #: figures beside the sentence rather than as a generic error.
 SERVICE_UNAVAILABLE_CODES: Final = frozenset(
     {
         "media_tools_missing",  # video
         "private_media_not_erased",  # auth (§61's erasure refuses before any write)
+        "provider_switch_unavailable",  # model_router — a runtime switch needs env changes and a restart
         "tactics_not_synced",  # tactics (the catalogue has not been stored on this database yet)
     }
 )
