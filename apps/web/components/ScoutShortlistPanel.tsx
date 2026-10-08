@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { Panel } from "@/components/ui";
 import { browserFetch, errorMessage } from "@/lib/api";
@@ -26,6 +27,7 @@ import type { Candidate, ShortlistList, ShortlistRules, ShortlistView } from "@/
  *    only number this tier stores. Ranking two players against each other is §27's comparison, above.
  */
 export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rules: ShortlistRules; candidates: Candidate[]; searchedQuery: string }) {
+  const t = useTranslations("common");
   const [lists, setLists] = useState<ShortlistList | null>(null);
   const [open, setOpen] = useState<ShortlistView | null>(null);
   const [name, setName] = useState("");
@@ -158,8 +160,8 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
                     <th scope="col" className="num">
                       Room
                     </th>
-                    <th scope="col">Open</th>
-                    <th scope="col">Delete</th>
+                    <th scope="col">{t("open")}</th>
+                    <th scope="col">{t("delete")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -178,12 +180,12 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
                       <td className="num">{row.room_left}</td>
                       <td>
                         <button className="btn btn--sm" data-act="open" disabled={busy !== null} onClick={() => void openList(row.id)} type="button">
-                          Open
+                          {t("open")}
                         </button>
                       </td>
                       <td>
                         <button className="btn btn--sm" data-act="delete" disabled={busy !== null} onClick={() => void drop(row.id)} type="button">
-                          Delete
+                          {t("delete")}
                         </button>
                       </td>
                     </tr>
