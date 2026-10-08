@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { browserFetch } from "@/lib/api";
@@ -167,6 +168,7 @@ export function InvitationTools({ items }: { items: InvitationItem[] }) {
  * it is enforced rather than as a screenshot of what a designer expected.
  */
 export function TenantTools({ ident, members, teams, rules }: { ident: string; members: MemberRow[]; teams: TeamView[]; rules: ClubRules }) {
+  const t = useTranslations("common");
   const { busy, call, note } = useClubCall();
   const [email, setEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("coach");
@@ -401,10 +403,10 @@ export function TenantTools({ ident, members, teams, rules }: { ident: string; m
       </div>
       <div className="row wrap">
         <button className="btn btn--sm" data-testid="club-rename" disabled={busy !== null} onClick={() => void call("rename", `/club/${encodeURIComponent(ident)}`, { body: rename, method: "PATCH" })} type="button">
-          Apply
+          {t("apply")}
         </button>
         <button className="btn btn--sm btn--ghost" data-testid="club-close" disabled={busy !== null} onClick={() => void call("close", `/club/${encodeURIComponent(ident)}`, { method: "DELETE" })} type="button">
-          Close the organisation
+          {t("close")} the organisation
         </button>
       </div>
       <CallNote note={note} />
