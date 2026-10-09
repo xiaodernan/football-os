@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Empty, Panel } from "@/components/ui";
 import { KnowledgeAsk } from "@/app/knowledge/KnowledgeAsk";
@@ -51,6 +52,7 @@ export default async function KnowledgePage({
   const params = await searchParams;
   const category = params.category;
   const q = params.q;
+  const tc = await getTranslations("common");
 
   // Library + status are public reads (no bearer token on the backend), so this renders
   // for a signed-out visitor; only search/ask need the session, handled in the client halves.
@@ -78,7 +80,7 @@ export default async function KnowledgePage({
       {statusResult.ok && statusResult.data.demo_mode && (
         <div className="notice notice--warn" style={{ fontSize: "0.85rem" }}>
           <span className="badge badge--demo" title="No language-model key is configured — ask/search answers are assembled extractively from the cited passages, never generated.">
-            DEMO MODE
+            {tc("demoMode")}
           </span>{" "}
           Answer generation is running without a language model ({String(statusResult.data.providers.reranker ?? "")} reranker,{" "}
           {statusResult.data.embedding_models.join(", ") || "no"} embeddings). Retrieval and citations are fully live.
@@ -139,11 +141,11 @@ export default async function KnowledgePage({
                     <input className="input" id="klib-q" type="search" name="q" defaultValue={q ?? ""} placeholder="e.g. press, hamstring" />
                   </label>
                   <button type="submit" className="btn btn--primary">
-                    Search
+                    {tc("search")}
                   </button>
                   {(category || q) && (
                     <Link className="btn btn--ghost" href="/knowledge">
-                      Clear
+                      {tc("clear")}
                     </Link>
                   )}
                 </form>
@@ -151,7 +153,7 @@ export default async function KnowledgePage({
 
               <div className="row wrap" style={{ gap: "0.4rem" }}>
                 <Link className={`chip ${!category ? "chip--accent" : ""}`} href={q ? `/knowledge?q=${encodeURIComponent(q)}` : "/knowledge"}>
-                  All
+                  {tc("all")}
                 </Link>
                 {docsResult.data.categories.map((name) => (
                   <Link

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { OriginBadge, Provenance, WorldHead, WorldUnavailable, JsonLd } from "@/components/world";
@@ -27,6 +28,7 @@ const TYPES = ["competitions", "teams", "players", "matches", "news"] as const;
 export default async function WorldSearchPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const term = query.q ?? "";
+  const tc = await getTranslations("common");
   const result = term ? await readWorld<WorldSearchResponse>("/world/search", { q: term, types: query.types, limit_rows: 40 }) : null;
 
   return (
@@ -57,7 +59,7 @@ export default async function WorldSearchPage({ searchParams }: Props) {
             ))}
           </select>
           <button className="btn btn--primary" type="submit">
-            Search
+            {tc("search")}
           </button>
         </form>
       </WorldHead>

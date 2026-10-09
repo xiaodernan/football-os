@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { ReasonList } from "@/components/ui";
@@ -12,6 +13,7 @@ function fmt(value: number | undefined, digits = 3): string {
 }
 
 export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; categories: string[] }) {
+  const t = useTranslations("common");
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<string>("hybrid");
   const [category, setCategory] = useState("");
@@ -145,7 +147,7 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
           <div className="row wrap" style={{ gap: "0.4rem" }}>
             {data.demo_mode ? (
               <span className="badge badge--demo" title="No language-model key is configured; ranking uses the feature reranker and results are shown verbatim.">
-                DEMO MODE
+                {t("demoMode")}
               </span>
             ) : (
               <span className="badge badge--live">AI-ranked</span>

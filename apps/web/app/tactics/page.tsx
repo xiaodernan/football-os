@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Pitch } from "@/components/pitch";
 import { BandLegend, MetricTable, SystemCard } from "@/components/tactics";
@@ -26,6 +27,7 @@ const PAGE_SIZE = 12;
 export default async function TacticsIndexPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
+  const tc = await getTranslations("common");
   const [status, list] = await Promise.all([
     readWorld<TacticsStatus>("/tactics/status"),
     readWorld<SystemList>("/tactics", {
@@ -75,7 +77,7 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
             type="search"
           />
           <button className="btn btn--primary" type="submit">
-            Search
+            {tc("search")}
           </button>
           <Link className="btn btn--ghost" href="/tactics/compare">
             Compare two

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { DrillMeta, Empty, Panel } from "@/components/ui";
 import { SessionLogger } from "@/app/training/SessionLogger";
@@ -22,6 +23,7 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
   if (!user) redirect("/login");
 
   const { category } = await searchParams;
+  const tc = await getTranslations("common");
 
   const [drillsResult, sessionsResult] = await Promise.all([
     serverFetch<Drill[]>("/trainings/drills"),
@@ -86,7 +88,7 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
           <h2 className="h2">Drill catalogue</h2>
           <div className="row wrap" style={{ gap: "0.4rem" }}>
             <Link className={`chip ${!activeCategory ? "chip--accent" : ""}`} href="/training">
-              All
+              {tc("all")}
             </Link>
             {categories.map((name) => (
               <Link key={name} className={`chip ${activeCategory === name ? "chip--accent" : ""}`} href={`/training?category=${encodeURIComponent(name)}`}>
