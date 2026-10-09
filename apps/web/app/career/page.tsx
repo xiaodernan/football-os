@@ -36,6 +36,7 @@ export default async function CareerIndexPage() {
   if (!user) redirect("/login?next=%2Fcareer");
 
   const t = await getTranslations("career");
+  const tc = await getTranslations("common");
   const [choices, owned] = await Promise.all([serverFetch<CareerOptions>("/careers/options"), serverFetch<CareerList>("/careers")]);
   if (!choices.ok) return <WorldUnavailable message={choices.error.message} title={t("title")} />;
   const options = choices.data;
@@ -86,7 +87,7 @@ export default async function CareerIndexPage() {
                   <th scope="col">GD</th>
                   <th scope="col">Pts</th>
                   <th scope="col">Objectives met</th>
-                  <th scope="col">Status</th>
+                  <th scope="col">{tc("status")}</th>
                 </tr>
               </thead>
               <tbody>

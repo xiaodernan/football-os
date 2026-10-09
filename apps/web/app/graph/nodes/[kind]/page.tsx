@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { Panel } from "@/components/ui";
 import { WorldHead, WorldUnavailable } from "@/components/world";
@@ -21,6 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ kind: str
 }
 
 function KindNodes({ kind, rules }: { kind: string; rules: GraphRules }) {
+  const t = useTranslations("common");
   return (
     <Panel title={`${kind.charAt(0).toUpperCase() + kind.slice(1)} nodes`} eyebrow={`nodes of kind ${kind}`}>
       <p className="muted" style={{ fontSize: "0.85rem" }}>
@@ -31,7 +33,7 @@ function KindNodes({ kind, rules }: { kind: string; rules: GraphRules }) {
           slug:
         </label>
         <input id="slug" name="slug" type="text" placeholder="slug" style={{ minWidth: "180px" }} />
-        <button className="btn btn--primary" type="submit">Open</button>
+        <button className="btn btn--primary" type="submit">{t("open")}</button>
       </form>
       <p className="muted world-section-note">
         Or browse a node by its slug. The node door prints the node and all its typed edges.

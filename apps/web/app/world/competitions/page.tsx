@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { FilterChips, Provenance, WorldHead, WorldPager, WorldUnavailable } from "@/components/world";
@@ -23,6 +24,7 @@ const PAGE_SIZE = 20;
 export default async function CompetitionsPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
+  const tc = await getTranslations("common");
   const result = await readWorld<CompetitionList>("/world/competitions", { kind: query.kind, page, page_size: PAGE_SIZE });
 
   if (!result.ok) return <WorldUnavailable message={result.message} />;
@@ -58,7 +60,7 @@ export default async function CompetitionsPage({ searchParams }: Props) {
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Name</th>
+                  <th scope="col">{tc("name")}</th>
                   <th scope="col">Format</th>
                   <th scope="col">Region</th>
                   <th scope="col">Season</th>

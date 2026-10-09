@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { ClubCreateForm, InvitationTools } from "@/components/ClubTools";
 import { Panel } from "@/components/ui";
@@ -33,6 +34,7 @@ export default async function ClubIndexPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fclub");
 
+  const tc = await getTranslations("common");
   const [owned, invited, rules] = await Promise.all([
     serverFetch<OrganizationList>("/club"),
     serverFetch<InvitationList>("/club/invitations"),
@@ -82,7 +84,7 @@ export default async function ClubIndexPage() {
                   <th scope="col">Your standing</th>
                   <th scope="col">Members</th>
                   <th scope="col">Teams</th>
-                  <th scope="col">Status</th>
+                  <th scope="col">{tc("status")}</th>
                 </tr>
               </thead>
               <tbody>

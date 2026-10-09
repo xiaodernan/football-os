@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { FilterChips, Provenance, WorldHead, WorldPager, WorldUnavailable } from "@/components/world";
@@ -24,6 +25,7 @@ const PAGE_SIZE = 25;
 export default async function PlayersPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
+  const tc = await getTranslations("common");
   const result = await readWorld<PlayerList>("/world/players", {
     position: query.position,
     sort: query.sort,
@@ -78,7 +80,7 @@ export default async function PlayersPage({ searchParams }: Props) {
               <thead>
                 <tr>
                   <th scope="col">Pos</th>
-                  <th scope="col">Name</th>
+                  <th scope="col">{tc("personName")}</th>
                   <th scope="col">Club</th>
                   <th scope="col">Age</th>
                   <th scope="col">OVR</th>

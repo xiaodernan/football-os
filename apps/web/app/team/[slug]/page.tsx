@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel, ReasonList } from "@/components/ui";
 import {
@@ -43,6 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TeamDetailPage({ params }: Props) {
   const { slug } = await params;
+  const tc = await getTranslations("common");
   const result = await load(slug);
 
   if (!result.ok) {
@@ -145,7 +147,7 @@ export default async function TeamDetailPage({ params }: Props) {
             <thead>
               <tr>
                 <th scope="col">Pos</th>
-                <th scope="col">Name</th>
+                <th scope="col">{tc("personName")}</th>
                 <th scope="col">Age</th>
                 <th scope="col">Nation</th>
                 <th scope="col">Foot</th>

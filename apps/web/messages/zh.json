@@ -84,6 +84,7 @@
     "required": "必填",
     "optional": "可选",
     "name": "名称",
+    "personName": "姓名",
     "description": "描述",
     "details": "详情",
     "summary": "摘要",

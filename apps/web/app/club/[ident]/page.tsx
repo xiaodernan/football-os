@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AcademyTools, ConsentTable } from "@/components/AcademyTools";
 import { TenantTools } from "@/components/ClubTools";
@@ -91,6 +92,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
   if (!user) redirect("/login?next=%2Fclub");
 
   const [{ ident }, query] = await Promise.all([params, searchParams]);
+  const tc = await getTranslations("common");
   if (!ident || ident.length > 160 || ident === "rules") notFound();
   // The board's audience filter is the door's own query parameter, so the page hands it over untouched and prints
   // whatever comes back — including the 422 that says the word selected nobody. Narrowing the rows here instead
@@ -329,7 +331,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                 <tr>
                   <th scope="col">Child</th>
                   <th scope="col">Age</th>
-                  <th scope="col">Status</th>
+                  <th scope="col">{tc("status")}</th>
                   <th scope="col">Review cadence</th>
                   <th scope="col">Reviews filed</th>
                   <th scope="col">Goals</th>

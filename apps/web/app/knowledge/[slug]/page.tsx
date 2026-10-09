@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
@@ -33,6 +34,7 @@ function formatDay(iso: string | null): string {
 
 export default async function KnowledgeDocumentPage({ params }: Props) {
   const { slug } = await params;
+  const tc = await getTranslations("common");
   const result = await serverFetch<KnowledgeDocumentDetail>(`/knowledge/documents/${encodeURIComponent(slug)}`);
 
   if (!result.ok) {
@@ -113,7 +115,7 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
         }
       >
         <p className="muted" style={{ fontSize: "0.88rem" }}>
-          This document is project-authored editorial content, not demo data. The <span className="mono">DEMO MODE</span>{" "}
+          This document is project-authored editorial content, not demo data. The <span className="mono">{tc("demoMode")}</span>{" "}
           badge elsewhere on the site applies to how answers are generated, never to these passages. Use the anchors below —
           a citation link like <span className="mono">#0</span> jumps to the exact passage it quotes.
         </p>

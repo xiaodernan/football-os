@@ -216,7 +216,7 @@ export function TenantTools({ ident, members, teams, rules }: { ident: string; m
             <tr>
               <th scope="col">Member</th>
               <th scope="col">Standing</th>
-              <th scope="col">Status</th>
+              <th scope="col">{t("status")}</th>
               <th scope="col">Rights held</th>
               <th scope="col">Change / revoke</th>
             </tr>

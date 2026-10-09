@@ -84,6 +84,7 @@
     "required": "Required",
     "optional": "Optional",
     "name": "Name",
+    "personName": "Name",
     "description": "Description",
     "details": "Details",
     "summary": "Summary",

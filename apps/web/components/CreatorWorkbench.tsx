@@ -226,7 +226,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
                     <th scope="col" className="num">Moved</th>
                     <th scope="col" className="num">Tokens</th>
                     <th scope="col">Published</th>
-                    <th scope="col">Open</th>
+                    <th scope="col">{t("open")}</th>
                     <th scope="col">Erase</th>
                   </tr>
                 </thead>
