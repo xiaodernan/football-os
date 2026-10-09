@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { AiBadge, ReasonList } from "@/components/ui";
@@ -8,14 +9,15 @@ import { browserFetch, errorMessage } from "@/lib/api";
 import type { GeneratedPlan, PlanDay } from "@/lib/types";
 
 const TYPE_ORDER: PlanDay["type"][] = ["training", "test", "recovery", "rest"];
-const TYPE_LABELS: Record<PlanDay["type"], string> = {
-  training: "Training days",
-  test: "Test days",
-  recovery: "Recovery days",
-  rest: "Rest days",
+const TYPE_KEYS: Record<PlanDay["type"], string> = {
+  training: "typeTraining",
+  test: "typeTest",
+  recovery: "typeRecovery",
+  rest: "typeRest",
 };
 
 export function PlanBuilder() {
+  const t = useTranslations("coach");
   const [horizon, setHorizon] = useState(7);
   const [minutes, setMinutes] = useState(25);
   const [daysPerWeek, setDaysPerWeek] = useState(4);
@@ -39,7 +41,7 @@ export function PlanBuilder() {
       setResult(response.data);
       setSaved(response.status === 200);
     } else {
-      setError(errorMessage(response.error, "The plan could not be built right now."));
+      setError(errorMessage(response.error, t("planFailed")));
     }
     setBusy(false);
   }
@@ -51,36 +53,36 @@ export function PlanBuilder() {
     <div className="stack">
       <div className="form-grid">
         <label className="field">
-          <span className="field__label">Horizon</span>
+          <span className="field__label">{t("horizonLabel")}</span>
           <select className="select" value={horizon} onChange={(event) => setHorizon(Number(event.target.value))}>
-            <option value={7}>7 days</option>
-            <option value={30}>30 days</option>
-            <option value={90}>90 days</option>
+            <option value={7}>{t("days7")}</option>
+            <option value={30}>{t("days30")}</option>
+            <option value={90}>{t("days90")}</option>
           </select>
         </label>
         <label className="field">
-          <span className="field__label">Sessions per week: {daysPerWeek}</span>
+          <span className="field__label">{t("sessionsPerWeek", { count: daysPerWeek })}</span>
           <select className="select" value={daysPerWeek} onChange={(event) => setDaysPerWeek(Number(event.target.value))}>
             {[1, 2, 3, 4, 5, 6, 7].map((value) => (
               <option value={value} key={value}>
-                {value} {value === 1 ? "day" : "days"}
+                {value === 1 ? t("dayOne", { count: value }) : t("dayMany", { count: value })}
               </option>
             ))}
           </select>
         </label>
         <label className="field">
-          <span className="field__label">Minutes per session: {minutes}</span>
+          <span className="field__label">{t("minutesPerSession", { count: minutes })}</span>
           <input className="plan-range" type="range" min={5} max={180} step={5} value={minutes} onChange={(event) => setMinutes(Number(event.target.value))} />
         </label>
         <label className="check" style={{ alignSelf: "end" }}>
           <input type="checkbox" checked={hasPitch} onChange={(event) => setHasPitch(event.target.checked)} />
-          <span>I have pitch / grass access</span>
+          <span>{t("pitchAccess")}</span>
         </label>
       </div>
 
       <div>
         <button type="button" className="btn btn--primary" onClick={build} disabled={busy}>
-          {busy ? "Building plan…" : `Build a ${horizon}-day plan`}
+          {busy ? t("building") : t("buildPlan", { days: horizon })}
         </button>
       </div>
 
@@ -89,11 +91,11 @@ export function PlanBuilder() {
       {result && (
         <div className="stack">
           <AiBadge demo_mode={result.demo_mode} provider={result.provider} model={result.model} confidence={result.confidence} />
-          {saved && <div className="notice">Saved to your plan history — the server stored this plan for your player.</div>}
+          {saved && <div className="notice">{t("planSaved")}</div>}
 
           {grouped.map((group) => (
             <div className="stack-sm" key={group.type}>
-              <p className="eyebrow">{TYPE_LABELS[group.type]}</p>
+              <p className="eyebrow">{t(TYPE_KEYS[group.type])}</p>
               <ul className="list plan-group">
                 {group.rows.map((day) => (
                   <li className="list__item" key={`${group.type}-${day.day}`}>
@@ -116,7 +118,7 @@ export function PlanBuilder() {
                         ))
                       ) : (
                         <span className="muted" style={{ fontSize: "0.88rem" }}>
-                          {day.note || "No session scheduled — recovery or rest."}
+                          {day.note || t("noSession")}
                         </span>
                       )}
                     </div>
@@ -126,7 +128,7 @@ export function PlanBuilder() {
             </div>
           ))}
 
-          <ReasonList items={result.reasons} title="How the load was spread" />
+          <ReasonList items={result.reasons} title={t("loadSpread")} />
           <p className="muted coach-disclaimer">{result.disclaimer}</p>
         </div>
       )}

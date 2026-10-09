@@ -563,6 +563,45 @@ async function run() {
       englishMessages.scout.askTitle,
     );
 
+    // 10c. §81 2c: the coach screen reads its own catalogue now — a 78-key namespace that did not exist before
+    // this, across three files (the server page, `CoachAsk`, `PlanBuilder`). Same three-way read as 10b, and the
+    // negative half as well: the English sentence must be *gone*, not merely accompanied by a Chinese one.
+    //
+    // It sits here, beside the scout read, rather than next to the career read at 12g-bis — and that is not
+    // cosmetic. The video section below aborts this walk on roughly half its runs (`"No clips yet" never
+    // appeared` after a `DELETE` the API answered `204` to), and anything after it is simply not run. The scout
+    // and coach reads both need only a signed-in account, which exists by here, so they cannot be taken down by
+    // a failure in somebody else's surface.
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    await open(page, '/coach');
+    await waitForText(page, chineseMessages.coach.title);
+    const coachZh = await page.evaluate(() => ({
+      h1: document.querySelector('h1')?.textContent.trim() ?? '',
+      body: document.body.innerText.replace(/\s+/gu, ' '),
+    }));
+    check(
+      'the coach screen in Chinese renders the catalogue: heading, lede, tabs and ask panel come from messages/zh.json',
+      coachZh.h1 === chineseMessages.coach.title &&
+        coachZh.body.includes(chineseMessages.coach.lede) &&
+        coachZh.body.includes(chineseMessages.coach.tabMemory) &&
+        coachZh.body.includes(chineseMessages.coach.askTitle) &&
+        coachZh.body.includes(chineseMessages.coach.questionLabel),
+      `h1 ${coachZh.h1} · lede ${coachZh.body.includes(chineseMessages.coach.lede)} · tab ${coachZh.body.includes(chineseMessages.coach.tabMemory)} · ask ${coachZh.body.includes(chineseMessages.coach.askTitle)} · label ${coachZh.body.includes(chineseMessages.coach.questionLabel)}`,
+    );
+    check(
+      'and the English copy is gone from the Chinese coach page',
+      !coachZh.body.includes(englishMessages.coach.lede) && !coachZh.body.includes(englishMessages.coach.askTitle) && !coachZh.body.includes(englishMessages.coach.tabMemory),
+      `en lede present ${coachZh.body.includes(englishMessages.coach.lede)} · en askTitle present ${coachZh.body.includes(englishMessages.coach.askTitle)} · en tab present ${coachZh.body.includes(englishMessages.coach.tabMemory)}`,
+    );
+    await shot(page, '18c-coach-chinese');
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+    await open(page, '/coach');
+    check(
+      'and the switch back leaves the coach screen in English, so the check is not one-way',
+      (await bodyText(page)).includes(englishMessages.coach.title),
+      englishMessages.coach.title,
+    );
+
     // 12. SEO surface (spec §80): robots, sitemap, canonical, OpenGraph and structured data.
     const [robots, sitemap] = await Promise.all([
       fetch(`${BASE}/robots.txt`).then(async (response) => ({
@@ -2177,6 +2216,7 @@ async function run() {
     );
     await shot(page, '31b-career-chinese');
     await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+
     await open(page, '/career');
     await waitForText(page, englishMessages.career.startCareer);
     const careerBackEn = await page.evaluate(() => ({

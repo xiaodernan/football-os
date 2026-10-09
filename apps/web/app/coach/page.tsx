@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AiBadge, DrillMeta, Panel, ReasonList, Stat } from "@/components/ui";
 import { CoachAsk } from "@/app/coach/CoachAsk";
@@ -13,10 +14,12 @@ import "./coach.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "AI Coach",
-  description: "Ask your rule-engine coach for today's session, a training plan, and read what it remembers.",
-};
+// `generateMetadata` rather than a constant, so the tab title is read from the same catalogue as the page and a
+// reader who chose Chinese does not keep the one string that never moves. Same shape as the auth pages.
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("coach");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 /** The backend stores recent_categories as a {category: count} map; older/mock shapes use a string array. */
 function categoryEntries(raw: string[] | Record<string, number>): [string, number][] {
@@ -31,13 +34,14 @@ function label(value: string): string {
 }
 
 const SECTIONS = [
-  { id: "today", text: "Today" },
-  { id: "ask", text: "Ask" },
-  { id: "plan", text: "Plan" },
-  { id: "memory", text: "Progress notes" },
-];
+  { id: "today", key: "tabToday" },
+  { id: "ask", key: "tabAsk" },
+  { id: "plan", key: "tabPlan" },
+  { id: "memory", key: "tabMemory" },
+] as const;
 
 export default async function CoachPage() {
+  const t = await getTranslations("coach");
   const user = await currentUser();
   if (!user) redirect("/login");
 
@@ -48,7 +52,7 @@ export default async function CoachPage() {
 
   const notice = (status: number, message: string) => (
     <div className="notice notice--warn">
-      {status === 401 ? "Your session expired. " : ""}
+      {status === 401 ? t("sessionExpired") : ""}
       {message}
     </div>
   );
@@ -56,24 +60,21 @@ export default async function CoachPage() {
   return (
     <div className="container page stack">
       <div>
-        <p className="eyebrow">AI Coach · rule engine</p>
-        <h1 className="h1">Train with your coach</h1>
-        <p className="lede">
-          Four working surfaces, not a blank chat box. The coach only knows what your stored profile and completed sessions
-          tell it — every answer shows its reasons and confidence.
-        </p>
+        <p className="eyebrow">{t("eyebrow")}</p>
+        <h1 className="h1">{t("title")}</h1>
+        <p className="lede">{t("lede")}</p>
       </div>
 
-      <nav className="coach-tabs" aria-label="Coach sections">
+      <nav className="coach-tabs" aria-label={t("sectionsLabel")}>
         {SECTIONS.map((section) => (
           <a className="coach-tabs__link" href={`#${section.id}`} key={section.id}>
-            {section.text}
+            {t(section.key)}
           </a>
         ))}
       </nav>
 
       <section id="today" className="stack">
-        <Panel eyebrow="Today" title="Recommended session">
+        <Panel eyebrow={t("tabToday")} title={t("todayTitle")}>
           {todayResult.ok ? (
             <div className="stack">
               <AiBadge
@@ -89,7 +90,7 @@ export default async function CoachPage() {
                   <div className="between wrap">
                     <h3 className="h3">{todayResult.data.recommendation.title}</h3>
                     <Link className="btn btn--primary btn--sm" href={`/training/${todayResult.data.recommendation.slug}`}>
-                      Open &amp; add
+                      {t("openAndAdd")}
                     </Link>
                   </div>
                   <p className="muted">{todayResult.data.recommendation.objective}</p>
@@ -107,11 +108,11 @@ export default async function CoachPage() {
                 </div>
               )}
 
-              <ReasonList items={todayResult.data.reasons} title="Why this was chosen" />
+              <ReasonList items={todayResult.data.reasons} title={t("whyChosen")} />
 
               {todayResult.data.alternatives && todayResult.data.alternatives.length > 0 && (
                 <div className="stack-sm">
-                  <p className="eyebrow">Alternatives</p>
+                  <p className="eyebrow">{t("alternatives")}</p>
                   <div className="grid-2">
                     {todayResult.data.alternatives.map((alt) => (
                       <Link className="coach-alt" href={`/training/${alt.slug}`} key={alt.slug}>
@@ -130,37 +131,37 @@ export default async function CoachPage() {
           ) : todayResult.status === 409 && todayResult.error.code === "no_player" ? (
             redirect("/onboarding")
           ) : (
-            notice(todayResult.status, errorMessage(todayResult.error, "Today's recommendation is unavailable."))
+            notice(todayResult.status, errorMessage(todayResult.error, t("todayUnavailable")))
           )}
         </Panel>
       </section>
 
       <section id="ask" className="stack">
-        <Panel eyebrow="Ask" title="Ask a coaching question">
+        <Panel eyebrow={t("tabAsk")} title={t("askTitle")}>
           <CoachAsk />
         </Panel>
       </section>
 
       <section id="plan" className="stack">
-        <Panel eyebrow="Plan" title="Build a training plan">
+        <Panel eyebrow={t("tabPlan")} title={t("planTitle")}>
           <PlanBuilder />
         </Panel>
       </section>
 
       <section id="memory" className="stack">
-        <Panel eyebrow="Progress notes" title="What your coach remembers">
+        <Panel eyebrow={t("tabMemory")} title={t("memoryTitle")}>
           {historyResult.ok ? (
             <div className="stack">
               {historyResult.data.disclaimer && <p className="muted coach-disclaimer">{historyResult.data.disclaimer}</p>}
               <div className="grid-4 coach-memory">
-                <Stat label="Sessions" value={historyResult.data.memory.sessions_total} hint="Completed &amp; logged" />
-                <Stat label="XP total" value={historyResult.data.memory.xp_total} />
-                <Stat label="Level" value={historyResult.data.memory.level} />
-                <Stat label="Q&amp;A turns stored" value={historyResult.data.items.length} hint="Persisted server-side" />
+                <Stat label={t("statSessions")} value={historyResult.data.memory.sessions_total} hint={t("statSessionsHint")} />
+                <Stat label={t("statXp")} value={historyResult.data.memory.xp_total} />
+                <Stat label={t("statLevel")} value={historyResult.data.memory.level} />
+                <Stat label={t("statTurns")} value={historyResult.data.items.length} hint={t("statTurnsHint")} />
               </div>
 
               <div className="stack-sm">
-                <p className="eyebrow">Recent categories</p>
+                <p className="eyebrow">{t("recentCategories")}</p>
                 {(() => {
                   const entries = categoryEntries(historyResult.data.memory.recent_categories as unknown as string[]);
                   return entries.length > 0 ? (
@@ -173,13 +174,13 @@ export default async function CoachPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="muted">No completed sessions in the last few days yet.</p>
+                    <p className="muted">{t("noRecentSessions")}</p>
                   );
                 })()}
               </div>
 
               <div className="stack-sm">
-                <p className="eyebrow">Attribute trend</p>
+                <p className="eyebrow">{t("attributeTrend")}</p>
                 {historyResult.data.memory.attribute_trend.length > 0 ? (
                   <ul className="list coach-trend">
                     {historyResult.data.memory.attribute_trend.map((row, index) => (
@@ -190,14 +191,14 @@ export default async function CoachPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="muted">No attribute changes recorded yet — complete a session first.</p>
+                  <p className="muted">{t("noAttributeChanges")}</p>
                 )}
               </div>
             </div>
           ) : historyResult.status === 409 && historyResult.error.code === "no_player" ? (
             redirect("/onboarding")
           ) : (
-            notice(historyResult.status, errorMessage(historyResult.error, "Coach memory is unavailable."))
+            notice(historyResult.status, errorMessage(historyResult.error, t("memoryUnavailable")))
           )}
         </Panel>
       </section>
