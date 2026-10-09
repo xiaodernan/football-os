@@ -46,7 +46,7 @@ and the fields are where the work is.
 | M10 Creator Economy | 🟡 §38 portfolio landed, share links + CV PDF landed 2026-10-06 | `docs/M10_PORTFOLIO_VERIFICATION.md` |
 | M11 Multi-Agent | ⬜ not started — and §30 Knowledge Graph waits on it by decision | `docs/SPEC_COVERAGE_AUDIT.md` |
 | M12 Hardening | 🟡 §61 account erasure landed 2026-10-06; the rest of M12 (load, ops) untouched | `docs/SECURITY_AUTHORIZATION_VERIFICATION.md` |
-| §81 i18n | 🟡 catalogues full, switcher works, shell switches — page bodies are still English literals | the grep that counts `useTranslations` callers |
+| §81 i18n | 🟡 catalogues full, switcher works, shell switches; **45 files bind a translator (63 bindings)** — nav/auth/scout/career/settings/world plus `common`'s verbs, nouns and both scanned label shapes. Still English literals: the ten content-page namespaces, which have no keys yet. | the grep that counts `useTranslations`/`getTranslations` callers, and the value-derived label census (shape A 0, shape B 4 — the four are sense skips) |
 
 Three cross-cutting defects have now been found and fixed **three separate times** (M4's `tactics/sync.py`, M7's
 scouting modules, M8's academy tier): *the committed tree does not pass the gate its own documents quote.* The
@@ -141,8 +141,10 @@ build (was 249), including a screenshot of the Chinese login page. `test_locale_
 switcher repaints the nav bar above a page that cannot change. The catalogue is now the *easy* part; this item is
 the long tail.
 
-**Do.** One namespace at a time, in the order a reader meets them: ~~`auth`~~ done, ~~`scout`~~ done, ~~`career`~~ done, ~~`disclaimer`~~ done (2/3 keys — `demoData` + `aiEstimate`; `fictionalResults` has no reader), ~~`settings`~~ done (86 keys — page + PrivacyPanel fully wired), ~~`world`~~ done (54 keys — /world page fully wired with metadata, search, panels, table headers, badges, generation labels, browse section), then `common`
-(shared verbs used across many components). The `validation` namespace (8 keys) waits for a form that
+**Do.** One namespace at a time, in the order a reader meets them: ~~`auth`~~ done, ~~`scout`~~ done, ~~`career`~~ done, ~~`disclaimer`~~ done (2/3 keys — `demoData` + `aiEstimate`; `fictionalResults` has no reader), ~~`settings`~~ done (86 keys — page + PrivacyPanel fully wired), ~~`world`~~ done (54 keys — /world page fully wired with metadata, search, panels, table headers, badges, generation labels, browse section), ~~`common`~~ done on both scanned label shapes (2026-10-09 and 2026-10-10 records below; attribute-position labels are a third shape, unclosed).
+The rest are **content-page** namespaces that do not exist yet — `tactics`, `training`, `progress`, `coach`, `club`,
+`community`, `video`, `simulate`, `market`, `challenges` each need new keys in all three catalogues before a page can
+be wired, because their copy is page-specific rather than a shared word. The `validation` namespace (8 keys) waits for a form that
 displays custom error messages — no component uses these yet. Each page wired is a page the walk can read
 in Chinese — extend `scripts/visual-qa.mjs` to assert one translated string per wired page rather than
 trusting the absence of literals.
@@ -196,6 +198,45 @@ locale**: production `next start` on a fresh port, `GET` with the `fo_locale` co
 the response (`← 上一页 / 下一页 →` on `/world/players?page=2`; the landing hero CTA `前往 我的足球` signed in, after
 registering a throwaway account and player through the shipped cookie proxy — the same route `visual-qa` takes).
 `test_locale_claims.py` 4/4 on every new key.
+
+**Done (common batch, closed on the labels) 2026-10-10, three commits `db5fc27`, `dab8449`, `78da148`.**
+`db5fc27` moved the training-log pager and the landing hero CTA. `dab8449` deleted the last **standalone**
+`common` literal in the tree — census **8 to 0** — and named the two shapes the rest of this item is measured by,
+both derived from the catalogue's own values rather than from a hand-typed word list, walking the 105 `.tsx` files
+under `app/` and `components/`: shape A is a JSX line whose `trim()` *is* a `common` value (0 left), shape B is an
+inline text child `>Label<` (14 before `78da148`, **4 after**). `78da148` took the table headers and the badge quote:
+`Status` on `/career`, `/club`, `/club/{ident}` and inside the client component `ClubTools.TenantTools`, `Name` on
+`/team/{slug}` and `/world/players`, `Name` on `/world/competitions`, `Open` on `/graph/nodes/{kind}` and on the
+creator guides header row, plus the `DEMO MODE` the prose at `knowledge/[slug]` quotes.
+
+- **A literal equal to a catalogue value is not automatically the same sense.** `common.name` = 名称 (a thing's name)
+  and a person's name are different words in Chinese, so `personName` (姓名) was added for `/team` and `/world/players`
+  while `/world/competitions` kept `name` — and the two locales then disagreed on screen in exactly the way the
+  senses do, which is the read that proves the split rather than the dictionary entry. The four labels left literal
+  are the same finding in reverse: `CreatorWorkbench`'s two `Moved` headers sit over numeric cells (`common.moved`
+  is 已移动, a sentence, not a count), its `Published` sits over `guide.published_on`, a date, and `NoticeBoardTools`'
+  `Notice` names an announcement row while `common.notice` = 提示 is a UI hint box. `AI-ranked` and `Erase` stay
+  English for the same reason — domain state words with no key of that sense.
+- **One of these was a real inconsistency, not a skip**: the creator guides column's *button* already read `t("open")`
+  while its own *header* carried the literal. The census found it because it scans for the value, not for the key.
+- **A client-fetched table is invisible to `curl`.** The creator shelf loads after hydration, so the SSR bytes hold
+  no such row — the headless read went through `puppeteer-core` (already a devDependency) with the locale and
+  `fo_access` cookies set, and the header matched its own column's button in all three locales. The in-app browser
+  timed out on every operation, so that leg was replaced rather than reported as done.
+- **Shared tree, measured not assumed**: the three catalogues also carried a concurrent writer's uncommitted
+  `progress` namespace (55 lines each, plus `app/progress/page.tsx` and `scripts/visual-qa.mjs`). The catalogues were
+  staged as HEAD-blob + my one line through `hash-object`/`update-index` — never `git add <path>` — each asserted
+  `+1/-0`, and the staged set was asserted equal to my thirteen paths with a refuse branch. The refuse fired on the
+  first attempt: the script split the worktree on the **string** `"\r?\n"` instead of the regex, so the file looked
+  like one line, the anchor matched nothing, and the index was untouched. Post-commit, `HEAD:<path>` equalled the
+  recorded index hash for all 13, and `git show HEAD:…en.json` still had no `progress` block.
+- **A build cannot see a locale, and a running server can be stale.** One live read disagreed with the source and
+  the cause was my own: the build had silently not run (a mangled parallel command), so the server answered from old
+  `.next` bytes. The order is now enforced — rebuild into a log in the repo, assert `Compiled successfully` and
+  exit 0, start on a **new** port, then read. `next start` prints `Error: ENVIRONMENT_FALLBACK` once at boot;
+  attributed as boot-only (the log did not grow across four route reads, all 200) but its source is unidentified.
+- `common` is now closed on both scanned shapes. It is **not** closed on a third: a label in an **attribute**
+  (`aria-label="Search"`) is neither shape A nor shape B, and no scanner here reads it.
 
 **Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,
 assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.
