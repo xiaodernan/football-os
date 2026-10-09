@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.services.agents.base import BaseAgent
 from app.services.agents.coach import CoachAgent
+from app.services.agents.orchestrator import FootballOrchestrator, run_composite_task
 from app.services.agents.research import ResearchAgent
 from app.services.agents.scout import ScoutAgent
 from app.services.agents.simulation import SimulationAgent
@@ -37,3 +38,19 @@ def get_agent(db: Session, user_id: str, agent_type: str, session_id: str | None
 def list_available_agents() -> list[str]:
     """Return sorted list of registered agent type names."""
     return sorted(AGENT_REGISTRY)
+
+
+__all__ = [
+    "BaseAgent",
+    "CoachAgent",
+    "ResearchAgent",
+    "ScoutAgent",
+    "SimulationAgent",
+    "TacticalAgent",
+    "VideoAgent",
+    "FootballOrchestrator",
+    "run_composite_task",
+    "get_agent",
+    "list_available_agents",
+    "AGENT_REGISTRY",
+]

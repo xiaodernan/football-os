@@ -29,6 +29,21 @@ if [[ -n "${DATABASE_URL:-}" && "${DATABASE_URL:-}" != sqlite* ]]; then
 else
   echo "skipped PostgreSQL leg (export DATABASE_URL to a PostgreSQL URL to run it)"
 fi
+# The two legs below are CI's PostgreSQL job, and one variable decides both: the suite above switches engines on
+# FOOTBALL_OS_TEST_DATABASE_URL (`tests/conftest.py`), so the seed and the RAG benchmark take the same switch rather
+# than a second one to drift from the first. CI runs the suite twice — once per engine — because SQLite accepts
+# over-length strings and lax types; a local run is one engine per invocation, chosen by this variable.
+if [[ -n "${FOOTBALL_OS_TEST_DATABASE_URL:-}" && "${FOOTBALL_OS_TEST_DATABASE_URL:-}" != sqlite* ]]; then
+  echo "── API: seed on the PostgreSQL engine ───────────────"
+  (cd apps/api && python -m seed --with-demo-user)
+  echo "── API: RAG evaluation gates (pgvector leg) ─────────"
+  # Spec §64's benchmark is the reviewer for any change to retrieval, chunking or the corpus. The suite gate
+  # (`tests/test_knowledge_rag.py`) already holds the same thresholds on whichever engine the suite is on;
+  # this leg is CI's report shape on the engine CI runs it on, so a quiet corpus change cannot merge.
+  (cd apps/api && python -m evals.run_rag_eval)
+else
+  echo "skipped the seed and RAG-benchmark PostgreSQL legs (export FOOTBALL_OS_TEST_DATABASE_URL to a throwaway PostgreSQL URL; the suite's own gate tests/test_knowledge_rag.py ran above)"
+fi
 
 echo "── Web: refusal-shape gate ───────────────────────────"
 # Not a browser walk: this one loads apps/web/lib/api.ts through the repo's own TypeScript and feeds it the
