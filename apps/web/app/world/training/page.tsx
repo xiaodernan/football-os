@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { FilterChips, Provenance, WorldHead, WorldPager, WorldUnavailable } from "@/components/world";
@@ -24,6 +25,7 @@ const PAGE_SIZE = 25;
 export default async function WorldTrainingPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
+  const tc = await getTranslations("common");
   const result = await readWorld<WorldTrainingList>("/world/training", {
     player: query.player,
     team: query.team,
@@ -47,7 +49,7 @@ export default async function WorldTrainingPage({ searchParams }: Props) {
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow="Filter" title="By focus">
+        <Panel eyebrow={tc("filter")} title="By focus">
           <FilterChips active={query.category} base={BASE} label="Focus" options={categories} param="category" query={query} />
         </Panel>
         <Panel eyebrow="This page" title="Session load, measured from the rows below">

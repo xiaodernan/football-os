@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { FilterChips, Provenance, WorldHead, WorldPager, WorldUnavailable, formatMoment } from "@/components/world";
@@ -24,6 +25,7 @@ const PAGE_SIZE = 25;
 export default async function MatchesPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
+  const tc = await getTranslations("common");
   const result = await readWorld<MatchList>("/world/matches", {
     status: query.status,
     season: query.season,
@@ -45,7 +47,7 @@ export default async function MatchesPage({ searchParams }: Props) {
         title="Fixtures & results"
       />
 
-      <Panel eyebrow="Filter" title="By state">
+      <Panel eyebrow={tc("filter")} title="By state">
         <FilterChips active={query.status} base={BASE} label="State" options={statuses} param="status" query={query} />
       </Panel>
 

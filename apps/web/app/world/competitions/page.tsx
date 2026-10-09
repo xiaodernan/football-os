@@ -41,7 +41,7 @@ export default async function CompetitionsPage({ searchParams }: Props) {
       />
 
       {kinds.length > 1 && (
-        <Panel eyebrow="Filter" title="By format">
+        <Panel eyebrow={tc("filter")} title="By format">
           <FilterChips active={query.kind} base={BASE} label="Format" options={kinds} param="kind" query={query} />
         </Panel>
       )}

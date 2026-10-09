@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { Crest, FilterChips, Provenance, WorldHead, WorldPager, WorldUnavailable } from "@/components/world";
@@ -23,6 +24,7 @@ const PAGE_SIZE = 25;
 export default async function TeamsPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
+  const tc = await getTranslations("common");
   const result = await readWorld<TeamList>("/world/teams", {
     competition: query.competition,
     nation: query.nation,
@@ -43,7 +45,7 @@ export default async function TeamsPage({ searchParams }: Props) {
         title="Clubs"
       />
 
-      <Panel eyebrow="Filter" title="By nation">
+      <Panel eyebrow={tc("filter")} title="By nation">
         <div className="stack-sm">
           <FilterChips active={query.nation} base={BASE} label="Nation" options={nations} param="nation" query={query} />
           <p className="muted world-section-note">Seasons in the dataset: {seasons.join(" · ")}</p>

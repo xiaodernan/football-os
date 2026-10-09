@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { ClaimChip, FilterChips, OriginBadge, Provenance, RefLink, WorldHead, WorldPager, WorldUnavailable, formatMoment } from "@/components/world";
@@ -24,6 +25,7 @@ const PAGE_SIZE = 20;
 export default async function NewsPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
+  const tc = await getTranslations("common");
   const result = await readWorld<NewsList>("/world/news", {
     category: query.category,
     claim_class: query.claim_class,
@@ -46,10 +48,10 @@ export default async function NewsPage({ searchParams }: Props) {
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow="Filter" title="By kind of writing">
+        <Panel eyebrow={tc("filter")} title="By kind of writing">
           <FilterChips active={query.category} base={BASE} label="Category" options={categories} param="category" query={query} />
         </Panel>
-        <Panel eyebrow="Filter" title="By claim level">
+        <Panel eyebrow={tc("filter")} title="By claim level">
           <FilterChips active={query.claim_class} base={BASE} label="Claim class" options={claimClasses} param="claim_class" query={query} />
         </Panel>
       </div>

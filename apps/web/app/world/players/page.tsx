@@ -50,7 +50,7 @@ export default async function PlayersPage({ searchParams }: Props) {
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow="Filter" title="By position">
+        <Panel eyebrow={tc("filter")} title="By position">
           <FilterChips active={query.position} base={BASE} label="Position" options={positions} param="position" query={query} />
         </Panel>
         <Panel eyebrow="Order" title="Sort by">

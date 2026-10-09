@@ -151,10 +151,10 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
       {list.ok && (
         <>
           <div className="grid grid-2">
-            <Panel eyebrow="Filter" title="By shape">
+            <Panel eyebrow={tc("filter")} title="By shape">
               <FilterChips active={query.formation} base={BASE} label="Shape" options={world.formations} param="formation" query={query} />
             </Panel>
-            <Panel eyebrow="Filter" title="By temperament">
+            <Panel eyebrow={tc("filter")} title="By temperament">
               <FilterChips
                 active={query.temperament}
                 base={BASE}

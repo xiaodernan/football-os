@@ -204,7 +204,8 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
               <select aria-label="Visibility" className="mono" data-creator-guide-visibility onChange={(e) => setGuideVisibility(e.target.value as GuideIn["visibility"])} value={guideVisibility}>
                 {VISIBILITIES.map((v) => <option key={v} value={v}>{v}</option>)}
               </select>
-              <input aria-label="Summary" className="grow" data-creator-guide-summary maxLength={rules.caps.guide_summary_max} onChange={(e) => setGuideSummary(e.target.value)} placeholder="Summary (optional)" value={guideSummary} />
+              {/* the parenthetical keeps its own lower case: t("optional") is the label form "Optional" */}
+              <input aria-label={t("summary")} className="grow" data-creator-guide-summary maxLength={rules.caps.guide_summary_max} onChange={(e) => setGuideSummary(e.target.value)} placeholder={`${t("summary")} (${t("optional").toLowerCase()})`} value={guideSummary} />
               <button className="btn btn--primary" data-creator-publish-guide disabled={guideCall.busy !== null || !guideTitle.trim()} onClick={() => void publishGuide()} type="button">
                 {guideCall.busy === "guide" ? "Publishing…" : "Publish guide"}
               </button>

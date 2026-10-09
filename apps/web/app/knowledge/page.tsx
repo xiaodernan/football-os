@@ -208,7 +208,7 @@ export default async function KnowledgePage({
 
       <section id="search" className="stack">
         <Panel
-          eyebrow="Search"
+          eyebrow={tc("search")}
           title="Hybrid retrieval over the corpus"
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
