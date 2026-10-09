@@ -1,20 +1,25 @@
-"""Metrics and observability endpoint (spec §58-§60).
+"""Metrics and observability endpoints (spec §58-§60).
 
 Exposes platform health metrics including request latency, error rates, database performance,
-AI provider usage, and resource utilization. All endpoints are auth-gated to prevent information
-leakage while allowing administrators to monitor system health.
+AI provider usage, cost optimisation advice, and cache statistics. All endpoints are auth-gated to
+prevent information leakage while allowing administrators to monitor system health.
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from typing import Any
+
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.cache import get_cache_stats
 from app.core.db import get_db
 from app.core.security import current_user
 from app.models import ModelCall, User, VideoAsset
+from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
+from app.services.cost_advisor import recommend as cost_recommend
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
@@ -59,20 +64,12 @@ def system_metrics(
 
     # Count users
     total_users = int(db.scalar(select(func.count(User.id))) or 0)
-    active_today = int(
-        db.scalar(
-            select(func.count(func.distinct(ModelCall.user_id))).where(ModelCall.created_at >= today_start)
-        ) or 0
-    )
+    active_today = int(db.scalar(select(func.count(func.distinct(ModelCall.user_id))).where(ModelCall.created_at >= today_start)) or 0)
 
     # Model call stats as proxy for request volume
     total_calls = int(db.scalar(select(func.count(ModelCall.id))) or 0)
-    failed_calls = int(
-        db.scalar(select(func.count(ModelCall.id)).where(ModelCall.success.is_(False))) or 0
-    )
-    avg_latency = float(
-        db.scalar(select(func.avg(ModelCall.latency_ms))) or 0.0
-    )
+    failed_calls = int(db.scalar(select(func.count(ModelCall.id)).where(ModelCall.success.is_(False))) or 0)
+    avg_latency = float(db.scalar(select(func.avg(ModelCall.latency_ms))) or 0.0)
 
     return SystemMetricsResponse(
         uptime_seconds=0.0,  # Would need process start time tracking
@@ -97,16 +94,10 @@ def database_metrics(
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     total_calls = int(db.scalar(select(func.count(ModelCall.id))) or 0)
-    calls_today = int(
-        db.scalar(select(func.count(ModelCall.id)).where(ModelCall.created_at >= today_start)) or 0
-    )
+    calls_today = int(db.scalar(select(func.count(ModelCall.id)).where(ModelCall.created_at >= today_start)) or 0)
     total_videos = int(db.scalar(select(func.count(VideoAsset.id))) or 0)
-    avg_latency = float(
-        db.scalar(select(func.avg(ModelCall.latency_ms))) or 0.0
-    )
-    successful = int(
-        db.scalar(select(func.count(ModelCall.id)).where(ModelCall.success.is_(True))) or 0
-    )
+    avg_latency = float(db.scalar(select(func.avg(ModelCall.latency_ms))) or 0.0)
+    successful = int(db.scalar(select(func.count(ModelCall.id)).where(ModelCall.success.is_(True))) or 0)
     success_rate = successful / total_calls if total_calls > 0 else 0.0
 
     return DatabaseMetricsResponse(
@@ -133,33 +124,18 @@ def provider_metrics(
     total_calls = int(db.scalar(select(func.count(ModelCall.id))) or 0)
 
     # Calls by provider
-    provider_counts = db.execute(
-        select(ModelCall.provider, func.count(ModelCall.id))
-        .group_by(ModelCall.provider)
-    ).all()
+    provider_counts = db.execute(select(ModelCall.provider, func.count(ModelCall.id)).group_by(ModelCall.provider)).all()
     calls_by_provider = {str(provider): int(count) for provider, count in provider_counts}
 
     # Costs
-    total_cost = float(
-        db.scalar(select(func.coalesce(func.sum(ModelCall.actual_cost_usd), 0.0))) or 0.0
-    )
-    cost_today = float(
-        db.scalar(
-            select(func.coalesce(func.sum(ModelCall.actual_cost_usd), 0.0)).where(
-                ModelCall.created_at >= today_start
-            )
-        ) or 0.0
-    )
+    total_cost = float(db.scalar(select(func.coalesce(func.sum(ModelCall.actual_cost_usd), 0.0))) or 0.0)
+    cost_today = float(db.scalar(select(func.coalesce(func.sum(ModelCall.actual_cost_usd), 0.0)).where(ModelCall.created_at >= today_start)) or 0.0)
 
     # Latency
-    avg_latency = float(
-        db.scalar(select(func.avg(ModelCall.latency_ms))) or 0.0
-    )
+    avg_latency = float(db.scalar(select(func.avg(ModelCall.latency_ms))) or 0.0)
 
     # Demo mode percentage
-    demo_calls = int(
-        db.scalar(select(func.count(ModelCall.id)).where(ModelCall.demo_mode.is_(True))) or 0
-    )
+    demo_calls = int(db.scalar(select(func.count(ModelCall.id)).where(ModelCall.demo_mode.is_(True))) or 0)
     demo_pct = (demo_calls / total_calls * 100) if total_calls > 0 else 0.0
 
     return ProviderMetricsResponse(
@@ -170,3 +146,27 @@ def provider_metrics(
         avg_latency_ms=round(avg_latency, 2),
         demo_mode_percentage=round(demo_pct, 2),
     )
+
+
+@router.get("/cost-optimisation")
+def cost_optimisation(
+    days: int = Query(DEFAULT_WINDOW_DAYS, ge=1, le=365),
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Where the AI budget went and what a cheaper call would have been (spec §46, §76).
+
+    Reads the model-call ledger over a stated window and answers four breakdowns (by feature, by
+    model, reasoning share, demo share) with every figure recomputed on the request. The
+    recommendations name the arithmetic that produced them, and the answer says plainly that it is an
+    advisor, not an enforcer: nothing here changes which provider a door calls (§45 owns that).
+    """
+    return cost_recommend(db, days=days)
+
+
+@router.get("/cache")
+def cache_stats(
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Cache hit/miss counts and sizes for the response and computation caches (M12)."""
+    return get_cache_stats()
