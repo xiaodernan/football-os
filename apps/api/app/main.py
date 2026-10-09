@@ -44,6 +44,7 @@ from app.api.v1 import (
     video,
     world,
 )
+from app.core.cache import _response_cache
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
@@ -59,6 +60,7 @@ logger = get_logger("football_os.api")
 
 # Request ID context variable for correlation
 request_id_var: ContextVar[str] = ContextVar("request_id", default="")
+
 
 DESCRIPTION = """
 **FOOTBALL OS** — The Operating System for Football.
@@ -137,6 +139,70 @@ def create_app() -> FastAPI:
         response.headers["X-Request-Duration-Ms"] = str(int((time.perf_counter() - started) * 1000))
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+    @app.middleware("http")
+    async def response_cache(request: Request, call_next):
+        """Cache GET responses for 60 seconds."""
+        # Only cache GET requests
+        if request.method != "GET":
+            return await call_next(request)
+
+        # Skip if no-cache header
+        if request.headers.get("Cache-Control", "").lower().find("no-cache") >= 0:
+            return await call_next(request)
+
+        # Skip caching in test environment
+        if settings.env == "test":
+            return await call_next(request)
+
+        # Build cache key
+        cache_key = f"http:{request.url.path}:{request.url.query}"
+        cached = _response_cache.get(cache_key)
+        if cached is not None:
+            # Return cached response with cache hit header
+            from fastapi.responses import Response
+
+            response = Response(
+                content=cached.body,
+                status_code=cached.status_code,
+                headers=dict(cached.headers),
+                media_type=cached.media_type,
+            )
+            response.headers["X-Cache"] = "HIT"
+            return response
+
+        response = await call_next(request)
+
+        # Cache successful GET responses
+        if 200 <= response.status_code < 300:
+            # Only cache JSON responses
+            content_type = response.headers.get("content-type", "")
+            if "application/json" in content_type:
+                # Read body for caching
+                body = b""
+                async for chunk in response.body_iterator:
+                    body += chunk
+                # Reconstruct response with same body
+                from starlette.responses import Response as StarletteResponse
+
+                cached_response = StarletteResponse(
+                    content=body,
+                    status_code=response.status_code,
+                    headers=dict(response.headers),
+                    media_type=response.media_type,
+                )
+                _response_cache.set(f"http:{request.url.path}:{request.url.query}", cached_response, ttl=60.0)
+                # Return new response with cache miss header
+                new_response = StarletteResponse(
+                    content=body,
+                    status_code=response.status_code,
+                    headers=dict(response.headers),
+                    media_type=response.media_type,
+                )
+                new_response.headers["X-Cache"] = "MISS"
+                return new_response
+
         return response
 
     install_error_handlers(app)
