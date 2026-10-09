@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import logging
 import time
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from contextvars import ContextVar
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,13 +47,18 @@ from app.api.v1 import (
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
+from app.core.logging import configure_logging, get_logger
 from app.services.knowledge import corpus_stats, sync_knowledge
 from app.services.tactics import sync_tactics
 from app.services.training_catalog import sync_catalog
 from app.services.world import sync_world
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-logger = logging.getLogger("football_os.api")
+# Configure structured logging
+configure_logging()
+logger = get_logger("football_os.api")
+
+# Request ID context variable for correlation
+request_id_var: ContextVar[str] = ContextVar("request_id", default="")
 
 DESCRIPTION = """
 **FOOTBALL OS** — The Operating System for Football.
@@ -122,7 +129,11 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def request_context(request: Request, call_next):
         started = time.perf_counter()
+        # Generate or extract request ID
+        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        request_id_var.set(request_id)
         response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
         response.headers["X-Request-Duration-Ms"] = str(int((time.perf_counter() - started) * 1000))
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
