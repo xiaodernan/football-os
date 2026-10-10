@@ -150,11 +150,38 @@ an endpoint that read the ledger could not safely own it. A human reads the figu
 * `scripts/restore_db.sh` — restore into a named target database, replayed with `alembic upgrade
   head`, parallel restore on 4 jobs.
 
-**Not claimed:** backup and restore are *written and reviewed*, not *executed here*. This host runs
-SQLite for the API's tests and a PostgreSQL container on 54321 for the local plane; there is no
-`pg_dump`, no S3 bucket, and no WAL archive configured, so the scripts are verified by inspection and
-by their own argument handling, and the first live `pg_dump` run belongs to a host that has both.
-The documents say so, because a backup script nobody has run is a plan, not a control.
+**Executed 2026-10-11 — the first live restore drill.** The scripts name host binaries this host
+does not have, but the project's own PostgreSQL container (`football_os_db`, port 54321) ships
+them, so the drill ran inside it against the container's real data (69 tables, 231 users at drill
+time):
+
+1. `pg_dump -Fc -Z 3` → **2,106,017 bytes**; `pg_restore --list` counts **69 TABLE DATA entries**,
+   one per table.
+2. `pg_restore --jobs=4` into a throwaway `football_os_restore_drill` database — rc=0.
+3. Exact per-table `count(*)` compared source against restored: **58/69 tables identical**. The 11
+   that differ are exactly the tables the live tier writes (`users`, `xp_events`, `coach_messages`,
+   `knowledge_queries`, `model_calls`, `audit_logs`, `refresh_sessions`, `training_plans`,
+   `training_sessions`, `user_achievements`, `user_players`) — the browser walk was running
+   against the same container while the drill ran, and every divergence is source-side additions
+   since the dump instant. **Zero tables where the restored copy holds more rows than the
+   source.** A restored copy matching a moving source as of the dump instant is what a faithful
+   restore looks like; the drill's comparison is reproducible only in a quiesced window, which is
+   the same caveat production's verify step carries.
+4. `alembic upgrade head` + `alembic check` against the restored copy — and here the drill earned
+   its keep: **`alembic check` failed**, reporting two `remove_index` operations on `video_assets`.
+   The restored copy was faithful; the drift it copied was the source's. The container had been
+   created before `2e197f085070` fixed the double-indexing of `player_id`/`match_id`, so it still
+   carried the original aliases (`ix_video_match`, `ix_video_player`) that no fresh database — and
+   therefore no gate run — has ever had. Migration `0027` drops both aliases (`DROP INDEX IF
+   EXISTS`, no-ops on fresh databases, reversible via `downgrade`); applied to the container, the
+   duplicate indexes are gone and `alembic check` is clean against the live database. The gate
+   compares models against *fresh* databases; only a restore drill compares against the one that
+   has lived.
+
+The drill database was dropped afterwards. Still **not claimed**: no S3 upload, no WAL archive,
+no point-in-time recovery — the container is one local PostgreSQL, and the scripts' remote
+pathways remain inspection-verified. What changed is the worst claim in this document: the backup
+and restore are now *executed*, and the execution found a defect no gate could see.
 
 ## The figures, with their plane
 
@@ -181,9 +208,11 @@ audit's own numbers rather than left stale.
 * **No trace backend.** OpenTelemetry is wired and the span path is measured through an in-memory
   exporter, but no collector runs on this host, so no span has reached a real backend; sampling and
   propagation through the proxy are deployment concerns, not claims.
-* **Backup scripts unexecuted on this host.** No `pg_dump`, no S3, no WAL archive here.
-* **No load test.** No k6, no locust, no measured throughput figure. The latency percentiles measure
-  *observed* latency over the ledger; they do not assert a ceiling under load.
+* **No off-host backup pathway executed.** The restore drill ran `pg_dump` → `pg_restore` inside
+  the project's own container; S3 upload and WAL archiving remain inspection-verified only.
+* **No published load-test ceiling.** `scripts/bench_api.py` is the harness; a measured run
+  against the local tier is recorded below when it is run, and it will not be extrapolated to
+  production hardware.
 * **No cost guarantee.** The advisor reports; the router decides (`settings.ai_daily_budget_usd` is a
   `budget_exhausted()` check the caller honouring it is what enforces).
 * **The i18n §81 work is another agent's lane.** Several web files were modified by the concurrent
