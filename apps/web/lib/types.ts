@@ -1809,3 +1809,32 @@ export type SimAggLeagueRules = {
   clauses_declined: number;
   private_tables_excluded: number;
 };
+
+/** GET /agents/list */
+export type AgentsListResponse = { available_agents: string[] };
+
+/** POST /agents/run — citations arrive string-valued (the API coerces the knowledge layer's numbers at the boundary). */
+export type AgentRunResponse = {
+  answer: string;
+  citations: Record<string, string>[] | null;
+  confidence: number | null;
+  from_cache: boolean;
+  stored_key: string | null;
+};
+
+/** POST /agents/composite — one step per agent the orchestrator routed to. */
+export type AgentCompositeResponse = {
+  answer: string;
+  steps: { agent_type: string; query: string; result_summary: string; status: string; confidence: number | null; error: string | null }[];
+  confidence: number | null;
+  from_cache: boolean;
+};
+
+/** GET /agents/context — one persisted memory row for this agent + session. */
+export type AgentMemoryRow = {
+  key: string;
+  value: unknown;
+  session_id: string | null;
+  created_at: string | null;
+  expires_at: string | null;
+};

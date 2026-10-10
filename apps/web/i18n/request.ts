@@ -30,5 +30,12 @@ export default getRequestConfig(async ({ requestLocale }) => {
   return {
     locale,
     messages: messagesMap[locale],
+    // A global default for every date next-intl formats. Without it, the first component that renders
+    // a formatted date makes next-intl's error callback fire once per process — in production the
+    // message is stripped and the log shows only `Error: ENVIRONMENT_FALLBACK`, which is how this
+    // line's absence spent weeks in the PLAN as an unidentified boot error. UTC is what the pages'
+    // own explicit `Intl.DateTimeFormat` calls already pin, so server and client now agree on the
+    // same day boundary instead of whichever timezone each happens to run in.
+    timeZone: "UTC",
   };
 });

@@ -36,7 +36,7 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/simulation/aggregates/league", label: "League ledgers" }}
+        back={{ href: "/simulation/aggregates", label: "Simulation aggregates" }}
         eyebrow={`${ledger.fixtures_played} fixtures · ${ledger.players_with_events} players · ${ledger.totals.goals} goals`}
         lede="Every figure below is a sum over sim_events rows from all careers whose club is in this competition. The ledger is a pure read: nothing is stored, and the consistency check compares the same season's goals from the event rows against the career's own fixture list."
         title={ledger.competition.name}

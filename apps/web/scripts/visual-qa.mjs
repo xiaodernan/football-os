@@ -254,6 +254,31 @@ async function run() {
     check('coach /plan returns a 7-day plan with sessions', /D1/iu.test(planned) && /min/iu.test(planned));
     await shot(page, '06-coach-plan-desktop');
 
+    // 5b. Agents: the M11 console. This section sits early on purpose — the video section below
+    // aborts the walk about half the time, and a check placed after it does not run.
+    await open(page, '/agents');
+    await waitForText(page, 'AI Agents');
+    const agentsShell = await bodyText(page);
+    check('agents page renders the console with its roster', /Roster/iu.test(agentsShell) && /Single agent/iu.test(agentsShell), agentsShell.includes('Research') ? 'roster chips render' : 'no roster chips');
+    check('agents page self-describes the orchestrator', /Orchestrator task/iu.test(agentsShell));
+    await shot(page, '06b-agents-desktop');
+
+    await page.type('.textarea', 'What is offside?');
+    await clickByText(page, 'button', 'Run agent');
+    await waitForText(page, 'Confidence', 120_000);
+    const agentsRun = await bodyText(page);
+    check('agents /run answers with a confidence figure', /Confidence:\s*\d+%/iu.test(agentsRun), agentsRun.match(/Confidence:\s*\d+%/iu)?.[0] ?? 'no confidence');
+    check('agents run names the agent that produced it', /Research/iu.test(agentsRun));
+    await shot(page, '06b-agents-run-desktop');
+
+    await clickByText(page, 'button', 'Orchestrator task');
+    await page.type('.textarea', 'Summarise my last simulated match and recommend training to fix what went wrong');
+    await clickByText(page, 'button', 'Run the orchestrator');
+    await waitForText(page, 'Orchestration steps', 180_000);
+    const agentsComposite = await bodyText(page);
+    check('agents composite shows its steps', /Orchestration steps/iu.test(agentsComposite), `${(agentsComposite.match(/Orchestration steps/giu) ?? []).length} step panels`);
+    await shot(page, '06b-agents-composite-desktop');
+
     // 6. Training academy: catalogue -> drill detail -> schedule.
     await open(page, '/training');
     await waitForText(page, 'min');
@@ -2706,8 +2731,21 @@ async function run() {
     // aborted the whole run at this line: 192 checks recorded instead of 249, with the abort itself appearing
     // only as the "completed without an unhandled error" check going red.
     const compSlug = worldLeague.path.split('/').pop();
+    // The index both aggregate pages' back links promise. Until it existed the two links were dead
+    // doors, and the walk's console gate recorded their 404s as unprovoked errors.
+    await open(page, '/simulation/aggregates');
+    await waitForText(page, 'Simulation aggregates');
+    const aggIndex = await bodyText(page);
+    check(
+      'the aggregates index lists the competitions the league door accepts',
+      /One ledger per competition/iu.test(aggIndex) && worldLeague.name && aggIndex.includes(worldLeague.name),
+      `${worldLeague.name} listed: ${aggIndex.includes(worldLeague.name)}`,
+    );
     await open(page, `/simulation/aggregates/league/${compSlug}`);
-    await waitForText(page, 'League Ledger');
+    // Anchor on the competition name — the page's h1 — not on a label this file used to share
+    // with the page's back link: when that link was repointed at the aggregates index, the old
+    // anchor stopped existing and this wait silently became the walk's only failure.
+    await waitForText(page, worldLeague.name);
     const leagueBody2 = await page.evaluate(() => ({
       competition: document.querySelector('[data-competition-slug]')?.textContent?.trim() ?? '',
       totals: document.querySelector('[data-testid="league-totals"]')?.textContent ?? '',
@@ -2723,7 +2761,10 @@ async function run() {
     // Player aggregate: find a player from a career in the world
     const playerSlug = String(worldPlayer.path).split('/').pop();
     await open(page, `/simulation/aggregates/player/${playerSlug}`);
-    await waitForText(page, 'Player Career Aggregate');
+    // Anchor on what the success body always renders — the slug chip. The old anchor
+    // ("Player Career Aggregate") existed only in the page's metadata, so this wait had never
+    // once been satisfied by the page it was checking.
+    await waitForText(page, playerSlug);
     const playerAggBody = await page.evaluate(() => ({
       name: document.querySelector('[data-player-name]')?.textContent?.trim() ?? '',
       careers: [...document.querySelectorAll('[data-testid="agg-careers"] tbody tr')].length,

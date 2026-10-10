@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import type { Drill } from "@/lib/types";
 
@@ -11,7 +11,8 @@ export function Panel({
   children,
   footer,
   className = "",
-}: {
+  ...rest
+}: Omit<ComponentProps<"section">, "children"> & {
   title?: ReactNode;
   eyebrow?: ReactNode;
   action?: ReactNode;
@@ -20,7 +21,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`panel ${className}`.trim()}>
+    <section className={`panel ${className}`.trim()} {...rest}>
       {(title || action) && (
         <header className="panel__head">
           <div>

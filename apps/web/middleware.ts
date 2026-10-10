@@ -38,7 +38,24 @@ const PROTECTED_PREFIXES = [
   "/onboarding",
   "/tactics/boards",
   "/video",
+  // The walk found this list drifting from the pages that gate themselves: a prefix missing here
+  // means the middleware never refreshes that surface's expired access token, so a signed-in
+  // reader whose 15-minute token died mid-visit was bounced to /login by the page's own
+  // currentUser() — /simulation/aggregates was where the walk proved it. Every prefix below is
+  // one whose pages call currentUser() and redirect on null; /club/rules is exempt because the
+  // rulebook is the one /club page a signed-out visitor may read (the sitemap says so).
+  "/agents",
+  "/club",
+  "/community",
+  "/creator",
+  "/graph",
+  "/portfolio",
+  "/scout",
+  "/simulate",
+  "/simulation",
 ];
+
+const PUBLIC_EXCEPTIONS = new Set(["/club/rules"]);
 
 const SKEW_SECONDS = 60;
 const REFRESH_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30);
@@ -47,6 +64,7 @@ const IS_SECURE = process.env.NODE_ENV === "production";
 type Minted = { accessToken: string; expiresIn: number; refresh?: string };
 
 function isProtected(pathname: string): boolean {
+  if (PUBLIC_EXCEPTIONS.has(pathname)) return false;
   return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
