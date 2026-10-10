@@ -26,6 +26,7 @@ export default async function PlayersPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
   const tc = await getTranslations("common");
+  const tw = await getTranslations("world");
   const result = await readWorld<PlayerList>("/world/players", {
     position: query.position,
     sort: query.sort,
@@ -43,10 +44,10 @@ export default async function PlayersPage({ searchParams }: Props) {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/world", label: "Back to Football World" }}
-        eyebrow="Football World"
+        eyebrow={tw("title")}
         lede={`${total.toLocaleString("en-GB")} generated players. Attributes come from the player's archetype and season output, and the page for each one lists why every number is what it is.`}
         provenance={result.data}
-        title="Players"
+        title={tw("sectionPlayersLabel")}
       />
 
       <div className="grid grid-2">
@@ -68,7 +69,7 @@ export default async function PlayersPage({ searchParams }: Props) {
       ) : (
         <Panel
           eyebrow={`sorted by ${sort} (${order})`}
-          title="Players"
+          title={tw("sectionPlayersLabel")}
           action={
             <Link className="btn btn--ghost btn--sm" href={buildHref(BASE, query, { order: order === "desc" ? "asc" : "desc" }, ["page"])}>
               {order === "desc" ? "Lowest first" : "Highest first"}

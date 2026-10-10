@@ -26,6 +26,7 @@ export default async function MatchesPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
   const tc = await getTranslations("common");
+  const tw = await getTranslations("world");
   const result = await readWorld<MatchList>("/world/matches", {
     status: query.status,
     season: query.season,
@@ -41,14 +42,14 @@ export default async function MatchesPage({ searchParams }: Props) {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/world", label: "Back to Football World" }}
-        eyebrow="Football World"
+        eyebrow={tw("title")}
         lede={`${total.toLocaleString("en-GB")} fixtures. A row that has not been played carries NULL in the database, so it renders as “not played” rather than 0–0.`}
         provenance={result.data}
-        title="Fixtures & results"
+        title={tw("sectionFixturesLabel")}
       />
 
       <Panel eyebrow={tc("filter")} title="By state">
-        <FilterChips active={query.status} base={BASE} label="State" options={statuses} param="status" query={query} />
+        <FilterChips active={query.status} base={BASE} label={tw("tableHeaderState")} options={statuses} param="status" query={query} />
       </Panel>
 
       {items.length === 0 ? (

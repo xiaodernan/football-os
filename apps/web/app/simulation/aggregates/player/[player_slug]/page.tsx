@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { JsonLd, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
 
 export default async function PlayerAggregatePage({ params }: { params: Promise<{ player_slug: string }> }) {
   const { player_slug } = await params;
+  const tw = await getTranslations("world");
 
   const user = await currentUser();
   if (!user) redirect(`/login?next=%2Fsimulation%2Faggregates%2Fplayer%2F${encodeURIComponent(player_slug)}`);
@@ -180,7 +182,7 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           )}
         </Panel>
 
-        <Panel eyebrow={`${aggregate.players_with_events} players with events · ${aggregate.players_shown} shown`} title="Players" data-testid="agg-players">
+        <Panel eyebrow={`${aggregate.players_with_events} players with events · ${aggregate.players_shown} shown`} title={tw("sectionPlayersLabel")} data-testid="agg-players">
           <div className="world-tablewrap">
             <table className="table">
               <thead>

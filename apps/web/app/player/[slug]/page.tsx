@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AttributeRadar } from "@/components/AttributeRadar";
 import { Meter, Panel, ReasonList } from "@/components/ui";
@@ -43,6 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PlayerDetailPage({ params }: Props) {
   const { slug } = await params;
+  const tw = await getTranslations("world");
   const result = await load(slug);
 
   if (!result.ok) {
@@ -209,7 +211,7 @@ export default async function PlayerDetailPage({ params }: Props) {
         </Panel>
       </div>
 
-      <Panel eyebrow={`${trainingLog.sessions} sessions · ${trainingLog.total_minutes} min`} title="Training log">
+      <Panel eyebrow={`${trainingLog.sessions} sessions · ${trainingLog.total_minutes} min`} title={tw("trainingLogLink")}>
         <div className="stack">
           <KeyValueGrid
             rows={[

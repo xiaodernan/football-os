@@ -26,6 +26,7 @@ export default async function NewsPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
   const tc = await getTranslations("common");
+  const tw = await getTranslations("world");
   const result = await readWorld<NewsList>("/world/news", {
     category: query.category,
     claim_class: query.claim_class,
@@ -41,10 +42,10 @@ export default async function NewsPage({ searchParams }: Props) {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/world", label: "Back to Football World" }}
-        eyebrow="Football World"
+        eyebrow={tw("title")}
         lede={`${total.toLocaleString("en-GB")} generated reports. Nothing here was fetched from a wire service — the source is the local generator, and each article says so.`}
         provenance={result.data}
-        title="Reports & notes"
+        title={tw("sectionReportsLabel")}
       />
 
       <div className="grid grid-2">

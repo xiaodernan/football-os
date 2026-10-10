@@ -26,6 +26,7 @@ export default async function WorldTrainingPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
   const tc = await getTranslations("common");
+  const tw = await getTranslations("world");
   const result = await readWorld<WorldTrainingList>("/world/training", {
     player: query.player,
     team: query.team,
@@ -42,10 +43,10 @@ export default async function WorldTrainingPage({ searchParams }: Props) {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/world", label: "Back to Football World" }}
-        eyebrow="Football World"
+        eyebrow={tw("title")}
         lede="What the generated squad did between fixtures. Each row names a catalogue drill this repository authored, the synthetic player who is said to have run it, and the two figures the load number is made from — there is no tracking data and no person behind any of it."
         provenance={result.data}
-        title="Training log"
+        title={tw("trainingLogLink")}
       />
 
       <div className="grid grid-2">

@@ -25,6 +25,7 @@ export default async function CompetitionsPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
   const tc = await getTranslations("common");
+  const tw = await getTranslations("world");
   const result = await readWorld<CompetitionList>("/world/competitions", { kind: query.kind, page, page_size: PAGE_SIZE });
 
   if (!result.ok) return <WorldUnavailable message={result.message} />;
@@ -34,10 +35,10 @@ export default async function CompetitionsPage({ searchParams }: Props) {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/world", label: "Back to Football World" }}
-        eyebrow="Football World"
+        eyebrow={tw("title")}
         lede={`${total.toLocaleString("en-GB")} generated competitions. A cup reports the clubs its drawn fixtures name, not a membership table.`}
         provenance={result.data}
-        title="Competitions"
+        title={tw("sectionCompetitionsLabel")}
       />
 
       {kinds.length > 1 && (
