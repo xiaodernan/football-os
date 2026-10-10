@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Pitch } from "@/components/pitch";
 import { BandLegend } from "@/components/tactics";
@@ -24,11 +25,12 @@ export const metadata: Metadata = {
 
 export default async function SharedBoardPage({ params }: Props) {
   const { token } = await params;
+  const tn = await getTranslations("nav");
   const result = await readWorld<SharedBoard>(`/boards/shared/${encodeURIComponent(token)}`);
 
   if (!result.ok) {
     if (result.notFound) notFound();
-    return <WorldUnavailable eyebrow="Tactical Lab" message={result.message} title="Shared tactical board" />;
+    return <WorldUnavailable eyebrow={tn("tactics")} message={result.message} title="Shared tactical board" />;
   }
 
   const board = result.data;

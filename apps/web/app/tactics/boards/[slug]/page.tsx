@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { BoardEditor } from "@/components/BoardEditor";
 import { Panel } from "@/components/ui";
@@ -26,11 +27,12 @@ export default async function BoardEditPage({ params }: Props) {
   if (!user) redirect("/login?next=%2Ftactics%2Fboards");
 
   const { slug } = await params;
+  const tn = await getTranslations("nav");
   const result = await readWorld<BoardDetail>(`/boards/${encodeURIComponent(slug)}`);
 
   if (!result.ok) {
     if (result.notFound) notFound();
-    return <WorldUnavailable eyebrow="Tactical Lab" message={result.message} title="Edit tactical board" />;
+    return <WorldUnavailable eyebrow={tn("tactics")} message={result.message} title="Edit tactical board" />;
   }
 
   const board = result.data;

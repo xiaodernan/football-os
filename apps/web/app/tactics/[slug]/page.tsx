@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { ISO_FORMULA, Pitch, Pitch3D } from "@/components/pitch";
 import { PhasePlayer } from "@/components/PhasePlayer";
@@ -72,11 +73,12 @@ function DeltaTable({ rows }: { rows: CounterfactualResponse["metrics"] }) {
 export default async function TacticsDetailPage({ params, searchParams }: Props) {
   const [{ slug }, rawQuery] = await Promise.all([params, searchParams]);
   const query = cleanParams(rawQuery);
+  const tn = await getTranslations("nav");
   const result = await load(slug);
 
   if (!result.ok) {
     if (result.notFound) notFound();
-    return <WorldUnavailable eyebrow="Tactical Lab" message={result.message} title="Tactical system" />;
+    return <WorldUnavailable eyebrow={tn("tactics")} message={result.message} title="Tactical system" />;
   }
 
   const system = result.data;

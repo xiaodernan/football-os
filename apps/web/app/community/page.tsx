@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { CommunityWall, PostComposer } from "@/components/CommunityTools";
 import { Panel } from "@/components/ui";
@@ -43,14 +44,15 @@ export default async function CommunityPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fcommunity");
 
+  const tn = await getTranslations("nav");
   const [rules, feed, profile] = await Promise.all([
     serverFetch<CommunityRules>("/community/rules"),
     serverFetch<CommunityFeed>("/community/posts"),
     serverFetch<CommunityProfile>(`/community/members/${encodeURIComponent(user.id)}`),
   ]);
-  if (!rules.ok) return <WorldUnavailable detail={refusalFigures(rules.error.details).join(" · ")} message={rules.error.message} title="Community" />;
-  if (!feed.ok) return <WorldUnavailable detail={refusalFigures(feed.error.details).join(" · ")} message={feed.error.message} title="Community" />;
-  if (!profile.ok) return <WorldUnavailable message="Your own wall counts could not be read, so this page has nothing to size the ceilings against." title="Community" />;
+  if (!rules.ok) return <WorldUnavailable detail={refusalFigures(rules.error.details).join(" · ")} message={rules.error.message} title={tn("community")} />;
+  if (!feed.ok) return <WorldUnavailable detail={refusalFigures(feed.error.details).join(" · ")} message={feed.error.message} title={tn("community")} />;
+  if (!profile.ok) return <WorldUnavailable message="Your own wall counts could not be read, so this page has nothing to size the ceilings against." title={tn("community")} />;
 
   const following = [...new Set(feed.data.items.filter(row => row.author.id !== user.id).map(row => row.author.id))];
 

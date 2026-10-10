@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Pitch } from "@/components/pitch";
 import { BandLegend } from "@/components/tactics";
@@ -29,6 +30,7 @@ const PHASES: { key: string; label: string }[] = [
 export default async function TacticsComparePage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const phase = query.phase === "out" ? "out" : "in";
+  const tn = await getTranslations("nav");
   const options = await readWorld<SystemList>("/tactics", { page_size: 50 });
 
   const pair =
@@ -46,7 +48,7 @@ export default async function TacticsComparePage({ searchParams }: Props) {
   if (!options.ok) {
     return (
       <WorldUnavailable
-        eyebrow="Tactical Lab"
+        eyebrow={tn("tactics")}
         message={options.message}
         title="Compare two systems"
         detail="The comparison reads the stored catalogue; start the API with scripts/dev.sh."
@@ -126,7 +128,7 @@ export default async function TacticsComparePage({ searchParams }: Props) {
           “{query.a}” or “{query.b}” is not a stored system, so nothing was measured. Pick from the list above.
         </div>
       )}
-      {pair && !pair.ok && pair.status !== 404 && <WorldUnavailable eyebrow="Tactical Lab" message={pair.message} title="Compare two systems" />}
+      {pair && !pair.ok && pair.status !== 404 && <WorldUnavailable eyebrow={tn("tactics")} message={pair.message} title="Compare two systems" />}
 
       {pair?.ok && left?.ok && right?.ok && (
         <>

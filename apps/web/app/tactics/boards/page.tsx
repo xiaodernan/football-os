@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { BoardsNew } from "@/components/BoardsNew";
 import { Panel } from "@/components/ui";
@@ -30,11 +31,12 @@ function formatStamp(iso: string | null): string {
 export default async function BoardsIndexPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Ftactics%2Fboards");
+  const tn = await getTranslations("nav");
 
   const [boards, systems] = await Promise.all([serverFetch<BoardList>("/boards"), readWorld<SystemList>("/tactics", { page_size: 50 })]);
 
   if (!boards.ok) {
-    return <WorldUnavailable eyebrow="Tactical Lab" message={boards.error.message} title="My tactical boards" />;
+    return <WorldUnavailable eyebrow={tn("tactics")} message={boards.error.message} title="My tactical boards" />;
   }
 
   const list = boards.data;

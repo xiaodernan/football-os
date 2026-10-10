@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { PortfolioSectionPanel } from "@/components/PortfolioSection";
 import { PortfolioSharePanel } from "@/components/PortfolioSharePanel";
@@ -43,13 +44,14 @@ export default async function PortfolioPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fportfolio");
 
+  const tn = await getTranslations("nav");
   const [rules, cv, shares] = await Promise.all([
     serverFetch<PortfolioRules>("/portfolio/rules"),
     serverFetch<PortfolioCv>("/portfolio/cv"),
     serverFetch<PortfolioShareLedger>("/portfolio/shares"),
   ]);
-  if (!rules.ok) return <WorldUnavailable detail={rules.error.message} message="The CV rulebook door did not answer, so this page has no vocabulary to render against." title="Football CV" />;
-  if (!cv.ok) return <WorldUnavailable detail={cv.error.message} message="The CV door did not answer, so there is nothing to print." title="Football CV" />;
+  if (!rules.ok) return <WorldUnavailable detail={rules.error.message} message="The CV rulebook door did not answer, so this page has no vocabulary to render against." title={tn("footballCv")} />;
+  if (!cv.ok) return <WorldUnavailable detail={cv.error.message} message="The CV door did not answer, so there is nothing to print." title={tn("footballCv")} />;
 
   const publishedOrder = rules.data.sections.map(row => row.section).join(" → ");
   const paintedOrder = cv.data.sections.map(row => row.section).join(" → ");
@@ -62,7 +64,7 @@ export default async function PortfolioPage() {
         back={{ href: "/", label: "Home" }}
         eyebrow={`${cv.data.account.display_name} · ${cv.data.counts.filled} of ${cv.data.counts.sections} sections filled`}
         lede="A CV in this build stores nothing: each of the ten sections is a read of rows another tier already writes, counted from the formula printed beside it at the moment you ask. Two of the ten cannot be filled here, and they print the reason and the tables they would need rather than a zero."
-        title="Football CV"
+        title={tn("footballCv")}
       />
 
       <Panel eyebrow={cv.data.has_player ? `player ${cv.data.player?.id} · visibility ${cv.data.player?.visibility}` : "no player row on this account yet"} title="Whose CV this is">

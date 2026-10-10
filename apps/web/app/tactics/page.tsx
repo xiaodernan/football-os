@@ -28,6 +28,7 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const page = pageOf(query);
   const tc = await getTranslations("common");
+  const tn = await getTranslations("nav");
   const [status, list] = await Promise.all([
     readWorld<TacticsStatus>("/tactics/status"),
     readWorld<SystemList>("/tactics", {
@@ -42,9 +43,9 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
   if (!status.ok) {
     return (
       <WorldUnavailable
-        eyebrow="Tactical Lab"
+        eyebrow={tn("tactics")}
         message={status.message}
-        title="Tactical Lab"
+        title={tn("tactics")}
         detail="The catalogue is stored on boot by apps/api; start it with scripts/dev.sh."
       />
     );
@@ -64,7 +65,7 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
         eyebrow="Authored coaching structures · measured in metres"
         lede="Ten shapes × five temperaments = the fifty systems this lab stores. Nothing here is a real team's play: the coordinates are written by this project, and every figure is measured from them."
         provenance={world}
-        title="Tactical Lab"
+        title={tn("tactics")}
       >
         <form action="/tactics" className="world-search" method="get" role="search" style={{ marginTop: "1rem" }}>
           <input
