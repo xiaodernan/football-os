@@ -35,17 +35,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-function DeltaTable({ rows }: { rows: CounterfactualResponse["metrics"] }) {
+function DeltaTable({ rows, t }: { rows: CounterfactualResponse["metrics"]; t: (key: string) => string }) {
   return (
     <div className="world-tablewrap">
       <table className="table">
         <thead>
           <tr>
-            <th scope="col">Measure</th>
-            <th scope="col">Before</th>
-            <th scope="col">After</th>
-            <th scope="col">Change</th>
-            <th scope="col">How it is obtained</th>
+            <th scope="col">{t("tableMeasure")}</th>
+            <th scope="col">{t("deltaBefore")}</th>
+            <th scope="col">{t("deltaAfter")}</th>
+            <th scope="col">{t("deltaChange")}</th>
+            <th scope="col">{t("tableFormula")}</th>
           </tr>
         </thead>
         <tbody>
@@ -59,7 +59,7 @@ function DeltaTable({ rows }: { rows: CounterfactualResponse["metrics"] }) {
                 {row.after.toFixed(2)} {row.unit}
               </td>
               <td className={`num mono ${row.delta > 0.05 ? "tac-metric--up" : row.delta < -0.05 ? "tac-metric--down" : "muted"}`}>
-                {Math.abs(row.delta) < 0.05 ? "no change" : `${row.delta > 0 ? "+" : ""}${row.delta.toFixed(2)} ${row.unit}`}
+                {Math.abs(row.delta) < 0.05 ? t("noChange") : `${row.delta > 0 ? "+" : ""}${row.delta.toFixed(2)} ${row.unit}`}
               </td>
               <td className="tac-formula">{row.formula}</td>
             </tr>
@@ -74,11 +74,12 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
   const [{ slug }, rawQuery] = await Promise.all([params, searchParams]);
   const query = cleanParams(rawQuery);
   const tn = await getTranslations("nav");
+  const t = await getTranslations("tactics");
   const result = await load(slug);
 
   if (!result.ok) {
     if (result.notFound) notFound();
-    return <WorldUnavailable eyebrow={tn("tactics")} message={result.message} title="Tactical system" />;
+    return <WorldUnavailable eyebrow={tn("tactics")} message={result.message} title={t("unavailableTitle")} />;
   }
 
   const system = result.data;
@@ -97,7 +98,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/tactics", label: "Tactical Lab" }}
+        back={{ href: "/tactics", label: tn("tactics") }}
         eyebrow={`Tactical Lab · ${system.formation} · ${system.temperament_label}`}
         lede={system.idea}
         provenance={system}
@@ -106,9 +107,9 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
         <div className="row wrap" style={{ gap: "0.6rem", marginTop: "0.75rem" }}>
           <OriginBadge provenance={system} />
           <div className="tag-list">
-            <span className="chip">press line {system.press_line_y} m</span>
-            <span className="chip">block {system.block_depth} m deep</span>
-            <span className="chip">defensive width ×{system.defensive_narrowing}</span>
+            <span className="chip">{t("chipPressLine", { value: system.press_line_y })}</span>
+            <span className="chip">{t("chipBlock", { value: system.block_depth })}</span>
+            <span className="chip">{t("chipNarrowing", { value: system.defensive_narrowing })}</span>
             <span className="chip mono" title="Content hash of the stored row: change a coordinate and it changes.">
               {system.content_hash.slice(0, 12)}…
             </span>
@@ -132,7 +133,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
         }}
       />
 
-      <Panel eyebrow="Choose a change" title="What happens if…">
+      <Panel eyebrow={t("counterfactualEyebrow")} title={t("counterfactualTitle")}>
         <div className="stack-sm">
           <ChangeNav
             active={changeKey}
@@ -140,64 +141,63 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
             changes={system.counterfactuals}
             query={{ phase: query.phase ?? "" }}
           />
-          <p className="muted world-section-note">
-            Every change is applied to the stored coordinates and the eight measures are recomputed from the result — the answer is never a
-            conclusion kept in a column.
-          </p>
+          <p className="muted world-section-note">{t("counterfactualNote")}</p>
         </div>
       </Panel>
 
       {unknownChange && (
         <div className="notice notice--warn">
-          “{changeKey}” is not one of the {system.counterfactuals.length} changes this lab offers.{" "}
+          {t("unknownChange", { change: changeKey ?? "", count: system.counterfactuals.length })}{" "}
           {counterfactual && !counterfactual.ok ? counterfactual.message : ""}
         </div>
       )}
 
       {counterfactual?.ok && (
-        <Panel eyebrow={counterfactual.data.change.label} title="The board, before and after">
+        <Panel eyebrow={counterfactual.data.change.label} title={t("boardBeforeAfterTitle")}>
           <div className="tac-boards">
             <Pitch
               before={counterfactual.data.board_before}
-              caption="hollow = before · dashed arrow = the displacement asked for"
+              caption={t("boardBeforeAfterCaption")}
               slots={counterfactual.data.board_after}
-              title={`${system.name} after ${counterfactual.data.change.label.toLowerCase()}`}
+              title={t("boardAfterTitle", { name: system.name, change: counterfactual.data.change.label.toLowerCase() })}
             />
             <div className="stack-sm">
               <p className="muted" style={{ fontSize: "0.9rem" }}>
                 {counterfactual.data.change.note}
               </p>
               <p className="muted world-section-note">
-                Applies to: {counterfactual.data.change.target.join(", ")} · phase: {counterfactual.data.change.phase.replace("_", " ")} ·{" "}
-                {counterfactual.data.moved_count} of {counterfactual.data.metrics.length} measures moved.
+                {t("appliesTo", {
+                  targets: counterfactual.data.change.target.join(", "),
+                  phase: counterfactual.data.change.phase.replace("_", " "),
+                  moved: counterfactual.data.moved_count,
+                  total: counterfactual.data.metrics.length,
+                })}
               </p>
               {counterfactual.data.clamped.length > 0 && (
                 <div className="notice notice--warn">
-                  {counterfactual.data.clamped.length} position{counterfactual.data.clamped.length === 1 ? "" : "s"} would have left the
-                  pitch, so it was clamped to the touchline or goal line rather than moved the full distance. The table below reports where
-                  each player actually ended up.
+                  {t("clampedNotice", { count: counterfactual.data.clamped.length })}
                 </div>
               )}
               <Link className="btn btn--sm" href={`/tactics/${system.slug}`}>
-                Show the unchanged board
+                {t("showUnchanged")}
               </Link>
             </div>
           </div>
           <div style={{ marginTop: "0.75rem" }}>
-            <DeltaTable rows={counterfactual.data.metrics} />
+            <DeltaTable rows={counterfactual.data.metrics} t={t} />
           </div>
         </Panel>
       )}
 
-      <Panel eyebrow="Both phases, one structure" title="The boards">
+      <Panel eyebrow={t("phasesEyebrow")} title={t("phasesTitle")}>
         <div className="tac-boards">
           <div className="stack-sm">
-            <p className="eyebrow">In possession</p>
-            <Pitch slots={system.phase_in} title={`${system.name} in possession`} />
+            <p className="eyebrow">{t("phaseIn")}</p>
+            <Pitch slots={system.phase_in} title={t("pitchTitleIn", { name: system.name })} />
           </div>
           <div className="stack-sm">
-            <p className="eyebrow">Out of possession</p>
-            <Pitch slots={system.phase_out} title={`${system.name} out of possession`} />
+            <p className="eyebrow">{t("phaseOut")}</p>
+            <Pitch slots={system.phase_out} title={t("pitchTitleOut", { name: system.name })} />
           </div>
         </div>
         <div className="stack-sm" style={{ marginTop: "0.75rem" }}>
@@ -206,68 +206,60 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
             {system.transform_note}
           </p>
           <p className="muted world-section-note">
-            Both boards carry the same eleven roles. The defending side is not a second drawing: it is the possession board mapped onto a{" "}
-            {system.block_depth} m block whose top edge is the {system.press_line_y} m press line.
+            {t("bothBoardsNote", { block_depth: system.block_depth, press_line: system.press_line_y })}
           </p>
         </div>
       </Panel>
 
-      <Panel eyebrow="Frames between are interpolation" title="Play the phase change">
+      <Panel eyebrow={t("framesEyebrow")} title={t("framesTitle")}>
         <PhasePlayer inPhase={system.phase_in} outPhase={system.phase_out} transform={system.transform_note} />
       </Panel>
 
       {/* §13 asks for 2D and 3D. A `<details>` rather than a toggle button: the view is a second way of reading
           numbers that are already on the page, so it needs no client state to open, and it stays in the
           document for a reader who has no JavaScript. */}
-      <Panel eyebrow="§13's third view — the same metres, projected" title="The board in 3D">
+      <Panel eyebrow={t("isoEyebrow")} title={t("isoTitle")}>
         <details className="stack-sm" data-testid="pitch-3d">
-          <summary>Show the isometric projection of the in-possession board</summary>
+          <summary>{t("isoSummary")}</summary>
           <div className="stack-sm" style={{ marginTop: "0.75rem" }}>
-            <Pitch3D slots={system.phase_in} title={`${system.name} in possession, projected isometrically`} />
+            <Pitch3D slots={system.phase_in} title={t("pitchTitleIn", { name: system.name })} />
             <p className="muted mono" style={{ fontSize: "0.82rem" }} data-iso-formula={ISO_FORMULA}>
               {ISO_FORMULA}
             </p>
             <p className="muted" style={{ fontSize: "0.86rem" }}>
-              Every dot above went through that pair of lines, from the same <span className="mono">x</span>/<span className="mono">y</span> metres the
-              in-possession board uses — the projection is arithmetic over the board&apos;s own numbers, not a second set of coordinates kept in
-              step by hand. Each marker carries the metres it was projected from beside the point it landed on, so the two can be compared
-              without a screenshot. The lawn, the centre circle and the penalty arcs are the 2D frame&apos;s own Law 1 measurements, sampled in
-              metres and projected point by point — a circle on the grass is an ellipse here, and computing that ellipse separately would be a
-              second piece of maths to keep in step with the first.
+              {t("isoNote")}
             </p>
-            <p className="muted world-section-note">
-              What this is not: a rendered scene. There is no camera, no depth buffer and no lighting, so nothing here can show you what a
-              player would see — it is the plan view bent into a diamond, which is what makes it checkable.
-            </p>
+            <p className="muted world-section-note">{t("isoNotNote")}</p>
           </div>
         </details>
       </Panel>
 
       <div className="grid grid-2">
-        <Panel eyebrow="In possession" title="Measured">
+        <Panel eyebrow={t("phaseIn")} title={t("measuredTitle")}>
           <MetricTable metrics={system.metrics_in} />
         </Panel>
-        <Panel eyebrow="Out of possession" title="Measured">
+        <Panel eyebrow={t("phaseOut")} title={t("measuredTitle")}>
           <MetricTable metrics={system.metrics_out} />
         </Panel>
       </div>
 
-      <Panel eyebrow="Decided by the numbers above" title="What this shape is for, and what it costs">
+      <Panel eyebrow={t("verdictEyebrow")} title={t("verdictTitle")}>
         <Verdicts risks={system.risks} strengths={system.strengths} />
       </Panel>
 
       <Panel
         action={
           analysis.ok ? (
-            <span className="chip mono" title="No AI provider key is configured: the text below is assembled from stored passages, not generated.">
-              {analysis.data.demo_mode ? "EXTRACTIVE · NO AI KEY" : `MODEL · ${analysis.data.model}`}
+            <span className="chip mono" title={t("analysisChipTitle")}>
+              {analysis.data.demo_mode ? t("analysisChipDemo") : t("analysisChipModel", { model: analysis.data.model })}
             </span>
           ) : null
         }
-        eyebrow={`${analysis.ok ? analysis.data.points.length : 0} statements with a passage behind them · ${
-          analysis.ok ? analysis.data.ungrounded.length : 0
-        } refused`}
-        title="What this lab will say about the shape"
+        eyebrow={t("analysisEyebrow", {
+          grounded: analysis.ok ? analysis.data.points.length : 0,
+          refused: analysis.ok ? analysis.data.ungrounded.length : 0,
+        })}
+        title={t("analysisTitle")}
       >
         {analysis.ok ? (
           <div className="stack">
@@ -275,7 +267,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
               <article className="tac-point" key={point.topic}>
                 <p className="eyebrow">
                   {point.label} · {point.metric.value.toFixed(1)} {point.metric.unit} ·{" "}
-                  {point.metric.phase === "out" ? "out of possession" : "in possession"}
+                  {point.metric.phase === "out" ? t("phaseOutLower") : t("phaseInLower")}
                 </p>
                 <p>{point.statement}</p>
                 <blockquote className="tac-quote">
@@ -293,7 +285,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
 
             {analysis.data.ungrounded.length > 0 && (
               <div className="notice notice--warn">
-                <p className="eyebrow">Topics this build refused to answer</p>
+                <p className="eyebrow">{t("refusedEyebrow")}</p>
                 <ul className="reasons">
                   {analysis.data.ungrounded.map((item) => (
                     <li className="reasons__item" key={item.topic}>
@@ -302,16 +294,17 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
                     </li>
                   ))}
                 </ul>
-                <p style={{ marginTop: "0.4rem" }}>
-                  The library has no passage that supports these, and retrieval said so. The alternative was a sentence with a source it did
-                  not have, which is the one thing this surface is not for.
-                </p>
+                <p style={{ marginTop: "0.4rem" }}>{t("refusedNote")}</p>
               </div>
             )}
 
             <p className="muted world-section-note">
-              {analysis.data.method} Retrieved over {analysis.data.scanned_chunks.toLocaleString("en-GB")} passages with{" "}
-              <span className="mono">{analysis.data.retrieval_backend}</span>; provider <span className="mono">{analysis.data.provider}</span>.
+              {t("analysisMethod", {
+                method: analysis.data.method,
+                scanned: analysis.data.scanned_chunks.toLocaleString("en-GB"),
+                backend: analysis.data.retrieval_backend,
+                provider: analysis.data.provider,
+              })}
             </p>
           </div>
         ) : (
@@ -319,16 +312,16 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
         )}
       </Panel>
 
-      <Panel eyebrow={`${system.roles.length} slots in the field`} title="Roles, both ways">
+      <Panel eyebrow={t("rolesEyebrow", { count: system.roles.length })} title={t("rolesTitle")}>
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Role</th>
-                <th scope="col">Band</th>
-                <th scope="col">In possession</th>
-                <th scope="col">Out of possession</th>
-                <th scope="col">What it risks</th>
+                <th scope="col">{t("tableRole")}</th>
+                <th scope="col">{t("tableBand")}</th>
+                <th scope="col">{t("phaseIn")}</th>
+                <th scope="col">{t("phaseOut")}</th>
+                <th scope="col">{t("tableRisks")}</th>
               </tr>
             </thead>
             <tbody>
@@ -347,22 +340,22 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
       </Panel>
 
       <div className="grid grid-2">
-        <Panel eyebrow="Method" title="How this side plays">
+        <Panel eyebrow={t("methodEyebrow")} title={t("methodTitle")}>
           <dl className="world-kv">
             <div className="world-kv__row">
-              <dt>Build-up</dt>
+              <dt>{t("labelBuildUp")}</dt>
               <dd>{system.build_up}</dd>
             </div>
             <div className="world-kv__row">
-              <dt>Tempo</dt>
+              <dt>{t("labelTempo")}</dt>
               <dd>{system.tempo}</dd>
             </div>
             <div className="world-kv__row">
-              <dt>Pressing trigger</dt>
+              <dt>{t("labelPressing")}</dt>
               <dd>{system.pressing_trigger}</dd>
             </div>
             <div className="world-kv__row">
-              <dt>Width</dt>
+              <dt>{t("labelWidth")}</dt>
               <dd>{system.width_note}</dd>
             </div>
           </dl>
@@ -376,10 +369,10 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
         </Panel>
 
         <Panel
-          eyebrow="The highest demand in the field for each" title="What it asks of a player"
+          eyebrow={t("demandsEyebrow")} title={t("demandsTitle")}
           action={
-            <span className="chip" title="Compared with your player's own tactical attributes on My Football.">
-              attribute demand
+            <span className="chip" title={t("demandsChipTitle")}>
+              {t("demandsChip")}
             </span>
           }
         >
@@ -389,16 +382,13 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
               .map(([attribute, level]) => (
                 <Meter key={attribute} label={attribute.replace(/_/g, " ")} max={99} value={level} />
               ))}
-            <p className="muted world-section-note">
-              Six tactical attributes, taken as the maximum demanded by any role this shape fields. They are the same six stored on a
-              player, so fit is a comparison rather than an opinion — the page for your own player shows the pairing.
-            </p>
+            <p className="muted world-section-note">{t("demandsNote")}</p>
           </div>
         </Panel>
       </div>
 
       {siblings.ok && siblings.data.items.length > 1 && (
-        <Panel eyebrow="Same shape, different temperament" title="Compare the trade">
+        <Panel eyebrow={t("siblingsEyebrow")} title={t("siblingsTitle")}>
           <div className="tag-list">
             {siblings.data.items
               .filter((item) => item.slug !== system.slug)
@@ -409,7 +399,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
               ))}
           </div>
           <p className="muted world-section-note" style={{ marginTop: "0.6rem" }}>
-            Eleven other systems share this shape; each comparison prints all eight measures side by side, with the formula for every one.
+            {t("siblingsNote")}
           </p>
         </Panel>
       )}

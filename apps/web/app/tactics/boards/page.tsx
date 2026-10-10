@@ -14,12 +14,15 @@ import type { BoardList, SystemList } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 /** A person's own boards are private working material, not a publication. */
-export const metadata: Metadata = {
-  title: "My tactical boards",
-  description: "Boards you have arranged in the Tactical Lab, with the measurements recomputed from their coordinates.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/tactics/boards") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("tactics");
+  return {
+    title: t("boardsMetaTitle"),
+    description: t("boardsMetaDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/tactics/boards") },
+  };
+}
 
 function formatStamp(iso: string | null): string {
   if (!iso) return "—";
@@ -32,11 +35,12 @@ export default async function BoardsIndexPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Ftactics%2Fboards");
   const tn = await getTranslations("nav");
+  const t = await getTranslations("tactics");
 
   const [boards, systems] = await Promise.all([serverFetch<BoardList>("/boards"), readWorld<SystemList>("/tactics", { page_size: 50 })]);
 
   if (!boards.ok) {
-    return <WorldUnavailable eyebrow={tn("tactics")} message={boards.error.message} title="My tactical boards" />;
+    return <WorldUnavailable eyebrow={tn("tactics")} message={boards.error.message} title={t("boardsUnavailableTitle")} />;
   }
 
   const list = boards.data;
@@ -44,21 +48,21 @@ export default async function BoardsIndexPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/tactics", label: "Tactical Lab" }}
-        eyebrow={`${user.display_name} · your arrangements`}
-        lede="A board starts as a copy of one of the 50 authored systems and becomes yours the moment you move a dot. Its measurements are recomputed by the server from the positions you saved, never from the ones still on screen."
+        back={{ href: "/tactics", label: tn("tactics") }}
+        eyebrow={t("boardsEyebrow", { name: user.display_name })}
+        lede={t("boardsLede")}
         provenance={list}
-        title="My tactical boards"
+        title={t("boardsMetaTitle")}
       />
 
-      <Panel eyebrow={`Create · ${list.total} of ${list.limit_per_user} used`} title="Start from an authored system">
+      <Panel eyebrow={t("createEyebrow", { used: list.total, limit: list.limit_per_user })} title={t("createTitle")}>
         {systems.ok ? <BoardsNew systems={systems.data.items.map((item) => ({ slug: item.slug, name: item.name }))} /> : <div className="notice notice--warn">{systems.message}</div>}
       </Panel>
 
       {list.items.length === 0 ? (
         <div className="empty">
-          <strong>No boards yet</strong>
-          <span className="muted">Pick a system above and copy it — nothing in the catalogue changes when you do.</span>
+          <strong>{t("boardsEmptyTitle")}</strong>
+          <span className="muted">{t("boardsEmptyNote")}</span>
         </div>
       ) : (
         <section className="tac-cards">
@@ -69,7 +73,7 @@ export default async function BoardsIndexPage() {
                 <OriginBadge provenance={board} />
               </span>
               <span className="tac-card__meta">
-                {board.origin_system ? `from ${board.origin_system}` : "drawn from scratch"} · {board.visibility === "shared" ? "link is live" : "private"}
+                {board.origin_system ? t("boardFromSystem", { system: board.origin_system }) : t("boardFromScratch")} · {board.visibility === "shared" ? t("boardLinkLive") : t("boardPrivate")}
               </span>
               <div className="tac-card__metrics">
                 <span className="chip num">{board.metrics_in.find((metric) => metric.key === "width")?.value.toFixed(1)} m wide</span>
@@ -83,7 +87,7 @@ export default async function BoardsIndexPage() {
 
       <Provenance
         provenance={list}
-        extra={<span className="chip">only you can read these; a share link is per board and revocable</span>}
+        extra={<span className="chip">{t("boardsPrivacyChip")}</span>}
       />
     </div>
   );

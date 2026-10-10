@@ -16,21 +16,25 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ token: string }> };
 
 /** A shared link is sent to a person, not to a crawler: no index, and no way to reach it by guessing. */
-export const metadata: Metadata = {
-  title: "Shared tactical board",
-  description: "A board arranged by a FOOTBALL OS account, with the eight measurements recomputed from its saved positions.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/tactics") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("tactics");
+  return {
+    title: t("sharedMetaTitle"),
+    description: t("sharedMetaDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/tactics") },
+  };
+}
 
 export default async function SharedBoardPage({ params }: Props) {
   const { token } = await params;
   const tn = await getTranslations("nav");
+  const t = await getTranslations("tactics");
   const result = await readWorld<SharedBoard>(`/boards/shared/${encodeURIComponent(token)}`);
 
   if (!result.ok) {
     if (result.notFound) notFound();
-    return <WorldUnavailable eyebrow={tn("tactics")} message={result.message} title="Shared tactical board" />;
+    return <WorldUnavailable eyebrow={tn("tactics")} message={result.message} title={t("sharedUnavailableTitle")} />;
   }
 
   const board = result.data;
@@ -38,22 +42,28 @@ export default async function SharedBoardPage({ params }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/tactics", label: "Tactical Lab" }}
-        eyebrow={`Shared by ${board.owner.name} · read-only`}
-        lede={board.note || "The account that arranged this board left no note with it."}
+        back={{ href: "/tactics", label: tn("tactics") }}
+        eyebrow={t("sharedEyebrow", { name: board.owner.name })}
+        lede={board.note || t("sharedNoNote")}
         provenance={board}
         title={board.name}
       />
 
-      <Panel eyebrow={`${board.phase_in.length} positions · ${board.origin_system ? `copied from ${board.origin_system}` : "drawn from scratch"}`} title="Both phases as the owner saved them">
+      <Panel
+        eyebrow={t("sharedPanelEyebrow", {
+          count: board.phase_in.length,
+          origin: board.origin_system ? t("boardFromSystem", { system: board.origin_system }) : t("boardFromScratch"),
+        })}
+        title={t("sharedPanelTitle")}
+      >
         <div className="tac-boards">
           <div className="stack-sm">
-            <p className="eyebrow">In possession</p>
-            <Pitch caption={`${board.phase_in.length} positions · metres, 68 × 105`} slots={board.phase_in} title={`${board.name} in possession`} />
+            <p className="eyebrow">{t("phaseIn")}</p>
+            <Pitch caption={t("sharedPitchCaption", { count: board.phase_in.length })} slots={board.phase_in} title={t("pitchTitleIn", { name: board.name })} />
           </div>
           <div className="stack-sm">
-            <p className="eyebrow">Out of possession</p>
-            <Pitch caption={`${board.phase_out.length} positions · metres, 68 × 105`} slots={board.phase_out} title={`${board.name} out of possession`} />
+            <p className="eyebrow">{t("phaseOut")}</p>
+            <Pitch caption={t("sharedPitchCaption", { count: board.phase_out.length })} slots={board.phase_out} title={t("pitchTitleOut", { name: board.name })} />
           </div>
         </div>
         <div style={{ marginTop: "0.7rem" }}>
@@ -62,7 +72,7 @@ export default async function SharedBoardPage({ params }: Props) {
       </Panel>
 
       <div className="grid grid-2">
-        <Panel eyebrow="Measured from the saved coordinates" title="In possession">
+        <Panel eyebrow={t("sharedMeasuredEyebrow")} title={t("phaseIn")}>
           <div className="world-tablewrap">
             <table className="table">
               <tbody>
@@ -79,7 +89,7 @@ export default async function SharedBoardPage({ params }: Props) {
             </table>
           </div>
         </Panel>
-        <Panel eyebrow="Measured from the saved coordinates" title="Out of possession">
+        <Panel eyebrow={t("sharedMeasuredEyebrow")} title={t("phaseOut")}>
           <div className="world-tablewrap">
             <table className="table">
               <tbody>
@@ -99,14 +109,14 @@ export default async function SharedBoardPage({ params }: Props) {
       </div>
 
       <p className="muted world-section-note">
-        This page cannot be edited, and the account behind it is named only as “{board.owner.name}”.{" "}
-        <Link className="world-link" href="/tactics">
-          Browse the 50 authored systems
-        </Link>{" "}
-        — those are this project&apos;s own, with the reasoning written out on each page.
+        {t.rich("sharedOwnerNote", { name: board.owner.name, link: (chunks) => (
+          <Link className="world-link" href="/tactics">
+            {chunks}
+          </Link>
+        ) })}
       </p>
 
-      <Provenance provenance={board} extra={<span className="chip">shared by link, revocable by the owner at any time</span>} />
+      <Provenance provenance={board} extra={<span className="chip">{t("sharedRevocableChip")}</span>} />
     </div>
   );
 }

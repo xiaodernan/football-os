@@ -15,22 +15,26 @@ export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 /** A comparison is a question asked of two pages, not a page of its own: kept out of the index. */
-export const metadata: Metadata = {
-  title: "Compare two tactical systems",
-  description: "The same eight measurements, computed for two systems from the same phase, side by side.",
-  robots: { index: false, follow: true },
-  alternates: { canonical: absolute("/tactics/compare") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("tactics");
+  return {
+    title: t("compareMetaTitle"),
+    description: t("compareMetaDescription"),
+    robots: { index: false, follow: true },
+    alternates: { canonical: absolute("/tactics/compare") },
+  };
+}
 
-const PHASES: { key: string; label: string }[] = [
-  { key: "in", label: "In possession" },
-  { key: "out", label: "Out of possession" },
+const PHASES: { key: string; labelKey: string }[] = [
+  { key: "in", labelKey: "phaseIn" },
+  { key: "out", labelKey: "phaseOut" },
 ];
 
 export default async function TacticsComparePage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const phase = query.phase === "out" ? "out" : "in";
   const tn = await getTranslations("nav");
+  const t = await getTranslations("tactics");
   const options = await readWorld<SystemList>("/tactics", { page_size: 50 });
 
   const pair =
@@ -50,8 +54,8 @@ export default async function TacticsComparePage({ searchParams }: Props) {
       <WorldUnavailable
         eyebrow={tn("tactics")}
         message={options.message}
-        title="Compare two systems"
-        detail="The comparison reads the stored catalogue; start the API with scripts/dev.sh."
+        title={t("compareUnavailableTitle")}
+        detail={t("compareUnavailableDetail")}
       />
     );
   }
@@ -60,22 +64,23 @@ export default async function TacticsComparePage({ searchParams }: Props) {
   const boardOf = (detail: SystemDetail | undefined) =>
     detail ? (phase === "out" ? detail.phase_out : detail.phase_in) : [];
   const sides = pair?.ok && left?.ok && right?.ok ? [{ detail: left.data, tag: "A" }, { detail: right.data, tag: "B" }] : [];
+  const phaseWord = phase === "out" ? t("phaseOutLower") : t("phaseInLower");
 
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/tactics", label: "Tactical Lab" }}
-        eyebrow="Same measurements · different systems"
-        lede="Two authored structures, the eight measurements, and the difference between them. Nothing is averaged across the pair: each side is computed from its own coordinates."
+        back={{ href: "/tactics", label: tn("tactics") }}
+        eyebrow={t("compareEyebrow")}
+        lede={t("compareLede")}
         provenance={options.data}
-        title="Compare two tactical systems"
+        title={t("compareMetaTitle")}
       >
         <form action="/tactics/compare" className="stack-sm" method="get" style={{ marginTop: "1rem", gap: "0.6rem" }}>
           <div className="grid grid-2">
             <label className="field">
-              <span className="field__label">System A</span>
+              <span className="field__label">{t("systemA")}</span>
               <select className="select" defaultValue={query.a ?? ""} name="a">
-                <option value="">choose…</option>
+                <option value="">{t("chooseOption")}</option>
                 {systems.map((item) => (
                   <option key={item.slug} value={item.slug}>
                     {item.name}
@@ -84,9 +89,9 @@ export default async function TacticsComparePage({ searchParams }: Props) {
               </select>
             </label>
             <label className="field">
-              <span className="field__label">System B</span>
+              <span className="field__label">{t("systemB")}</span>
               <select className="select" defaultValue={query.b ?? ""} name="b">
-                <option value="">choose…</option>
+                <option value="">{t("chooseOption")}</option>
                 {systems.map((item) => (
                   <option key={item.slug} value={item.slug}>
                     {item.name}
@@ -97,17 +102,17 @@ export default async function TacticsComparePage({ searchParams }: Props) {
           </div>
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             <label className="field grow">
-              <span className="field__label">Phase</span>
+              <span className="field__label">{t("phaseLabel")}</span>
               <select className="select" defaultValue={phase} name="phase">
                 {PHASES.map((option) => (
                   <option key={option.key} value={option.key}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </option>
                 ))}
               </select>
             </label>
             <button className="btn btn--primary" type="submit">
-              Compare
+              {t("compareButton")}
             </button>
           </div>
         </form>
@@ -115,20 +120,17 @@ export default async function TacticsComparePage({ searchParams }: Props) {
 
       {!pair && (
         <div className="empty">
-          <strong>Pick two different systems</strong>
-          <span className="muted">
-            {systems.length} systems are loaded for the dropdowns. Until both are chosen nothing is computed — an empty comparison would have
-            to invent a row to show you.
-          </span>
+          <strong>{t("compareEmptyTitle")}</strong>
+          <span className="muted">{t("compareEmptyNote", { count: systems.length })}</span>
         </div>
       )}
 
       {pair && !pair.ok && pair.status === 404 && (
         <div className="notice notice--warn">
-          “{query.a}” or “{query.b}” is not a stored system, so nothing was measured. Pick from the list above.
+          {t("unknownNotice", { a: query.a ?? "", b: query.b ?? "" })}
         </div>
       )}
-      {pair && !pair.ok && pair.status !== 404 && <WorldUnavailable eyebrow={tn("tactics")} message={pair.message} title="Compare two systems" />}
+      {pair && !pair.ok && pair.status !== 404 && <WorldUnavailable eyebrow={tn("tactics")} message={pair.message} title={t("compareUnavailableTitle")} />}
 
       {pair?.ok && left?.ok && right?.ok && (
         <>
@@ -153,15 +155,15 @@ export default async function TacticsComparePage({ searchParams }: Props) {
               >
                 <div className="stack-sm">
                   <Pitch
-                    caption={`${boardOf(detail).length} positions · ${phase === "out" ? "out of" : "in"} possession`}
+                    caption={t("sideBoardCaption", { count: boardOf(detail).length, phase: phaseWord })}
                     slots={boardOf(detail)}
-                    title={`${detail.name} ${phase === "out" ? "out of possession" : "in possession"}`}
+                    title={t("pitchTitle" + (phase === "out" ? "Out" : "In"), { name: detail.name })}
                   />
                   <p className="muted" style={{ fontSize: "0.88rem" }}>
                     {detail.idea}
                   </p>
                   <Link className="btn btn--ghost btn--sm" href={detail.path}>
-                    Open {tag}
+                    {t("openSide", { tag })}
                   </Link>
                 </div>
               </Panel>
@@ -172,22 +174,22 @@ export default async function TacticsComparePage({ searchParams }: Props) {
             action={
               <div className="row wrap" style={{ gap: "0.4rem" }}>
                 <OriginBadge provenance={pair.data} />
-                <span className="chip">{phase === "out" ? "out of possession" : "in possession"}</span>
+                <span className="chip">{phaseWord}</span>
               </div>
             }
-            eyebrow={`${pair.data.a.name} vs ${pair.data.b.name}`}
-            title="Eight measurements, side by side"
+            eyebrow={t("measuresEyebrow", { a: pair.data.a.name, b: pair.data.b.name })}
+            title={t("measuresTitle")}
           >
             <div className="stack">
               <div className="world-tablewrap">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th scope="col">Measure</th>
-                      <th scope="col">A · {pair.data.a.name}</th>
-                      <th scope="col">B · {pair.data.b.name}</th>
-                      <th scope="col">B − A</th>
-                      <th scope="col">How it is obtained</th>
+                      <th scope="col">{t("tableMeasure")}</th>
+                      <th scope="col">{t("tableA", { name: pair.data.a.name })}</th>
+                      <th scope="col">{t("tableB", { name: pair.data.b.name })}</th>
+                      <th scope="col">{t("tableDelta")}</th>
+                      <th scope="col">{t("tableFormula")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -201,7 +203,7 @@ export default async function TacticsComparePage({ searchParams }: Props) {
                           {row.b.toFixed(2)} {row.unit}
                         </td>
                         <td className={`num mono ${row.delta > 0.05 ? "tac-metric--up" : row.delta < -0.05 ? "tac-metric--down" : "muted"}`}>
-                          {Math.abs(row.delta) < 0.05 ? "level" : `${row.delta > 0 ? "+" : ""}${row.delta.toFixed(2)} ${row.unit}`}
+                          {Math.abs(row.delta) < 0.05 ? t("level") : `${row.delta > 0 ? "+" : ""}${row.delta.toFixed(2)} ${row.unit}`}
                         </td>
                         <td className="tac-formula">{row.formula}</td>
                       </tr>
@@ -211,10 +213,7 @@ export default async function TacticsComparePage({ searchParams }: Props) {
               </div>
               <BandLegend />
               <p className="muted world-section-note">{pair.data.note}</p>
-              <p className="muted world-section-note">
-                Both dropdowns are plain HTML with a GET form, so this page is reachable and shareable without JavaScript; it is
-                <span className="mono"> noindex</span> because a comparison is a question, not a document.
-              </p>
+              <p className="muted world-section-note">{t("noindexNote")}</p>
             </div>
           </Panel>
 

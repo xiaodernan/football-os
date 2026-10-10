@@ -14,12 +14,16 @@ export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export const metadata: Metadata = pageMetadata({
-  title: "Tactical Lab",
-  description:
-    "Fifty authored tactical systems — ten shapes times five temperaments — with the width, spacing and space behind the back line measured from their own coordinates, in metres.",
-  path: "/tactics",
-});
+// `generateMetadata` rather than a constant, so the tab title follows the reader's locale — same
+// shape as the auth pages and /coach.
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("tactics");
+  return pageMetadata({
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    path: "/tactics",
+  });
+}
 
 const BASE = "/tactics";
 const PAGE_SIZE = 12;
@@ -29,6 +33,7 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
   const page = pageOf(query);
   const tc = await getTranslations("common");
   const tn = await getTranslations("nav");
+  const t = await getTranslations("tactics");
   const [status, list] = await Promise.all([
     readWorld<TacticsStatus>("/tactics/status"),
     readWorld<SystemList>("/tactics", {
@@ -46,7 +51,7 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
         eyebrow={tn("tactics")}
         message={status.message}
         title={tn("tactics")}
-        detail="The catalogue is stored on boot by apps/api; start it with scripts/dev.sh."
+        detail={t("unavailableDetail")}
       />
     );
   }
@@ -61,27 +66,27 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world", label: "Football World" }}
-        eyebrow="Authored coaching structures · measured in metres"
-        lede="Ten shapes × five temperaments = the fifty systems this lab stores. Nothing here is a real team's play: the coordinates are written by this project, and every figure is measured from them."
+        back={{ href: "/world", label: tn("world") }}
+        eyebrow={t("eyebrow")}
+        lede={t("lede")}
         provenance={world}
         title={tn("tactics")}
       >
         <form action="/tactics" className="world-search" method="get" role="search" style={{ marginTop: "1rem" }}>
           <input
-            aria-label="Search the tactical catalogue"
+            aria-label={t("searchAriaLabel")}
             className="input"
             defaultValue={query.search ?? ""}
             maxLength={60}
             name="search"
-            placeholder="Search a shape, e.g. 3-4-2-1…"
+            placeholder={t("searchPlaceholder")}
             type="search"
           />
           <button className="btn btn--primary" type="submit">
             {tc("search")}
           </button>
           <Link className="btn btn--ghost" href="/tactics/compare">
-            Compare two
+            {t("compareLink")}
           </Link>
         </form>
       </WorldHead>
@@ -102,30 +107,30 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow="Store" title="What is here">
+        <Panel eyebrow={t("storeEyebrow")} title={t("storeTitle")}>
           <dl className="world-kv">
             <div className="world-kv__row">
-              <dt>systems stored</dt>
+              <dt>{t("labelStored")}</dt>
               <dd className="mono">
                 {world.stored} / {world.gate.tactical_systems ?? 50}
               </dd>
             </div>
             <div className="world-kv__row">
-              <dt>shapes × temperaments</dt>
+              <dt>{t("labelShapes")}</dt>
               <dd className="mono">
                 {world.formations.length} × {world.temperaments.length}
               </dd>
             </div>
             <div className="world-kv__row">
-              <dt>catalogue fingerprint</dt>
+              <dt>{t("labelFingerprint")}</dt>
               <dd className="mono">{world.catalogue_fingerprint.slice(0, 16)}…</dd>
             </div>
             <div className="world-kv__row">
-              <dt>ready</dt>
+              <dt>{t("labelReady")}</dt>
               <dd className="mono">{String(world.ready)}</dd>
             </div>
             <div className="world-kv__row">
-              <dt>auto-sync</dt>
+              <dt>{t("labelAutoSync")}</dt>
               <dd className="mono">{String(world.auto_sync)}</dd>
             </div>
           </dl>
@@ -134,17 +139,14 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
           </p>
         </Panel>
 
-        <Panel eyebrow="The eight measurements" title="Every figure on this site, and its formula">
+        <Panel eyebrow={t("metricsEyebrow")} title={t("metricsTitle")}>
           {firstDetail?.ok ? (
             <div className="stack-sm">
               <MetricTable metrics={firstDetail.data.metrics_in} />
-              <p className="muted world-section-note">
-                These are the in-possession numbers of one row — {firstDetail.data.name}. Each system&apos;s page prints all eight for both
-                phases, and a measure is never printed without the rule that produced it.
-              </p>
+              <p className="muted world-section-note">{t("metricsNote", { name: firstDetail.data.name })}</p>
             </div>
           ) : (
-            <span className="unavailable">{firstDetail?.message ?? "The metrics table needs at least one stored system."}</span>
+            <span className="unavailable">{firstDetail?.message ?? t("metricsUnavailable")}</span>
           )}
         </Panel>
       </div>
@@ -152,14 +154,14 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
       {list.ok && (
         <>
           <div className="grid grid-2">
-            <Panel eyebrow={tc("filter")} title="By shape">
-              <FilterChips active={query.formation} base={BASE} label="Shape" options={world.formations} param="formation" query={query} />
+            <Panel eyebrow={tc("filter")} title={t("byShape")}>
+              <FilterChips active={query.formation} base={BASE} label={t("shapeFilterLabel")} options={world.formations} param="formation" query={query} />
             </Panel>
-            <Panel eyebrow={tc("filter")} title="By temperament">
+            <Panel eyebrow={tc("filter")} title={t("byTemperament")}>
               <FilterChips
                 active={query.temperament}
                 base={BASE}
-                label="Temperament"
+                label={t("temperamentFilterLabel")}
                 options={world.temperaments}
                 param="temperament"
                 query={query}
@@ -169,16 +171,16 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
 
           {list.data.items.length === 0 ? (
             <div className="empty">
-              <strong>No system matches those filters</strong>
-              <span className="muted">The catalogue holds {world.stored} rows; the filter is what is empty.</span>
+              <strong>{t("emptyTitle")}</strong>
+              <span className="muted">{t("emptyNote", { count: world.stored })}</span>
               <Link className="btn btn--sm" href={BASE}>
-                Clear filters
+                {t("clearFilters")}
               </Link>
             </div>
           ) : (
             <section className="stack">
               <div className="between wrap">
-                <h2 className="h2">Systems</h2>
+                <h2 className="h2">{t("systemsHeading")}</h2>
                 <BandLegend />
               </div>
               <div className="tac-cards">
@@ -196,29 +198,25 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
       {!list.ok && <div className="notice notice--warn">{list.message}</div>}
 
       {firstDetail?.ok && (
-        <Panel eyebrow={`${firstDetail.data.name} · in possession`} title="What a board looks like">
+        <Panel eyebrow={t("boardEyebrow", { name: firstDetail.data.name })} title={t("boardTitle")}>
           <div className="tac-boards">
             <Pitch
-              caption={`${firstDetail.data.phase_in.length} positions · metres, 68 × 105 (Law 1) · attack upward`}
+              caption={t("pitchCaption", { count: firstDetail.data.phase_in.length })}
               slots={firstDetail.data.phase_in}
-              title={`${firstDetail.data.name} in possession`}
+              title={t("pitchTitleIn", { name: firstDetail.data.name })}
             />
             <div className="stack-sm">
               <p className="muted" style={{ fontSize: "0.9rem" }}>
-                Each card above prints three of its measured numbers; opening a system draws both phases, lists all eight measures with
-                their formulas, and offers the six counterfactuals. The press line sits at {firstDetail.data.press_line_y} m and the
-                defending block is {firstDetail.data.block_depth} m deep — those two authored values are what the out-of-possession board
-                is derived from.
+                {t("boardNote", { press_line: firstDetail.data.press_line_y, block_depth: firstDetail.data.block_depth })}
               </p>
               <p className="muted world-section-note">
-                This one is {firstDetail.data.formation} under {firstDetail.data.temperament_label.toLowerCase()}. Compare the same shape
-                under a different temperament to see the trade: the same eleven players, measured both ways.
+                {t("boardCompareNote", { formation: firstDetail.data.formation, temperament: firstDetail.data.temperament_label.toLowerCase() })}
               </p>
               <Link className="btn btn--sm" href={firstDetail.data.path}>
-                Open {firstDetail.data.name}
+                {t("openSystem", { name: firstDetail.data.name })}
               </Link>
               <Link className="btn btn--ghost btn--sm" href="/tactics/compare">
-                Open the comparison board
+                {t("openCompare")}
               </Link>
             </div>
           </div>

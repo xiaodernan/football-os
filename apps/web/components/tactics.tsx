@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import type { BoardMetric, ChangeCard, SystemBrief } from "@/lib/types";
 
@@ -19,20 +20,21 @@ import "../styles/tactics.css";
  * lab, the world and the library cannot label the same `data_origin` three different ways.
  */
 
-const BANDS: { key: string; label: string; color: string }[] = [
-  { key: "goalkeeper", label: "goalkeeper", color: "#ffd166" },
-  { key: "defensive", label: "defensive line", color: "#5fa8ff" },
-  { key: "midfield", label: "midfield line", color: "#35f0a4" },
-  { key: "attacking", label: "front line", color: "#ff6b6b" },
+const BANDS: { key: string; color: string }[] = [
+  { key: "bandGoalkeeper", color: "#ffd166" },
+  { key: "bandDefensive", color: "#5fa8ff" },
+  { key: "bandMidfield", color: "#35f0a4" },
+  { key: "bandAttacking", color: "#ff6b6b" },
 ];
 
 export function BandLegend() {
+  const t = useTranslations("tactics");
   return (
     <div className="band-legend">
       {BANDS.map((band) => (
         <span className="band-legend__key" key={band.key}>
           <span className="band-legend__dot" style={{ background: band.color }} />
-          {band.label}
+          {t(band.key)}
         </span>
       ))}
     </div>
@@ -41,14 +43,15 @@ export function BandLegend() {
 
 /** Metric · value · formula. The formula column is the point: a number without it is a claim. */
 export function MetricTable({ metrics }: { metrics: BoardMetric[] }) {
+  const t = useTranslations("tactics");
   return (
     <div className="world-tablewrap">
       <table className="table">
         <thead>
           <tr>
-            <th scope="col">Measure</th>
-            <th scope="col">Value</th>
-            <th scope="col">How it is obtained</th>
+            <th scope="col">{t("tableMeasure")}</th>
+            <th scope="col">{t("tableValue")}</th>
+            <th scope="col">{t("tableFormula")}</th>
           </tr>
         </thead>
         <tbody>
@@ -57,7 +60,7 @@ export function MetricTable({ metrics }: { metrics: BoardMetric[] }) {
               <td>{metric.label}</td>
               <td className="num tac-metric mono">
                 {/* A measure this payload does not carry is shown as absent, never borrowed from another row. */}
-                {Number.isFinite(metric.value) ? `${metric.value.toFixed(2)} ${metric.unit}` : "not on this card"}
+                {Number.isFinite(metric.value) ? `${metric.value.toFixed(2)} ${metric.unit}` : t("metricAbsent")}
               </td>
               <td className="tac-formula">{metric.formula}</td>
             </tr>
@@ -69,10 +72,11 @@ export function MetricTable({ metrics }: { metrics: BoardMetric[] }) {
 }
 
 export function Verdicts({ strengths, risks }: { strengths: string[]; risks: string[] }) {
+  const t = useTranslations("tactics");
   return (
     <div className="tac-verdicts">
       <div className="stack-sm">
-        <p className="eyebrow">What the measurement favours</p>
+        <p className="eyebrow">{t("verdictsStrengths")}</p>
         <ul className="reasons">
           {strengths.map((line, index) => (
             <li className="reasons__item" key={`strength-${index}`}>
@@ -82,7 +86,7 @@ export function Verdicts({ strengths, risks }: { strengths: string[]; risks: str
         </ul>
       </div>
       <div className="stack-sm">
-        <p className="eyebrow">What the measurement costs</p>
+        <p className="eyebrow">{t("verdictsCosts")}</p>
         <ul className="reasons">
           {risks.map((line, index) => (
             <li className="reasons__item" key={`risk-${index}`}>
@@ -114,12 +118,13 @@ export function ChangeNav({
     const qs = params.toString();
     return qs ? `${base}?${qs}` : base;
   };
+  const t = useTranslations("tactics");
   return (
     <div className="stack-sm">
-      <span className="eyebrow">What happens if…</span>
+      <span className="eyebrow">{t("changeNavEyebrow")}</span>
       <div className="tag-list">
         <Link className={`chip ${active ? "" : "chip--accent"}`} href={href()}>
-          nothing — show the board
+          {t("changeNavNone")}
         </Link>
         {changes.map((change) => (
           <Link className={`chip ${active === change.key ? "chip--accent" : ""}`} href={href(change.key)} key={change.key} title={change.note}>
@@ -132,19 +137,20 @@ export function ChangeNav({
 }
 
 export function SystemCard({ item, footnote }: { item: SystemBrief; footnote?: ReactNode }) {
+  const t = useTranslations("tactics");
   return (
     <Link className="tac-card" href={item.path}>
       <span className="tac-card__name">{item.name}</span>
       <span className="tac-card__idea">{item.idea}</span>
       <div className="tac-card__metrics">
-        <span className="chip num" title="Width across the outfield players, in possession.">
-          {item.in_possession.width?.toFixed(1)} m wide
+        <span className="chip num" title={t("cardWideTitle")}>
+          {item.in_possession.width?.toFixed(1)} {t("cardWide")}
         </span>
-        <span className="chip num" title="Space between this team's back line and its own goal, in possession.">
-          {item.in_possession.space_behind?.toFixed(1)} m behind
+        <span className="chip num" title={t("cardBehindTitle")}>
+          {item.in_possession.space_behind?.toFixed(1)} {t("cardBehind")}
         </span>
-        <span className="chip num" title="Mean distance to the nearest team-mate when defending.">
-          {item.out_of_possession.spacing?.toFixed(1)} m block
+        <span className="chip num" title={t("cardBlockTitle")}>
+          {item.out_of_possession.spacing?.toFixed(1)} {t("cardBlock")}
         </span>
       </div>
       {footnote}
