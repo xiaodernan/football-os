@@ -29,6 +29,7 @@ os.environ["APP_SECRET"] = "test-secret-not-for-production"
 os.environ["ENV"] = "test"
 os.environ.pop("OPENAI_API_KEY", None)
 os.environ.pop("ANTHROPIC_API_KEY", None)
+os.environ.pop("OTEL_EXPORTER_OTLP_ENDPOINT", None)  # M12: a test run must not export spans to a developer's collector.
 
 _IDENTIFIER = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,58}")
 

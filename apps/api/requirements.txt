@@ -9,3 +9,9 @@ python-dotenv==1.0.1
 pgvector==0.3.6
 python-multipart==0.0.30
 reportlab==4.4.4
+# M12 Observability: OpenTelemetry tracing. The OTLP endpoint env var gates the
+# traffic; these packages are imported by app.core.tracing at boot either way.
+opentelemetry-sdk==1.45.1
+opentelemetry-exporter-otlp==1.45.1
+opentelemetry-instrumentation-fastapi==0.66b1
+opentelemetry-instrumentation-httpx==0.66b1

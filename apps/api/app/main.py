@@ -48,6 +48,7 @@ from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging, get_logger
+from app.core.tracing import init_tracing, instrument_fastapi
 from app.services.knowledge import corpus_stats, sync_knowledge
 from app.services.tactics import sync_tactics
 from app.services.training_catalog import sync_catalog
@@ -108,6 +109,7 @@ def create_app() -> FastAPI:
                 elif tactics_report.changed:
                     logger.info("tactical systems synced %s", tactics_report.summary_line())
         logger.info("boot env=%s dialect=%s demo_mode=%s", settings.env, settings.database_url.split(":")[0], settings.is_demo_mode)
+        init_tracing()
         yield
 
     app = FastAPI(
@@ -119,6 +121,7 @@ def create_app() -> FastAPI:
         docs_url="/api/v1/docs",
         redoc_url=None,
     )
+    instrument_fastapi(app)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_origins),

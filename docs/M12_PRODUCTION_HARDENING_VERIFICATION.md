@@ -38,6 +38,39 @@ Third-party noise is silenced where it would drown the application's own lines: 
 sink is configured — no Loki, no CloudWatch. The formatter is the contract with whichever sink is
 wired later, and the sink is deployment configuration, not application code.
 
+### Observability — distributed tracing (OpenTelemetry)
+
+`app/core/tracing.py`, wired from `app/main.py`. `init_tracing()` builds an SDK `TracerProvider`
+whose resource carries `service.name=football-os-api`, the service version and the deployment
+environment, and installs it as the global provider with an OTLP/HTTP exporter behind a
+`BatchSpanProcessor` — a slow or down collector cannot block a request, because the export runs on
+the processor's own thread. `HTTPXClientInstrumentor` covers outgoing calls; `instrument_fastapi`
+covers the app's incoming requests. `main.py` calls both at boot.
+
+The switch is the environment variable `OTEL_EXPORTER_OTLP_ENDPOINT`, and what it gates is the
+**traffic**, not the import: without it, `init_tracing` returns None, no processor is built, no
+background thread runs, no network call is attempted, and `instrument_fastapi` leaves the app
+uninstrumented. With it, a request produces a `SERVER` span named for its route. The five packages
+are pinned in `requirements.txt`, so a fresh install cannot boot into an `ImportError` the env var
+was supposed to prevent — the first version of this module imported OpenTelemetry at module level
+while promising "tests run without external dependencies", which was exactly the kind of claim this
+project exists to catch.
+
+What is measured (`tests/test_tracing.py`, three cases): without the variable, no provider is
+installed and a FastAPI app gains no middleware; with it, a request through an instrumented app
+produces exactly one `SERVER` span carrying the service resource — observed through an
+`InMemorySpanExporter` injected as the span processor, never through a network call, and without
+installing a global provider the rest of the suite would inherit (`init_tracing` accepts one for
+exactly this reason, and `instrument_fastapi` takes the provider explicitly). The remaining spans
+that exporter sees are the httpx CLIENT spans TestClient itself produces — the same instrumentation
+a real outgoing call gets. The third case points the real OTLP exporter at a port nothing listens
+on and holds the request to 200: a down collector degrades telemetry, not the API.
+
+What is deliberately **not** claimed: no collector runs on this host, so no span has ever been
+exported to a real backend; no sampling policy beyond the SDK default; no trace-context propagation
+assertion across the web tier (the browser does not send `traceparent`, and the proxy is not
+instrumented). Span export is deployment configuration, the same boundary the log sink sits behind.
+
 ### Performance — an in-memory TTL cache and a response middleware
 
 `app/core/cache.py`. `TTLCache` is a thread-safe `OrderedDict` with three properties a cache needs
@@ -132,6 +165,7 @@ The documents say so, because a backup script nobody has run is a plan, not a co
 | `ruff format --check` over the new modules | same | all formatted |
 | `mypy` over `cost_advisor`, `latency_profile`, `metrics`, `cache`, `logging`, `main` | same | no issues |
 | `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same, against `HEAD` | 13 tests, rc=0 |
+| `pytest tests/test_tracing.py -q` | SQLite, working copy | **3 tests / 0 failures**, rc=0 |
 | contract paths after the three metrics doors | `docs/api/openapi.json` committed | 179 → **182** |
 | `git grep -li agents -- apps/api/app` | committed tree | 13 → **14** (`services/agents/orchestrator.py`) |
 
@@ -144,8 +178,9 @@ audit's own numbers rather than left stale.
 
 * **No external cache.** In-memory only; no Redis instance exists to measure against.
 * **No external log sink.** The JSON formatter is the contract with a sink that deployment wires.
-* **No distributed tracing.** No OpenTelemetry, no span propagation. Request correlation through the
-  ID header is what exists; spans are not.
+* **No trace backend.** OpenTelemetry is wired and the span path is measured through an in-memory
+  exporter, but no collector runs on this host, so no span has reached a real backend; sampling and
+  propagation through the proxy are deployment concerns, not claims.
 * **Backup scripts unexecuted on this host.** No `pg_dump`, no S3, no WAL archive here.
 * **No load test.** No k6, no locust, no measured throughput figure. The latency percentiles measure
   *observed* latency over the ledger; they do not assert a ceiling under load.
