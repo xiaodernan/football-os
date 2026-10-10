@@ -602,6 +602,39 @@ async function run() {
       englishMessages.coach.title,
     );
 
+    // 10d. §81 2c: the development screen. Same three-way read, and the same reason for sitting here rather than
+    // after the career read — see 10c. Its `h1` is the player's own name, so unlike the coach and scout screens
+    // there is no heading to compare: the check reads the panel titles and the section eyebrows instead, which is
+    // where this page's copy actually lives.
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    await open(page, '/progress');
+    await waitForText(page, chineseMessages.progress.profileTitle);
+    const progressZh = await page.evaluate(() => document.body.innerText.replace(/\s+/gu, ' '));
+    check(
+      'the development screen in Chinese renders the catalogue: profile, attributes, groups and milestones come from messages/zh.json',
+      progressZh.includes(chineseMessages.progress.profileTitle) &&
+        progressZh.includes(chineseMessages.progress.attributesTitle) &&
+        progressZh.includes(chineseMessages.progress.groupsEyebrow) &&
+        progressZh.includes(chineseMessages.progress.achievementsTitle) &&
+        progressZh.includes(chineseMessages.progress.statOverall),
+      `profile ${progressZh.includes(chineseMessages.progress.profileTitle)} · attributes ${progressZh.includes(chineseMessages.progress.attributesTitle)} · groups ${progressZh.includes(chineseMessages.progress.groupsEyebrow)} · milestones ${progressZh.includes(chineseMessages.progress.achievementsTitle)} · stat ${progressZh.includes(chineseMessages.progress.statOverall)}`,
+    );
+    check(
+      'and the English copy is gone from the Chinese development screen',
+      !progressZh.includes(englishMessages.progress.profileTitle) &&
+        !progressZh.includes(englishMessages.progress.attributesTitle) &&
+        !progressZh.includes(englishMessages.progress.groupsEyebrow),
+      `en profile present ${progressZh.includes(englishMessages.progress.profileTitle)} · en attributes present ${progressZh.includes(englishMessages.progress.attributesTitle)} · en groups present ${progressZh.includes(englishMessages.progress.groupsEyebrow)}`,
+    );
+    await shot(page, '18d-progress-chinese');
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+    await open(page, '/progress');
+    check(
+      'and the switch back leaves the development screen in English, so the check is not one-way',
+      (await bodyText(page)).includes(englishMessages.progress.profileTitle),
+      englishMessages.progress.profileTitle,
+    );
+
     // 12. SEO surface (spec §80): robots, sitemap, canonical, OpenGraph and structured data.
     const [robots, sitemap] = await Promise.all([
       fetch(`${BASE}/robots.txt`).then(async (response) => ({

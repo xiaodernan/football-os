@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AttributeRadar } from "@/components/AttributeRadar";
 import { AiBadge, DataUnavailable, Empty, Meter, Panel, Stat } from "@/components/ui";
@@ -10,11 +11,10 @@ import "./progress.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Development",
-  description:
-    "Your attribute profile, XP level, achievements and the exact reason behind every recorded change.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("progress");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -60,11 +60,11 @@ type Timeline = {
 };
 
 /** Group order shown on the page; unknown groups from the API still render, after these. */
-const GROUP_LABELS: Record<string, string> = {
-  technical: "Technical",
-  physical: "Physical",
-  mental: "Mental",
-  tactical: "Tactical",
+const GROUP_KEYS: Record<string, string> = {
+  technical: "groupTechnical",
+  physical: "groupPhysical",
+  mental: "groupMental",
+  tactical: "groupTactical",
 };
 
 function first(value: string | string[] | undefined): string | undefined {
@@ -93,6 +93,7 @@ function clampDays(value: string | undefined): number {
 }
 
 export default async function ProgressPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const t = await getTranslations("progress");
   const params = await searchParams;
   const playerId = first(params.player_id);
   const days = clampDays(first(params.days));
@@ -104,9 +105,9 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
     return (
       <div className="page container">
         <div className="stack">
-          <h1 className="h1">Development</h1>
+          <h1 className="h1">{t("metaTitle")}</h1>
           <div className="notice notice--warn">
-            {errorMessage(overviewResult.error, "Progress data is unavailable right now.")}
+            {errorMessage(overviewResult.error, t("unavailable"))}
           </div>
         </div>
       </div>
@@ -137,73 +138,70 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
       <div className="stack">
         <div className="pg-head">
           <div className="stack-sm">
-            <span className="eyebrow">Development</span>
+            <span className="eyebrow">{t("eyebrow")}</span>
             <h1 className="h1">{overview.player.name}</h1>
             <p className="lede">
-              {overview.player.position} · {overview.player.age} years · goal: {attributeLabel(overview.player.goal)}
+              {t("lede", { position: overview.player.position, age: overview.player.age, goal: attributeLabel(overview.player.goal) })}
             </p>
             <div className="row wrap" style={{ gap: "0.4rem" }}>
               <span className="chip upper">{overview.player.archetype}</span>
-              <span className="chip">archetype fit {Math.round(overview.player.archetype_match * 100)}%</span>
-              <span className="chip">strong foot: {overview.player.preferred_foot}</span>
+              <span className="chip">{t("archetypeFit", { percent: Math.round(overview.player.archetype_match * 100) })}</span>
+              <span className="chip">{t("strongFoot", { foot: overview.player.preferred_foot })}</span>
             </div>
           </div>
           <AiBadge demo_mode={overview.demo_data} />
         </div>
 
         {overview.training.sessions_completed === 0 && (
-          <div className="notice notice--warn">
-            No completed sessions recorded yet. Every number below comes from your onboarding profile only — attributes
-            cannot move until you log training yourself.
-          </div>
+          <div className="notice notice--warn">{t("noSessions")}</div>
         )}
 
         <Panel
-          eyebrow="Profile"
-          title="Where you are now"
+          eyebrow={t("profileEyebrow")}
+          title={t("profileTitle")}
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              All figures read from <span className="mono">GET /progress/overview</span>. No modelled or decorative data.
+              {t("profileFooter")}
             </span>
           }
         >
           <div className="pg-hero-grid">
             <Stat
-              label="Overall"
+              label={t("statOverall")}
               value={<span className="num">{overview.player.overall}</span>}
-              hint={`potential ${overview.player.potential}`}
+              hint={t("statOverallHint", { value: overview.player.potential })}
             />
             <Stat
-              label="Level"
+              label={t("statLevel")}
               value={<span className="num">{overview.xp.level}</span>}
-              hint={`${overview.xp.total} XP total`}
+              hint={t("statLevelHint", { value: overview.xp.total })}
             />
             <Stat
-              label="Form"
+              label={t("statForm")}
               value={<span className="num">{overview.player.form}</span>}
-              hint="derived from recent completed sessions"
+              hint={t("statFormHint")}
             />
             <Stat
-              label="Streak"
+              label={t("statStreak")}
               value={<span className="num">{overview.training.streak_days}</span>}
-              hint={overview.training.last_session_at ? `last session ${formatDay(overview.training.last_session_at)}` : "no sessions logged"}
+              hint={overview.training.last_session_at ? t("statStreakHint", { date: formatDay(overview.training.last_session_at) }) : t("statStreakNone")}
             />
             <Stat
-              label="Sessions completed"
+              label={t("statSessions")}
               value={<span className="num">{overview.training.sessions_completed}</span>}
-              hint={`${overview.training.sessions_this_week} in the last 7 days`}
+              hint={t("statSessionsHint", { value: overview.training.sessions_this_week })}
             />
           </div>
           <div className="pg-xp">
             <div className="pg-xp__meta">
               <span>
-                Level {overview.xp.level} → {overview.xp.level + 1}
+                {t("levelTo", { from: overview.xp.level, to: overview.xp.level + 1 })}
               </span>
               <span className="num">
-                {Math.round(xpPct)}% · next level at {overview.xp.next_level_at} XP
+                {t("levelProgress", { percent: Math.round(xpPct), xp: overview.xp.next_level_at })}
               </span>
             </div>
-            <div className="bar" role="img" aria-label={`Level progress ${xpPct}%`}>
+            <div className="bar" role="img" aria-label={t("levelBarLabel", { percent: xpPct })}>
               <div className="bar__fill" style={{ width: `${xpPct}%` }} />
             </div>
           </div>
@@ -211,12 +209,11 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
 
         <div className="grid grid-2">
           <Panel
-            eyebrow="Attributes"
-            title="Strongest six right now"
+            eyebrow={t("attributesEyebrow")}
+            title={t("attributesTitle")}
             footer={
               <span className="muted" style={{ fontSize: "0.82rem" }}>
-                Selected as the six highest current values in <span className="mono">attributes</span> — the API supplies
-                the numbers, the chart adds none.
+                {t("attributesFooter")}
               </span>
             }
           >
@@ -233,13 +230,13 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
                 </div>
               </div>
             ) : (
-              <DataUnavailable metric="Attribute profile" />
+              <DataUnavailable metric={t("metricAttributeProfile")} />
             )}
           </Panel>
 
           <Panel
-            eyebrow={`Last ${days} days`}
-            title="Attribute changes, with the reason"
+            eyebrow={t("changesEyebrow", { days })}
+            title={t("changesTitle")}
             action={
               <div className="row" style={{ gap: "0.4rem" }}>
                 {[7, 30, 90, 180].map((option) => (
@@ -248,7 +245,7 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
                     href={`/progress?days=${option}${playerId ? `&player_id=${encodeURIComponent(playerId)}` : ""}`}
                     key={option}
                   >
-                    {option}d
+                    {t("dayButton", { days: option })}
                   </a>
                 ))}
               </div>
@@ -256,19 +253,19 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
             footer={
               <span className="muted" style={{ fontSize: "0.82rem" }}>
                 {timeline
-                  ? "Read from GET /progress/timeline → attribute_series. Oldest first, newest last."
-                  : errorMessage(timelineResult.ok ? undefined : timelineResult.error, "Timeline unavailable.")}
+                  ? t("changesFooter")
+                  : errorMessage(timelineResult.ok ? undefined : timelineResult.error, t("timelineUnavailable"))}
               </span>
             }
           >
             {!timeline ? (
-              <DataUnavailable metric="Attribute history" />
+              <DataUnavailable metric={t("metricAttributeHistory")} />
             ) : !hasAttributeHistory ? (
               <Empty
-                title="No attribute changes in this window"
-                body="Attributes only move when a session is completed and self-rated. Widen the window or log a session."
+                title={t("emptyChangesTitle")}
+                body={t("emptyChangesBody")}
                 href="/training"
-                cta="Go to training"
+                cta={t("goToTraining")}
               />
             ) : (
               <div className="stack" style={{ gap: "0.9rem" }}>
@@ -277,7 +274,7 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
                     <div className="attr-block" key={attribute}>
                       <div className="attr-block__title">
                         <span className="upper">{attributeLabel(attribute)}</span>
-                        <span className="chip num">{points.length} change{points.length === 1 ? "" : "s"}</span>
+                        <span className="chip num">{points.length === 1 ? t("changeOne", { count: points.length }) : t("changeMany", { count: points.length })}</span>
                       </div>
                       {[...points]
                         .sort((a, b) => a.at.localeCompare(b.at))
@@ -305,17 +302,19 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
         </div>
 
         <div className="section stack" style={{ gap: "0.75rem" }}>
-          <span className="eyebrow">Attribute groups</span>
+          <span className="eyebrow">{t("groupsEyebrow")}</span>
           {groups.length === 0 ? (
-            <DataUnavailable metric="Attribute groups" />
+            <DataUnavailable metric={t("metricAttributeGroups")} />
           ) : (
             <div className="grid grid-4">
               {groups.map(([group, values]) => {
                 const entries = Object.entries(values ?? {});
+                const groupKey = GROUP_KEYS[group];
+                const groupLabel = groupKey ? t(groupKey) : attributeLabel(group);
                 return (
-                  <Panel eyebrow="Group" title={GROUP_LABELS[group] ?? attributeLabel(group)} key={group}>
+                  <Panel eyebrow={t("groupEyebrow")} title={groupLabel} key={group}>
                     {entries.length === 0 ? (
-                      <DataUnavailable metric={GROUP_LABELS[group] ?? group} />
+                      <DataUnavailable metric={groupLabel} />
                     ) : (
                       <div className="pg-group__body">
                         {entries.map(([key, value]) => (
@@ -331,8 +330,8 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
         </div>
 
         <Panel
-          eyebrow="Milestones"
-          title="Achievements"
+          eyebrow={t("milestonesEyebrow")}
+          title={t("achievementsTitle")}
           footer={
             <div className="pg-note">
               <AiBadge demo_mode={overview.demo_data || Boolean(timeline?.demo_data)} />
@@ -341,10 +340,10 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
         >
           {overview.achievements.length === 0 ? (
             <Empty
-              title="No achievements unlocked yet"
-              body="Achievements are written by the progression engine when a completed session crosses a stored threshold."
+              title={t("emptyAchievementsTitle")}
+              body={t("emptyAchievementsBody")}
               href="/training"
-              cta="Log a session"
+              cta={t("logSession")}
             />
           ) : (
             <div className="list">
@@ -364,13 +363,8 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
         </Panel>
 
         <div className="notice pg-note">
-          <strong>How these numbers move</strong>
-          <span className="muted">
-            This engine has no camera, no wearable and no club feed. An attribute only changes when you complete a
-            session and report your own execution and focus; the recorded <span className="mono">reason</span> text above
-            is the rule that fired. The AI layer explains and recommends — it never edits your attributes, and every XP
-            award on the history page shows its stored formula.
-          </span>
+          <strong>{t("howNumbersMove")}</strong>
+          <span className="muted">{t("howNumbersMoveBody")}</span>
           {overview.demo_data && (
             <span>
               <AiBadge demo_mode={overview.demo_data} />
