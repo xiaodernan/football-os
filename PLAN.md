@@ -44,8 +44,8 @@ and the fields are where the work is.
 | M8 Club OS | ✅ verified 2026-09-28 — only §42's **payments** open, and spec §42 says not to rush them | `docs/M8_CLUB_OS_VERIFICATION.md` |
 | M9 Community | 🟡 §35 (posts, reactions, follows, feed) landed 2026-09-28; §36/§37 verbs still absent | `docs/M9_COMMUNITY_VERIFICATION.md` |
 | M10 Creator Economy | 🟡 §38 portfolio landed, share links + CV PDF landed 2026-10-06 | `docs/M10_PORTFOLIO_VERIFICATION.md` |
-| M11 Multi-Agent | ⬜ not started — and §30 Knowledge Graph waits on it by decision | `docs/SPEC_COVERAGE_AUDIT.md` |
-| M12 Hardening | 🟡 §61 account erasure landed 2026-10-06; the rest of M12 (load, ops) untouched | `docs/SECURITY_AUTHORIZATION_VERIFICATION.md` |
+| M11 Multi-Agent | 🟡 all six agents + `FootballOrchestrator` landed — the orchestrator replaced the keyword router, and §30's graph has its own joint-retrieval evidence | `docs/M11_AGENT_BENCHMARK_VERIFICATION.md` |
+| M12 Hardening | 🟡 §61 erasure landed 2026-10-06; **structured logging, cache, latency percentiles, cost advisor, governance + backup docs landed 2026-10-09** — what has *not* landed is listed in the verification doc's "does not claim" (no Redis, no OTel spans, no executed restore, no load test) | `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md` |
 | §81 i18n | 🟡 catalogues full, switcher works, shell switches; **45 files bind a translator (63 bindings)** — nav/auth/scout/career/settings/world plus `common`'s verbs, nouns and both scanned label shapes. Still English literals: the ten content-page namespaces, which have no keys yet. | the grep that counts `useTranslations`/`getTranslations` callers, and the value-derived label census (shape A 0, shape B 4 — the four are sense skips) |
 
 Three cross-cutting defects have now been found and fixed **three separate times** (M4's `tactics/sync.py`, M7's
