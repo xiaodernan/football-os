@@ -12,6 +12,7 @@ return:
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Any, Final
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -22,7 +23,15 @@ from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import TACTICS_DISCLAIMER, TacticalSystem, User, UserPlayer
-from app.services.tactics.analysis import CHANGES, METRIC_KEYS, Shape, apply_change, metrics_of, shape_from_rows
+from app.services.tactics.analysis import (
+    CHANGES,
+    METRIC_KEYS,
+    Shape,
+    apply_change,
+    metrics_for_rows,
+    metrics_of,
+    shape_from_rows,
+)
 from app.services.tactics.feedback import build_feedback, fit_rows
 from app.services.tactics.plan import SYSTEM_COUNT, fingerprint, system_path
 from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_tables_present
@@ -81,14 +90,24 @@ def _metrics_map(shape: Shape) -> dict[str, dict[str, Any]]:
     return {metric.key: metric.to_dict() for metric in metrics_of(shape)}
 
 
+def _row_metrics(rows: Sequence[Mapping[str, object]]) -> dict[str, dict[str, Any]]:
+    """The same read, through the service's content-addressed memo.
+
+    The counterfactual door (`apply_change` → `metrics_of`) still computes directly, because its input
+    is a question the caller just asked and the answer is the work being sold. This one reads a stored
+    phase, where the memo's key is the rows' own bytes and a second reader with the same dots is free.
+    """
+    return metrics_for_rows(rows)
+
+
 def _headline(metrics: dict[str, dict[str, Any]]) -> dict[str, float]:
     return {key: float(metrics[key]["value"]) for key in HEADLINE_METRICS if key in metrics}
 
 
 def _row_brief(row: TacticalSystem) -> dict[str, Any]:
     board = dict(row.board or {})
-    in_metrics = _metrics_map(shape_from_rows(list(board.get("phase_in") or [])))
-    out_metrics = _metrics_map(shape_from_rows(list(board.get("phase_out") or [])))
+    in_metrics = _row_metrics(list(board.get("phase_in") or []))
+    out_metrics = _row_metrics(list(board.get("phase_out") or []))
     return {
         "id": row.id,
         "slug": row.slug,
@@ -181,9 +200,8 @@ def compare_systems(
     limit(request, 60, 60, scope="tactics_compare")
     _require_catalogue(db)
     left, right = _one(db, a), _one(db, b)
-    left_shape = shape_from_rows(list((left.board or {}).get(f"phase_{phase}") or []))
-    right_shape = shape_from_rows(list((right.board or {}).get(f"phase_{phase}") or []))
-    left_metrics, right_metrics = _metrics_map(left_shape), _metrics_map(right_shape)
+    left_metrics = _row_metrics(list((left.board or {}).get(f"phase_{phase}") or []))
+    right_metrics = _row_metrics(list((right.board or {}).get(f"phase_{phase}") or []))
     rows = [
         {
             "key": key,

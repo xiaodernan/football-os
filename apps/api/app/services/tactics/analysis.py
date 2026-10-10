@@ -14,11 +14,13 @@ Three rules the whole module obeys:
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from statistics import mean
-from typing import Final
+from typing import Any, Final
 
+from app.core.cache import TTLCache
 from app.services.tactics.pitch import Point, centroid, clamp_point, nearest_neighbour_distances
 from app.services.tactics.roles import ROLES
 from app.services.tactics.shapes import Slot, Temperament
@@ -355,3 +357,34 @@ def analyse(shape: Shape, changes: Mapping[str, Change] = CHANGES) -> list[Shape
     """Every counterfactual the board offers, evaluated against one shape."""
     before = metrics_of(shape)
     return [ShapeDiff(change, before, metrics_of(apply_change(shape, change))) for change in changes.values()]
+
+
+#: The content-addressed memo for the pure read path. `metrics_for_rows` is a function of the stored
+#: coordinates alone — no database, no clock, no user — so the canonical JSON of the rows is a complete
+#: and self-invalidating cache key: a row written by a different build, or the same phase re-synced
+#: with different dots, produces a different key and therefore a different answer. That is the property
+#: a TTL cannot give, and it is why this cache does not need one keyed on a system's id.
+#: The key is the *content*, so the answer can never be stale in a way that matters: a stale answer here
+#: would be the same figures the pure function would return for the same rows, which is not stale.
+_ROW_METRICS_CACHE = TTLCache(max_size=2000, default_ttl=3600.0)
+
+
+def metrics_for_rows(rows: Sequence[Mapping[str, object]]) -> dict[str, Any]:
+    """The published metrics for stored rows, memoised on the rows' own bytes.
+
+    The Tactical Lab's read doors recompute every figure from the dots rather than serving a stored
+    answer — `shape_from_rows` above exists so a row written by an older build cannot smuggle a stale
+    conclusion. That discipline is the point, and this memo does not weaken it: the key is the canonical
+    JSON of the rows, so two callers holding the same dots get the same answer (and the second is free),
+    and any edit to a dot produces a different key and therefore a fresh computation.
+
+    The dict is returned by value through the cache, so a caller that mutates it must copy first —
+    `analysis`'s ShapeDiff is the only place that builds on these, and it reads.
+    """
+    key = "tactics:metrics:" + json.dumps(list(rows), sort_keys=True, separators=(",", ":"))
+    found = _ROW_METRICS_CACHE.get(key)
+    if found is not None:
+        return found
+    answer = {metric.key: metric.to_dict() for metric in metrics_of(shape_from_rows(rows))}
+    _ROW_METRICS_CACHE.set(key, answer)
+    return answer
