@@ -6,11 +6,12 @@ Thread-safe with automatic TTL expiration.
 
 from __future__ import annotations
 
-import time
 import threading
+import time
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 

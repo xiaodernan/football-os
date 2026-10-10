@@ -11079,7 +11079,7 @@
           "agents"
         ],
         "summary": "Agent Composite",
-        "description": "Execute a composite task that chains multiple agents.\n\nExample: 'Analyze Arsenal's recent matches, identify their attacking patterns,\ncompare with my player profile, and recommend training to bridge the gap.'\n\nThis orchestrates: TacticalAgent (patterns) → ScoutAgent (match data) →\nCoachAgent (training recommendations).",
+        "description": "Execute a composite task using the FootballOrchestrator.\n\nExample: 'Analyze Arsenal's recent matches, identify their attacking patterns,\ncompare with my player profile, and recommend training to bridge the gap.'\n\nThe FootballOrchestrator plans the execution, routes to appropriate agents,\npasses context between them, and aggregates results.",
         "operationId": "agent_composite_api_v1_agents_composite_post",
         "requestBody": {
           "content": {
@@ -11432,6 +11432,155 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProviderMetricsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics/cost-optimisation": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Cost Optimisation",
+        "description": "Where the AI budget went and what a cheaper call would have been (spec §46, §76).\n\nReads the model-call ledger over a stated window and answers four breakdowns (by feature, by\nmodel, reasoning share, demo share) with every figure recomputed on the request. The\nrecommendations name the arithmetic that produced them, and the answer says plainly that it is an\nadvisor, not an enforcer: nothing here changes which provider a door calls (§45 owns that).",
+        "operationId": "cost_optimisation_api_v1_metrics_cost_optimisation_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Cost Optimisation Api V1 Metrics Cost Optimisation Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/latency": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Latency Profile Endpoint",
+        "description": "Latency percentiles over the model-call ledger, per feature or overall (spec §58).\n\nThe percentiles are nearest-rank over the newest rows the profile read, which is the same figure\non SQLite and PostgreSQL — SQL has `percentile_cont` on one engine and nothing on the other. The\nanswer prints the sample size and whether the sample is full, so a percentile over 20 rows is never\nmistaken for one over 2,000.",
+        "operationId": "latency_profile_endpoint_api_v1_metrics_latency_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          },
+          {
+            "name": "feature",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Feature"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Latency Profile Endpoint Api V1 Metrics Latency Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/cache": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Cache Stats",
+        "description": "Cache hit/miss counts and sizes for the response and computation caches (M12).",
+        "operationId": "cache_stats_api_v1_metrics_cache_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Cache Stats Api V1 Metrics Cache Get"
                 }
               }
             }

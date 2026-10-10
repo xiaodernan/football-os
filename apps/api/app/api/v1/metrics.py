@@ -20,6 +20,7 @@ from app.core.security import current_user
 from app.models import ModelCall, User, VideoAsset
 from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
 from app.services.cost_advisor import recommend as cost_recommend
+from app.services.latency_profile import profile as latency_profile
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
@@ -71,12 +72,17 @@ def system_metrics(
     failed_calls = int(db.scalar(select(func.count(ModelCall.id)).where(ModelCall.success.is_(False))) or 0)
     avg_latency = float(db.scalar(select(func.avg(ModelCall.latency_ms))) or 0.0)
 
+    # The p95 this door used to answer None: SQLite has no percentile_cont and this project runs both
+    # engines, so the figure comes from the latency profile's bounded sample. `/metrics/latency` prints
+    # the sample size and whether it is full; this row carries the number itself.
+    p95 = float(latency_profile(db)["p95_latency_ms"])
+
     return SystemMetricsResponse(
         uptime_seconds=0.0,  # Would need process start time tracking
         request_count=total_calls,
         error_count=failed_calls,
         avg_latency_ms=round(avg_latency, 2),
-        p95_latency_ms=None,  # Would need percentile calculation
+        p95_latency_ms=round(p95, 2),
         active_users_today=active_today,
         total_users=total_users,
     )
@@ -162,6 +168,23 @@ def cost_optimisation(
     advisor, not an enforcer: nothing here changes which provider a door calls (§45 owns that).
     """
     return cost_recommend(db, days=days)
+
+
+@router.get("/latency")
+def latency_profile_endpoint(
+    days: int = Query(DEFAULT_WINDOW_DAYS, ge=1, le=365),
+    feature: str | None = Query(None, max_length=60),
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Latency percentiles over the model-call ledger, per feature or overall (spec §58).
+
+    The percentiles are nearest-rank over the newest rows the profile read, which is the same figure
+    on SQLite and PostgreSQL — SQL has `percentile_cont` on one engine and nothing on the other. The
+    answer prints the sample size and whether the sample is full, so a percentile over 20 rows is never
+    mistaken for one over 2,000.
+    """
+    return latency_profile(db, days=days, feature=feature)
 
 
 @router.get("/cache")
