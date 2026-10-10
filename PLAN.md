@@ -19,7 +19,7 @@ Last updated 2026-10-08.
 | **1. §13's 3D pitch** | ✅ 2026-09-30 | `components/pitch.tsx` projects the board's own metres isometrically; `237/237` walk checks on a production build, with a check that recomputes every dot from its metres and another that holds the projected lawn inside its `viewBox`. `docs/M4_WEB_VERIFICATION.md` §8. |
 | **2a. §81's `locales` claim** | ✅ 2026-10-01 | `tests/test_locale_claims.py` binds `locales` to the catalogues in both directions. Found that `zh.json`/`zh-TW.json` are 278/278 copies of English, so the field stays `["en"]` — and now cannot be moved without a translation or left unmoved with one. |
 | **2b. §81's translations + the switcher** | ✅ 2026-10-06 | `LocaleSwitcher` writes the `fo_locale` cookie middleware has always read; `locales` moved to `["en","zh","zh-TW"]`; both Chinese catalogues are now **complete** — `zh` 392/394 translated (fallbacks: `scout.placeholder` already Chinese in the English file, `settings.apiBadge` = 'API {status}'), `zh-TW` 393/394 (`settings.apiBadge` only), `zh-TW` written as Traditional rather than converted. `test_locale_claims.py` 4/4; the locale walk drives the real switcher and reads the repainted shell. |
-| **2c. the catalogue is reachable from 15 files** | 🟡 2026-10-10 | **Development is wired** — a 54-key `progress` namespace written from the page's own strings (metadata, four group names, five stat labels + hints, the XP bar, both panel footers, four day buttons, two empty states, the achievements panel, the closing notice). Coach before it (78 keys, three files); scout/career/world were wired from keys that already existed. **15 files now read a catalogue**, walk **140/142** on a production build — all three of this page's checks green, and the run stopping at 142 rather than ~199 because the video section aborted it again (see the video row below; the three checks are placed in front of it for exactly that reason). Still literals: tactics, training, history, knowledge, club, community, video, simulate, market, challenges. `validation` (8 keys) waits for a form that shows custom messages. |
+| **2c. the catalogue is reachable from 15 files** | 🟡 2026-10-10 | **Development is wired** — a 54-key `progress` namespace written from the page's own strings (metadata, four group names, five stat labels + hints, the XP bar, both panel footers, four day buttons, two empty states, the achievements panel, the closing notice). Coach before it (78 keys, three files); scout/career/world were wired from keys that already existed — and `8feda9a` closed `world`'s seventeen **attribute** labels the same way, no new key: 16 wired, one named a sense skip, two of the files (`/player/{slug}` and the signed-in aggregate) reading no catalogue at all before it. **15 files now read a catalogue**, walk **140/142** on a production build — all three of this page's checks green, and the run stopping at 142 rather than ~199 because the video section aborted it again (see the video row below; the three checks are placed in front of it for exactly that reason). Still literals: tactics, training, history, knowledge, club, community, video, simulate, market, challenges. `validation` (8 keys) waits for a form that shows custom messages. |
 | **— `common` is 97 keys and 3 are read** | ⚠️ not the next step | Measured 2026-10-09. `common` is generic UI vocabulary (`save`, `cancel`, `loading`, `yes`, `no`, `or`, `of`) and **three keys are read** — `language`, `demoMode`, `demoModeTitle`, all from `Nav`/`LocaleSwitcher`. Of its 97 English values, 16 appear as a literal anywhere in `app/`+`components/` and 80 appear nowhere: there is no `Loading…` string in the project at all. The app's real vocabulary is domain words (Player, Age, Position, Club, Expected goals, Fixture) which belong to pages, not a shared namespace. So the plan's "wire `common` next" had nothing to wire; the next work is a page, and `coach` was the next page a reader meets. |
 | **4. §61 account erasure end to end** | ✅ 2026-10-06 | `GET/DELETE /auth/account`: preview inventories every row and byte, one confirmed transaction, media containment refused before any write, last-owner blocking (409), §60's third 403 code (`invalid_password`) registered. 4 tests including the escaping-storage-key case a planted-defect probe demanded. |
 | **§38/§60 portfolio share + PDF** | ✅ 2026-10-06 | `POST/GET/DELETE /portfolio/share[/{token}]`, `/portfolio/cv.pdf` (reportlab), robots keeps both off crawlers. Committed with the two above because all three share one contract file. |
@@ -48,7 +48,7 @@ and the fields are where the work is.
 | M10 Creator Economy | 🟡 §38 portfolio landed, share links + CV PDF landed 2026-10-06 | `docs/M10_PORTFOLIO_VERIFICATION.md` |
 | M11 Multi-Agent | 🟡 all six agents + `FootballOrchestrator` landed — the orchestrator replaced the keyword router, and §30's graph has its own joint-retrieval evidence | `docs/M11_AGENT_BENCHMARK_VERIFICATION.md` |
 | M12 Hardening | 🟡 §61 erasure landed 2026-10-06; **structured logging, cache, latency percentiles, cost advisor, governance + backup docs landed 2026-10-09** — what has *not* landed is listed in the verification doc's "does not claim" (no Redis, no OTel spans, no executed restore, no load test) | `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md` |
-| §81 i18n | 🟡 catalogues full, switcher works, shell switches; **51 files bind a translator (70 bindings)** — nav/auth/scout/career/settings/world/progress/agents plus `common`'s verbs, nouns and all three scanned label shapes. Still English literals: the ten content-page namespaces, which have no keys yet. | the grep that counts `useTranslations`/`getTranslations` callers, and the value-derived label census (shape A 0, shape B 4 — the four are sense skips; shape C 11 wired + 1 sense skip, composites 0) |
+| §81 i18n | 🟡 catalogues full, switcher works, shell switches; **51 files bind a translator (75 bindings), counted on HEAD blobs** — nav/auth/scout/career/settings/world/progress plus `common`'s verbs, nouns and its attribute labels; `agents` (36 keys) exists only in a writer's uncommitted catalogue. Still English literals: the content-page namespaces whose keys do not exist yet (tactics, training, club, community, video, simulate, market, challenges). | the grep that counts `useTranslations`/`getTranslations` callers on HEAD blobs; the label census re-run **with a TSX parser over all eleven HEAD dictionaries** (`census-ast.mjs`, 105 files, 0 parse diagnostics): **A 24 sites, B 168, C 54 — 245 distinct sites**. `world`'s C group closed at `8feda9a` (17 found, 16 wired, 1 named sense skip) and `common`'s at the two shape-C landings (11 wired + 1 skip). The parser then **withdrew the older "shape A 0"**: `common`/`world` words do stand as bare JSX text — 7 A sites and 76 B sites carry one of their values, every one of them still a sense question rather than a wiring. | A **fourth shape** is open and invisible to that census: a label inside an object literal, `back={{ label: "Back to Football World" }}`, on six pages. |
 
 Three cross-cutting defects have now been found and fixed **three separate times** (M4's `tactics/sync.py`, M7's
 scouting modules, M8's academy tier): *the committed tree does not pass the gate its own documents quote.* The
@@ -282,13 +282,85 @@ recorded index hash for 9/9. No catalogue line was needed — every key already 
 the three files the concurrent writers keep editing.
 
 **Not closed by this, and why it is a different question.** The same attribute scan against *every* namespace finds
-labels whose key exists but is read by nothing: 23 equal to a `nav` value, 17 to a `world` value, 5 to `coach`,
-2 to `settings` (e.g. `/club/{ident}/plans/{plan}` `title="Progress"`, `/world/players` `title="Players"`), plus the
-`progress` namespace the writer landed at `686f9aa`. Those are key-**ownership** decisions — which namespace a page
-label belongs to — not a value lookup, and answering them by importing whichever dictionary happens to contain the
-word would make the catalogue the author of the UI. Also unclosed: attribute labels with no key anywhere,
-`CreatorWorkbench`'s `Headline` / `Biography` / `Guide title` / `Section` / `Visibility`, which need new keys the way
-the content-page namespaces do.
+labels whose key exists but is read by nothing. `world`'s group was the one where the stored key plainly *is* the
+page's own word, and it closed in `8feda9a` (recorded below). The rest, re-run on the TSX parser at `8feda9a`:
+**`nav` 21, `scout` 14, `coach` 6, `progress` 4, `world` 2, `career` 2, `common` 1, `auth` 1, plus 3 sites two
+dictionaries both hold** — and `nav`'s 21 are mostly one repeated find: nine `eyebrow`/`title` pairs reading
+"Tactical Lab" across the five `/tactics` pages, three `title="Football CV"` on `/portfolio`, three
+`title="Community"` on `/community`. The three single hits are the named sense skips (`label="Received"`,
+`eyebrow="Get started"`, `title="Table"`), not open work. The plane is named because it moves the number: the
+census reads **105 HEAD `.tsx` blobs**, where a worktree walk reads 107 — the two extra files, and the `agents`
+dictionary their single hit comes from, are a writer's uncommitted work. What is left is key-**ownership**
+decisions — which namespace a page label belongs to (e.g. `/club/{ident}/plans/{plan}` `title="Progress"`, or
+"Tactical Lab" living in `nav` while the tactics pages have no namespace of their own) — not a value lookup, and
+answering them by importing whichever dictionary happens to contain the word would make the catalogue the author of
+the UI. Also unclosed: attribute labels with no key anywhere, `CreatorWorkbench`'s `Headline` / `Biography` /
+`Guide title` / `Section` / `Visibility`, which need new keys the way the content-page namespaces do.
+
+**Done (the `world` section headings, 2026-10-11, `8feda9a`).** Sixteen labels whose text was already in the
+catalogue, wired without authoring a key — the same no-contention route that made shape C safe to land while three
+writers kept editing `messages/*.json`. Six `eyebrow="Football World"`, the six `WorldHead title`s (Competitions,
+Fixtures & results, Reports & notes, Players ×2, Clubs, Training log), `label="State"` on the matches filter, and the
+two pages that had borrowed a world word from outside `/world/*`: `app/player/{slug}` `title="Training log"` and the
+signed-in `app/simulation/aggregates/player/{slug}` `title="Players"`. Those two files read **no catalogue at all**
+before this; every key they now use already had a reader on `app/world/page.tsx`, which is what makes borrowing
+legitimate rather than convenient.
+
+- **Sense skip, named:** `/competition/{slug}` `title="Table"` sits over a standings table
+  (`{standings.length} clubs with at least one played fixture`) while `world.tableHeaderTable` is the column header of
+  a *database* table — 表格. Same three letters, different word. The scan surfaced a second one while this record was
+  being written: `/training/{slug}` `eyebrow="Get started"` sits over "Add this drill to today", while
+  `auth.getStarted` = 开始使用 is the register-CTA sense of the same two words. Naming it is the whole action — a
+  drill-scheduling eyebrow reading the `auth` dictionary would be wrong twice over.
+- **A fourth shape, still open.** `back={{ href: "/world", label: "Back to Football World" }}` is a label inside an
+  object literal in a JSX *expression*: neither the bare-quoted nor the `={ "…" }` attribute spelling matches it, so
+  the census reports 0 for it while six pages carry it. Recorded as unclosed rather than wired blind — it needs its
+  own key first.
+- **The fallback locale's bytes are the risk in a wiring commit, and this time a derived check reads the diff.**
+  `world-parity.mjs` zips each hunk's removed literals against the `tw("key")` calls added in the same hunk and asserts
+  `en.world[key] === removedLiteral`: 16 pairs, 0 mismatches, so `en` renders what it rendered before. Its first run
+  **refused** — the diff header `--- a/x` was being counted as a deleted line. The refusal firing on my own parser is
+  the proof the branch works; a check that cannot refuse is not a check.
+- **The live read got a reverse control.** Judging the same `zh` bytes against the *English* value goes red while the
+  `zh` value stays green (arm A, three pages); no English literal survives in the wired element on any of the six
+  world pages (arm B); and `/world/matches` `zh` carries **exactly one** filter label, `状态`, printed beside the
+  still-literal `By state` panel eyebrow, so the `tableHeaderState` claim names its own element (arm C).
+  `world-read.mjs` 24/24 over `zh`/`zh-TW`/`en` on port `8816`, the authenticated aggregate page included.
+
+**Census basis, corrected.** The status row read "51 files bind a translator (70 bindings)". That walk ran over the
+*worktree*, which then held a foreign writer's uncommitted `app/agents/` pages — 2 files, 3 bindings. On HEAD blobs
+the same walk reads **49 files / 67 bindings** at `fe7685d` and **51 / 75** at `8feda9a` (+2 files, +8 bindings: this
+slice's two new pages and their eight `world` bindings). The file counts coincide; the numbers are not the same
+measurement, and a walk over a plane that mixes two writers' work cannot be compared to one that does not.
+
+The corrected walk became a tool, and the first tool was wrong. `census-head.mjs` matched lines, and it admitted
+**two** `app/login/LoginForm.tsx` rows as shape-A labels (`:47`, `:63`, both the line `required`) — the HTML boolean
+attribute name, not a label. Re-running it confirms the defect is still there rather than a transcription of an old
+output: line scan gives A 27 sites / B 110 / C 54. Line scanning cannot tell JSX structure from JSX text, so the
+census was re-run with the actual TSX parser (`census-ast.mjs`: `typescript` 5.7.3 as required through
+`apps/web/package.json`, `createSourceFile(…, ScriptKind.TSX)` over the 105 HEAD `.tsx` blobs, **0 parse
+diagnostics**, walking `JsxText` nodes for A/B and `JsxAttribute` nodes whose name matches the label list for C).
+Its verdict: **A 24 sites, B 172 rows / 168 sites, C 57 rows / 54 sites — 245 distinct sites**, where A is a label
+alone on its line and B the same label inline. Comparing the two artifacts site by site: **A 24 ⊂ 27** — the three
+the parser refuses are exactly false positives, `LoginForm.tsx:47` and `:63` (the attribute name `required`) and
+`app/page.tsx:95` (the identifier `capabilities`, a ternary operand inside a `{ … }` expression that renders no
+label at all); **B 110 ⊂ 168** — every line-scan B site survives the parser, which adds 58 more, because
+`>text<` on one line cannot see a label the formatter put on its own line, nor text sitting after an expression as
+in `{objective.actual} of {objective.target}`; and **C is identical, 54 sites on both**. That agreement matters
+more than the disagreement: C is the shape every landing of this arc has worked, so a heuristic and a parser
+reading the same population reach the same 54 — while the JSX-text shapes were never measured honestly until now.
+Shape C splits by dictionary: **nav 21, scout 14, coach 6, progress 4, world 2, career 2, common 1, auth 1**, plus
+3 sites two dictionaries both claim. The finds the earlier `common`-only scans could not see:
+`components/world.tsx:243` renders a bare `all` chip in the same `FilterChips` whose label this slice wired;
+`app/not-found.tsx:18,21` prints `My Football` and `Training` while `nav` holds both; `ScoutShortlistPanel` carries
+**eight** shape-A cells — seven equal a `scout` value (`Room` `Age` `Overall` `Potential` `Headroom` `Asking fee`
+`Off`) and the eighth, `Players` at `:158`, equals two `world` keys, which is a naming collision rather than a
+borrow. Each still needs the sense test before it needs the call — `open`, `all`, `With` / `Without` are the
+kind of short words that equal a catalogue value in one dictionary and mean something else in the sentence they sit
+in. And the parser overturned a claim of this arc's own: `common` and `world` were recorded as census-closed on
+every shape because the line scanner found **0** shape-A labels for them; the AST finds seven (`all`, `Open` ×2,
+`With`, `Without`, `Seed`, `Players`, and the `Room` header beside `Players`), and each of them is a sense skip
+before it is a wiring. Zero rows was the tool's blindness, not the tree's.
 
 **One death left unattributed, on purpose.** The first server of this slice (`8811`) died mid-batch with
 `ECONNRESET` immediately after the boot block it printed. That block — `Error: ENVIRONMENT_FALLBACK` — appears
