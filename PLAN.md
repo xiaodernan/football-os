@@ -48,7 +48,7 @@ and the fields are where the work is.
 | M10 Creator Economy | 🟡 §38 portfolio landed, share links + CV PDF landed 2026-10-06 | `docs/M10_PORTFOLIO_VERIFICATION.md` |
 | M11 Multi-Agent | 🟡 all six agents + `FootballOrchestrator` landed — the orchestrator replaced the keyword router, and §30's graph has its own joint-retrieval evidence | `docs/M11_AGENT_BENCHMARK_VERIFICATION.md` |
 | M12 Hardening | 🟡 §61 erasure landed 2026-10-06; **structured logging, cache, latency percentiles, cost advisor, governance + backup docs landed 2026-10-09** — what has *not* landed is listed in the verification doc's "does not claim" (no Redis, no OTel spans, no executed restore, no load test) | `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md` |
-| §81 i18n | 🟡 catalogues full, switcher works, shell switches; **45 files bind a translator (63 bindings)** — nav/auth/scout/career/settings/world plus `common`'s verbs, nouns and both scanned label shapes. Still English literals: the ten content-page namespaces, which have no keys yet. | the grep that counts `useTranslations`/`getTranslations` callers, and the value-derived label census (shape A 0, shape B 4 — the four are sense skips) |
+| §81 i18n | 🟡 catalogues full, switcher works, shell switches; **51 files bind a translator (70 bindings)** — nav/auth/scout/career/settings/world/progress/agents plus `common`'s verbs, nouns and all three scanned label shapes. Still English literals: the ten content-page namespaces, which have no keys yet. | the grep that counts `useTranslations`/`getTranslations` callers, and the value-derived label census (shape A 0, shape B 4 — the four are sense skips; shape C 11 wired + 1 sense skip, composites 0) |
 
 Three cross-cutting defects have now been found and fixed **three separate times** (M4's `tactics/sync.py`, M7's
 scouting modules, M8's academy tier): *the committed tree does not pass the gate its own documents quote.* The
@@ -237,8 +237,64 @@ creator guides header row, plus the `DEMO MODE` the prose at `knowledge/[slug]` 
   `.next` bytes. The order is now enforced — rebuild into a log in the repo, assert `Compiled successfully` and
   exit 0, start on a **new** port, then read. `next start` prints `Error: ENVIRONMENT_FALLBACK` once at boot;
   attributed as boot-only (the log did not grow across four route reads, all 200) but its source is unidentified.
-- `common` is now closed on both scanned shapes. It is **not** closed on a third: a label in an **attribute**
-  (`aria-label="Search"`) is neither shape A nor shape B, and no scanner here reads it.
+- `common` is now closed on all three scanned shapes. Shape C — a label in an **attribute**, which is neither a line
+  that IS a label nor a `>Label<` child — is measured and wired in `286c71a`, recorded below.
+
+**Done (shape C: attribute labels) 2026-10-11, `286c71a`.** The hand-picked spelling list was the first thing to go
+wrong: grepping the four names I thought of (`aria-label`, `placeholder`, `title`, `alt`) found **1** attribute label
+equal to a `common` value. Enumerating instead what the tree actually writes — 58 attribute names carry a plain string
+over the same 105 files, of which 13 are label-bearing (`aria-label` 96, `label` 37, `eyebrow` 97, `placeholder` 45,
+`title` 330, `hint` 4, `lede` 26, `message` 13, `body` 13, `fallback` 3, `detail` 2, `what` 2, `caption` 1 = **669
+carriers**) — found **12**. Eleven wired, one named as a sense skip:
+
+- `eyebrow="Filter"` ×9 (`/world/players`, `competitions`, `matches`, `news` ×2, `teams`, `training`, `/tactics` ×2)
+  → `common.filter`; `eyebrow="Search"` on `/knowledge` → `common.search`, the same file that already read
+  `t("search")` at line 144 while its own section heading stayed a literal — the header/button disagreement again,
+  one shape over. `aria-label="Summary"` → `common.summary`.
+- Four pages (`world/matches`, `news`, `teams`, `training`) bound `getTranslations("common")` for the first time;
+  before this they read no catalogue at all.
+- **Sense skip, named:** `app/career/[slug]/market/page.tsx` `label="Received"` is a money figure sitting beside
+  three page-copy siblings, while `common.received` is 已接收 — a delivery status. Wiring one label of a four-label
+  row to a dictionary whose sense is wrong would trade an English literal for a Chinese lie.
+
+Two claims this slice nearly made without evidence, and the control that stopped each:
+
+- **Composites are invisible to an exact-value scan.** `placeholder="Summary (optional)"` is two catalogue words
+  (`summary`, `optional`) joined by punctuation, so it matched nothing. A decomposition detector was written for it
+  and first reported **0 on HEAD's own bytes** — a belt that cannot fire is not a measurement, so the detector was
+  run against the pre-edit blob as a reverse control: it was comparing case-sensitively and could not see the
+  catalogue's `Optional` inside `(optional)`. Fixed, it finds that one composite at `HEAD:…CreatorWorkbench.tsx:207`
+  and **0** now.
+- **A build cannot see a locale, and `tsc` cannot see a rendered string.** The first composition interpolated
+  `t("optional")` as-is, so the fallback locale printed `Summary (Optional)` where HEAD prints `Summary (optional)` —
+  green typecheck, green build, green parity gate, wrong bytes for the default locale. The puppeteer read of `/creator`
+  is what caught it; the hint word is now lower-cased inside the sentence and the en DOM is byte-identical to HEAD.
+  Same leg also caught a **bare `//` comment left in JSX child position**, which React renders as page text: the
+  witness asked for the sentence in `document.body.innerText` and got `true` in all three locales, `{/* */}` and a
+  rebuild take it to `false`. Neither tsc, lint, the build nor the parity gate can see either defect.
+
+**Verification.** Production build, `next start` on `127.0.0.1:8815`, 24 reads (8 pages × `zh`/`zh-TW`/`en`) all 200:
+`筛选` / `篩選` / `Filter` and `搜索` / `搜尋` / `Search`, the English rows unchanged from HEAD. `/creator` is
+client-fetched, so its read goes through `puppeteer-core` with a freshly registered throwaway account and a published
+creator profile: `aria-label` 摘要 / 摘要 / Summary and `placeholder` 摘要 (可选) / 摘要 (選填) / Summary (optional).
+`test_locale_claims.py` 4/4, `tsc` and `npm run lint` clean, `staged == mine: 9 paths`, `HEAD:<path>` equal to the
+recorded index hash for 9/9. No catalogue line was needed — every key already existed — so this slice never touched
+the three files the concurrent writers keep editing.
+
+**Not closed by this, and why it is a different question.** The same attribute scan against *every* namespace finds
+labels whose key exists but is read by nothing: 23 equal to a `nav` value, 17 to a `world` value, 5 to `coach`,
+2 to `settings` (e.g. `/club/{ident}/plans/{plan}` `title="Progress"`, `/world/players` `title="Players"`), plus the
+`progress` namespace the writer landed at `686f9aa`. Those are key-**ownership** decisions — which namespace a page
+label belongs to — not a value lookup, and answering them by importing whichever dictionary happens to contain the
+word would make the catalogue the author of the UI. Also unclosed: attribute labels with no key anywhere,
+`CreatorWorkbench`'s `Headline` / `Biography` / `Guide title` / `Section` / `Visibility`, which need new keys the way
+the content-page namespaces do.
+
+**One death left unattributed, on purpose.** The first server of this slice (`8811`) died mid-batch with
+`ECONNRESET` immediately after the boot block it printed. That block — `Error: ENVIRONMENT_FALLBACK` — appears
+identically in **6 of 6** server logs from this arc, including ones started before this slice existed, and the log
+does not grow with route reads, so it is boot-time and pre-existing; the restart answered every page. The death is
+therefore not charged to it, and not explained either.
 
 **Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,
 assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.
