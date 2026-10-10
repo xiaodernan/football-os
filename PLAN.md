@@ -48,7 +48,7 @@ and the fields are where the work is.
 | M10 Creator Economy | 🟡 §38 portfolio landed, share links + CV PDF landed 2026-10-06 | `docs/M10_PORTFOLIO_VERIFICATION.md` |
 | M11 Multi-Agent | 🟡 all six agents + `FootballOrchestrator` landed — the orchestrator replaced the keyword router, and §30's graph has its own joint-retrieval evidence | `docs/M11_AGENT_BENCHMARK_VERIFICATION.md` |
 | M12 Hardening | 🟡 §61 erasure landed 2026-10-06; **structured logging, cache, latency percentiles, cost advisor, governance + backup docs landed 2026-10-09** — what has *not* landed is listed in the verification doc's "does not claim" (no Redis, no OTel spans, no executed restore, no load test) | `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md` |
-| §81 i18n | 🟡 catalogues full, switcher works, shell switches; **51 files bind a translator (75 bindings), counted on HEAD blobs** — nav/auth/scout/career/settings/world/progress plus `common`'s verbs, nouns and its attribute labels; `agents` (36 keys) exists only in a writer's uncommitted catalogue. Still English literals: the content-page namespaces whose keys do not exist yet (tactics, training, club, community, video, simulate, market, challenges). | the grep that counts `useTranslations`/`getTranslations` callers on HEAD blobs; the label census re-run **with a TSX parser over all eleven HEAD dictionaries** (`census-ast.mjs`, 105 files, 0 parse diagnostics): **A 24 sites, B 168, C 54 — 245 distinct sites**. `world`'s C group closed at `8feda9a` (17 found, 16 wired, 1 named sense skip) and `common`'s at the two shape-C landings (11 wired + 1 skip). The parser then **withdrew the older "shape A 0"**: `common`/`world` words do stand as bare JSX text — 7 A sites and 76 B sites carry one of their values, every one of them still a sense question rather than a wiring. | A **fourth shape** is open and invisible to that census: a label inside an object literal, `back={{ label: "Back to Football World" }}`, on six pages. |
+| §81 i18n | 🟡 catalogues full, switcher works, shell switches; **58 files bind a translator (83 bindings), counted on HEAD blobs at `844216d`** — nav/auth/scout/career/settings/world/progress plus `common`'s verbs, nouns and its attribute labels; `agents` (36 keys) exists only in a writer's uncommitted catalogue. Still English literals: the content-page namespaces whose keys do not exist yet (tactics, training, club, community, video, simulate, market, challenges). | the grep that counts `useTranslations`/`getTranslations` callers on HEAD blobs; the label census re-run **with a TSX parser over all eleven HEAD dictionaries** (`census-ast.mjs`, 105 files, 0 parse diagnostics). At `8feda9a` it read **A 24 sites, B 168, C 54 — 245 distinct sites**; re-run at `844216d` after the `nav` group it reads **A 24, B 168, C 40 — 231 distinct sites**, plus **E 3** (a label in a component's default parameter, which no earlier shape could see). `world`'s C group closed at `8feda9a` (17 found, 16 wired, 1 named sense skip), `common`'s at the two shape-C landings (11 wired + 1 skip) and `nav`'s at `844216d` (21 rows: 15 wired, 4 reachable only case-insensitively so wiring them would rewrite `en`, 2 left as key-ownership questions with the reason named). The union fell by 14 for 15 wired attributes, and the one is not a missing label: `tactics/[slug]/page.tsx` `title="Tactical system"` survived its own file's edit but moved from `:79` to `:81`, so a census keyed on `file:line` re-counts a site when a line *above* it is written. That is why every figure in this arc names the ref it was measured at. The parser also **withdrew the older "shape A 0"**: `common`/`world` words do stand as bare JSX text — 7 A sites and 76 B sites carry one of their values, every one of them still a sense question rather than a wiring. | A **fourth shape** is open and invisible to that census: a label inside an object literal, `back={{ label: "Back to Football World" }}`, on six pages. A **fifth** is now measured (shape E, 3 sites) and open for a different reason: one of its strings is used as data by a page that compares against it. |
 
 Three cross-cutting defects have now been found and fixed **three separate times** (M4's `tactics/sync.py`, M7's
 scouting modules, M8's academy tier): *the committed tree does not pass the gate its own documents quote.* The
@@ -285,8 +285,10 @@ the three files the concurrent writers keep editing.
 labels whose key exists but is read by nothing. `world`'s group was the one where the stored key plainly *is* the
 page's own word, and it closed in `8feda9a` (recorded below). The rest, re-run on the TSX parser at `8feda9a`:
 **`nav` 21, `scout` 14, `coach` 6, `progress` 4, `world` 2, `career` 2, `common` 1, `auth` 1, plus 3 sites two
-dictionaries both hold** — and `nav`'s 21 are mostly one repeated find: nine `eyebrow`/`title` pairs reading
-"Tactical Lab" across the five `/tactics` pages, three `title="Football CV"` on `/portfolio`, three
+dictionaries both hold** — and `nav`'s 21 are mostly one repeated find: nine sites reading "Tactical Lab" across the
+six `/tactics` page files (seven `eyebrow`, two `title`; the earlier wording here said "pairs" and "five pages", both
+of which under-counted — corrected when `844216d` wired them and listed each row), three `title="Football CV"` on
+`/portfolio`, three
 `title="Community"` on `/community`. The three single hits are the named sense skips (`label="Received"`,
 `eyebrow="Get started"`, `title="Table"`), not open work. The plane is named because it moves the number: the
 census reads **105 HEAD `.tsx` blobs**, where a worktree walk reads 107 — the two extra files, and the `agents`
@@ -367,6 +369,67 @@ before it is a wiring. Zero rows was the tool's blindness, not the tree's.
 identically in **6 of 6** server logs from this arc, including ones started before this slice existed, and the log
 does not grow with route reads, so it is boot-time and pre-existing; the restart answered every page. The death is
 therefore not charged to it, and not explained either.
+
+**Done (the `nav` section headings, 2026-10-11, `844216d`).** Fifteen attribute labels, eight files, no new key and
+no catalogue line: seven `eyebrow="Tactical Lab"` and two `title="Tactical Lab"` over the six `/tactics` page files,
+three `title="Community"`, three `title="Football CV"`. Every one is a page's own section heading, which is what
+`nav` holds, so the ownership question the previous paragraph left open did not arise here — it arises for the two
+sites this slice deliberately did **not** take (below). `nav`'s 21 reconcile exactly, once the census's
+lower-cased bucketing is undone: **17 byte-exact against `en` + 4 case-only** (the parser matches
+`value.toLowerCase()`, so `title="My football"`, `eyebrow="Video analysis"` ×2 and `title="Transfer market"` are
+reported as `nav` hits while `en` says *My Football*, *Video Analysis*, *Transfer Market* — wiring those four would
+rewrite the fallback locale's bytes, which is the one thing a wiring commit must never do). The 17 split **15 wired +
+2 left**: `club/{ident}/plans/{plan}` `title="Progress"` (a panel over review arithmetic, whose eyebrow says so —
+`nav.progress` is the app's *section*, so this is ownership, not a lookup) and `training/{slug}` `eyebrow="Video"`
+(a drill's demonstration clip, while `nav.videoShort` names the video-analysis section). Both are recorded as open
+work with the reason, not quietly dropped.
+
+- **The live read asserts three things per row, and the middle one was not enough.** `nav-read.mjs` sends one cookie
+  and reads one element, so its first run reported **eight zh-TW reds that were its own**: the harness sent
+  `fo_locale=TW`, which is not a locale the middleware knows, so the app correctly fell back and answered English.
+  Each row now also pins the page's own claim — `<html lang>` must equal the tag the row asked for — so a cookie that
+  selects nothing is a refusal naming the harness instead of a phantom translation gap. The second defect was in the
+  same file's arithmetic: the mismatch branch printed `RED …` without incrementing `red`, so the run summary read
+  **"16 green, 0 red of 24"** beside eight printed reds. A tally that loses rows cannot gate anything; the branch now
+  counts, and the run refuses unless `green + red` equals the row count. With both fixed: **24/24** over
+  zh/zh-TW/en — 8 paths × 3 locales, on a fresh build (`Compiled successfully`, exit 0) served on `8817` against the
+  running API and on `8818` against a stub that replays a *captured* `/auth/me` and refuses every other read, which
+  is the only way the `WorldUnavailable` branches holding most of these labels render for real.
+- **Green here is decisive without a second build, because `want` did not exist in HEAD's bytes for that element.**
+  `战术实验室` / `社群` / `足球履歷` can only come from the wired call; the same element pre-slice held an English literal,
+  so a stale bundle prints RED. And a per-row `keep` pins a literal this slice left alone on the same page —
+  `Tactical system`, `Compare two systems`, `My tactical boards`, `Shared tactical board`, and on `/community` and
+  `/portfolio` the surviving string is `WorldUnavailable`'s own default `eyebrow`, `"Football World"`. That last pair
+  is the whole point of the `keep`: it proves the neighbour moved while this element stayed English, which a wholesale
+  locale fallback cannot produce.
+- **Shape E: a default parameter is a label no caller can translate.** The parser's new shape found three sites, in
+  three different components: `components/world.tsx:272` `eyebrow = "Football World"` (equal to both `nav.world` and
+  `world.title`), `components/AttributeRadar.tsx:6` `label = "Attribute profile"` (`progress.metricAttributeProfile`)
+  and `components/ui.tsx:94` `title = "Why this was chosen"` (`coach.whyChosen`). Every caller that omits the prop
+  renders English whatever the cookie says, which is why `/community` and `/portfolio` now show 社区 under an English
+  eyebrow. `WorldUnavailable`'s sibling default, `title = "Data unavailable"` at `:273`, is the same hazard pointing
+  the other way: no dictionary holds those bytes, so it is not a wiring candidate — and it is *also* data, because
+  `app/training/[slug]/page.tsx:98` invents that exact string as a sentinel and `:212` branches on
+  `video !== "Data unavailable"`, where `video &&` can never be false since the sentinel is never empty. A shape-E
+  landing therefore has to move the sentinel's comparison in the same commit, or it changes behaviour while looking
+  like a translation.
+- **The census moved, and the arithmetic asked a question.** Re-running `census-ast.mjs` at `844216d` reads
+  **C 42 rows / 40 sites** where the walk recorded at `1b4cf2d` — whose `apps/web` bytes are `8feda9a`'s, since that
+  commit wrote only this document — read 57/54. Rows fell by exactly the 15 wirings while *sites* fell by 14. Diffing the two artifacts site by site names the extra one: `tactics/[slug]/page.tsx:79` carried **two** C rows
+  (`eyebrow="Tactical Lab"` and `title="Tactical system"`), the first was wired, and the second survives at `:81` —
+  same label, same element, a line number that moved because the slice wrote an import above it. A site identity
+  keyed on `file:line` therefore re-counts a site that was never touched, which is why the union
+  (**245 → 231 distinct sites**, 248 → 234 counting shape E) is quoted with its ref every time it appears.
+- **A witness must grade the plane that lands.** `parity.mjs` passed before staging and then crashed on re-run: it
+  read `git diff` (empty once the slice is staged — *nothing graded* is not *a pass*, so it now throws on an empty
+  diff) and it read `messages/en.json` off disk, which three concurrent writers keep editing. It now takes each
+  source file from the index (`git show :path`) and `en` from HEAD, and prints, for every namespace the slice reads,
+  whether HEAD and the worktree catalogue agree before making any claim that depends on that agreement (`nav` and
+  `common`: they do). Its refusal branch was proved by rewiring one site to `nav.training` — it named the key, its
+  `en` value and every literal in the hunk, exit 1; the file came back byte-identical and the run went green.
+
+`tsc --noEmit` and `npm run lint` clean, `staged == mine: 8 paths`, and `HEAD`'s numstat is the 8 files +30/−15 the
+derived expectation computed before staging.
 
 **Evidence.** The locale walk's per-page assertions: switch to `zh`, read a string that used to be a literal,
 assert it equals the catalogue's value. The `useTranslations` caller count moves with each landing.
