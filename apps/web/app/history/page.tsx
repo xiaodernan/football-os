@@ -9,10 +9,10 @@ import { serverFetch } from "@/lib/server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Training log",
-  description: "Every completed session, the XP it awarded and the exact formula behind that award.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("history");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -89,6 +89,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   const page = clampPage(first(params.page));
   const days = clampDays(first(params.days));
   const tc = await getTranslations("common");
+  const t = await getTranslations("history");
 
   const sessionsResult = await serverFetch<SessionList>("/trainings/sessions", {
     query: { status: "completed", page, page_size: PAGE_SIZE },
@@ -99,9 +100,9 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
     return (
       <div className="page container">
         <div className="stack">
-          <h1 className="h1">Training log</h1>
+          <h1 className="h1">{t("metaTitle")}</h1>
           <div className="notice notice--warn">
-            {errorMessage(sessionsResult.error, "Your training log is unavailable right now.")}
+            {errorMessage(sessionsResult.error, t("unavailable"))}
           </div>
         </div>
       </div>
@@ -139,25 +140,21 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
       <div className="stack">
         <div className="between wrap" style={{ alignItems: "flex-start", gap: "1rem" }}>
           <div className="stack-sm">
-            <span className="eyebrow">History</span>
-            <h1 className="h1">Training log</h1>
-            <p className="lede">
-              Completed sessions, the day-by-day record and the XP ledger. Nothing here is estimated: each row is a stored
-              row from the API.
-            </p>
+            <span className="eyebrow">{t("eyebrow")}</span>
+            <h1 className="h1">{t("title")}</h1>
+            <p className="lede">{t("lede")}</p>
           </div>
           <div className="stack-sm" style={{ alignItems: "flex-end" }}>
             <AiBadge demo_mode={sessions.demo_data || Boolean(timeline?.demo_data)} />
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              <span className="num">{sessions.total}</span> sessions on file (all statuses) · page{" "}
-              <span className="num">{sessions.page}</span>
+              {t("onFile", { total: sessions.total, page: sessions.page })}
             </span>
           </div>
         </div>
 
         <Panel
-          eyebrow="Completed sessions"
-          title={`Session table · page ${sessions.page}`}
+          eyebrow={t("sessionsEyebrow")}
+          title={t("sessionsTitle", { page: sessions.page })}
           action={
             <div className="row" style={{ gap: "0.4rem" }}>
               {hasPrev ? (
@@ -182,36 +179,30 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
           }
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              <span className="mono">GET /trainings/sessions?status=completed</span> · {PAGE_SIZE} rows per page ·
-              showing <span className="num">{sessions.items.length}</span> of{" "}
-              <span className="num">{sessions.total}</span> stored sessions.
+              {t("sessionsFooter", { size: PAGE_SIZE, shown: sessions.items.length, total: sessions.total })}
             </span>
           }
         >
           {sessions.items.length === 0 ? (
             <Empty
-              title={sessions.page > 1 ? "Nothing on this page" : "No completed sessions yet"}
-              body={
-                sessions.page > 1
-                  ? "Use the previous link to return to the most recent entries."
-                  : "The log fills itself when you finish a drill and report how it went."
-              }
+              title={sessions.page > 1 ? t("emptyPageTitle") : t("emptyLogTitle")}
+              body={sessions.page > 1 ? t("emptyPageBody") : t("emptyLogBody")}
               href="/training"
-              cta="Go to the academy"
+              cta={t("goToAcademy")}
             />
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Drill</th>
-                    <th scope="col">Category</th>
-                    <th scope="col">Min</th>
-                    <th scope="col">Diff.</th>
-                    <th scope="col">XP</th>
-                    <th scope="col">Exec.</th>
-                    <th scope="col">Notes</th>
+                    <th scope="col">{t("colDate")}</th>
+                    <th scope="col">{t("colDrill")}</th>
+                    <th scope="col">{t("colCategory")}</th>
+                    <th scope="col">{t("colMin")}</th>
+                    <th scope="col">{t("colDiff")}</th>
+                    <th scope="col">{t("colXp")}</th>
+                    <th scope="col">{t("colExec")}</th>
+                    <th scope="col">{t("colNotes")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -227,12 +218,12 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                       <td className="num">{item.drill.duration_min}</td>
                       <td className="num">{item.drill.difficulty}/5</td>
                       <td className="num">
-                        {typeof item.xp_awarded === "number" ? item.xp_awarded : <DataUnavailable metric="XP" />}
+                        {typeof item.xp_awarded === "number" ? item.xp_awarded : <DataUnavailable metric={t("metricXp")} />}
                       </td>
                       <td className="num">
                         {typeof item.execution_rating === "number"
                           ? `${item.execution_rating}/10`
-                          : <DataUnavailable metric="Exec" />}
+                          : <DataUnavailable metric={t("metricExec")} />}
                       </td>
                       <td title={item.self_notes ?? undefined} style={{ maxWidth: 240 }}>
                         {truncate(item.self_notes)}
@@ -247,8 +238,8 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
 
         <div className="grid grid-2">
           <Panel
-            eyebrow={`Last ${days} days`}
-            title="Day by day"
+            eyebrow={t("daysEyebrow", { days })}
+            title={t("daysTitle")}
             action={
               <div className="row wrap" style={{ gap: "0.4rem" }}>
                 {[7, 30, 90, 180].map((option) => (
@@ -257,7 +248,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                     href={`/history?page=1&days=${option}${playerId ? `&player_id=${encodeURIComponent(playerId)}` : ""}`}
                     key={option}
                   >
-                    {option}d
+                    {t("dayButton", { days: option })}
                   </Link>
                 ))}
               </div>
@@ -265,19 +256,19 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
             footer={
               <span className="muted" style={{ fontSize: "0.82rem" }}>
                 {timeline
-                  ? "Per-day totals are summed from GET /progress/timeline → sessions."
-                  : errorMessage(timelineResult.ok ? undefined : timelineResult.error, "Timeline unavailable.")}
+                  ? t("daysFooter")
+                  : errorMessage(timelineResult.ok ? undefined : timelineResult.error, t("timelineUnavailable"))}
               </span>
             }
           >
             {!timeline ? (
-              <DataUnavailable metric="Daily timeline" />
+              <DataUnavailable metric={t("metricDailyTimeline")} />
             ) : orderedDays.length === 0 ? (
               <Empty
-                title="No sessions in this window"
-                body="Pick a longer window, or complete a drill to start the record."
+                title={t("emptyWindowTitle")}
+                body={t("emptyWindowBody")}
                 href="/training"
-                cta="Go to training"
+                cta={t("goToTraining")}
               />
             ) : (
               <div className="timeline">
@@ -286,16 +277,16 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                     <span className="mono">{formatDay(date).slice(0, 6)}</span>
                     <div className="stack-sm" style={{ gap: "0.15rem" }}>
                       <span className="upper" style={{ fontWeight: 600 }}>
-                        {bucket.drills.length === 1 ? bucket.drills[0] : `${bucket.drills.length} sessions`}
+                        {bucket.drills.length === 1 ? bucket.drills[0] : t("sessionCount", { count: bucket.drills.length })}
                       </span>
                       <span className="muted" style={{ fontSize: "0.82rem" }}>
                         {bucket.executions.length > 0
-                          ? `avg execution ${(bucket.executions.reduce((sum, v) => sum + v, 0) / bucket.executions.length).toFixed(1)}/10`
-                          : "execution not reported"}
+                          ? t("avgExecution", { value: (bucket.executions.reduce((sum, v) => sum + v, 0) / bucket.executions.length).toFixed(1) })
+                          : t("executionMissing")}
                       </span>
                     </div>
                     <span className="num mono">
-                      {bucket.xpCount > 0 ? `+${bucket.xp} XP` : <DataUnavailable metric="XP" />}
+                      {bucket.xpCount > 0 ? t("xpPlus", { value: bucket.xp }) : <DataUnavailable metric={t("metricXp")} />}
                     </span>
                   </div>
                 ))}
@@ -304,24 +295,24 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
           </Panel>
 
           <Panel
-            eyebrow="XP ledger"
-            title="Every XP award and its formula"
+            eyebrow={t("ledgerEyebrow")}
+            title={t("ledgerTitle")}
             footer={
               <span className="muted" style={{ fontSize: "0.82rem" }}>
                 {xpEvents.length > ledger.length
-                  ? `Showing the ${ledger.length} most recent of ${xpEvents.length} stored XP events.`
-                  : "All stored XP events for this player are listed."}
+                  ? t("ledgerFooterRecent", { shown: ledger.length, total: xpEvents.length })
+                  : t("ledgerFooterAll")}
               </span>
             }
           >
             {!timeline ? (
-              <DataUnavailable metric="XP events" />
+              <DataUnavailable metric={t("metricXpEvents")} />
             ) : ledger.length === 0 ? (
               <Empty
-                title="No XP awarded yet"
-                body="XP is granted by the progression engine when a session is completed; the formula is stored with it."
+                title={t("emptyLedgerTitle")}
+                body={t("emptyLedgerBody")}
                 href="/training"
-                cta="Start a session"
+                cta={t("startSession")}
               />
             ) : (
               <div className="list">
@@ -331,7 +322,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                       <div className="between wrap" style={{ gap: "0.5rem" }}>
                         <span className="mono">{formatDay(event.at)}</span>
                         <span className="num mono" style={{ color: "var(--accent)" }}>
-                          {event.amount > 0 ? `+${event.amount}` : event.amount} XP
+                          {t("xpAmount", { value: event.amount > 0 ? `+${event.amount}` : event.amount })}
                         </span>
                       </div>
                       <span className="muted" style={{ fontSize: "0.88rem" }}>

@@ -660,6 +660,40 @@ async function run() {
       englishMessages.progress.profileTitle,
     );
 
+    // 10e. §81 2c: the training log. Its `h1` *is* a catalogue value ("Training log"), unlike the development
+    // screen's, so this one compares the heading as well as the body — the same shape as the career read.
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    await open(page, '/history');
+    await waitForText(page, chineseMessages.history.title);
+    const historyZh = await page.evaluate(() => ({
+      h1: document.querySelector('h1')?.textContent.trim() ?? '',
+      body: document.body.innerText.replace(/\s+/gu, ' '),
+    }));
+    check(
+      'the training log in Chinese renders the catalogue: heading, table headers and both panels come from messages/zh.json',
+      historyZh.h1 === chineseMessages.history.title &&
+        historyZh.body.includes(chineseMessages.history.lede) &&
+        historyZh.body.includes(chineseMessages.history.colNotes) &&
+        historyZh.body.includes(chineseMessages.history.daysTitle) &&
+        historyZh.body.includes(chineseMessages.history.ledgerTitle),
+      `h1 ${historyZh.h1} · lede ${historyZh.body.includes(chineseMessages.history.lede)} · header ${historyZh.body.includes(chineseMessages.history.colNotes)} · days ${historyZh.body.includes(chineseMessages.history.daysTitle)} · ledger ${historyZh.body.includes(chineseMessages.history.ledgerTitle)}`,
+    );
+    check(
+      'and the English copy is gone from the Chinese training log',
+      !historyZh.body.includes(englishMessages.history.lede) &&
+        !historyZh.body.includes(englishMessages.history.daysTitle) &&
+        !historyZh.body.includes(englishMessages.history.ledgerTitle),
+      `en lede present ${historyZh.body.includes(englishMessages.history.lede)} · en days present ${historyZh.body.includes(englishMessages.history.daysTitle)} · en ledger present ${historyZh.body.includes(englishMessages.history.ledgerTitle)}`,
+    );
+    await shot(page, '18e-history-chinese');
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+    await open(page, '/history');
+    check(
+      'and the switch back leaves the training log in English, so the check is not one-way',
+      (await bodyText(page)).includes(englishMessages.history.title),
+      englishMessages.history.title,
+    );
+
     // 12. SEO surface (spec §80): robots, sitemap, canonical, OpenGraph and structured data.
     const [robots, sitemap] = await Promise.all([
       fetch(`${BASE}/robots.txt`).then(async (response) => ({
