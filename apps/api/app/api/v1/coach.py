@@ -16,7 +16,7 @@ from app.models import CoachMessage, TrainingDrill, User, UserPlayer
 from app.providers import get_llm_provider
 from app.schemas import CoachAskIn, PlanIn
 from app.services import coach_engine
-from app.services.model_ledger import record_model_call
+from app.services.model_ledger import budget_exhausted, record_model_call
 
 router = APIRouter(prefix="/coach", tags=["coach"])
 
@@ -192,10 +192,25 @@ def ask(
         reasons = rec.reasons
         confidence = rec.confidence
 
-    result = provider.complete(system="You phrase football coaching guidance in short sentences. Never invent data.", prompt=str({"intent": intent, "facts": structured.get("message", "")}))
+    # §76's cap, gated at the call rather than at the request. The answer above is arithmetic over
+    # `user_players` and the training ledger, and the model only phrases it, so a reached cap refuses the
+    # phrasing step and ships the arithmetic — the same trade §60's answer table records as
+    # `ai_budget_exhausted` ("Retrieval still works"), applied to a door that has no separate retrieval.
+    # In demo mode the provider is the mock and costs nothing, so the ledger's actual spend stays at zero
+    # and this never fires there: a cap measured in real dollars cannot bind a free run.
+    spend_capped = budget_exhausted(db)
+    if spend_capped:
+        result = None
+    else:
+        result = provider.complete(
+            system="You phrase football coaching guidance in short sentences. Never invent data.",
+            prompt=str({"intent": intent, "facts": structured.get("message", "")}),
+        )
     content = structured.get("message", "")
-    if not result.demo_mode and result.text.strip():
+    if result is not None and not result.demo_mode and result.text.strip():
         content = f"{content}\n\n{result.text.strip()}"
+    if spend_capped:
+        reasons = [*reasons, "Today's AI spend cap is reached, so the phrasing step was skipped; every figure above is still computed from your stored profile and history"]
     db.add(
         CoachMessage(
             id=new_public_id("msg"),
@@ -204,17 +219,28 @@ def ask(
             role="coach",
             kind=f"answer:{intent}",
             content=content,
-            structured={"reasons": reasons, "provider_text": result.text if not result.demo_mode else None},
-            provider=result.provider,
-            model=result.model,
-            demo_mode=result.demo_mode,
+            structured={"reasons": reasons, "provider_text": result.text if result is not None and not result.demo_mode else None},
+            provider=result.provider if result is not None else "mock",
+            model=result.model if result is not None else "rule-engine-demo",
+            demo_mode=result.demo_mode if result is not None else settings.is_demo_mode,
             confidence=confidence,
             reasons=reasons,
         )
     )
-    record_model_call(db, result=result, feature="coach.ask", user_id=user.id)
+    if result is not None:
+        record_model_call(db, result=result, feature="coach.ask", user_id=user.id)
     db.commit()
-    return _envelope(reasons, confidence, result.provider, result.model, result.demo_mode, {**structured, "message": content, "question": payload.question})
+    # The envelope names the provider that answered. A capped turn is answered by the rule engine alone,
+    # which is what the CoachMessage defaults already say — the door keeps one vocabulary for "no model
+    # was called" rather than inventing a second one for the capped path.
+    return _envelope(
+        reasons,
+        confidence,
+        result.provider if result is not None else "mock",
+        result.model if result is not None else "rule-engine-demo",
+        result.demo_mode if result is not None else settings.is_demo_mode,
+        {**structured, "message": content, "question": payload.question},
+    )
 
 
 @router.get("/history")
