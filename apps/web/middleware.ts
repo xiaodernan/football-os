@@ -42,8 +42,9 @@ const PROTECTED_PREFIXES = [
   // means the middleware never refreshes that surface's expired access token, so a signed-in
   // reader whose 15-minute token died mid-visit was bounced to /login by the page's own
   // currentUser() — /simulation/aggregates was where the walk proved it. Every prefix below is
-  // one whose pages call currentUser() and redirect on null; /club/rules is exempt because the
-  // rulebook is the one /club page a signed-out visitor may read (the sitemap says so).
+  // one whose pages gate themselves, in either of the two shapes the census finds: `currentUser()`
+  // then redirect on null, or `serverFetch` then redirect on its 401 (/progress, /history, /settings
+  // are the second shape, and testing only the first spelling mis-files all three).
   "/agents",
   "/club",
   "/community",
@@ -55,7 +56,19 @@ const PROTECTED_PREFIXES = [
   "/simulation",
 ];
 
-const PUBLIC_EXCEPTIONS = new Set(["/club/rules"]);
+/**
+ * Prefixes under a protected prefix that a signed-out reader must still reach.
+ *
+ * Matched the way `PROTECTED_PREFIXES` is matched — as a prefix, not a whole pathname — because both share
+ * surfaces below sit one dynamic segment deep (`/video/shared/<token>`), where an exact set lookup can never
+ * hit. The live read proved it: `/video/shared/e90273…` answered 307 to `/login` in all three locales while
+ * `/tactics/shared/<token>` — the same design, under a prefix that was never listed — answered 200.
+ *
+ * What earns a place here is the property `scripts/qa-middleware-gating.mjs` measures on every run: the page
+ * never reads a session and has no path to `/login`, so gating it can only deny a reader what the page was
+ * built to hand them. `/club/rules` qualifies; `/club` does not, and its own page redirects a signed-out visitor.
+ */
+const PUBLIC_EXCEPTIONS = new Set(["/club/rules", "/portfolio/shared", "/video/shared"]);
 
 const SKEW_SECONDS = 60;
 const REFRESH_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30);
@@ -64,7 +77,10 @@ const IS_SECURE = process.env.NODE_ENV === "production";
 type Minted = { accessToken: string; expiresIn: number; refresh?: string };
 
 function isProtected(pathname: string): boolean {
-  if (PUBLIC_EXCEPTIONS.has(pathname)) return false;
+  // Prefix semantics, identical to the protected list's, so an exemption actually reaches the segment below it.
+  for (const exception of PUBLIC_EXCEPTIONS) {
+    if (pathname === exception || pathname.startsWith(`${exception}/`)) return false;
+  }
   return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 

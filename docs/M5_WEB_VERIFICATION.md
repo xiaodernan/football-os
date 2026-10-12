@@ -166,7 +166,15 @@ Indexes on `player_id` and `match_id` for efficient lookups.
 
 - `/video/{id}` page now has a "Linked to" panel with forms to link player/match
 - "Share this clip" panel with Create share link / Revoke link buttons
-- `/video/shared/{token}` page renders the clip publicly with no owner identity disclosed
+- `/video/shared/{token}` renders the **record** the upload left behind — the ten fields `GET /video/shared/{token}`
+  actually returns (id, title, filename, duration, frame size, status, `frame_count`, `data_origin`, `is_demo_data`),
+  with no owner identity disclosed. It does **not** play the footage: `GET /video/{id}/file` and `/frames/{index}` are
+  owner-session routes by design (video.py's own docstring: "to its owner only"), so a shared reader sees what was
+  recorded, not the clip. The page previously typed this read as the owner's `VideoReport` and reached into
+  `report.asset`, which the shared door has never returned — an anonymous reader got HTTP 500, and before that HTTP 307
+  to `/login` from the middleware. Both halves are corrected and re-read live in
+  `docs/MIDDLEWARE_GATING_VERIFICATION.md`; whether a share link *should* disclose the measurements and the bytes is
+  an open design question recorded there, not settled here.
 
 ### Tests
 

@@ -85,6 +85,12 @@ jobs:
         # rather than joining the live-tier walks. It is the reason a new file under apps/web/scripts cannot arrive
         # unaccounted for: either a runner names it or its own bytes prove why no runner can.
         run: node scripts/qa-gate-inventory.mjs
+      - name: Middleware gating gate (which routes a signed-out reader reaches)
+        # Same command as `scripts/check.sh`. It transpiles and calls middleware.ts's own `isProtected`, then asks
+        # it of every page route, so a change to the matching logic — not just to the lists it reads — fails here.
+        # It exists because prefix matching reached into /video/shared/<token> and /portfolio/shared/<token> and
+        # answered 307 to /login for a reader holding a share link: the one reader those pages are written for.
+        run: node scripts/qa-middleware-gating.mjs
       - name: Types
         run: npm run typecheck
       - name: Build

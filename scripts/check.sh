@@ -60,6 +60,14 @@ echo "── Web: script-inventory gate ─────────────�
 # only: no server, no browser, no port, which is why it runs here rather than joining the live-tier walks.
 (cd apps/web && node scripts/qa-gate-inventory.mjs)
 
+echo "── Web: middleware gating gate ───────────────────────"
+# Which routes a signed-out reader may reach is one function's decision, and a prefix list that reaches down into
+# `/video/shared/<token>` made two share-link pages answer 307 to /login — a link handed to a person with no
+# account. This gate loads `isProtected` out of middleware.ts itself (transpiled, called), and asks it of all 59
+# page routes, so a change to the matching logic moves the verdict and not only the lists. Files only: no server,
+# no browser, which is why it runs here rather than in the live-tier walks that would need a token-free plane.
+(cd apps/web && node scripts/qa-middleware-gating.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 
