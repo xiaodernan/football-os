@@ -68,6 +68,15 @@ echo "── Web: middleware gating gate ─────────────
 # no browser, which is why it runs here rather than in the live-tier walks that would need a token-free plane.
 (cd apps/web && node scripts/qa-middleware-gating.mjs)
 
+echo "── Web: metadata-title i18n gate ─────────────────────"
+# §81 2c's permanent rule over the whole page population: a page may still write its <title> as a load-time
+# literal, but only while its own heading is a literal that says the same thing — a literal tab over a keyed
+# heading repaints differently per locale, which is the bug the arc is closing. The gate walks every app/**/page.tsx
+# through the repo's own TypeScript, so the population, the literal ceiling (24 today) and the two ledger rows are
+# all re-derived from the bytes on every run: a scan that narrows itself, an exemption that goes stale and a page
+# that drifts from its own heading each go red. Files only: no server, no browser, which is why it runs here.
+(cd apps/web && node scripts/qa-metadata-title.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 

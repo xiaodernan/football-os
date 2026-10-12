@@ -91,6 +91,11 @@ jobs:
         # It exists because prefix matching reached into /video/shared/<token> and /portfolio/shared/<token> and
         # answered 307 to /login for a reader holding a share link: the one reader those pages are written for.
         run: node scripts/qa-middleware-gating.mjs
+      - name: Metadata-title gate (every page's tab agrees with its own heading, or is ledgered)
+        # Same command as `scripts/check.sh`. §81 2c's rule stated permanently over the whole page population instead
+        # of against one change's diff: the population, the literal ceiling and the two exemptions are re-derived
+        # from the parsed bytes on every run, so a shrinking scan or a stale exemption fails the build. Files only.
+        run: node scripts/qa-metadata-title.mjs
       - name: Types
         run: npm run typecheck
       - name: Build
