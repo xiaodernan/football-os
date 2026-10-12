@@ -216,11 +216,45 @@ and restore are now *executed*, and the execution found a defect no gate could s
 | `pytest tests/test_tracing.py -q` | SQLite, working copy | **3 tests / 0 failures**, rc=0 |
 | contract paths after the three metrics doors | `docs/api/openapi.json` committed | 179 → **182** |
 | `git grep -li agents -- apps/api/app` | committed tree | 13 → **14** (`services/agents/orchestrator.py`) |
+| `python -m scripts.bench_api --endpoint /api/v1/healthz --concurrency 10 --duration 15` | live uvicorn, one worker, Postgres 54321, demo mode, response cache **on** | **90.80 req/s**, p50 71.50 / p95 99.29 / p99 153.21 ms, **0 errors**, 1375 requests |
+| same, `--concurrency 50` | same | **52.54 req/s**, p50 612.12 / p95 2743.91 / p99 4481.11 ms, **0 errors**, 829 requests |
+| `--endpoint /api/v1/players --concurrency 10` (unauthenticated) | same | **76.08 req/s**, p50 84.93 / p95 325.97 / p99 1646.32 ms, 923 responses all 401 |
 
 The contract and audit figures were recomputed against the committed tree, not the working copy,
 because `test_spec_audit_currency.py` reads `git show HEAD:…`. Two doc landings were needed to make
 that pass — one for the agents scan, one for the contract-path count — and both are recorded in the
 audit's own numbers rather than left stale.
+
+### Load — the ceiling this tier actually has, and the one statistic that lies
+
+`scripts/bench_api.py`, three runs against a live uvicorn (single worker, `--reload` off so the
+watcher is not in the numbers), Postgres on 54321, demo mode, response cache active because
+`env=development`.
+
+**Throughput saturates rather than scales.** Going from 10 to 50 concurrent clients — five times the
+load — *cut* throughput from 90.80 to 52.54 req/s while p50 rose 8.6× (71.50 → 612.12 ms). That is
+the signature of a saturated single process, not a slow one: the server stopped absorbing requests
+and started queueing them. **~90 req/s is this tier's ceiling on this host**, and it is a single
+uvicorn worker, so the honest next question — what more workers buy — is unmeasured here and is not
+implied by these figures.
+
+**`max` is not a quotable statistic from this harness.** At concurrency 10 it came out 15091 ms in
+one run and 15131 ms in another, against a 15-second window — one request starved for essentially
+the whole run, reproduced in both. p99 over the same runs was 133 and 153 ms. Quote p99; the max
+measures this host's scheduler, not the API. At concurrency 50 the max was 7389 ms, *below* the
+window, because workers still mid-request when the run ends are abandoned after a 5-second grace and
+never enter the results at all.
+
+**Zero errors in all three runs**, so the ceiling here is latency, not correctness.
+
+**The 401 door has a slower tail than the health check** — p99 1646 ms against 153 ms. A door that
+refuses every unauthenticated caller still reaches the dependency before it answers, and the tail is
+where that shows.
+
+These numbers are a **floor, not a ceiling**: this host is a Windows workstation shared with roughly
+two hundred other processes. They are published because a harness that has never been run publishes
+nothing, and because the *shape* — saturation at one process, max unreliable, p99 stable — will
+survive the move to quieter hardware even though the absolute figures will not.
 
 ## What M12 does not claim
 
@@ -233,9 +267,11 @@ audit's own numbers rather than left stale.
   propagation through the proxy are deployment concerns, not claims.
 * **No off-host backup pathway executed.** The restore drill ran `pg_dump` → `pg_restore` inside
   the project's own container; S3 upload and WAL archiving remain inspection-verified only.
-* **No published load-test ceiling.** `scripts/bench_api.py` is the harness; a measured run
-  against the local tier is recorded below when it is run, and it will not be extrapolated to
-  production hardware.
+* **The load figures are a floor, and only one worker was measured.** Three runs are recorded above
+  against a live single-worker uvicorn on a host shared with some two hundred other processes. They
+  are not extrapolated to production hardware, and what additional uvicorn workers buy is unmeasured
+  here. The harness's `max` is unreliable at low concurrency — it reproduced at ~15.1 s against a
+  15-second window — so p99 is the figure to quote, and the harness now states its denominator.
 * **No cost guarantee, and honouring the cap is still a per-caller duty.** The advisor reports; the
   router decides. Two doors check `budget_exhausted()` at the call instead of trusting a caller to
   stop on its own: `/knowledge/ask` refuses with 429 `ai_budget_exhausted` (2026-10-06), and
