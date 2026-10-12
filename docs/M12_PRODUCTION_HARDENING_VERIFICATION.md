@@ -219,6 +219,8 @@ and restore are now *executed*, and the execution found a defect no gate could s
 | `python -m scripts.bench_api --endpoint /api/v1/healthz --concurrency 10 --duration 15` | live uvicorn, one worker, Postgres 54321, demo mode, response cache **on** | **90.80 req/s**, p50 71.50 / p95 99.29 / p99 153.21 ms, **0 errors**, 1375 requests |
 | same, `--concurrency 50` | same | **52.54 req/s**, p50 612.12 / p95 2743.91 / p99 4481.11 ms, **0 errors**, 829 requests |
 | `--endpoint /api/v1/players --concurrency 10` (unauthenticated) | same | **76.08 req/s**, p50 84.93 / p95 325.97 / p99 1646.32 ms, 923 responses all 401 |
+| `--healthz --concurrency 10`, **`--workers 4`** | same, four uvicorn workers | **117.43 req/s**, p50 77.36 / p95 188.24 / p99 385.36 ms, **max 655.91 ms**, 0 errors |
+| `--healthz --concurrency 50`, **`--workers 4`** | same | **55.83 req/s**, p50 564.11 / p95 2843.56 / p99 4070.82 ms, 0 errors |
 
 The contract and audit figures were recomputed against the committed tree, not the working copy,
 because `test_spec_audit_currency.py` reads `git show HEAD:…`. Two doc landings were needed to make
@@ -246,6 +248,20 @@ window, because workers still mid-request when the run ends are abandoned after 
 never enter the results at all.
 
 **Zero errors in all three runs**, so the ceiling here is latency, not correctness.
+
+**Four workers buy real headroom at low load and almost none at high load**, which is the shape the
+bottleneck predicts. At concurrency 10, four workers lifted throughput 90.80 → 117.43 req/s (+29%);
+at concurrency 50 they lifted it only 52.54 → 55.83 req/s (+6%). Below saturation the Python
+process is what is scarce, so more of them help; above it the scarce thing is Postgres and this
+host, and more processes merely queue behind the same dependency.
+
+**The long `max` was a single-worker artifact, and four workers prove it.** The 15-second outliers
+that reproduced twice at one worker came out at **655.91 ms** with four, against the same 15-second
+window and the same endpoint. Nothing about the API changed — only how many processes were waiting
+to accept. So the diagnosis above was right, and it is now settled by measurement rather than by
+argument: at one worker a single request can be starved for essentially the whole run, and the fix
+is not a tuning knob, it is a second process. The cost is a longer p99 at low concurrency (153 →
+385 ms), because four workers also means four times the concurrent work against the same database.
 
 **The 401 door has a slower tail than the health check** — p99 1646 ms against 153 ms. A door that
 refuses every unauthenticated caller still reaches the dependency before it answers, and the tail is
@@ -275,11 +291,12 @@ survive the move to quieter hardware even though the absolute figures will not.
   propagation through the proxy are deployment concerns, not claims.
 * **No off-host backup pathway executed.** The restore drill ran `pg_dump` → `pg_restore` inside
   the project's own container; S3 upload and WAL archiving remain inspection-verified only.
-* **The load figures are a floor, and only one worker was measured.** Three runs are recorded above
-  against a live single-worker uvicorn on a host shared with some two hundred other processes. They
-  are not extrapolated to production hardware, and what additional uvicorn workers buy is unmeasured
-  here. The harness's `max` is unreliable at low concurrency — it reproduced at ~15.1 s against a
-  15-second window — so p99 is the figure to quote, and the harness now states its denominator.
+* **The load figures are a floor, and both worker counts were measured on one host.** Five runs are
+  recorded above against a live uvicorn — one and four workers, two concurrency tiers and one
+  unauthenticated door — on a workstation shared with some two hundred other processes. They are not
+  extrapolated to production hardware. The harness's `max` is unreliable at *one* worker, where it
+  reproduced at ~15.1 s against a 15-second window and fell to 656 ms once a second process
+  existed, so p99 is the figure to quote; the harness now states its denominator.
 * **No cost guarantee, and honouring the cap is still a per-caller duty.** The advisor reports; the
   router decides. Two doors check `budget_exhausted()` at the call instead of trusting a caller to
   stop on its own: `/knowledge/ask` refuses with 429 `ai_budget_exhausted` (2026-10-06), and
