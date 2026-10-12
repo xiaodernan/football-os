@@ -728,6 +728,43 @@ async function run() {
       englishMessages.training.title,
     );
 
+    // 10g. §81 2c: the knowledge base. 96 keys across four files, and all three top-level files were already
+    // reading `common` — the third half-wired page in this batch, and the reason the coverage note in PLAN.md says
+    // to read a page's own copy rather than grep for `useTranslations`. The library renders for a signed-out
+    // visitor, so this read needs no session at all.
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    await open(page, '/knowledge');
+    await waitForText(page, chineseMessages.knowledge.title);
+    const knowledgeZh = await page.evaluate(() => ({
+      h1: document.querySelector('h1')?.textContent.trim() ?? '',
+      body: document.body.innerText.replace(/\s+/gu, ' '),
+    }));
+    check(
+      'the knowledge base in Chinese renders the catalogue: heading, tabs, library panel and card meta come from messages/zh.json',
+      knowledgeZh.h1 === chineseMessages.knowledge.title &&
+        knowledgeZh.body.includes(chineseMessages.knowledge.tabLibrary) &&
+        knowledgeZh.body.includes(chineseMessages.knowledge.libraryTitle) &&
+        knowledgeZh.body.includes(chineseMessages.knowledge.askLibrary) &&
+        knowledgeZh.body.includes(chineseMessages.knowledge.authoredBadge),
+      `h1 ${knowledgeZh.h1} · tab ${knowledgeZh.body.includes(chineseMessages.knowledge.tabLibrary)} · library ${knowledgeZh.body.includes(chineseMessages.knowledge.libraryTitle)} · ask ${knowledgeZh.body.includes(chineseMessages.knowledge.askLibrary)} · badge ${knowledgeZh.body.includes(chineseMessages.knowledge.authoredBadge)}`,
+    );
+    check(
+      'and the English copy is gone from the Chinese knowledge base',
+      !knowledgeZh.body.includes(englishMessages.knowledge.title) &&
+        !knowledgeZh.body.includes(englishMessages.knowledge.libraryTitle) &&
+        !knowledgeZh.body.includes(englishMessages.knowledge.askLibrary) &&
+        !knowledgeZh.body.includes(englishMessages.knowledge.authoredBadge),
+      `en title present ${knowledgeZh.body.includes(englishMessages.knowledge.title)} · en library present ${knowledgeZh.body.includes(englishMessages.knowledge.libraryTitle)} · en ask present ${knowledgeZh.body.includes(englishMessages.knowledge.askLibrary)} · en badge present ${knowledgeZh.body.includes(englishMessages.knowledge.authoredBadge)}`,
+    );
+    await shot(page, '18g-knowledge-chinese');
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+    await open(page, '/knowledge');
+    check(
+      'and the switch back leaves the knowledge base in English, so the check is not one-way',
+      (await bodyText(page)).includes(englishMessages.knowledge.title),
+      englishMessages.knowledge.title,
+    );
+
     // 12. SEO surface (spec §80): robots, sitemap, canonical, OpenGraph and structured data.
     const [robots, sitemap] = await Promise.all([
       fetch(`${BASE}/robots.txt`).then(async (response) => ({

@@ -14,6 +14,7 @@ function fmt(value: number | undefined, digits = 3): string {
 
 export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; categories: string[] }) {
   const t = useTranslations("common");
+  const tk = useTranslations("knowledge");
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<string>("hybrid");
   const [category, setCategory] = useState("");
@@ -44,7 +45,7 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
     if (!result.ok) {
       setData(null);
       if (result.status === 401) setPromptSignIn(true);
-      else setError(errorMessage(result.error, "Search failed."));
+      else setError(errorMessage(result.error, tk("searchFailed")));
     } else {
       setData(result.data);
     }
@@ -54,11 +55,11 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
   if (!signedIn) {
     return (
       <div className="notice notice--warn" style={{ fontSize: "0.88rem" }}>
-        Search reads the whole corpus through your authenticated session.{" "}
+        {tk("searchSignedOut")}{" "}
         <Link className="kn-ref" href="/login?next=%2Fknowledge">
-          Sign in
+          {tk("searchSignIn")}
         </Link>{" "}
-        to run it. The library above stays open without an account.
+        {tk("searchSignInTail")}
       </div>
     );
   }
@@ -69,14 +70,14 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
     <div className="stack">
       <div className="kn-form-row">
         <label className="field" style={{ flex: "2 1 240px" }}>
-          <span className="field__label">Query</span>
+          <span className="field__label">{tk("queryLabel")}</span>
           <input
             className="input"
             id="ksearch-query"
             type="search"
             value={query}
             maxLength={400}
-            placeholder="e.g. how do teams press high"
+            placeholder={tk("queryPlaceholder")}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") void run();
@@ -84,7 +85,7 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
           />
         </label>
         <label className="field">
-          <span className="field__label">Mode</span>
+          <span className="field__label">{tk("modeLabel")}</span>
           <select className="select" value={mode} onChange={(event) => setMode(event.target.value)}>
             {KNOWLEDGE_MODES.map((option) => (
               <option key={option} value={option}>
@@ -94,9 +95,9 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
           </select>
         </label>
         <label className="field">
-          <span className="field__label">Category</span>
+          <span className="field__label">{tk("categoryLabel")}</span>
           <select className="select" value={category} onChange={(event) => setCategory(event.target.value)}>
-            <option value="">all</option>
+            <option value="">{t("all")}</option>
             {categories.map((name) => (
               <option key={name} value={name}>
                 {name}
@@ -105,9 +106,9 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
           </select>
         </label>
         <label className="field">
-          <span className="field__label">Difficulty</span>
+          <span className="field__label">{tk("difficultyLabel")}</span>
           <select className="select" value={difficulty} onChange={(event) => setDifficulty(event.target.value)}>
-            <option value="">any</option>
+            <option value="">{tk("anyOption")}</option>
             {KNOWLEDGE_DIFFICULTIES.map((name) => (
               <option key={name} value={name}>
                 {name}
@@ -116,9 +117,9 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
           </select>
         </label>
         <label className="field">
-          <span className="field__label">Position</span>
+          <span className="field__label">{tk("positionLabel")}</span>
           <select className="select" value={position} onChange={(event) => setPosition(event.target.value)}>
-            <option value="">any</option>
+            <option value="">{tk("anyOption")}</option>
             {KNOWLEDGE_POSITIONS.map((name) => (
               <option key={name} value={name}>
                 {name}
@@ -127,17 +128,17 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
           </select>
         </label>
         <button type="button" className="btn btn--primary" onClick={run} disabled={busy || query.trim().length < 2}>
-          {busy ? "Searching…" : "Run search"}
+          {busy ? tk("searching") : tk("runSearch")}
         </button>
       </div>
 
       {promptSignIn && (
         <div className="notice notice--warn" style={{ fontSize: "0.88rem" }}>
-          Your session expired.{" "}
+          {tk("sessionExpired")}{" "}
           <Link className="kn-ref" href="/login?next=%2Fknowledge">
-            Sign in again
+            {tk("signInAgain")}
           </Link>{" "}
-          to keep searching.
+          {tk("keepSearching")}
         </div>
       )}
       {error && <div className="notice notice--warn">{error}</div>}
@@ -154,9 +155,9 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
             )}
             <span className="chip">{data.mode}</span>
             <span className="chip mono">{data.retrieval_backend}</span>
-            <span className="chip">{data.scanned_chunks} chunks scanned</span>
-            <span className="chip">top score {fmt(data.top_score)}</span>
-            <span className="chip">confidence {Math.round(data.confidence * 100)}%</span>
+            <span className="chip">{tk("chunksScanned", { count: data.scanned_chunks })}</span>
+            <span className="chip">{tk("topScore", { value: fmt(data.top_score) })}</span>
+            <span className="chip">{tk("confidence", { percent: Math.round(data.confidence * 100) })}</span>
           </div>
 
           <div
@@ -167,27 +168,29 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
               borderColor: answerability?.answerable ? "rgba(53, 240, 164, 0.3)" : "rgba(255, 182, 72, 0.35)",
             }}
           >
-            <strong>{answerability?.answerable ? "The corpus covers this query" : "Weak coverage for this query"}</strong>
+            <strong>{answerability?.answerable ? tk("corpusCovers") : tk("corpusWeak")}</strong>
             <div className="kn-explain">
               {answerability
-                ? `Rare terms from your query found in the top passage: ${answerability.discriminative_matches.length}/${answerability.discriminative_terms.length} (coverage ${fmt(
-                    answerability.discriminative_coverage,
-                    2,
-                  )}, floor ${fmt(answerability.coverage_floor, 2)}).`
+                ? tk("coverageExplain", {
+                    matched: answerability.discriminative_matches.length,
+                    total: answerability.discriminative_terms.length,
+                    coverage: fmt(answerability.discriminative_coverage, 2),
+                    floor: fmt(answerability.coverage_floor, 2),
+                  })
                 : ""}
             </div>
           </div>
 
-          <ReasonList items={data.reasons} title="Why these ranked this way" />
+          <ReasonList items={data.reasons} title={tk("whyRanked")} />
 
           <div className="stack">
             {data.results.length === 0 ? (
-              <p className="muted">No passages matched the query with these filters.</p>
+              <p className="muted">{tk("noPassages")}</p>
             ) : (
               data.results.map((hit) => (
                 <div className="kn-result" key={hit.chunk_id}>
                   <div className="row wrap" style={{ gap: "0.6rem" }}>
-                    <span className="kn-rank" aria-label={`Rank ${hit.rank}`}>
+                    <span className="kn-rank" aria-label={tk("rankLabel", { rank: hit.rank })}>
                       {hit.rank}
                     </span>
                     <div className="grow">
@@ -195,15 +198,15 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
                         {hit.title}
                       </Link>
                       <div className="muted" style={{ fontSize: "0.82rem" }}>
-                        {hit.heading} · {hit.category.replace(/_/g, " ")} · difficulty {hit.difficulty}
+                        {tk("resultMeta", { heading: hit.heading, category: hit.category.replace(/_/g, " "), difficulty: hit.difficulty })}
                       </div>
                     </div>
                   </div>
                   <p className="kn-excerpt">{hit.excerpt}</p>
                   <div className="kn-metrics">
-                    <span className="chip">score {fmt(hit.score)}</span>
-                    <span className="chip">cosine {fmt(hit.similarity)}</span>
-                    <span className="chip">bm25 {fmt(hit.lexical)}</span>
+                    <span className="chip">{tk("scoreChip", { value: fmt(hit.score) })}</span>
+                    <span className="chip">{tk("cosineChip", { value: fmt(hit.similarity) })}</span>
+                    <span className="chip">{tk("bm25Chip", { value: fmt(hit.lexical) })}</span>
                     {Object.entries(hit.features ?? {}).map(([feature, value]) => (
                       <span className="chip mono" key={feature}>
                         {feature} {typeof value === "number" ? value.toFixed(3) : "—"}
@@ -216,8 +219,7 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
           </div>
 
           <p className="muted kn-explain">
-            timings_ms {JSON.stringify(data.timings_ms)} · model <span className="mono">{data.model}</span> · provider{" "}
-            <span className="mono">{data.provider}</span>
+            {tk("timingsLine", { json: JSON.stringify(data.timings_ms), model: data.model, provider: data.provider })}
           </p>
           <p className="muted kn-disclaimer">{data.disclaimer}</p>
         </div>

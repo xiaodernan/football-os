@@ -13,13 +13,13 @@ function fmt(value: number | undefined, digits = 3): string {
 }
 
 /** Turns inline [1], [2] … markers into anchors that jump to the matching citation card. */
-function withRefs(text: string): ReactNode[] {
+function withRefs(text: string, goToCitation: (ref: string) => string): ReactNode[] {
   return text.split(/(\[\d+\])/g).map((part, index) => {
     const match = /^\[(\d+)\]$/.exec(part);
     if (!match) return <Fragment key={index}>{part}</Fragment>;
     const ref = match[1];
     return (
-      <a key={index} className="kn-ref" href={`#cite-${ref}`} aria-label={`Go to citation ${ref}`}>
+      <a key={index} className="kn-ref" href={`#cite-${ref}`} aria-label={goToCitation(ref)}>
         {part}
       </a>
     );
@@ -28,21 +28,22 @@ function withRefs(text: string): ReactNode[] {
 
 function CitationCard({ citation, index }: { citation: KnowledgeCitation; index: number }) {
   const t = useTranslations("common");
+  const tk = useTranslations("knowledge");
   return (
     <div className="kn-cite" id={`cite-${index + 1}`}>
       <div className="between wrap" style={{ gap: "0.5rem" }}>
         <span className="h3">
           <span className="kn-ref">[{index + 1}]</span> {citation.title}
         </span>
-        <span className="chip">score {fmt(citation.score)}</span>
+        <span className="chip">{tk("citationScore", { value: fmt(citation.score) })}</span>
       </div>
       <span className="muted" style={{ fontSize: "0.82rem" }}>
-        {citation.section} · {citation.category.replace(/_/g, " ")} · cosine {fmt(citation.similarity)}
+        {tk("citationMeta", { section: citation.section, category: citation.category.replace(/_/g, " "), value: fmt(citation.similarity) })}
       </span>
       <p className="kn-cite__quote">&ldquo;{citation.quote}&rdquo;</p>
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <Link className="kn-ref" href={`/knowledge/${encodeURIComponent(citation.slug)}#${citation.ordinal}`}>
-          {t("open")} this passage →
+          {t("open")} {tk("openPassage")} →
         </Link>
         <span className="kn-prov__text grow">{citation.source}</span>
       </div>
@@ -51,6 +52,8 @@ function CitationCard({ citation, index }: { citation: KnowledgeCitation; index:
 }
 
 export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; categories: string[] }) {
+  const t = useTranslations("common");
+  const tk = useTranslations("knowledge");
   const [question, setQuestion] = useState("");
   const [mode, setMode] = useState("hybrid");
   const [category, setCategory] = useState("");
@@ -81,7 +84,7 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
     if (!response.ok) {
       setResult(null);
       if (response.status === 401) setPromptSignIn(true);
-      else setError(errorMessage(response.error, "The library could not answer that."));
+      else setError(errorMessage(response.error, tk("askFailed")));
     } else {
       setResult(response.data);
       setQuestion("");
@@ -92,11 +95,11 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
   if (!signedIn) {
     return (
       <div className="notice notice--warn" style={{ fontSize: "0.88rem" }}>
-        Asking the library uses your authenticated session.{" "}
+        {tk("askSignedOut")}{" "}
         <Link className="kn-ref" href="/login?next=%2Fknowledge">
-          Sign in
+          {tk("searchSignIn")}
         </Link>{" "}
-        to ask. You can still browse every document above without an account.
+        {tk("askSignInTail")}
       </div>
     );
   }
@@ -105,21 +108,21 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
     <div className="stack">
       <div className="stack-sm">
         <label className="field">
-          <span className="field__label">Your question</span>
+          <span className="field__label">{tk("questionLabel")}</span>
           <textarea
             className="kn-textarea"
             id="kask-question"
             value={question}
             maxLength={500}
-            placeholder="e.g. How should a team build out against a high press?"
+            placeholder={tk("questionPlaceholder")}
             onChange={(event) => setQuestion(event.target.value)}
           />
-          <span className="field__hint">3–500 characters. Answers come only from passages the library can cite — nothing is generated from outside the corpus.</span>
+          <span className="field__hint">{tk("questionHint")}</span>
         </label>
 
         <div className="kn-form-row">
           <label className="field">
-            <span className="field__label">Mode</span>
+            <span className="field__label">{tk("modeLabel")}</span>
             <select className="select" value={mode} onChange={(event) => setMode(event.target.value)}>
               {KNOWLEDGE_MODES.map((option) => (
                 <option key={option} value={option}>
@@ -129,9 +132,9 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
             </select>
           </label>
           <label className="field">
-            <span className="field__label">Category</span>
+            <span className="field__label">{tk("categoryLabel")}</span>
             <select className="select" value={category} onChange={(event) => setCategory(event.target.value)}>
-              <option value="">all</option>
+              <option value="">{t("all")}</option>
               {categories.map((name) => (
                 <option key={name} value={name}>
                   {name}
@@ -140,9 +143,9 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
             </select>
           </label>
           <label className="field">
-            <span className="field__label">Difficulty</span>
+            <span className="field__label">{tk("difficultyLabel")}</span>
             <select className="select" value={difficulty} onChange={(event) => setDifficulty(event.target.value)}>
-              <option value="">any</option>
+              <option value="">{tk("anyOption")}</option>
               {KNOWLEDGE_DIFFICULTIES.map((name) => (
                 <option key={name} value={name}>
                   {name}
@@ -151,9 +154,9 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
             </select>
           </label>
           <label className="field">
-            <span className="field__label">Position</span>
+            <span className="field__label">{tk("positionLabel")}</span>
             <select className="select" value={position} onChange={(event) => setPosition(event.target.value)}>
-              <option value="">any</option>
+              <option value="">{tk("anyOption")}</option>
               {KNOWLEDGE_POSITIONS.map((name) => (
                 <option key={name} value={name}>
                   {name}
@@ -165,18 +168,18 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
 
         <div>
           <button type="button" className="btn btn--primary" onClick={ask} disabled={busy || question.trim().length < 3}>
-            {busy ? "Asking…" : "Ask the library"}
+            {busy ? tk("asking") : tk("askLibrary")}
           </button>
         </div>
       </div>
 
       {promptSignIn && (
         <div className="notice notice--warn" style={{ fontSize: "0.88rem" }}>
-          Your session expired.{" "}
+          {tk("sessionExpired")}{" "}
           <Link className="kn-ref" href="/login?next=%2Fknowledge">
-            Sign in again
+            {tk("signInAgain")}
           </Link>{" "}
-          to keep asking.
+          {tk("keepAsking")}
         </div>
       )}
       {error && <div className="notice notice--warn">{error}</div>}
@@ -187,35 +190,35 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
           <div className="row wrap" style={{ gap: "0.4rem" }}>
             {result.demo_mode ? (
               <span className="badge badge--demo" title="No language-model key is configured; this answer is assembled extractively from the cited passages, not generated.">
-                DEMO MODE · extractive answer
+                {tk("demoModeExtractive")}
               </span>
             ) : (
-              <span className="badge badge--live">AI-generated</span>
+              <span className="badge badge--live">{tk("aiGenerated")}</span>
             )}
-            <span className="chip">confidence {Math.round(result.confidence * 100)}%</span>
+            <span className="chip">{tk("confidence", { percent: Math.round(result.confidence * 100) })}</span>
             <span className="chip mono">{result.model}</span>
             <span className="chip mono">{result.retrieval_backend}</span>
           </div>
 
           {result.answered ? (
             <div className="stack-sm">
-              <span className="eyebrow">Answer</span>
-              <p className="kn-answer">{withRefs(result.answer)}</p>
+              <span className="eyebrow">{tk("answerEyebrow")}</span>
+              <p className="kn-answer">{withRefs(result.answer, (ref) => tk("goToCitation", { ref }))}</p>
             </div>
           ) : (
             <div className="notice notice--warn">
               <span className="eyebrow" style={{ color: "var(--warn)" }}>
-                No grounded answer
+                {tk("noGroundedAnswer")}
               </span>
               <p style={{ marginTop: "0.3rem" }}>{result.answer}</p>
             </div>
           )}
 
-          <ReasonList items={result.reasons} title="Why this answer (or refusal)" />
+          <ReasonList items={result.reasons} title={tk("whyAnswer")} />
 
           {result.citations.length > 0 && (
             <div className="stack-sm">
-              <span className="eyebrow">Cited passages</span>
+              <span className="eyebrow">{tk("citedPassages")}</span>
               {result.citations.map((citation, index) => (
                 <CitationCard key={`${citation.chunk_id}-${index}`} citation={citation} index={index} />
               ))}

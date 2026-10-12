@@ -17,11 +17,12 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const tk = await getTranslations("knowledge");
   const result = await serverFetch<KnowledgeDocumentDetail>(`/knowledge/documents/${encodeURIComponent(slug)}`);
   const title = result.ok ? result.data.title : slug.replace(/-/g, " ");
   const description = result.ok
-    ? `${result.data.category.replace(/_/g, " ")} · ${result.data.chunk_count} cited passages · ${result.data.source}`
-    : "Football knowledge document.";
+    ? tk("articleDescription", { category: result.data.category.replace(/_/g, " "), count: result.data.chunk_count })
+    : tk("metaFallbackDocument");
   return pageMetadata({ title, description, path: `/knowledge/${slug}`, type: "article" });
 }
 
@@ -35,14 +36,15 @@ function formatDay(iso: string | null): string {
 export default async function KnowledgeDocumentPage({ params }: Props) {
   const { slug } = await params;
   const tc = await getTranslations("common");
+  const tk = await getTranslations("knowledge");
   const result = await serverFetch<KnowledgeDocumentDetail>(`/knowledge/documents/${encodeURIComponent(slug)}`);
 
   if (!result.ok) {
     if (result.status === 404 || result.error.code === "not_found") notFound();
     return (
       <div className="container page stack">
-        <h1 className="h1">Knowledge document</h1>
-        <div className="notice notice--warn">{errorMessage(result.error, "This document could not be loaded right now.")}</div>
+        <h1 className="h1">{tk("documentFallbackTitle")}</h1>
+        <div className="notice notice--warn">{errorMessage(result.error, tk("documentUnavailable"))}</div>
       </div>
     );
   }
@@ -53,23 +55,23 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
     <div className="container page stack">
       <div>
         <Link href="/knowledge" className="muted" style={{ fontSize: "0.85rem" }}>
-          ← Back to the library
+          {tk("backToLibrary")}
         </Link>
         <div className="between wrap" style={{ gap: "0.6rem", marginTop: "0.5rem" }}>
           <div>
             <p className="eyebrow">{doc.category.replace(/_/g, " ")}</p>
             <h1 className="h1">{doc.title}</h1>
           </div>
-          <span className="badge badge--authored" title="Written for this project — no external text reproduced. This is not demo data.">
-            PROJECT AUTHORED
+          <span className="badge badge--authored" title={tk("authoredBadgeTitle")}>
+            {tk("authoredBadge")}
           </span>
         </div>
         <div className="tag-list" style={{ marginTop: "0.6rem" }}>
-          <span className="chip">difficulty {doc.difficulty}</span>
-          <span className="chip">{doc.chunk_count} passages</span>
-          <span className="chip">{doc.char_count.toLocaleString()} characters</span>
-          <span className="chip">editorial confidence: {doc.editorial_confidence}</span>
-          <span className="chip">last reviewed {formatDay(doc.last_reviewed)}</span>
+          <span className="chip">{tk("difficultyChip", { value: doc.difficulty })}</span>
+          <span className="chip">{tk("passagesCount", { count: doc.chunk_count })}</span>
+          <span className="chip">{tk("charactersChip", { count: doc.char_count.toLocaleString() })}</span>
+          <span className="chip">{tk("editorialConfidence", { value: doc.editorial_confidence })}</span>
+          <span className="chip">{tk("lastReviewed", { date: formatDay(doc.last_reviewed) })}</span>
         </div>
         {doc.applies_to.length > 0 && (
           <div className="tag-list" style={{ marginTop: "0.4rem" }}>
@@ -103,21 +105,21 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
       />
 
       <Panel
-        eyebrow="Provenance"
-        title="Where this text comes from"
+        eyebrow={tk("provenanceEyebrow")}
+        title={tk("provenanceTitle")}
         footer={
           <span className="kn-prov__text">
-            data_origin: <span className="mono">{doc.data_origin}</span> · is_demo_data:{" "}
-            <span className="mono">{String(doc.is_demo_data)}</span> · embedding model: <span className="mono">{doc.embedding_model}</span>
-            {" · "}
-            {doc.source}
+            {tk("provenanceFooter", {
+              origin: doc.data_origin,
+              demo: String(doc.is_demo_data),
+              model: doc.embedding_model,
+              source: doc.source,
+            })}
           </span>
         }
       >
         <p className="muted" style={{ fontSize: "0.88rem" }}>
-          This document is project-authored editorial content, not demo data. The <span className="mono">{tc("demoMode")}</span>{" "}
-          badge elsewhere on the site applies to how answers are generated, never to these passages. Use the anchors below —
-          a citation link like <span className="mono">#0</span> jumps to the exact passage it quotes.
+          {tk("provenanceBody")}
         </p>
         {doc.tags.length > 0 && (
           <div className="tag-list" style={{ marginTop: "0.6rem" }}>
@@ -131,7 +133,7 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
       </Panel>
 
       <section className="stack">
-        <h2 className="h2">Passages</h2>
+        <h2 className="h2">{tk("passagesH2")}</h2>
         <div className="kn-sections">
           {doc.sections.map((section) => (
             <article className="kn-section" id={String(section.ordinal)} key={section.ordinal}>
@@ -142,7 +144,7 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
                   </a>{" "}
                   {section.heading}
                 </span>
-                <span className="chip">{section.char_count} chars</span>
+                <span className="chip">{tk("sectionChars", { count: section.char_count })}</span>
               </div>
               <p className="kn-section__text">{section.text}</p>
             </article>

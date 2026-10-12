@@ -22,16 +22,17 @@ export const metadata: Metadata = pageMetadata({
 });
 
 const SECTIONS = [
-  { id: "library", text: "Library" },
-  { id: "search", text: "Search" },
-  { id: "ask", text: "Ask" },
-];
+  { id: "library", key: "tabLibrary" },
+  { id: "search", key: "tabSearch" },
+  { id: "ask", key: "tabAsk" },
+] as const;
 
 /** The library corpus is authored for this project; only answer generation is in demo mode. */
-function AuthoredBadge() {
+async function AuthoredBadge() {
+  const t = await getTranslations("knowledge");
   return (
-    <span className="badge badge--authored" title="Every document here was written for this project — no external text is reproduced. This is not demo data.">
-      PROJECT AUTHORED
+    <span className="badge badge--authored" title={t("authoredBadgeTitle")}>
+      {t("authoredBadge")}
     </span>
   );
 }
@@ -53,6 +54,7 @@ export default async function KnowledgePage({
   const category = params.category;
   const q = params.q;
   const tc = await getTranslations("common");
+  const t = await getTranslations("knowledge");
 
   // Library + status are public reads (no bearer token on the backend), so this renders
   // for a signed-out visitor; only search/ask need the session, handled in the client halves.
@@ -66,14 +68,13 @@ export default async function KnowledgePage({
   return (
     <div className="container page stack">
       <div>
-        <p className="eyebrow">Football Knowledge · RAG</p>
-        <h1 className="h1">The football knowledge base</h1>
+        <p className="eyebrow">{t("eyebrow")}</p>
+        <h1 className="h1">{t("title")}</h1>
         <p className="lede">
           {statusResult.ok
-            ? `${statusResult.data.documents} project-authored documents, ${statusResult.data.chunks} indexed passages. `
-            : "Browse the library, "}
-          Search runs hybrid retrieval over the corpus; Ask answers only from passages it can cite. The documents are real
-          editorial content — what runs in demo mode is the answer generation, not the library.
+            ? t("ledeCounts", { documents: statusResult.data.documents, chunks: statusResult.data.chunks })
+            : t("ledeNoCounts")}
+          {t("ledeRest")}
         </p>
       </div>
 
@@ -82,15 +83,17 @@ export default async function KnowledgePage({
           <span className="badge badge--demo" title="No language-model key is configured — ask/search answers are assembled extractively from the cited passages, never generated.">
             {tc("demoMode")}
           </span>{" "}
-          Answer generation is running without a language model ({String(statusResult.data.providers.reranker ?? "")} reranker,{" "}
-          {statusResult.data.embedding_models.join(", ") || "no"} embeddings). Retrieval and citations are fully live.
+          {t("demoNotice", {
+            reranker: String(statusResult.data.providers.reranker ?? ""),
+            embeddings: statusResult.data.embedding_models.join(", ") || "no",
+          })}
         </div>
       )}
 
-      <nav className="kn-tabs" aria-label="Knowledge sections">
+      <nav className="kn-tabs" aria-label={t("sectionsLabel")}>
         {SECTIONS.map((section) => (
           <a className="kn-tabs__link" href={`#${section.id}`} key={section.id}>
-            {section.text}
+            {t(section.key)}
           </a>
         ))}
       </nav>
@@ -103,7 +106,7 @@ export default async function KnowledgePage({
               <Link key={name} href={`/knowledge?category=${encodeURIComponent(name)}`} className="kn-card">
                 <span className="h3 upper">{name.replace(/_/g, " ")}</span>
                 <span className="muted kn-card__summary">
-                  {count} document{count === 1 ? "" : "s"}
+                  {t("resultLineOne", { total: count, s: count === 1 ? "" : "s" })}
                 </span>
               </Link>
             ))}
@@ -112,33 +115,35 @@ export default async function KnowledgePage({
 
       <section id="library" className="stack">
         <Panel
-          eyebrow="Library"
-          title="Document library"
+          eyebrow={t("libraryEyebrow")}
+          title={t("libraryTitle")}
           action={<AuthoredBadge />}
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              Read from <span className="mono">GET /knowledge/documents</span>. Provenance, difficulty and chunk counts are
-              the API&rsquo;s own fields — nothing here is modelled or decorative.
+              {t("libraryFooter")}
             </span>
           }
         >
           {!docsResult.ok ? (
             <div className="notice notice--warn">
-              {errorMessage(docsResult.error, "The document library is unavailable right now.")}
+              {errorMessage(docsResult.error, t("libraryUnavailable"))}
             </div>
           ) : (
             <div className="stack">
               <div className="between wrap" style={{ gap: "0.6rem" }}>
                 <p className="muted" style={{ fontSize: "0.85rem" }}>
-                  {docsResult.data.total} document{docsResult.data.total === 1 ? "" : "s"}
-                  {category ? ` in ${category.replace(/_/g, " ")}` : ""}
-                  {q ? ` matching “${q}”` : ""}.
+                  {t("resultLine", {
+                    total: docsResult.data.total,
+                    s: docsResult.data.total === 1 ? "" : "s",
+                    category: category ? ` in ${category.replace(/_/g, " ")}` : "",
+                    query: q ? ` matching “${q}”` : "",
+                  })}
                 </p>
                 <form method="get" action="/knowledge" className="kn-form-row">
                   <input type="hidden" name="category" value={category ?? ""} />
                   <label className="field" style={{ minWidth: "200px" }}>
-                    <span className="field__label">Filter title / source</span>
-                    <input className="input" id="klib-q" type="search" name="q" defaultValue={q ?? ""} placeholder="e.g. press, hamstring" />
+                    <span className="field__label">{t("filterLabel")}</span>
+                    <input className="input" id="klib-q" type="search" name="q" defaultValue={q ?? ""} placeholder={t("queryPlaceholder")} />
                   </label>
                   <button type="submit" className="btn btn--primary">
                     {tc("search")}
@@ -167,20 +172,20 @@ export default async function KnowledgePage({
               </div>
 
               {docsResult.data.items.length === 0 ? (
-                <Empty title="No documents match this filter" body="Clear the filter or pick another category." href="/knowledge" cta="Show the full library" />
+                <Empty title={t("noMatchesTitle")} body={t("noMatchesBody")} href="/knowledge" cta={t("showFullLibrary")} />
               ) : (
                 <div className="grid-2">
                   {docsResult.data.items.map((doc) => (
                     <Link key={doc.slug} href={`/knowledge/${encodeURIComponent(doc.slug)}`} className="kn-card">
                       <span className="h3">{doc.title}</span>
-                      <span className="muted kn-card__summary upper">{doc.category.replace(/_/g, " ")} · difficulty {doc.difficulty}</span>
+                      <span className="muted kn-card__summary upper">{t("cardMeta", { category: doc.category.replace(/_/g, " "), difficulty: doc.difficulty })}</span>
                       <div className="tag-list">
                         {doc.applies_to.slice(0, 4).map((role) => (
                           <span className="chip" key={role}>
                             {role}
                           </span>
                         ))}
-                        <span className="chip">{doc.chunk_count} passages</span>
+                        <span className="chip">{t("passagesCount", { count: doc.chunk_count })}</span>
                       </div>
                       {doc.tags.length > 0 && (
                         <div className="tag-list">
@@ -194,7 +199,7 @@ export default async function KnowledgePage({
                       <div className="kn-prov">
                         <AuthoredBadge />
                         <span className="kn-prov__text">
-                          {doc.source} · last reviewed {formatDay(doc.last_reviewed)}
+                          {t("cardSource", { source: doc.source, date: formatDay(doc.last_reviewed) })}
                         </span>
                       </div>
                     </Link>
@@ -209,11 +214,10 @@ export default async function KnowledgePage({
       <section id="search" className="stack">
         <Panel
           eyebrow={tc("search")}
-          title="Hybrid retrieval over the corpus"
+          title={t("searchEyebrow")}
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              Every score, cosine similarity, bm25 value and reason is returned by{" "}
-              <span className="mono">POST /knowledge/search</span>.
+              {t("searchFooter")}
             </span>
           }
         >
@@ -223,12 +227,11 @@ export default async function KnowledgePage({
 
       <section id="ask" className="stack">
         <Panel
-          eyebrow="Ask"
-          title="Ask the library"
+          eyebrow={t("askEyebrow")}
+          title={t("askLibrary")}
           footer={
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              Answers cite passages verbatim via <span className="mono">POST /knowledge/ask</span>. When the corpus cannot
-              support an answer, it says so rather than inventing one.
+              {t("askFooter")}
             </span>
           }
         >
