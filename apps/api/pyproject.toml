@@ -33,3 +33,9 @@ disallow_untyped_defs = false
 testpaths = ["tests"]
 addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning:passlib.*"]
+markers = [
+  # These need a live external service. Each one skips itself when the service is
+  # absent rather than failing, so a marker selects a class of test, not a class of
+  # failure — which is why leaving it unregistered only produced a warning.
+  "integration: talks to a live external service (Redis, a real port) and skips itself when none answers",
+]

@@ -33,7 +33,11 @@ class RedisCache:
     ) -> None:
         self.max_size = max_size
         self.default_ttl = default_ttl
-        self.redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        # Annotated, not inferred: `redis_url` arrives as `str | None`, and typeshed
+        # declares `os.getenv` as `str | None` even when a default is passed — so the
+        # literal has to sit outside the call for the expression to narrow to `str`,
+        # which is what `from_url` demands two lines down.
+        self.redis_url: str = redis_url or os.getenv("REDIS_URL") or "redis://localhost:6379/0"
         self._redis: redis.Redis | None = None
         self._fallback = TTLCache(max_size=max_size, default_ttl=default_ttl)
         self._available = False
