@@ -261,7 +261,15 @@ survive the move to quieter hardware even though the absolute figures will not.
 * **No authenticated Redis tier.** `RedisCache` landed with the in-memory fallback wired, and its
   degradation paths are measured against this host's password-protected 6379 — but no instance has
   ever served a real request through it, and the fallback is sticky for the life of the process.
-* **No external log sink.** The JSON formatter is the contract with a sink that deployment wires.
+* **No external log sink.** The JSON formatter is the contract with a sink that deployment wires,
+  and the contract itself is now tested rather than asserted — `tests/test_logging.py` parses the
+  emitted line, checks the standard fields, extras and exception text, and walks a request id from
+  the header through the middleware into the emitted record. That test was written because the walk
+  was broken: `RequestIDFilter` built its own `ContextVar("request_id")` while `app.main` built a
+  second one with the same name and set *that*, so every line carried `"request_id": ""`. An empty
+  string is a legal value for a string field, so nothing failed — an aggregator grouping on the
+  field would simply have put every request in one bucket. One variable now, defined where the
+  filter lives and imported by `main`.
 * **No trace backend.** OpenTelemetry is wired and the span path is measured through an in-memory
   exporter, but no collector runs on this host, so no span has reached a real backend; sampling and
   propagation through the proxy are deployment concerns, not claims.
