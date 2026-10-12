@@ -96,6 +96,12 @@ jobs:
         # of against one change's diff: the population, the literal ceiling and the two exemptions are re-derived
         # from the parsed bytes on every run, so a shrinking scan or a stale exemption fails the build. Files only.
         run: node scripts/qa-metadata-title.mjs
+      - name: Crawl-policy gate (gated routes disallowed, advertised routes reachable, Allow exceptions live)
+        # Same command as `scripts/check.sh`. Three files split one decision — who may crawl what — and each only
+        # described the others in prose. This transpiles and calls all three, reconciles them against every page's
+        # own `robots:` declaration, and refuses the class it found: 8 session-gated pages in no disallowed prefix,
+        # whose `noindex` a crawler never reads because a 307 carries no head. Files only.
+        run: node scripts/qa-crawl-policy.mjs
       - name: Types
         run: npm run typecheck
       - name: Build

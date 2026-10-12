@@ -68,6 +68,16 @@ echo "── Web: middleware gating gate ─────────────
 # no browser, which is why it runs here rather than in the live-tier walks that would need a token-free plane.
 (cd apps/web && node scripts/qa-middleware-gating.mjs)
 
+echo "── Web: crawl-policy reconciliation gate ─────────────"
+# middleware.ts, app/robots.ts and app/sitemap.ts each decide part of what a crawler may see, and each only
+# *described* the others in a comment. This gate loads all three decisions (transpiled, called) and reconciles them
+# against every page's own `robots:` declaration: a session-gated route must be disallowed, an advertised route must
+# be neither gated nor self-declared noindex, and an `Allow` exception must still cover a reachable page under a
+# disallowed prefix. It found 8 gated pages in no disallowed prefix at all — `/agents`, the four `/graph` pages and
+# the three `/simulation/aggregates` pages — whose `noindex` was inert because a 307 has no `<head>` to read.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-crawl-policy.mjs)
+
 echo "── Web: metadata-title i18n gate ─────────────────────"
 # §81 2c's permanent rule over the whole page population: a page may still write its <title> as a load-time
 # literal, but only while its own heading is a literal that says the same thing — a literal tab over a keyed

@@ -32,6 +32,12 @@ const DISALLOWED = [
   // already; the account's own simulation history is not content, and a model scoreline must not be
   // crawlable as if it were a result.
   "/simulate",
+  // The cross-career ledgers. Same rule as the row above and the same rows behind it: a league table or a
+  // player aggregate is the sum of what an account's own rounds produced, so it is not content even though
+  // the world's fixtures are. `scripts/qa-crawl-policy.mjs` found these three prefixes missing when the list
+  // was written by hand — the pages declare `noindex`, but a signed-out fetch answers 307 and a redirect has
+  // no `<head>`, so the declaration was never readable by the one crawler that would have honoured it.
+  "/simulation",
   "/career",
   // A challenge run is a career: which scenario an account took on, and the verdict its own rounds
   // produced. Nothing here is a real competition, so nothing here should be crawlable as one.
@@ -40,6 +46,13 @@ const DISALLOWED = [
   // one manager's opinion-shaped cut of generated rows. `/scout/rules` is public JSON, but the page itself is
   // session-gated, so it is disallowed rather than noindexed alone.
   "/scout",
+  // The agent console: which agents an account has run, and what each one answered. The roster itself is public
+  // JSON at `/api/v1/agents/list` — which the `/api/` row above closes — while this page is the account's run log.
+  "/agents",
+  // §30's graph browser. Its nodes are the generated world's own rows, so the *entities* it links to are
+  // crawlable through the sitemap; the browser is a session-gated view over them, and the four pages under it
+  // (`/graph`, `/graph/nodes/<kind>`, `<slug>`, `<slug>/neighborhood`) all redirect a signed-out reader.
+  "/graph",
   // A tenant's members, sheets and children's plans. `/club/rules` is excepted below on purpose: the
   // permission matrix, the caps and the refusal table are the terms of the service, and §39 publishes them
   // at a door that needs no account — a rule an account holder cannot read until they have agreed to it is
