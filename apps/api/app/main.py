@@ -6,7 +6,6 @@ import time
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from contextvars import ContextVar
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,7 +46,7 @@ from app.core.cache import _response_cache
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
-from app.core.logging import configure_logging, get_logger
+from app.core.logging import configure_logging, get_logger, request_id_var
 from app.core.tracing import init_tracing, instrument_fastapi
 from app.services.knowledge import corpus_stats, sync_knowledge
 from app.services.tactics import sync_tactics
@@ -57,10 +56,6 @@ from app.services.world import sync_world
 # Configure structured logging
 configure_logging()
 logger = get_logger("football_os.api")
-
-# Request ID context variable for correlation
-request_id_var: ContextVar[str] = ContextVar("request_id", default="")
-
 
 DESCRIPTION = """
 **FOOTBALL OS** — The Operating System for Football.
