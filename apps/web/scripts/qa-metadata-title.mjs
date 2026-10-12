@@ -7,9 +7,10 @@ Why the change-time witness could not be the shipped one: `dmeta-check.mjs` grad
 read against *HEAD's literal* — the only proof that no English copy was rewritten while wiring. That comparison stops
 meaning anything the moment HEAD is the wired file, so it is an instrument for making a change, not for holding one.
 This file states the rule permanently: **a tab may not be a load-time literal on a page whose heading already follows
-the locale**, because the heading repaints in Chinese while the tab stays English; and where both are still literals,
-**they must be the same bytes**, because a tab that names a different copy than its own heading is two authors talking
-past each other inside one page.
+the locale**, because the heading repaints in Chinese while the tab stays English; **nor may a tab follow the locale
+on a page whose headings are all literals**, because that is the same mismatch written in the other direction; and
+where both are still literals, **they must be the same bytes**, because a tab that names a different copy than its own
+heading is two authors talking past each other inside one page.
 
 Measured over the whole population at the ref this gate landed (59 `page.tsx`, 0 parse diagnostics): titles are
 keyed 24 → 25, literal 25 → 24, dynamic 10; headings are keyed 25, dynamic 21, literal 13. The literal×keyed cell —
@@ -28,6 +29,7 @@ Checks, each able to refuse on its own:
   8  a tab key differs from English in both Chinese catalogues          — an English-valued key means no locale read can see the wiring
   9  every <ns>.metaTitle in the catalogue is read by some page's tab   — the orphan shape: written for a title, read by nothing
   10 LITERAL ceiling: the count of literal-titled pages may not rise     — i18n work lowers this; a new page must not raise it
+  11 MIRROR: no keyed tab on a page whose headings are all literals       — the drift of check 4 written in the other direction; 0 today, so it refuses rather than ratchets
 
 The two ledger rows are the pages whose tab and heading are two different copies in English today (`/club` prints
 "My clubs" over "Club tenancies"; `/community` prints "Community" over "Community wall"). Choosing between them is a
@@ -294,6 +296,17 @@ const literalCount = rows.filter((r) => r.title?.kind === "literal").length;
 const CEILING_LITERALS = 24; // measured at the ref this gate landed; wiring lowers it, a new page must not raise it
 check(`10 LITERAL ceiling: pages still titling from a load-time literal <= ${CEILING_LITERALS}`,
   literalCount <= CEILING_LITERALS, `found ${literalCount}`);
+
+// The mirror of check 4, and the same defect from the other side: the tab follows the locale while the page's own
+// heading cannot. It is the half a metadata slice can create on its own — wire the `<title>`, leave the `<h1>` — and
+// it measures 0 over today's population, so this is a refusal, not a ratchet: a page may not be wired top-down.
+// (A census written earlier in this arc printed a bucket it called "title-keyed-heading-literal" and read 7; every
+// one of those 7 turned out to be a keyed heading under a *different* key — `/knowledge`'s tab names the surface,
+// its h1 names the corpus. The label was the census's misnomer, not a hole in this check.)
+const mirror = rows.filter((r) => r.title?.kind === "keyed" && r.heads.some((h) => h.kind === "literal")
+  && !r.heads.some((h) => h.kind === "keyed"));
+check("11 MIRROR — no keyed tab on a page whose headings are all literals", mirror.length === 0,
+  mirror.map((r) => `${r.rel} tab=${r.title.ns}.${r.title.key} heading=${JSON.stringify(r.heads.find((h) => h.kind === "literal").value)}`).join(", "));
 
 console.log(`CHECKS passed=${passed} total=${checks} failed=${checks - passed}`);
 console.log(`  population=${rows.length} titles: keyed=${rows.filter((r) => r.title?.kind === "keyed").length} `
