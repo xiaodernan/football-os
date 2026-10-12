@@ -15,6 +15,7 @@ def test_redis_cache_fallback_when_unavailable() -> None:
         mock_from_url.return_value = mock_redis
 
         from app.core.redis_cache import RedisCache
+
         cache = RedisCache(redis_url="redis://localhost:6379/0")
         assert cache._available is False
 
@@ -36,6 +37,7 @@ def test_redis_cache_happy_path() -> None:
         mock_from_url.return_value = mock_redis
 
         from app.core.redis_cache import RedisCache
+
         cache = RedisCache(redis_url="redis://localhost:6379/0")
         assert cache._available is True
 
@@ -55,6 +57,7 @@ def test_redis_cache_fallback_on_redis_failure() -> None:
         mock_from_url.return_value = mock_redis
 
         from app.core.redis_cache import RedisCache
+
         cache = RedisCache(redis_url="redis://localhost:6379/0")
         assert cache._available is True
 
@@ -76,6 +79,7 @@ def test_redis_cache_graceful_degradation_on_set_failure() -> None:
         mock_from_url.return_value = mock_redis
 
         from app.core.redis_cache import RedisCache
+
         cache = RedisCache(redis_url="redis://localhost:6379/0")
         assert cache._available is True
 
@@ -93,6 +97,7 @@ def test_redis_cache_delete() -> None:
         mock_from_url.return_value = mock_redis
 
         from app.core.redis_cache import RedisCache
+
         cache = RedisCache(redis_url="redis://localhost:6379/0")
         cache.set("test_key", "test_value")
 
@@ -110,6 +115,7 @@ def test_redis_cache_clear() -> None:
         mock_from_url.return_value = mock_redis
 
         from app.core.redis_cache import RedisCache
+
         cache = RedisCache(redis_url="redis://localhost:6379/0")
         cache.set("test_key", "test_value")
         cache.clear()
@@ -127,6 +133,7 @@ def test_redis_cache_get_stats() -> None:
         mock_from_url.return_value = mock_redis
 
         from app.core.redis_cache import RedisCache
+
         cache = RedisCache(redis_url="redis://localhost:6379/0")
         cache.set("test_key", "test_value")
 
@@ -143,7 +150,8 @@ def test_global_redis_cache_singleton() -> None:
         mock_redis.ping.return_value = True
         mock_from_url.return_value = mock_redis
 
-        from app.core.redis_cache import get_redis_cache, close_redis_cache
+        from app.core.redis_cache import close_redis_cache, get_redis_cache
+
         cache1 = get_redis_cache()
         cache2 = get_redis_cache()
         assert cache1 is cache2
@@ -158,7 +166,8 @@ def test_redis_cache_close() -> None:
         mock_redis.ping.return_value = True
         mock_from_url.return_value = mock_redis
 
-        from app.core.redis_cache import RedisCache, close_redis_cache
+        from app.core.redis_cache import RedisCache
+
         cache = RedisCache(redis_url="redis://localhost:6379/0")
         assert cache._available is True
 
@@ -176,6 +185,7 @@ def test_redis_cache_graceful_degradation_when_env_unset() -> None:
             mock_from_url.return_value = mock_redis
 
             from app.core.redis_cache import RedisCache
+
             cache = RedisCache()  # Uses default redis_url
             assert cache._available is False
             # Still works via fallback
@@ -189,6 +199,7 @@ def test_redis_cache_real_integration() -> None:
     """Integration test against real Redis (requires running Redis)."""
     pytest.importorskip("redis")
     from app.core.redis_cache import RedisCache
+
     cache = RedisCache(redis_url="redis://localhost:6379/0")
     if not cache._available:
         pytest.skip("Redis not available")

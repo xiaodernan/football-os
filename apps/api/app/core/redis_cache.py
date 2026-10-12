@@ -9,13 +9,11 @@ from __future__ import annotations
 import json
 import logging
 import os
-import time
 from typing import Any
 
 import redis
 
 from app.core.cache import TTLCache
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +63,6 @@ class RedisCache:
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get value by key."""
-        redis_key = self._key(key)
-
         if self._available and self._redis:
             try:
                 value = self._redis.get(self._key(key))
@@ -81,7 +77,6 @@ class RedisCache:
 
     def set(self, key: str, value: Any, ttl: float | None = None) -> bool:
         """Set value with optional TTL."""
-        redis_key = self._key(key)
         ttl_seconds = int(ttl if ttl is not None else self.default_ttl)
 
         # Always write to fallback
@@ -163,7 +158,7 @@ class RedisCache:
 
 
 # Global Redis cache instance (lazy initialization)
-_redis_cache: "RedisCache | None" = None
+_redis_cache: RedisCache | None = None
 
 
 def get_redis_cache() -> RedisCache:
