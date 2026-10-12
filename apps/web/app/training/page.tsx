@@ -13,10 +13,10 @@ import "./training.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Training Academy",
-  description: "Original synthetic drills grouped by category, plus the sessions you have planned for today.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("training");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 export default async function TrainingPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const user = await currentUser();
@@ -24,6 +24,7 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
 
   const { category } = await searchParams;
   const tc = await getTranslations("common");
+  const t = await getTranslations("training");
 
   const [drillsResult, sessionsResult] = await Promise.all([
     serverFetch<Drill[]>("/trainings/drills"),
@@ -35,8 +36,8 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
     if (drillsResult.status === 409 && drillsResult.error.code === "no_player") redirect("/onboarding");
     return (
       <div className="container page stack">
-        <h1 className="h1">Training Academy</h1>
-        <div className="notice notice--warn">{errorMessage(drillsResult.error, "The drill catalogue is unavailable right now.")}</div>
+        <h1 className="h1">{t("metaTitle")}</h1>
+        <div className="notice notice--warn">{errorMessage(drillsResult.error, t("catalogueUnavailable"))}</div>
       </div>
     );
   }
@@ -57,23 +58,20 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
     <div className="container page stack">
       <div className="between wrap" style={{ gap: "0.6rem" }}>
         <div>
-          <p className="eyebrow">Training Academy</p>
-          <h1 className="h1">Drills &amp; your sessions</h1>
+          <p className="eyebrow">{t("eyebrow")}</p>
+          <h1 className="h1">{t("title")}</h1>
         </div>
-        <span className="badge badge--demo" title="Every drill here is original, synthetic demo content authored for this demo — not a real club's curriculum.">
-          {drills.length} DEMO DRILLS
+        <span className="badge badge--demo" title={t("demoBadgeTitle")}>
+          {t("demoBadge", { count: drills.length })}
         </span>
       </div>
-      <p className="lede">
-        These {drills.length} drills are original content generated for this demo build. They are not any real club&apos;s
-        curriculum. Open a drill to read its full instructions and add it to today.
-      </p>
+      <p className="lede">{t("lede", { count: drills.length })}</p>
 
-      <Panel eyebrow="Today" title={`Planned sessions (${planned.length})`} action={<Link className="btn btn--ghost btn--sm" href="/coach">Ask the coach</Link>}>
+      <Panel eyebrow={t("todayEyebrow")} title={t("plannedTitle", { count: planned.length })} action={<Link className="btn btn--ghost btn--sm" href="/coach">{t("askCoach")}</Link>}>
         {!sessionsResult.ok ? (
-          <div className="notice notice--warn">{errorMessage(sessionsResult.error, "Your planned sessions could not be loaded.")}</div>
+          <div className="notice notice--warn">{errorMessage(sessionsResult.error, t("plannedUnavailable"))}</div>
         ) : planned.length === 0 ? (
-          <Empty title="Nothing planned yet" body="Add a drill from the catalogue below and it will appear here ready to log." href="#catalogue" cta="Browse drills" />
+          <Empty title={t("nothingPlannedTitle")} body={t("nothingPlannedBody")} href="#catalogue" cta={t("browseDrills")} />
         ) : (
           <div className="stack">
             {planned.map((session) => (
@@ -85,7 +83,7 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
 
       <div id="catalogue" className="stack">
         <div className="between wrap" style={{ gap: "0.6rem" }}>
-          <h2 className="h2">Drill catalogue</h2>
+          <h2 className="h2">{t("catalogueTitle")}</h2>
           <div className="row wrap" style={{ gap: "0.4rem" }}>
             <Link className={`chip ${!activeCategory ? "chip--accent" : ""}`} href="/training">
               {tc("all")}
@@ -100,9 +98,9 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
 
         {activeCategory ? (
           <p className="muted" style={{ fontSize: "0.85rem" }}>
-            Filtered to <strong>{activeCategory.replace(/_/g, " ")}</strong>.{" "}
+            {t("filteredTo")} <strong>{activeCategory.replace(/_/g, " ")}</strong>.{" "}
             <Link href="/training" style={{ textDecoration: "underline" }}>
-              Clear filter
+              {t("clearFilter")}
             </Link>
           </p>
         ) : null}
@@ -118,8 +116,8 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
                   </div>
                   <p className="muted drill-card__objective">{drill.objective}</p>
                   <DrillMeta drill={drill} />
-                  {drill.coaching_points[0] && <p className="drill-card__point">Key point: {drill.coaching_points[0]}</p>}
-                  <span className="badge badge--demo">demo / synthetic</span>
+                  {drill.coaching_points[0] && <p className="drill-card__point">{t("keyPoint", { point: drill.coaching_points[0] })}</p>}
+                  <span className="badge badge--demo">{t("demoSynthetic")}</span>
                 </Link>
               ))}
             </div>

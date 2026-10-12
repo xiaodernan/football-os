@@ -694,6 +694,40 @@ async function run() {
       englishMessages.history.title,
     );
 
+    // 10f. §81 2c: the academy index. Four files and 108 keys — the largest namespace in the batch — and like
+    // the training log it had been *half*-wired: `page.tsx` already read `common` for the "all" chip while the
+    // rest of the page, and the three components beside it, were literals.
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    await open(page, '/training');
+    await waitForText(page, chineseMessages.training.title);
+    const trainingZh = await page.evaluate(() => ({
+      h1: document.querySelector('h1')?.textContent.trim() ?? '',
+      body: document.body.innerText.replace(/\s+/gu, ' '),
+    }));
+    check(
+      'the academy index in Chinese renders the catalogue: heading, lede, catalogue panel and drill cards come from messages/zh.json',
+      trainingZh.h1 === chineseMessages.training.title &&
+        trainingZh.body.includes(chineseMessages.training.catalogueTitle) &&
+        trainingZh.body.includes(chineseMessages.training.todayEyebrow) &&
+        trainingZh.body.includes(chineseMessages.training.demoSynthetic),
+      `h1 ${trainingZh.h1} · catalogue ${trainingZh.body.includes(chineseMessages.training.catalogueTitle)} · today ${trainingZh.body.includes(chineseMessages.training.todayEyebrow)} · card ${trainingZh.body.includes(chineseMessages.training.demoSynthetic)}`,
+    );
+    check(
+      'and the English copy is gone from the Chinese academy index',
+      !trainingZh.body.includes(englishMessages.training.catalogueTitle) &&
+        !trainingZh.body.includes(englishMessages.training.title) &&
+        !trainingZh.body.includes(englishMessages.training.demoSynthetic),
+      `en catalogue present ${trainingZh.body.includes(englishMessages.training.catalogueTitle)} · en title present ${trainingZh.body.includes(englishMessages.training.title)} · en card present ${trainingZh.body.includes(englishMessages.training.demoSynthetic)}`,
+    );
+    await shot(page, '18f-training-chinese');
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+    await open(page, '/training');
+    check(
+      'and the switch back leaves the academy index in English, so the check is not one-way',
+      (await bodyText(page)).includes(englishMessages.training.title),
+      englishMessages.training.title,
+    );
+
     // 12. SEO surface (spec §80): robots, sitemap, canonical, OpenGraph and structured data.
     const [robots, sitemap] = await Promise.all([
       fetch(`${BASE}/robots.txt`).then(async (response) => ({

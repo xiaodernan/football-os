@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { DataUnavailable, DrillMeta, Meter, Panel } from "@/components/ui";
 import { AddSession } from "@/app/training/AddSession";
@@ -16,15 +17,16 @@ type DrillKnowledge = Omit<Drill, "id" | "positions" | "xp_base"> & { video: str
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  const t = await getTranslations("training");
   const result = await serverFetch<DrillKnowledge>(`/coach/drills/${encodeURIComponent(slug)}/knowledge`);
   const title = result.ok ? result.data.title : slug.replace(/-/g, " ");
   return {
     title,
-    description: result.ok ? result.data.objective : "Original synthetic training drill.",
+    description: result.ok ? result.data.objective : t("syntheticDrill"),
   };
 }
 
-function PointList({ title, items }: { title: string; items: string[] }) {
+function PointList({ title, empty, items }: { title: string; empty: string; items: string[] }) {
   return (
     <div className="stack-sm">
       <p className="eyebrow">{title}</p>
@@ -38,7 +40,7 @@ function PointList({ title, items }: { title: string; items: string[] }) {
         </ul>
       ) : (
         <span className="muted" style={{ fontSize: "0.85rem" }}>
-          Not provided for this drill.
+          {empty}
         </span>
       )}
     </div>
@@ -50,6 +52,7 @@ export default async function DrillDetailPage({ params }: { params: Promise<{ sl
   if (!user) redirect("/login");
 
   const { slug } = await params;
+  const t = await getTranslations("training");
 
   const [knowledgeResult, listResult] = await Promise.all([
     serverFetch<DrillKnowledge>(`/coach/drills/${encodeURIComponent(slug)}/knowledge`),
@@ -71,8 +74,8 @@ export default async function DrillDetailPage({ params }: { params: Promise<{ sl
     if (!listResult.ok && !knowledgeResult.ok) {
       return (
         <div className="container page stack">
-          <h1 className="h1">Drill</h1>
-          <div className="notice notice--warn">{errorMessage(knowledgeResult.ok ? listResult.error : knowledgeResult.error, "This drill could not be loaded.")}</div>
+          <h1 className="h1">{t("drillFallbackTitle")}</h1>
+          <div className="notice notice--warn">{errorMessage(knowledgeResult.ok ? listResult.error : knowledgeResult.error, t("drillUnavailable"))}</div>
         </div>
       );
     }
@@ -95,7 +98,7 @@ export default async function DrillDetailPage({ params }: { params: Promise<{ sl
   const testTarget = knowledge?.test_target ?? listDrill?.test_target ?? "";
   const targetAttributes = knowledge?.target_attributes ?? listDrill?.target_attributes ?? {};
   const isDemo = knowledge?.is_demo_data ?? listDrill?.is_demo_data ?? true;
-  const video = knowledge?.video ?? "Data unavailable";
+  const video = knowledge?.video ?? t("dataUnavailable");
 
   const weights = Object.values(targetAttributes);
   const maxWeight = weights.length > 0 ? Math.max(...weights) : 1;
@@ -104,7 +107,7 @@ export default async function DrillDetailPage({ params }: { params: Promise<{ sl
     <div className="container page stack">
       <div>
         <Link href="/training" className="muted" style={{ fontSize: "0.85rem" }}>
-          ← Back to Training Academy
+          {t("backToAcademy")}
         </Link>
         <div className="between wrap" style={{ gap: "0.6rem", marginTop: "0.5rem" }}>
           <div>
@@ -112,8 +115,8 @@ export default async function DrillDetailPage({ params }: { params: Promise<{ sl
             <h1 className="h1">{title}</h1>
           </div>
           {isDemo && (
-            <span className="badge badge--demo" title="Original synthetic demo content — not a real club's curriculum.">
-              DEMO / SYNTHETIC
+            <span className="badge badge--demo" title={t("demoSyntheticTitle")}>
+              {t("demoSyntheticUpper")}
             </span>
           )}
         </div>
@@ -124,28 +127,28 @@ export default async function DrillDetailPage({ params }: { params: Promise<{ sl
           </div>
         ) : (
           <div className="tag-list" style={{ marginTop: "0.6rem" }}>
-            <span className="chip">{durationMin} min</span>
-            <span className="chip">difficulty {difficulty}/5</span>
+            <span className="chip">{t("durationChip", { minutes: durationMin })}</span>
+            <span className="chip">{t("difficultyChip", { difficulty })}</span>
           </div>
         )}
       </div>
 
-      <Panel eyebrow="Get started" title="Add this drill to today">
+      <Panel eyebrow={t("getStartedEyebrow")} title={t("addToTodayTitle")}>
         {listDrill ? (
           <AddSession drillId={listDrill.id} title={title} durationMin={durationMin} />
         ) : (
-          <p className="muted">This drill record is missing its catalogue id, so it cannot be scheduled right now. Use the Training Academy index to add it.</p>
+          <p className="muted">{t("missingCatalogueId")}</p>
         )}
       </Panel>
 
-      <Panel eyebrow="How to run it" title="Setup &amp; instructions">
+      <Panel eyebrow={t("howToRunEyebrow")} title={t("setupTitle")}>
         <div className="stack">
           <div className="stack-sm">
-            <p className="eyebrow">Setup</p>
-            <p className="muted">{setup || "Not provided for this drill."}</p>
+            <p className="eyebrow">{t("setupEyebrow")}</p>
+            <p className="muted">{setup || t("notProvided")}</p>
           </div>
           <div className="stack-sm">
-            <p className="eyebrow">Equipment</p>
+            <p className="eyebrow">{t("equipmentEyebrow")}</p>
             {equipment.length > 0 ? (
               <div className="tag-list">
                 {equipment.map((item) => (
@@ -156,66 +159,66 @@ export default async function DrillDetailPage({ params }: { params: Promise<{ sl
               </div>
             ) : (
               <span className="muted" style={{ fontSize: "0.85rem" }}>
-                No specific equipment listed.
+                {t("noEquipment")}
               </span>
             )}
           </div>
-          <PointList title="Instructions" items={instructions} />
-          <PointList title="Coaching points" items={coachingPoints} />
+          <PointList title={t("instructions")} empty={t("notProvided")} items={instructions} />
+          <PointList title={t("coachingPoints")} empty={t("notProvided")} items={coachingPoints} />
         </div>
       </Panel>
 
       <div className="grid-2">
-        <Panel eyebrow="Watch out" title="Common mistakes">
-          <PointList title="Mistakes to avoid" items={mistakes} />
+        <Panel eyebrow={t("watchOutEyebrow")} title={t("mistakesTitle")}>
+          <PointList title={t("mistakesToAvoid")} empty={t("notProvided")} items={mistakes} />
         </Panel>
-        <Panel eyebrow="Adjust" title="Progressions & regression">
+        <Panel eyebrow={t("adjustEyebrow")} title={t("progressionsTitle")}>
           <div className="stack">
-            <PointList title="Progressions" items={progressions} />
+            <PointList title={t("progressions")} empty={t("notProvided")} items={progressions} />
             <div className="stack-sm">
-              <p className="eyebrow">Regression (make it easier)</p>
+              <p className="eyebrow">{t("regressionEyebrow")}</p>
               <p className="muted" style={{ fontSize: "0.9rem" }}>
-                {regression || "Not provided for this drill."}
+                {regression || t("notProvided")}
               </p>
             </div>
           </div>
         </Panel>
       </div>
 
-      <Panel eyebrow="Self-test" title="Test">
+      <Panel eyebrow={t("selfTestEyebrow")} title={t("testTitle")}>
         <div className="stack-sm">
-          <p className="muted">{testPrompt || "No test prompt provided."}</p>
+          <p className="muted">{testPrompt || t("noTestPrompt")}</p>
           {testTarget && (
             <div className="notice">
-              <span className="eyebrow">Target</span>
+              <span className="eyebrow">{t("targetEyebrow")}</span>
               <p>{testTarget}</p>
             </div>
           )}
         </div>
       </Panel>
 
-      <Panel eyebrow="What it trains" title="Target attributes">
+      <Panel eyebrow={t("trainsEyebrow")} title={t("targetAttributesTitle")}>
         {weights.length > 0 ? (
           <div className="grid-2">
             {Object.entries(targetAttributes).map(([attr, weight]) => (
-              <Meter key={attr} label={`${attr.replace(/_/g, " ")} · emphasis`} value={weight} max={maxWeight} />
+              <Meter key={attr} label={t("emphasis", { attribute: attr.replace(/_/g, " ") })} value={weight} max={maxWeight} />
             ))}
           </div>
         ) : (
           <span className="muted" style={{ fontSize: "0.85rem" }}>
-            No target attributes recorded for this drill.
+            {t("noTargetAttributes")}
           </span>
         )}
       </Panel>
 
-      <Panel eyebrow="Video" title="Demonstration">
-        {video && video !== "Data unavailable" ? (
+      <Panel eyebrow={t("videoEyebrow")} title={t("demonstrationTitle")}>
+        {video && video !== t("dataUnavailable") ? (
           <p className="muted">{video}</p>
         ) : (
           <div className="stack-sm">
-            <DataUnavailable metric="Video" />
+            <DataUnavailable metric={t("metricVideo")} />
             <p className="muted" style={{ fontSize: "0.85rem" }}>
-              The video pipeline (M5) is not part of this build, so no demonstration clip is available for this drill.
+              {t("noVideoPipeline")}
             </p>
           </div>
         )}

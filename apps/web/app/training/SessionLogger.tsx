@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { AiBadge, ReasonList } from "@/components/ui";
@@ -10,17 +11,23 @@ import type { CompletionResult, SessionListItem } from "@/lib/types";
 
 const RATINGS = [1, 2, 3, 4, 5];
 
-function ratingLabel(kind: string, value: number): string {
-  const map: Record<string, string[]> = {
-    execution: ["Poor", "Rough", "Solid", "Sharp", "Excellent"],
-    focus: ["Distracted", "Patchy", "Steady", "Locked in", "Total"],
-    difficulty_experience: ["Too easy", "Easy", "Balanced", "Hard", "Very hard"],
-  };
-  return map[kind]?.[value - 1] ?? String(value);
-}
+// Three five-point scales, as keys rather than sentences. A rating that falls outside 1–5 has no key and keeps
+// its raw number, which is what the old `?? String(value)` did.
+const RATING_KEYS: Record<string, string[]> = {
+  execution: ["ratingExec1", "ratingExec2", "ratingExec3", "ratingExec4", "ratingExec5"],
+  focus: ["ratingFocus1", "ratingFocus2", "ratingFocus3", "ratingFocus4", "ratingFocus5"],
+  difficulty_experience: ["ratingDiff1", "ratingDiff2", "ratingDiff3", "ratingDiff4", "ratingDiff5"],
+};
 
 export function SessionLogger({ session }: { session: SessionListItem }) {
+  const t = useTranslations("training");
   const router = useRouter();
+
+  const ratingLabel = (kind: string, value: number): string => {
+    const key = RATING_KEYS[kind]?.[value - 1];
+    return key ? t(key) : String(value);
+  };
+
   const [execution, setExecution] = useState(3);
   const [focus, setFocus] = useState(3);
   const [difficulty, setDifficulty] = useState(3);
@@ -46,9 +53,9 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
       setResult(response.data);
       router.refresh();
     } else if (response.status === 409 && response.error.code === "already_completed") {
-      setError(response.error.message || "This session is already logged.");
+      setError(response.error.message || t("alreadyLogged"));
     } else {
-      setError(errorMessage(response.error, "This session could not be logged."));
+      setError(errorMessage(response.error, t("logFailed")));
     }
     setBusy(false);
   }
@@ -57,12 +64,12 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
     <div className="session-card">
       <div className="between wrap" style={{ gap: "0.5rem" }}>
         <div>
-          <p className="eyebrow">{session.drill.category.replace(/_/g, " ")} · planned {session.planned_date}</p>
+          <p className="eyebrow">{t("plannedOn", { category: session.drill.category.replace(/_/g, " "), date: session.planned_date })}</p>
           <Link href={session.drill.slug ? `/training/${session.drill.slug}` : "/training"} className="h3">
             {session.drill.title}
           </Link>
           <p className="muted" style={{ fontSize: "0.82rem" }}>
-            {session.drill.duration_min} min · difficulty {session.drill.difficulty}/5 · DEMO drill
+            {t("drillMeta", { minutes: session.drill.duration_min, difficulty: session.drill.difficulty })}
           </p>
         </div>
         <span className="chip">{session.status}</span>
@@ -71,18 +78,18 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
       {result ? (
         <div className="stack-sm session-card__result">
           <div className="notice">
-            +{result.xp_awarded} XP · {result.xp_formula}
+            {t("xpAwarded", { xp: result.xp_awarded, formula: result.xp_formula })}
           </div>
-          {result.level_changed && <div className="notice notice--warn">Level up — you are now level {result.player_level}.</div>}
+          {result.level_changed && <div className="notice notice--warn">{t("levelUp", { level: result.player_level })}</div>}
           <div className="row wrap" style={{ gap: "0.5rem" }}>
-            <span className="chip">Streak {result.streak_days} d</span>
-            <span className="chip">Form {result.form}</span>
-            <span className="chip">OVR {result.player.overall}</span>
+            <span className="chip">{t("streakChip", { days: result.streak_days })}</span>
+            <span className="chip">{t("formChip", { value: result.form })}</span>
+            <span className="chip">{t("overallChip", { value: result.player.overall })}</span>
           </div>
 
           {result.attribute_changes.length > 0 && (
             <div className="stack-sm">
-              <p className="eyebrow">Attribute changes</p>
+              <p className="eyebrow">{t("attributeChanges")}</p>
               <ul className="list">
                 {result.attribute_changes.map((change, index) => (
                   <li className="list__item" key={`${change.attribute}-${index}`}>
@@ -102,7 +109,7 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
 
           {result.skill_progress && result.skill_progress.length > 0 && (
             <div className="stack-sm">
-              <p className="eyebrow">Skill points banked</p>
+              <p className="eyebrow">{t("skillPoints")}</p>
               <ul className="list">
                 {result.skill_progress.map((row) => (
                   <li className="list__item" key={row.attribute}>
@@ -112,8 +119,8 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
                     </span>
                     <span className="muted" style={{ fontSize: "0.8rem" }}>
                       {row.ceiling
-                        ? `Banked, no point added — ${row.ceiling} reached.`
-                        : `+${row.earned} from this session; ${Math.max(0, row.needed - row.banked)} more raises ${row.value} → ${row.value + 1}.`}
+                        ? t("skillCeiling", { ceiling: row.ceiling })
+                        : t("skillProgress", { earned: row.earned, remaining: Math.max(0, row.needed - row.banked), value: row.value, next: row.value + 1 })}
                     </span>
                   </li>
                 ))}
@@ -123,10 +130,10 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
 
           {result.new_achievements.length > 0 && (
             <div className="stack-sm">
-              <p className="eyebrow">New achievements</p>
+              <p className="eyebrow">{t("newAchievements")}</p>
               <div className="row wrap" style={{ gap: "0.4rem" }}>
                 {result.new_achievements.map((slug) => (
-                  <span className="badge badge--live" key={slug} title={`Achievement slug: ${slug}`}>
+                  <span className="badge badge--live" key={slug} title={t("achievementSlug", { slug })}>
                     {slug.replace(/_/g, " ")}
                   </span>
                 ))}
@@ -135,10 +142,10 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
           )}
 
           <div className="stack-sm">
-            <p className="eyebrow">Coach feedback</p>
+            <p className="eyebrow">{t("coachFeedback")}</p>
             <AiBadge demo_mode={result.coach_feedback ? result.demo_mode : undefined} confidence={result.coach_feedback?.confidence} provider="rule-engine" />
             {result.coach_feedback && <p className="lede">{result.coach_feedback.content}</p>}
-            {result.coach_feedback && <ReasonList items={result.coach_feedback.reasons} title="Why this feedback" />}
+            {result.coach_feedback && <ReasonList items={result.coach_feedback.reasons} title={t("whyFeedback")} />}
           </div>
         </div>
       ) : (
@@ -146,7 +153,7 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
           {error && <div className="notice notice--warn">{error}</div>}
           <div className="session-card__ratings">
             <label className="field">
-              <span className="field__label">Execution: {ratingLabel("execution", execution)}</span>
+              <span className="field__label">{t("executionLabel", { label: ratingLabel("execution", execution) })}</span>
               <select className="select" value={execution} onChange={(event) => setExecution(Number(event.target.value))}>
                 {RATINGS.map((value) => (
                   <option value={value} key={value}>
@@ -156,7 +163,7 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
               </select>
             </label>
             <label className="field">
-              <span className="field__label">Focus: {ratingLabel("focus", focus)}</span>
+              <span className="field__label">{t("focusLabel", { label: ratingLabel("focus", focus) })}</span>
               <select className="select" value={focus} onChange={(event) => setFocus(Number(event.target.value))}>
                 {RATINGS.map((value) => (
                   <option value={value} key={value}>
@@ -166,7 +173,7 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
               </select>
             </label>
             <label className="field">
-              <span className="field__label">Felt: {ratingLabel("difficulty_experience", difficulty)}</span>
+              <span className="field__label">{t("feltLabel", { label: ratingLabel("difficulty_experience", difficulty) })}</span>
               <select className="select" value={difficulty} onChange={(event) => setDifficulty(Number(event.target.value))}>
                 {RATINGS.map((value) => (
                   <option value={value} key={value}>
@@ -177,12 +184,12 @@ export function SessionLogger({ session }: { session: SessionListItem }) {
             </label>
           </div>
           <label className="field">
-            <span className="field__label">Notes (optional)</span>
-            <textarea className="textarea" value={notes} maxLength={1200} placeholder="What clicked, what to fix next time?" onChange={(event) => setNotes(event.target.value)} />
+            <span className="field__label">{t("notesLabel")}</span>
+            <textarea className="textarea" value={notes} maxLength={1200} placeholder={t("notesPlaceholder")} onChange={(event) => setNotes(event.target.value)} />
           </label>
           <div>
             <button type="button" className="btn btn--primary btn--sm" onClick={complete} disabled={busy}>
-              {busy ? "Logging…" : "Log this session"}
+              {busy ? t("logging") : t("logSession")}
             </button>
           </div>
         </div>
