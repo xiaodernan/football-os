@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { KeyValueGrid, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
@@ -31,6 +32,7 @@ export default async function SimulateIndexPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fsimulate");
 
+  const tn = await getTranslations("nav");
   const [choices, played] = await Promise.all([
     serverFetch<SimOptions>("/simulate/options"),
     serverFetch<SimList>("/simulate"),
@@ -55,7 +57,7 @@ export default async function SimulateIndexPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/my-football", label: "My Football" }}
+        back={{ href: "/my-football", label: tn("myFootball") }}
         eyebrow={`${user.display_name} · simulations are private to this account`}
         lede="Two clubs from the generated world, the eleven each formation actually selects, and the metres of the tactical system they are playing. The model then plays the match block by block and keeps every number it used."
         provenance={{ data_origin: "simulation", is_demo_data: true, disclaimer: options.disclaimer }}

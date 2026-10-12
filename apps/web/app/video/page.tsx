@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { VideoUpload } from "@/components/VideoUpload";
 import { Panel } from "@/components/ui";
@@ -31,6 +32,7 @@ export default async function VideoIndexPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fvideo");
 
+  const tn = await getTranslations("nav");
   const result = await serverFetch<VideoList>("/video");
   if (!result.ok) {
     return <WorldUnavailable eyebrow="Video analysis" message={result.error.message} title="My video analysis" />;
@@ -41,7 +43,7 @@ export default async function VideoIndexPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/my-football", label: "My Football" }}
+        back={{ href: "/my-football", label: tn("myFootball") }}
         eyebrow={`${user.display_name} · private to this account`}
         lede="Upload a clip and the pipeline will read its container, sample frames at an even interval, and report where the non-pitch pixels moved. Every detection says which provider made it, and the provider says what it cannot see."
         title="My video analysis"

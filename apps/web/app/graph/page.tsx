@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { WorldHead, WorldUnavailable } from "@/components/world";
@@ -109,6 +110,7 @@ async function GraphPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fgraph");
 
+  const tn = await getTranslations("nav");
   const rulesResult = await serverFetch<GraphRules>("/graph/rules");
   if (!rulesResult.ok) {
     return <WorldUnavailable detail={rulesResult.error.message} message="The graph rules door did not answer." title="Knowledge Graph" />;
@@ -119,7 +121,7 @@ async function GraphPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/", label: "Home" }}
+        back={{ href: "/", label: tn("home") }}
         eyebrow={`${rules.node_kinds.length} kinds · ${rules.edge_verbs.length} verbs · depth ≤ ${rules.max_depth}`}
         lede="The football knowledge graph is a read-time projection over the schema's own foreign keys. No `graph_edges` table exists; every relation is a clause that already lives in the world tables. This page lets you browse nodes, follow typed edges, and walk the neighbourhood up to the published ceilings."
         title="Knowledge Graph"

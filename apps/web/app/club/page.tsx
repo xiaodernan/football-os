@@ -35,6 +35,7 @@ export default async function ClubIndexPage() {
   if (!user) redirect("/login?next=%2Fclub");
 
   const tc = await getTranslations("common");
+  const tn = await getTranslations("nav");
   const [owned, invited, rules] = await Promise.all([
     serverFetch<OrganizationList>("/club"),
     serverFetch<InvitationList>("/club/invitations"),
@@ -46,7 +47,7 @@ export default async function ClubIndexPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/", label: "Home" }}
+        back={{ href: "/", label: tn("home") }}
         eyebrow={`${user.display_name} · ${owned.data.total} of ${owned.data.limit} organisations`}
         lede="An organisation here is a tenant: it has members, each with one standing from a published matrix, and a member of one tenant can read nothing of another. The matrix, the caps and every refusal code are printed at /club/rules, which needs no account."
         provenance={{ data_origin: rules.data.data_origin, is_demo_data: rules.data.is_demo_data }}

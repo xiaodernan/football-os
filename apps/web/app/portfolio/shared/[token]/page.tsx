@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { PortfolioSectionPanel } from "@/components/PortfolioSection";
 import { Panel } from "@/components/ui";
@@ -23,6 +24,7 @@ export const metadata: Metadata = {
 
 export default async function SharedPortfolioPage({ params }: Props) {
   const { token } = await params;
+  const tn = await getTranslations("nav");
   const result = await serverFetch<PortfolioPublicCv>(`/portfolio/share/${encodeURIComponent(token)}`);
 
   if (!result.ok) {
@@ -38,7 +40,7 @@ export default async function SharedPortfolioPage({ params }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/", label: "Home" }}
+        back={{ href: "/", label: tn("home") }}
         eyebrow={`${cv.counts.sections} published section${cv.counts.sections === 1 ? "" : "s"} · ${cv.counts.filled} filled · live read`}
         lede="This page is rebuilt from the owning account's rows every time it is opened. It is not a snapshot, and the sections the owner did not publish are not part of it."
         title="Shared Football CV"

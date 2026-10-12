@@ -59,7 +59,7 @@ export default async function CommunityPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{href: "/", label: "Home"}}
+        back={{href: "/", label: tn("home")}}
         eyebrow={`${user.display_name} · ${profile.data.posts} of ${rules.data.caps.post_max} posts · ${profile.data.followers} follower(s)`}
         lede="A post here is a pointer and the author's own words: it names the page it shares and stores no figure about it, so what you read beside a share is counted from the rows the moment you ask. Reach is a predicate over follows, recomputed on every read — unfollowing someone withdraws their posts at once and deletes nothing."
         title="Community wall"

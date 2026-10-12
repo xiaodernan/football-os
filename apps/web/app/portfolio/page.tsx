@@ -61,7 +61,7 @@ export default async function PortfolioPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/", label: "Home" }}
+        back={{ href: "/", label: tn("home") }}
         eyebrow={`${cv.data.account.display_name} · ${cv.data.counts.filled} of ${cv.data.counts.sections} sections filled`}
         lede="A CV in this build stores nothing: each of the ten sections is a read of rows another tier already writes, counted from the formula printed beside it at the moment you ask. Two of the ten cannot be filled here, and they print the reason and the tables they would need rather than a zero."
         title={tn("footballCv")}
