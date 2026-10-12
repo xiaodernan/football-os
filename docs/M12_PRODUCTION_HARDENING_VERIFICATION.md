@@ -86,8 +86,18 @@ bypassed by a `Cache-Control: no-cache` request header, and answers with `X-Cach
 make the case after it read the case before it. That bypass is what kept `test_community.py`'s
 follow-then-withdraw case honest, and it was found by that case going red, not by reading the code.
 
-`GET /api/v1/metrics/cache` publishes both caches' statistics, so the cache is observable rather
-than an invisible optimisation.
+`GET /api/v1/metrics/cache` publishes the statistics of every tier the process runs — the two
+in-memory caches and Redis — so the cache is observable rather than an invisible optimisation, and
+an operator can see which tier is actually serving.
+
+**What is honest to say about where Redis sits today: it is landed, tested and observable, and no
+request path uses it.** Nothing in `app/` calls `get_redis_cache()` except that metrics door, which
+constructs the singleton in order to report on it. So the layer's value at present is that its
+degradation behaviour is measured and its interface is the one a future hot path would adopt; a
+cache that has never been written to is not a cache that has sped anything up. Wiring it into the
+response middleware is the next step and is deliberately not implied by any figure above — that
+change alters what a request reads when Redis *is* available, which is a different claim from
+"the layer degrades correctly", and it deserves its own measurement.
 
 `app/core/redis_cache.py`. `RedisCache` sits behind the same operations and keeps `TTLCache` as a
 mandatory second tier: every `set` writes the fallback first and Redis second, so a cache that is

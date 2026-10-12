@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.core.cache import get_cache_stats
 from app.core.db import get_db
+from app.core.redis_cache import get_redis_cache
 from app.core.security import current_user
 from app.models import ModelCall, User, VideoAsset
 from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
@@ -191,5 +192,13 @@ def latency_profile_endpoint(
 def cache_stats(
     user: User = Depends(current_user),
 ) -> dict[str, Any]:
-    """Cache hit/miss counts and sizes for the response and computation caches (M12)."""
-    return get_cache_stats()
+    """Cache statistics for every tier the process runs: the two in-memory caches and Redis.
+
+    Redis is reported whether or not it is serving. `get_redis_cache()` is a lazy singleton
+    that attempts the connection once and then remembers the answer, so this door costs a
+    failed connect at most once per process on a host with no usable instance — and what it
+    returns there is the fact an operator needs: the tier exists, and it is not serving.
+    """
+    stats: dict[str, Any] = get_cache_stats()
+    stats["redis"] = get_redis_cache().get_stats()
+    return stats

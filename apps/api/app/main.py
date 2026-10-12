@@ -47,6 +47,7 @@ from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging, get_logger, request_id_var
+from app.core.redis_cache import close_redis_cache
 from app.core.tracing import init_tracing, instrument_fastapi
 from app.services.knowledge import corpus_stats, sync_knowledge
 from app.services.tactics import sync_tactics
@@ -106,6 +107,10 @@ def create_app() -> FastAPI:
         logger.info("boot env=%s dialect=%s demo_mode=%s", settings.env, settings.database_url.split(":")[0], settings.is_demo_mode)
         init_tracing()
         yield
+        # The Redis singleton is built on first use, which may be never, and closing an
+        # unconstructed one is a no-op — so shutdown does not have to know whether the
+        # metrics door was ever called.
+        close_redis_cache()
 
     app = FastAPI(
         title="FOOTBALL OS API",
