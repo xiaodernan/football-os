@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { ScoutWorkbench } from "@/components/ScoutWorkbench";
@@ -18,20 +19,24 @@ export const dynamic = "force-dynamic";
  * the stored player table, builds a §24 report and forms a §27 pair, and all three need an account — so the
  * page is private and unpublished, exactly like `/career`, `/challenges` and `/market`.
  */
-export const metadata: Metadata = {
-  title: "AI Scout",
-  description: "Search a generated world in your own words, read a report whose every line names its row, and compare a pair across ten dimensions with no overall score to hide behind.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/scout") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("scout");
+  return {
+    title: t("title"),
+    description: "Search a generated world in your own words, read a report whose every line names its row, and compare a pair across ten dimensions with no overall score to hide behind.",
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/scout") },
+  };
+}
 
 export default async function ScoutPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fscout");
 
   const rules = await serverFetch<ScoutRulesView>("/scout/rules");
+  const t = await getTranslations("scout");
   if (!rules.ok) {
-    return <WorldUnavailable eyebrow="AI Scout" message={rules.error.message} title="AI Scout" />;
+    return <WorldUnavailable eyebrow={t("title")} message={rules.error.message} title={t("title")} />;
   }
   const data = rules.data;
 
@@ -42,7 +47,7 @@ export default async function ScoutPage() {
         eyebrow={`${user.display_name} · searching, reporting and comparing are private to your account`}
         lede="A sentence in, a cut out. The parser tells you which phrases it understood and which it refused, the waterfall tells you how many rows each cut removed, the report answers thirteen fields with figures recomputed from the stored row, and a comparison answers ten dimensions without ever forming the one number the spec rules out."
         provenance={{ data_origin: data.data_origin, is_demo_data: data.is_demo_data, disclaimer: data.disclaimer }}
-        title="AI Scout"
+        title={t("title")}
       />
 
       {data.integrity.clean ? (

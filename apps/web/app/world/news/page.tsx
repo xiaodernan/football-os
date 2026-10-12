@@ -12,12 +12,15 @@ export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export const metadata: Metadata = pageMetadata({
-  title: "Reports & notes",
-  description:
-    "Match reports, previews, spotlights and tactical notes from the generated football world. Each one declares whether it is a fact, an analysis or speculation.",
-  path: "/world/news",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const tw = await getTranslations("world");
+  return pageMetadata({
+    title: tw("sectionReportsLabel"),
+    description:
+      "Match reports, previews, spotlights and tactical notes from the generated football world. Each one declares whether it is a fact, an analysis or speculation.",
+    path: "/world/news",
+  });
+}
 
 const BASE = "/world/news";
 const PAGE_SIZE = 20;

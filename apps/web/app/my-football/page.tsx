@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { AttributeRadar } from "@/components/AttributeRadar";
 import { AiBadge, DrillMeta, Empty, Meter, Panel, ReasonList, Stat } from "@/components/ui";
@@ -12,10 +13,13 @@ import "./my-football.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "My Football",
-  description: "Your player profile, attribute progress and today's coach recommendation.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tn = await getTranslations("nav");
+  return {
+    title: tn("myFootball"),
+    description: "Your player profile, attribute progress and today's coach recommendation.",
+  };
+}
 
 /** Turns a snake_case attribute key into a short radar label without inventing data. */
 function shortLabel(key: string): string {
@@ -36,6 +40,8 @@ export default async function MyFootballPage() {
   const user = await currentUser();
   if (!user) redirect("/login");
 
+  const tn = await getTranslations("nav");
+
   const [overviewResult, todayResult] = await Promise.all([
     serverFetch<ProgressOverview>("/progress/overview"),
     serverFetch<TodayRecommendation>("/coach/today", { query: { available_minutes: 25, has_pitch: "true" } }),
@@ -46,7 +52,7 @@ export default async function MyFootballPage() {
     if (overviewResult.status === 409 && overviewResult.error.code === "no_player") redirect("/onboarding");
     return (
       <div className="container page stack">
-        <h1 className="h1">My Football</h1>
+        <h1 className="h1">{tn("myFootball")}</h1>
         <div className="notice notice--warn">{errorMessage(overviewResult.error, "We could not load your overview right now.")}</div>
       </div>
     );
@@ -68,7 +74,7 @@ export default async function MyFootballPage() {
     <div className="container page stack">
       <div className="between wrap" style={{ gap: "0.6rem" }}>
         <div>
-          <p className="eyebrow">My Football</p>
+          <p className="eyebrow">{tn("myFootball")}</p>
           <h1 className="h1">{player.name}</h1>
         </div>
         <div className="row wrap" style={{ gap: "0.5rem" }}>

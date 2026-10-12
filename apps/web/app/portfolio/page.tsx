@@ -33,12 +33,15 @@ export const dynamic = "force-dynamic";
  * * the three outputs §38 permits publicly are listed with the state the rules door publishes. Each now names the
  *   door that serves it, including the owner-authenticated PDF rendered from this same live read.
  */
-export const metadata: Metadata = {
-  title: "Football CV",
-  description: "The ten sections of your football CV, each read from the rows that already exist, and the two this build cannot fill.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/portfolio") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tn = await getTranslations("nav");
+  return {
+    title: tn("footballCv"),
+    description: "The ten sections of your football CV, each read from the rows that already exist, and the two this build cannot fill.",
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/portfolio") },
+  };
+}
 
 export default async function PortfolioPage() {
   const user = await currentUser();

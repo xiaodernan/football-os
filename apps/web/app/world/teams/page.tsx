@@ -12,11 +12,14 @@ export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export const metadata: Metadata = pageMetadata({
-  title: "Clubs",
-  description: "Every club in the generated football world: city, stadium, manager, formation, squad size and mean overall rating.",
-  path: "/world/teams",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const tw = await getTranslations("world");
+  return pageMetadata({
+    title: tw("sectionClubsLabel"),
+    description: "Every club in the generated football world: city, stadium, manager, formation, squad size and mean overall rating.",
+    path: "/world/teams",
+  });
+}
 
 const BASE = "/world/teams";
 const PAGE_SIZE = 25;
