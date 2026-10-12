@@ -89,10 +89,31 @@ follow-then-withdraw case honest, and it was found by that case going red, not b
 `GET /api/v1/metrics/cache` publishes both caches' statistics, so the cache is observable rather
 than an invisible optimisation.
 
-**Not claimed:** there is no distributed cache. Redis is not in `requirements.txt`, and the run that
-built this has no Redis instance, so a Redis-backed tier would have been unmeasured speculation — the
-in-memory cache is measured, and a Redis tier behind the same interface is the upgrade path when an
-instance exists.
+`app/core/redis_cache.py`. `RedisCache` sits behind the same operations and keeps `TTLCache` as a
+mandatory second tier: every `set` writes the fallback first and Redis second, so a cache that is
+down costs a read path and never a write. The connection is attempted once at construction with a
+two-second socket budget; on any failure — refused, timed out, or an authentication handshake the
+instance rejects — `redis_available` drops to false and stays there, and every later call takes the
+in-memory branch without paying another connect. Keys are namespaced `football_os:` and values are
+JSON, so a shared instance cannot collide with another application's data.
+
+`REDIS_URL` is the only knob and defaults to `redis://localhost:6379/0`. `get_stats()` publishes the
+URL **only while Redis is serving** — a URL can carry a password, and a metrics endpoint is the
+wrong place to put one.
+
+**Measured on this host:** port 6379 is occupied, by a Redis that requires a password, so the
+default no-auth URL cannot authenticate. The layer behaves as designed there: the first `get` costs
+0.008 ms and falls through to memory, the `set` still lands in the fallback and returns true, the
+second read hits the fallback (`hits: 1`, `hit_rate: 0.5`), and `redis_available` is false. That is
+the path most likely to run in a deployment that has not provisioned a cache, so measuring it beats
+asserting it.
+
+**Not claimed:** the Redis tier has never served a real request. No authenticated instance was
+available here, so the ten degradation cases run against a mocked client and the `integration`-marked
+case is the one that needs a live service. Degradation is also **sticky for the life of the
+process** — a Redis that starts after the process is not picked up until restart. That is the right
+trade against paying a failed connect per call, and it is stated so a reader deploying behind a
+restart-less rollout can decide otherwise.
 
 ### Performance — latency percentiles that read the same on both engines
 
@@ -203,7 +224,9 @@ audit's own numbers rather than left stale.
 
 ## What M12 does not claim
 
-* **No external cache.** In-memory only; no Redis instance exists to measure against.
+* **No authenticated Redis tier.** `RedisCache` landed with the in-memory fallback wired, and its
+  degradation paths are measured against this host's password-protected 6379 — but no instance has
+  ever served a real request through it, and the fallback is sticky for the life of the process.
 * **No external log sink.** The JSON formatter is the contract with a sink that deployment wires.
 * **No trace backend.** OpenTelemetry is wired and the span path is measured through an in-memory
   exporter, but no collector runs on this host, so no span has reached a real backend; sampling and
@@ -213,7 +236,11 @@ audit's own numbers rather than left stale.
 * **No published load-test ceiling.** `scripts/bench_api.py` is the harness; a measured run
   against the local tier is recorded below when it is run, and it will not be extrapolated to
   production hardware.
-* **No cost guarantee.** The advisor reports; the router decides (`settings.ai_daily_budget_usd` is a
-  `budget_exhausted()` check the caller honouring it is what enforces).
+* **No cost guarantee, and honouring the cap is still a per-caller duty.** The advisor reports; the
+  router decides. Two doors check `budget_exhausted()` at the call instead of trusting a caller to
+  stop on its own: `/knowledge/ask` refuses with 429 `ai_budget_exhausted` (2026-10-06), and
+  `/coach/ask` skips the phrasing step while still shipping the arithmetic (2026-10-11), because
+  the recommendation there is computed from stored data and the model only words it. Provider-side
+  spend controls are not in this repository, so a door that omits the check is not stopped by it.
 * **The i18n §81 work is another agent's lane.** Several web files were modified by the concurrent
   run during this milestone and are not part of it.
