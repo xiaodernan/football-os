@@ -16,8 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const tw = await getTranslations("world");
   return pageMetadata({
     title: tw("sectionFixturesLabel"),
-    description:
-      "Every fixture in the generated football world, newest first. Scheduled matches show a kick-off time and no score, because no score exists yet.",
+    description: tw("metaMatches"),
     path: "/world/matches",
   });
 }

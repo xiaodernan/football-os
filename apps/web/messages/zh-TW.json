@@ -285,7 +285,8 @@
     "integrityProblems": "已回報問題",
     "checkedLists": "名單已檢查",
     "checkedMemberships": "成員列已檢查",
-    "checkedPlayers": "儲存球員已核對"
+    "checkedPlayers": "儲存球員已核對",
+    "metaDescription": "用自己的話搜尋一個生成的世界，讀一份每行都註明資料來源的報告，並在十個維度上比較兩名球員——沒有任何一個可以被用來藏拙的總分。"
   },
   "career": {
     "title": "生涯模式",
@@ -310,7 +311,8 @@
     "enterBudget": "輸入預算",
     "budgetHelp": "預算用在轉會市場：報價高於可用餘額會被拒絕。預算本身不改變任何一場比賽——只有真正完成的交易才會改變先發陣容。",
     "wageBill": "薪資支出",
-    "wageBillHelp": "引擎現在每進行一輪，都會按該輪開始時持有的每份合約扣除週薪。"
+    "wageBillHelp": "引擎現在每進行一輪，都會按該輪開始時持有的每份合約扣除週薪。",
+    "metaDescription": "接管一家生成的俱樂部，定下目標，在標註了全部算式的模擬引擎裡踢完整個賽季。"
   },
   "settings": {
     "title": "設定",
@@ -469,7 +471,13 @@
     "emptyNotice": "世界表格為空。在 apps/api 中使用 python -m seed 生成，或設置 WORLD_AUTO_SYNC=true。此頁面顯示空白而非佔位行。",
     "trainingLogLink": "訓練日誌",
     "clubsUnit": "家俱樂部",
-    "rowsUnit": "行"
+    "rowsUnit": "行",
+    "metaCompetitions": "生成的足球世界裡每一個聯賽和盃賽，以及每個聯賽實際擁有的俱樂部數量。",
+    "metaMatches": "生成的足球世界裡每一場比賽，最新的在前。未開賽的比賽只顯示開球時間而沒有比分，因為比分還不存在。",
+    "metaNews": "來自生成的足球世界的比賽報告、前瞻、聚焦和戰術隨筆。每篇都聲明自己是事實、分析還是猜測。",
+    "metaPlayers": "每一位生成的球員：位置、年齡、當前與潛力評分，以及每場技術統計行能加總出的賽季資料。",
+    "metaTeams": "生成的足球世界裡每一家俱樂部：城市、球場、經理、陣型、陣容規模與平均評分。",
+    "metaTraining": "生成的世界的訓練日誌：每節訓練課都寫明球員、目錄中的練習、分鐘數與 RPE，負荷值就是後兩項的乘積。"
   },
   "coach": {
     "metaTitle": "AI 教練",
@@ -1337,5 +1345,11 @@
     "fallbackTitle": "（以檔名代替）",
     "sharedNote": "片段的位元組、它抽出的影格和它的偵測時間線只提供給上傳它們的帳號，因此分享的讀者看到的是上傳記錄下的內容，而不是畫面本身。播放片段需要所有者的會話。",
     "sharedProvenanceChip": "以可撤銷連結分享；此處不揭露任何所有者身分"
+  },
+  "myFootball": {
+    "metaDescription": "你的球員檔案、屬性成長與今天的教練建議。"
+  },
+  "portfolio": {
+    "metaDescription": "你足球履歷的十個板塊，每個都從已存在的資料列讀出——以及這個建置無法填補的兩個。"
   }
 }

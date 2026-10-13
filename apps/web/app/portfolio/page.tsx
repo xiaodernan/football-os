@@ -35,9 +35,10 @@ export const dynamic = "force-dynamic";
  */
 export async function generateMetadata(): Promise<Metadata> {
   const tn = await getTranslations("nav");
+  const td = await getTranslations("portfolio");
   return {
     title: tn("footballCv"),
-    description: "The ten sections of your football CV, each read from the rows that already exist, and the two this build cannot fill.",
+    description: td("metaDescription"),
     robots: { index: false, follow: false },
     alternates: { canonical: absolute("/portfolio") },
   };

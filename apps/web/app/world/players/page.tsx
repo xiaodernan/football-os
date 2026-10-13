@@ -16,8 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const tw = await getTranslations("world");
   return pageMetadata({
     title: tw("sectionPlayersLabel"),
-    description:
-      "Every generated footballer: position, age, overall and potential, plus the season totals that the per-match statistic lines add up to.",
+    description: tw("metaPlayers"),
     path: "/world/players",
   });
 }

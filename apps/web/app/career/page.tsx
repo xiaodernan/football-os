@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("career");
   return {
     title: t("title"),
-    description: "Take charge of a generated club, state an objective, and play the season through the labelled simulation engine.",
+    description: t("metaDescription"),
     robots: { index: false, follow: false },
     alternates: { canonical: absolute("/career") },
   };

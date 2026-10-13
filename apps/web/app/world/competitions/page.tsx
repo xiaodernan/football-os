@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const tw = await getTranslations("world");
   return pageMetadata({
     title: tw("sectionCompetitionsLabel"),
-    description: "Every league and cup in the generated football world, with the number of clubs each one actually contains.",
+    description: tw("metaCompetitions"),
     path: "/world/competitions",
   });
 }

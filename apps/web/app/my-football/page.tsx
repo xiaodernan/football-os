@@ -15,9 +15,10 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const tn = await getTranslations("nav");
+  const td = await getTranslations("myFootball");
   return {
     title: tn("myFootball"),
-    description: "Your player profile, attribute progress and today's coach recommendation.",
+    description: td("metaDescription"),
   };
 }
 

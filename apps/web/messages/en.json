@@ -285,7 +285,8 @@
     "integrityProblems": "problems reported",
     "checkedLists": "lists checked",
     "checkedMemberships": "membership rows checked",
-    "checkedPlayers": "stored players checked against"
+    "checkedPlayers": "stored players checked against",
+    "metaDescription": "Search a generated world in your own words, read a report whose every line names its row, and compare a pair across ten dimensions with no overall score to hide behind."
   },
   "career": {
     "title": "Career Mode",
@@ -310,7 +311,8 @@
     "enterBudget": "Enter budget",
     "budgetHelp": "This is what the transfer market gets to spend: an offer priced above the balance left is refused. A budget still changes no fixture by itself — only a deal that was actually made changes the eleven.",
     "wageBill": "Wage bill",
-    "wageBillHelp": "Each round the engine plays now costs the career the weekly wage of every deal it holds at the start of that round."
+    "wageBillHelp": "Each round the engine plays now costs the career the weekly wage of every deal it holds at the start of that round.",
+    "metaDescription": "Take charge of a generated club, state an objective, and play the season through the labelled simulation engine."
   },
   "settings": {
     "title": "Settings",
@@ -469,7 +471,13 @@
     "emptyNotice": "The world tables are empty. Generate them with python -m seed in apps/api, or set WORLD_AUTO_SYNC=true. This page shows nothing rather than placeholder rows.",
     "trainingLogLink": "Training log",
     "clubsUnit": "clubs",
-    "rowsUnit": "rows"
+    "rowsUnit": "rows",
+    "metaCompetitions": "Every league and cup in the generated football world, with the number of clubs each one actually contains.",
+    "metaMatches": "Every fixture in the generated football world, newest first. Scheduled matches show a kick-off time and no score, because no score exists yet.",
+    "metaNews": "Match reports, previews, spotlights and tactical notes from the generated football world. Each one declares whether it is a fact, an analysis or speculation.",
+    "metaPlayers": "Every generated footballer: position, age, overall and potential, plus the season totals that the per-match statistic lines add up to.",
+    "metaTeams": "Every club in the generated football world: city, stadium, manager, formation, squad size and mean overall rating.",
+    "metaTraining": "The generated world's training log: every session names the player, the catalogue drill, the minutes and the RPE, and the load figure is those last two multiplied."
   },
   "coach": {
     "metaTitle": "AI Coach",
@@ -1337,5 +1345,11 @@
     "fallbackTitle": "(the file name stands in)",
     "sharedNote": "The clip's bytes, its sampled frames and its detection timeline are served to the account that uploaded them, so a shared reader sees what the upload recorded rather than the footage. Playing a clip needs the owner's session.",
     "sharedProvenanceChip": "shared via revocable link; no owner identity is disclosed here"
+  },
+  "myFootball": {
+    "metaDescription": "Your player profile, attribute progress and today's coach recommendation."
+  },
+  "portfolio": {
+    "metaDescription": "The ten sections of your football CV, each read from the rows that already exist, and the two this build cannot fill."
   }
 }

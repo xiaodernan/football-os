@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("scout");
   return {
     title: t("title"),
-    description: "Search a generated world in your own words, read a report whose every line names its row, and compare a pair across ten dimensions with no overall score to hide behind.",
+    description: t("metaDescription"),
     robots: { index: false, follow: false },
     alternates: { canonical: absolute("/scout") },
   };

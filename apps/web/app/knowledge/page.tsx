@@ -18,8 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("knowledge");
   return pageMetadata({
     title: t("metaTitle"),
-    description:
-      "The project-authored football knowledge base: browse the library, run hybrid retrieval, and ask questions answered only from cited passages.",
+    description: t("metaDescription"),
     path: "/knowledge",
   });
 }

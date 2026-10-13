@@ -18,8 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     // The key is spelled …Link because the world index reached this page through a link; the page's own
     // heading already reads the same key, so the tab and the heading cannot drift apart.
     title: tw("trainingLogLink"),
-    description:
-      "The generated world's training log: every session names the player, the catalogue drill, the minutes and the RPE, and the load figure is those last two multiplied.",
+    description: tw("metaTraining"),
     path: "/world/training",
   });
 }

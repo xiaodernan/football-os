@@ -16,8 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const tw = await getTranslations("world");
   return pageMetadata({
     title: tw("sectionReportsLabel"),
-    description:
-      "Match reports, previews, spotlights and tactical notes from the generated football world. Each one declares whether it is a fact, an analysis or speculation.",
+    description: tw("metaNews"),
     path: "/world/news",
   });
 }
