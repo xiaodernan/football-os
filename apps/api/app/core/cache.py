@@ -111,6 +111,11 @@ class TTLCache:
         with self._lock:
             self._cache.clear()
 
+    @property
+    def available(self) -> bool:
+        """Whether this tier can serve. An in-process cache always can."""
+        return True
+
     def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         with self._lock:

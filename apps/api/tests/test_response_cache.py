@@ -164,3 +164,39 @@ def test_the_environment_bypass_stays_in_the_middleware() -> None:
     from app.core.config import settings
 
     assert settings.env == "test"
+
+
+def test_a_cache_hit_still_carries_this_requests_own_identity() -> None:
+    """The defect the extracted function cannot see on its own.
+
+    Found live: two different requests came back with the same `X-Request-ID` and the
+    same `X-Request-Duration-Ms`, because `response_cache` was the outermost middleware
+    and returned a replay before `request_context` ever ran — so the HIT answered under
+    the MISS's identity, with the MISS's duration, and no security headers of its own.
+
+    It needs the real middleware stack, which means it needs the cache to actually be
+    engaged, so the environment bypass is lifted for the duration of the case and put
+    back in a `finally`: leaving it lifted would let a later case serve a response a
+    previous case had written.
+    """
+    from starlette.testclient import TestClient
+
+    from app.core.cache import _response_cache
+    from app.core.config import settings
+    from app.main import app as fastapi_app
+
+    was_env = settings.env
+    object.__setattr__(settings, "env", "development")
+    _response_cache.clear()
+    try:
+        with TestClient(fastapi_app) as client:
+            miss = client.get("/api/v1/healthz")
+            hit = client.get("/api/v1/healthz")
+        assert miss.headers["X-Cache"] == "MISS"
+        assert hit.headers["X-Cache"] == "HIT", "the case is only meaningful if the second answer is a replay"
+        assert miss.headers["X-Request-ID"] != hit.headers["X-Request-ID"], "a hit answers as its own caller, never as the one it copied"
+        assert hit.headers.get("X-Request-Duration-Ms") is not None, "the duration must be this request's, measured around this request"
+        assert hit.headers["X-Content-Type-Options"] == "nosniff", "security headers belong on a served response, cached or not"
+    finally:
+        object.__setattr__(settings, "env", was_env)
+        _response_cache.clear()

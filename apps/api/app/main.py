@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import time
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterable
 from contextlib import asynccontextmanager
+from typing import Any, Protocol
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,12 +43,12 @@ from app.api.v1 import (
     video,
     world,
 )
-from app.core.cache import TTLCache, _response_cache
+from app.core.cache import _response_cache
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging, get_logger, request_id_var
-from app.core.redis_cache import close_redis_cache
+from app.core.redis_cache import close_redis_cache, get_redis_cache
 from app.core.tracing import init_tracing, instrument_fastapi
 from app.services.knowledge import corpus_stats, sync_knowledge
 from app.services.tactics import sync_tactics
@@ -100,24 +101,73 @@ def response_cache_key(path: str, query: str) -> str:
     return f"http:{path}:{query}"
 
 
+PER_REQUEST_HEADERS = frozenset({"x-request-id", "x-request-duration-ms"})
+"""Headers that describe one request and are therefore not part of its answer.
+
+`request_context` sets these while `response_cache` is still collecting the response,
+so they are present at store time and would otherwise be replayed on every hit — two
+different callers receiving the same `X-Request-ID`, and a hit reporting the duration
+of the miss it was copied from. They are filtered on the way in and again on the way
+out, because a shared tier may already hold entries written before this existed.
+"""
+
+
+def cacheable_headers(headers: Iterable[tuple[str, str]]) -> list[tuple[str, str]]:
+    """The response headers that belong to the answer rather than to one request."""
+    return [pair for pair in headers if pair[0].lower() not in PER_REQUEST_HEADERS]
+
+
+class CacheTier(Protocol):
+    """The operations a response-cache tier must offer.
+
+    Both tiers implement it: `TTLCache` returns `None` from `set`, `RedisCache`
+    returns a bool. Declared as a protocol rather than a union so the middleware
+    can name the shape it depends on instead of the classes it happens to use.
+
+    `available` is what distinguishes a tier that is serving from one that is merely
+    configured. It is the flag that keeps a degraded second tier from quietly becoming
+    a second *process-local* tier. Declared as a property because neither tier should
+    let a caller set it: only the tier knows whether it is serving.
+    """
+
+    @property
+    def available(self) -> bool: ...
+
+    def get(self, key: str, default: Any = None) -> Any: ...
+
+    def set(self, key: str, value: Any, ttl: float | None = None) -> Any: ...
+
+
 async def cached_response_for(
-    cache: TTLCache,
+    cache: CacheTier,
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
     *,
     ttl: float = 60.0,
+    shared: CacheTier | None = None,
 ) -> Response:
     """Serve a GET from `cache`, or fetch it from `call_next` and store the answer.
 
+    `cache` is the process-local tier; `shared` is an optional second tier other
+    processes can see. Reads check the near tier first because it is the cheapest,
+    and a hit found only in the shared tier is written back into the near one so the
+    next request from this process does not pay for it again. Writes go to both.
+
+    Four uvicorn workers otherwise run four independent caches, which is part of why
+    the measured gain from extra workers fell away at higher concurrency: a response
+    one process paid for cannot be served by another. With `shared` absent — as it is
+    today, and on any host where the second tier cannot serve — every code path here
+    is the single-tier behaviour it replaced.
+
     The cache holds a serialisable payload rather than a response object, which is what
-    lets a second tier sit behind the same operations later: an in-memory cache can hold
-    a `Response` and a Redis one cannot, so the value here is a plain dict in both.
+    lets the two tiers share a value: an in-memory cache can hold a `Response` and a
+    Redis one cannot, so the value here is a plain dict in both.
 
     A response is cached only when it is a 2xx whose content type is JSON. Anything else
-    is passed through untouched and marked MISS — caching a 500 would replay a failure
-    for the whole TTL, and caching a non-JSON body would break the contract the payload
-    is built on. `no-cache` from the caller defeats a warm entry, because a caller who
-    asks for a fresh answer is entitled to one.
+    is passed through and marked MISS — caching a 500 would replay a failure for the
+    whole TTL, and caching a non-JSON body would break the contract the payload is built
+    on. `no-cache` from the caller defeats a warm entry, because a caller who asks for a
+    fresh answer is entitled to one.
     """
     if request.method != "GET":
         return await call_next(request)
@@ -127,11 +177,15 @@ async def cached_response_for(
 
     key = response_cache_key(request.url.path, request.url.query)
     cached = cache.get(key)
+    if cached is None and shared is not None and shared.available:
+        cached = shared.get(key)
+        if cached is not None:
+            cache.set(key, cached, ttl=ttl)
     if cached is not None:
         replay = Response(
             content=cached["body"],
             status_code=cached["status_code"],
-            headers=dict(cached["headers"]),
+            headers=dict(cacheable_headers(cached["headers"])),
             media_type=cached["media_type"],
         )
         replay.headers["X-Cache"] = "HIT"
@@ -145,16 +199,15 @@ async def cached_response_for(
 
     body = await _read_body(response)
 
-    cache.set(
-        key,
-        {
-            "body": body.decode("utf-8"),
-            "status_code": response.status_code,
-            "headers": [tuple(pair) for pair in response.headers.items()],
-            "media_type": response.media_type,
-        },
-        ttl=ttl,
-    )
+    payload = {
+        "body": body.decode("utf-8"),
+        "status_code": response.status_code,
+        "headers": cacheable_headers(response.headers.items()),
+        "media_type": response.media_type,
+    }
+    cache.set(key, payload, ttl=ttl)
+    if shared is not None and shared.available:
+        shared.set(key, payload, ttl=ttl)
 
     replay = Response(content=body, status_code=response.status_code, headers=dict(response.headers), media_type=response.media_type)
     replay.headers["X-Cache"] = "MISS"
@@ -222,19 +275,6 @@ def create_app() -> FastAPI:
     )
 
     @app.middleware("http")
-    async def request_context(request: Request, call_next):
-        started = time.perf_counter()
-        # Generate or extract request ID
-        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
-        request_id_var.set(request_id)
-        response = await call_next(request)
-        response.headers["X-Request-ID"] = request_id
-        response.headers["X-Request-Duration-Ms"] = str(int((time.perf_counter() - started) * 1000))
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        return response
-
-    @app.middleware("http")
     async def response_cache(request: Request, call_next):
         """Cache GET responses for 60 seconds.
 
@@ -246,7 +286,31 @@ def create_app() -> FastAPI:
         """
         if settings.env == "test":
             return await call_next(request)
-        return await cached_response_for(_response_cache, request, call_next)
+        # The shared tier is fetched per request rather than captured at startup: the
+        # singleton is built on first use, and building it at import would make every
+        # process pay a Redis connect before it had served a single request. Once built,
+        # this is a global lookup, and a tier that cannot serve is remembered as such.
+        return await cached_response_for(_response_cache, request, call_next, shared=get_redis_cache())
+
+    # Registered after `response_cache`, and therefore wrapped by it: this is the
+    # outermost middleware. The order is load-bearing in both directions. Here it means
+    # the request id is set before the cache layer runs, so a warning emitted while
+    # looking the answer up still carries the id of the request that caused it. It also
+    # means this runs on a HIT, where `response_cache` returns without calling anything
+    # downstream — so a served-from-cache response gets this request's own id, duration
+    # and security headers rather than none, or the previous caller's.
+    @app.middleware("http")
+    async def request_context(request: Request, call_next):
+        started = time.perf_counter()
+        # Generate or extract request ID
+        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        request_id_var.set(request_id)
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        response.headers["X-Request-Duration-Ms"] = str(int((time.perf_counter() - started) * 1000))
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
 
     install_error_handlers(app)
     api = "/api/v1"

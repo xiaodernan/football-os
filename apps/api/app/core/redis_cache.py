@@ -133,6 +133,18 @@ class RedisCache:
                 logger.warning("Redis clear failed: %s", e)
                 self._available = False
 
+    @property
+    def available(self) -> bool:
+        """Whether Redis is actually serving, as opposed to configured.
+
+        Distinct from `redis_url` being set: on a host whose instance rejects the
+        handshake this is False while the configuration still looks right. A caller
+        deciding whether to *write* to the shared tier needs this, because writing
+        into this class's internal fallback while Redis is down would populate a
+        second process-local cache and quietly defeat the point of a shared one.
+        """
+        return self._available
+
     def get_stats(self) -> dict[str, Any]:
         """Get combined stats from Redis and fallback."""
         fallback_stats = self._fallback.get_stats()
