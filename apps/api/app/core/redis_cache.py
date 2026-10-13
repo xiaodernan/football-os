@@ -2,6 +2,13 @@
 
 Provides a Redis-backed cache that can be used alongside the in-memory TTLCache.
 Gracefully degrades to in-memory only when Redis is unavailable.
+
+The `cast`s are types, not behaviour: redis-py's stubs type every command's return as
+`Awaitable[Any] | Any` because one client class serves both the sync and the async API,
+and this build only ever drives the sync half — so each result is asserted to the type
+the sync call actually returns. A guard that merely narrowed `self._redis` would not
+survive mypy: a method call may mutate an attribute, so every guarded block binds the
+client to a local first.
 """
 
 from __future__ import annotations
@@ -9,7 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any
+from typing import Any, cast
 
 import redis
 
@@ -46,14 +53,18 @@ class RedisCache:
     def _connect(self) -> None:
         """Attempt to connect to Redis."""
         try:
-            self._redis = redis.from_url(
+            client: redis.Redis | None = redis.from_url(
                 self.redis_url,
                 socket_connect_timeout=2,
                 socket_timeout=2,
                 decode_responses=True,
             )
-            # Test connection
-            self._redis.ping()
+            # typeshed allows from_url to yield no client; a configured-but-absent
+            # client is the same degraded state as a refused handshake.
+            if client is None:
+                raise ConnectionError("redis.from_url returned no client")
+            client.ping()
+            self._redis = client
             self._available = True
             logger.info("Redis cache connected: %s", self.redis_url)
         except Exception as e:
@@ -67,9 +78,10 @@ class RedisCache:
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get value by key."""
-        if self._available and self._redis:
+        client = self._redis
+        if self._available and client is not None:
             try:
-                value = self._redis.get(self._key(key))
+                value = cast("Any", client.get(self._key(key)))
                 if value is not None:
                     return json.loads(value)
             except Exception as e:
@@ -86,9 +98,10 @@ class RedisCache:
         # Always write to fallback
         self._fallback.set(key, value, ttl)
 
-        if self._available and self._redis:
+        client = self._redis
+        if self._available and client is not None:
             try:
-                self._redis.setex(
+                client.setex(
                     self._key(key),
                     int(ttl_seconds),
                     json.dumps(value, separators=(",", ":")),
@@ -105,9 +118,10 @@ class RedisCache:
         """Delete key from both Redis and fallback."""
         deleted = self._fallback.delete(key)
 
-        if self._available and self._redis:
+        client = self._redis
+        if self._available and client is not None:
             try:
-                result = self._redis.delete(self._key(key))
+                result = cast("int", client.delete(self._key(key)))
                 return result > 0 or deleted
             except Exception as e:
                 logger.warning("Redis delete failed: %s", e)
@@ -118,15 +132,16 @@ class RedisCache:
     def clear(self) -> None:
         """Clear all entries."""
         self._fallback.clear()
-        if self._available and self._redis:
+        client = self._redis
+        if self._available and client is not None:
             try:
                 # Use SCAN to delete keys with our prefix
                 pattern = self._key("*")
                 cursor = 0
                 while True:
-                    cursor, keys = self._redis.scan(cursor, match=pattern, count=1000)
+                    cursor, keys = cast("tuple[int, list[str]]", client.scan(cursor, match=pattern, count=1000))
                     if keys:
-                        self._redis.delete(*keys)
+                        client.delete(*keys)
                     if cursor == 0:
                         break
             except Exception as e:
@@ -153,9 +168,10 @@ class RedisCache:
             "redis_available": self._available,
             "redis_url": self.redis_url if self._available else None,
         }
-        if self._available and self._redis:
+        client = self._redis
+        if self._available and client is not None:
             try:
-                info = self._redis.info("memory")
+                info = cast("dict[str, Any]", client.info("memory"))
                 stats["redis_memory_used"] = info.get("used_memory_human")
                 stats["redis_connected_clients"] = info.get("connected_clients")
             except Exception:
