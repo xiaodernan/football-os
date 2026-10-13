@@ -52,10 +52,12 @@ def _origin(body: dict[str, object] | str | None = None, status: int = 200, cont
     return call_next
 
 
-def test_the_key_carries_the_path_and_the_query() -> None:
-    assert response_cache_key("/api/v1/healthz", "") == "http:/api/v1/healthz:"
-    assert response_cache_key("/api/v1/healthz", "a=1&b=2") == "http:/api/v1/healthz:a=1&b=2"
-    assert response_cache_key("/x", "a=1") != response_cache_key("/x", "a=2")
+def test_the_key_carries_the_path_the_query_and_the_origin() -> None:
+    assert response_cache_key("/api/v1/healthz", "") == "http:%2Fapi%2Fv1%2Fhealthz::"
+    assert response_cache_key("/x", "a=1") != response_cache_key("/x", "a=2"), "a different query is a different answer"
+    assert response_cache_key("/x", "") != response_cache_key("/y", ""), "a different path is a different answer"
+    assert response_cache_key("/x", "", "http://localhost:3210") != response_cache_key("/x", "", "http://127.0.0.1:3210"), "a different origin is a different answer"
+    assert response_cache_key("/a:b", "c") != response_cache_key("/a", "b:c"), "encoding each part is what keeps the separators unambiguous"
 
 
 def test_a_second_identical_get_is_served_from_the_cache() -> None:
@@ -157,6 +159,79 @@ def test_a_miss_is_labelled_and_a_non_candidate_is_not() -> None:
         return response.headers["X-Cache"]
 
     assert asyncio.run(run()) == "MISS"
+
+
+def _origin_echoing_acao() -> Origin:
+    """What `CORSMiddleware` does to a response, reduced to the part that varies.
+
+    `Access-Control-Allow-Origin` is a function of the request's `Origin`, so a response
+    carrying it is not the same answer for every caller. That is the whole reason this
+    shape exists: a cache keyed only on path and query cannot tell the two apart.
+    """
+
+    async def call_next(request: Request) -> Response:
+        response = JSONResponse(content={"status": "ok"})
+        origin = request.headers.get("origin")
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+        return response
+
+    return call_next
+
+
+def _with_origin(origin: str) -> list[tuple[bytes, bytes]]:
+    return [(b"origin", origin.encode())]
+
+
+def test_a_second_allowlisted_origin_gets_its_own_answer_not_the_first_ones() -> None:
+    """The defect found live, in the smallest form that shows it.
+
+    With two allowlisted origins — which is this project's own configuration, `localhost:3210`
+    and `127.0.0.1:3210` — the first caller to fetch a path warmed the cache and every later
+    caller was served the first caller's `Access-Control-Allow-Origin`. A browser compares
+    that header against *its* origin and rejects the mismatch, so the second allowlisted
+    origin silently stopped working the moment a path was warm.
+    """
+    cache: TTLCache = TTLCache()
+    origin = _origin_echoing_acao()
+
+    async def run() -> tuple[str, str, str]:
+        first = await cached_response_for(cache, _request(headers=_with_origin("http://localhost:3210")), origin)
+        second = await cached_response_for(cache, _request(headers=_with_origin("http://127.0.0.1:3210")), origin)
+        return first.headers["X-Cache"], second.headers["X-Cache"], second.headers.get("Access-Control-Allow-Origin", "")
+
+    first_header, second_header, acao = asyncio.run(run())
+    assert first_header == "MISS"
+    assert second_header == "MISS", "a different origin is a different question, so it must not be a hit"
+    assert acao == "http://127.0.0.1:3210", "the answer must name the origin that asked"
+
+
+def test_the_same_origin_still_gets_a_hit() -> None:
+    """The other half: keying on `Origin` must not simply disable the cache."""
+    cache: TTLCache = TTLCache()
+    origin = _origin_echoing_acao()
+
+    async def run() -> tuple[str, str]:
+        first = await cached_response_for(cache, _request(headers=_with_origin("http://localhost:3210")), origin)
+        second = await cached_response_for(cache, _request(headers=_with_origin("http://localhost:3210")), origin)
+        return first.headers["X-Cache"], second.headers["X-Cache"]
+
+    assert asyncio.run(run()) == ("MISS", "HIT")
+
+
+def test_an_origin_header_does_not_leak_into_an_uncached_caller() -> None:
+    """A caller that sends no `Origin` must not be answered with someone else's."""
+    cache: TTLCache = TTLCache()
+    origin = _origin_echoing_acao()
+
+    async def run() -> tuple[str, str | None]:
+        await cached_response_for(cache, _request(headers=_with_origin("http://localhost:3210")), origin)
+        plain = await cached_response_for(cache, _request(), origin)
+        return plain.headers["X-Cache"], plain.headers.get("Access-Control-Allow-Origin")
+
+    header, acao = asyncio.run(run())
+    assert header == "MISS"
+    assert acao is None, "a same-origin caller never sent an origin and must not be handed one"
 
 
 def test_the_environment_bypass_stays_in_the_middleware() -> None:

@@ -68,7 +68,7 @@ def _serving_shared() -> RedisCache:
     return shared
 
 
-def _request(path: str = "/api/v1/healthz", query: str = "") -> Request:
+def _request(path: str = "/api/v1/healthz", query: str = "", headers: list[tuple[bytes, bytes]] | None = None) -> Request:
     return Request(
         {
             "type": "http",
@@ -76,7 +76,7 @@ def _request(path: str = "/api/v1/healthz", query: str = "") -> Request:
             "scheme": "http",
             "path": path,
             "query_string": query.encode(),
-            "headers": [],
+            "headers": headers or [],
             "client": ("127.0.0.1", 1),
             "server": ("testserver", 80),
         }
@@ -179,6 +179,34 @@ def test_no_shared_tier_is_the_pre_two_tier_behaviour() -> None:
 def test_the_key_is_the_same_for_both_tiers() -> None:
     """One key space, or the second tier would never be found by the first."""
     assert response_cache_key("/a", "b=1") == response_cache_key("/a", "b=1")
+
+
+def test_the_shared_tier_does_not_hand_one_origins_answer_to_another() -> None:
+    """The reason the origin is part of the key at all, checked where it matters most.
+
+    The near tier can only ever be read by the process that wrote it. The shared one
+    cannot: an entry written by a worker serving `localhost:3210` is read by every worker,
+    so a key that ignored `Origin` would put one browser's `Access-Control-Allow-Origin`
+    in front of another's across the whole deployment — not just for the life of one
+    process's cache.
+    """
+    shared = _serving_shared()
+
+    async def origin(request: Request) -> Response:
+        response = JSONResponse(content={"status": "ok"})
+        asking = request.headers.get("origin")
+        if asking:
+            response.headers["Access-Control-Allow-Origin"] = asking
+        return response
+
+    async def run() -> tuple[str, str]:
+        first = await cached_response_for(TTLCache(), _request(headers=[(b"origin", b"http://localhost:3210")]), origin, shared=shared)
+        second = await cached_response_for(TTLCache(), _request(headers=[(b"origin", b"http://127.0.0.1:3210")]), origin, shared=shared)
+        return first.headers["X-Cache"], second.headers["X-Cache"]
+
+    first_header, second_header = asyncio.run(run())
+    assert first_header == "MISS"
+    assert second_header == "MISS", "the shared tier must not answer a different origin from the one that wrote it"
 
 
 PER_REQUEST_HEADERS = ("X-Request-ID", "X-Request-Duration-Ms")

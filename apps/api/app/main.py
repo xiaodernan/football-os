@@ -7,6 +7,7 @@ import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable
 from contextlib import asynccontextmanager
 from typing import Any, Protocol
+from urllib.parse import quote
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -91,14 +92,23 @@ async def _read_body(response: Response) -> bytes:
     return body
 
 
-def response_cache_key(path: str, query: str) -> str:
-    """The cache identity of a request: path plus query, prefixed by kind.
+def response_cache_key(path: str, query: str, origin: str = "") -> str:
+    """The cache identity of a request: path, query, and the origin that asked.
 
-    The prefix matters less than it looks — nothing else writes into this cache
-    today — but it keeps an HTTP entry from colliding with any future key space
-    sharing the same store.
+    `origin` belongs here for the same reason it belongs in HTTP's own `Vary`:
+    `Access-Control-Allow-Origin` is a function of the request's `Origin`, so a response
+    carrying it is not one answer but one answer per origin. With this project's own
+    configuration — `localhost:3210` and `127.0.0.1:3210` both allowlisted — keying on
+    path alone meant the first caller warmed the cache and every later caller was served
+    the first caller's `Access-Control-Allow-Origin`; a browser rejects that mismatch, so
+    the second allowlisted origin stopped working as soon as a path was warm.
+
+    Each component is percent-encoded with `safe=""` so that none of them can contain a
+    colon. The parts are then separated by colons without ambiguity, which the previous
+    `path:query` join could not promise — `("/a:b", "c")` and `("/a", "b:c")` produced the
+    same key.
     """
-    return f"http:{path}:{query}"
+    return "http:{}:{}:{}".format(quote(path, safe=""), quote(query, safe=""), quote(origin, safe=""))
 
 
 PER_REQUEST_HEADERS = frozenset({"x-request-id", "x-request-duration-ms"})
@@ -175,7 +185,7 @@ async def cached_response_for(
     if "no-cache" in request.headers.get("Cache-Control", "").lower():
         return await call_next(request)
 
-    key = response_cache_key(request.url.path, request.url.query)
+    key = response_cache_key(request.url.path, request.url.query, request.headers.get("origin", ""))
     cached = cache.get(key)
     if cached is None and shared is not None and shared.available:
         cached = shared.get(key)
