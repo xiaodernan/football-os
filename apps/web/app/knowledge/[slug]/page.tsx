@@ -35,7 +35,6 @@ function formatDay(iso: string | null): string {
 
 export default async function KnowledgeDocumentPage({ params }: Props) {
   const { slug } = await params;
-  const tc = await getTranslations("common");
   const tk = await getTranslations("knowledge");
   const result = await serverFetch<KnowledgeDocumentDetail>(`/knowledge/documents/${encodeURIComponent(slug)}`);
 
