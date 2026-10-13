@@ -106,9 +106,12 @@ export default async function VideoReportPage({ params }: Props) {
               {" "}
               {asset.bitrate_kbps.toFixed(1)} kbit/s.
             </p>
-            <Link className="chip" href={`/api/v1/video/${encodeURIComponent(asset.id)}/file`}>
+            {/* An `<a>`, not Next's `<Link>`: the target is an API route, not a page, and Link's RSC
+                prefetch of it answers 404 every visit — an unprovoked console error the walk's gate
+                used to count. */}
+            <a className="chip" href={`/api/v1/video/${encodeURIComponent(asset.id)}/file`}>
               open the file directly
-            </Link>
+            </a>
           </div>
         </Panel>
 

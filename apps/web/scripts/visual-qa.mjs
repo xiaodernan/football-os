@@ -1884,17 +1884,23 @@ async function run() {
         check('mobile 375px: the clip report holds with no horizontal overflow', videoNarrow <= 1, `overflow ${videoNarrow}px`);
         await page.setViewport(DESKTOP);
 
-        // Detach the media before deleting: dropping the element alone leaves Chromium's in-flight range
-        // request running, and its 404 after the row is gone is the browser chasing a clip that no longer
-        // exists rather than anything the walk wants to claim about the report.
+        // Neutralise the media before deleting — without detaching the nodes. The first version of this step
+        // called `video.remove()` / `element.remove()` on elements React owns, and pulling them out from under
+        // React broke the tree the delete button's `router.push('/video')` needed: the page never left the
+        // report URL, `No clips yet` never appeared, and this section aborted the walk about half the time —
+        // every check after it (simulator, careers, challenges, graph, aggregates) silently not running.
+        // Swapping the source instead keeps the tree intact: `load()` with no source aborts the video element's
+        // in-flight range request, and a new data-URI src cancels an img's pending fetch the same way.
         await page.evaluate(() => {
+          const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
           document.querySelectorAll('video').forEach((video) => {
             video.pause();
             video.removeAttribute('src');
             video.load();
-            video.remove();
           });
-          document.querySelectorAll('img[src^="/api/v1/video/"]').forEach((element) => element.remove());
+          document.querySelectorAll('img[src^="/api/v1/video/"]').forEach((element) => {
+            element.src = BLANK;
+          });
         });
         await clickByText(page, 'button', 'Delete clip and file');
         await waitForText(page, 'No clips yet', 60_000);

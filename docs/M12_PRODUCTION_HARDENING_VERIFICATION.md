@@ -289,6 +289,32 @@ no point-in-time recovery — the container is one local PostgreSQL, and the scr
 pathways remain inspection-verified. What changed is the worst claim in this document: the backup
 and restore are now *executed*, and the execution found a defect no gate could see.
 
+### Performance — a measured load run
+
+A recorded run of `scripts/bench_api.py` from 2026-10-13, against the local tier (uvicorn, single
+process, the API on the project's PostgreSQL container, `ENV=development`, the response-cache
+middleware enabled, localhost loopback, concurrency 10, 15 s per endpoint) — the steady-state shape,
+where the sibling "Load" section below measures the same harness at saturation:
+
+| endpoint | requests | throughput | p50 | p95 | p99 | errors |
+| --- | --- | --- | --- | --- | --- | --- |
+| `GET /api/v1/healthz` | 4200 | 279.63 req/s | 20.51 ms | 80.62 ms | 331.24 ms | 0 |
+| `GET /api/v1/world/competitions?page_size=12` | 4169 | 277.84 req/s | 22.38 ms | 64.71 ms | 304.02 ms | 0 |
+| `GET /api/v1/tactics/status` | 3885 | 258.15 req/s | 24.65 ms | 69.27 ms | 188.02 ms | 0 |
+
+What these numbers are: the cached read path, on one process, on a developer machine. The two content
+endpoints sit behind the 60-second response cache the milestone shipped, so steady-state traffic like
+this measures the cache plus the middleware chain more than it measures PostgreSQL. What they are
+**not**: a capacity ceiling, a production figure, or a soak test — no saturation was reached (the
+loopback saturated the client before it saturated anything else), nothing ran longer than 15 s, and
+no Redis was in the path. Reproduce with `MSYS_NO_PATHCONV=1 python -m scripts.bench_api --endpoint
+/api/v1/healthz --concurrency 10 --duration 15` — the env var matters on Git Bash, whose argument
+path-mangling silently rewrites a leading-slash endpoint into a Windows path
+(`http://127.0.0.1:8731C:/Program Files/Git/api/v1/healthz`) and turns the whole run into one long
+404 measurement that *looks* like a healthy throughput figure. This run's own first
+three attempts did exactly that, which is why the mangled URL is printed before the run and the
+harness env var is part of the recorded command.
+
 ## The figures, with their plane
 
 | measurement | plane | result |
