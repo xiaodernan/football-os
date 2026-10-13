@@ -187,6 +187,15 @@ def password_refusal(*, message: str) -> HTTPException:
     return HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": INVALID_PASSWORD, "message": message})
 
 
+MAX_BUCKETS = 5000
+"""The most distinct rate-limit buckets one process will hold.
+
+Named because the bound it sets is a promise, and a promise needs a name to be checked
+against. Buckets are keyed by `scope:client:path`, and `client` is a dimension no caller
+controls, so the count of live buckets is not something the server can predict.
+"""
+
+
 class RateLimiter:
     """Fixed-window in-memory limiter; swap for Redis when horizontally scaled (ADR-001)."""
 
@@ -205,8 +214,29 @@ class RateLimiter:
             )
         hits.append(now)
         self._hits[bucket] = hits
-        if len(self._hits) > 5000:  # keep the map bounded
-            self._hits = {k: v for k, v in self._hits.items() if now - v[-1] < window_seconds}
+        self._prune(now, window_seconds)
+
+    def _prune(self, now: float, window_seconds: int) -> None:
+        """Hold the map under `MAX_BUCKETS`.
+
+        Idle buckets go first, because dropping a bucket whose hits are still inside its
+        window would hand a caller a fresh budget for free. But idle-first is not by
+        itself a bound: against a flood of *distinct live* buckets — which is exactly
+        what a rotating source address produces, since the key contains the client — the
+        idle pass removes nothing and the map grows without limit. So the least recently
+        touched survivors are dropped until the promise holds.
+
+        Evicting a live bucket is the lesser of the two ways this can fail. The other is
+        an unbounded map reachable from outside the doors the limiter protects, and a
+        process that dies has no rate limit at all.
+        """
+        if len(self._hits) <= MAX_BUCKETS:
+            return
+        live = {k: v for k, v in self._hits.items() if now - v[-1] < window_seconds}
+        if len(live) > MAX_BUCKETS:
+            keepers = sorted(live, key=lambda k: live[k][-1])[-MAX_BUCKETS:]
+            live = {k: live[k] for k in keepers}
+        self._hits = live
 
 
 rate_limiter = RateLimiter()
