@@ -28,6 +28,23 @@ request produces can be joined to it.
 
 The middleware (`app/main.py`) generates a `X-Request-ID` when the caller sent none, echoes the
 caller's own when they did, and both the ID and `X-Request-Duration-Ms` travel back on the response.
+
+That is true of every response except the one that needs it most. Starlette builds its stack as
+`[ServerErrorMiddleware] + user_middleware + [ExceptionMiddleware]`, so `request_context` — for all the
+care taken over its registration order — sits *inside* the middleware that renders an unhandled
+exception: a route that raises propagates out of it before the lines that dress the response have run,
+and the 500 reached the client carrying no `X-Request-ID`, no duration, no `nosniff`. The log line kept
+its ID, because the context variable is set before the call and `ServerErrorMiddleware` reads the same
+variable back — so the two ends disagreed: the server had recorded an ID it never put on the wire, and
+nothing tied them together but a timestamp and a path. That is the same as having no ID, and it is the
+wrong response to lose it on, since a 500 is the one status a client quotes back at you. The header set
+now lives in one function, `app/core/response_headers.py`: `request_context` calls it for everything that
+flows normally, `install_error_handlers`'s `_unhandled` calls it for the one answer that never comes back
+to it, and `request_started_var` carries the start time across the same gap so a crash still reports a
+real duration. `tests/test_error_response_headers.py` drives a throwing route through the real middleware
+stack and asserts the crash answer's ID is the ID in its own log record. The case was written first and
+failed first — the response came back with `content-length: 72` and nothing but `content-type`.
+
 `configure_logging()` replaces the previous `logging.basicConfig(...)` call — the old format was
 `"%(asctime)s %(levelname)s %(name)s %(message)s"`, which is human-readable and not machine-readable,
 and an aggregation pipeline could not index it without a parser.

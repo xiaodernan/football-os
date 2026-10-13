@@ -20,6 +20,8 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
+from app.core.response_headers import dress_response
+
 logger = logging.getLogger("football_os.api")
 
 
@@ -76,7 +78,13 @@ def install_error_handlers(app: FastAPI) -> None:
         logger.warning("integrity_error %s", type(exc.orig).__name__)
         return JSONResponse(_answer("conflict", "That record conflicts with existing data"), status_code=status.HTTP_409_CONFLICT)
 
+    # Starlette's `ServerErrorMiddleware` sits outside every user middleware, so an exception raised in a
+    # route leaves `request_context` before that middleware can add this answer's headers. A 500 is the one
+    # status a client quotes back at you, so it is the one answer that can least afford to arrive without an
+    # `X-Request-ID` — the handler that renders the crash dresses it here.
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("unhandled_error path=%s", request.url.path)
-        return JSONResponse(_answer("internal_error", "Unexpected server error"), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        response = JSONResponse(_answer("internal_error", "Unexpected server error"), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        dress_response(response)
+        return response

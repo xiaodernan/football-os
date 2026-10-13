@@ -48,8 +48,9 @@ from app.core.cache import _response_cache
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
-from app.core.logging import configure_logging, get_logger, request_id_var
+from app.core.logging import configure_logging, get_logger, request_id_var, request_started_var
 from app.core.redis_cache import close_redis_cache, get_redis_cache
+from app.core.response_headers import dress_response
 from app.core.tracing import init_tracing, instrument_fastapi
 from app.services.knowledge import corpus_stats, sync_knowledge
 from app.services.tactics import sync_tactics
@@ -309,17 +310,19 @@ def create_app() -> FastAPI:
     # means this runs on a HIT, where `response_cache` returns without calling anything
     # downstream — so a served-from-cache response gets this request's own id, duration
     # and security headers rather than none, or the previous caller's.
+    #
+    # The headers themselves are added by `dress_response`, which the 500 handler also calls: an
+    # exception propagates out of this middleware before the lines below could run, so the crash
+    # has to dress itself, and two definitions of the header set would drift apart.
     @app.middleware("http")
     async def request_context(request: Request, call_next):
         started = time.perf_counter()
         # Generate or extract request ID
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
         request_id_var.set(request_id)
+        request_started_var.set(started)
         response = await call_next(request)
-        response.headers["X-Request-ID"] = request_id
-        response.headers["X-Request-Duration-Ms"] = str(int((time.perf_counter() - started) * 1000))
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        dress_response(response)
         return response
 
     install_error_handlers(app)

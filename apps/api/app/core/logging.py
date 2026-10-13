@@ -27,6 +27,13 @@ from app.core.config import settings
 # simply have put every request in one bucket.
 request_id_var: ContextVar[str] = ContextVar("request_id", default="")
 
+# When the request began, as `time.perf_counter()`, so the duration header can be built by whoever finally
+# dresses the response. Normally that is `request_context`; on a 500 it cannot be, because the exception
+# left that middleware before it reached the lines that add the headers, and the handler that renders the
+# crash sits outside every user middleware. Keeping the start time here rather than as a local is what lets
+# the crash answer report a real duration instead of none. `None` means no request has begun here yet.
+request_started_var: ContextVar[float | None] = ContextVar("request_started", default=None)
+
 
 class JSONFormatter(logging.Formatter):
     """JSON log formatter with standardized fields."""
