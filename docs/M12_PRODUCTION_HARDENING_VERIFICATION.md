@@ -90,6 +90,19 @@ follow-then-withdraw case honest, and it was found by that case going red, not b
 in-memory caches and Redis — so the cache is observable rather than an invisible optimisation, and
 an operator can see which tier is actually serving.
 
+**The middleware body is now tested, which it was not when this document first described it.**
+`response_cache` had no test at all, because it returns early when `settings.env == "test"` and
+every test runs with that set — the same bypass that kept `test_community.py`'s follow-then-withdraw
+case honest. The bypass stays, because the reason for it is real; what changed is that the body
+moved out of the middleware closure into `cached_response_for`, taking the cache as an argument, so
+nine cases can drive it directly with a real `Request` and a stub origin. Extracting it found two
+things reading had not: the body read assumed a streaming response and raised `AttributeError` on
+any plain `JSONResponse`, and the cached value was a `StarletteResponse` object, which an
+in-memory cache can hold and Redis cannot — so no second tier could ever have sat behind that
+interface. The payload is now a plain dict both tiers can hold. The shape is verified on a live
+server too, since the unit tests exercise the non-streaming path: MISS, then HITs at
+byte-identical length, with `no-cache` returning no header at all.
+
 **What is honest to say about where Redis sits today: it is landed, tested and observable, and no
 request path uses it.** Nothing in `app/` calls `get_redis_cache()` except that metrics door, which
 constructs the singleton in order to report on it. So the layer's value at present is that its
