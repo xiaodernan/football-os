@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -27,6 +28,7 @@ type ClosedDetail = { code?: string; message?: string; rounds_played?: number; w
  * walk asks for the refused round anyway.
  */
 export function ChallengeRunTools({ ident, status, available, windowClosed, windowRounds }: { ident: string; status: string; available: boolean; windowClosed: boolean; windowRounds: number }) {
+  const t = useTranslations("challenges");
   const router = useRouter();
   const [busy, setBusy] = useState<null | "play" | "delete">(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,22 +75,22 @@ export function ChallengeRunTools({ ident, status, available, windowClosed, wind
     <div className="stack-sm">
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <button className="btn" disabled={busy !== null || stopped} onClick={play} type="button">
-          {busy === "play" ? "Playing the round…" : "Play the next round"}
+          {busy === "play" ? t("playButtonBusy") : t("playButton")}
         </button>
         <button className="btn btn--ghost" disabled={busy !== null} onClick={remove} type="button">
-          {busy === "delete" ? "Deleting…" : "Delete this run"}
+          {busy === "delete" ? t("deleteButtonBusy") : t("deleteButton")}
         </button>
       </div>
 
       {windowStopped && !closed && (
         <p className="notice notice--warn" role="status">
-          The window closed at {windowRounds} rounds, so there is no round left to ask for. The run page still reads its verdict from the rounds it played.
+          {t("windowStoppedNotice", { n: windowRounds })}
         </p>
       )}
 
       {!available && status === "active" && !windowStopped && (
         <p className="notice notice--warn" role="status">
-          The engine has no round to offer: this club has no competition to rotate through. The window is not the reason — it closes at {windowRounds} rounds.
+          {t("noRoundNotice", { n: windowRounds })}
         </p>
       )}
 
@@ -101,16 +103,16 @@ export function ChallengeRunTools({ ident, status, available, windowClosed, wind
       {closed && (
         <div className="stack-sm" data-testid="challenge-window" role="status">
           <p className="notice notice--warn">
-            {closed.message} The window is enforced by the route that plays a round, so there is no other door to try.{" "}
+            {t("closedPrefix", { message: closed.message ?? "" })}
             {closed.verdict
-              ? `Final verdict: ${closed.verdict.objectives_met} of ${closed.verdict.objectives_total} objectives, and the reward is ${closed.verdict.reward.earned ? "earned" : "not earned"}.`
-              : "No verdict came back with it, so nothing here pretends to have re-derived one."}
+              ? t("closedVerdict", { met: closed.verdict.objectives_met, total: closed.verdict.objectives_total, reward: closed.verdict.reward.earned ? t("earned") : t("notEarned") })
+              : t("closedNoVerdict")}
           </p>
           {closed.verdict && (
             <ul className="stack-sm" style={{ listStyle: "none", padding: 0 }}>
               {closed.verdict.objectives.map((objective) => (
                 <li key={objective.kind}>
-                  <span className={objective.met ? "badge badge--live" : "badge badge--demo"}>{objective.met ? "MET" : "MISSED"}</span> {objective.label} — {objective.actual} of {objective.target}
+                  <span className={objective.met ? "badge badge--live" : "badge badge--demo"}>{objective.met ? t("metMissed") : t("missed")}</span> {objective.label} {t("objectiveActual", { actual: objective.actual, target: objective.target })}
                 </li>
               ))}
             </ul>
@@ -121,16 +123,16 @@ export function ChallengeRunTools({ ident, status, available, windowClosed, wind
       {played && last && (
         <div className="stack-sm" data-testid="challenge-round" role="status">
           <p className="notice">
-            Round {last.round_index} played: {played.career.club_short} {last.club_goals}–{last.opponent_goals} {last.opponent_short}. The record now reads {played.record.played} played,{" "}
-            {played.record.points} points. {verdict ? `${verdict.rounds_played} of ${verdict.window_rounds} rounds used, ${verdict.rounds_remaining} left in the window.` : ""}
+            {t("playedPre", { idx: last.round_index, club: played.career.club_short, cg: last.club_goals, og: last.opponent_goals, opp: last.opponent_short, played: played.record.played, points: played.record.points })}
+            {verdict ? t("playedWindow", { used: verdict.rounds_played, window: verdict.window_rounds, remaining: verdict.rounds_remaining }) : ""}
           </p>
           <div className="tag-list">
-            <span className="chip mono">digest: {last.digest}</span>
-            <span className="chip mono">seed: {last.seed}</span>
-            <span className="chip mono">status: {verdict?.status ?? "no verdict returned"}</span>
+            <span className="chip mono">{t("digestChip", { digest: last.digest })}</span>
+            <span className="chip mono">{t("seedChip", { seed: last.seed })}</span>
+            <span className="chip mono">{t("statusChip", { status: verdict?.status ?? t("noVerdictReturned") })}</span>
           </div>
           <Link className="world-link" href={`/career/${encodeURIComponent(ident)}`}>
-            see the season this run is played in
+            {t("seeSeason")}
           </Link>
         </div>
       )}

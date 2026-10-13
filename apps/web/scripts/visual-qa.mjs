@@ -765,6 +765,41 @@ async function run() {
       englishMessages.knowledge.title,
     );
 
+    // 10h. §81 2c: the manager live challenges. 154 keys across four files (index, run detail, the start
+    // form and the run tools). The page is session-gated, so this read rides the session the walk already
+    // minted at registration; the catalogue it prints comes from the API the evidence run starts beside it.
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    await open(page, '/challenges');
+    await waitForText(page, chineseMessages.challenges.title);
+    const challengesZh = await page.evaluate(() => ({
+      h1: document.querySelector('h1')?.textContent.trim() ?? '',
+      body: document.body.innerText.replace(/\s+/gu, ' '),
+    }));
+    check(
+      'the challenges catalogue in Chinese renders the catalogue: heading, start panel, scenario table header and scenario-card panel come from messages/zh.json',
+      challengesZh.h1 === chineseMessages.challenges.title &&
+        challengesZh.body.includes(chineseMessages.challenges.startRunTitle) &&
+        challengesZh.body.includes(chineseMessages.challenges.tableScenario) &&
+        challengesZh.body.includes(chineseMessages.challenges.whatEachTitle),
+      `h1 ${challengesZh.h1} · start ${challengesZh.body.includes(chineseMessages.challenges.startRunTitle)} · table ${challengesZh.body.includes(chineseMessages.challenges.tableScenario)} · whatEach ${challengesZh.body.includes(chineseMessages.challenges.whatEachTitle)}`,
+    );
+    check(
+      'and the English copy is gone from the Chinese challenges catalogue',
+      !challengesZh.body.includes(englishMessages.challenges.title) &&
+        !challengesZh.body.includes(englishMessages.challenges.startRunTitle) &&
+        !challengesZh.body.includes(englishMessages.challenges.tableScenario) &&
+        !challengesZh.body.includes(englishMessages.challenges.whatEachTitle),
+      `en title present ${challengesZh.body.includes(englishMessages.challenges.title)} · en start present ${challengesZh.body.includes(englishMessages.challenges.startRunTitle)} · en table present ${challengesZh.body.includes(englishMessages.challenges.tableScenario)} · en whatEach present ${challengesZh.body.includes(englishMessages.challenges.whatEachTitle)}`,
+    );
+    await shot(page, '18h-challenges-chinese');
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+    await open(page, '/challenges');
+    check(
+      'and the switch back leaves the challenges catalogue in English, so the check is not one-way',
+      (await bodyText(page)).includes(englishMessages.challenges.title),
+      englishMessages.challenges.title,
+    );
+
     // 12. SEO surface (spec §80): robots, sitemap, canonical, OpenGraph and structured data.
     const [robots, sitemap] = await Promise.all([
       fetch(`${BASE}/robots.txt`).then(async (response) => ({

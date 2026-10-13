@@ -23,6 +23,7 @@ import type { ChallengeCatalogue, ChallengeEntry, ChallengeRunView } from "@/lib
  * redirect — the run page shows the club it gave, not the arithmetic that selected it.
  */
 export function ChallengeStartForm({ catalogue }: { catalogue: ChallengeCatalogue }) {
+  const t = useTranslations("challenges");
   const router = useRouter();
   const first = catalogue.challenges[0];
   const [slug, setSlug] = useState(first?.slug ?? "");
@@ -48,7 +49,7 @@ export function ChallengeStartForm({ catalogue }: { catalogue: ChallengeCatalogu
     setError(null);
     setOpened(null);
     if (manager.trim().length < 2) {
-      setError("A manager name of at least two characters is required — the run is printed with it.");
+      setError(t("startError"));
       setBusy(false);
       return;
     }
@@ -76,46 +77,46 @@ export function ChallengeStartForm({ catalogue }: { catalogue: ChallengeCatalogu
     <div className="stack">
       <div className="grid grid-2">
         <label className="field">
-          <span>Scenario</span>
-          <select aria-label="Scenario" onChange={(event) => setSlug(event.target.value)} value={slug}>
+          <span>{t("scenario")}</span>
+          <select aria-label={t("scenario")} onChange={(event) => setSlug(event.target.value)} value={slug}>
             {catalogue.challenges.map((row) => (
               <option key={row.slug} value={row.slug}>
-                {row.name} · {row.window_rounds} rounds · {row.difficulty}
+                {t("scenarioOption", { name: row.name, rounds: row.window_rounds, difficulty: row.difficulty })}
               </option>
             ))}
           </select>
         </label>
         <label className="field">
-          <span>Manager name</span>
-          <input aria-label="Manager name" onChange={(event) => setManager(event.target.value)} placeholder="How the run is signed" type="text" value={manager} />
+          <span>{t("managerName")}</span>
+          <input aria-label={t("managerName")} onChange={(event) => setManager(event.target.value)} placeholder={t("managerPlaceholder")} type="text" value={manager} />
         </label>
         {wantsClub ? (
           <label className="field">
-            <span>Club (you choose it)</span>
-            <select aria-label="Club" onChange={(event) => setClub(event.target.value)} value={club}>
+            <span>{t("clubChoose")}</span>
+            <select aria-label={t("club")} onChange={(event) => setClub(event.target.value)} value={club}>
               {catalogue.clubs.map((row) => (
                 <option key={row.slug} value={row.slug}>
-                  {row.name} · {row.formation} · {row.overall}
+                  {t("clubOption", { name: row.name, formation: row.formation, overall: row.overall })}
                 </option>
               ))}
             </select>
           </label>
         ) : (
           <label className="field">
-            <span>Competition to take the weakest club from</span>
-            <select aria-label="Competition" onChange={(event) => setCompetition(event.target.value)} value={competition}>
+            <span>{t("competitionLabel")}</span>
+            <select aria-label={t("competition")} onChange={(event) => setCompetition(event.target.value)} value={competition}>
               {catalogue.competitions.map((row) => (
                 <option key={row.slug} value={row.slug}>
-                  {row.name} · {row.clubs} clubs
+                  {t("competitionOption", { name: row.name, clubs: row.clubs })}
                 </option>
               ))}
             </select>
           </label>
         )}
         <label className="field">
-          <span>Tactical system — the part the engine reads</span>
-          <select aria-label="Tactical system" onChange={(event) => setSystem(event.target.value)} value={system}>
-            <option value="">{wantsClub ? `Club default (${clubFormation || "no shape"})` : "Club default, whichever club the measurement picks"}</option>
+          <span>{t("systemLabel")}</span>
+          <select aria-label={t("system")} onChange={(event) => setSystem(event.target.value)} value={system}>
+            <option value="">{wantsClub ? t("systemDefaultClub", { shape: clubFormation || t("noShape") }) : t("systemDefaultMeasured")}</option>
             {systems.map((row) => (
               <option key={row.slug} value={row.slug}>
                 {row.label ?? row.slug}
@@ -129,10 +130,10 @@ export function ChallengeStartForm({ catalogue }: { catalogue: ChallengeCatalogu
 
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <button className="btn" disabled={busy || !scenario} onClick={submit} type="button">
-          {busy ? "Opening the run…" : "Start this run"}
+          {busy ? t("startButtonBusy") : t("startButton")}
         </button>
         <span className="muted">
-          Up to {catalogue.max_runs_per_user} per account. The window, the budget and the objectives come from the scenario and are not offered here.
+          {t("perAccount", { max: catalogue.max_runs_per_user })}
         </span>
       </div>
 
@@ -148,16 +149,17 @@ export function ChallengeStartForm({ catalogue }: { catalogue: ChallengeCatalogu
 }
 
 function ScenarioSummary({ scenario }: { scenario: ChallengeEntry }) {
+  const t = useTranslations("challenges");
   return (
     <div className="stack-sm" data-testid="challenge-scenario">
       <p className="notice">{scenario.brief}</p>
       <div className="tag-list">
-        <span className="chip mono">window: {scenario.window_rounds} rounds</span>
-        <span className="chip mono">philosophy: {scenario.philosophy}</span>
-        <span className="chip mono">budget: {scenario.budget.toLocaleString("en-GB")} {scenario.budget_units}</span>
+        <span className="chip mono">{t("cardWindow", { rounds: scenario.window_rounds })}</span>
+        <span className="chip mono">{t("cardPhilosophy", { philosophy: scenario.philosophy })}</span>
+        <span className="chip mono">{t("cardBudget", { budget: scenario.budget.toLocaleString("en-GB"), units: scenario.budget_units })}</span>
         {scenario.objectives.map((objective) => (
           <span className="chip mono" key={objective.kind}>
-            {objective.kind} ≥ {objective.target}
+            {t("cardObjective", { kind: objective.kind, target: objective.target })}
           </span>
         ))}
       </div>
@@ -167,14 +169,15 @@ function ScenarioSummary({ scenario }: { scenario: ChallengeEntry }) {
 
 /** The measurement the club came from, printed in the response that carried it. */
 function OpenedRun({ opened }: { opened: ChallengeRunView }) {
-  const t = useTranslations("common");
+  const t = useTranslations("challenges");
+  const tc = useTranslations("common");
   const choice = opened.club_choice;
   const ranking = (choice?.ranking ?? []).filter((row) => row.measurable && typeof row.overall === "number");
   const lowest = ranking.reduce<number | null>((min, row) => (min === null || Number(row.overall) < min ? Number(row.overall) : min), null);
   return (
     <div className="stack-sm" data-testid="challenge-club-choice" role="status">
       <p className="notice">
-        Run opened: <strong>{opened.career.club_name}</strong> under {opened.challenge?.name}.{" "}
+        {t("runOpenedPre")}<strong>{opened.career.club_name}</strong>{t("runOpenedUnder")}{opened.challenge?.name}.{" "}
         {choice?.how}
       </p>
       {choice?.selector === "weakest" && ranking.length > 0 && (
@@ -182,8 +185,8 @@ function OpenedRun({ opened }: { opened: ChallengeRunView }) {
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Club measured</th>
-                <th scope="col">Selected eleven (OVR mean on the engine&apos;s 0–1 scale)</th>
+                <th scope="col">{t("measuredHeader")}</th>
+                <th scope="col">{t("elevenHeader")}</th>
               </tr>
             </thead>
             <tbody>
@@ -192,7 +195,7 @@ function OpenedRun({ opened }: { opened: ChallengeRunView }) {
                   <td>{row.name}</td>
                   <td className="mono">
                     {row.overall}
-                    {choice.chosen.name === row.name ? " ← taken" : ""}
+                    {choice.chosen.name === row.name ? t("taken") : ""}
                   </td>
                 </tr>
               ))}
@@ -201,14 +204,14 @@ function OpenedRun({ opened }: { opened: ChallengeRunView }) {
         </div>
       )}
       <div className="tag-list">
-        <span className="chip mono">lowest measured: {lowest ?? "—"}</span>
-        <span className="chip mono">your club measured: {choice?.chosen.overall ?? "you named this club"}</span>
-        <span className="chip mono">gap to runner-up: {choice?.gap_to_runner_up ?? "—"}</span>
-        <span className="chip mono">catalogue: {opened.run?.fingerprint}</span>
+        <span className="chip mono">{t("lowestMeasured", { lowest: lowest ?? "—" })}</span>
+        <span className="chip mono">{t("yourClubMeasured", { overall: choice?.chosen.overall ?? t("youNamedClub") })}</span>
+        <span className="chip mono">{t("gapRunnerUp", { gap: choice?.gap_to_runner_up ?? "—" })}</span>
+        <span className="chip mono">{t("catalogueLabel", { fp: opened.run?.fingerprint ?? "" })}</span>
       </div>
       <p className="muted">{opened.verdict?.closed_by} {opened.verdict?.judged_on}</p>
       <Link className="btn btn--sm" href={`/challenges/runs/${encodeURIComponent(opened.career.slug)}`}>
-        {t("open")} the run
+        {tc("open")}{t("openTheRun")}
       </Link>
     </div>
   );

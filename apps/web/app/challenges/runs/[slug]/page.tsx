@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 
 import { Panel } from "@/components/ui";
@@ -18,25 +19,29 @@ export const dynamic = "force-dynamic";
  * One run. `noindex` for the same reason the season page is: it is an account's own history with the
  * simulation engine, and a model's scoreline must not be crawlable as if it were a result.
  */
-export const metadata: Metadata = {
-  title: "Challenge run",
-  description: "A live challenge played to its window: the objective, the rounds that count towards it, and the verdict summed from them.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/challenges") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("challenges");
+  return {
+    title: t("runTitle"),
+    description: t("runDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/challenges") },
+  };
+}
 
 type Props = { params: Promise<{ slug: string }> };
 
 export default async function ChallengeRunPage({ params }: Props) {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fchallenges");
+  const t = await getTranslations("challenges");
   const { slug } = await params;
   if (!slug || slug.length > 80) notFound();
 
   const result = await serverFetch<ChallengeRunView>(`/challenges/runs/${encodeURIComponent(slug)}`);
   if (!result.ok) {
     if (result.status === 404) notFound();
-    return <WorldUnavailable message={result.error.message} title="Challenge run" />;
+    return <WorldUnavailable message={result.error.message} title={t("runTitle")} />;
   }
 
   const view = result.data;
@@ -51,20 +56,21 @@ export default async function ChallengeRunPage({ params }: Props) {
     return (
       <div className="container page stack">
         <WorldHead
-          back={{ href: "/challenges", label: "All scenarios" }}
-          eyebrow={`${career.manager_name} · private to this account`}
-          lede={view.run.note ?? "The scenario this run was started under is no longer in the catalogue."}
+          back={{ href: "/challenges", label: t("runBackLabel") }}
+          eyebrow={`${career.manager_name}${t("privateSuffix")}`}
+          lede={view.run.note ?? t("unrecognisedLede")}
           provenance={{ data_origin: "simulation", is_demo_data: true, disclaimer: view.disclaimer }}
-          title={`${career.club_name} · unrecognised scenario`}
+          title={t("unrecognisedTitle", { club: career.club_name })}
         />
-        <Panel eyebrow="not judged" title="Why this page refuses">
+        <Panel eyebrow={t("notJudgedEyebrow")} title={t("refusesTitle")}>
           <div className="stack-sm">
             <p className="notice notice--warn">
-              A verdict is computed from the scenario&apos;s own objectives, so when the catalogue no longer contains the scenario, there is nothing to compute it from. The rounds this career played are
-              still its own, and <Link className="world-link" href={`/career/${encodeURIComponent(career.slug)}`}>the season page</Link> reads them back.
+              {t("refPre")}
+              <Link className="world-link" href={`/career/${encodeURIComponent(career.slug)}`}>{t("refLink")}</Link>
+              {t("refPost")}
             </p>
             <p className="muted">
-              <span className="mono">catalogue fingerprint: {view.run.fingerprint ?? "none"}</span>
+              <span className="mono">{t("catalogueFingerprint", { fp: view.run.fingerprint ?? "none" })}</span>
             </p>
           </div>
         </Panel>
@@ -80,23 +86,23 @@ export default async function ChallengeRunPage({ params }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/challenges", label: "All scenarios" }}
-        eyebrow={`${career.manager_name} · ${challenge?.name ?? "scenario"} · private to this account`}
-        lede="The objective below is the scenario's, not yours: it was fixed when the run opened and cannot be moved. Every number beside it is summed from the rounds this run has played, and the window is enforced by the only route that can play a round."
+        back={{ href: "/challenges", label: t("runBackLabel") }}
+        eyebrow={`${career.manager_name} · ${challenge?.name ?? t("scenarioFallback")}${t("privateSuffix")}`}
+        lede={t("verdictLede")}
         provenance={{ data_origin: "simulation", is_demo_data: true, disclaimer: view.disclaimer }}
-        title={`${career.club_name} · ${windowRounds}-round window`}
+        title={t("windowTitle", { club: career.club_name, window: windowRounds })}
       />
 
-      <Panel eyebrow={verdict ? verdict.status.toUpperCase() : "no verdict"} title="The verdict, as it stands">
+      <Panel eyebrow={verdict ? verdict.status.toUpperCase() : t("noVerdict")} title={t("verdictTitle")}>
         <div className="stack-sm">
           <div className="row wrap" style={{ gap: "0.6rem" }}>
-            <span className={verdict?.status === "met" ? "badge badge--live" : "badge badge--demo"}>{verdict ? `${verdict.objectives_met} of ${verdict.objectives_total} objectives` : "nothing to judge"}</span>
+            <span className={verdict?.status === "met" ? "badge badge--live" : "badge badge--demo"}>{verdict ? t("objectivesCount", { met: verdict.objectives_met, total: verdict.objectives_total }) : t("nothingToJudge")}</span>
             <span className="chip mono">
-              rounds {used} of {windowRounds}
+              {t("roundsChip", { used, window: windowRounds })}
             </span>
-            <span className="chip mono">{verdict ? `${verdict.rounds_remaining} left in the window` : "no window"}</span>
+            <span className="chip mono">{verdict ? t("leftInWindow", { remaining: verdict.rounds_remaining }) : t("noWindow")}</span>
           </div>
-          <div aria-label={`rounds used ${used} of ${windowRounds}`} className="bar" role="progressbar">
+          <div aria-label={t("ariaRoundsUsed", { used, window: windowRounds })} className="bar" role="progressbar">
             <div className={verdict?.status === "missed" ? "bar__fill bar__fill--warn" : "bar__fill"} style={{ width: `${share}%` }} />
           </div>
           <p className="muted">
@@ -105,14 +111,14 @@ export default async function ChallengeRunPage({ params }: Props) {
           <ul className="stack-sm" style={{ listStyle: "none", padding: 0 }}>
             {(verdict?.objectives ?? []).map((objective) => (
               <li key={objective.kind}>
-                <span className={objective.met ? "badge badge--live" : "badge badge--demo"}>{objective.met ? "MET" : "SHORT"}</span> <strong>{objective.label}</strong> — {objective.actual} of {objective.target}
+                <span className={objective.met ? "badge badge--live" : "badge badge--demo"}>{objective.met ? t("met") : t("short")}</span> <strong>{objective.label}</strong> {t("objectiveActual", { actual: objective.actual, target: objective.target })}
                 <div className="muted mono">{objective.formula}</div>
               </li>
             ))}
           </ul>
           {verdict && (
             <p className="notice">
-              Reward: <strong>{String(verdict.reward.label)}</strong> — {verdict.reward.earned ? "earned" : "not earned"}. {verdict.reward.reason}{" "}
+              {t("rewardPrefix")}<strong>{String(verdict.reward.label)}</strong>{verdict.reward.earned ? t("rewardEarned") : t("runNotEarned")} {verdict.reward.reason}{" "}
               <span className="mono">
                 {verdict.reward.credits?.toLocaleString("en-GB")} {verdict.reward.credits_units} · {verdict.reward.xp} xp
               </span>
@@ -121,52 +127,51 @@ export default async function ChallengeRunPage({ params }: Props) {
         </div>
       </Panel>
 
-      <Panel eyebrow={challenge ? `${challenge.window}` : "no window"} title="Play it out">
+      <Panel eyebrow={challenge ? `${challenge.window}` : t("noWindow")} title={t("playItOutTitle")}>
         <div className="stack-sm">
           <ChallengeRunTools available={Boolean(next?.available)} ident={career.slug} status={career.status} windowClosed={Boolean(verdict?.window_closed)} windowRounds={windowRounds} />
           {next?.available ? (
             <p className="muted">
-              Next up: round {next.round_index}, {next.side === "home" ? "at home against" : "away at"} {next.opponent_name}
-              {next.venue_name ? ` at ${next.venue_name}` : ""}. {next.rotation} The seed for the round is {next.seed}.
+              {t("nextUp", { round: next.round_index, side: next.side === "home" ? t("sideHome") : t("sideAway"), opponent: next.opponent_name ?? "", venue: next.venue_name ? ` at ${next.venue_name}` : "", rotation: next.rotation ?? "", seed: next.seed ?? "" })}
             </p>
           ) : (
-            <p className="muted">{next?.reason ?? "No further round is scheduled."}</p>
+            <p className="muted">{next?.reason ?? t("noFurtherRound")}</p>
           )}
         </div>
       </Panel>
 
       <div className="grid grid-2">
-        <Panel eyebrow="summed from the rounds below" title="Record inside the window">
+        <Panel eyebrow={t("recordEyebrow")} title={t("recordTitle")}>
           <KeyValueGrid
             rows={[
-              ["Rounds", `${record.played}`],
-              ["Won / drawn / lost", `${record.won} / ${record.drawn} / ${record.lost}`],
-              ["Goals", `${record.goals_for} – ${record.goals_against}`],
+              [t("kvRounds"), `${record.played}`],
+              [t("kvWonDrawnLost"), `${record.won} / ${record.drawn} / ${record.lost}`],
+              [t("kvGoals"), `${record.goals_for} – ${record.goals_against}`],
               [
-                "Goal difference",
+                t("kvGoalDifference"),
                 <span key="gd">
                   {record.goal_difference} · <span className="mono">{record.goal_difference_formula}</span>
                 </span>,
               ],
               [
-                "Points",
+                t("kvPoints"),
                 <span key="pts">
                   {record.points} · <span className="mono">{record.points_formula}</span>
                 </span>,
               ],
-              ["Longest unbeaten run", `${record.unbeaten_run}`],
-              ["Budget (set by the scenario)", `${career.budget.toLocaleString("en-GB")} ${career.budget_units}`],
+              [t("kvLongestUnbeaten"), `${record.unbeaten_run}`],
+              [t("kvBudgetScenario"), `${career.budget.toLocaleString("en-GB")} ${career.budget_units}`],
             ]}
           />
           <p className="muted">{view.limitations.budget}</p>
         </Panel>
 
-        <Panel eyebrow={challenge ? `${challenge.constraints.filter((item) => item.enforced).length} of ${challenge.constraints.length} applied` : "no scenario"} title="What the scenario binds, and what it only states">
+        <Panel eyebrow={challenge ? t("appliedEyebrow", { applied: challenge.constraints.filter((item) => item.enforced).length, total: challenge.constraints.length }) : t("noScenario")} title={t("bindsTitle")}>
           <div className="stack-sm">
             <ul className="stack-sm" style={{ listStyle: "none", padding: 0 }}>
               {(challenge?.constraints ?? []).map((constraint) => (
                 <li key={constraint.key}>
-                  <span className={constraint.enforced ? "badge badge--live" : "badge badge--demo"}>{constraint.enforced ? "APPLIED" : "STATED ONLY"}</span> <strong>{constraint.label}</strong>
+                  <span className={constraint.enforced ? "badge badge--live" : "badge badge--demo"}>{constraint.enforced ? t("applied") : t("statedOnly")}</span> <strong>{constraint.label}</strong>
                   <div className="muted">{constraint.how}</div>
                 </li>
               ))}
@@ -175,34 +180,34 @@ export default async function ChallengeRunPage({ params }: Props) {
             <p className="notice notice--warn">{view.limitations.reward}</p>
             <KeyValueGrid
               rows={[
-                ["Club the scenario gave", career.club_path ? <Link className="world-link" key="club" href={career.club_path}>{career.club_name}</Link> : "the club is no longer in the generated world"],
-                ["Competition", career.competition_name || "none"],
-                ["Stated philosophy", career.philosophy],
-                ["Season page for this run", <Link className="world-link" key="season" href={`/career/${encodeURIComponent(career.slug)}`}>open it</Link>],
+                [t("clubGave"), career.club_path ? <Link className="world-link" key="club" href={career.club_path}>{career.club_name}</Link> : t("clubNoLonger")],
+                [t("competition"), career.competition_name || "none"],
+                [t("statedPhilosophy"), career.philosophy],
+                [t("seasonPageForRun"), <Link className="world-link" key="season" href={`/career/${encodeURIComponent(career.slug)}`}>{t("openIt")}</Link>],
               ]}
             />
           </div>
         </Panel>
       </div>
 
-      <Panel eyebrow={`${fixtures.length} of ${windowRounds} rounds`} title="The rounds the verdict is summed from">
+      <Panel eyebrow={t("roundsEyebrow", { n: fixtures.length, window: windowRounds })} title={t("roundsVerdictTitle")}>
         {fixtures.length === 0 ? (
           <div className="empty">
-            <strong>No round played yet</strong>
-            <p className="muted">Press “Play the next round”: the engine picks the eleven from stored squads, decides the match block by block, and keeps every number it used.</p>
+            <strong>{t("noRoundYet")}</strong>
+            <p className="muted">{t("noRoundYetBody")}</p>
           </div>
         ) : (
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Round</th>
-                  <th scope="col">Fixture</th>
-                  <th scope="col">Score</th>
-                  <th scope="col">Pts</th>
-                  <th scope="col">Digest</th>
-                  <th scope="col">Seed</th>
-                  <th scope="col">Report</th>
+                  <th scope="col">{t("tRound")}</th>
+                  <th scope="col">{t("tFixture")}</th>
+                  <th scope="col">{t("tScore")}</th>
+                  <th scope="col">{t("tPts")}</th>
+                  <th scope="col">{t("tDigest")}</th>
+                  <th scope="col">{t("tSeed")}</th>
+                  <th scope="col">{t("tReport")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -210,7 +215,7 @@ export default async function ChallengeRunPage({ params }: Props) {
                   <tr key={fixture.round_index}>
                     <td className="num">{fixture.round_index}</td>
                     <td>
-                      <span className="world-pos">{fixture.side === "home" ? career.club_short : fixture.opponent_short}</span> <span className="muted">vs</span>{" "}
+                      <span className="world-pos">{fixture.side === "home" ? career.club_short : fixture.opponent_short}</span> <span className="muted">{t("vs")}</span>{" "}
                       <Link className="world-link" href={fixture.opponent_path}>
                         {fixture.side === "home" ? fixture.opponent_short : career.club_short}
                       </Link>
@@ -224,10 +229,10 @@ export default async function ChallengeRunPage({ params }: Props) {
                     <td>
                       {fixture.match_path ? (
                         <Link className="world-link" href={fixture.match_path}>
-                          open
+                          {t("openReport")}
                         </Link>
                       ) : (
-                        <span className="unavailable">report deleted</span>
+                        <span className="unavailable">{t("reportDeleted")}</span>
                       )}
                     </td>
                   </tr>
