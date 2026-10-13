@@ -192,9 +192,13 @@ class TestCostOptimisationDoor:
         assert self._client().get("/api/v1/metrics/cost-optimisation?days=400").status_code == 422
         assert self._client().get("/api/v1/metrics/cost-optimisation?days=0").status_code == 422
 
-    def test_the_cache_stats_door_reports_both_caches(self) -> None:
+    def test_the_cache_stats_door_reports_every_tier(self) -> None:
         resp = self._client().get("/api/v1/metrics/cache")
         assert resp.status_code == 200
         body = resp.json()
-        assert set(body) == {"response_cache", "compute_cache"}
+        # Was `{"response_cache", "compute_cache"}` until Redis landed; an exact set is
+        # the right assertion for a door whose job is to enumerate what the process runs,
+        # and it is what caught the third tier being absent.
+        assert set(body) == {"response_cache", "compute_cache", "redis"}
         assert body["response_cache"]["hits"] >= 0 and body["response_cache"]["hit_rate"] >= 0.0
+        assert isinstance(body["redis"]["redis_available"], bool)

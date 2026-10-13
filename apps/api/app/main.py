@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import time
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from app.api.v1 import (
     agent_memory,
@@ -42,7 +42,7 @@ from app.api.v1 import (
     video,
     world,
 )
-from app.core.cache import _response_cache
+from app.core.cache import TTLCache, _response_cache
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
@@ -68,6 +68,97 @@ Data provenance: the training catalogue and any world data are **synthetic demo 
 and are labelled as such. AI surfaces run in **DEMO MODE** unless a provider key is
 configured, and always say so.
 """
+
+
+async def _read_body(response: Response) -> bytes:
+    """Read a response body whichever shape it arrived in.
+
+    Inside a middleware stack `call_next` hands back a streaming response, whose body
+    is an async iterator and has to be drained to be read. A response built directly —
+    a stub origin in a test, or any ordinary `JSONResponse` — already has its body in
+    `response.body` and no iterator at all. Draining the iterator unconditionally worked
+    in production and raised `AttributeError` the moment the function was called
+    anywhere else, which is the difference between code that has been exercised and
+    code that has only been reached.
+    """
+    iterator = getattr(response, "body_iterator", None)
+    if iterator is None:
+        return response.body
+    body = b""
+    async for chunk in iterator:
+        body += chunk
+    return body
+
+
+def response_cache_key(path: str, query: str) -> str:
+    """The cache identity of a request: path plus query, prefixed by kind.
+
+    The prefix matters less than it looks — nothing else writes into this cache
+    today — but it keeps an HTTP entry from colliding with any future key space
+    sharing the same store.
+    """
+    return f"http:{path}:{query}"
+
+
+async def cached_response_for(
+    cache: TTLCache,
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+    *,
+    ttl: float = 60.0,
+) -> Response:
+    """Serve a GET from `cache`, or fetch it from `call_next` and store the answer.
+
+    The cache holds a serialisable payload rather than a response object, which is what
+    lets a second tier sit behind the same operations later: an in-memory cache can hold
+    a `Response` and a Redis one cannot, so the value here is a plain dict in both.
+
+    A response is cached only when it is a 2xx whose content type is JSON. Anything else
+    is passed through untouched and marked MISS — caching a 500 would replay a failure
+    for the whole TTL, and caching a non-JSON body would break the contract the payload
+    is built on. `no-cache` from the caller defeats a warm entry, because a caller who
+    asks for a fresh answer is entitled to one.
+    """
+    if request.method != "GET":
+        return await call_next(request)
+
+    if "no-cache" in request.headers.get("Cache-Control", "").lower():
+        return await call_next(request)
+
+    key = response_cache_key(request.url.path, request.url.query)
+    cached = cache.get(key)
+    if cached is not None:
+        replay = Response(
+            content=cached["body"],
+            status_code=cached["status_code"],
+            headers=dict(cached["headers"]),
+            media_type=cached["media_type"],
+        )
+        replay.headers["X-Cache"] = "HIT"
+        return replay
+
+    response = await call_next(request)
+
+    if not (200 <= response.status_code < 300) or "application/json" not in response.headers.get("content-type", ""):
+        response.headers["X-Cache"] = "MISS"
+        return response
+
+    body = await _read_body(response)
+
+    cache.set(
+        key,
+        {
+            "body": body.decode("utf-8"),
+            "status_code": response.status_code,
+            "headers": [tuple(pair) for pair in response.headers.items()],
+            "media_type": response.media_type,
+        },
+        ttl=ttl,
+    )
+
+    replay = Response(content=body, status_code=response.status_code, headers=dict(response.headers), media_type=response.media_type)
+    replay.headers["X-Cache"] = "MISS"
+    return replay
 
 
 def create_app() -> FastAPI:
@@ -145,67 +236,17 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def response_cache(request: Request, call_next):
-        """Cache GET responses for 60 seconds."""
-        # Only cache GET requests
-        if request.method != "GET":
-            return await call_next(request)
+        """Cache GET responses for 60 seconds.
 
-        # Skip if no-cache header
-        if request.headers.get("Cache-Control", "").lower().find("no-cache") >= 0:
-            return await call_next(request)
-
-        # Skip caching in test environment
+        Only the environment decision lives here. It is configuration — the test
+        database persists from case to case, so a cached response would make one case
+        read another's — and it is the reason this middleware had no test. Everything
+        else is in `cached_response_for`, which takes the cache as an argument and can
+        therefore be driven directly.
+        """
         if settings.env == "test":
             return await call_next(request)
-
-        # Build cache key
-        cache_key = f"http:{request.url.path}:{request.url.query}"
-        cached = _response_cache.get(cache_key)
-        if cached is not None:
-            # Return cached response with cache hit header
-            from fastapi.responses import Response
-
-            response = Response(
-                content=cached.body,
-                status_code=cached.status_code,
-                headers=dict(cached.headers),
-                media_type=cached.media_type,
-            )
-            response.headers["X-Cache"] = "HIT"
-            return response
-
-        response = await call_next(request)
-
-        # Cache successful GET responses
-        if 200 <= response.status_code < 300:
-            # Only cache JSON responses
-            content_type = response.headers.get("content-type", "")
-            if "application/json" in content_type:
-                # Read body for caching
-                body = b""
-                async for chunk in response.body_iterator:
-                    body += chunk
-                # Reconstruct response with same body
-                from starlette.responses import Response as StarletteResponse
-
-                cached_response = StarletteResponse(
-                    content=body,
-                    status_code=response.status_code,
-                    headers=dict(response.headers),
-                    media_type=response.media_type,
-                )
-                _response_cache.set(f"http:{request.url.path}:{request.url.query}", cached_response, ttl=60.0)
-                # Return new response with cache miss header
-                new_response = StarletteResponse(
-                    content=body,
-                    status_code=response.status_code,
-                    headers=dict(response.headers),
-                    media_type=response.media_type,
-                )
-                new_response.headers["X-Cache"] = "MISS"
-                return new_response
-
-        return response
+        return await cached_response_for(_response_cache, request, call_next)
 
     install_error_handlers(app)
     api = "/api/v1"
