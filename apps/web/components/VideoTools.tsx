@@ -13,7 +13,7 @@ import { useState } from "react";
  */
 export function VideoTools({ assetId, status }: { assetId: string; status: string }) {
   const router = useRouter();
-  const t = useTranslations("common");
+  const t = useTranslations("video");
   const [busy, setBusy] = useState<null | "analyse" | "delete">(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +28,7 @@ export function VideoTools({ assetId, status }: { assetId: string; status: strin
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
         const detail = (payload as { detail?: { code?: string; message?: string } } | null)?.detail;
-        setError(detail?.message ? `${detail.code ?? "failed"}: ${detail.message}` : `Request failed (${response.status}).`);
+        setError(detail?.message ? `${detail.code ?? "failed"}: ${detail.message}` : t("errRequest", { status: response.status }));
         setBusy(null);
         return;
       }
@@ -39,7 +39,7 @@ export function VideoTools({ assetId, status }: { assetId: string; status: strin
       }
       router.refresh();
     } catch (cause) {
-      setError(`The request could not be completed: ${String(cause).slice(0, 120)}`);
+      setError(t("errComplete", { cause: String(cause).slice(0, 120) }));
     }
     setBusy(null);
   }
@@ -48,16 +48,13 @@ export function VideoTools({ assetId, status }: { assetId: string; status: strin
     <div className="stack-sm">
       <div className="row wrap" style={{ gap: "0.5rem" }}>
         <button className="btn btn--primary btn--sm" disabled={busy !== null} onClick={() => call("analyse")} type="button">
-          {busy === "analyse" ? "Measuring frames…" : status === "analysed" ? "Analyse again" : "Analyse this clip"}
+          {busy === "analyse" ? t("analysing") : status === "analysed" ? t("analyseAgain") : t("analyse")}
         </button>
         <button className="btn btn--danger btn--sm" disabled={busy !== null} onClick={() => call("delete")} type="button">
-          {busy === "delete" ? `${t("delete")}…` : `${t("delete")} clip and file`}
+          {busy === "delete" ? `${t("deleteClip")}…` : t("deleteClip")}
         </button>
       </div>
-      <p className="muted world-section-note">
-        Analysis runs in this request and records a job row for itself; there is no queue and no worker, and the page says so rather than
-        showing a progress bar that nothing is feeding.
-      </p>
+      <p className="muted world-section-note">{t("toolsNote")}</p>
       {error && (
         <p className="notice notice--warn" role="status">
           {error}

@@ -15,12 +15,15 @@ import "../../styles/video.css";
 export const dynamic = "force-dynamic";
 
 /** An account's clips are the most identifying files the platform can hold: nothing here is published. */
-export const metadata: Metadata = {
-  title: "My video analysis",
-  description: "Upload a clip, sample its frames, and read what the demo vision provider measured from its pixels.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/video") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("video");
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/video") },
+  };
+}
 
 function formatBytes(size: number): string {
   if (size < 1024) return `${size} B`;
@@ -33,9 +36,10 @@ export default async function VideoIndexPage() {
   if (!user) redirect("/login?next=%2Fvideo");
 
   const tn = await getTranslations("nav");
+  const t = await getTranslations("video");
   const result = await serverFetch<VideoList>("/video");
   if (!result.ok) {
-    return <WorldUnavailable eyebrow="Video analysis" message={result.error.message} title="My video analysis" />;
+    return <WorldUnavailable eyebrow={t("unavailableEyebrow")} message={result.error.message} title={t("unavailableTitle")} />;
   }
 
   const listing = result.data;
@@ -44,19 +48,19 @@ export default async function VideoIndexPage() {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/my-football", label: tn("myFootball") }}
-        eyebrow={`${user.display_name} · private to this account`}
-        lede="Upload a clip and the pipeline will read its container, sample frames at an even interval, and report where the non-pitch pixels moved. Every detection says which provider made it, and the provider says what it cannot see."
-        title="My video analysis"
+        eyebrow={t("eyebrow", { name: user.display_name })}
+        lede={t("lede")}
+        title={t("metaTitle")}
       />
 
-      <Panel eyebrow={`Upload · ${listing.total} of ${listing.limit_per_user} clips used`} title="Add a clip">
+      <Panel eyebrow={t("uploadEyebrow", { used: listing.total, limit: listing.limit_per_user })} title={t("uploadTitle")}>
         <VideoUpload current={listing.total} limitPerUser={listing.limit_per_user} />
       </Panel>
 
       {listing.items.length === 0 ? (
         <div className="empty">
-          <strong>No clips yet</strong>
-          <span className="muted">Nothing is analysed, and nothing is claimed, until a file arrives.</span>
+          <strong>{t("emptyTitle")}</strong>
+          <span className="muted">{t("emptyNote")}</span>
         </div>
       ) : (
         <section className="tac-cards">
@@ -68,8 +72,8 @@ export default async function VideoIndexPage() {
               </span>
               <div className="tac-card__metrics">
                 <span className={`chip ${asset.status === "analysed" ? "chip--accent" : ""}`}>{asset.status}</span>
-                <span className="chip num">{asset.frame_count} frames sampled</span>
-                <span className="chip mono" title="Uploaded by you; never shown to anyone else.">
+                <span className="chip num">{t("chipFrames", { count: asset.frame_count })}</span>
+                <span className="chip mono" title={t("chipOriginTitle")}>
                   data_origin: {asset.data_origin}
                 </span>
               </div>
@@ -81,7 +85,7 @@ export default async function VideoIndexPage() {
       <p className="muted world-section-note">{listing.privacy}</p>
       <Provenance
         provenance={{ data_origin: "user", is_demo_data: false }}
-        extra={<span className="chip">the clips are yours; the detections are a demo provider&apos;s pixel statistics</span>}
+        extra={<span className="chip">{t("privacyChip")}</span>}
       />
     </div>
   );

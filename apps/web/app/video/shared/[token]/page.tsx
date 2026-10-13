@@ -35,19 +35,23 @@ type SharedClip = {
   is_demo_data: boolean;
 };
 
-export const metadata: Metadata = {
-  title: "Shared clip",
-  description: "The record a FOOTBALL OS upload leaves behind, handed over by a revocable link — no account required.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("video");
+  return {
+    title: t("sharedMetaTitle"),
+    description: t("sharedMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function SharedClipPage({ params }: Props) {
   const { token } = await params;
   const tn = await getTranslations("nav");
+  const t = await getTranslations("video");
   const result = await serverFetch<SharedClip>(`/video/shared/${encodeURIComponent(token)}`);
   if (!result.ok) {
     if (result.status === 404 || result.error.code === "not_found") notFound();
-    return <WorldUnavailable eyebrow="Shared clip" message={result.error.message} title="Shared clip" />;
+    return <WorldUnavailable eyebrow={t("sharedUnavailable")} message={result.error.message} title={t("sharedUnavailable")} />;
   }
 
   const clip = result.data;
@@ -57,14 +61,14 @@ export default async function SharedClipPage({ params }: Props) {
       <WorldHead
         back={{ href: "/", label: tn("home") }}
         eyebrow={`${clip.status} · ${clip.duration_s !== null ? `${clip.duration_s.toFixed(2)} s` : "no duration recorded"} · ${clip.width ?? "?"}×${clip.height ?? "?"}`}
-        lede="This link was handed out by an account that uploaded a clip, and the account can revoke it at any time. It discloses the record the upload left behind; the footage itself is served to its owner."
+        lede={t("sharedLede")}
         title={clip.title || clip.filename}
       >
         <div className="tag-list" style={{ marginTop: "0.7rem" }}>
-          <span className="chip mono" title="Shared via a revocable link; the owner can revoke it at any time.">
-            shared clip
+          <span className="chip mono" title={t("chipSharedTitle")}>
+            {t("chipShared")}
           </span>
-          <span className="chip num">{clip.frame_count} frames sampled</span>
+          <span className="chip num">{t("chipFrames", { count: clip.frame_count })}</span>
         </div>
       </WorldHead>
 
@@ -80,45 +84,42 @@ export default async function SharedClipPage({ params }: Props) {
       />
 
       <div className="tac-boards">
-        <Panel eyebrow={`revocable link · ${token.slice(0, 8)}…`} title="What this link discloses">
+        <Panel eyebrow={t("revocableLink", { token: `${token.slice(0, 8)}…` })} title={t("discloseTitle")}>
           <div className="stack-sm" data-testid="shared-clip-disclosed">
             <dl className="world-kv">
               <div className="world-kv__row">
-                <dt>title</dt>
-                <dd className="mono">{clip.title || "(the file name stands in)"}</dd>
+                <dt>{t("labelTitle")}</dt>
+                <dd className="mono">{clip.title || t("fallbackTitle")}</dd>
               </div>
               <div className="world-kv__row">
-                <dt>file</dt>
+                <dt>{t("labelFile")}</dt>
                 <dd className="mono">{clip.filename}</dd>
               </div>
               <div className="world-kv__row">
-                <dt>status</dt>
+                <dt>{t("labelStatus")}</dt>
                 <dd className="mono">{clip.status}</dd>
               </div>
               <div className="world-kv__row">
-                <dt>duration</dt>
+                <dt>{t("labelDuration")}</dt>
                 <dd className="mono">{clip.duration_s !== null ? `${clip.duration_s.toFixed(2)} s` : "—"}</dd>
               </div>
               <div className="world-kv__row">
-                <dt>frame size</dt>
+                <dt>{t("labelFrameSize")}</dt>
                 <dd className="mono">{clip.width !== null && clip.height !== null ? `${clip.width} × ${clip.height}` : "—"}</dd>
               </div>
               <div className="world-kv__row">
-                <dt>frames sampled</dt>
+                <dt>{t("labelFramesSampled")}</dt>
                 <dd className="mono">{clip.frame_count}</dd>
               </div>
             </dl>
-            <p className="muted world-section-note">
-              The clip&apos;s bytes, its sampled frames and its detection timeline are served to the account that uploaded them, so a
-              shared reader sees what the upload recorded rather than the footage. Playing a clip needs the owner&apos;s session.
-            </p>
+            <p className="muted world-section-note">{t("sharedNote")}</p>
           </div>
         </Panel>
       </div>
 
       <Provenance
         provenance={{ data_origin: clip.data_origin, is_demo_data: clip.is_demo_data }}
-        extra={<span className="chip">shared via revocable link; no owner identity is disclosed here</span>}
+        extra={<span className="chip">{t("sharedProvenanceChip")}</span>}
       />
     </div>
   );

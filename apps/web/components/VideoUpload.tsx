@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
 /**
@@ -14,6 +15,7 @@ const MAX_LABEL = "64 MiB";
 
 export function VideoUpload({ limitPerUser, current }: { limitPerUser: number; current: number }) {
   const router = useRouter();
+  const t = useTranslations("video");
   const input = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export function VideoUpload({ limitPerUser, current }: { limitPerUser: number; c
   async function submit() {
     const file = input.current?.files?.[0];
     if (!file) {
-      setError("Choose a file first.");
+      setError(t("errChoose"));
       return;
     }
     setBusy(true);
@@ -38,7 +40,7 @@ export function VideoUpload({ limitPerUser, current }: { limitPerUser: number; c
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
         const detail = (payload as { detail?: { code?: string; message?: string } } | null)?.detail;
-        setError(detail?.message ? `${detail.code ?? "rejected"}: ${detail.message}` : `Upload failed (${response.status}).`);
+        setError(detail?.message ? `${detail.code ?? "rejected"}: ${detail.message}` : t("errUpload", { status: response.status }));
         setBusy(false);
         return;
       }
@@ -49,9 +51,9 @@ export function VideoUpload({ limitPerUser, current }: { limitPerUser: number; c
         router.refresh();
         return;
       }
-      setError("The server accepted the file but returned no clip id.");
+      setError(t("errNoId"));
     } catch (cause) {
-      setError(`The upload could not be sent: ${String(cause).slice(0, 120)}`);
+      setError(t("errSend", { cause: String(cause).slice(0, 120) }));
     }
     setBusy(false);
   }
@@ -62,21 +64,17 @@ export function VideoUpload({ limitPerUser, current }: { limitPerUser: number; c
         <input
           ref={input}
           accept="video/mp4,video/quicktime,video/webm"
-          aria-label="Choose a clip to upload"
+          aria-label={t("chooseAria")}
           className="input grow"
           style={{ maxWidth: 360 }}
           type="file"
         />
         <button className="btn btn--primary" disabled={busy || full} onClick={submit} type="button">
-          {busy ? "Uploading…" : "Upload clip"}
+          {busy ? t("uploading") : t("upload")}
         </button>
       </div>
-      <p className="muted world-section-note">
-        Accepted: mp4, MOV and webm, checked from the file&apos;s own bytes — a renamed file of another kind is refused, not renamed back.
-        Up to {MAX_LABEL} per clip, {limitPerUser} clips per account ({current} used). Nothing is published: only this account can read a
-        clip, its frames or its report.
-      </p>
-      {full && <p className="notice notice--warn">This account holds {limitPerUser} clips, which is the ceiling. Delete one to add another.</p>}
+      <p className="muted world-section-note">{t("acceptedNote", { max: MAX_LABEL, limit: limitPerUser, used: current })}</p>
+      {full && <p className="notice notice--warn">{t("ceilingNote", { limit: limitPerUser })}</p>}
       {error && (
         <p className="notice notice--warn" role="status">
           {error}

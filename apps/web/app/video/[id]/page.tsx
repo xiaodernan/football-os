@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { VideoTools } from "@/components/VideoTools";
 import { Panel } from "@/components/ui";
@@ -15,22 +16,26 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
 
-export const metadata: Metadata = {
-  title: "Clip report",
-  description: "Frames sampled from an uploaded clip, and the pixel statistics a demo vision provider measured from them.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/video") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("video");
+  return {
+    title: t("reportMetaTitle"),
+    description: t("reportMetaDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/video") },
+  };
+}
 
 export default async function VideoReportPage({ params }: Props) {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fvideo");
 
   const { id } = await params;
+  const t = await getTranslations("video");
   const result = await serverFetch<VideoReport>(`/video/${encodeURIComponent(id)}`);
   if (!result.ok) {
     if (result.status === 404 || result.error.code === "not_found") notFound();
-    return <WorldUnavailable eyebrow="Video analysis" message={result.error.message} title="Clip report" />;
+    return <WorldUnavailable eyebrow={t("unavailableEyebrow")} message={result.error.message} title={t("reportUnavailableTitle")} />;
   }
 
   const report = result.data;
@@ -56,18 +61,18 @@ export default async function VideoReportPage({ params }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/video", label: "My video analysis" }}
+        back={{ href: "/video", label: t("backToIndex") }}
         eyebrow={`${asset.status} · ${asset.duration_s.toFixed(2)} s · ${asset.width}×${asset.height} · ${asset.codec}`}
         lede={report.privacy}
         title={asset.title || asset.filename}
       >
         <div className="tag-list" style={{ marginTop: "0.7rem" }}>
-          <span className="chip mono" title="Uploaded by this account; never published.">
+          <span className="chip mono" title={t("chipOriginTitleReport")}>
             data_origin: {asset.data_origin}
           </span>
-          <span className="chip num">{asset.frame_count} frames sampled</span>
-          <span className="chip num">{report.detections.length} detections</span>
-          <span className="chip mono" title="SHA-256 of the stored bytes, so you can check the file is the one you uploaded.">
+          <span className="chip num">{t("chipFrames", { count: asset.frame_count })}</span>
+          <span className="chip num">{t("chipDetections", { count: report.detections.length })}</span>
+          <span className="chip mono" title={t("chipShaTitle")}>
             sha {asset.sha256.slice(0, 12)}…
           </span>
         </div>
@@ -87,7 +92,7 @@ export default async function VideoReportPage({ params }: Props) {
       />
 
       <div className="tac-boards">
-        <Panel eyebrow="Owner-only stream" title="The clip">
+        <Panel eyebrow={t("streamEyebrow")} title={t("streamTitle")}>
           <div className="stack-sm">
             {/* The source is the authenticated file route, so the browser asks for the bytes only when
                 this page — already behind the session — requests them. */}
@@ -99,50 +104,51 @@ export default async function VideoReportPage({ params }: Props) {
               src={`/api/v1/video/${encodeURIComponent(asset.id)}/file`}
               width={asset.width || undefined}
             >
-              This browser cannot play the file.
+              {t("cannotPlay")}
             </video>
             <p className="muted world-section-note">
-              Served only to this account, and never advertised to a crawler. {asset.size_bytes.toLocaleString("en-GB")} bytes,
-              {" "}
-              {asset.bitrate_kbps.toFixed(1)} kbit/s.
+              {t("streamNote", { size: asset.size_bytes.toLocaleString("en-GB"), kbps: asset.bitrate_kbps.toFixed(1) })}
             </p>
             {/* An `<a>`, not Next's `<Link>`: the target is an API route, not a page, and Link's RSC
                 prefetch of it answers 404 every visit — an unprovoked console error the walk's gate
                 used to count. */}
             <a className="chip" href={`/api/v1/video/${encodeURIComponent(asset.id)}/file`}>
-              open the file directly
+              {t("openFile")}
             </a>
           </div>
         </Panel>
 
-        <Panel eyebrow={analysis ? `${analysis.provider} · demo_mode ${String(analysis.demo_mode)}` : "not analysed yet"} title="What was measured">
+        <Panel
+          eyebrow={analysis ? t("measuredEyebrow", { provider: analysis.provider, mode: String(analysis.demo_mode) }) : t("measuredNotYet")}
+          title={t("measuredTitle")}
+        >
           {analysis ? (
             <div className="stack-sm" data-testid="video-measured">
               <dl className="world-kv">
                 <div className="world-kv__row">
-                  <dt>frames read</dt>
+                  <dt>{t("labelFrames")}</dt>
                   <dd className="mono">{analysis.frames_seen}</dd>
                 </div>
                 <div className="world-kv__row">
-                  <dt>task</dt>
+                  <dt>{t("labelTask")}</dt>
                   <dd className="mono">{analysis.task}</dd>
                 </div>
                 <div className="world-kv__row">
-                  <dt>pitch-green mean</dt>
+                  <dt>{t("labelGreen")}</dt>
                   <dd className="mono">{typeof green === "number" ? `${(green * 100).toFixed(1)}%` : "—"}</dd>
                 </div>
                 <div className="world-kv__row">
-                  <dt>grid</dt>
+                  <dt>{t("labelGrid")}</dt>
                   <dd className="mono">{analysis.grid ? `${analysis.grid[0]} × ${analysis.grid[1]}` : "—"}</dd>
                 </div>
                 <div className="world-kv__row">
-                  <dt>model</dt>
+                  <dt>{t("labelModel")}</dt>
                   <dd className="mono">{analysis.model}</dd>
                 </div>
               </dl>
               {analysis.thresholds && (
                 <p className="muted world-section-note">
-                  thresholds:{" "}
+                  {t("thresholdsPrefix")}{" "}
                   <span className="mono">
                     {Object.entries(analysis.thresholds)
                       .map(([key, value]) => `${key}=${value}`)
@@ -154,20 +160,20 @@ export default async function VideoReportPage({ params }: Props) {
             </div>
           ) : (
             <div className="stack-sm">
-              <span className="unavailable">No analysis stored for this clip yet.</span>
-              <p className="muted world-section-note">Uploading alone does not measure anything — the pipeline runs when you ask it to.</p>
+              <span className="unavailable">{t("notAnalysed")}</span>
+              <p className="muted world-section-note">{t("notAnalysedNote")}</p>
             </div>
           )}
           <div style={{ marginTop: "0.75rem" }}>
             <VideoTools assetId={asset.id} status={asset.status} />
           </div>
-          {asset.error && <p className="notice notice--warn">Last run failed: {asset.error}</p>}
+          {asset.error && <p className="notice notice--warn">{t("lastFailed", { error: asset.error })}</p>}
         </Panel>
       </div>
 
       {/* M5 item 3: link to player/match and share controls */}
       <div className="tac-boards">
-        <Panel eyebrow={asset.player_id || asset.match_id ? "linked" : "not linked"} title="Linked to">
+        <Panel eyebrow={asset.player_id || asset.match_id ? t("linkedEyebrow") : t("notLinkedEyebrow")} title={t("linkedTitle")}>
           <div className="stack-sm" style={{ gap: "0.5rem" }}>
             {asset.player_id ? (
               <p className="muted" style={{ fontSize: "0.86rem" }}>
@@ -175,8 +181,8 @@ export default async function VideoReportPage({ params }: Props) {
               </p>
             ) : (
               <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/link-player`} method="POST" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-                <input name="player_id" placeholder="player id (from My Football)" className="mono" style={{ minWidth: "180px" }} type="text" required />
-                <button className="btn btn--primary" type="submit">Link player</button>
+                <input name="player_id" placeholder={t("playerPlaceholder")} className="mono" style={{ minWidth: "180px" }} type="text" required />
+                <button className="btn btn--primary" type="submit">{t("linkPlayer")}</button>
               </form>
             )}
             {asset.match_id ? (
@@ -185,18 +191,15 @@ export default async function VideoReportPage({ params }: Props) {
               </p>
             ) : (
               <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/link-match`} method="POST" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-                <input name="match_id" placeholder="match id (from Challenges or Career)" className="mono" style={{ minWidth: "180px" }} type="text" required />
-                <button className="btn btn--primary" type="submit">Link match</button>
+                <input name="match_id" placeholder={t("matchPlaceholder")} className="mono" style={{ minWidth: "180px" }} type="text" required />
+                <button className="btn btn--primary" type="submit">{t("linkMatch")}</button>
               </form>
             )}
-            <p className="muted world-section-note">
-              Linking a clip to your football identity or an M6 match lets the clip appear in those contexts
-              and enables richer reports. Both links are optional and can be changed later.
-            </p>
+            <p className="muted world-section-note">{t("linkedNote")}</p>
           </div>
         </Panel>
 
-        <Panel eyebrow={asset.visibility === "shared" ? "public link active" : "private"} title="Share this clip">
+        <Panel eyebrow={asset.visibility === "shared" ? t("shareActive") : t("sharePrivate")} title={t("shareTitle")}>
           <div className="stack-sm" style={{ gap: "0.5rem" }}>
             {asset.visibility === "shared" && asset.share_token ? (
               <div className="row wrap" style={{ alignItems: "center", gap: "0.75rem" }}>
@@ -204,27 +207,27 @@ export default async function VideoReportPage({ params }: Props) {
                   /video/shared/{asset.share_token.slice(0, 12)}…
                 </Link>
                 <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/share`} method="DELETE" style={{ display: "inline" }}>
-                  <button className="btn btn--warn" type="submit">Revoke link</button>
+                  <button className="btn btn--warn" type="submit">{t("revoke")}</button>
                 </form>
                 <span className="muted" style={{ fontSize: "0.84rem" }}>
-                  Created {asset.shared_at ? new Date(asset.shared_at).toLocaleString() : "unknown"}
+                  {t("created", { time: asset.shared_at ? new Date(asset.shared_at).toLocaleString() : t("unknown") })}
                 </span>
               </div>
             ) : (
               <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/share`} method="POST" style={{ display: "inline" }}>
-                <button className="btn btn--primary" type="submit">Create share link</button>
+                <button className="btn btn--primary" type="submit">{t("createShare")}</button>
               </form>
             )}
-            <p className="muted world-section-note">
-              A share link is a revocable token (§17 pattern). It opens a public read of this clip with no
-              session required and no owner identity disclosed. Revoking clears the token; the clip stays private.
-            </p>
+            <p className="muted world-section-note">{t("shareNote")}</p>
           </div>
         </Panel>
       </div>
 
       {report.detections.length > 0 && (
-        <Panel eyebrow={`${report.detections.length} events · ${asset.frame_interval_s.toFixed(2)} s between samples`} title="Detection timeline">
+        <Panel
+          eyebrow={t("timelineEyebrow", { count: report.detections.length, interval: asset.frame_interval_s.toFixed(2) })}
+          title={t("timelineTitle")}
+        >
           <div className="stack-sm">
             <div className="video-track" data-testid="video-track">
               {report.detections.map((detection) => (
@@ -240,11 +243,11 @@ export default async function VideoReportPage({ params }: Props) {
               <table className="table" data-testid="video-detections">
                 <thead>
                   <tr>
-                    <th scope="col">Time</th>
-                    <th scope="col">Position</th>
-                    <th scope="col">Confidence</th>
-                    <th scope="col">Why it was called</th>
-                    <th scope="col">Provider</th>
+                    <th scope="col">{t("tableTime")}</th>
+                    <th scope="col">{t("tablePosition")}</th>
+                    <th scope="col">{t("tableConfidence")}</th>
+                    <th scope="col">{t("tableWhy")}</th>
+                    <th scope="col">{t("tableProvider")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -271,7 +274,7 @@ export default async function VideoReportPage({ params }: Props) {
       )}
 
       {frames.length > 0 && (
-        <Panel eyebrow="The frames the measurements came from" title="Sampled frames">
+        <Panel eyebrow={t("framesEyebrow")} title={t("framesTitle")}>
           <div className="video-frames" data-testid="video-frames">
             {frames.map((index) => (
               <figure className="video-frames__item" key={index}>
@@ -283,7 +286,7 @@ export default async function VideoReportPage({ params }: Props) {
                   {/* Not next/image on purpose: the QA gate proves the pixels on screen are the bytes the
                       pipeline decoded, so nothing may re-encode, resize or cache-transform them. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img alt={`Sampled frame ${index}`} height={asset.height} src={`/api/v1/video/${encodeURIComponent(asset.id)}/frames/${index}`} width={asset.width} />
+                  <img alt={t("frameAlt", { index })} height={asset.height} src={`/api/v1/video/${encodeURIComponent(asset.id)}/frames/${index}`} width={asset.width} />
                   {(overlays.get(index) ?? []).map((detection) => (
                     <span
                       className="video-frame__mark"
@@ -302,25 +305,20 @@ export default async function VideoReportPage({ params }: Props) {
               </figure>
             ))}
           </div>
-          <p className="muted world-section-note">
-            These are the same samples the provider read, converted to PNG for display only. Positions above are fractions of the frame
-            width and height, so they line up with what you see here. Each ring marks one detection&apos;s (x, y) on the sample its
-            timestamp falls on — the centre of the non-pitch pixels that provider measured, not a player or a ball — and hovering it
-            prints the timestamp, the confidence and the sentence the measurement was called with.
-          </p>
+          <p className="muted world-section-note">{t("framesNote")}</p>
         </Panel>
       )}
 
       {report.stages.length > 0 && (
-        <Panel eyebrow={report.job ? `${report.job.type} · ${report.job.status} · ${report.job.progress}%` : "no job"} title="Stages of the last run">
+        <Panel eyebrow={report.job ? `${report.job.type} · ${report.job.status} · ${report.job.progress}%` : t("stagesNoJob")} title={t("stagesTitle")}>
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Stage</th>
-                  <th scope="col">State</th>
-                  <th scope="col">Time</th>
-                  <th scope="col">What it recorded</th>
+                  <th scope="col">{t("tableStage")}</th>
+                  <th scope="col">{t("tableState")}</th>
+                  <th scope="col">{t("tableTime")}</th>
+                  <th scope="col">{t("tableWhat")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -341,7 +339,7 @@ export default async function VideoReportPage({ params }: Props) {
 
       <Provenance
         provenance={{ data_origin: asset.data_origin, is_demo_data: asset.is_demo_data, disclaimer: report.disclaimer }}
-        extra={<span className="chip">the clip is yours; the detections are a demo provider&apos;s measurements of it</span>}
+        extra={<span className="chip">{t("reportProvenanceChip")}</span>}
       />
     </div>
   );
