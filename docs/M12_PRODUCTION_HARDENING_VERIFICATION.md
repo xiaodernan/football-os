@@ -103,14 +103,23 @@ interface. The payload is now a plain dict both tiers can hold. The shape is ver
 server too, since the unit tests exercise the non-streaming path: MISS, then HITs at
 byte-identical length, with `no-cache` returning no header at all.
 
-**What is honest to say about where Redis sits today: it is landed, tested and observable, and no
-request path uses it.** Nothing in `app/` calls `get_redis_cache()` except that metrics door, which
-constructs the singleton in order to report on it. So the layer's value at present is that its
-degradation behaviour is measured and its interface is the one a future hot path would adopt; a
-cache that has never been written to is not a cache that has sped anything up. Wiring it into the
-response middleware is the next step and is deliberately not implied by any figure above — that
-change alters what a request reads when Redis *is* available, which is a different claim from
-"the layer degrades correctly", and it deserves its own measurement.
+**What is honest to say about where Redis sits today: it is landed, tested, observable, and now on
+one request path — as the response cache's second tier.** `cached_response_for` takes an optional
+`shared` tier and reads through it: miss in the process-local cache, look in the shared one, write
+back what is found. The reason is in the measurement above — four workers each hold an independent
+cache, so a response one process paid for could not be served by another, which is part of why the
+gain from extra workers fell away at higher concurrency. The payload being a plain dict rather than
+a `StarletteResponse` is what made this possible at all: an in-memory cache can hold the latter and
+Redis cannot.
+
+**What has *not* changed is the degraded path, and the distinction is load-bearing.** On this host,
+where `redis_available` is false, the shared tier is never written to and every read falls through,
+so every code path is the single-tier behaviour that was measured before it. `RedisCache` keeps an
+internal `TTLCache` for exactly the case where Redis is down — right for a standalone cache, wrong
+for a shared one, because writing into it would build a second process-local cache while leaving
+`redis_available` false, and the shared tier would then look healthy to anyone reading its hit rate
+while sharing nothing. The `available` property is what prevents that write, and a tier is only
+read from when it is serving.
 
 `app/core/redis_cache.py`. `RedisCache` sits behind the same operations and keeps `TTLCache` as a
 mandatory second tier: every `set` writes the fallback first and Redis second, so a cache that is
@@ -129,14 +138,30 @@ default no-auth URL cannot authenticate. The layer behaves as designed there: th
 0.008 ms and falls through to memory, the `set` still lands in the fallback and returns true, the
 second read hits the fallback (`hits: 1`, `hit_rate: 0.5`), and `redis_available` is false. That is
 the path most likely to run in a deployment that has not provisioned a cache, so measuring it beats
-asserting it.
+asserting it. Wiring the shared tier in did not change that: the warning is emitted once, structured,
+and the request that triggered it is answered from the near tier as before.
 
-**Not claimed:** the Redis tier has never served a real request. No authenticated instance was
-available here, so the ten degradation cases run against a mocked client and the `integration`-marked
-case is the one that needs a live service. Degradation is also **sticky for the life of the
-process** — a Redis that starts after the process is not picked up until restart. That is the right
-trade against paying a failed connect per call, and it is stated so a reader deploying behind a
-restart-less rollout can decide otherwise.
+**Not claimed:** the shared tier has never served a real request. No authenticated instance was
+available here, so the cross-process read-through is proven against a stand-in connection — the
+`RedisCache` code runs and only its socket is replaced — while the ten degradation cases run against
+a mocked client and the `integration`-marked case is the one that needs a live service. **No figure
+above is a Redis figure:** the load numbers were all measured with the tier degraded, so nothing
+here measures what sharing buys. Degradation is also **sticky for the life of the process** — a
+Redis that starts after the process is not picked up until restart. That is the right trade against
+paying a failed connect per call, and it is stated so a reader deploying behind a restart-less
+rollout can decide otherwise.
+
+**Also found by verifying this live rather than by reading:** two different requests came back with
+the same `X-Request-ID` and the same `X-Request-Duration-Ms`. `response_cache` was registered after
+`request_context` and therefore wrapped it, so a HIT returned its replay before `request_context`
+had run — the caller answered under the previous caller's identity, with the previous caller's
+duration, and without this request's security headers. The registration order is now the other way
+round, so `request_context` is outermost: it sets the id before the cache layer runs (which means a
+warning emitted while looking an answer up carries the id of the request that caused it) and it runs
+on a HIT. `X-Request-ID` and `X-Request-Duration-Ms` are also filtered out of the cached payload, on
+the way in and again on the way out, because an entry a shared tier already holds must not carry one
+request's identity across to the next. The case that caught it was run once with the order reverted
+to confirm it fails there.
 
 ### Performance — latency percentiles that read the same on both engines
 
@@ -297,9 +322,12 @@ survive the move to quieter hardware even though the absolute figures will not.
 
 ## What M12 does not claim
 
-* **No authenticated Redis tier.** `RedisCache` landed with the in-memory fallback wired, and its
-  degradation paths are measured against this host's password-protected 6379 — but no instance has
-  ever served a real request through it, and the fallback is sticky for the life of the process.
+* **No authenticated Redis tier.** `RedisCache` is now read from and written to by the response
+  cache's second tier, so it is no longer a layer no request touches — but no authenticated instance
+  has ever served a real request. Its degradation paths are measured against this host's
+  password-protected 6379, the cross-process read-through is proven against a stand-in connection
+  rather than a live one, the fallback is sticky for the life of the process, and **every load figure
+  below was measured with the tier degraded** — so nothing here measures what sharing buys.
 * **No external log sink.** The JSON formatter is the contract with a sink that deployment wires,
   and the contract itself is now tested rather than asserted — `tests/test_logging.py` parses the
   emitted line, checks the standard fields, extras and exception text, and walks a request id from
