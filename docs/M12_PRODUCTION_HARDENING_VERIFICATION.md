@@ -163,6 +163,26 @@ the way in and again on the way out, because an entry a shared tier already hold
 request's identity across to the next. The case that caught it was run once with the order reverted
 to confirm it fails there.
 
+**The second thing found live was worse, because it broke the product's own configuration.**
+`Access-Control-Allow-Origin` is a function of the request's `Origin`, but the cache key was path
+plus query — so the first caller to fetch a path warmed the cache and every later caller was served
+the first caller's header. This project allowlists two origins (`localhost:3210` and
+`127.0.0.1:3210`), and the second was answered with the first as soon as a path was warm; a browser
+compares that header against its own origin and refuses the mismatch, so one of the two configured
+origins silently stopped working. An origin nobody allowlisted was handed one too. Neither is a
+security hole — the same comparison is what rejects them — but the first is a correctness bug in the
+product's own setup, and it would have been invisible to any test that used a single origin.
+
+`Origin` is therefore the third component of `response_cache_key`, which is what `Vary: Origin`
+means. Each component is percent-encoded with `safe=""` so that none can contain a colon, which
+also settles a flaw the old `path:query` join had always had: `("/a:b", "c")` and `("/a", "b:c")`
+produced the same key. Caching is not disabled by this — the same origin still hits, and a caller
+that sent no `Origin` still gets a MISS of its own. `Set-Cookie` was checked as the other
+request-dependent header a cache could replay: every call to `_set_refresh_cookie` sits on a POST,
+and only GETs are cached, so it does not reach the payload. Verified against a live server as well
+as by test — two allowlisted origins each MISS and get their own header, an unallowlisted origin
+gets none, and the repeat of the first is a HIT carrying that origin.
+
 ### Performance — latency percentiles that read the same on both engines
 
 `app/services/latency_profile.py`. `/metrics/system` carried `p95_latency_ms: None` with a comment
