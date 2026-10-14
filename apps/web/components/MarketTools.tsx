@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
@@ -11,6 +12,14 @@ type Action = "open" | "negotiate" | "buy" | "clause" | "loan" | "sell" | "relea
 type Acknowledged = { text: string; figures: string[] } | null;
 
 const money = (value: number) => value.toLocaleString("en-GB");
+
+/**
+ * The translator as the two module-level helpers below see it. They are not components, so they cannot
+ * call `useTranslations` themselves, and this is the whole of what they need from it: a key and its ICU
+ * values in, a string out. Declared as a shape rather than imported so the helpers stay testable without
+ * a React tree.
+ */
+type Translate = (key: string, values?: Record<string, string | number>) => string;
 
 /**
  * The §22 market as something a manager can actually do, on one career's own terms.
@@ -58,6 +67,7 @@ export function MarketTools({
   marketSize: number;
   loanRounds: number;
 }) {
+  const t = useTranslations("market");
   const router = useRouter();
   const [busy, setBusy] = useState<Action | null>(null);
   const [offers, setOffers] = useState<Record<string, string>>({});
@@ -75,7 +85,7 @@ export function MarketTools({
       const detail = (result.error.details ?? {}) as MarketRefusalDetail;
       setRefused({
         text: `${result.error.code} — ${result.error.message}`,
-        figures: figuresOf(detail),
+        figures: figuresOf(detail, t),
       });
       setBusy(null);
       return;
@@ -84,9 +94,19 @@ export function MarketTools({
     // A negotiation is answered by the seller's own ladder, so its figures are the offer, the price it
     // came back at and the floor the rule would not go under. Everything else is answered by the balance.
     const figures = view.result
-      ? [`came back at ${money(view.result.price)}`, `asking ${money(view.result.asking)}`, `floor ${money(view.result.floor)}`, `${view.result.attempts_left} offer${view.result.attempts_left === 1 ? "" : "s"} left`, view.result.formula]
-      : [`${money(view.budget.remaining)} ${view.budget.units} left`, `${view.squad.account.squad_now} players`, `${view.squad.account.keepers} goalkeepers`];
-    setAnswer({ text: sentenceFor(action, view), figures: figures.filter(Boolean) });
+      ? [
+          t("figCameBack", { amount: money(view.result.price) }),
+          t("figAsking", { amount: money(view.result.asking) }),
+          t("figFloor", { amount: money(view.result.floor) }),
+          t("figOffersLeft", { count: view.result.attempts_left }),
+          view.result.formula,
+        ]
+      : [
+          t("figLeft", { amount: money(view.budget.remaining), units: view.budget.units }),
+          t("figPlayersShort", { n: view.squad.account.squad_now }),
+          t("figKeepersShort", { n: view.squad.account.keepers }),
+        ];
+    setAnswer({ text: sentenceFor(action, view, t), figures: figures.filter(Boolean) });
     router.refresh();
     setBusy(null);
   }
@@ -99,7 +119,7 @@ export function MarketTools({
     const raw = offers[row.id] ?? "";
     const value = Number(raw.replace(/[^\d]/g, ""));
     if (!Number.isFinite(value) || raw === "") {
-      setRefused({ text: "negotiate: an offer has to be a number of credits before the seller can answer it.", figures: [] });
+      setRefused({ text: t("negotiateError"), figures: [] });
       return;
     }
     void run("negotiate", "/negotiate", { listing: row.id, offer: value });
@@ -108,7 +128,7 @@ export function MarketTools({
   const offerFor = (row: Listing) => (
     <div className="row wrap" style={{ gap: "0.35rem" }}>
       <input
-        aria-label={`offer for ${row.player_name}`}
+        aria-label={t("ariaOffer", { name: row.player_name })}
         className="input"
         inputMode="numeric"
         onChange={(event) => setOffers({ ...offers, [row.id]: event.target.value })}
@@ -118,18 +138,18 @@ export function MarketTools({
         value={offers[row.id] ?? ""}
       />
       <button className="btn btn--sm btn--ghost" data-act="offer" disabled={busy !== null || blocked || row.attempts_left === 0} onClick={() => negotiate(row)} type="button">
-        {busy === "negotiate" ? "Asking…" : "Offer"}
+        {busy === "negotiate" ? t("askingBusy") : t("offerBtn")}
       </button>
       <button className="btn btn--sm" data-act="sign" disabled={busy !== null || blocked || !row.affordable} onClick={() => void run("buy", "/buy", { listing: row.id })} type="button">
-        {busy === "buy" ? "Signing…" : `Sign ${money(row.current_price)}`}
+        {busy === "buy" ? t("signingBusy") : t("signBtn", { amount: money(row.current_price) })}
       </button>
       {row.clause_required && (
         <button className="btn btn--sm btn--ghost" data-act="clause" disabled={busy !== null || blocked} onClick={() => void run("clause", "/buy", { listing: row.id, use_clause: true })} type="button">
-          {busy === "clause" ? "Paying the clause…" : `Clause ${money(row.release_clause)}`}
+          {busy === "clause" ? t("clauseBusy") : t("clauseBtn", { amount: money(row.release_clause) })}
         </button>
       )}
       <button className="btn btn--sm btn--ghost" data-act="loan" disabled={busy !== null || blocked} onClick={() => void run("loan", "/loan", { listing: row.id, rounds: loanRounds })} type="button">
-        {busy === "loan" ? "Loan…" : `Loan ${loanRounds}r`}
+        {busy === "loan" ? t("loanBusy") : t("loanBtn", { rounds: loanRounds })}
       </button>
     </div>
   );
@@ -138,21 +158,18 @@ export function MarketTools({
     <div className="stack-sm" data-testid="market-tools">
       {blocked && (
         <p className="notice notice--warn" data-testid="market-blocked" role="status">
-          <strong>{allowed.code}</strong> — {allowed.message} {allowed.constraint === "no_transfers" ? `The scenario forbids transfers, and the market is what enforces it (${allowed.enforced_by ?? "checked on every move"}).` : ""}
+          <strong>{allowed.code}</strong> — {allowed.message}{" "}
+          {allowed.constraint === "no_transfers" ? t("noteNoTransfers", { enforced_by: allowed.enforced_by ?? t("noteCheckedEveryMove") }) : ""}
         </p>
       )}
 
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <button className="btn" data-testid="market-open" disabled={busy !== null || blocked} onClick={open} type="button">
-          {busy === "open" ? "Pricing round…" : totals.listed > 0 ? `Re-open the market for round ${round}` : `Open the market for round ${round}`}
+          {busy === "open" ? t("openBusy") : totals.listed > 0 ? t("reopenBtn", { round }) : t("openBtn", { round })}
         </button>
-        <span className="chip mono">
-          {totals.listed} of {marketSize} offers on the shelf
-        </span>
-        <span className="chip mono">{account.squad_now} players · {account.keepers} keepers</span>
-        <span className="chip mono">
-          balance {money(budget.remaining)} {budget.units}
-        </span>
+        <span className="chip mono">{t("chipOffersOnShelf", { listed: totals.listed, size: marketSize })}</span>
+        <span className="chip mono">{t("chipSquadKeepers", { players: account.squad_now, keepers: account.keepers })}</span>
+        <span className="chip mono">{t("chipBalance", { amount: money(budget.remaining), units: budget.units })}</span>
       </div>
 
       {refused && (
@@ -175,33 +192,33 @@ export function MarketTools({
 
       {listings.length === 0 ? (
         <div className="empty">
-          <strong>No offers priced yet</strong>
-          <p className="muted">
-            Press “Open the market for round {round}”. The board picks the best-rated players in the band this club is short in — the need is measured from the engine&apos;s own band indices, not chosen by
-            an adjective — and prices each one with the expression printed at the foot of this page.
-          </p>
+          <strong>{t("emptyNoOffers")}</strong>
+          <p className="muted">{t("emptyNoOffersBody", { round })}</p>
         </div>
       ) : (
         <div className="world-tablewrap">
           <table className="table">
             <caption className="muted">
-              The need this board was picked against: <strong>{need.needed_band}</strong> ({need.positions_in_band.join(", ")}) — {need.squad_applied || "the club's stored squad, unchanged by this career"}
+              {t("boardNeedPre")}
+              <strong>{need.needed_band}</strong>
+              {t("boardNeedPositions", { positions: need.positions_in_band.join(", ") })}
+              {need.squad_applied || t("boardNeedSquad")}
             </caption>
             <thead>
               <tr>
-                <th scope="col">Player</th>
-                <th scope="col">Pos</th>
-                <th scope="col">Age</th>
-                <th scope="col">Ovr</th>
-                <th scope="col">Pot</th>
-                <th scope="col">From</th>
-                <th scope="col">Asking</th>
-                <th scope="col">Now</th>
-                <th scope="col">Clause</th>
-                <th scope="col">Wage</th>
-                <th scope="col">Fit</th>
-                <th scope="col">Offers</th>
-                <th scope="col">Deal</th>
+                <th scope="col">{t("buyThPlayer")}</th>
+                <th scope="col">{t("buyThPos")}</th>
+                <th scope="col">{t("buyThAge")}</th>
+                <th scope="col">{t("buyThOvr")}</th>
+                <th scope="col">{t("buyThPot")}</th>
+                <th scope="col">{t("buyThFrom")}</th>
+                <th scope="col">{t("buyThAsking")}</th>
+                <th scope="col">{t("buyThNow")}</th>
+                <th scope="col">{t("buyThClause")}</th>
+                <th scope="col">{t("buyThWage")}</th>
+                <th scope="col">{t("buyThFit")}</th>
+                <th scope="col">{t("buyThOffers")}</th>
+                <th scope="col">{t("buyThDeal")}</th>
               </tr>
             </thead>
             <tbody>
@@ -211,7 +228,7 @@ export function MarketTools({
                     <Link className="world-link" href={row.player_path}>
                       {row.player_name}
                     </Link>
-                    {row.band === need.needed_band && <span className="badge badge--live"> answers the need</span>}
+                    {row.band === need.needed_band && <span className="badge badge--live">{t("badgeAnswersNeed")}</span>}
                   </td>
                   <td>{row.position}</td>
                   <td className="num">{row.age}</td>
@@ -225,18 +242,19 @@ export function MarketTools({
                     ) : (
                       row.from_team_name
                     )}
-                    {row.rival && <span className="badge badge--demo"> rival</span>}
+                    {row.rival && <span className="badge badge--demo">{t("badgeRival")}</span>}
                   </td>
                   <td className="num">{money(row.asking_fee)}</td>
                   <td className="num">
                     {money(row.current_price)}
-                    {row.current_price !== row.asking_fee && <span className="muted"> · moved</span>}
+                    {row.current_price !== row.asking_fee && <span className="muted">{t("chipMoved")}</span>}
                   </td>
                   <td className="num">{money(row.release_clause)}</td>
                   <td className="num">{money(row.weekly_wage)}</td>
                   <td className="num">{row.tactical_fit.toFixed(3)}</td>
                   <td className="num">
-                    {row.attempts_left} left<span className="muted">{row.last_offer > 0 ? ` · last ${money(row.last_offer)}` : ""}</span>
+                    {t("attemptsLeft", { n: row.attempts_left })}
+                    <span className="muted">{row.last_offer > 0 ? t("lastOffer", { amount: money(row.last_offer) }) : ""}</span>
                   </td>
                   <td>{offerFor(row)}</td>
                 </tr>
@@ -248,30 +266,28 @@ export function MarketTools({
 
       {deals.length > 0 && (
         <p className="muted">
-          <span className="mono">{deals.length}</span> closed {deals.length === 1 ? "deal is" : "deals are"} off the shelf and stay in the squad table below — a signed listing is not repriced, and a loan
-          returns to its own club when its rounds run out.
+          <span className="mono">{deals.length}</span>
+          {t("dealsNote", { count: deals.length })}
         </p>
       )}
 
       <div className="world-tablewrap">
         <table className="table">
           <caption className="muted">
-            Selling from {account.club_name}: the world stores {account.stored_in_world} players for this club. As of round {account.as_of_round}, {account.signed_in} of the players this career fields were
-            brought in by its own moves and {account.departed} the world stored here are gone. These are the squad&apos;s counts, not the ledger&apos;s: a signing that is later sold again leaves no trace on either
-            number, while both of its fees stay in this career&apos;s ledger.
+            {t("sellingCaption", { club: account.club_name, stored: account.stored_in_world, round: account.as_of_round, signed: account.signed_in, departed: account.departed })}
           </caption>
           <thead>
             <tr>
-              <th scope="col">Player</th>
-              <th scope="col">Pos</th>
-              <th scope="col">Band</th>
-              <th scope="col">Age</th>
-              <th scope="col">Ovr</th>
-              <th scope="col">Pot</th>
-              <th scope="col">Worth</th>
-              <th scope="col">Sale brings</th>
-              <th scope="col">Wage</th>
-              <th scope="col">Let go</th>
+              <th scope="col">{t("sellThPlayer")}</th>
+              <th scope="col">{t("sellThPos")}</th>
+              <th scope="col">{t("sellThBand")}</th>
+              <th scope="col">{t("sellThAge")}</th>
+              <th scope="col">{t("sellThOvr")}</th>
+              <th scope="col">{t("sellThPot")}</th>
+              <th scope="col">{t("sellThWorth")}</th>
+              <th scope="col">{t("sellThSaleBrings")}</th>
+              <th scope="col">{t("sellThWage")}</th>
+              <th scope="col">{t("sellThLetGo")}</th>
             </tr>
           </thead>
           <tbody>
@@ -300,10 +316,10 @@ export function MarketTools({
                       onClick={() => void run("sell", "/sell", { player: row.slug })}
                       type="button"
                     >
-                      {busy === "sell" ? "Selling…" : `Sell ${money(row.sell_proceeds)}`}
+                      {busy === "sell" ? t("sellBusy") : t("sellBtn", { amount: money(row.sell_proceeds) })}
                     </button>
                     <button className="btn btn--sm btn--ghost" data-act="release" data-player={row.player_id} disabled={busy !== null || blocked} onClick={() => void run("release", "/release", { player: row.slug })} type="button">
-                      {busy === "release" ? "Releasing…" : "Release"}
+                      {busy === "release" ? t("releaseBusy") : t("releaseBtn")}
                     </button>
                   </div>
                 </td>
@@ -314,43 +330,66 @@ export function MarketTools({
       </div>
 
       <p className={fielding.ok ? "muted" : "notice notice--warn"} data-testid="fielding-rule">
-        {fielding.rule} This squad reads {fielding.players} players and {fielding.keepers} goalkeeper{fielding.keepers === 1 ? "" : "s"}. {account.rule}
+        {fielding.rule}
+        {t("fieldingReads", { players: fielding.players, keepers: fielding.keepers, plural: fielding.keepers === 1 ? "" : "s", rule: account.rule })}
       </p>
     </div>
   );
 }
 
 /** The figures a refusal carried, in the order a reader checks them. */
-function figuresOf(detail: MarketRefusalDetail): string[] {
+function figuresOf(detail: MarketRefusalDetail, t: Translate): string[] {
   const out: string[] = [];
-  if (typeof detail.fee === "number") out.push(`fee ${money(detail.fee)}`);
-  if (typeof detail.remaining === "number") out.push(`balance ${money(detail.remaining)}`);
-  if (typeof detail.current_price === "number") out.push(`price ${money(detail.current_price)}`);
-  if (typeof detail.release_clause === "number") out.push(`clause ${money(detail.release_clause)}`);
-  if (typeof detail.asking === "number") out.push(`asking ${money(detail.asking)}`);
-  if (typeof detail.attempts === "number") out.push(`offers made ${detail.attempts}`);
-  if (typeof detail.players === "number") out.push(`${detail.players} players, ${detail.keepers ?? 0} keepers (needs ${detail.needs_players ?? "?"}/${detail.needs_keepers ?? "?"})`);
-  if (typeof detail.squad_size === "number") out.push(`squad as of round ${detail.as_of_round ?? "?"}: ${detail.squad_size}`);
+  if (typeof detail.fee === "number") out.push(t("figFee", { amount: money(detail.fee) }));
+  if (typeof detail.remaining === "number") out.push(t("figBalance", { amount: money(detail.remaining) }));
+  if (typeof detail.current_price === "number") out.push(t("figPrice", { amount: money(detail.current_price) }));
+  if (typeof detail.release_clause === "number") out.push(t("figClause", { amount: money(detail.release_clause) }));
+  if (typeof detail.asking === "number") out.push(t("figAsking", { amount: money(detail.asking) }));
+  if (typeof detail.attempts === "number") out.push(t("figOffersMade", { n: detail.attempts }));
+  if (typeof detail.players === "number")
+    out.push(
+      t("figPlayers", {
+        players: detail.players,
+        keepers: detail.keepers ?? 0,
+        needs_players: detail.needs_players ?? "?",
+        needs_keepers: detail.needs_keepers ?? "?",
+      }),
+    );
+  if (typeof detail.squad_size === "number")
+    out.push(t("figSquad", { round: detail.as_of_round ?? "?", size: detail.squad_size }));
   if (typeof detail.formula === "string" && detail.formula) out.push(detail.formula);
   return out;
 }
 
 /** What the server's own re-read says just happened, in the words this page prints. */
-function sentenceFor(action: Action, view: MarketView): string {
+function sentenceFor(action: Action, view: MarketView, t: Translate): string {
   const last = view.moves[view.moves.length - 1];
+  // `String(...)` on the two fields the ledger may hold as `null` — `player_name` and `counterparty_name`.
+  // The literals this slice replaced interpolated them straight into a template, so a null printed `null`;
+  // ICU prints a null value as the empty string, which would move the same wart somewhere quieter. `String`
+  // keeps the rendered bytes what they were. Making the empty case read well is a separate change with its
+  // own evidence, not a side effect of a translation.
   switch (action) {
     case "open":
-      return view.market.opened ? `Round ${view.market.round_index} priced: ${view.totals.listed} offers on the shelf.` : "The market answered with no offers.";
+      return view.market.opened
+        ? t("openPriced", { round: view.market.round_index, listed: view.totals.listed })
+        : t("openNone");
     case "negotiate":
-      return "The seller has answered; the price beside the player is the one on file now.";
+      return t("negotiateAnswered");
     case "buy":
     case "clause":
-      return last ? `${last.player_name} signed for ${money(last.fee)} ${last.fee_units}. ${last.effect}` : "The signing went through.";
+      return last
+        ? t("buySigned", { name: String(last.player_name), amount: money(last.fee), units: last.fee_units, effect: last.effect })
+        : t("buySignedFallback");
     case "loan":
-      return last ? `${last.player_name} arrives on loan until round ${last.loan_until_round} for ${money(last.fee)} ${last.fee_units}. ${last.effect}` : "The loan went through.";
+      return last
+        ? t("loanArrived", { name: String(last.player_name), round: last.loan_until_round, amount: money(last.fee), units: last.fee_units, effect: last.effect })
+        : t("loanArrivedFallback");
     case "sell":
-      return last ? `${last.player_name} sold to ${last.counterparty_name} for ${money(last.fee)} ${last.fee_units}. ${last.effect}` : "The sale went through.";
+      return last
+        ? t("sellSold", { name: String(last.player_name), counterparty: String(last.counterparty_name), amount: money(last.fee), units: last.fee_units, effect: last.effect })
+        : t("sellSoldFallback");
     case "release":
-      return last ? `${last.player_name} released for nothing. ${last.effect}` : "The release went through.";
+      return last ? t("releaseDone", { name: String(last.player_name), effect: last.effect }) : t("releaseDoneFallback");
   }
 }

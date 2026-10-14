@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -19,12 +20,15 @@ export const dynamic = "force-dynamic";
  * under `/career`, which `robots.ts` already disallows — so a page an account would not want crawled
  * cannot become crawlable by being given a new prefix.
  */
-export const metadata: Metadata = {
-  title: "Transfer market",
-  description: "What one career can buy, what its club is short of, what it has already spent, and the arithmetic every figure came from.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/career") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("market");
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/career") },
+  };
+}
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -33,13 +37,14 @@ const money = (value: number) => value.toLocaleString("en-GB");
 export default async function CareerMarketPage({ params }: Props) {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fcareer");
+  const t = await getTranslations("market");
   const { slug } = await params;
   if (!slug || slug.length > 80) notFound();
 
   const result = await serverFetch<MarketView>(`/transfers/${encodeURIComponent(slug)}`);
   if (!result.ok) {
     if (result.status === 404) notFound();
-    return <WorldUnavailable message={result.error.message} title="Transfer market" />;
+    return <WorldUnavailable message={result.error.message} title={t("metaTitle")} />;
   }
 
   const view = result.data;
@@ -52,30 +57,30 @@ export default async function CareerMarketPage({ params }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: `/career/${encodeURIComponent(career.slug)}`, label: "Back to the season" }}
-        eyebrow={`${career.club_name} · round ${career.market_round} · private to this account`}
-        lede="A market, not a shop: the board is picked from the band this club is weakest in, every price is the valuation formula recomputed from a stored player row, and the balance is the sum of this career's own move rows. Nothing here was observed; every figure is printed with the expression that made it."
+        back={{ href: `/career/${encodeURIComponent(career.slug)}`, label: t("backLabel") }}
+        eyebrow={`${career.club_name}${t("eyebrowSuffix", { round: career.market_round })}`}
+        lede={t("lede")}
         provenance={{ data_origin: view.data_origin, is_demo_data: view.is_demo_data, disclaimer: view.disclaimer }}
-        title={`${career.club_name} · transfer market`}
+        title={`${career.club_name}${t("titleSuffix")}`}
       />
 
       <div className="grid grid-4">
-        <Stat hint={budget.units} label="Stated budget" value={money(budget.budget)} />
-        <Stat hint={`${budget.moves} move${budget.moves === 1 ? "" : "s"} on the ledger`} label="Spent on arrivals" value={money(budget.spent)} />
-        <Stat hint="from sales only" label="Received" value={money(budget.received)} />
-        <Stat hint={budget.formula} label="Remaining" value={money(budget.remaining)} />
+        <Stat hint={budget.units} label={t("statBudgetLabel")} value={money(budget.budget)} />
+        <Stat hint={t("statSpentHint", { count: budget.moves })} label={t("statSpentLabel")} value={money(budget.spent)} />
+        <Stat hint={t("statReceivedHint")} label={t("statReceivedLabel")} value={money(budget.received)} />
+        <Stat hint={budget.formula} label={t("statRemainingLabel")} value={money(budget.remaining)} />
       </div>
 
       <p className="muted">
         <span className="mono">{budget.formula}</span>
       </p>
       <p className="notice notice--warn">
-        {budget.wage_note} {money(budget.wage_committed_per_week)} {budget.units} a week across{" "}
-        {budget.wage_players} deal{budget.wage_players === 1 ? "" : "s"} stands charged; {money(budget.wages_paid)} {budget.units} has
-        left the balance over {budget.wage_rows} round{budget.wage_rows === 1 ? "" : "s"}, each one a row in the ledger below.
+        {budget.wage_note} {money(budget.wage_committed_per_week)} {budget.units}{t("wageWeekPrefix")}
+        {t("wageDeals", { count: budget.wage_players })}{t("wageStands")}{money(budget.wages_paid)} {budget.units}{t("wagePaidPrefix")}
+        {t("wageRounds", { count: budget.wage_rows })}{t("wageSuffix")}
       </p>
 
-      <Panel eyebrow={`${view.listings.length} priced offers · need: ${need.needed_band}`} title="Buying">
+      <Panel eyebrow={t("buyingEyebrow", { count: view.listings.length, band: need.needed_band })} title={t("buyingTitle")}>
         <MarketTools
           account={account}
           allowed={view.transfers_allowed}
@@ -94,7 +99,7 @@ export default async function CareerMarketPage({ params }: Props) {
       </Panel>
 
       <div className="grid grid-2">
-        <Panel eyebrow={need.formula} title="What this club is short of, measured">
+        <Panel eyebrow={need.formula} title={t("needTitle")}>
           <div className="stack-sm">
             <div className="row wrap" style={{ gap: "0.5rem" }}>
               {Object.entries(need.bands).map(([band, value]) => (
@@ -105,19 +110,19 @@ export default async function CareerMarketPage({ params }: Props) {
             </div>
             <KeyValueGrid
               rows={[
-                ["Weakest band", need.needed_band],
-                ["Positions it staffs", need.positions_in_band.join(", ")],
-                ["Judged on", need.judged_on.join(", ")],
-                ["Formation", need.formation],
-                ["Tactical system", need.system_slug || "the club's own"],
+                [t("kvWeakestBand"), need.needed_band],
+                [t("kvPositionsStaffs"), need.positions_in_band.join(", ")],
+                [t("kvJudgedOn"), need.judged_on.join(", ")],
+                [t("kvFormation"), need.formation],
+                [t("kvTacticalSystem"), need.system_slug || t("kvOwnSystem")],
                 [
-                  "Squad the reading used",
+                  t("kvSquadUsed"),
                   need.squad_applied ? (
                     <span className="mono" key="applied">
                       {need.squad_applied}
                     </span>
                   ) : (
-                    "the club's stored squad — this career has changed nothing yet"
+                    t("kvNoSquadChange")
                   ),
                 ],
               ]}
@@ -126,48 +131,48 @@ export default async function CareerMarketPage({ params }: Props) {
           </div>
         </Panel>
 
-        <Panel eyebrow={`${account.squad_now} players · ${account.keepers} keepers`} title="The squad a deal has to leave standing">
+        <Panel eyebrow={t("squadEyebrow", { squad: account.squad_now, keepers: account.keepers })} title={t("squadTitle")}>
           <div className="stack-sm">
             <KeyValueGrid
               rows={[
-                ["Stored by the world", `${account.stored_in_world}`],
-                ["Fielded here because this career brought them", `${account.signed_in}`],
-                ["The world stored them, this career let them go", `${account.departed}`],
-                ["Read as of round", `${account.as_of_round}`],
+                [t("kvStoredByWorld"), `${account.stored_in_world}`],
+                [t("kvFieldedHere"), `${account.signed_in}`],
+                [t("kvDeparted"), `${account.departed}`],
+                [t("kvAsOfRound"), `${account.as_of_round}`],
                 [
-                  "Can field a side",
+                  t("kvCanFieldSide"),
                   <span className={fielding.ok ? "badge badge--live" : "badge badge--demo"} key="field">
-                    {fielding.ok ? "YES" : "NO"}
+                    {fielding.ok ? t("yes") : t("no")}
                   </span>,
                 ],
-                ["Rule", fielding.rule],
+                [t("kvRule"), fielding.rule],
               ]}
             />
-            <p className="muted">{account.rule} The world&apos;s own player rows are never rewritten by a deal: an arrival or a departure is a row in this career&apos;s ledger, composed into the eleven when the round is read.</p>
+            <p className="muted">{account.rule} {t("squadRuleNote")}</p>
           </div>
         </Panel>
       </div>
 
-      <Panel eyebrow={`${view.moves.length} row${view.moves.length === 1 ? "" : "s"} · ${view.totals.signed} signed, ${view.totals.withdrawn} withdrawn`} title="The ledger the balance is summed from">
+      <Panel eyebrow={t("ledgerEyebrow", { rows: view.moves.length, signed: view.totals.signed, withdrawn: view.totals.withdrawn })} title={t("ledgerTitle")}>
         {view.moves.length === 0 ? (
           <div className="empty">
-            <strong>No move recorded</strong>
-            <p className="muted">The balance above is the figure the career opened with. It only moves when a deal is written here, and a deal that is not a row cannot be spent.</p>
+            <strong>{t("emptyNoMove")}</strong>
+            <p className="muted">{t("emptyNoMoveBody")}</p>
           </div>
         ) : (
           <div className="world-tablewrap">
             <table className="table" data-testid="ledger">
               <thead>
                 <tr>
-                  <th scope="col">Round</th>
-                  <th scope="col">Move</th>
-                  <th scope="col">Player</th>
-                  <th scope="col">From / to</th>
-                  <th scope="col">Fee</th>
-                  <th scope="col">Balance after</th>
-                  <th scope="col">Wage</th>
-                  <th scope="col">Contract</th>
-                  <th scope="col">Effect</th>
+                  <th scope="col">{t("thRound")}</th>
+                  <th scope="col">{t("thMove")}</th>
+                  <th scope="col">{t("thPlayer")}</th>
+                  <th scope="col">{t("thFromTo")}</th>
+                  <th scope="col">{t("thFee")}</th>
+                  <th scope="col">{t("thBalanceAfter")}</th>
+                  <th scope="col">{t("thWage")}</th>
+                  <th scope="col">{t("thContract")}</th>
+                  <th scope="col">{t("thEffect")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,8 +202,12 @@ export default async function CareerMarketPage({ params }: Props) {
                       {money(move.fee)} {move.fee_units}
                     </td>
                     <td className="num mono">{money(move.budget_after)}</td>
-                    <td className="num">{move.weekly_wage ? `${money(move.weekly_wage)}/wk` : "—"}</td>
-                    <td className="num">{move.kind === "wage" ? "—" : `${move.contract_years}y${move.loan_until_round ? ` · until r${move.loan_until_round}` : ""}`}</td>
+                    <td className="num">{move.weekly_wage ? t("wageCell", { amount: money(move.weekly_wage) }) : "—"}</td>
+                    <td className="num">
+                      {move.kind === "wage"
+                        ? "—"
+                        : `${t("contractYears", { years: move.contract_years })}${move.loan_until_round ? t("contractUntil", { round: move.loan_until_round }) : ""}`}
+                    </td>
                     <td className="muted">{move.effect}</td>
                   </tr>
                 ))}
@@ -207,27 +216,28 @@ export default async function CareerMarketPage({ params }: Props) {
           </div>
         )}
         <p className="muted">
-          {budget.budget.toLocaleString("en-GB")} stated {budget.received ? `+ ${money(budget.received)} received ` : ""}
-          {budget.spent ? `− ${money(budget.spent)} spent ` : ""}
-          {budget.wages_paid ? `− ${money(budget.wages_paid)} in wages ` : ""}={" "}
-          <strong className="mono">{money(budget.remaining)} {budget.units}</strong>, and the same number is printed beside every offer as the
-          balance a deal has to fit inside.
+          {budget.budget.toLocaleString("en-GB")}{t("footerStated")}
+          {budget.received ? t("footerReceived", { amount: money(budget.received) }) : ""}
+          {budget.spent ? t("footerSpent", { amount: money(budget.spent) }) : ""}
+          {budget.wages_paid ? t("footerWages", { amount: money(budget.wages_paid) }) : ""}={" "}
+          <strong className="mono">{money(budget.remaining)} {budget.units}</strong>
+          {t("footerTail")}
         </p>
       </Panel>
 
-      <Panel eyebrow={`${Object.keys(view.rules).length} published expressions`} title="The rules this market is made of">
+      <Panel eyebrow={t("rulesEyebrow", { count: Object.keys(view.rules).length })} title={t("rulesTitle")}>
         <div className="stack-sm">
           <KeyValueGrid rows={Object.entries(view.rules).map(([key, expression]) => [key, <span className="mono" key={key}>{expression}</span>])} />
           <div className="tag-list">
-            <span className="chip mono">board size: {view.constants.market_size}</span>
-            <span className="chip mono">offers per player: {view.constants.negotiation_rounds}</span>
-            <span className="chip mono">floor: {Math.round(view.constants.negotiation_floor_share * 100)}% of asking</span>
-            <span className="chip mono">clause: ×{view.constants.release_clause_share} asking</span>
-            <span className="chip mono">loan fee: {Math.round(view.constants.loan_fee_share * 100)}% of price</span>
-            <span className="chip mono">sale proceeds: {Math.round(view.constants.sell_proceeds_share * 100)}% of valuation</span>
+            <span className="chip mono">{t("chipBoardSize", { n: view.constants.market_size })}</span>
+            <span className="chip mono">{t("chipOffersPerPlayer", { n: view.constants.negotiation_rounds })}</span>
+            <span className="chip mono">{t("chipFloor", { percent: Math.round(view.constants.negotiation_floor_share * 100) })}</span>
+            <span className="chip mono">{t("chipClause", { share: view.constants.release_clause_share })}</span>
+            <span className="chip mono">{t("chipLoanFee", { percent: Math.round(view.constants.loan_fee_share * 100) })}</span>
+            <span className="chip mono">{t("chipSaleProceeds", { percent: Math.round(view.constants.sell_proceeds_share * 100) })}</span>
           </div>
           <p className="muted">
-            Age is the one input a club cannot train, so the curve is stated as bands rather than fitted:{" "}
+            {t("ageCurveNote")}
             <span className="mono">{view.constants.age_curve.map((row) => `${row.ages}→×${row.weight}`).join("  ")}</span>
           </p>
           <p className="notice">{view.market.note}</p>
