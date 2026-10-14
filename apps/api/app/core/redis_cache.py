@@ -121,7 +121,7 @@ class RedisCache:
         client = self._redis
         if self._available and client is not None:
             try:
-                result = client.delete(self._key(key))
+                result = cast("int", client.delete(self._key(key)))
                 return result > 0 or deleted
             except Exception as e:
                 logger.warning("Redis delete failed: %s", e)
@@ -171,7 +171,7 @@ class RedisCache:
         client = self._redis
         if self._available and client is not None:
             try:
-                info = client.info("memory")
+                info = cast("dict[str, Any]", client.info("memory"))
                 stats["redis_memory_used"] = info.get("used_memory_human")
                 stats["redis_connected_clients"] = info.get("connected_clients")
             except Exception:
