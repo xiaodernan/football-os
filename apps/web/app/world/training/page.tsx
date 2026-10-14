@@ -46,7 +46,7 @@ export default async function WorldTrainingPage({ searchParams }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world", label: "Back to Football World" }}
+        back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
         lede="What the generated squad did between fixtures. Each row names a catalogue drill this repository authored, the synthetic player who is said to have run it, and the two figures the load number is made from — there is no tracking data and no person behind any of it."
         provenance={result.data}

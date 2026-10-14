@@ -477,7 +477,8 @@
     "metaNews": "Match reports, previews, spotlights and tactical notes from the generated football world. Each one declares whether it is a fact, an analysis or speculation.",
     "metaPlayers": "Every generated footballer: position, age, overall and potential, plus the season totals that the per-match statistic lines add up to.",
     "metaTeams": "Every club in the generated football world: city, stadium, manager, formation, squad size and mean overall rating.",
-    "metaTraining": "The generated world's training log: every session names the player, the catalogue drill, the minutes and the RPE, and the load figure is those last two multiplied."
+    "metaTraining": "The generated world's training log: every session names the player, the catalogue drill, the minutes and the RPE, and the load figure is those last two multiplied.",
+    "backToWorld": "Back to Football World"
   },
   "coach": {
     "metaTitle": "AI Coach",

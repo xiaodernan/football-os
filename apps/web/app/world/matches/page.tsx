@@ -43,7 +43,7 @@ export default async function MatchesPage({ searchParams }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world", label: "Back to Football World" }}
+        back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
         lede={`${total.toLocaleString("en-GB")} fixtures. A row that has not been played carries NULL in the database, so it renders as “not played” rather than 0–0.`}
         provenance={result.data}

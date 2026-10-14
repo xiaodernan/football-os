@@ -29,12 +29,13 @@ export default async function WorldSearchPage({ searchParams }: Props) {
   const query = cleanParams(await searchParams);
   const term = query.q ?? "";
   const tc = await getTranslations("common");
+  const tw = await getTranslations("world");
   const result = term ? await readWorld<WorldSearchResponse>("/world/search", { q: term, types: query.types, limit_rows: 40 }) : null;
 
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world", label: "Back to Football World" }}
+        back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow="One box, five tables (spec §56)"
         title="Search the football world"
         lede="Terms are matched against the stored rows and every hit reports the fields that made it rank. No provider call, no web fetch."

@@ -45,7 +45,7 @@ export default async function PlayersPage({ searchParams }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world", label: "Back to Football World" }}
+        back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
         lede={`${total.toLocaleString("en-GB")} generated players. Attributes come from the player's archetype and season output, and the page for each one lists why every number is what it is.`}
         provenance={result.data}

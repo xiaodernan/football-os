@@ -43,7 +43,7 @@ export default async function NewsPage({ searchParams }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world", label: "Back to Football World" }}
+        back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
         lede={`${total.toLocaleString("en-GB")} generated reports. Nothing here was fetched from a wire service — the source is the local generator, and each article says so.`}
         provenance={result.data}

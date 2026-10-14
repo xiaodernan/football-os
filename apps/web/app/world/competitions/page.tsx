@@ -37,7 +37,7 @@ export default async function CompetitionsPage({ searchParams }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world", label: "Back to Football World" }}
+        back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
         lede={`${total.toLocaleString("en-GB")} generated competitions. A cup reports the clubs its drawn fixtures name, not a membership table.`}
         provenance={result.data}

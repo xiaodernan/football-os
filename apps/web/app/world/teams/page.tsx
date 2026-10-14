@@ -42,7 +42,7 @@ export default async function TeamsPage({ searchParams }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world", label: "Back to Football World" }}
+        back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
         lede={`${total.toLocaleString("en-GB")} generated clubs. Overall is the mean of the stored squad, so it moves when a squad does.`}
         provenance={result.data}
