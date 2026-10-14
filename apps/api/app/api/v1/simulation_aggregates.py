@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.security import limit
-from app.models import Career, CareerAppearance, Competition
+from app.models import Career, CareerAppearance, Competition, RealPlayer
 from app.services.simulation.aggregates import league_ledger_view, player_career_aggregate_view
 from app.services.simulation.engine import SIMULATION_DISCLAIMER
 
@@ -96,12 +96,20 @@ def read_player_career_aggregate(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Player career aggregate: all careers with a player matching this slug, summed.
-    
-    Public read: no session required. The player is identified by slug (which is
-    unique per career, but a real player may have multiple careers — one per account).
-    We find all careers that have a player with this slug and sum their events.
+
+    Public read: no session required. The player is identified by slug (which is unique per career, but a real player may have
+    multiple careers — one per account), and we find all careers that have a player with this slug and sum their events.
+
+    The 404 is about the *player*, not about their season, which is what its sibling door above has always done: this door
+    refuses a slug the generated world has no `real_players` row for, and answers a ledger of zeros — with the reason in
+    `career_notice` — for a player the world has and no manager has ever played. The careers it sums come from
+    `career_appearances`, and only the players a played round has traced appear there, so resolving the subject from those
+    rows turned most world players into a 404.
     """
     limit(request, 30, 60, scope="sim_agg_player")
+    player = db.scalar(select(RealPlayer).where(RealPlayer.slug == player_slug))
+    if player is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=NOT_FOUND)
     # Find careers that have a player with this slug via CareerAppearance
     career_ids = [
         str(row[0]) for row in
@@ -112,6 +120,4 @@ def read_player_career_aggregate(
             .distinct()
         ).all()
     ]
-    if not career_ids:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=NOT_FOUND)
-    return player_career_aggregate_view(db, career_ids, player_slug)
+    return player_career_aggregate_view(db, career_ids, player_slug, player)

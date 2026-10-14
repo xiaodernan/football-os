@@ -5027,7 +5027,7 @@
           "simulation-aggregates"
         ],
         "summary": "Read Player Career Aggregate",
-        "description": "Player career aggregate: all careers with a player matching this slug, summed.\n\nPublic read: no session required. The player is identified by slug (which is\nunique per career, but a real player may have multiple careers — one per account).\nWe find all careers that have a player with this slug and sum their events.",
+        "description": "Player career aggregate: all careers with a player matching this slug, summed.\n\nPublic read: no session required. The player is identified by slug (which is unique per career, but a real player may have\nmultiple careers — one per account), and we find all careers that have a player with this slug and sum their events.\n\nThe 404 is about the *player*, not about their season, which is what its sibling door above has always done: this door\nrefuses a slug the generated world has no `real_players` row for, and answers a ledger of zeros — with the reason in\n`career_notice` — for a player the world has and no manager has ever played. The careers it sums come from\n`career_appearances`, and only the players a played round has traced appear there, so resolving the subject from those\nrows turned most world players into a 404.",
         "operationId": "read_player_career_aggregate_api_v1_simulation_aggregates_player__player_slug__get",
         "parameters": [
           {

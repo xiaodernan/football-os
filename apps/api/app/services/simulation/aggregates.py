@@ -22,7 +22,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Career, CareerFixture, Competition, SimulationEvent, Team
+from app.models import Career, CareerAppearance, CareerFixture, Competition, RealPlayer, SimulationEvent, Team
 from app.services.simulation.engine import SIMULATION_DISCLAIMER
 from app.services.simulation.events import ATTRIBUTION_FORMULA
 
@@ -284,12 +284,23 @@ def league_ledger_view(session: Session, competition: Competition) -> dict[str, 
     }
 
 
-def player_career_aggregate_view(session: Session, career_ids: list[str], player_slug: str) -> dict[str, Any]:
+def player_career_aggregate_view(
+    session: Session,
+    career_ids: list[str],
+    player_slug: str,
+    player: RealPlayer | None = None,
+) -> dict[str, Any]:
     """Aggregate of one player across all careers they've played in.
     
     The player is identified by their slug (which is unique per career, but a real
     player may have multiple careers — one per account). We find all careers that
     have a player with this slug and sum their events.
+
+    `player` is the world's own `real_players` row, which the route has already had to find before
+    calling this — a player the world does not have is a 404, a player the world has and whose career
+    list is empty is a ledger of zeros. The name and position below come from the appearance row when
+    one exists, and from that world row when none does, so this door cannot print a slug in the place
+    `/world/players` prints a name.
     """
     fixtures = _fixtures_of_careers(session, career_ids)
     played = [row for row in fixtures if row.match_id]
@@ -302,14 +313,13 @@ def player_career_aggregate_view(session: Session, career_ids: list[str], player
     careers = list(session.scalars(select(Career).where(Career.id.in_(career_ids)).order_by(Career.id)))
 
     # Get the player's name/position from CareerAppearance
-    from app.models import CareerAppearance
     sample_appearance = session.scalar(
         select(CareerAppearance)
         .where(CareerAppearance.career_id.in_(career_ids))
         .where(CareerAppearance.player_slug == player_slug)
     )
-    player_name = sample_appearance.player_name if sample_appearance else player_slug
-    player_position = sample_appearance.position if sample_appearance else None
+    player_name = str(sample_appearance.player_name if sample_appearance else (player.name if player else player_slug))
+    player_position = str(sample_appearance.position) if sample_appearance else (str(player.position) if player else None)
 
     totals = _totals_by_type(session, match_ids, club_id=None)
     players = _player_rows(session, match_ids, club_id=None)
@@ -328,6 +338,15 @@ def player_career_aggregate_view(session: Session, career_ids: list[str], player
 
     shown = player_rows[:LEDGER_LIMIT]
     unattributed_events = {kind: sum(int(entry.get(kind, 0)) for entry in totals.values()) for kind in ("ambiguous", "unnamed")}
+
+    # Why an empty `careers` is not an error. The ledger reads `career_appearances`, so a player the world
+    # has and nobody has managed has nothing to add up — a true answer, and one the page cannot state
+    # without inventing product copy. It travels as data, the same way `scope`, `source` and `consistency`
+    # do, and it is blank the moment a season exists to contradict it.
+    career_notice = "" if careers else (
+        f"no career in this world has a `career_appearances` row naming {player_slug}, so this ledger has no fixture to sum: "
+        f"the player is the world's `real_players` row, and every figure below is a sum over no rows"
+    )
 
     return {
         "player": {"slug": player_slug, "name": player_name, "position": player_position},
@@ -355,6 +374,7 @@ def player_career_aggregate_view(session: Session, career_ids: list[str], player
             "unnamed_names": names["unnamed"],
         },
         "consistency": _consistency(goals, 0, traced, untraced),  # no club_goals for cross-career
+        "career_notice": career_notice,
         "scope": f"all careers with player slug {player_slug}",
         "source": "sim_events rows" if traced else "no traced fixture",
         "formula": LEDGER_FORMULA,

@@ -1765,6 +1765,8 @@ export type SimAggPlayerRow = {
 export type SimAggPlayerAggregate = {
   player: { slug: string; name: string; position: string | null };
   careers: { id: string; slug: string; club_name: string; club_short: string }[];
+  /** Blank as soon as one career has played; non-empty is the door's own sentence about why it has nothing to sum. */
+  career_notice: string;
   players: SimAggPlayerRow[];
   players_with_events: number;
   players_shown: number;

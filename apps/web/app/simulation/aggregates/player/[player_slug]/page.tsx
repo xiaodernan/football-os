@@ -86,6 +86,11 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
               </tbody>
             </table>
           </div>
+          {aggregate.career_notice !== "" && (
+            <p className="muted world-section-note" data-testid="agg-career-notice">
+              {aggregate.career_notice}
+            </p>
+          )}
         </Panel>
 
         <Panel eyebrow="Sum over all careers" title="Totals" data-testid="player-totals">
