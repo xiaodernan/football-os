@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.core.cache import get_cache_stats
 from app.core.db import get_db
 from app.core.redis_cache import get_redis_cache
+from app.core.runtime import uptime_seconds
 from app.core.security import current_user
 from app.models import ModelCall, User, VideoAsset
 from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
@@ -79,7 +80,7 @@ def system_metrics(
     p95 = float(latency_profile(db)["p95_latency_ms"])
 
     return SystemMetricsResponse(
-        uptime_seconds=0.0,  # Would need process start time tracking
+        uptime_seconds=round(uptime_seconds(), 2),
         request_count=total_calls,
         error_count=failed_calls,
         avg_latency_ms=round(avg_latency, 2),
