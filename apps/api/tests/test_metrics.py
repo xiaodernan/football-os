@@ -68,6 +68,24 @@ class TestMetricsEndpoints:
         assert first > 0.0, "the door promises uptime; a process that has imported its own modules has some"
         assert second > first, "uptime is the process age, so it cannot stand still between two calls"
 
+    def test_active_users_today_counts_a_user_who_never_spent_a_model_call(self) -> None:
+        """Should count a user who is active, not one who spent a model call.
+
+        The row counted `DISTINCT ModelCall.user_id` over today, which answers a different question than
+        its name: how many accounts bought an AI call. Someone who logs in and spends the day on training,
+        tactics or boards is active today and invisible here, so an operator watching this number would
+        read a busy product as an empty one. `User.last_login_at` is the column that records what the row
+        promises, and registration — which hands back a usable token and is therefore the account's first
+        session — was the one path that never stamped it.
+        """
+        before = _client().get("/api/v1/metrics/system").json()["active_users_today"]
+
+        # A brand-new account: it has logged in and has issued no model call at all.
+        fresh = _client()
+        after = fresh.get("/api/v1/metrics/system").json()["active_users_today"]
+
+        assert after > before, "an account that just registered is active today, and it bought no call"
+
     def test_database_metrics(self) -> None:
         """Should report database-level metrics."""
         client = _client()

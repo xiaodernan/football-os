@@ -64,6 +64,10 @@ def register(payload: RegisterIn, request: Request, response: Response, db: Sess
         password_hash=hash_password(payload.password),
         display_name=payload.display_name.strip(),
         role=payload.role,
+        # Registering hands back a usable access token, so it is the account's first session. The column
+        # existed and only /auth/login ever wrote it, which meant an account created here had never been
+        # "active" to anything that reads it - /metrics/system's active-users row being the one that does.
+        last_login_at=datetime.now(UTC),
     )
     db.add(user)
     db.add(AuditLog(id=new_public_id("aud"), user_id=user.id, action="user.registered", detail={"role": user.role}))

@@ -67,7 +67,12 @@ def system_metrics(
 
     # Count users
     total_users = int(db.scalar(select(func.count(User.id))) or 0)
-    active_today = int(db.scalar(select(func.count(func.distinct(ModelCall.user_id))).where(ModelCall.created_at >= today_start)) or 0)
+    # How many accounts were active today, which is what the row's name says. This used to count
+    # DISTINCT ModelCall.user_id, which answers a different question - how many accounts bought an AI
+    # call - so a user who logged in and spent the day on training, tactics or boards was active today and
+    # counted as nobody. `last_login_at` is the column that records what the row promises, and it is
+    # written on both ways in (login, and registration, which issues a token).
+    active_today = int(db.scalar(select(func.count(User.id)).where(User.last_login_at >= today_start)) or 0)
 
     # Model call stats as proxy for request volume
     total_calls = int(db.scalar(select(func.count(ModelCall.id))) or 0)
