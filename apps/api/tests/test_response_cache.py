@@ -147,9 +147,9 @@ def test_a_non_get_request_is_not_cached() -> None:
 def test_a_miss_is_labelled_and_a_non_candidate_is_not() -> None:
     """The distinction the two cases above turn on, stated once.
 
-    `MISS` means the cache was consulted and could not answer. A POST, a non-JSON body
-    and a `no-cache` caller are never consulted, and labelling them MISS would tell an
-    operator their cache was missing work it was never asked to do.
+    `MISS` means the cache was consulted and could not answer. A POST and a `no-cache` caller are never
+    consulted, and labelling them MISS would tell an operator their cache was missing work it was never
+    asked to do.
     """
     cache: TTLCache = TTLCache()
     origin = _origin(status=404)
@@ -159,6 +159,45 @@ def test_a_miss_is_labelled_and_a_non_candidate_is_not() -> None:
         return response.headers["X-Cache"]
 
     assert asyncio.run(run()) == "MISS"
+
+
+def test_which_requests_the_cache_is_actually_consulted_for() -> None:
+    """Which of these three the cache looks up, measured on its own counters rather than argued about.
+
+    The case above says a non-JSON body is never consulted, and the code does consult it. The lookup has
+    to run before the body's content type is known — the response does not exist until the origin has
+    been called — so for a non-JSON GET the cache is asked, and answers nothing. `MISS` is therefore the
+    truthful label for one: it means "consulted and could not answer", and it was. A POST and a `no-cache`
+    caller are known to be non-candidates before any of that happens, so neither counter moves.
+    """
+    cache: TTLCache = TTLCache()
+
+    async def run(origin: Origin, request: Request) -> None:
+        await cached_response_for(cache, request, origin)
+
+    async def drive() -> tuple[int, int, int, int, int, int]:
+        # A POST: refused on the method, before the cache is touched at all.
+        post = cache.get_stats()["misses"]
+        await run(_origin(), _request(method="POST"))
+        post_after = cache.get_stats()["misses"]
+
+        # A GET a caller marked `no-cache`: also refused before the cache is touched.
+        want_fresh = cache.get_stats()["misses"]
+        await run(_origin(), _request(headers=[(b"cache-control", b"no-cache")]))
+        fresh_after = cache.get_stats()["misses"]
+
+        # A non-JSON 200: only its answer's content type rules it out, and that arrives after the lookup.
+        plain = cache.get_stats()["misses"]
+        await run(_origin(content_type="text"), _request())
+        plain_after = cache.get_stats()["misses"]
+
+        return post, post_after, want_fresh, fresh_after, plain, plain_after
+
+    post, post_after, want_fresh, fresh_after, plain, plain_after = asyncio.run(drive())
+
+    assert post == post_after, "a POST is not a cache candidate before the cache is asked"
+    assert want_fresh == fresh_after, "a `no-cache` caller asked for a fresh answer, not a warm one"
+    assert plain_after == plain + 1, "a non-JSON GET is consulted; only its content type rules it out"
 
 
 def _origin_echoing_acao() -> Origin:
