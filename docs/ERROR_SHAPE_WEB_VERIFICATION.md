@@ -160,3 +160,41 @@ both 3997 — the same 85 lines modulo the `b'\r'`s, verified by re-encoding the
 copy's bytes and comparing against the plane's file rather than by arithmetic. Every mutation string and every source
 pin in the gate is single-line, which is why that difference is harmless here; a multi-line arm would have had to ask
 the plane what its own line endings are first.
+
+## Dated corrections, 2026-10-14 — #108 (the player ledger door)
+
+Two sentences above are currency statements ("the remaining finding is …", "the leg skips 2 cases …"), and both
+are false on the current head. The readings that made them stay; the corrections are appended, each naming the
+ref it was read at, because a rewritten record would hide the drift this section exists to expose.
+
+* **"mypy's single remaining finding is `app\services\simulationggregates.py:325: error: Name "careers" is
+  not defined [name-defined]"** (finding 1, and the mypy row of the leg table). It was true over `50efc5e`, and
+  `2671102` removed it: at `50efc5e` `player_career_aggregate_view` (line 287) references `careers` at line 325
+  with no binding, and from `2671102` the same function carries `careers = list(session.scalars(select(Career)…))`
+  at line 302. `python -m mypy app` is therefore **`Success: no issues found in 142 source files`** at `f75faf6`
+  on a plane verified against `git ls-tree -r HEAD --name-only apps/api/tests` (65 of 65 committed `test_*.py`),
+  and green again with #108's change. That verification is why this correction can be published at all: #108's
+  *first* plane was silently incomplete (61 of 65, `tar` exit 0) and produced two readings this unit retracts —
+  `1605 collected` (HEAD collects 1636) and "6 mypy errors in `app/core/redis_cache.py` at HEAD". The class of
+  defect is this section's own finding 1, met from the other side: a plane that loses files makes a green or a red
+  verdict mean nothing.
+  **The second of those two retractions was itself only half right, and the correction is this record's kind of
+  finding.** The incomplete plane was one cause, not the cause. Which interpreter is invoked decides the answer,
+  re-measured on the worktree today (2026-10-16, `2e07600`): `C:/Program Files/Python311/python.exe -m mypy app`
+  (Python 3.11.1, whose `redis` stubs type `Redis.get`/`scan` as `Awaitable[Any] | Any`) answers
+  **`Found 3 errors in 1 file (checked 145 source files)`**, all in `app/core/redis_cache.py`, while
+  `../../.venv/Scripts/python.exe -m mypy app` (Python 3.13.14, `redis==8.1.0` as `requirements.txt` pins it)
+  answers **`Success: no issues found in 145 source files`**. The venv is the gate — it is the version CI
+  installs — so HEAD is green, and a "pre-existing red" reading has to name its interpreter the way it names its
+  ref. The count is not the same one this unit first reported (6 on a truncated plane at `f75faf6`, 3 here on the
+  full tree at `2e07600`, where `5a4f6a6` has since landed casts in that file); what is identical is the
+  mechanism and the fact that only the 3.11 interpreter can see it.
+* **"The leg skips 2 cases, each named by the junit … `test_simulation_aggregates.TestSimulationAggregates::
+  test_player_aggregate_returns_structured_data`"** (the leg table's footnote). That case no longer exists: #108
+  deleted it, because the fixture handed `POST /players`' `user_players.id` to a door keyed on
+  `real_players.slug` — two namespaces, so the skip's stated reason ("requires world with careers") could not have
+  been satisfied by any integration. #108's own whole-suite leg (`.scratch/r108-suite2.xml`, worktree SQLite) is
+  **1637 passed, 2 skipped, 0 failed, 0 errors**, 1639 collected where HEAD collects 1636, and the two skips are
+  `test_scout_search.TestPublishedArithmetic::test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]`
+  and `test_redis_cache::test_redis_cache_real_integration`. The scout case is the long-standing one named above;
+  the redis case is that module's own live-tier skip, not this unit's.
