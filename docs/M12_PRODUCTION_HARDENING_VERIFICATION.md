@@ -213,12 +213,59 @@ percentiles in Python: the same arithmetic on both engines, and honest about bei
 `sample_size`, `sampled_from` and `sample_is_newest` are in the answer. Nearest-rank rather than
 interpolated, because an interpolated value between two rows is a latency no call actually took, and
 this figure sits beside a sentence about what a caller waited. `GET /api/v1/metrics/latency` exposes
-it overall or per feature, and the system door now carries the p95 itself.
+it overall or per feature.
+
+**The formula now lives in `app/core/percentile.py`, because `/metrics/system` needed a second set of
+percentiles.** That door's four headline rows — `request_count`, `error_count`, `avg_latency_ms`,
+`p95_latency_ms` — were reading the model-call ledger: the first two were `COUNT(ModelCall.id)` and
+its failed subset, the latencies came out of the same table. So the figures an operator looks at first
+answered how much AI the product bought rather than how much traffic it took, and a door answering 404
+all day, a limiter firing, a worker wedging, moved none of them. `avg_latency_ms` duplicated
+`/metrics/database`'s own `avg_model_call_latency_ms` — nothing was lost by moving it.
+
+`app/core/request_metrics.py` records what this process served, from `request_context`, which is the
+outermost user middleware and therefore the only place that sees every response. `error_count` is the
+5xx subset: a 404 says a client asked the wrong thing, a 500 says the server broke, and a row that
+cannot tell them apart is not an error rate. Durations go into a deque bounded at the same 2000 rows,
+for the reason the profile's sample is bounded — and the arithmetic is imported rather than copied, so
+the two percentiles cannot drift into disagreeing about the same sample. The scope is stated in the
+answer (`scope: this process`): every worker holds its own figures, which is the same answer `uptime`
+already gives and the two belong together.
+
+The 500 path is the one that needed the extra line. An unhandled exception is rendered by
+`ServerErrorMiddleware`, which sits outside every user middleware, so the count would otherwise be
+taken only for requests that succeeded — and the failures that matter most would be the missing ones.
 
 The case that pinned the definition found a mistake in the *test*: it asserted `50/95/99` over rows
 `0..99`, and `n = ceil(P/100 × N)` makes the correct nearest-rank answers `49/94/98`. The code was
 right and the assertion was wrong; the test now carries the formula in a comment so the next reader
 does not have to re-derive it.
+
+### Observability — the system row answers the system
+
+`GET /api/v1/metrics/system` had four rows that answered something else, and two of them answered it
+so misleadingly that the number worked against the reader rather than for them.
+
+`uptime_seconds` was `0.0`, with a comment asking for process start time tracking that nobody made
+happen. The row carried the field in its response model, in the OpenAPI schema and in its own
+docstring — the promise was everywhere and the answer was a constant. Uptime is not a number that is
+merely wrong when zero: it is the one figure that tells "restarted seconds ago" from "has been up for
+a week", so the placeholder reported both at once. `app/core/runtime.py` now captures the start at
+import, the last moment shared by every process. It cannot live in `main`, which is where the obvious
+place would put it: uvicorn's `--reload` runs a supervisor and a worker that import independently, and
+each having its own clock is the correct answer to "this process" rather than the supervisor's age.
+`perf_counter` rather than `time`, so a host clock correction shows up as neither an outage nor a jump
+into the future.
+
+`active_users_today` counted `DISTINCT ModelCall.user_id` over today. That is a real question under
+another name — how many accounts bought an AI call — and the row answered it in place of the one it
+promised. A user who logged in and spent the day on training, tactics or boards was active today and
+counted as nobody, so an operator watching this number would read a busy product as an empty one;
+of the two directions for the row to be wrong, that is the one that hides the product working.
+`User.last_login_at` is the column that records what the row promises, and login was already writing
+it. The path that never wrote it was registration, which hands back a usable access token and is
+therefore the account's first session — the newest accounts were invisible to the very number whose
+job is to notice them.
 
 ### Cost optimisation — an advisor over the ledger, not an enforcer over the router
 
@@ -319,10 +366,10 @@ harness env var is part of the recorded command.
 
 | measurement | plane | result |
 | --- | --- | --- |
-| `pytest tests/test_cost_advisor.py tests/test_latency_profile.py tests/test_metrics.py tests/test_agents.py tests/test_answer_census.py tests/test_authorization_census.py tests/test_community.py tests/test_account_deletion.py -q --tb=line` | SQLite, local venv, working copy | **127 tests / 0 failures / 0 errors / 0 skipped**, rc=0, wall **65s** |
+| `pytest tests/test_cost_advisor.py tests/test_latency_profile.py tests/test_metrics.py tests/test_request_metrics.py tests/test_agents.py tests/test_answer_census.py tests/test_authorization_census.py tests/test_community.py tests/test_account_deletion.py -q --tb=line` | SQLite, local venv, working copy | **127 tests / 0 failures / 0 errors / 0 skipped**, rc=0, wall **65s** |
 | `ruff check app tests` | same | All checks passed |
 | `ruff format --check` over the new modules | same | all formatted |
-| `mypy` over `cost_advisor`, `latency_profile`, `metrics`, `cache`, `logging`, `main` | same | no issues |
+| `mypy` over `cost_advisor`, `latency_profile`, `metrics`, `request_metrics`, `percentile`, `runtime`, `response_headers`, `cache`, `redis_cache`, `logging`, `main` | same | no issues |
 | `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same, against `HEAD` | 13 tests, rc=0 |
 | `pytest tests/test_tracing.py -q` | SQLite, working copy | **3 tests / 0 failures**, rc=0 |
 | contract paths after the three metrics doors | `docs/api/openapi.json` committed | 179 → **182** |

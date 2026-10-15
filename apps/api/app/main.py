@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from typing import Any, Protocol
 from urllib.parse import quote
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
@@ -50,6 +50,7 @@ from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging, get_logger, request_id_var, request_started_var
 from app.core.redis_cache import close_redis_cache, get_redis_cache
+from app.core.request_metrics import record
 from app.core.response_headers import dress_response
 from app.core.tracing import init_tracing, instrument_fastapi
 from app.services.knowledge import corpus_stats, sync_knowledge
@@ -321,7 +322,16 @@ def create_app() -> FastAPI:
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
         request_id_var.set(request_id)
         request_started_var.set(started)
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception:
+            # An exception that reached here is a 500 `ServerErrorMiddleware` will render, because
+            # everything shorter of one was already answered further in. Counting it needs this path:
+            # that middleware sits outside every user middleware, so nothing downstream of here will
+            # ever run for it, and an error the row cannot see is the error that hides.
+            record(status.HTTP_500_INTERNAL_SERVER_ERROR, (time.perf_counter() - started) * 1000)
+            raise
+        record(response.status_code, (time.perf_counter() - started) * 1000)
         dress_response(response)
         return response
 

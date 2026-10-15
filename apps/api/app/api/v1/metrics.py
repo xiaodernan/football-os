@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.core.cache import get_cache_stats
 from app.core.db import get_db
 from app.core.redis_cache import get_redis_cache
+from app.core.request_metrics import snapshot as request_metrics_snapshot
 from app.core.runtime import uptime_seconds
 from app.core.security import current_user
 from app.models import ModelCall, User, VideoAsset
@@ -74,22 +75,19 @@ def system_metrics(
     # written on both ways in (login, and registration, which issues a token).
     active_today = int(db.scalar(select(func.count(User.id)).where(User.last_login_at >= today_start)) or 0)
 
-    # Model call stats as proxy for request volume
-    total_calls = int(db.scalar(select(func.count(ModelCall.id))) or 0)
-    failed_calls = int(db.scalar(select(func.count(ModelCall.id)).where(ModelCall.success.is_(False))) or 0)
-    avg_latency = float(db.scalar(select(func.avg(ModelCall.latency_ms))) or 0.0)
-
-    # The p95 this door used to answer None: SQLite has no percentile_cont and this project runs both
-    # engines, so the figure comes from the latency profile's bounded sample. `/metrics/latency` prints
-    # the sample size and whether it is full; this row carries the number itself.
-    p95 = float(latency_profile(db)["p95_latency_ms"])
+    # The four rows that describe the traffic, which counted the AI ledger until now: `request_count` was
+    # `COUNT(ModelCall.id)`, `error_count` the failed subset of the same table, and both latencies came out
+    # of it too. That is a different question with no name of its own — a door answering 404 all day moved
+    # none of these figures, and `/metrics/providers` already answers "how much AI did we buy" over the
+    # ledger. What callers waited, and how much of it failed, is what a system row is for.
+    served = request_metrics_snapshot()
 
     return SystemMetricsResponse(
         uptime_seconds=round(uptime_seconds(), 2),
-        request_count=total_calls,
-        error_count=failed_calls,
-        avg_latency_ms=round(avg_latency, 2),
-        p95_latency_ms=round(p95, 2),
+        request_count=served["request_count"],
+        error_count=served["error_count"],
+        avg_latency_ms=served["avg_latency_ms"],
+        p95_latency_ms=served["p95_latency_ms"],
         active_users_today=active_today,
         total_users=total_users,
     )

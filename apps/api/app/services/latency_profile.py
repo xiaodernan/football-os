@@ -19,6 +19,7 @@ from typing import Any
 from sqlalchemy import Float, Integer, case, func, select
 from sqlalchemy.orm import Session
 
+from app.core.percentile import nearest_rank
 from app.models import ModelCall
 
 #: How many of the newest rows to read for the percentile. Large enough that a p95 over the sample is
@@ -27,18 +28,6 @@ SAMPLE_SIZE: int = 2000
 
 #: The window the profile reads by default.
 DEFAULT_WINDOW_DAYS: int = 30
-
-
-def _percentile(sorted_values: list[float], fraction: float) -> float:
-    """The nearest-rank percentile: the smallest value at or above the requested share of the sample.
-
-    Nearest-rank rather than interpolated, because an interpolated value between two rows is a number
-    no call actually took, and this figure sits beside a sentence about what a caller waited.
-    """
-    if not sorted_values:
-        return 0.0
-    index = max(0, min(len(sorted_values) - 1, int(fraction * len(sorted_values) + 0.999999) - 1))
-    return float(sorted_values[index])
 
 
 def profile(db: Session, *, days: int = DEFAULT_WINDOW_DAYS, feature: str | None = None) -> dict[str, Any]:
@@ -69,9 +58,9 @@ def profile(db: Session, *, days: int = DEFAULT_WINDOW_DAYS, feature: str | None
         "sample_size": len(sample),
         "sampled_from": rows_in_window,
         "sample_is_newest": len(sample) >= SAMPLE_SIZE,
-        "p50_latency_ms": round(_percentile(sample, 0.50), 2),
-        "p95_latency_ms": round(_percentile(sample, 0.95), 2),
-        "p99_latency_ms": round(_percentile(sample, 0.99), 2),
+        "p50_latency_ms": round(nearest_rank(sample, 0.50), 2),
+        "p95_latency_ms": round(nearest_rank(sample, 0.95), 2),
+        "p99_latency_ms": round(nearest_rank(sample, 0.99), 2),
         "max_latency_ms": round(sample[-1], 2) if sample else 0.0,
         "avg_latency_ms": round(average, 2),
         "failure_count": failures,
