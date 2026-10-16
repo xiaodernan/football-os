@@ -261,3 +261,133 @@ rather than as noise.
   already falsified; it now names `/club/academy` as the service holding §41's sessions and saved reports, and
   `tests/test_club_organizations.py` holds the old wording out of the list rather than only asserting the new one
   is in it.
+
+## Dated, 2026-10-17 — #110: the academy's `counts` was typed for a migrated host only
+
+The bullet above this section records the door answering a guardian with a key set it did not answer a coach with.
+#110 is that family one layer up: **the door's key set legitimately varies by branch, and the web's type promised
+the migrated branch to every reader.** Nothing in the toolchain could see the gap, so a page would print `undefined`
+behind a green build the first time a reader asked for one of the four conditional figures.
+
+**The class, measured before any edit** (`.scratch/r110_divergent_keys.py`, Python `ast`, read-only, no server and
+no database, over `apps/api/app/**/*.py` at `f3c9f1d`): 145 files, 1461 functions, 32 of which return a dict literal
+on two or more paths — `D1` divergent literal key sets **13**, `D2` conditional key insertions **8**, `D3`
+literal-plus-non-literal returns **15**, 44 rows in `.scratch/r110-divergence.json`. The reader join
+(`.scratch/r110_readers.py`) found 45 distinct omitted keys, 15 of them name-matched to a required field in
+`apps/web/lib/types.ts` that a web file actually reads. **That join over-counted, and reading the carrier is what
+proved it**: four of the strongest sites are already honest, each in a different way —
+`simulation/market.py::transferable()` omits five keys that `lib/market.ts:26-30` declares optional and
+`components/MarketTools.tsx:162` reads through `??`; `simulation/career.py::next_fixture_plan()` omits ten that
+`lib/types.ts:1452-1465` marks optional, and `transfer_sim.py:214` guards on `plan.get("available")` before naming
+`plan["side"]`; `scouting/shortlist.py::_recheck()` omits `refused`/`unaccounted`, both optional in
+`lib/scout.ts:465-466` and read as `item.recheck.refused?.length ?? 0`; and `agents/research.py::run()` omits
+`from_cache` on its refusal branches, which the door absorbs before the wire because `AgentRunResponse`
+(`api/v1/agents.py:118`) defaults it `False`. A name that matches a required field is not a contradiction; only the
+carrier's own text is.
+
+**The site this unit took, and the exact contradiction.** `GET /api/v1/club/academy/capabilities` composes one
+published `counts` from three producers at `app/api/v1/club_academy.py:219`. `academy.py:1422 academy_counts()`
+answers **12** keys when the academy tables are present and **8** when they are not;
+`sessions.py:94 session_counts(*, ready)` and `reports.py:52 report_counts(*, ready)` answer `sessions` and
+`reports` on both branches — the latter's docstring says why: "0 rather than a crash". So the door publishes **14**
+on a migrated host and **10** on an unmigrated one, and the subset is deliberate: this suite asserts
+`set(empty) < set(counts)` with the reason "a reader cannot mistake it for a quiet academy"
+(`tests/test_club_academy.py:331` on the plane). Against that, `apps/web/lib/club.ts:226-239` at `f3c9f1d` declared
+**all twelve academy keys required and neither `sessions` nor `reports` at all** — four promised figures the door
+may withhold, two always-published figures no reader could find in the type.
+
+**The fix is web-side, and that choice is the point** (`5e213db`: `lib/club.ts` **+14/−4**, 23081 → 23768 bytes;
+ten keys required, four optional, with a number-free comment stating the branch semantics). No API file moved,
+because the other fix — making the unmigrated branch publish all twelve — would overturn an invariant the API owns
+and tests. The reader census is why this changes no served byte: the four conditional names occur only at
+`lib/club.ts:228,233,235,238` and nowhere in `apps/web/app` or `apps/web/components`; the only typed page read of an
+academy figure is `{edu.counts.rule}` at `app/club/rules/page.tsx:271`, and `rule` is required on both branches.
+
+**The gate** (`tests/test_club_academy.py` **+97**, one case in `TestThePublishedRulebook`) does not paraphrase the
+door: it **calls** `academy_counts`, `session_counts` and `report_counts` on both branches — the second through the
+same `academy_tables_present` patch its neighbour uses — unions the key sets, parses the `counts` block out of
+`lib/club.ts`'s real bytes (bound to `export type AcademyCapabilities = {` because `lib/club.ts` carries three
+`counts:` blocks), pins the seam (exactly one composition line, naming all three producers), and then requires:
+published on every branch ⇒ declared **required**; published on some ⇒ declared **optional**; declared and published
+on no branch ⇒ red, a type that invents a field; published only when the tables are *missing* ⇒ red, a shape no
+reader can plan for.
+
+**Why no existing layer could have caught it, each measured rather than asserted.** `mypy app` sees `dict[str, Any]`
+(the handler's own annotation); `npx tsc --noEmit` cannot see it because `apps/web/lib/server.ts:44` returns
+`(await response.json()) as T` — the cast is the promise; and `docs/api/openapi.json` publishes **no `counts`
+object at all** (`"counts"`: 0 occurrences; each of the four conditional names: 0; the *word* `sessions` appears 15
+times, all of them paths and tags, none a property) — re-measured on the worktree at `5e213db` on 2026-10-17, with
+the contract byte-identical to HEAD (`sha256 1d6b56305d6500f5d75ab8dd369e5f506140a6d3e9ea2746d01de7b75dd8ec14`,
+411051 bytes both).
+
+## Legs, and every red attributed by case name
+
+| leg | reading | where |
+| --- | --- | --- |
+| `test_club_academy.py` in the worktree | **84 collected, 84 passed, exit 0**; per-ref `def test_` census 83 at `f3c9f1d` → 84 at `5e213db`, the +1 being this unit's case | `.scratch/r110-final-legs.txt` |
+| whole API suite, worktree SQLite | **1668 tests, 4 failures, 0 errors, 2 skipped, 2132.595s**; this unit's case passed inside it in 0.855s | `.scratch/r110-suite.xml` |
+| the four suite reds | three are `tests/test_openapi_contract_currency.py::test_the_contract_lists_every_route_the_app_answers_and_no_route_it_does_not`, `::test_the_contract_counts_each_verb_on_each_route_the_way_the_app_answers_it`, `::test_the_exporter_derives_the_contract_from_the_tree_and_reproduces_the_committed_bytes` — all three name `boards/gallery/public`, `boards/gallery/public/{slug}`, `boards/{ident}/list-publicly`, routes that exist **only** in the gallery lane's uncommitted `app/api/v1/boards.py` (`git show HEAD:` answers 0 of the three; the worktree file carries them at :303, :330, :344, :358), so no clean plane can reproduce them; the fourth is `tests/test_timeutil.py::TestTheRuleIsHeldAcrossTheApp::test_no_module_takes_its_day_from_the_host_clock`, whose file is **untracked** and whose offender — `planned_date=date.today().isoformat()` — is committed at `app/api/v1/trainings.py:84` | `.scratch/r110-web-and-suite-legs.txt` |
+| the two skips | `test_redis_cache::test_redis_cache_real_integration` (live tier absent) and `test_scout_search.TestPublishedArithmetic::test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]` — neither is this unit's | `.scratch/r110-suite.xml` |
+| `mypy app`, venv interpreter | `Success: no issues found in 145 source files`, exit 0 | `.scratch/r110-mypy-app.txt` |
+| `npx tsc --noEmit` | exit 0, 11-byte log — no diagnostics at all, on a tree the gallery lane has modified | `.scratch/r110-tsc-worktree.txt` |
+| `ruff check` | whole project exit 1, one error, not this unit's: `tests/test_timeutil.py:30:51 F401` in the untracked foreign file; the two files this unit landed are clean scoped | `.scratch/r110-ruff-root.txt` |
+| the three shipped web gates | `qa-gate-inventory.mjs` **54/54**, `qa-metadata-title.mjs` **115/115**, `qa-crawl-policy.mjs` **9/9** — no page added, no new literal, no script | `.scratch/r110-web-and-suite-legs.txt` |
+
+No browser leg was run, and that is a measured decision rather than a skipped one: the reader census above shows no
+served byte moves, so a live read could only re-confirm what the type and the gate already hold.
+
+## Three findings about the witness, not the product
+
+**1. pytest renders a collection-valued assert message through its own repr and elides the middle.** The gate's
+first form was `assert not problems, problems`. Its own red printed **492 of the message's 692 characters** and
+dropped **3 of the 6 verdicts**, which is how run 2 came to ask whether the gate had failed to see a key when the
+key was named and then invisible. Measured twice: in `D:/r110-tiny` (a two-case file with no conftest, 0.09s —
+elision is a rewriting artifact, not a fixture or a timing artifact) and in `.scratch/r110_message_form_probe.py`
+(plain Python, no elision, because nothing renders it). The shipped message is now a joined string with a header,
+and the verdict that came back named all six keys in 770 characters. #111 is the class gate over the 17
+collection-shaped assert messages censused in `apps/api/tests`.
+
+**2. A reverse control keyed on `HEAD` stops meaning what it says at the commit that lands the fix.** The plane
+builder read its control from `HEAD`, so the run after the landing refused with **five `PREFLIGHT FAIL` lines** —
+correctly, and that refusal is the finding. Both ends are pinned now: `f3c9f1d` (pre-fix type, 23081 bytes) is the
+control, `5e213db` supplies the gate, the fixed type and all 255 `apps/api` blobs, and the tree is enumerated with
+`git ls-tree -r <ref>` rather than `git ls-files`, because `ls-files` reads the **index**, which in this shared
+worktree is another lane's. Re-graded on the repaired planes (`.scratch/r110-run5.txt`, 2026-10-17): the collector
+reads **6/90 selected, 84 deselected** and the battery exits 0 — `R` red with a **770-char** verdict naming
+`closed_plans`, `feedback_held_from_guardian`, `plans_of_minors`, `citations_without_clip`, `sessions`, `reports` and
+both clauses; `A1`/`A2`/`A3` red on their own single clause; `CTRL` green; the probe reading
+`present=14 absent=10 conditional=4`, `prefix declared=12 optional=[]`, `prefix lacks: ['reports', 'sessions']`.
+`-q -s` logs carry no tally line, so the count is the collector's reading plus the exit code, never a dot count.
+A4 — widening the unmigrated branch to publish all twelve — still answers **2 failed, exit 1**, at plane lines 331
+and 375, which are the subset invariant and the reconciliation: the door may not be widened to satisfy a type.
+
+**3. And a finding about the check on the check.** Run 5's at-rest clause printed `four inserted keys: 0/4` for the
+plane whose service file A4 had *just* widened. Two bugs in one clause: it searched `plans_of_minors: 0,` where the
+inserted bytes are `"plans_of_minors": 0,`, and it keyed on `endswith("academy.py")`, which is true of both
+`app/api/v1/club_academy.py` (never widened) and `app/services/club/academy.py` (the file A4 widens). A clause that
+matches nothing still prints a number. `.scratch/r110_at_rest.py` now measures the **delta** against the pinned
+bytes: plane B's service differs from `5e213db` and carries 4/4 quoted zero-literals the pinned bytes do not have;
+plane A's service is byte-identical to them and carries 0/4.
+
+## Reproduce
+
+```
+python .scratch/r110_plane_setup.py arms && python .scratch/r110_plane_setup.py a4   # both must print "preflight clean"
+cd D:/r110-plane/apps/api   && python -m pytest tests/test_club_academy.py -k TestTheCountsGateItsOwnArms -q -s --tb=line
+cd D:/r110-plane-b/apps/api && python -m pytest tests/test_club_academy.py -k "counts_object or publishes_its_own_readiness" -q --tb=line -rf
+python .scratch/r110_at_rest.py                                                       # both planes at rest
+cd apps/api && python -m pytest tests/test_club_academy.py -q                          # 84 cases, the shipped gate
+```
+
+## Opened by this unit, not closed
+
+* The gate is **one door's**. Of the census, `D1` still has **12** divergent-literal sites, `D2` **8** conditional
+  insertions and `D3` **15** literal-plus-non-literal returns with no reconciliation like this one; three of the four
+  honest sites above are honest by *their* types' optional marks, which nothing enforces from the producer's side.
+  A class gate would have to enumerate response models, and `dict[str, Any]` handlers are exactly the population
+  that hides from it.
+* #111: collection-shaped assert messages, 17 sites in `apps/api/tests`, are the same hiding pattern inside the
+  suite's own reporting.
+* The unmigrated branch is asserted to be a strict subset of the migrated one. Whether an *unmigrated* host should
+  publish a capability object at all — rather than ten figures and a `rule` string that implies an academy exists —
+  is a product question this unit deliberately did not answer, because the answer would move served bytes.
