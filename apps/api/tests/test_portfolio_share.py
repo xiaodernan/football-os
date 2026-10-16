@@ -284,7 +284,7 @@ class TestTheLinkIsALiveRead:
         table = Base.metadata.tables["cv_shares"]
         assert sorted(column.name for column in table.columns) == sorted(
             ["id", "user_id", "share_token", "sections", "created_at", "updated_at", "revoked_at"]
-        ), [column.name for column in table.columns]
+        ), f"{table.name!r} carries columns {[column.name for column in table.columns]!r}, the seven shared columns were required"
 
     def test_the_account_with_no_player_gets_a_link_of_ten_reasons_not_a_refusal(self) -> None:
         """§38's own rule, one door further out: an absent player is an answer, so a link over it is not an error."""
@@ -293,7 +293,7 @@ class TestTheLinkIsALiveRead:
         body = _anonymous().get(f"{SHARE}/{token}").json()
         assert body["has_player"] is False
         assert len(body["sections"]) == len(portfolio.SECTIONS)
-        assert body["counts"]["filled"] == 0, [row["section"] for row in body["sections"] if row["available"]]
+        assert body["counts"]["filled"] == 0, f"counts said filled=0 while these sections were available: {[row['section'] for row in body['sections'] if row['available']]!r}"
 
 
 class TestTheRulesRefuseBeforeATokenExists:

@@ -433,11 +433,11 @@ class TestOpeningATenant:
         ]
         for body, code, figures in cases:
             response = owner.post(CLUB, json=body)
-            assert response.status_code == 422, (body, response.text)
+            assert response.status_code == 422, f"{body!r} must be refused with 422, the door answered {response.status_code!r}: {response.text!r}"
             detail = _detail(response)
-            assert detail["code"] == code, (body, detail)
+            assert detail["code"] == code, f"{body!r} refused with {detail!r}, code {code!r} was required"
             for key, value in figures.items():
-                assert detail[key] == value, (body, key, detail)
+                assert detail[key] == value, f"{body!r} refused with detail[{key!r}]={detail.get(key)!r}, {value!r} was required"
         assert owner.get(CLUB).json()["total"] == 0, "none of the seven bodies above opened anything"
 
     def test_a_country_is_either_two_letters_or_blank_and_upper_casing_is_the_only_change_made(self) -> None:
@@ -517,10 +517,10 @@ class TestIsolationAcrossTenants:
         answers = []
         for caller in (insider, _account("Nobody At All")):
             response = _at_door(caller, method, f"{CLUB}{path.format(ident=ident, **PROBE)}", body)
-            assert response.status_code == 404, (method, path, response.text)
-            assert _detail(response)["code"] == "no_such_organization", (method, path, _detail(response))
+            assert response.status_code == 404, f"{method!r} {path!r} answered {response.status_code!r}, 404 was required; body: {response.text!r}"
+            assert _detail(response)["code"] == "no_such_organization", f"{method!r} {path!r} refused with {_detail(response)!r}, code no_such_organization was required"
             for secret in (hidden, PROBE["team"], _email_of(owner), insider_email):
-                assert secret not in response.text, (method, path, f"the refusal named {secret!r}")
+                assert secret not in response.text, f"{method!r} {path!r} failed: the refusal named {secret!r}"
             answers.append(response.text)
         # The director of another tenant and a total stranger get the same words, so nothing is confirmed either way.
         assert answers[0].replace(_email_of(insider), "X") == answers[1].replace(_email_of(insider), "X")
@@ -545,10 +545,10 @@ class TestIsolationAcrossTenants:
         insider, insider_email = _joined(boss, unrelated, "director", "Insider Standing Elsewhere")
         for caller in (insider, _account("Stranger With A Number")):
             response = _at_door(caller, method, f"{CLUB}{path.format(ident=organization_id, **PROBE)}", body)
-            assert response.status_code == 404, (method, path, response.text)
-            assert _detail(response)["code"] == "no_such_organization", (method, path, _detail(response))
+            assert response.status_code == 404, f"{method!r} {path!r} answered {response.status_code!r}, 404 was required; body: {response.text!r}"
+            assert _detail(response)["code"] == "no_such_organization", f"{method!r} {path!r} refused with {_detail(response)!r}, code no_such_organization was required"
             for secret in (ident, name, PROBE["team"], _email_of(owner), insider_email):
-                assert secret not in response.text, (method, path, f"the refusal named {secret!r}")
+                assert secret not in response.text, f"{method!r} {path!r} failed: the refusal named {secret!r}"
 
     def test_the_list_of_doors_is_the_route_table_itself(self) -> None:
         declared = {(method, path) for method, path, _ in DOORS}
@@ -633,11 +633,11 @@ class TestStandingAndTheMatrix:
             try:
                 club.require(session, person, ident, permission)
             except ClubRefusal as error:
-                assert error.code == "insufficient_role", (role, permission, error.code)
+                assert error.code == "insufficient_role", f"role {role!r} asked for {permission!r} and raised {error.code!r}, insufficient_role was required"
                 refused.add(permission)
             else:
                 opened.add(permission)
-        assert opened == set(access.permissions_of(role)), (role, sorted(opened ^ set(access.permissions_of(role))))
+        assert opened == set(access.permissions_of(role)), f"role {role!r} is out of step by {sorted(opened ^ set(access.permissions_of(role)))!r}"
         assert opened | refused == set(access.PERMISSIONS) and not opened & refused
         if role != "owner":
             # `org.rename` is not in this list because the published matrix hands it to `director` too, and the
@@ -732,7 +732,7 @@ class TestStandingAndTheMatrix:
         # §39's own list would now be false rather than protective. What stays true, and what this asserts: every
         # code this tier can refuse with has an answer here, and the table is the shared object rather than a copy.
         assert _ANSWERS is answers.ANSWERS, "this door assembled its own answer table again"
-        assert set(REFUSALS) <= set(_ANSWERS), {code for code in REFUSALS if code not in _ANSWERS}
+        assert set(REFUSALS) <= set(_ANSWERS), f"these refusal codes have no entry in the answer table: {sorted(set(REFUSALS) - set(_ANSWERS))!r}"
 
         assert all(_ANSWERS[code] == 404 for code in club.NOT_FOUND_CODES)
         assert all(_ANSWERS[code] == 422 for code in club.UNPROCESSABLE_CODES)
@@ -921,11 +921,11 @@ class TestTeamsAndSheets:
         ]
         for body, expected, code, figures in cases:
             response = owner.post(f"{CLUB}/{ident}/teams", json=body)
-            assert response.status_code == expected, (body, response.text)
+            assert response.status_code == expected, f"{body!r} answered {response.status_code!r}, {expected!r} was required; body: {response.text!r}"
             detail = _detail(response)
-            assert detail["code"] == code, (body, detail)
+            assert detail["code"] == code, f"{body!r} refused with {detail!r}, code {code!r} was required"
             for key, value in figures.items():
-                assert detail[key] == value, (body, key, detail)
+                assert detail[key] == value, f"{body!r} refused with detail[{key!r}]={detail.get(key)!r}, {value!r} was required"
         _team(owner, ident, "First Side")
         twice = owner.post(f"{CLUB}/{ident}/teams", json={"name": "first side"})
         assert twice.status_code == 409 and _detail(twice)["code"] == "team_name_taken" and _detail(twice)["name"] == "first side"

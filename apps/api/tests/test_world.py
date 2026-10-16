@@ -213,7 +213,7 @@ class TestReads:
         listed = client.get(f"{API}/competitions").json()["items"]
         by_kind = {item["kind"]: item for item in listed}
         assert {"league", "cup"} <= set(by_kind), sorted(by_kind)
-        assert all(item["team_count"] > 0 for item in listed), [item["team_count"] for item in listed]
+        assert all(item["team_count"] > 0 for item in listed), f"a listed entry carried no teams: {[item['team_count'] for item in listed]!r}"
 
         league = client.get(f"{API}/competitions/{by_kind['league']['slug']}").json()
         assert league["competition"]["path"] == web_path("competition", by_kind["league"]["slug"])
@@ -291,7 +291,7 @@ class TestReads:
             item = _item(client, path)
             body = client.get(f"{API}{path}/{item['slug']}").json()
             for candidate in walk(body):
-                assert candidate.startswith(("/player/", "/team/", "/match/", "/competition/", "/news/", "/training/")), (path, candidate)
+                assert candidate.startswith(("/player/", "/team/", "/match/", "/competition/", "/news/", "/training/")), f"{candidate!r} is not a page route the world publishes for {path!r}"
                 assert SAFE_SLUG.match(candidate.rsplit("/", 1)[-1]), candidate
                 checked += 1
         assert checked > 25, checked

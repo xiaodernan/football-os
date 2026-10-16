@@ -103,7 +103,7 @@ class TestOpening:
         ):
             response = auth_client.post(API, json=_body(club_id, **patch))
             assert response.status_code in (404, 422), response.text
-            assert response.json()["detail"]["code"] == code, (code, response.json())
+            assert response.json()["detail"]["code"] == code, f"the door answered {response.json()!r}, the refusal code {code!r} was required"
 
     def test_opening_a_career_returns_the_record_and_the_next_fixture(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
         response = auth_client.post(API, json=_body(club_id, system="4-3-3-press-high"))
@@ -180,7 +180,7 @@ class TestOwnership:
             assert other.get(API).json()["total"] == 0
             for method, path in (("get", f"{API}/{slug}"), ("post", f"{API}/{slug}/play"), ("post", f"{API}/{slug}/retire"), ("delete", f"{API}/{slug}")):
                 response = getattr(other, method)(path)
-                assert response.status_code == 404, (method, path, response.status_code)
+                assert response.status_code == 404, f"{method!r} {path!r} answered {response.status_code!r}, 404 was required"
                 assert response.json()["detail"]["code"] == "not_found"
 
     def test_deleting_a_career_keeps_the_matches_the_account_chose_to_play(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]

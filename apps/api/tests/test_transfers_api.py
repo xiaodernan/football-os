@@ -109,7 +109,7 @@ class TestOwnership:
                 ("post", f"{API}/{slug}/negotiate", {"listing": "anything", "offer": 1}),
             ):
                 response = other.request(method.upper(), path, json=payload)
-                assert response.status_code == 404, (method, path, response.status_code)
+                assert response.status_code == 404, f"{method!r} {path!r} answered {response.status_code!r}, 404 was required"
                 assert response.json()["detail"]["code"] == "not_found"
 
     def test_an_unknown_career_is_a_404_on_every_door(self, auth_client) -> None:  # type: ignore[no-untyped-def]

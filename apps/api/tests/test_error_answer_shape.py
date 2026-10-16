@@ -156,7 +156,7 @@ class TestASchemaRefusalAnswersWhereTheProductReads:
         locs = {str(item.get("loc")) for item in entries}
         assert any("email" in loc for loc in locs), locs
         assert any("password" in loc for loc in locs), locs
-        assert all(set(item) <= {"type", "loc", "msg"} for item in entries), [sorted(item) for item in entries]
+        assert all(set(item) <= {"type", "loc", "msg"} for item in entries), f"an entry carries a key outside type/loc/msg: {[sorted(item) for item in entries]!r}"
         printed = json.dumps(response.json(), ensure_ascii=False)
         assert marker not in printed, "the answer that names the offending field must not repeat its contents"
 
@@ -164,7 +164,7 @@ class TestASchemaRefusalAnswersWhereTheProductReads:
         """A 401 from a door and a 422 from the framework are read by the same line of the same helper."""
         refused = client.post("/api/v1/auth/refresh", json={})
         schema = client.post("/api/v1/auth/register", json={"email": "a" * 3})
-        assert refused.status_code == 401 and schema.status_code == 422, (refused.status_code, schema.status_code)
+        assert refused.status_code == 401 and schema.status_code == 422, f"the unauthenticated call answered {refused.status_code!r} and the schema call {schema.status_code!r}; 401 and 422 were required"
         for response in (refused, schema):
             body = response.json()
             assert sorted(body) == ["detail"], f"{response.status_code} answered outside the one address: {body}"
@@ -331,11 +331,11 @@ class TestTheWebReaderIsGatedOnAnswersThisApiProduces:
         web = Path(__file__).resolve().parents[2] / "web"
         gate = (web / "scripts" / "qa-error-shape.mjs").read_text(encoding="utf-8")
         reader = (web / "lib" / "api.ts").read_text(encoding="utf-8")
-        assert len(gate) > 2000 and len(reader) > 500, (len(gate), len(reader))
+        assert len(gate) > 2000 and len(reader) > 500, f"the gate is {len(gate)!r} chars and the reader {len(reader)!r}; the floors 2000 and 500 both have to hold"
         for needle in ("refusals.json", "browserFetch", "normalizeError"):
             assert needle in gate, f"the web gate no longer names {needle}, so this file is not its fixture"
         assert '"detail" in payload' in reader, "normalizeError no longer unwraps a detail key"
         assert "readError(response)" in reader, "browserFetch no longer sends a refusal answer through the reader"
         tolerant = [entry for entry in self._entries() if entry["producer"]["kind"] == "reader-tolerance"]
         assert len(tolerant) <= 5, f"{len(tolerant)} tolerance entries out of the set — a fixture file of inventions is not a contract"
-        assert all(len(str(entry["producer"].get("why", ""))) > 30 for entry in tolerant), [entry["name"] for entry in tolerant]
+        assert all(len(str(entry["producer"].get("why", ""))) > 30 for entry in tolerant), f"an entry named a producer of 30 characters or less: {[entry['name'] for entry in tolerant]!r}"

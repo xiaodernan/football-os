@@ -301,8 +301,8 @@ class TestIsolationAndTheAnswerTable:
         for method, path, payload in doors:
             send = getattr(stranger, method)
             gone = send(path, json=payload) if payload is not None else send(path)
-            assert gone.status_code == 404, (method, path, gone.text[:200])
-            assert _detail(gone)["code"] == "no_such_organization", (method, path)
+            assert gone.status_code == 404, f"{method!r} {path!r} answered {gone.status_code!r}, 404 was required; body: {gone.text[:200]!r}"
+            assert _detail(gone)["code"] == "no_such_organization", f"{method!r} {path!r} refused with {_detail(gone)!r}, code no_such_organization was required"
         assert _board(owner, ident).json()["total"] == 1, "every foreign knock wrote nothing"
 
     def test_a_director_of_one_tenant_posts_nothing_on_another(self) -> None:

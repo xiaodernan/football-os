@@ -172,7 +172,7 @@ def _tree_sites() -> tuple[list[tuple[str, int, str, int]], int, int]:
 def test_every_code_the_tree_raises_is_registered_with_that_status() -> None:
     sites, _table_driven, _unresolved = _tree_sites()
     offenders = [f"{file}:{line} raises {code!r} with {raise_status} but the table says {ANSWERS.get(code)!r}" for file, line, code, raise_status in sites if ANSWERS.get(code) != raise_status]
-    assert not offenders, "the tree and the ledger disagree (fix the raise or register the code):\n" + "\n".join(offenders)
+    assert not offenders, "the tree and the ledger disagree (fix the raise or register the code): " + " | ".join(offenders)
 
 
 def test_no_raise_site_is_unreadable() -> None:
@@ -219,7 +219,7 @@ def test_no_router_keeps_a_local_status_routing_set() -> None:
             for target in targets:
                 if isinstance(target, ast.Name) and target.id.endswith("_CODES"):
                     offenders.append(f"{path.name}:{node.lineno} declares {target.id} — status routing belongs to answers.ANSWERS")
-    assert not offenders, "a router kept its own status-routing set:\n" + "\n".join(offenders)
+    assert not offenders, "a router kept its own status-routing set: " + " | ".join(offenders)
 
 
 def test_the_census_actually_saw_the_tree() -> None:

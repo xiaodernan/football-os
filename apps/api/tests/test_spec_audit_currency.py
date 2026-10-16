@@ -556,10 +556,7 @@ def test_every_api_route_citation_in_the_verdict_ledger_resolves() -> None:
                 parameterized.append(candidate)
             resolved.append(candidate)
 
-    assert not defects, (
-        f"{len(resolved)} of the ledger's route citations resolve; these name a door the committed contract does not "
-        f"answer for:\n  " + "\n  ".join(defects)
-    )
+    assert not defects, f"{len(resolved)!r} of the ledger's route citations resolve; these name a door the committed contract does not answer for: " + " | ".join(defects)
     assert len(resolved) >= MIN_ROUTE_CITATIONS, (
         f"the audit yields {len(resolved)} resolvable route citations where `§83` yields {MIN_ROUTE_CITATIONS} — "
         "either a citation was deleted or the grammar stopped matching the ledger's spelling; both mean this case "

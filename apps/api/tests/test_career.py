@@ -87,7 +87,7 @@ class TestOpening:
         second = _career(session, world)
         assert first.slug != second.slug
         base = slugify(f"Test Manager-{world['club_name'][:4]}")
-        assert first.slug.startswith(base[:12]) and second.slug.startswith(base[:12]), (first.slug, second.slug)
+        assert first.slug.startswith(base[:12]) and second.slug.startswith(base[:12]), f"two careers must share the 12-char prefix {base[:12]!r}, got {first.slug!r} and {second.slug!r}"
 
 
 class TestRotation:

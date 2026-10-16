@@ -179,7 +179,7 @@ class TestValuation:
         for player in _players_of(session, world["club_id"])[:5]:
             price = market.valuation(player)
             expected = _round5(((player.overall - 40) * 45_000 + max(0, player.potential - player.overall) * 25_000) * market.age_curve(player.age))
-            assert price["asking_fee"] == expected, (player.name, player.overall, player.potential, player.age)
+            assert price["asking_fee"] == expected, f"{player.name!r} (overall {player.overall!r}, potential {player.potential!r}, age {player.age!r}) was priced {price['asking_fee']!r}, {expected!r} was required"
             assert price["release_clause"] == _round5(expected * 1.5)
             assert price["weekly_wage"] == max(5, _round5(expected / 500))
             assert price["quality_points"] == player.overall - 40

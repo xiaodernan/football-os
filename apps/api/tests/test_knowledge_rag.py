@@ -99,7 +99,7 @@ def test_corpus_is_labelled_as_project_authored_not_demo_data(db: Session) -> No
 def test_all_three_retrieval_modes_retrieve_the_handball_document(db: Session, mode: str) -> None:
     result = knowledge.search(db, "is it handball if the ball hits my arm", mode=mode, top_k=5)
     assert result.hits, result.reasons
-    assert any("handball" in hit.document_slug for hit in result.hits), [hit.document_slug for hit in result.hits]
+    assert any("handball" in hit.document_slug for hit in result.hits), f"no hit names handball; the retrieved slugs were {[hit.document_slug for hit in result.hits]!r}"
 
 
 def test_hybrid_report_explains_its_ranking_and_backend(db: Session) -> None:

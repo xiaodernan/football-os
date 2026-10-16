@@ -372,7 +372,7 @@ class TestThePublishedRulebook:
         ]
         # Joined, not the list: pytest renders a list message through its own repr and elides the middle, which cut
         # three of six verdicts out of this case's own red.
-        assert not problems, "AcademyCapabilities counts disagrees with the door:\n" + "\n".join(f"  - {problem}" for problem in problems)
+        assert not problems, "AcademyCapabilities counts disagrees with the door: " + " | ".join(problems)
 
 
 def _published_counts(session: Session) -> set[str]:
@@ -507,7 +507,7 @@ class TestACurriculum:
             assert member.get(f"{ACADEMY}/{ident}/curricula").status_code == 200, role
             refused = member.post(f"{ACADEMY}/{ident}/curricula", json={"name": f"A {role} writes one"})
             if writable:
-                assert refused.status_code == 200, (role, refused.text)
+                assert refused.status_code == 200, f"role {role!r} must be answered 200, the door said {refused.text!r}"
             else:
                 assert refused.status_code == 403 and _detail(refused)["permission"] == "curriculum.write", role
 
@@ -1733,7 +1733,7 @@ class TestAcademyRowsAreIsolatedToo:
         elsewhere = str(_opened(stranger, "Peeking Academy", kind="academy")["organization"]["slug"])
         for method, url in [("get", f"{ACADEMY}/{elsewhere}/plans/{plan}"), ("patch", f"{ACADEMY}/{elsewhere}/plans/{plan}"), ("delete", f"{ACADEMY}/{elsewhere}/plans/{plan}")]:
             response = getattr(stranger, method)(url, **({} if method != "patch" else {"json": {"status": "paused"}}))
-            assert response.status_code == 404, (method, response.text)
+            assert response.status_code == 404, f"{method!r} must answer 404, it answered {response.status_code!r}: {response.text!r}"
             assert _detail(response)["code"] == "no_such_plan"
             assert _email_of(owner) not in response.text, "a 404 on the wrong tenant's door must not name its owner"
 

@@ -201,7 +201,7 @@ class TestRecordingASession:
             if code is None:
                 assert made.status_code == 200, made.text
                 continue
-            assert made.status_code == 422 and _detail(made)["code"] == code, (minutes, rpe, made.text)
+            assert made.status_code == 422 and _detail(made)["code"] == code, f"minutes={minutes!r} rpe={rpe!r} refused with {_detail(made)!r}, code {code!r} was required; body: {made.text!r}"
         assert owner.get(f"{ACADEMY}/{ident}/sessions").json()["total"] == 2, "the accepted pair are the only writes"
 
     def test_a_field_that_is_not_a_number_is_answered_by_the_transport_naming_the_field(self, client: TestClient, session: Session) -> None:
