@@ -24,7 +24,9 @@ sees no plan at all, and a `parent` holds rights that mean nothing without a con
 from __future__ import annotations
 
 import datetime
+import re
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -51,6 +53,8 @@ from app.models import (
 from app.services.club import academy as edu
 from app.services.club import access
 from app.services.club import organizations as club
+from app.services.club import reports as rep
+from app.services.club import sessions as sess
 from app.services.world import sync_world, world_ready
 
 CLUB = "/api/v1/club"
@@ -61,6 +65,10 @@ TODAY = datetime.datetime.now(datetime.UTC).date()  # the service reads `datetim
 #: Dates inside the season a test writes about, all of them in the past so `date_in_future` cannot fire by accident.
 PAST = [(TODAY - datetime.timedelta(days=days)).isoformat() for days in (120, 90, 60, 30, 7)]
 FULL_RATINGS = {"technique": 61, "tactics": 40, "physical": 55, "mental": 70, "competition_readiness": 33}
+#: The two files the cross-plane gate below reads: the handler that composes the published `counts`, and the type
+#: the browser imports for it. Named by path so a rename reddens the gate instead of grading an empty set.
+_CAPABILITY_HANDLER = Path(__file__).resolve().parents[1] / "app" / "api" / "v1" / "club_academy.py"
+_CLUB_TYPES = Path(__file__).resolve().parents[2] / "web" / "lib" / "club.ts"
 
 
 @pytest.fixture(scope="module")
@@ -321,6 +329,95 @@ class TestThePublishedRulebook:
         empty = edu.academy_counts(session)
         assert empty["plans"] == 0 and "not in this database yet" in empty["rule"]
         assert set(empty) < set(counts), "the unmigrated answer is a subset, so a reader cannot mistake it for a quiet academy"
+
+    def test_the_web_types_the_counts_object_the_door_actually_builds(self, monkeypatch: pytest.MonkeyPatch, session: Session) -> None:
+        """`AcademyCapabilities["counts"]` is reconciled against the door's three producers, branch for branch.
+
+        The published `counts` is spread at `api/v1/club_academy.py` from `academy_counts`, `session_counts` and
+        `report_counts`, and `academy_counts` answers a strictly smaller key set when this database has no academy
+        tables yet — the case above holds that subset on purpose. No other reader in the repo can see the seam: the
+        handler is annotated `dict[str, Any]`, so `mypy` sees a dict, `docs/api/openapi.json` sees no properties,
+        and `tsc` reads only the interface, never the producer. A key the door may withhold while the type calls it
+        required is a page printing `undefined` with a green build behind it, and a declared key no producer sends
+        is a field nobody can fill. Both directions are checked against the file the browser actually imports.
+        """
+        _account("Somebody Who Can Count Their Own Rows")
+        assert _CAPABILITY_HANDLER.is_file() and _CLUB_TYPES.is_file(), f"{_CAPABILITY_HANDLER} and {_CLUB_TYPES} are the two halves of this seam"
+        spread = [line for line in _CAPABILITY_HANDLER.read_text(encoding="utf-8").splitlines() if '"counts": {' in line]
+        assert len(spread) == 1, f"the published counts is composed at {len(spread)} lines, not the one this case reads"
+        for producer in ("academy_counts(", "session_counts(", "report_counts("):
+            assert producer in spread[0], f"{producer} no longer spreads into the counts object, so this case measures a different door"
+
+        present = _published_counts(session)
+        monkeypatch.setattr(edu, "academy_tables_present", lambda row: False)
+        absent = _published_counts(session)
+        assert present and absent, "a producer walk that named no keys is not a reconciliation"
+
+        declared = _counts_declaration()
+        always, conditional = present & absent, present - absent
+        problems = [
+            f"{key} is published on every branch but declared {'optional' if key in declared else 'absent'}"
+            for key in sorted(always)
+            if key not in declared or not declared[key]
+        ] + [
+            f"{key} is withheld on the unmigrated branch but declared {'required' if key in declared else 'absent'}"
+            for key in sorted(conditional)
+            if key not in declared or declared[key]
+        ] + [
+            f"{key} is published only when the academy tables are MISSING, which no reader can plan for"
+            for key in sorted(absent - present)
+        ] + [
+            f"{key} is declared by the web type and published by no producer on any branch"
+            for key in sorted(set(declared) - present - absent)
+        ]
+        # Joined, not the list: pytest renders a list message through its own repr and elides the middle, which cut
+        # three of six verdicts out of this case's own red.
+        assert not problems, "AcademyCapabilities counts disagrees with the door:\n" + "\n".join(f"  - {problem}" for problem in problems)
+
+
+def _published_counts(session: Session) -> set[str]:
+    """The keys `GET /club/academy/capabilities` puts in `counts`, taken from the three functions it spreads.
+
+    The branch is read the way the handler reads it — from `academy_ready` — so this walk cannot drift into
+    measuring a shape the door no longer answers with.
+    """
+    ready = edu.academy_ready(session)
+    return set(edu.academy_counts(session)) | set(sess.session_counts(session, ready=ready)) | set(rep.report_counts(session, ready=ready))
+
+
+def _counts_declaration() -> dict[str, bool]:
+    """`AcademyCapabilities["counts"]`'s declared keys, and whether each of them is required.
+
+    Bound to the type's own header, because `lib/club.ts` carries three `counts:` blocks and a whole-file match
+    would grade §39's declaration instead of this one.
+    """
+    text = _CLUB_TYPES.read_text(encoding="utf-8").replace("\r\n", "\n")
+    header = "export type AcademyCapabilities = {"
+    assert header in text, f"{header} is the type this door answers with"
+    body = _braced(text, text.index(header) + len(header) - 1)
+    assert "counts: {" in body, "AcademyCapabilities no longer declares a counts block"
+    block = _braced(body, body.index("counts: {") + len("counts: {") - 1)
+    declared: dict[str, bool] = {}
+    for line in block.splitlines():
+        match = re.match(r"\s*([A-Za-z_][A-Za-z0-9_]*)\??\s*:", line)
+        if match:
+            declared[match.group(1)] = "?" not in line[: line.index(":")]
+    assert len(declared) >= 8, f"the parse found {sorted(declared)}; a block that small is not this door's type"
+    return declared
+
+
+def _braced(text: str, open_index: int) -> str:
+    """The text between a `{` and its own matching `}`, counted rather than searched — the block nests."""
+    depth = 0
+    for position in range(open_index, len(text)):
+        char = text[position]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[open_index + 1 : position]
+    raise AssertionError(f"unbalanced braces from index {open_index} of {text[:60]!r}")
 
 
 def edu_guide() -> list[dict[str, Any]]:

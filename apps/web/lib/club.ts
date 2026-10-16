@@ -224,18 +224,28 @@ export type AcademyCapabilities = {
   consent: string;
   consent_scopes: { scopes: string[]; default_granted: string[]; rule: string };
   counts: {
+    /**
+     * `academy_counts` answers a strictly smaller key set when this database has no academy tables yet, and that
+     * subset is the door's own signal — `tests/test_club_academy.py` holds it, and the gate beside it reconciles
+     * every key here against all three producers this object is spread from. So the figures only a migrated host
+     * can count are optional, while `sessions` and `reports` — which `session_counts` and `report_counts` send on
+     * both branches — are declared, because a type that promises a figure the door withholds prints a panel of
+     * `undefined` with a green build behind it.
+     */
     assessments: number;
-    closed_plans: number;
+    closed_plans?: number;
     coach_feedback: number;
     consents_granted: number;
     consents_withdrawn: number;
     curricula: number;
-    feedback_held_from_guardian: number;
+    feedback_held_from_guardian?: number;
     plans: number;
-    plans_of_minors: number;
+    plans_of_minors?: number;
+    reports: number;
     rule: string;
+    sessions: number;
     video_citations: number;
-    citations_without_clip: number;
+    citations_without_clip?: number;
   };
   curriculum_name_max: number;
   data_origin: string;
