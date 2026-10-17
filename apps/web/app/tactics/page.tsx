@@ -88,6 +88,9 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
           <Link className="btn btn--ghost" href="/tactics/compare">
             {t("compareLink")}
           </Link>
+          <Link className="btn btn--ghost" href="/tactics/gallery">
+            {t("galleryLink")}
+          </Link>
         </form>
       </WorldHead>
 

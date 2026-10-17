@@ -1651,6 +1651,35 @@ async function run() {
     const afterRevoke = await fetch(`${BASE}${shareUrl}`);
     check('revoking kills the old link without deleting the board', afterRevoke.status === 404, `${afterRevoke.status}`);
 
+    // 12d-2. M9's consent story: the board stands in the public gallery only while its owner
+    // says so. The walk lists the board it still owns, reads the gallery signed out, withdraws
+    // it, and reads the absence — the predicate, not a delete.
+    const boardName = storedAfter.name;
+    await open(page, `/tactics/boards/${boardSlug}`);
+    await waitForText(page, 'The public gallery');
+    const consentPanel = await bodyText(page);
+    check('the board edit page carries the consent sentence with what becomes public', /your display name/iu.test(consentPanel) && /revocable/iu.test(consentPanel));
+    await clickByText(page, 'button', 'List publicly');
+    await waitForText(page, 'Standing in the public gallery');
+    check('consent flips the chip the owner reads', true, 'chip now says standing');
+
+    const anonGallery = await fetch(`${BASE}/tactics/gallery`);
+    const galleryHtml = await anonGallery.text();
+    check(
+      'the signed-out gallery shows the consented board with the display name and no more',
+      anonGallery.status === 200 && galleryHtml.includes(boardName) && galleryHtml.includes('QA Tester'),
+      `HTTP ${anonGallery.status} · board ${galleryHtml.includes(boardName)} · name ${galleryHtml.includes('QA Tester')} · email leaked ${galleryHtml.includes('@example.test')}`,
+    );
+    check('the gallery stays out of the crawl', /noindex/iu.test(galleryHtml.slice(0, 4000)), 'noindex on the gallery page');
+
+    await clickByText(page, 'button', 'Withdraw from the gallery');
+    await waitForText(page, 'Not in the public gallery');
+    const afterWithdraw = await fetch(`${BASE}/tactics/gallery/${boardSlug}`);
+    check('withdrawal removes the board from the public gallery as absence', afterWithdraw.status === 404, `detail now ${afterWithdraw.status}`);
+    await open(page, `/tactics/boards/${boardSlug}`);
+    await waitForText(page, 'Drag · save · share');
+    check('the board itself survives the withdrawal', true, 'the owner still edits it');
+
     // 12e. Video analysis: upload a clip the walk generated, measure it, and prove nobody else can look.
     const clipPath = join(tmpdir(), `football-os-visual-qa-${stamp}.mp4`);
     let clipReady = false;

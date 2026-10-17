@@ -24,6 +24,8 @@ const DISALLOWED = [
   // A person's own boards, and links they handed out on purpose. `/tactics` and the 50 authored
   // system pages stay crawlable; these two prefixes are user content, not publication.
   "/tactics/boards",
+  // The gallery is public but it is user content: the same rule the clip report holds.
+  "/tactics/gallery",
   "/tactics/shared",
   // Uploaded clips and everything derived from them. A clip is the most identifying file a user can
   // hand the platform, so it is disallowed rather than noindexed alone: no frame URL, no report.

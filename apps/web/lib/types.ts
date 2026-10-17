@@ -985,6 +985,7 @@ export type BoardDetail = TacticsProvenance & {
   note: string;
   origin_system: string | null;
   visibility: string;
+  listed_publicly: boolean;
   path: string;
   phase_in: BoardPositions[];
   phase_out: BoardPositions[];
@@ -1839,4 +1840,27 @@ export type AgentMemoryRow = {
   session_id: string | null;
   created_at: string | null;
   expires_at: string | null;
+};
+
+/** GET /boards/gallery/public — boards whose owners listed them, with the display name consent shows. */
+export type GalleryRow = {
+  slug: string;
+  name: string;
+  note: string;
+  origin_system: string | null;
+  phase_in: BoardSlot[];
+  metrics_in: BoardMetric[];
+  owner: { name: string };
+  path: string;
+  data_origin: string;
+  is_demo_data: boolean;
+  disclaimer: string;
+};
+
+export type GalleryList = {
+  items: GalleryRow[];
+  total: number;
+  data_origin: string;
+  is_demo_data: boolean;
+  disclaimer: string;
 };

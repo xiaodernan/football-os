@@ -827,7 +827,17 @@
     "sharedPitchCaption": "{count} 个位置 · 米，68 × 105",
     "sharedMeasuredEyebrow": "从保存的坐标量出",
     "sharedOwnerNote": "本页不可编辑，背后的账号只以“{name}”出现。<link>浏览五十套人工编写的体系</link>——那些是本项目自己的，每页都写明了理由。",
-    "sharedRevocableChip": "以链接分享，所有者可随时撤销"
+    "sharedRevocableChip": "以链接分享，所有者可随时撤销",
+    "consentList": "公开列出",
+    "consentWithdraw": "从画廊撤回",
+    "consentListed": "正在公开画廊展出",
+    "consentUnlisted": "不在公开画廊",
+    "consentSentence": "把这块板列入公开画廊，等于把它的名字、度量和你的昵称展示给所有无需账号的访客。随时可撤销；撤销只是把它从画廊移除，不会删除这块板。",
+    "consentWorking": "处理中…",
+    "consentFailed": "画廊更新失败。请重试。",
+    "galleryLink": "公开画廊",
+    "consentEyebrow": "公开画廊",
+    "consentTitle": "在画廊展出——或离开它"
   },
   "history": {
     "metaTitle": "训练日志",
@@ -1507,5 +1517,36 @@
   },
   "portfolio": {
     "metaDescription": "你足球简历的十个板块，每个都从已存在的数据行读出——以及这个构建无法填补的两个。"
+  },
+  "gallery": {
+    "metaTitle": "阵型画廊",
+    "metaDescription": "FOOTBALL OS 账号选择公开展示的战术板——每一块都从所有者自己摆下的点测量。",
+    "eyebrow": "公开画廊 · 仅凭同意",
+    "lede": "这里的每一块板都因为所有者按下了公开按钮而存在，撤销的瞬间就会离开。展示的是画、它的度量和所有者的昵称——不展示账号的其他任何信息。",
+    "emptyTitle": "画廊还是空的",
+    "emptyNote": "还没有账号公开任何板。在战术实验室摆一块，按下公开列出，它就会站在这里。",
+    "arrangeCta": "去摆一块板",
+    "cardsHeading": "{count} 块板在展",
+    "arrangedBy": "由 {name} 摆放",
+    "fromSystem": "来自 {system}",
+    "fromScratch": "从零画起",
+    "unitWide": "m 宽",
+    "unitBehind": "m 纵深",
+    "sampleEyebrow": "{name} · 最新在展",
+    "sampleTitle": "画廊里的板是什么",
+    "pitchCaption": "{count} 个位置 · 米，68 × 105（规则第 1 条） · 进攻方向朝上",
+    "sampleNote": "上方的度量在每次读取时从存储的点重新计算——与所有者自己页面相同的算术，从不是快照。",
+    "openBoard": "打开 {name}",
+    "consentChip": "每块板凭其所有者可撤销的同意在展",
+    "boardMetaSuffix": "阵型画廊",
+    "boardMetaDescription": "{name}——公开画廊中的一块战术板，从所有者摆下的点测量。",
+    "boardEyebrow": "由 {name} 摆放 · 只读",
+    "boardLede": "公开画廊中的一块板：所有者自己的摆法，每个度量都从他们摆下的点重新计算。",
+    "phaseIn": "控球时",
+    "boardTitle": "板，按所有者离开时的样子",
+    "measuredEyebrow": "从所有者的点量出",
+    "measuredTitle": "八项度量",
+    "noteNote": "这是用户的画，不是本项目教练工作的成果。五十套人工编写的体系在",
+    "catalogueLink": "战术实验室里，每套都写明了理由"
   }
 }

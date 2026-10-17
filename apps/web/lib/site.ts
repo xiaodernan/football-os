@@ -25,11 +25,16 @@ export function pageMetadata(input: {
   description: string;
   path: string;
   type?: "website" | "article";
+  /** The one declaration the helper never set on its own. User-content pages that are
+   * public but never indexed — the gallery, the clip report — pass their robots here
+   * instead of leaving the helper, which is what the metadata gate's forms check reads. */
+  robots?: Metadata["robots"];
 }): Metadata {
   const url = absolute(input.path);
   return {
     title: input.title,
     description: input.description,
+    robots: input.robots,
     alternates: { canonical: url },
     openGraph: {
       type: input.type ?? "website",

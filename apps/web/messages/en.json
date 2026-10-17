@@ -827,7 +827,17 @@
     "sharedPitchCaption": "{count} positions · metres, 68 × 105",
     "sharedMeasuredEyebrow": "Measured from the saved coordinates",
     "sharedOwnerNote": "This page cannot be edited, and the account behind it is named only as “{name}”. <link>Browse the 50 authored systems</link> — those are this project's own, with the reasoning written out on each page.",
-    "sharedRevocableChip": "shared by link, revocable by the owner at any time"
+    "sharedRevocableChip": "shared by link, revocable by the owner at any time",
+    "consentList": "List publicly",
+    "consentWithdraw": "Withdraw from the gallery",
+    "consentListed": "Standing in the public gallery",
+    "consentUnlisted": "Not in the public gallery",
+    "consentSentence": "Listing this board in the public gallery shows its name, its measurements and your display name to any visitor with no account at all. It is revocable at any time, and revoking removes it from the gallery without deleting the board.",
+    "consentWorking": "Working…",
+    "consentFailed": "The gallery could not be updated. Try again.",
+    "galleryLink": "Public gallery",
+    "consentEyebrow": "The public gallery",
+    "consentTitle": "Stand in the gallery — or leave it"
   },
   "history": {
     "metaTitle": "Training log",
@@ -1507,5 +1517,36 @@
   },
   "portfolio": {
     "metaDescription": "The ten sections of your football CV, each read from the rows that already exist, and the two this build cannot fill."
+  },
+  "gallery": {
+    "metaTitle": "Board gallery",
+    "metaDescription": "Tactical boards arranged by FOOTBALL OS accounts who chose to show them — each one measured from the dots its owner placed.",
+    "eyebrow": "Public gallery · by consent only",
+    "lede": "Every board here stands because its owner pressed the button that lists it, and leaves the moment they withdraw. What is shown is the drawing, its measurements and the owner's display name — nothing else about the account.",
+    "emptyTitle": "The gallery is empty",
+    "emptyNote": "No account has listed a board yet. Arrange one in the Tactical Lab and press List publicly to stand here.",
+    "arrangeCta": "Arrange a board",
+    "cardsHeading": "{count} boards standing",
+    "arrangedBy": "arranged by {name}",
+    "fromSystem": "from {system}",
+    "fromScratch": "drawn from scratch",
+    "unitWide": "m wide",
+    "unitBehind": "m behind",
+    "sampleEyebrow": "{name} · newest standing board",
+    "sampleTitle": "What a gallery board is",
+    "pitchCaption": "{count} positions · metres, 68 × 105 (Law 1) · attack upward",
+    "sampleNote": "The measurements above are recomputed from the stored dots on every read — the same arithmetic the owner's own page serves, never a snapshot.",
+    "openBoard": "Open {name}",
+    "consentChip": "each board stands by its owner's revocable consent",
+    "boardMetaSuffix": "board gallery",
+    "boardMetaDescription": "{name} — a tactical board in the public gallery, measured from the dots its owner placed.",
+    "boardEyebrow": "arranged by {name} · read-only",
+    "boardLede": "One board from the public gallery: the owner's own arrangement, with every measurement recomputed from the dots they placed.",
+    "phaseIn": "In possession",
+    "boardTitle": "The board, as its owner left it",
+    "measuredEyebrow": "Measured from the owner's dots",
+    "measuredTitle": "The eight measurements",
+    "noteNote": "This is a user's drawing, not the project's coaching work. The fifty authored systems are",
+    "catalogueLink": "in the Tactical Lab, with their reasoning written out"
   }
 }

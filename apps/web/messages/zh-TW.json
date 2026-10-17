@@ -827,7 +827,17 @@
     "sharedPitchCaption": "{count} 個位置 · 公尺，68 × 105",
     "sharedMeasuredEyebrow": "從儲存的座標量出",
     "sharedOwnerNote": "本頁不可編輯，背後的帳號只以「{name}」出現。<link>瀏覽五十套人工編寫的體系</link>——那些是本專案自己的，每頁都寫明了理由。",
-    "sharedRevocableChip": "以連結分享，所有者可隨時撤銷"
+    "sharedRevocableChip": "以連結分享，所有者可隨時撤銷",
+    "consentList": "公開列出",
+    "consentWithdraw": "從畫廊撤回",
+    "consentListed": "正在公開畫廊展出",
+    "consentUnlisted": "不在公開畫廊",
+    "consentSentence": "把這塊板列入公開畫廊，等於把它的名字、度量和你的暱稱展示給所有無需帳號的訪客。隨時可撤銷；撤銷只是把它從畫廊移除，不會刪除這塊板。",
+    "consentWorking": "處理中…",
+    "consentFailed": "畫廊更新失敗。請重試。",
+    "galleryLink": "公開畫廊",
+    "consentEyebrow": "公開畫廊",
+    "consentTitle": "在畫廊展出——或離開它"
   },
   "history": {
     "metaTitle": "訓練日誌",
@@ -1507,5 +1517,36 @@
   },
   "portfolio": {
     "metaDescription": "你足球履歷的十個板塊，每個都從已存在的資料列讀出——以及這個建置無法填補的兩個。"
+  },
+  "gallery": {
+    "metaTitle": "陣型畫廊",
+    "metaDescription": "FOOTBALL OS 帳號選擇公開展示的戰術板——每一塊都從所有者自己擺下的點測量。",
+    "eyebrow": "公開畫廊 · 僅憑同意",
+    "lede": "這裡的每一塊板都因為所有者按下了公開按鈕而存在，撤銷的瞬間就會離開。展示的是畫、它的度量和所有者的暱稱——不展示帳號的其他任何資訊。",
+    "emptyTitle": "畫廊還是空的",
+    "emptyNote": "還沒有帳號公開任何板。在戰術實驗室擺一塊，按下公開列出，它就會站在這裡。",
+    "arrangeCta": "去擺一塊板",
+    "cardsHeading": "{count} 塊板在展",
+    "arrangedBy": "由 {name} 擺放",
+    "fromSystem": "來自 {system}",
+    "fromScratch": "從零畫起",
+    "unitWide": "m 寬",
+    "unitBehind": "m 縱深",
+    "sampleEyebrow": "{name} · 最新在展",
+    "sampleTitle": "畫廊裡的板是什麼",
+    "pitchCaption": "{count} 個位置 · 公尺，68 × 105（規則第 1 條） · 進攻方向朝上",
+    "sampleNote": "上方的度量在每次讀取時從儲存的點重新計算——與所有者自己頁面相同的算術，從不是快照。",
+    "openBoard": "開啟 {name}",
+    "consentChip": "每塊板憑其所有者可撤銷的同意在展",
+    "boardMetaSuffix": "陣型畫廊",
+    "boardMetaDescription": "{name}——公開畫廊中的一塊戰術板，從所有者擺下的點測量。",
+    "boardEyebrow": "由 {name} 擺放 · 唯讀",
+    "boardLede": "公開畫廊中的一塊板：所有者自己的擺法，每個度量都從他們擺下的點重新計算。",
+    "phaseIn": "控球時",
+    "boardTitle": "板，按所有者離開時的樣子",
+    "measuredEyebrow": "從所有者的點量出",
+    "measuredTitle": "八項度量",
+    "noteNote": "這是使用者的畫，不是本專案教練工作的成果。五十套人工編寫的體系在",
+    "catalogueLink": "戰術實驗室裡，每套都寫明了理由"
   }
 }

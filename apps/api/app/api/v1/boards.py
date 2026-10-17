@@ -32,6 +32,11 @@ from app.services.world.names import slugify
 router = APIRouter(prefix="/boards", tags=["tactics-boards"])
 
 NOT_FOUND: Final = {"code": "not_found", "message": "No such board for this account"}
+CONSENT_SENTENCE: Final = (
+    "Listing this board in the public gallery shows its name, its measurements and your display name to "
+    "any visitor with no account at all. It is revocable at any time, and revoking removes it from the "
+    "gallery without deleting the board."
+)
 USER_DISCLAIMER = (
     "This board was arranged by a FOOTBALL OS user, not by the project. Its measurements are computed from "
     "the positions they placed, which makes them a description of this drawing and not of any real team."
@@ -79,6 +84,7 @@ def _row(board: TacticBoard, *, owner: bool = True) -> dict[str, Any]:
         "is_demo_data": board.is_demo_data,
         "disclaimer": USER_DISCLAIMER,
     }
+    payload["listed_publicly"] = board.listed_publicly
     if owner:
         payload["shared_at"] = board.shared_at.isoformat() if board.shared_at else None
         # The owner always sees the link that currently works, so revoking visibly changes it.
@@ -292,3 +298,97 @@ def read_shared(token: str, request: Request, db: Session = Depends(get_db)) -> 
     row["owner"] = {"name": "a FOOTBALL OS account", "id": None}
     row["path"] = f"/tactics/shared/{board.share_token}"
     return row
+
+
+@router.post("/{ident}/list-publicly")
+def list_board_publicly(
+    ident: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """M9's consent door: the owner's explicit yes to the public gallery.
+
+    A dedicated door rather than a field on the patch, so the consent sentence travels
+    with the action that grants it and revoking is a state a reader can see, not a
+    side effect of an unrelated save. The board keeps its own visibility — a gallery
+    listing and a share link are two separate decisions.
+    """
+    limit(request, 20, 60, scope="boards_list_publicly")
+    board = _one(db, user, ident)
+    board.listed_publicly = True
+    db.commit()
+    db.refresh(board)
+    return {
+        "id": board.id,
+        "slug": board.slug,
+        "listed_publicly": board.listed_publicly,
+        "consent": CONSENT_SENTENCE,
+    }
+
+
+@router.delete("/{ident}/list-publicly", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
+def unlist_board_publicly(
+    ident: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> None:
+    """The consent withdraws; the board and any share link it holds stay."""
+    limit(request, 20, 60, scope="boards_unlist_publicly")
+    board = _one(db, user, ident)
+    board.listed_publicly = False
+    db.commit()
+
+
+@router.get("/gallery/public/{slug}")
+def read_gallery_board(slug: str, request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """One consented board, public and read-only. An unlisted board is absent, not refused."""
+    limit(request, 60, 60, scope="boards_gallery_read")
+    board = db.scalar(select(TacticBoard).where(TacticBoard.slug == slug, TacticBoard.listed_publicly.is_(True)))
+    if board is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "not_found", "message": "No such board in the gallery"})
+    owner_name = db.scalar(select(User.display_name).where(User.id == board.owner_id)) or "a FOOTBALL OS account"
+    row = _row(board, owner=False)
+    row["owner"] = {"name": owner_name}
+    row["path"] = f"/tactics/gallery/{board.slug}"
+    return row
+
+
+@router.get("/gallery/public")
+def read_gallery(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The public gallery: the boards whose owners said yes.
+
+    The predicate *is* the consent — a revoked board stops being visible here the
+    moment its column flips, and nothing is deleted. Owner display names show because
+    the consent sentence says they do; measurements are recomputed from the stored
+    coordinates, so the gallery serves the same arithmetic the owner's own page does.
+    """
+    limit(request, 60, 60, scope="boards_gallery")
+    boards = list(
+        db.scalars(
+            select(TacticBoard)
+            .where(TacticBoard.listed_publicly.is_(True))
+            .order_by(TacticBoard.updated_at.desc())
+            .limit(60)
+        ).all()
+    )
+    owner_names: dict[str, str] = {}
+    if boards:
+        owner_ids = {board.owner_id for board in boards}
+        rows = db.execute(select(User.id, User.display_name).where(User.id.in_(owner_ids))).all()
+        owner_names = {row[0]: row[1] for row in rows}
+    return {
+        "items": [
+            {
+                **_row(board, owner=False),
+                "owner": {"name": owner_names.get(board.owner_id, "a FOOTBALL OS account")},
+                "path": f"/tactics/gallery/{board.slug}",
+            }
+            for board in boards
+        ],
+        "total": len(boards),
+        "data_origin": "user",
+        "is_demo_data": False,
+        "disclaimer": USER_DISCLAIMER,
+    }

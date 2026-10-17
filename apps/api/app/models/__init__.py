@@ -804,6 +804,7 @@ class TacticBoard(Base, TimestampMixin):
     __table_args__ = (
         Index("ix_board_owner", "owner_id"),
         Index("ix_board_visibility", "visibility"),
+        Index("ix_board_listed_publicly", "listed_publicly"),
     )
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
@@ -817,6 +818,11 @@ class TacticBoard(Base, TimestampMixin):
     visibility: Mapped[str] = mapped_column(String(12), default="private", nullable=False)
     share_token: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
     shared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # M9's consent story: the owner's explicit, revocable yes to standing in the public
+    # gallery — name, measurements and display name to visitors with no account. Default
+    # False: a board is private working material until the owner says otherwise, and
+    # revocation changes the gallery's predicate rather than deleting the row.
+    listed_publicly: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 

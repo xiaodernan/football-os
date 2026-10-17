@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { BoardEditor } from "@/components/BoardEditor";
+import { GalleryConsent } from "@/components/GalleryConsent";
 import { Panel } from "@/components/ui";
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import { currentUser } from "@/lib/server";
@@ -50,6 +51,10 @@ export default async function BoardEditPage({ params }: Props) {
         provenance={board}
         title={board.name}
       />
+
+      <Panel eyebrow={t("consentEyebrow")} title={t("consentTitle")}>
+        <GalleryConsent listed={board.listed_publicly} slug={board.slug} />
+      </Panel>
 
       <Panel eyebrow={t("editorEyebrow")} title={t("editorTitle")}>
         <div className="stack-sm">

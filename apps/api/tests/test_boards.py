@@ -7,6 +7,8 @@ account must not be able to tell whether a board exists at all.
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from sqlalchemy import select
 
@@ -209,3 +211,111 @@ class TestSharing:
         with SessionLocal() as session:
             stored = session.scalar(select(TacticBoard).where(TacticBoard.id == board["id"]))
             assert stored is not None and stored.share_token == token and stored.visibility == "shared"
+
+
+class TestPublicGallery:
+    """M9's consent story: the owner's explicit, revocable yes to the public gallery.
+
+    The predicate *is* the consent — a revoked board vanishes from the read without its
+    row being deleted — and the gallery shows the owner's display name because the
+    consent sentence says it does, and nothing else about them.
+    """
+
+    GALLERY = f"{API}/gallery/public"
+
+    def _stranger(self):  # type: ignore[no-untyped-def]
+        from fastapi.testclient import TestClient
+
+        from app.main import app
+
+        stranger = TestClient(app)
+        register = stranger.post(
+            "/api/v1/auth/register",
+            json={"email": f"gallery-stranger-{uuid.uuid4().hex[:8]}@example.test", "password": "strong-pass-1234", "display_name": "Gallery Stranger", "role": "fan", "accepts_data_policy": True},
+        )
+        assert register.status_code == 201, register.text
+        stranger.headers.update({"Authorization": f"Bearer {register.json()['access_token']}"})
+        return stranger
+
+    def test_consent_is_a_door_not_a_field_and_the_gallery_predicate_reads_it(self, auth_client) -> None:  # type: ignore[no-untyped-def]
+        board = _create(auth_client, name="Gallery piece")
+        assert board["listed_publicly"] is False, "a board is private working material until its owner says otherwise"
+        assert auth_client.get(self.GALLERY).json()["items"] == []
+
+        consented = auth_client.post(f"{API}/{board['slug']}/list-publicly")
+        assert consented.status_code == 200, consented.text
+        body = consented.json()
+        assert body["listed_publicly"] is True
+        assert "your display name" in body["consent"] and "revocable" in body["consent"], "the sentence that grants it travels with the door"
+
+        gallery = auth_client.get(self.GALLERY).json()
+        assert gallery["total"] == 1
+        row = gallery["items"][0]
+        assert row["slug"] == board["slug"]
+        assert row["owner"] == {"name": "Test User"}, "the consent shows the display name, because the sentence says it does"
+        assert row["listed_publicly"] is False or row["listed_publicly"] is True  # public row shape: the flag is not the public reader's business
+        assert len(row["metrics_in"]) == 8, "the gallery recomputes the same measurements the owner's page serves"
+
+        withdrawn = auth_client.delete(f"{API}/{board['slug']}/list-publicly")
+        assert withdrawn.status_code == 204, withdrawn.text
+        assert auth_client.get(self.GALLERY).json()["items"] == [], "revocation is a predicate change, not a delete"
+        assert auth_client.get(f"{API}/{board['slug']}").status_code == 200, "the board itself stays"
+
+    def test_a_board_that_never_consented_stays_out_even_when_others_stand_in(self, auth_client) -> None:  # type: ignore[no-untyped-def]
+        stranger = self._stranger()
+        theirs = stranger.post(API, json={"name": "Consented work", "origin_system": "4-3-3-press-high", "phase_in": _positions("4-3-3-press-high"), "phase_out": _positions("4-3-3-press-high", "phase_out")})
+        assert theirs.status_code == 201, theirs.text
+        assert stranger.post(f"{API}/{theirs.json()['slug']}/list-publicly").status_code == 200
+
+        _create(auth_client, name="Silent work")
+        gallery = auth_client.get(self.GALLERY).json()
+        assert [row["slug"] for row in gallery["items"]] == [theirs.json()["slug"]], "absence of consent reads as absence from the gallery"
+
+    def test_only_the_owner_can_consent_or_withdraw(self, auth_client) -> None:  # type: ignore[no-untyped-def]
+        board = _create(auth_client, name="Not yours to list")
+        stranger = self._stranger()
+        for response in (
+            stranger.post(f"{API}/{board['slug']}/list-publicly"),
+            stranger.delete(f"{API}/{board['slug']}/list-publicly"),
+        ):
+            assert response.status_code == 404, f"ownership_or_admin: probing learns nothing — got {response.status_code}: {response.text}"
+        slugs = [row["slug"] for row in auth_client.get(self.GALLERY).json()["items"]]
+        assert board["slug"] not in slugs, "a stranger's refusal leaves the board absent from the gallery"
+
+    def test_the_gallery_leaks_no_identity_beyond_the_name_it_consented_to_show(self, auth_client) -> None:  # type: ignore[no-untyped-def]
+        board = _create(auth_client, name="Leak check")
+        auth_client.post(f"{API}/{board['slug']}/share")
+        auth_client.post(f"{API}/{board['slug']}/list-publicly")
+        row = next(item for item in auth_client.get(self.GALLERY).json()["items"] if item["slug"] == board["slug"])
+        leaked = [key for key in ("email", "owner_id", "share_token", "share_url", "shared_at") if key in row]
+        assert leaked == [], f"the gallery row exposes {leaked}"
+        assert set(row["owner"]) == {"name"}, f"the owner object is the name and nothing else: {set(row['owner'])}"
+
+    def test_the_gallery_serves_the_arithmetic_not_a_stored_copy(self, auth_client) -> None:  # type: ignore[no-untyped-def]
+        board = _create(auth_client, name="Moves after listing")
+        auth_client.post(f"{API}/{board['slug']}/list-publicly")
+        before = auth_client.get(self.GALLERY).json()["items"][0]
+        positions = [dict(row) for row in before["phase_in"]]
+        for row in positions:
+            if row["role"] in {"RB", "LB", "DCB"}:
+                row["y"] = float(row["y"]) + 10.0
+        auth_client.patch(f"{API}/{board['slug']}", json={"phase_in": positions})
+        after = auth_client.get(self.GALLERY).json()["items"][0]
+        deep_before = next(m for m in before["metrics_in"] if m["key"] == "space_behind")["value"]
+        deep_after = next(m for m in after["metrics_in"] if m["key"] == "space_behind")["value"]
+        assert deep_after == pytest.approx(deep_before + 10.0), "the gallery must recompute from the stored dots, not replay a snapshot"
+
+    def test_one_consented_board_answers_publicly_and_an_unlisted_one_is_absent(self, auth_client) -> None:  # type: ignore[no-untyped-def]
+        board = _create(auth_client, name="Public reading")
+        assert auth_client.get(f"{self.GALLERY}/{board['slug']}").status_code == 404, "absence before consent"
+        auth_client.post(f"{API}/{board['slug']}/list-publicly")
+        response = auth_client.get(f"{self.GALLERY}/{board['slug']}")
+        assert response.status_code == 200, response.text
+        row = response.json()
+        assert row["owner"] == {"name": "Test User"}
+        assert set(row["owner"]) == {"name"}
+        leaked = [key for key in ("email", "owner_id", "share_token", "share_url", "shared_at") if key in row]
+        assert leaked == [], f"the public row exposes {leaked}"
+        assert len(row["metrics_in"]) == 8
+        auth_client.delete(f"{API}/{board['slug']}/list-publicly")
+        assert auth_client.get(f"{self.GALLERY}/{board['slug']}").status_code == 404, "revocation is the predicate, not a delete"
