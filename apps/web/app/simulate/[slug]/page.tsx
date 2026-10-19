@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
@@ -18,12 +19,15 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
 
 /** A stored simulation is the account's own working record, so it is not published (spec §61). */
-export const metadata: Metadata = {
-  title: "Simulated match report",
-  description: "A block-by-block report from the possession-block model, with the inputs, formulas and seed that produced it.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/simulate") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("simulate");
+  return {
+    title: t("reportTitle"),
+    description: t("reportDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/simulate") },
+  };
+}
 
 function pct(value: number): string {
   return `${value.toFixed(1)}%`;
@@ -33,20 +37,21 @@ export default async function SimulationReportPage({ params }: Props) {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fsimulate");
 
+  const t = await getTranslations("simulate");
   const { slug } = await params;
   const result = await serverFetch<SimRow>(`/simulate/${encodeURIComponent(slug)}`);
   if (!result.ok) {
     if (result.status === 404) notFound();
-    return <WorldUnavailable eyebrow="Match simulator" message={result.error.message} title="Simulated match report" />;
+    return <WorldUnavailable eyebrow={t("backLabel")} message={result.error.message} title={t("reportTitle")} />;
   }
   const match = result.data;
   const report = match.report;
   if (!report) {
     return (
       <WorldUnavailable
-        eyebrow="Match simulator"
-        message="The stored row came back without its report, so nothing on this page is rendered from memory."
-        title="Simulated match report"
+        eyebrow={t("backLabel")}
+        message={t("noReport")}
+        title={t("reportTitle")}
       />
     );
   }
@@ -72,30 +77,30 @@ export default async function SimulationReportPage({ params }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/simulate", label: "Match simulator" }}
+        back={{ href: "/simulate", label: t("backLabel") }}
         eyebrow={`${report.model.model_version} · ${report.model.minutes}′ · seed ${report.model.seed}`}
-        lede="Every figure below is a model output, printed with the rate that produced it. The scoreline is what this model did with these two squads — not what a real match would have produced."
+        lede={t("headLede")}
         provenance={{ data_origin: match.data_origin, is_demo_data: match.is_demo_data, disclaimer: match.disclaimer }}
         title={`${home.short_name} ${report.score.home} – ${report.score.away} ${away.short_name}`}
       >
         <div className="tag-list" style={{ marginTop: "0.7rem" }}>
-          <span className="chip mono" title="SHA-256 prefix of the report, taken before the digest key existed.">
-            digest {match.digest}
+          <span className="chip mono" title={t("digestTitle")}>
+            {t("digestChip", { digest: match.digest })}
           </span>
-          <span className="chip num">{report.blocks.length} blocks of {report.model.block_minutes}′</span>
-          <span className="chip num">{report.events.length} events</span>
-          <span className="chip num">{scored.length} goals scored in the model</span>
+          <span className="chip num">{t("blocksChip", { count: report.blocks.length, minutes: report.model.block_minutes })}</span>
+          <span className="chip num">{t("eventsChip", { count: report.events.length })}</span>
+          <span className="chip num">{t("goalsChip", { count: scored.length })}</span>
           <span className="badge badge--sim">simulation</span>
         </div>
       </WorldHead>
 
-      <Panel eyebrow="The scoreline" title={`${home.name} v ${away.name}`}>
+      <Panel eyebrow={t("scorelineEyebrow")} title={`${home.name} v ${away.name}`}>
         <div className="stack">
           <ScoreLine hrefs={hrefs} report={report} />
           <div className="sim-possession">
             <span className="num mono">{pct(home.possession_pct)}</span>
             <span className="muted" style={{ fontSize: "0.78rem" }}>
-              possession
+              {t("possessionLabel")}
             </span>
             <span className="num mono" style={{ textAlign: "right" }}>
               {pct(away.possession_pct)}
@@ -113,18 +118,22 @@ export default async function SimulationReportPage({ params }: Props) {
             ))}
           </div>
           <p className="muted world-section-note">
-            Goals in the model: {report.totals.goal_events} of {report.totals.shots} shots, against {report.totals.expected_goals}{" "}
-            expected goals. A model that scores fewer goals than its own xG is not broken — the xG is a sum of probabilities and
-            each chance was rolled once.
+            {t("totalsNote", { goals: report.totals.goal_events, shots: report.totals.shots, xg: report.totals.expected_goals })}
           </p>
         </div>
       </Panel>
 
-      <Panel eyebrow={`${home.short_name} v ${away.short_name} · as the engine counted them`} title="Match totals">
+      <Panel
+        eyebrow={t("totalsEyebrow", { home: home.short_name, away: away.short_name })}
+        title={t("totalsTitle")}
+      >
         <SideComparison report={report} />
       </Panel>
 
-      <Panel eyebrow={timeline ? `${timeline.count} events · read from ${timeline.source}` : `${report.events.length} events · in minute order`} title="Timeline">
+      <Panel
+        eyebrow={timeline ? t("timelineEyebrowDb", { count: timeline.count, source: timeline.source }) : t("timelineEyebrowNo", { count: report.events.length })}
+        title={t("timelineTitle")}
+      >
         <div className="stack">
           <EventTimeline events={shown} />
           {timeline && (
@@ -137,24 +146,20 @@ export default async function SimulationReportPage({ params }: Props) {
                   </span>
                 ))}
                 <span className="chip num" title={timeline.formula}>
-                  {timeline.stored_rows} stored rows
+                  {t("storedRowsChip", { count: timeline.stored_rows })}
                 </span>
-                <span className="chip num" title="An event names a player only when that side's eleven holds the name once.">
-                  {timeline.identified} of {timeline.count} traced to a player
+                <span className="chip num" title={t("tracedTitle")}>
+                  {t("tracedChip", { identified: timeline.identified, total: timeline.count })}
                 </span>
               </div>
               {timeline.ambiguous_names.length > 0 && (
                 <p className="notice notice--warn">
-                  {timeline.ambiguous_names.length} name{timeline.ambiguous_names.length > 1 ? "s" : ""} on this timeline belong to
-                  two players in the same eleven ({timeline.ambiguous_names.join(", ")}), so those events are kept without a player
-                  rather than guessed at.
+                  {t("ambiguousNames", { count: timeline.ambiguous_names.length, names: timeline.ambiguous_names.join(", ") })}
                 </p>
               )}
               {timeline.unnamed_names.length > 0 && (
                 <p className="muted world-section-note">
-                  {timeline.unnamed_names.length} event{timeline.unnamed_names.length > 1 ? "s" : ""} named the club rather than a
-                  player ({timeline.unnamed_names.join(", ")}), which is what the engine prints when a side has no eleven to name
-                  from.
+                  {t("unnamedNames", { count: timeline.unnamed_names.length, names: timeline.unnamed_names.join(", ") })}
                 </p>
               )}
               <p className="muted world-section-note">{timeline.consistency}</p>
@@ -163,48 +168,44 @@ export default async function SimulationReportPage({ params }: Props) {
         </div>
       </Panel>
 
-      <Panel eyebrow={`${report.blocks.length} blocks · the model rolls inside a block, not minute by minute`} title="Block by block">
+      <Panel
+        eyebrow={t("blocksEyebrow", { count: report.blocks.length })}
+        title={t("blocksTitle")}
+      >
         <div className="stack">
           <BlockTable blocks={report.blocks} />
           <p className="muted world-section-note">
-            Each multiplier is printed exactly as the model applied it, including the ones that did nothing: a
-            <span className="mono"> man_down_attack </span>of 1.00 means nobody was sent off in that block, and a
-            <span className="mono"> fatigue </span>below 1.00 is the model reducing shot volume as the match runs on.
+            {t.rich("blocksNote", { mono: (chunks) => <span className="mono">{chunks}</span> })}
           </p>
         </div>
       </Panel>
 
-      <Panel eyebrow="Measured from stored rows, not chosen for the page" title={`What went into ${home.name}`}>
+      <Panel eyebrow={t("inputsEyebrow")} title={t("inputsTitle", { name: home.name })}>
         <div className="stack">
           <InputList side={home} />
           <LineupList side={home} />
         </div>
       </Panel>
 
-      <Panel eyebrow="Measured from stored rows, not chosen for the page" title={`What went into ${away.name}`}>
+      <Panel eyebrow={t("inputsEyebrow")} title={t("inputsTitle", { name: away.name })}>
         <div className="stack">
           <InputList side={away} />
           <LineupList side={away} />
         </div>
       </Panel>
 
-      <Panel eyebrow={report.model.model_version} title="The model behind this report">
+      <Panel eyebrow={report.model.model_version} title={t("modelPanelTitle")}>
         <ModelPanel model={report.model} />
       </Panel>
 
-      <Panel eyebrow="owner-only" title="Re-check it, or delete it">
+      <Panel eyebrow={t("ownerEyebrow")} title={t("ownerTitle")}>
         <div className="stack-sm">
           <SimTools digest={match.digest} ident={match.slug} />
           <p className="muted world-section-note">
-            Only this account can read a stored match. Nothing here is a forecast:{" "}
-            <Link className="world-link" href="/tactics">
-              the Tactical Lab
-            </Link>{" "}
-            is where the shapes come from, and{" "}
-            <Link className="world-link" href="/knowledge">
-              the knowledge library
-            </Link>{" "}
-            is where the terms mean something.
+            {t.rich("ownerNote", {
+              lab: (chunks) => <Link className="world-link" href="/tactics">{chunks}</Link>,
+              lib: (chunks) => <Link className="world-link" href="/knowledge">{chunks}</Link>,
+            })}
           </p>
         </div>
       </Panel>
@@ -212,8 +213,8 @@ export default async function SimulationReportPage({ params }: Props) {
       <Provenance
         provenance={{ data_origin: match.data_origin, is_demo_data: match.is_demo_data, disclaimer: match.disclaimer }}
         extra={
-          <span className="chip mono" title="The tables the inputs were read from">
-            inputs from: {report.provenance.inputs_are_from.join(", ")}
+          <span className="chip mono" title={t("inputsFromTitle")}>
+            {t("inputsFromChip", { sources: report.provenance.inputs_are_from.join(", ") })}
           </span>
         }
       />

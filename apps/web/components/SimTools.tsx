@@ -17,7 +17,7 @@ import type { SimReplay } from "@/lib/types";
  */
 export function SimTools({ ident, digest }: { ident: string; digest: string }) {
   const router = useRouter();
-  const t = useTranslations("common");
+  const t = useTranslations("simulate");
   const [busy, setBusy] = useState<null | "replay" | "delete">(null);
   const [error, setError] = useState<string | null>(null);
   const [replay, setReplay] = useState<SimReplay | null>(null);
@@ -48,10 +48,10 @@ export function SimTools({ ident, digest }: { ident: string; digest: string }) {
     <div className="stack-sm">
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <button className="btn btn--ghost" disabled={busy !== null} onClick={check} type="button">
-          {busy === "replay" ? "Replaying…" : "Replay and compare"}
+          {busy === "replay" ? t("replayBusy") : t("replayBtn")}
         </button>
         <button className="btn btn--ghost" disabled={busy !== null} onClick={remove} type="button">
-          {busy === "delete" ? `${t("delete")}…` : `${t("delete")} this match`}
+          {busy === "delete" ? t("deleteBusy") : t("deleteThis")}
         </button>
       </div>
 
@@ -63,8 +63,7 @@ export function SimTools({ ident, digest }: { ident: string; digest: string }) {
 
       {replay && !replay.possible && (
         <p className="notice notice--warn" role="status">
-          The check could not run: {replay.reason ?? "one of the clubs is no longer in the generated world"}. The stored digest
-          stays what it was — nothing here pretends to have re-derived it.
+          {t("replayUnable", { reason: replay.reason ?? t("clubGone") })}
         </p>
       )}
 
@@ -72,14 +71,14 @@ export function SimTools({ ident, digest }: { ident: string; digest: string }) {
         <div className="stack-sm" data-testid="sim-replay" role="status">
           <p className={replay.identical ? "notice" : "notice notice--warn"}>
             {replay.identical
-              ? `Identical. Playing the same two squads, systems, length and seed through ${replay.model_version} produced ${replay.replayed_digest} again, which is the digest on this row.`
-              : `Not identical. The row says ${replay.stored_digest} and a fresh run says ${replay.replayed_digest}. The engine moved without its version moving, so this match is no longer reproducible and is kept as a record of what was claimed.`}
+              ? t("replayIdentical", { version: String(replay.model_version), replayed: String(replay.replayed_digest) })
+              : t("replayNotIdentical", { stored: String(replay.stored_digest), replayed: String(replay.replayed_digest) })}
           </p>
           <div className="tag-list">
-            <span className="chip mono">stored digest: {replay.stored_digest}</span>
-            <span className="chip mono">replayed digest: {replay.replayed_digest}</span>
-            <span className="chip mono">this page&rsquo;s digest: {digest}</span>
-            <span className="chip mono">model: {replay.model_version}</span>
+            <span className="chip mono">{t("storedDigestChip", { digest: String(replay.stored_digest) })}</span>
+            <span className="chip mono">{t("replayedDigestChip", { digest: String(replay.replayed_digest) })}</span>
+            <span className="chip mono">{t("pageDigestChip", { digest })}</span>
+            <span className="chip mono">{t("modelChip", { version: String(replay.model_version) })}</span>
           </div>
         </div>
       )}

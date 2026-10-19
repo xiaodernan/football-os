@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import "../styles/tactics.css";
 
@@ -18,26 +19,36 @@ function num(value: number, digits = 0): string {
 }
 
 /** `side` is which of the two the row belongs to; `null` prints both. */
-const COMPARED: { key: keyof SimSide; label: string; digits?: number; unit?: string }[] = [
-  { key: "possession_pct", label: "Possession", digits: 1, unit: "%" },
-  { key: "goals", label: "Goals" },
-  { key: "expected_goals", label: "Expected goals", digits: 3 },
-  { key: "shots", label: "Shots" },
-  { key: "shots_on_target", label: "Shots on target" },
-  { key: "big_chances", label: "Big chances" },
-  { key: "passes", label: "Passes" },
-  { key: "pass_completions", label: "Passes completed" },
-  { key: "pass_accuracy_pct", label: "Pass accuracy", digits: 1, unit: "%" },
-  { key: "press_attempts", label: "Press attempts" },
-  { key: "turnovers_won", label: "Turnovers won" },
-  { key: "high_turnovers_won", label: "Turnovers won in the final third" },
-  { key: "transitions", label: "Transition shots" },
-  { key: "corners_conceded", label: "Corners conceded" },
-  { key: "fouls", label: "Fouls" },
-  { key: "yellow_cards", label: "Yellow cards" },
-  { key: "red_cards", label: "Red cards" },
-  { key: "injuries", label: "Injuries" },
+const COMPARED: { key: keyof SimSide; msg: string; digits?: number; unit?: string }[] = [
+  { key: "possession_pct", msg: "mPossession", digits: 1, unit: "%" },
+  { key: "goals", msg: "mGoals" },
+  { key: "expected_goals", msg: "mXG", digits: 3 },
+  { key: "shots", msg: "mShots" },
+  { key: "shots_on_target", msg: "mShotsOnTarget" },
+  { key: "big_chances", msg: "mBigChances" },
+  { key: "passes", msg: "mPasses" },
+  { key: "pass_completions", msg: "mPassesCompleted" },
+  { key: "pass_accuracy_pct", msg: "mPassAccuracy", digits: 1, unit: "%" },
+  { key: "press_attempts", msg: "mPressAttempts" },
+  { key: "turnovers_won", msg: "mTurnoversWon" },
+  { key: "high_turnovers_won", msg: "mHighTurnoversWon" },
+  { key: "transitions", msg: "mTransitions" },
+  { key: "corners_conceded", msg: "mCornersConceded" },
+  { key: "fouls", msg: "mFouls" },
+  { key: "yellow_cards", msg: "mYellowCards" },
+  { key: "red_cards", msg: "mRedCards" },
+  { key: "injuries", msg: "mInjuries" },
 ];
+
+/** The engine's event type mapped to its catalogue key; an unknown type falls back to the raw type. */
+const EVENT_KEY: Record<string, string> = {
+  goal: "eGoal",
+  shot_saved: "eSaved",
+  shot_off_target: "eOffTarget",
+  yellow_card: "eYellow",
+  red_card: "eRed",
+  injury: "eInjury",
+};
 
 /**
  * The club pages are addressed by slug, and a report only carries a team id, so the page resolves the
@@ -46,9 +57,10 @@ const COMPARED: { key: keyof SimSide; label: string; digits?: number; unit?: str
  */
 export type SideHrefs = { home?: string; away?: string };
 
-function SideName({ side, href }: { side: SimSide; href?: string }) {
+async function SideName({ side, href }: { side: SimSide; href?: string }) {
+  const t = await getTranslations("simulate");
   const label = side.name;
-  const shape = side.system_name || "the club's own formation";
+  const shape = side.system_name || t("ownFormation");
   return (
     <div className="world-scoreline__side">
       {href ? (
@@ -65,7 +77,8 @@ function SideName({ side, href }: { side: SimSide; href?: string }) {
   );
 }
 
-export function ScoreLine({ report, hrefs }: { report: SimReport; hrefs?: SideHrefs }) {
+export async function ScoreLine({ report, hrefs }: { report: SimReport; hrefs?: SideHrefs }) {
+  const t = await getTranslations("simulate");
   const winner = report.score.winner.side;
   return (
     <div className="world-scoreline" data-testid="sim-score">
@@ -75,7 +88,7 @@ export function ScoreLine({ report, hrefs }: { report: SimReport; hrefs?: SideHr
           {report.score.home} – {report.score.away}
         </span>
         <span className="chip" style={{ fontSize: "0.7rem" }}>
-          {winner === "draw" ? "Modelled draw" : `Model winner: ${report.score.winner.name}`}
+          {winner === "draw" ? t("modelledDraw") : t("modelWinner", { name: report.score.winner.name })}
         </span>
       </div>
       <div className="world-scoreline__side world-scoreline__side--away">
@@ -85,13 +98,14 @@ export function ScoreLine({ report, hrefs }: { report: SimReport; hrefs?: SideHr
   );
 }
 
-export function SideComparison({ report }: { report: SimReport }) {
+export async function SideComparison({ report }: { report: SimReport }) {
+  const t = await getTranslations("simulate");
   return (
     <div className="world-tablewrap">
       <table className="table" data-testid="sim-totals">
         <thead>
           <tr>
-            <th scope="col">Metric</th>
+            <th scope="col">{t("thMetric")}</th>
             <th scope="col">{report.sides.home.short_name}</th>
             <th scope="col">{report.sides.away.short_name}</th>
           </tr>
@@ -99,7 +113,7 @@ export function SideComparison({ report }: { report: SimReport }) {
         <tbody>
           {COMPARED.map((row) => (
             <tr key={String(row.key)}>
-              <td>{row.label}</td>
+              <td>{t(row.msg)}</td>
               <td className="num mono">
                 {num(Number(report.sides.home[row.key]), row.digits ?? 0)}
                 {row.unit ?? ""}
@@ -116,21 +130,12 @@ export function SideComparison({ report }: { report: SimReport }) {
   );
 }
 
-const EVENT_LABEL: Record<string, string> = {
-  goal: "Goal",
-  shot_saved: "Saved",
-  shot_off_target: "Off target",
-  yellow_card: "Yellow",
-  red_card: "Red",
-  injury: "Injury",
-};
-
-export function EventTimeline({ events }: { events: SimEvent[] }) {
+export async function EventTimeline({ events }: { events: SimEvent[] }) {
+  const t = await getTranslations("simulate");
   if (events.length === 0) {
     return (
       <p className="muted world-section-note" data-testid="sim-events">
-        The model produced no goal-bound event, card or injury in this match. An empty timeline is a result, not a missing
-        fetch — the totals above add up to it.
+        {t("timelineEmpty")}
       </p>
     );
   }
@@ -142,12 +147,12 @@ export function EventTimeline({ events }: { events: SimEvent[] }) {
             {event.minute}&apos;{event.score ? ` · ${event.score}` : ""}
           </span>
           <span>
-            <strong>{EVENT_LABEL[event.type] ?? event.type}</strong>
+            <strong>{EVENT_KEY[event.type] ? t(EVENT_KEY[event.type]) : event.type}</strong>
             <span className="muted"> — {event.detail}</span>
             {event.expected_goals !== undefined && (
               <span className="tac-formula"> xG {num(event.expected_goals, 3)}</span>
             )}
-            {event.from_press && <span className="chip" style={{ marginLeft: "0.35rem" }}>from a won turnover</span>}
+            {event.from_press && <span className="chip" style={{ marginLeft: "0.35rem" }}>{t("fromPress")}</span>}
           </span>
           <span className="row" style={{ gap: "0.35rem" }}>
             <span className="chip mono">{event.team}</span>
@@ -160,23 +165,24 @@ export function EventTimeline({ events }: { events: SimEvent[] }) {
 }
 
 /** One row per block, both sides: the scoreboard and the multipliers the model applied to it. */
-export function BlockTable({ blocks }: { blocks: SimBlock[] }) {
+export async function BlockTable({ blocks }: { blocks: SimBlock[] }) {
+  const t = await getTranslations("simulate");
   return (
     <div className="world-tablewrap">
       <table className="table" data-testid="sim-blocks">
         <thead>
           <tr>
-            <th scope="col">Block</th>
-            <th scope="col">Home G</th>
-            <th scope="col">xG</th>
-            <th scope="col">Shots</th>
-            <th scope="col">Poss</th>
-            <th scope="col">Away G</th>
-            <th scope="col">xG</th>
-            <th scope="col">Shots</th>
-            <th scope="col">Poss</th>
-            <th scope="col">Home multipliers</th>
-            <th scope="col">Away multipliers</th>
+            <th scope="col">{t("blockThBlock")}</th>
+            <th scope="col">{t("blockThHomeG")}</th>
+            <th scope="col">{t("blockThXG")}</th>
+            <th scope="col">{t("blockThShots")}</th>
+            <th scope="col">{t("blockThPoss")}</th>
+            <th scope="col">{t("blockThAwayG")}</th>
+            <th scope="col">{t("blockThXG")}</th>
+            <th scope="col">{t("blockThShots")}</th>
+            <th scope="col">{t("blockThPoss")}</th>
+            <th scope="col">{t("blockThHomeMult")}</th>
+            <th scope="col">{t("blockThAwayMult")}</th>
           </tr>
         </thead>
         <tbody>
@@ -193,8 +199,8 @@ export function BlockTable({ blocks }: { blocks: SimBlock[] }) {
               <td className="num mono">{num(block.away.expected_goals, 2)}</td>
               <td className="num">{block.away.shots}</td>
               <td className="num mono">{num(block.away.possession_pct, 1)}</td>
-              <td className="tac-formula">{multipliers(block.home)}</td>
-              <td className="tac-formula">{multipliers(block.away)}</td>
+              <td className="tac-formula">{multipliers(block.home, t)}</td>
+              <td className="tac-formula">{multipliers(block.away, t)}</td>
             </tr>
           ))}
         </tbody>
@@ -203,28 +209,32 @@ export function BlockTable({ blocks }: { blocks: SimBlock[] }) {
   );
 }
 
-function multipliers(row: SimBlock["home"]): string {
-  return `vol ${num(row.volume, 3)} · quality ${num(row.chance_quality, 3)} · fatigue ${num(row.fatigue, 3)} · late space ${num(
-    row.late_space,
-    3,
-  )} · stretch ${num(row.stretch, 3)} · opponent open ${num(row.opponent_opening, 3)} · man-down ${num(
-    row.man_down_attack,
-    2,
-  )}/${num(row.man_down_concede, 2)}`;
+function multipliers(row: SimBlock["home"], t: Awaited<ReturnType<typeof getTranslations>>): string {
+  return t("multiplierLine", {
+    volume: num(row.volume, 3),
+    quality: num(row.chance_quality, 3),
+    fatigue: num(row.fatigue, 3),
+    lateSpace: num(row.late_space, 3),
+    stretch: num(row.stretch, 3),
+    opponentOpen: num(row.opponent_opening, 3),
+    manAttack: num(row.man_down_attack, 2),
+    manConcede: num(row.man_down_concede, 2),
+  });
 }
 
 /** The eleven the profile selected, so a named scorer can be checked against the squad on the page. */
-export function LineupList({ side }: { side: SimSide }) {
+export async function LineupList({ side }: { side: SimSide }) {
+  const t = await getTranslations("simulate");
   return (
     <div className="stack-sm">
-      <span className="eyebrow">{`${side.short_name} — the ${side.lineup.length} the shape selected`}</span>
+      <span className="eyebrow">{t("lineupEyebrow", { short: side.short_name, count: side.lineup.length })}</span>
       <div className="world-tablewrap">
         <table className="table" data-testid="sim-lineup">
           <thead>
             <tr>
-              <th scope="col">Band</th>
-              <th scope="col">Player</th>
-              <th scope="col">Position</th>
+              <th scope="col">{t("lineupThBand")}</th>
+              <th scope="col">{t("lineupThPlayer")}</th>
+              <th scope="col">{t("lineupThPosition")}</th>
             </tr>
           </thead>
           <tbody>
@@ -243,11 +253,12 @@ export function LineupList({ side }: { side: SimSide }) {
 }
 
 /** What went into a side: the metres of the chosen system and the formula behind every index. */
-export function InputList({ side }: { side: SimSide }) {
+export async function InputList({ side }: { side: SimSide }) {
+  const t = await getTranslations("simulate");
   return (
     <div className="stack-sm">
       <div className="tag-list">
-        <span className="chip mono">{side.short_name} indices</span>
+        <span className="chip mono">{t("indicesChip", { short: side.short_name })}</span>
         {Object.entries(side.indices).map(([key, value]) => (
           <span className="chip" key={key}>
             {key} {num(value, 3)}
@@ -258,9 +269,9 @@ export function InputList({ side }: { side: SimSide }) {
         <table className="table" data-testid="sim-inputs">
           <thead>
             <tr>
-              <th scope="col">Measured input</th>
-              <th scope="col">Value</th>
-              <th scope="col">How it was obtained</th>
+              <th scope="col">{t("inputsThInput")}</th>
+              <th scope="col">{t("inputsThValue")}</th>
+              <th scope="col">{t("inputsThHow")}</th>
             </tr>
           </thead>
           <tbody>
@@ -278,8 +289,7 @@ export function InputList({ side }: { side: SimSide }) {
       </div>
       {Object.keys(side.inputs.tactics).length === 0 && (
         <p className="muted world-section-note">
-          No tactical system was chosen for this side, so the shape metrics are empty: the match was played from the club&apos;s
-          own formation and nothing was measured from a pitch shape.
+          {t("noTactics")}
         </p>
       )}
     </div>
@@ -287,7 +297,8 @@ export function InputList({ side }: { side: SimSide }) {
 }
 
 /** The engine's own claims: coefficients, the formula each rate uses, and what it refuses to model. */
-export function ModelPanel({ model }: { model: SimModel }) {
+export async function ModelPanel({ model }: { model: SimModel }) {
+  const t = await getTranslations("simulate");
   return (
     <div className="stack">
       <p className="notice">{model.calibration}</p>
@@ -295,9 +306,9 @@ export function ModelPanel({ model }: { model: SimModel }) {
         <table className="table" data-testid="sim-model">
           <thead>
             <tr>
-              <th scope="col">Rate</th>
-              <th scope="col">Formula</th>
-              <th scope="col">What it reads</th>
+              <th scope="col">{t("thRate")}</th>
+              <th scope="col">{t("thExpression")}</th>
+              <th scope="col">{t("thReads")}</th>
             </tr>
           </thead>
           <tbody>
@@ -312,7 +323,7 @@ export function ModelPanel({ model }: { model: SimModel }) {
         </table>
       </div>
       <div className="stack-sm">
-        <span className="eyebrow">Coefficients as shipped</span>
+        <span className="eyebrow">{t("coefficientsEyebrow")}</span>
         <div className="tag-list">
           {Object.entries(model.coefficients).map(([key, value]) => (
             <span className="chip mono" key={key}>
@@ -322,7 +333,7 @@ export function ModelPanel({ model }: { model: SimModel }) {
         </div>
       </div>
       <div className="stack-sm">
-        <span className="eyebrow">What this model does not model</span>
+        <span className="eyebrow">{t("notModelEyebrow")}</span>
         <ul className="reasons">
           {model.what_it_does_not_model.map((item, index) => (
             <li className="reasons__item" key={`${item}-${index}`}>
