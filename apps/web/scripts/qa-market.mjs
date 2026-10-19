@@ -18,6 +18,7 @@
  * Env overrides: QA_BASE, CHROME_PATH.
  */
 
+import { readFileSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,6 +34,12 @@ const PASSWORD = 'market-qa-password';
 const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 12);
 const EMAIL = `market-qa-${stamp}@footballos.test`;
 const BUDGET = 10_000_000;
+
+// §81 2c: the two catalogues the locale checks compare the painted page against, read off disk rather than
+// off the page — a value read back out of the page would only ever agree with itself.
+const catalogue = (locale) => JSON.parse(readFileSync(new URL(`../messages/${locale}.json`, import.meta.url), 'utf8'));
+const english = catalogue('en');
+const chinese = catalogue('zh');
 
 const results = [];
 const consoleErrors = [];
@@ -269,6 +276,12 @@ async function main() {
   const page = await browser.newPage();
   await page.setViewport(DESKTOP);
   watch(page, 'owner');
+  // Pin the walk's own locale before the first navigation. `middleware.ts` picks the locale from the
+  // `fo_locale` cookie, then `Accept-Language`, then English — and a zh-CN host makes the browser
+  // negotiate Chinese, which every English label this walk reads would then miss (measured: the whole
+  // empty-state block read a Chinese page and failed 8 checks on four clubs). The §81 2c block at the
+  // end flips to zh and back deliberately; everything before it must start from a known English.
+  await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   await open(page, '/login');
   const registered = await call(page, 'POST', '/api/v1/auth/register', { email: EMAIL, password: PASSWORD, display_name: 'Market QA', role: 'player', accepts_data_policy: true });
   check('a fresh account registers through the cookie proxy', registered.status === 201, `HTTP ${registered.status}`);
@@ -592,6 +605,57 @@ async function main() {
   );
   check('the rule that charged the round is on the page', has(body, 'wage charge for a round'), await lineWith(page, 'wage charge for a round'));
   await shot(page, 'market-after-round');
+
+  // --- §81 2c: the route reads its catalogue (2026-10-15, `4f5c284`) ------------------------------------
+  // The same three reads every wired page gets: the Chinese catalogue's own strings are what the page
+  // paints, the English labels they replaced are gone, and switching back leaves it English. Two things
+  // this page needs that `/career` did not. First, the English-absent half has to name **long** labels and
+  // only catalogue-owned ones: this route also prints the door's own prose — the rule expressions,
+  // `budget.wage_note`, `fielding.rule`, `market.note` — which is English in every locale by design, so a
+  // body-level "no English here" assertion would be measuring the API, not the wiring. `Buying` and
+  // `Balance after` are short enough to collide with that prose, so the four sentences below are the ones
+  // asserted. Second, the heading is the club's name plus a catalogue suffix, so it is compared by suffix:
+  // the club name is the world's data and does not translate.
+  await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+  await open(page, marketPath);
+  await until(page, chinese.market.buyingTitle);
+  const marketZh = await page.evaluate(() => ({
+    h1: document.querySelector('h1')?.textContent.trim() ?? '',
+    body: document.body.innerText.replace(/\s+/gu, ' '),
+  }));
+  check(
+    'the transfer market in Chinese renders the catalogue: the panel titles and the ledger headers come from messages/zh.json',
+    marketZh.h1.endsWith(chinese.market.titleSuffix) &&
+      marketZh.body.includes(chinese.market.buyingTitle) &&
+      marketZh.body.includes(chinese.market.needTitle) &&
+      marketZh.body.includes(chinese.market.squadTitle) &&
+      marketZh.body.includes(chinese.market.ledgerTitle) &&
+      marketZh.body.includes(chinese.market.thBalanceAfter),
+    `h1 ${marketZh.h1} · buying ${marketZh.body.includes(chinese.market.buyingTitle)} · need ${marketZh.body.includes(chinese.market.needTitle)} · squad ${marketZh.body.includes(chinese.market.squadTitle)} · ledger ${marketZh.body.includes(chinese.market.ledgerTitle)} · th ${marketZh.body.includes(chinese.market.thBalanceAfter)}`,
+  );
+  check(
+    'and the English labels are gone from the Chinese market',
+    !marketZh.body.includes(english.market.needTitle) &&
+      !marketZh.body.includes(english.market.squadTitle) &&
+      !marketZh.body.includes(english.market.ledgerTitle) &&
+      !marketZh.body.includes(english.market.rulesTitle),
+    `en need present ${marketZh.body.includes(english.market.needTitle)} · en squad ${marketZh.body.includes(english.market.squadTitle)} · en ledger ${marketZh.body.includes(english.market.ledgerTitle)} · en rules ${marketZh.body.includes(english.market.rulesTitle)}`,
+  );
+  await shot(page, 'market-chinese');
+  await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+  await open(page, marketPath);
+  await until(page, english.market.buyingTitle);
+  const marketBackEn = await page.evaluate(() => ({
+    h1: document.querySelector('h1')?.textContent.trim() ?? '',
+    body: document.body.innerText.replace(/\s+/gu, ' '),
+  }));
+  check(
+    'switching back leaves the market in English',
+    marketBackEn.h1.endsWith(english.market.titleSuffix) &&
+      marketBackEn.body.includes(english.market.ledgerTitle) &&
+      !marketBackEn.body.includes(chinese.market.ledgerTitle),
+    `h1 ${marketBackEn.h1} · en ledger ${marketBackEn.body.includes(english.market.ledgerTitle)} · zh ledger still present ${marketBackEn.body.includes(chinese.market.ledgerTitle)}`,
+  );
 
   // The walk allows one browser habit in its console gate, and this is the check that pays for it: the icon
   // the document declares is really served, so a legacy `/favicon.ico` probe missing is not an asset lost.
