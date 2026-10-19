@@ -33,17 +33,21 @@ export const dynamic = "force-dynamic";
  *   reachable is therefore not listed here, because the doors publish counts and no recipient list, and a page
  *   that guessed the missing rows would be inventing the one thing this tier refuses to store.
  */
-export const metadata: Metadata = {
-  title: "Community",
-  description: "What your account publishes, the feed that reaches you, and the rules that decide who reads a post.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/community") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("community");
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/community") },
+  };
+}
 
 export default async function CommunityPage() {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fcommunity");
 
+  const t = await getTranslations("community");
   const tn = await getTranslations("nav");
   const [rules, feed, profile] = await Promise.all([
     serverFetch<CommunityRules>("/community/rules"),
@@ -52,7 +56,7 @@ export default async function CommunityPage() {
   ]);
   if (!rules.ok) return <WorldUnavailable detail={refusalFigures(rules.error.details).join(" · ")} message={rules.error.message} title={tn("community")} />;
   if (!feed.ok) return <WorldUnavailable detail={refusalFigures(feed.error.details).join(" · ")} message={feed.error.message} title={tn("community")} />;
-  if (!profile.ok) return <WorldUnavailable message="Your own wall counts could not be read, so this page has nothing to size the ceilings against." title={tn("community")} />;
+  if (!profile.ok) return <WorldUnavailable message={t("profileUnreadable")} title={tn("community")} />;
 
   const following = [...new Set(feed.data.items.filter(row => row.author.id !== user.id).map(row => row.author.id))];
 
@@ -60,30 +64,29 @@ export default async function CommunityPage() {
     <div className="container page stack">
       <WorldHead
         back={{href: "/", label: tn("home")}}
-        eyebrow={`${user.display_name} · ${profile.data.posts} of ${rules.data.caps.post_max} posts · ${profile.data.followers} follower(s)`}
-        lede="A post here is a pointer and the author's own words: it names the page it shares and stores no figure about it, so what you read beside a share is counted from the rows the moment you ask. Reach is a predicate over follows, recomputed on every read — unfollowing someone withdraws their posts at once and deletes nothing."
-        title="Community wall"
+        eyebrow={t("headEyebrow", { name: user.display_name, posts: profile.data.posts, max: rules.data.caps.post_max, followers: profile.data.followers })}
+        lede={t("headLede")}
+        title={t("headTitle")}
       />
 
-      <Panel eyebrow={`${profile.data.following} of ${rules.data.caps.following_max} followed · ${rules.data.counts.posts} posts and ${rules.data.counts.follows} follow rows on the platform`} title="Publish something you own">
+      <Panel eyebrow={t("composerEyebrow", { following: profile.data.following, followingMax: rules.data.caps.following_max, posts: rules.data.counts.posts, follows: rules.data.counts.follows })} title={t("composerTitle")}>
         <PostComposer caps={rules.data.caps} profile={profile.data} />
       </Panel>
 
-      <Panel eyebrow={`${feed.data.total} reachable · ${feed.data.items.length} printed · a feed of ${feed.data.feed_authors ?? 0} author(s)`} title="What reaches you right now">
+      <Panel eyebrow={t("feedEyebrow", { total: feed.data.total, printed: feed.data.items.length, authors: feed.data.feed_authors ?? 0 })} title={t("feedTitle")}>
         <CommunityWall caps={rules.data.caps} feed={feed.data} following={following} profile={profile.data} viewer={user.id} />
         <p className="muted" style={{fontSize: "0.8rem"}}>
-          The follow button on a row is decided from the authors this feed lists, because the tier publishes counts and no list of who follows whom. A
-          followed account with nothing reachable here is not shown as followed.
+          {t("feedNote")}
         </p>
       </Panel>
 
-      <Panel eyebrow={`${Object.keys(rules.data.refusal_answers).length} codes · one status each, from the project’s one table`} title="What a door here refuses, and with what answer">
+      <Panel eyebrow={t("refusalsEyebrow", { count: Object.keys(rules.data.refusal_answers).length })} title={t("refusalsTitle")}>
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Code</th>
-                <th scope="col">Answer</th>
+                <th scope="col">{t("thCode")}</th>
+                <th scope="col">{t("thAnswer")}</th>
               </tr>
             </thead>
             <tbody>
@@ -99,19 +102,18 @@ export default async function CommunityPage() {
           </table>
         </div>
         <p className="muted" style={{fontSize: "0.82rem"}}>
-          There is no 403 in this tier: a community door asks only whether you have a session, and what you may not reach is answered as absence — the same shape a
-          row that was never written earns, so no door confirms that somebody else&apos;s private wall exists.
+          {t("refusalsNote")}
         </p>
       </Panel>
 
-      <Panel eyebrow={`${rules.data.routes.length} published doors`} title="The doors themselves">
+      <Panel eyebrow={t("doorsEyebrow", { count: rules.data.routes.length })} title={t("doorsTitle")}>
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Method</th>
-                <th scope="col">Path</th>
-                <th scope="col">What it is for</th>
+                <th scope="col">{t("thMethod")}</th>
+                <th scope="col">{t("thPath")}</th>
+                <th scope="col">{t("thPurpose")}</th>
               </tr>
             </thead>
             <tbody>
@@ -127,14 +129,14 @@ export default async function CommunityPage() {
         </div>
       </Panel>
 
-      <Panel eyebrow={`${Object.keys(rules.data.caps.pointer_prefixes).length} kinds that point, and the page each one names`} title="Where a pointer has to land">
+      <Panel eyebrow={t("pointersEyebrow", { count: Object.keys(rules.data.caps.pointer_prefixes).length })} title={t("pointersTitle")}>
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Kind</th>
-                <th scope="col">Prefix</th>
-                <th scope="col">The page it opens</th>
+                <th scope="col">{t("thKind")}</th>
+                <th scope="col">{t("thPrefix")}</th>
+                <th scope="col">{t("thOpens")}</th>
               </tr>
             </thead>
             <tbody>
@@ -153,18 +155,16 @@ export default async function CommunityPage() {
           </table>
         </div>
         <p className="muted" style={{fontSize: "0.82rem"}}>
-          A `note` points at nothing and every other kind must point under its own prefix; the door refuses the pair otherwise, with the prefix it expected in the
-          refusal.
+          {t("pointersNote")}
         </p>
       </Panel>
 
-      <Panel eyebrow={`${rules.data.limitation ? "one limit, stated by the API on every read" : "no limit published"}`} title="What this tier does not do">
+      <Panel eyebrow={rules.data.limitation ? t("limitsEyebrowOne") : t("limitsEyebrowNone")} title={t("limitsTitle")}>
         <p className="muted" style={{fontSize: "0.86rem", margin: 0}}>
           {rules.data.limitation}
         </p>
         <p className="muted" style={{fontSize: "0.82rem", marginTop: "0.6rem"}}>
-          Nothing here is gated on a plan: the entitlement table has no community feature today, so publishing costs nothing and the ceilings above are row counts,
-          not prices. Read the vocabulary at <span className="mono">/api/v1/community/rules</span>, which needs no account.
+          {t.rich("limitsNote", { code: chunks => <span className="mono">{chunks}</span> })}
         </p>
       </Panel>
     </div>

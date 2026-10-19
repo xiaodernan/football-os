@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { browserFetch, errorMessage } from "@/lib/api";
@@ -94,6 +95,7 @@ function CallNote({id, note}: {id: string; note: Note | null}) {
 }
 
 export function PostComposer({caps, profile}: {caps: CommunityCaps; profile: CommunityProfile}) {
+  const t = useTranslations("community");
   const {busy, call, note} = useCommunityCall();
   const [body, setBody] = useState("");
   const [kind, setKind] = useState(caps.kinds[0] ?? "note");
@@ -115,8 +117,8 @@ export function PostComposer({caps, profile}: {caps: CommunityCaps; profile: Com
     <div className="stack">
       <div className="grid-cards">
         <label className="field">
-          <span>Kind — a note carries words, everything else carries the address of your own artifact</span>
-          <select aria-label="Post kind" disabled={busy !== null} onChange={event => setKind(event.target.value)} value={kind}>
+          <span>{t("kindLabel")}</span>
+          <select aria-label={t("ariaPostKind")} disabled={busy !== null} onChange={event => setKind(event.target.value)} value={kind}>
             {caps.kinds.map(word => (
               <option key={word} value={word}>
                 {word}
@@ -125,8 +127,8 @@ export function PostComposer({caps, profile}: {caps: CommunityCaps; profile: Com
           </select>
         </label>
         <label className="field">
-          <span>Visibility — reach is decided by the follow rows, not by a list stored on the post</span>
-          <select aria-label="Post visibility" disabled={busy !== null} onChange={event => setVisibility(event.target.value)} value={visibility}>
+          <span>{t("visibilityLabel")}</span>
+          <select aria-label={t("ariaPostVisibility")} disabled={busy !== null} onChange={event => setVisibility(event.target.value)} value={visibility}>
             {caps.visibilities.map(word => (
               <option key={word} value={word}>
                 {word}
@@ -137,17 +139,17 @@ export function PostComposer({caps, profile}: {caps: CommunityCaps; profile: Com
       </div>
 
       <label className="field">
-        <span>Words (at most {caps.post_body_max} characters, and never blank)</span>
-        <textarea aria-label="Post body" disabled={busy !== null} maxLength={caps.post_body_max} onChange={event => setBody(event.target.value)} rows={3} value={body} />
+        <span>{t("wordsLabel", { max: caps.post_body_max })}</span>
+        <textarea aria-label={t("ariaPostBody")} disabled={busy !== null} maxLength={caps.post_body_max} onChange={event => setBody(event.target.value)} rows={3} value={body} />
       </label>
 
       {pointing && (
         <label className="field">
           <span>
-            Points at <span className="mono">{prefix}</span> plus the artifact address — this kind names the {kind.replace("my_", "")} page, and the tier stores the address, never a figure read from it
+            {t.rich("pointerLabel", { prefix, kind: kind.replace("my_", ""), code: chunks => <span className="mono">{chunks}</span> })}
           </span>
           <input
-            aria-label="Post pointer tail"
+            aria-label={t("ariaPostPointerTail")}
             disabled={busy !== null}
             maxLength={Math.max(1, caps.pointer_max - prefix.length)}
             onChange={event => setPointer(event.target.value)}
@@ -158,10 +160,10 @@ export function PostComposer({caps, profile}: {caps: CommunityCaps; profile: Com
         </label>
       )}
 
-      <button aria-label="Publish post" className="btn" data-testid="community-publish" disabled={busy !== null || room <= 0} onClick={publish} type="button">
-        {busy === "publish" ? "Publishing…" : `Publish it — ${room} of ${caps.post_max} posts left`}
+      <button aria-label={t("ariaPublishPost")} className="btn" data-testid="community-publish" disabled={busy !== null || room <= 0} onClick={publish} type="button">
+        {busy === "publish" ? t("publishing") : t("publish", { room, max: caps.post_max })}
       </button>
-      {room <= 0 && <p className="notice notice--warn" data-testid="community-post-ceiling">This account holds the {caps.post_max} posts the tier allows, so the door is closed until one is erased.</p>}
+      {room <= 0 && <p className="notice notice--warn" data-testid="community-post-ceiling">{t("ceiling", { max: caps.post_max })}</p>}
       <CallNote id="composer" note={note} />
       <p className="muted" style={{fontSize: "0.82rem"}}>
         {caps.visibility_rule}
@@ -171,6 +173,7 @@ export function PostComposer({caps, profile}: {caps: CommunityCaps; profile: Com
 }
 
 function ReplyBox({caps, row}: {caps: CommunityCaps; row: CommunityPostRow}) {
+  const t = useTranslations("community");
   const {busy, call, note} = useCommunityCall();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<CommunityCommentRow[] | null>(null);
@@ -194,15 +197,15 @@ function ReplyBox({caps, row}: {caps: CommunityCaps; row: CommunityPostRow}) {
 
   return (
     <div className="stack-sm" data-testid={`community-replies-${row.id}`}>
-      <button aria-label={`Replies on the post ${row.body.slice(0, 24)}`} className="btn btn--sm btn--ghost" data-testid={`community-replies-toggle-${row.id}`} disabled={busy !== null} onClick={show} type="button">
-        {row.comments} repl{row.comments === 1 ? "y" : "ies"} — read them
+      <button aria-label={t("ariaRepliesOn", { snippet: row.body.slice(0, 24) })} className="btn btn--sm btn--ghost" data-testid={`community-replies-toggle-${row.id}`} disabled={busy !== null} onClick={show} type="button">
+        {t("repliesToggle", { comments: row.comments })}
       </button>
       {open && (
         <>
           {items === null ? (
-            <span className="muted" data-testid="community-replies-loading" style={{fontSize: "0.78rem"}}>reading the replies…</span>
+            <span className="muted" data-testid="community-replies-loading" style={{fontSize: "0.78rem"}}>{t("repliesLoading")}</span>
           ) : items.length === 0 ? (
-            <span className="muted" data-testid="community-replies-empty" style={{fontSize: "0.78rem"}}>no reply has been written on this post</span>
+            <span className="muted" data-testid="community-replies-empty" style={{fontSize: "0.78rem"}}>{t("repliesEmpty")}</span>
           ) : (
             <ul className="stack-sm" style={{margin: 0, paddingLeft: "1.1rem"}}>
               {items.map(item => (
@@ -214,16 +217,16 @@ function ReplyBox({caps, row}: {caps: CommunityCaps; row: CommunityPostRow}) {
           )}
           {full ? (
             <span className="notice notice--warn" data-testid="community-reply-ceiling" style={{fontSize: "0.78rem"}}>
-              This post holds the {caps.comment_max} comments the tier allows; the door will refuse a further one and say so.
+              {t("replyCeiling", { max: caps.comment_max })}
             </span>
           ) : (
             <>
               <label className="field">
-                <span>Reply (at most {caps.comment_body_max} characters)</span>
-                <textarea aria-label={`Reply on the post ${row.body.slice(0, 24)}`} disabled={busy !== null} maxLength={caps.comment_body_max} onChange={event => setBody(event.target.value)} rows={2} value={body} />
+                <span>{t("replyLabel", { max: caps.comment_body_max })}</span>
+                <textarea aria-label={t("ariaReplyOn", { snippet: row.body.slice(0, 24) })} disabled={busy !== null} maxLength={caps.comment_body_max} onChange={event => setBody(event.target.value)} rows={2} value={body} />
               </label>
-              <button aria-label="Send reply" className="btn btn--sm" data-testid={`community-reply-send-${row.id}`} disabled={busy !== null} onClick={reply} type="button">
-                {busy === `reply-${row.id}` ? "Sending…" : "Reply"}
+              <button aria-label={t("ariaSendReply")} className="btn btn--sm" data-testid={`community-reply-send-${row.id}`} disabled={busy !== null} onClick={reply} type="button">
+                {busy === `reply-${row.id}` ? t("sending") : t("reply")}
               </button>
             </>
           )}
@@ -235,6 +238,7 @@ function ReplyBox({caps, row}: {caps: CommunityCaps; row: CommunityPostRow}) {
 }
 
 function PostRow({announce, caps, following, row, viewer}: {announce: (value: Note) => void; caps: CommunityCaps; following: string[]; row: CommunityPostRow; viewer: string}) {
+  const t = useTranslations("community");
   const {busy, call, note} = useCommunityCall(announce);
   const mine = row.author.id === viewer;
   const followsAuthor = following.includes(row.author.id);
@@ -245,8 +249,8 @@ function PostRow({announce, caps, following, row, viewer}: {announce: (value: No
         <div className="row wrap" style={{gap: "0.35rem"}}>
           <span className="badge badge--demo mono">{row.kind}</span>
           <span className="badge mono">{row.visibility}</span>
-          {mine && <span className="badge badge--ok">yours</span>}
-          {!pointerAgreesWithKind(row, caps) && <span className="badge badge--warn" data-testid={`community-pointer-broken-${row.id}`}>pointer is not under its kind prefix</span>}
+          {mine && <span className="badge badge--ok">{t("yours")}</span>}
+          {!pointerAgreesWithKind(row, caps) && <span className="badge badge--warn" data-testid={`community-pointer-broken-${row.id}`}>{t("pointerBroken")}</span>}
         </div>
         <div style={{fontWeight: 600, whiteSpace: "pre-wrap"}}>{row.body}</div>
         {row.has_pointer ? (
@@ -254,7 +258,7 @@ function PostRow({announce, caps, following, row, viewer}: {announce: (value: No
             {row.pointer}
           </Link>
         ) : (
-          <span className="muted mono" style={{fontSize: "0.76rem"}}>points at nothing — a note is words only</span>
+          <span className="muted mono" style={{fontSize: "0.76rem"}}>{t("pointerNone")}</span>
         )}
         <div className="muted mono" style={{fontSize: "0.74rem"}}>
           {row.author.display_name} · {row.shared_on}
@@ -265,33 +269,33 @@ function PostRow({announce, caps, following, row, viewer}: {announce: (value: No
       <td className="num" data-testid={`community-reposts-${row.id}`}>{row.reposts}</td>
       <td className="row wrap" style={{gap: "0.35rem"}}>
         <button
-          aria-label={`Like the post ${row.body.slice(0, 24)}`}
+          aria-label={t("ariaLikePost", { snippet: row.body.slice(0, 24) })}
           className={row.viewer_liked ? "btn btn--sm" : "btn btn--sm btn--ghost"}
           data-testid={`community-like-${row.id}`}
           disabled={busy !== null}
           onClick={() => call(`like-${row.id}`, `/community/posts/${encodeURIComponent(row.id)}/reactions`, {body: {reaction: caps.reactions[0] ?? "like"}}, row.viewer_liked ? "already one row" : "recorded")}
           type="button"
         >
-          {busy === `like-${row.id}` ? "Recording…" : row.viewer_liked ? "liked (one row)" : "Like"}
+          {busy === `like-${row.id}` ? t("recording") : row.viewer_liked ? t("likedOneRow") : t("like")}
         </button>
         {mine ? (
-          <button aria-label={`Erase the post ${row.body.slice(0, 24)}`} className="btn btn--sm btn--ghost" data-testid={`community-erase-${row.id}`} disabled={busy !== null} onClick={() => call(`erase-${row.id}`, `/community/posts/${encodeURIComponent(row.id)}`, {method: "DELETE"}, "erased")} type="button">
-            {busy === `erase-${row.id}` ? "Erasing…" : "Erase"}
+          <button aria-label={t("ariaErasePost", { snippet: row.body.slice(0, 24) })} className="btn btn--sm btn--ghost" data-testid={`community-erase-${row.id}`} disabled={busy !== null} onClick={() => call(`erase-${row.id}`, `/community/posts/${encodeURIComponent(row.id)}`, {method: "DELETE"}, "erased")} type="button">
+            {busy === `erase-${row.id}` ? t("erasing") : t("erase")}
           </button>
         ) : (
           <>
-            <button aria-label={`Repost the post ${row.body.slice(0, 24)}`} className="btn btn--sm btn--ghost" data-testid={`community-repost-${row.id}`} disabled={busy !== null} onClick={() => call(`repost-${row.id}`, `/community/posts/${encodeURIComponent(row.id)}/reposts`, {body: {}}, "carried")} type="button">
-              {busy === `repost-${row.id}` ? "Carrying…" : "Repost"}
+            <button aria-label={t("ariaRepostPost", { snippet: row.body.slice(0, 24) })} className="btn btn--sm btn--ghost" data-testid={`community-repost-${row.id}`} disabled={busy !== null} onClick={() => call(`repost-${row.id}`, `/community/posts/${encodeURIComponent(row.id)}/reposts`, {body: {}}, "carried")} type="button">
+              {busy === `repost-${row.id}` ? t("carrying") : t("repost")}
             </button>
             <button
-              aria-label={`${followsAuthor ? "Unfollow" : "Follow"} ${row.author.display_name}`}
+              aria-label={followsAuthor ? t("ariaUnfollow", { name: row.author.display_name }) : t("ariaFollow", { name: row.author.display_name })}
               className="btn btn--sm btn--ghost"
               data-testid={`community-follow-${row.author.id}`}
               disabled={busy !== null}
               onClick={() => call(`follow-${row.author.id}`, `/community/follows/${encodeURIComponent(row.author.id)}`, followsAuthor ? {method: "DELETE"} : {body: {}}, followsAuthor ? "reach withdrawn" : "following")}
               type="button"
             >
-              {busy === `follow-${row.author.id}` ? "…" : followsAuthor ? "unfollow" : "follow"}
+              {busy === `follow-${row.author.id}` ? t("busyEllipsis") : followsAuthor ? t("unfollow") : t("follow")}
             </button>
           </>
         )}
@@ -303,27 +307,28 @@ function PostRow({announce, caps, following, row, viewer}: {announce: (value: No
 }
 
 export function CommunityWall({caps, feed, following, profile, viewer}: {caps: CommunityCaps; feed: CommunityFeed; following: string[]; profile: CommunityProfile; viewer: string}) {
+  const t = useTranslations("community");
   const [wallNote, setWallNote] = useState<Note | null>(null);
   const broken = feed.items.filter(row => !pointerAgreesWithKind(row, caps));
   return (
     <div className="stack">
       <div className="row wrap" data-testid="community-totals" style={{gap: "0.4rem"}}>
-        <span className="badge">{feed.total} reachable</span>
-        <span className="badge">{feed.items.length} printed</span>
+        <span className="badge">{t("reachable", { total: feed.total })}</span>
+        <span className="badge">{t("printed", { n: feed.items.length })}</span>
         <span className="badge">
-          {profile.posts} of {caps.post_max} yours
+          {t("yoursOf", { posts: profile.posts, max: caps.post_max })}
         </span>
         <span className="badge">
-          {profile.followers} follower(s) · following {profile.following} of {caps.following_max}
+          {t("followerLine", { followers: profile.followers, following: profile.following, max: caps.following_max })}
         </span>
         <span className={feed.wall === null ? "badge" : "badge badge--demo"}>
-          {feed.wall === null ? `a feed of ${feed.feed_authors} author(s)` : "one author wall"}
+          {feed.wall === null ? t("feedAuthors", { n: String(feed.feed_authors) }) : t("oneAuthorWall")}
         </span>
         <span className={feed.total === feed.items.length ? "badge badge--ok" : "badge badge--warn"} data-testid="community-total-agrees">
-          {feed.total === feed.items.length ? "the door total is the number of rows it printed" : `total ${feed.total} against ${feed.items.length} row(s)`}
+          {feed.total === feed.items.length ? t("totalAgrees") : t("totalMismatch", { total: feed.total, n: feed.items.length })}
         </span>
         <span className={broken.length === 0 ? "badge badge--ok" : "badge badge--warn"} data-testid="community-pointers-agree">
-          {broken.length === 0 ? "every row pointer sits under its own kind prefix" : `${broken.length} row(s) whose pointer is not under its kind prefix`}
+          {broken.length === 0 ? t("pointersAgree") : t("pointersMismatch", { n: broken.length })}
         </span>
       </div>
 
@@ -333,10 +338,10 @@ export function CommunityWall({caps, feed, following, profile, viewer}: {caps: C
         <table>
           <thead>
             <tr>
-              <th>Post</th>
-              <th>Likes</th>
-              <th>Replies</th>
-              <th>Reposts</th>
+              <th>{t("thPost")}</th>
+              <th>{t("thLikes")}</th>
+              <th>{t("thReplies")}</th>
+              <th>{t("thReposts")}</th>
               <th />
             </tr>
           </thead>
@@ -348,7 +353,7 @@ export function CommunityWall({caps, feed, following, profile, viewer}: {caps: C
               <tr>
                 <td colSpan={5}>
                   <span className="muted">
-                    Nothing reaches you yet. Follow an account, or publish the first post — {profile.posts} of {caps.post_max} used.
+                    {t("emptyWall", { posts: profile.posts, max: caps.post_max })}
                   </span>
                 </td>
               </tr>
