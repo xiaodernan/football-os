@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { browserFetch } from "@/lib/api";
@@ -19,6 +20,7 @@ import type { SimOptions, SimRow } from "@/lib/types";
 const NO_SYSTEM = "";
 
 export function SimulatorForm({ options }: { options: SimOptions }) {
+  const t = useTranslations("simulate");
   const router = useRouter();
   const [home, setHome] = useState(options.teams[0]?.slug ?? "");
   const [away, setAway] = useState(options.teams[1]?.slug ?? "");
@@ -53,7 +55,7 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
     setError(null);
     const parsed = seed.trim() === "" ? undefined : Number(seed.trim());
     if (parsed !== undefined && (!Number.isInteger(parsed) || parsed < 0 || parsed > 2_147_483_647)) {
-      setError("A seed has to be a whole number between 0 and 2,147,483,647 — or blank, so the server picks one and stores it.");
+      setError(t("seedError"));
       setBusy(false);
       return;
     }
@@ -74,7 +76,7 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
       return;
     }
     if (!result.data.path) {
-      setError("The server played the match but returned no link to its report.");
+      setError(t("noPathError"));
       setBusy(false);
       return;
     }
@@ -86,24 +88,24 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
     <div className="stack sim-form">
       <div className="sim-fixtures">
         <label className="stack-sm">
-          <span className="eyebrow">Home</span>
-          <select aria-label="Home club" className="input" onChange={(event) => setHome(event.target.value)} value={home}>
+          <span className="eyebrow">{t("home")}</span>
+          <select aria-label={t("ariaHomeClub")} className="input" onChange={(event) => setHome(event.target.value)} value={home}>
             {options.teams.map((team) => (
               <option key={team.team_id} value={team.slug}>
-                {team.name} · {team.formation} · {team.overall} overall
+                {t("teamOption", { name: team.name, formation: team.formation, overall: team.overall })}
               </option>
             ))}
           </select>
         </label>
-        <button className="btn btn--ghost btn--sm sim-swap" onClick={swap} title="Play the tie the other way round" type="button">
-          ⇄ Swap
+        <button className="btn btn--ghost btn--sm sim-swap" onClick={swap} title={t("swapTitle")} type="button">
+          {t("swap")}
         </button>
         <label className="stack-sm">
-          <span className="eyebrow">Away</span>
-          <select aria-label="Away club" className="input" onChange={(event) => setAway(event.target.value)} value={away}>
+          <span className="eyebrow">{t("away")}</span>
+          <select aria-label={t("ariaAwayClub")} className="input" onChange={(event) => setAway(event.target.value)} value={away}>
             {options.teams.map((team) => (
               <option key={team.team_id} value={team.slug}>
-                {team.name} · {team.formation} · {team.overall} overall
+                {t("teamOption", { name: team.name, formation: team.formation, overall: team.overall })}
               </option>
             ))}
           </select>
@@ -112,9 +114,9 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
 
       <div className="sim-fixtures">
         <label className="stack-sm">
-          <span className="eyebrow">Home tactical system</span>
-          <select aria-label="Home tactical system" className="input" onChange={(event) => setHomeSystem(event.target.value)} value={homeSystem}>
-            <option value={NO_SYSTEM}>Club&apos;s own formation — no authored shape</option>
+          <span className="eyebrow">{t("homeSystem")}</span>
+          <select aria-label={t("homeSystem")} className="input" onChange={(event) => setHomeSystem(event.target.value)} value={homeSystem}>
+            <option value={NO_SYSTEM}>{t("ownFormation")}</option>
             {homeSystems.map((system) => (
               <option key={system.slug} value={system.slug}>
                 {system.name}
@@ -123,9 +125,9 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
           </select>
         </label>
         <label className="stack-sm">
-          <span className="eyebrow">Away tactical system</span>
-          <select aria-label="Away tactical system" className="input" onChange={(event) => setAwaySystem(event.target.value)} value={awaySystem}>
-            <option value={NO_SYSTEM}>Club&apos;s own formation — no authored shape</option>
+          <span className="eyebrow">{t("awaySystem")}</span>
+          <select aria-label={t("awaySystem")} className="input" onChange={(event) => setAwaySystem(event.target.value)} value={awaySystem}>
+            <option value={NO_SYSTEM}>{t("ownFormation")}</option>
             {awaySystems.map((system) => (
               <option key={system.slug} value={system.slug}>
                 {system.name}
@@ -137,35 +139,33 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
 
       <div className="row wrap sim-controls">
         <label className="stack-sm">
-          <span className="eyebrow">Minutes</span>
-          <select aria-label="Match length" className="input" onChange={(event) => setMinutes(Number(event.target.value))} value={minutes}>
+          <span className="eyebrow">{t("minutes")}</span>
+          <select aria-label={t("ariaMatchLength")} className="input" onChange={(event) => setMinutes(Number(event.target.value))} value={minutes}>
             {options.engine.minute_choices.map((choice) => (
               <option key={choice} value={choice}>
-                {choice}&apos; · {Math.ceil(choice / options.engine.block_minutes)} blocks
+                {t("minuteOption", { minutes: choice, blocks: Math.ceil(choice / options.engine.block_minutes) })}
               </option>
             ))}
           </select>
         </label>
         <label className="stack-sm">
-          <span className="eyebrow">Seed (optional)</span>
+          <span className="eyebrow">{t("seedLabel")}</span>
           <input
-            aria-label="Seed"
+            aria-label={t("ariaSeed")}
             className="input"
             inputMode="numeric"
             onChange={(event) => setSeed(event.target.value)}
-            placeholder="blank: the server picks and stores one"
+            placeholder={t("seedPlaceholder")}
             value={seed}
           />
         </label>
         <button className="btn btn--primary" disabled={busy || options.teams.length < 2} onClick={submit} type="button">
-          {busy ? "Playing…" : "Play match"}
+          {busy ? t("playing") : t("playMatch")}
         </button>
       </div>
 
       <p className="muted world-section-note">
-        A tactical system adds the metres the Tactical Lab measured from its eleven coordinates; without one the match is played
-        from the club&apos;s own formation and those inputs stay empty. The seed is kept with the match, so the same fixture and
-        seed replay to the same report — {options.engine.calibration}
+        {t("formNote", { calibration: options.engine.calibration })}
       </p>
       {error && (
         <p className="notice notice--warn" role="status">
