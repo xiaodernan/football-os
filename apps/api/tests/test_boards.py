@@ -103,7 +103,7 @@ class TestCreateAndMeasure:
             mutated = [dict(row) for row in rows]
             mutated[5] = {**mutated[5], "x": bad}
             problems = problems_with(mutated, label="phase_in")
-            assert any("finite metres" in problem for problem in problems), (bad, problems)
+            assert any("finite metres" in problem for problem in problems), f"a coordinate of {bad!r} was accepted; the problems read {problems!r}"
 
     def test_an_origin_that_does_not_exist_is_refused(self, auth_client) -> None:  # type: ignore[no-untyped-def]
         response = auth_client.post(
@@ -155,7 +155,7 @@ class TestOwnership:
                 API,
                 json={"name": f"Board {index:02d}", "phase_in": _positions("4-3-3-press-high"), "phase_out": _positions("4-3-3-press-high", "phase_out")},
             )
-            assert response.status_code == 201, (index, response.text)
+            assert response.status_code == 201, f"board {index!r} of 24 was not created; the answer read {response.text!r}"
         overflow = auth_client.post(API, json={"name": "Board 24", "phase_in": _positions("4-3-3-press-high"), "phase_out": _positions("4-3-3-press-high", "phase_out")})
         assert overflow.status_code == 409
         assert overflow.json()["detail"]["code"] == "board_limit"
