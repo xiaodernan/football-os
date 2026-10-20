@@ -49,13 +49,14 @@ export default async function PortfolioPage() {
   if (!user) redirect("/login?next=%2Fportfolio");
 
   const tn = await getTranslations("nav");
+  const td = await getTranslations("portfolio");
   const [rules, cv, shares] = await Promise.all([
     serverFetch<PortfolioRules>("/portfolio/rules"),
     serverFetch<PortfolioCv>("/portfolio/cv"),
     serverFetch<PortfolioShareLedger>("/portfolio/shares"),
   ]);
-  if (!rules.ok) return <WorldUnavailable detail={rules.error.message} message="The CV rulebook door did not answer, so this page has no vocabulary to render against." title={tn("footballCv")} />;
-  if (!cv.ok) return <WorldUnavailable detail={cv.error.message} message="The CV door did not answer, so there is nothing to print." title={tn("footballCv")} />;
+  if (!rules.ok) return <WorldUnavailable detail={rules.error.message} message={td("rulesUnavailable")} title={tn("footballCv")} />;
+  if (!cv.ok) return <WorldUnavailable detail={cv.error.message} message={td("cvUnavailable")} title={tn("footballCv")} />;
 
   const publishedOrder = rules.data.sections.map(row => row.section).join(" → ");
   const paintedOrder = cv.data.sections.map(row => row.section).join(" → ");
@@ -66,23 +67,34 @@ export default async function PortfolioPage() {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/", label: tn("home") }}
-        eyebrow={`${cv.data.account.display_name} · ${cv.data.counts.filled} of ${cv.data.counts.sections} sections filled`}
-        lede="A CV in this build stores nothing: each of the ten sections is a read of rows another tier already writes, counted from the formula printed beside it at the moment you ask. Two of the ten cannot be filled here, and they print the reason and the tables they would need rather than a zero."
+        eyebrow={td("eyebrow", {
+          name: cv.data.account.display_name,
+          filled: cv.data.counts.filled,
+          total: cv.data.counts.sections,
+        })}
+        lede={td("lede")}
         title={tn("footballCv")}
       />
 
-      <Panel eyebrow={cv.data.has_player ? `player ${cv.data.player?.id} · visibility ${cv.data.player?.visibility}` : "no player row on this account yet"} title="Whose CV this is">
+      <Panel
+        eyebrow={
+          cv.data.has_player
+            ? td("playerRow", { id: cv.data.player?.id ?? "", visibility: cv.data.player?.visibility ?? "" })
+            : td("noPlayerRow")
+        }
+        title={td("whoseTitle")}
+      >
         {cv.data.has_player ? (
           <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
-            <li className="muted" style={{ fontSize: "0.86rem" }}>name · {cv.data.player?.name}</li>
-            <li className="muted" style={{ fontSize: "0.86rem" }}>position · {cv.data.player?.position}</li>
-            <li className="muted" style={{ fontSize: "0.86rem" }}>origin of the rows · {cv.data.player?.data_origin}</li>
+            <li className="muted" style={{ fontSize: "0.86rem" }}>{td("rowName", { value: cv.data.player?.name ?? "" })}</li>
+            <li className="muted" style={{ fontSize: "0.86rem" }}>{td("rowPosition", { value: cv.data.player?.position ?? "" })}</li>
+            <li className="muted" style={{ fontSize: "0.86rem" }}>{td("rowOrigin", { value: cv.data.player?.data_origin ?? "" })}</li>
           </ul>
         ) : (
           <p className="muted" style={{ fontSize: "0.86rem" }}>
             {cv.data.sections.find(row => row.section === "position")?.missing_because ?? ""}{" "}
             <Link className="world-link" href="/my-football">
-              Open your player identity
+              {td("openPlayerIdentity")}
             </Link>
             .
           </p>
@@ -95,27 +107,33 @@ export default async function PortfolioPage() {
         rules={rules.data}
       />
 
-      <Panel eyebrow="rendered on demand · no document or figure is stored" title="PDF">
+      <Panel eyebrow={td("pdfEyebrow")} title={td("pdfTitle")}>
         <div className="row wrap" style={{ alignItems: "center", gap: "0.75rem" }}>
           <a className="btn btn--primary" data-portfolio-cv-pdf download href="/api/v1/portfolio/cv.pdf">
-            Download Football CV
+            {td("downloadCv")}
           </a>
           <span className="muted" style={{ fontSize: "0.84rem" }}>
-            The PDF is rendered from the live read above and returned without a stored copy.
+            {td("pdfNote")}
           </span>
         </div>
       </Panel>
 
-      <Panel eyebrow={`${cv.data.counts.sections} sections · ${cv.data.counts.filled} filled · ${cv.data.counts.unfilled.length} not filled · ${origins.join(" · ")}`} title="Order, and what is missing">
+      <Panel
+        eyebrow={td("orderEyebrow", {
+          sections: cv.data.counts.sections,
+          filled: cv.data.counts.filled,
+          unfilled: cv.data.counts.unfilled.length,
+          origins: origins.join(" · "),
+        })}
+        title={td("orderTitle")}
+      >
         <p className="muted" style={{ fontSize: "0.85rem" }}>
-          {orderAgrees
-            ? "The CV arrives in the same order the rules door publishes its sections in: "
-            : "The CV arrives in a different order than the rules door publishes: "}
+          {orderAgrees ? td("orderAgrees") : td("orderDiffers")}
           <span className="mono">{paintedOrder}</span>
         </p>
         {cv.data.counts.unfilled.length > 0 && (
           <p className="muted" style={{ fontSize: "0.85rem" }}>
-            Not filled: <span className="mono">{cv.data.counts.unfilled.join(", ")}</span>
+            {td("notFilled", { sections: cv.data.counts.unfilled.join(", ") })}
           </p>
         )}
       </Panel>
@@ -124,13 +142,19 @@ export default async function PortfolioPage() {
         <PortfolioSectionPanel key={section.section} section={section} />
       ))}
 
-      <Panel eyebrow={`${Object.keys(rules.data.public_outputs).length} outputs §38 permits · ${Object.values(rules.data.public_outputs).filter(line => line.startsWith("not in this build")).length} absent from this build`} title="What §38 allows to be public">
+      <Panel
+        eyebrow={td("publicEyebrow", {
+          count: Object.keys(rules.data.public_outputs).length,
+          absent: Object.values(rules.data.public_outputs).filter(line => line.startsWith("not in this build")).length,
+        })}
+        title={td("publicTitle")}
+      >
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Output</th>
-                <th scope="col">State</th>
+                <th scope="col">{td("thOutput")}</th>
+                <th scope="col">{td("thState")}</th>
               </tr>
             </thead>
             <tbody>
@@ -145,7 +169,10 @@ export default async function PortfolioPage() {
         </div>
       </Panel>
 
-      <Panel eyebrow={`${Object.keys(cv.data.formulas).length} expressions · every counted figure names one`} title="How each figure is folded">
+      <Panel
+        eyebrow={td("formulasEyebrow", { count: Object.keys(cv.data.formulas).length })}
+        title={td("formulasTitle")}
+      >
         <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
           {Object.entries(cv.data.formulas).map(([name, expression]) => (
             <li className="muted" data-formula={name} key={name} style={{ fontSize: "0.85rem" }}>
@@ -155,19 +182,25 @@ export default async function PortfolioPage() {
         </ul>
       </Panel>
 
-      <Panel eyebrow={`${Object.keys(rules.data.refusal_answers).length} refusal code(s) · ${rules.data.routes.length} doors`} title="What a door here refuses">
+      <Panel
+        eyebrow={td("refusalsEyebrow", {
+          count: Object.keys(rules.data.refusal_answers).length,
+          doors: rules.data.routes.length,
+        })}
+        title={td("refusalsTitle")}
+      >
         <p className="muted" style={{ fontSize: "0.86rem" }}>
           {Object.keys(rules.data.refusal_answers).length === 0
-            ? "This tier registers no refusal code in the project’s one answer table: the only question a door asks is whether the caller has a session, and a section with no rows behind it is an answer, not a refusal."
-            : "Every code this tier publishes answers with the status the one table gives it."}
+            ? td("noRefusalCodes")
+            : td("refusalCodes")}
         </p>
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Method</th>
-                <th scope="col">Path</th>
-                <th scope="col">Door</th>
+                <th scope="col">{td("thMethod")}</th>
+                <th scope="col">{td("thPath")}</th>
+                <th scope="col">{td("thDoor")}</th>
               </tr>
             </thead>
             <tbody>

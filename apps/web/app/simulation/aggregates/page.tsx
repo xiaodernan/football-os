@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { WorldHead, WorldUnavailable } from "@/components/world";
@@ -10,11 +11,14 @@ import type { CompetitionList, SimAggLeagueRules } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Simulation aggregates",
-  description: "Cross-career league ledgers and player aggregates, summed from sim_events.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("simulationAggregates");
+  return {
+    title: t("indexMetaTitle"),
+    description: t("indexMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * The index the two aggregate doors' back links promised: `/simulation/aggregates/league` and
@@ -25,6 +29,8 @@ export const metadata: Metadata = {
  */
 export default async function AggregatesIndexPage() {
   const user = await currentUser();
+
+  const t = await getTranslations("simulationAggregates");
   if (!user) redirect("/login?next=%2Fsimulation%2Faggregates");
 
   const [comps, rules] = await Promise.all([
@@ -35,13 +41,13 @@ export default async function AggregatesIndexPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/simulate", label: "Simulation" }}
-        eyebrow="Cross-career aggregates · summed, never stored"
-        title="Simulation aggregates"
-        lede="Two read-only doors over the match events every career stored. Nothing here is written: a ledger is a sum over sim_events rows, recomputed on each request, and its consistency check is printed beside it."
+        back={{ href: "/simulate", label: t("backSimulation") }}
+        eyebrow={t("indexEyebrow")}
+        title={t("indexTitle")}
+        lede={t("indexLede")}
       />
 
-      <Panel eyebrow="League ledgers" title="One ledger per competition">
+      <Panel eyebrow={t("leagueLedgersEyebrow")} title={t("leagueLedgersTitle")}>
         {comps.ok ? (
           <div className="stack-sm">
             <ul className="list">
@@ -57,42 +63,39 @@ export default async function AggregatesIndexPage() {
               ))}
             </ul>
             <p className="muted world-section-note">
-              A competition whose careers stored no events still answers — its totals are zero, and the page says so rather than
-              pretending the season never happened.
+              {t("leagueLedgersNote")}
             </p>
           </div>
         ) : (
-          <WorldUnavailable message={comps.message} title="League ledgers" />
+          <WorldUnavailable message={comps.message} title={t("leagueLedgersUnavailableTitle")} />
         )}
       </Panel>
 
-      <Panel eyebrow="Player aggregates" title="One ledger per player">
+      <Panel eyebrow={t("playerAggregatesEyebrow")} title={t("playerAggregatesTitle")}>
         <div className="stack-sm">
           <p className="muted">
-            The player door aggregates one player&apos;s events across every career whose fixtures they appeared in. It is reached from a
-            player, not from a list: the world&apos;s player pages are the way in.
+            {t("playerAggregatesNote")}
           </p>
           <Link className="btn btn--sm" href="/world/players">
-            Browse the world&apos;s players
+            {t("browsePlayers")}
           </Link>
         </div>
       </Panel>
 
       {rules.ok && (
-        <Panel eyebrow="The vocabulary door" title="What the rules endpoint publishes">
+        <Panel eyebrow={t("vocabularyEyebrow")} title={t("vocabularyTitle")}>
           <dl className="world-kv">
             <div className="world-kv__row">
-              <dt>node kinds</dt>
+              <dt>{t("nodeKinds")}</dt>
               <dd className="mono">{rules.data.node_kinds.join(", ")}</dd>
             </div>
             <div className="world-kv__row">
-              <dt>edge verbs</dt>
+              <dt>{t("edgeVerbs")}</dt>
               <dd className="mono">{rules.data.edge_verbs.join(", ")}</dd>
             </div>
           </dl>
           <p className="muted world-section-note" style={{ marginTop: "0.7rem" }}>
-            The same vocabulary the graph surface walks, printed here because an aggregate that will not name its own shape is a number
-            with no address.
+            {t("vocabularyNote")}
           </p>
         </Panel>
       )}
