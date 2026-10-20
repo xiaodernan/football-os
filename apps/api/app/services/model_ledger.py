@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import UTC
-
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import new_public_id
-from app.models import ModelCall
+from app.core.timeutil import utc_midnight
+from app.models import ModelCall, utc_today
 from app.providers import LlmResult
 
 
@@ -34,11 +33,9 @@ def record_model_call(db: Session, *, result: LlmResult, feature: str, user_id: 
 
 
 def spend_today_usd(db: Session) -> float:
-    from datetime import datetime
-
     from sqlalchemy import func, select
 
-    start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    start = utc_midnight(utc_today())
     return float(db.scalar(select(func.coalesce(func.sum(ModelCall.actual_cost_usd), 0.0)).where(ModelCall.created_at >= start)) or 0.0)
 
 

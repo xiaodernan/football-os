@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password, new_public_id
-from app.models import User, UserPlayer
+from app.models import User, UserPlayer, utc_today
 from app.services.attributes import derive_archetype, derive_baseline
 from app.services.progression import refresh_derived_state
 from app.services.training_catalog import sync_catalog
@@ -62,4 +60,4 @@ def ensure_demo_account(db: Session, *, email: str, password: str) -> UserPlayer
 
 
 def today_str() -> str:
-    return date.today().isoformat()
+    return utc_today().isoformat()

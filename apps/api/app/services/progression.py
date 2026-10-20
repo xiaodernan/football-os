@@ -8,13 +8,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import ALL_ATTRIBUTES, AttributeChange, TrainingDrill, TrainingSession, User, UserPlayer, XpEvent, utcnow
+from app.core.timeutil import utc_midnight
+from app.models import ALL_ATTRIBUTES, AttributeChange, TrainingDrill, TrainingSession, User, UserPlayer, XpEvent, utc_today, utcnow
 
 # Guardrails keep progression honest: no single session can inflate a player.
 MAX_DAILY_XP = 400
@@ -59,12 +60,12 @@ def xp_for_next_level(level_number: int) -> int:
 
 def update_streak(user: User) -> tuple[int, bool]:
     """Returns (streak, changed). Streak anchors to ISO date strings."""
-    today = date.today().isoformat()
+    today = utc_today().isoformat()
     if user.streak_anchor_date == today:
         return user.streak_days, False
     from datetime import timedelta
 
-    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    yesterday = (utc_today() - timedelta(days=1)).isoformat()
     if user.streak_anchor_date == yesterday and user.streak_days > 0:
         user.streak_days += 1
     else:
@@ -231,4 +232,4 @@ def complete_session(
 
 
 def _today_start() -> datetime:
-    return datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    return utc_midnight(utc_today())

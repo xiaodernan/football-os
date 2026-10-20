@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.security import current_user, ownership_or_admin
+from app.core.timeutil import utc_midnight
 from app.models import (
     Achievement,
     AttributeChange,
@@ -20,6 +21,7 @@ from app.models import (
     UserAchievement,
     UserPlayer,
     XpEvent,
+    utc_today,
 )
 from app.services.attributes import ATTRIBUTES
 from app.services.progression import level_from_xp, xp_for_next_level
@@ -45,7 +47,7 @@ def overview(player_id: str | None = Query(default=None), db: Session = Depends(
             select(func.count(TrainingSession.id)).where(
                 TrainingSession.player_id == player.id,
                 TrainingSession.status == "completed",
-                TrainingSession.completed_at >= (date.today() - timedelta(days=7)).isoformat(),
+                TrainingSession.completed_at >= utc_midnight(utc_today() - timedelta(days=7)),
             )
         )
         or 0
@@ -96,9 +98,9 @@ def overview(player_id: str | None = Query(default=None), db: Session = Depends(
 @router.get("/timeline")
 def timeline(player_id: str | None = Query(default=None), days: int = Query(default=30, ge=7, le=180), db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
     player = _player_or_404(db, user, player_id)
-    since = date.today() - timedelta(days=days)
+    since = utc_today() - timedelta(days=days)
     sessions = db.scalars(select(TrainingSession).where(TrainingSession.player_id == player.id, TrainingSession.planned_date >= since.isoformat()).order_by(TrainingSession.planned_date)).all()
-    changes = db.scalars(select(AttributeChange).where(AttributeChange.player_id == player.id, AttributeChange.created_at >= str(since)).order_by(AttributeChange.created_at)).all()
+    changes = db.scalars(select(AttributeChange).where(AttributeChange.player_id == player.id, AttributeChange.created_at >= utc_midnight(since)).order_by(AttributeChange.created_at)).all()
     by_attribute: dict[str, list[dict[str, Any]]] = {}
     for change in changes:
         by_attribute.setdefault(change.attribute, []).append({"at": change.created_at.isoformat(), "after": change.after, "delta": change.delta, "reason": change.reason})

@@ -8,13 +8,14 @@ DEMO MODE the phrasing is template based and labelled as such.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import timedelta
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import ATTRIBUTES, AttributeChange, TrainingDrill, TrainingSession, User, UserPlayer, XpEvent
+from app.core.timeutil import utc_midnight
+from app.models import ATTRIBUTES, AttributeChange, TrainingDrill, TrainingSession, User, UserPlayer, XpEvent, utc_today
 from app.services.achievements import award  # noqa: F401  (kept for parity with progression)
 from app.services.attributes import ARCHETYPES, derive_archetype
 from app.services.training_catalog import DRILLS
@@ -99,13 +100,13 @@ def _drill_rows(db: Session) -> list[dict[str, Any]]:
 
 
 def _recent_categories(db: Session, user_id: str, days: int = 5) -> dict[str, int]:
-    since = date.today() - timedelta(days=days)
+    since = utc_today() - timedelta(days=days)
     rows = db.execute(
         select(TrainingDrill.category, XpEvent.created_at)
         .select_from(XpEvent)
         .join(TrainingSession, TrainingSession.id == XpEvent.source_id)
         .join(TrainingDrill, TrainingDrill.id == TrainingSession.drill_id)
-        .where(XpEvent.user_id == user_id, XpEvent.created_at >= str(since))
+        .where(XpEvent.user_id == user_id, XpEvent.created_at >= utc_midnight(since))
     ).all()
     counts: dict[str, int] = {}
     for category, _created in rows:
@@ -134,7 +135,7 @@ def recommend_today(
     has_wall = True
     candidates: list[tuple[float, dict[str, Any], list[str]]] = []
     recent = _recent_categories(db, user.id)
-    training_load = sum(db.scalars(select(XpEvent.amount).where(XpEvent.user_id == user.id, XpEvent.created_at >= str(date.today() - timedelta(days=1)))).all())
+    training_load = sum(db.scalars(select(XpEvent.amount).where(XpEvent.user_id == user.id, XpEvent.created_at >= utc_midnight(utc_today() - timedelta(days=1)))).all())
 
     for drill in _drill_rows(db):
         reasons: list[str] = []
@@ -248,7 +249,7 @@ def build_plan(db: Session, player: UserPlayer, *, horizon_days: int, available_
             days.append(
                 {
                     "day": day_index + 1,
-                    "date": (date.today() + timedelta(days=day_index)).isoformat(),
+                    "date": (utc_today() + timedelta(days=day_index)).isoformat(),
                     "type": "recovery",
                     "sessions": [],
                     "note": "Mobility, hydration and 10 min video review. Recovery is part of the plan.",
@@ -256,7 +257,7 @@ def build_plan(db: Session, player: UserPlayer, *, horizon_days: int, available_
             )
             continue
         if days_per_week <= 3 and iso_weekday in (1, 3):
-            days.append({"day": day_index + 1, "date": (date.today() + timedelta(days=day_index)).isoformat(), "type": "rest", "sessions": [], "note": "Scheduled rest day to keep load safe."})
+            days.append({"day": day_index + 1, "date": (utc_today() + timedelta(days=day_index)).isoformat(), "type": "rest", "sessions": [], "note": "Scheduled rest day to keep load safe."})
             continue
         capacity = max(1, int(available_minutes // 18))
         sessions = []
@@ -285,7 +286,7 @@ def build_plan(db: Session, player: UserPlayer, *, horizon_days: int, available_
         days.append(
             {
                 "day": day_index + 1,
-                "date": (date.today() + timedelta(days=day_index)).isoformat(),
+                "date": (utc_today() + timedelta(days=day_index)).isoformat(),
                 "type": "test" if is_test else "training",
                 "sessions": sessions,
                 "note": "Testing week: record the drill's test metric so progress is measurable." if is_test else "",

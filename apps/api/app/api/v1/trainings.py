@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.security import current_user, limit, new_public_id, ownership_or_admin
-from app.models import TrainingDrill, TrainingSession, User, UserPlayer
+from app.models import TrainingDrill, TrainingSession, User, UserPlayer, utc_today
 from app.schemas import CompleteIn, DrillOut, PlanSessionIn
 from app.services import coach_engine
 from app.services.progression import complete_session
@@ -81,7 +79,7 @@ def plan_session(
         user_id=user.id,
         player_id=player.id,
         drill_id=drill.id,
-        planned_date=date.today().isoformat(),
+        planned_date=utc_today().isoformat(),
         recommendation_reasons=reasons,
     )
     db.add(session)
