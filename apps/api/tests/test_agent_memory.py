@@ -110,25 +110,36 @@ class TestAgentMemoryCrud:
 
 class TestAgentMemoryTtl:
     def test_expired_memory_not_visible(self) -> None:
-        """A memory with short TTL should disappear after expiration."""
+        """A memory with short TTL should disappear after expiration.
+
+        Two keys, because one one-second clock cannot answer both halves. Measured 2026-10-20 on
+        this host: the first GET arrived 1.7s after the SET, so the key that was meant to prove
+        "visible immediately" had already expired and the case failed on a machine where
+        registration plus two PostgreSQL round trips cost more than the TTL. The visibility claim
+        belongs to a key whose TTL is hours; the expiry claim belongs to a key whose only
+        assertion is that it is gone after the sleep.
+        """
         client = _client()
 
-        # Set with 1 second TTL
         client.post(
             "/api/v1/agents/memory/set",
             json={"key": "short_lived", "value": {"expires": True}, "ttl_seconds": 1},
         )
+        client.post(
+            "/api/v1/agents/memory/set",
+            json={"key": "long_lived", "value": {"persists": True}, "ttl_seconds": 3600},
+        )
 
-        # Should be visible immediately
-        resp = client.get("/api/v1/agents/memory/get?key=short_lived")
-        assert resp.status_code == 200
+        # The long-lived key is visible; the short-lived one is only asserted to be gone.
+        resp = client.get("/api/v1/agents/memory/get?key=long_lived")
+        assert resp.status_code == 200, f"a 3600-second memory read {resp.status_code}: {resp.text}"
 
         # Wait for expiration
         time.sleep(1.5)
 
         # Should be gone now
         resp = client.get("/api/v1/agents/memory/get?key=short_lived")
-        assert resp.status_code == 404
+        assert resp.status_code == 404, f"an expired memory read {resp.status_code}: {resp.text}"
 
     def test_non_expired_memory_visible(self) -> None:
         """A memory with long TTL should remain visible."""
