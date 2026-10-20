@@ -84,8 +84,10 @@ Verification commands: `pytest` and `python -m evals.run_rag_eval` (API, both da
 - Every video detection names the provider that produced it, and that provider publishes what it cannot see. Nobody's
   clip is crawlable: reports are `noindex` and robots keeps `/video` out of the crawl.
 - No copyrighted assets, no scraped paywalled data, no fabricated citations.
-- The UI speaks English only today. `GET /capabilities` answers `locales: ["en","zh","zh-TW"]` as the §81 target, not as a
-  shipped feature — the translation layer itself is not built yet.
+- The interface answers in English, Simplified Chinese and Traditional Chinese: `GET /capabilities` names the
+  catalogues the app will actually serve, `middleware.ts` picks one per request, and every page body reads its
+  copy from `apps/web/messages/*.json` — `apps/api/tests/test_locale_claims.py` holds the published list to the
+  files, and `apps/web/scripts/qa-i18n-literals.mjs` holds the pages to the catalogues.
 
 ## Documentation
 

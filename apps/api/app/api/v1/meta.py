@@ -50,8 +50,10 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
 
     M3 reports what the database actually holds rather than what the code could serve: the flag
     flips to true only once the synthetic world is present in full, because a half-written world
-    must not be rendered as if it were real (spec §65, `DATA_POLICY.md`). `locales` likewise lists
-    only the language the UI ships today; §81 translations are `locales_planned`.
+    must not be rendered as if it were real (spec §65, `DATA_POLICY.md`). `locales` names every
+    catalogue this API answers in — a language is live as soon as its catalogue is not a copy of
+    English — and `tests/test_locale_claims.py` holds it to that in both directions, so neither a
+    copy nor an unadvertised translation survives a green suite.
     """
     video = video_readiness(db)
     engine = engine_description()

@@ -14,9 +14,12 @@ import type {
 } from "@/lib/types";
 
 /**
- * Only routes that render real content for a signed-out visitor are listed. `/` and every
- * `My Football` area 302 to /login without a session, so pointing a crawler at them would
- * publish redirect chains as if they were pages.
+ * Only routes that render real content for a signed-out visitor are listed. Every session-gated
+ * route answers 307 to `/login?next=…` for a signed-out visitor, so pointing a crawler at those
+ * would publish a redirect chain as if it were a page. `/` is not listed either, for a different
+ * reason: it answers 200 to a signed-out visitor but declares no canonical of its own, and both of
+ * its calls to action lead to `/register` or into a session-gated route (`docs/SEO_VERIFICATION.md`
+ * §3).
  *
  * The world rows are read from the same list endpoints the pages use — with the API's own
  * `path` field — so the sitemap cannot advertise a slug that no page answers.

@@ -102,9 +102,9 @@ What is true now, and how a reader checks it:
   `Accept-Language` and then the account's own column; `i18n/request.ts` loads the matching
   catalogue; the nav switcher writes the cookie; `GET /capabilities` names the catalogues it
   serves, and `tests/test_locale_claims.py` holds that field to the files in both directions.
-* **The catalogues** — `en.json`, `zh.json` and `zh-TW.json` carry the same 2890 keys, and the two
+* **The catalogues** — `en.json`, `zh.json` and `zh-TW.json` carry the same key set, and the two
   Chinese files are written translations rather than copies. The key counts live in
-  `apps/web/messages/README.md`, which the suite recomputes; the 73 values that are identical in
+  `apps/web/messages/README.md`, which the suite recomputes; the values that are identical in
   both catalogues are technical tokens (a product name, an enum, a unit), not untranslated copy.
 * **The page bodies** — every page reads its copy from a catalogue. The copy gate
   (`apps/web/scripts/qa-i18n-literals.mjs`) walks every `app/**/*.tsx` through the repository's own
@@ -124,9 +124,15 @@ npx tsc --noEmit && npm run lint                       # clean
 NEXT_DIST_DIR=.next-ci npx next build                  # ƒ /sitemap.xml, ƒ /robots.txt
 SITE_URL=http://127.0.0.1:3211 NEXT_DIST_DIR=.next-ci npx next start -p 3211
 curl -s http://127.0.0.1:3211/robots.txt | tail -2     # Host/Sitemap must name 3211
-curl -s http://127.0.0.1:3211/sitemap.xml | grep -c "<loc>"   # 1036 today; 17 when this doc was written
-QA_BASE=http://127.0.0.1:3211 node scripts/visual-qa.mjs      # 164/164 today — one walk for every milestone; this run recorded 66/66, exit 0
+curl -s http://127.0.0.1:3211/sitemap.xml | grep -c "<loc>"   # 10 fixed + one per world/knowledge row
+QA_BASE=http://127.0.0.1:3211 node scripts/visual-qa.mjs      # one walk for every milestone; this doc's run recorded 66/66, exit 0
 ```
+
+The `<loc>` count is not a constant, and this line used to print one (`1036 today`) with no basis beside it. It is
+the 10 entries of `PUBLIC` in `app/sitemap.ts` plus one `<loc>` per row the API returns for competitions, teams,
+players, matches, news, systems and knowledge documents — so it follows the seeded world: 1036 at the runs M3, M4 and
+this document recorded, and **10 on an unseeded box**, where every world list answers nothing and only the fixed
+public routes remain. A reader who counts 10 has not found drift; a reader who counts fewer than 10 has.
 
 The QA walk exercises the whole M1+M2 loop against the **production build**, not a hot-reloaded dev server, so the
 SEO assertions above are read from server-rendered HTML.

@@ -25,6 +25,15 @@ the over-claiming check, a translated catalogue sits unadvertised forever; with 
 discards the earlier one silently, so a key set compared as *parsed objects* cannot notice that the file declares
 `common.error` twice — which all three catalogues did, four times over. And a catalogue that is *short* is worse
 than one that is absent: a missing key is a blank on a page in a language nobody on this project reads.
+
+**The prose is part of the claim.** Five carriers describe these catalogues in the present tense, and on
+2026-10-21 they named three different denominators for the same file — 288, 393 and 2890 — while the repo's front
+door still said the translation layer was not built. A figure in prose has no reader, so the only figure allowed
+to persist is the one `test_the_readme_table_states_the_coverage…` recomputes from the catalogues on every run;
+the others must not state one at all. Dated run records (`PLAN.md`, `ROADMAP.md`, the M3/M4 verification logs) are
+outside that population by identity, not by pattern: a figure measured at a named run is evidence about that run,
+and rewriting it to today's number would destroy the record. `docs/SEO_VERIFICATION.md` is *inside* it: it
+specifies the layer, so its present tense is a claim about today.
 """
 
 from __future__ import annotations
@@ -49,6 +58,41 @@ LANGUAGE_NEUTRAL: frozenset[str] = frozenset({"common.ok"})
 
 #: A JSON leaf line: its indentation, its key, and whatever follows the colon.
 _LEAF = re.compile(r'^(\s*)"([^"]+)":\s*(\{|.*)')
+
+#: The repository root, for the carriers that *describe* these files rather than hold them.
+REPO = Path(__file__).resolve().parents[3]
+
+#: The one place a coverage figure may live, because `test_the_readme_table_recomputes…` below recomputes it.
+README = "apps/web/messages/README.md"
+
+#: Carriers that describe the catalogues in the present tense. A dated run record — `PLAN.md`, `ROADMAP.md`,
+#: `docs/*_VERIFICATION.md` — is exempt by identity, not by pattern: a figure measured at a named run is evidence
+#: about that run, and re-writing it to today's number would destroy the record. What may not happen is a
+#: *undated* sentence about today carrying a number nobody recomputes.
+PROSE_CARRIERS: tuple[str, ...] = ("README.md", "ARCHITECTURE.md", "CONTRIBUTING.md", "apps/api/app/api/v1/meta.py", "docs/SEO_VERIFICATION.md")
+
+#: The exact spellings of the claim that no i18n exists. Contradicted by the tree since 2026-10-01; all three were
+#: live sentences on 2026-10-21, in the two places a reader starts from — the repository README and the SEO record —
+#: while `ARCHITECTURE.md` §6 said i18n was built. Each claim is retired by naming it, so a future edit that writes
+#: it again has to delete this entry first, which is the argument.
+CHARGED_CLAIMS: tuple[tuple[str, str], ...] = (
+    ("README.md", "The UI speaks English only today"),
+    ("README.md", "the translation layer itself is not built yet"),
+    ("docs/SEO_VERIFICATION.md", "## 5. i18n (spec §81) — not built"),
+    ("docs/SEO_VERIFICATION.md", "The UI is English-only"),
+)
+
+#: A coverage fraction as prose writes it: `287/288`, `392 of 393`, `2816 of 2890`.
+_COVERAGE = re.compile(r"(\d{2,5})\s*(?:/\s*|\bof\s+(?:the\s+)?)(\d{2,5})")
+
+#: What makes a line about these files rather than about some other pair of numbers in the same document.
+_NEAR_LOCALE = re.compile(r"zh-TW|zh\.json|`zh`|catalou?gue|locale|key", re.IGNORECASE)
+
+#: The lowest figure the README may state per locale. Floors, not pins: translating a key raises what the catalogue
+#: holds without touching the prose, and a pinned equality would make every translation batch edit this file.
+#: What the pair of assertions below refuses is the direction that lies — a stated count above the real one, or a
+#: denominator that is not the live key population.
+README_FLOORS: dict[str, int] = {"zh": 2816, "zh-TW": 2817}
 
 
 def _flatten(node: Any, prefix: str = "") -> dict[str, str]:
@@ -96,6 +140,17 @@ def _shipped(catalogues: dict[str, dict[str, str]]) -> list[str]:
     """The locales whose catalogue is not merely the English one — what `middleware.ts` will answer in."""
     english = catalogues[FALLBACK]
     return sorted(locale for locale, values in catalogues.items() if locale != FALLBACK and any(values.get(key) != value for key, value in english.items()))
+
+
+def _prose(rel: str) -> list[str]:
+    path = REPO / rel
+    assert path.is_file(), f"the locale carrier {rel} is missing, so the check that reads it is blind"
+    return path.read_text(encoding="utf-8").splitlines()
+
+
+def _coverage_claims(rel: str) -> list[str]:
+    """Lines in a prose carrier that state a locale coverage figure — `287/288`, `392 of 393 keys`."""
+    return [f"{rel}:{i} {line.strip()[:70]!r}" for i, line in enumerate(_prose(rel), 1) if _NEAR_LOCALE.search(line) and _COVERAGE.search(line)]
 
 
 def test_no_catalogue_declares_a_key_twice() -> None:
@@ -162,3 +217,42 @@ def test_the_plan_still_covers_what_ships_and_what_is_promised() -> None:
     # The spec's own three. Removing one from the plan is a scope decision that belongs in a document, not a diff.
     assert {"en", "zh", "zh-TW"} <= set(planned), f"the spec's three locales are not all planned: {planned}"
     assert set(planned) <= set(_catalogues()), f"a planned locale has no catalogue at all: {sorted(set(planned) - set(_catalogues()))}"
+
+
+def test_the_readme_table_states_the_coverage_the_catalogues_actually_have() -> None:
+    """The one figure prose may state about translation progress is recomputed here, from these files.
+
+    Three carriers named three denominators for the same catalogue on the day this case was written — `ARCHITECTURE.md`
+    and `meta.py` said 288, `messages/README.md` said 393, and `en.json` held 2890 keys — and none of them could fail
+    anything, because a number in prose has no reader. The population is what drifts silently: every key added to the
+    interface moves it, so it is pinned to equality. The numerator is pinned below the real count and above a floor,
+    which forbids over-claiming progress without forcing a prose edit every time somebody translates a key.
+    """
+    catalogues = _catalogues()
+    left = _untranslated(catalogues)
+    total = len(catalogues[FALLBACK])
+    lines = _prose(README)
+    for locale in sorted(k for k in catalogues if k != FALLBACK):
+        row = next((line for line in lines if f"`{locale}.json`" in line and line.lstrip().startswith("|")), None)
+        assert row is not None, f"{README} has no table row for {locale}, so nothing recomputes its coverage"
+        found = _COVERAGE.search(row)
+        assert found is not None, f"the {locale} row states no `N of M` figure: {row.strip()[:70]!r}"
+        stated, population = int(found.group(1)), int(found.group(2))
+        translated = total - len(left[locale])
+        assert population == total, f"the {locale} row counts a population of {population}; `en.json` holds {total} keys"
+        assert stated <= translated, f"the {locale} row claims {stated} translated keys, the catalogue holds {translated}"
+        assert stated >= README_FLOORS[locale], f"the {locale} row fell below its floor of {README_FLOORS[locale]}: {stated}"
+
+
+def test_no_other_carrier_states_a_locale_figure() -> None:
+    """A second place to state a figure is a second place to be wrong, so prose names the table instead.
+
+    The regex is pinned to a positive control below: a ban that matches nothing is not a ban, and the two carriers
+    this case was written to cure — `ARCHITECTURE.md:130` and `meta.py:131`, both reading `287/288` — prove it matches
+    the spelling they used.
+    """
+    assert _COVERAGE.search("both Chinese catalogues carry the full key set (`zh` 287/288") is not None
+    offenders = [claim for rel in PROSE_CARRIERS for claim in _coverage_claims(rel)]
+    assert not offenders, f"{len(offenders)} locale figure(s) stated outside {README}, which no reader recomputes: {' · '.join(offenders[:3])}"
+    charged = [f"{rel} carries {text!r}" for rel, text in CHARGED_CLAIMS if any(text in line for line in _prose(rel))]
+    assert not charged, f"a retired claim about i18n is back: {' · '.join(charged)}"
