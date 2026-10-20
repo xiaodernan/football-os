@@ -31,6 +31,7 @@ Files only: no server, no browser, no port — which is why it belongs with the 
 */
 
 import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { createRequire as createRequireForJson } from "node:module";
 import { join, resolve, sep } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -56,7 +57,7 @@ const COMPONENTS = join(WEB, "components");
  *
  * It may only fall.
  */
-const FLOOR_SITES = 350;
+const FLOOR_SITES = 346;
 
 /** The population the walk must find, so a scan that narrows itself cannot pass by finding nothing. */
 const FLOOR_FILES = 70;
@@ -98,6 +99,12 @@ const TECHNICAL = new Set([
   "AI", "API", "CV", "DRI", "FM", "GB", "GPS", "HTML", "HTTP", "ID", "JSON", "MB", "MVP", "PDF",
   "PM", "RPE", "SQL", "TBD", "URL", "UTC", "U19", "U21", "VS", "X", "XGD", "xG", "xT",
 ]);
+
+/**
+ * The catalogue the keys are checked against. The English file is the one that must hold every key:
+ * a locale may lag, but the fallback must not, or a page renders an error instead of a sentence.
+ */
+const CATALOGUE = JSON.parse(readFileSync(join(WEB, "messages", "en.json"), "utf8"));
 
 const files = [];
 const walk = (dir) => {
@@ -143,6 +150,8 @@ const isEnglishCopy = (value) => {
 };
 
 const sites = [];
+/** Per file: the namespaces it binds and the keys it asks for. */
+const keyCalls = new Map();
 let parsed = 0;
 let diagnostics = 0;
 
@@ -154,7 +163,19 @@ for (const file of files) {
   const rel = relOf(file);
   const position = (node) => source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
 
+  const namespaces = new Set();
+  const keys = new Set();
+
   const visit = (node) => {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.arguments.length > 0) {
+      const callee = node.expression.text;
+      const first = node.arguments[0];
+      if ((callee === "useTranslations" || callee === "getTranslations") && ts.isStringLiteral(first)) {
+        namespaces.add(first.text);
+      } else if (/^t[a-z]{0,2}$/.test(callee) && ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
+        keys.add(first.text);
+      }
+    }
     if (ts.isJsxText(node)) {
       const copy = node.text.replace(/\s+/g, " ").trim();
       if (isEnglishCopy(copy)) sites.push({ file: rel, line: position(node), shape: "jsx", copy });
@@ -174,6 +195,7 @@ for (const file of files) {
     ts.forEachChild(node, visit);
   };
   visit(source);
+  keyCalls.set(rel, { namespaces, keys });
 }
 
 const byFile = new Map();
@@ -198,6 +220,29 @@ check(
   `${sites.length} site(s) against a floor of ${FLOOR_SITES}`,
 );
 
+/**
+ * A key the catalogue does not hold is a runtime error, not a build error: next-intl throws
+ * MISSING_MESSAGE the first time the page renders that string. The copy gate counts English
+ * literals; this check is the other half — every key the source asks for is in the catalogue.
+ */
+const missingKeys = [];
+for (const [file, { namespaces, keys }] of keyCalls) {
+  for (const key of keys) {
+    const held = [...namespaces].some((namespace) =>
+      Object.prototype.hasOwnProperty.call(CATALOGUE[namespace] ?? {}, key),
+    );
+    if (!held) missingKeys.push({ file, key, namespaces: [...namespaces].sort() });
+  }
+}
+
+check(
+  "every key the source asks for is in the catalogue",
+  missingKeys.length === 0,
+  missingKeys.length === 0
+    ? `${[...keyCalls.values()].reduce((total, entry) => total + entry.keys.size, 0)} key call(s) checked`
+    : `${missingKeys.length} key(s) the catalogue does not hold`,
+);
+
 for (const [file, count] of [...byFile.entries()].sort((a, b) => (b[1] - a[1]) || (a[0] < b[0] ? -1 : 1))) {
   console.log(`      ${String(count).padStart(3)}  ${file}`);
 }
@@ -208,5 +253,12 @@ if (failed.length) {
   console.log("");
   console.log("Every site above is copy the catalogues do not carry. Wire it to a key, or say why it stays in English.");
   for (const site of sites) console.log(`  ${site.file}:${site.line} [${site.shape}] ${site.copy.slice(0, 90)}`);
+  if (missingKeys.length) {
+    console.log("");
+    console.log("Every key below is asked for and not in the catalogue. next-intl throws MISSING_MESSAGE for it.");
+    for (const missing of missingKeys) {
+      console.log(`  ${missing.file}: ${missing.namespaces.join("/")} has no key ${JSON.stringify(missing.key)}`);
+    }
+  }
   process.exitCode = 1;
 }

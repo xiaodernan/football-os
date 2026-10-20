@@ -130,7 +130,17 @@
     "critical": "嚴重",
     "demoMode": "示範模式",
     "demoModeTitle": "未設定 AI 服務金鑰——輸出由規則引擎產生。",
-    "language": "語言"
+    "language": "語言",
+    "demoData": "示範資料",
+    "aiGenerated": "AI 生成",
+    "confidence": "信賴度 {value}%",
+    "whyChosen": "為什麼這樣選",
+    "dataUnavailable": "資料不可用",
+    "minutesCount": "{count} 分鐘",
+    "difficultyOf": "難度 {value}/5",
+    "xpGain": "+{value} 經驗",
+    "noAiKey": "沒有設定 AI 服務商金鑰；這段文字由確定性規則引擎產生。",
+    "remove": "移除"
   },
   "auth": {
     "signIn": "登入",
@@ -611,7 +621,9 @@
     "searchEmptyNote": "搜尋刻意留空：空查詢什麼都不回傳，而不是列出全部，所以結果數量永遠有意義。",
     "searchTooLong": "查詢請保持在 1 到 120 個字元之間。",
     "searchHitsEyebrow": "“{query}”有 {total} 筆命中",
-    "searchResultsTitle": "結果，按詞條重疊度排序"
+    "searchResultsTitle": "結果，按詞條重疊度排序",
+    "thCompetition": "賽事",
+    "thPos": "位置"
   },
   "coach": {
     "metaTitle": "AI 教練",
@@ -2272,7 +2284,17 @@
     "reportWindow": "{from} — {to}（{days} 天）",
     "tierLimitsSentence": "{members} 名成員與 {teams} 支球隊是 §39 自己的介面所拒絕的邊界 —— {rule}",
     "accountMeterSentence": "{name} 作為帳號在 {plan} 上是另一個主體：",
-    "matrixReadMore": "完整矩陣、上限與拒絕表見"
+    "matrixReadMore": "完整矩陣、上限與拒絕表見",
+    "notTiedToOneTeam": "不綁定某支球隊",
+    "noneNamed": "無",
+    "fixturesDoorMissing": "賽程介面沒有回應，因此這個區塊無法呈現。",
+    "noticesDoorMissing": "通知介面沒有回應，因此這個區塊無法呈現。",
+    "consentsDoorMissing": "監護同意介面沒有回應，因此這個區塊無法呈現。",
+    "curriculaDoorMissing": "課程介面沒有回應，因此這個區塊無法呈現。",
+    "plansDoorMissing": "計畫介面沒有回應，因此這個區塊無法呈現。",
+    "sessionsDoorMissing": "訓練紀錄介面沒有回應，因此這個區塊無法呈現。",
+    "reportsDoorMissing": "報告介面沒有回應，因此這個區塊無法呈現。",
+    "entitlementsDoorMissing": "權益介面沒有回應，因此這個區塊無法呈現。"
   },
   "home": {
     "metaTitle": "觀看。理解。訓練。比賽。管理。成長。",
@@ -2428,7 +2450,8 @@
     "ledgerEmptyNoRows": "這份職業生涯的任何一輪都沒有事件列存檔，所以無從歸類。踢一輪，事件列會隨報告一起到達。",
     "ledgerEmptyAmbiguous": "已追蹤的 {traced} 輪裡，每個事件都在同一套十一人中不止一次點到同一個名字，因此沒有哪一列能認領身分。",
     "ledgerTruncated": "列表在 {total} 人中的 {shown} 人處截斷：其餘的人參與了比賽，卻沒有印出足夠大的事件進入名單。",
-    "carryDecay": "{rounds} 輪，每輪衰減 {decay}"
+    "carryDecay": "{rounds} 輪，每輪衰減 {decay}",
+    "thGoals": "進球"
   },
   "worldPlayer": {
     "metaDescriptionFallback": "FOOTBALL OS 生成足球世界中的球員檔案。",
@@ -2906,7 +2929,8 @@
     "entrantsEyebrow": "{count} 支俱樂部",
     "entrantsTitle": "參賽俱樂部",
     "fixturesEyebrow": "{season} 的 {count} 場賽程",
-    "fixturesTitle": "賽程與結果"
+    "fixturesTitle": "賽程與結果",
+    "thClub": "俱樂部"
   },
   "worldNews": {
     "metaDescriptionFallback": "來自 FOOTBALL OS 生成足球世界的報導。",
@@ -3036,6 +3060,7 @@
     "thSessions": "訓練",
     "programStart": "開始這份計畫",
     "programStarted": "這份計畫已排成你自己的訓練。",
-    "programErased": "這份計畫和它排出的訓練都已抹除。"
+    "programErased": "這份計畫和它排出的訓練都已抹除。",
+    "thNote": "備註"
   }
 }

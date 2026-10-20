@@ -130,7 +130,17 @@
     "critical": "Critical",
     "demoMode": "DEMO MODE",
     "demoModeTitle": "No AI provider key configured — outputs come from the rule engine.",
-    "language": "Language"
+    "language": "Language",
+    "demoData": "DEMO DATA",
+    "aiGenerated": "AI-generated",
+    "confidence": "confidence {value}%",
+    "whyChosen": "Why this was chosen",
+    "dataUnavailable": "Data unavailable",
+    "minutesCount": "{count} min",
+    "difficultyOf": "difficulty {value}/5",
+    "xpGain": "+{value} XP",
+    "noAiKey": "No AI provider key is configured; this text is produced by the deterministic rule engine.",
+    "remove": "Remove"
   },
   "auth": {
     "signIn": "Sign in",
@@ -611,7 +621,9 @@
     "searchEmptyNote": "Search is empty on purpose: an empty query returns nothing rather than a list of everything, so the result count always means something.",
     "searchTooLong": "Keep the query between 1 and 120 characters.",
     "searchHitsEyebrow": "{total} hit(s) for “{query}”",
-    "searchResultsTitle": "Results, ranked by term overlap"
+    "searchResultsTitle": "Results, ranked by term overlap",
+    "thCompetition": "Competition",
+    "thPos": "Pos"
   },
   "coach": {
     "metaTitle": "AI Coach",
@@ -2272,7 +2284,17 @@
     "reportWindow": "{from} — {to} ({days} day(s))",
     "tierLimitsSentence": "{members} members and {teams} teams are what §39's own doors refuse on — {rule}",
     "accountMeterSentence": "{name} as an account is a separate subject on {plan}:",
-    "matrixReadMore": "Read the whole matrix, the caps and the refusal table at"
+    "matrixReadMore": "Read the whole matrix, the caps and the refusal table at",
+    "notTiedToOneTeam": "not tied to one team",
+    "noneNamed": "none",
+    "fixturesDoorMissing": "The fixtures door did not answer, so this panel cannot be drawn.",
+    "noticesDoorMissing": "The notices door did not answer, so this panel cannot be drawn.",
+    "consentsDoorMissing": "The consents door did not answer, so this panel cannot be drawn.",
+    "curriculaDoorMissing": "The curricula door did not answer, so this panel cannot be drawn.",
+    "plansDoorMissing": "The plans door did not answer, so this panel cannot be drawn.",
+    "sessionsDoorMissing": "The sessions door did not answer, so this panel cannot be drawn.",
+    "reportsDoorMissing": "The reports door did not answer, so this panel cannot be drawn.",
+    "entitlementsDoorMissing": "The entitlements door did not answer, so this panel cannot be drawn."
   },
   "home": {
     "metaTitle": "Watch. Understand. Train. Play. Manage. Become.",
@@ -2428,7 +2450,8 @@
     "ledgerEmptyNoRows": "None of this career’s rounds has event rows on file, so there is nothing to group. Play a round and the rows arrive with its report.",
     "ledgerEmptyAmbiguous": "Every event of the {traced} traced round(s) named a player more than once in the same eleven, so no row could claim an identity.",
     "ledgerTruncated": "The list is cut at {shown} names of {total}: the rest played their part without printing an event big enough to reach the top.",
-    "carryDecay": "{rounds} rounds at {decay} decay"
+    "carryDecay": "{rounds} rounds at {decay} decay",
+    "thGoals": "Goals"
   },
   "worldPlayer": {
     "metaDescriptionFallback": "Player profile in the FOOTBALL OS generated football world.",
@@ -2906,7 +2929,8 @@
     "entrantsEyebrow": "{count} clubs",
     "entrantsTitle": "Entrants",
     "fixturesEyebrow": "{count} fixtures in {season}",
-    "fixturesTitle": "Fixtures & results"
+    "fixturesTitle": "Fixtures & results",
+    "thClub": "Club"
   },
   "worldNews": {
     "metaDescriptionFallback": "Report from the FOOTBALL OS generated football world.",
@@ -3036,6 +3060,7 @@
     "thSessions": "Sessions",
     "programStart": "Start this program",
     "programStarted": "The program is planned as your own training sessions.",
-    "programErased": "The program and the sessions it planned are erased."
+    "programErased": "The program and the sessions it planned are erased.",
+    "thNote": "Note"
   }
 }

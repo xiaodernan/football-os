@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import type { Drill } from "@/lib/types";
 
@@ -76,27 +77,31 @@ export function AiBadge({
   model?: string;
   confidence?: number;
 }) {
+  const t = useTranslations("common");
   return (
     <div className="row wrap" style={{ gap: "0.4rem" }}>
       {demo_mode ? (
-        <span className="badge badge--demo" title="No AI provider key is configured; this text is produced by the deterministic rule engine.">
-          DEMO DATA
+        <span className="badge badge--demo" title={t("noAiKey")}>
+          {t("demoData")}
         </span>
       ) : (
-        <span className="badge badge--live">AI-generated</span>
+        <span className="badge badge--live">{t("aiGenerated")}</span>
       )}
       {provider && <span className="chip">{provider}</span>}
       {model && <span className="chip mono">{model}</span>}
-      {typeof confidence === "number" && <span className="chip">confidence {Math.round(confidence * 100)}%</span>}
+      {typeof confidence === "number" && (
+        <span className="chip">{t("confidence", { value: Math.round(confidence * 100) })}</span>
+      )}
     </div>
   );
 }
 
-export function ReasonList({ items, title = "Why this was chosen" }: { items: string[]; title?: string }) {
+export function ReasonList({ items, title }: { items: string[]; title?: string }) {
+  const t = useTranslations("common");
   if (!items?.length) return null;
   return (
     <div className="stack-sm">
-      <span className="eyebrow">{title}</span>
+      <span className="eyebrow">{title ?? t("whyChosen")}</span>
       <ul className="reasons">
         {items.map((item, index) => (
           <li className="reasons__item" key={`${item}-${index}`}>
@@ -123,16 +128,23 @@ export function Empty({ title, body, href, cta }: { title: string; body?: ReactN
 }
 
 export function DataUnavailable({ metric }: { metric?: string }) {
-  return <span className="unavailable">{metric ? `${metric}: ` : ""}Data unavailable</span>;
+  const t = useTranslations("common");
+  return (
+    <span className="unavailable">
+      {metric ? `${metric}: ` : ""}
+      {t("dataUnavailable")}
+    </span>
+  );
 }
 
 export function DrillMeta({ drill }: { drill: Drill }) {
+  const t = useTranslations("common");
   return (
     <div className="tag-list">
       <span className="chip">{drill.category}</span>
-      <span className="chip">{drill.duration_min} min</span>
-      <span className="chip">difficulty {drill.difficulty}/5</span>
-      <span className="chip">+{drill.xp_base} XP</span>
+      <span className="chip">{t("minutesCount", { count: drill.duration_min })}</span>
+      <span className="chip">{t("difficultyOf", { value: drill.difficulty })}</span>
+      <span className="chip">{t("xpGain", { value: drill.xp_base })}</span>
     </div>
   );
 }

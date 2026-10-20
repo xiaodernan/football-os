@@ -130,7 +130,17 @@
     "critical": "严重",
     "demoMode": "演示模式",
     "demoModeTitle": "未配置 AI 服务密钥——输出由规则引擎产生。",
-    "language": "语言"
+    "language": "语言",
+    "demoData": "演示数据",
+    "aiGenerated": "AI 生成",
+    "confidence": "置信度 {value}%",
+    "whyChosen": "为什么这样选",
+    "dataUnavailable": "数据不可用",
+    "minutesCount": "{count} 分钟",
+    "difficultyOf": "难度 {value}/5",
+    "xpGain": "+{value} 经验",
+    "noAiKey": "没有配置 AI 服务商密钥；这段文字由确定性规则引擎生成。",
+    "remove": "移除"
   },
   "auth": {
     "signIn": "登录",
@@ -611,7 +621,9 @@
     "searchEmptyNote": "搜索刻意留空：空查询什么都不返回，而不是列出全部，所以结果数量永远有意义。",
     "searchTooLong": "查询请保持在 1 到 120 个字符之间。",
     "searchHitsEyebrow": "“{query}”有 {total} 条命中",
-    "searchResultsTitle": "结果，按词条重合度排序"
+    "searchResultsTitle": "结果，按词条重合度排序",
+    "thCompetition": "赛事",
+    "thPos": "位置"
   },
   "coach": {
     "metaTitle": "AI 教练",
@@ -2272,7 +2284,17 @@
     "reportWindow": "{from} — {to}（{days} 天）",
     "tierLimitsSentence": "{members} 名成员与 {teams} 支球队是 §39 自己的接口所拒绝的边界 —— {rule}",
     "accountMeterSentence": "{name} 作为账号在 {plan} 上是另一个主体：",
-    "matrixReadMore": "完整矩阵、上限与拒绝表见"
+    "matrixReadMore": "完整矩阵、上限与拒绝表见",
+    "notTiedToOneTeam": "不绑定某支球队",
+    "noneNamed": "无",
+    "fixturesDoorMissing": "赛程接口没有应答，因此这个板块无法呈现。",
+    "noticesDoorMissing": "通知接口没有应答，因此这个板块无法呈现。",
+    "consentsDoorMissing": "监护同意接口没有应答，因此这个板块无法呈现。",
+    "curriculaDoorMissing": "课程接口没有应答，因此这个板块无法呈现。",
+    "plansDoorMissing": "计划接口没有应答，因此这个板块无法呈现。",
+    "sessionsDoorMissing": "训练记录接口没有应答，因此这个板块无法呈现。",
+    "reportsDoorMissing": "报告接口没有应答，因此这个板块无法呈现。",
+    "entitlementsDoorMissing": "权益接口没有应答，因此这个板块无法呈现。"
   },
   "home": {
     "metaTitle": "观看。理解。训练。比赛。管理。成长。",
@@ -2428,7 +2450,8 @@
     "ledgerEmptyNoRows": "这份职业生涯的任何一轮都没有事件行归档，所以无从归类。踢一轮，事件行会随报告一起到达。",
     "ledgerEmptyAmbiguous": "已追踪的 {traced} 轮里，每个事件都在同一套十一人中不止一次点到同一个名字，因此没有哪一行能认领身份。",
     "ledgerTruncated": "列表在 {total} 人中的 {shown} 人处截断：其余的人参与了比赛，却没有印出足够大的事件进入名单。",
-    "carryDecay": "{rounds} 轮，每轮衰减 {decay}"
+    "carryDecay": "{rounds} 轮，每轮衰减 {decay}",
+    "thGoals": "进球"
   },
   "worldPlayer": {
     "metaDescriptionFallback": "FOOTBALL OS 生成足球世界中的球员档案。",
@@ -2906,7 +2929,8 @@
     "entrantsEyebrow": "{count} 支俱乐部",
     "entrantsTitle": "参赛俱乐部",
     "fixturesEyebrow": "{season} 的 {count} 场赛程",
-    "fixturesTitle": "赛程与结果"
+    "fixturesTitle": "赛程与结果",
+    "thClub": "俱乐部"
   },
   "worldNews": {
     "metaDescriptionFallback": "来自 FOOTBALL OS 生成足球世界的报道。",
@@ -3036,6 +3060,7 @@
     "thSessions": "训练",
     "programStart": "开始这份计划",
     "programStarted": "这份计划已排成你自己的训练。",
-    "programErased": "这份计划和它排出的训练都已擦除。"
+    "programErased": "这份计划和它排出的训练都已擦除。",
+    "thNote": "备注"
   }
 }
