@@ -10617,6 +10617,279 @@
         }
       }
     },
+    "/api/v1/creator/programs": {
+      "post": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Publish Program",
+        "description": "Publish a training program: a title, a visibility and the steps a learner would walk.\n\nA step names a drill from the training catalogue and the minutes it asks for, and a step\nnaming a drill the catalogue does not hold is refused here rather than at the learner's first\nsession: a plan that cannot be walked is not a plan.",
+        "operationId": "publish_program_api_v1_creator_programs_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProgramIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Publish Program Api V1 Creator Programs Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Programs",
+        "description": "The public shelf of programs.",
+        "operationId": "read_programs_api_v1_creator_programs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "creator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Creator"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Programs Api V1 Creator Programs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/programs/{program}": {
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Program",
+        "description": "One program with its steps and the figures counted now.",
+        "operationId": "read_program_api_v1_creator_programs__program__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "program",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Program"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Program Api V1 Creator Programs  Program  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Erase Program",
+        "description": "Erase your own program and the sessions it planned.",
+        "operationId": "erase_program_api_v1_creator_programs__program__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "program",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Program"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase Program Api V1 Creator Programs  Program  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/programs/{program}/start": {
+      "post": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Start Program",
+        "description": "Plan a program's steps as the caller's own training sessions - the runnable half.\n\nThe sessions are the training tier's rows, so completing one of them is the same act as\ncompleting any other session, and the progression is the program's order.",
+        "operationId": "start_program_api_v1_creator_programs__program__start_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "program",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Program"
+            }
+          },
+          {
+            "name": "player_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Start Program Api V1 Creator Programs  Program  Start Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/portfolio/rules": {
       "get": {
         "tags": [
@@ -14409,6 +14682,62 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ProfileIn"
+      },
+      "ProgramIn": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": ""
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 700,
+            "title": "Summary",
+            "default": ""
+          },
+          "visibility": {
+            "type": "string",
+            "maxLength": 12,
+            "title": "Visibility",
+            "default": "public"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ProgramStepIn"
+            },
+            "type": "array",
+            "title": "Steps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProgramIn"
+      },
+      "ProgramStepIn": {
+        "properties": {
+          "drill": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Drill",
+            "default": ""
+          },
+          "minutes": {
+            "type": "integer",
+            "title": "Minutes",
+            "default": 0
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 400,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProgramStepIn"
       },
       "ProviderMetricsResponse": {
         "properties": {

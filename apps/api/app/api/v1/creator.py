@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
@@ -35,6 +35,7 @@ from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
 from app.services.club import answers
+from app.services.creator import programs as cpr
 from app.services.creator import publishing as cre
 
 router = APIRouter(prefix="/creator", tags=["creator"])
@@ -58,6 +59,11 @@ ROUTE_GUIDE: tuple[dict[str, str], ...] = (
     {"method": "POST", "path": "/creator/guides/{guide}/citations", "door": "cite one passage by address, remembering its hash"},
     {"method": "GET", "path": "/creator/guides/{guide}/citations", "door": "the citations, each with whether its passage moved"},
     {"method": "DELETE", "path": "/creator/guides/{guide}/citations/{citation}", "door": "un-cite one passage; the guide keeps the rest"},
+    {"method": "POST", "path": "/creator/programs", "door": "publish a training program: a title, a visibility and its steps"},
+    {"method": "GET", "path": "/creator/programs", "door": "the public shelf of programs"},
+    {"method": "GET", "path": "/creator/programs/{program}", "door": "one program with its steps and the figures counted now"},
+    {"method": "DELETE", "path": "/creator/programs/{program}", "door": "erase your own program and the sessions it planned"},
+    {"method": "POST", "path": "/creator/programs/{program}/start", "door": "plan a program's steps as your own training sessions"},
 )
 
 
@@ -85,6 +91,23 @@ class GuideIn(BaseModel):
     visibility: str = Field(default="public", max_length=12)
 
 
+class ProgramStepIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    drill: str = Field(default="", max_length=80)
+    minutes: int = Field(default=0)
+    note: str = Field(default="", max_length=cpr.STEP_NOTE_MAX + 100)
+
+
+class ProgramIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(default="", max_length=cpr.PROGRAM_TITLE_MAX + 40)
+    summary: str = Field(default="", max_length=cpr.PROGRAM_SUMMARY_MAX + 100)
+    visibility: str = Field(default="public", max_length=12)
+    steps: list[ProgramStepIn] = Field(default_factory=list)
+
+
 class CitationIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -105,6 +128,7 @@ def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
         "refusal_answers": answers.published(cre.REFUSALS),
         "entitlement_features": ["creator_publish", "creator_guide"],
         **cre.rules(db, ready=True),
+        **cpr.rules(db, ready=True),
     }
 
 
@@ -208,3 +232,89 @@ def remove_citation(guide: str, citation: str, request: Request, db: Session = D
         return cre.uncite(db, guide, citation, user.id)
     except cre.CreatorRefusal as error:
         raise _refusal(error) from None
+
+
+@router.post("/programs", status_code=status.HTTP_201_CREATED)
+def publish_program(
+    payload: ProgramIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Publish a training program: a title, a visibility and the steps a learner would walk.
+
+    A step names a drill from the training catalogue and the minutes it asks for, and a step
+    naming a drill the catalogue does not hold is refused here rather than at the learner's first
+    session: a plan that cannot be walked is not a plan.
+    """
+    limit(request, 20, 3600, scope="publish_program")
+    try:
+        return cpr.publish_program(
+            db,
+            user.id,
+            title=payload.title,
+            summary=payload.summary,
+            visibility=payload.visibility,
+            steps=[step.model_dump() for step in payload.steps],
+        )
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.get("/programs")
+def read_programs(
+    creator: str | None = None,
+    page_size: int = 20,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """The public shelf of programs."""
+    return cpr.list_programs(db, creator=creator, page_size=page_size)
+
+
+@router.get("/programs/{program}")
+def read_program(
+    program: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """One program with its steps and the figures counted now."""
+    try:
+        return cpr.read_program(db, program)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.delete("/programs/{program}")
+def erase_program(
+    program: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Erase your own program and the sessions it planned."""
+    limit(request, 20, 3600, scope="erase_program")
+    try:
+        return cpr.erase_program(db, user.id, program)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.post("/programs/{program}/start", status_code=status.HTTP_201_CREATED)
+def start_program(
+    program: str,
+    request: Request,
+    player_id: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Plan a program's steps as the caller's own training sessions - the runnable half.
+
+    The sessions are the training tier's rows, so completing one of them is the same act as
+    completing any other session, and the progression is the program's order.
+    """
+    limit(request, 20, 3600, scope="start_program")
+    try:
+        return cpr.start_program(db, user.id, program, player_id=player_id)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error

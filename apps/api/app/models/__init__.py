@@ -185,6 +185,10 @@ class TrainingSession(Base, TimestampMixin):
     xp_awarded: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     demo_mode: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     recommendation_reasons: Mapped[list[str]] = mapped_column(JSON, default=list)
+    #: The program that planned this session, when one did. NULL for a session the learner planned
+    #: themselves, which is most of them: the column records where a session came from, not that
+    #: every session has a program behind it.
+    program_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
     user: Mapped[User] = relationship(back_populates="sessions")
     drill: Mapped[TrainingDrill] = relationship()
@@ -2026,6 +2030,52 @@ class GuideCitation(Base, TimestampMixin):
     data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
     is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
+
+
+class CreatorProgram(Base, TimestampMixin):
+    """A training program: a schedule, a dose and a progression (M10, spec §36's first kind).
+
+    §36 lists six kinds of content a user can create, and the first is a Training Program. The
+    tier's guide is a frame - a section, a title, a summary and the addresses of the passages it
+    cites - and it is not a plan a learner can walk. A program is: a title, a visibility and an
+    ordered list of steps, each step naming a drill from the training catalogue, the minutes it asks
+    for and the author's own words. It stores no session and no completion: those are the
+    learner's rows in the training tier, counted from there.
+    """
+
+    __tablename__ = "creator_programs"
+    __table_args__ = (
+        UniqueConstraint("author_id", "slug", name="uq_creator_program_slug"),
+        Index("ix_creator_program_author_date", "author_id", "published_on"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary: Mapped[str] = mapped_column(String(600), nullable=False, default="")
+    visibility: Mapped[str] = mapped_column(String(12), nullable=False, default="public")
+    published_on: Mapped[str] = mapped_column(String(10), nullable=False, default=utc_today)
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class CreatorProgramStep(Base, TimestampMixin):
+    """One step of a program: the catalogue drill, the minutes it asks for, and the author's words.
+
+    `position` is the progression - the order the steps are walked in - and it is unique per
+    program, so a program cannot hold two steps at the same place in its own schedule.
+    """
+
+    __tablename__ = "creator_program_steps"
+    __table_args__ = (UniqueConstraint("program_id", "position", name="uq_creator_program_step_position"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    program_id: Mapped[str] = mapped_column(ForeignKey("creator_programs.id", ondelete="CASCADE"), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    drill_slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    minutes: Mapped[int] = mapped_column(Integer, nullable=False)
+    note: Mapped[str] = mapped_column(String(300), nullable=False, default="")
 
 class CvShare(Base, TimestampMixin):
     """One public CV link (§38's share output): the token that opens it, the sections it names, and when it closed."""

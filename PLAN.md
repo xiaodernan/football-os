@@ -683,6 +683,37 @@ still says plainly that the figures published earlier in it are the degraded one
 
 ---
 
+## Item 10 — M10: the training program, §36's first kind of content
+
+**Done 2026-10-21.** The creator tier published guides, and its own verification record said what a guide is not: *"Nothing here
+is a runnable program: no row carries a schedule, a dose or a progression."* §36 lists six kinds of content a user can
+create, and the first is a **Training Program** — so the tier owed an object of its own.
+
+**Do.** Build the program, and make it walkable.
+
+1. **`creator_programs` and `creator_program_steps`** (migration `0030`): a title, a visibility, and an ordered list of steps,
+   each naming a catalogue drill, the minutes it asks for and the author's own words. The schedule is the step order, the dose
+   is the minutes, and the progression is the position column — unique per program, so a program cannot hold two steps in
+   the same place in its own schedule.
+2. **A step names a drill, or the program is not a plan.** A step naming a drill the training catalogue does not hold is
+   refused **at publication** (404 `no_such_drill`), not at the learner's first session.
+3. **Starting a program plans the learner's own training sessions** — the training tier's rows, so completing one is the
+   same act as completing any other session, and the schedule is dated from today: the first step today, each later step the
+   next day. An account with no player row is refused with the platform's `no_player`.
+4. **Five doors** under the tier's existing prefix and rules: publish, the shelf, one program, erase (which takes the sessions
+   it planned with it), and start. The codes join the tier's own sets — one tier owns its codes — and the rulebook publishes
+   the program's ceilings, formulas and rule beside the guide's.
+
+**Evidence.** `tests/test_creator_programs.py` (10 cases) green together with `tests/test_creator.py` (42): a program carries its
+schedule, its dose and its progression; a step naming a drill that is not there is refused at publication; a program with
+no steps and a step asking for impossible minutes are refused; starting one plans the learner's own sessions in the
+program's order; an account with no player is refused; another account's program answers as absence; erasing a program erases
+the sessions it planned. mypy is clean over 149 files; the contract is regenerated at 191 paths / 242 operations. The record is
+in `docs/M10_CREATOR_VERIFICATION.md`, whose claim list now says the first kind has an object of its own — and that the other
+five do not.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

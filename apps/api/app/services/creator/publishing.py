@@ -89,6 +89,15 @@ FORMULAS: Final = {
 
 REFUSALS: Final = (
     "no_such_guide",
+    "no_such_program",
+    "no_such_drill",
+    "program_title",
+    "program_summary",
+    "program_visibility",
+    "program_steps",
+    "step_minutes",
+    "step_note",
+    "program_limit",
     "no_such_creator",
     "no_such_document",
     "no_such_citation",
@@ -105,7 +114,9 @@ REFUSALS: Final = (
     "citation_limit",
 )
 
-NOT_FOUND_CODES: Final = frozenset({"no_such_guide", "no_such_creator", "no_such_document", "no_such_citation"})
+NOT_FOUND_CODES: Final = frozenset(
+    {"no_such_guide", "no_such_creator", "no_such_document", "no_such_citation", "no_such_program", "no_such_drill"}
+)
 UNPROCESSABLE_CODES: Final = frozenset(
     {
         "guide_section",
@@ -116,9 +127,15 @@ UNPROCESSABLE_CODES: Final = frozenset(
         "citation_note",
         "profile_headline",
         "profile_bio",
+        "program_title",
+        "program_summary",
+        "program_visibility",
+        "program_steps",
+        "step_minutes",
+        "step_note",
     }
 )
-CONFLICT_CODES: Final = frozenset({"slug_taken", "guide_limit", "citation_limit"})
+CONFLICT_CODES: Final = frozenset({"slug_taken", "guide_limit", "citation_limit", "program_limit"})
 #: 403 is the permission matrix's single meaning (§51) and this tier has no matrix of its own.
 FORBIDDEN_CODES: Final[frozenset[str]] = frozenset()
 

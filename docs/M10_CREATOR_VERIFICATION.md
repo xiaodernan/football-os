@@ -61,16 +61,64 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
 
 ## What §36 does not claim yet
 
-* **The six kinds are six sections, not six objects.** §36 lists Training Program, Tactical Guide, Player
-  Analysis, Match Analysis, Career Challenge and Scouting List; the tier's `GUIDE_SECTIONS` is
-  `plan, drill, match, tactic, scout, video`, and a guide is a title, a frame, a section and citations in every
-  one of them. Nothing here is a runnable program: no row carries a schedule, a dose or a progression.
+* **The six kinds are six sections, not six objects — and the first kind now has an object of its
+  own (2026-10-21).** §36 lists Training Program, Tactical Guide, Player Analysis, Match Analysis,
+  Career Challenge and Scouting List; the tier's `GUIDE_SECTIONS` is `plan, drill, match, tactic,
+  scout, video`, and a guide is a title, a frame, a section and citations in every one of them.
+  A **Training Program** is now a row of its own: a schedule, a dose and a progression, with a step
+  naming a catalogue drill, and starting one plans the learner's own training sessions. What is still
+  not there: the other five kinds have no object of their own, a program is a plan rather than an
+  enrolled course, and there is no progress model beyond the training tier's own sessions.
 * **No money, by design.** `creator_publish` and `creator_guide` are ceilings the data holds and **no door refuses
   on** — the caps that actually bite are the lifetime counts in `CAPS` (100 guides, 24 citations a guide).
 * **The feedback half of §36's loop is §35's.** "Users → Feedback → Creator" is reactions, comments and follows on
   §35's rows; this tier stores no per-guide feedback of its own and counts `subscribers` from `community_follows`.
 * **§38 is not started.** Football Career Portfolio is M10's second subject and the next slice, with the minors'
   part held back until §40's consent shape is read rather than duplicated.
+
+## The training program — §36's first kind of content (2026-10-21)
+
+The list above said what this tier could not do, and it is worth reading the sentence again:
+*"The six kinds are six sections, not six objects. §36 lists Training Program, Tactical Guide,
+Player Analysis, Match Analysis, Career Challenge and Scouting List; the tier's `GUIDE_SECTIONS` is
+`plan, drill, match, tactic, scout, video`, and a guide is a title, a frame, a section and citations
+in every one of them. **Nothing here is a runnable program: no row carries a schedule, a dose or a
+progression.**"*
+
+A program is those three things and nothing else.
+
+* **A schedule** — the steps, in order, one row each. `creator_program_steps.position` is unique per
+  program, so a program cannot hold two steps at the same place in its own schedule.
+* **A dose** — the minutes each step asks for, and the total the program asks for, counted now.
+* **A progression** — the order, which is the position column and nothing more.
+
+**A step names a drill from the training catalogue**, so a program is runnable by construction: the
+drill is the one the learner opens and the minutes are the ones the learner is asked for. A step
+naming a drill the catalogue does not hold is refused **at publication** (404 `no_such_drill`), not at
+the learner's first session — a plan that cannot be walked is not a plan.
+
+**Starting a program plans the caller's own training sessions.** They are the training tier's rows
+(`training_sessions.program_id` remembers which program planned one), so completing one of them is the
+same act as completing any other session, and the schedule is dated from today: the first step is
+today and each later step is the next day. An account with no player row is refused with the
+platform's own `no_player` (409) — a program needs a player to plan for.
+
+**Five doors**, under the tier's existing prefix and its existing rules: publish, the shelf, one
+program, erase (which takes the sessions it planned with it), and start. The shelf and the read need a
+session, like every other door in this tier. The codes join the tier's own sets — one tier owns its
+codes — and the rulebook publishes the program's ceilings, its formulas and its rule beside the guide's.
+
+**The figures are counted now**, like every other figure in this tier: `steps` is a count of the step
+rows, `minutes` is their sum, `sessions` is the count of the planned sessions this program has
+produced, and `programs` is the count of program rows. The formulas are published beside them.
+
+**What this does not claim.** A program is a plan and the plan is walked in the training tier; there
+is no progress model of its own (a step is not "done" until a session is completed, and that session
+is the training tier's row), no enrolment, no cohort, and no pricing beyond §42's table — which
+still names two features and refuses on neither.
+
+Measured: `tests/test_creator_programs.py` (10 cases) and `tests/test_creator.py` (42) are green
+together; mypy is clean over 149 files; the contract is regenerated at 191 paths / 242 operations.
 
 ## A finding this milestone corrected
 
