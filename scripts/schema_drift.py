@@ -27,9 +27,9 @@ warnings.filterwarnings("ignore", message="Did not recognize type")
 from sqlalchemy import create_engine, inspect  # noqa: E402
 from sqlalchemy.engine import Engine  # noqa: E402
 
+from app import models  # noqa: E402,F401 — importing the models is what populates Base.metadata
 from app.core.config import settings  # noqa: E402
 from app.core.db import Base  # noqa: E402
-from app import models  # noqa: E402,F401 — importing the models is what populates Base.metadata
 
 
 def declared() -> dict[str, dict[str, int]]:

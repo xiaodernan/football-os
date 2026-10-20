@@ -228,7 +228,7 @@ async def run_benchmark(config: BenchmarkConfig) -> BenchmarkResult:
             try:
                 local = await asyncio.wait_for(task, timeout=5.0)
                 all_results.extend(local)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
         end_time = time.perf_counter()

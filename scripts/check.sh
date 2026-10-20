@@ -6,12 +6,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-echo "── API: lint ─────────────────────────────────────────"
-# No path arguments on purpose. Ruff then walks the whole project, which is the target CI enforces — and the
-# three targets this project has used (`app tests`, `app tests seed.py migrations`, and CI's list) disagree.
-# A planted unused import in `evals/` is invisible to the first two and caught by this one, which is exactly
-# how a committed tree passed its own documented gate three separate times. One command, no list to drift.
-(cd apps/api && python -m ruff check)
+echo "── Lint: the project's one target ─────────────────────"
+# One file, `scripts/lint.sh`, and CI runs that same file. It lints the whole of `apps/api` plus every committed
+# `.py` outside that tree, the extra population derived from `git ls-files` on every run rather than typed here —
+# the typed lists are what let three targets disagree while only one was enforced, and what kept four committed
+# files in `scripts/` invisible to a command whose comment claimed the whole project was in scope.
+bash "$ROOT/scripts/lint.sh"
 
 echo "── API: types ────────────────────────────────────────"
 (cd apps/api && python -m mypy app)

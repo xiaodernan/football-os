@@ -26,9 +26,15 @@ commands on purpose — three different `ruff` targets have been used in this pr
 run against the narrow one was not evidence that CI would be green.
 
 - `pytest` suite green (unit + API integration, no network needed).
-- `python -m ruff check` + `python -m mypy app` clean for the API. **No path arguments** — ruff walks the whole
-  project, including `evals/` and `seed.py`, so the scope cannot drift from CI's. A planted unused import in
-  `evals/` passes `ruff check app tests` and fails this.
+- The project's one lint target: `bash scripts/lint.sh`. It is the only place a ruff target is written down, and
+  CI runs that same file. It lints all of `apps/api`, plus every committed `.py` outside that tree — the extra
+  population is derived from `git ls-files` on every run, so a newly committed Python file is in target without
+  anyone editing a list, and the count it prints is the scope it read. Two measurements shaped it: run from the
+  repository root with `--config apps/api/pyproject.toml`, the same rules call `app.*` third-party and report 71
+  bogus import-ordering errors, so ruff runs with `apps/api` as its project root; and the `ruff check` command this
+  bullet used to publish walked only `apps/api`, which is how four committed files in `scripts/` passed a gate whose
+  comment claimed the whole project. A planted unused import in `scripts/qa_db.py` is invisible to that command and
+  caught by this one — measured 2026-10-20, and `python -m mypy app` is unchanged.
 - `npm run typecheck` and `npm run build` clean for the web app.
 - No `TODO`/`FIXME` placeholders in merged code (spec §89) — open an issue or a roadmap row instead.
 - Every new user-visible string lives in `apps/web/messages/*.json` for all three locales (spec §81). The
