@@ -379,6 +379,15 @@ python .scratch/r110_at_rest.py                                                 
 cd apps/api && python -m pytest tests/test_club_academy.py -q                          # 84 cases, the shipped gate
 ```
 
+**Correction, 2026-10-18 (#114).** The two `--tb=line` legs above ran green, and their logs therefore never showed
+what they would have shown. At `fe32570` the counts gate's message was
+`"AcademyCapabilities counts disagrees with the door:\n" + "\n".join(f"  - {problem}" …)` (`test_club_academy.py:375`),
+and `--tb=line` prints only a message's *first* line: a red run under those two commands would have named the door
+and none of the verdicts below it. The same file at this commit reads
+`"... disagrees with the door: " + " | ".join(problems)` — one line by construction — so the style is now safe for
+these legs, and `docs/ASSERT_MESSAGE_VERIFICATION.md` records the measurement that says why. Legs published before
+that change should not be cited as evidence that a `--tb=line` log carries a verdict.
+
 ## Opened by this unit, not closed
 
 * The gate is **one door's**. Of the census, `D1` still has **12** divergent-literal sites, `D2` **8** conditional
