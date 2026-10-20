@@ -40,9 +40,23 @@ const ts = require("typescript");
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const APP = join(WEB, "app");
+/**
+ * The components directory carries copy too, and a page is only as localised as the components it
+ * renders: `components/CreatorWorkbench.tsx` holds the tier's own buttons and sentences, and no scan
+ * of `app/` could see them. The population is therefore both directories.
+ */
+const COMPONENTS = join(WEB, "components");
 
 /** The committed ceiling on English literal sites. i18n work lowers it; nothing else may. */
-const FLOOR_SITES = 0;
+/**
+ * The ceiling on English literal sites over the whole population: `app/**/*.tsx` **and**
+ * `components/**/*.tsx`. A page is only as localised as the components it renders, and the
+ * components hold copy — the workbench's buttons, the club and academy tools' sentences, the scout
+ * panels' headings. A scan of `app/` alone could not see any of it.
+ *
+ * It may only fall.
+ */
+const FLOOR_SITES = 392;
 
 /** The population the walk must find, so a scan that narrows itself cannot pass by finding nothing. */
 const FLOOR_FILES = 70;
@@ -95,6 +109,7 @@ const walk = (dir) => {
   }
 };
 walk(APP);
+walk(COMPONENTS);
 
 const relOf = (p) => p.slice(WEB.length + 1).split(sep).join("/");
 
