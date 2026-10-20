@@ -2158,6 +2158,46 @@ class CreatorPlayerAnalysis(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
+class CreatorMatchAnalysis(Base, TimestampMixin):
+    """An editorial analysis anchored to a played world fixture (M10, spec §36's fourth kind).
+
+    §36's fourth kind is a *Match Analysis*: an author's reading of a played match, published beside
+    the match rather than copied out of it. The row stores the author's words, a visibility and the
+    **address** of a row in `real_matches` - never a score, a shot count or a sentence about the
+    match. Every measurement a read shows is computed from the match row's own stored score and
+    stats on that read, so a refreshed world cannot leave an analysis quoting an old result.
+
+    `match_hash` is not a figure about the match, it is a **witness**: the content address the match
+    carried when the analysis was written. A read compares it with the world's, and an analysis of a
+    match revised since says so through `moved` while still measuring the match as it reads now - the
+    same shape as `guide_citations.cited_text_hash`.
+
+    `match_slug` is a plain pointer rather than a foreign key on purpose: `services/world/sync.py`
+    retires rows the world plan no longer authors, and a RESTRICT would make a routine world sync
+    fail because somebody once wrote about a fixture. A retired match answers as absence on read,
+    in the same shape an analysis that was never written earns.
+    """
+
+    __tablename__ = "creator_match_analyses"
+    __table_args__ = (
+        UniqueConstraint("author_id", "slug", name="uq_creator_match_slug"),
+        Index("ix_creator_match_author_date", "author_id", "published_on"),
+        Index("ix_creator_match_anchor", "match_slug"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary: Mapped[str] = mapped_column(String(600), nullable=False, default="")
+    visibility: Mapped[str] = mapped_column(String(12), nullable=False, default="public")
+    match_slug: Mapped[str] = mapped_column(String(200), nullable=False)
+    match_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    published_on: Mapped[str] = mapped_column(String(10), nullable=False, default=utc_today)
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
 class CvShare(Base, TimestampMixin):
     """One public CV link (§38's share output): the token that opens it, the sections it names, and when it closed."""
 

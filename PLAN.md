@@ -773,6 +773,38 @@ claim list now says three kinds have objects of their own — and that the other
 
 ---
 
+## Item 13 — M10: the match analysis, §36's fourth kind of content
+
+**Done 2026-10-21.** Item 12 gave the third kind an object. The fourth kind — a **Match Analysis** — was still only a
+section, and the tier could point at a footballer's rates but not at the fixture they were earned in.
+
+**Do.** Anchor an analysis to a stored fixture without copying its result.
+
+1. **`creator_match_analyses`** (migration `0033`): the author, a title and summary, a visibility, and the **address**
+   of a fixture. `match_slug` is a plain pointer, not a foreign key, because `services/world/sync.py` retires and
+   re-creates generated fixtures; `match_hash` is the content address the fixture carried at publication.
+2. **No score or stat line is stored.** Five measurements (`total_goals`, `goal_margin`, `shot_accuracy`,
+   `chance_conversion`, `possession_edge`) come from the anchored row's own score columns and `stats` object on the
+   read, each beside its unit and formula. The column list is asserted as a set; replaying a scratch fixture with a
+   different score and stats moves the analysis, matches the world door's own figures through the published formulas,
+   and flips `moved`.
+3. **An unplayed fixture is refused, not read as a blank result.** Publication answers 409 `match_not_played` for a
+   scheduled fixture, and the read answers the same if the anchor has lost its result; the anchor resolves by slug or
+   id and an unknown one is 404 `no_such_match`. A retired fixture is absence at the address, while the shelf keeps
+   the address with null home/away/kickoff/status/path — nothing of the author's is deleted by a refresh.
+4. **Four doors** under the tier's prefix: publish, shelf, one analysis, erase. Reach is §35's follow predicate;
+   another account's analysis is absence; no door answers 403.
+
+**Evidence.** `tests/test_creator_matches.py` (16 cases); the five creator files together answer **110 tests / 0
+failures / 0 errors / 0 skipped in 52.428s** (junit `.scratch/leg_matches_creator.xml`). mypy is clean over 152 files;
+ruff is clean on the seven touched Python files; the contract is regenerated at 197 paths / 254 operations; migration
+`0033` upgrades to head, passes `alembic check` silently and round-trips on a scratch SQLite database. The record's
+claim list now says four kinds have objects of their own — and that the other two do not. The tactical retired-system
+shelf case also needed the same `creator=` scoping the analyses and matches shelves use: the ceiling cases fill the
+public shelf past its default page, so an unscoped lookup was reading page one only.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

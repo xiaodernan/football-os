@@ -1,6 +1,6 @@
 """Creator endpoints (M10, spec §36): what an account publishes as a guide, and the addresses it cites.
 
-One public door and twenty-three private ones. `GET /creator/rules` prints only the tier's own vocabulary — the sections,
+One public door and twenty-seven private ones. `GET /creator/rules` prints only the tier's own vocabulary — the sections,
 the ceilings, the formulas, the refusal codes and the limitation sentence — which is §39's and §35's precedent: a
 rulebook is not a person's data, a shelf of guides is.
 
@@ -36,6 +36,7 @@ from app.core.security import current_user, limit
 from app.models import User
 from app.services.club import answers
 from app.services.creator import analyses as can
+from app.services.creator import matches as cma
 from app.services.creator import programs as cpr
 from app.services.creator import publishing as cre
 from app.services.creator import tactical as ctr
@@ -74,6 +75,10 @@ ROUTE_GUIDE: tuple[dict[str, str], ...] = (
     {"method": "GET", "path": "/creator/players", "door": "the shelf of player analyses, each player named as he reads now"},
     {"method": "GET", "path": "/creator/players/{analysis}", "door": "one player analysis, with the player measured on this read"},
     {"method": "DELETE", "path": "/creator/players/{analysis}", "door": "erase your own player analysis; the player is untouched"},
+    {"method": "POST", "path": "/creator/matches", "door": "publish a match analysis: an address into the fixture list, a title, a visibility"},
+    {"method": "GET", "path": "/creator/matches", "door": "the shelf of match analyses, each fixture named as it reads now"},
+    {"method": "GET", "path": "/creator/matches/{analysis}", "door": "one match analysis, with the fixture measured on this read"},
+    {"method": "DELETE", "path": "/creator/matches/{analysis}", "door": "erase your own match analysis; the fixture is untouched"},
 )
 
 
@@ -146,6 +151,15 @@ class AnalysisIn(BaseModel):
     visibility: str = Field(default="public", max_length=12)
 
 
+class MatchIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    match: str = Field(default="", max_length=cma.MATCH_ANCHOR_MAX)
+    title: str = Field(default="", max_length=cma.MATCH_TITLE_MAX + 40)
+    summary: str = Field(default="", max_length=cma.MATCH_SUMMARY_MAX + 100)
+    visibility: str = Field(default="public", max_length=12)
+
+
 @router.get("/rules")
 def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
     """The rulebook door: no guide, no creator, no figure about anybody — only what may be published.
@@ -161,6 +175,7 @@ def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
         **cpr.rules(db, ready=True),
         **ctr.rules(db, ready=True),
         **can.rules(db, ready=True),
+        **cma.rules(db, ready=True),
     }
 
 
@@ -484,5 +499,74 @@ def erase_analysis(
     limit(request, 20, 3600, scope="erase_analysis")
     try:
         return can.erase_player_analysis(db, user.id, analysis)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.post("/matches", status_code=status.HTTP_201_CREATED)
+def publish_match_analysis(
+    payload: MatchIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Publish a match analysis: the address of a played fixture, a title and a visibility.
+
+    The fixture is resolved here, at publication, so an analysis anchored to a match the world
+    does not hold - or to one that has not been played - is refused now rather than surfacing
+    as a page with nothing to read.
+    """
+    limit(request, 20, 3600, scope="publish_match_analysis")
+    try:
+        return cma.publish_match_analysis(
+            db,
+            user.id,
+            match=payload.match,
+            title=payload.title,
+            summary=payload.summary,
+            visibility=payload.visibility,
+        )
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.get("/matches")
+def read_match_analysis_shelf(
+    creator: str | None = None,
+    page_size: int = 20,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """The shelf of match analyses, as far as this reader may reach."""
+    try:
+        return cma.list_match_analyses(db, user.id, creator=creator, limit=page_size)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.get("/matches/{analysis}")
+def read_match_analysis(
+    analysis: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """One match analysis, with its fixture measured from the match row's own columns on this read."""
+    try:
+        return cma.read_match_analysis(db, analysis, user.id)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.delete("/matches/{analysis}")
+def erase_match_analysis(
+    analysis: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Erase your own match analysis. The fixture it was about is untouched."""
+    limit(request, 20, 3600, scope="erase_match_analysis")
+    try:
+        return cma.erase_match_analysis(db, user.id, analysis)
     except cre.CreatorRefusal as error:
         raise _refusal(error) from error

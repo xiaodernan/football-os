@@ -11306,6 +11306,214 @@
         }
       }
     },
+    "/api/v1/creator/matches": {
+      "post": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Publish Match Analysis",
+        "description": "Publish a match analysis: the address of a played fixture, a title and a visibility.\n\nThe fixture is resolved here, at publication, so an analysis anchored to a match the world\ndoes not hold - or to one that has not been played - is refused now rather than surfacing\nas a page with nothing to read.",
+        "operationId": "publish_match_analysis_api_v1_creator_matches_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Publish Match Analysis Api V1 Creator Matches Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Match Analysis Shelf",
+        "description": "The shelf of match analyses, as far as this reader may reach.",
+        "operationId": "read_match_analysis_shelf_api_v1_creator_matches_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "creator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Creator"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Match Analysis Shelf Api V1 Creator Matches Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/matches/{analysis}": {
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Match Analysis",
+        "description": "One match analysis, with its fixture measured from the match row's own columns on this read.",
+        "operationId": "read_match_analysis_api_v1_creator_matches__analysis__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "analysis",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Analysis"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Match Analysis Api V1 Creator Matches  Analysis  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Erase Match Analysis",
+        "description": "Erase your own match analysis. The fixture it was about is untouched.",
+        "operationId": "erase_match_analysis_api_v1_creator_matches__analysis__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "analysis",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Analysis"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase Match Analysis Api V1 Creator Matches  Analysis  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/portfolio/rules": {
       "get": {
         "tags": [
@@ -14508,6 +14716,37 @@
           "password"
         ],
         "title": "LoginIn"
+      },
+      "MatchIn": {
+        "properties": {
+          "match": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Match",
+            "default": ""
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": ""
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 700,
+            "title": "Summary",
+            "default": ""
+          },
+          "visibility": {
+            "type": "string",
+            "maxLength": 12,
+            "title": "Visibility",
+            "default": "public"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MatchIn"
       },
       "MemoryGetResponse": {
         "properties": {

@@ -103,6 +103,13 @@ REFUSALS: Final = (
     "analysis_summary",
     "analysis_visibility",
     "analysis_limit",
+    "no_such_match",
+    "no_such_match_analysis",
+    "match_title",
+    "match_summary",
+    "match_visibility",
+    "match_limit",
+    "match_not_played",
     "program_title",
     "program_summary",
     "program_visibility",
@@ -138,6 +145,8 @@ NOT_FOUND_CODES: Final = frozenset(
         "no_such_system",
         "no_such_analysis",
         "no_such_analysed_player",
+        "no_such_match",
+        "no_such_match_analysis",
     }
 )
 UNPROCESSABLE_CODES: Final = frozenset(
@@ -162,9 +171,14 @@ UNPROCESSABLE_CODES: Final = frozenset(
         "analysis_title",
         "analysis_summary",
         "analysis_visibility",
+        "match_title",
+        "match_summary",
+        "match_visibility",
     }
 )
-CONFLICT_CODES: Final = frozenset({"slug_taken", "guide_limit", "citation_limit", "program_limit", "tactical_limit", "analysis_limit"})
+CONFLICT_CODES: Final = frozenset(
+    {"slug_taken", "guide_limit", "citation_limit", "program_limit", "tactical_limit", "analysis_limit", "match_limit", "match_not_played"}
+)
 #: 403 is the permission matrix's single meaning (§51) and this tier has no matrix of its own.
 FORBIDDEN_CODES: Final[frozenset[str]] = frozenset()
 

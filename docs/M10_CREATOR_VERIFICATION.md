@@ -61,7 +61,7 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
 
 ## What §36 does not claim yet
 
-* **The six kinds are six sections, not six objects — and the first three kinds now have objects
+* **The six kinds are six sections, not six objects — and the first four kinds now have objects
   of their own (2026-10-21).** §36 lists Training Program, Tactical Guide, Player Analysis, Match
   Analysis, Career Challenge and Scouting List; the tier's `GUIDE_SECTIONS` is `plan, drill, match,
   tactic, scout, video`, and a guide is a title, a frame, a section and citations in every one of
@@ -70,9 +70,12 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
   **Tactical Guide** is now a row anchored to a stored system: it keeps the system's address and a
   hash witness, and every measurement is computed on the read from the system's own dots. A
   **Player Analysis** is now a row anchored to a stored footballer: it keeps his address and a hash
-  witness, and its five rates are computed on the read from the player row's own columns. What is
-  still not there: the other three kinds have no object of their own, a program is a plan rather
-  than an enrolled course, and there is no progress model beyond the training tier's own sessions.
+  witness, and its five rates are computed on the read from the player row's own columns. A
+  **Match Analysis** is now a row anchored to a stored fixture: it keeps the fixture's address and a
+  hash witness, and its five measurements are computed on the read from the fixture row's own score
+  and stats. What is still not there: the other two kinds have no object of their own, a program is a
+  plan rather than an enrolled course, and there is no progress model beyond the training tier's own
+  sessions.
 * **No money, by design.** `creator_publish` and `creator_guide` are ceilings the data holds and **no door refuses
   on** — the caps that actually bite are the lifetime counts in `CAPS` (100 guides, 24 citations a guide).
 * **The feedback half of §36's loop is §35's.** "Users → Feedback → Creator" is reactions, comments and follows on
@@ -220,6 +223,51 @@ answer **90 tests / 0 failures / 0 errors / 0 skipped in 48.356s** (junit,
 `.scratch/leg_analyses_creator.xml`); `mypy app` clean over **151 source files**; `ruff check` clean
 on the six touched Python files; the contract is regenerated at **195 paths / 250 operations**, the
 four new operations being its only delta; migration `0032` upgrades to head, passes `alembic check`
+silently and downgrades/upgrades cleanly on a scratch SQLite database.
+
+## The match analysis — §36's fourth kind of content (2026-10-21)
+
+The fourth kind applies the same rule to the fixture the world already plays: **an address, never a
+copy**.
+
+* **The anchor is an address, not a foreign key.** `creator_match_analyses.match_slug` names a row in
+  `real_matches` and is deliberately a plain pointer: `services/world/sync.py` retires and re-creates
+  generated fixtures, so a foreign key would either block a refresh or take an author's words with
+  it. Publication resolves the anchor (by slug or id) and refuses one the world does not hold there
+  (404 `no_such_match`).
+* **An unplayed fixture is refused, not read as a blank result.** `match_not_played` answers 409 at
+  publication, and again on a later read if the anchored fixture has lost its result: the tier has
+  no measurements for a match that has not been played, and an analysis of a scoreless fixture would
+  be a claim about nothing.
+* **No score or stat line is stored.** The column set is asserted as a set: author, slug, title,
+  summary, visibility, the address, the hash witness, the date and provenance — no goal, margin,
+  percentage or stat pair. Five measurements (`total_goals`, `goal_margin`, `shot_accuracy`,
+  `chance_conversion`, `possession_edge`) are computed on the read from the anchored fixture row's
+  own score columns and `stats` object, and each one prints its value, its unit and its formula.
+* **The witness covers exactly what is read.** `match_hash` records the fixture's `content_hash` at
+  publication. Every measurement derives from the anchored row's score and stats, and the hash is
+  computed over exactly those columns (`plan.content_hash(fixture.columns())` covers status, both
+  goal columns and the whole `stats` object), so a revised result moves the hash and the read says
+  `moved`. The measurements are deliberately *not* derived from `real_player_match_stats` lines: the
+  hash covers the fixture row only, so a line-derived figure could move while the witness stood
+  still.
+* **The proof is behavioural.** A scratch fixture is replayed with a different score and different
+  stats between two reads of the same analysis: the answer follows the row, equals the world door's
+  own score and stats fed through the published formulas, and `moved` flips. A stored copy could not
+  pass that case.
+* **`moved`, a retired fixture, reach and four doors.** A retired fixture is absence at the address
+  (404 `no_such_match`), while the shelf keeps the address with `home`, `away`, `kickoff_at`,
+  `status` and `path` null — and the author's row survives the world's refresh. Four doors under the
+  tier's existing prefix: publish, the shelf, one analysis (which carries the measurements), and
+  erase. Erasing an analysis leaves the fixture untouched; reach is §35's follow predicate, so a
+  `followers` analysis opens on a follow and closes on an unfollow without deleting it; another
+  account's analysis is absence, and no door in this tier answers 403.
+
+Measured 2026-10-21: `tests/test_creator_matches.py` **16 cases**; the five creator files together
+answer **110 tests / 0 failures / 0 errors / 0 skipped in 52.428s** (junit,
+`.scratch/leg_matches_creator.xml`); `mypy app` clean over **152 source files**; `ruff check` clean
+on the seven touched Python files; the contract is regenerated at **197 paths / 254 operations**, the
+four new operations being its only delta; migration `0033` upgrades to head, passes `alembic check`
 silently and downgrades/upgrades cleanly on a scratch SQLite database.
 
 ## A finding this milestone corrected

@@ -329,7 +329,7 @@ def test_a_retired_system_is_absence_at_the_address_and_a_bare_pointer_on_the_sh
     session.commit()
 
     _refused(lambda: ctr.read_tactical_guide(session, guide["id"], author.id), "no_such_system")
-    item = next(row for row in ctr.list_tactical_guides(session, author.id)["items"] if row["id"] == guide["id"])
+    item = next(row for row in ctr.list_tactical_guides(session, author.id, creator=author.id)["items"] if row["id"] == guide["id"])
     assert item["system"] == {"slug": slug, "name": None, "formation": None, "path": None}, (
         "the shelf keeps the address and leaves nothing behind it"
     )
