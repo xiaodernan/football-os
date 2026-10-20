@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { KeyValueGrid } from "@/components/world";
@@ -19,6 +20,7 @@ const GROUPS = ["technical", "physical", "mental", "tactical"] as const;
  * six attributes is not the same claim as an average over twenty-seven.
  */
 export function ScoutReportPanel({ report }: { report: ReportView }) {
+  const ts = useTranslations("scout");
   const player = report.player;
   return (
     <div className="stack-sm">
@@ -51,37 +53,51 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
 
       <div className="tac-cards">
         <div className="tac-card">
-          <strong>Current level</strong>
+          <strong>{ts("currentLevelTitle")}</strong>
           <KeyValueGrid
             rows={[
-              ["Overall", <span className="num" key="o">{report.current_level.overall}</span>],
+              [ts("kvOverall"), <span className="num" key="o">{report.current_level.overall}</span>],
               [
-                "Recomputed",
+                ts("kvRecomputed"),
                 <span className="num" key="r">
-                  {report.current_level.recomputed} · {report.current_level.agrees_with_stored ? "agrees with the stored column" : "DISAGREES with the stored column"}
+                  {report.current_level.recomputed} ·{" "}
+                  {report.current_level.agrees_with_stored ? ts("agreesWithStored") : ts("disagreesWithStored")}
                 </span>,
               ],
               [
-                "Percentile",
+                ts("kvPercentile"),
                 <span key="p">
-                  <span className="num">{(report.current_level.share_of_pool * 100).toFixed(1)}%</span> of {report.current_level.players_in_pool} rows ·{" "}
-                  <span className="num">{(report.current_level.share_of_band * 100).toFixed(1)}%</span> inside {report.current_level.band} ({report.current_level.players_in_band} rows)
+                  <span className="num">{(report.current_level.share_of_pool * 100).toFixed(1)}%</span>{" "}
+                  {ts("percentOfPool", {
+                    value: (report.current_level.share_of_pool * 100).toFixed(1),
+                    rows: report.current_level.players_in_pool,
+                  })}{" "}
+                  ·{" "}
+                  <span className="num">{(report.current_level.share_of_band * 100).toFixed(1)}%</span>{" "}
+                  {ts("percentOfBand", {
+                    value: (report.current_level.share_of_band * 100).toFixed(1),
+                    band: report.current_level.band,
+                    rows: report.current_level.players_in_band,
+                  })}
                 </span>,
               ],
-              ["Archetype", `${report.current_level.archetype} · match ${report.current_level.archetype_match}`],
+              [
+                ts("kvArchetype"),
+                `${report.current_level.archetype} · ${ts("archetypeMatch", { value: report.current_level.archetype_match })}`,
+              ],
             ]}
           />
           <p className="muted mono">{report.current_level.rule}</p>
         </div>
 
         <div className="tac-card">
-          <strong>Potential</strong>
+          <strong>{ts("potentialTitle")}</strong>
           <KeyValueGrid
             rows={[
-              ["Ceiling", <span className="num" key="c">{report.potential.potential}</span>],
-              ["Headroom", <span className="num" key="h">{report.potential.headroom}</span>],
-              ["Age curve", <span className="num" key="a">{report.potential.age_curve}</span>],
-              ["Years past peak", <span className="num" key="y">{report.potential.years_past_peak}</span>],
+              [ts("kvCeiling"), <span className="num" key="c">{report.potential.potential}</span>],
+              [ts("kvHeadroom"), <span className="num" key="h">{report.potential.headroom}</span>],
+              [ts("kvAgeCurve"), <span className="num" key="a">{report.potential.age_curve}</span>],
+              [ts("kvYearsPastPeak"), <span className="num" key="y">{report.potential.years_past_peak}</span>],
             ]}
           />
           <p className="muted mono">{report.potential.rule}</p>
@@ -92,12 +108,12 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
         <table className="table">
           <thead>
             <tr>
-              <th scope="col">Group</th>
-              <th scope="col" className="num">Mean</th>
-              <th scope="col" className="num">Measured</th>
-              <th scope="col">Strongest</th>
-              <th scope="col">Weakest</th>
-              <th scope="col">Missing keys</th>
+              <th scope="col">{ts("thGroup")}</th>
+              <th scope="col" className="num">{ts("thMean")}</th>
+              <th scope="col" className="num">{ts("thMeasured")}</th>
+              <th scope="col">{ts("thStrongest")}</th>
+              <th scope="col">{ts("thWeakest")}</th>
+              <th scope="col">{ts("thMissingKeys")}</th>
             </tr>
           </thead>
           <tbody>
@@ -112,17 +128,21 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
       {report.role_fit ? (
         <div className="stack-sm">
           <strong>
-            Role fit · {report.role_fit.role} — {report.role_fit.label} <span className="chip mono">{report.role_fit.board_band}</span>
+            {ts("roleFitTitle", {
+              role: report.role_fit.role,
+              label: report.role_fit.label,
+            })}{" "}
+            <span className="chip mono">{report.role_fit.board_band}</span>
           </strong>
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Attribute</th>
-                  <th scope="col" className="num">Demanded</th>
-                  <th scope="col" className="num">Have</th>
-                  <th scope="col" className="num">Gap</th>
-                  <th scope="col">Verdict</th>
+                  <th scope="col">{ts("thAttribute")}</th>
+                  <th scope="col" className="num">{ts("thDemanded")}</th>
+                  <th scope="col" className="num">{ts("thHave")}</th>
+                  <th scope="col" className="num">{ts("thGap")}</th>
+                  <th scope="col">{ts("thVerdict")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -141,28 +161,35 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
             </table>
           </div>
           <p className="muted">
-            mean gap <span className="mono">{report.role_fit.mean_gap}</span> over {report.role_fit.covered_attributes} attributes · {report.role_fit.verdict} · {report.role_fit.formula}
+            {ts("meanGap", {
+              gap: report.role_fit.mean_gap,
+              attributes: report.role_fit.covered_attributes,
+              verdict: report.role_fit.verdict,
+              formula: report.role_fit.formula,
+            })}
           </p>
           <p className="muted">{report.role_fit.risk}</p>
         </div>
       ) : (
         <p className="muted">
-          <span className="mono">role_fit: null</span> — no role was asked for, so there is no fit to print. The role codes this catalogue holds are published by{" "}
-          <span className="mono">GET /api/v1/scout/rules</span>.
+          <span className="mono">role_fit: null</span> {ts("roleFitNull")}
         </p>
       )}
 
       {report.team_fit ? (
         <div className="stack-sm">
           <strong>
-            Team fit · {report.team_fit.club.name} needs {report.team_fit.needed_band}
+            {ts("teamFitTitle", {
+              club: report.team_fit.club.name,
+              band: report.team_fit.needed_band,
+            })}
           </strong>
           <KeyValueGrid
             rows={[
-              ["Fit", <span className="num" key="f">{report.team_fit.fit}</span>],
-              ["Club stores in band", <span className="num" key="s">{report.team_fit.club_stores_in_band}</span>],
-              ["Candidate already lists there", String(report.team_fit.candidate_already_lists_there)],
-              ["Bands", JSON.stringify(report.team_fit.bands)],
+              [ts("kvFit"), <span className="num" key="f">{report.team_fit.fit}</span>],
+              [ts("kvClubStoresInBand"), <span className="num" key="s">{report.team_fit.club_stores_in_band}</span>],
+              [ts("kvCandidateListsThere"), String(report.team_fit.candidate_already_lists_there)],
+              [ts("kvBands"), JSON.stringify(report.team_fit.bands)],
             ]}
           />
           <p className="muted mono">
@@ -171,15 +198,14 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
         </div>
       ) : (
         <p className="muted">
-          <span className="mono">team_fit: null</span> — no career was named, so no club&rsquo;s weakest band was judged. This is §24&rsquo;s field left unanswered rather than filled with a number that belongs to no
-          club.
+          <span className="mono">team_fit: null</span> {ts("teamFitNull")}
         </p>
       )}
 
       <div className="stack-sm">
-        <strong>Risk · {report.risk.length} factor{report.risk.length === 1 ? "" : "s"}</strong>
+        <strong>{ts("riskTitle", { count: report.risk.length })}</strong>
         {report.risk.length === 0 ? (
-          <p className="muted">No factor matched. That is not the same as no risk — it means none of the published thresholds was crossed by this row.</p>
+          <p className="muted">{ts("noRiskFactors")}</p>
         ) : (
           <ul className="stack-sm" style={{ listStyle: "none", padding: 0 }}>
             {report.risk.map((factor) => (
@@ -193,24 +219,27 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
       </div>
 
       <div className="stack-sm">
-        <strong>Cost</strong>
+        <strong>{ts("costTitle")}</strong>
         <KeyValueGrid
           rows={[
-            ["Asking fee", <span className="num" key="af">{money(report.cost.asking_fee)}</span>],
-            ["Weekly wage", <span className="num" key="ww">{money(report.cost.weekly_wage)}</span>],
-            ["Season wage", <span className="num" key="sw">{money(report.cost.season_wage)}</span>],
-            ["Wage share of fee", <span className="num" key="ws">{report.cost.wage_share_of_fee}</span>],
-            ["Release clause", <span className="num" key="rc">{money(report.cost.release_clause)}</span>],
-            ["Contract years", <span className="num" key="cy">{report.cost.contract_years}</span>],
-            ["Value for money", <span className="num" key="vf">{report.cost.value_for_money}</span>],
-            ["Components", <span className="mono" key="cp">{JSON.stringify(report.cost.components)}</span>],
+            [ts("kvAskingFee"), <span className="num" key="af">{money(report.cost.asking_fee)}</span>],
+            [ts("kvWeeklyWage"), <span className="num" key="ww">{money(report.cost.weekly_wage)}</span>],
+            [ts("kvSeasonWage"), <span className="num" key="sw">{money(report.cost.season_wage)}</span>],
+            [ts("kvWageShareOfFee"), <span className="num" key="ws">{report.cost.wage_share_of_fee}</span>],
+            [ts("kvReleaseClause"), <span className="num" key="rc">{money(report.cost.release_clause)}</span>],
+            [ts("kvContractYears"), <span className="num" key="cy">{report.cost.contract_years}</span>],
+            [ts("kvValueForMoney"), <span className="num" key="vf">{report.cost.value_for_money}</span>],
+            [ts("kvComponents"), <span className="mono" key="cp">{JSON.stringify(report.cost.components)}</span>],
             ...(report.cost.against_career_budget
               ? ([[
-                  "Against this budget",
+                  ts("kvAgainstBudget"),
                   <span key="ab">
-                    <span className="num">{money(report.cost.against_career_budget.budget)}</span> {report.cost.against_career_budget.units} · share{" "}
-                    <span className="num">{String(report.cost.against_career_budget.share_of_budget)}</span> · fits without selling:{" "}
-                    {String(report.cost.against_career_budget.fits_without_selling)}
+                    {ts("budgetRow", {
+                      budget: money(report.cost.against_career_budget.budget),
+                      units: report.cost.against_career_budget.units,
+                      share: String(report.cost.against_career_budget.share_of_budget),
+                      fits: String(report.cost.against_career_budget.fits_without_selling),
+                    })}
                   </span>,
                 ]] as [string, ReactNode][])
               : []),
@@ -224,12 +253,17 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
       <p className="muted">
         {report.comparison ? (
           <>
-            Comparison against <Link href={report.comparison.other.path}>{report.comparison.other.name}</Link> — overall <span className="num">{report.comparison.overall}</span>, headroom{" "}
-            <span className="num">{report.comparison.headroom}</span>, fee <span className="num">{money(report.comparison.asking_fee)}</span>, value for money{" "}
-            <span className="num">{report.comparison.value_for_money}</span>. {report.comparison.rule}
+            {ts("comparisonAgainst")} <Link href={report.comparison.other.path}>{report.comparison.other.name}</Link>{" "}
+            {ts("comparisonLine", {
+              overall: report.comparison.overall,
+              headroom: report.comparison.headroom,
+              fee: money(report.comparison.asking_fee),
+              value: report.comparison.value_for_money,
+            })}{" "}
+            {report.comparison.rule}
           </>
         ) : (
-          <span className="mono">comparison: null</span>
+          <span className="mono">{ts("comparisonNull")}</span>
         )}
       </p>
 

@@ -57,7 +57,7 @@ const COMPONENTS = join(WEB, "components");
  *
  * It may only fall.
  */
-const FLOOR_SITES = 97;
+const FLOOR_SITES = 76;
 
 /** The population the walk must find, so a scan that narrows itself cannot pass by finding nothing. */
 const FLOOR_FILES = 70;
@@ -90,6 +90,11 @@ const TECHNICAL_PATTERNS = [
   /^is_demo_data\b/,
   /^(max_depth|max_edges|max_nodes)\b/,
   /^identity_retained=/,
+  // A field's own name, printed as itself: `role_fit: null` is the API saying that the field is
+  // null, and translating the field's name would break the one string an operator greps for.
+  /^role_fit:/,
+  /^team_fit:/,
+  /^comparison:/,
   /^you@example\.com$/,
   /^footballos-export\.json$/,
   /^FOOTBALL OS$/,
