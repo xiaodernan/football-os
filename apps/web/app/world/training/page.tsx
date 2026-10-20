@@ -14,6 +14,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 export async function generateMetadata(): Promise<Metadata> {
   const tw = await getTranslations("world");
+  const tt = await getTranslations("worldTraining");
   return pageMetadata({
     // The key is spelled …Link because the world index reached this page through a link; the page's own
     // heading already reads the same key, so the tab and the heading cannot drift apart.
@@ -31,6 +32,7 @@ export default async function WorldTrainingPage({ searchParams }: Props) {
   const page = pageOf(query);
   const tc = await getTranslations("common");
   const tw = await getTranslations("world");
+  const tt = await getTranslations("worldTraining");
   const result = await readWorld<WorldTrainingList>("/world/training", {
     player: query.player,
     team: query.team,
@@ -48,77 +50,85 @@ export default async function WorldTrainingPage({ searchParams }: Props) {
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
-        lede="What the generated squad did between fixtures. Each row names a catalogue drill this repository authored, the synthetic player who is said to have run it, and the two figures the load number is made from — there is no tracking data and no person behind any of it."
+        lede={tt("lede")}
         provenance={result.data}
         title={tw("trainingLogLink")}
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow={tc("filter")} title="By focus">
-          <FilterChips active={query.category} base={BASE} label="Focus" options={categories} param="category" query={query} />
+        <Panel eyebrow={tc("filter")} title={tt("byFocusTitle")}>
+          <FilterChips active={query.category} base={BASE} label={tt("focusLabel")} options={categories} param="category" query={query} />
         </Panel>
-        <Panel eyebrow="This page" title="Session load, measured from the rows below">
+        <Panel eyebrow={tt("pageEyebrow")} title={tt("pageTitle")}>
           <dl className="world-kv">
             <div>
-              <dt>Sessions listed</dt>
+              <dt>{tt("rowSessionsListed")}</dt>
               <dd>{total.toLocaleString("en-GB")}</dd>
             </div>
             <div>
-              <dt>Gate (spec §65)</dt>
+              <dt>{tt("rowGate")}</dt>
               <dd>{gate.training_sessions?.toLocaleString("en-GB") ?? "—"}</dd>
             </div>
             <div>
-              <dt>Minutes on this page</dt>
+              <dt>{tt("rowMinutesOnPage")}</dt>
               <dd>{totals.total_minutes.toLocaleString("en-GB")}</dd>
             </div>
             <div>
-              <dt>Load on this page</dt>
+              <dt>{tt("rowLoadOnPage")}</dt>
               <dd>{totals.total_load.toLocaleString("en-GB")}</dd>
             </div>
             <div>
-              <dt>Mean RPE</dt>
+              <dt>{tt("rowMeanRpe")}</dt>
               <dd>{totals.mean_rpe}</dd>
             </div>
             <div>
-              <dt>Formula</dt>
+              <dt>{tt("rowFormula")}</dt>
               <dd className="mono">{totals.load_formula}</dd>
             </div>
             <div>
-              <dt>Drills used here</dt>
+              <dt>{tt("rowDrillsUsed")}</dt>
               <dd>{totals.drills.length}</dd>
             </div>
           </dl>
           {scoped ? (
             <p className="muted">
-              Filtered by <span className="mono">{filters.player ? `player=${filters.player}` : `team=${filters.team}`}</span> ·{" "}
-              <Link href={BASE}>clear</Link>
+              {tt("filteredBy", {
+                filter: filters.player ? `player=${filters.player}` : `team=${filters.team}`,
+              })}
+              <Link href={BASE}>{tt("clear")}</Link>
             </p>
           ) : null}
-          <p className="muted">Drill names link into the Training Academy, which asks for an account. Nothing else on this page does.</p>
+          <p className="muted">{tt("drillsNote")}</p>
         </Panel>
       </div>
 
       {items.length === 0 ? (
         <div className="empty">
-          <strong>No session matches that filter</strong>
+            <strong>{tt("emptyTitle")}</strong>
           <Link className="btn btn--sm" href={BASE}>
-            Clear filters
+            {tt("clearFilters")}
           </Link>
         </div>
       ) : (
-        <Panel eyebrow={`${items.length} of ${total.toLocaleString("en-GB")} rows`} title="Sessions">
+        <Panel
+          eyebrow={tt("sessionsEyebrow", {
+            shown: items.length,
+            total: total.toLocaleString("en-GB"),
+          })}
+          title={tt("sessionsTitle")}
+        >
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Player</th>
-                  <th scope="col">Pos</th>
-                  <th scope="col">Drill</th>
-                  <th scope="col">Focus</th>
-                  <th scope="col">Min</th>
-                  <th scope="col">RPE</th>
-                  <th scope="col">Load</th>
+                  <th scope="col">{tt("thDate")}</th>
+                  <th scope="col">{tt("thPlayer")}</th>
+                  <th scope="col">{tt("thPos")}</th>
+                  <th scope="col">{tt("thDrill")}</th>
+                  <th scope="col">{tt("thFocus")}</th>
+                  <th scope="col">{tt("thMin")}</th>
+                  <th scope="col">{tt("thRpe")}</th>
+                  <th scope="col">{tt("thLoad")}</th>
                 </tr>
               </thead>
               <tbody>
