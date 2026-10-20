@@ -44,49 +44,59 @@ export default async function CareerIndexPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/simulate", label: "Match simulator" }}
-        eyebrow={`${user.display_name} · careers are private to this account`}
-        lede="One club out of the generated world, one tactical system out of the fifty authored here, and an objective you set before the first round. Each fixture is decided by the same engine the simulator uses, and every figure on the season page is a sum of the rounds it lists."
+        back={{ href: "/simulate", label: t("backLabel") }}
+        eyebrow={t("eyebrow", { name: user.display_name })}
+        lede={t("lede")}
         provenance={{ data_origin: "simulation", is_demo_data: true, disclaimer: options.disclaimer }}
         title={t("title")}
       />
 
-      <Panel eyebrow={`${options.clubs.length} clubs · ${options.systems.length} authored systems · ${options.objective_kinds.points ? "4 objective kinds" : "no objective kinds"}`} title={t("createCareer")}>
+      <Panel
+        eyebrow={t("panelEyebrow", {
+          clubs: options.clubs.length,
+          systems: options.systems.length,
+          kinds: options.objective_kinds.points ? t("objectiveKinds") : t("noObjectiveKinds"),
+        })}
+        title={t("createCareer")}
+      >
         <CareerForm options={options} />
       </Panel>
 
       <p className="muted">
-        Rather than setting your own target, be judged by one that was fixed before you started:{" "}
+        {t("challengeLead")} {" "}
         <Link className="world-link" href="/challenges">
-          six authored scenarios
+          {t("challengeLink")}
         </Link>{" "}
-        name the objective, the round window and the reward, and the start route accepts no field for any of them.
+        {t("challengeTail")}
       </p>
 
       {!owned.ok ? (
-        <WorldUnavailable message={owned.error.message} title="Your careers" />
+        <WorldUnavailable message={owned.error.message} title={t("unavailableTitle")} />
       ) : owned.data.items.length === 0 ? (
         <div className="empty">
-          <strong>No career opened yet</strong>
-          <p className="muted">Nothing is simulated until you press play on a season. The form above offers the choices; the engine decides the results.</p>
+          <strong>{t("emptyTitle")}</strong>
+          <p className="muted">{t("emptyBody")}</p>
         </div>
       ) : (
-        <Panel eyebrow={`${owned.data.items.length} of ${owned.data.limit_per_user} used`} title="Your seasons">
+        <Panel
+          eyebrow={t("seasonsEyebrow", { used: owned.data.items.length, limit: owned.data.limit_per_user })}
+          title={t("seasonsTitle")}
+        >
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Manager</th>
-                  <th scope="col">Club</th>
-                  <th scope="col">Competition</th>
-                  <th scope="col">Rounds</th>
-                  <th scope="col">P</th>
-                  <th scope="col">W</th>
-                  <th scope="col">D</th>
-                  <th scope="col">L</th>
-                  <th scope="col">GD</th>
-                  <th scope="col">Pts</th>
-                  <th scope="col">Objectives met</th>
+                  <th scope="col">{t("thManager")}</th>
+                  <th scope="col">{t("thClub")}</th>
+                  <th scope="col">{t("thCompetition")}</th>
+                  <th scope="col">{t("thRounds")}</th>
+                  <th scope="col">{t("thPlayed")}</th>
+                  <th scope="col">{t("thWon")}</th>
+                  <th scope="col">{t("thDrawn")}</th>
+                  <th scope="col">{t("thLost")}</th>
+                  <th scope="col">{t("thGd")}</th>
+                  <th scope="col">{t("thPoints")}</th>
+                  <th scope="col">{t("thObjectivesMet")}</th>
                   <th scope="col">{tc("status")}</th>
                 </tr>
               </thead>
@@ -99,7 +109,9 @@ export default async function CareerIndexPage() {
                       </Link>
                     </td>
                     <td>{row.club_name}</td>
-                    <td className="muted">{row.competition_name || <span className="unavailable">no competition</span>}</td>
+                    <td className="muted">
+                      {row.competition_name || <span className="unavailable">{t("noCompetition")}</span>}
+                    </td>
                     <td className="num">{row.rounds_played}</td>
                     <td className="num">{row.record.played}</td>
                     <td className="num">{row.record.won}</td>
@@ -108,7 +120,7 @@ export default async function CareerIndexPage() {
                     <td className="num">{row.record.goal_difference}</td>
                     <td className="num">{row.record.points}</td>
                     <td className="num">
-                      {row.objectives_met} of {row.objectives_total}
+                      {t("objectivesMet", { met: row.objectives_met, total: row.objectives_total })}
                     </td>
                     <td>
                       <span className={row.status === "active" ? "badge badge--live" : "badge badge--demo"}>{row.status.toUpperCase()}</span>
