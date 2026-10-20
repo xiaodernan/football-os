@@ -17,10 +17,13 @@ function faultLine(error: ApiError): string {
   return [`${error.code}: ${error.message}`, ...refusalFigures(error.details)].join(" · ");
 }
 
-function shelfEyebrow(shelf: GuideShelfView | null): string {
-  if (!shelf) return "your shelf has not been read yet";
-  const parts = [`${shelf.total} guide${shelf.total === 1 ? "" : "s"} on your shelf`];
-  if (shelf.section) parts.push(`section: ${shelf.section}`);
+function shelfEyebrow(
+  shelf: GuideShelfView | null,
+  t: (key: string, values?: Record<string, string | number>) => string,
+): string {
+  if (!shelf) return t("shelfUnread");
+  const parts = [t("shelfCount", { count: shelf.total })];
+  if (shelf.section) parts.push(t("shelfSection", { section: shelf.section }));
   return parts.join(" · ");
 }
 
@@ -43,6 +46,7 @@ function shelfEyebrow(shelf: GuideShelfView | null): string {
  */
 export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; creator: string }) {
   const t = useTranslations("common");
+  const tp = useTranslations("creator");
   const profileCall = useClubCall();
   const guideCall = useClubCall();
   const citationCall = useClubCall();
@@ -153,7 +157,10 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
 
   return (
     <div className="stack">
-      <Panel eyebrow={profile ? `Published as ${profile.slug}` : "No profile yet — the first publication creates it"} title="Your creator profile">
+      <Panel
+        eyebrow={profile ? tp("profilePublishedAs", { slug: profile.slug }) : tp("profileNone")}
+        title={tp("profileTitle")}
+      >
         <div className="stack-sm" data-creator-profile={profile ? "published" : "none"}>
           {readFault && (
             <p className="notice notice--warn" data-creator-read-fault>
@@ -165,70 +172,72 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
               <div className="grow">
                 <strong data-creator-slug-shown>{profile.slug}</strong>
                 <div className="muted mono" data-creator-account>
-                  {profile.account.display_name} · since {profile.since} · {profile.guides} guide(s) · {profile.subscribers} subscriber(s)
+                  {profile.account.display_name} · {tp("profileSince", { date: profile.since })} ·{" "}
+                  {tp("guidesCount", { count: profile.guides })} ·{" "}
+                  {tp("subscribersCount", { count: profile.subscribers })}
                 </div>
               </div>
-              <input aria-label="Headline" className="grow" data-creator-headline maxLength={rules.caps.profile_headline_max} onChange={(e) => setHeadline(e.target.value)} placeholder="Headline" value={headline} />
-              <input aria-label="Biography" className="grow" data-creator-bio maxLength={rules.caps.profile_bio_max} onChange={(e) => setBio(e.target.value)} placeholder="Biography" value={bio} />
+              <input aria-label={tp("labelHeadline")} className="grow" data-creator-headline maxLength={rules.caps.profile_headline_max} onChange={(e) => setHeadline(e.target.value)} placeholder={tp("labelHeadline")} value={headline} />
+              <input aria-label={tp("labelBiography")} className="grow" data-creator-bio maxLength={rules.caps.profile_bio_max} onChange={(e) => setBio(e.target.value)} placeholder={tp("labelBiography")} value={bio} />
               <button className="btn" data-creator-publish-profile disabled={profileCall.busy !== null} onClick={() => void publishProfile()} type="button">
-                {profileCall.busy === "profile" ? "Updating…" : "Amend profile"}
+                {profileCall.busy === "profile" ? tp("updating") : tp("amendProfile")}
               </button>
             </div>
           ) : (
             <div className="row wrap" style={{ gap: "0.6rem" }}>
-              <input aria-label="Profile slug" className="grow mono" data-creator-slug maxLength={64} onChange={(e) => setSlug(e.target.value)} placeholder="your-handle" value={slug} />
-              <input aria-label="Headline" className="grow" data-creator-headline maxLength={rules.caps.profile_headline_max} onChange={(e) => setHeadline(e.target.value)} placeholder="One line that says what you write about" value={headline} />
-              <input aria-label="Biography" className="grow" data-creator-bio maxLength={rules.caps.profile_bio_max} onChange={(e) => setBio(e.target.value)} placeholder="A short biography" value={bio} />
+              <input aria-label={tp("labelProfileSlug")} className="grow mono" data-creator-slug maxLength={64} onChange={(e) => setSlug(e.target.value)} placeholder="your-handle" value={slug} />
+              <input aria-label={tp("labelHeadline")} className="grow" data-creator-headline maxLength={rules.caps.profile_headline_max} onChange={(e) => setHeadline(e.target.value)} placeholder={tp("placeholderHeadline")} value={headline} />
+              <input aria-label={tp("labelBiography")} className="grow" data-creator-bio maxLength={rules.caps.profile_bio_max} onChange={(e) => setBio(e.target.value)} placeholder={tp("placeholderBiography")} value={bio} />
               <button className="btn btn--primary" data-creator-publish-profile disabled={profileCall.busy !== null} onClick={() => void publishProfile()} type="button">
-                {profileCall.busy === "profile" ? "Publishing…" : "Publish profile"}
+                {profileCall.busy === "profile" ? tp("publishing") : tp("publishProfile")}
               </button>
             </div>
           )}
           {!profile && (
-            <p className="muted mono">The slug is derived from your display name if you leave it blank. It cannot be changed after the first publication.</p>
+            <p className="muted mono">{tp("slugNote")}</p>
           )}
           <CallNote note={profileCall.note} />
         </div>
       </Panel>
 
-      <Panel eyebrow={shelfEyebrow(shelf)} title="Guides">
+      <Panel eyebrow={shelfEyebrow(shelf, tp)} title={tp("guidesTitle")}>
         <div className="stack-sm" data-creator-shelf={shelf ? String(shelf.total) : "unread"}>
           {!profile ? (
-            <p className="muted">Publish your profile first — a guide needs an author.</p>
+            <p className="muted">{tp("profileFirst")}</p>
           ) : (
             <div className="row wrap" style={{ gap: "0.6rem" }}>
-              <input aria-label="Guide title" className="grow" data-creator-guide-title maxLength={rules.caps.guide_title_max} onChange={(e) => setGuideTitle(e.target.value)} placeholder="e.g. How to defend a low block" value={guideTitle} />
-              <select aria-label="Section" className="mono" data-creator-guide-section onChange={(e) => setGuideSection(e.target.value as GuideIn["section"])} value={guideSection}>
+              <input aria-label={tp("labelGuideTitle")} className="grow" data-creator-guide-title maxLength={rules.caps.guide_title_max} onChange={(e) => setGuideTitle(e.target.value)} placeholder={tp("placeholderGuideTitle")} value={guideTitle} />
+              <select aria-label={tp("labelSection")} className="mono" data-creator-guide-section onChange={(e) => setGuideSection(e.target.value as GuideIn["section"])} value={guideSection}>
                 {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-              <select aria-label="Visibility" className="mono" data-creator-guide-visibility onChange={(e) => setGuideVisibility(e.target.value as GuideIn["visibility"])} value={guideVisibility}>
+              <select aria-label={tp("labelVisibility")} className="mono" data-creator-guide-visibility onChange={(e) => setGuideVisibility(e.target.value as GuideIn["visibility"])} value={guideVisibility}>
                 {VISIBILITIES.map((v) => <option key={v} value={v}>{v}</option>)}
               </select>
               {/* the parenthetical keeps its own lower case: t("optional") is the label form "Optional" */}
               <input aria-label={t("summary")} className="grow" data-creator-guide-summary maxLength={rules.caps.guide_summary_max} onChange={(e) => setGuideSummary(e.target.value)} placeholder={`${t("summary")} (${t("optional").toLowerCase()})`} value={guideSummary} />
               <button className="btn btn--primary" data-creator-publish-guide disabled={guideCall.busy !== null || !guideTitle.trim()} onClick={() => void publishGuide()} type="button">
-                {guideCall.busy === "guide" ? "Publishing…" : "Publish guide"}
+                {guideCall.busy === "guide" ? tp("publishing") : tp("publishGuide")}
               </button>
             </div>
           )}
-          <p className="muted mono">A guide is a frame. The title, section and summary are yours; the substance stays in the corpus and is cited by address.</p>
+          <p className="muted mono">{tp("guideFrameNote")}</p>
 
-          {shelf && shelf.items.length === 0 && <p className="muted">No guides yet. Publish one above.</p>}
+          {shelf && shelf.items.length === 0 && <p className="muted">{tp("noGuides")}</p>}
 
           {shelf && shelf.items.length > 0 && (
             <div className="world-tablewrap">
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">Guide</th>
-                    <th scope="col">Section</th>
-                    <th scope="col">Visibility</th>
-                    <th scope="col" className="num">Citations</th>
-                    <th scope="col" className="num">Moved</th>
-                    <th scope="col" className="num">Tokens</th>
-                    <th scope="col">Published</th>
+                    <th scope="col">{tp("thGuide")}</th>
+                    <th scope="col">{tp("thSection")}</th>
+                    <th scope="col">{tp("thVisibility")}</th>
+                    <th scope="col" className="num">{tp("thCitations")}</th>
+                    <th scope="col" className="num">{tp("thMoved")}</th>
+                    <th scope="col" className="num">{tp("thTokens")}</th>
+                    <th scope="col">{tp("thPublished")}</th>
                     <th scope="col">{t("open")}</th>
-                    <th scope="col">Erase</th>
+                    <th scope="col">{tp("erase")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -251,7 +260,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
                       </td>
                       <td>
                         <button className="btn btn--sm" data-creator-guide-erase disabled={guideCall.busy !== null} onClick={() => void eraseGuide(guide.id)} type="button">
-                          Erase
+                          {tp("erase")}
                         </button>
                       </td>
                     </tr>
@@ -267,32 +276,32 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
       {selectedGuide && (
         <Panel
           eyebrow={`${selectedGuide.title} · ${selectedGuide.section} · ${selectedGuide.visibility} · ${selectedGuide.citations} citation(s) · ${selectedGuide.moved} moved · ${selectedGuide.tokens} tokens`}
-          title="Citations"
+          title={tp("citationsTitle")}
         >
           <div className="stack-sm" data-creator-citations={selectedGuide.id}>
             <div className="row wrap" style={{ gap: "0.6rem" }}>
-              <input aria-label="Document slug" className="grow mono" data-creator-cite-document maxLength={80} onChange={(e) => setCitationDocument(e.target.value)} placeholder="document slug (e.g. tactics-2026-pressing)" value={citationDocument} />
-              <input aria-label="Passage ordinal" className="mono" data-creator-cite-ordinal maxLength={4} onChange={(e) => setCitationOrdinal(e.target.value)} placeholder="ordinal" type="number" value={citationOrdinal} />
-              <input aria-label="Note" className="grow" data-creator-cite-note maxLength={rules.caps.citation_note_max} onChange={(e) => setCitationNote(e.target.value)} placeholder="Your note on this passage (optional)" value={citationNote} />
+              <input aria-label={tp("labelDocumentSlug")} className="grow mono" data-creator-cite-document maxLength={80} onChange={(e) => setCitationDocument(e.target.value)} placeholder={tp("placeholderDocumentSlug")} value={citationDocument} />
+              <input aria-label={tp("labelPassageOrdinal")} className="mono" data-creator-cite-ordinal maxLength={4} onChange={(e) => setCitationOrdinal(e.target.value)} placeholder="ordinal" type="number" value={citationOrdinal} />
+              <input aria-label={tp("labelNote")} className="grow" data-creator-cite-note maxLength={rules.caps.citation_note_max} onChange={(e) => setCitationNote(e.target.value)} placeholder={tp("placeholderNote")} value={citationNote} />
               <button className="btn btn--primary" data-creator-cite disabled={citationCall.busy !== null || !citationDocument.trim()} onClick={() => void addCitation()} type="button">
-                {citationCall.busy === "cite" ? "Citing…" : "Cite passage"}
+                {citationCall.busy === "cite" ? tp("citing") : tp("citePassage")}
               </button>
             </div>
-            <p className="muted mono">Cite by (document slug, ordinal). The chunk&apos;s hash is recorded; if the corpus re-ingests and the passage changes, the guide will say the passage has moved.</p>
+            <p className="muted mono">{tp("citeNote")}</p>
 
-            {selectedGuide.passages.length === 0 && <p className="muted">No citations yet. Add one above.</p>}
+            {selectedGuide.passages.length === 0 && <p className="muted">{tp("noCitations")}</p>}
 
             {selectedGuide.passages.length > 0 && (
               <div className="world-tablewrap">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th scope="col">Document</th>
-                      <th scope="col" className="num">Ordinal</th>
-                      <th scope="col">Heading</th>
-                      <th scope="col">Moved</th>
-                      <th scope="col">Note</th>
-                      <th scope="col">Remove</th>
+                      <th scope="col">{tp("thDocument")}</th>
+                      <th scope="col" className="num">{tp("thOrdinal")}</th>
+                      <th scope="col">{tp("thHeading")}</th>
+                      <th scope="col">{tp("thMoved")}</th>
+                      <th scope="col">{tp("thNote")}</th>
+                      <th scope="col">{tp("thRemove")}</th>
                     </tr>
                   </thead>
                   <tbody>

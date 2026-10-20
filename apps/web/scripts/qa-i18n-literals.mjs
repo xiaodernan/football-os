@@ -56,7 +56,7 @@ const COMPONENTS = join(WEB, "components");
  *
  * It may only fall.
  */
-const FLOOR_SITES = 392;
+const FLOOR_SITES = 350;
 
 /** The population the walk must find, so a scan that narrows itself cannot pass by finding nothing. */
 const FLOOR_FILES = 70;
