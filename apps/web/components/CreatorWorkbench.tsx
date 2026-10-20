@@ -6,7 +6,19 @@ import { useTranslations } from "next-intl";
 import { CallNote, useClubCall } from "@/components/ClubTools";
 import { Panel } from "@/components/ui";
 import { browserFetch } from "@/lib/api";
-import { refusalFigures, type CreatorProfileView, type CreatorRulesView, type GuideDetailView, type GuideIn, type GuideShelfView, type GuideView } from "@/lib/creator";
+import {
+  refusalFigures,
+  type CreatorProfileView,
+  type CreatorRulesView,
+  type GuideDetailView,
+  type GuideIn,
+  type GuideShelfView,
+  type GuideView,
+  type ProgramIn,
+  type ProgramShelfView,
+  type ProgramView,
+} from "@/lib/creator";
+import type { Drill } from "@/lib/types";
 import type { ApiError } from "@/lib/types";
 
 const SECTIONS: GuideIn["section"][] = ["plan", "drill", "match", "tactic", "scout", "video"];
@@ -64,6 +76,15 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
   const [guideVisibility, setGuideVisibility] = useState<GuideIn["visibility"]>("public");
 
   const [selectedGuide, setSelectedGuide] = useState<GuideDetailView | null>(null);
+  const programCall = useClubCall();
+  const [programs, setPrograms] = useState<ProgramShelfView | null>(null);
+  const [drills, setDrills] = useState<Drill[]>([]);
+  const [programTitle, setProgramTitle] = useState("");
+  const [programSummary, setProgramSummary] = useState("");
+  const [programVisibility, setProgramVisibility] = useState<ProgramIn["visibility"]>("public");
+  const [programSteps, setProgramSteps] = useState<{ drill: string; minutes: string; note: string }[]>([
+    { drill: "", minutes: "20", note: "" },
+  ]);
   const [citationDocument, setCitationDocument] = useState("");
   const [citationOrdinal, setCitationOrdinal] = useState("");
   const [citationNote, setCitationNote] = useState("");
@@ -102,10 +123,25 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
     else setReadFault(faultLine(result.error));
   }, []);
 
+  const loadPrograms = useCallback(async () => {
+    // Scoped to this account for the same reason the guide shelf is: the panel is titled "your
+    // shelf", and the door's unscoped listing is everybody's.
+    const result = await browserFetch<ProgramShelfView>(`/creator/programs?creator=${encodeURIComponent(creator)}`);
+    if (result.ok) setPrograms(result.data);
+    else setReadFault(faultLine(result.error));
+  }, [creator]);
+
+  const loadDrills = useCallback(async () => {
+    const result = await browserFetch<Drill[]>("/trainings/drills");
+    if (result.ok) setDrills(result.data);
+  }, []);
+
   useEffect(() => {
     void loadProfile();
     void loadShelf();
-  }, [loadProfile, loadShelf]);
+    void loadPrograms();
+    void loadDrills();
+  }, [loadProfile, loadShelf, loadPrograms, loadDrills]);
 
   async function publishProfile() {
     const answer = await profileCall.call("profile", "/creator/profile", { body: { slug: slug.trim() || undefined, headline: headline.trim() || undefined, bio: bio.trim() || undefined } });
@@ -145,6 +181,35 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
     if (!answer) return;
     await readGuide(selectedGuide.id);
     await loadShelf();
+  }
+
+  async function publishProgram() {
+    if (!programTitle.trim() || programSteps.length === 0) return;
+    const steps = programSteps
+      .filter((step) => step.drill.trim())
+      .map((step) => ({ drill: step.drill.trim(), minutes: Number(step.minutes) || 0, note: step.note.trim() || undefined }));
+    if (steps.length === 0) return;
+    const answer = await programCall.call("program", "/creator/programs", {
+      body: { title: programTitle.trim(), summary: programSummary.trim() || undefined, visibility: programVisibility, steps },
+    });
+    if (!answer) return;
+    setProgramTitle("");
+    setProgramSummary("");
+    setProgramSteps([{ drill: "", minutes: "20", note: "" }]);
+    await loadPrograms();
+  }
+
+  async function startProgram(programId: string) {
+    const answer = await programCall.call("start", `/creator/programs/${programId}/start`);
+    if (!answer) return;
+    await loadPrograms();
+  }
+
+  async function eraseProgram(programId: string) {
+    if (!confirm("Erase this program and the sessions it planned?")) return;
+    const answer = await programCall.call("erase", `/creator/programs/${programId}`, { method: "DELETE" });
+    if (!answer) return;
+    await loadPrograms();
   }
 
   async function eraseGuide(guideId: string) {
@@ -270,6 +335,180 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
             </div>
           )}
           <CallNote note={guideCall.note} />
+        </div>
+      </Panel>
+
+      <Panel
+        eyebrow={
+          programs
+            ? tp("programsEyebrow", { count: programs.total })
+            : tp("programsUnread")
+        }
+        title={tp("programsTitle")}
+      >
+        <div className="stack-sm" data-creator-programs={programs ? String(programs.total) : "unread"}>
+          <div className="row wrap" style={{ gap: "0.6rem", alignItems: "flex-end" }}>
+            <input
+              aria-label={tp("programLabelTitle")}
+              className="grow"
+              data-creator-program-title
+              maxLength={160}
+              onChange={(e) => setProgramTitle(e.target.value)}
+              placeholder={tp("programPlaceholderTitle")}
+              value={programTitle}
+            />
+            <input
+              aria-label={tp("programLabelSummary")}
+              className="grow"
+              data-creator-program-summary
+              maxLength={600}
+              onChange={(e) => setProgramSummary(e.target.value)}
+              placeholder={tp("programPlaceholderSummary")}
+              value={programSummary}
+            />
+            <select
+              aria-label={tp("labelVisibility")}
+              className="mono"
+              data-creator-program-visibility
+              onChange={(e) => setProgramVisibility(e.target.value as ProgramIn["visibility"])}
+              value={programVisibility}
+            >
+              {VISIBILITIES.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+            <button
+              className="btn btn--primary"
+              data-creator-publish-program
+              disabled={programCall.busy !== null || !programTitle.trim()}
+              onClick={() => void publishProgram()}
+              type="button"
+            >
+              {tp("programPublish")}
+            </button>
+          </div>
+
+          {programSteps.map((step, index) => (
+            <div className="row wrap" key={index} style={{ gap: "0.6rem", alignItems: "flex-end" }}>
+              <select
+                aria-label={tp("programDrillLabel")}
+                className="grow mono"
+                data-creator-program-drill
+                onChange={(e) =>
+                  setProgramSteps((previous) =>
+                    previous.map((row, at) => (at === index ? { ...row, drill: e.target.value } : row)),
+                  )
+                }
+                value={step.drill}
+              >
+                <option value="">—</option>
+                {drills.map((drill) => (
+                  <option key={drill.id} value={drill.slug}>
+                    {drill.title}
+                  </option>
+                ))}
+              </select>
+              <input
+                aria-label={tp("programMinutesLabel")}
+                className="mono"
+                data-creator-program-minutes
+                maxLength={3}
+                onChange={(e) =>
+                  setProgramSteps((previous) =>
+                    previous.map((row, at) => (at === index ? { ...row, minutes: e.target.value } : row)),
+                  )
+                }
+                type="number"
+                value={step.minutes}
+              />
+              <input
+                aria-label={tp("programNoteLabel")}
+                className="grow"
+                data-creator-program-note
+                maxLength={300}
+                onChange={(e) =>
+                  setProgramSteps((previous) =>
+                    previous.map((row, at) => (at === index ? { ...row, note: e.target.value } : row)),
+                  )
+                }
+                value={step.note}
+              />
+              {programSteps.length > 1 && (
+                <button
+                  className="btn btn--sm"
+                  data-creator-program-remove-step
+                  onClick={() => setProgramSteps((previous) => previous.filter((_, at) => at !== index))}
+                  type="button"
+                >
+                  {tp("programRemoveStep")}
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            className="btn btn--sm"
+            data-creator-program-add-step
+            onClick={() => setProgramSteps((previous) => [...previous, { drill: "", minutes: "20", note: "" }])}
+            type="button"
+          >
+            {tp("programAddStep")}
+          </button>
+          <p className="muted mono">{tp("programNote")}</p>
+
+          {programs && programs.programs.length === 0 && <p className="muted">{tp("noPrograms")}</p>}
+
+          {programs && programs.programs.length > 0 && (
+            <div className="world-tablewrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">{tp("thProgram")}</th>
+                    <th scope="col">{tp("thSteps")}</th>
+                    <th scope="col">{tp("thPublished")}</th>
+                    <th scope="col">{tp("programStart")}</th>
+                    <th scope="col">{tp("erase")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {programs.programs.map((program) => (
+                    <tr data-creator-program={program.id} key={program.id}>
+                      <td>
+                        <strong>{program.title}</strong>
+                        <div className="muted mono">{program.slug}</div>
+                      </td>
+                      <td className="num">{program.steps}</td>
+                      <td className="mono">{program.published_on}</td>
+                      <td>
+                        <button
+                          className="btn btn--sm"
+                          data-creator-program-start
+                          disabled={programCall.busy !== null}
+                          onClick={() => void startProgram(program.id)}
+                          type="button"
+                        >
+                          {tp("programStart")}
+                        </button>
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn--sm"
+                          data-creator-program-erase
+                          disabled={programCall.busy !== null}
+                          onClick={() => void eraseProgram(program.id)}
+                          type="button"
+                        >
+                          {tp("erase")}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <CallNote note={programCall.note} />
         </div>
       </Panel>
 

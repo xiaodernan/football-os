@@ -112,6 +112,20 @@ codes — and the rulebook publishes the program's ceilings, its formulas and it
 rows, `minutes` is their sum, `sessions` is the count of the planned sessions this program has
 produced, and `programs` is the count of program rows. The formulas are published beside them.
 
+**The page.** The creator workbench gains a **programs panel** beside its profile and guide panels:
+a publish form (title, summary, visibility and a step editor — the drill is chosen from the
+training catalogue, the minutes and the author's note are typed), the shelf of the account's own
+programs with each program's step count, and a **Start** button beside each one that plans the
+steps as the learner's own training sessions, and an **Erase** button that takes the program and
+the sessions it planned with it. Every string the panel shows is a catalogue key, so the panel adds
+no English literal site — the copy gate's count did not move when it landed.
+
+**Measured against the live API** (2026-10-21, `127.0.0.1:8099`): the drill catalogue answered 24
+drills; publishing a program answered **201** with its step (`1v1-isolation-channel`, 20 minutes)
+and its figures (`steps` 1, `minutes` 20); the scoped shelf answered **200** with the program it
+had just published; starting it answered **201** with the planned session
+(`ses_2I42XAkxPacccOet`) and the dose; erasing it answered **200** with `sessions_erased: 1`.
+
 **What this does not claim.** A program is a plan and the plan is walked in the training tier; there
 is no progress model of its own (a step is not "done" until a session is completed, and that session
 is the training tier's row), no enrolment, no cohort, and no pricing beyond §42's table — which

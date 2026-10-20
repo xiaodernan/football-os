@@ -128,3 +128,38 @@ export function refusalFigures(details: unknown): string[] {
     .filter(([, value]) => value !== null && value !== undefined && value !== "")
     .map(([key, value]) => `${key} ${Array.isArray(value) ? value.join(", ") || "none" : String(value)}`);
 }
+
+
+/** POST /creator/programs — one program with its steps and the figures counted now. */
+export type ProgramView = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  visibility: string;
+  published_on: string;
+  steps: { position: number; drill: string; minutes: number; note: string }[];
+  figures: { steps: number; minutes: number; sessions: number };
+};
+
+/** GET /creator/programs — the shelf. */
+export type ProgramShelfView = {
+  programs: {
+    id: string;
+    slug: string;
+    title: string;
+    summary: string;
+    author: string;
+    published_on: string;
+    steps: number;
+  }[];
+  total: number;
+};
+
+/** POST /creator/programs — what a program asks for. */
+export type ProgramIn = {
+  title: string;
+  summary?: string;
+  visibility: string;
+  steps: { drill: string; minutes: number; note?: string }[];
+};
