@@ -28,6 +28,7 @@ import type { Candidate, ShortlistList, ShortlistRules, ShortlistView } from "@/
  */
 export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rules: ShortlistRules; candidates: Candidate[]; searchedQuery: string }) {
   const t = useTranslations("common");
+  const ts = useTranslations("scout");
   const [lists, setLists] = useState<ShortlistList | null>(null);
   const [open, setOpen] = useState<ShortlistView | null>(null);
   const [name, setName] = useState("");
@@ -120,21 +121,31 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
 
   return (
     <div className="stack">
-      <Panel eyebrow={`${lists?.total ?? 0} of ${rules.max_shortlists_per_user} lists · ${rules.max_items_per_shortlist} players each`} title="Your shortlists">
+      <Panel
+        eyebrow={ts("listsEyebrow", {
+          total: lists?.total ?? 0,
+          max: rules.max_shortlists_per_user,
+          each: rules.max_items_per_shortlist,
+        })}
+        title={ts("listsTitle")}
+      >
         <div className="stack-sm">
           <div className="row wrap" style={{ gap: "0.6rem" }}>
-            <input aria-label="Shortlist name" className="grow" maxLength={rules.name_max} onChange={(event) => setName(event.target.value)} placeholder="e.g. Left-footed midfielders to watch" value={name} />
-            <input aria-label="Career to read the list against" className="mono" maxLength={80} onChange={(event) => setCareer(event.target.value)} placeholder="career slug (optional)" value={career} />
+            <input aria-label={ts("listNameAria")} className="grow" maxLength={rules.name_max} onChange={(event) => setName(event.target.value)} placeholder={ts("listNamePlaceholder")} value={name} />
+            <input aria-label={ts("careerAria")} className="mono" maxLength={80} onChange={(event) => setCareer(event.target.value)} placeholder={ts("careerPlaceholder")} value={career} />
             <button className="btn btn--primary" disabled={busy !== null || !name.trim() || (lists ? lists.total >= lists.limit : false)} onClick={() => void create()} type="button">
-              {busy === "create" ? "Opening…" : "Open a list"}
+              {busy === "create" ? ts("opening") : ts("openAList")}
             </button>
           </div>
           <label className="muted" style={{ display: "block" }}>
-            <input checked={carry} onChange={(event) => setCarry(event.target.checked)} type="checkbox" /> store the sentence I just searched ({searchedQuery ? `“${searchedQuery}”` : "none yet"}) — it is re-applied to every member on each read
+            <input checked={carry} onChange={(event) => setCarry(event.target.checked)} type="checkbox" />{" "}
+            {ts("carrySentence", {
+              query: searchedQuery ? `“${searchedQuery}”` : ts("noneYet"),
+            })}
           </label>
           {lists && lists.total >= lists.limit && (
             <p className="notice notice--warn">
-              This account holds the {lists.limit} lists it is allowed. Delete one before opening another — the cap is printed by the API, not invented here.
+              {ts("limitNotice", { limit: lists.limit })}
             </p>
           )}
           {fault && (
@@ -144,21 +155,21 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
             </p>
           )}
           {!lists || lists.items.length === 0 ? (
-            <p className="muted">No list yet. A list stores a name, an optional sentence and career, and which players are on it — nothing that measures a player, so nothing here can go out of date without saying so.</p>
+            <p className="muted">{ts("noListYet")}</p>
           ) : (
             <div className="world-tablewrap">
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">List</th>
-                    <th scope="col">Sentence stored</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Career</th>
+                    <th scope="col">{ts("thList")}</th>
+                    <th scope="col">{ts("thSentenceStored")}</th>
+                    <th scope="col">{ts("thRole")}</th>
+                    <th scope="col">{ts("thCareer")}</th>
                     <th scope="col" className="num">
-                      Players
+                      {ts("thPlayers")}
                     </th>
                     <th scope="col" className="num">
-                      Room
+                      {ts("thRoom")}
                     </th>
                     <th scope="col">{t("open")}</th>
                     <th scope="col">{t("delete")}</th>
@@ -170,10 +181,10 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
                       <td>
                         <strong>{row.name}</strong>
                         <div className="muted mono">
-                          stored: {row.stored.join(" · ")}
+                          {ts("storedLabel", { value: row.stored.join(" · ") })}
                         </div>
                       </td>
-                      <td className="muted">{row.query || <span className="mono">no sentence</span>}</td>
+                      <td className="muted">{row.query || <span className="mono">{ts("noSentence")}</span>}</td>
                       <td className="mono">{row.role || "—"}</td>
                       <td className="mono">{row.career ?? "—"}</td>
                       <td className="num">{row.players_listed}</td>
@@ -196,27 +207,54 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
           )}
           {lists && (
             <p className="muted">
-              <span className="mono">integrity</span>: {lists.integrity.clean ? "clean" : "problems reported"} · {lists.integrity.problems.length} problem{lists.integrity.problems.length === 1 ? "" : "s"} ·{" "}
-              {lists.integrity.checked.shortlists} list{lists.integrity.checked.shortlists === 1 ? "" : "s"} and {lists.integrity.checked.membership_rows} membership row
-              {lists.integrity.checked.membership_rows === 1 ? "" : "s"} checked against {lists.integrity.checked.players_in_pool} stored players. {lists.rule}
+              <span className="mono">integrity</span>:{" "}
+              {lists.integrity.clean ? ts("integrityClean") : ts("integrityProblems")} ·{" "}
+              {ts("problemCount", { count: lists.integrity.problems.length })} ·{" "}
+              {ts("checkedRows", {
+                lists: lists.integrity.checked.shortlists,
+                rows: lists.integrity.checked.membership_rows,
+                players: lists.integrity.checked.players_in_pool,
+              })}{" "}
+              {lists.rule}
             </p>
           )}
         </div>
       </Panel>
 
       {open && (
-        <Panel eyebrow={`${open.counts.printed} player${open.counts.printed === 1 ? "" : "s"} on it · ${open.counts.membership_rows} membership row${open.counts.membership_rows === 1 ? "" : "s"} stored · ${open.room_left} room left`} title={`Shortlist · ${open.shortlist.name}`}>
+        <Panel
+          eyebrow={ts("openPanelEyebrow", {
+            players: open.counts.printed,
+            rows: open.counts.membership_rows,
+            room: open.room_left,
+          })}
+          title={ts("openPanelTitle", { name: open.shortlist.name })}
+        >
           <div className="stack-sm">
             <p className="notice">{open.figures_from}</p>
             <div className="row wrap" style={{ gap: "0.5rem" }}>
-              <span className="chip mono">asked: {open.need?.needed_band ? `the career needs ${open.need.needed_band}` : "no career linked"}</span>
               <span className="chip mono">
-                answers everything: {open.counts.answered_everything} · answers nothing: {open.counts.answered_nothing}
+                {ts("askedChip", {
+                  value: open.need?.needed_band
+                    ? ts("careerNeedsBand", { band: open.need.needed_band })
+                    : ts("noCareerLinked"),
+                })}
               </span>
               <span className="chip mono">
-                stored: {open.shortlist.stored.join(" · ")} · not stored: {open.shortlist.not_stored}
+                {ts("answersChip", {
+                  yes: open.counts.answered_everything,
+                  no: open.counts.answered_nothing,
+                })}
               </span>
-              {open.gone_from_the_world.length > 0 && <span className="badge badge--demo">{open.gone_from_the_world.length} NO LONGER IN THE WORLD</span>}
+              <span className="chip mono">
+                {ts("storedChip", {
+                  value: open.shortlist.stored.join(" · "),
+                  count: open.shortlist.not_stored,
+                })}
+              </span>
+              {open.gone_from_the_world.length > 0 && (
+                <span className="badge badge--demo">{ts("goneBadge", { count: open.gone_from_the_world.length })}</span>
+              )}
             </div>
             {open.need?.refused && (
               <p className="notice notice--warn">
@@ -225,30 +263,35 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
             )}
             {open.need?.needed_band && open.need.positions_in_band && (
               <p className="muted">
-                {open.career?.club_name} needs <span className="mono">{open.need.needed_band}</span> at round {open.career?.rounds_played}: {open.need.positions_in_band.join(", ")} · bands{" "}
-                <span className="mono">{JSON.stringify(open.need.bands)}</span>
+                {ts("careerNeedsBandLine", {
+                  club: open.career?.club_name ?? "",
+                  band: open.need.needed_band,
+                  rounds: open.career?.rounds_played ?? 0,
+                  positions: open.need.positions_in_band.join(", "),
+                  bands: JSON.stringify(open.need.bands),
+                })}
               </p>
             )}
 
             <div className="row wrap" style={{ gap: "0.6rem" }}>
-              <select aria-label="Player to add" className="grow mono" disabled={busy !== null || candidates.length === 0} onChange={(event) => setPlayer(event.target.value)} value={player}>
-                <option value="">{candidates.length ? "add one of the players this search just returned" : "run a search first, or type nothing and use the note field"}</option>
+              <select aria-label={ts("playerToAddAria")} className="grow mono" disabled={busy !== null || candidates.length === 0} onChange={(event) => setPlayer(event.target.value)} value={player}>
+                <option value="">{candidates.length ? ts("addOneOption") : ts("runSearchFirstOption")}</option>
                 {candidates.map((candidate) => (
                   <option key={candidate.slug} value={candidate.slug}>
                     {candidate.name} · {candidate.age} · {candidate.band} · {candidate.overall}/{candidate.potential}
                   </option>
                 ))}
               </select>
-              <input aria-label="Note about this player" className="grow" maxLength={rules.note_max} onChange={(event) => setNote(event.target.value)} placeholder="your own words (optional)" value={note} />
+              <input aria-label={ts("noteAria")} className="grow" maxLength={rules.note_max} onChange={(event) => setNote(event.target.value)} placeholder={ts("notePlaceholder")} value={note} />
               <button className="btn btn--primary" disabled={busy !== null || !player || open.room_left === 0} onClick={() => void add()} type="button">
-                {busy === "add" ? "Adding…" : "Add to the list"}
+                {busy === "add" ? ts("adding") : ts("addToList")}
               </button>
             </div>
 
             {open.items.length === 0 ? (
               <div className="empty">
-                <strong>Nobody on it yet</strong>
-                <p className="muted">Add a player from the search above. Nothing about him is copied into the list, so what you see tomorrow is what the stored row says tomorrow.</p>
+                <strong>{ts("nobodyYet")}</strong>
+                <p className="muted">{ts("nobodyYetNote")}</p>
               </div>
             ) : (
               <div className="world-tablewrap">
@@ -258,27 +301,27 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
                       <th scope="col" className="num">
                         #
                       </th>
-                      <th scope="col">Player</th>
+                      <th scope="col">{ts("thPlayer")}</th>
                       <th scope="col" className="num">
-                        Age
+                        {ts("thAge")}
                       </th>
-                      <th scope="col">Band</th>
-                      <th scope="col">Foot</th>
+                      <th scope="col">{ts("thBand")}</th>
+                      <th scope="col">{ts("thFoot")}</th>
                       <th scope="col" className="num">
-                        Overall
-                      </th>
-                      <th scope="col" className="num">
-                        Potential
+                        {ts("thOverall")}
                       </th>
                       <th scope="col" className="num">
-                        Headroom
+                        {ts("thPotential")}
                       </th>
                       <th scope="col" className="num">
-                        Asking fee
+                        {ts("thHeadroom")}
                       </th>
-                      <th scope="col">Answers / no longer answers</th>
-                      <th scope="col">Note</th>
-                      <th scope="col">Off</th>
+                      <th scope="col" className="num">
+                        {ts("thAskingFee")}
+                      </th>
+                      <th scope="col">{ts("thAnswers")}</th>
+                      <th scope="col">{ts("thNote")}</th>
+                      <th scope="col">{ts("thOff")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -291,7 +334,7 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
                           </a>
                           <div className="muted mono">
                             {item.player.position} · {item.player.archetype}
-                            {item.player.club ? ` · ${item.player.club.name}` : " · no club"}
+                            {item.player.club ? ` · ${item.player.club.name}` : ` · ${ts("noClub")}`}
                           </div>
                         </td>
                         <td className="num">{item.player.age}</td>
@@ -311,11 +354,15 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
                               ))}
                               {item.recheck.no_longer_answers.map((answer) => (
                                 <span className="badge badge--demo" key={`lost-${answer.kind}-${answer.phrase}`}>
-                                  LOST {answer.phrase}
+                                  {ts("lostBadge", { phrase: answer.phrase })}
                                 </span>
                               ))}
                               {(item.recheck.refused?.length ?? 0) > 0 && (
-                                <div className="muted mono">not understood: {item.recheck.refused?.map((refusal) => refusal.phrase).join(" · ")}</div>
+                                <div className="muted mono">
+                                  {ts("notUnderstood", {
+                                    phrases: item.recheck.refused?.map((refusal) => refusal.phrase).join(" · ") ?? "",
+                                  })}
+                                </div>
                               )}
                             </>
                           ) : (
@@ -324,8 +371,15 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
                         </td>
                         <td className="muted">{item.note || <span className="mono">—</span>}</td>
                         <td>
-                          <button aria-label={`Take ${item.player.name} off the list`} className="btn btn--sm" data-act="remove" disabled={busy !== null} onClick={() => void remove(item.player.slug)} type="button">
-                            Off
+                          <button
+                            aria-label={ts("takeOffAria", { name: item.player.name })}
+                            className="btn btn--sm"
+                            data-act="remove"
+                            disabled={busy !== null}
+                            onClick={() => void remove(item.player.slug)}
+                            type="button"
+                          >
+                            {ts("off")}
                           </button>
                         </td>
                       </tr>
@@ -337,7 +391,7 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
 
             {open.items.length > 0 && (
               <p className="muted">
-                <span className="mono">position</span> is the order the list was built in, and the only number about a player this tier stores. {open.rules.position}. {open.account_content}.
+                {ts("positionNote")} {open.rules.position}. {open.account_content}.
               </p>
             )}
             <p className="muted">{open.limitations.join(" · ")}</p>
