@@ -49,10 +49,10 @@ const COMPONENTS = join(WEB, "components");
 
 /** The committed ceiling on English literal sites. i18n work lowers it; nothing else may. */
 /**
- * The ceiling on English literal sites over the whole population: `app/**/*.tsx` **and**
- * `components/**/*.tsx`. A page is only as localised as the components it renders, and the
- * components hold copy — the workbench's buttons, the club and academy tools' sentences, the scout
- * panels' headings. A scan of `app/` alone could not see any of it.
+ * The ceiling on English literal sites over the whole population: every `.tsx` under `app/` and
+ * every `.tsx` under `components/`. A page is only as localised as the components it renders, and
+ * the components hold copy — the workbench's buttons, the club and academy tools' sentences, the
+ * scout panels' headings. A scan of `app/` alone could not see any of it.
  *
  * It may only fall.
  */
