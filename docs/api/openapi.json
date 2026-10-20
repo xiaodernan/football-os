@@ -11098,6 +11098,214 @@
         }
       }
     },
+    "/api/v1/creator/players": {
+      "post": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Publish Analysis",
+        "description": "Publish a player analysis: the address of a footballer, a title and a visibility.\n\nThe player is resolved here, at publication, so an analysis anchored to a footballer the\nworld does not hold is refused now rather than surfacing as a page with nothing to read.",
+        "operationId": "publish_analysis_api_v1_creator_players_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Publish Analysis Api V1 Creator Players Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Analysis Shelf",
+        "description": "The shelf of player analyses, as far as this reader may reach.",
+        "operationId": "read_analysis_shelf_api_v1_creator_players_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "creator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Creator"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Analysis Shelf Api V1 Creator Players Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/players/{analysis}": {
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Analysis",
+        "description": "One player analysis, with its player measured from his own stored columns on this read.",
+        "operationId": "read_analysis_api_v1_creator_players__analysis__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "analysis",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Analysis"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Analysis Api V1 Creator Players  Analysis  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Erase Analysis",
+        "description": "Erase your own player analysis. The player it was about is untouched.",
+        "operationId": "erase_analysis_api_v1_creator_players__analysis__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "analysis",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Analysis"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase Analysis Api V1 Creator Players  Analysis  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/portfolio/rules": {
       "get": {
         "tags": [
@@ -12794,6 +13002,37 @@
           "answer"
         ],
         "title": "AgentRunResponse"
+      },
+      "AnalysisIn": {
+        "properties": {
+          "player": {
+            "type": "string",
+            "maxLength": 160,
+            "title": "Player",
+            "default": ""
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": ""
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 700,
+            "title": "Summary",
+            "default": ""
+          },
+          "visibility": {
+            "type": "string",
+            "maxLength": 12,
+            "title": "Visibility",
+            "default": "public"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AnalysisIn"
       },
       "AnnouncementIn": {
         "properties": {

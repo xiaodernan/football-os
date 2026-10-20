@@ -737,12 +737,39 @@ section: a guide with a title, a frame and citations, whose subject did not exis
 4. **Four doors** under the tier's prefix: publish, shelf, one guide, erase. Reach is §35's follow predicate; another
    account's guide is absence; no door answers 403.
 
-**Evidence.** `tests/test_creator_tactical.py` (15 cases) green together with `tests/test_creator.py` (42) and
+**Evidence.** `tests/test_creator_tactical.py` (15 cases) green together with `tests/test_creator.py` (46) and
 `tests/test_creator_programs.py` (10) — **71 tests / 0 failures / 0 errors / 0 skipped**. mypy is clean over 150 files;
 ruff is clean; the contract is regenerated at 193 paths / 246 operations. A whole-suite SQLite leg over the pre-unit
 plane `f4d6146` is recorded in `docs/M10_CREATOR_VERIFICATION.md`: **1,740 / 1 / 0 / 4**, the one red being the plane's
 CRLF copy of the contract rather than the tree. The record's claim list now says two kinds have objects of their own —
 and that the other four do not.
+
+---
+
+## Item 12 — M10: the player analysis, §36's third kind of content
+
+**Done 2026-10-21.** Item 11 gave the second kind an object. The third kind — a **Player Analysis** — was still only a
+section, and the tier could point at a shape but not at a footballer.
+
+**Do.** Anchor an analysis to a stored player without copying him.
+
+1. **`creator_player_analyses`** (migration `0032`): the author, a title and summary, a visibility, and the **address**
+   of a footballer. `player_slug` is a plain pointer, not a foreign key, because `services/world/sync.py` retires
+   generated rows; `player_hash` is the content address the player carried at publication.
+2. **No total is stored.** Five rates come from the anchored row's own columns on the read, each beside its unit and
+   formula. The column list is asserted as a set; editing a scratch player's totals moves the analysis, matches the
+   world door's own `season_stats` through the published formulas, and flips `moved`.
+3. **Publication resolves the anchor** (404 `no_such_analysed_player`), the read of a retired player is absence, and
+   the shelf keeps the address with null name/position/overall/team/path — nothing of the author's is deleted by a
+   refresh. The first draft's code was `no_such_player`; the tier's own invariant case caught that §39–§41 own it.
+4. **Four doors** under the tier's prefix: publish, shelf, one analysis, erase. Reach is §35's follow predicate;
+   another account's analysis is absence; no door answers 403.
+
+**Evidence.** `tests/test_creator_analyses.py` (15 cases); the four creator files together answer **90 tests / 0
+failures / 0 errors / 0 skipped in 48.356s** (junit `.scratch/leg_analyses_creator.xml`). mypy is clean over 151 files;
+ruff is clean on the six touched Python files; the contract is regenerated at 195 paths / 250 operations; migration
+`0032` upgrades to head, passes `alembic check` silently and round-trips on a scratch SQLite database. The record's
+claim list now says three kinds have objects of their own — and that the other three do not.
 
 ---
 

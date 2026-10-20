@@ -1,6 +1,6 @@
 """Creator endpoints (M10, spec §36): what an account publishes as a guide, and the addresses it cites.
 
-One public door and nineteen private ones. `GET /creator/rules` prints only the tier's own vocabulary — the sections,
+One public door and twenty-three private ones. `GET /creator/rules` prints only the tier's own vocabulary — the sections,
 the ceilings, the formulas, the refusal codes and the limitation sentence — which is §39's and §35's precedent: a
 rulebook is not a person's data, a shelf of guides is.
 
@@ -35,6 +35,7 @@ from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
 from app.services.club import answers
+from app.services.creator import analyses as can
 from app.services.creator import programs as cpr
 from app.services.creator import publishing as cre
 from app.services.creator import tactical as ctr
@@ -69,6 +70,10 @@ ROUTE_GUIDE: tuple[dict[str, str], ...] = (
     {"method": "GET", "path": "/creator/tactics", "door": "the shelf of tactical guides, each anchor named as it reads now"},
     {"method": "GET", "path": "/creator/tactics/{guide}", "door": "one tactical guide, with the system it is about measured on this read"},
     {"method": "DELETE", "path": "/creator/tactics/{guide}", "door": "erase your own tactical guide; the system is untouched"},
+    {"method": "POST", "path": "/creator/players", "door": "publish a player analysis: an address into the world, a title, a visibility"},
+    {"method": "GET", "path": "/creator/players", "door": "the shelf of player analyses, each player named as he reads now"},
+    {"method": "GET", "path": "/creator/players/{analysis}", "door": "one player analysis, with the player measured on this read"},
+    {"method": "DELETE", "path": "/creator/players/{analysis}", "door": "erase your own player analysis; the player is untouched"},
 )
 
 
@@ -131,6 +136,16 @@ class TacticalIn(BaseModel):
     visibility: str = Field(default="public", max_length=12)
 
 
+class AnalysisIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # The anchor is the world's own address, so the tier stores it and never the numbers behind it.
+    player: str = Field(default="", max_length=can.PLAYER_SLUG_MAX)
+    title: str = Field(default="", max_length=can.ANALYSIS_TITLE_MAX + 40)
+    summary: str = Field(default="", max_length=can.ANALYSIS_SUMMARY_MAX + 100)
+    visibility: str = Field(default="public", max_length=12)
+
+
 @router.get("/rules")
 def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
     """The rulebook door: no guide, no creator, no figure about anybody — only what may be published.
@@ -145,6 +160,7 @@ def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
         **cre.rules(db, ready=True),
         **cpr.rules(db, ready=True),
         **ctr.rules(db, ready=True),
+        **can.rules(db, ready=True),
     }
 
 
@@ -400,5 +416,73 @@ def erase_tactical(
     limit(request, 20, 3600, scope="erase_tactical")
     try:
         return ctr.erase_tactical_guide(db, user.id, guide)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.post("/players", status_code=status.HTTP_201_CREATED)
+def publish_analysis(
+    payload: AnalysisIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Publish a player analysis: the address of a footballer, a title and a visibility.
+
+    The player is resolved here, at publication, so an analysis anchored to a footballer the
+    world does not hold is refused now rather than surfacing as a page with nothing to read.
+    """
+    limit(request, 20, 3600, scope="publish_analysis")
+    try:
+        return can.publish_player_analysis(
+            db,
+            user.id,
+            player=payload.player,
+            title=payload.title,
+            summary=payload.summary,
+            visibility=payload.visibility,
+        )
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.get("/players")
+def read_analysis_shelf(
+    creator: str | None = None,
+    page_size: int = 20,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """The shelf of player analyses, as far as this reader may reach."""
+    try:
+        return can.list_player_analyses(db, user.id, creator=creator, limit=page_size)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.get("/players/{analysis}")
+def read_analysis(
+    analysis: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """One player analysis, with its player measured from his own stored columns on this read."""
+    try:
+        return can.read_player_analysis(db, analysis, user.id)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.delete("/players/{analysis}")
+def erase_analysis(
+    analysis: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Erase your own player analysis. The player it was about is untouched."""
+    limit(request, 20, 3600, scope="erase_analysis")
+    try:
+        return can.erase_player_analysis(db, user.id, analysis)
     except cre.CreatorRefusal as error:
         raise _refusal(error) from error

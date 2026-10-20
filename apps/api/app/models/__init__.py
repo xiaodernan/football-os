@@ -2117,6 +2117,47 @@ class CreatorTacticalGuide(Base, TimestampMixin):
     data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
     is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
+
+class CreatorPlayerAnalysis(Base, TimestampMixin):
+    """An editorial analysis anchored to a stored world player (M10, spec §36's third kind).
+
+    §36's third kind is a *Player Analysis*: an author's reading of a footballer, published beside
+    the player rather than copied out of him. The row stores the author's words, a visibility and
+    the **address** of a row in `real_players` - never a rate, a total or a sentence about the
+    player. Every measurement a read shows is computed from the player's own stored columns on that
+    read, so a refreshed world cannot leave an analysis quoting last season's output.
+
+    `player_hash` is not a figure about the player, it is a **witness**: the content address the
+    player carried when the analysis was written. A read compares it with the world's, and an
+    analysis of a player revised since says so through `moved` while still measuring the player as
+    he reads now - the same shape as `guide_citations.cited_text_hash`.
+
+    `player_slug` is a plain pointer rather than a foreign key on purpose: `services/world/sync.py`
+    retires rows the world plan no longer authors, and a RESTRICT would make a routine world sync
+    fail because somebody once wrote about a player. A retired player answers as absence on read,
+    in the same shape an analysis that was never written earns.
+    """
+
+    __tablename__ = "creator_player_analyses"
+    __table_args__ = (
+        UniqueConstraint("author_id", "slug", name="uq_creator_analysis_slug"),
+        Index("ix_creator_analysis_author_date", "author_id", "published_on"),
+        Index("ix_creator_analysis_player", "player_slug"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary: Mapped[str] = mapped_column(String(600), nullable=False, default="")
+    visibility: Mapped[str] = mapped_column(String(12), nullable=False, default="public")
+    player_slug: Mapped[str] = mapped_column(String(160), nullable=False)
+    player_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    published_on: Mapped[str] = mapped_column(String(10), nullable=False, default=utc_today)
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
 class CvShare(Base, TimestampMixin):
     """One public CV link (§38's share output): the token that opens it, the sections it names, and when it closed."""
 

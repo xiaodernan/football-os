@@ -61,16 +61,18 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
 
 ## What §36 does not claim yet
 
-* **The six kinds are six sections, not six objects — and the first two kinds now have objects of
-  their own (2026-10-21).** §36 lists Training Program, Tactical Guide, Player Analysis, Match Analysis,
-  Career Challenge and Scouting List; the tier's `GUIDE_SECTIONS` is `plan, drill, match, tactic,
-  scout, video`, and a guide is a title, a frame, a section and citations in every one of them.
-  A **Training Program** is now a row of its own: a schedule, a dose and a progression, with a step
-  naming a catalogue drill, and starting one plans the learner's own training sessions. A **Tactical
-  Guide** is now a row anchored to a stored system: it keeps the system's address and a hash witness,
-  and every measurement is computed on the read from the system's own dots. What is still
-  not there: the other four kinds have no object of their own, a program is a plan rather than an
-  enrolled course, and there is no progress model beyond the training tier's own sessions.
+* **The six kinds are six sections, not six objects — and the first three kinds now have objects
+  of their own (2026-10-21).** §36 lists Training Program, Tactical Guide, Player Analysis, Match
+  Analysis, Career Challenge and Scouting List; the tier's `GUIDE_SECTIONS` is `plan, drill, match,
+  tactic, scout, video`, and a guide is a title, a frame, a section and citations in every one of
+  them. A **Training Program** is now a row of its own: a schedule, a dose and a progression, with a
+  step naming a catalogue drill, and starting one plans the learner's own training sessions. A
+  **Tactical Guide** is now a row anchored to a stored system: it keeps the system's address and a
+  hash witness, and every measurement is computed on the read from the system's own dots. A
+  **Player Analysis** is now a row anchored to a stored footballer: it keeps his address and a hash
+  witness, and its five rates are computed on the read from the player row's own columns. What is
+  still not there: the other three kinds have no object of their own, a program is a plan rather
+  than an enrolled course, and there is no progress model beyond the training tier's own sessions.
 * **No money, by design.** `creator_publish` and `creator_guide` are ceilings the data holds and **no door refuses
   on** — the caps that actually bite are the lifetime counts in `CAPS` (100 guides, 24 citations a guide).
 * **The feedback half of §36's loop is §35's.** "Users → Feedback → Creator" is reactions, comments and follows on
@@ -180,6 +182,45 @@ and the plane's own diff is `b'\n' != b'\r'`: the plane carried a CRLF copy of t
 same case is green in the tree where the artifact is LF (0 CRLF / 16,218 LF) and the exporter writes LF.
 The estimate carried into the run (~1,662 tests / 0 failures / 2 skipped) was wrong on all three
 counts; the run is recorded rather than dropped.
+
+## The player analysis — §36's third kind of content (2026-10-21)
+
+The third kind applies the second's rule to a different noun: **an address, never a copy**.
+
+* **The anchor is an address, not a foreign key.** `creator_player_analyses.player_slug` names a row
+  in `real_players` and is deliberately a plain pointer: `services/world/sync.py` retires generated
+  rows, so a foreign key would either block a refresh or take an author's words with it. Publication
+  resolves the anchor (by slug or id) and refuses one the world does not hold there
+  (404 `no_such_analysed_player`) — a reading of nobody is not a reading. The first draft named this
+  code `no_such_player`; the tier's own invariant case caught that §39–§41 already publish it, and
+  the code was renamed before the unit landed.
+* **No total is stored.** The column set is asserted as a set: author, slug, title, summary,
+  visibility, the address, the hash witness, the date and provenance — no minute, goal, rate or
+  rating. Five rates (`minutes_per_appearance`, `goal_contributions_per_90`, `scoring_rate`,
+  `availability`, `cards_per_90`) are computed on the read from the anchored row's own columns, and
+  each one prints its value, its unit and its formula.
+* **The witness covers exactly what is read.** `player_hash` records the player's `content_hash` at
+  publication. Every metric is derived from the anchored row's own columns, so a refresh that moves a
+  number also moves the hash and the read says `moved`. The rates are deliberately *not* derived from
+  `real_player_match_stats` lines: the hash covers the player row only, so a line-derived figure
+  could move while the witness stood still.
+* **The proof is behavioural.** A scratch player's totals are edited between two reads of the same
+  analysis: the answer follows the columns, equals the world door's own `season_stats` fed through
+  the published formulas, and `moved` flips. A stored copy could not pass that case.
+* **`moved`, a retired player, reach and four doors.** A retired player is absence at the address
+  (404 `no_such_analysed_player`), while the shelf keeps the address with `name`, `position`,
+  `overall`, `team` and `path` null — and the author's row survives the world's refresh. Four doors
+  under the tier's existing prefix: publish, the shelf, one analysis (which carries the metrics), and
+  erase. Erasing an analysis leaves the player untouched; reach is §35's follow predicate, so a
+  `followers` analysis opens on a follow and closes on an unfollow without deleting it; another
+  account's analysis is absence, and no door in this tier answers 403.
+
+Measured 2026-10-21: `tests/test_creator_analyses.py` **15 cases**; the four creator files together
+answer **90 tests / 0 failures / 0 errors / 0 skipped in 48.356s** (junit,
+`.scratch/leg_analyses_creator.xml`); `mypy app` clean over **151 source files**; `ruff check` clean
+on the six touched Python files; the contract is regenerated at **195 paths / 250 operations**, the
+four new operations being its only delta; migration `0032` upgrades to head, passes `alembic check`
+silently and downgrades/upgrades cleanly on a scratch SQLite database.
 
 ## A finding this milestone corrected
 
