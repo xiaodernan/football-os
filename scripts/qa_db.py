@@ -12,6 +12,10 @@ The name is checked before anything is dropped, and the database named by the AP
 so the worst this script can do is delete its own scratch space.
 
 Usage: `export DATABASE_URL=$(python scripts/qa_db.py)`
+
+`--assert-scratch NAME` answers one question — would this script be willing to drop and re-create NAME? — and
+touches nothing. `scripts/restore_db.sh` runs it, so a disaster-recovery script that has to refuse a real
+database holds the refusal once instead of typing a copy of this file's pattern into bash.
 """
 
 from __future__ import annotations
@@ -36,6 +40,20 @@ SCRATCH = re.compile(r"^(?:football_os_)?(?:qa|walk|scratch)[a-z0-9_]*$")
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
 
 
+def scratch_refusal(name: str) -> str | None:
+    """Return the reason ``name`` is not a database this script may drop, or ``None`` when it is one."""
+    if not IDENTIFIER.fullmatch(name):
+        return (
+            f"{name!r} is not a plain lower-case SQL identifier (a-z, digits, underscore, at most 63 characters)"
+        )
+    if not SCRATCH.fullmatch(name):
+        return (
+            f"{name!r} does not start with qa/walk/scratch (optionally after a football_os_ prefix), "
+            "so nothing about it says throwaway — e.g. football_os_qa"
+        )
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
     parser.add_argument(
@@ -43,12 +61,26 @@ def main() -> int:
         default="football_os_qa",
         help="the scratch database to create (must be recognisably scratch)",
     )
+    parser.add_argument(
+        "--assert-scratch",
+        metavar="NAME",
+        help="print whether NAME would be a legal --name and exit 1 if it would not, without touching a server",
+    )
     args: Any = parser.parse_args()
 
-    if not IDENTIFIER.fullmatch(args.name) or not SCRATCH.fullmatch(args.name):
-        raise SystemExit(
-            f"refusing to touch {args.name!r}: a scratch name must be lower-case and start with qa/walk/scratch, e.g. football_os_qa"
-        )
+    if args.assert_scratch is not None:
+        # The name-only leg, for `scripts/restore_db.sh`: it must decide before a `pg_dump` is on the command line
+        # and it must not need a running server to answer, because the answer is what arms the refusal.
+        reason = scratch_refusal(args.assert_scratch)
+        if reason is None:
+            print(f"scratch: {args.assert_scratch} is a database this script may drop and re-create")
+            return 0
+        print(f"REFUSED: {reason}", file=sys.stderr)
+        return 1
+
+    reason = scratch_refusal(args.name)
+    if reason is not None:
+        raise SystemExit(f"refusing to touch {args.name!r}: {reason}")
     source = make_url(settings.database_url)
     if source.drivername.startswith("sqlite"):
         raise SystemExit(

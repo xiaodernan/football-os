@@ -298,10 +298,20 @@ an endpoint that read the ledger could not safely own it. A human reads the figu
 * `docs/BACKUP_RECOVERY.md` — RTO/RPO targets per system (API 4h/15min, database 2h/5min), the
   continuous-archiving plus daily logical dump strategy, four recovery scenarios, the testing
   schedule, the alerting table, and the on-call roles.
-* `scripts/backup_db.sh` — full (`pg_dump -Fc`) or incremental (WAL/verification) with S3 upload,
-  post-backup verification via `pg_restore --list`, and local cleanup keeping the last 7 days.
-* `scripts/restore_db.sh` — restore into a named target database, replayed with `alembic upgrade
-  head`, parallel restore on 4 jobs.
+* `scripts/backup_db.sh` — full (`pg_dump -Fc`) or incremental, with S3 upload, post-backup
+  verification via `pg_restore --list`, and local cleanup keeping the last 7 days. An
+  *incremental* is a write-ahead-log archive, so the script refuses (exit 2) unless the server
+  answers `archive_mode=on`, reports the last archived segment from `pg_stat_archiver`, and — when
+  `REPLICA_HOST` is set — checks replay lag against `REPLICA_LAG_CEILING_SECONDS` (default 300).
+* `scripts/restore_db.sh` — restore into a named scratch database, replayed with `alembic upgrade
+  head` (run from `apps/api`, the one directory carrying `alembic.ini`), parallel restore on 4
+  jobs. The target name must pass the same scratch policy `scripts/qa_db.py` uses to decide what it
+  may drop, and success is printed only after `pg_restore`'s exit code *and* the restored table
+  count have both been read.
+* `scripts/dr_lib.sh` — the connection coordinates both scripts use, derived from
+  `infra/docker-compose.yml` (`54321`, `football_os`, `football`) instead of typed defaults, and
+  refused (exit 2, with the match count) if the compose file does not carry exactly one host-port
+  mapping and one assignment per variable.
 
 **Executed 2026-10-11 — the first live restore drill.** The scripts name host binaries this host
 does not have, but the project's own PostgreSQL container (`football_os_db`, port 54321) ships
@@ -333,8 +343,50 @@ time):
 
 The drill database was dropped afterwards. Still **not claimed**: no S3 upload, no WAL archive,
 no point-in-time recovery — the container is one local PostgreSQL, and the scripts' remote
-pathways remain inspection-verified. What changed is the worst claim in this document: the backup
-and restore are now *executed*, and the execution found a defect no gate could see.
+pathways remain inspection-verified. What changed is the worst claim in this document: the drill's
+*commands* were executed inside the container, and that execution found a defect no gate could
+see. The *scripts* were not what ran.
+
+**Corrected 2026-10-20 — the drill exercised the commands, not the pair.** Nothing in this
+repository invoked `scripts/backup_db.sh` or `scripts/restore_db.sh`; they were described here and
+never run, and running them found five defects, each measured before it was fixed:
+
+1. **`incremental` was a no-op that returned success.** It logged "Checking WAL archive status",
+   ran `pg_waldump -n 1` when the host had it, and exited 0 — no artifact, no `pg_dump` call, no
+   question asked of the server. Measured with stubs on the HEAD script: rc=0 and an empty backup
+   directory, a success shape around an absent backup.
+2. **Both scripts typed the server coordinates.** `PGPORT=5432`, `PGUSER=football`,
+   `PGDATABASE=football_os` — while the compose file this project ships publishes PostgreSQL on
+   **54321**, the port every other tier derives. The default was a second copy of a fact the
+   compose file already owned, and the copy was stale.
+3. **The restore's target was a name its own policy refuses.** The default was
+   `football_os_restore`, and the script dropped it with an interpolated, unquoted identifier
+   before asking anything: `DROP DATABASE IF EXISTS $TARGET_DB`. `scripts/qa_db.py` already owned
+   the rule for what this project may drop and re-create; the restore script did not consult it.
+4. **The failure branch was unreachable.** `pg_restore` was followed by `if [[ $? -eq 0 ]]` under
+   `set -euo pipefail`: a failed restore aborts the script at the command, so the branch that was
+   meant to report the failure never ran, and no line naming the status was ever printed.
+5. **Alembic ran from a directory with no `alembic.ini`, and success was printed without a
+   measurement.** The script `cd`'d to the repository root; `alembic.ini` exists only at
+   `apps/api/`. Nothing counted the restored copy before announcing completion.
+
+The fix, in the same pair: `scripts/dr_lib.sh` derives the four coordinates from
+`infra/docker-compose.yml`, refusing (exit 2, with the match count) unless the file carries exactly
+one host-port mapping and one assignment per variable; the restore hands its target to
+`scripts/qa_db.py --assert-scratch`, the policy the qa script already uses to decide what it may
+drop; `pg_restore`'s status is captured with `rc=$?` so the error line runs; alembic runs from
+`apps/api`; and success is printed only after the restored table count has been read. An
+`incremental` now asks `SHOW archive_mode`, reads `pg_stat_archiver`, and — with `REPLICA_HOST` set
+— the replay lag, refusing with exit 2 on every non-answer instead of reporting a backup.
+
+`apps/api/tests/test_dr_scripts.py` is the gate: **14 cases**, run against the shipped scripts with
+stub `psql`/`pg_dump`/`pg_restore`/`pg_isready`/`python` in front and no server, so every leg —
+including restore failure — is reachable offline. It reads the compose file rather than typing the
+port, runs the shipped `dr_published_pg_port` and the shipped policy CLI instead of paraphrasing
+them, and holds `pg_dump`'s argv to the derived coordinates. **14 passed** on the fixed pair;
+**1 passed / 13 failed** against HEAD's scripts on a sibling `git archive` plane (528/528 files),
+with the red names matching the defect list above — the reverse control that makes this a gate
+rather than a description.
 
 ### Performance — a measured load run
 
