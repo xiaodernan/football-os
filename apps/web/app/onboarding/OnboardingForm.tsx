@@ -1,49 +1,53 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { browserFetch, errorMessage } from "@/lib/api";
 import type { Player } from "@/lib/types";
 
 const POSITIONS = ["GK", "CB", "LB", "RB", "CDM", "CM", "CAM", "LM", "RM", "LW", "RW", "ST", "CF"];
+// The value is the backend's own enum; the label is a catalogue key, so a locale switch repaints
+// the option without the enum moving.
 const LEVELS = [
-  { value: "beginner", label: "Beginner" },
-  { value: "intermediate", label: "Intermediate" },
-  { value: "advanced", label: "Advanced" },
-  { value: "elite", label: "Elite" },
+  { value: "beginner", key: "levelBeginner" },
+  { value: "intermediate", key: "levelIntermediate" },
+  { value: "advanced", key: "levelAdvanced" },
+  { value: "elite", key: "levelElite" },
 ];
 const FEET = [
-  { value: "right", label: "Right" },
-  { value: "left", label: "Left" },
-  { value: "both", label: "Both" },
+  { value: "right", key: "footRight" },
+  { value: "left", key: "footLeft" },
+  { value: "both", key: "footBoth" },
 ];
 const GOALS = [
-  { value: "improve_first_touch", label: "Improve first touch" },
-  { value: "improve_passing", label: "Improve passing" },
-  { value: "improve_dribbling", label: "Improve dribbling" },
-  { value: "improve_finishing", label: "Improve finishing" },
-  { value: "improve_defending", label: "Improve defending" },
-  { value: "improve_pressing", label: "Improve pressing" },
-  { value: "improve_weak_foot", label: "Improve weak foot" },
-  { value: "improve_fitness", label: "Improve fitness" },
-  { value: "improve_vision", label: "Improve vision" },
-  { value: "become_box_to_box", label: "Become box-to-box" },
-  { value: "become_playmaker", label: "Become a playmaker" },
-  { value: "become_inverted_winger", label: "Become an inverted winger" },
+  { value: "improve_first_touch", key: "goalImproveFirstTouch" },
+  { value: "improve_passing", key: "goalImprovePassing" },
+  { value: "improve_dribbling", key: "goalImproveDribbling" },
+  { value: "improve_finishing", key: "goalImproveFinishing" },
+  { value: "improve_defending", key: "goalImproveDefending" },
+  { value: "improve_pressing", key: "goalImprovePressing" },
+  { value: "improve_weak_foot", key: "goalImproveWeakFoot" },
+  { value: "improve_fitness", key: "goalImproveFitness" },
+  { value: "improve_vision", key: "goalImproveVision" },
+  { value: "become_box_to_box", key: "goalBecomeBoxToBox" },
+  { value: "become_playmaker", key: "goalBecomePlaymaker" },
+  { value: "become_inverted_winger", key: "goalBecomeInvertedWinger" },
 ];
 
 /** Six sliders whose keys are guaranteed valid attribute names on the backend. */
-const SELF_RATED: { key: string; label: string }[] = [
-  { key: "first_touch", label: "First touch" },
-  { key: "passing", label: "Passing" },
-  { key: "dribbling", label: "Dribbling" },
-  { key: "finishing", label: "Finishing" },
-  { key: "speed", label: "Speed" },
-  { key: "vision", label: "Vision" },
+const SELF_RATED: { key: string; labelKey: string }[] = [
+  { key: "first_touch", labelKey: "attrFirstTouch" },
+  { key: "passing", labelKey: "attrPassing" },
+  { key: "dribbling", labelKey: "attrDribbling" },
+  { key: "finishing", labelKey: "attrFinishing" },
+  { key: "speed", labelKey: "attrSpeed" },
+  { key: "vision", labelKey: "attrVision" },
 ];
 
 export function OnboardingForm() {
+  const t = useTranslations("onboarding");
   const router = useRouter();
   const [name, setName] = useState("");
   const [position, setPosition] = useState("CM");
@@ -64,13 +68,13 @@ export function OnboardingForm() {
 
   function validate(): string[] {
     const found: string[] = [];
-    if (!name.trim()) found.push("Enter your player name.");
+    if (!name.trim()) found.push(t("errorName"));
     const ageNum = Number(age);
-    if (!Number.isInteger(ageNum) || ageNum < 8 || ageNum > 45) found.push("Age must be between 8 and 45.");
+    if (!Number.isInteger(ageNum) || ageNum < 8 || ageNum > 45) found.push(t("errorAge"));
     if (height.trim()) {
       const heightNum = Number(height);
       if (!Number.isInteger(heightNum) || heightNum < 120 || heightNum > 215) {
-        found.push("Height must be between 120 and 215 cm, or left blank.");
+        found.push(t("errorHeight"));
       }
     }
     return found;
@@ -110,10 +114,10 @@ export function OnboardingForm() {
     }
     setPending(false);
     if (result.status === 401) {
-      setErrors(["Your session expired. Please sign in again."]);
+      setErrors([t("errorSession")]);
       return;
     }
-    setErrors([errorMessage(result.error, "We could not save your profile. Check the details and try again.")]);
+    setErrors([errorMessage(result.error, t("errorSave"))]);
   }
 
   return (
@@ -124,21 +128,21 @@ export function OnboardingForm() {
     >
       <div className="field">
         <label className="field__label" htmlFor="name">
-          Player name
+          {t("labelName")}
         </label>
         <input
           id="name"
           className="input"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Your name or nickname"
+          placeholder={t("placeholderName")}
         />
       </div>
 
       <div className="form-grid">
         <div className="field">
           <label className="field__label" htmlFor="position">
-            Position
+            {t("labelPosition")}
           </label>
           <select id="position" className="select" value={position} onChange={(e) => setPosition(e.target.value)}>
             {POSITIONS.map((option) => (
@@ -151,12 +155,12 @@ export function OnboardingForm() {
 
         <div className="field">
           <label className="field__label" htmlFor="level">
-            Level
+            {t("labelLevel")}
           </label>
           <select id="level" className="select" value={level} onChange={(e) => setLevel(e.target.value)}>
             {LEVELS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
@@ -164,7 +168,7 @@ export function OnboardingForm() {
 
         <div className="field">
           <label className="field__label" htmlFor="age">
-            Age
+            {t("labelAge")}
           </label>
           <input
             id="age"
@@ -175,17 +179,17 @@ export function OnboardingForm() {
             value={age}
             onChange={(e) => setAge(e.target.value)}
           />
-          <span className="field__hint">Between 8 and 45.</span>
+          <span className="field__hint">{t("hintAge")}</span>
         </div>
 
         <div className="field">
           <label className="field__label" htmlFor="foot">
-            Preferred foot
+            {t("labelFoot")}
           </label>
           <select id="foot" className="select" value={foot} onChange={(e) => setFoot(e.target.value)}>
             {FEET.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
@@ -193,12 +197,12 @@ export function OnboardingForm() {
 
         <div className="field">
           <label className="field__label" htmlFor="goal">
-            Main goal
+            {t("labelGoal")}
           </label>
           <select id="goal" className="select" value={goal} onChange={(e) => setGoal(e.target.value)}>
             {GOALS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.key)}
               </option>
             ))}
           </select>
@@ -206,7 +210,7 @@ export function OnboardingForm() {
 
         <div className="field">
           <label className="field__label" htmlFor="height">
-            Height (cm) — optional
+            {t("labelHeight")}
           </label>
           <input
             id="height"
@@ -216,27 +220,24 @@ export function OnboardingForm() {
             max={215}
             value={height}
             onChange={(e) => setHeight(e.target.value)}
-            placeholder="e.g. 178"
+            placeholder={t("placeholderHeight")}
           />
-          <span className="field__hint">120–215, or leave blank.</span>
+          <span className="field__hint">{t("hintHeight")}</span>
         </div>
       </div>
 
       <div className="stack-sm">
-        <span className="eyebrow">Rate yourself (optional)</span>
-        <p className="field__hint">
-          Leave these untouched and the profile is fully derived from your position and level. Move a
-          slider only to blend your own read of one attribute.
-        </p>
+        <span className="eyebrow">{t("selfRateEyebrow")}</span>
+        <p className="field__hint">{t("selfRateHint")}</p>
         {SELF_RATED.map((attr) => {
           const isTouched = Boolean(touched[attr.key]);
           const value = ratings[attr.key] ?? 50;
           return (
             <div className="field" key={attr.key}>
               <label className="between" htmlFor={`rate-${attr.key}`} style={{ fontSize: "0.85rem" }}>
-                <span className="muted">{attr.label}</span>
+                <span className="muted">{t(attr.labelKey)}</span>
                 <span className="mono num">
-                  {isTouched ? value : "derived"}
+                  {isTouched ? value : t("derived")}
                 </span>
               </label>
               <input
@@ -266,7 +267,7 @@ export function OnboardingForm() {
       )}
 
       <button className="btn btn--primary" type="submit" disabled={pending}>
-        {pending ? "Building your profile…" : "Create my football identity"}
+        {pending ? t("submitting") : t("submit")}
       </button>
     </form>
   );
