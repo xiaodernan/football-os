@@ -247,8 +247,8 @@ The same file run at `862079a` plus this commit's two files is `6 passed` (§7).
 | witness battery 3, run 2 | `D:/r118-plane` | **9 arms 9 MATCH**, both baselines green, 9 clean restores, exit 0 |
 | reverse control, shipped gate against the pre-cure ref | worktree at `fe32570` | **5 failed, 1 passed in 28.25s**, exit 1 |
 | whole API suite, SQLite | worktree at `71d6850` + gate file | **1652 passed, 2 skipped in 820.97s (13:40)**, exit 0 |
-| whole API suite, SQLite | at the commit that lands this file | owed — a docs-only follow-up records it here |
-| PostgreSQL leg | — | owed, recorded below |
+| whole API suite, SQLite | plane `D:/r119-legs` at `fb5453b` (`git rev-parse` verified), venv interpreter | **5 failed, 1653 passed, 2 skipped in 3965.73s**, exit 1 |
+| whole API suite, PostgreSQL | same plane, PostgreSQL 16.15, per-run DB `football_os_test_ef969d` | **5 failed, 0 errors, 1653 passed, 2 skipped, 1660 collected in 3978.52s**, exit 1 |
 
 The conversion's own suite leg ran at `71d6850`, before `test_boards.py` was freed and converted and before this file
 moved from 17 pins to 18; it is kept as the reading it is, not re-labelled as a leg of this commit. The gate adds no
@@ -264,6 +264,23 @@ carries the same LF bytes). Normalising the plane's copy to the blob's bytes mad
 and the whole suite was re-run over the corrected plane to produce the number in the table. **The red was an
 artifact of the plane, not of the tree** — a fresh worktree on this host is not byte-faithful to HEAD, and any
 whole-suite leg run in one has to normalise the artifacts its gates read.
+
+Both legs read the same five reds, by name, on both engines. Three are
+`test_openapi_contract_currency.py::test_the_contract_lists_every_route_the_app_answers_and_no_route_it_does_not`,
+`…::test_the_contract_counts_each_verb_on_each_route_the_way_the_app_answers_it` and
+`…::test_the_exporter_derives_the_contract_from_the_tree_and_reproduces_the_committed_bytes`: the committed contract
+does not list the three gallery routes (`/api/v1/boards/gallery/public`, `/api/v1/boards/gallery/public/{slug}`,
+`/api/v1/boards/{ident}/list-publicly`) and measures 411051 bytes against 416045 serialised from the same tree. They
+are the gallery lane's routes committed at `862079a` without a contract regeneration, not this record's — the same
+attribution #114 had to make. The other two are
+`test_spec_audit_currency.py::test_the_audit_s_declared_figures_answer_for_the_committed_tree` ("59 page routes" where
+the committed tree holds 61) and `…::test_every_door_and_page_census_in_the_module_table_recomputes` ("6 `/tactics/*`"
+where it holds 8), both cured after this plane by #116 (`33bdd8c`). No other case failed on either engine. The two
+skips are `test_redis_cache::test_redis_cache_real_integration` ("Redis not available") and
+`test_scout_search::TestPublishedArithmetic::test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]`.
+The PostgreSQL leg used a per-run database that the conftest creates and drops (`football_os_test_ef969d` while it
+ran; `pg_database` answered no `football_os_test%` row afterwards), and the runner's binding probe printed
+`app/__init__.py` and `app/main.py` inside `D:/r119-legs` before the first test started.
 
 ## 8. Reproduce
 
@@ -297,8 +314,9 @@ re-derived from those without any scratch file, which is the property that makes
   walk. Closing them means a convention (`assert isinstance(x, str)` first, or a helper that renders the message),
   not a scanner. `test_boards.py` alone holds 16 of them (`UNPROVABLE:Attribute` 10, `unknown-lines:fstring` 5,
   `UNPROVABLE:Subscript` 1) — converting its two `BAD` sites did not make that file provable, only less blind.
-* **The whole-suite and PostgreSQL legs at this commit** are owed (§7). The conversion is text-only in its conditions,
-  so the risk these legs carry is a *message* a test asserts about another test's output, not a behaviour change.
+* **The whole-suite and PostgreSQL legs at this commit** are recorded in §7: 1660 collected on each engine, the same
+  five reds by name, no others. The conversion is text-only in its conditions, so the risk these legs carry is a
+  *message* a test asserts about another test's output, not a behaviour change.
 * **`docs/M8_ACADEMY_VERIFICATION.md` §"Reproduce"** publishes two `--tb=line` legs over `test_club_academy.py`, and
   at `fe32570` that file's counts-gate message was `"...disagrees with the door:\n" + "\n".join(...)` — so the logs
   those commands produced carried the header sentence and none of the verdict tags. Corrected in this commit with
