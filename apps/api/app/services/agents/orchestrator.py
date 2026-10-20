@@ -17,6 +17,9 @@ from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.orm import Session
 
+from app.core.security import new_public_id
+from app.services.agents.traces import store_trace
+
 if TYPE_CHECKING:
     from app.services.agents.base import BaseAgent
 
@@ -44,6 +47,14 @@ class AgentStep:
     completed_at: datetime | None = None
     confidence: float = 0.0
     citations: list[dict[str, str]] = field(default_factory=list)
+    #: What this step looked up, as the agent recorded it. Empty means the agent answered from its
+    #: own static knowledge — a different kind of answer, and the trace should not blur them.
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)
+
+    def duration_ms(self) -> int | None:
+        if self.started_at is None or self.completed_at is None:
+            return None
+        return max(0, round((self.completed_at - self.started_at).total_seconds() * 1000))
 
 
 @dataclass
@@ -66,6 +77,8 @@ class OrchestrationResult:
     started_at: datetime
     completed_at: datetime
     plan: OrchestrationPlan
+    trace_id: str = ""
+    status: str = "completed"
 
 
 class RoutingRule:
@@ -193,8 +206,9 @@ class FootballOrchestrator:
         }
 
     def execute(self, query: str, context: dict[str, Any] | None = None) -> OrchestrationResult:
-        """Execute a full orchestration run."""
+        """Execute a full orchestration run and store its trace."""
         started_at = datetime.now(UTC)
+        trace_id = new_public_id("trc")
         plan = self.plan(query, context)
         steps: list[AgentStep] = []
         accumulated_context = context or {}
@@ -207,6 +221,9 @@ class FootballOrchestrator:
 
             try:
                 agent = self._get_agent(agent_type)
+                #: An agent instance is cached for the life of this orchestration; slice its tool
+                #: list so a step reports what *it* touched, not every step that reused the instance.
+                already_recorded = len(agent.tool_calls)
                 agent_query = step.query
                 result = agent.run(query=agent_query)
 
@@ -214,6 +231,7 @@ class FootballOrchestrator:
                 step.status = AgentStatus.COMPLETED
                 step.confidence = result.get("confidence", 0.0)
                 step.citations = result.get("citations", [])
+                step.tool_calls = list(agent.tool_calls[already_recorded:])
                 step.completed_at = datetime.now(UTC)
 
                 # Accumulate context for next agents
@@ -242,14 +260,63 @@ class FootballOrchestrator:
 
         completed_at = datetime.now(UTC)
 
-        return OrchestrationResult(
+        if len(completed_steps) == len(steps):
+            status = "completed"
+        elif completed_steps:
+            status = "partial"
+        else:
+            status = "failed"
+
+        result = OrchestrationResult(
             answer=answer,
             steps=steps,
             confidence=confidence,
             started_at=started_at,
             completed_at=completed_at,
             plan=plan,
+            trace_id=trace_id,
+            status=status,
         )
+        #: Stored even when every step failed: a failed run is the one an operator needs to read.
+        #: The endpoint owns the commit; this write is flushed with the rest of the request.
+        store_trace(self.db, user_id=self.user_id, trace=self.trace(result, query, context), session_id=self.session_id)
+        return result
+
+    def trace(self, result: OrchestrationResult, query: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
+        """The JSON shape stored for one run — the same object `GET /agents/traces/{id}` returns."""
+        return {
+            "trace_id": result.trace_id,
+            "query": query,
+            "session_id": self.session_id,
+            "status": result.status,
+            "started_at": result.started_at.isoformat(),
+            "completed_at": result.completed_at.isoformat(),
+            "duration_ms": max(0, round((result.completed_at - result.started_at).total_seconds() * 1000)),
+            "confidence": round(result.confidence, 4),
+            "answer_chars": len(result.answer),
+            "answer": result.answer[:8000],
+            "plan": {
+                "steps": list(result.plan.steps),
+                "max_retries": result.plan.max_retries,
+                "timeout_seconds": result.plan.timeout_seconds,
+                "context_keys": sorted((context or {}).keys()),
+            },
+            "steps": [
+                {
+                    "agent_type": step.agent_type,
+                    "query": step.query,
+                    "status": step.status.value,
+                    "confidence": round(step.confidence, 4),
+                    "started_at": step.started_at.isoformat() if step.started_at else None,
+                    "completed_at": step.completed_at.isoformat() if step.completed_at else None,
+                    "duration_ms": step.duration_ms(),
+                    "citations": len(step.citations),
+                    "tool_calls": list(step.tool_calls),
+                    "error": step.error,
+                }
+                for step in result.steps
+            ],
+        }
 
 
 # Backwards-compatible function for the composite endpoint
@@ -272,6 +339,8 @@ def run_composite_task(
 
     return {
         "answer": result.answer,
+        "trace_id": result.trace_id,
+        "status": result.status,
         "steps": [
             {
                 "agent_type": s.agent_type,
@@ -279,6 +348,7 @@ def run_composite_task(
                 "result_summary": s.result.get("answer", "")[:200] + "..." if s.result and s.result.get("answer") and len(s.result["answer"]) > 200 else s.result.get("answer", "") if s.result else "",
                 "status": s.status.value,
                 "confidence": s.confidence,
+                "tool_calls": list(s.tool_calls),
                 "error": s.error,
             }
             for s in result.steps

@@ -1826,11 +1826,44 @@ export type AgentRunResponse = {
 };
 
 /** POST /agents/composite — one step per agent the orchestrator routed to. */
+export type AgentToolCall = {
+  tool: string;
+  args: Record<string, unknown>;
+  ok: boolean;
+  detail: string | null;
+  at: string;
+};
+
 export type AgentCompositeResponse = {
   answer: string;
-  steps: { agent_type: string; query: string; result_summary: string; status: string; confidence: number | null; error: string | null }[];
+  steps: {
+    agent_type: string;
+    query: string;
+    result_summary: string;
+    status: string;
+    confidence: number | null;
+    tool_calls: AgentToolCall[];
+    error: string | null;
+  }[];
   confidence: number | null;
   from_cache: boolean;
+  /** The stored run this answer came from; `GET /agents/traces/{id}` replays it. */
+  trace_id: string | null;
+  status: string | null;
+};
+
+/** GET /agents/traces — one row per stored orchestration run, newest first. */
+export type AgentTraceSummary = {
+  trace_id: string;
+  query: string;
+  session_id: string | null;
+  status: string;
+  started_at: string;
+  completed_at: string;
+  confidence: number;
+  step_count: number;
+  agents: string[];
+  tool_call_count: number;
 };
 
 /** GET /agents/context — one persisted memory row for this agent + session. */

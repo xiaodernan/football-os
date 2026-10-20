@@ -11,6 +11,7 @@ Metrics
     refusal_accuracy  — out-of-scope questions correctly refused
     topic_coverage    — share of cases where expected topics appear in the answer
     multi_step_completion — share of composite tasks that executed all expected agents
+    trace_integrity   — share of composite runs whose stored trace replays every step the answer named
 """
 
 from __future__ import annotations
@@ -32,6 +33,7 @@ THRESHOLDS = {
     "citation_integrity": 0.90,
     "refusal_accuracy": 1.0,
     "multi_step_completion": 0.75,
+    "trace_integrity": 1.0,
 }
 
 
@@ -59,6 +61,7 @@ class BenchmarkReport:
     citation_integrity: float = 0.0
     refusal_accuracy: float = 0.0
     multi_step_completion: float = 0.0
+    trace_integrity: float = 0.0
     failures: list[str] = field(default_factory=list)
     per_category_summary: list[dict[str, Any]] = field(default_factory=list)
 
@@ -69,6 +72,7 @@ class BenchmarkReport:
             "citation_integrity": round(self.citation_integrity, 4),
             "refusal_accuracy": round(self.refusal_accuracy, 4),
             "multi_step_completion": round(self.multi_step_completion, 4),
+            "trace_integrity": round(self.trace_integrity, 4),
         }
 
     def passed(self) -> bool:
@@ -202,6 +206,12 @@ def evaluate(db: Any, *, persist: bool = False) -> BenchmarkReport:
     multi_step_total = 0
     multi_step_completed = 0
 
+    #: §33's stored half: a composite answer names a trace id, and the trace it names must replay the
+    #: same steps. `trace_total` counts composite runs; `trace_completed` counts the ones whose trace
+    #: was readable with every step and tool-call count intact.
+    trace_total = 0
+    trace_completed = 0
+
     for category_data in golden["categories"]:
         cat_name = category_data["name"]
         agent_type = category_data["agent_type"]
@@ -227,6 +237,25 @@ def evaluate(db: Any, *, persist: bool = False) -> BenchmarkReport:
                     confidence = data.get("confidence", 0.0)
                     steps = data.get("steps", [])
                     citations = []
+
+                    # §33's stored half: the answer names a trace, and the trace must replay the run.
+                    trace_total += 1
+                    trace_id = data.get("trace_id")
+                    if not trace_id:
+                        cat_report.failures.append(f"{case['id']}: composite answer named no trace")
+                    else:
+                        trace_resp = client.get(f"/api/v1/agents/traces/{trace_id}")
+                        if trace_resp.status_code != 200:
+                            cat_report.failures.append(f"{case['id']}: stored trace {trace_id} read {trace_resp.status_code}")
+                        else:
+                            trace = trace_resp.json()
+                            trace_steps = trace.get("steps", [])
+                            traces_match = [step.get("agent_type") for step in trace_steps] == [step["agent_type"] for step in steps]
+                            tools_recorded = all("tool_calls" in step for step in trace_steps)
+                            if traces_match and tools_recorded and trace.get("query") == case["query"]:
+                                trace_completed += 1
+                            else:
+                                cat_report.failures.append(f"{case['id']}: stored trace does not replay the answer")
 
                     # Check multi-step completion
                     expected_agents = set(case.get("expected_agents", []))
@@ -360,6 +389,7 @@ def evaluate(db: Any, *, persist: bool = False) -> BenchmarkReport:
     report.citation_integrity = total_citations_valid / total_citations_checked if total_citations_checked else 1.0
     report.refusal_accuracy = report.refusal_cases_passed / report.refusal_cases_total if report.refusal_cases_total else 1.0
     report.multi_step_completion = multi_step_completed / multi_step_total if multi_step_total else 0.0
+    report.trace_integrity = trace_completed / trace_total if trace_total else 1.0
 
     # Check thresholds
     for metric, minimum in THRESHOLDS.items():

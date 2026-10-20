@@ -3507,6 +3507,161 @@
         }
       }
     },
+    "/api/v1/boards/{ident}/list-publicly": {
+      "post": {
+        "tags": [
+          "tactics-boards"
+        ],
+        "summary": "List Board Publicly",
+        "description": "M9's consent door: the owner's explicit yes to the public gallery.\n\nA dedicated door rather than a field on the patch, so the consent sentence travels\nwith the action that grants it and revoking is a state a reader can see, not a\nside effect of an unrelated save. The board keeps its own visibility — a gallery\nlisting and a share link are two separate decisions.",
+        "operationId": "list_board_publicly_api_v1_boards__ident__list_publicly_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response List Board Publicly Api V1 Boards  Ident  List Publicly Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tactics-boards"
+        ],
+        "summary": "Unlist Board Publicly",
+        "description": "The consent withdraws; the board and any share link it holds stay.",
+        "operationId": "unlist_board_publicly_api_v1_boards__ident__list_publicly_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/boards/gallery/public/{slug}": {
+      "get": {
+        "tags": [
+          "tactics-boards"
+        ],
+        "summary": "Read Gallery Board",
+        "description": "One consented board, public and read-only. An unlisted board is absent, not refused.",
+        "operationId": "read_gallery_board_api_v1_boards_gallery_public__slug__get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Gallery Board Api V1 Boards Gallery Public  Slug  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/boards/gallery/public": {
+      "get": {
+        "tags": [
+          "tactics-boards"
+        ],
+        "summary": "Read Gallery",
+        "description": "The public gallery: the boards whose owners said yes.\n\nThe predicate *is* the consent — a revoked board stops being visible here the\nmoment its column flips, and nothing is deleted. Owner display names show because\nthe consent sentence says they do; measurements are recomputed from the stored\ncoordinates, so the gallery serves the same arithmetic the owner's own page does.",
+        "operationId": "read_gallery_api_v1_boards_gallery_public_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Gallery Api V1 Boards Gallery Public Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/video/upload": {
       "post": {
         "tags": [
@@ -11079,7 +11234,7 @@
           "agents"
         ],
         "summary": "Agent Composite",
-        "description": "Execute a composite task using the FootballOrchestrator.\n\nExample: 'Analyze Arsenal's recent matches, identify their attacking patterns,\ncompare with my player profile, and recommend training to bridge the gap.'\n\nThe FootballOrchestrator plans the execution, routes to appropriate agents,\npasses context between them, and aggregates results.",
+        "description": "Execute a composite task using the FootballOrchestrator.\n\nExample: 'Analyze Arsenal's recent matches, identify their attacking patterns,\ncompare with my player profile, and recommend training to bridge the gap.'\n\nThe FootballOrchestrator plans the execution, routes to appropriate agents,\npasses context between them, and aggregates results. The run's trace is stored\nunder `orchestrator` in agent memory and is retrievable at `/agents/traces/{id}`\n— including when every step failed, which is exactly the run worth reading.",
         "operationId": "agent_composite_api_v1_agents_composite_post",
         "requestBody": {
           "content": {
@@ -11118,6 +11273,106 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/api/v1/agents/traces": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Traces",
+        "description": "List this account's stored orchestration traces, newest first.",
+        "operationId": "agent_traces_api_v1_agents_traces_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agents/traces/{trace_id}": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent Trace",
+        "description": "Return one stored trace.\n\nA trace that never existed, expired, or belongs to another account answers the same 404 —\nabsence must not confirm which ids exist.",
+        "operationId": "agent_trace_api_v1_agents_traces__trace_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "trace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Trace Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Agent Trace Api V1 Agents Traces  Trace Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/agents/list": {
@@ -12531,6 +12786,28 @@
             "type": "boolean",
             "title": "From Cache",
             "default": false
+          },
+          "trace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trace Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
           }
         },
         "type": "object",
@@ -14983,6 +15260,23 @@
           "demo_mode"
         ],
         "title": "TokenPair"
+      },
+      "TraceListResponse": {
+        "properties": {
+          "traces": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Traces"
+          }
+        },
+        "type": "object",
+        "required": [
+          "traces"
+        ],
+        "title": "TraceListResponse",
+        "description": "This account's stored orchestration runs, newest first."
       },
       "TransferSimIn": {
         "properties": {

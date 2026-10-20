@@ -8,6 +8,7 @@ comes from persisted memories scoped to user + agent_type + optional session_id.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -28,6 +29,35 @@ class BaseAgent(ABC):
         self.user_id = user_id
         self.agent_type = agent_type
         self.session_id = session_id
+        #: Every store the last `run()` touched, in the order it touched them. The orchestrator
+        #: snapshots this list before a step and stores the slice in that step's trace, so a
+        #: composite answer can say *what was looked up*, not only what it said.
+        self.tool_calls: list[dict[str, Any]] = []
+
+    def record_tool_call(
+        self,
+        tool: str,
+        *,
+        args: dict[str, Any] | None = None,
+        ok: bool = True,
+        detail: str | None = None,
+    ) -> None:
+        """Record one tool invocation for the orchestrator's trace.
+
+        A tool call is a read or write against a store this agent does not own — the knowledge
+        corpus, the tactical catalogue, the player rows, the training catalogue. Agents whose answer
+        is a static explanation (simulation, video) record none, and their step's empty list is the
+        honest reading: nothing was looked up.
+        """
+        self.tool_calls.append(
+            {
+                "tool": tool,
+                "args": args or {},
+                "ok": bool(ok),
+                "detail": detail,
+                "at": datetime.now(UTC).isoformat(),
+            }
+        )
 
     # ------------------------------------------------------------------
     # Memory helpers — thin wrappers around the agent_memory service

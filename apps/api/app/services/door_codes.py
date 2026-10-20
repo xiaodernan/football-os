@@ -33,6 +33,7 @@ NOT_FOUND_CODES: Final = frozenset(
         "no_such_job",  # jobs — the id in the message is a figure the caller holds, so it travels as one
         "no_such_memory",  # agent_memory — one named fact, per account
         "no_such_system",  # careers, challenges, simulations
+        "no_such_trace",  # agents — one stored orchestration run, per account; absent and foreign are one answer
         "wrong_path",  # tactics
     }
 )

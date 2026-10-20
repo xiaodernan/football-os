@@ -7,8 +7,8 @@ Spec §64 asks for an "agent evaluation benchmark" that covers 9 categories of a
 | path | role |
 | --- | --- |
 | `apps/api/evals/golden_agent_benchmark.json` | 27 golden cases across 9 categories + 3 refusal controls |
-| `apps/api/evals/run_agent_benchmark.py` | evaluation harness with metrics: answer_rate, avg_confidence, citation_integrity, refusal_accuracy, multi_step_completion |
-| `apps/api/tests/test_agents_benchmark.py` | 8 gating tests that import `evaluate()` and fail on threshold breach |
+| `apps/api/evals/run_agent_benchmark.py` | evaluation harness with metrics: answer_rate, avg_confidence, citation_integrity, refusal_accuracy, multi_step_completion, trace_integrity |
+| `apps/api/tests/test_agents_benchmark.py` | 9 gating tests that import `evaluate()` and fail on threshold breach |
 
 ### Categories covered (per §64's list)
 
@@ -31,10 +31,11 @@ Spec §64 asks for an "agent evaluation benchmark" that covers 9 categories of a
 | citation_integrity | ≥ 0.90 | Citation quotes must be verbatim from chunks |
 | refusal_accuracy | 1.0 | Out-of-scope questions must be refused |
 | multi_step_completion | ≥ 0.75 | Composite tasks must execute expected agents |
+| trace_integrity | 1.0 | Every composite run's stored trace must replay the steps its answer named (added 2026-10-20 with §33's stored trace — [evidence](M11_AGENT_TRACE_VERIFICATION.md)) |
 
 ## Measurements (current HEAD, corpus loaded)
 
-* `tests/test_agents_benchmark.py`: **8 collected / 8 passed** (every threshold gate green).
+* `tests/test_agents_benchmark.py`: **9 collected / 9 passed** (every threshold gate green).
 * `python -m evals.run_agent_benchmark --json` on a **fresh, empty database** (temp SQLite, cold start): exit 0, `failures: []`.
 * Total cases: **27** across 9 categories.
 * Refusal cases: **3** (non-football question, live scores request, prediction request).
@@ -44,12 +45,18 @@ Spec §64 asks for an "agent evaluation benchmark" that covers 9 categories of a
 | metric | value | gate | status |
 | --- | --- | --- | --- |
 | overall_answer_rate | 1.0 | ≥ 0.80 | PASS ✅ |
-| avg_confidence | 0.7724 | ≥ 0.55 | PASS ✅ |
+| avg_confidence | 0.7684 | ≥ 0.55 | PASS ✅ |
 | citation_integrity | 1.0 | ≥ 0.90 | PASS ✅ |
 | refusal_accuracy | 1.0 | 1.0 | PASS ✅ |
 | multi_step_completion | 1.0 | ≥ 0.75 | PASS ✅ |
+| trace_integrity | 1.0 | 1.0 | PASS ✅ |
 
-All five metrics pass their gates, both through the pytest gate (`evaluate()` with a real app/client) and through the standalone CLI entry point. The benchmark is a reliable quality gate, not a source of false failures.
+All six metrics pass their gates, both through the pytest gate (`evaluate()` with a real app/client) and through the standalone CLI entry point. The benchmark is a reliable quality gate, not a source of false failures.
+
+**Measured 2026-10-20** (the run that added `trace_integrity`, against the seeded PostgreSQL database).
+`avg_confidence` reads 0.7684 here against the 0.7724 recorded on 2026-10-07: the corpus and the world were
+re-seeded between the two, and the golden cases' answers are recomputed from whatever is stored, so a
+confidence mean is a reading of a database and not a constant. Both are above the 0.55 gate.
 
 ### Per-category breakdown (current HEAD)
 
@@ -90,7 +97,16 @@ The original unit left a follow-up owed; three more defects kept the gates red o
 
 ### Identified gaps (tracked, non-gating)
 
-Case-level quality notes still appear in `per_category_summary.failures` (topic mismatches, per-case confidence floors such as `compare-strikers: confidence 0.30 below minimum 0.5`, missing "recommendation" keyword in some coach answers). These do not touch the five threshold gates; they are follow-up quality work.
+Case-level quality notes still appear in `per_category_summary.failures` (topic mismatches, per-case confidence floors such as `compare-strikers: confidence 0.30 below minimum 0.5`, missing "recommendation" keyword in some coach answers). These do not touch the six threshold gates; they are follow-up quality work.
+
+### The gate file measures once (2026-10-20)
+
+The eight cases each called `evaluate()`, so one gate file ran the whole 27-case benchmark eight times,
+registered eight accounts, and let every case disagree with the report the next case read. The report is
+now computed once per module and read by all nine cases; the module's warm wall time is 30.8s against 28.4s
+before, because the seven extra evaluations were cheap repeats of a warm cache. What changed is that the
+suite writes one account's worth of state instead of eight, and the ninth case re-runs the benchmark on
+purpose to prove the scores are reproducible.
 
 ## Reproduce
 
@@ -109,6 +125,6 @@ python -m pytest tests/test_agents_benchmark.py::test_agent_benchmark_refusal_ac
 
 The benchmark is a gate, not a vibe. Whenever agent code changes:
 
-1. Run `python -m pytest tests/test_agents_benchmark.py -v` — all 8 must pass.
+1. Run `python -m pytest tests/test_agents_benchmark.py -v` — all 9 must pass.
 2. If thresholds slip, treat it as a real regression (the harness provisions its own world/tactics/player data, so an empty dev database is no longer an explanation).
 3. Case-level notes in `per_category_summary.failures` (topic wording, per-case confidence floors) are follow-up quality work, not gate failures.

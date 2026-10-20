@@ -216,6 +216,11 @@ export function AgentConsole({ agents, rosterError }: { agents: string[]; roster
                   <div className="row wrap" style={{ gap: "0.4rem" }}>
                     <span className="chip chip--accent">{t("modeComposite")}</span>
                     {turn.composite.from_cache && <span className="badge badge--demo">{t("cachedLabel")}</span>}
+                    {turn.composite.trace_id && (
+                      <span className="muted" style={{ fontSize: "0.82rem" }}>
+                        {t("traceLabel")} <code>{turn.composite.trace_id}</code>
+                      </span>
+                    )}
                     {turn.composite.confidence !== null && (
                       <span className="muted" style={{ fontSize: "0.82rem" }}>
                         {t("confidenceLabel")}: {(turn.composite.confidence * 100).toFixed(0)}%
@@ -236,6 +241,10 @@ export function AgentConsole({ agents, rosterError }: { agents: string[]; roster
                                 {step.result_summary}
                               </span>
                             )}
+                            <span className="muted" style={{ fontSize: "0.82rem", display: "block" }}>
+                              {t("toolCallsLabel", { count: step.tool_calls.length })}
+                              {step.tool_calls.length > 0 && ` · ${step.tool_calls.map((call) => call.tool).join(" · ")}`}
+                            </span>
                           </div>
                         </li>
                       ))}

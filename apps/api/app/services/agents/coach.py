@@ -141,7 +141,14 @@ class CoachAgent(BaseAgent):
     def _get_player(self) -> UserPlayer | None:
         """Get the user's primary player."""
         stmt = select(UserPlayer).where(UserPlayer.user_id == self.user_id).limit(1)
-        return self.db.execute(stmt).scalar_one_or_none()
+        player = self.db.execute(stmt).scalar_one_or_none()
+        self.record_tool_call(
+            "players.profile",
+            args={"user_id": self.user_id},
+            ok=player is not None,
+            detail="profile found" if player is not None else "no profile",
+        )
+        return player
 
     def _extract_goal(self, query: str) -> str | None:
         """Extract training goal from query text."""
@@ -178,7 +185,9 @@ class CoachAgent(BaseAgent):
         focus = GOAL_FOCUS.get(goal)
         if not focus:
             # Return generic drills
-            return _drill_rows(self.db)[:5]
+            generic = _drill_rows(self.db)[:5]
+            self.record_tool_call("training.drills", args={"goal": goal}, ok=bool(generic), detail=f"{len(generic)} generic drills")
+            return generic
 
         # Filter drills by matching categories or attributes
         all_drills = _drill_rows(self.db)
@@ -192,6 +201,12 @@ class CoachAgent(BaseAgent):
         # Sort by difficulty (easier first for progression)
         matching.sort(key=_difficulty_rank)
 
+        self.record_tool_call(
+            "training.drills",
+            args={"goal": goal, "categories": list(categories)},
+            ok=bool(matching),
+            detail=f"{len(matching)} of {len(all_drills)} drills matched",
+        )
         return matching[:5]
 
     def _get_recent_sessions(self, limit: int = 5) -> list[dict[str, Any]]:
@@ -206,6 +221,12 @@ class CoachAgent(BaseAgent):
             .limit(limit)
         )
         sessions = self.db.execute(stmt).scalars().all()
+        self.record_tool_call(
+            "training.sessions",
+            args={"limit": limit},
+            ok=True,
+            detail=f"{len(sessions)} completed sessions",
+        )
         return [
             {
                 "id": s.id,

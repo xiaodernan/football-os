@@ -641,6 +641,8 @@
     "askFailed": "代理無法回答這個問題。請重試。",
     "turnsEmpty": "對話會顯示在這裡。這個清單只存在於你的瀏覽器裡——代理在伺服器端有自己的記憶。",
     "stepsLabel": "編排步驟",
+    "traceLabel": "執行軌跡",
+    "toolCallsLabel": "{count, plural, other {# 次工具呼叫}}",
     "citationsLabel": "引用",
     "confidenceLabel": "信心程度",
     "cachedLabel": "來自快取",

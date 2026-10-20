@@ -138,6 +138,12 @@ class TacticalAgent(BaseAgent):
             stmt = stmt.where(TacticalSystem.formation == formation)
 
         rows = self.db.scalars(stmt).all()
+        self.record_tool_call(
+            "tactics.systems",
+            args={"formation": formation, "topic": topic},
+            ok=True,
+            detail=f"{len(rows)} systems",
+        )
 
         result = []
         for row in rows:

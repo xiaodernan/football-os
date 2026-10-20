@@ -641,6 +641,8 @@
     "askFailed": "The agent could not answer this. Try again.",
     "turnsEmpty": "Turns appear here. This list lives in your browser only — the agents keep their own memory on the server.",
     "stepsLabel": "Orchestration steps",
+    "traceLabel": "Trace",
+    "toolCallsLabel": "{count, plural, one {# tool call} other {# tool calls}}",
     "citationsLabel": "Citations",
     "confidenceLabel": "Confidence",
     "cachedLabel": "from cache",

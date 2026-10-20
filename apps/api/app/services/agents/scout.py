@@ -69,6 +69,7 @@ class ScoutAgent(BaseAgent):
         try:
             parsed = parse_requirements(query)
         except Exception as exc:
+            self.record_tool_call("scout.parse", args={"query": query}, ok=False, detail=str(exc))
             return {
                 "answer": f"I couldn't understand any scouting requirements from your query: {exc}. Try phrases like 'left-footed striker', 'under 25 years old', 'budget €30m', or 'high potential midfielder'.",
                 "citations": [],
@@ -76,6 +77,7 @@ class ScoutAgent(BaseAgent):
             }
 
         if not parsed.requirements:
+            self.record_tool_call("scout.parse", args={"query": query}, ok=False, detail="no requirements parsed")
             return {
                 "answer": "I couldn't understand any scouting requirements from your query. Try phrases like 'left-footed striker', 'under 25 years old', 'budget €30m', or 'high potential midfielder'.",
                 "citations": [],
@@ -86,6 +88,7 @@ class ScoutAgent(BaseAgent):
         try:
             search_result = search(self.db, parsed)
         except Exception as exc:
+            self.record_tool_call("scout.search", args={"requirements": len(parsed.requirements)}, ok=False, detail=str(exc))
             return {
                 "answer": f"Search failed: {exc}. The scouting database may not be fully populated.",
                 "citations": [],
@@ -95,6 +98,12 @@ class ScoutAgent(BaseAgent):
         candidates = search_result.get("candidates", [])
         problems = search_result.get("problems", [])
         waterfall = search_result.get("waterfall", [])
+        self.record_tool_call(
+            "scout.search",
+            args={"requirements": len(parsed.requirements)},
+            ok=True,
+            detail=f"{len(candidates)} candidates over {len(waterfall)} filter steps",
+        )
 
         # Build answer
         if not candidates:

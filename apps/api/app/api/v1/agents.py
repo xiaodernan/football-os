@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.security import current_user
 from app.models import User
-from app.services.agents import get_agent, list_available_agents, run_composite_task
+from app.services.agents import get_agent, list_available_agents, run_composite_task, traces
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -50,9 +50,17 @@ class CompositeTaskResponse(BaseModel):
     """Result from orchestrating multiple agents."""
 
     answer: str
-    steps: list[dict[str, Any]]  # Each step: {agent_type, query, result_summary}
+    steps: list[dict[str, Any]]  # Each step: {agent_type, query, result_summary, tool_calls, ...}
     confidence: float | None = None
     from_cache: bool = False
+    trace_id: str | None = None
+    status: str | None = None
+
+
+class TraceListResponse(BaseModel):
+    """This account's stored orchestration runs, newest first."""
+
+    traces: list[dict[str, Any]]
 
 
 @router.post("/composite", response_model=CompositeTaskResponse)
@@ -67,7 +75,9 @@ def agent_composite(
     compare with my player profile, and recommend training to bridge the gap.'
 
     The FootballOrchestrator plans the execution, routes to appropriate agents,
-    passes context between them, and aggregates results.
+    passes context between them, and aggregates results. The run's trace is stored
+    under `orchestrator` in agent memory and is retrievable at `/agents/traces/{id}`
+    — including when every step failed, which is exactly the run worth reading.
     """
     result = run_composite_task(
         db=db,
@@ -75,13 +85,46 @@ def agent_composite(
         query=body.query,
         session_id=body.session_id,
     )
+    db.commit()
 
     return CompositeTaskResponse(
         answer=result["answer"],
         steps=result["steps"],
         confidence=result["confidence"],
         from_cache=result["from_cache"],
+        trace_id=result.get("trace_id"),
+        status=result.get("status"),
     )
+
+
+@router.get("/traces", response_model=TraceListResponse)
+def agent_traces(
+    limit: int = Query(20, ge=1, le=100),
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> TraceListResponse:
+    """List this account's stored orchestration traces, newest first."""
+    return TraceListResponse(traces=[traces.summary(trace) for trace in traces.list_traces(db, user_id=user.id, limit=limit)])
+
+
+@router.get("/traces/{trace_id}")
+def agent_trace(
+    trace_id: str,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Return one stored trace.
+
+    A trace that never existed, expired, or belongs to another account answers the same 404 —
+    absence must not confirm which ids exist.
+    """
+    trace = traces.get_trace(db, user_id=user.id, trace_id=trace_id)
+    if trace is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail={"code": "no_such_trace", "message": f"no stored trace {trace_id!r}"},
+        )
+    return trace
 
 
 @router.get("/list", response_model=AgentListResponse)

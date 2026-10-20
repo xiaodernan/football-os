@@ -641,6 +641,8 @@
     "askFailed": "智能体无法回答这个问题。请重试。",
     "turnsEmpty": "对话会显示在这里。这个列表只存在于你的浏览器里——智能体在服务端有自己的记忆。",
     "stepsLabel": "编排步骤",
+    "traceLabel": "运行轨迹",
+    "toolCallsLabel": "{count, plural, other {# 次工具调用}}",
     "citationsLabel": "引用",
     "confidenceLabel": "置信度",
     "cachedLabel": "来自缓存",

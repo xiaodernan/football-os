@@ -82,6 +82,12 @@ class ResearchAgent(BaseAgent):
         # Check if we've answered this before
         cache_key = f"answer:{query.lower().strip()}"
         cached = self.recall(cache_key)
+        self.record_tool_call(
+            "memory.recall",
+            args={"key": cache_key},
+            ok=bool(cached),
+            detail="cache hit" if cached else "cache miss",
+        )
         if cached:
             return {
                 "answer": cached.get("answer", ""),
@@ -93,6 +99,12 @@ class ResearchAgent(BaseAgent):
 
         # Query the knowledge base
         result = ask(self.db, question=query)
+        self.record_tool_call(
+            "knowledge.ask",
+            args={"question": query},
+            ok=bool(result.answered),
+            detail=f"{len(result.citations)} citations at confidence {result.confidence:.2f}",
+        )
         
         # Handle cases where RAG couldn't find relevant information
         if not result.answered or result.confidence < 0.3:

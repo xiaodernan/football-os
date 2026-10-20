@@ -277,6 +277,16 @@ async function run() {
     await waitForText(page, 'Orchestration steps', 180_000);
     const agentsComposite = await bodyText(page);
     check('agents composite shows its steps', /Orchestration steps/iu.test(agentsComposite), `${(agentsComposite.match(/Orchestration steps/giu) ?? []).length} step panels`);
+    check(
+      'agents composite names the stored trace it came from',
+      /Trace\s+trc_[A-Za-z0-9_-]+/u.test(agentsComposite),
+      agentsComposite.match(/Trace\s+trc_[A-Za-z0-9_-]+/u)?.[0] ?? 'no trace id on the answer',
+    );
+    check(
+      'agents composite says what each step looked up',
+      /\d+ tool calls?/iu.test(agentsComposite),
+      agentsComposite.match(/\d+ tool calls?/iu)?.[0] ?? 'no tool-call line',
+    );
     await shot(page, '06b-agents-composite-desktop');
 
     // 6. Training academy: catalogue -> drill detail -> schedule.
