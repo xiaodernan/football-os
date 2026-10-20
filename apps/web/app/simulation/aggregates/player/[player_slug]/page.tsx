@@ -14,15 +14,19 @@ import "../../../../../styles/simulate.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Player Career Aggregate",
-  description: "Cross-career player aggregate summed from sim_events.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("simulationAggregates");
+  return {
+    title: t("playerMetaTitle"),
+    description: t("playerMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function PlayerAggregatePage({ params }: { params: Promise<{ player_slug: string }> }) {
   const { player_slug } = await params;
   const tw = await getTranslations("world");
+  const t = await getTranslations("simulationAggregates");
 
   const user = await currentUser();
   if (!user) redirect(`/login?next=%2Fsimulation%2Faggregates%2Fplayer%2F${encodeURIComponent(player_slug)}`);
@@ -30,7 +34,13 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
   const result = await serverFetch<SimAggPlayerAggregate>(`/simulation/aggregates/player/${encodeURIComponent(player_slug)}`);
   if (!result.ok) {
     if (result.status === 404 || result.error.code === "not_found") notFound();
-    return <WorldUnavailable detail={result.error.message} message="The player aggregate door did not answer." title="Player Career Aggregate" />;
+    return (
+      <WorldUnavailable
+        detail={result.error.message}
+        message={t("playerUnavailableDetail")}
+        title={t("playerMetaTitle")}
+      />
+    );
   }
 
   const aggregate = result.data;
@@ -38,16 +48,24 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/simulation/aggregates", label: "Simulation aggregates" }}
-        eyebrow={`${aggregate.careers.length} careers · ${aggregate.fixtures_played} fixtures · ${aggregate.totals.goals} goals`}
-        lede="Every figure below is a sum over sim_events rows from all careers that have a player with this slug. The aggregate is a pure read: nothing is stored, and the consistency check compares the same events against themselves."
+        back={{ href: "/simulation/aggregates", label: t("backLabel") }}
+        eyebrow={t("playerEyebrow", {
+          careers: aggregate.careers.length,
+          fixtures: aggregate.fixtures_played,
+          goals: aggregate.totals.goals,
+        })}
+        lede={t("playerLede")}
         title={aggregate.player.name}
       >
         <div className="tag-list" style={{ marginTop: "0.7rem" }}>
-          <span className="chip mono" title="Player slug">{aggregate.player.slug}</span>
-          <span className="chip mono" title="Position">{aggregate.player.position ?? "—"}</span>
-          <span className="chip num">{aggregate.fixtures_played} fixtures</span>
-          <span className="chip num">{aggregate.totals.goals} goals</span>
+          <span className="chip mono" title={t("playerSlugTitle")}>
+            {aggregate.player.slug}
+          </span>
+          <span className="chip mono" title={t("positionTitle")}>
+            {aggregate.player.position ?? "—"}
+          </span>
+          <span className="chip num">{t("fixturesChip", { count: aggregate.fixtures_played })}</span>
+          <span className="chip num">{t("goalsChip", { count: aggregate.totals.goals })}</span>
           <span className="chip mono" data-player-slug>{aggregate.player.slug}</span>
           <span className="chip mono" data-player-name>{aggregate.player.name}</span>
         </div>
@@ -57,22 +75,26 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
         data={{
           "@context": "https://schema.org",
           "@type": "CreativeWork",
-          name: `${aggregate.player.name} — Career Aggregate`,
+          name: `${aggregate.player.name} — ${t("playerMetaTitle")}`,
           url: absolute(`/simulation/aggregates/player/${player_slug}`),
-          license: "Private to the platform; derived from synthetic demo data",
+          license: t("jsonLdLicense"),
           isAccessibleForFree: false,
         }}
       />
 
       <div className="tac-boards">
-        <Panel eyebrow={`${aggregate.careers.length} career${aggregate.careers.length === 1 ? "" : "s"}`} title="Careers" data-testid="agg-careers">
+        <Panel
+          eyebrow={t("careersEyebrow", { count: aggregate.careers.length })}
+          title={t("careersTitle")}
+          data-testid="agg-careers"
+        >
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Career</th>
-                  <th scope="col">Club</th>
-                  <th scope="col">Slug</th>
+                  <th scope="col">{t("thCareer")}</th>
+                  <th scope="col">{t("thClub")}</th>
+                  <th scope="col">{t("thSlug")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,42 +115,46 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           )}
         </Panel>
 
-        <Panel eyebrow="Sum over all careers" title="Totals" data-testid="player-totals">
+        <Panel
+          eyebrow={t("playerTotalsEyebrow")}
+          title={t("playerTotalsTitle")}
+          data-testid="player-totals"
+        >
           <div className="grid grid-3">
             <div className="stack-sm">
-              <dt className="muted">Total events</dt>
+              <dt className="muted">{t("labelTotalEvents")}</dt>
               <dd className="num mono">{aggregate.totals.events}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Goals</dt>
+              <dt className="muted">{t("labelGoals")}</dt>
               <dd className="num mono">{aggregate.totals.goals}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Expected goals</dt>
+              <dt className="muted">{t("labelExpectedGoals")}</dt>
               <dd className="num mono">{aggregate.totals.expected_goals.toFixed(3)}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Attempts</dt>
+              <dt className="muted">{t("labelAttempts")}</dt>
               <dd className="num mono">{aggregate.totals.attempts}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Yellow cards</dt>
+              <dt className="muted">{t("labelYellowCards")}</dt>
               <dd className="num mono">{aggregate.totals.yellow_cards}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Red cards</dt>
+              <dt className="muted">{t("labelRedCards")}</dt>
               <dd className="num mono">{aggregate.totals.red_cards}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Injuries</dt>
+              <dt className="muted">{t("labelInjuries")}</dt>
               <dd className="num mono">{aggregate.totals.injuries}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Expected goals</dt>
+              <dt className="muted">{t("labelExpectedGoals")}</dt>
               <dd className="num mono">{aggregate.totals.expected_goals.toFixed(3)}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Fixtures played</dt>
+              <dt className="muted">{t("labelFixturesPlayed")}</dt>
               <dd className="num mono">{aggregate.fixtures_played}</dd>
             </div>
           </div>
@@ -138,21 +164,28 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           <p className="notice notice--warn">{aggregate.disclaimer}</p>
         </Panel>
 
-        <Panel eyebrow={`${aggregate.fixtures_traced} fixtures traced · ${aggregate.fixtures_untraced} untraced`} title="Consistency">
+        <Panel
+          eyebrow={t("consistencyEyebrow", { traced: aggregate.fixtures_traced, untraced: aggregate.fixtures_untraced })}
+          title={t("consistencyTitle")}
+        >
           <p className="muted">{aggregate.consistency}</p>
         </Panel>
 
-        <Panel eyebrow={`${aggregate.totals.events} events · ${aggregate.players_with_events} players with events`} title="By event type" data-testid="agg-by-type">
+        <Panel
+          eyebrow={t("byTypeEyebrow", { events: aggregate.totals.events, players: aggregate.players_with_events })}
+          title={t("byTypeTitle")}
+          data-testid="agg-by-type"
+        >
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Type</th>
-                  <th scope="col">Events</th>
-                  <th scope="col">Identified</th>
-                  <th scope="col">Ambiguous</th>
-                  <th scope="col">Unnamed</th>
-                  <th scope="col">Expected goals</th>
+                  <th scope="col">{t("thType")}</th>
+                  <th scope="col">{t("thEvents")}</th>
+                  <th scope="col">{t("thIdentified")}</th>
+                  <th scope="col">{t("thAmbiguous")}</th>
+                  <th scope="col">{t("thUnnamed")}</th>
+                  <th scope="col">{t("thExpectedGoals")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -171,36 +204,47 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           </div>
         </Panel>
 
-        <Panel eyebrow={`${aggregate.unattributed.events.ambiguous} ambiguous · ${aggregate.unattributed.events.unnamed} unnamed`} title="Unattributed" data-testid="agg-unattributed">
+        <Panel
+          eyebrow={t("unattributedEyebrow", {
+            ambiguous: aggregate.unattributed.events.ambiguous,
+            unnamed: aggregate.unattributed.events.unnamed,
+          })}
+          title={t("unattributedTitle")}
+          data-testid="agg-unattributed"
+        >
           {aggregate.unattributed.ambiguous_names.length > 0 && (
             <p className="muted world-section-note">
-              Ambiguous names: {aggregate.unattributed.ambiguous_names.join(", ")}
+              {t("ambiguousNames", { names: aggregate.unattributed.ambiguous_names.join(", ") })}
             </p>
           )}
           {aggregate.unattributed.unnamed_names.length > 0 && (
             <p className="muted world-section-note">
-              Unnamed: {aggregate.unattributed.unnamed_names.join(", ")}
+              {t("unnamedNames", { names: aggregate.unattributed.unnamed_names.join(", ") })}
             </p>
           )}
           {aggregate.unattributed.ambiguous_names.length === 0 && aggregate.unattributed.unnamed_names.length === 0 && (
-            <p className="muted">No unattributed events.</p>
+            <p className="muted">{t("noUnattributed")}</p>
           )}
         </Panel>
 
-        <Panel eyebrow={`${aggregate.players_with_events} players with events · ${aggregate.players_shown} shown`} title={tw("sectionPlayersLabel")} data-testid="agg-players">
+        <Panel
+          eyebrow={t("byTypeEyebrow", { events: aggregate.totals.events, players: aggregate.players_with_events })}
+          title={tw("sectionPlayersLabel")}
+          data-testid="agg-players"
+        >
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Player</th>
-                  <th scope="col">Position</th>
-                  <th scope="col">Matches</th>
-                  <th scope="col">Goals</th>
-                  <th scope="col">Attempts</th>
-                  <th scope="col">xG</th>
-                  <th scope="col">Yellow</th>
-                  <th scope="col">Red</th>
-                  <th scope="col">Injuries</th>
+                  <th scope="col">{t("thPlayer")}</th>
+                  <th scope="col">{t("thPosition")}</th>
+                  <th scope="col">{t("thMatches")}</th>
+                  <th scope="col">{t("thGoals")}</th>
+                  <th scope="col">{t("thAttempts")}</th>
+                  <th scope="col">{t("thXg")}</th>
+                  <th scope="col">{t("thYellow")}</th>
+                  <th scope="col">{t("thRed")}</th>
+                  <th scope="col">{t("thInjuries")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -226,7 +270,7 @@ export default async function PlayerAggregatePage({ params }: { params: Promise<
           </div>
           {aggregate.truncated && (
             <p className="muted world-section-note">
-              Showing {aggregate.players_shown} of {aggregate.players_with_events} players.
+              {t("showingPlayers", { shown: aggregate.players_shown, total: aggregate.players_with_events })}
             </p>
           )}
         </Panel>

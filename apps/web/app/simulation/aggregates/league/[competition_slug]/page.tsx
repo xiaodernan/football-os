@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { JsonLd, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
@@ -13,14 +14,18 @@ import "../../../../../styles/simulate.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "League Ledger",
-  description: "Cross-career league-wide ledger summed from sim_events.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("simulationAggregates");
+  return {
+    title: t("leagueMetaTitle"),
+    description: t("leagueMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function LeagueLedgerPage({ params }: { params: Promise<{ competition_slug: string }> }) {
   const { competition_slug } = await params;
+  const t = await getTranslations("simulationAggregates");
 
   const user = await currentUser();
   if (!user) redirect(`/login?next=%2Fsimulation%2Faggregates%2Fleague%2F${encodeURIComponent(competition_slug)}`);
@@ -28,7 +33,13 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
   const ledgerResult = await serverFetch<SimAggLeagueLedger>(`/simulation/aggregates/league/${encodeURIComponent(competition_slug)}`);
   if (!ledgerResult.ok) {
     if (ledgerResult.status === 404 || ledgerResult.error.code === "not_found") notFound();
-    return <WorldUnavailable detail={ledgerResult.error.message} message="The league ledger door did not answer." title="League Ledger" />;
+    return (
+      <WorldUnavailable
+        detail={ledgerResult.error.message}
+        message={t("leagueUnavailableDetail")}
+        title={t("leagueMetaTitle")}
+      />
+    );
   }
 
   const ledger = ledgerResult.data;
@@ -36,15 +47,23 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/simulation/aggregates", label: "Simulation aggregates" }}
-        eyebrow={`${ledger.fixtures_played} fixtures · ${ledger.players_with_events} players · ${ledger.totals.goals} goals`}
-        lede="Every figure below is a sum over sim_events rows from all careers whose club is in this competition. The ledger is a pure read: nothing is stored, and the consistency check compares the same season's goals from the event rows against the career's own fixture list."
+        back={{ href: "/simulation/aggregates", label: t("backLabel") }}
+        eyebrow={t("leagueEyebrow", {
+          fixtures: ledger.fixtures_played,
+          players: ledger.players_with_events,
+          goals: ledger.totals.goals,
+        })}
+        lede={t("leagueLede")}
         title={ledger.competition.name}
       >
         <div className="tag-list" style={{ marginTop: "0.7rem" }}>
-          <span className="chip mono" title="Competition slug" data-competition-slug>{ledger.competition.slug}</span>
-          <span className="chip num">{ledger.fixtures_traced} traced / {ledger.fixtures_played} played</span>
-          <span className="chip num">{ledger.players_with_events} players with events</span>
+          <span className="chip mono" title={t("competitionSlugTitle")} data-competition-slug>
+            {ledger.competition.slug}
+          </span>
+          <span className="chip num">
+            {t("leagueTracedPlayed", { traced: ledger.fixtures_traced, played: ledger.fixtures_played })}
+          </span>
+          <span className="chip num">{t("leaguePlayersWithEvents", { players: ledger.players_with_events })}</span>
         </div>
       </WorldHead>
 
@@ -52,50 +71,50 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
         data={{
           "@context": "https://schema.org",
           "@type": "CreativeWork",
-          name: `${ledger.competition.name} — League Ledger`,
+          name: `${ledger.competition.name} — ${t("leagueMetaTitle")}`,
           url: absolute(`/simulation/aggregates/league/${ledger.competition.slug}`),
-          license: "Private to the platform; derived from synthetic demo data",
+          license: t("jsonLdLicense"),
           isAccessibleForFree: false,
         }}
       />
 
       <div className="tac-boards">
-        <Panel eyebrow="Sum over all clubs in this competition" title="League totals" data-testid="league-totals">
+        <Panel eyebrow={t("leagueTotalsEyebrow")} title={t("leagueTotalsTitle")} data-testid="league-totals">
           <div className="grid grid-3">
             <div className="stack-sm">
-              <dt className="muted">Total events</dt>
+              <dt className="muted">{t("labelTotalEvents")}</dt>
               <dd className="num mono">{ledger.totals.events}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Goals</dt>
+              <dt className="muted">{t("labelGoals")}</dt>
               <dd className="num mono">{ledger.totals.goals}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Expected goals</dt>
+              <dt className="muted">{t("labelExpectedGoals")}</dt>
               <dd className="num mono">{ledger.totals.expected_goals.toFixed(3)}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Attempts</dt>
+              <dt className="muted">{t("labelAttempts")}</dt>
               <dd className="num mono">{ledger.totals.attempts}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Yellow cards</dt>
+              <dt className="muted">{t("labelYellowCards")}</dt>
               <dd className="num mono">{ledger.totals.yellow_cards}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Red cards</dt>
+              <dt className="muted">{t("labelRedCards")}</dt>
               <dd className="num mono">{ledger.totals.red_cards}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Injuries</dt>
+              <dt className="muted">{t("labelInjuries")}</dt>
               <dd className="num mono">{ledger.totals.injuries}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Expected goals</dt>
+              <dt className="muted">{t("labelExpectedGoals")}</dt>
               <dd className="num mono">{ledger.totals.expected_goals.toFixed(3)}</dd>
             </div>
             <div className="stack-sm">
-              <dt className="muted">Fixtures traced</dt>
+              <dt className="muted">{t("labelFixturesTraced")}</dt>
               <dd className="num mono">{ledger.fixtures_traced} / {ledger.fixtures_played}</dd>
             </div>
           </div>
@@ -105,21 +124,29 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
           <p className="notice notice--warn">{ledger.disclaimer}</p>
         </Panel>
 
-        <Panel eyebrow={`${ledger.fixtures_traced} fixtures traced · ${ledger.fixtures_untraced} untraced`} title="Consistency" data-testid="league-consistency">
+        <Panel
+          eyebrow={t("consistencyEyebrow", { traced: ledger.fixtures_traced, untraced: ledger.fixtures_untraced })}
+          title={t("consistencyTitle")}
+          data-testid="league-consistency"
+        >
           <p className="muted">{ledger.consistency}</p>
         </Panel>
 
-        <Panel eyebrow={`${ledger.totals.events} events · ${ledger.players_with_events} players with events`} title="By event type" data-testid="league-by-type">
+        <Panel
+          eyebrow={t("byTypeEyebrow", { events: ledger.totals.events, players: ledger.players_with_events })}
+          title={t("byTypeTitle")}
+          data-testid="league-by-type"
+        >
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Type</th>
-                  <th scope="col">Events</th>
-                  <th scope="col">Identified</th>
-                  <th scope="col">Ambiguous</th>
-                  <th scope="col">Unnamed</th>
-                  <th scope="col">Expected goals</th>
+                  <th scope="col">{t("thType")}</th>
+                  <th scope="col">{t("thEvents")}</th>
+                  <th scope="col">{t("thIdentified")}</th>
+                  <th scope="col">{t("thAmbiguous")}</th>
+                  <th scope="col">{t("thUnnamed")}</th>
+                  <th scope="col">{t("thExpectedGoals")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -138,36 +165,47 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
           </div>
         </Panel>
 
-        <Panel eyebrow={`${ledger.unattributed.events.ambiguous} ambiguous · ${ledger.unattributed.events.unnamed} unnamed`} title="Unattributed" data-testid="league-unattributed">
+        <Panel
+          eyebrow={t("unattributedEyebrow", {
+            ambiguous: ledger.unattributed.events.ambiguous,
+            unnamed: ledger.unattributed.events.unnamed,
+          })}
+          title={t("unattributedTitle")}
+          data-testid="league-unattributed"
+        >
           {ledger.unattributed.ambiguous_names.length > 0 && (
             <p className="muted world-section-note">
-              Ambiguous names: {ledger.unattributed.ambiguous_names.join(", ")}
+              {t("ambiguousNames", { names: ledger.unattributed.ambiguous_names.join(", ") })}
             </p>
           )}
           {ledger.unattributed.unnamed_names.length > 0 && (
             <p className="muted world-section-note">
-              Unnamed: {ledger.unattributed.unnamed_names.join(", ")}
+              {t("unnamedNames", { names: ledger.unattributed.unnamed_names.join(", ") })}
             </p>
           )}
           {ledger.unattributed.ambiguous_names.length === 0 && ledger.unattributed.unnamed_names.length === 0 && (
-            <p className="muted">No unattributed events.</p>
+            <p className="muted">{t("noUnattributed")}</p>
           )}
         </Panel>
 
-        <Panel eyebrow={`${ledger.players_with_events} players · ${ledger.players_shown} shown`} title="Top players" data-testid="league-players">
+        <Panel
+          eyebrow={t("leagueTopPlayersEyebrow", { players: ledger.players_with_events, shown: ledger.players_shown })}
+          title={t("leagueTopPlayersTitle")}
+          data-testid="league-players"
+        >
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Player</th>
-                  <th scope="col">Position</th>
-                  <th scope="col">Matches</th>
-                  <th scope="col">Goals</th>
-                  <th scope="col">Attempts</th>
-                  <th scope="col">xG</th>
-                  <th scope="col">Yellow</th>
-                  <th scope="col">Red</th>
-                  <th scope="col">Injuries</th>
+                  <th scope="col">{t("thPlayer")}</th>
+                  <th scope="col">{t("thPosition")}</th>
+                  <th scope="col">{t("thMatches")}</th>
+                  <th scope="col">{t("thGoals")}</th>
+                  <th scope="col">{t("thAttempts")}</th>
+                  <th scope="col">{t("thXg")}</th>
+                  <th scope="col">{t("thYellow")}</th>
+                  <th scope="col">{t("thRed")}</th>
+                  <th scope="col">{t("thInjuries")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -193,7 +231,7 @@ export default async function LeagueLedgerPage({ params }: { params: Promise<{ c
           </div>
           {ledger.truncated && (
             <p className="muted world-section-note">
-              Showing {ledger.players_shown} of {ledger.players_with_events} players.
+              {t("showingPlayers", { shown: ledger.players_shown, total: ledger.players_with_events })}
             </p>
           )}
         </Panel>
