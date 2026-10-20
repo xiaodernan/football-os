@@ -119,6 +119,12 @@ jobs:
         # of against one change's diff: the population, the literal ceiling and the two exemptions are re-derived
         # from the parsed bytes on every run, so a shrinking scan or a stale exemption fails the build. Files only.
         run: node scripts/qa-metadata-title.mjs
+      - name: English-literal gate (the copy the catalogues do not carry may only fall)
+        # Same command as `scripts/check.sh`. The count of English copy written in the source, over every
+        # `app/**/*.tsx`, parsed with the repo's own TypeScript: JSX text, label-ish attributes and label-ish
+        # object properties are three shapes and the gate reads all three. The ceiling only falls — wiring a page
+        # to its catalogue lowers it, and a page that adds copy in English raises it. Files only.
+        run: node scripts/qa-i18n-literals.mjs
       - name: Crawl-policy gate (gated routes disallowed, advertised routes reachable, Allow exceptions live)
         # Same command as `scripts/check.sh`. Three files split one decision — who may crawl what — and each only
         # described the others in prose. This transpiles and calls all three, reconciles them against every page's

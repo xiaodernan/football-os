@@ -87,6 +87,13 @@ echo "── Web: metadata-title i18n gate ────────────�
 # that drifts from its own heading each go red. Files only: no server, no browser, which is why it runs here.
 (cd apps/web && node scripts/qa-metadata-title.mjs)
 
+echo "── Web: English-literal i18n gate ────────────────────"
+# The other half of §81: the copy a page writes in English in the source, counted over every app/**/*.tsx through
+# the repo's own TypeScript — JSX text, label-ish attributes and label-ish object properties, which are three
+# shapes and not one. The count is a ceiling that may only fall: wiring a page to its catalogue lowers it, and a
+# page that adds copy in English raises it, which is what this gate says. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-i18n-literals.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 
