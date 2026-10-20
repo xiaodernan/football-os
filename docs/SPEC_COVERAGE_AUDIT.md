@@ -11,7 +11,7 @@ carries its noun; a service file with no door is **partial**.
 Every figure in this sentence is re-checked against the committed tree by
 `apps/api/tests/test_spec_audit_currency.py`, which reads the machine-readable line below rather than the prose:
 
-`AUDIT_FIGURES contract_paths=182 page_routes=59 migrations=28`
+`AUDIT_FIGURES contract_paths=182 page_routes=61 migrations=29`
 
 ## A. The 30 product modules (spec §3's list, §4–§42)
 
@@ -22,7 +22,7 @@ Every figure in this sentence is re-checked against the committed tree by
 | 9–12 | AI Coach / training academy / progression / plan | `/api/v1/coach/{ask,plan,today,history}`, `/api/v1/coach/drills/{drill_slug}/knowledge`, `/api/v1/trainings/{drills,sessions}`, `/api/v1/trainings/drills/{drill_id}`, `/api/v1/trainings/sessions/{session_id}/complete`, `/coach`, `/training`, `/training/[slug]` | M2/M1 | landed |
 | 13–14 | Video analysis + output | `/api/v1/video`, `/api/v1/video/upload`, `/api/v1/video/{ident}/{analyse,file,jobs}`, `/api/v1/video/{ident}/frames/{index}`, `/video`, `/video/[id]` | M5 | landed, **vision provider labelled demo** |
 | 15 | Match analysis | `/match/[slug]`, `/world/matches`, `sim_events` | M6 | landed |
-| 16–18 | Tactical Lab / Tactical AI / Simulator | **7 paths / 7 operations** under `/api/v1/tactics*`, **5 paths / 8 operations** under `/api/v1/boards*`, **4 paths / 6 operations** under `/api/v1/simulate*`, 6 `/tactics/*` pages (every one of these four censuses re-read 2026-10-04 over `8b68b0f`; the row used to print one number per route family without saying whether it counted paths or operations, and neither figure answered for this repository) | M4/M6 | landed |
+| 16–18 | Tactical Lab / Tactical AI / Simulator | **7 paths / 7 operations** under `/api/v1/tactics*`, **5 paths / 8 operations** under `/api/v1/boards*`, **4 paths / 6 operations** under `/api/v1/simulate*`, 8 `/tactics/*` pages (all four censuses re-read 2026-10-20 over the commit that lands this row; the three route-family figures held and the page census did not, because the gallery lane's `862079a` added the two `/tactics/gallery` pages and migration `0028` — which is where the tree's page total moved from 59 to 61 and its migration count from 28 to 29 — and the last time all four censuses were true together was 2026-10-04 over `8b68b0f`; the row used to print one number per route family without saying whether it counted paths or operations, and neither figure answered for this repository) | M4/M6 | landed |
 | 19 | Football simulation | `/api/v1/simulate`, `/simulate/{id}/replay`, `services/simulation` | M6 | landed |
 | 20 | Career Mode | **6 paths / 8 operations** under `/api/v1/careers*`, `/career`, `/career/[slug]`, `/career/[slug]/market` | M6 | landed |
 | 21 | Manager live challenges | **4 paths / 4 operations** under `/api/v1/challenges*`, `/challenges`, `/challenges/runs/[slug]` | M6 | landed |

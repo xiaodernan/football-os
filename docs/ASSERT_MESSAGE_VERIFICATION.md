@@ -318,3 +318,12 @@ re-derived from those without any scratch file, which is the property that makes
   fixed here, because this commit's evidence would stop naming the tree it was measured on.
 * **A fresh worktree is not byte-faithful to HEAD on this host** (§7). Anything that gates artifact bytes has to say
   which plane it read, and legs that run in a worktree have to normalise first.
+* **Closed after this commit landed: the audit census (#116).** The three stale figures are re-derived from
+  `git ls-tree -r HEAD` and written into `docs/SPEC_COVERAGE_AUDIT.md:14` and the `ROADMAP.md` quote of it — page
+  routes 59 → **61**, `/tactics/*` pages 6 → **8**, migrations 28 → **29** — with the gallery lane's `862079a` named
+  as the landing that moved all three. The migrations count was **not** in the red this section quotes:
+  `test_the_audit_s_declared_figures_answer_for_the_committed_tree` asserts contract paths, then page routes, then
+  migrations, so the page-route refusal stopped the case before its third clause ran, and the second stale figure only
+  appeared when the corrected census was re-run on a plane carrying it (`D:/r116-plane`, an extract of `fb5453b` with
+  the two ledgers replaced by this unit's bytes: **9 passed in 25.54s**, exit 0). A first red is evidence about the
+  clause that fired, not about the case. `test_openapi_contract_currency.py` stays owed to the agents lane.
