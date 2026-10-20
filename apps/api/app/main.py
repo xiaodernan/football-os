@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable
@@ -94,8 +95,22 @@ async def _read_body(response: Response) -> bytes:
     return body
 
 
-def response_cache_key(path: str, query: str, origin: str = "") -> str:
-    """The cache identity of a request: path, query, and the origin that asked.
+def caller_identity(credential: str) -> str:
+    """A short, stable name for the caller a credential belongs to — never the credential.
+
+    A cache key has to name the caller when the answer belongs to one, and the credential
+    itself must not go into the key: keys are printed in metrics, written to logs, and
+    readable by anyone with access to the shared store. A truncated SHA-256 of the whole
+    `Authorization` header is stable for the life of the token, different for every caller,
+    and useless to anyone who does not already hold the token.
+    """
+    if not credential:
+        return ""
+    return hashlib.sha256(credential.encode("utf-8")).hexdigest()[:32]
+
+
+def response_cache_key(path: str, query: str, origin: str = "", identity: str = "") -> str:
+    """The cache identity of a request: path, query, the origin that asked, and the caller.
 
     `origin` belongs here for the same reason it belongs in HTTP's own `Vary`:
     `Access-Control-Allow-Origin` is a function of the request's `Origin`, so a response
@@ -105,12 +120,23 @@ def response_cache_key(path: str, query: str, origin: str = "") -> str:
     the first caller's `Access-Control-Allow-Origin`; a browser rejects that mismatch, so
     the second allowlisted origin stopped working as soon as a path was warm.
 
+    `identity` is the fourth component, and it is the one that was missing until
+    2026-10-20: a private answer belongs to the caller who asked for it, and a key that
+    names no caller hands it to the next caller who asks the same question. Measured live:
+    account B was served account A's player row. The identity is a hash of the
+    credential, never the credential (see `caller_identity`).
+
     Each component is percent-encoded with `safe=""` so that none of them can contain a
     colon. The parts are then separated by colons without ambiguity, which the previous
     `path:query` join could not promise — `("/a:b", "c")` and `("/a", "b:c")` produced the
     same key.
     """
-    return "http:{}:{}:{}".format(quote(path, safe=""), quote(query, safe=""), quote(origin, safe=""))
+    return "http:{}:{}:{}:{}".format(
+        quote(path, safe=""),
+        quote(query, safe=""),
+        quote(origin, safe=""),
+        quote(identity, safe=""),
+    )
 
 
 PER_REQUEST_HEADERS = frozenset({"x-request-id", "x-request-duration-ms"})
@@ -180,6 +206,32 @@ async def cached_response_for(
     whole TTL, and caching a non-JSON body would break the contract the payload is built
     on. `no-cache` from the caller defeats a warm entry, because a caller who asks for a
     fresh answer is entitled to one.
+
+    **A private answer belongs to the caller who asked for it, so the key names the
+    caller.** Measured 2026-10-20 against a live server: the key was path + query +
+    origin and named no caller, so `GET /api/v1/players` — the caller's own player row —
+    was stored under a key that any other account's request for the same path matched,
+    and the second account was served the first account's player. The cached payload was
+    the leak, not the header, and the replay was invisible: the second caller got a 200
+    with someone else's football identity in it.
+
+    The `Authorization` header is the only credential this API honours (`current_user`
+    reads a bearer token and nothing else), so it is the only one the cache has to
+    consider. A request that carries one is keyed by `caller_identity(credential)` — a
+    hash of the header, never the header — so its answer is stored under its own name
+    and no other caller's request can match it.
+
+    **The shared tier follows RFC 9111 §3.5: a shared cache must not store a response
+    to a request that carries an `Authorization` header**, because that response is not
+    one every user may see. So a credentialed request is answered from the near tier
+    only, and the shared store holds public answers and nothing else. The near tier is
+    one process's memory and it is already where a private answer lived before; the
+    change is that the answer is now under the caller's name.
+
+    The cost is that a private answer is not shared between workers — the price of never
+    sharing one account's answer with another. The benefit is that the shared tier still
+    does the work it is for, on the public content every caller asks the same question
+    about, and that no user data is written to a store another process can read.
     """
     if request.method != "GET":
         return await call_next(request)
@@ -187,9 +239,11 @@ async def cached_response_for(
     if "no-cache" in request.headers.get("Cache-Control", "").lower():
         return await call_next(request)
 
-    key = response_cache_key(request.url.path, request.url.query, request.headers.get("origin", ""))
+    credential = request.headers.get("authorization", "")
+    identity = caller_identity(credential)
+    key = response_cache_key(request.url.path, request.url.query, request.headers.get("origin", ""), identity)
     cached = cache.get(key)
-    if cached is None and shared is not None and shared.available:
+    if cached is None and not identity and shared is not None and shared.available:
         cached = shared.get(key)
         if cached is not None:
             cache.set(key, cached, ttl=ttl)
@@ -218,7 +272,7 @@ async def cached_response_for(
         "media_type": response.media_type,
     }
     cache.set(key, payload, ttl=ttl)
-    if shared is not None and shared.available:
+    if not identity and shared is not None and shared.available:
         shared.set(key, payload, ttl=ttl)
 
     replay = Response(content=body, status_code=response.status_code, headers=dict(response.headers), media_type=response.media_type)

@@ -53,11 +53,20 @@ def _origin(body: dict[str, object] | str | None = None, status: int = 200, cont
 
 
 def test_the_key_carries_the_path_the_query_and_the_origin() -> None:
-    assert response_cache_key("/api/v1/healthz", "") == "http:%2Fapi%2Fv1%2Fhealthz::"
+    assert response_cache_key("/api/v1/healthz", "") == "http:%2Fapi%2Fv1%2Fhealthz:::"
     assert response_cache_key("/x", "a=1") != response_cache_key("/x", "a=2"), "a different query is a different answer"
     assert response_cache_key("/x", "") != response_cache_key("/y", ""), "a different path is a different answer"
     assert response_cache_key("/x", "", "http://localhost:3210") != response_cache_key("/x", "", "http://127.0.0.1:3210"), "a different origin is a different answer"
     assert response_cache_key("/a:b", "c") != response_cache_key("/a", "b:c"), "encoding each part is what keeps the separators unambiguous"
+
+
+def test_the_key_also_carries_the_caller() -> None:
+    """The fourth component, and the one whose absence leaked one account's answer to another."""
+    first = response_cache_key("/api/v1/players", "", "", "caller-a")
+    second = response_cache_key("/api/v1/players", "", "", "caller-b")
+    public = response_cache_key("/api/v1/players", "", "")
+    assert first != second, "two callers must not share a key"
+    assert first != public, "a private answer must not sit under the public key"
 
 
 def test_a_second_identical_get_is_served_from_the_cache() -> None:

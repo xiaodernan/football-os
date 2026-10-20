@@ -11,6 +11,12 @@ jobs:
     defaults:
       run:
         working-directory: apps/api
+    env:
+      # The shared cache tier, with the same host port and the same password the compose file
+      # publishes. The app reads this and the second tier of the response cache becomes a real
+      # server here instead of the in-memory fallback, which is what
+      # `tests/test_redis_shared_tier.py`'s live case needs.
+      REDIS_URL: redis://:football@localhost:63790/0
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -28,6 +34,20 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements-dev.txt
+      - name: Start the shared cache tier
+        # The same image, the same password and the same host port as `infra/docker-compose.yml`'s
+        # `redis` service, so the live shared-tier case runs here instead of skipping. The image's
+        # own entrypoint takes the command, so `--requirepass` is the server's argument rather than
+        # an entrypoint override.
+        run: |
+          docker run -d --name football_os_cache -p 63790:6379 redis:7-alpine redis-server --requirepass football
+          for attempt in $(seq 1 30); do
+            if docker exec football_os_cache redis-cli -a football ping 2>/dev/null | grep -q PONG; then
+              break
+            fi
+            sleep 1
+          done
+          docker exec football_os_cache redis-cli -a football ping
       - name: Lint
         # The job's default working directory is apps/api; this step goes back to the repository root so it can
         # run the same file the local gate runs. `scripts/lint.sh` is the project's one lint target — it lints all

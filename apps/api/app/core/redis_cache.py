@@ -17,12 +17,34 @@ import json
 import logging
 import os
 from typing import Any, cast
+from urllib.parse import urlsplit, urlunsplit
 
 import redis
 
 from app.core.cache import TTLCache
 
 logger = logging.getLogger(__name__)
+
+
+def redact_url(url: str) -> str:
+    """The URL with its password removed, for anything that leaves this process.
+
+    A Redis URL is where the password lives — `redis://:secret@host:6379/0` — so every place the
+    URL is printed has to drop the userinfo or the password is in the log line, in the metrics
+    door, and in whatever reads them. The host, the port and the database number stay, because
+    those are what make the line useful: an operator needs to know *which* instance is serving,
+    not the credential for it.
+
+    The redaction is on the parsed URL rather than on a string, so a password that contains the
+    `@` or `/` that a naive split would trip over is still removed.
+    """
+    parts = urlsplit(url)
+    if not parts.password:
+        return url
+    host = parts.hostname or ""
+    if parts.port is not None:
+        host = f"{host}:{parts.port}"
+    return urlunsplit((parts.scheme, host, parts.path, parts.query, parts.fragment))
 
 
 class RedisCache:
@@ -66,7 +88,7 @@ class RedisCache:
             client.ping()
             self._redis = client
             self._available = True
-            logger.info("Redis cache connected: %s", self.redis_url)
+            logger.info("Redis cache connected: %s", self.redacted_url())
         except Exception as e:
             self._available = False
             self._redis = None
@@ -75,6 +97,10 @@ class RedisCache:
     def _key(self, key: str) -> str:
         """Prefix keys to avoid collisions."""
         return f"football_os:{key}"
+
+    def redacted_url(self) -> str:
+        """This tier's URL with the password removed — the only form allowed to leave the process."""
+        return redact_url(self.redis_url)
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get value by key."""
@@ -101,10 +127,12 @@ class RedisCache:
         client = self._redis
         if self._available and client is not None:
             try:
-                client.setex(
+                #: `setex` is deprecated in the pinned redis-py (8.1.0 says "use `set` instead"), and
+                #: `set` with `ex=` is the same write with the expiry in the same command.
+                client.set(
                     self._key(key),
-                    int(ttl_seconds),
                     json.dumps(value, separators=(",", ":")),
+                    ex=int(ttl_seconds),
                 )
                 return True
             except Exception as e:
@@ -166,7 +194,9 @@ class RedisCache:
         stats = {
             "fallback": fallback_stats,
             "redis_available": self._available,
-            "redis_url": self.redis_url if self._available else None,
+            #: The URL without its password. The metrics door publishes this to any signed-in
+            #: caller, and a URL that carries a credential is a credential in a metrics door.
+            "redis_url": self.redacted_url() if self._available else None,
         }
         client = self._redis
         if self._available and client is not None:

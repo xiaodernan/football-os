@@ -50,7 +50,7 @@ class _ServingRedis:
     def get(self, key: str) -> str | None:
         return self.store.get(key)
 
-    def setex(self, key: str, ttl: int, value: str) -> bool:
+    def set(self, key: str, value: str, ex: int | None = None) -> bool:
         self.store[key] = value
         return True
 

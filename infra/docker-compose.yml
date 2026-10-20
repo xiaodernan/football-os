@@ -22,5 +22,37 @@ services:
       timeout: 3s
       retries: 10
 
+  # The shared cache tier. It is here, and it is authenticated, for one reason: an open Redis on a
+  # host that already publishes 6379 is a *different application's* cache, and pointing this
+  # project at it would both fail the handshake and put this project's entries in someone else's
+  # keyspace. The host port is 63790, not 6379, for that reason.
+  #
+  # `requirepass` is the point, not a hardening extra: the URL the app reads carries the
+  # password, so the tier can be reached by the app and by nobody else. The password lives in
+  # one place (the environment), and `apps/api/tests/test_redis_shared_tier.py` reads the same
+  # file to prove the app, the compose and CI all name the same instance.
+  redis:
+    image: redis:7-alpine
+    container_name: football_os_cache
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:-football}
+      # A cache keeps nothing across a restart, so it writes nothing to disk.
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-football}
+    ports:
+      - "${REDIS_PORT:-63790}:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   db-data:

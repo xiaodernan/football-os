@@ -267,7 +267,7 @@ class FootballOrchestrator:
         else:
             status = "failed"
 
-        result = OrchestrationResult(
+        outcome = OrchestrationResult(
             answer=answer,
             steps=steps,
             confidence=confidence,
@@ -279,8 +279,8 @@ class FootballOrchestrator:
         )
         #: Stored even when every step failed: a failed run is the one an operator needs to read.
         #: The endpoint owns the commit; this write is flushed with the rest of the request.
-        store_trace(self.db, user_id=self.user_id, trace=self.trace(result, query, context), session_id=self.session_id)
-        return result
+        store_trace(self.db, user_id=self.user_id, trace=self.trace(outcome, query, context), session_id=self.session_id)
+        return outcome
 
     def trace(self, result: OrchestrationResult, query: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """The JSON shape stored for one run — the same object `GET /agents/traces/{id}` returns."""

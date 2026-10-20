@@ -31,7 +31,7 @@ def test_redis_cache_happy_path() -> None:
         mock_redis = MagicMock()
         mock_redis.ping.return_value = True
         mock_redis.get.return_value = '"test_value"'
-        mock_redis.setex.return_value = True
+        mock_redis.set.return_value = True
         mock_redis.delete.return_value = 1
         mock_redis.ping.return_value = True
         mock_from_url.return_value = mock_redis
@@ -42,7 +42,7 @@ def test_redis_cache_happy_path() -> None:
         assert cache._available is True
 
         cache.set("test_key", "test_value")
-        mock_redis.setex.assert_called_once()
+        mock_redis.set.assert_called_once()
 
         value = cache.get("test_key")
         assert value == "test_value"
@@ -75,7 +75,7 @@ def test_redis_cache_graceful_degradation_on_set_failure() -> None:
     with patch("redis.from_url") as mock_from_url:
         mock_redis = MagicMock()
         mock_redis.ping.return_value = True
-        mock_redis.setex.side_effect = Exception("Connection lost")
+        mock_redis.set.side_effect = Exception("Connection lost")
         mock_from_url.return_value = mock_redis
 
         from app.core.redis_cache import RedisCache

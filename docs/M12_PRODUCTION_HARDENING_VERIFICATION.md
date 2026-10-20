@@ -148,9 +148,11 @@ JSON, so a shared instance cannot collide with another application's data.
 
 `REDIS_URL` is the only knob and defaults to `redis://localhost:6379/0`. `get_stats()` publishes the
 URL **only while Redis is serving** — a URL can carry a password, and a metrics endpoint is the
-wrong place to put one.
+wrong place to put one. *(Corrected 2026-10-20: the URL is now published **redacted** — the
+userinfo is parsed off — because the sentence above described an intention the code did not
+carry. See the shared-tier section below.)*
 
-**Measured on this host:** port 6379 is occupied, by a Redis that requires a password, so the
+**Measured on this host at the time:** port 6379 is occupied, by a Redis that requires a password, so the
 default no-auth URL cannot authenticate. The layer behaves as designed there: the first `get` costs
 0.008 ms and falls through to memory, the `set` still lands in the fallback and returns true, the
 second read hits the fallback (`hits: 1`, `hit_rate: 0.5`), and `redis_available` is false. That is
@@ -158,15 +160,16 @@ the path most likely to run in a deployment that has not provisioned a cache, so
 asserting it. Wiring the shared tier in did not change that: the warning is emitted once, structured,
 and the request that triggered it is answered from the near tier as before.
 
-**Not claimed:** the shared tier has never served a real request. No authenticated instance was
-available here, so the cross-process read-through is proven against a stand-in connection — the
+**Not claimed *then*:** the shared tier had never served a real request. No authenticated instance was
+available here, so the cross-process read-through was proven against a stand-in connection — the
 `RedisCache` code runs and only its socket is replaced — while the ten degradation cases run against
 a mocked client and the `integration`-marked case is the one that needs a live service. **No figure
 above is a Redis figure:** the load numbers were all measured with the tier degraded, so nothing
 here measures what sharing buys. Degradation is also **sticky for the life of the process** — a
 Redis that starts after the process is not picked up until restart. That is the right trade against
 paying a failed connect per call, and it is stated so a reader deploying behind a restart-less
-rollout can decide otherwise.
+rollout can decide otherwise. *(The tier itself is live since 2026-10-20; the load figures above
+are still the degraded ones. See the shared-tier section.)*
 
 **Also found by verifying this live rather than by reading:** two different requests came back with
 the same `X-Request-ID` and the same `X-Request-Duration-Ms`. `response_cache` was registered after
@@ -199,6 +202,96 @@ request-dependent header a cache could replay: every call to `_set_refresh_cooki
 and only GETs are cached, so it does not reach the payload. Verified against a live server as well
 as by test — two allowlisted origins each MISS and get their own header, an unallowlisted origin
 gets none, and the repeat of the first is a HIT carrying that origin.
+
+### The shared cache tier, live — and the cross-account leak that was behind it
+
+Two findings, and the first one is why the shared tier could not be landed before this section.
+
+**The finding: the cache replayed one account's private answer to another.** Measured 2026-10-20
+against a live server with the cache engaged (`ENV=development`, the project's PostgreSQL, the
+cache's own tier and the shared tier both enabled). Account A registered, created a player and
+asked for `GET /api/v1/players`; account B asked for the same path with its own token:
+
+```
+A GET /players -> 200 body: [{"id":"ply_6NzRGkWAhv5hIN-q","name":"Alice Only Player","position":"ST", ...}]
+B GET /players -> 200 body: [{"id":"ply_6NzRGkWAhv5hIN-q","name":"Alice Only Player","position":"ST", ...}]
+LEAK: True - B was served A's player
+```
+
+The key was path + query + origin and named no caller, so B's request matched A's stored answer
+and B was handed A's football identity with a 200. Nothing in the response said so: the cached
+payload was the leak, not a header, and the replay was indistinguishable from a normal answer.
+Every private `GET` in this API was exposed the same way — the caller's own player, their
+progression, their club, their agent memory.
+
+**The fix: the key names the caller, and the shared tier never sees a private answer.** Two halves,
+because the two tiers are two different things.
+
+* The **near** tier (one process's memory) is keyed by `caller_identity(credential)` — a truncated
+  SHA-256 of the `Authorization` header, never the header itself. A private answer is stored under
+  its caller's name, so no other caller's request can match it, and the same caller still gets a
+  `HIT` in the process that computed it.
+* The **shared** tier follows RFC 9111 §3.5: *a shared cache must not store a response to a request
+  that carries an `Authorization` header*, because that response is not one every user may see. So a
+  credentialed request is neither read from nor written to the shared tier, and the shared store
+  holds public answers and nothing else.
+
+`Authorization` is the only credential this API honours (`current_user` reads a bearer token and
+nothing else), so it is the only one the cache has to consider. The cost is that a private answer
+is not shared between workers — the price of never sharing one account's answer with another, and
+of keeping user data out of a store every worker can read.
+
+Re-measured on the same live server, same script, same two accounts:
+
+```
+A GET /players -> 200 body: [{"id":"ply_z2wS2KUmjfOehFau","name":"Alice Only Player", ...}]
+B GET /players -> 200 body: []
+LEAK: False - B was served its own answer
+```
+
+and the shared store held no key for that path at all — the private answer was never written to it.
+
+The gate is `tests/test_response_cache_privacy.py` (10 cases): the identity is a hash and not the
+credential, two callers have two keys, two callers never see each other's body, the same caller is
+still served from the near tier, a private answer never reaches the shared tier, a public answer
+does, a second reader with an empty near tier is served from the shared one, and the same thing
+happens against the real middleware stack with two real accounts.
+
+**The second finding: the metrics door published the cache's password.** `get_stats()` published
+`redis_url` — and a Redis URL is where the credential lives
+(`redis://:secret@host:6379/0`). The document above had already said that "a URL can carry a
+password, and a metrics endpoint is the wrong place to put one", while the code published the
+whole URL to any signed-in caller as soon as the tier was serving, and the connection log line
+printed it too. `redact_url()` now parses the URL and drops the userinfo, keeping the host, the
+port and the database number, and both the published stats and the log line use it. The gate
+covers a password containing `@` and `/` — a naive string split would not have removed it.
+
+**The tier, live.** The project now publishes an authenticated Redis of its own
+(`infra/docker-compose.yml`, `redis:7-alpine`, `--requirepass`, host port 63790 — not 6379,
+which on this host belongs to another application's cache), and CI starts the same image with the
+same password and the same URL. Measured on this host, 2026-10-20:
+
+* `redis-cli ping` without the password answers `NOAUTH Authentication required.`; with it, `PONG`.
+* Two **server processes** (ports 8099 and 8098, each with its own empty process-local tier) were
+  asked for the same public path:
+
+```
+server 1 -> 200 X-Cache: MISS bytes: 11571
+server 2 -> 200 X-Cache: HIT  bytes: 11571
+same answer: True
+keys in the shared store: ['football_os:http:%2Fapi%2Fv1%2Fworld%2Fteams:::']
+the shared store holds a payload of 13402 bytes
+```
+
+Server 2's own tier was empty, so its `HIT` can only have come from the shared store — the
+cross-process read-through this document used to say was proven "against a stand-in connection".
+The key's four components are visible in it: path, query, origin, and the caller's identity
+(empty here, because the request presented no credential).
+The gate is `tests/test_redis_shared_tier.py` (10 cases): the compose file publishes an
+authenticated cache of its own, CI starts the same one, the password never leaves the process, a
+cache that refuses the handshake degrades and says so rather than pretending to serve, and a key
+written by one operating system process is read by **another operating system process** through
+its own client.
 
 ### Performance — latency percentiles that read the same on both engines
 
@@ -484,12 +577,25 @@ survive the move to quieter hardware even though the absolute figures will not.
 
 ## What M12 does not claim
 
-* **No authenticated Redis tier.** `RedisCache` is now read from and written to by the response
-  cache's second tier, so it is no longer a layer no request touches — but no authenticated instance
-  has ever served a real request. Its degradation paths are measured against this host's
-  password-protected 6379, the cross-process read-through is proven against a stand-in connection
-  rather than a live one, the fallback is sticky for the life of the process, and **every load figure
-  below was measured with the tier degraded** — so nothing here measures what sharing buys.
+* **The Redis tier is live and authenticated (2026-10-20), and the load figures above were still
+  measured with it degraded.** The project's own cache now serves: `infra/docker-compose.yml`
+  publishes an authenticated `redis:7-alpine` on host port 63790, CI starts the same image with
+  the same password and URL, and two server processes were measured serving a public path from
+  one shared store (`MISS` on the first, `HIT` on the second, whose own process-local tier was
+  empty). What that changes is the *sharing*, not the throughput: **every load figure above was
+  taken before this landing, with the tier degraded**, so none of them measures what sharing
+  buys, and the numbers are still a floor. The degradation paths themselves are unchanged and
+  still measured: a cache that refuses the handshake drops to the in-memory fallback, says so,
+  and stays down for the life of the process — a Redis that starts after the process is not
+  picked up until restart. That is the right trade against paying a failed connect per call,
+  and it is stated so a reader deploying behind a restart-less rollout can decide otherwise.
+  One defect the landing exposed is fixed and one is not: the metrics door no longer publishes
+  the cache's password, and the **cross-account replay the shared tier would have spread across
+  workers is closed** (the near tier's key names the caller, and the shared tier never stores a
+  credentialed response), but the cache still holds no user data at all only because private
+  answers are excluded from the shared tier — the door that decides what a response may be
+  cached as is `cached_response_for`, and a new door that returns caller-specific data has to
+  remember that a credentialed `GET` is keyed by its caller and never reaches the shared store.
 * **No external log sink.** The JSON formatter is the contract with a sink that deployment wires,
   and the contract itself is now tested rather than asserted — `tests/test_logging.py` parses the
   emitted line, checks the standard fields, extras and exception text, and walks a request id from
