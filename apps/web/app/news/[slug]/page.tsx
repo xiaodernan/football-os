@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { ClaimChip, JsonLd, KeyValueGrid, OriginBadge, Provenance, RefLink, WorldHead, WorldUnavailable, formatMoment } from "@/components/world";
@@ -20,11 +21,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const result = await load(slug);
   const article = result.ok ? result.data.article : null;
+  const t = await getTranslations("worldNews");
   return pageMetadata({
     title: article?.title ?? slug.replace(/-/g, " "),
     description: article
-      ? `${article.summary} (generated report, claim class: ${article.claim_class})`
-      : "Report from the FOOTBALL OS generated football world.",
+      ? t("metaDescription", { summary: article.summary, claim: article.claim_class })
+      : t("metaDescriptionFallback"),
     path: `/news/${slug}`,
     type: "article",
   });
@@ -40,14 +42,18 @@ export default async function NewsDetailPage({ params }: Props) {
   }
 
   const { article, body, related, editorial_note: editorialNote } = result.data;
+  const t = await getTranslations("worldNews");
   const path = `/news/${article.slug}`;
   const paragraphs = body.split(/\n+/).filter((line) => line.trim().length > 0);
 
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world/news", label: "All reports" }}
-        eyebrow={`Football World · ${article.category.replace(/_/g, " ")} · ${formatMoment(article.published_at)}`}
+        back={{ href: "/world/news", label: t("backLabel") }}
+        eyebrow={t("eyebrow", {
+          category: article.category.replace(/_/g, " "),
+          published: formatMoment(article.published_at),
+        })}
         lede={article.summary}
         provenance={result.data}
         title={article.title}
@@ -55,8 +61,8 @@ export default async function NewsDetailPage({ params }: Props) {
         <div className="row wrap" style={{ gap: "0.5rem", marginTop: "0.75rem" }}>
           <ClaimChip claimClass={article.claim_class} />
           <OriginBadge provenance={article} />
-          <span className="chip mono">source: {article.source_name}</span>
-          {article.author && <span className="chip">by {article.author}</span>}
+          <span className="chip mono">{t("chipSource", { source: article.source_name })}</span>
+          {article.author && <span className="chip">{t("chipAuthor", { author: article.author })}</span>}
           <span className="chip">{article.season}</span>
         </div>
       </WorldHead>
@@ -66,7 +72,7 @@ export default async function NewsDetailPage({ params }: Props) {
           "@context": "https://schema.org",
           "@type": "NewsArticle",
           headline: article.title,
-          description: `${article.summary} Generated content — claim class ${article.claim_class}.`,
+          description: t("jsonLdDescription", { summary: article.summary, claim: article.claim_class }),
           url: absolute(path),
           mainEntityOfPage: { "@type": "WebPage", "@id": absolute(path) },
           datePublished: article.published_at,
@@ -88,13 +94,13 @@ export default async function NewsDetailPage({ params }: Props) {
         </div>
         <footer className="panel__foot">
           <div className="stack-sm">
-            <p className="eyebrow">Claim class · {article.claim_class}</p>
+            <p className="eyebrow">{t("claimClassEyebrow", { claim: article.claim_class })}</p>
             <p className="muted" style={{ fontSize: "0.85rem" }}>
               {article.claim_class === "fact"
-                ? "A statement about rows in the generated dataset — it can be checked against the tables linked below."
+                ? t("claimFact")
                 : article.claim_class === "analysis"
-                  ? "An interpretation of those rows, not a neutral report of them."
-                  : "Speculation generated inside the dataset. Nothing here predicts or describes a real event."}
+                  ? t("claimAnalysis")
+                  : t("claimSpeculation")}
             </p>
             <p className="muted world-section-note">{editorialNote}</p>
           </div>
@@ -102,7 +108,7 @@ export default async function NewsDetailPage({ params }: Props) {
       </article>
 
       <div className="grid grid-2">
-        <Panel eyebrow="Linked rows" title="What this report is about">
+        <Panel eyebrow={t("linkedEyebrow")} title={t("linkedTitle")}>
           <div className="stack">
             {related.length > 0 ? (
               <div className="tag-list">
@@ -111,20 +117,19 @@ export default async function NewsDetailPage({ params }: Props) {
                 ))}
               </div>
             ) : (
-              <span className="unavailable">No entity link is stored for this article.</span>
+              <span className="unavailable">{t("noEntityLink")}</span>
             )}
             <p className="muted world-section-note">
-              Links come from <span className="mono">news_article_links</span>, the same rows the API filters on — not from a keyword guess
-              made in the browser.
+              {t("linksNote", { table: "news_article_links" })}
             </p>
           </div>
         </Panel>
 
-        <Panel eyebrow="Record" title="Editorial fields">
+        <Panel eyebrow={t("recordEyebrow")} title={t("recordTitle")}>
           <KeyValueGrid
             rows={[
               [
-                "Canonical path",
+                t("rowCanonicalPath"),
                 <Link className="world-link mono" href={path} key="canonical-path">
                   {article.url ?? path}
                 </Link>,

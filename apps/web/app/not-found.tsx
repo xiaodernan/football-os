@@ -1,18 +1,19 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function NotFound() {
+  const t = useTranslations("notFound");
   return (
     <div className="container page" style={{ maxWidth: "560px" }}>
       <div className="stack" style={{ gap: "1rem" }}>
-        <span className="eyebrow">Error 404</span>
-        <h1 className="h1">This page is not on the pitch</h1>
+        <span className="eyebrow">{t("eyebrow")}</span>
+        <h1 className="h1">{t("title")}</h1>
         <p className="lede">
-          We could not find what you were looking for. It may have moved, or the link may be out of
-          date. Nothing has been lost — pick a destination below.
+          {t("lede")}
         </p>
         <div className="row wrap" style={{ gap: "0.6rem" }}>
           <Link className="btn btn--primary" href="/">
-            Back home
+            {t("backHome")}
           </Link>
           <Link className="btn" href="/my-football">
             My Football

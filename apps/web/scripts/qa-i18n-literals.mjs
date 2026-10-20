@@ -42,7 +42,7 @@ const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLT
 const APP = join(WEB, "app");
 
 /** The committed ceiling on English literal sites. i18n work lowers it; nothing else may. */
-const FLOOR_SITES = 80;
+const FLOOR_SITES = 58;
 
 /** The population the walk must find, so a scan that narrows itself cannot pass by finding nothing. */
 const FLOOR_FILES = 70;
