@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { CallNote, useClubCall } from "@/components/ClubTools";
@@ -24,6 +25,7 @@ import type { AnnouncementCaps, AnnouncementList, AnnouncementRow } from "@/lib/
  * the tier exists to teach.
  */
 export function NoticeBoard({ audience, caps, ident, list }: { audience: string | null; caps: AnnouncementCaps; ident: string; list: AnnouncementList }) {
+  const tc = useTranslations("club");
   const { busy, call, note } = useClubCall();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -64,8 +66,8 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
     <div className="stack">
       <div className="grid-cards">
         <label className="field">
-          <span>Audience — a predicate over the roster, not a list of people</span>
-          <select aria-label="Notice audience" disabled={busy !== null} onChange={(event) => setChosen(event.target.value)} value={chosen}>
+          <span>{tc("noticeAudienceLabel")}</span>
+          <select aria-label={tc("noticeAudienceAria")} disabled={busy !== null} onChange={(event) => setChosen(event.target.value)} value={chosen}>
             {caps.audiences.map((word) => (
               <option key={word} value={word}>
                 {word}
@@ -74,21 +76,21 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
           </select>
         </label>
         <label className="field">
-          <span>Title (at most {caps.title_max} characters, and never blank)</span>
-          <input aria-label="Notice title" disabled={busy !== null} maxLength={caps.title_max} onChange={(event) => setTitle(event.target.value)} type="text" value={title} />
+          <span>{tc("noticeTitleLabel", { max: caps.title_max })}</span>
+          <input aria-label={tc("noticeTitleAria")} disabled={busy !== null} maxLength={caps.title_max} onChange={(event) => setTitle(event.target.value)} type="text" value={title} />
         </label>
       </div>
       <label className="field">
-        <span>Body (at most {caps.body_max} characters)</span>
-        <textarea aria-label="Notice body" disabled={busy !== null} maxLength={caps.body_max} onChange={(event) => setBody(event.target.value)} rows={3} value={body} />
+        <span>{tc("noticeBodyLabel", { max: caps.body_max })}</span>
+        <textarea aria-label={tc("noticeBodyAria")} disabled={busy !== null} maxLength={caps.body_max} onChange={(event) => setBody(event.target.value)} rows={3} value={body} />
       </label>
       <div className="row wrap">
         <label className="row" style={{ gap: "0.4rem" }}>
-          <input aria-label="Notice pinned" checked={pinned} disabled={busy !== null} onChange={(event) => setPinned(event.target.checked)} type="checkbox" />
-          <span>Pin it — at most {caps.pinned_max} per audience</span>
+          <input aria-label={tc("noticePinnedAria")} checked={pinned} disabled={busy !== null} onChange={(event) => setPinned(event.target.checked)} type="checkbox" />
+          <span>{tc("noticePinLabel", { max: caps.pinned_max })}</span>
         </label>
-        <button aria-label="Post notice" className="btn" data-testid="notice-post" disabled={busy !== null} onClick={post} type="button">
-          {busy === "notice-post" ? "Posting…" : "Post it to the audience"}
+        <button aria-label={tc("noticePostAria")} className="btn" data-testid="notice-post" disabled={busy !== null} onClick={post} type="button">
+          {busy === "notice-post" ? tc("noticePosting") : tc("noticePostIt")}
         </button>
       </div>
       <p className="muted" style={{ fontSize: "0.82rem" }}>
@@ -97,28 +99,30 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
       <CallNote note={note} />
 
       <div className="row wrap" data-testid="notice-totals">
-        <span className="badge">{list.total} listed</span>
+        <span className="badge">{tc("noticeTotalListed", { count: list.total })}</span>
         <span className="badge">
-          {list.announcements_held} of {list.limit} on this board
+          {tc("noticeHeldOnBoard", { held: list.announcements_held, max: list.limit })}
         </span>
-        <span className="badge">you are {list.role} here</span>
-        <span className="badge">read through {list.read_through}</span>
+        <span className="badge">{tc("noticeYouAre", { role: list.role })}</span>
+        <span className="badge">{tc("noticeReadThrough", { count: list.read_through })}</span>
         <span className={list.total === list.items.length ? "badge badge--ok" : "badge badge--warn"} data-testid="notice-listed-agrees">
-          {list.total === list.items.length ? "the door's total is the number of rows it printed" : `total ${list.total} against ${list.items.length} row(s)`}
+          {list.total === list.items.length
+            ? tc("noticeTotalAgrees")
+            : tc("noticeTotalDisagrees", { total: list.total, rows: list.items.length })}
         </span>
         <span className={brokenArithmetic.length === 0 ? "badge badge--ok" : "badge badge--warn"} data-testid="notice-arithmetic-agrees">
           {brokenArithmetic.length === 0
-            ? "unread is recipients minus read_by on every row here"
-            : `${brokenArithmetic.length} row(s) where unread is not recipients minus read_by`}
+            ? tc("noticeUnreadAgrees")
+            : tc("noticeUnreadDisagrees", { count: brokenArithmetic.length })}
         </span>
         <span className="badge" data-testid="notice-sees">
-          {seen.length} of {list.total} listed select you right now
+          {tc("noticeSeesYou", { seen: seen.length, total: list.total })}
         </span>
       </div>
 
       <div className="row wrap" data-testid="notice-filter" style={{ gap: "0.4rem" }}>
         <Link className={audience === null ? "btn btn--sm" : "btn btn--sm btn--ghost"} data-testid="notice-filter-all" href={`/club/${encodeURIComponent(ident)}`}>
-          all audiences
+          {tc("noticeAllAudiences")}
         </Link>
         {caps.audiences.map((word) => (
           <Link
@@ -127,20 +131,32 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
             href={`/club/${encodeURIComponent(ident)}?audience=${encodeURIComponent(word)}`}
             key={word}
           >
-            {word} ({list.pinned_by_audience[word] ?? 0} pinned{audience === null ? "" : " tenant-wide"})
+            {tc("noticeAudienceChip", {
+              audience: word,
+              count: list.pinned_by_audience[word] ?? 0,
+              scope: audience === null ? "" : tc("noticeTenantWide"),
+            })}
           </Link>
         ))}
       </div>
       {audience === null && (
         <span className={pinnedAgrees ? "muted" : "notice notice--warn"} data-testid="notice-pinned-agrees" style={{ fontSize: "0.82rem" }}>
           {pinnedAgrees
-            ? "the pinned counts per audience are the board's own rows counted again"
-            : `the door's pinned_by_audience disagrees with the rows printed here: ${caps.audiences.map((word) => `${word} ${list.pinned_by_audience[word] ?? 0} vs ${pinnedCounted[word] ?? 0}`).join(" · ")}`}
+            ? tc("noticePinnedAgrees")
+            : tc("noticePinnedDisagrees", {
+                detail: caps.audiences
+                  .map((word) => `${word} ${list.pinned_by_audience[word] ?? 0} vs ${pinnedCounted[word] ?? 0}`)
+                  .join(" · "),
+              })}
         </span>
       )}
       {audience !== null && (
         <p className="muted" style={{ fontSize: "0.82rem" }}>
-          Filtered to {audience}: the door narrowed the rows, not the tenant — {list.total} listed against {list.announcements_held} held.
+          {tc("noticeFiltered", {
+            audience,
+            total: list.total,
+            held: list.announcements_held,
+          })}
         </p>
       )}
 
@@ -148,11 +164,11 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
         <table>
           <thead>
             <tr>
-              <th>Notice</th>
-              <th>Audience</th>
-              <th>Posted by</th>
-              <th>Readership</th>
-              <th>Your receipt</th>
+              <th>{tc("thNotice")}</th>
+              <th>{tc("thAudience")}</th>
+              <th>{tc("thPostedBy")}</th>
+              <th>{tc("thReadership")}</th>
+              <th>{tc("thYourReceipt")}</th>
               <th />
             </tr>
           </thead>
@@ -160,52 +176,54 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
             {list.items.map((row) => (
               <tr data-notice={row.id} key={row.id}>
                 <td>
-                  {row.pinned && <span className="badge badge--ok">pinned</span>}
+                  {row.pinned && <span className="badge badge--ok">{tc("noticePinned")}</span>}
                   <div style={{ fontWeight: 600 }}>{row.title}</div>
-                  <div className="muted" style={{ fontSize: "0.8rem", whiteSpace: "pre-wrap" }}>{row.body || "no body"}</div>
+                  <div className="muted" style={{ fontSize: "0.8rem", whiteSpace: "pre-wrap" }}>{row.body || tc("noticeNoBody")}</div>
                 </td>
                 <td>{row.audience}</td>
                 <td>
-                  {row.author ? row.author.name : "an account that is gone"}
-                  <div className="muted mono" style={{ fontSize: "0.76rem" }}>as {row.author_role} · {row.published_on}</div>
+                  {row.author ? row.author.name : tc("noticeAuthorGone")}
+                  <div className="muted mono" style={{ fontSize: "0.76rem" }}>
+                    {tc("noticeAuthorRole", { role: row.author_role, date: row.published_on })}
+                  </div>
                 </td>
                 <td data-testid={`notice-readership-${row.id}`}>
-                  {row.read_by} of {row.recipients} read
+                  {tc("noticeReadCount", { read: row.read_by, recipients: row.recipients })}
                   <div className="muted mono" style={{ fontSize: "0.76rem" }}>
-                    {row.unread} unread · {row.receipts_on_row} receipt row(s)
+                    {tc("noticeUnreadCount", { unread: row.unread, receipts: row.receipts_on_row })} · {row.receipts_on_row} receipt row(s)
                   </div>
                 </td>
                 <td>
                   {row.read === null ? (
-                    <span className="muted">the listing did not ask</span>
+                    <span className="muted">{tc("noticeListingDidNotAsk")}</span>
                   ) : row.read ? (
-                    <span className="badge badge--ok">you have read it</span>
+                    <span className="badge badge--ok">{tc("noticeYouHaveRead")}</span>
                   ) : list.sees.includes(row.id) ? (
-                    <span className="badge badge--warn">addressed to you, unread</span>
+                    <span className="badge badge--warn">{tc("noticeAddressedUnread")}</span>
                   ) : (
-                    <span className="muted">not addressed to your standing</span>
+                    <span className="muted">{tc("noticeNotAddressed")}</span>
                   )}
                 </td>
                 <td className="row wrap" style={{ gap: "0.35rem" }}>
                   <button
-                    aria-label={`Mark notice ${row.title} read`}
+                    aria-label={tc("noticeMarkReadAria", { title: row.title })}
                     className="btn btn--sm"
                     data-testid={`notice-read-${row.id}`}
                     disabled={busy !== null}
                     onClick={() => markRead(row)}
                     type="button"
                   >
-                    {busy === `notice-read-${row.id}` ? "Recording…" : "I have read it"}
+                    {busy === `notice-read-${row.id}` ? tc("noticeRecording") : tc("noticeIHaveRead")}
                   </button>
                   <button
-                    aria-label={`Erase notice ${row.title}`}
+                    aria-label={tc("noticeEraseAria", { title: row.title })}
                     className="btn btn--sm btn--ghost"
                     data-testid={`notice-erase-${row.id}`}
                     disabled={busy !== null}
                     onClick={() => erase(row)}
                     type="button"
                   >
-                    {busy === `notice-erase-${row.id}` ? "Erasing…" : "Erase"}
+                    {busy === `notice-erase-${row.id}` ? tc("noticeErasing") : tc("noticeErase")}
                   </button>
                 </td>
               </tr>
@@ -215,8 +233,14 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
                 <td colSpan={6}>
                   <span className="muted">
                     {audience === null
-                      ? `Nothing on this board yet. A notice is posted to an audience, so ${list.announcements_held} of ${list.limit} allowed are still free.`
-                      : `No notice has been posted to ${audience} — the board holds ${list.announcements_held} notice(s) under every audience.`}
+                      ? tc("noticeEmptyBoard", {
+                          held: list.announcements_held,
+                          max: list.limit,
+                        })
+                      : tc("noticeEmptyAudience", {
+                          audience,
+                          held: list.announcements_held,
+                        })}
                   </span>
                 </td>
               </tr>
