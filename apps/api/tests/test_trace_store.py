@@ -20,9 +20,11 @@ The door is auth-gated like every other door in this API, and a trace id nobody 
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
@@ -34,9 +36,21 @@ from app.models import RequestSpan
 PASSWORD = "TestPass1234!"
 
 
-def _store_on() -> None:
-    """Turn the store on for the duration of a case, and put it back afterwards."""
+@pytest.fixture()
+def store_on() -> Iterator[None]:
+    """Turn the store on for the duration of a case, and put it back afterwards.
+
+    The setting is on a frozen dataclass, so it is set the way the rest of the suite sets one
+    (`object.__setattr__`), and it is put back in a `finally`: a case that leaves the store on
+    would instrument the apps of every case that follows it, and the tracing gate's own "without
+    an endpoint, tracing is a no-op" case would answer otherwise.
+    """
+    was = settings.trace_store_enabled
     object.__setattr__(settings, "trace_store_enabled", True)
+    try:
+        yield
+    finally:
+        object.__setattr__(settings, "trace_store_enabled", was)
 
 
 def _client() -> TestClient:
@@ -60,14 +74,13 @@ def _client() -> TestClient:
 
 
 class TestTheStore:
-    def test_a_finished_span_is_stored_with_its_own_timings(self) -> None:
+    def test_a_finished_span_is_stored_with_its_own_timings(self, store_on: None) -> None:
         """The exporter writes a row a reader can use: the ids, the parent, the duration."""
         from opentelemetry.sdk.trace.export import SimpleSpanProcessor
         from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
         from app.core import tracing
 
-        _store_on()
         exporter = InMemorySpanExporter()
         provider = tracing.build_provider(None, SimpleSpanProcessor(exporter))
         assert provider is not None
@@ -101,14 +114,13 @@ class TestTheStore:
         assert row.duration_ms >= 0
         assert row.start_time is not None and row.end_time is not None
 
-    def test_a_child_span_names_the_span_it_hung_from(self) -> None:
+    def test_a_child_span_names_the_span_it_hung_from(self, store_on: None) -> None:
         """The tree is stored, not rebuilt by the reader."""
         from opentelemetry.sdk.trace.export import SimpleSpanProcessor
         from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
         from app.core import tracing
 
-        _store_on()
         exporter = InMemorySpanExporter()
         provider = tracing.build_provider(None, SimpleSpanProcessor(exporter))
 
@@ -142,14 +154,13 @@ class TestTheStore:
             "the child span does not name its parent, so the tree has to be rebuilt by the reader"
         )
 
-    def test_a_failing_store_never_raises_into_the_caller(self) -> None:
+    def test_a_failing_store_never_raises_into_the_caller(self, store_on: None) -> None:
         """A trace backend that can take the API down is worse than no trace backend."""
         from opentelemetry.sdk.trace.export import SimpleSpanProcessor
         from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
         from app.core import tracing
 
-        _store_on()
         exporter = InMemorySpanExporter()
         provider = tracing.build_provider(None, SimpleSpanProcessor(exporter))
 
