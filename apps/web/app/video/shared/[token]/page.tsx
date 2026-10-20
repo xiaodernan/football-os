@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { JsonLd, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
-import { absolute } from "@/lib/site";
+import { absolute, sharedMetadata } from "@/lib/site";
 import { serverFetch } from "@/lib/server";
 
 import "../../../../styles/video.css";
@@ -35,13 +35,21 @@ type SharedClip = {
   is_demo_data: boolean;
 };
 
-export async function generateMetadata(): Promise<Metadata> {
+/**
+ * The clip a share link carries is the most identifying file the platform holds, so this page is noindex and its
+ * canonical belongs to `/video` — the same shape as the other two share surfaces (§109 gave it the canonical it
+ * never had, and the card it should always have had: without an `openGraph` of its own the preview named the site
+ * rather than the clip, which is exactly the difference between a link a reader opens and one they ignore.
+ */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { token } = await params;
   const t = await getTranslations("video");
-  return {
+  return sharedMetadata({
     title: t("sharedMetaTitle"),
     description: t("sharedMetaDescription"),
-    robots: { index: false, follow: false },
-  };
+    sharePath: `/video/shared/${encodeURIComponent(token)}`,
+    canonicalPath: "/video",
+  });
 }
 
 export default async function SharedClipPage({ params }: Props) {

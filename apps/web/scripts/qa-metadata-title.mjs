@@ -52,6 +52,10 @@ const WEB = resolve(process.env.QA_METADATA_WEB ? process.env.QA_METADATA_WEB : 
 const APP = join(WEB, "app");
 const MESSAGES = join(WEB, "messages");
 const LOCALES = ["en", "zh", "zh-TW"];
+const die = (m) => {
+  console.error(`FATAL: ${m}`);
+  process.exit(2);
+};
 const FLOOR_PAGES = 59;
 const FLOOR_CARRIERS = 45; // pages on which the walk finds at least one heading carrier
 const dict = {};
@@ -148,6 +152,33 @@ const headingsOf = (sf, ns, inits) => {
   return out;
 };
 
+/**
+ * A page may build its metadata through one of the helpers `lib/site.ts` exports. The rule this gate grades is
+ * about the title the page *hands* to that helper, so the walk steps into the call and reads the argument. The
+ * helper names are read out of the module rather than copied here: a third helper added to `lib/site.ts` is
+ * unwrapped on the next run, and a walk that stopped at `sharedMetadata({…})` would have reported three wired
+ * share pages as titling from something unreadable — a census that narrows itself while the code gets better.
+ */
+const metadataHelpers = (src) => {
+  const out = new Set();
+  for (const m of src.matchAll(/export function (\w+)\s*\(/g)) {
+    let depth = 0;
+    let i = m.index + m[0].length - 1;
+    for (; i < src.length; i += 1) {
+      if (src[i] === "(") depth += 1;
+      else if (src[i] === ")" && (depth -= 1) === 0) break;
+    }
+    if (/:\s*Metadata\s*$/.test(src.slice(i + 1, src.indexOf("{", i)).trimEnd())) out.add(m[1]);
+  }
+  return out;
+};
+const METADATA_HELPERS = metadataHelpers(readFileSync(join(WEB, "lib", "site.ts"), "utf8"));
+if (METADATA_HELPERS.size < 2) {
+  die(`lib/site.ts exports ${METADATA_HELPERS.size} Metadata helper(s); the walk needs at least the two it was written against — a scan that finds none silently drops every page built through one`);
+}
+const unwrapHelper = (node) => (node && ts.isCallExpression(node) && METADATA_HELPERS.has(node.expression.getText())
+  && node.arguments.length === 1 && ts.isObjectLiteralExpression(node.arguments[0]) ? node.arguments[0] : node);
+
 const rows = [];
 for (const file of pages) {
   const src = readFileSync(file, "utf8");
@@ -173,7 +204,7 @@ for (const file of pages) {
       if (!decl || decl.name.getText() !== "metadata") return;
       row.forms.push("load-time");
       let init = decl.initializer;
-      if (init && ts.isCallExpression(init) && init.expression.getText() === "pageMetadata") init = init.arguments[0];
+      init = unwrapHelper(init);
       row.title = init && ts.isObjectLiteralExpression(init) ? titleOf(init, ns, inits) : { kind: "dynamic", text: "metadata is not an object literal" };
     }
     if (ts.isFunctionDeclaration(node) && (node.modifiers ?? []).some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
@@ -184,7 +215,7 @@ for (const file of pages) {
         if (!ts.isReturnStatement(st) || !st.expression) continue;
         let e = st.expression;
         if (ts.isParenthesizedExpression(e)) e = e.expression;
-        if (ts.isCallExpression(e) && e.expression.getText() === "pageMetadata") e = e.arguments[0];
+        e = unwrapHelper(e);
         if (ts.isIdentifier(e) && inits.has(e.getText())) e = inits.get(e.getText());
         if (e && ts.isObjectLiteralExpression(e)) { obj = e; break; }
       }

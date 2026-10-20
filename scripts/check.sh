@@ -87,6 +87,18 @@ echo "── Web: metadata-title i18n gate ────────────�
 # that drifts from its own heading each go red. Files only: no server, no browser, which is why it runs here.
 (cd apps/web && node scripts/qa-metadata-title.mjs)
 
+echo "── Web: share-preview card gate ──────────────────────"
+# §109: a share link is handed to a person, and the card they see before clicking said "FOOTBALL OS" instead of
+# naming the CV, board or clip it carried, because a page with no `openGraph` of its own inherits the root layout's
+# site-level block. This gate loads `sharedMetadata` and `pageMetadata` out of lib/site.ts (transpiled, called),
+# then asks each of the three app/**/shared/[token] pages whether it builds its metadata through that helper rather
+# than hand-writing one: the card must name the page, point at the share URL while the canonical stays on the parent,
+# keep the helper's noindex, and pay for every `summary_large_image` promise with an image whose declared size matches
+# the IHDR of public/og.png — the file whose absence docs/SEO_VERIFICATION.md §3 used to publish as a deliberate
+# exclusion. It also grades the generator's own card markup, which may size, word and colour itself only from the
+# module's constants and the stylesheet's tokens. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-share-preview.mjs)
+
 echo "── Web: English-literal i18n gate ────────────────────"
 # The other half of §81: the copy a page writes in English in the source, counted over every app/**/*.tsx through
 # the repo's own TypeScript — JSX text, label-ish attributes and label-ish object properties, which are three

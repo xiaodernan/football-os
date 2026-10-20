@@ -82,6 +82,42 @@ const ALLOWED = take(robRegion, "[...ALLOWED]");
 const smRegion = regionOf(join(APP, "sitemap.ts"), "const PUBLIC", "type Row");
 const PUBLIC = take(smRegion, "[...PUBLIC]");
 
+/**
+ * A page can carry the noindex decision without writing it: `sharedMetadata` sets `robots` itself, so the share
+ * pages built through it have no `robots:` literal for the walk below to find. Counting only literals would make
+ * the census shrink every time a page hands the decision to the helper — the safer page would read as the
+ * unprotected one. So the helper is loaded and asked, and a page inherits the declaration only while the shipped
+ * module really returns one.
+ */
+const SITE_TS = join(WEB, "lib", "site.ts");
+const sharedRobots = (() => {
+  const compiled = ts.transpileModule(readFileSync(SITE_TS, "utf8"), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText;
+  let site;
+  try {
+    site = new Function("exports", `${compiled}\nreturn exports;`)({});
+  } catch (err) {
+    fail(`${SITE_TS} could not be evaluated: ${err.message}`);
+  }
+  if (typeof site.sharedMetadata !== "function") fail(`${SITE_TS} exports no sharedMetadata — a page that delegates its robots decision has no judge to ask`);
+  return site.sharedMetadata({ title: "gate", description: "gate", sharePath: "/tactics/shared/abc123", canonicalPath: "/tactics" }).robots;
+})();
+
+const inheritsSharedRobots = (file, src) => {
+  const sf = ts.createSourceFile(file, src, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
+  let called = false;
+  let imported = false;
+  const walkNode = (node) => {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "sharedMetadata") called = true;
+    // A local function of the same name would satisfy the call test while returning whatever it liked.
+    if (ts.isImportDeclaration(node) && /(^|\/)lib\/site$/.test(node.moduleSpecifier.text ?? "")
+      && ts.isNamedImports(node.importClause?.namedBindings)
+      && node.importClause.namedBindings.elements.some((e) => e.name.text === "sharedMetadata")) imported = true;
+    node.getChildren(sf).forEach(walkNode);
+  };
+  walkNode(sf);
+  return called && imported;
+};
+
 /* ---- the page population, with each page's own robots declaration read structurally ---- */
 const pageFiles = [];
 (function walk(dir) {
@@ -138,6 +174,7 @@ const pages = pageFiles.map((f) => {
   const src = readFileSync(f, "utf8");
   const route = routeOf(f);
   const rb = robotsOf(f, src);
+  const inherited = rb === null && inheritsSharedRobots(f, src);
   const match = (list) => list.filter((p) => route === p || route.startsWith(`${p}/`));
   const longest = (list) => list.reduce((m, x) => (x.length > m.length ? x : m), "");
   const dis = match(DISALLOWED);
@@ -147,8 +184,9 @@ const pages = pageFiles.map((f) => {
     route,
     gated: isProtected(route),
     declaresRobots: rb !== null,
+    inheritedRobots: inherited,
     opaqueRobots: rb?.opaque ?? false,
-    noindex: rb ? String(rb.props.index) === "false" : false,
+    noindex: rb ? String(rb.props.index) === "false" : (inherited && String(sharedRobots?.index) === "false"),
     disallowed: dis,
     allowed: all,
     // The standard robots.ts cites: the longer pattern wins, so an Allow beats a Disallow only when it is longer.
@@ -175,7 +213,7 @@ check(`1 the walk reads the three decisions and the population floors hold (page
     && pages.filter((p) => p.gated).length >= FLOOR_GATED
     && pages.filter((p) => p.advertised).length >= FLOOR_ADVERTISED
     && pages.filter((p) => p.noindex).length >= FLOOR_NOINDEX,
-  `pages=${pages.length} gated=${pages.filter((p) => p.gated).length} advertised=${pages.filter((p) => p.advertised).length} noindex=${pages.filter((p) => p.noindex).length} disallowed=${DISALLOWED.length} allowed=${ALLOWED.length}`);
+  `pages=${pages.length} gated=${pages.filter((p) => p.gated).length} advertised=${pages.filter((p) => p.advertised).length} noindex=${pages.filter((p) => p.noindex).length} (written ${pages.filter((p) => p.noindex && p.declaresRobots).length}, inherited ${pages.filter((p) => p.noindex && p.inheritedRobots).length}) disallowed=${DISALLOWED.length} allowed=${ALLOWED.length}`);
 
 const ungated = pages.filter((p) => p.gated && p.disallowed.length === 0);
 check(`2 GATED but not DISALLOWED: a signed-out reader is redirected, and the crawler is told nothing (${ungated.length})`,

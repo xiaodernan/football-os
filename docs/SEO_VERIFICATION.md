@@ -55,11 +55,21 @@ Rendered head of `/knowledge/warmup-structure` (production build, `SITE_URL=http
 
 ## 3. Deliberate exclusions (honesty, not omission)
 
-- **`/` is not in the sitemap.** For a signed-out visitor it `redirect()`s to `/login` (or `/onboarding`), so
-  advertising it would publish a redirect chain as a page. Same for `/training`, `/training/{slug}`, `/coach`,
-  `/my-football`, `/progress`, `/history`, `/settings` — all session-gated, all in `robots.txt` `Disallow`.
-- **No `og:image` / `twitter:image`.** There is no licensed or project-authored image asset to point at, and
-  §89 forbids copied imagery. The tag is absent rather than filled with a stock or scraped picture.
+- **`/` is not in the sitemap.** It is an explicit allowlist (`PUBLIC` in `app/sitemap.ts`) and the entry surface is
+   not on it: it declares no canonical of its own and both of its CTAs lead to `/register` or to a session-gated
+   route. **This bullet used to give the wrong reason** — it claimed a signed-out visitor is `redirect()`ed to
+   `/login`, so advertising `/` would publish a redirect chain. §109's live read answers **HTTP 200** with the
+   public landing, and the two `redirect()` calls sit inside `if (user)` at `app/page.tsx:46` and `app/page.tsx:48`:
+   they fire for a *signed-in* reader who has no player yet, or whose access token died — the opposite of the claim.
+   `/` is also absent from `robots.txt`'s `Disallow` list, so a crawler may fetch it. The decision stands; the
+   justification did not.
+- **`/training`, `/training/{slug}`, `/coach`, `/my-football`, `/progress`, `/history`, `/settings` are not in the
+   sitemap** — and for *this* reason: all session-gated, all in `robots.txt` `Disallow`, and a signed-out read of
+   `/my-football`, `/scout` and `/portfolio` answers **307 to `/login?next=…`**, measured in
+   [`SHARE_PREVIEW_VERIFICATION.md`](SHARE_PREVIEW_VERIFICATION.md) §4.
+- **~~No `og:image` / `twitter:image`.~~ Retired 2026-10-21 by §109.** `apps/web/public/og.png` is a project-authored
+  card (rendered by `scripts/make_og_image.mjs` from `app/icon.svg`, `lib/site.ts` and the stylesheet's tokens), so
+  §89's ban on copied imagery still holds; see `docs/SHARE_PREVIEW_VERIFICATION.md` for what is now asserted.
 - **`sitemap.xml` lastmod comes from `last_reviewed ?? ingested_at`** — the API's own fields, not a build timestamp.
 - Filter links such as `/knowledge?category=tactics` are not listed; they are the same content under a query
   string, i.e. duplicate URLs a crawler would otherwise be told to treat as distinct pages.

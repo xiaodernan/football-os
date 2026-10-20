@@ -7,7 +7,7 @@ import { Pitch } from "@/components/pitch";
 import { BandLegend } from "@/components/tactics";
 import { Panel } from "@/components/ui";
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
-import { absolute } from "@/lib/site";
+import { sharedMetadata } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { SharedBoard } from "@/lib/types";
 
@@ -15,15 +15,20 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ token: string }> };
 
-/** A shared link is sent to a person, not to a crawler: no index, and no way to reach it by guessing. */
-export async function generateMetadata(): Promise<Metadata> {
+/**
+ * A shared link is sent to a person, not to a crawler: no index, and no way to reach it by guessing. The card is
+ * this board's own (§109) — before it had an `openGraph` of its own, the preview a reader saw named the site and
+ * not the board somebody had just sent them.
+ */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { token } = await params;
   const t = await getTranslations("tactics");
-  return {
+  return sharedMetadata({
     title: t("sharedMetaTitle"),
     description: t("sharedMetaDescription"),
-    robots: { index: false, follow: false },
-    alternates: { canonical: absolute("/tactics") },
-  };
+    sharePath: `/tactics/shared/${encodeURIComponent(token)}`,
+    canonicalPath: "/tactics",
+  });
 }
 
 export default async function SharedBoardPage({ params }: Props) {

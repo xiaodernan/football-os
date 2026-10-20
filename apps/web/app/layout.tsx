@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Nav } from "@/components/Nav";
 import { LocaleProvider } from "@/components/LocaleProvider";
-import { SITE_NAME, absolute, siteOrigin } from "@/lib/site";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, absolute, ogImages, siteOrigin } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
 import type { CapabilitiesResponse } from "@/lib/types";
 import { locales, defaultLocale } from "@/i18n/request";
@@ -23,13 +23,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
   title: { default: "FOOTBALL OS", template: "%s · FOOTBALL OS" },
-  description: "Watch. Understand. Train. Play. Manage. Become. — a football operating system for fans, players and coaches.",
+  description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   openGraph: {
     siteName: SITE_NAME,
     type: "website",
     title: SITE_NAME,
-    description: "Watch. Understand. Train. Play. Manage. Become. — a football operating system for fans, players and coaches.",
+    description: SITE_DESCRIPTION,
+    images: ogImages(),
   },
 };
 
@@ -66,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 "@type": "WebSite",
                 name: SITE_NAME,
                 url: absolute("/"),
-                description: "Watch. Understand. Train. Play. Manage. Become.",
+                description: SITE_TAGLINE,
                 inLanguage: locale,
                 publisher: { "@type": "Organization", name: SITE_NAME, url: absolute("/") },
               }),
