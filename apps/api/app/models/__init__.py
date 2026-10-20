@@ -2077,6 +2077,46 @@ class CreatorProgramStep(Base, TimestampMixin):
     minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     note: Mapped[str] = mapped_column(String(300), nullable=False, default="")
 
+
+class CreatorTacticalGuide(Base, TimestampMixin):
+    """An editorial guide anchored to a stored tactical system (M10, spec §36's second kind).
+
+    §36's second kind is a *Tactical Guide*: an author's reading of a shape, published beside the
+    shape rather than copied out of it. The row stores the author's words, a visibility and the
+    **address** of a row in `tactical_systems` - never a metric, a coordinate or a sentence about
+    the shape. Every measurement a read shows is computed from the system's own dots on that read,
+    so a revised catalogue cannot leave a guide quoting the old geometry.
+
+    `system_hash` is not a figure about the system, it is a **witness**: the content address the
+    system carried when the guide was written. A read compares it with the catalogue's, and a guide
+    whose system has been revised since says so through `moved` while still measuring the system as
+    it reads now - the same shape as `guide_citations.cited_text_hash`.
+
+    `system_slug` is a plain pointer rather than a foreign key on purpose: `services/tactics/sync.py`
+    retires catalogue rows the plan no longer authors, and a RESTRICT would make a routine catalogue
+    sync fail because somebody once wrote about a system. A retired system answers as absence on
+    read, in the same shape a guide that was never written earns.
+    """
+
+    __tablename__ = "creator_tactical_guides"
+    __table_args__ = (
+        UniqueConstraint("author_id", "slug", name="uq_creator_tactical_slug"),
+        Index("ix_creator_tactical_author_date", "author_id", "published_on"),
+        Index("ix_creator_tactical_system", "system_slug"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary: Mapped[str] = mapped_column(String(600), nullable=False, default="")
+    visibility: Mapped[str] = mapped_column(String(12), nullable=False, default="public")
+    system_slug: Mapped[str] = mapped_column(String(160), nullable=False)
+    system_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    published_on: Mapped[str] = mapped_column(String(10), nullable=False, default=utc_today)
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
 class CvShare(Base, TimestampMixin):
     """One public CV link (§38's share output): the token that opens it, the sections it names, and when it closed."""
 

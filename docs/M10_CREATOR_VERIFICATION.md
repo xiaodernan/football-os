@@ -61,20 +61,23 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
 
 ## What §36 does not claim yet
 
-* **The six kinds are six sections, not six objects — and the first kind now has an object of its
-  own (2026-10-21).** §36 lists Training Program, Tactical Guide, Player Analysis, Match Analysis,
+* **The six kinds are six sections, not six objects — and the first two kinds now have objects of
+  their own (2026-10-21).** §36 lists Training Program, Tactical Guide, Player Analysis, Match Analysis,
   Career Challenge and Scouting List; the tier's `GUIDE_SECTIONS` is `plan, drill, match, tactic,
   scout, video`, and a guide is a title, a frame, a section and citations in every one of them.
   A **Training Program** is now a row of its own: a schedule, a dose and a progression, with a step
-  naming a catalogue drill, and starting one plans the learner's own training sessions. What is still
-  not there: the other five kinds have no object of their own, a program is a plan rather than an
+  naming a catalogue drill, and starting one plans the learner's own training sessions. A **Tactical
+  Guide** is now a row anchored to a stored system: it keeps the system's address and a hash witness,
+  and every measurement is computed on the read from the system's own dots. What is still
+  not there: the other four kinds have no object of their own, a program is a plan rather than an
   enrolled course, and there is no progress model beyond the training tier's own sessions.
 * **No money, by design.** `creator_publish` and `creator_guide` are ceilings the data holds and **no door refuses
   on** — the caps that actually bite are the lifetime counts in `CAPS` (100 guides, 24 citations a guide).
 * **The feedback half of §36's loop is §35's.** "Users → Feedback → Creator" is reactions, comments and follows on
   §35's rows; this tier stores no per-guide feedback of its own and counts `subscribers` from `community_follows`.
-* **§38 is not started.** Football Career Portfolio is M10's second subject and the next slice, with the minors'
-  part held back until §40's consent shape is read rather than duplicated.
+* **§38 is no longer unstarted.** Football Career Portfolio's read landed in `471da30` and its `/portfolio` page
+  landed after that ([evidence](docs/M10_PORTFOLIO_VERIFICATION.md)); its permitted public outputs are the part
+  still open, as the section below records.
 
 ## The training program — §36's first kind of content (2026-10-21)
 
@@ -133,6 +136,50 @@ still names two features and refuses on neither.
 
 Measured: `tests/test_creator_programs.py` (10 cases) and `tests/test_creator.py` (42) are green
 together; mypy is clean over 149 files; the contract is regenerated at 191 paths / 242 operations.
+
+## The tactical guide — §36's second kind of content (2026-10-21)
+
+The sentence above has been corrected rather than repeated: the `tactic` section was a guide whose
+subject was a word. A tactical guide now anchors to a system the tactics tier stores, and what it keeps
+about that system is the address and a witness — never a measurement.
+
+* **The anchor is an address, not a foreign key.** `creator_tactical_guides.system_slug` names a row in
+  `tactical_systems` and is deliberately a plain pointer: `services/tactics/sync.py` retires catalogue
+  rows, so a foreign key would either block the retirement or take an author's words with it.
+  Publication resolves the anchor (by slug or id) and refuses one the catalogue does not hold there
+  (404 `no_such_system`) — a reading of nothing is not a reading.
+* **No measurement is stored.** The column set is asserted as a set: author, slug, title, summary,
+  visibility, the address, the hash witness, the date and provenance — no board, no coordinate, no
+  metric. The eight metrics on both phases are computed on the read by `metrics_for_rows`, the same
+  function `/api/v1/tactics/{ident}` answers with; a case compares the two answers metric for metric and
+  checks each one carries its formula.
+* **The proof is behavioural.** A scratch system's board is edited between two reads of the same guide:
+  the answer follows the dots, equals the pure function's output, and `moved` flips. A stored copy could
+  not pass that case.
+* **`moved` is the citation rule applied to a board.** `system_hash` records the system's `content_hash`
+  at publication; a revised system is still readable and says it moved. A **retired** system is absence
+  at the address (404 `no_such_system`), while the shelf keeps the address with `name`, `formation` and
+  `path` null — the author can see what to re-anchor, and the catalogue's retirement deleted nothing of
+  theirs.
+* **Four doors** under the tier's existing prefix: publish, the shelf, one guide (which carries the
+  measurements), and erase. Erasing a guide leaves the system untouched. The shelf and the read need a
+  session; reach is §35's follow predicate, so a `followers` guide opens on a follow and closes on an
+  unfollow without deleting it; another account's guide is absence, and no door in this tier answers 403.
+
+Measured 2026-10-21: `tests/test_creator_tactical.py` **15 cases**; the three creator files together
+(`test_creator.py` 42, `test_creator_programs.py` 10, `test_creator_tactical.py` 15) answer **71 tests /
+0 failures / 0 errors / 0 skipped in 36.783s** (junit, `.scratch/leg_tactical_creator.xml`); `mypy app`
+clean over **150 source files**; `ruff check` clean on the five touched Python files; the contract is
+regenerated at **193 paths / 246 operations**, the four new operations being its only delta.
+
+**A whole-suite leg over the pre-unit tree, recorded honestly.** SQLite, on a frozen plane at
+`f4d6146` (an ancestor that holds none of this unit's files), launched 2026-10-20T19:43Z: **1,740 tests /
+1 failure / 0 errors / 4 skipped in 1,359.6s**, exit 1. The failure is
+`test_openapi_contract_currency::test_the_exporter_derives_the_contract_from_the_tree_and_reproduces_the_committed_bytes`,
+and the plane's own diff is `b'\n' != b'\r'`: the plane carried a CRLF copy of the contract, while the
+same case is green in the tree where the artifact is LF (0 CRLF / 16,218 LF) and the exporter writes LF.
+The estimate carried into the run (~1,662 tests / 0 failures / 2 skipped) was wrong on all three
+counts; the run is recorded rather than dropped.
 
 ## A finding this milestone corrected
 

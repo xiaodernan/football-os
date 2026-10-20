@@ -1,6 +1,6 @@
 """Creator endpoints (M10, spec §36): what an account publishes as a guide, and the addresses it cites.
 
-One public door and ten private ones. `GET /creator/rules` prints only the tier's own vocabulary — the sections,
+One public door and nineteen private ones. `GET /creator/rules` prints only the tier's own vocabulary — the sections,
 the ceilings, the formulas, the refusal codes and the limitation sentence — which is §39's and §35's precedent: a
 rulebook is not a person's data, a shelf of guides is.
 
@@ -37,6 +37,7 @@ from app.models import User
 from app.services.club import answers
 from app.services.creator import programs as cpr
 from app.services.creator import publishing as cre
+from app.services.creator import tactical as ctr
 
 router = APIRouter(prefix="/creator", tags=["creator"])
 
@@ -64,6 +65,10 @@ ROUTE_GUIDE: tuple[dict[str, str], ...] = (
     {"method": "GET", "path": "/creator/programs/{program}", "door": "one program with its steps and the figures counted now"},
     {"method": "DELETE", "path": "/creator/programs/{program}", "door": "erase your own program and the sessions it planned"},
     {"method": "POST", "path": "/creator/programs/{program}/start", "door": "plan a program's steps as your own training sessions"},
+    {"method": "POST", "path": "/creator/tactics", "door": "publish a tactical guide: an address into the catalogue, a title, a visibility"},
+    {"method": "GET", "path": "/creator/tactics", "door": "the shelf of tactical guides, each anchor named as it reads now"},
+    {"method": "GET", "path": "/creator/tactics/{guide}", "door": "one tactical guide, with the system it is about measured on this read"},
+    {"method": "DELETE", "path": "/creator/tactics/{guide}", "door": "erase your own tactical guide; the system is untouched"},
 )
 
 
@@ -116,6 +121,16 @@ class CitationIn(BaseModel):
     note: str = Field(default="", max_length=cre.CITATION_NOTE_MAX + 100)
 
 
+class TacticalIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # The anchor is the catalogue's own address, so the tier stores it and never the shape behind it.
+    system: str = Field(default="", max_length=ctr.SYSTEM_SLUG_MAX)
+    title: str = Field(default="", max_length=ctr.TACTICAL_TITLE_MAX + 40)
+    summary: str = Field(default="", max_length=ctr.TACTICAL_SUMMARY_MAX + 100)
+    visibility: str = Field(default="public", max_length=12)
+
+
 @router.get("/rules")
 def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
     """The rulebook door: no guide, no creator, no figure about anybody — only what may be published.
@@ -129,6 +144,7 @@ def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
         "entitlement_features": ["creator_publish", "creator_guide"],
         **cre.rules(db, ready=True),
         **cpr.rules(db, ready=True),
+        **ctr.rules(db, ready=True),
     }
 
 
@@ -316,5 +332,73 @@ def start_program(
     limit(request, 20, 3600, scope="start_program")
     try:
         return cpr.start_program(db, user.id, program, player_id=player_id)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.post("/tactics", status_code=status.HTTP_201_CREATED)
+def publish_tactical(
+    payload: TacticalIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Publish a tactical guide: the address of a system, a title and a visibility.
+
+    The system is resolved here, at publication, so a guide anchored to a shape the catalogue
+    does not hold is refused now rather than surfacing as a page with nothing to read.
+    """
+    limit(request, 20, 3600, scope="publish_tactical")
+    try:
+        return ctr.publish_tactical_guide(
+            db,
+            user.id,
+            system=payload.system,
+            title=payload.title,
+            summary=payload.summary,
+            visibility=payload.visibility,
+        )
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.get("/tactics")
+def read_tactical_shelf(
+    creator: str | None = None,
+    page_size: int = 20,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """The shelf of tactical guides, as far as this reader may reach."""
+    try:
+        return ctr.list_tactical_guides(db, user.id, creator=creator, limit=page_size)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.get("/tactics/{guide}")
+def read_tactical(
+    guide: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """One tactical guide, with the system it is about measured from its own dots on this read."""
+    try:
+        return ctr.read_tactical_guide(db, guide, user.id)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.delete("/tactics/{guide}")
+def erase_tactical(
+    guide: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Erase your own tactical guide. The system it was about is untouched."""
+    limit(request, 20, 3600, scope="erase_tactical")
+    try:
+        return ctr.erase_tactical_guide(db, user.id, guide)
     except cre.CreatorRefusal as error:
         raise _refusal(error) from error

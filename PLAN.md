@@ -719,6 +719,33 @@ five do not.
 
 ---
 
+## Item 11 — M10: the tactical guide, §36's second kind of content
+
+**Done 2026-10-21.** Item 10 gave §36's first kind an object. The second kind — a **Tactical Guide** — was still only a
+section: a guide with a title, a frame and citations, whose subject did not exist in the tier at all.
+
+**Do.** Anchor a guide to a stored tactical system without copying it.
+
+1. **`creator_tactical_guides`** (migration `0031`): the author, a title and summary, a visibility, and the **address**
+   of a system. `system_slug` is a plain pointer, not a foreign key, because `sync_tactics` retires catalogue rows;
+   `system_hash` is the content address the system carried at publication.
+2. **No measurement is stored.** Both phases' eight metrics come from `metrics_for_rows` on the read, the same function
+   the `/tactics` door answers with. The column list is asserted as a set so a board, a coordinate or a metric cannot be
+   added without a failing case; editing a scratch system's dots moves the guide and flips `moved`.
+3. **Publication resolves the anchor** (404 `no_such_system`), the read of a retired system is absence, and the shelf
+   keeps the address with null name/formation/path — so nothing of the author's is deleted by a retirement.
+4. **Four doors** under the tier's prefix: publish, shelf, one guide, erase. Reach is §35's follow predicate; another
+   account's guide is absence; no door answers 403.
+
+**Evidence.** `tests/test_creator_tactical.py` (15 cases) green together with `tests/test_creator.py` (42) and
+`tests/test_creator_programs.py` (10) — **71 tests / 0 failures / 0 errors / 0 skipped**. mypy is clean over 150 files;
+ruff is clean; the contract is regenerated at 193 paths / 246 operations. A whole-suite SQLite leg over the pre-unit
+plane `f4d6146` is recorded in `docs/M10_CREATOR_VERIFICATION.md`: **1,740 / 1 / 0 / 4**, the one red being the plane's
+CRLF copy of the contract rather than the tree. The record's claim list now says two kinds have objects of their own —
+and that the other four do not.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
