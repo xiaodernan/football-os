@@ -605,6 +605,33 @@ what is still not claimed, is in `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`
 
 ---
 
+## Item 7 — M12's trace backend: a span that reaches somewhere without a collector
+
+**Done 2026-10-21.** The M12 row's "does not claim" list carried one observability sentence that this repository could fix
+in itself: *"no span has reached a real backend"*. OpenTelemetry was wired with an OTLP exporter, and a host that runs no
+collector has nowhere to send a span — which is every host this project measures on.
+
+**Do.** Build the backend the project already had a database for, and read it back.
+
+1. **`app/core/span_store.py`** is an ordinary OpenTelemetry *exporter* that writes each finished span into `request_spans`
+   (migration `0029`), installed behind the SDK's `BatchSpanProcessor` so the request path never pays for the write. The
+   rows carry the span's own identifiers — `trace_id`, `span_id`, `parent_span_id` — so the tree is stored rather than
+   rebuilt by the reader.
+2. **Two rules the exporter holds to**: a store failure is never a request failure (the exporter catches everything and
+   returns a failure result), and the store is bounded (every export prunes the spans older than seven days).
+3. **`GET /api/v1/traces/{trace_id}`** returns a request's spans, oldest first, each with the parent it hung from.
+   Auth-gated; an unknown trace id answers `404 no_such_trace`.
+4. **Off by default** (`TRACE_STORE_ENABLED=1` turns it on), because it writes a row per span; the OTLP collector path is
+   untouched and the two are independent.
+
+**Evidence.** `tests/test_trace_store.py` (6 cases): a finished span is stored with its own timings and identifiers; a
+child span names its parent, read back through the door; a broken store reports failure and raises nothing into the
+caller; the door reads a stored trace, answers 404 for an unknown one, and needs a session. mypy is clean over 148 files;
+the contract is regenerated at 188 paths / 237 operations. The record is in
+`docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

@@ -40,6 +40,7 @@ from app.api.v1 import (
     simulation_aggregates,
     simulations,
     tactics,
+    traces,
     trainings,
     transfers,
     video,
@@ -423,6 +424,7 @@ def create_app() -> FastAPI:
     app.include_router(model_router.router, prefix=api)
     app.include_router(metrics.router, prefix=api)
     app.include_router(jobs.router, prefix=api)
+    app.include_router(traces.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:

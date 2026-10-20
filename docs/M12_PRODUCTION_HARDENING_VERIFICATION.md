@@ -293,6 +293,43 @@ cache that refuses the handshake degrades and says so rather than pretending to 
 written by one operating system process is read by **another operating system process** through
 its own client.
 
+### The trace backend: a span that reaches somewhere without a collector
+
+The observability claim this milestone could not make was about OpenTelemetry: the SDK was wired,
+the span path was measured through an in-memory exporter, and **no collector runs on this host** — so
+no span had ever reached a real backend. The claim was honest, and it was also the last thing in this
+document that the project could fix in its own repository rather than in a deployment.
+
+**The store.** `app/core/span_store.py` is an ordinary OpenTelemetry *exporter* that writes each
+finished span into `request_spans` (migration `0029`). It is installed behind the SDK's
+`BatchSpanProcessor`, so the write happens on the exporter's thread and the request path never pays
+for it. The rows carry the span's own identifiers — `trace_id` groups a request's spans, `span_id`
+names one, `parent_span_id` names the span it hung from — so the tree is *stored* rather than
+rebuilt by whoever reads it, plus the span's own start, end, duration and attributes.
+
+Two rules the exporter holds to, both of them the kind a trace backend that has taken an API down
+would break:
+
+* **A store failure is never a request failure.** The exporter catches everything and returns a
+  failure result; the batch processor then drops the batch. Measured: a store whose session factory
+  raises answers `FAILURE` and raises nothing into the caller.
+* **The store is bounded.** Every export also deletes the spans older than the retention window
+  (seven days), so an instance that runs for months does not accumulate traces forever.
+
+**The door.** `GET /api/v1/traces/{trace_id}` returns the spans of one trace, oldest first, each
+with the parent it hung from. It is auth-gated like every other door in this API, and a trace id
+nobody stored answers `404 no_such_trace` — absence must not confirm which ids exist.
+
+**What it is off by default for.** `TRACE_STORE_ENABLED=1` turns the store on; the default is off
+because it writes a row per span, and a deployment that runs a collector has a better place for
+them. The OTLP path is untouched, and the two are independent: a deployment can send spans to a
+collector and keep them in the database, or use either alone.
+
+**Measured** (`tests/test_trace_store.py`, 6 cases): a finished span is stored with its own timings
+and identifiers; a child span names the span it hung from, read back through the door; a broken
+store reports failure without raising; the door reads a stored trace, answers 404 for an unknown one,
+and needs a session.
+
 ### Performance — latency percentiles that read the same on both engines
 
 `app/services/latency_profile.py`. `/metrics/system` carried `p95_latency_ms: None` with a comment
@@ -605,9 +642,15 @@ survive the move to quieter hardware even though the absolute figures will not.
   string is a legal value for a string field, so nothing failed — an aggregator grouping on the
   field would simply have put every request in one bucket. One variable now, defined where the
   filter lives and imported by `main`.
-* **No trace backend.** OpenTelemetry is wired and the span path is measured through an in-memory
-  exporter, but no collector runs on this host, so no span has reached a real backend; sampling and
-  propagation through the proxy are deployment concerns, not claims.
+* **The trace backend now exists (2026-10-21), and the claim changed with it.** OpenTelemetry is
+  wired and the span path is measured through an in-memory exporter, but no collector runs on this
+  host — so the project's **own** backend is now the one that answers: `app/core/span_store.py` is an
+  ordinary OpenTelemetry *exporter* that writes each finished span into `request_spans`, and
+  `GET /api/v1/traces/{trace_id}` reads a request's spans back. The store is off by default
+  (`TRACE_STORE_ENABLED=1` turns it on) because it writes a row per span; the OTLP collector path is
+  untouched and the two are independent. What is still not claimed: **sampling** and
+  **propagation through the proxy** are deployment concerns, not claims — the store keeps what the
+  SDK produced, and the SDK's sampling decision is the deployment's.
 * **No off-host backup pathway executed.** The restore drill ran `pg_dump` → `pg_restore` inside
   the project's own container; S3 upload and WAL archiving remain inspection-verified only.
 * **The load figures are a floor, and both worker counts were measured on one host.** Five runs are

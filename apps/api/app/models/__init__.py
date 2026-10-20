@@ -2064,3 +2064,37 @@ class AgentMemory(Base, TimestampMixin):
     key: Mapped[str] = mapped_column(String(256), nullable=False)
     value_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RequestSpan(Base, TimestampMixin):
+    """One finished span, kept so a request can be read back without a collector (M12 observability).
+
+    OpenTelemetry was wired with an OTLP exporter, which means the spans went wherever a
+    collector was listening - and nowhere at all on a host that runs none. This table is the
+    backend that needs no collector: the exporter writes each finished span here, and a door
+    reads a request's spans back.
+
+    The identifiers are the trace's own: `trace_id` groups the spans of one request, `span_id`
+    names one of them and `parent_span_id` names the span it hung from, so the tree is stored
+    rather than rebuilt. The timings are the span's own nanosecond clock, kept as UTC datetimes
+    and a duration in milliseconds, because a span that cannot say how long it took cannot say
+    where the time went.
+    """
+
+    __tablename__ = "request_spans"
+    __table_args__ = (
+        Index("ix_request_spans_trace", "trace_id"),
+        Index("ix_request_spans_start", "start_time"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=lambda: new_public_id("sp"))
+    trace_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    span_id: Mapped[str] = mapped_column(String(16), nullable=False)
+    parent_span_id: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="unset")
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    duration_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    attributes_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)

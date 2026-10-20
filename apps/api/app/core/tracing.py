@@ -29,14 +29,18 @@ SERVICE_NAME = "football-os-api"
 ENDPOINT_ENV = "OTEL_EXPORTER_OTLP_ENDPOINT"
 
 
-def init_tracing(*, span_processor: SpanProcessor | None = None) -> TracerProvider | None:
-    """Initialise OpenTelemetry tracing when an OTLP endpoint is configured.
+def init_tracing(*, span_processor: SpanProcessor | None = None, store: bool | None = None) -> TracerProvider | None:
+    """Initialise OpenTelemetry tracing when a backend is configured.
 
-    Returns the installed `TracerProvider`, or None when
-    `OTEL_EXPORTER_OTLP_ENDPOINT` is unset — the expected state for local
-    development and CI, where no collector runs. Idempotency note: the OpenTelemetry
-    API installs a global provider once; a second call logs an override warning and
-    replaces it, so this is a boot-time call, not a per-request one.
+    Returns the installed `TracerProvider`, or None when no backend is configured - the expected
+    state for local development and CI, where no collector runs and the span store is off.
+
+    A backend is either the OTLP collector (`OTEL_EXPORTER_OTLP_ENDPOINT`) or the project's own
+    span store (`TRACE_STORE_ENABLED`), and either one is enough to turn tracing on: the store
+    writes the spans into the database, which is the backend a host without a collector has.
+
+    Idempotency note: the OpenTelemetry API installs a global provider once; a second call logs an
+    override warning and replaces it, so this is a boot-time call, not a per-request one.
 
     `span_processor` exists for tests: pass a `SimpleSpanProcessor(InMemorySpanExporter)`
     to observe spans without a collector. Production leaves it None and gets the
@@ -44,10 +48,11 @@ def init_tracing(*, span_processor: SpanProcessor | None = None) -> TracerProvid
     cannot block a request.
     """
     endpoint = os.getenv(ENDPOINT_ENV)
-    if not endpoint:
+    use_store = settings.trace_store_enabled if store is None else store
+    if not endpoint and not use_store:
         return None
 
-    provider = build_provider(endpoint, span_processor)
+    provider = build_provider(endpoint, span_processor, store=use_store)
     trace.set_tracer_provider(provider)
 
     # Instrument the HTTPX client (outgoing HTTP calls) globally; FastAPI is
@@ -56,8 +61,17 @@ def init_tracing(*, span_processor: SpanProcessor | None = None) -> TracerProvid
     return provider
 
 
-def build_provider(endpoint: str, span_processor: SpanProcessor | None = None) -> TracerProvider:
-    """Build the SDK tracer provider with the service resource and one span processor."""
+def build_provider(
+    endpoint: str | None,
+    span_processor: SpanProcessor | None = None,
+    *,
+    store: bool = False,
+) -> TracerProvider:
+    """Build the SDK tracer provider with the service resource and its span processors.
+
+    `endpoint` may be None: the span store alone is a backend. The two are independent - a
+    deployment can send spans to a collector and keep them in the database, or use either alone.
+    """
     resource = Resource.create(
         {
             "service.name": SERVICE_NAME,
@@ -68,8 +82,15 @@ def build_provider(endpoint: str, span_processor: SpanProcessor | None = None) -
     provider = TracerProvider(resource=resource)
     if span_processor is not None:
         provider.add_span_processor(span_processor)
-    else:
+    elif endpoint:
         provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+    if store:
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor as _Batch
+
+        from app.core.db import SessionLocal
+        from app.core.span_store import SpanStoreExporter
+
+        provider.add_span_processor(_Batch(SpanStoreExporter(SessionLocal)))
     return provider
 
 
@@ -80,7 +101,7 @@ def instrument_fastapi(app: Any, *, tracer_provider: trace.TracerProvider | None
     tracing is disabled. `tracer_provider` overrides the global provider — tests
     pass the provider `init_tracing` returned so they never touch global state.
     """
-    if not os.getenv(ENDPOINT_ENV):
+    if not os.getenv(ENDPOINT_ENV) and not settings.trace_store_enabled:
         return
     FastAPIInstrumentor.instrument_app(
         app, tracer_provider=tracer_provider or trace.get_tracer_provider()
