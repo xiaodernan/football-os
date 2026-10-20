@@ -614,25 +614,33 @@ survive the move to quieter hardware even though the absolute figures will not.
 
 ## What M12 does not claim
 
-* **The Redis tier is live and authenticated (2026-10-20), and the load figures above were still
-  measured with it degraded.** The project's own cache now serves: `infra/docker-compose.yml`
-  publishes an authenticated `redis:7-alpine` on host port 63790, CI starts the same image with
-  the same password and URL, and two server processes were measured serving a public path from
-  one shared store (`MISS` on the first, `HIT` on the second, whose own process-local tier was
-  empty). What that changes is the *sharing*, not the throughput: **every load figure above was
-  taken before this landing, with the tier degraded**, so none of them measures what sharing
-  buys, and the numbers are still a floor. The degradation paths themselves are unchanged and
-  still measured: a cache that refuses the handshake drops to the in-memory fallback, says so,
-  and stays down for the life of the process — a Redis that starts after the process is not
-  picked up until restart. That is the right trade against paying a failed connect per call,
-  and it is stated so a reader deploying behind a restart-less rollout can decide otherwise.
-  One defect the landing exposed is fixed and one is not: the metrics door no longer publishes
-  the cache's password, and the **cross-account replay the shared tier would have spread across
-  workers is closed** (the near tier's key names the caller, and the shared tier never stores a
-  credentialed response), but the cache still holds no user data at all only because private
-  answers are excluded from the shared tier — the door that decides what a response may be
-  cached as is `cached_response_for`, and a new door that returns caller-specific data has to
-  remember that a credentialed `GET` is keyed by its caller and never reaches the shared store.
+* **The Redis tier is live and authenticated (2026-10-20), and what sharing buys is now measured.**
+  The project's own cache serves: `infra/docker-compose.yml` publishes an authenticated
+  `redis:7-alpine` on host port 63790, CI starts the same image with the same password and URL,
+  and the shared tier's own hit rate is counted where it happens (a read Redis answered is a hit,
+  a read it did not is a miss) and published by the metrics door. Two server processes, one store,
+  measured on this host:
+
+  | worker | X-Cache over 12 requests | its near tier | its shared tier |
+  | --- | --- | --- | --- |
+  | A, alone | 9 HIT / 3 MISS | hits 9, misses 5 (0.64) | **0 hits**, 4 misses — its near tier answered first |
+  | B, own tier empty | **12 HIT / 0 MISS** | hits 9, misses 5 (0.64) | **4 hits**, 0 misses, hit rate 1.0 |
+
+  Every answer worker B served was one worker A had already paid for, and B's shared hits are
+  counted in B's own process - which is what makes the figure attributable to this application
+  rather than to the Redis instance. **The load figures above are still the degraded ones** and
+  still a floor: they were taken before this landing, and nothing here re-measures throughput.
+  What changed is the *sharing*, not the speed, and the two are not the same claim. The
+  degradation paths are unchanged and still measured: a cache that refuses the handshake drops to
+  the in-memory fallback, says so, and stays down for the life of the process — a Redis that
+  starts after the process is not picked up until restart. One defect the landing exposed is
+  fixed and one is not: the metrics door no longer publishes the cache's password, and the
+  **cross-account replay the shared tier would have spread across workers is closed** (the near
+  tier's key names the caller, and the shared tier never stores a credentialed response), but
+  the cache still holds no user data at all only because private answers are excluded from the
+  shared tier — the door that decides what a response may be cached as is `cached_response_for`,
+  and a new door that returns caller-specific data has to remember that a credentialed `GET` is
+  keyed by its caller and never reaches the shared store.
 * **No external log sink.** The JSON formatter is the contract with a sink that deployment wires,
   and the contract itself is now tested rather than asserted — `tests/test_logging.py` parses the
   emitted line, checks the standard fields, extras and exception text, and walks a request id from

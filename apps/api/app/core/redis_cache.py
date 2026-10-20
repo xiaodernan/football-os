@@ -70,6 +70,11 @@ class RedisCache:
         self._redis: redis.Redis | None = None
         self._fallback = TTLCache(max_size=max_size, default_ttl=default_ttl)
         self._available = False
+        #: This process's own count of the shared tier's reads: a read Redis answered and a read
+        #: it did not. The server's own counters are not used - they count every client of the
+        #: instance, so they could not be attributed to this application.
+        self._shared_hits = 0
+        self._shared_misses = 0
         self._connect()
 
     def _connect(self) -> None:
@@ -109,7 +114,9 @@ class RedisCache:
             try:
                 value = cast("Any", client.get(self._key(key)))
                 if value is not None:
+                    self._shared_hits += 1
                     return json.loads(value)
+                self._shared_misses += 1
             except Exception as e:
                 logger.warning("Redis get failed, falling back: %s", e)
                 self._available = False
@@ -191,12 +198,19 @@ class RedisCache:
     def get_stats(self) -> dict[str, Any]:
         """Get combined stats from Redis and fallback."""
         fallback_stats = self._fallback.get_stats()
+        shared_total = self._shared_hits + self._shared_misses
         stats = {
             "fallback": fallback_stats,
             "redis_available": self._available,
             #: The URL without its password. The metrics door publishes this to any signed-in
             #: caller, and a URL that carries a credential is a credential in a metrics door.
             "redis_url": self.redacted_url() if self._available else None,
+            #: How often the shared tier answered, counted by this process. With several workers
+            #: the app-wide figure is the sum of theirs, and a worker with hits above zero has
+            #: served an answer another worker paid for.
+            "redis_hits": self._shared_hits,
+            "redis_misses": self._shared_misses,
+            "redis_hit_rate": round(self._shared_hits / shared_total, 4) if shared_total else 0.0,
         }
         client = self._redis
         if self._available and client is not None:

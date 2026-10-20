@@ -632,6 +632,31 @@ the contract is regenerated at 188 paths / 237 operations. The record is in
 
 ---
 
+## Item 8 — M12: what sharing buys, measured with the tier live
+
+**Done 2026-10-21.** Item 6 landed the shared cache tier, and the M12 document still carried the sentence that
+no figure measured what it buys: *"the load numbers were all measured with the tier degraded"*. Two things were missing
+for that sentence to be answerable, and only one of them was the tier itself.
+
+**Do.** Count the shared tier's own hits, and measure the difference between two workers.
+
+1. **`RedisCache` counts its own reads.** A read the shared tier answered is a hit; a read it did not is a miss. Redis's
+   own `INFO stats` counters are deliberately *not* used: they are server-wide, so they could not be attributed to
+   this application, and a figure that cannot be attributed is not a figure about this project. The counters reach the
+   metrics door, so an operator reads them without a debugger.
+2. **Measure two workers against one store.** The claim is not "the cache is fast" but "the cache is *shared*":
+   a worker whose own tier is empty must serve the answers another worker paid for.
+
+**Evidence.** Measured on this host, 2026-10-21, two server processes and one store: worker A alone answered 12
+requests 9 HIT / 3 MISS from its own tier (its shared hits: **0** — its near tier answered first); worker B, whose own
+tier was empty, answered **12 HIT / 0 MISS**, every one of them an answer A had already paid for, with B's shared tier
+counting 4 hits and 0 misses (hit rate 1.0). Gates: `tests/test_redis_shared_hits.py` (4 cases), including the
+attribution case — two cache objects over one store, where the writer counts no hit and the reader counts one. The
+figures are in `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`; the load numbers are still the degraded ones and the
+document says so.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
