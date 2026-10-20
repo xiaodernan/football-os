@@ -62,6 +62,7 @@ function Answer({ note }: { note: Note | null }) {
 
 /** The consent rows themselves: who claimed which child, for which purposes, and whether it still stands. */
 export function ConsentTable({ consents, ident }: { consents: ConsentList; ident: string }) {
+  const t = useTranslations("academy");
   const { busy, call, note } = useAcademyCall();
   return (
     <div className="stack">
@@ -69,13 +70,13 @@ export function ConsentTable({ consents, ident }: { consents: ConsentList; ident
         <table className="table">
           <thead>
             <tr>
-              <th scope="col">Child</th>
-              <th scope="col">Age</th>
-              <th scope="col">Guardian</th>
-              <th scope="col">Purposes agreed</th>
-              <th scope="col">State</th>
-              <th scope="col">Live plans</th>
-              <th scope="col">Answer</th>
+              <th scope="col">{t("thChild")}</th>
+              <th scope="col">{t("thAge")}</th>
+              <th scope="col">{t("thGuardian")}</th>
+              <th scope="col">{t("thPurposes")}</th>
+              <th scope="col">{t("thState")}</th>
+              <th scope="col">{t("thLivePlans")}</th>
+              <th scope="col">{t("thAnswer")}</th>
             </tr>
           </thead>
           <tbody>
@@ -84,7 +85,7 @@ export function ConsentTable({ consents, ident }: { consents: ConsentList; ident
                 <td>{row.player.name}</td>
                 <td className="num">
                   {row.player.age}
-                  {row.player.is_minor && <span className="chip mono"> minor</span>}
+                  {row.player.is_minor && <span className="chip mono">{t("minorChip")}</span>}
                 </td>
                 <td className="muted">
                   {row.guardian.display_name}
@@ -99,7 +100,7 @@ export function ConsentTable({ consents, ident }: { consents: ConsentList; ident
                 <td className="num">{row.plans_for_this_child}</td>
                 <td>
                   <button className="btn btn--sm btn--ghost" data-act="withdraw" disabled={busy !== null || row.state !== "granted"} onClick={() => void call(`withdraw-${row.player.slug}`, `/club/academy/${encodeURIComponent(ident)}/consents/${encodeURIComponent(row.player.slug)}`, { method: "DELETE" })} type="button">
-                    Withdraw
+                    {t("withdraw")}
                   </button>
                 </td>
               </tr>
@@ -115,6 +116,7 @@ export function ConsentTable({ consents, ident }: { consents: ConsentList; ident
 /** A guardian's yes, and a coach's first plan for a child that yes permits. */
 export function AcademyTools({ ident, scopes, sheets }: { ident: string; scopes: Scopes; sheets: SheetChild[] }) {
   const t = useTranslations("common");
+  const ta = useTranslations("academy");
   const { busy, call, note } = useAcademyCall();
   const [child, setChild] = useState(sheets[0]?.slug ?? "");
   const [agreed, setAgreed] = useState<string[]>(scopes.default_granted);
@@ -126,15 +128,15 @@ export function AcademyTools({ ident, scopes, sheets }: { ident: string; scopes:
 
   return (
     <div className="stack">
-      <h3 className="panel__title">Answer for a child on a sheet</h3>
+      <h3 className="panel__title">{ta("answerForChildTitle")}</h3>
       {sheets.length === 0 ? (
-        <p className="muted">No player is on a sheet in this tenant yet, so there is nobody to consent for and nobody to plan for.</p>
+        <p className="muted">{ta("noSheetNote")}</p>
       ) : (
         <>
           <div className="grid grid-2">
             <label className="field">
-              <span>Child (only players on this tenant&apos;s sheets can be named)</span>
-              <select aria-label="Child" onChange={(event) => setChild(event.target.value)} value={child}>
+              <span>{ta("childLabel")}</span>
+              <select aria-label={ta("childAria")} onChange={(event) => setChild(event.target.value)} value={child}>
                 {sheets.map((row) => (
                   <option key={row.slug} value={row.slug}>
                     {row.name} · {row.age} · {row.team}
@@ -143,7 +145,7 @@ export function AcademyTools({ ident, scopes, sheets }: { ident: string; scopes:
               </select>
             </label>
             <div className="field">
-              <span>Purposes agreed — leaving one off stops any record of it</span>
+              <span>{ta("purposesLabel")}</span>
               <div className="row wrap">
                 {scopes.scopes.map((scope) => (
                   <label className="row" data-scope={scope} key={scope} style={{ gap: "0.3rem" }}>
@@ -161,11 +163,11 @@ export function AcademyTools({ ident, scopes, sheets }: { ident: string; scopes:
           </div>
           <div className="row wrap">
             <button className="btn btn--sm" data-testid="consent-grant" disabled={busy !== null || child === "" || agreed.length === 0} onClick={() => void call("grant", `/club/academy/${encodeURIComponent(ident)}/consents`, { body: { player: child, scopes: agreed } })} type="button">
-              {busy === "grant" ? "Writing…" : "Grant consent"}
+              {busy === "grant" ? ta("granting") : ta("grantConsent")}
             </button>
             {chosen?.is_minor && (
               <span className="chip mono">
-                {chosen.name} is {chosen.age} — under the published threshold, so no plan can open without this row
+                {ta("minorThreshold", { name: chosen.name, age: chosen.age })}
               </span>
             )}
           </div>
@@ -173,35 +175,35 @@ export function AcademyTools({ ident, scopes, sheets }: { ident: string; scopes:
             {scopes.rule}
           </p>
 
-          <h3 className="panel__title">Open a development plan</h3>
+          <h3 className="panel__title">{ta("openPlanTitle")}</h3>
           <div className="grid grid-2">
             <label className="field">
-              <span>Review cadence (weeks)</span>
-              <input aria-label="Review weeks" onChange={(event) => setReviewWeeks(event.target.value)} type="text" value={reviewWeeks} />
+              <span>{ta("reviewCadenceLabel")}</span>
+              <input aria-label={ta("reviewWeeksAria")} onChange={(event) => setReviewWeeks(event.target.value)} type="text" value={reviewWeeks} />
             </label>
             <label className="field">
-              <span>Focus areas — up to six, comma separated</span>
-              <input aria-label="Focus areas" onChange={(event) => setFocus(event.target.value)} placeholder="technique, tactics" type="text" value={focus} />
+              <span>{ta("focusLabel")}</span>
+              <input aria-label={ta("focusAria")} onChange={(event) => setFocus(event.target.value)} placeholder={ta("focusPlaceholder")} type="text" value={focus} />
             </label>
             <label className="field">
-              <span>Goal title</span>
-              <input aria-label="Goal title" onChange={(event) => setGoal({ ...goal, title: event.target.value })} type="text" value={goal.title} />
+              <span>{ta("goalTitleLabel")}</span>
+              <input aria-label={ta("goalTitleAria")} onChange={(event) => setGoal({ ...goal, title: event.target.value })} type="text" value={goal.title} />
             </label>
             <label className="field">
-              <span>How it is measured</span>
-              <input aria-label="Goal measure" onChange={(event) => setGoal({ ...goal, measure: event.target.value })} type="text" value={goal.measure} />
+              <span>{ta("goalMeasureLabel")}</span>
+              <input aria-label={ta("goalMeasureAria")} onChange={(event) => setGoal({ ...goal, measure: event.target.value })} type="text" value={goal.measure} />
             </label>
             <label className="field">
-              <span>By when (ISO date)</span>
-              <input aria-label="Goal date" onChange={(event) => setGoal({ ...goal, by: event.target.value })} placeholder="2026-12-31" type="text" value={goal.by} />
+              <span>{ta("goalDateLabel")}</span>
+              <input aria-label={ta("goalDateAria")} onChange={(event) => setGoal({ ...goal, by: event.target.value })} placeholder="2026-12-31" type="text" value={goal.by} />
             </label>
           </div>
           <div className="row wrap">
             <button className="btn btn--sm" data-testid="plan-open" disabled={busy !== null || child === ""} onClick={() => void call("plan", `/club/academy/${encodeURIComponent(ident)}/plans`, { body: { player: child, review_weeks: Number(reviewWeeks), focus: focus.split(",").map((row) => row.trim()).filter(Boolean), goals: goal.title ? [goal] : [] } })} type="button">
-              {busy === "plan" ? `${t("open")}…` : `${t("open")} plan`}
+              {busy === "plan" ? ta("openingPlan") : ta("openPlan")}
             </button>
             <span className="muted" style={{ fontSize: "0.82rem" }}>
-              A second open plan for the same child is refused by name: `plan_already_open` says which plan holds the seat.
+              {ta("planOpenNote")}
             </span>
           </div>
         </>
@@ -213,6 +215,7 @@ export function AcademyTools({ ident, scopes, sheets }: { ident: string; scopes:
 
 /** The review and the note: the two writes a plan page is asked for, with the axes the tier publishes. */
 export function PlanTools({ axes, ident, plan, range }: { axes: string[]; ident: string; plan: string; range: [number, number] }) {
+  const t = useTranslations("academy");
   const { busy, call, note } = useAcademyCall();
   const today = new Date().toISOString().slice(0, 10);
   const [assessed, setAssessed] = useState({ on: today, strengths: "", areas: "", next_focus: "" });
@@ -221,15 +224,15 @@ export function PlanTools({ axes, ident, plan, range }: { axes: string[]; ident:
 
   return (
     <div className="stack">
-      <h3 className="panel__title">File a review</h3>
+      <h3 className="panel__title">{t("fileReviewTitle")}</h3>
       <div className="grid grid-2">
         <label className="field">
-          <span>Assessed on (ISO day, not in the future, not before the plan opened)</span>
-          <input aria-label="Assessed on" onChange={(event) => setAssessed({ ...assessed, on: event.target.value })} type="text" value={assessed.on} />
+          <span>{t("assessedOnLabel")}</span>
+          <input aria-label={t("assessedOnAria")} onChange={(event) => setAssessed({ ...assessed, on: event.target.value })} type="text" value={assessed.on} />
         </label>
         <div className="field">
           <span>
-            The published axes, {range[0]}–{range[1]}
+            {t("axesLabel", { from: range[0], to: range[1] })}
           </span>
           <div className="grid grid-2">
             {axes.map((axis) => (
@@ -237,60 +240,60 @@ export function PlanTools({ axes, ident, plan, range }: { axes: string[]; ident:
                 <span className="mono" style={{ fontSize: "0.82rem" }}>
                   {axis}
                 </span>
-                <input aria-label={`Rating for ${axis}`} max={range[1]} min={range[0]} onChange={(event) => setRatings({ ...ratings, [axis]: event.target.value })} type="number" value={ratings[axis] ?? ""} />
+                <input aria-label={t("ratingForAria", { axis })} max={range[1]} min={range[0]} onChange={(event) => setRatings({ ...ratings, [axis]: event.target.value })} type="number" value={ratings[axis] ?? ""} />
               </label>
             ))}
           </div>
         </div>
         <label className="field">
-          <span>Strengths</span>
-          <input aria-label="Strengths" onChange={(event) => setAssessed({ ...assessed, strengths: event.target.value })} type="text" value={assessed.strengths} />
+          <span>{t("strengthsLabel")}</span>
+          <input aria-label={t("strengthsAria")} onChange={(event) => setAssessed({ ...assessed, strengths: event.target.value })} type="text" value={assessed.strengths} />
         </label>
         <label className="field">
-          <span>Areas to work on</span>
-          <input aria-label="Areas" onChange={(event) => setAssessed({ ...assessed, areas: event.target.value })} type="text" value={assessed.areas} />
+          <span>{t("areasLabel")}</span>
+          <input aria-label={t("areasAria")} onChange={(event) => setAssessed({ ...assessed, areas: event.target.value })} type="text" value={assessed.areas} />
         </label>
         <label className="field">
-          <span>Next focus</span>
-          <input aria-label="Next focus" onChange={(event) => setAssessed({ ...assessed, next_focus: event.target.value })} type="text" value={assessed.next_focus} />
+          <span>{t("nextFocusLabel")}</span>
+          <input aria-label={t("nextFocusAria")} onChange={(event) => setAssessed({ ...assessed, next_focus: event.target.value })} type="text" value={assessed.next_focus} />
         </label>
       </div>
       <div className="row wrap">
         <button className="btn btn--sm" data-testid="assessment-add" disabled={busy !== null} onClick={() => void call("assess", `/club/academy/${encodeURIComponent(ident)}/plans/${encodeURIComponent(plan)}/assessments`, { body: { assessed_on: assessed.on, ratings: Object.fromEntries(Object.entries(ratings).filter(([, value]) => String(value).trim() !== "").map(([axis, value]) => [axis, Number(value)])), strengths: assessed.strengths, areas: assessed.areas, next_focus: assessed.next_focus } })} type="button">
-          {busy === "assess" ? "Filing…" : "File review"}
+          {busy === "assess" ? t("filing") : t("fileReview")}
         </button>
         <span className="muted" style={{ fontSize: "0.82rem" }}>
-          An axis nobody rated is not a zero: the review lists it under `axes_missing` instead.
+          {t("axesMissingNote")}
         </span>
       </div>
 
-      <h3 className="panel__title">Write to the child or their guardian</h3>
+      <h3 className="panel__title">{t("writeToTitle")}</h3>
       <label className="field">
-        <span>Note</span>
-        <input aria-label="Feedback message" onChange={(event) => setFeedback((current) => ({ ...current, message: event.target.value }))} placeholder="What you saw, in one or two sentences" type="text" value={feedback.message} />
+        <span>{t("noteLabel")}</span>
+        <input aria-label={t("feedbackAria")} onChange={(event) => setFeedback((current) => ({ ...current, message: event.target.value }))} placeholder={t("feedbackPlaceholder")} type="text" value={feedback.message} />
       </label>
       <div className="row wrap">
         <label className="row" style={{ gap: "0.4rem" }}>
-          <input aria-label="Share with guardian" checked={feedback.shared} onChange={(event) => setFeedback((current) => ({ ...current, shared: event.target.checked }))} type="checkbox" />
-          <span>shared_with_guardian</span>
+          <input aria-label={t("shareWithGuardianAria")} checked={feedback.shared} onChange={(event) => setFeedback((current) => ({ ...current, shared: event.target.checked }))} type="checkbox" />
+          <span>{t("sharedWithGuardian")}</span>
         </label>
         <button className="btn btn--sm" data-testid="feedback-add" disabled={busy !== null || feedback.message.trim() === ""} onClick={() => void call("feedback", `/club/academy/${encodeURIComponent(ident)}/plans/${encodeURIComponent(plan)}/feedback`, { body: { message: feedback.message.trim(), shared_with_guardian: feedback.shared } })} type="button">
-          {busy === "feedback" ? "Writing…" : "Add note"}
+          {busy === "feedback" ? t("writing") : t("addNote")}
         </button>
       </div>
       <p className="muted" style={{ fontSize: "0.82rem" }}>
-        A note withheld from the guardian stays counted on this page rather than vanishing from it: `withheld.coach_feedback` is the tenant&apos;s own total of what you have written that a family cannot see.
+        {t("withheldNote")}
       </p>
 
-      <h3 className="panel__title">Close the plan</h3>
+      <h3 className="panel__title">{t("closePlanTitle")}</h3>
       <div className="row wrap">
         {(["paused", "closed"] as const).map((status) => (
           <button className="btn btn--sm btn--ghost" data-status={status} disabled={busy !== null} key={status} onClick={() => void call(`status-${status}`, `/club/academy/${encodeURIComponent(ident)}/plans/${encodeURIComponent(plan)}`, { body: { status }, method: "PATCH" })} type="button">
-            Mark {status}
+            {t("markStatus", { status })}
           </button>
         ))}
         <span className="muted" style={{ fontSize: "0.82rem" }}>
-          Closing frees the child&apos;s seat for a new plan and refuses further writes to this one.
+          {t("closingNote")}
         </span>
       </div>
       <Answer note={note} />
