@@ -16,12 +16,15 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
  * A query page is not a content page: it is the same thin shell with a different word in it, so
  * it stays out of the index while its result links remain crawlable.
  */
-export const metadata: Metadata = {
-  title: "Search the football world",
-  description: "One box across generated competitions, clubs, players, fixtures and reports.",
-  robots: { index: false, follow: true },
-  alternates: { canonical: absolute("/world/search") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const tw = await getTranslations("world");
+  return {
+    title: tw("searchMetaTitle"),
+    description: tw("searchMetaDescription"),
+    robots: { index: false, follow: true },
+    alternates: { canonical: absolute("/world/search") },
+  };
+}
 
 const TYPES = ["competitions", "teams", "players", "matches", "news"] as const;
 
@@ -36,23 +39,23 @@ export default async function WorldSearchPage({ searchParams }: Props) {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
-        eyebrow="One box, five tables (spec §56)"
-        title="Search the football world"
-        lede="Terms are matched against the stored rows and every hit reports the fields that made it rank. No provider call, no web fetch."
+        eyebrow={tw("searchEyebrow")}
+        title={tw("searchTitle")}
+        lede={tw("searchLede")}
         provenance={result?.ok ? result.data : undefined}
       >
         <form action="/world/search" method="get" className="world-search" style={{ marginTop: "1rem" }} role="search">
           <input
-            aria-label="Search term"
+            aria-label={tw("searchAriaLabel")}
             className="input"
             defaultValue={term}
             maxLength={120}
             name="q"
-            placeholder="Try “Viremont”, “Ilja”, “Matchday 3”"
+            placeholder={tw("searchPlaceholder")}
             type="search"
           />
-          <select aria-label="Result types" className="select" defaultValue={query.types ?? ""} name="types">
-            <option value="">all types</option>
+          <select aria-label={tw("searchTypesAria")} className="select" defaultValue={query.types ?? ""} name="types">
+            <option value="">{tw("searchAllTypes")}</option>
             {TYPES.map((type) => (
               <option key={type} value={type}>
                 {type}
@@ -67,16 +70,17 @@ export default async function WorldSearchPage({ searchParams }: Props) {
 
       {!term && (
         <div className="empty">
-          <strong>Type something</strong>
+          <strong>{tw("searchEmptyTitle")}</strong>
           <span className="muted">
-            Search is empty on purpose: an empty query returns nothing rather than a list of everything, so the result count always means
-            something.
+            {tw("searchEmptyNote")}
           </span>
         </div>
       )}
 
       {result && !result.ok && result.status === 422 && (
-        <div className="notice notice--warn">{result.message} Keep the query between 1 and 120 characters.</div>
+        <div className="notice notice--warn">
+          {result.message} {tw("searchTooLong")}
+        </div>
       )}
       {result && !result.ok && result.status !== 422 && <WorldUnavailable message={result.message} />}
 
@@ -96,8 +100,11 @@ export default async function WorldSearchPage({ searchParams }: Props) {
             }}
           />
           <Panel
-            eyebrow={`${result.data.total} hit${result.data.total === 1 ? "" : "s"} for “${result.data.query}”`}
-            title="Results, ranked by term overlap"
+            eyebrow={tw("searchHitsEyebrow", {
+              total: result.data.total,
+              query: result.data.query,
+            })}
+            title={tw("searchResultsTitle")}
             action={
               result.data.types.length > 0 ? (
                 <div className="tag-list">

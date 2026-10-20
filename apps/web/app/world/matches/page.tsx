@@ -45,32 +45,32 @@ export default async function MatchesPage({ searchParams }: Props) {
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
-        lede={`${total.toLocaleString("en-GB")} fixtures. A row that has not been played carries NULL in the database, so it renders as “not played” rather than 0–0.`}
+        lede={tw("matchesLede", { count: total.toLocaleString("en-GB") })}
         provenance={result.data}
         title={tw("sectionFixturesLabel")}
       />
 
-      <Panel eyebrow={tc("filter")} title="By state">
+      <Panel eyebrow={tc("filter")} title={tw("matchesByStateTitle")}>
         <FilterChips active={query.status} base={BASE} label={tw("tableHeaderState")} options={statuses} param="status" query={query} />
       </Panel>
 
       {items.length === 0 ? (
         <div className="empty">
-          <strong>No fixture matches that filter</strong>
+          <strong>{tw("matchesEmptyTitle")}</strong>
           <Link className="btn btn--sm" href={BASE}>
-            Clear filter
+            {tw("matchesClearFilter")}
           </Link>
         </div>
       ) : (
-        <Panel eyebrow="Names link to the match centre" title="Every fixture">
+        <Panel eyebrow={tw("matchesPanelEyebrow")} title={tw("matchesPanelTitle")}>
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Kick-off</th>
-                  <th scope="col">Competition</th>
-                  <th scope="col">Fixture</th>
-                  <th scope="col">Score</th>
+                  <th scope="col">{tw("thKickoff")}</th>
+                  <th scope="col">{tw("thCompetition")}</th>
+                  <th scope="col">{tw("thFixture")}</th>
+                  <th scope="col">{tw("thScore")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -95,7 +95,7 @@ export default async function MatchesPage({ searchParams }: Props) {
                           {row.home_goals}–{row.away_goals}
                         </Link>
                       ) : (
-                        <span className="unavailable">not played</span>
+                        <span className="unavailable">{tw("notPlayed")}</span>
                       )}
                     </td>
                   </tr>

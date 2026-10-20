@@ -39,37 +39,37 @@ export default async function CompetitionsPage({ searchParams }: Props) {
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
-        lede={`${total.toLocaleString("en-GB")} generated competitions. A cup reports the clubs its drawn fixtures name, not a membership table.`}
+        lede={tw("competitionsLede", { count: total.toLocaleString("en-GB") })}
         provenance={result.data}
         title={tw("sectionCompetitionsLabel")}
       />
 
       {kinds.length > 1 && (
-        <Panel eyebrow={tc("filter")} title="By format">
-          <FilterChips active={query.kind} base={BASE} label="Format" options={kinds} param="kind" query={query} />
+        <Panel eyebrow={tc("filter")} title={tw("competitionsByFormatTitle")}>
+          <FilterChips active={query.kind} base={BASE} label={tw("competitionsFormatLabel")} options={kinds} param="kind" query={query} />
         </Panel>
       )}
 
       {items.length === 0 ? (
         <div className="empty">
-          <strong>No competition matches that filter</strong>
-          <span className="muted">The table is not empty — the filter is.</span>
+          <strong>{tw("competitionsEmptyTitle")}</strong>
+          <span className="muted">{tw("competitionsEmptyNote")}</span>
           <Link className="btn btn--sm" href={BASE}>
-            Clear filter
+            {tw("competitionsClearFilter")}
           </Link>
         </div>
       ) : (
-        <Panel eyebrow="Names link to the competition page" title="All competitions">
+        <Panel eyebrow={tw("competitionsPanelEyebrow")} title={tw("competitionsPanelTitle")}>
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
                   <th scope="col">{tc("name")}</th>
-                  <th scope="col">Format</th>
-                  <th scope="col">Region</th>
-                  <th scope="col">Season</th>
-                  <th scope="col">Tier</th>
-                  <th scope="col">Clubs</th>
+                  <th scope="col">{tw("thFormat")}</th>
+                  <th scope="col">{tw("thRegion")}</th>
+                  <th scope="col">{tw("thSeason")}</th>
+                  <th scope="col">{tw("thTier")}</th>
+                  <th scope="col">{tw("thClubs")}</th>
                 </tr>
               </thead>
               <tbody>

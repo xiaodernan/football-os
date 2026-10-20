@@ -45,25 +45,25 @@ export default async function NewsPage({ searchParams }: Props) {
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
-        lede={`${total.toLocaleString("en-GB")} generated reports. Nothing here was fetched from a wire service — the source is the local generator, and each article says so.`}
+        lede={tw("newsLede", { count: total.toLocaleString("en-GB") })}
         provenance={result.data}
         title={tw("sectionReportsLabel")}
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow={tc("filter")} title="By kind of writing">
-          <FilterChips active={query.category} base={BASE} label="Category" options={categories} param="category" query={query} />
+        <Panel eyebrow={tc("filter")} title={tw("newsByKindTitle")}>
+          <FilterChips active={query.category} base={BASE} label={tw("newsCategoryLabel")} options={categories} param="category" query={query} />
         </Panel>
-        <Panel eyebrow={tc("filter")} title="By claim level">
-          <FilterChips active={query.claim_class} base={BASE} label="Claim class" options={claimClasses} param="claim_class" query={query} />
+        <Panel eyebrow={tc("filter")} title={tw("newsByClaimTitle")}>
+          <FilterChips active={query.claim_class} base={BASE} label={tw("newsClaimClassLabel")} options={claimClasses} param="claim_class" query={query} />
         </Panel>
       </div>
 
       {items.length === 0 ? (
         <div className="empty">
-          <strong>No report matches those filters</strong>
+          <strong>{tw("newsEmptyTitle")}</strong>
           <Link className="btn btn--sm" href={BASE}>
-            Clear filters
+            {tw("newsClearFilters")}
           </Link>
         </div>
       ) : (
@@ -96,8 +96,7 @@ export default async function NewsPage({ searchParams }: Props) {
                   </div>
                 )}
                 <p className="muted world-section-note">
-                  source: <span className="mono">{article.source_name}</span>
-                  {article.author ? ` · by ${article.author}` : ""}
+                  {tw("newsSourceNote", { source: article.source_name })}
                 </p>
               </div>
             </li>
