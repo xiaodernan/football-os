@@ -10,16 +10,18 @@ import type { CapabilitiesResponse, Player, ProgressOverview } from "@/lib/types
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Watch. Understand. Train. Play. Manage. Become.",
-  description:
-    "FOOTBALL OS is a football operating system for fans, players and coaches. Today the AI player-coach vertical slice works end to end; the live football-world modules are still being built.",
-};
+// `generateMetadata` rather than a constant — the tab follows the reader's locale instead of
+// staying the one string that never moves.
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("home");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
 export default async function HomePage() {
-  const [user, capabilitiesResult, t, ta, tn, tc] = await Promise.all([
+  const [user, capabilitiesResult, t, td, ta, tn, tc] = await Promise.all([
     currentUser(),
     serverFetch<CapabilitiesResponse>("/capabilities"),
+    getTranslations("home"),
     getTranslations("disclaimer"),
     getTranslations("auth"),
     getTranslations("nav"),
@@ -56,14 +58,11 @@ export default async function HomePage() {
         <div className="stack" style={{ gap: "1.1rem" }}>
           <span className="eyebrow">FOOTBALL OS</span>
           <h1 className="h1" style={{ textTransform: "uppercase", lineHeight: 1.1 }}>
-            Watch. Understand. Train.
+            {t("heroLine1")}
             <br />
-            Play. Manage. Become.
+            {t("heroLine2")}
           </h1>
-          <p className="lede">
-            One system for the whole football journey — follow the game, learn it, train against an
-            explainable AI coach, and watch a player profile grow from real sessions.
-          </p>
+          <p className="lede">{t("heroLede")}</p>
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             {user ? (
               <Link className="btn btn--primary" href="/my-football">
@@ -75,7 +74,7 @@ export default async function HomePage() {
               </Link>
             )}
             <Link className="btn btn--ghost" href="/training">
-              Explore training
+              {t("heroExploreTraining")}
             </Link>
           </div>
         </div>
@@ -84,30 +83,41 @@ export default async function HomePage() {
       {/* Modules: three honest 'not built' columns + a real My Football column */}
       <section className="section grid grid-2">
         <NotBuiltPanel
-          title="Live now"
-          eyebrow="Matchday"
-          body="Live scores are not shown because no match feed is licensed yet. This module ships with M3 Football World."
+          title={t("moduleLiveTitle")}
+          eyebrow={t("moduleLiveEyebrow")}
+          body={t("moduleLiveBody")}
+          badge={t("notBuiltBadge")}
+          hint={t("notBuiltHint")}
+          emptyTitle={t("notBuiltTitle")}
         />
         <NotBuiltPanel
-          title="Football world"
-          eyebrow="M3 · Roadmap"
+          title={t("moduleWorldTitle")}
+          eyebrow={t("moduleWorldEyebrow")}
           body={
             capabilities
-              ? `Football World ships with M3 (module status: ${capabilities.m3_football_world ? "on" : "not built"}). No fixtures, tables or transfers are displayed because no data source is connected.`
-              : "Football World ships with M3. No fixtures or transfers are shown — the capabilities endpoint is currently unreachable."
+              ? t("moduleWorldBodyOn", {
+                  status: capabilities.m3_football_world ? "on" : "not built",
+                })
+              : t("moduleWorldBodyOff")
           }
+          badge={t("notBuiltBadge")}
+          hint={t("notBuiltHint")}
+          emptyTitle={t("notBuiltTitle")}
         />
         <NotBuiltPanel
-          title="News"
-          eyebrow="M3 · Roadmap"
-          body="No news headlines are rendered because no provider is licensed. When it lands, every item will carry its source."
+          title={t("moduleNewsTitle")}
+          eyebrow={t("moduleNewsEyebrow")}
+          body={t("moduleNewsBody")}
+          badge={t("notBuiltBadge")}
+          hint={t("notBuiltHint")}
+          emptyTitle={t("notBuiltTitle")}
         />
 
-        <Panel title="My football" eyebrow="M1 · Available today">
+        <Panel title={t("myFootballTitle")} eyebrow={t("myFootballEyebrow")}>
           {!user ? (
             <Empty
-              title="Sign in to see your football"
-              body="Your OVR, streak and completed sessions appear here once you have an account and a player profile."
+              title={t("signInTitle")}
+              body={t("signInBody")}
               href="/login"
               cta={ta("signIn")}
             />
@@ -121,14 +131,26 @@ export default async function HomePage() {
                   <strong>{overview.player.name}</strong>
                   <span className="muted" style={{ fontSize: "0.85rem" }}>
                     {overview.player.position} · {overview.player.archetype}
-                    {players?.[0]?.is_demo_data ? " · demo data" : ""}
+                    {players?.[0]?.is_demo_data ? t("demoDataSuffix") : ""}
                   </span>
                 </div>
               </div>
               <div className="grid grid-3">
-                <Stat label="OVR" value={<span className="num">{overview.player.overall}</span>} hint={`potential ${overview.player.potential}`} />
-                <Stat label="Streak" value={<span className="num">{overview.training.streak_days}</span>} hint="days" />
-                <Stat label="Sessions" value={<span className="num">{overview.training.sessions_completed}</span>} hint="completed" />
+                <Stat
+                  label="OVR"
+                  value={<span className="num">{overview.player.overall}</span>}
+                  hint={t("statPotential", { value: overview.player.potential })}
+                />
+                <Stat
+                  label={t("statStreak")}
+                  value={<span className="num">{overview.training.streak_days}</span>}
+                  hint={t("statStreakHint")}
+                />
+                <Stat
+                  label={t("statSessions")}
+                  value={<span className="num">{overview.training.sessions_completed}</span>}
+                  hint={t("statSessionsHint")}
+                />
               </div>
               <Link className="btn btn--sm" href="/my-football">
                 {tc("open")} {tn("myFootball")}
@@ -136,10 +158,10 @@ export default async function HomePage() {
             </div>
           ) : (
             <Empty
-              title="No player yet"
-              body="Create your football identity to start earning XP and growing attributes."
+              title={t("noPlayerTitle")}
+              body={t("noPlayerBody")}
               href="/onboarding"
-              cta="Set up my player"
+              cta={t("noPlayerCta")}
             />
           )}
         </Panel>
@@ -147,61 +169,52 @@ export default async function HomePage() {
 
       {/* What works today */}
       <section className="section">
-        <p className="eyebrow">Available now</p>
-        <h2 className="h2">What works today</h2>
+        <p className="eyebrow">{t("availableNow")}</p>
+        <h2 className="h2">{t("whatWorksTitle")}</h2>
         <p className="lede" style={{ marginTop: "0.5rem" }}>
-          The M1 player &amp; AI-coach vertical slice runs end to end. Everything below uses real
-          requests against the backend — nothing here is faked.
+          {t("whatWorksLede")}
         </p>
         <div className="grid grid-2 section">
           <FeaturePanel
-            title="Training academy"
-            body="A library of drills with setup, instructions, coaching points, common mistakes and progressions."
+            title={t("featureTrainingTitle")}
+            body={t("featureTrainingBody")}
             href="/training"
-            cta="Browse drills"
+            cta={t("featureTrainingCta")}
           />
           <FeaturePanel
-            title="Explainable AI coach"
-            body="Ask for a recommendation and get the chosen drill plus the reasons behind it — every answer is labelled demo vs live."
+            title={t("featureCoachTitle")}
+            body={t("featureCoachBody")}
             href="/coach"
-            cta="Talk to the coach"
+            cta={t("featureCoachCta")}
           />
           <FeaturePanel
-            title="XP & attribute progression"
-            body="Completing sessions awards XP and nudges the attributes a drill targets, so your OVR is earned, not invented."
+            title={t("featureProgressTitle")}
+            body={t("featureProgressBody")}
             href="/progress"
-            cta="See progress"
+            cta={t("featureProgressCta")}
           />
           <FeaturePanel
-            title="Own your data"
-            body="Export your sessions and attributes, or delete everything you have stored, straight from settings."
+            title={t("featureDataTitle")}
+            body={t("featureDataBody")}
             href="/settings"
-            cta="Manage data"
+            cta={t("featureDataCta")}
           />
         </div>
       </section>
 
       {/* How we treat data */}
       <section className="section">
-        <p className="eyebrow">Policy</p>
-        <h2 className="h2">How we treat data</h2>
+        <p className="eyebrow">{t("policyEyebrow")}</p>
+        <h2 className="h2">{t("policyTitle")}</h2>
         <div className="grid grid-3 section">
-          <Panel title="Synthetic demo only">
-            <p className="muted">
-              Player profiles, attributes and content in this build are synthetic demo data. They
-              are not real athletes and are labelled as demo wherever they appear.
-            </p>
+          <Panel title={t("policySyntheticTitle")}>
+            <p className="muted">{t("policySyntheticBody")}</p>
           </Panel>
-          <Panel title="No licensed assets">
-            <p className="muted">
-              No club, league, player imagery or broadcast assets are used or claimed. Anything that
-              would need a licence simply is not shown yet.
-            </p>
+          <Panel title={t("policyLicensedTitle")}>
+            <p className="muted">{t("policyLicensedBody")}</p>
           </Panel>
-          <Panel title="AI is an estimate">
-            <p className="muted">
-              {t("aiEstimate")}
-            </p>
+          <Panel title={t("policyAiTitle")}>
+            <p className="muted">{td("aiEstimate")}</p>
           </Panel>
         </div>
       </section>
@@ -209,18 +222,32 @@ export default async function HomePage() {
   );
 }
 
-function NotBuiltPanel({ title, eyebrow, body }: { title: string; eyebrow: string; body: string }) {
+function NotBuiltPanel({
+  title,
+  eyebrow,
+  body,
+  badge,
+  hint,
+  emptyTitle,
+}: {
+  title: string;
+  eyebrow: string;
+  body: string;
+  badge: string;
+  hint: string;
+  emptyTitle: string;
+}) {
   return (
     <Panel
       title={title}
       eyebrow={eyebrow}
       action={
-        <span className="badge badge--demo" title="This module is on the roadmap and not implemented yet.">
-          NOT BUILT
+        <span className="badge badge--demo" title={hint}>
+          {badge}
         </span>
       }
     >
-      <Empty title="Not built yet" body={body} />
+      <Empty title={emptyTitle} body={body} />
     </Panel>
   );
 }
