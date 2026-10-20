@@ -33,11 +33,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = await load(slug);
   const team = result.ok ? result.data.team : null;
   const name = team?.name ?? slug.replace(/-/g, " ");
+  const t = await getTranslations("worldTeam");
   return pageMetadata({
-    title: `${name} — club profile`,
+    title: `${name}${t("metaTitleSuffix")}`,
     description: team
-      ? `${team.summary.slice(0, 220)} Every figure is generated demo data.`
-      : "Club profile in the FOOTBALL OS generated football world.",
+      ? `${team.summary.slice(0, 220)}${t("metaDescriptionSuffix")}`
+      : t("metaDescriptionFallback"),
     path: `/team/${slug}`,
   });
 }
@@ -45,6 +46,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function TeamDetailPage({ params }: Props) {
   const { slug } = await params;
   const tc = await getTranslations("common");
+  const t = await getTranslations("worldTeam");
+  const tw = await getTranslations("world");
   const result = await load(slug);
 
   if (!result.ok) {
@@ -65,8 +68,8 @@ export default async function TeamDetailPage({ params }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world/teams", label: "All clubs" }}
-        eyebrow={`Football World · club · ${team.nation}`}
+        back={{ href: "/world/teams", label: t("backLabel") }}
+        eyebrow={t("eyebrow", { world: tw("title"), nation: team.nation })}
         lede={team.summary}
         provenance={result.data}
         title={team.name}
@@ -77,7 +80,7 @@ export default async function TeamDetailPage({ params }: Props) {
             <span className="chip mono">{team.short_name}</span>
             <span className="chip">{team.formation}</span>
             <span className="chip num">{team.overall} OVR</span>
-            <span className="chip num">{team.squad_size} in squad</span>
+            <span className="chip num">{t("squadChip", { count: team.squad_size })}</span>
             <span className="chip">
               <CompetitionLink competition={team.competition} />
             </span>
@@ -103,60 +106,59 @@ export default async function TeamDetailPage({ params }: Props) {
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow="Ground & staff" title="Identity">
+        <Panel eyebrow={t("identityEyebrow")} title={t("identityTitle")}>
           <KeyValueGrid
             rows={[
-              ["City", team.city],
-              ["Ground", team.stadium],
-              ["Capacity", team.capacity.toLocaleString("en-GB")],
-              ["Manager", team.manager_name],
-              ["Shape", <span className="mono" key="shape">{team.formation}</span>],
-              ["Season", team.season],
+              [t("rowCity"), team.city],
+              [t("rowGround"), team.stadium],
+              [t("rowCapacity"), team.capacity.toLocaleString("en-GB")],
+              [t("rowManager"), team.manager_name],
+              [t("rowShape"), <span className="mono" key="shape">{team.formation}</span>],
+              [t("rowSeason"), team.season],
               [
-                "League",
+                t("rowLeague"),
                 team.competition ? (
                   <Link className="world-link" href={team.competition.path}>
                     {team.competition.name}
                   </Link>
                 ) : (
-                  <span className="unavailable">no league</span>
+                  <span className="unavailable">{t("noLeague")}</span>
                 ),
               ],
               [
-                "Mean overall",
-                <span key="mean-overall" title="Averaged over the stored squad rows — not an independent rating.">{team.overall}</span>,
+                t("rowMeanOverall"),
+                <span key="mean-overall" title={t("meanOverallTitle")}>{team.overall}</span>,
               ],
             ]}
           />
         </Panel>
 
-        <Panel eyebrow="How to read this club" title="Derivation notes">
+        <Panel eyebrow={t("derivationEyebrow")} title={t("derivationTitle")}>
           <div className="stack">
-            <ReasonList items={squadNotes} title="What these numbers are" />
+            <ReasonList items={squadNotes} title={t("derivationReasonTitle")} />
             <p className="muted world-section-note">
-              {played.length} played and {upcoming.length} unplayed fixtures in this view — the 40 most recent by kick-off. Unplayed rows
-              show a kick-off time and nothing else.
+              {t("derivationNote", { played: played.length, upcoming: upcoming.length })}
             </p>
           </div>
         </Panel>
       </div>
 
-      <Panel eyebrow={`${squad.length} registered`} title="Squad">
+      <Panel eyebrow={t("squadEyebrow", { count: squad.length })} title={t("squadTitle")}>
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Pos</th>
+                <th scope="col">{t("thPos")}</th>
                 <th scope="col">{tc("personName")}</th>
-                <th scope="col">Age</th>
-                <th scope="col">Nation</th>
-                <th scope="col">Foot</th>
-                <th scope="col">OVR</th>
-                <th scope="col">POT</th>
-                <th scope="col">Goals</th>
-                <th scope="col">Assists</th>
-                <th scope="col">Minutes</th>
-                <th scope="col">Rating</th>
+                <th scope="col">{t("thAge")}</th>
+                <th scope="col">{t("thNation")}</th>
+                <th scope="col">{t("thFoot")}</th>
+                <th scope="col">{t("thOvr")}</th>
+                <th scope="col">{t("thPot")}</th>
+                <th scope="col">{t("thGoals")}</th>
+                <th scope="col">{t("thAssists")}</th>
+                <th scope="col">{t("thMinutes")}</th>
+                <th scope="col">{t("thRating")}</th>
               </tr>
             </thead>
             <tbody>
@@ -183,12 +185,12 @@ export default async function TeamDetailPage({ params }: Props) {
           </table>
         </div>
         <p className="muted world-section-note" style={{ marginTop: "0.6rem" }}>
-          Ordered by overall, then name. Height is omitted where the generator left it blank rather than shown as 0 cm.
+          {t("squadNote")}
         </p>
       </Panel>
 
       <div className="grid grid-2">
-        <Panel eyebrow={`${played.length} results`} title="Played">
+        <Panel eyebrow={t("playedEyebrow", { count: played.length })} title={t("playedTitle")}>
           {played.length > 0 ? (
             <ul className="world-list">
               {played.slice(0, 12).map((match) => (
@@ -196,10 +198,10 @@ export default async function TeamDetailPage({ params }: Props) {
               ))}
             </ul>
           ) : (
-            <span className="unavailable">No completed fixture stored for this club.</span>
+            <span className="unavailable">{t("noCompletedFixture")}</span>
           )}
         </Panel>
-        <Panel eyebrow={`${upcoming.length} to come`} title="Scheduled">
+        <Panel eyebrow={t("upcomingEyebrow", { count: upcoming.length })} title={t("upcomingTitle")}>
           {upcoming.length > 0 ? (
             <ul className="world-list">
               {upcoming.slice(0, 12).map((match) => (
@@ -207,13 +209,13 @@ export default async function TeamDetailPage({ params }: Props) {
               ))}
             </ul>
           ) : (
-            <span className="unavailable">Nothing scheduled in this view.</span>
+            <span className="unavailable">{t("nothingScheduled")}</span>
           )}
         </Panel>
       </div>
 
       {Object.keys(lineGroups).length > 0 && (
-        <Panel eyebrow="From real_player_match_stats" title="Per-match lines, most recent games">
+        <Panel eyebrow={t("linesEyebrow")} title={t("linesTitle")}>
           <div className="stack">
             {Object.entries(lineGroups)
               .slice(0, 3)
@@ -221,22 +223,26 @@ export default async function TeamDetailPage({ params }: Props) {
                 <div className="stack-sm" key={matchSlug}>
                   <p className="eyebrow">
                     <Link className="world-link" href={lines[0]?.match_path ?? "/world/matches"}>
-                      {formatDay(lines[0]?.kickoff_at)} · {lines[0]?.competition?.name ?? "match"} · {lines.length} lines
+                      {t("linesLink", {
+                        day: formatDay(lines[0]?.kickoff_at),
+                        competition: lines[0]?.competition?.name ?? t("matchFallback"),
+                        count: lines.length,
+                      })}
                     </Link>
                   </p>
                   <div className="world-tablewrap">
                     <table className="table">
                       <thead>
                         <tr>
-                          <th scope="col">Player</th>
-                          <th scope="col">Role</th>
-                          <th scope="col">Min</th>
-                          <th scope="col">G</th>
-                          <th scope="col">A</th>
-                          <th scope="col">Shots</th>
-                          <th scope="col">Passes</th>
-                          <th scope="col">Tkl</th>
-                          <th scope="col">Rating</th>
+                          <th scope="col">{t("thPlayer")}</th>
+                          <th scope="col">{t("thRole")}</th>
+                          <th scope="col">{t("thMin")}</th>
+                          <th scope="col">{t("thG")}</th>
+                          <th scope="col">{t("thA")}</th>
+                          <th scope="col">{t("thShots")}</th>
+                          <th scope="col">{t("thPasses")}</th>
+                          <th scope="col">{t("thTkl")}</th>
+                          <th scope="col">{t("thRating")}</th>
                         </tr>
                       </thead>
                       <tbody>

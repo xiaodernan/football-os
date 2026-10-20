@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel, ReasonList } from "@/components/ui";
 import {
@@ -33,18 +34,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const result = await load(slug);
   const match = result.ok ? result.data.match : null;
-  const title = match ? `${match.home?.name ?? "Home"} v ${match.away?.name ?? "Away"}` : slug.replace(/-/g, " ");
+  const t = await getTranslations("worldMatch");
+  const title = match
+    ? `${match.home?.name ?? t("homeFallback")} v ${match.away?.name ?? t("awayFallback")}`
+    : slug.replace(/-/g, " ");
   return pageMetadata({
-    title: `${title} — match centre`,
+    title: `${title}${t("metaTitleSuffix")}`,
     description: match
-      ? `${match.round_label}, ${match.season}. ${match.status === "completed" ? match.summary : "Scheduled: no score exists for this fixture yet."}`
-      : "Match centre in the FOOTBALL OS generated football world.",
+      ? match.status === "completed"
+        ? t("metaDescriptionPlayed", { round: match.round_label, season: match.season, summary: match.summary })
+        : t("metaDescriptionScheduled", { round: match.round_label, season: match.season })
+      : t("metaDescriptionFallback"),
     path: `/match/${slug}`,
   });
 }
 
 export default async function MatchDetailPage({ params }: Props) {
   const { slug } = await params;
+  const t = await getTranslations("worldMatch");
+  const tw = await getTranslations("world");
   const result = await load(slug);
 
   if (!result.ok) {
@@ -54,7 +62,7 @@ export default async function MatchDetailPage({ params }: Props) {
 
   const { match, line_ups: lineUps, stat_lines: statLines, available, note, method, goals_check: goalsCheck } = result.data;
   const path = `/match/${match.slug}`;
-  const title = `${match.home?.name ?? "Home"} v ${match.away?.name ?? "Away"}`;
+  const title = `${match.home?.name ?? t("homeFallback")} v ${match.away?.name ?? t("awayFallback")}`;
   const metrics = Object.entries(match.stats).filter(
     ([key, value]) => key !== "method" && (typeof value === "number" || isPair(value)),
   ) as [string, number | StatPair][];
@@ -63,8 +71,12 @@ export default async function MatchDetailPage({ params }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world/matches", label: "All fixtures" }}
-        eyebrow={`Football World · ${match.competition?.name ?? "fixture"} · ${match.round_label}`}
+        back={{ href: "/world/matches", label: t("backLabel") }}
+        eyebrow={t("eyebrow", {
+          world: tw("title"),
+          competition: match.competition?.name ?? t("fixtureFallback"),
+          round: match.round_label,
+        })}
         lede={match.summary}
         provenance={result.data}
         title={title}
@@ -72,7 +84,7 @@ export default async function MatchDetailPage({ params }: Props) {
         <div className="world-scoreline" style={{ marginTop: "0.9rem" }}>
           <div className="world-scoreline__side">
             <EntityLink href={match.home?.path} label={match.home?.name} />
-            <span className="muted world-section-note">home</span>
+            <span className="muted world-section-note">{t("homeLabel")}</span>
           </div>
           <div className="world-scoreline__score">
             {played ? (
@@ -80,13 +92,13 @@ export default async function MatchDetailPage({ params }: Props) {
                 {match.home_goals} – {match.away_goals}
               </span>
             ) : (
-              <span className="unavailable">no score yet</span>
+              <span className="unavailable">{t("noScoreYet")}</span>
             )}
-            <span className="eyebrow">{played ? "full time" : match.status}</span>
+            <span className="eyebrow">{played ? t("fullTime") : match.status}</span>
           </div>
           <div className="world-scoreline__side world-scoreline__side--away">
             <EntityLink href={match.away?.path} label={match.away?.name} />
-            <span className="muted world-section-note">away</span>
+            <span className="muted world-section-note">{t("awayLabel")}</span>
           </div>
         </div>
       </WorldHead>
@@ -113,29 +125,28 @@ export default async function MatchDetailPage({ params }: Props) {
 
       {!played && (
         <div className="notice notice--warn">
-          {note ?? "This fixture has not been played, so there is nothing to report."} A scheduled row stores NULL for the score, so no
-          placeholder is rendered — see the kick-off time below.
+          {note ?? t("noticeScheduled")} {t("noticeScheduledTail")}
         </div>
       )}
 
       <div className="grid grid-2">
-        <Panel eyebrow="Fixture" title="When &amp; where">
+        <Panel eyebrow={t("fixtureEyebrow")} title={t("whenWhereTitle")}>
           <KeyValueGrid
             rows={[
-              ["Kick-off", <span className="mono" key="kickoff">{formatMoment(match.kickoff_at)}</span>],
-              ["Venue", `${match.venue.name}, ${match.venue.city}`],
-              ["Competition", match.competition ? <Link className="world-link" href={match.competition.path}>{match.competition.name}</Link> : "—"],
-              ["Season", match.season],
-              ["Round", match.round_label],
-              ["Status", match.status],
-              ["Attendance", typeof match.stats.attendance === "number" ? match.stats.attendance.toLocaleString("en-GB") : <span className="unavailable">not recorded</span>],
+              [t("rowKickoff"), <span className="mono" key="kickoff">{formatMoment(match.kickoff_at)}</span>],
+              [t("rowVenue"), `${match.venue.name}, ${match.venue.city}`],
+              [t("rowCompetition"), match.competition ? <Link className="world-link" href={match.competition.path}>{match.competition.name}</Link> : "—"],
+              [t("rowSeason"), match.season],
+              [t("rowRound"), match.round_label],
+              [t("rowStatus"), match.status],
+              [t("rowAttendance"), typeof match.stats.attendance === "number" ? match.stats.attendance.toLocaleString("en-GB") : <span className="unavailable">{t("notRecorded")}</span>],
             ]}
           />
         </Panel>
 
         <Panel
-          eyebrow="The score is made of these"
-          title="Team statistics"
+          eyebrow={t("statsEyebrow")}
+          title={t("statsTitle")}
           action={<OriginBadge provenance={match} />}
         >
           {metrics.length > 0 ? (
@@ -143,9 +154,9 @@ export default async function MatchDetailPage({ params }: Props) {
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">Home</th>
-                    <th scope="col">Metric</th>
-                    <th scope="col">Away</th>
+                    <th scope="col">{t("thHome")}</th>
+                    <th scope="col">{t("thMetric")}</th>
+                    <th scope="col">{t("thAway")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -166,20 +177,20 @@ export default async function MatchDetailPage({ params }: Props) {
               </table>
             </div>
           ) : (
-            <span className="unavailable">No team statistics stored: this fixture has not been played.</span>
+            <span className="unavailable">{t("noStats")}</span>
           )}
           {played && (
             <div className="row wrap" style={{ gap: "0.5rem", marginTop: "0.6rem" }}>
-              <span className="chip" title="Every goal in the score must belong to a player line.">
-                goals in score: {goalsCheck.match_goals}
+              <span className="chip" title={t("goalsInScoreTitle")}>
+                {t("goalsInScore", { count: goalsCheck.match_goals })}
               </span>
-              <span className="chip" title="Summed from the per-player lines.">
-                goals in lines: {goalsCheck.line_up_goals}
+              <span className="chip" title={t("goalsInLinesTitle")}>
+                {t("goalsInLines", { count: goalsCheck.line_up_goals })}
               </span>
               {goalsCheck.match_goals === goalsCheck.line_up_goals ? (
-                <span className="badge badge--live">RECONCILES</span>
+                <span className="badge badge--live">{t("reconciles")}</span>
               ) : (
-                <span className="badge badge--demo">DOES NOT RECONCILE</span>
+                <span className="badge badge--demo">{t("doesNotReconcile")}</span>
               )}
             </div>
           )}
@@ -192,25 +203,29 @@ export default async function MatchDetailPage({ params }: Props) {
             const group = lineUps[side];
             return (
               <Panel
-                eyebrow={`${side} · ${group.starters.length} starters, ${group.substitutes.length} used from the bench`}
-                title={group.team?.name ?? "Team"}
+                eyebrow={t("lineUpEyebrow", {
+                  side,
+                  starters: group.starters.length,
+                  substitutes: group.substitutes.length,
+                })}
+                title={group.team?.name ?? t("teamFallback")}
                 key={side}
               >
                 <div className="world-tablewrap">
                   <table className="table">
                     <thead>
                       <tr>
-                        <th scope="col">Role</th>
-                        <th scope="col">Player</th>
-                        <th scope="col">Pos</th>
-                        <th scope="col">Min</th>
-                        <th scope="col">G</th>
-                        <th scope="col">A</th>
-                        <th scope="col">Sh</th>
-                        <th scope="col">P</th>
-                        <th scope="col">Tk</th>
-                        <th scope="col">Sv</th>
-                        <th scope="col">Rt</th>
+                        <th scope="col">{t("thRole")}</th>
+                        <th scope="col">{t("thPlayer")}</th>
+                        <th scope="col">{t("thPos")}</th>
+                        <th scope="col">{t("thMin")}</th>
+                        <th scope="col">{t("thG")}</th>
+                        <th scope="col">{t("thA")}</th>
+                        <th scope="col">{t("thSh")}</th>
+                        <th scope="col">{t("thP")}</th>
+                        <th scope="col">{t("thTk")}</th>
+                        <th scope="col">{t("thSv")}</th>
+                        <th scope="col">{t("thRt")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -245,7 +260,7 @@ export default async function MatchDetailPage({ params }: Props) {
       )}
 
       {played && statLines.length > 0 && (
-        <Panel eyebrow={`${statLines.length} stored lines · nothing entered twice`} title="Who scored">
+        <Panel eyebrow={t("scorersEyebrow", { count: statLines.length })} title={t("scorersTitle")}>
           {statLines.some((line) => line.goals > 0) ? (
             <ul className="reasons">
               {statLines
@@ -254,24 +269,30 @@ export default async function MatchDetailPage({ params }: Props) {
                   <li className="reasons__item" key={line.id}>
                     <strong>{line.goals}×</strong> <EntityLink href={line.player?.path} label={line.player?.name} />{" "}
                     <span className="muted">
-                      ({line.team_id === match.home?.id ? "home" : "away"}, {line.minutes}&#39;, rating {line.rating.toFixed(2)})
+                      {t("scorersLine", {
+                        side: line.team_id === match.home?.id ? t("homeLabel") : t("awayLabel"),
+                        minutes: line.minutes,
+                        rating: line.rating.toFixed(2),
+                      })}
                     </span>
                   </li>
                 ))}
             </ul>
           ) : (
-            <span className="unavailable">No player line in this fixture records a goal.</span>
+            <span className="unavailable">{t("noScorer")}</span>
           )}
           <p className="muted world-section-note" style={{ marginTop: "0.6rem" }}>
-            The two tables above are these same rows split by side: the score, the team statistics and the per-player lines all come from
-            the one stored fixture, so they cannot disagree.
+            {t("scorersNote")}
           </p>
         </Panel>
       )}
 
       {Object.keys(method).length > 0 && (
-        <Panel eyebrow="No model, no feed" title="How each figure was produced">
-          <ReasonList items={Object.entries(method).map(([key, value]) => `${key}: ${value}`)} title="Formulas" />
+        <Panel eyebrow={t("methodEyebrow")} title={t("methodTitle")}>
+          <ReasonList
+            items={Object.entries(method).map(([key, value]) => `${key}: ${value}`)}
+            title={t("formulasTitle")}
+          />
         </Panel>
       )}
 
