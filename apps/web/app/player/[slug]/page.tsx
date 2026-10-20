@@ -29,6 +29,7 @@ async function load(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const tp = await getTranslations("worldPlayer");
   const result = await load(slug);
   const player = result.ok ? result.data.player : null;
   const name = player?.name ?? slug.replace(/-/g, " ");
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${name}${club ? ` — ${club}` : ""}`,
     description: player
       ? `${player.position} · ${player.overall} overall · ${player.goals} goals and ${player.assists} assists in ${player.minutes} minutes. ${player.summary.slice(0, 120)}`
-      : "Player profile in the FOOTBALL OS generated football world.",
+      : tp("metaDescriptionFallback"),
     path: `/player/${slug}`,
   });
 }
@@ -45,6 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PlayerDetailPage({ params }: Props) {
   const { slug } = await params;
   const tw = await getTranslations("world");
+  const tp = await getTranslations("worldPlayer");
   const result = await load(slug);
 
   if (!result.ok) {
@@ -71,8 +73,8 @@ export default async function PlayerDetailPage({ params }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world/players", label: "All players" }}
-        eyebrow={`Football World · ${player.position} · ${player.nation}`}
+        back={{ href: "/world/players", label: tp("backLabel") }}
+        eyebrow={tp("eyebrow", { world: tw("title"), position: player.position, nation: player.nation })}
         lede={player.summary}
         provenance={result.data}
         title={player.name}
@@ -80,23 +82,25 @@ export default async function PlayerDetailPage({ params }: Props) {
         <div className="tag-list" style={{ marginTop: "0.75rem" }}>
           <span className="world-pos">{player.position}</span>
           {player.secondary_positions.map((position) => (
-            <span className="world-pos" key={position} title="Secondary position">
+            <span className="world-pos" key={position} title={tp("secondaryPosition")}>
               {position}
             </span>
           ))}
           <span className="chip num">{player.overall} OVR</span>
-          <span className="chip num" title="Ceiling the generator assigned from age and level, not a scout's grade.">
+          <span className="chip num" title={tp("potentialHint")}>
             {player.potential} POT
           </span>
           <span className="chip">{player.age} yrs</span>
-          <span className="chip">{player.height_cm === null ? "height: not recorded" : `${player.height_cm} cm`}</span>
-          <span className="chip">{player.preferred_foot} foot</span>
+          <span className="chip">
+            {player.height_cm === null ? tp("heightNotRecorded") : tp("heightValue", { height: player.height_cm })}
+          </span>
+          <span className="chip">{tp("foot", { foot: player.preferred_foot })}</span>
           <span className="chip">{player.archetype}</span>
           <span className="chip">
-            club: <EntityLink href={player.club?.path} label={player.club?.name} fallback="no club" />
+            {tp("clubLabel")} <EntityLink href={player.club?.path} label={player.club?.name} fallback={tp("noClub")} />
           </span>
           <span className="chip">
-            league: <CompetitionLink competition={player.competition} />
+            {tp("leagueLabel")} <CompetitionLink competition={player.competition} />
           </span>
         </div>
       </WorldHead>
@@ -125,65 +129,62 @@ export default async function PlayerDetailPage({ params }: Props) {
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow={`${season.season} season`} title="Season totals">
+        <Panel eyebrow={tp("seasonEyebrow", { season: season.season })} title={tp("seasonTotalsTitle")}>
           <div className="stack">
             <KeyValueGrid
               rows={[
-                ["Appearances", season.appearances],
-                ["Starts", season.starts],
-                ["Minutes", season.minutes],
-                ["Goals", season.goals],
-                ["Assists", season.assists],
-                ["Clean sheets", season.clean_sheets],
-                ["Yellow / red", `${season.yellow_cards} / ${season.red_cards}`],
-                ["Rating", season.rating.toFixed(2)],
-                ["Matches stored", season.matches_stored],
-                ["Archetype fit", `${Math.round(player.archetype_match * 100)}%`],
-                ["Form index", player.form.toFixed(2)],
+                [tp("rowAppearances"), season.appearances],
+                [tp("rowStarts"), season.starts],
+                [tp("rowMinutes"), season.minutes],
+                [tp("rowGoals"), season.goals],
+                [tp("rowAssists"), season.assists],
+                [tp("rowCleanSheets"), season.clean_sheets],
+                [tp("rowCards"), `${season.yellow_cards} / ${season.red_cards}`],
+                [tp("rowRating"), season.rating.toFixed(2)],
+                [tp("rowMatchesStored"), season.matches_stored],
+                [tp("rowArchetypeFit"), `${Math.round(player.archetype_match * 100)}%`],
+                [tp("rowFormIndex"), player.form.toFixed(2)],
               ]}
             />
             <div className={`notice ${consistent ? "" : "notice--warn"}`}>
-              <span className="eyebrow">Consistency</span>
+              <span className="eyebrow">{tp("consistency")}</span>
               <p>
                 <span className="mono">{season.stored_from}</span> — {season.consistency_check}.
               </p>
             </div>
             {method.season_totals && (
               <p className="muted world-section-note">
-                season totals: <span className="mono">{method.season_totals}</span>
+                {tp("seasonTotalsNote", { formula: method.season_totals })}
               </p>
             )}
           </div>
         </Panel>
 
-        <Panel eyebrow={`highest six of ${attributes.length}`} title="Attribute profile">
+        <Panel eyebrow={tp("attributeEyebrow", { count: attributes.length })} title={tp("attributeTitle")}>
           <div className="stack">
-            <AttributeRadar label={`${player.name} attribute profile`} size={260} values={radar} />
-            <p className="muted world-section-note">
-              The full list is below; the radar shows the six highest so the shape is readable. Nothing here is a scouted grade — see the
-              derivation notes.
-            </p>
+            <AttributeRadar label={tp("radarLabel", { name: player.name })} size={260} values={radar} />
+            <p className="muted world-section-note">{tp("attributeNote")}</p>
           </div>
         </Panel>
       </div>
 
       <div className="grid grid-2">
-        <Panel eyebrow="Why each number is what it is" title="Derivation">
-          <ReasonList items={player.derivation_reasons} title="Rules that produced this profile" />
+        <Panel eyebrow={tp("derivationEyebrow")} title={tp("derivationTitle")}>
+          <ReasonList items={player.derivation_reasons} title={tp("derivationReasonTitle")} />
         </Panel>
-        <Panel eyebrow="recent_form" title="Last five appearances">
+        <Panel eyebrow={tp("recentFormEyebrow")} title={tp("recentFormTitle")}>
           {recentForm.length > 0 ? (
             <div className="world-tablewrap">
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Match</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Min</th>
-                    <th scope="col">G</th>
-                    <th scope="col">A</th>
-                    <th scope="col">Rating</th>
+                    <th scope="col">{tp("thDate")}</th>
+                    <th scope="col">{tp("thMatch")}</th>
+                    <th scope="col">{tp("thRole")}</th>
+                    <th scope="col">{tp("thMin")}</th>
+                    <th scope="col">{tp("thGoalsShort")}</th>
+                    <th scope="col">{tp("thAssistsShort")}</th>
+                    <th scope="col">{tp("rowRating")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -192,7 +193,7 @@ export default async function PlayerDetailPage({ params }: Props) {
                       <td className="muted mono">{formatDay(row.kickoff_at)}</td>
                       <td>
                         <Link className="world-link" href={row.match_path}>
-                          match centre
+                          {tp("matchCentre")}
                         </Link>
                       </td>
                       <td className="muted">{row.role}</td>
@@ -206,21 +207,24 @@ export default async function PlayerDetailPage({ params }: Props) {
               </table>
             </div>
           ) : (
-            <span className="unavailable">No appearance recorded in the stored lines.</span>
+            <span className="unavailable">{tp("noAppearance")}</span>
           )}
         </Panel>
       </div>
 
-      <Panel eyebrow={`${trainingLog.sessions} sessions · ${trainingLog.total_minutes} min`} title={tw("trainingLogLink")}>
+      <Panel
+        eyebrow={tp("trainingEyebrow", { sessions: trainingLog.sessions, minutes: trainingLog.total_minutes })}
+        title={tw("trainingLogLink")}
+      >
         <div className="stack">
           <KeyValueGrid
             rows={[
-              ["Sessions", trainingLog.sessions],
-              ["Minutes", trainingLog.total_minutes],
-              ["Load units", trainingLog.total_load],
-              ["Mean RPE", trainingLog.sessions === 0 ? "—" : trainingLog.mean_rpe],
-              ["Focus areas", trainingLog.categories.length === 0 ? "—" : trainingLog.categories.join(", ")],
-              ["Drills used", trainingLog.drills.length],
+              [tp("rowSessions"), trainingLog.sessions],
+              [tp("rowMinutes"), trainingLog.total_minutes],
+              [tp("rowLoadUnits"), trainingLog.total_load],
+              [tp("rowMeanRpe"), trainingLog.sessions === 0 ? "—" : trainingLog.mean_rpe],
+              [tp("rowFocusAreas"), trainingLog.categories.length === 0 ? "—" : trainingLog.categories.join(", ")],
+              [tp("rowDrillsUsed"), trainingLog.drills.length],
             ]}
           />
           {trainingLog.items.length > 0 ? (
@@ -228,13 +232,13 @@ export default async function PlayerDetailPage({ params }: Props) {
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Drill</th>
-                    <th scope="col">Focus</th>
-                    <th scope="col">Diff</th>
-                    <th scope="col">Min</th>
-                    <th scope="col">RPE</th>
-                    <th scope="col">Load</th>
+                    <th scope="col">{tp("thDate")}</th>
+                    <th scope="col">{tp("thDrill")}</th>
+                    <th scope="col">{tp("thFocus")}</th>
+                    <th scope="col">{tp("thDiff")}</th>
+                    <th scope="col">{tp("thMin")}</th>
+                    <th scope="col">{tp("thRpe")}</th>
+                    <th scope="col">{tp("thLoad")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -257,30 +261,34 @@ export default async function PlayerDetailPage({ params }: Props) {
               </table>
             </div>
           ) : (
-            <span className="unavailable">No session recorded for this player.</span>
+            <span className="unavailable">{tp("noSession")}</span>
           )}
           <div className={`notice ${trainingConsistent ? "" : "notice--warn"}`}>
-            <span className="eyebrow">Consistency</span>
+            <span className="eyebrow">{tp("consistency")}</span>
             <p>
               <span className="mono">{trainingLog.load_formula}</span> —{" "}
               {trainingConsistent
-                ? `the totals above equal the ${trainingLog.items.length} rows printed here`
-                : `totals and rows disagree: ${trainingLog.total_minutes}/${trainedMinutes} minutes, ${trainingLog.total_load}/${trainedLoad} load`}.
+                ? tp("totalsAgree", { count: trainingLog.items.length })
+                : tp("totalsDisagree", {
+                    totalMinutes: trainingLog.total_minutes,
+                    trainedMinutes,
+                    totalLoad: trainingLog.total_load,
+                    trainedLoad,
+                  })}
+              .
             </p>
           </div>
           <p className="muted world-section-note">
-            These rows are this entry in{" "}
+            {tp("trainingNoteLead")} {" "}
             <Link className="world-link" href="/world/training">
-              the training log for the whole world
+              {tp("trainingLogLinkText")}
             </Link>
-            , newest first. Nothing here is tracked data: a session is a catalogue drill the generator assigned to a synthetic player, and the
-            load figure is the minutes and RPE in the two columns beside it multiplied. Drill names link into the Training Academy, which asks
-            for an account; nothing else on this page does.
+            {tp("trainingNoteTail")}
           </p>
         </div>
       </Panel>
 
-      <Panel eyebrow={`${attributes.length} attributes, 1–99`} title="Full attribute list">
+      <Panel eyebrow={tp("attributesEyebrow", { count: attributes.length })} title={tp("attributesTitle")}>
         <div className="grid grid-2">
           {attributes.map(([key, value]) => (
             <Meter key={key} label={key.replace(/_/g, " ")} value={value} />
@@ -288,27 +296,27 @@ export default async function PlayerDetailPage({ params }: Props) {
         </div>
       </Panel>
 
-      <Panel eyebrow={`${statLines.length} rows · one per appearance`} title="Every stored statistic line">
+      <Panel eyebrow={tp("statLinesEyebrow", { count: statLines.length })} title={tp("statLinesTitle")}>
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Competition</th>
-                <th scope="col">Pos</th>
-                <th scope="col">Min</th>
-                <th scope="col">G</th>
-                <th scope="col">A</th>
-                <th scope="col">Shots</th>
-                <th scope="col">On tgt</th>
-                <th scope="col">Passes</th>
-                <th scope="col">Key</th>
-                <th scope="col">Tkl</th>
-                <th scope="col">Int</th>
-                <th scope="col">Sv</th>
-                <th scope="col">Foul</th>
-                <th scope="col">Rating</th>
-                <th scope="col">Match</th>
+                <th scope="col">{tp("thDate")}</th>
+                <th scope="col">{tp("thCompetition")}</th>
+                <th scope="col">{tp("thPos")}</th>
+                <th scope="col">{tp("thMin")}</th>
+                <th scope="col">{tp("thGoalsShort")}</th>
+                <th scope="col">{tp("thAssistsShort")}</th>
+                <th scope="col">{tp("thShots")}</th>
+                <th scope="col">{tp("thOnTarget")}</th>
+                <th scope="col">{tp("thPasses")}</th>
+                <th scope="col">{tp("thKey")}</th>
+                <th scope="col">{tp("thTkl")}</th>
+                <th scope="col">{tp("thInt")}</th>
+                <th scope="col">{tp("thSv")}</th>
+                <th scope="col">{tp("thFoul")}</th>
+                <th scope="col">{tp("rowRating")}</th>
+                <th scope="col">{tp("thMatch")}</th>
               </tr>
             </thead>
             <tbody>
@@ -334,7 +342,7 @@ export default async function PlayerDetailPage({ params }: Props) {
                   <td className="num">{line.fouls}</td>
                   <td className="num">{line.rating.toFixed(2)}</td>
                   <td>
-                    <EntityLink href={line.match_path} label="centre" fallback="—" />
+                    <EntityLink href={line.match_path} label={tp("centre")} fallback="—" />
                   </td>
                 </tr>
               ))}
@@ -343,7 +351,7 @@ export default async function PlayerDetailPage({ params }: Props) {
         </div>
         {method.rating && (
           <p className="muted world-section-note" style={{ marginTop: "0.6rem" }}>
-            rating formula: <span className="mono">{method.rating}</span>
+            {tp("ratingNote", { formula: method.rating })}
           </p>
         )}
       </Panel>
