@@ -44,38 +44,38 @@ export default async function TeamsPage({ searchParams }: Props) {
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
-        lede={`${total.toLocaleString("en-GB")} generated clubs. Overall is the mean of the stored squad, so it moves when a squad does.`}
+        lede={tw("teamsLede", { count: total.toLocaleString("en-GB") })}
         provenance={result.data}
         title={tw("sectionClubsLabel")}
       />
 
-      <Panel eyebrow={tc("filter")} title="By nation">
+      <Panel eyebrow={tc("filter")} title={tw("teamsByNationTitle")}>
         <div className="stack-sm">
-          <FilterChips active={query.nation} base={BASE} label="Nation" options={nations} param="nation" query={query} />
-          <p className="muted world-section-note">Seasons in the dataset: {seasons.join(" · ")}</p>
+          <FilterChips active={query.nation} base={BASE} label={tw("teamsNationLabel")} options={nations} param="nation" query={query} />
+          <p className="muted world-section-note">{tw("teamsSeasonsNote", { seasons: seasons.join(" · ") })}</p>
         </div>
       </Panel>
 
       {items.length === 0 ? (
         <div className="empty">
-          <strong>No club matches that filter</strong>
+            <strong>{tw("teamsEmptyTitle")}</strong>
           <Link className="btn btn--sm" href={BASE}>
-            Clear filter
+            {tw("teamsClearFilter")}
           </Link>
         </div>
       ) : (
-        <Panel eyebrow="Names link to the club page" title="All clubs">
+        <Panel eyebrow={tw("teamsPanelEyebrow")} title={tw("teamsPanelTitle")}>
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Club</th>
-                  <th scope="col">City / ground</th>
-                  <th scope="col">League</th>
-                  <th scope="col">Manager</th>
-                  <th scope="col">Shape</th>
-                  <th scope="col">Squad</th>
-                  <th scope="col">OVR</th>
+                  <th scope="col">{tw("thClub")}</th>
+                  <th scope="col">{tw("thCityGround")}</th>
+                  <th scope="col">{tw("thLeague")}</th>
+                  <th scope="col">{tw("thManager")}</th>
+                  <th scope="col">{tw("thShape")}</th>
+                  <th scope="col">{tw("thSquad")}</th>
+                  <th scope="col">{tw("thOvr")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,7 +98,7 @@ export default async function TeamsPage({ searchParams }: Props) {
                           {row.competition.name}
                         </Link>
                       ) : (
-                        <span className="unavailable">no league</span>
+                        <span className="unavailable">{tw("noLeague")}</span>
                       )}
                     </td>
                     <td className="muted">{row.manager_name}</td>

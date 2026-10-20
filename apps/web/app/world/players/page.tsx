@@ -47,34 +47,34 @@ export default async function PlayersPage({ searchParams }: Props) {
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={tw("title")}
-        lede={`${total.toLocaleString("en-GB")} generated players. Attributes come from the player's archetype and season output, and the page for each one lists why every number is what it is.`}
+        lede={tw("playersLede", { count: total.toLocaleString("en-GB") })}
         provenance={result.data}
         title={tw("sectionPlayersLabel")}
       />
 
       <div className="grid grid-2">
-        <Panel eyebrow={tc("filter")} title="By position">
-          <FilterChips active={query.position} base={BASE} label="Position" options={positions} param="position" query={query} />
+        <Panel eyebrow={tc("filter")} title={tw("playersByPositionTitle")}>
+          <FilterChips active={query.position} base={BASE} label={tw("playersPositionLabel")} options={positions} param="position" query={query} />
         </Panel>
-        <Panel eyebrow="Order" title="Sort by">
-          <FilterChips active={sort} base={BASE} drop={["order"]} label="Sort" options={sorts} param="sort" query={query} />
+        <Panel eyebrow={tw("playersOrderEyebrow")} title={tw("playersSortTitle")}>
+          <FilterChips active={sort} base={BASE} drop={["order"]} label={tw("playersSortLabel")} options={sorts} param="sort" query={query} />
         </Panel>
       </div>
 
       {items.length === 0 ? (
         <div className="empty">
-          <strong>No player matches that filter</strong>
+          <strong>{tw("playersEmptyTitle")}</strong>
           <Link className="btn btn--sm" href={BASE}>
-            Clear filters
+            {tw("playersClearFilters")}
           </Link>
         </div>
       ) : (
         <Panel
-          eyebrow={`sorted by ${sort} (${order})`}
+          eyebrow={tw("playersSortedBy", { sort, order })}
           title={tw("sectionPlayersLabel")}
           action={
             <Link className="btn btn--ghost btn--sm" href={buildHref(BASE, query, { order: order === "desc" ? "asc" : "desc" }, ["page"])}>
-              {order === "desc" ? "Lowest first" : "Highest first"}
+              {order === "desc" ? tw("playersLowestFirst") : tw("playersHighestFirst")}
             </Link>
           }
         >
@@ -82,16 +82,16 @@ export default async function PlayersPage({ searchParams }: Props) {
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Pos</th>
+                  <th scope="col">{tw("thPos")}</th>
                   <th scope="col">{tc("personName")}</th>
-                  <th scope="col">Club</th>
-                  <th scope="col">Age</th>
-                  <th scope="col">OVR</th>
-                  <th scope="col">POT</th>
-                  <th scope="col">G</th>
-                  <th scope="col">A</th>
-                  <th scope="col">Min</th>
-                  <th scope="col">Rating</th>
+                  <th scope="col">{tw("thClub")}</th>
+                  <th scope="col">{tw("thAge")}</th>
+                  <th scope="col">{tw("thOvr")}</th>
+                  <th scope="col">{tw("thPot")}</th>
+                  <th scope="col">{tw("thGoals")}</th>
+                  <th scope="col">{tw("thAssists")}</th>
+                  <th scope="col">{tw("thMinutes")}</th>
+                  <th scope="col">{tw("thRating")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -105,7 +105,7 @@ export default async function PlayersPage({ searchParams }: Props) {
                         {row.name}
                       </Link>
                     </td>
-                    <td className="muted">{row.club?.name ?? <span className="unavailable">no club</span>}</td>
+                    <td className="muted">{row.club?.name ?? <span className="unavailable">{tw("noClub")}</span>}</td>
                     <td className="num">{row.age}</td>
                     <td className="num">{row.overall}</td>
                     <td className="num muted">{row.potential}</td>
