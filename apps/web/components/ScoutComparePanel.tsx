@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { LEADER_LABELS, figure, leaderTone, money } from "@/lib/scout";
 import type { CompareDimension, CompareSide, CompareView, Measure, TotalsCheck } from "@/lib/scout";
@@ -14,6 +15,7 @@ const OPEN_BY_DEFAULT = new Set(["technical", "age", "context"]);
  * four answers are the payload's own and are printed as it words them.
  */
 function leaderText(leader: string): string {
+const ts = useTranslations("scout");
   if (leader === "left") return "A AHEAD";
   if (leader === "right") return "B AHEAD";
   return (LEADER_LABELS[leader] ?? leader).toUpperCase();
@@ -28,6 +30,7 @@ function leaderText(leader: string): string {
  * from, so a `split` is not a shrug — it is two sides winning named figures.
  */
 export function ScoutComparePanel({ compared }: { compared: CompareView }) {
+  const ts = useTranslations("scout");
   return (
     <div className="stack-sm">
       <div className="tac-cards">
@@ -49,7 +52,11 @@ export function ScoutComparePanel({ compared }: { compared: CompareView }) {
       </div>
 
       <p className="muted mono">
-        overall A {compared.overall_line.left} · B {compared.overall_line.right} · delta {compared.overall_line.delta}
+        {ts("overallLine", {
+          left: compared.overall_line.left,
+          right: compared.overall_line.right,
+          delta: compared.overall_line.delta,
+        })}
       </p>
       <p className="muted">{compared.overall_line.note}</p>
 
@@ -61,14 +68,14 @@ export function ScoutComparePanel({ compared }: { compared: CompareView }) {
         <table className="table">
           <thead>
             <tr>
-              <th scope="col">Side</th>
-              <th scope="col" className="num">Stored minutes</th>
-              <th scope="col" className="num">Minutes in lines</th>
-              <th scope="col" className="num">Stored goals</th>
-              <th scope="col" className="num">Goals in lines</th>
-              <th scope="col" className="num">Appearances</th>
-              <th scope="col" className="num">Lines</th>
-              <th scope="col">Agree</th>
+              <th scope="col">{ts("thSide")}</th>
+              <th scope="col" className="num">{ts("thStoredMinutes")}</th>
+              <th scope="col" className="num">{ts("thMinutesInLines")}</th>
+              <th scope="col" className="num">{ts("thStoredGoals")}</th>
+              <th scope="col" className="num">{ts("thGoalsInLines")}</th>
+              <th scope="col" className="num">{ts("thAppearances")}</th>
+              <th scope="col" className="num">{ts("thLines")}</th>
+              <th scope="col">{ts("thAgree")}</th>
             </tr>
           </thead>
           <tbody>
@@ -85,6 +92,7 @@ export function ScoutComparePanel({ compared }: { compared: CompareView }) {
 }
 
 function SideCard({ side, label }: { side: CompareSide; label: string }) {
+const ts = useTranslations("scout");
   return (
     <div className="tac-card">
       <div className="row wrap" style={{ gap: "0.5rem" }}>
@@ -111,14 +119,15 @@ function SideCard({ side, label }: { side: CompareSide; label: string }) {
         {side.competition ? ` · ${side.competition.name}, tier ${side.competition.tier}` : ""}
       </p>
       <p className="muted mono">
-        {side.stat_lines} stat lines · {side.minutes_in_lines} minutes behind the rates
+        {ts("minutesBehind", { lines: side.stat_lines, minutes: side.minutes_in_lines })}
       </p>
-      {!side.observed && <span className="badge badge--demo">NO APPEARANCES</span>}
+      {!side.observed && <span className="badge badge--demo">{ts("noAppearances")}</span>}
     </div>
   );
 }
 
 function DimensionBlock({ dimension }: { dimension: CompareDimension }) {
+const ts = useTranslations("scout");
   const scorable = dimension.measures.filter((measure) => measure.leader !== "unknown" && measure.leader !== "not_scorable").length;
   return (
     <details className="tac-card" data-dimension={dimension.dimension} open={OPEN_BY_DEFAULT.has(dimension.dimension)}>
@@ -135,13 +144,13 @@ function DimensionBlock({ dimension }: { dimension: CompareDimension }) {
         <table className="table">
           <thead>
             <tr>
-              <th scope="col">Measure</th>
+              <th scope="col">{ts("thMeasure")}</th>
               <th scope="col" className="num">A</th>
               <th scope="col" className="num">B</th>
-              <th scope="col" className="num">Delta</th>
-              <th scope="col">Direction</th>
-              <th scope="col">Leader</th>
-              <th scope="col">Read from</th>
+              <th scope="col" className="num">{ts("thDelta")}</th>
+              <th scope="col">{ts("thDirection")}</th>
+              <th scope="col">{ts("thLeader")}</th>
+              <th scope="col">{ts("thReadFrom")}</th>
             </tr>
           </thead>
           <tbody>
@@ -157,6 +166,7 @@ function DimensionBlock({ dimension }: { dimension: CompareDimension }) {
 }
 
 function MeasureRow({ measure }: { measure: Measure }) {
+const ts = useTranslations("scout");
   const gap: string[] = [];
   if (measure.missing?.length) gap.push(`missing on ${measure.missing.join(" + ")}`);
   if (measure.unobserved?.length) gap.push(`no lines for ${measure.unobserved.join(" + ")}`);
@@ -180,6 +190,7 @@ function MeasureRow({ measure }: { measure: Measure }) {
 }
 
 function TotalsRow({ label, check }: { label: string; check: TotalsCheck }) {
+const ts = useTranslations("scout");
   return (
     <tr>
       <td className="mono">{label}</td>

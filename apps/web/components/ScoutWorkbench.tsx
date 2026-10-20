@@ -37,6 +37,7 @@ type Busy = "search" | "parse" | "report" | "compare" | null;
  * with the API's own sentence rather than retried quietly.
  */
 export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
+  const tw = useTranslations("scout");
   // The `scout` namespace is 99 keys and was read by nobody: this whole screen was English literals above a
   // fully translated catalogue, so a Chinese reader got a Chinese nav bar and an English page. Every string
   // below already had a key — this component was the largest single gap §81 had left.
@@ -124,7 +125,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
         <div className="stack-sm">
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             <input
-              aria-label="Scouting request"
+              aria-label={tw("requestAria")}
               className="grow"
               maxLength={400}
               onChange={(event) => setQuery(event.target.value)}
@@ -134,8 +135,8 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
               placeholder={t("placeholder")}
               value={query}
             />
-            <input aria-label="Role to judge the fit against" className="mono" list="scout-roles" maxLength={16} onChange={(event) => setRole(event.target.value)} placeholder={t("roleLabel")} value={role} />
-            <input aria-label="Career slug" className="mono" maxLength={80} onChange={(event) => setCareer(event.target.value)} placeholder={t("careerLabel")} value={career} />
+            <input aria-label={tw("roleAria")} className="mono" list="scout-roles" maxLength={16} onChange={(event) => setRole(event.target.value)} placeholder={t("roleLabel")} value={role} />
+            <input aria-label={tw("careerSlugAria")} className="mono" maxLength={80} onChange={(event) => setCareer(event.target.value)} placeholder={t("careerLabel")} value={career} />
           </div>
           <datalist id="scout-roles">
             {Object.entries(rules.roles).map(([code, entry]) => (
@@ -184,7 +185,11 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
           <Panel eyebrow={`${searched.total_matches} match${searched.total_matches === 1 ? "" : "es"} of ${searched.rows_examined} rows examined · sorted by ${searched.sort.key}`} title={t("resultsTitle")}>
             <div className="stack-sm">
               <RefusalBlock refused={searched.refused} assumptions={searched.assumptions} unaccounted={searched.unaccounted} />
-              {searched.truncated && <p className="notice">Only the first {searched.returned} of {searched.total_matches} are printed — `truncated` is the API saying so, not the pool being that size.</p>}
+              {searched.truncated && (
+                <p className="notice">
+                  {tw("onlyFirst", { returned: searched.returned, total: searched.total_matches })}
+                </p>
+              )}
               <div className="world-tablewrap">
                 <table className="table">
                   <thead>
@@ -225,12 +230,12 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">Requirement</th>
-                    <th scope="col">Phrase</th>
-                    <th scope="col" className="num">Rows in</th>
-                    <th scope="col" className="num">Cut</th>
-                    <th scope="col" className="num">Rows out</th>
-                    <th scope="col">Rule</th>
+                    <th scope="col">{tw("thRequirement")}</th>
+                    <th scope="col">{tw("thPhrase")}</th>
+                    <th scope="col" className="num">{tw("thRowsIn")}</th>
+                    <th scope="col" className="num">{tw("thCut")}</th>
+                    <th scope="col" className="num">{tw("thRowsOut")}</th>
+                    <th scope="col">{tw("thRule")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -346,6 +351,7 @@ function CandidateRow({
 
 /** Every requirement the request produced, with the rule it will cut or rank on and where it came from. */
 function RequirementList({ requirements }: { requirements: ParseView["requirements"] }) {
+  const tw = useTranslations("scout");
   const t = useTranslations("scout");
   if (!requirements.length) return <p className="muted">{t("noFilter")}</p>;
   return (
@@ -364,6 +370,7 @@ function RequirementList({ requirements }: { requirements: ParseView["requiremen
 
 /** The honesty block: what was refused, what was assumed, what was ignored, and what was left unaccounted. */
 function RefusalBlock({ refused, assumptions, unaccounted }: { refused: ParseView["refused"]; assumptions: string[]; unaccounted: string[] }) {
+  const tw = useTranslations("scout");
   if (!refused.length && !assumptions.length && !unaccounted.length) return null;
   return (
     <div className="stack-sm">
@@ -383,7 +390,12 @@ function RefusalBlock({ refused, assumptions, unaccounted }: { refused: ParseVie
               <strong className="mono">{item.phrase}</strong> — {item.message}
               {item.suggestions.length > 0 && (
                 <div className="muted">
-                  closest in the catalogue: {item.suggestions.map((suggestion) => <span className="chip mono" key={suggestion}>{suggestion}</span>)}
+                  {tw("closestInCatalogue")}{" "}
+                  {item.suggestions.map((suggestion) => (
+                    <span className="chip mono" key={suggestion}>
+                      {suggestion}
+                    </span>
+                  ))}
                 </div>
               )}
             </li>

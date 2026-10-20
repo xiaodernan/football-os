@@ -190,7 +190,7 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
                 <td data-testid={`notice-readership-${row.id}`}>
                   {tc("noticeReadCount", { read: row.read_by, recipients: row.recipients })}
                   <div className="muted mono" style={{ fontSize: "0.76rem" }}>
-                    {tc("noticeUnreadCount", { unread: row.unread, receipts: row.receipts_on_row })} · {row.receipts_on_row} receipt row(s)
+                    {tc("noticeUnreadCount", { unread: row.unread, receipts: row.receipts_on_row })}
                   </div>
                 </td>
                 <td>

@@ -33,6 +33,7 @@ function shortToken(token: string | null): string {
  */
 export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }: Props) {
   const t = useTranslations("common");
+  const td = useTranslations("portfolio");
   const { busy, call, note } = useClubCall();
   const [ledger, setLedger] = useState<PortfolioShareLedger | null>(initialLedger);
   const [fault, setFault] = useState(initialFault);
@@ -97,11 +98,11 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
   return (
     <Panel
       eyebrow={`${ledger?.counts.live ?? 0} live · ${ledger?.counts.revoked ?? 0} closed · ${rules.share.minor_age} is the age at which the videos rule changes`}
-      title="Public link"
+      title={td("publicLinkTitle")}
     >
       <div className="stack-sm" data-portfolio-share-panel>
         <p className="muted" style={{ fontSize: "0.86rem" }}>
-          A link reads this CV live. It stores the token and the section names only; changing the rows behind a section changes what the open link shows.
+          {td("linkReadsLive")}
         </p>
 
         {fault && (
@@ -111,7 +112,7 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
         )}
 
         <fieldset className="stack-sm" disabled={busy !== null} style={{ border: 0, margin: 0, padding: 0 }}>
-          <legend className="eyebrow">Sections this link may publish</legend>
+          <legend className="eyebrow">{td("publishableSections")}</legend>
           <div className="grid grid-3" data-portfolio-share-sections>
             {rules.share.publishable.map((section) => {
               const blockedForMinor = rules.share.minor_blocked.includes(section);
@@ -142,10 +143,10 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
           {live?.token && (
             <>
               <Link className="btn" data-portfolio-share-view href={publicPath(live.token)} rel="noreferrer" target="_blank">
-                {t("view")} public page
+                {td("viewPublicPage", { view: t("view") })}
               </Link>
               <button className="btn" data-portfolio-share-copy disabled={busy !== null} onClick={() => void copyLink(live.token as string)} type="button">
-                Copy link
+                {td("copyLink")}
               </button>
               <button className="btn btn--danger" data-portfolio-share-revoke disabled={busy !== null} onClick={() => void closeLink(live.token as string)} type="button">
                 {busy === "revoke" ? `${t("close")}…` : `${t("close")} link`}
@@ -156,7 +157,7 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
 
         {copied && (
           <p className="muted mono" data-portfolio-share-copied={copied} style={{ fontSize: "0.82rem" }}>
-            Link ready: {copied}
+            {td("linkReady", { value: copied })}
           </p>
         )}
 
@@ -166,26 +167,30 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">State</th>
-                <th scope="col">Token</th>
-                <th scope="col">Sections</th>
-                <th scope="col">Opened</th>
-                <th scope="col">Closed</th>
+                <th scope="col">{td("thState")}</th>
+                <th scope="col">{td("thToken")}</th>
+                <th scope="col">{td("thSections")}</th>
+                <th scope="col">{td("thOpened")}</th>
+                <th scope="col">{td("thClosed")}</th>
               </tr>
             </thead>
             <tbody>
               {(ledger?.shares ?? []).map((row: PortfolioShareRecord) => (
                 <tr data-portfolio-share-row={row.share} key={row.share}>
-                  <td><span className={row.live ? "badge badge--live" : "badge"}>{row.live ? "LIVE" : "CLOSED"}</span></td>
+                  <td>
+                    <span className={row.live ? "badge badge--live" : "badge"}>
+                      {row.live ? td("linkLive") : td("linkClosed")}
+                    </span>
+                  </td>
                   <td className="mono">{shortToken(row.token)}</td>
-                  <td className="mono">{row.sections.join(", ") || "(none)"}</td>
-                  <td className="muted mono">{row.opened_at?.slice(0, 16) ?? "unknown"}</td>
+                  <td className="mono">{row.sections.join(", ") || td("noSections")}</td>
+                  <td className="muted mono">{row.opened_at?.slice(0, 16) ?? td("unknownTime")}</td>
                   <td className="muted mono">{row.revoked_at?.slice(0, 16) ?? "-"}</td>
                 </tr>
               ))}
               {(ledger?.shares ?? []).length === 0 && (
                 <tr>
-                  <td className="muted" colSpan={5}>No public link has been opened by this account.</td>
+                  <td className="muted" colSpan={5}>{td("noPublicLink")}</td>
                 </tr>
               )}
             </tbody>

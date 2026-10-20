@@ -27,6 +27,7 @@ function zoneOf(x: number, y: number): string {
 export function BoardEditor({ board: initial }: { board: BoardDetail }) {
   const router = useRouter();
   const t = useTranslations("common");
+  const tb = useTranslations("tactics");
   const svg = useRef<SVGSVGElement | null>(null);
   const [board, setBoard] = useState(initial);
   const [phase, setPhase] = useState<Phase>("in");
@@ -167,12 +168,12 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
 
         <div className="stack-sm">
           <div className="row wrap" style={{ gap: "0.4rem" }}>
-            <span className="eyebrow">Editing</span>
+            <span className="eyebrow">{tb("editing")}</span>
             <button className={`chip ${phase === "in" ? "chip--accent" : ""}`} onClick={() => setPhase("in")} type="button">
-              in possession
+              {tb("inPossession")}
             </button>
             <button className={`chip ${phase === "out" ? "chip--accent" : ""}`} onClick={() => setPhase("out")} type="button">
-              out of possession
+              {tb("outOfPossession")}
             </button>
           </div>
 
@@ -181,11 +182,11 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
               {busy ? `${t("save")}…` : dirty ? `${t("save")} board` : t("save") + "d"}
             </button>
             <button className="btn btn--sm" disabled={busy} onClick={derive} type="button">
-              Derive the block from this
+              {tb("deriveFromThis")}
             </button>
             {board.origin_system && (
               <button className="btn btn--ghost btn--sm" disabled={busy} onClick={resetToAuthored} type="button">
-                Reset to {board.origin_system}
+                {tb("resetTo", { system: board.origin_system })}
               </button>
             )}
           </div>
@@ -208,15 +209,15 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
                   }}
                   type="button"
                 >
-                  {copied ? "Copied" : "Copy link"}
+                  {copied ? tb("copied") : tb("copyLink")}
                 </button>
                 <button className="btn btn--sm" disabled={busy} onClick={revoke} type="button">
-                  Revoke link
+                  {tb("revokeLink")}
                 </button>
               </>
             ) : (
               <button className="btn btn--sm" disabled={busy} onClick={share} type="button">
-                {t("create")} a share link
+                {tb("createShareLink", { create: t("create") })}
               </button>
             )}
             <button className="btn btn--danger btn--sm" disabled={busy} onClick={remove} type="button">
@@ -231,8 +232,8 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
           )}
 
           <p className="muted world-section-note">
-            {dirty ? "Unsaved changes: the numbers beside this board are from the last save, not from these positions." : "Positions saved."}{" "}
-            Measurements are computed by the server from the coordinates it has stored, so a drag changes a number only once it is saved.
+            {dirty ? tb("unsavedChanges") : tb("positionsSaved")}{" "}
+            {tb("measurementsNote")}
           </p>
         </div>
       </div>
@@ -241,9 +242,9 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
         <table className="table">
           <thead>
             <tr>
-              <th scope="col">Measure</th>
-              <th scope="col">Value</th>
-              <th scope="col">How it is obtained</th>
+              <th scope="col">{tb("thMeasure")}</th>
+              <th scope="col">{tb("thValue")}</th>
+              <th scope="col">{tb("thHowObtained")}</th>
             </tr>
           </thead>
           <tbody>

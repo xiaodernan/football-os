@@ -188,11 +188,13 @@ export function WorldPager({
   build: (page: number) => string;
 }) {
   const t = useTranslations("common");
-  if (pages <= 1) return <p className="muted world-pageinfo">{total.toLocaleString("en-GB")} rows.</p>;
+  if (pages <= 1) {
+    return <p className="muted world-pageinfo">{t("rowsCount", { total: total.toLocaleString("en-GB") })}</p>;
+  }
   return (
-    <nav className="between wrap world-pageinfo" aria-label="Pagination">
+    <nav className="between wrap world-pageinfo" aria-label={t("paginationAria")}>
       <span className="muted">
-        Page {page} of {pages} · {total.toLocaleString("en-GB")} rows
+        {t("pageOf", { page, pages, total: total.toLocaleString("en-GB") })}
       </span>
       <div className="row" style={{ gap: "0.4rem" }}>
         {page > 1 && (
