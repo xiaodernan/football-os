@@ -243,8 +243,6 @@ check("4 DRIFT — no literal tab on a page whose heading reads a key", drift.le
 // A literal tab beside a literal heading must be that heading's bytes. The ledger buys time for the two pages whose
 // English genuinely holds two copies; it buys it only while their bytes still show the disagreement (check 6).
 const LEDGER = {
-  "app/club/page.tsx": "the tab says \"My clubs\", the heading says \"Club tenancies\" — which copy names the page is a sense decision, not a wiring",
-  "app/community/page.tsx": "the tab says \"Community\", the heading says \"Community wall\" — the same sense question, and no key holds either copy's bytes",
 };
 const disagree = rows.filter((r) => {
   if (r.title?.kind !== "literal") return false;
@@ -261,8 +259,9 @@ for (const r of disagree) {
 }
 for (const [rel, reason] of Object.entries(LEDGER)) {
   const r = rows.find((x) => x.rel === rel);
+  const tabDisplay = r?.title?.kind === "keyed" ? `${r.title.ns}.${r.title.key}` : r?.title?.value;
   check(`6 ledger row ${rel} still describes its file`, r !== undefined && disagree.includes(r),
-    r === undefined ? "no such page in the walk" : `tab=${JSON.stringify(r.title?.value)} headings=${JSON.stringify(r.heads.map((h) => h.value ?? `${h.ns}.${h.key}`))}`);
+    r === undefined ? "no such page in the walk" : `tab=${JSON.stringify(tabDisplay)} headings=${JSON.stringify(r.heads.map((h) => h.value ?? `${h.ns}.${h.key}`))}`);
 }
 
 const keyed = [];

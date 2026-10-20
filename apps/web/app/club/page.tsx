@@ -23,12 +23,15 @@ export const dynamic = "force-dynamic";
  * matrix before anybody signs in, and a rule you cannot read until you have already agreed to it is not a
  * rule.
  */
-export const metadata: Metadata = {
-  title: "My clubs",
-  description: "The organisations your account stands in, the invitations waiting for an answer, and the standing each one grants.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/club") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("club");
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/club") },
+  };
+}
 
 export default async function ClubIndexPage() {
   const user = await currentUser();
@@ -36,26 +39,27 @@ export default async function ClubIndexPage() {
 
   const tc = await getTranslations("common");
   const tn = await getTranslations("nav");
+  const t = await getTranslations("club");
   const [owned, invited, rules] = await Promise.all([
     serverFetch<OrganizationList>("/club"),
     serverFetch<InvitationList>("/club/invitations"),
     serverFetch<ClubCapabilities>("/club/capabilities"),
   ]);
-  if (!owned.ok) return <WorldUnavailable detail={refusalFigures(owned.error.details).join(" · ")} message={owned.error.message} title="My clubs" />;
-  if (!rules.ok) return <WorldUnavailable message="The club rulebook could not be read, so this page has nothing to check its numbers against." title="My clubs" />;
+  if (!owned.ok) return <WorldUnavailable detail={refusalFigures(owned.error.details).join(" · ")} message={owned.error.message} title={t("errorMyClubs")} />;
+  if (!rules.ok) return <WorldUnavailable message={t("errorRulebook")} title={t("errorMyClubs")} />;
 
   return (
     <div className="container page stack">
       <WorldHead
         back={{ href: "/", label: tn("home") }}
         eyebrow={`${user.display_name} · ${owned.data.total} of ${owned.data.limit} organisations`}
-        lede="An organisation here is a tenant: it has members, each with one standing from a published matrix, and a member of one tenant can read nothing of another. The matrix, the caps and every refusal code are printed at /club/rules, which needs no account."
+        lede={t("headLede")}
         provenance={{ data_origin: rules.data.data_origin, is_demo_data: rules.data.is_demo_data }}
-        title="Club tenancies"
+        title={t("headTitle")}
       />
 
       {invited.ok && invited.data.items.length > 0 && (
-        <Panel eyebrow={`${invited.data.total} invitation(s) · accepting is what grants the standing`} title="Invitations addressed to you">
+        <Panel eyebrow={t("eyebrowInvitations", { total: invited.data.total })} title={t("titleInvitations")}>
           <InvitationTools items={invited.data.items} />
           <p className="muted" style={{ fontSize: "0.84rem" }}>
             {invited.data.rule}
@@ -63,28 +67,28 @@ export default async function ClubIndexPage() {
         </Panel>
       )}
 
-      <Panel eyebrow={`${owned.data.total} of ${owned.data.limit} used · ${owned.data.room_left} seat(s) left`} title="Open an organisation">
+      <Panel eyebrow={t("eyebrowCreateOrg", { total: owned.data.total, limit: owned.data.limit, room: owned.data.room_left })} title={t("titleCreateOrg")}>
         <ClubCreateForm roomLeft={owned.data.room_left} rules={rules.data} />
       </Panel>
 
       {owned.data.items.length === 0 ? (
         <div className="empty">
-          <strong>You stand in no organisation yet</strong>
+          <strong>{t("emptyTitle")}</strong>
           <p className="muted">
             {owned.data.rule}
           </p>
         </div>
       ) : (
-        <Panel eyebrow={`${owned.data.items.length} listed · nothing here is a public page`} title="Where you stand">
+        <Panel eyebrow={t("eyebrowWhereYouStand", { count: owned.data.items.length })} title={t("titleWhereYouStand")}>
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Organisation</th>
-                  <th scope="col">Kind</th>
-                  <th scope="col">Your standing</th>
-                  <th scope="col">Members</th>
-                  <th scope="col">Teams</th>
+                  <th scope="col">{t("tableHeaderOrganisation")}</th>
+                  <th scope="col">{t("tableHeaderKind")}</th>
+                  <th scope="col">{t("tableHeaderStanding")}</th>
+                  <th scope="col">{t("tableHeaderMembers")}</th>
+                  <th scope="col">{t("tableHeaderTeams")}</th>
                   <th scope="col">{tc("status")}</th>
                 </tr>
               </thead>
@@ -116,14 +120,14 @@ export default async function ClubIndexPage() {
         </Panel>
       )}
 
-      <Panel eyebrow={`${rules.data.matrix.roles.length} standings · ${rules.data.matrix.permissions.length} rights · ${rules.data.routes.length} published doors`} title="What the matrix says about the seat you are in">
+      <Panel eyebrow={t("eyebrowMatrix", { roles: rules.data.matrix.roles.length, perms: rules.data.matrix.permissions.length, doors: rules.data.routes.length })} title={t("titleMatrix")}>
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Standing</th>
-                <th scope="col">Rights</th>
-                <th scope="col">Meaning</th>
+                <th scope="col">{t("tableHeaderStanding2")}</th>
+                <th scope="col">{t("tableHeaderRights")}</th>
+                <th scope="col">{t("tableHeaderMeaning")}</th>
               </tr>
             </thead>
             <tbody>
@@ -144,7 +148,7 @@ export default async function ClubIndexPage() {
 
       <p className="muted" style={{ fontSize: "0.84rem" }}>{rules.data.addressing}</p>
 
-      <Panel eyebrow={`${rules.data.limitations.length} limits, stated by the API on every read`} title="What this tier does not do">
+      <Panel eyebrow={t("eyebrowLimits", { count: rules.data.limitations.length })} title={t("titleLimits")}>
         <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
           {rules.data.limitations.map((line) => (
             <li className="muted" key={line} style={{ fontSize: "0.86rem" }}>
@@ -154,7 +158,7 @@ export default async function ClubIndexPage() {
         </ul>
       </Panel>
 
-      <Provenance extra={<span className="chip mono">an organisation and its members are user data; the players a sheet lists stay the world&apos;s</span>} provenance={{ data_origin: rules.data.data_origin, is_demo_data: rules.data.is_demo_data }} />
+      <Provenance extra={<span className="chip mono">{t("provenanceExtra")}</span>} provenance={{ data_origin: rules.data.data_origin, is_demo_data: rules.data.is_demo_data }} />
     </div>
   );
 }

@@ -93,6 +93,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
 
   const [{ ident }, query] = await Promise.all([params, searchParams]);
   const tc = await getTranslations("common");
+  const t = await getTranslations("club");
   if (!ident || ident.length > 160 || ident === "rules") notFound();
   // The board's audience filter is the door's own query parameter, so the page hands it over untouched and prints
   // whatever comes back — including the 422 that says the word selected nobody. Narrowing the rows here instead
@@ -102,7 +103,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
   const first = await serverFetch<OrganizationView>(`/club/${encodeURIComponent(ident)}`);
   if (!first.ok) {
     if (first.status === 404) notFound();
-    return <WorldUnavailable detail={refusalFigures(first.error.details).join(" · ")} message={first.error.message} title="Organisation" />;
+    return <WorldUnavailable detail={refusalFigures(first.error.details).join(" · ")} message={first.error.message} title={t("tenantMetaTitle")} />;
   }
   const view = first.data;
 
@@ -147,39 +148,39 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/club", label: "My clubs" }}
+        back={{ href: "/club", label: t("backLabel") }}
         eyebrow={`${view.organization.slug} · you are ${view.my_grant.role} here · ${view.my_grant.permissions.length} of ${view.rules.matrix.permissions.length} rights`}
         lede={view.my_grant.why}
         provenance={{ data_origin: view.data_origin, is_demo_data: view.is_demo_data }}
         title={view.organization.name}
       />
 
-      <Panel eyebrow={`${view.counts.active_members} active member(s) · ${view.counts.owners} owner(s) · ${view.counts.teams} of ${view.rules.max_teams_per_organization} sheets · ${view.counts.players_on_sheets} squad rows`} title="What this tenant holds">
+      <Panel eyebrow={`${view.counts.active_members} active member(s) · ${view.counts.owners} owner(s) · ${view.counts.teams} of {view.rules.max_teams_per_organization} sheets · ${view.counts.players_on_sheets} squad rows`} title={t("titleWhatTenantHolds")}>
         <div className="grid grid-2">
           <div>
             <dl className="world-kv">
               <div className="world-kv__row">
-                <dt>Kind</dt>
+                <dt>{t("labelKind")}</dt>
                 <dd>{view.organization.kind}</dd>
               </div>
               <div className="world-kv__row">
-                <dt>Country</dt>
+                <dt>{t("labelCountry")}</dt>
                 <dd className="mono">{view.organization.country || "—"}</dd>
               </div>
               <div className="world-kv__row">
-                <dt>Default visibility</dt>
+                <dt>{t("labelDefaultVisibility")}</dt>
                 <dd>{view.organization.visibility_default}</dd>
               </div>
               <div className="world-kv__row">
-                <dt>Opened</dt>
+                <dt>{t("labelOpened")}</dt>
                 <dd className="mono">{view.organization.created_at.slice(0, 16)} UTC</dd>
               </div>
               <div className="world-kv__row">
-                <dt>Invited, not answered</dt>
+                <dt>{t("labelInvitedMembers")}</dt>
                 <dd className="num">{view.counts.invited_members}</dd>
               </div>
               <div className="world-kv__row">
-                <dt>Members under 18 on a sheet</dt>
+                <dt>{t("labelMinorsOnSheet")}</dt>
                 <dd className="num">{minors}</dd>
               </div>
             </dl>
@@ -187,7 +188,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
           <div className="stack">
             <div className={view.integrity.clean ? "notice" : "notice notice--warn"} data-integrity={String(view.integrity.clean)}>
               <p style={{ margin: 0 }}>
-                Integrity check: {view.integrity.clean ? "clean" : `${view.integrity.problems.length} problem(s)`} over {Object.entries(view.integrity.checked).map(([key, value]) => `${value} ${key}`).join(", ")}.
+                {view.integrity.clean ? t("integrityClean", { checked: Object.entries(view.integrity.checked).map(([key, value]) => `${value} ${key}`).join(", ") }) : t("integrityProblems", { count: view.integrity.problems.length, checked: Object.entries(view.integrity.checked).map(([key, value]) => `${value} ${key}`).join(", ") })}
               </p>
               {view.integrity.problems.map((problem) => (
                 <p className="mono" key={problem} style={{ fontSize: "0.8rem", margin: "0.3rem 0 0" }}>
@@ -205,13 +206,13 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         </div>
       </Panel>
 
-      <Panel eyebrow={`${view.members.length} row(s) · a standing changes only here, and only a row can change it`} title="Members and standings">
+      <Panel eyebrow={`${view.members.length} row(s) · a standing changes only here, and only a row can change it`} title={t("titleMembers")}>
         <TenantTools ident={view.organization.slug} members={view.members} rules={view.rules} teams={view.teams} />
       </Panel>
 
       <Panel
-        eyebrow={fixtures.ok ? `${fixtures.data.total} fixture(s) · ${fixtures.data.played} played · a fixture keeps a pointer, the engine keeps the result` : "the fixtures door did not answer"}
-        title="Fixtures and matchdays"
+        eyebrow={fixtures.ok ? t("eyebrowFixtures", { total: fixtures.data.total, played: fixtures.data.played }) : t("fixturesDoorMissing")}
+        title={t("titleFixtures")}
       >
         {fixtures.ok ? (
           rulebook.ok ? (
@@ -219,7 +220,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
           ) : (
             // No form without the door's own vocabulary: a page that drew its own sides, block lengths or head
             // count would be teaching a caller to be refused by a rule the page invented.
-            <p className="muted">The rulebook door did not answer, so this page has no published `fixture_caps` to build an arrangement from. The calendar above is unaffected — it is read through `match.read`.</p>
+            <p className="muted">{t("fixturesRulebookMissing")}</p>
           )
         ) : (
           <Refused figures={refusalFigures(fixtures.error.details)} label="fixtures" message={fixtures.error.message} status={fixtures.status} />
@@ -234,10 +235,10 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
       <Panel
         eyebrow={
           notices.ok
-            ? `${notices.data.total} listed · ${notices.data.announcements_held} of ${notices.data.limit} on the board${audience ? ` · filtered to ${audience}` : ""} · an audience is a predicate over the roster`
-            : "the notices door did not answer"
+            ? t("eyebrowNotices", { total: notices.data.total, held: notices.data.announcements_held, limit: notices.data.limit, audience: audience ? ` · filtered to ${audience}` : "" })
+            : t("noticesDoorMissing")
         }
-        title="Notices to an audience"
+        title={t("titleNotices")}
       >
         {notices.ok ? (
           <NoticeBoard audience={audience} caps={notices.data.caps} ident={view.organization.slug} list={notices.data} />
@@ -251,7 +252,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         )}
       </Panel>
 
-      <Panel eyebrow={consents.ok ? `${consents.data.total} consent row(s) · ${consents.data.under_18} child(ren) under ${academyRules.ok ? academyRules.data.minor_age : 18} on a sheet` : "the consent door did not answer"} title="Guardian consent">
+      <Panel eyebrow={consents.ok ? t("eyebrowConsents", { total: consents.data.total, under18: consents.data.under_18, minorAge: academyRules.ok ? academyRules.data.minor_age : 18 }) : t("consentsDoorMissing")} title={t("titleConsents")}>
         {consents.ok ? (
           <>
             <ConsentTable consents={consents.data} ident={view.organization.slug} />
@@ -282,18 +283,18 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         )}
       </Panel>
 
-      <Panel eyebrow={curricula.ok ? `${curricula.data.total} of ${curricula.data.limit} curricula · no curriculum names a child` : "the curriculum door did not answer"} title="Training curricula">
+      <Panel eyebrow={curricula.ok ? t("eyebrowCurricula", { total: curricula.data.total, limit: curricula.data.limit }) : t("curriculaDoorMissing")} title={t("titleCurricula")}>
         {curricula.ok ? (
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Curriculum</th>
-                  <th scope="col">Age band</th>
-                  <th scope="col">Weekly minutes</th>
-                  <th scope="col">Phases</th>
-                  <th scope="col">Unassigned</th>
-                  <th scope="col">Plans using it</th>
+                  <th scope="col">{t("tableHeaderCurriculum")}</th>
+                  <th scope="col">{t("tableHeaderAgeBand")}</th>
+                  <th scope="col">{t("tableHeaderWeeklyMinutes")}</th>
+                  <th scope="col">{t("tableHeaderPhases")}</th>
+                  <th scope="col">{t("tableHeaderUnassigned")}</th>
+                  <th scope="col">{t("tableHeaderPlansUsing")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -323,20 +324,20 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         {curricula.ok && <p className="muted" style={{ fontSize: "0.82rem" }}>{curricula.data.rule}</p>}
       </Panel>
 
-      <Panel eyebrow={plans.ok ? `${plans.data.total} plan(s), ${plans.data.minors_in_list} of them a child under ${academyRules.ok ? academyRules.data.minor_age : 18}'s · read through ${plans.data.read_through}` : "the plan door did not answer"} title="Development plans">
+      <Panel eyebrow={plans.ok ? t("eyebrowPlans", { total: plans.data.total, minors: plans.data.minors_in_list, minorAge: academyRules.ok ? academyRules.data.minor_age : 18, readThrough: plans.data.read_through }) : t("plansDoorMissing")} title={t("titlePlans")}>
         {plans.ok ? (
           <div className="world-tablewrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Child</th>
-                  <th scope="col">Age</th>
+                  <th scope="col">{t("tableHeaderChild")}</th>
+                  <th scope="col">{t("tableHeaderAge")}</th>
                   <th scope="col">{tc("status")}</th>
-                  <th scope="col">Review cadence</th>
-                  <th scope="col">Reviews filed</th>
-                  <th scope="col">Goals</th>
-                  <th scope="col">Progress</th>
-                  <th scope="col">Focus</th>
+                  <th scope="col">{t("tableHeaderReviewCadence")}</th>
+                  <th scope="col">{t("tableHeaderReviewsFiled")}</th>
+                  <th scope="col">{t("tableHeaderGoals")}</th>
+                  <th scope="col">{t("tableHeaderProgress")}</th>
+                  <th scope="col">{t("tableHeaderFocus")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -358,7 +359,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                     <td className="num">{row.assessments}</td>
                     <td className="num">{row.goals}</td>
                     <td className="num" title="null means one review or none: a direction cannot be measured from one point">
-                      {row.progress ?? "not yet"}
+                      {row.progress ?? t("progressNotYet")}
                     </td>
                     <td className="muted">{row.focus.join(", ") || "—"}</td>
                   </tr>
@@ -374,7 +375,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         )}
       </Panel>
 
-      <Panel eyebrow={`${view.limitations.length} limits the API states on this very response`} title="What this tier does not do">
+      <Panel eyebrow={t("eyebrowTierLimits", { count: view.limitations.length })} title={t("titleTierLimits")}>
         <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
           {view.limitations.map((line) => (
             <li className="muted" key={line} style={{ fontSize: "0.86rem" }}>
@@ -384,7 +385,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         </ul>
       </Panel>
 
-      <Panel eyebrow={sessions.ok ? `${sessions.data.total} session(s) · ${sessions.data.total_load_units} load units · read through ${sessions.data.read_through}` : "the session door did not answer"} title="Training sessions">
+      <Panel eyebrow={sessions.ok ? t("eyebrowSessions", { total: sessions.data.total, load: sessions.data.total_load_units, readThrough: sessions.data.read_through }) : t("sessionsDoorMissing")} title={t("titleSessions")}>
         {sessions.ok ? (
           <div className="stack">
             {academyRules.ok ? (
@@ -395,29 +396,29 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
               // number the API never published — a form that invites a caller past a cap it invented is worse here
               // than a blank that says which door is missing.
               <p className="muted" style={{ fontSize: "0.86rem" }}>
-                The academy rulebook door did not answer, so this page has no published `session_limits` to build a recorder from. The log below is still the door&apos;s own rows.
+                {t("sessionRulebookMissing")}
               </p>
             )}
             <p className="muted" data-session-day={sessions.data.today} style={{ fontSize: "0.86rem", margin: 0 }}>
-              {`The date above is the one this door prints as its own today (${sessions.data.today}), not the one this page guessed at ${today}.`} {sessions.data.today_rule}
+              {t("sessionDateNote", { today: sessions.data.today, guessed: today })} {sessions.data.today_rule}
             </p>
             <EraseNotes id="session-erase-wall">
             <div className="world-tablewrap">
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Slot</th>
-                    <th scope="col">Team</th>
-                    <th scope="col">Curriculum</th>
-                    <th scope="col">Duration</th>
-                    <th scope="col">RPE</th>
-                    <th scope="col">Load</th>
-                    <th scope="col">Focus</th>
-                    <th scope="col">Coach</th>
-                    <th scope="col">Attendees</th>
-                    <th scope="col">Note</th>
-                    <th scope="col">Erase</th>
+                    <th scope="col">{t("tableHeaderDate")}</th>
+                    <th scope="col">{t("tableHeaderSlot")}</th>
+                    <th scope="col">{t("tableHeaderTeam")}</th>
+                    <th scope="col">{t("tableHeaderCurriculum")}</th>
+                    <th scope="col">{t("tableHeaderDuration")}</th>
+                    <th scope="col">{t("tableHeaderRPE")}</th>
+                    <th scope="col">{t("tableHeaderLoad")}</th>
+                    <th scope="col">{t("tableHeaderFocus")}</th>
+                    <th scope="col">{t("tableHeaderCoach")}</th>
+                    <th scope="col">{t("tableHeaderAttendees")}</th>
+                    <th scope="col">{t("tableHeaderNote")}</th>
+                    <th scope="col">{t("tableHeaderErase")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -439,7 +440,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                       </td>
                       <td className="muted">{row.note || "—"}</td>
                       <td>
-                        <EraseRow action="session-erase" label="Erase" path={`/club/academy/${encodeURIComponent(ident)}/sessions/${encodeURIComponent(row.id)}`} what="session" />
+                        <EraseRow action="session-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/sessions/${encodeURIComponent(row.id)}`} what="session" />
                       </td>
                     </tr>
                   ))}
@@ -448,8 +449,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
             </div>
             </EraseNotes>
             <p className="muted" data-load-check={loadAgrees ? "agrees" : "mismatch"} style={{ fontSize: "0.82rem" }}>
-              Load total: the {sessions.data.items.length} row(s) above add to {printedLoad.toFixed(2)} and the API&apos;s own figure for the same list
-              is {sessions.data.total_load_units.toFixed(2)} — {loadAgrees ? "they agree" : "MISMATCH"}.
+              {loadAgrees ? t("loadAgrees", { count: sessions.data.items.length, printed: printedLoad.toFixed(2), api: sessions.data.total_load_units.toFixed(2) }) : t("loadMismatch", { count: sessions.data.items.length, printed: printedLoad.toFixed(2), api: sessions.data.total_load_units.toFixed(2) })}
             </p>
             <p className="muted" style={{ fontSize: "0.82rem" }}>
               {sessions.data.formulas.total_load_units} · {sessions.data.read_through}
@@ -460,7 +460,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         )}
       </Panel>
 
-      <Panel eyebrow={reports.ok ? `${reports.data.total} report(s) of ${reports.data.limit} allowed · ${reports.data.kinds.join(", ")}` : "the report door did not answer"} title="Saved questions (reports)">
+      <Panel eyebrow={reports.ok ? t("eyebrowReports", { total: reports.data.total, limit: reports.data.limit, kinds: reports.data.kinds.join(", ") }) : t("reportsDoorMissing")} title={t("titleReports")}>
         {reports.ok ? (
           <div className="stack">
             {academyRules.ok ? (
@@ -474,7 +474,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
               />
             ) : (
               <p className="muted" style={{ fontSize: "0.86rem" }}>
-                The academy rulebook door did not answer, so this page has no published `report_limits` to bound a window or a quota with. The questions below are still the door&apos;s own rows.
+                {t("reportRulebookMissing")}
               </p>
             )}
             <EraseNotes id="report-erase-wall">
@@ -482,15 +482,15 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">Kind</th>
-                    <th scope="col">Window</th>
-                    <th scope="col">Team</th>
-                    <th scope="col">Asked by</th>
-                    <th scope="col">Asked on</th>
-                    <th scope="col">Sessions</th>
-                    <th scope="col">Load</th>
-                    <th scope="col">The answer, now</th>
-                    <th scope="col">Erase</th>
+                    <th scope="col">{t("tableHeaderKind")}</th>
+                    <th scope="col">{t("tableHeaderWindow")}</th>
+                    <th scope="col">{t("tableHeaderTeam2")}</th>
+                    <th scope="col">{t("tableHeaderAskedBy")}</th>
+                    <th scope="col">{t("tableHeaderAskedOn")}</th>
+                    <th scope="col">{t("tableHeaderSessions")}</th>
+                    <th scope="col">{t("tableHeaderLoad2")}</th>
+                    <th scope="col">{t("tableHeaderAnswer")}</th>
+                    <th scope="col">{t("tableHeaderErase2")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -508,10 +508,10 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                       <td className="num">{row.body.sessions ?? "—"}</td>
                       <td className="num">{row.body.total_load_units?.toFixed(2) ?? "—"}</td>
                       <td className="muted" style={{ fontSize: "0.8rem" }}>
-                        {row.body.empty_window ? "empty window — no rows, and no mean over nothing" : (row.body.formulas.total_load_units ?? "recomputed on read")}
+                        {row.body.empty_window ? t("emptyWindow") : (row.body.formulas.total_load_units ?? "recomputed on read")}
                       </td>
                       <td>
-                        <EraseRow action="report-erase" label="Erase" path={`/club/academy/${encodeURIComponent(ident)}/reports/${encodeURIComponent(row.id)}`} what="question" />
+                        <EraseRow action="report-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/reports/${encodeURIComponent(row.id)}`} what="question" />
                       </td>
                     </tr>
                   ))}
@@ -529,8 +529,8 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
       </Panel>
 
       <Panel
-        eyebrow={entitlements.ok ? `${entitlements.data.plan} plan · ${meterRows.length} ceiling(s) for this tenant · as of ${entitlements.data.as_of}` : "the entitlement door did not answer"}
-        title="Plan and limits"
+        eyebrow={entitlements.ok ? t("eyebrowEntitlements", { plan: entitlements.data.plan, ceilings: meterRows.length, asOf: entitlements.data.as_of }) : t("entitlementsDoorMissing")}
+        title={t("titleEntitlements")}
       >
         {entitlements.ok ? (
           <div className="stack">
@@ -538,13 +538,13 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
               <table className="table">
                 <thead>
                   <tr>
-                    <th scope="col">Feature</th>
-                    <th scope="col">Ceiling</th>
-                    <th scope="col">Used</th>
-                    <th scope="col">Remaining</th>
-                    <th scope="col">Period</th>
-                    <th scope="col">Act rows</th>
-                    <th scope="col">Refused on today</th>
+                    <th scope="col">{t("tableHeaderFeature")}</th>
+                    <th scope="col">{t("tableHeaderCeiling")}</th>
+                    <th scope="col">{t("tableHeaderUsed")}</th>
+                    <th scope="col">{t("tableHeaderRemaining")}</th>
+                    <th scope="col">{t("tableHeaderPeriod")}</th>
+                    <th scope="col">{t("tableHeaderActRows")}</th>
+                    <th scope="col">{t("tableHeaderRefusedToday")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -556,14 +556,14 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                       <td className="num">{row.remaining}</td>
                       <td>{row.period}</td>
                       <td className="num">{row.acts}</td>
-                      <td>{row.enforced ? "yes — a write past it is refused" : "no — published as data until its tier wires it"}</td>
+                      <td>{row.enforced ? t("refusedYes") : t("refusedNo")}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             <p className="muted" data-meter-check={meterAgrees ? "agrees" : "mismatch"} style={{ fontSize: "0.82rem" }}>
-              Remaining: re-subtracted from the two columns above for all {meterRows.length} row(s) — {meterAgrees ? "the door&apos;s own figures hold" : "MISMATCH with the figure printed beside them"}.
+              {meterAgrees ? t("meterAgrees", { count: meterRows.length }) : t("meterMismatch", { count: meterRows.length })}
             </p>
             <p className="muted" style={{ fontSize: "0.82rem" }}>
               {entitlements.data.formula}
@@ -575,7 +575,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
               {entitlements.data.plan_rule}
             </p>
             <p className="muted" style={{ fontSize: "0.82rem" }}>
-              {entitlements.data.tier_limits.members} members and {entitlements.data.tier_limits.teams} teams are what §39&apos;s own doors refuse on — {entitlements.data.tier_limits.rule}
+              {entitlements.data.tier_limits.members} members and {entitlements.data.tier_limits.teams} teams are what §39's own doors refuse on — {entitlements.data.tier_limits.rule}
             </p>
             <p className="muted" style={{ fontSize: "0.82rem" }}>
               {entitlements.data.no_payment}
@@ -584,7 +584,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
               <p className="muted" data-account-meter={mine.data.items.map((row) => row.feature).join(",")} style={{ fontSize: "0.82rem" }}>
                 {mine.data.display_name} as an account is a separate subject on {mine.data.plan}:{" "}
                 {mine.data.items.map((row) => `${row.feature} ${row.used} of ${row.limit} per ${row.period}${row.enforced ? ", refused on today" : ", not refused on today"}`).join("; ") ||
-                  "nothing of an account is metered here"}
+                  t("accountMeterNothing")}
                 .
               </p>
             ) : (
@@ -596,7 +596,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         )}
       </Panel>
 
-      <Provenance extra={<span className="chip mono">{view.teams.length} sheet(s), {view.counts.players_on_sheets} squad row(s) — pointers to the world&apos;s players, not copies</span>} provenance={{ data_origin: view.data_origin, is_demo_data: view.is_demo_data }} />
+      <Provenance extra={<span className="chip mono">{t("provenanceExtra2", { teams: view.teams.length, players: view.counts.players_on_sheets })}</span>} provenance={{ data_origin: view.data_origin, is_demo_data: view.is_demo_data }} />
     </div>
   );
 }
