@@ -87,14 +87,33 @@ Also changed in the harness: browser console errors are now tagged with the rout
 React `#418` hydration error that has **not** reproduced in the clean run above or in a targeted walk of six public
 routes; it is recorded here rather than dropped, and the new tagging will name the route if it returns.
 
-## 5. i18n (spec §81) — not built
+## 5. i18n (spec §81) — built, and the page copy follows the locale
 
-The UI is English-only: no `messages/*.json`, no locale routing, no translation layer. What existed was a
-`locales: ["en","zh","zh-TW"]` field in `GET /capabilities`, which reads as a shipped feature. Corrected where it
-was overstated: `README.md` architecture line now lists what the web tier actually does (SEO metadata, sitemap,
-robots) and its honesty-guarantees section states the English-only reality; `ARCHITECTURE.md` §6 now marks i18n as
-not built and describes the target shape. The `/capabilities` field itself is a backend change and is tracked in
-`ROADMAP.md` under "Now → next session" so the claim and the code can be reconciled together.
+*This section used to say the opposite. It was written on 2026-09-27, when the web tier carried no
+catalogue, no locale routing and no translation layer, and it corrected a `locales: ["en","zh","zh-TW"]`
+field in `GET /capabilities` that read as a shipped feature. The field was the honest answer then and
+is still the honest answer now — it names the catalogues this API answers in — but the sentence
+around it stopped being true on 2026-10-01 and stopped being true again for the last time on
+2026-10-21, when the last page body was wired to its catalogue.*
+
+What is true now, and how a reader checks it:
+
+* **The mechanism** — `middleware.ts` resolves the locale from the `fo_locale` cookie, the browser's
+  `Accept-Language` and then the account's own column; `i18n/request.ts` loads the matching
+  catalogue; the nav switcher writes the cookie; `GET /capabilities` names the catalogues it
+  serves, and `tests/test_locale_claims.py` holds that field to the files in both directions.
+* **The catalogues** — `en.json`, `zh.json` and `zh-TW.json` carry the same 2890 keys, and the two
+  Chinese files are written translations rather than copies. The key counts live in
+  `apps/web/messages/README.md`, which the suite recomputes; the 73 values that are identical in
+  both catalogues are technical tokens (a product name, an enum, a unit), not untranslated copy.
+* **The page bodies** — every page reads its copy from a catalogue. The copy gate
+  (`apps/web/scripts/qa-i18n-literals.mjs`) walks every `app/**/*.tsx` through the repository's own
+  TypeScript and reads **0 English literal sites**, and holds the count at 0, so a page that adds
+  copy in English fails the build.
+* **The metadata** — the metadata gate reports **tabs keyed 51 / literal 0** and **headings keyed 43
+  / literal 0**: every page's document tab and every page's heading is now locale-driven, which is
+  the SEO point as much as the i18n one — a Chinese page served to a Chinese crawler now carries a
+  Chinese tab, a Chinese `og:title` and a Chinese heading.
 
 ## 6. Reproduce
 

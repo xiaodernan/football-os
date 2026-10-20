@@ -5,8 +5,8 @@ Three files, one per locale (`apps/api/app/api/v1/meta.py` publishes them as `lo
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 392 of 393 keys in Simplified Chinese (`scout.placeholder` is a Chinese sentence in the English file already, so its falling back is the honest state) | **yes** |
-| `zh-TW.json` | 393 of 393 keys, written in Traditional Chinese, not converted from the `zh` file | **yes** |
+| `zh.json` | 2816 of 2890 keys in Simplified Chinese, and all 2890 present (`scout.placeholder` is a Chinese sentence in the English file already, so its falling back is the honest state) | **yes** |
+| `zh-TW.json` | 2817 of 2890 keys written in Traditional Chinese, not converted from the `zh` file, and all 2890 present | **yes** |
 
 ## What a reader gets today
 
@@ -17,9 +17,7 @@ Chinese filenames, and nothing read a catalogue anyway — the interface was Eng
 so the locale the middleware had always resolved was invisible. `apps/api/tests/test_locale_claims.py` is what
 stopped that being invisible: it holds `locales` to these files in both directions.
 
-The nav, the auth pages and the settings screen read the catalogue (`components/Nav.tsx`, `app/login/*`,
-`app/register/*`, `app/settings/*`); the rest of the interface still carries English literals and is wired
-namespace by namespace (PLAN.md, Item 2c).
+**Every page reads the catalogue.** The arc that wired the interface namespace by namespace is finished: the copy gate (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` and holds the count at 0, so a page that adds copy in English fails the build; the metadata gate agrees that every page's tab and heading is now locale-driven (**tabs keyed 51 / literal 0, headings keyed 43 / literal 0**). The 74 keys that still fall back are the ones that are *supposed* to: a value that is identical in both catalogues is a technical token - a product name, an enum, a unit - and the figures above are floors rather than pins, so a translation batch raises them without touching this file.
 
 ## The rule
 

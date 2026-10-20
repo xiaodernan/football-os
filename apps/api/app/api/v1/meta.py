@@ -128,9 +128,9 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
         # The languages this app will answer in — `middleware.ts` picks one of these from the `fo_locale` cookie,
         # the browser's `Accept-Language` and the account's own column, so a catalogue that is not a copy of
         # English is a language a reader can already be served. Since 2026-10-06 both Chinese catalogues carry
-        # the full key set translated (`zh-TW` 288/288; `zh` 287/288, the search example sentence being Chinese
-        # in the English file already, so its falling back is the honest state); a key added to `en.json`
-        # without translations falls back per key until translated. Until 2026-10-01 the files were
+        # the full key set present and translated (the key counts live in
+        # `apps/web/messages/README.md`, which the suite recomputes; the search example sentence is
+        # Chinese in the English file already, so its falling back is the honest state); a key added to `en.json`
         # byte-for-byte copies of the English one, and this field said `["en"]` — the true answer then.
         # `tests/test_locale_claims.py` holds this list to the catalogues in both directions;
         # `apps/web/messages/README.md` explains the switch.
