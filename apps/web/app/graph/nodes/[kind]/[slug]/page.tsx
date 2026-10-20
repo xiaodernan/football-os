@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { JsonLd, WorldHead, WorldUnavailable } from "@/components/world";
@@ -16,35 +17,46 @@ type Props = { params: Promise<{ kind: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { kind, slug } = await params;
+  const t = await getTranslations("graph");
   return {
     title: `${kind}: ${slug}`,
-    description: `Knowledge graph node: ${kind} ${slug}`,
+    description: t("nodeMetaDescription", { kind, slug }),
     robots: { index: false, follow: false },
   };
 }
 
-function EdgesPanel({ links, verb, direction }: { links: GraphLink[]; verb: string; direction: string }) {
+function EdgesPanel({
+  links,
+  verb,
+  direction,
+  t,
+}: {
+  links: GraphLink[];
+  verb: string;
+  direction: string;
+  t: (key: string, values?: Record<string, string | number | Date>) => string;
+}) {
   if (!links.length) {
     return (
-      <Panel title="No edges" eyebrow={`no ${verb || "edges"} found`}>
+      <Panel title={t("noEdgesTitle")} eyebrow={t("noEdgesEyebrow", { verb: verb || t("noEdgesTitle") })}>
         <p className="muted" style={{ fontSize: "0.85rem" }}>
-          This node has no edges matching the filter.
+          {t("noEdgesNote")}
         </p>
       </Panel>
     );
   }
 
   return (
-    <Panel title={`edges: ${links.length}`} eyebrow={`verb: ${verb || "all"} · direction: ${direction}`}>
+    <Panel title={t("edgesTitle", { count: links.length })} eyebrow={t("edgesEyebrow", { verb: verb || "all", direction })}>
       <div className="world-tablewrap" data-testid="graph-edges">
         <table className="table">
           <thead>
             <tr>
-              <th scope="col">Verb</th>
-              <th scope="col">Direction</th>
-              <th scope="col">Other</th>
-              <th scope="col">Facts</th>
-              <th scope="col">Evidence</th>
+              <th scope="col">{t("thVerb")}</th>
+              <th scope="col">{t("thDirection")}</th>
+              <th scope="col">{t("thOther")}</th>
+              <th scope="col">{t("thFacts")}</th>
+              <th scope="col">{t("thEvidence")}</th>
             </tr>
           </thead>
           <tbody>
@@ -61,7 +73,11 @@ function EdgesPanel({ links, verb, direction }: { links: GraphLink[]; verb: stri
                   {JSON.stringify(link.facts).slice(0, 120)}
                 </td>
                 <td className="mono muted" style={{ fontSize: "0.75rem" }}>
-                  carrier: {link.evidence.carrier} · row: {link.evidence.row} · col: {link.evidence.column}
+                  {t("evidenceLine", {
+                    carrier: link.evidence.carrier,
+                    row: link.evidence.row,
+                    column: link.evidence.column,
+                  })}
                 </td>
               </tr>
             ))}
@@ -72,21 +88,30 @@ function EdgesPanel({ links, verb, direction }: { links: GraphLink[]; verb: stri
   );
 }
 
-function NeighborhoodPanel({ data }: { data: GraphNeighborhood }) {
+function NeighborhoodPanel({
+  data,
+  t,
+}: {
+  data: GraphNeighborhood;
+  t: (key: string, values?: Record<string, string | number | Date>) => string;
+}) {
   return (
-    <Panel title={`Neighbourhood (depth ${data.depth})`} eyebrow={`${data.node_count} nodes · ${data.edge_count} edges`}>
+    <Panel
+      title={t("neighborhoodTitle", { depth: data.depth })}
+      eyebrow={t("neighborhoodEyebrow", { nodes: data.node_count, edges: data.edge_count })}
+    >
       <p className="muted" style={{ fontSize: "0.85rem" }}>
-        Breadth-first walk capped at depth {data.depth}, max {data.node_count} nodes, {data.edge_count} edges.
+        {t("neighborhoodNote", { depth: data.depth, nodes: data.node_count, edges: data.edge_count })}
       </p>
       <div className="world-tablewrap" data-testid="graph-neighborhood">
         <table className="table">
           <thead>
             <tr>
-              <th scope="col">Hop</th>
-              <th scope="col">From</th>
-              <th scope="col">To</th>
-              <th scope="col">Verb</th>
-              <th scope="col">Direction</th>
+              <th scope="col">{t("thHop")}</th>
+              <th scope="col">{t("thFrom")}</th>
+              <th scope="col">{t("thTo")}</th>
+              <th scope="col">{t("thVerb")}</th>
+              <th scope="col">{t("thDirection")}</th>
             </tr>
           </thead>
           <tbody>
@@ -103,7 +128,7 @@ function NeighborhoodPanel({ data }: { data: GraphNeighborhood }) {
         </table>
       </div>
       <p className="muted world-section-note">
-        {data.node_count} nodes · {data.edge_count} edges · max depth {data.depth}
+        {t("neighborhoodSummary", { nodes: data.node_count, edges: data.edge_count, depth: data.depth })}
       </p>
     </Panel>
   );
@@ -115,6 +140,8 @@ export default async function GraphNodeDetailPage({ params }: { params: Promise<
   const user = await currentUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/graph/nodes/${kind}/${slug}`)}`);
 
+  const t = await getTranslations("graph");
+
   const [nodeResult, edgesResult, neighborhoodResult] = await Promise.all([
     serverFetch<{ node: GraphNode; verb: string; direction: string; edges: GraphLink[]; outgoing_count: number; incoming_count: number; verbs_here: string[] }>(`/graph/nodes/${encodeURIComponent(kind)}/${encodeURIComponent(slug)}`),
     serverFetch<{ edges: GraphLink[] }>(`/graph/nodes/${encodeURIComponent(kind)}/${encodeURIComponent(slug)}?direction=both`),
@@ -123,7 +150,13 @@ export default async function GraphNodeDetailPage({ params }: { params: Promise<
 
   if (!nodeResult.ok) {
     if (nodeResult.status === 404 || nodeResult.error.code === "no_such_node") notFound();
-    return <WorldUnavailable detail={nodeResult.error.message} message="The graph node door did not answer." title={`Graph node: ${kind}:${slug}`} />;
+    return (
+      <WorldUnavailable
+        detail={nodeResult.error.message}
+        message={t("nodeUnavailableMessage")}
+        title={t("nodeUnavailableTitle", { kind, slug })}
+      />
+    );
   }
 
   const nodeData = nodeResult.data;
@@ -133,14 +166,29 @@ export default async function GraphNodeDetailPage({ params }: { params: Promise<
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: `/graph/nodes/${kind}`, label: `${kind.charAt(0).toUpperCase() + kind.slice(1)} nodes` }}
-        eyebrow={`kind: ${kind} · {nodeData.outgoing_count} out · {nodeData.incoming_count} in`}
-        lede={nodeData.verbs_here.length ? `Verbs here: ${nodeData.verbs_here.join(", ")}` : "No edges at this node."}
+        back={{
+          href: `/graph/nodes/${kind}`,
+          label: t("nodesTitle", { kind: kind.charAt(0).toUpperCase() + kind.slice(1) }),
+        }}
+        eyebrow={t("nodeEyebrow", {
+          kind,
+          out: nodeData.outgoing_count,
+          in: nodeData.incoming_count,
+        })}
+        lede={
+          nodeData.verbs_here.length
+            ? t("verbsHere", { verbs: nodeData.verbs_here.join(", ") })
+            : t("noEdgesHere")
+        }
         title={`${kind.charAt(0).toUpperCase() + kind.slice(1)}: ${slug}`}
       >
         <div className="tag-list" style={{ marginTop: "0.7rem" }}>
-          <span className="chip mono" title="Kind of this node">{kind}</span>
-          <span className="chip mono" title="Public slug">{slug}</span>
+          <span className="chip mono" title={t("kindTitle")}>
+            {kind}
+          </span>
+          <span className="chip mono" title={t("publicSlug")}>
+            {slug}
+          </span>
         </div>
       </WorldHead>
 
@@ -154,24 +202,46 @@ export default async function GraphNodeDetailPage({ params }: { params: Promise<
         }}
       />
 
-      <Panel title="Node">
+      <Panel title={t("nodePanelTitle")}>
         <dl className="world-kv">
-          <div className="world-kv__row"><dt>Kind</dt><dd className="mono">{kind}</dd></div>
-          <div className="world-kv__row"><dt>Slug</dt><dd className="mono">{slug}</dd></div>
-          <div className="world-kv__row"><dt>Label</dt><dd className="mono" data-testid="graph-node-label">{nodeData.node.label}</dd></div>
-          <div className="world-kv__row"><dt>Path</dt><dd className="mono">{nodeData.node.path}</dd></div>
-          <div className="world-kv__row"><dt>Data origin</dt><dd className="mono">{nodeData.node.data_origin}</dd></div>
-          <div className="world-kv__row"><dt>Demo data</dt><dd className="mono">{String(nodeData.node.is_demo_data)}</dd></div>
+          <div className="world-kv__row">
+            <dt>{t("kvKind")}</dt>
+            <dd className="mono">{kind}</dd>
+          </div>
+          <div className="world-kv__row">
+            <dt>{t("kvSlug")}</dt>
+            <dd className="mono">{slug}</dd>
+          </div>
+          <div className="world-kv__row">
+            <dt>{t("kvLabel")}</dt>
+            <dd className="mono" data-testid="graph-node-label">
+              {nodeData.node.label}
+            </dd>
+          </div>
+          <div className="world-kv__row">
+            <dt>{t("kvPath")}</dt>
+            <dd className="mono">{nodeData.node.path}</dd>
+          </div>
+          <div className="world-kv__row">
+            <dt>{t("kvDataOrigin")}</dt>
+            <dd className="mono">{nodeData.node.data_origin}</dd>
+          </div>
+          <div className="world-kv__row">
+            <dt>{t("kvDemoData")}</dt>
+            <dd className="mono">{String(nodeData.node.is_demo_data)}</dd>
+          </div>
         </dl>
-        <p className="muted world-section-note">Canonical path: <Link className="world-link" href={nodeData.node.path}>{nodeData.node.path}</Link></p>
+        <p className="muted world-section-note">
+          {t("canonicalPath")} <Link className="world-link" href={nodeData.node.path}>{nodeData.node.path}</Link>
+        </p>
       </Panel>
 
-      <EdgesPanel links={edgesData.edges} verb="" direction="both" />
+      <EdgesPanel links={edgesData.edges} verb="" direction="both" t={t} />
 
-      {neighborhoodData && <NeighborhoodPanel data={neighborhoodData} />}
+      {neighborhoodData && <NeighborhoodPanel data={neighborhoodData} t={t} />}
 
       <p className="muted" style={{ fontSize: "0.84rem" }}>
-        Graph provenance:
+        {t("graphProvenance")}
         <span className="chip mono">data_origin: synthetic</span>
         <span className="chip mono">is_demo_data: true</span>
         <span className="chip mono">kind: {kind}</span>

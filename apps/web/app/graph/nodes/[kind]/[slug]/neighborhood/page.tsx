@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { JsonLd, WorldHead, WorldUnavailable } from "@/components/world";
@@ -11,11 +12,14 @@ import "../../../../../../styles/tactics.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Neighbourhood",
-  description: "Breadth-first walk from a graph node.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("graph");
+  return {
+    title: t("hoodMetaTitle"),
+    description: t("hoodMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 function EdgeRow({ edge, idx }: { edge: { hop: number; from: string; to: string; verb: string; direction: string }; idx: number }) {
   return (
@@ -39,10 +43,18 @@ export default async function GraphNeighborhoodPage({ params }: { params: Promis
   const user = await currentUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/graph/nodes/${kind}/${slug}/neighborhood`)}`);
 
+  const t = await getTranslations("graph");
+
   const result = await serverFetch<GraphNeighborhood>(`/graph/nodes/${encodeURIComponent(kind)}/${encodeURIComponent(slug)}/neighborhood`);
   if (!result.ok) {
     if (result.status === 404 || result.error.code === "no_such_node") notFound();
-    return <WorldUnavailable detail={result.error.message} message="The neighbourhood door did not answer." title="Neighbourhood" />;
+    return (
+      <WorldUnavailable
+        detail={result.error.message}
+        message={t("hoodUnavailableMessage")}
+        title={t("hoodUnavailableTitle")}
+      />
+    );
   }
 
   const data = result.data;
@@ -50,15 +62,17 @@ export default async function GraphNeighborhoodPage({ params }: { params: Promis
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: `/graph/nodes/${kind}/${slug}`, label: `${kind.charAt(0).toUpperCase() + kind.slice(1)}: ${slug}` }}
-        eyebrow={`depth {data.depth} · {data.node_count} nodes · {data.edge_count} edges`}
-        lede="Breadth-first walk capped by the published ceilings. Each edge carries its evidence (carrier table, row, column)."
-        title={`Neighbourhood: ${kind}:${slug}`}
+        back={{ href: `/graph/nodes/${kind}/${slug}`, label: t("backLabel", { kind, slug }) }}
+        eyebrow={t("hoodEyebrow", { depth: data.depth, nodes: data.node_count, edges: data.edge_count })}
+        lede={t("hoodLede")}
+        title={t("hoodTitle", { kind, slug })}
       >
         <div className="tag-list" style={{ marginTop: "0.7rem" }}>
-          <span className="chip mono" title="Walk depth">depth {data.depth}</span>
-          <span className="chip num">{data.node_count} nodes</span>
-          <span className="chip num">{data.edge_count} edges</span>
+          <span className="chip mono" title={t("walkDepth")}>
+            {t("depthChip", { depth: data.depth })}
+          </span>
+          <span className="chip num">{t("nodesChip", { count: data.node_count })}</span>
+          <span className="chip num">{t("edgesChip", { count: data.edge_count })}</span>
         </div>
       </WorldHead>
 
@@ -75,19 +89,22 @@ export default async function GraphNeighborhoodPage({ params }: { params: Promis
         }}
       />
 
-      <Panel title={`Neighbourhood (depth {data.depth})`} eyebrow={`${data.node_count} nodes · {data.edge_count} edges`}>
+      <Panel
+        title={t("neighborhoodTitle", { depth: data.depth })}
+        eyebrow={t("neighborhoodEyebrow", { nodes: data.node_count, edges: data.edge_count })}
+      >
         <p className="muted" style={{ fontSize: "0.85rem" }}>
-          Breadth-first walk capped at depth {data.depth}, max {data.node_count} nodes, {data.edge_count} edges.
+          {t("neighborhoodNote", { depth: data.depth, nodes: data.node_count, edges: data.edge_count })}
         </p>
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">Hop</th>
-                <th scope="col">From</th>
-                <th scope="col">To</th>
-                <th scope="col">Verb</th>
-                <th scope="col">Direction</th>
+                <th scope="col">{t("thHop")}</th>
+                <th scope="col">{t("thFrom")}</th>
+                <th scope="col">{t("thTo")}</th>
+                <th scope="col">{t("thVerb")}</th>
+                <th scope="col">{t("thDirection")}</th>
               </tr>
             </thead>
             <tbody>
@@ -98,12 +115,12 @@ export default async function GraphNeighborhoodPage({ params }: { params: Promis
           </table>
         </div>
         <p className="muted world-section-note">
-          {data.node_count} nodes · {data.edge_count} edges · max depth {data.depth}
+          {t("neighborhoodSummary", { nodes: data.node_count, edges: data.edge_count, depth: data.depth })}
         </p>
       </Panel>
 
       <p className="muted" style={{ fontSize: "0.84rem" }}>
-        Graph provenance:
+        {t("graphProvenance")}
         <span className="chip mono">data_origin: synthetic</span>
         <span className="chip mono">is_demo_data: true</span>
         <span className="chip mono">kind: {data.node.kind}</span>

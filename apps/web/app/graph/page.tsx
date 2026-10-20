@@ -13,25 +13,35 @@ import "../../styles/tactics.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Knowledge Graph",
-  description: "Browse the football knowledge graph: nodes, edges, and the vocabulary that connects them.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/graph") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("graph");
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/graph") },
+  };
+}
 
-function RulesPanel({ rules }: { rules: GraphRules }) {
+function RulesPanel({ rules, t }: { rules: GraphRules; t: (key: string, values?: Record<string, string | number | Date>) => string }) {
   return (
-    <Panel title="Graph Rules" eyebrow={`${rules.node_kinds.length} kinds · ${rules.edge_verbs.length} verbs · depth ≤ ${rules.max_depth} · edges ≤ ${rules.max_edges} · nodes ≤ ${rules.max_nodes}`}>
+    <Panel
+      title={t("rulesTitle")}
+      eyebrow={t("rulesEyebrow", {
+        kinds: rules.node_kinds.length,
+        verbs: rules.edge_verbs.length,
+        depth: rules.max_depth,
+        edges: rules.max_edges,
+        nodes: rules.max_nodes,
+      })}
+    >
       <div className="stack">
         <p className="muted" style={{ fontSize: "0.85rem" }}>
-          The graph is a read-time projection over the schema&apos;s own foreign keys. No `graph_edges` table exists;
-          every edge is a clause that already lives in the world tables. The ceiling figures below are the same
-          ones the walk guards with.
+          {t("rulesNote")}
         </p>
 
         <div className="row wrap" style={{ gap: "0.5rem" }}>
-          <Panel className="grow" title="Node Kinds" eyebrow={rules.node_kinds.length.toString()}>
+          <Panel className="grow" title={t("nodeKindsTitle")} eyebrow={rules.node_kinds.length.toString()}>
             <ul className="stack-sm" data-testid="graph-kinds" style={{ margin: 0, paddingLeft: "1.1rem" }}>
               {rules.node_kinds.map((kind) => (
                 <li key={kind}>
@@ -43,7 +53,7 @@ function RulesPanel({ rules }: { rules: GraphRules }) {
             </ul>
           </Panel>
 
-          <Panel className="grow" title="Edge Verbs" eyebrow={rules.edge_verbs.length.toString()}>
+          <Panel className="grow" title={t("edgeVerbsTitle")} eyebrow={rules.edge_verbs.length.toString()}>
             <ul className="stack-sm" data-testid="graph-verbs" style={{ margin: 0, paddingLeft: "1.1rem" }}>
               {rules.edge_verbs.map((verb) => (
                 <li key={verb}>
@@ -56,7 +66,7 @@ function RulesPanel({ rules }: { rules: GraphRules }) {
           </Panel>
         </div>
 
-        <Panel title="Ceilings" eyebrow={rules.routes.length.toString()}>
+        <Panel title={t("ceilingsTitle")} eyebrow={rules.routes.length.toString()}>
           <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
             <li><span className="mono">max_depth</span> = {rules.max_depth}</li>
             <li><span className="mono">max_edges</span> = {rules.max_edges}</li>
@@ -65,10 +75,9 @@ function RulesPanel({ rules }: { rules: GraphRules }) {
         </Panel>
 
         {rules.spec_verbs_declined && Object.keys(rules.spec_verbs_declined).length > 0 && (
-          <Panel title="Declined Spec Verbs" eyebrow={Object.keys(rules.spec_verbs_declined).length.toString()}>
+          <Panel title={t("declinedVerbsTitle")} eyebrow={Object.keys(rules.spec_verbs_declined).length.toString()}>
             <p className="muted" style={{ fontSize: "0.85rem" }}>
-              These verbs appear in §30 but the schema has no clause to project them. Each is recorded with the
-              measurement that forced the decline, so nothing is quietly dropped.
+              {t("declinedVerbsNote")}
             </p>
             <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
               {Object.entries(rules.spec_verbs_declined).map(([verb, reason]) => (
@@ -80,9 +89,9 @@ function RulesPanel({ rules }: { rules: GraphRules }) {
           </Panel>
         )}
 
-        <Panel title="Declined Clauses" eyebrow={rules.clauses_declined.toString()}>
+        <Panel title={t("declinedClausesTitle")} eyebrow={rules.clauses_declined.toString()}>
           <p className="muted" style={{ fontSize: "0.85rem" }}>
-            Public foreign keys the graph does not traverse. Each names the clause and the reason it is not walked.
+            {t("declinedClausesNote")}
           </p>
           {rules.declined_clauses && rules.declined_clauses.length > 0 && (
             <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
@@ -95,10 +104,9 @@ function RulesPanel({ rules }: { rules: GraphRules }) {
           )}
         </Panel>
 
-        <Panel title="Private Tables Excluded" eyebrow={rules.private_tables_excluded.toString()}>
+        <Panel title={t("privateTablesTitle")} eyebrow={rules.private_tables_excluded.toString()}>
           <p className="muted" style={{ fontSize: "0.85rem" }}>
-            Tables that reach a user or organisation (directly or transitively) are excluded from the graph.
-            The graph only projects relations over purely world data.
+            {t("privateTablesNote")}
           </p>
         </Panel>
       </div>
@@ -111,9 +119,16 @@ async function GraphPage() {
   if (!user) redirect("/login?next=%2Fgraph");
 
   const tn = await getTranslations("nav");
+  const t = await getTranslations("graph");
   const rulesResult = await serverFetch<GraphRules>("/graph/rules");
   if (!rulesResult.ok) {
-    return <WorldUnavailable detail={rulesResult.error.message} message="The graph rules door did not answer." title="Knowledge Graph" />;
+    return (
+      <WorldUnavailable
+        detail={rulesResult.error.message}
+        message={t("rulesUnavailableMessage")}
+        title={t("unavailableTitle")}
+      />
+    );
   }
 
   const rules = rulesResult.data;
@@ -122,14 +137,18 @@ async function GraphPage() {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/", label: tn("home") }}
-        eyebrow={`${rules.node_kinds.length} kinds · ${rules.edge_verbs.length} verbs · depth ≤ ${rules.max_depth}`}
-        lede="The football knowledge graph is a read-time projection over the schema's own foreign keys. No `graph_edges` table exists; every relation is a clause that already lives in the world tables. This page lets you browse nodes, follow typed edges, and walk the neighbourhood up to the published ceilings."
-        title="Knowledge Graph"
+        eyebrow={t("eyebrow", {
+          kinds: rules.node_kinds.length,
+          verbs: rules.edge_verbs.length,
+          depth: rules.max_depth,
+        })}
+        lede={t("lede")}
+        title={t("title")}
       />
 
-      <RulesPanel rules={rules} />
+      <RulesPanel rules={rules} t={t} />
 
-      <Panel title="Browse Nodes" eyebrow={`pick a kind to list its nodes`}>
+      <Panel title={t("browseTitle")} eyebrow={t("browseEyebrow")}>
         <div className="row wrap" style={{ gap: "0.5rem" }}>
           {rules.node_kinds.map((kind) => (
             <Link key={kind} className="btn" href={`/graph/nodes/${kind}`}>
@@ -140,14 +159,14 @@ async function GraphPage() {
       </Panel>
 
       <p className="muted" style={{ fontSize: "0.84rem" }}>
-        All graph reads are public and carry the same provenance envelope as the world routes:
+        {t("provenanceNote")}
         <span className="chip mono">data_origin: synthetic</span>
         <span className="chip mono">is_demo_data: true</span>
         <span className="chip mono">{rules.edge_verbs.length} verbs</span>
         <span className="chip mono">depth ≤ {rules.max_depth}</span>
         <span className="chip mono">edges ≤ {rules.max_edges}</span>
         <span className="chip mono">nodes ≤ {rules.max_nodes}</span>
-        <span className="chip">{rules.private_tables_excluded} private tables excluded</span>
+        <span className="chip">{t("privateTablesChip", { count: rules.private_tables_excluded })}</span>
       </p>
     </div>
   );

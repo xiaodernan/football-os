@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { WorldHead, WorldUnavailable } from "@/components/world";
@@ -14,40 +15,49 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ kind: string }> }): Promise<Metadata> {
   const { kind } = await params;
+  const tg = await getTranslations("graph");
+  const label = kind.charAt(0).toUpperCase() + kind.slice(1);
   return {
-    title: `${kind.charAt(0).toUpperCase() + kind.slice(1)} nodes`,
-    description: `Browse all ${kind} nodes in the football knowledge graph.`,
+    title: tg("nodesTitle", { kind: label }),
+    description: tg("kindMetaDescription", { kind }),
     robots: { index: false, follow: false },
   };
 }
 
 function KindNodes({ kind, rules }: { kind: string; rules: GraphRules }) {
   const t = useTranslations("common");
+  const tg = useTranslations("graph");
+  const label = kind.charAt(0).toUpperCase() + kind.slice(1);
   return (
-    <Panel title={`${kind.charAt(0).toUpperCase() + kind.slice(1)} nodes`} eyebrow={`nodes of kind ${kind}`}>
+    <Panel title={tg("nodesTitle", { kind: label })} eyebrow={tg("kindEyebrow", { kind })}>
       <p className="muted" style={{ fontSize: "0.85rem" }}>
-        Select a node to see its typed edges and walk its neighbourhood up to depth {rules.max_depth}.
+        {tg("kindNote", { depth: rules.max_depth })}
       </p>
       <form action={`/graph/nodes/${kind}`} method="GET" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
         <label htmlFor="slug" className="muted" style={{ fontSize: "0.85rem" }}>
-          slug:
+          {tg("slugLabel")}
         </label>
-        <input id="slug" name="slug" type="text" placeholder="slug" style={{ minWidth: "180px" }} />
+        <input
+          id="slug"
+          name="slug"
+          type="text"
+          placeholder={tg("slugPlaceholder")}
+          style={{ minWidth: "180px" }}
+        />
         <button className="btn btn--primary" type="submit">{t("open")}</button>
       </form>
-      <p className="muted world-section-note">
-        Or browse a node by its slug. The node door prints the node and all its typed edges.
-      </p>
+      <p className="muted world-section-note">{tg("kindOr")}</p>
     </Panel>
   );
 }
 
 function NodeListing({ kind, rules }: { kind: string; rules: GraphRules }) {
+  const tg = useTranslations("graph");
+  const label = kind.charAt(0).toUpperCase() + kind.slice(1);
   return (
-    <Panel title={`${kind.charAt(0).toUpperCase() + kind.slice(1)}`} eyebrow={`nodes of kind ${kind}`}>
+    <Panel title={tg("listingTitle", { kind: label })} eyebrow={tg("kindEyebrow", { kind })}>
       <p className="muted" style={{ fontSize: "0.85rem" }}>
-        This is a placeholder. The list view would paginate through all nodes of this kind.
-        For now, use the form above to open a specific node by slug.
+        {tg("listingNote")}
       </p>
       <div className="row wrap" style={{ gap: "0.5rem", marginTop: "0.5rem" }}>
         {rules.node_kinds.map((k) => (
@@ -66,9 +76,16 @@ async function GraphNodesKindPage({ params }: { params: Promise<{ kind: string }
   const user = await currentUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/graph/nodes/${kind}`)}`);
 
+  const tg = await getTranslations("graph");
   const rulesResult = await serverFetch<GraphRules>("/graph/rules");
   if (!rulesResult.ok) {
-    return <WorldUnavailable detail={rulesResult.error.message} message="The graph rules door did not answer." title="Knowledge Graph" />;
+    return (
+      <WorldUnavailable
+        detail={rulesResult.error.message}
+        message={tg("rulesUnavailableMessage")}
+        title={tg("unavailableTitle")}
+      />
+    );
   }
   const rules = rulesResult.data;
 
@@ -79,10 +96,10 @@ async function GraphNodesKindPage({ params }: { params: Promise<{ kind: string }
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/graph", label: "Knowledge Graph" }}
-        eyebrow={`${kind.charAt(0).toUpperCase() + kind.slice(1)} nodes`}
-        lede="Pick a node by its slug to see its typed edges and walk its neighbourhood."
-        title={`${kind.charAt(0).toUpperCase() + kind.slice(1)} nodes`}
+        back={{ href: "/graph", label: tg("unavailableTitle") }}
+        eyebrow={tg("nodesTitle", { kind: kind.charAt(0).toUpperCase() + kind.slice(1) })}
+        lede={tg("kindLede")}
+        title={tg("nodesTitle", { kind: kind.charAt(0).toUpperCase() + kind.slice(1) })}
       />
 
       <KindNodes kind={kind} rules={rules} />
