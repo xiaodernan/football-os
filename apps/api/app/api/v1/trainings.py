@@ -188,6 +188,10 @@ def list_sessions(
                 "focus_quality": row.focus_quality,
                 "self_notes": row.self_notes,
                 "recommendation_reasons": row.recommendation_reasons,
+                # Which program planned this session, when one did. A session the learner planned
+                # themselves carries none, and the column says so rather than leaving the reader to
+                # guess from the reason text.
+                "program_id": row.program_id,
                 "drill": {
                     "id": row.drill_id,
                     "slug": drill.slug if drill else None,

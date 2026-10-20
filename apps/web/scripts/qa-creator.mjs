@@ -23,6 +23,11 @@
  * * **no number in this walk is invented here.** The ceilings, the sections, the visibilities, the refusal codes and
  *   their statuses all come out of `GET /api/v1/creator/rules`, the same door the page reads.
  *
+ * The page answers in the browser's language (§81), so the walk **pins the locale** to English with the
+ * `fo_locale` cookie: a walk whose needles are English must measure the English surface, and a host
+ * whose Chrome asks for Chinese would otherwise fail every one of them for a reason that has nothing
+ * to do with the tier. The cookie is written before the first page is opened.
+ *
  * Env overrides: QA_BASE, QA_DIST, CHROME_PATH.
  */
 
@@ -59,6 +64,7 @@ const shouts = (body, needle) => squeeze(body).toUpperCase().includes(squeeze(ne
 /** A creator control, by the attribute the page gives it. */
 const C = (name) => `[data-creator-${name}]`;
 const rowOf = (guideId) => `tr[data-creator-guide="${guideId}"]`;
+const programRowOf = (programId) => `tr[data-creator-program="${programId}"]`;
 const citationOf = (id) => `tr[data-creator-citation="${id}"]`;
 
 async function shot(page, name) {
@@ -244,7 +250,12 @@ async function main() {
   const rules = rulesResponse.ok ? await rulesResponse.json() : null;
   const caps = rules?.caps ?? {};
   const answers = rules?.refusal_answers ?? {};
-  check('the rules door answers a caller with no session and publishes the eleven doors it declares', rulesResponse.status === 200 && (rules?.routes ?? []).length === 11, `HTTP ${rulesResponse.status}; ${(rules?.routes ?? []).length} route(s) published`);
+  const contract = await (await fetch(`${BASE}/api/v1/openapi.json`)).json();
+  const contractOperations = Object.entries(contract?.paths ?? {})
+    .filter(([path]) => path.startsWith('/api/v1/creator'))
+    .flatMap(([path, methods]) => Object.keys(methods).filter((method) => method !== 'parameters').map((method) => `${method.toUpperCase()} ${path}`));
+  const publishedRoutes = (rules?.routes ?? []).map((route) => `${String(route.method).toUpperCase()} /api/v1${route.path}`);
+  check('the rules door answers a caller with no session and publishes every door the contract holds', rulesResponse.status === 200 && publishedRoutes.length === contractOperations.length && contractOperations.every((operation) => publishedRoutes.includes(operation)), `HTTP ${rulesResponse.status}; ${publishedRoutes.length} route(s) published for ${contractOperations.length} operation(s) in the contract`);
   check('and the code list it answers with is the list it publishes', Object.keys(answers).length === (rules?.refusals ?? []).length && (rules?.refusals ?? []).every((code) => code in answers), `${Object.keys(answers).length} answers for ${(rules?.refusals ?? []).length} codes`);
   const statuses = [...new Set(Object.values(answers))];
   check('every published code earns 404, 409 or 422 — no 403 without a matrix, and no 400 fall-through', statuses.every((value) => [404, 409, 422].includes(value)), `statuses ${statuses.sort().join(', ')}`);
@@ -263,6 +274,7 @@ async function main() {
   const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   const authorPage = await browser.newPage();
   await authorPage.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+  await authorPage.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   watch(authorPage, 'author');
 
   await open(authorPage, '/creator');
@@ -343,6 +355,7 @@ async function main() {
   const readerContext = await browser.createBrowserContext();
   const readerPage = await readerContext.newPage();
   await readerPage.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+  await readerPage.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   watch(readerPage, 'reader');
   await open(readerPage, '/');
   const readerSigned = await register(readerPage, READER, 'QA Stranger');
@@ -393,6 +406,65 @@ async function main() {
 
   const uncited = await pressWrite(authorPage, `${citationOf(String(recorded.id ?? ''))} [data-creator-citation-remove]`, 'uncite', 'answered');
   check('un-citing from the row takes the citation off the guide at the door, not only off the page', uncited.ok && ((await call(authorPage, 'GET', `/api/v1/creator/guides/${publicGuide.id}`)).json ?? {}).citations === 0, uncited.note.slice(0, 140));
+
+  // The programs panel asks before it erases, so the walk has to answer the dialog — and only one
+  // handler may answer it, or the second accept finds the first has already handled it.
+  authorPage.on('dialog', (dialog) => void dialog.accept());
+
+  // ------------------------------------------------------------------- the programs panel: a plan a learner can walk
+  // The programs panel is the tier's newest surface, and a panel nothing walks is a panel whose
+  // figures are believed rather than checked. The same rule as the guide panel applies: every press
+  // is re-read through the door, and the note that answers it is the one the panel that owns the
+  // control painted.
+
+  const drillCatalogue = await call(authorPage, 'GET', '/api/v1/trainings/drills');
+  const drill = (Array.isArray(drillCatalogue.json) ? drillCatalogue.json : [])[0] ?? {};
+  check('the training catalogue the programs panel names drills from is the one the API holds', drillCatalogue.status === 200 && !!drill.slug, `HTTP ${drillCatalogue.status}; ${(Array.isArray(drillCatalogue.json) ? drillCatalogue.json : []).length} drill(s); the walk names ${drill.slug}`);
+
+  await typeInto(authorPage, C('program-title'), 'first touch and passing');
+  await authorPage.select(C('program-drill'), String(drill.slug));
+  await clearField(authorPage, C('program-minutes'));
+  await typeInto(authorPage, C('program-minutes'), '25');
+  const program = await pressWrite(authorPage, C('publish-program'), 'program', 'answered');
+  check('the page publishes a program from its own controls, and the program panel is where the answer lands', program.ok, `the control ${program.pressed} after ${program.attempts} attempt(s); note: ${program.note.slice(0, 140)}`);
+
+  const programShelf = (await call(authorPage, 'GET', `/api/v1/creator/programs?creator=${authorId}`)).json ?? {};
+  const programRow = (programShelf.programs ?? [])[0] ?? {};
+  check('the door holds the program the page pressed for, with the one step it named', !!programRow.id && programRow.title === 'first touch and passing' && programRow.steps === 1, `${(programShelf.programs ?? []).length} program(s); steps ${programRow.steps}`);
+  check('and the panel repaints with the program, on the read that follows the write', await waitForRows(authorPage, 'creator-program', 1));
+  const paintedProgram = (await rowsOf(authorPage, 'creator-program'))[0]?.cells ?? [];
+  check('every figure in the painted row is the door\'s own, cell for cell', has(paintedProgram[0] ?? '', programRow.title ?? ''), JSON.stringify(paintedProgram.slice(0, 3)));
+
+  const unwalkable = await call(authorPage, 'POST', '/api/v1/creator/programs', { title: 'a program that cannot be walked', steps: [{ drill: 'no-such-drill-anywhere', minutes: 20 }] });
+  check('a step naming a drill the catalogue does not hold is refused at publication, not at the learner\'s first session', unwalkable.status === 404 && unwalkable.json?.detail?.code === 'no_such_drill', `HTTP ${unwalkable.status} · ${unwalkable.json?.detail?.code}`);
+  check('and that refusal wrote nothing, so the shelf still holds the one program it did', ((await call(authorPage, 'GET', `/api/v1/creator/programs?creator=${authorId}`)).json?.programs ?? []).length === 1);
+
+  const noPlayer = await call(authorPage, 'POST', `/api/v1/creator/programs/${programRow.id}/start`);
+  check('starting a program with no player to plan for is refused with the platform\'s own code', noPlayer.status === 409 && noPlayer.json?.detail?.code === 'no_player', `HTTP ${noPlayer.status} · ${noPlayer.json?.detail?.code}`);
+
+  const player = await call(authorPage, 'POST', '/api/v1/players', { name: 'QA Program Player', position: 'CM', age: 24, level: 'intermediate', preferred_foot: 'right', goal: 'become_box_to_box' });
+  check('and once the account has a player, the start is answered', player.status === 201, `HTTP ${player.status}`);
+
+  const started = await pressWrite(authorPage, `${programRowOf(programRow.id)} [data-creator-program-start]`, 'start', 'answered');
+  check('the start button on the program\'s own row plans the caller\'s training sessions', started.ok, `the control ${started.pressed} after ${started.attempts} attempt(s); note: ${started.note.slice(0, 140)}`);
+  const sessions = (await call(authorPage, 'GET', '/api/v1/trainings/sessions')).json ?? [];
+  const planned = (sessions.items ?? []).filter((row) => row.program_id === programRow.id);
+  check('and the sessions it planned are the training tier\'s own rows, with the program recorded on them', planned.length === 1, `${planned.length} session(s) carrying ${programRow.id}`);
+
+  const strangerProgram = await call(readerPage, 'POST', '/api/v1/creator/programs', { title: 'a stranger\'s own program', visibility: 'public', steps: [{ drill: String(drill.slug), minutes: 20 }] });
+  const strangerProgramId = String(strangerProgram.json?.id ?? '');
+  check('a second account publishes a program of its own', strangerProgram.status === 201 && strangerProgramId.length > 0, `HTTP ${strangerProgram.status} · ${strangerProgramId}`);
+  await openStudio(authorPage, null);
+  const authorPanelPrograms = await rowsOf(authorPage, 'creator-program');
+  check('and it does not appear on this author\'s shelf, which is the account\'s own listing', !authorPanelPrograms.some((row) => row.key === strangerProgramId), `${authorPanelPrograms.length} row(s) painted; the stranger\'s program is ${authorPanelPrograms.some((row) => row.key === strangerProgramId) ? 'on it' : 'not on it'}`);
+
+  const erasedProgram = await pressWrite(authorPage, `${programRowOf(programRow.id)} [data-creator-program-erase]`, 'erase', 'answered');
+  check('erasing a program from its own row is answered by the door, and the shelf drops the row', erasedProgram.ok && await waitForRows(authorPage, 'creator-program', 0), erasedProgram.note.slice(0, 140));
+  const afterProgramErase = await call(authorPage, 'GET', `/api/v1/creator/programs/${programRow.id}`);
+  check('and the program is absent afterwards, its author included', afterProgramErase.status === 404 && afterProgramErase.json?.detail?.code === 'no_such_program', `HTTP ${afterProgramErase.status} · ${afterProgramErase.json?.detail?.code}`);
+  const sessionsAfter = (await call(authorPage, 'GET', '/api/v1/trainings/sessions')).json ?? [];
+  check('and the sessions it planned went with it', !(sessionsAfter.items ?? []).some((row) => row.program_id === programRow.id), 'no session carries the erased program');
+
   // ----------------------------------------------------------- reach is a predicate, and absence is what it answers
   const readFollowers = await call(readerPage, 'GET', `/api/v1/creator/guides/${followersGuide.id}`);
   const readItsCitations = await call(readerPage, 'GET', `/api/v1/creator/guides/${followersGuide.id}/citations`);
@@ -409,7 +481,6 @@ async function main() {
   check('and an unfollow withdraws it again, deleting nothing the guide holds', [200, 204].includes(unfollowed.status) && (await call(readerPage, 'GET', `/api/v1/creator/guides/${followersGuide.id}`)).status === 404, `unfollow HTTP ${unfollowed.status}`);
 
   // ------------------------------------------------------------------------------------------ erasing, and the census
-  authorPage.on('dialog', (dialog) => void dialog.accept());
   await openStudio(authorPage, 2);
   const erased = await pressWrite(authorPage, `${rowOf(followersGuide.id)} [data-creator-guide-erase]`, 'erase', 'answered');
   check('erasing a guide from its own row is answered by the door, and the shelf drops the row', erased.ok && await waitForRows(authorPage, 'creator-guide', 1), erased.note.slice(0, 140));

@@ -206,7 +206,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
   }
 
   async function eraseProgram(programId: string) {
-    if (!confirm("Erase this program and the sessions it planned?")) return;
+    if (!confirm(tp("programEraseConfirm"))) return;
     const answer = await programCall.call("erase", `/creator/programs/${programId}`, { method: "DELETE" });
     if (!answer) return;
     await loadPrograms();

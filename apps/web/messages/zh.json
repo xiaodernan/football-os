@@ -643,7 +643,7 @@
     "exportSummary": "已下载 footballos-export.json —— {players} 名球员、{sessions} 节训练课、{events} 条经验值事件，格式 v{version}。",
     "deleteAccountHeading": "删除我的整个账号",
     "accountDescription": "这会删除账号本身、它的球员与训练记录、AI 历史、战术板、模拟、社区帖子、分享以及上传的视频原片和帧。只有当另一名在任所有者仍持有租户时，租户记录才会保留。审计记录以不含账号 id 的聚合动作形式留存。",
-    "inScope": "{rows} 行账号关联记录和 {assets} 个视频资产在删除范围内。",
+    "inScope": "{rows} 行与账号关联的记录、{assets} 个视频资产在范围内。",
     "tenantsKept": "{count} 个租户因为另一名在任所有者而保留记录。",
     "readingInventory": "正在读取删除清单…",
     "tenantBlocks": "租户所有权阻止删除。",
@@ -3485,7 +3485,8 @@
     "programStart": "开始这份计划",
     "programStarted": "这份计划已排成你自己的训练。",
     "programErased": "这份计划和它排出的训练都已擦除。",
-    "thNote": "备注"
+    "thNote": "备注",
+    "programEraseConfirm": "删除这份计划以及它排出的训练？"
   },
   "academy": {
     "thChild": "孩子",

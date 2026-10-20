@@ -643,7 +643,7 @@
     "exportSummary": "已下載 footballos-export.json —— {players} 名球員、{sessions} 節訓練課、{events} 筆經驗值事件，格式 v{version}。",
     "deleteAccountHeading": "刪除我的整個帳號",
     "accountDescription": "這會刪除帳號本身、它的球員與訓練記錄、AI 歷史、戰術板、模擬、社群貼文、分享以及上傳的影片原片和影格。只有當另一名在任擁有者仍持有租戶時，租戶記錄才會保留。稽核記錄以不含帳號 id 的聚合動作形式留存。",
-    "inScope": "{rows} 筆帳號關聯記錄和 {assets} 個影片資產在刪除範圍內。",
+    "inScope": "{rows} 列與帳號關聯的紀錄、{assets} 個影片資產在範圍內。",
     "tenantsKept": "{count} 個租戶因為另一名在任擁有者而保留記錄。",
     "readingInventory": "正在讀取刪除清單…",
     "tenantBlocks": "租戶所有權阻止刪除。",
@@ -3485,7 +3485,8 @@
     "programStart": "開始這份計畫",
     "programStarted": "這份計畫已排成你自己的訓練。",
     "programErased": "這份計畫和它排出的訓練都已抹除。",
-    "thNote": "備註"
+    "thNote": "備註",
+    "programEraseConfirm": "刪除這份計畫以及它排出的訓練？"
   },
   "academy": {
     "thChild": "孩子",

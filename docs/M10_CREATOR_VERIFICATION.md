@@ -134,6 +134,38 @@ and its figures (`steps` 1, `minutes` 20); the scoped shelf answered **200** wit
 had just published; starting it answered **201** with the planned session
 (`ses_2I42XAkxPacccOet`) and the dose; erasing it answered **200** with `sessions_erased: 1`.
 
+**The browser walk, which is the plane that matters** (2026-10-21, `apps/web/scripts/qa-creator.mjs`):
+**72 of 72 checks passed, exit 0** on a production build served on `127.0.0.1:3218` against the
+API on `127.0.0.1:8741` over a fresh SQLite database. The programs panel is walked in the tier's own
+house style — every press is re-read through the door rather than trusted from the note it painted:
+
+* the page publishes a program from its own controls, and the **program panel** is where the answer
+  lands (the walk reads each note out of the panel whose control was pressed);
+* the door holds the program the page pressed for, with the one step it named, and the panel
+  repaints with it;
+* **a step naming a drill the catalogue does not hold is refused at publication** (404
+  `no_such_drill`), and that refusal wrote nothing — the shelf still held the one program it did;
+* **starting a program with no player to plan for is refused** with the platform's own `no_player`
+  (409), and once the account has a player the start button on the program's own row plans the
+  caller's training sessions — which are the training tier's own rows, with the program recorded on
+  them (so the sessions list says which program planned each one);
+* a second account's program does not appear on this account's shelf, which is the account's own
+  listing; and erasing a program from its row erases the program **and the sessions it planned**.
+
+**Three defects the walk found, all of them in the harness or the surface rather than in the tier:**
+
+* **the walk was silently locale-dependent.** The page answers in the browser's language (§81), and
+  this host's Chrome asks for Chinese — so every English needle in the walk failed for a reason that
+  had nothing to do with the tier. The walk now **pins the locale** with the `fo_locale` cookie
+  before it opens its first page, and says so in its header.
+* **the walk counted the tier's doors.** It asserted "the eleven doors it declares", and the tier
+  publishes more now, so the check was wrong rather than the door. It now compares the published
+  routes with the operations the API's own contract holds — count-free, and a real invariant.
+* **the hand-written plurals the i18n arc introduced.** "{count} guide(s) on your shelf" is not
+  English, and a page that says "0 GUIDE(S) ON YOUR SHELF" is a page that says nothing. Every
+  plural in the catalogues is now **ICU** — `{count, plural, one {# guide} other {# guides}}` — and
+  the Chinese keeps its plain form, because Chinese has no plural.
+
 **What this does not claim.** A program is a plan and the plan is walked in the training tier; there
 is no progress model of its own (a step is not "done" until a session is completed, and that session
 is the training tier's row), no enrolment, no cohort, and no pricing beyond §42's table — which
