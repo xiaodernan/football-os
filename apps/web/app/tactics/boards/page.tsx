@@ -76,8 +76,16 @@ export default async function BoardsIndexPage() {
                 {board.origin_system ? t("boardFromSystem", { system: board.origin_system }) : t("boardFromScratch")} · {board.visibility === "shared" ? t("boardLinkLive") : t("boardPrivate")}
               </span>
               <div className="tac-card__metrics">
-                <span className="chip num">{board.metrics_in.find((metric) => metric.key === "width")?.value.toFixed(1)} m wide</span>
-                <span className="chip num">{board.metrics_in.find((metric) => metric.key === "space_behind")?.value.toFixed(1)} m behind</span>
+          <span className="chip num">
+            {t("metricWide", {
+              value: board.metrics_in.find((metric) => metric.key === "width")?.value.toFixed(1) ?? "—",
+            })}
+          </span>
+          <span className="chip num">
+            {t("metricBehind", {
+              value: board.metrics_in.find((metric) => metric.key === "space_behind")?.value.toFixed(1) ?? "—",
+            })}
+          </span>
                 <span className="chip">{formatStamp(board.updated_at)}</span>
               </div>
             </Link>

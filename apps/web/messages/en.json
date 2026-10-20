@@ -184,7 +184,8 @@
     "registerFailed": "We could not create your account.",
     "creatingAccount": "Creating account…",
     "alreadyRegistered": "Already registered?",
-    "signInFailed": "We could not sign you in. Check your email and password."
+    "signInFailed": "We could not sign you in. Check your email and password.",
+    "demoAccount": "Demo account available: demo@footballos.local / demo-password-123"
   },
   "scout": {
     "title": "AI Scout",
@@ -286,7 +287,35 @@
     "checkedLists": "lists checked",
     "checkedMemberships": "membership rows checked",
     "checkedPlayers": "stored players checked against",
-    "metaDescription": "Search a generated world in your own words, read a report whose every line names its row, and compare a pair across ten dimensions with no overall score to hide behind."
+    "metaDescription": "Search a generated world in your own words, read a report whose every line names its row, and compare a pair across ten dimensions with no overall score to hide behind.",
+    "backLabel": "Football world",
+    "eyebrow": "{name} · searching, reporting and comparing are private to your account",
+    "lede": "A sentence in, a cut out. The parser tells you which phrases it understood and which it refused, the waterfall tells you how many rows each cut removed, the report answers thirteen fields with figures recomputed from the stored row, and a comparison answers ten dimensions without ever forming the one number the spec rules out.",
+    "integrityNote": "The scout passes its own integrity check: the vocabulary agrees with itself, every requirement kind the parser emits is answered by the search, a report builds over the stored pool, and a pair of stored rows answers §27's ten dimensions.",
+    "vocabularyEyebrow": "{positions} positions · {bands} engine bands · {roles} roles · {attributes} attributes",
+    "vocabularyTitle": "What this vocabulary understands",
+    "positionsTitle": "Positions",
+    "engineNamesNote": "The engine names {codes}, but no stored row is filed under them, so a search for those codes answers empty rather than wrong.",
+    "bandsTitle": "Bands",
+    "rolesNote": "Roles no stored position occupies: {roles}",
+    "rowStatedFields": "Stated fields",
+    "rowSortings": "Sortings",
+    "rowFeet": "Feet",
+    "rowSearchLimits": "{default} by default, {max} at most",
+    "rowConnectorsIgnored": "{count} phrases (articles, fillers and conjunctions in six languages)",
+    "exampleNote": "Example: {example}",
+    "promiseEyebrow": "§23 · a list that stores membership · §24 · thirteen fields · §27 · ten dimensions",
+    "promiseTitle": "What the shortlist, the report and the comparison promise",
+    "rowShortlistCaps": "Shortlist caps",
+    "rowWhyNot": "Why not",
+    "rowReRead": "Re-read on every visit",
+    "rowReportFields": "Report fields",
+    "rowVerdicts": "Verdicts the ladder can produce",
+    "rowReportRefusals": "Report refusals",
+    "rowComparisonDimensions": "Comparison dimensions",
+    "rowMeasureLeaders": "Measure leaders",
+    "rowDimensionLeaders": "Dimension leaders",
+    "rowStatColumns": "Stat columns summed for the rates"
   },
   "career": {
     "title": "Career Mode",
@@ -943,7 +972,10 @@
     "consentFailed": "The gallery could not be updated. Try again.",
     "galleryLink": "Public gallery",
     "consentEyebrow": "The public gallery",
-    "consentTitle": "Stand in the gallery — or leave it"
+    "consentTitle": "Stand in the gallery — or leave it",
+    "contentHashTitle": "Content hash of the stored row: change a coordinate and it changes.",
+    "metricWide": "{value} m wide",
+    "metricBehind": "{value} m behind"
   },
   "history": {
     "metaTitle": "Training log",
@@ -1200,7 +1232,9 @@
     "provenanceFooter": "data_origin: {origin} · is_demo_data: {demo} · embedding model: {model} · {source}",
     "provenanceBody": "This document is project-authored editorial content, not demo data. The DEMO MODE badge elsewhere on the site applies to how answers are generated, never to these passages. Use the anchors below — a citation link like #0 jumps to the exact passage it quotes.",
     "passagesH2": "Passages",
-    "sectionChars": "{count} chars"
+    "sectionChars": "{count} chars",
+    "demoExtractiveTitle": "No language-model key is configured; this answer is assembled extractively from the cited passages, not generated.",
+    "demoRerankTitle": "No language-model key is configured; ranking uses the feature reranker and results are shown verbatim."
   },
   "challenges": {
     "title": "Manager live challenges",
@@ -2233,7 +2267,12 @@
     "reviewsRule": "{rule}",
     "eraseNotesTitle": "Erase notes",
     "provenanceExtraPlan": "a plan and its reviews are academy data; the player row stays the world's",
-    "planTitle": "Plan for {name}"
+    "planTitle": "Plan for {name}",
+    "reviewProgressTitle": "null means one review or none: a direction cannot be measured from one point",
+    "reportWindow": "{from} — {to} ({days} day(s))",
+    "tierLimitsSentence": "{members} members and {teams} teams are what §39's own doors refuse on — {rule}",
+    "accountMeterSentence": "{name} as an account is a separate subject on {plan}:",
+    "matrixReadMore": "Read the whole matrix, the caps and the refusal table at"
   },
   "home": {
     "metaTitle": "Watch. Understand. Train. Play. Manage. Become.",
@@ -2388,7 +2427,8 @@
     "ledgerEmptyTitle": "No name to count yet",
     "ledgerEmptyNoRows": "None of this career’s rounds has event rows on file, so there is nothing to group. Play a round and the rows arrive with its report.",
     "ledgerEmptyAmbiguous": "Every event of the {traced} traced round(s) named a player more than once in the same eleven, so no row could claim an identity.",
-    "ledgerTruncated": "The list is cut at {shown} names of {total}: the rest played their part without printing an event big enough to reach the top."
+    "ledgerTruncated": "The list is cut at {shown} names of {total}: the rest played their part without printing an event big enough to reach the top.",
+    "carryDecay": "{rounds} rounds at {decay} decay"
   },
   "worldPlayer": {
     "metaDescriptionFallback": "Player profile in the FOOTBALL OS generated football world.",
@@ -2902,5 +2942,27 @@
     "title": "This page is not on the pitch",
     "lede": "We could not find what you were looking for. It may have moved, or the link may be out of date. Nothing has been lost — pick a destination below.",
     "backHome": "Back home"
+  },
+  "creator": {
+    "metaTitle": "Creator Studio",
+    "metaDescription": "Publish guides that cite the corpus. Every figure is counted now; nothing is stored that the corpus already holds.",
+    "backLabel": "Football world",
+    "eyebrow": "{name} · publishing and reading are private to your account",
+    "lede": "A guide is a frame: a section, a title, a summary and the addresses of the passages it cites. The corpus stays the corpus — re-ingesting it cannot leave a guide quoting words the document no longer holds. Every figure on a guide is counted from the rows its own formula names, recomputed on every read.",
+    "noProfiles": "No creator profiles yet. Publish your profile to begin — the first guide you write creates it.",
+    "vocabularyEyebrow": "{profiles} profiles · {guides} guides · {citations} citations",
+    "vocabularyTitle": "What this vocabulary understands",
+    "rowGuideCaps": "Guide caps",
+    "rowCitationCaps": "Citation caps",
+    "rowProfileCaps": "Profile caps",
+    "rowSections": "Sections",
+    "rowVisibilities": "Visibilities",
+    "rowVisibilityRule": "Visibility rule",
+    "refusalsEyebrow": "{count} codes · one status each, from the project's one table",
+    "refusalsTitle": "What a door here refuses, and with what answer",
+    "thCode": "Code",
+    "thAnswer": "Answer",
+    "no403Note": "There is no 403 in this tier: a creator door asks only whether you have a session, so what you may not reach is answered as absence — the same shape a row that was never written earns, and the same table §39's doors answer from.",
+    "entitlementNote": "This tier names two features in §42's entitlement table ({features}). They are ceilings the data holds and no door refuses on yet, so the caps above are what actually bites."
   }
 }

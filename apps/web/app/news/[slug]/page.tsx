@@ -139,7 +139,7 @@ export default async function NewsDetailPage({ params }: Props) {
               ["Season", article.season],
               ["Published", <span className="mono" key="published">{formatMoment(article.published_at)}</span>],
               ["Source", <span className="mono" key="source">{article.source_name}</span>],
-              ["Author", article.author ?? <span className="unavailable">not attributed</span>],
+              ["Author", article.author ?? <span className="unavailable">{t("notAttributed")}</span>],
               ["Topics", article.topics.length > 0 ? article.topics.join(", ") : <span className="unavailable">none</span>],
             ]}
           />

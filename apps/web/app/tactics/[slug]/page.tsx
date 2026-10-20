@@ -110,7 +110,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
             <span className="chip">{t("chipPressLine", { value: system.press_line_y })}</span>
             <span className="chip">{t("chipBlock", { value: system.block_depth })}</span>
             <span className="chip">{t("chipNarrowing", { value: system.defensive_narrowing })}</span>
-            <span className="chip mono" title="Content hash of the stored row: change a coordinate and it changes.">
+        <span className="chip mono" title={t("contentHashTitle")}>
               {system.content_hash.slice(0, 12)}…
             </span>
           </div>

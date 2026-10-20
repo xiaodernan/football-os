@@ -147,11 +147,11 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
         <div className="stack">
           <div className="row wrap" style={{ gap: "0.4rem" }}>
             {data.demo_mode ? (
-              <span className="badge badge--demo" title="No language-model key is configured; ranking uses the feature reranker and results are shown verbatim.">
+              <span className="badge badge--demo" title={t("demoRerankTitle")}>
                 {t("demoMode")}
               </span>
             ) : (
-              <span className="badge badge--live">AI-ranked</span>
+              <span className="badge badge--live">{t("aiRanked")}</span>
             )}
             <span className="chip">{data.mode}</span>
             <span className="chip mono">{data.retrieval_backend}</span>

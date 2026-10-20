@@ -85,7 +85,7 @@ export function LoginForm() {
       </p>
 
       <p className="field__hint">
-        Demo account available: demo@footballos.local / demo-password-123
+        {t("demoAccount")}
       </p>
     </form>
   );

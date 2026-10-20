@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 
 export default function NotFound() {
   const t = useTranslations("notFound");
+  const tn = useTranslations("nav");
   return (
     <div className="container page" style={{ maxWidth: "560px" }}>
       <div className="stack" style={{ gap: "1rem" }}>
@@ -16,10 +17,10 @@ export default function NotFound() {
             {t("backHome")}
           </Link>
           <Link className="btn" href="/my-football">
-            My Football
+            {tn("myFootball")}
           </Link>
           <Link className="btn btn--ghost" href="/training">
-            Training
+            {tn("training")}
           </Link>
         </div>
       </div>

@@ -215,7 +215,10 @@ export default async function CareerDetailPage({ params }: Props) {
               [
                 t("rowLoadWindow"),
                 <span key="win">
-                  {carry.window_rounds} rounds at {carry.decay_per_round} decay ·{" "}
+                  {t("carryDecay", {
+                    rounds: carry.window_rounds,
+                    decay: carry.decay_per_round,
+                  })} ·{" "}
                   <span className="mono">{carry.load_formula}</span>
                 </span>,
               ],

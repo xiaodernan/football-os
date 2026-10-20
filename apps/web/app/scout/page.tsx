@@ -43,17 +43,16 @@ export default async function ScoutPage() {
   return (
     <div className="container page stack">
       <WorldHead
-        back={{ href: "/world", label: "Football world" }}
-        eyebrow={`${user.display_name} · searching, reporting and comparing are private to your account`}
-        lede="A sentence in, a cut out. The parser tells you which phrases it understood and which it refused, the waterfall tells you how many rows each cut removed, the report answers thirteen fields with figures recomputed from the stored row, and a comparison answers ten dimensions without ever forming the one number the spec rules out."
+        back={{ href: "/world", label: t("backLabel") }}
+        eyebrow={t("eyebrow", { name: user.display_name })}
+        lede={t("lede")}
         provenance={{ data_origin: data.data_origin, is_demo_data: data.is_demo_data, disclaimer: data.disclaimer }}
         title={t("title")}
       />
 
       {data.integrity.clean ? (
         <p className="notice">
-          The scout passes its own integrity check: the vocabulary agrees with itself, every requirement kind the parser emits is answered by the search, a report builds over the stored pool, and a pair of stored rows
-          answers §27&rsquo;s ten dimensions. <span className="mono">problems: {data.integrity.problems.length}</span>
+          {t("integrityNote")} <span className="mono">problems: {data.integrity.problems.length}</span>
         </p>
       ) : (
         <ul className="notice notice--warn">
@@ -65,11 +64,19 @@ export default async function ScoutPage() {
 
       <ScoutWorkbench rules={data} />
 
-      <Panel eyebrow={`${Object.keys(data.positions).length} positions · ${Object.keys(data.bands).length} engine bands · ${Object.keys(data.roles).length} roles · ${data.attributes.length} attributes`} title="What this vocabulary understands">
+      <Panel
+        eyebrow={t("vocabularyEyebrow", {
+          positions: Object.keys(data.positions).length,
+          bands: Object.keys(data.bands).length,
+          roles: Object.keys(data.roles).length,
+          attributes: data.attributes.length,
+        })}
+        title={t("vocabularyTitle")}
+      >
         <div className="stack-sm">
           <div className="tac-cards">
             <div className="tac-card">
-              <strong>Positions</strong>
+              <strong>{t("positionsTitle")}</strong>
               <ul className="stack-sm" style={{ listStyle: "none", padding: 0 }}>
                 {Object.entries(data.positions).map(([code, entry]) => (
                   <li key={code}>
@@ -78,14 +85,13 @@ export default async function ScoutPage() {
                 ))}
               </ul>
               {data.positions_the_engine_names_and_the_world_does_not_staff.length > 0 && (
-                <p className="muted">
-                  The engine names <span className="mono">{data.positions_the_engine_names_and_the_world_does_not_staff.join(", ")}</span>, but no stored row is filed under them, so a search for those codes answers empty
-                  rather than wrong.
-                </p>
+          <p className="muted">
+            {t("exampleNote", { example: JSON.stringify(data.example) })}
+          </p>
               )}
             </div>
             <div className="tac-card">
-              <strong>Bands</strong>
+              <strong>{t("bandsTitle")}</strong>
               {Object.entries(data.band_vocabularies).map(([vocabulary, entry]) => (
                 <div key={vocabulary}>
                   <span className="chip mono">{vocabulary}</span>
@@ -95,18 +101,20 @@ export default async function ScoutPage() {
               ))}
               {data.roles_no_stored_position_occupies.length > 0 && (
                 <p className="muted">
-                  Roles no stored position occupies: <span className="mono">{data.roles_no_stored_position_occupies.join(", ")}</span>
+                  {t("rolesNote", {
+                    roles: data.roles_no_stored_position_occupies.join(", "),
+                  })}
                 </p>
               )}
             </div>
           </div>
           <KeyValueGrid
             rows={[
-              ["Stated fields", data.fields.join(" · ")],
-              ["Sortings", data.sorts.join(" · ")],
-              ["Feet", data.feet.join(" · ")],
-              ["Search limits", `${data.search.default_limit} by default, ${data.search.max_limit} at most`],
-              ["Connectors ignored", `${data.connector_count} phrases (articles, fillers and conjunctions in six languages)`],
+              [t("rowStatedFields"), data.fields.join(" · ")],
+              [t("rowSortings"), data.sorts.join(" · ")],
+              [t("rowFeet"), data.feet.join(" · ")],
+              [t("rowSearchLimits"), `${data.search.default_limit} by default, ${data.search.max_limit} at most`],
+              [t("rowConnectorsIgnored"), `${data.connector_count} phrases (articles, fillers and conjunctions in six languages)`],
             ]}
           />
           <ul className="stack-sm" style={{ listStyle: "none", padding: 0 }}>
@@ -117,12 +125,15 @@ export default async function ScoutPage() {
             ))}
           </ul>
           <p className="muted">
-            Example: <span className="mono">{JSON.stringify(data.example)}</span>
+            {t("exampleNote", { example: JSON.stringify(data.example) })}
           </p>
         </div>
       </Panel>
 
-      <Panel eyebrow="§23 · a list that stores membership · §24 · thirteen fields · §27 · ten dimensions" title="What the shortlist, the report and the comparison promise">
+      <Panel
+        eyebrow={t("promiseEyebrow")}
+        title={t("promiseTitle")}
+      >
         <div className="stack-sm">
           <KeyValueGrid
             rows={[

@@ -106,7 +106,7 @@ async function GraphNodesKindPage({ params }: { params: Promise<{ kind: string }
       <NodeListing kind={kind} rules={rules} />
 
       <p className="muted" style={{ fontSize: "0.84rem" }}>
-        All graph reads are public and carry the same provenance envelope as the world routes:
+        {tg("provenanceNote")}
         <span className="chip mono">data_origin: synthetic</span>
         <span className="chip mono">is_demo_data: true</span>
         <span className="chip mono">kind: {kind}</span>

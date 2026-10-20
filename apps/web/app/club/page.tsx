@@ -142,7 +142,9 @@ export default async function ClubIndexPage() {
           </table>
         </div>
         <p className="muted" style={{ fontSize: "0.84rem" }}>
-          {rules.data.matrix.rule} Read the whole matrix, the caps and the refusal table at <Link className="world-link" href="/club/rules">/club/rules</Link>.
+          {rules.data.matrix.rule} {t("matrixReadMore")} <Link className="world-link" href="/club/rules">
+            /club/rules
+          </Link>.
         </p>
       </Panel>
 

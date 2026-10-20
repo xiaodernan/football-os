@@ -189,7 +189,7 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
           <p className="kn-answer-q">&ldquo;{result.question}&rdquo;</p>
           <div className="row wrap" style={{ gap: "0.4rem" }}>
             {result.demo_mode ? (
-              <span className="badge badge--demo" title="No language-model key is configured; this answer is assembled extractively from the cited passages, not generated.">
+              <span className="badge badge--demo" title={tk("demoExtractiveTitle")}>
                 {tk("demoModeExtractive")}
               </span>
             ) : (

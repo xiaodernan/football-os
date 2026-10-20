@@ -51,12 +51,15 @@ export const dynamic = "force-dynamic";
  * itself before believing the total beside it, and a saved report is a question whose answer the page prints
  * as the door computes it now — not as it came back the day the question was written.
  */
-export const metadata: Metadata = {
-  title: "Organisation",
-  description: "A club tenant's members, standings, team sheets, guardian consents, development plans, its session log and the questions it keeps.",
-  robots: { index: false, follow: false },
-  alternates: { canonical: absolute("/club") },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("club");
+  return {
+    title: t("tenantMetaTitle"),
+    description: t("tenantMetaDescription"),
+    robots: { index: false, follow: false },
+    alternates: { canonical: absolute("/club") },
+  };
+}
 
 type Props = { params: Promise<{ ident: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -358,7 +361,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                     <td className="num">every {row.review_weeks} weeks</td>
                     <td className="num">{row.assessments}</td>
                     <td className="num">{row.goals}</td>
-                    <td className="num" title="null means one review or none: a direction cannot be measured from one point">
+                    <td className="num" title={t("reviewProgressTitle")}>
                       {row.progress ?? t("progressNotYet")}
                     </td>
                     <td className="muted">{row.focus.join(", ") || "—"}</td>
@@ -500,7 +503,11 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                         <span className="badge badge--demo">{row.kind}</span>
                       </td>
                       <td className="muted">
-                        {row.window_from.slice(0, 10)} → {row.window_to.slice(0, 10)} ({row.window_days ?? "?"} day(s))
+                        {t("reportWindow", {
+                          from: row.window_from.slice(0, 10),
+                          to: row.window_to.slice(0, 10),
+                          days: row.window_days ?? "?",
+                        })}
                       </td>
                       <td>{row.team?.name || "all"}</td>
                       <td>{row.asked_by?.display_name || "—"}</td>
@@ -575,14 +582,18 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
               {entitlements.data.plan_rule}
             </p>
             <p className="muted" style={{ fontSize: "0.82rem" }}>
-              {entitlements.data.tier_limits.members} members and {entitlements.data.tier_limits.teams} teams are what §39's own doors refuse on — {entitlements.data.tier_limits.rule}
+              {t("tierLimitsSentence", {
+                members: entitlements.data.tier_limits.members,
+                teams: entitlements.data.tier_limits.teams,
+                rule: entitlements.data.tier_limits.rule,
+              })}
             </p>
             <p className="muted" style={{ fontSize: "0.82rem" }}>
               {entitlements.data.no_payment}
             </p>
             {mine.ok ? (
               <p className="muted" data-account-meter={mine.data.items.map((row) => row.feature).join(",")} style={{ fontSize: "0.82rem" }}>
-                {mine.data.display_name} as an account is a separate subject on {mine.data.plan}:{" "}
+                {t("accountMeterSentence", { name: mine.data.display_name, plan: mine.data.plan })} {" "}
                 {mine.data.items.map((row) => `${row.feature} ${row.used} of ${row.limit} per ${row.period}${row.enforced ? ", refused on today" : ", not refused on today"}`).join("; ") ||
                   t("accountMeterNothing")}
                 .

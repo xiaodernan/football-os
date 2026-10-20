@@ -42,7 +42,7 @@ const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLT
 const APP = join(WEB, "app");
 
 /** The committed ceiling on English literal sites. i18n work lowers it; nothing else may. */
-const FLOOR_SITES = 58;
+const FLOOR_SITES = 0;
 
 /** The population the walk must find, so a scan that narrows itself cannot pass by finding nothing. */
 const FLOOR_FILES = 70;
@@ -62,6 +62,24 @@ const LABEL_PROPERTIES = new Set([
  * Words a page prints as themselves: a rating scale, a protocol, a file format, a product name.
  * Short and closed — every member is a thing the product prints in English on purpose.
  */
+/**
+ * Values that are not copy, and the reason each one is not.
+ *
+ * A field name is not copy. `data_origin: synthetic` is the provenance envelope the API prints, and
+ * translating it would break the one string an operator greps for; the same holds for the cap names
+ * `max_depth` / `max_edges` / `max_nodes`, the parameter `identity_retained=`, the example address
+ * `you@example.com`, the export file name, and the product's own name.
+ */
+const TECHNICAL_PATTERNS = [
+  /^data_origin\b/,
+  /^is_demo_data\b/,
+  /^(max_depth|max_edges|max_nodes)\b/,
+  /^identity_retained=/,
+  /^you@example\.com$/,
+  /^footballos-export\.json$/,
+  /^FOOTBALL OS$/,
+];
+
 const TECHNICAL = new Set([
   "AI", "API", "CV", "DRI", "FM", "GB", "GPS", "HTML", "HTTP", "ID", "JSON", "MB", "MVP", "PDF",
   "PM", "RPE", "SQL", "TBD", "URL", "UTC", "U19", "U21", "VS", "X", "XGD", "xG", "xT",
@@ -95,6 +113,7 @@ const isEnglishCopy = (value) => {
   if (/^[A-Z0-9_]+$/.test(text)) return false; // a constant
   if (/^[a-z]+[A-Z]/.test(text)) return false; // camelCase identifier
   if (/[^\x00-\x7F]/.test(text)) return false; // already translated
+  if (TECHNICAL_PATTERNS.some((pattern) => pattern.test(text))) return false; // a field name, not copy
   const words = text.match(/[A-Za-z][A-Za-z'’-]*/g) ?? [];
   if (words.length === 0) return false;
   if (words.length === 1) {
