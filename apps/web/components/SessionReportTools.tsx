@@ -28,6 +28,7 @@ type EraseNote = { text: string; figures: string[]; refused: boolean; action: st
  * succeed.
  */
 export function SessionRecorder({ formula, ident, limits, teams, today }: { formula: string; ident: string; limits: SessionLimits; teams: TeamView[]; today: string }) {
+  const ta = useTranslations("academy");
   const { busy, call, note } = useClubCall();
   const [teamId, setTeamId] = useState(teams[0]?.id ?? "");
   const [date, setDate] = useState(today);
@@ -77,59 +78,65 @@ export function SessionRecorder({ formula, ident, limits, teams, today }: { form
     <div className="stack">
       <div className="grid grid-2">
         <label className="field">
-          <span>Team whose sheet is the register</span>
-          <select aria-label="Session team" disabled={busy !== null} onChange={(event) => { setTeamId(event.target.value); setHeld([]); }} value={teamId}>
-            {teams.length === 0 && <option value="">no sheet exists yet</option>}
+          <span>{ta("sessionTeamLabel")}</span>
+          <select aria-label={ta("sessionTeamAria")} disabled={busy !== null} onChange={(event) => { setTeamId(event.target.value); setHeld([]); }} value={teamId}>
+            {teams.length === 0 && <option value="">{ta("noSheetYet")}</option>}
             {teams.map((row) => (
               <option key={row.id} value={row.id}>
-                {row.name} — {row.squad_size} on the sheet
+                {row.name} — {ta("onTheSheet", { count: row.squad_size })}
               </option>
             ))}
           </select>
         </label>
         <label className="field">
-          <span>Date — work already done, so never in the future</span>
-          <input aria-label="Session date" data-session-date={today} disabled={busy !== null} onChange={(event) => { dateWasTyped.current = true; setDate(event.target.value); }} placeholder="2026-09-26" type="text" value={date} />
+          <span>{ta("sessionDateLabel")}</span>
+          <input aria-label={ta("sessionDateAria")} data-session-date={today} disabled={busy !== null} onChange={(event) => { dateWasTyped.current = true; setDate(event.target.value); }} placeholder="2026-09-26" type="text" value={date} />
         </label>
 
         <label className="field">
-          <span>Duration ({limits.duration_range[0]}–{limits.duration_range[1]} minutes)</span>
-          <input aria-label="Session duration" disabled={busy !== null} onChange={(event) => setDuration(event.target.value)} type="text" value={duration} />
+          <span>{ta("sessionDurationLabel", {
+            min: limits.duration_range[0],
+            max: limits.duration_range[1],
+          })}</span>
+          <input aria-label={ta("sessionDurationAria")} disabled={busy !== null} onChange={(event) => setDuration(event.target.value)} type="text" value={duration} />
         </label>
         <label className="field">
-          <span>RPE ({limits.rpe_range[0]}–{limits.rpe_range[1]})</span>
-          <input aria-label="Session RPE" disabled={busy !== null} onChange={(event) => setRpe(event.target.value)} type="text" value={rpe} />
+          <span>{ta("sessionRpeLabel", { min: limits.rpe_range[0], max: limits.rpe_range[1] })}</span>
+          <input aria-label={ta("sessionRpeAria")} disabled={busy !== null} onChange={(event) => setRpe(event.target.value)} type="text" value={rpe} />
         </label>
         <label className="field">
-          <span>Slot on that date</span>
-          <select aria-label="Session slot" disabled={busy !== null} onChange={(event) => setSlot(event.target.value)} value={slot}>
+          <span>{ta("sessionSlotLabel")}</span>
+          <select aria-label={ta("sessionSlotAria")} disabled={busy !== null} onChange={(event) => setSlot(event.target.value)} value={slot}>
             {slots.map((row) => (
               <option key={row} value={String(row)}>
-                slot {row}
+                {ta("slotOption", { number: row })}
               </option>
             ))}
           </select>
         </label>
         <label className="field">
-          <span>Focus areas, comma separated (at most {limits.session_focus_max})</span>
-          <input aria-label="Session focus" disabled={busy !== null} onChange={(event) => setFocus(event.target.value)} placeholder="pressing, transitions" type="text" value={focus} />
+          <span>{ta("sessionFocusLabel", { max: limits.session_focus_max })}</span>
+          <input aria-label={ta("sessionFocusAria")} disabled={busy !== null} onChange={(event) => setFocus(event.target.value)} placeholder={ta("sessionFocusPlaceholder")} type="text" value={focus} />
         </label>
       </div>
       <label className="field">
-        <span>Note (at most {limits.session_note_max} characters)</span>
-        <input aria-label="Session note" disabled={busy !== null} maxLength={limits.session_note_max} onChange={(event) => setText(event.target.value)} type="text" value={text} />
+        <span>{ta("sessionNoteLabel", { max: limits.session_note_max })}</span>
+        <input aria-label={ta("sessionNoteAria")} disabled={busy !== null} maxLength={limits.session_note_max} onChange={(event) => setText(event.target.value)} type="text" value={text} />
       </label>
 
       <div className="stack-sm">
         <span className="muted" style={{ fontSize: "0.84rem" }}>
-          Attendance — {held.length} of {squad.length} named, and at most {limits.attendance_max} may be. A child on this
-          sheet still needs their guardian&apos;s yes, which the door checks when the row is written.
+          {ta("attendanceNote", {
+            held: held.length,
+            squad: squad.length,
+            max: limits.attendance_max,
+          })}
         </span>
         <div className="row wrap">
           {squad.map((row) => (
             <label className="chip" key={row.player_id} style={{ gap: "0.4rem" }}>
               <input
-                aria-label={`Attendee ${row.name}`}
+                aria-label={ta("attendeeAria", { name: row.name })}
                 checked={held.includes(row.slug)}
                 data-testid={`attendee-${row.slug}`}
                 disabled={busy !== null}
@@ -138,11 +145,11 @@ export function SessionRecorder({ formula, ident, limits, teams, today }: { form
               />
               <span className="mono" style={{ fontSize: "0.78rem" }}>
                 {row.name}
-                {row.is_minor ? " (minor)" : ""}
+                {row.is_minor ? ta("minorSuffix") : ""}
               </span>
             </label>
           ))}
-          {squad.length === 0 && <span className="muted">This team has nobody on its sheet yet.</span>}
+          {squad.length === 0 && <span className="muted">{ta("nobodyOnSheet")}</span>}
         </div>
       </div>
 
@@ -154,10 +161,10 @@ export function SessionRecorder({ formula, ident, limits, teams, today }: { form
           onClick={() => void record()}
           type="button"
         >
-          {busy === "session-record" ? "Recording…" : "Record the session"}
+          {busy === "session-record" ? ta("recording") : ta("recordSession")}
         </button>
         <span className="muted" style={{ fontSize: "0.84rem" }}>
-          {formula} — the door’s own sentence for the figure below, and never sent from here.
+          {ta("formulaNote", { formula })}
         </span>
       </div>
       <CallNote note={note} />
@@ -171,6 +178,7 @@ export function SessionRecorder({ formula, ident, limits, teams, today }: { form
  */
 export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }: { defaultFrom: string; ident: string; kinds: string[]; limits: ReportLimits; teams: TeamView[]; today: string }) {
   const t = useTranslations("common");
+  const ta = useTranslations("academy");
   const { busy, call, note } = useClubCall();
   const [kind, setKind] = useState(kinds[0] ?? "");
   const [from, setFrom] = useState(defaultFrom);
@@ -181,8 +189,8 @@ export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }:
     <div className="stack">
       <div className="grid grid-2">
         <label className="field">
-          <span>What to read — the kinds this tier can produce</span>
-          <select aria-label="Report kind" disabled={busy !== null} onChange={(event) => setKind(event.target.value)} value={kind}>
+          <span>{ta("reportKindLabel")}</span>
+          <select aria-label={ta("reportKindAria")} disabled={busy !== null} onChange={(event) => setKind(event.target.value)} value={kind}>
             {kinds.map((row) => (
               <option key={row} value={row}>
                 {row}
@@ -191,9 +199,9 @@ export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }:
           </select>
         </label>
         <label className="field">
-          <span>Sheet — a tenant-wide question leaves this empty</span>
-          <select aria-label="Report team" disabled={busy !== null} onChange={(event) => setTeam(event.target.value)} value={team}>
-            <option value="">every sheet of this tenant</option>
+          <span>{ta("reportTeamLabel")}</span>
+          <select aria-label={ta("reportTeamAria")} disabled={busy !== null} onChange={(event) => setTeam(event.target.value)} value={team}>
+            <option value="">{ta("everySheet")}</option>
             {teams.map((row) => (
               <option key={row.id} value={row.id}>
                 {row.name}
@@ -202,12 +210,12 @@ export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }:
           </select>
         </label>
         <label className="field">
-          <span>Window start — an ISO date</span>
-          <input aria-label="Report window start" disabled={busy !== null} onChange={(event) => setFrom(event.target.value)} placeholder="2026-08-01" type="text" value={from} />
+          <span>{ta("reportFromLabel")}</span>
+          <input aria-label={ta("reportFromAria")} disabled={busy !== null} onChange={(event) => setFrom(event.target.value)} placeholder="2026-08-01" type="text" value={from} />
         </label>
         <label className="field">
-          <span>Window end — at most {limits.window_max_days} days after the start</span>
-          <input aria-label="Report window end" disabled={busy !== null} onChange={(event) => setTo(event.target.value)} placeholder="2026-09-26" type="text" value={to} />
+          <span>{ta("reportToLabel", { max: limits.window_max_days })}</span>
+          <input aria-label={ta("reportToAria")} disabled={busy !== null} onChange={(event) => setTo(event.target.value)} placeholder="2026-09-26" type="text" value={to} />
         </label>
       </div>
       <div className="row wrap">
@@ -218,11 +226,10 @@ export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }:
           onClick={() => void call("report-save", `/club/academy/${encodeURIComponent(ident)}/reports`, { body: { kind, window_from: from.trim(), window_to: to.trim(), team: team === "" ? null : team } })}
           type="button"
         >
-          {busy === "report-save" ? `${t("save")} the question…` : `${t("save")} the question`}
+          {busy === "report-save" ? ta("savingTheQuestion") : ta("saveTheQuestion")}
         </button>
         <span className="muted" style={{ fontSize: "0.84rem" }}>
-          {limits.max_reports_per_organization} reports per tenant — and no figure is sent with it: the answer is computed when
-          somebody reads it.
+          {ta("reportsPerTenant", { max: limits.max_reports_per_organization })}
         </span>
       </div>
       <CallNote note={note} />
