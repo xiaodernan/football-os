@@ -330,6 +330,45 @@ and identifiers; a child span names the span it hung from, read back through the
 store reports failure without raising; the door reads a stored trace, answers 404 for an unknown one,
 and needs a session.
 
+### What sharing buys, measured with the tier live
+
+Every load figure above was taken with the tier degraded, and the document said so: *"no figure above
+is a Redis figure"*. The tier is live now, and the shared tier counts its own hits, so the question
+can finally be asked as a paired measurement on one host: **the same code, the same minutes, the
+same endpoint, one server with the shared store and one without.**
+
+`/api/v1/healthz`, 15 seconds per run, this host (a shared Windows workstation, so the absolute
+numbers are a floor and the pairs are the point):
+
+| workers | concurrency | tier live | tier degraded | difference |
+| --- | --- | --- | --- | --- |
+| 1 | 10 | 201.71 req/s (p50 29.31, p95 81.56) | 236.38 req/s (p50 24.39, p95 76.47) | **−34.67 (−15%)** |
+| 1 | 50 | 175.22 req/s (p50 198.75, p95 804.39) | 168.05 req/s (p50 193.39, p95 898.40) | +7.17 (+4%) |
+| 4 | 10 | 187.84 req/s (p50 30.66, p95 151.36) | 175.52 req/s (p50 30.44, p95 205.64) | +12.32 (+7%) |
+| 4 | 50 | **84.34 req/s** (p50 354.79, p95 1955.24) | 39.86 req/s (p50 275.34, p95 1205.20) | **+44.48 (2.12×)** |
+
+Three things this says, and the third is the one worth having.
+
+* **With one worker the shared tier is a small tax** (-15% at c10): the process-local tier already
+  answers every repeat, so the shared store is a round trip paid for nothing.
+* **With four workers at saturation the shared tier more than doubles throughput** (2.12× at c50):
+  four workers each holding their own cache is four caches, and at c50 the requests are spread
+  across them, so the working set is four times as large as one worker needs. One store is one
+  cache, and the database leaves the loop.
+* **The tail gets worse, and the reason is the same round trip**: p95 1955 ms with the tier live
+  against 1205 ms degraded. More requests are served, and the ones that miss pay for the shared
+  store before they pay for the database.
+
+And the attribution is the counters' own: worker B, whose own tier was empty, answered **12 HIT /
+0 MISS**, every answer one worker A had already paid for, with B's shared tier counting 4 hits and
+0 misses. A worker with hits above zero has served an answer another worker paid for - which is
+the whole claim of a shared tier, and the one the load numbers above could not make.
+
+**What this does not say.** These are one host's numbers, on a workstation shared with roughly two
+hundred other processes, and the endpoint is the cheapest door the API has. The published load
+figures earlier in this document are still the ones a reader should quote; these are the *pair*,
+and the pair is the claim.
+
 ### Performance — latency percentiles that read the same on both engines
 
 `app/services/latency_profile.py`. `/metrics/system` carried `p95_latency_ms: None` with a comment

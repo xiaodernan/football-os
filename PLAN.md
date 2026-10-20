@@ -657,6 +657,32 @@ document says so.
 
 ---
 
+## Item 9 — M12: the load figures, paired, with the tier live and degraded
+
+**Done 2026-10-21.** Item 8 answered *what sharing buys* at the cache's own level. This item answers it at the level
+the milestone's numbers are written at: throughput.
+
+**Do.** One host, the same minutes, the same endpoint, the same code — one server with the shared store and one without.
+
+**Evidence.** `/api/v1/healthz`, 15 seconds per run, 2026-10-21:
+
+| workers | concurrency | tier live | tier degraded | difference |
+| --- | --- | --- | --- | --- |
+| 1 | 10 | 201.71 req/s | 236.38 req/s | **-15%** |
+| 1 | 50 | 175.22 req/s | 168.05 req/s | +4% |
+| 4 | 10 | 187.84 req/s | 175.52 req/s | +7% |
+| 4 | 50 | **84.34 req/s** | 39.86 req/s | **2.12×** |
+
+Three findings, and the third is the one worth having. With **one** worker the shared tier is a small tax: the
+process-local tier already answers every repeat, so the shared store is a round trip paid for nothing. With **four**
+workers at saturation it more than doubles throughput - four workers each holding their own cache is four caches, and
+the requests are spread across them, so the working set is four times what one worker needs; one store is one cache.
+And the **tail gets worse**: p95 1955 ms live against 1205 ms degraded, because the requests that miss pay for the
+shared store before they pay for the database. The record is in `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`, which
+still says plainly that the figures published earlier in it are the degraded ones and a floor on this shared host.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
