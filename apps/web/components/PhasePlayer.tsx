@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { PITCH_VIEWBOX, PitchFrame, PlayerMarker, toX, toY } from "@/components/pitch";
 import type { BoardSlot } from "@/lib/types";
@@ -27,6 +28,7 @@ function lerp(from: BoardSlot, to: BoardSlot, t: number): BoardSlot {
 }
 
 export function PhasePlayer({ inPhase, outPhase, transform }: { inPhase: BoardSlot[]; outPhase: BoardSlot[]; transform: string }) {
+const tt = useTranslations("tactics");
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
   const frame = useRef<number | null>(null);
@@ -56,18 +58,22 @@ export function PhasePlayer({ inPhase, outPhase, transform }: { inPhase: BoardSl
   if (!matched) {
     return (
       <p className="notice notice--warn">
-        The two phases do not hold the same number of positions ({inPhase.length} and {outPhase.length}), so there is nothing to
-        interpolate. Each system page still draws both boards separately.
+        {tt("phasesDiffer", { inPhase: inPhase.length, outPhase: outPhase.length })}
       </p>
     );
   }
 
   const shown = inPhase.map((from, index) => lerp(from, outPhase[index], progress));
-  const at = progress <= 0.001 ? "in possession" : progress >= 0.999 ? "out of possession" : `${Math.round(progress * 100)}% of the way`;
+  const at =
+    progress <= 0.001
+      ? tt("inPossession")
+      : progress >= 0.999
+        ? tt("outOfPossession")
+        : tt("percentOfWay", { value: Math.round(progress * 100) });
 
   return (
     <div className="stack-sm">
-      <svg aria-label="Tactical board moving between the in-possession and out-of-possession shapes" role="img" viewBox={PITCH_VIEWBOX} preserveAspectRatio="xMidYMid meet">
+      <svg aria-label={tt("boardAria")} role="img" viewBox={PITCH_VIEWBOX} preserveAspectRatio="xMidYMid meet">
         <PitchFrame />
         <g className="pitch-path">
           {inPhase.map((from, index) =>
@@ -88,12 +94,12 @@ export function PhasePlayer({ inPhase, outPhase, transform }: { inPhase: BoardSl
           type="button"
           aria-pressed={playing}
         >
-          {playing ? "Pause" : "Play the phase change"}
+          {playing ? tt("pause") : tt("playPhaseChange")}
         </button>
         <label className="row grow" style={{ gap: "0.5rem", minWidth: 0 }}>
-          <span className="eyebrow">scrub</span>
+          <span className="eyebrow">{tt("scrub")}</span>
           <input
-            aria-label="Scrub between the two stored phases"
+            aria-label={tt("scrubAria")}
             className="pitch-scrub"
             max={100}
             min={0}
@@ -110,16 +116,14 @@ export function PhasePlayer({ inPhase, outPhase, transform }: { inPhase: BoardSl
         </span>
         <span
           className="badge badge--sim"
-          title="Simulation result is fictional / model-generated and should not be interpreted as a real-world prediction."
+          title={tt("simulationTitle")}
         >
-          SIMULATION
+          {tt("simulation")}
         </span>
       </div>
 
       <p className="muted world-section-note">
-        Simulation result is fictional / model-generated and should not be interpreted as a real-world prediction. Endpoints
-        are the stored boards — {inPhase.length} positions each, matched role for role. {transform} A frame in between is a
-        linear interpolation of those two positions, not a recorded or simulated passage of play.
+        {tt("simulationNote", { count: inPhase.length, transform })}
       </p>
     </div>
   );

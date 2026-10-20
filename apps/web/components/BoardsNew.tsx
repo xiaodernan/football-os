@@ -15,6 +15,7 @@ import { browserFetch, errorMessage } from "@/lib/api";
 export function BoardsNew({ systems }: { systems: { slug: string; name: string }[] }) {
   const router = useRouter();
   const t = useTranslations("common");
+  const tt = useTranslations("tactics");
   const [origin, setOrigin] = useState(systems[0]?.slug ?? "");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -52,7 +53,7 @@ export function BoardsNew({ systems }: { systems: { slug: string; name: string }
     <div className="stack-sm">
       <div className="grid grid-2">
         <label className="field">
-          <span className="field__label">Start from</span>
+          <span className="field__label">{tt("startFrom")}</span>
           <select className="select" name="origin" onChange={(event) => setOrigin(event.target.value)} value={origin}>
             {systems.map((system) => (
               <option key={system.slug} value={system.slug}>
@@ -62,13 +63,13 @@ export function BoardsNew({ systems }: { systems: { slug: string; name: string }
           </select>
         </label>
         <label className="field">
-          <span className="field__label">Name it</span>
+          <span className="field__label">{tt("nameIt")}</span>
           <input
             className="input"
             maxLength={120}
             name="name"
             onChange={(event) => setName(event.target.value)}
-            placeholder={systems.find((system) => system.slug === origin)?.name ?? "My board"}
+            placeholder={systems.find((system) => system.slug === origin)?.name ?? tt("myBoardPlaceholder")}
             type="text"
             value={name}
           />
@@ -80,8 +81,7 @@ export function BoardsNew({ systems }: { systems: { slug: string; name: string }
         </button>
       </div>
       <p className="muted world-section-note">
-        The copy keeps the authored system&apos;s exact coordinates, so its first measurements are the system&apos;s. After that the
-        board is yours: nothing here writes back to the catalogue.
+        {tt("copyKeepsCoordinates")}
       </p>
       {error && <p className="notice notice--warn">{error}</p>}
     </div>

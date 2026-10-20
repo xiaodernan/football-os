@@ -19,6 +19,7 @@ import type { CareerView } from "@/lib/types";
 export function CareerTools({ ident, status, available }: { ident: string; status: string; available: boolean }) {
   const router = useRouter();
   const t = useTranslations("common");
+  const tc = useTranslations("career");
   const [busy, setBusy] = useState<null | "play" | "retire" | "delete">(null);
   const [error, setError] = useState<string | null>(null);
   const [played, setPlayed] = useState<CareerView | null>(null);
@@ -59,16 +60,20 @@ export function CareerTools({ ident, status, available }: { ident: string; statu
           {busy === "play" ? "Playing the round…" : "Play the next round"}
         </button>
         <button className="btn btn--ghost" disabled={busy !== null} onClick={() => post("/retire", "retire")} type="button">
-          {busy === "retire" ? "Updating…" : status === "active" ? "Retire from this club" : "Take charge again"}
+          {busy === "retire"
+            ? tc("updating")
+            : status === "active"
+              ? tc("retireFromClub")
+              : tc("takeChargeAgain")}
         </button>
         <button className="btn btn--ghost" disabled={busy !== null} onClick={remove} type="button">
-          {busy === "delete" ? `${t("delete")}…` : `${t("delete")} this career`}
+          {busy === "delete" ? `${t("delete")}…` : `${t("delete")} ${tc("deleteThisCareer")}`}
         </button>
       </div>
 
       {!available && (
         <p className="notice notice--warn" role="status">
-          There is no round to play: the club has no competition to rotate through, or the season is retired.
+          {tc("noRoundToPlay")}
         </p>
       )}
 
@@ -81,9 +86,24 @@ export function CareerTools({ ident, status, available }: { ident: string; statu
       {played && last && (
         <div className="stack-sm" data-testid="career-round" role="status">
           <p className="notice">
-            Round {last.round_index} played: {played.career.club_short} {last.club_goals}–{last.opponent_goals} {last.opponent_short} ({last.side},{" "}
-            {last.venue_name || "venue unknown"}). {last.outcome === "W" ? "A win is 3 points" : last.outcome === "D" ? "A draw is 1 point" : "A loss is 0 points"} on the
-            record, which now reads {played.record.played} played, {played.record.points} points.
+            {tc("roundPlayed", {
+              round: last.round_index,
+              home: played.career.club_short,
+              goals: last.club_goals,
+              against: last.opponent_goals,
+              away: last.opponent_short,
+              side: last.side,
+              venue: last.venue_name || tc("venueUnknown"),
+            })}{" "}
+            {last.outcome === "W"
+              ? tc("outcomeWin")
+              : last.outcome === "D"
+                ? tc("outcomeDraw")
+                : tc("outcomeLoss")}{" "}
+            {tc("onTheRecord", {
+              played: played.record.played,
+              points: played.record.points,
+            })}
           </p>
           <div className="tag-list">
             <span className="chip mono">digest: {last.digest}</span>

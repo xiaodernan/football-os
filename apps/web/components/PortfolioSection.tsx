@@ -1,8 +1,10 @@
 import { Panel } from "@/components/ui";
+import { useTranslations } from "next-intl";
 import { figureText, itemColumns, type PortfolioSection } from "@/lib/portfolio";
 
 /** One §38 section, rendered from the shape the API sent rather than from a section-specific TSX branch. */
 export function PortfolioSectionPanel({ section }: { section: PortfolioSection }) {
+const td = useTranslations("portfolio");
   const figures = section.figures ?? {};
   const names = Object.keys(figures);
   const formulas = section.formulas ?? {};
@@ -13,7 +15,7 @@ export function PortfolioSectionPanel({ section }: { section: PortfolioSection }
       <div data-available={String(section.available)} data-section={section.section}>
         {section.available ? (
           names.length === 0 && items.length === 0 ? (
-            <p className="muted" style={{ fontSize: "0.85rem" }}>This section is filled and its source answers with no rows and no figure yet.</p>
+            <p className="muted" style={{ fontSize: "0.85rem" }}>{td("sectionFilledNoRows")}</p>
           ) : (
             <>
               {names.length > 0 && (
@@ -21,9 +23,9 @@ export function PortfolioSectionPanel({ section }: { section: PortfolioSection }
                   <table className="table">
                     <thead>
                       <tr>
-                        <th scope="col">Figure</th>
-                        <th scope="col">Value</th>
-                        <th scope="col">Formula</th>
+                        <th scope="col">{td("thFigure")}</th>
+                        <th scope="col">{td("thValue")}</th>
+                        <th scope="col">{td("thFormula")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -31,7 +33,7 @@ export function PortfolioSectionPanel({ section }: { section: PortfolioSection }
                         <tr data-figure={name} key={name}>
                           <td className="mono">{name}</td>
                           <td className="num">{figureText(figures[name])}</td>
-                          <td className="muted">{formulas[name] ?? "printed by the CV door for the section as a whole"}</td>
+                          <td className="muted">{formulas[name] ?? td("printedForSection")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -69,10 +71,10 @@ export function PortfolioSectionPanel({ section }: { section: PortfolioSection }
         ) : (
           <div className="stack-sm">
             <p className="muted" style={{ fontSize: "0.86rem" }}>
-              <strong>Not filled in this build.</strong> {section.missing_because ?? ""}
+              <strong>{td("notFilledInBuild")}</strong> {section.missing_because ?? ""}
             </p>
             <p className="muted" style={{ fontSize: "0.84rem" }}>
-              Would be read from: <span className="mono">{section.would_be_read_from ?? "no table published"}</span>
+              {td("wouldBeReadFrom")} <span className="mono">{section.would_be_read_from ?? td("noTablePublished")}</span>
             </p>
           </div>
         )}

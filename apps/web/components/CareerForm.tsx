@@ -27,6 +27,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
   // literals under a translated nav. Each string below comes from the catalogue now, so the reader's
   // chosen language reaches the form itself, not just the bar above it.
   const t = useTranslations("career");
+  const tc = useTranslations("career");
   const [club, setClub] = useState(options.clubs[0]?.slug ?? "");
   const [manager, setManager] = useState("");
   const [philosophy, setPhilosophy] = useState(options.philosophies.includes("balanced") ? "balanced" : options.philosophies[0] ?? "");
@@ -103,7 +104,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
           <input aria-label={t("managerName")} onChange={(event) => setManager(event.target.value)} placeholder={t("enterManagerName")} type="text" value={manager} />
         </label>
         <label className="field">
-          <span>{t("philosophy")} (stated intent)</span>
+          <span>{t("philosophy")} {tc("statedIntent")}</span>
           <select aria-label={t("philosophy")} onChange={(event) => setPhilosophy(event.target.value)} value={philosophy}>
             {options.philosophies.map((row) => (
               <option key={row} value={row}>
@@ -115,7 +116,9 @@ export function CareerForm({ options }: { options: CareerOptions }) {
         <label className="field">
           <span>{t("tacticalSystem")} — the part the engine reads</span>
           <select aria-label={t("tacticalSystem")} onChange={(event) => setSystem(event.target.value)} value={system}>
-            <option value="">Club default ({clubFormation || "no shape"})</option>
+            <option value="">
+              {tc("clubDefault", { formation: clubFormation || tc("noShape") })}
+            </option>
             {systems.map((row) => (
               <option key={row.slug} value={row.slug}>
                 {row.label ?? row.slug}
@@ -163,9 +166,9 @@ export function CareerForm({ options }: { options: CareerOptions }) {
 
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <button className="btn" disabled={busy} onClick={submit} type="button">
-          {busy ? "Opening…" : t("startCareer")}
+          {busy ? tc("opening") : t("startCareer")}
         </button>
-        <span className="muted">Up to {options.max_careers_per_user} per account. Every fixture is decided by the labelled simulation engine.</span>
+        <span className="muted">{tc("upToCareers", { max: options.max_careers_per_user })}</span>
       </div>
 
       {error && (
