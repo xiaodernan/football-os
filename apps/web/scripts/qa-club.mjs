@@ -185,15 +185,34 @@ async function call(page, method, path, body) {
   return last;
 }
 
+/**
+ * The field is waited for, and the page is served again once if it does not arrive.
+ *
+ * The walk presses more writes than the tier's rate door allows, and a refresh the door answers with a
+ * refusal paints `<Refused>` where the panel was — the form is gone until the page is served again. A
+ * walk that treated that as "the field is missing" would crash on the next press and lose every check
+ * after it, so the page is re-read once and the field waited for again.
+ */
+async function waitForField(page, selector, timeout = 45_000) {
+  try {
+    await page.waitForSelector(selector, { visible: true, timeout });
+    return true;
+  } catch {
+    await page.reload({ timeout: 60_000, waitUntil: 'networkidle2' }).catch(() => {});
+    await page.waitForSelector(selector, { visible: true, timeout }).catch(() => {});
+    return false;
+  }
+}
+
 /** Real keystrokes: React only sees a value that arrived through an input event. */
 async function typeInto(page, selector, value) {
-  await page.waitForSelector(selector, { visible: true, timeout: 20_000 });
+  await waitForField(page, selector);
   await page.click(selector);
   if (value) await page.type(selector, String(value), { delay: 8 });
 }
 
 async function clearField(page, selector) {
-  await page.waitForSelector(selector, { visible: true, timeout: 20_000 });
+  await waitForField(page, selector);
   await page.click(selector, { clickCount: 3 });
   await page.keyboard.press('Backspace');
 }

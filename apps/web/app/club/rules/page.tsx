@@ -59,8 +59,55 @@ export default async function ClubRulesPage() {
   const rules = club.data;
   const edu = academy.data;
 
-  // Helper to convert cap key to translation key
-  const capKey = (key: string) => "cap" + key.replace(/_/g, "").replace(/^\w/, (c: string) => c.toUpperCase());
+  /**
+   * The label for a capability the door publishes.
+   *
+   * The key is written out, one literal call per field, rather than built at runtime from the API's own
+   * name: a key the gate cannot read is a key the gate cannot check, and the first version of this
+   * helper — `"cap" + key.replace(/_/g, "")` — asked the catalogue for `capNamemax` and next-intl
+   * answered MISSING_MESSAGE for every row of the table. The walk's console is what named it.
+   *
+   * A field the door adds and this has not learned yet prints its own name, which is the API's word and
+   * not a sentence the page invented.
+   */
+  const capLabel = (key: string) => {
+    switch (key) {
+      case "name_max":
+        return t("capNameMax");
+      case "team_name_max":
+        return t("capTeamNameMax");
+      case "note_max":
+        return t("capNoteMax");
+      case "visibility_defaults":
+        return t("capVisibilityDefaults");
+      case "rating_range":
+        return t("capRatingRange");
+      case "review_weeks_range":
+        return t("capReviewWeeksRange");
+      case "weekly_minutes":
+        return t("capWeeklyMinutes");
+      case "focus_items_goals":
+        return t("capFocusItemsGoals");
+      case "goal_keys":
+        return t("capGoalKeys");
+      case "feedback_assessment":
+        return t("capFeedbackAssessment");
+      case "plan_statuses":
+        return t("capPlanStatuses");
+      case "country":
+        return t("capCountry");
+      case "kinds":
+        return t("capKinds");
+      case "addressing":
+        return t("capAddressing");
+      case "invitations":
+        return t("capInvitations");
+      case "axes":
+        return t("capAxes");
+      default:
+        return key;
+    }
+  };
 
   return (
     <div className="container page stack">
@@ -230,7 +277,7 @@ export default async function ClubRulesPage() {
               const k = String(key);
               return (
                 <div className="world-kv__row" key={k}>
-                  <dt className="mono">{t(capKey(k))}</dt>
+                  <dt className="mono">{capLabel(k)}</dt>
                   <dd style={{ textAlign: "right" }}>{value}</dd>
                 </div>
               );
@@ -250,7 +297,7 @@ export default async function ClubRulesPage() {
               const k = String(key);
               return (
                 <div className="world-kv__row" key={k}>
-                  <dt className="mono">{t(capKey(k))}</dt>
+                  <dt className="mono">{capLabel(k)}</dt>
                   <dd style={{ textAlign: "right" }}>{value}</dd>
                 </div>
               );

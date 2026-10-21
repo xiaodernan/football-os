@@ -440,3 +440,40 @@ What came back, with the copy in the catalogue:
 Measured 2026-10-21: `scripts/qa-club.mjs` — **252 of 252 checks passed, exit 0** on a production
 build served on `127.0.0.1:3218` against the API on `127.0.0.1:8741` over a fresh SQLite
 database; `scripts/qa-creator.mjs` — **72 of 72**, exit 0, on the same build.
+
+## The plan page asked the wrong catalogue, and the gate could not see it (2026-10-21)
+
+The club walk's console carried two lines that no check had asked for:
+
+    Error: MISSING_MESSAGE: club.no (en)
+    Error: MISSING_MESSAGE: club.yes (en)
+
+The plan page's "one review is not a direction" row asks the **club** namespace for `yes` and `no` — and
+those two keys live in **common**. next-intl answers a key the namespace does not hold with an error, so
+the page rendered an exception where the row should read "yes" or "no", and the walk carried on because
+the *rest* of the row was still there.
+
+**The copy gate could not see it, and that was the gate's own fault.** Its key check asked a coarser
+question than the one that matters: *does any namespace this file binds hold the key?* A file that binds
+`club` **and** `common` passes that question for either namespace, so a page that asks the wrong one of
+the two is invisible to it. The check now resolves **the translator each key was read through** — `tc("yes")`
+asks `common`, `t("yes")` asks `club` — and holds every key against the namespace it was actually asked
+of. It found four such reads on the first run:
+
+| file | asked | holds |
+| --- | --- | --- |
+| `app/club/[ident]/plans/[plan]/page.tsx` | `club.yes`, `club.no` | `common.yes`, `common.no` |
+| `app/knowledge/KnowledgeSearch.tsx` | `common.demoRerankTitle`, `common.aiRanked` | `knowledge.demoRerankTitle`, `knowledge.aiRanked` |
+
+**A fifth defect the gate cannot see at all: a key built at runtime.** The club rulebook page
+(`/club/rules`) built its catalogue keys from the API's own field names — `"cap" + key.replace(/_/g, "")` —
+which turns `name_max` into `capNamemax` while the catalogue holds `capNameMax`. Every row of the
+capabilities table raised `MISSING_MESSAGE` at runtime. The page now writes its keys out, one literal call
+per field, so the gate reads them and a field the door adds and the page has not learned prints the API's
+own name rather than an exception.
+
+**And the walk itself had a race with the tier's rate door.** One run of the club walk crashed on
+`clearField(page, titleField)` — the notice form was not on the page — and lost the fifty-two checks after
+it. The walk presses more writes than the door allows, and a refresh the door answers with a refusal paints
+`<Refused>` where the panel was: the form is gone until the page is served again. The walk now re-reads the
+page once and waits for the field again, instead of treating a rate-limited refresh as a missing field.

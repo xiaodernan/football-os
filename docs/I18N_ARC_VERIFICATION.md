@@ -69,6 +69,15 @@ The check reads ICU the way next-intl reads it: `{name}` is a placeholder, and
 `{name, plural, one {…} other {…}}` is a placeholder whose branches are the words the reader sees — so a
 catalogue full of plurals does not read as a catalogue full of missing values.
 
+**And it holds every key against the namespace it was asked of, not against the file's union.** That
+distinction is the check's own correction: a file that binds `club` and `common` used to pass a key check
+that asked "does *any* of them hold this key?", so a page reading `t("yes")` — where `t` is the club
+translator and `yes` lives in common — was invisible to it, and the page threw `MISSING_MESSAGE` at
+runtime. The check now resolves the translator each key was read through and holds it against that
+namespace; it found four such reads on its first run (the plan page's `yes` and `no`, the knowledge
+search's two badges), and the club rulebook's runtime-built keys — `capNamemax` where the catalogue holds
+`capNameMax` — are now written out one literal call per field so that the gate reads them too.
+
 ## 4. The field-name gate, and the collision it exists for
 
 The scout's shortlist and the scout's transfer panel were given one accessible name between them during

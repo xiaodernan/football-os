@@ -108,7 +108,7 @@ export default async function AcademyPlanPage({ params }: Props) {
             [t("kvOverallFirstLast"), `${progress.overall_first ?? "—"} · ${progress.overall_last ?? "—"}`],
             [t("kvOverallChange"), progress.overall_change ?? "—"],
             [t("kvAxisChange"), progress.axis_change ? Object.entries(progress.axis_change).map(([k, v]) => `${k}: ${v}`).join(", ") : "—"],
-            [t("kvOneReviewNotDirection"), progress.one_review_is_not_a_direction ? t("yes") : t("no")],
+            [t("kvOneReviewNotDirection"), progress.one_review_is_not_a_direction ? tc("yes") : tc("no")],
             [t("kvNotAColumn"), progress.not_a_column ?? "—"],
             [t("kvFocusItemsGoals"), `${caps?.focus_items_max ?? "—"} / {caps?.goals_max ?? "—"}`],
             [t("kvFeedbackAssessment"), `${caps?.feedback_max ?? "—"} / {caps?.assessment_text_max ?? "—"} characters`],

@@ -400,7 +400,14 @@ for (const file of files) {
       if ((callee === "useTranslations" || callee === "getTranslations") && ts.isStringLiteral(first)) {
         namespaces.add(first.text);
       } else if (callee && /^t[a-z]{0,2}$/.test(callee) && ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
-        keys.add(first.text);
+        /**
+         * The key is recorded **with the namespace it was asked of** — `tc("yes")` asks the `common`
+         * namespace, not whichever namespace the file happens to bind. Checking the union of a file's
+         * namespaces was too coarse: the plan page asked the `club` namespace for `yes` and `no` (which
+         * live in `common`), the gate could not see it, and the page threw MISSING_MESSAGE at runtime.
+         */
+        const bound = translatorNamespaces.get(callee);
+        keys.add(bound ? `${bound}.${first.text}` : first.text);
         /**
          * Every placeholder a message needs must be supplied with it. A key read without its values is
          * a message printed with its own placeholders in it — `{default} by default, {max} at most` in a
@@ -554,10 +561,11 @@ check(
 const missingKeys = [];
 for (const [file, { namespaces, keys }] of keyCalls) {
   for (const key of keys) {
-    const held = [...namespaces].some((namespace) =>
-      Object.prototype.hasOwnProperty.call(CATALOGUE[namespace] ?? {}, key),
-    );
-    if (!held) missingKeys.push({ file, key, namespaces: [...namespaces].sort() });
+    const [namespace, plain] = key.includes(".") && key.split(".").length === 2 ? [key.split(".")[0], key.split(".")[1]] : [null, key];
+    const held = namespace
+      ? Object.prototype.hasOwnProperty.call(CATALOGUE[namespace] ?? {}, plain)
+      : [...namespaces].some((each) => Object.prototype.hasOwnProperty.call(CATALOGUE[each] ?? {}, plain));
+    if (!held) missingKeys.push({ file, key: plain, namespaces: namespace ? [namespace] : [...namespaces].sort() });
   }
 }
 
