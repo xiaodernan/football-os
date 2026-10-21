@@ -212,7 +212,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
   }
 
   async function eraseGuide(guideId: string) {
-    if (!confirm("Erase this guide and its citations?")) return;
+    if (!confirm(tp("eraseGuideConfirm"))) return;
     const answer = await guideCall.call("erase", `/creator/guides/${guideId}`, { method: "DELETE" });
     if (!answer) return;
     setSelectedGuide(null);

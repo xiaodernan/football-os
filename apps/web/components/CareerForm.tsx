@@ -54,7 +54,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
       .filter((row) => row.target.trim() !== "")
       .map((row) => ({ kind: row.kind, target: Number(row.target.trim()), label: row.label.trim() || undefined }));
     if (chosen.length === 0) {
-      setError("Name at least one objective with a target, so the season can be judged against something.");
+      setError(t("objectiveRequired"));
       setBusy(false);
       return;
     }

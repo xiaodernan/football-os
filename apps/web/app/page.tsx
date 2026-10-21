@@ -47,7 +47,7 @@ export default async function HomePage() {
     } else if (overviewResult.status === 401) {
       redirect("/login");
     } else {
-      myFootballNotice = errorMessage(overviewResult.error, "Progress is unavailable right now.");
+      myFootballNotice = errorMessage(overviewResult.error, tc("progressUnavailable"));
     }
   }
 
@@ -96,7 +96,7 @@ export default async function HomePage() {
           body={
             capabilities
               ? t("moduleWorldBodyOn", {
-                  status: capabilities.m3_football_world ? "on" : "not built",
+                  status: capabilities.m3_football_world ? tc("statusOn") : tc("statusNotBuilt"),
                 })
               : t("moduleWorldBodyOff")
           }

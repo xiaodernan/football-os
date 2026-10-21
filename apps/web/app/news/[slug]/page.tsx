@@ -78,7 +78,7 @@ export default async function NewsDetailPage({ params }: Props) {
           datePublished: article.published_at,
           dateModified: article.published_at,
           author: { "@type": "Organization", name: article.source_name },
-          publisher: { "@type": "Organization", name: "FOOTBALL OS generated world" },
+          publisher: { "@type": "Organization", name: t("publisherName") },
           inLanguage: "en",
           isAccessibleForFree: true,
           articleSection: article.category,
@@ -134,13 +134,13 @@ export default async function NewsDetailPage({ params }: Props) {
                   {article.url ?? path}
                 </Link>,
               ],
-              ["Category", article.category],
-              ["Claim class", article.claim_class],
-              ["Season", article.season],
-              ["Published", <span className="mono" key="published">{formatMoment(article.published_at)}</span>],
-              ["Source", <span className="mono" key="source">{article.source_name}</span>],
-              ["Author", article.author ?? <span className="unavailable">{t("notAttributed")}</span>],
-              ["Topics", article.topics.length > 0 ? article.topics.join(", ") : <span className="unavailable">none</span>],
+              [t("rowCategory"), article.category],
+              [t("rowClaimClass"), article.claim_class],
+              [t("rowSeason"), article.season],
+              [t("rowPublished"), <span className="mono" key="published">{formatMoment(article.published_at)}</span>],
+              [t("rowSource"), <span className="mono" key="source">{article.source_name}</span>],
+              [t("rowAuthor"), article.author ?? <span className="unavailable">{t("notAttributed")}</span>],
+              [t("rowTopics"), article.topics.length > 0 ? article.topics.join(", ") : <span className="unavailable">{t("rowNoTopics")}</span>],
             ]}
           />
         </Panel>

@@ -37,7 +37,7 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
             at <Link href={player.club.path}>{player.club.name}</Link>
           </span>
         )}
-        <span className={player.observed ? "badge badge--live" : "badge badge--demo"}>{player.observed ? "OBSERVED" : "NO APPEARANCES"}</span>
+        <span className={player.observed ? "badge badge--live" : "badge badge--demo"}>{player.observed ? ts("observed") : ts("noAppearances")}</span>
         <span className={`badge ${report.recommendation.verdict === "sign now" ? "badge--live" : "badge--demo"}`}>{report.recommendation.verdict.toUpperCase()}</span>
       </div>
 

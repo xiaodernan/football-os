@@ -95,7 +95,7 @@ export default async function WorldIndexPage() {
         data={{
           "@context": "https://schema.org",
           "@type": "Dataset",
-          name: "FOOTBALL OS generated world",
+          name: t("publisherName"),
           description: world.disclaimer,
           url: absolute("/world"),
           creator: { "@type": "Organization", name: SITE_NAME, url: absolute("/") },

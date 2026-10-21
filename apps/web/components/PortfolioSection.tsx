@@ -11,7 +11,7 @@ const td = useTranslations("portfolio");
   const items = section.items ?? [];
   const columns = itemColumns(items);
   return (
-    <Panel eyebrow={`${section.source || "no source published"} · origin ${section.data_origin}`} title={section.title}>
+    <Panel eyebrow={`${section.source || td("noSourcePublished")} · origin ${section.data_origin}`} title={section.title}>
       <div data-available={String(section.available)} data-section={section.section}>
         {section.available ? (
           names.length === 0 && items.length === 0 ? (

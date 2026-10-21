@@ -85,7 +85,7 @@ export default async function VideoReportPage({ params }: Props) {
           name: asset.title || asset.filename,
           url: absolute(`/video/${asset.id}`),
           creator: { "@type": "Person", name: user.display_name },
-          license: "Private to the uploading account",
+          license: t("licensePrivate"),
           isAccessibleForFree: false,
           mentions: analysis ? { "@type": "SoftwareApplication", name: analysis.provider, applicationCategory: "analysis" } : undefined,
         }}

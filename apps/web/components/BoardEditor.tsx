@@ -66,7 +66,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
     setBusy(false);
     if (!result.ok) {
       const problems = (result.error as unknown as { details?: { problems?: string[] } })?.details?.problems;
-      setStatus({ kind: "error", text: problems?.length ? problems.join(" · ") : errorMessage(result.error, "The board could not be saved.") });
+      setStatus({ kind: "error", text: problems?.length ? problems.join(" · ") : errorMessage(result.error, tb("boardSaveFailed")) });
       return null;
     }
     return result.data;
@@ -80,7 +80,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
     if (saved && "slug" in saved) {
       setBoard(saved as BoardDetail);
       setDirty(false);
-      setStatus({ kind: "ok", text: "Saved. The measurements on the right are recomputed from these coordinates." });
+      setStatus({ kind: "ok", text: tb("boardSaved") });
     }
   }
 
@@ -90,7 +90,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
       setBoard(saved as BoardDetail);
       setPhase("out");
       setDirty(false);
-      setStatus({ kind: "ok", text: "Block derived with the same transform the 50 authored systems use: its span is the block depth, its top the press line." });
+      setStatus({ kind: "ok", text: tb("blockDerived") });
     }
   }
 
@@ -106,7 +106,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
     const result = await send(`/boards/${encodeURIComponent(board.slug)}/revoke`, { method: "POST" });
     if (result && "share_url" in result) {
       setBoard((current) => ({ ...current, share_url: null, visibility: "private" }));
-      setStatus({ kind: "ok", text: "Link revoked. The board is private again and the old URL no longer resolves." });
+      setStatus({ kind: "ok", text: tb("linkRevoked") });
     }
   }
 
@@ -119,12 +119,12 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
     if (!board.origin_system) return;
     const source = await browserFetch<{ phase_in: BoardPositions[]; phase_out: BoardPositions[] }>(`/tactics/${encodeURIComponent(board.origin_system)}`);
     if (!source.ok) {
-      setStatus({ kind: "error", text: errorMessage(source.error, "The authored system could not be re-read.") });
+      setStatus({ kind: "error", text: errorMessage(source.error, tb("systemReReadFailed")) });
       return;
     }
     setBoard((current) => ({ ...current, phase_in: source.data.phase_in, phase_out: source.data.phase_out }));
     setDirty(true);
-    setStatus({ kind: "ok", text: "Positions reset to the authored system. Save to keep them, or drag from here." });
+    setStatus({ kind: "ok", text: tb("positionsReset") });
   }
 
   const shown: BoardMetrics[] = phase === "in" ? board.metrics_in : board.metrics_out;
@@ -133,7 +133,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
     <div className="stack">
       <div className="tac-boards">
         <svg
-          aria-label={`Editable board: ${board.name}, ${phase === "in" ? "in" : "out of"} possession. Drag a player to move them.`}
+          aria-label={tb("boardEditorAria", { name: board.name, phase: phase === "in" ? tb("phaseInLower") : tb("phaseOutLower") })}
           onPointerUp={() => setDragging(null)}
           onPointerLeave={() => setDragging(null)}
           onPointerMove={(event) => {
@@ -201,7 +201,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
                   className="btn btn--ghost btn--sm"
                   onClick={() => {
                     if (!navigator.clipboard) {
-                      setStatus({ kind: "error", text: "This browser will not let the page copy the link. Select it and copy it by hand." });
+                      setStatus({ kind: "error", text: tb("copyLinkManual") });
                       return;
                     }
                     void navigator.clipboard.writeText(`${window.location.origin}${board.share_url}`);

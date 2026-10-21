@@ -524,7 +524,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                       <td className="num">{row.body.sessions ?? "—"}</td>
                       <td className="num">{row.body.total_load_units?.toFixed(2) ?? "—"}</td>
                       <td className="muted" style={{ fontSize: "0.8rem" }}>
-                        {row.body.empty_window ? t("emptyWindow") : (row.body.formulas.total_load_units ?? "recomputed on read")}
+                        {row.body.empty_window ? t("emptyWindow") : (row.body.formulas.total_load_units ?? t("recomputedOnRead"))}
                       </td>
                       <td>
                         <EraseRow action="report-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/reports/${encodeURIComponent(row.id)}`} what="question" />
@@ -603,7 +603,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
             {mine.ok ? (
               <p className="muted" data-account-meter={mine.data.items.map((row) => row.feature).join(",")} style={{ fontSize: "0.82rem" }}>
                 {t("accountMeterSentence", { name: mine.data.display_name, plan: mine.data.plan })} {" "}
-                {mine.data.items.map((row) => `${row.feature} ${row.used} of ${row.limit} per ${row.period}${row.enforced ? ", refused on today" : ", not refused on today"}`).join("; ") ||
+                {mine.data.items.map((row) => `${row.feature} ${row.used} of ${row.limit} per ${row.period}${row.enforced ? t("refusedOnToday") : t("notRefusedOnToday")}`).join("; ") ||
                   t("accountMeterNothing")}
                 .
               </p>

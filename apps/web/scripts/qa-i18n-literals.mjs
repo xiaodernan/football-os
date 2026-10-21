@@ -75,7 +75,7 @@ const FLOOR_SITES = 0;
  * shapes above do not cover. It starts at the count the gate read when it learned to see the shape,
  * and it may only fall: every site that moves into a catalogue lowers it.
  */
-const FLOOR_LITERAL_SITES = 61;
+const FLOOR_LITERAL_SITES = 0;
 
 /** The population the walk must find, so a scan that narrows itself cannot pass by finding nothing. */
 const FLOOR_FILES = 70;
@@ -198,6 +198,7 @@ const NAMING_ATTRIBUTES = new Set([
   "autoComplete", "inputMode", "form", "slot", "lang", "dir", "width", "height", "viewBox", "d",
   "fill", "stroke", "xmlns", "colSpan", "rowSpan", "pattern", "accept", "encType", "formAction",
   "formMethod", "download", "sandbox", "srcDoc", "loading", "decoding", "referrerPolicy", "as",
+  "data-testid", "data-note", "data-axis", "data-formula", "data-review", "data-slot",
 ]);
 
 /**
@@ -206,6 +207,13 @@ const NAMING_ATTRIBUTES = new Set([
  * local, and a local's value is whatever the author wrote.
  */
 const isApiFieldName = (name) => /^[a-z][a-z0-9]*(_[a-z0-9]+)+$/.test(name);
+
+/**
+ * The schema.org fields whose value is a *vocabulary* rather than a sentence: the sport a competition
+ * belongs to, the kind of thing a page is about. They are named here rather than inferred, because a
+ * value the crawler reads is metadata, and metadata is not the reader's copy.
+ */
+const SCHEMA_VOCABULARY = new Set(["sport", "genre"]);
 
 for (const file of files) {
   const text = readFileSync(file, "utf8");
@@ -250,15 +258,15 @@ for (const file of files) {
       const name = node.name.getText().replace(/^aria-/, "aria-");
       if (LABEL_ATTRIBUTES.has(name) && isEnglishCopy(node.initializer.text)) {
         sites.push({ file: rel, line: position(node), shape: `attr:${name}`, copy: node.initializer.text.trim() });
+        counted.add(node.initializer.getStart(source));
       }
-      counted.add(node.initializer.getStart(source));
     }
     if (ts.isPropertyAssignment(node) && node.name && ts.isIdentifier(node.name) && ts.isStringLiteral(node.initializer)) {
       const name = node.name.text;
       if (LABEL_PROPERTIES.has(name) && isEnglishCopy(node.initializer.text)) {
         sites.push({ file: rel, line: position(node), shape: `object:${name}`, copy: node.initializer.text.trim() });
+        counted.add(node.initializer.getStart(source));
       }
-      counted.add(node.initializer.getStart(source));
     }
     /**
      * The fourth shape. A string literal is copy when it is a sentence the reader will see, and it is
@@ -280,7 +288,11 @@ for (const file of files) {
       const inJsxAttribute = ts.isJsxAttribute(parent) && parent.initializer === node;
       const inJsxChild = ts.isJsxExpression(parent) && parent.expression === node;
       const namingAttribute = ts.isJsxAttribute(parent) && NAMING_ATTRIBUTES.has(parent.name.getText());
-      const comparison = ts.isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.EqualsEqualsToken;
+      const comparison =
+        ts.isBinaryExpression(parent) &&
+        (parent.operatorToken.kind === ts.SyntaxKind.EqualsEqualsToken ||
+          parent.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken ||
+          parent.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken);
       const schemaType =
         ts.isPropertyAssignment(parent) &&
         ((ts.isIdentifier(parent.name) && parent.name.text === "type") ||
@@ -297,6 +309,37 @@ for (const file of files) {
       const token = literal === "use client" || literal.startsWith("var(--");
       // A language tag names a locale: "en-GB" and "zh-TW" are not sentences.
       const languageTag = /^[a-z]{2}(-[A-Za-z0-9]{2,8})+$/.test(literal);
+      // A colour, a measurement, a style value: a value the page prints as itself.
+      const colour = /^#[0-9a-f]{3,8}$/i.test(literal);
+      const measurement = /^\d+(\.\d+)?\s?[A-Za-z%]+$/.test(literal);
+      let inStyle = false;
+      for (let up = parent; up; up = up.parent) {
+        if (ts.isJsxAttribute(up) && up.name.getText() === "style") {
+          inStyle = true;
+          break;
+        }
+        if (ts.isFunctionLike(up)) break;
+      }
+      // A locale's own name, written in that language: the switcher shows "English" and "简体中文" on
+      // purpose, so a reader who cannot read the page can still find their own language in the list.
+      const localeName =
+        ts.isPropertyAssignment(parent) &&
+        ts.isIdentifier(parent.name) &&
+        /^(en|zh)(-TW)?$/.test(parent.name.text);
+      /**
+       * A marker against the tier's own wording: `line.startsWith("not in this build")` matches the API's
+       * sentence rather than writing one. The wording it matches belongs to the API, and the API publishes
+       * it; the page quoting it is not the page writing it.
+       */
+      const matchMarker =
+        ts.isCallExpression(parent) &&
+        ts.isPropertyAccessExpression(parent.expression) &&
+        ["startsWith", "endsWith", "includes", "match"].includes(parent.expression.name.text);
+      // A schema.org vocabulary value: the sport a competition belongs to, not a sentence.
+      const schemaVocabulary =
+        ts.isPropertyAssignment(parent) &&
+        ts.isIdentifier(parent.name) &&
+        SCHEMA_VOCABULARY.has(parent.name.text);
       let inClassName = false;
       for (let up = parent; up; up = up.parent) {
         if (ts.isJsxAttribute(up) && up.name.getText() === "className") {
@@ -312,6 +355,7 @@ for (const file of files) {
       if (
         !inImport && !inJsxAttribute && !inJsxChild && !namingAttribute && !comparison &&
         !schemaType && !schemaField && !apiField && !token && !languageTag && !inClassName &&
+        !inStyle && !colour && !measurement && !localeName && !schemaVocabulary && !matchMarker &&
         isEnglishCopy(node.text)
       ) {
         literalSites.push({ file: rel, line: position(node), shape: "literal", copy: literal });

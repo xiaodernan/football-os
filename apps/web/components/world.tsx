@@ -40,14 +40,15 @@ export function formatMoment(iso: string | null | undefined): string {
  * the tactical catalogue) and must not be softened into "demo"; anything else is a named source.
  */
 export function OriginBadge({ provenance }: { provenance: RowProvenance }) {
+  const t = useTranslations("common");
   const authored = provenance.data_origin === "project-authored" && !provenance.is_demo_data;
   const synthetic = !authored && (provenance.data_origin === "synthetic" || provenance.is_demo_data);
-  const label = authored ? "PROJECT AUTHORED" : synthetic ? "DEMO DATA" : `SOURCE · ${provenance.data_origin}`;
+  const label = authored ? t("authoredBadge") : synthetic ? t("demoData") : t("sourceLabel", { origin: provenance.data_origin });
   const title = authored
-    ? "Written for this project — no external text reproduced, and not a simulation of the real world. This is not demo data."
+    ? t("authoredBadgeTitle")
     : synthetic
-      ? `data_origin: ${provenance.data_origin} · is_demo_data: ${String(provenance.is_demo_data)} — generated locally from the world seed.`
-      : `data_origin: ${provenance.data_origin} — served from a licensed provider, not generated here.`;
+      ? t("demoDataTitle", { origin: provenance.data_origin, demo: String(provenance.is_demo_data) })
+      : t("sourceTitle", { origin: provenance.data_origin });
   return (
     <span className={`badge ${authored ? "badge--authored" : synthetic ? "badge--demo" : "badge--live"}`} title={title}>
       {label}
@@ -116,7 +117,8 @@ export function EntityLink({
   fallback?: string;
   className?: string;
 }) {
-  if (!label) return <span className="unavailable">{fallback ?? "Data unavailable"}</span>;
+  const t = useTranslations("common");
+  if (!label) return <span className="unavailable">{fallback ?? t("dataUnavailable")}</span>;
   if (!href) return <span>{label}</span>;
   return (
     <Link className={className} href={href}>
@@ -271,17 +273,18 @@ export function KeyValueGrid({ rows }: { rows: [string, ReactNode][] }) {
 export function WorldUnavailable({
   message,
   detail,
-  eyebrow = "Football World",
-  title = "Data unavailable",
+  eyebrow,
+  title,
 }: {
   message: string;
   detail?: ReactNode;
   eyebrow?: string;
   title?: string;
 }) {
+  const t = useTranslations("common");
   return (
     <div className="container page stack">
-      <WorldHead eyebrow={eyebrow} title={title} />
+      <WorldHead eyebrow={eyebrow ?? t("worldTitle")} title={title ?? t("dataUnavailable")} />
       <div className="notice notice--warn">{message}</div>
       <p className="muted" style={{ fontSize: "0.88rem" }}>
         Nothing here is substituted with invented values (spec §78). {detail}

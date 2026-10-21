@@ -13,10 +13,13 @@ const OPEN_BY_DEFAULT = new Set(["technical", "age", "context"]);
  * The payload names the two sides `left` and `right`; this page has already labelled them A and B, so a badge
  * that said `LEFT` above a column headed `A` would be a second vocabulary for the same two players. The other
  * four answers are the payload's own and are printed as it words them.
+ *
+ * The two labels the page invents are the catalogue's, and the helper takes the translator rather than
+ * calling one: a hook cannot be called from a plain function.
  */
-function leaderText(leader: string): string {
-  if (leader === "left") return "A AHEAD";
-  if (leader === "right") return "B AHEAD";
+function leaderText(leader: string, ts: (key: string) => string): string {
+  if (leader === "left") return ts("leaderLeftAhead");
+  if (leader === "right") return ts("leaderRightAhead");
   return (LEADER_LABELS[leader] ?? leader).toUpperCase();
 }
 
@@ -45,7 +48,7 @@ export function ScoutComparePanel({ compared }: { compared: CompareView }) {
         </span>
         {Object.entries(compared.counts.dimension_leaders).map(([leader, count]) => (
           <span className={`chip mono ${leaderTone(leader) === "demo" ? "" : "chip--accent"}`} key={leader}>
-            {leaderText(leader)}: {count}
+            {leaderText(leader, ts)}: {count}
           </span>
         ))}
       </div>
@@ -113,7 +116,7 @@ function SideCard({ side, label }: { side: CompareSide; label: string }) {
             at <Link href={side.club.path}>{side.club.name}</Link> (overall {side.club.overall})
           </>
         ) : (
-          "lists at no club in this world"
+          ts("noClubInWorld")
         )}
         {side.competition ? ` · ${side.competition.name}, tier ${side.competition.tier}` : ""}
       </p>
@@ -132,7 +135,7 @@ function DimensionBlock({ dimension }: { dimension: CompareDimension }) {
     <details className="tac-card" data-dimension={dimension.dimension} open={OPEN_BY_DEFAULT.has(dimension.dimension)}>
       <summary>
         <strong>{dimension.dimension}</strong>{" "}
-        <span className={`badge ${leaderTone(dimension.leader) === "demo" ? "badge--demo" : "badge--live"}`}>{leaderText(dimension.leader)}</span>{" "}
+        <span className={`badge ${leaderTone(dimension.leader) === "demo" ? "badge--demo" : "badge--live"}`}>{leaderText(dimension.leader, ts)}</span>{" "}
         <span className="muted mono">
           {dimension.measures.length} measures · {scorable} scorable
         </span>
@@ -154,7 +157,7 @@ function DimensionBlock({ dimension }: { dimension: CompareDimension }) {
           </thead>
           <tbody>
             {dimension.measures.map((measure) => (
-              <MeasureRow measure={measure} key={measure.key} />
+              <MeasureRow measure={measure} key={measure.key} ts={ts} />
             ))}
           </tbody>
         </table>
@@ -164,7 +167,7 @@ function DimensionBlock({ dimension }: { dimension: CompareDimension }) {
   );
 }
 
-function MeasureRow({ measure }: { measure: Measure }) {
+function MeasureRow({ measure, ts }: { measure: Measure; ts: (key: string) => string }) {
   const gap: string[] = [];
   if (measure.missing?.length) gap.push(`missing on ${measure.missing.join(" + ")}`);
   if (measure.unobserved?.length) gap.push(`no lines for ${measure.unobserved.join(" + ")}`);
@@ -180,7 +183,7 @@ function MeasureRow({ measure }: { measure: Measure }) {
       <td className="num">{measure.delta === null ? "—" : measure.delta > 0 ? `+${measure.delta}` : String(measure.delta)}</td>
       <td className="mono muted">{measure.direction}</td>
       <td>
-        <span className={`badge ${leaderTone(measure.leader) === "demo" ? "badge--demo" : "badge--live"}`}>{leaderText(measure.leader)}</span>
+        <span className={`badge ${leaderTone(measure.leader) === "demo" ? "badge--demo" : "badge--live"}`}>{leaderText(measure.leader, ts)}</span>
       </td>
       <td className="muted mono">{measure.source}</td>
     </tr>

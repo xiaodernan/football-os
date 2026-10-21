@@ -57,7 +57,7 @@ export function CareerTools({ ident, status, available }: { ident: string; statu
     <div className="stack-sm">
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <button className="btn" disabled={busy !== null || !available} onClick={() => post("/play", "play")} type="button">
-          {busy === "play" ? "Playing the round…" : "Play the next round"}
+          {busy === "play" ? tc("playingTheRound") : tc("playNextRound")}
         </button>
         <button className="btn btn--ghost" disabled={busy !== null} onClick={() => post("/retire", "retire")} type="button">
           {busy === "retire"

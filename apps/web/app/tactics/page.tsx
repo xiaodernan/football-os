@@ -98,7 +98,7 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
         data={{
           "@context": "https://schema.org",
           "@type": "Dataset",
-          name: "FOOTBALL OS tactical systems",
+          name: t("publisherName"),
           description: world.disclaimer,
           url: absolute("/tactics"),
           creator: { "@type": "Organization", name: SITE_NAME, url: absolute("/") },

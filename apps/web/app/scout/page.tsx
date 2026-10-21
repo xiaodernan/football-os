@@ -137,18 +137,18 @@ export default async function ScoutPage() {
         <div className="stack-sm">
           <KeyValueGrid
             rows={[
-              ["Shortlist caps", `${data.shortlists.max_shortlists_per_user} lists per account · ${data.shortlists.max_items_per_shortlist} players each · ${data.shortlists.name_max}-character names · ${data.shortlists.note_max}-character notes`],
-              ["A list stores", data.shortlists.stored],
-              ["A list does not store", data.shortlists.not_stored],
-              ["Why not", data.shortlists.why_not],
-              ["Re-read on every visit", data.shortlists.rechecked_on_read],
-              ["Report fields", data.report.fields.join(" · ")],
-              ["Verdicts the ladder can produce", data.report.verdicts.join(" · ")],
-              ["Report refusals", Object.entries(data.report.refusals).map(([code, sentence]) => `${code}: ${sentence}`).join(" · ")],
-              ["Comparison dimensions", data.comparison.dimensions.join(" · ")],
-              ["Measure leaders", data.comparison.measure_leaders.join(" · ")],
-              ["Dimension leaders", data.comparison.dimension_leaders.join(" · ")],
-              ["Stat columns summed for the rates", data.comparison.stat_columns.join(" · ")],
+              [t("rowShortlistCaps"), `${data.shortlists.max_shortlists_per_user} lists per account · ${data.shortlists.max_items_per_shortlist} players each · ${data.shortlists.name_max}-character names · ${data.shortlists.note_max}-character notes`],
+              [t("rowListStores"), data.shortlists.stored],
+              [t("rowListDoesNotStore"), data.shortlists.not_stored],
+              [t("rowWhyNot"), data.shortlists.why_not],
+              [t("rowReRead"), data.shortlists.rechecked_on_read],
+              [t("rowReportFields"), data.report.fields.join(" · ")],
+              [t("rowVerdicts"), data.report.verdicts.join(" · ")],
+              [t("rowReportRefusals"), Object.entries(data.report.refusals).map(([code, sentence]) => `${code}: ${sentence}`).join(" · ")],
+              [t("rowComparisonDimensions"), data.comparison.dimensions.join(" · ")],
+              [t("rowMeasureLeaders"), data.comparison.measure_leaders.join(" · ")],
+              [t("rowDimensionLeaders"), data.comparison.dimension_leaders.join(" · ")],
+              [t("rowStatColumns"), data.comparison.stat_columns.join(" · ")],
             ]}
           />
           <p className="notice">{data.comparison.no_single_score}</p>

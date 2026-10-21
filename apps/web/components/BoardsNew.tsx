@@ -28,13 +28,13 @@ export function BoardsNew({ systems }: { systems: { slug: string; name: string }
     const source = await browserFetch<{ phase_in: unknown[]; phase_out: unknown[] }>(`/tactics/${encodeURIComponent(origin)}`);
     if (!source.ok) {
       setBusy(false);
-      setError(errorMessage(source.error, "The authored system could not be read."));
+      setError(errorMessage(source.error, tt("systemReadFailed")));
       return;
     }
     const created = await browserFetch<{ slug: string }>("/boards", {
       method: "POST",
       body: {
-        name: name.trim() || "My board",
+        name: name.trim() || tt("myBoardPlaceholder"),
         origin_system: origin,
         phase_in: source.data.phase_in,
         phase_out: source.data.phase_out,
@@ -42,7 +42,7 @@ export function BoardsNew({ systems }: { systems: { slug: string; name: string }
     });
     setBusy(false);
     if (!created.ok) {
-      setError(errorMessage(created.error, "The board could not be created."));
+      setError(errorMessage(created.error, tt("boardCreateFailed")));
       return;
     }
     router.push(`/tactics/boards/${created.data.slug}`);

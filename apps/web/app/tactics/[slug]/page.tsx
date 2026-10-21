@@ -22,6 +22,7 @@ async function load(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const t = await getTranslations("tactics");
   const result = await load(slug);
   const system = result.ok ? result.data : null;
   const width = system?.metrics_in.find((metric) => metric.key === "width")?.value;
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: system ? `${system.name} — tactical system` : slug.replace(/-/g, " "),
     description: system
       ? `${system.idea} In possession: ${width?.toFixed(1)} m wide with ${behind?.toFixed(1)} m behind the back line; out of possession the same eleven players form a ${system.block_depth} m block with its top at ${system.press_line_y} m.`
-      : "A tactical system in the FOOTBALL OS Tactical Lab: authored coordinates, measured in metres.",
+      : t("metaDescriptionFallback"),
     path: `/tactics/${slug}`,
   });
 }
@@ -129,7 +130,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
           publisher: { "@type": "Organization", name: "FOOTBALL OS" },
           inLanguage: "en",
           isAccessibleForFree: true,
-          keywords: [system.formation, system.temperament_key, "tactical system", "in possession", "out of possession"].join(", "),
+          keywords: [system.formation, system.temperament_key, t("keywordTacticalSystem"), t("inPossession"), t("outOfPossession")].join(", "),
         }}
       />
 

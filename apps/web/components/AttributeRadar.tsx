@@ -1,14 +1,17 @@
 /** Six-axis attribute radar. Pure SVG so it renders in server components with no client JS. */
 
+import { useTranslations } from "next-intl";
+
 export function AttributeRadar({
   values,
   size = 220,
-  label = "Attribute profile",
+  label,
 }: {
   values: { key: string; label: string; value: number }[];
   size?: number;
   label?: string;
 }) {
+  const t = useTranslations("common");
   if (values.length < 3) return null;
   const centre = size / 2;
   const radius = centre - 34;
@@ -21,7 +24,7 @@ export function AttributeRadar({
   const rings = [0.25, 0.5, 0.75, 1];
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label} style={{ width: "100%", maxWidth: size, height: "auto" }}>
+    <svg viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label ?? t("attributeProfile")} style={{ width: "100%", maxWidth: size, height: "auto" }}>
       {rings.map((ratio) => (
         <polygon
           key={ratio}

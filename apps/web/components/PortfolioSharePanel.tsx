@@ -138,7 +138,7 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
 
         <div className="row wrap" style={{ gap: "0.55rem" }}>
           <button className="btn btn--primary" data-portfolio-share-open disabled={busy !== null} onClick={() => void openLink()} type="button">
-            {busy === "open" ? "Opening..." : live ? "Update public link" : "Open public link"}
+            {busy === "open" ? td("opening") : live ? td("updatePublicLink") : td("openPublicLink")}
           </button>
           {live?.token && (
             <>

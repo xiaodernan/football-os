@@ -68,7 +68,7 @@ export default async function SharedClipPage({ params }: Props) {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/", label: tn("home") }}
-        eyebrow={`${clip.status} · ${clip.duration_s !== null ? `${clip.duration_s.toFixed(2)} s` : "no duration recorded"} · ${clip.width ?? "?"}×${clip.height ?? "?"}`}
+        eyebrow={`${clip.status} · ${clip.duration_s !== null ? `${clip.duration_s.toFixed(2)} s` : t("noDurationRecorded")} · ${clip.width ?? "?"}×${clip.height ?? "?"}`}
         lede={t("sharedLede")}
         title={clip.title || clip.filename}
       >
@@ -86,7 +86,7 @@ export default async function SharedClipPage({ params }: Props) {
           "@type": "CreativeWork",
           name: clip.title || clip.filename,
           url: absolute(`/video/shared/${token}`),
-          license: "Shared by a FOOTBALL OS account via revocable link",
+          license: t("licenseShared"),
           isAccessibleForFree: true,
         }}
       />

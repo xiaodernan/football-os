@@ -157,7 +157,7 @@ export default async function TacticsComparePage({ searchParams }: Props) {
                   <Pitch
                     caption={t("sideBoardCaption", { count: boardOf(detail).length, phase: phaseWord })}
                     slots={boardOf(detail)}
-                    title={t("pitchTitle" + (phase === "out" ? "Out" : "In"), { name: detail.name })}
+                    title={t(phase === "out" ? "pitchTitleOut" : "pitchTitleIn", { name: detail.name })}
                   />
                   <p className="muted" style={{ fontSize: "0.88rem" }}>
                     {detail.idea}

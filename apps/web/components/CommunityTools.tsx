@@ -273,7 +273,7 @@ function PostRow({announce, caps, following, row, viewer}: {announce: (value: No
           className={row.viewer_liked ? "btn btn--sm" : "btn btn--sm btn--ghost"}
           data-testid={`community-like-${row.id}`}
           disabled={busy !== null}
-          onClick={() => call(`like-${row.id}`, `/community/posts/${encodeURIComponent(row.id)}/reactions`, {body: {reaction: caps.reactions[0] ?? "like"}}, row.viewer_liked ? "already one row" : "recorded")}
+          onClick={() => call(`like-${row.id}`, `/community/posts/${encodeURIComponent(row.id)}/reactions`, {body: {reaction: caps.reactions[0] ?? "like"}}, row.viewer_liked ? t("alreadyOneRow") : t("recorded"))}
           type="button"
         >
           {busy === `like-${row.id}` ? t("recording") : row.viewer_liked ? t("likedOneRow") : t("like")}
@@ -292,7 +292,7 @@ function PostRow({announce, caps, following, row, viewer}: {announce: (value: No
               className="btn btn--sm btn--ghost"
               data-testid={`community-follow-${row.author.id}`}
               disabled={busy !== null}
-              onClick={() => call(`follow-${row.author.id}`, `/community/follows/${encodeURIComponent(row.author.id)}`, followsAuthor ? {method: "DELETE"} : {body: {}}, followsAuthor ? "reach withdrawn" : "following")}
+              onClick={() => call(`follow-${row.author.id}`, `/community/follows/${encodeURIComponent(row.author.id)}`, followsAuthor ? {method: "DELETE"} : {body: {}}, followsAuthor ? t("reachWithdrawn") : t("following"))}
               type="button"
             >
               {busy === `follow-${row.author.id}` ? t("busyEllipsis") : followsAuthor ? t("unfollow") : t("follow")}
