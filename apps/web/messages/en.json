@@ -595,7 +595,7 @@
     "updating": "Updating…",
     "retireFromClub": "Retire from this club",
     "takeChargeAgain": "Take charge again",
-    "deleteThisCareer": "delete this career",
+    "deleteThisCareer": "Delete this career",
     "noRoundToPlay": "There is no round to play: the club has no competition to rotate through, or the season is retired.",
     "roundPlayed": "Round {round} played: {home} {goals}–{against} {away} ({side}, {venue}).",
     "venueUnknown": "venue unknown",

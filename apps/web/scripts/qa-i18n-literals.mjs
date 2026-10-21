@@ -322,6 +322,30 @@ const sites = [];
 const namedKeys = [];
 /** The sentences that carry a translated fragment beside a word of their own. */
 const halfTranslated = [];
+/** The sentences that say the same word twice. */
+const duplicated = [];
+
+/**
+ * The translator calls an expression carries, in the order they appear, each with the namespace it reads.
+ */
+const adjacentTranslations = (node) => {
+  const calls = [];
+  const visit = (child) => {
+    if (ts.isCallExpression(child) && ts.isIdentifier(child.expression) && /^t[a-z]{0,2}$/.test(child.expression.text)) {
+      const first = child.arguments[0];
+      if (ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
+        calls.push({ namespace: translatorNamespaces.get(child.expression.text), key: first.text });
+      }
+    }
+    ts.forEachChild(child, visit);
+  };
+  ts.forEachChild(node, visit);
+  const pairs = [];
+  for (let index = 0; index + 1 < calls.length; index += 1) {
+    if (calls[index].namespace && calls[index + 1].namespace) pairs.push([calls[index], calls[index + 1]]);
+  }
+  return pairs;
+};
 
 /** Whether a template carries a translator call. */
 const hasTranslatorCall = (node) => {
@@ -572,6 +596,26 @@ for (const file of files) {
           copy: parts.map((part) => part.text.trim()).filter(Boolean).join(" ").slice(0, 120),
         });
       }
+      /**
+       * A sentence that says the same word twice: two translated fragments side by side where the first
+       * is already the beginning of the second. The career's delete button read "Delete" + "delete this
+       * career" — "Delete Delete this career" in English — and the walk could not find the button it was
+       * looking for, because the page said something else.
+       */
+      for (const pair of adjacentTranslations(node)) {
+        const [first, second] = pair;
+        // The same key twice is a range ("first · last"), not a duplication.
+        if (first.key === second.key) continue;
+        const left = (CATALOGUE[first.namespace]?.[first.key] ?? "").trim().toLowerCase();
+        const right = (CATALOGUE[second.namespace]?.[second.key] ?? "").trim().toLowerCase();
+        if (left.length >= 3 && right.startsWith(left)) {
+          duplicated.push({
+            file: rel,
+            line: position(node),
+            copy: `${first.namespace}.${first.key} + ${second.namespace}.${second.key}`,
+          });
+        }
+      }
     }
     if (ts.isStringLiteral(node) && !counted.has(node.getStart(source))) {
       if (isEnglishCopy(node.text) && !literalIsToken(node, node.parent)) {
@@ -673,6 +717,16 @@ check(
 );
 
 /**
+ * A sentence that says the same word twice: "Delete" beside "delete this career" reads "Delete Delete
+ * this career", and a walk looking for the second half of it cannot find the button.
+ */
+check(
+  "no sentence says the same word twice",
+  duplicated.length === 0,
+  duplicated.length === 0 ? "0 duplicated sentence(s)" : `${duplicated.length} duplicated sentence(s)`,
+);
+
+/**
  * A key read without the values its message needs prints the placeholders themselves, and next-intl
  * answers a missing value with an error rather than a sentence. The scout's search-limits row is the
  * case this check was written for: the label was wired to a key that holds a *pattern*, so the column
@@ -725,6 +779,13 @@ if (failed.length) {
     console.log("Every sentence below mixes a translated fragment with a word of its own. It reads in two languages.");
     for (const half of halfTranslated) {
       console.log(`  ${half.file}:${half.line}: ${JSON.stringify(half.copy)}`);
+    }
+  }
+  if (duplicated.length) {
+    console.log("");
+    console.log("Every sentence below says the same word twice.");
+    for (const twice of duplicated) {
+      console.log(`  ${twice.file}:${twice.line}: ${twice.copy}`);
     }
   }
   if (missingValues.length) {

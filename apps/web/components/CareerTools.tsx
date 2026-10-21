@@ -67,7 +67,7 @@ export function CareerTools({ ident, status, available }: { ident: string; statu
               : tc("takeChargeAgain")}
         </button>
         <button className="btn btn--ghost" disabled={busy !== null} onClick={remove} type="button">
-          {busy === "delete" ? `${t("delete")}…` : `${t("delete")} ${tc("deleteThisCareer")}`}
+          {busy === "delete" ? `${t("delete")}…` : tc("deleteThisCareer")}
         </button>
       </div>
 

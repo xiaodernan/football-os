@@ -1589,10 +1589,17 @@ async function run() {
 
     const beforeDrag = await page.evaluate(() => {
       const dot = document.querySelectorAll('.pitch-dot--grabbable')[6];
+      if (!dot) return null;
+      // The lawn is below the form, and the form grew: a dot that is off the screen cannot be dragged,
+      // because the pointer lands on the page instead of on the pitch. So it is scrolled into view first,
+      // and the box is read after the scroll — a box read before it is a box for a position the mouse
+      // never visits.
+      dot.scrollIntoView({ block: 'center', behavior: 'instant' });
       const circle = dot.querySelector('circle');
       const box = circle.getBoundingClientRect();
       return { cy: circle.getAttribute('cy'), x: box.x + box.width / 2, y: box.y + box.height / 2 };
     });
+    check('the lawn the walk drags on is inside the window it drags in', beforeDrag !== null && beforeDrag.y > 0 && beforeDrag.y < 900, beforeDrag ? `the dot is at y ${Math.round(beforeDrag.y)} of a 900px window` : 'no grabbable dot on the page');
     await page.mouse.move(beforeDrag.x, beforeDrag.y);
     await page.mouse.down();
     await page.mouse.move(beforeDrag.x + 4, beforeDrag.y - 70, { steps: 10 });

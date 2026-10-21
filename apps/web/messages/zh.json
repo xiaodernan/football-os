@@ -595,7 +595,7 @@
     "updating": "正在更新…",
     "retireFromClub": "从这个俱乐部退役",
     "takeChargeAgain": "再次拿起教鞭",
-    "deleteThisCareer": "删除这段职业生涯",
+    "deleteThisCareer": "删除本赛季",
     "noRoundToPlay": "没有可踢的轮次：俱乐部没有轮换要打的赛事，或者这个赛季已经退役。",
     "roundPlayed": "第 {round} 轮已踢：{home} {goals}–{against} {away}（{side}，{venue}）。",
     "venueUnknown": "场地未知",
