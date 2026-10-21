@@ -128,9 +128,15 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
 - i18n (spec §81): **built and finished** (2026-10-21) — `middleware.ts` resolves `fo_locale`/`Accept-Language`/the
   account column, `i18n/request.ts` loads the matching catalogue, the nav switcher writes the cookie, both Chinese
   catalogues carry every key the English file holds, and **every page body now reads its catalogue**: the copy gate
-  (`apps/web/scripts/qa-i18n-literals.mjs`) reads 0 English literal sites over every `app/**/*.tsx` and holds the
-  count at 0, and the metadata gate reports every page's tab and heading as locale-driven. The key counts live in
-  `apps/web/messages/README.md`, which the suite recomputes.
+  (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every
+  `components/**/*.tsx`**, on three floors — the three shapes the arc knew (JSX text, a label-ish attribute, a label-ish
+  object property), the **fifth** shape it found on 2026-10-21 (a string literal that reaches the reader from
+  somewhere else: a helper's sentence, a template, a lone word between two tags), and the keys a page names in its own
+  data — and it holds every key against **the namespace it was asked of**, and every placeholder against the values
+  supplied with it. Two more gates came out of the same arc: `qa-field-labels.mjs` (no two panels on one page may give a
+  field the same accessible name) and `qa-proxy-gate.mjs` (a browser may only reach the API through the cookie proxy,
+  because the access token is httpOnly). The key counts live in `apps/web/messages/README.md`, which the suite
+  recomputes, and the arc's own record is `docs/I18N_ARC_VERIFICATION.md`.
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.
