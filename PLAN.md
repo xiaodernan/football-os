@@ -132,22 +132,28 @@ record of a narrower command is not a claim about today's gate.
 measurements come from, and the ROADMAP has carried "3D pitch" as an open item since. It is the only M4 item that
 is neither blocked on another milestone nor a policy question.
 
-**Do.** Add a third view to `/tactics/{slug}` — alongside the existing 2D and the drag-to-arrange board — that
-projects each of the eleven from the same `x_metres`/`y_metres` the 2D view reads, through a stated isometric
-transform, and draws it as SVG. No new dependency: a 3D view that renders from the same numbers is a *projection*,
-and a projection is arithmetic, not a renderer. Print the projection formula on the page beside the view, the way
-every other figure on this project prints its own.
+**Done 2026-09-23, in `1494219` ("M4 §13: the 3D pitch, as a projection of the board's own metres") — and
+this item had not been marked, which is why it is written down here now.** The third view is on
+`/tactics/{slug}` beside the 2D board: the same eleven, projected from the same `x_metres`/`y_metres` through
+a **stated isometric transform** — `screen_x = ((x + 34) − (105 − y)) × cos30 + 105 × cos30`,
+`screen_y = ((x + 34) + (105 − y)) × sin30` — and drawn as SVG, with the formula printed beside the view and
+the constants riding on the `<svg>` as `data-iso-constants`, so a reader (and the walk) can recompute any
+point from its own metres rather than trusting the drawing.
 
-**The claim that has to hold.** A point at a known metre coordinate lands at the projected pixel the printed
-formula gives for it. That is checkable without a screenshot and is the difference between a 3D view and a picture
-that looks 3D.
+**The claim that holds, and how it is checked.** A point at a known metre coordinate lands at the projected
+pixel the printed formula gives for it. `apps/web/scripts/visual-qa.mjs` reads every marker's
+`data-iso-x`/`data-iso-y` out of the DOM, recomputes the projection **in the browser** from the constants
+the `<svg>` publishes and each marker's own `data-metres-x`/`data-metres-y`, and refuses a drift over
+0.02 — so a drawing that drifted as a whole cannot pass by agreeing with itself. Two more checks hold it: the
+3D board shows the same eleven, in the same order, as the API's own `phase_in`; and the four projected
+corners fit the viewBox, which is invisible when it is wrong (a clipped far touchline still renders, still
+looks like a pitch, and silently loses the bottom of it — the first draft of this view had exactly that bug).
 
-**Evidence.** A walk check that reads one player's projected coordinates out of the DOM and compares them with the
-formula recomputed in the browser from that player's own printed metres — plus the toggle asserted to leave the
-underlying metres unchanged, so the 3D view cannot quietly become a second source of truth.
-
-**Files.** `apps/web/app/tactics/[slug]/page.tsx`, `apps/web/components/**` (a new pitch component),
-`apps/web/scripts/visual-qa.mjs`.
+**One difference from this item's wording, named.** It asked for a *toggle*; the view is a `<details>`
+element, because the 3D view is a second way of reading numbers that are already on the page and so needs no
+client state to open, and it stays in the document for a reader who has no JavaScript. The claim the toggle
+was to protect — that the 3D view cannot become a second source of truth — holds by construction: it projects
+the same metres and stores none.
 
 ---
 

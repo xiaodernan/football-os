@@ -46,13 +46,23 @@ const CHROME = process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Ap
 /** The pause between walks, in milliseconds: the tier's rate door needs the clock to turn. */
 const PAUSE = Number(process.env.QA_WALK_PAUSE ?? 75000);
 
-/** Each walk, the API port it is served on, the web port it is measured on, and the database it gets. */
+/**
+ * Each walk, the API port it is served on, the web port it is measured on, and the database it gets.
+ *
+ * The order is the order the tiers depend on nothing but the API: the scouting screen, the community wall,
+ * the stored timeline, the carry-over panel, the season ledger, the academy tier, the creator tier, the
+ * portfolio and the market.
+ */
 const WALKS = [
   { name: "scout", api: 8764, web: 3241 },
   { name: "community", api: 8765, web: 3242 },
   { name: "timeline", api: 8766, web: 3243 },
   { name: "carry", api: 8767, web: 3244 },
   { name: "ledger", api: 8768, web: 3245 },
+  { name: "club", api: 8769, web: 3246 },
+  { name: "creator", api: 8770, web: 3247 },
+  { name: "portfolio", api: 8771, web: 3248 },
+  { name: "market", api: 8772, web: 3249 },
 ];
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
