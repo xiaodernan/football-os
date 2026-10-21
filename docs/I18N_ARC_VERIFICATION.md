@@ -168,10 +168,18 @@ broken. Measured after the fix: **1039 URLs probed, 1039 answered 200**.
   page quotes it, and the gate holds the quotation as a value rather than as a sentence.
 * **A locale may lag.** Every key is present in all three catalogues — a catalogue that is *short* is
   worse than one that is absent — but a value may still fall back to English until it is translated. The
-  82 identical values are the ones that are supposed to be identical.
+  56 identical values are the ones that are supposed to be identical.
 * **The copy gate counts; it does not judge.** It cannot tell a wrong sentence from a right one, and it
   cannot tell whether a key means what the page needs it to mean. The gates hold the *shape* of the
   contract; the walks and the API's own tests hold the meaning.
+* **A key's *existence* is not a key's *use*, and neither gate can see the third thing.** The copy gate
+  asks whether every key asked for is held; the dead-key gate asks whether every key held is asked for.
+  Between them, they hold that the catalogue and the tree agree — and neither can see a key that a page
+  *builds* rather than names, which is the shape §9 found in the club tier's thirty-six placeholder
+  messages. A message whose value is only a placeholder name (`"{rule}"`) is the same string in all three
+  catalogues, so it is not a translation at all; the club page does not read those, it prints the rule the
+  API sends, and that rule is the tier's own published English — the same kind the knowledge corpus
+  publishes on purpose, and the same kind the locale sweep deliberately does not judge.
 
 ## 7. The floor was a statement about the gate, not about the tree (2026-10-21)
 
