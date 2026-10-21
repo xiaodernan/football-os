@@ -301,7 +301,25 @@ const messagePlaceholders = (message) => {
   return [...new Set(found)];
 };
 
+/**
+ * Whether a string literal reads like a **catalogue key** rather than a field the tier owns.
+ *
+ * The two kinds share a property: `labelKey: "attrFirstTouch"` is a key, while `key: "first_touch"` is the
+ * API's own attribute name. The copy gate's heuristic cannot tell them apart — a key *is* an identifier,
+ * and an identifier is exactly what that heuristic reads as "not copy" — so this rule says it plainly: a
+ * snake_case value is a field, and a camelCase one (or a single capitalised word) is a key.
+ */
+const looksLikeKey = (value) => {
+  const text = value.trim();
+  if (!text) return false;
+  if (/^[a-z][a-z0-9]*(_[a-z0-9]+)+$/.test(text)) return false; // a field the tier owns
+  if (!/^[A-Za-z][A-Za-z0-9]*$/.test(text)) return false; // punctuation, a path, a sentence
+  return /^[A-Z]/.test(text) || /[A-Z]/.test(text.slice(1)); // a key: camelCase, or a capitalised word
+};
+
 const sites = [];
+/** The keys a page asks for by name — `t(link.key)` — which the key-existence check cannot read. */
+const namedKeys = [];
 /**
  * The fourth shape: a string literal that reaches the reader from somewhere the three shapes above do
  * not cover — a sentence a helper returns, a wording a ternary chooses, a note a component builds.
@@ -436,6 +454,22 @@ for (const file of files) {
             }
           }
         }
+      }
+    }
+    if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && ts.isStringLiteral(node.initializer)) {
+      /**
+       * A **named key**: a string literal in a `key`, `labelKey` or `msg` property that reads like a
+       * catalogue key. These are the keys a page asks for *by name* rather than by a literal call —
+       * `t(link.key)`, `t(option.labelKey)` — so the key-existence check above cannot see them, and a
+       * key the catalogue does not hold is a runtime error nobody sees.
+       *
+       * The filter is the gate's own copy heuristic, and it is what separates the two kinds of value
+       * that share a property: `labelKey: "attrFirstTouch"` is a key, while `key: "first_touch"` is the
+       * API's own field name — a snake_case value, which the heuristic has always read as a field and not
+       * as a sentence.
+       */
+      if (["key", "labelKey", "msg"].includes(node.name.text) && looksLikeKey(node.initializer.text)) {
+        namedKeys.push({ file: rel, line: position(node), key: node.initializer.text.trim() });
       }
     }
     if (ts.isJsxText(node)) {
@@ -578,6 +612,25 @@ check(
 );
 
 /**
+ * The keys a page asks for **by name** — `t(link.key)`, `t(option.labelKey)` — which the check above
+ * cannot read, because the key is a value in the page's own data rather than a literal at the call.
+ */
+const missingNamedKeys = [];
+for (const named of namedKeys) {
+  const { namespaces } = keyCalls.get(named.file) ?? { namespaces: new Set() };
+  const held = [...namespaces].some((namespace) => Object.prototype.hasOwnProperty.call(CATALOGUE[namespace] ?? {}, named.key));
+  if (!held) missingNamedKeys.push(named);
+}
+
+check(
+  "every key the source names in its own data is in the catalogue",
+  missingNamedKeys.length === 0,
+  missingNamedKeys.length === 0
+    ? `${namedKeys.length} named key(s) checked`
+    : `${missingNamedKeys.length} named key(s) the catalogue does not hold`,
+);
+
+/**
  * A key read without the values its message needs prints the placeholders themselves, and next-intl
  * answers a missing value with an error rather than a sentence. The scout's search-limits row is the
  * case this check was written for: the label was wired to a key that holds a *pattern*, so the column
@@ -616,6 +669,13 @@ if (failed.length) {
     console.log("Every key below is asked for and not in the catalogue. next-intl throws MISSING_MESSAGE for it.");
     for (const missing of missingKeys) {
       console.log(`  ${missing.file}: ${missing.namespaces.join("/")} has no key ${JSON.stringify(missing.key)}`);
+    }
+  }
+  if (missingNamedKeys.length) {
+    console.log("");
+    console.log("Every key below is named in the page's own data and not in the catalogue. next-intl throws MISSING_MESSAGE for it.");
+    for (const missing of missingNamedKeys) {
+      console.log(`  ${missing.file}:${missing.line}: ${JSON.stringify(missing.key)}`);
     }
   }
   if (missingValues.length) {

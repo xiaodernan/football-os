@@ -14,7 +14,7 @@ it.
 
 | what | where it lives | what it says |
 | --- | --- | --- |
-| the copy gate | `apps/web/scripts/qa-i18n-literals.mjs` | **5 checks**, three floors at 0, **3479 key calls** checked for existence *and* for their values |
+| the copy gate | `apps/web/scripts/qa-i18n-literals.mjs` | **6 checks**, three floors at 0, **3495 key calls** checked for existence, for their values, and for the keys the page names in its own data |
 | the field-name gate | `apps/web/scripts/qa-field-labels.mjs` | **2 checks**: no two panels on one page may give a field the same accessible name |
 | the metadata gate | `apps/web/scripts/qa-metadata-title.mjs` | **165 checks**: every page's tab and heading agree, and neither is a load-time literal |
 | the crawl gate | `apps/web/scripts/qa-crawl-policy.mjs` | **9 checks**: the three files that decide what a crawler may see reconcile against every page's own `robots:` |
@@ -77,6 +77,14 @@ runtime. The check now resolves the translator each key was read through and hol
 namespace; it found four such reads on its first run (the plan page's `yes` and `no`, the knowledge
 search's two badges), and the club rulebook's runtime-built keys — `capNamemax` where the catalogue holds
 `capNameMax` — are now written out one literal call per field so that the gate reads them too.
+
+**And a sixth check holds the keys a page names in its own data.** `t(link.key)`, `t(option.labelKey)` — a
+key read out of the page's own data rather than written at the call — cannot be read by the key-existence
+check at all, and a key the catalogue does not hold is a runtime error nobody sees. The check finds those
+literals (a `key`, `labelKey` or `msg` property whose value reads like a key) and holds them against the
+catalogue: **63 named keys** today, 0 missing. The rule that tells a key from a field is a distinction the
+copy heuristic cannot make — a key *is* an identifier, so `labelKey: "attrFirstTouch"` and
+`key: "first_touch"` are separated by their shape (camelCase against snake_case), not by their spelling.
 
 ## 4. The field-name gate, and the collision it exists for
 
