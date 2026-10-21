@@ -68,7 +68,7 @@ const HERE = process.env.INVENTORY_DIR ? resolve(process.env.INVENTORY_DIR)
 const WEB = resolve(HERE, "..");
 const REPO = resolve(WEB, "../..");
 const SELF = basename(fileURLToPath(import.meta.url));
-const FLOOR = 15;
+const FLOOR = 16;
 
 const GATES = [
   { label: "scripts/check.sh", file: resolve(REPO, "scripts/check.sh") },

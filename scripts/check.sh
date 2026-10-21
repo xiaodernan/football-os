@@ -114,6 +114,13 @@ echo "── Web: field-name i18n gate ─────────────�
 # constant aria-label key. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-field-labels.mjs)
 
+echo "── Web: cookie-proxy gate ─────────────────────────────"
+# The web tier's session design is one sentence: the access token is httpOnly, so no script can read it, and every
+# call a browser makes reaches the API through the cookie proxy. Nothing held that. This gate reads every fetch in
+# the tree and refuses one that names a target outside /api/ — an absolute URL, or a base built from one — because
+# a browser that reached the API directly would have to hold the token. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-proxy-gate.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 
