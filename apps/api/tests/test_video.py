@@ -336,6 +336,28 @@ class TestPipelineAndOwnership:
             assert session.get(VideoAsset, asset_id) is None
             assert session.scalar(select(func.count()).select_from(VideoDetection).where(VideoDetection.asset_id == asset_id)) == 0
 
+    def test_deleting_a_clip_takes_its_own_analysis_job_with_it(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
+        """A job whose payload names a clip that no longer exists is a row that outlives its subject."""
+        report = upload(auth_client, clips["moving"]).json()
+        asset_id = report["asset"]["id"]
+        with SessionLocal() as session:
+            session.add(
+                Job(
+                    id="job_clip_delete_probe",
+                    type="video.analyse",
+                    status="DONE",
+                    payload={"asset_id": asset_id, "target_frames": 8},
+                )
+            )
+            session.commit()
+        with SessionLocal() as session:
+            assert session.scalar(select(func.count()).select_from(Job).where(Job.payload["asset_id"].as_string() == asset_id)) == 1
+        assert auth_client.delete(f"{API}/{asset_id}").status_code == 204
+        with SessionLocal() as session:
+            assert session.scalar(select(func.count()).select_from(Job).where(Job.payload["asset_id"].as_string() == asset_id)) == 0, (
+                "the clip's analysis job outlived the clip it described"
+            )
+
     def test_a_refused_container_never_reaches_storage(self, auth_client, tmp_path) -> None:  # type: ignore[no-untyped-def]
         fake = tmp_path / "not-a-video.mp4"
         fake.write_bytes(b"\x7fELF" + bytes(200))

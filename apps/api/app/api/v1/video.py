@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Annotated, Any, Final
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Request, Response, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -392,6 +392,15 @@ def delete_clip(ident: str, request: Request, db: Session = Depends(get_db), use
     asset = _one(db, user, ident)
     stored = Path(settings.storage_dir) / asset.storage_key
     frames = Path(settings.storage_dir) / "frames" / asset.id
+    # The clip's own analysis jobs go with it. A job whose payload names a clip that no longer exists is
+    # a row that outlives the thing it describes, and the jobs table has no foreign key to the asset —
+    # so the erasure of the clip is where they are cleaned up, not left to a sweep.
+    db.execute(
+        delete(Job).where(
+            Job.type == "video.analyse",
+            Job.payload["asset_id"].as_string() == asset.id,
+        )
+    )
     db.delete(asset)
     db.commit()
     stored.unlink(missing_ok=True)

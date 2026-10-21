@@ -41,10 +41,16 @@ Rights, stated as what the code actually serves today rather than as a promise l
   the three refusals and the erasure itself in `apps/web/scripts/visual-qa.mjs` §10a.
   *This paragraph replaced a claim that it was **not** implemented — the door, the service, the preview
   and the panel have been there since the account tier landed, and the policy still said otherwise.*
-- **Not implemented, so not claimed as a feature:** per-entity visibility toggles, and per-video
-  deletion on its own (the *account's* media is purged when the account is erased, and M5's upload
-  routes have no single-clip delete of their own). Each is tracked in [`ROADMAP.md`](ROADMAP.md), and a
-  UI that offered them would be a lie, so it does not.
+- **Per-video deletion — implemented, and walked.** `DELETE /api/v1/video/{ident}` removes the clip's row
+  **and its stored bytes**: the original and the sampled frames are unlinked from private storage, and the
+  clip's analysis jobs go with it. "An upload right implies a take-back-right" is the tier's own sentence
+  on the door, and the walk presses the button in a browser: the list empties, the old report address
+  answers as unusable, and the file route is gone with the row.
+  *This paragraph replaced a claim that it was **not** implemented — the door has been there since M5, and
+  the policy still said otherwise.*
+- **Not implemented, so not claimed as a feature:** per-entity visibility toggles — a reader cannot yet say
+  "this row of mine is not public". It is tracked in [`ROADMAP.md`](ROADMAP.md), and a UI that offered it
+  would be a lie, so it does not.
 
 ## 4. Minors
 

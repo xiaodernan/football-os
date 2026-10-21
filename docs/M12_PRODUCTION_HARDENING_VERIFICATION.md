@@ -683,10 +683,12 @@ screens to its name by now):
 | the erasure takes the account, and its session stops working | `identity_retained=false` beside `GET /auth/me` answering **401** |
 
 And `DATA_POLICY.md` §3 now says what is true: the account erasure is implemented and walked, and the
-two things that are **not** implemented — per-entity visibility toggles, and a single clip's own delete
-— are still named as unimplemented, because the account's media is purged when the account is erased and
-M5's upload routes have no per-clip delete of their own. A UI that offered *those* would still be a lie,
-so it does not.
+thing that is still **not** implemented — per-entity visibility toggles — is still named as
+unimplemented, because a UI that offered it would be a lie. (The policy's other stale claim, that
+per-video deletion was missing, is corrected in
+[docs/M5_WEB_VERIFICATION.md](M5_WEB_VERIFICATION.md): the door has been there since M5 and the walk has
+pressed it in a browser — what the delete *did* leave behind was the clip's own analysis job, and that is
+fixed.)
 
 ## What M12 does not claim
 

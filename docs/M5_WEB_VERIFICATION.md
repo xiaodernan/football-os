@@ -118,6 +118,26 @@ re-encoding them (a deliberate `<img>` with the reason in a comment above it).
 * **No real detector.** With a vision key configured the same seam would carry a different provider; without one
   the page labels itself `demo_mode True`, which the walk reads back off the payload.
 
+### A clip's delete left its own analysis job behind (2026-10-21)
+
+`DELETE /api/v1/video/{ident}` removes the row, the stored original and the sampled frames — and the
+**job row that described the analysis** outlived it. The `jobs` table has no foreign key to `video_assets`
+(it is a queue row, and the queue is what a background worker would attach to later), so the clip's
+analysis job was a row that outlived the thing it described: its payload still named an asset id that
+answered 404.
+
+The delete now takes the clip's own jobs with it, and the case that says so is
+`test_deleting_a_clip_takes_its_own_analysis_job_with_it` in `tests/test_video.py` — it writes the job
+row the way the pipeline writes it (`payload: {"asset_id": …}`), deletes the clip, and asserts the job is
+gone. **Measured 2026-10-21:** `tests/test_video.py` **34 passed**; the case was turned red on purpose
+first (the delete matching no job type), and it failed with *"the clip's analysis job outlived the clip
+it described"*; `ruff` clean, `mypy` clean over **153 source files**.
+
+The policy's own sentence about this — that per-video deletion was *not implemented* — was **stale**: the
+door has been there since M5 and the walk has pressed it in a browser ("deleting empties the list and makes
+the old report URL unusable"). `DATA_POLICY.md` §3 says so now.
+
+
 ## 6. Frame overlay — detection rings on the sampled frames (verified 2026-09-29)
 
 Each detection the demo provider measures now carries a ring on the frame its timestamp falls on.
