@@ -107,6 +107,7 @@ export default async function AcademyPlanPage({ params }: Props) {
             [t("kvDueCadenceBehind"), `${progress.reviews_due_by_cadence} · ${progress.reviews_behind}`],
             [t("kvDaysSinceDue"), `${progress.days_since_review} · ${progress.due_in_days}`],
             [t("kvOverallFirstLast"), `${progress.overall_first ?? "—"} · ${progress.overall_last ?? "—"}`],
+            [t("kvOverallChange"), progress.overall_change ?? "—"],
             [t("kvAxisChange"), progress.axis_change ? Object.entries(progress.axis_change).map(([k, v]) => `${k}: ${v}`).join(", ") : "—"],
             [t("kvOneReviewNotDirection"), progress.one_review_is_not_a_direction ? t("yes") : t("no")],
             [t("kvNotAColumn"), progress.not_a_column ?? "—"],
@@ -114,42 +115,94 @@ export default async function AcademyPlanPage({ params }: Props) {
             [t("kvFeedbackAssessment"), `${caps?.feedback_max ?? "—"} / {caps?.assessment_text_max ?? "—"} characters`],
             [t("kvPlanStatuses"), caps?.plan_statuses?.join(", ") ?? "—"],
           ]}
-        />
+          />
+        {progress.assessments === 1 && (
+          <div className="notice notice--warn" data-honest="one review">
+            <p style={{ margin: 0 }}>{t("oneReviewNotice", { count: progress.assessments })}</p>
+          </div>
+        )}
+        <div className="world-tablewrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">{t("tableHeaderAxis")}</th>
+                <th scope="col">{t("tableHeaderAxisMean")}</th>
+                <th scope="col">{t("tableHeaderAxisChange")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {axes.map((axis) => (
+                <tr data-axis={axis} key={axis}>
+                  <td className="mono">{axis}</td>
+                  <td className="num">{progress.axis_means?.[axis] ?? "—"}</td>
+                  <td className="num">{progress.axis_change?.[axis] ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {progress.axis_change_unrated_at_one_end?.length > 0 && (
+          <p className="muted" style={{ fontSize: "0.82rem" }}>
+            {t("axisUnratedOneEnd", { axes: progress.axis_change_unrated_at_one_end.join(", ") })}
+          </p>
+        )}
         <p className="muted" style={{ fontSize: "0.82rem" }}>
-          {Object.entries(progress.formulas).map(([k, v]) => `${k}: ${v}`).join("; ")}
+          {t("progressMeasuredFrom", { source: progress.measured_from })}
         </p>
+        <dl className="world-kv">
+          {Object.entries(progress.formulas).map(([figure, formula]) => (
+            <div className="world-kv__row" data-formula={figure} key={figure}>
+              <dt className="mono">{figure}</dt>
+              <dd style={{ textAlign: "left" }} className="muted">
+                {formula}
+              </dd>
+            </div>
+          ))}
+        </dl>
         <p className="muted" style={{ fontSize: "0.82rem" }}>
           {view.limitations.join("; ")}
         </p>
       </Panel>
 
       <Panel eyebrow={t("reviewsEyebrow", { count: view.assessments.length })} title={t("reviewsTitle")}>
+        {view.assessments.length === 0 ? (
+          <div className="empty">
+            <strong>{t("noReviewYet")}</strong>
+            <p className="muted">{t("noReviewYetNote")}</p>
+          </div>
+        ) : (
         <div className="world-tablewrap">
           <table className="table">
             <thead>
               <tr>
-                <th scope="col">{t("tableHeaderReview")}</th>
-                <th scope="col">{t("tableHeaderDate2")}</th>
-                <th scope="col">{t("tableHeaderCoach2")}</th>
-                <th scope="col">{t("tableHeaderOverall")}</th>
-                <th scope="col">{t("tableHeaderAxes")}</th>
-                <th scope="col">{t("tableHeaderGoals")}</th>
-                <th scope="col">{t("tableHeaderFeedback")}</th>
-                <th scope="col">{t("tableHeaderAssessment")}</th>
+                <th scope="col">{t("tableHeaderAssessedOn")}</th>
+                {axes.map((axis) => (
+                  <th key={axis} scope="col">
+                    {axis}
+                  </th>
+                ))}
+                <th scope="col">{t("tableHeaderMeanRated")}</th>
+                <th scope="col">{t("tableHeaderWorldRating")}</th>
+                <th scope="col">{t("tableHeaderNotRated")}</th>
+                <th scope="col">{t("tableHeaderStrengthsAreasNext")}</th>
                 <th scope="col">{tc("delete")}</th>
               </tr>
             </thead>
             <tbody>
               {view.assessments.map((row) => (
-                <tr data-review={row.id} key={row.id}>
-                  <td className="mono">{row.id.slice(0, 8)}…</td>
-                  <td className="mono">{row.assessed_on.slice(0, 16)}</td>
-                  <td>{row.areas || "—"}</td>
+                <tr data-assessment={row.id} key={row.id}>
+                  <td className="mono">{row.assessed_on}</td>
+                  {axes.map((axis) => (
+                    <td className="num" key={axis}>
+                      {row.ratings[axis] ?? "—"}
+                    </td>
+                  ))}
+                  <td className="num">{row.mean_rating ?? "—"}</td>
                   <td className="num">{row.overall_observed ?? "—"}</td>
-                  <td className="muted">{Object.keys(row.ratings).join(", ") || "—"}</td>
-                  <td className="muted">{row.strengths || "—"}</td>
-                  <td className="muted" style={{ fontSize: "0.8rem" }}>{view.feedback.length > 0 ? view.feedback[0].message : "—"}</td>
-                  <td className="muted" style={{ fontSize: "0.8rem" }}>{row.areas || "—"}</td>
+                  <td className="muted">{row.axes_missing?.join(", ") || "—"}</td>
+                  <td className="muted" style={{ fontSize: "0.8rem" }}>
+                    {row.strengths || "—"} / {row.areas || "—"} / {row.next_focus || "—"}
+                  </td>
                   <td>
                     <EraseRow action="review-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/plans/${encodeURIComponent(plan)}/reviews/${encodeURIComponent(row.id)}`} what="review" />
                   </td>
@@ -158,12 +211,119 @@ export default async function AcademyPlanPage({ params }: Props) {
             </tbody>
           </table>
         </div>
+        )}
         <p className="muted" style={{ fontSize: "0.82rem" }}>
           {Object.entries(progress.formulas).map(([k, v]) => `${k}: ${v}`).join("; ")}
         </p>
         <p className="muted" style={{ fontSize: "0.82rem" }}>
           {view.limitations.join("; ")}
         </p>
+      </Panel>
+
+      <Panel
+        eyebrow={t("feedbackEyebrow", { count: view.feedback.length, withheld: view.withheld.coach_feedback })}
+        title={t("feedbackTitle")}
+      >
+        {view.feedback.length === 0 ? (
+          <p className="muted">{t("feedbackEmpty")}</p>
+        ) : (
+          <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
+            {view.feedback.map((row) => (
+              <li data-feedback={row.id} key={row.id}>
+                <span className="mono" style={{ fontSize: "0.78rem" }}>
+                  {row.written_at.slice(0, 16)} · {row.seen_as}
+                </span>
+                <div>{row.message}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="notice" data-withheld={view.withheld.coach_feedback}>
+          <p style={{ margin: 0 }}>{view.withheld.rule}</p>
+          {view.withheld.video_evidence > 0 && (
+            <p className="muted" style={{ margin: "0.3rem 0 0", fontSize: "0.82rem" }}>
+              {view.withheld.why_video}
+            </p>
+          )}
+        </div>
+      </Panel>
+
+      <Panel
+        eyebrow={t("evidenceEyebrow", { count: view.evidence.length })}
+        title={t("evidenceTitle")}
+      >
+        {view.evidence.length === 0 ? (
+          <p className="muted">{t("evidenceEmpty")}</p>
+        ) : (
+          <div className="world-tablewrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">{t("tableHeaderLabel")}</th>
+                  <th scope="col">{t("tableHeaderWindow")}</th>
+                  <th scope="col">{t("tableHeaderClip")}</th>
+                  <th scope="col">{t("tableHeaderLinkedReview")}</th>
+                  <th scope="col">{t("tableHeaderCited")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {view.evidence.map((row) => (
+                  <tr data-evidence={row.id} key={row.id}>
+                    <td>{row.label || "—"}</td>
+                    <td className="num">
+                      {row.t_start}–{row.t_end}s ({row.window_seconds}s)
+                    </td>
+                    <td className="muted">
+                      {row.clip
+                        ? `${row.clip.title} · ${row.clip.duration_s}s`
+                        : row.clip_present
+                          ? t("clipGone")
+                          : t("noClipRow")}
+                    </td>
+                    <td className="mono">{row.assessment_id ?? "—"}</td>
+                    <td className="muted">{row.linked_at?.slice(0, 10) ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {view.evidence[0] && (
+          <p className="muted" style={{ fontSize: "0.82rem" }}>{view.evidence[0].playback}</p>
+        )}
+      </Panel>
+
+      <Panel
+        eyebrow={t("consentEyebrow", {
+          checks: view.integrity.clean ? t("checksClean") : t("problemCount", { count: view.integrity.problems.length }),
+          checked: Object.entries(view.integrity.checked).map(([key, value]) => `${value} ${key}`).join(", "),
+        })}
+        title={t("consentTitle")}
+      >
+        <p className="muted" style={{ fontSize: "0.84rem" }}>
+          {view.integrity.rule}
+        </p>
+        {view.consented_by && (
+          <p className="mono" style={{ fontSize: "0.8rem" }}>
+            {t("consentLine", {
+              consent: view.consented_by.consent,
+              guardian: view.consented_by.guardian,
+              scopes: view.consented_by.scopes.join(", "),
+            })}
+          </p>
+        )}
+        {view.not_stored && (
+          <p className="muted" style={{ fontSize: "0.82rem" }}>
+            {t("neverStoredHere", { values: view.not_stored })}
+          </p>
+        )}
+      </Panel>
+
+      <Panel
+        eyebrow={t("writePanelEyebrow", { count: axes.length, from: range[0], to: range[1] })}
+        title={t("writePanelTitle")}
+      >
+        <PlanTools axes={axes} ident={view.organization} plan={view.plan.id} range={range} />
       </Panel>
 
       <Provenance extra={<span className="chip mono">{t("provenanceExtraPlan")}</span>} provenance={{ data_origin: view.plan.data_origin, is_demo_data: view.plan.is_demo_data }} />

@@ -15,6 +15,11 @@
  * the arithmetic it prints *and* for the single score it must not print.
  *
  * Env overrides: QA_BASE, CHROME_PATH.
+ *
+ * The page answers in the browser's language (§81), so this walk **pins the locale** to English with the
+ * `fo_locale` cookie: a walk whose needles are English must measure the English surface, and a host whose
+ * browser asks for Chinese would otherwise fail every one of them for a reason that has nothing to do with
+ * the tier. The cookie is written before the first page is opened.
  */
 
 import { mkdir } from 'node:fs/promises';
@@ -284,6 +289,7 @@ async function main() {
 
   // --- the walk's own account, minted through the same proxy the login form uses ---------------------
   const page = await browser.newPage();
+  await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   await page.setViewport(DESKTOP);
   watch(page, 'scout');
   await open(page, '/login');
@@ -311,6 +317,7 @@ async function main() {
 
   const anonymous = await browser.createBrowserContext();
   const anonPage = await anonymous.newPage();
+  await anonPage.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   await anonPage.goto(`${BASE}/scout`, { waitUntil: 'networkidle2', timeout: 90_000 });
   check('an anonymous visitor is sent to the login screen', new URL(anonPage.url()).pathname.startsWith('/login'), new URL(anonPage.url()).pathname + new URL(anonPage.url()).search);
   await anonymous.close();

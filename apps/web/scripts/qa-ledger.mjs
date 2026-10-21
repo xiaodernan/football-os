@@ -30,6 +30,11 @@
  * honest cut. A cap small enough to bite is pinned where the number itself can be read, not here.
  *
  * Env overrides: QA_BASE, CHROME_PATH.
+ *
+ * The page answers in the browser's language (§81), so this walk **pins the locale** to English with the
+ * `fo_locale` cookie: a walk whose needles are English must measure the English surface, and a host whose
+ * browser asks for Chinese would otherwise fail every one of them for a reason that has nothing to do with
+ * the tier. The cookie is written before the first page is opened.
  */
 
 import { mkdir } from 'node:fs/promises';
@@ -169,6 +174,7 @@ async function main() {
   const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 
   const page = await browser.newPage();
+  await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   await page.setViewport(DESKTOP);
   watch(page, 'owner');
   await open(page, '/login');

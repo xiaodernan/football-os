@@ -400,3 +400,43 @@ that change should not be cited as evidence that a `--tb=line` log carries a ver
 * The unmigrated branch is asserted to be a strict subset of the migrated one. Whether an *unmigrated* host should
   publish a capability object at all — rather than ten figures and a `rule` string that implies an academy exists —
   is a product question this unit deliberately did not answer, because the answer would move served bytes.
+
+## The plan page, restored (2026-10-21)
+
+The i18n commit that wired the club pages (`60e0661`, "The four club pages read the club catalogue")
+also **rewrote** the academy plan page: 282 lines changed, and the commit message described a
+wiring. What the page lost was not cosmetic — it lost the write panel, so **a coach could no
+longer file a review at all**, and with it the per-axis table, the "one review is not a direction"
+notice, the per-figure formula list, the empty state, the coach's feedback, the video evidence,
+the consent the plan stands on, and the review table's own columns.
+
+The club walk (`apps/web/scripts/qa-club.mjs`) is what found it: it went from **93 of 101** to
+**252 of 252** once the page was put back, because a walk that cannot file a review cannot check
+the arithmetic the reviews feed.
+
+What came back, with the copy in the catalogue:
+
+* the **write panel** — `<PlanTools>` again, so the plan can be reviewed;
+* the **axis table** — one row per published axis, with its mean over the plan and its change, and
+  the note that an axis rated at one end only is excluded *by name*;
+* the **"one review is not a direction"** notice, and the per-figure **formula list**;
+* the **empty state** — a plan with no review says so instead of printing an empty table;
+* the **coach's feedback**, the **video evidence** and the **consent the plan stands on**;
+* the review table's **columns**: the date, one column per axis (a dash where an axis was not
+  rated), the mean of the rated axes, the world rating that day, the axes nobody rated, the
+  coach's words, and the erase control. The walk reads the *printed* table as the evidence for
+  the arithmetic, so the columns are part of the contract.
+
+**Three defects the walk found in the harness, not in the tier:**
+
+* **the walk was locale-dependent** — the page answers in the browser's language (§81), so on a
+  Chinese-locale host every English needle failed. Eight browser walks now pin the locale with
+  the `fo_locale` cookie before they open their first page.
+* **two walks counted the tier's doors** — a number that is wrong the moment the tier grows. The
+  creator walk now compares the published routes with the operations the API's own contract holds.
+* **the hand-written plurals the i18n arc introduced** — "{count} guide(s)" is not English. Every
+  plural in the catalogues is now ICU, and the walks' needles are built the same way.
+
+Measured 2026-10-21: `scripts/qa-club.mjs` — **252 of 252 checks passed, exit 0** on a production
+build served on `127.0.0.1:3218` against the API on `127.0.0.1:8741` over a fresh SQLite
+database; `scripts/qa-creator.mjs` — **72 of 72**, exit 0, on the same build.

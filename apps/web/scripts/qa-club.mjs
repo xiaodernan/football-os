@@ -28,6 +28,11 @@
  * on screen cannot pass.
  *
  * Env overrides: QA_BASE, CHROME_PATH.
+ *
+ * The page answers in the browser's language (§81), so this walk **pins the locale** to English with the
+ * `fo_locale` cookie: a walk whose needles are English must measure the English surface, and a host whose
+ * browser asks for Chinese would otherwise fail every one of them for a reason that has nothing to do with
+ * the tier. The cookie is written before the first page is opened.
  */
 
 import { mkdir } from 'node:fs/promises';
@@ -59,6 +64,8 @@ function check(name, ok, detail = '') {
 }
 
 const has = (body, needle) => String(body).includes(String(needle));
+/** A count and its noun, the way the catalogue's ICU plural renders it. */
+const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
 const squeeze = (value) => String(value).replace(/\s+/g, '');
 /** Eyebrows and `dt` labels are upper-cased in CSS, so a needle matched against one sheds its case. */
 const shouts = (body, needle) => squeeze(body).toUpperCase().includes(squeeze(needle).toUpperCase());
@@ -336,6 +343,7 @@ async function main() {
 
   // ----------------------------------------------------------- the owner's browser
   const page = await browser.newPage();
+  await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   await page.setViewport(DESKTOP);
   watch(page, 'owner');
 
@@ -408,7 +416,7 @@ async function main() {
   const owned0 = await call(page, 'GET', '/api/v1/club');
   const body0 = await text(page);
   check('a brand-new account stands in no organisation', owned0.status === 200 && owned0.json?.total === 0 && owned0.json?.items?.length === 0, `total ${owned0.json?.total}`);
-  check('the index prints the seat arithmetic the list door reported', shouts(body0, `${owned0.json.total} of ${owned0.json.limit} used · ${owned0.json.room_left} seat(s) left`), `${owned0.json.total}/${owned0.json.limit} used, ${owned0.json.room_left} left`);
+  check('the index prints the seat arithmetic the list door reported', shouts(body0, `${owned0.json.total} of ${owned0.json.limit} used · ${plural(owned0.json.room_left, 'seat', 'seats')} left`), `${owned0.json.total}/${owned0.json.limit} used, ${owned0.json.room_left} left`);
   check('the rulebook panel counts what the capabilities door counts', shouts(body0, `${clubRules.matrix.roles.length} standings · ${clubRules.matrix.permissions.length} rights · ${clubRules.routes.length} published`), `${clubRules.matrix.roles.length} standings, ${clubRules.matrix.permissions.length} rights, ${clubRules.routes.length} doors`);
   check('an empty index says so in its own sentence, and prints the door’s rule beside it', shouts(body0, 'You stand in no organisation yet') && has(squeeze(body0), squeeze(owned0.json.rule)), String(owned0.json.rule ?? '(no rule)').slice(0, 70));
   check('an empty name cannot be submitted: the button stays inert until the field has text', (await page.$eval('[data-testid="club-create"]', (node) => node.disabled)) === true, 'the guard is on the blank name only, not on a guessed role');
@@ -433,7 +441,7 @@ async function main() {
   const view0 = await call(page, 'GET', `/api/v1/club/${encodeURIComponent(ident)}`);
   const c0 = view0.json.counts;
   const tbody = await text(page);
-  check('its counts panel agrees with the view door line by line', shouts(tbody, `${c0.active_members} active member(s) · ${c0.owners} owner(s) · ${c0.teams} of ${view0.json.rules.max_teams_per_organization} sheets · ${c0.players_on_sheets} squad rows`), JSON.stringify(c0));
+  check('its counts panel agrees with the view door line by line', shouts(tbody, `${plural(c0.active_members, 'active member', 'active members')} · ${plural(c0.owners, 'owner', 'owners')} · ${c0.teams} of ${view0.json.rules.max_teams_per_organization} sheets · ${c0.players_on_sheets} squad rows`), JSON.stringify(c0));
   check('the head says what the caller may do, in the door’s own numbers', shouts(tbody, `${view0.json.my_grant.permissions.length} of ${clubRules.matrix.permissions.length} rights`), `${view0.json.my_grant.permissions.length} rights as ${view0.json.my_grant.role}`);
   check('and prints the API’s reason rather than a paraphrase of it', has(squeeze(tbody), squeeze(view0.json.my_grant.why)), String(view0.json.my_grant.why).slice(0, 60));
   check('the isolation sentence is printed rather than paraphrased', has(squeeze(tbody), squeeze(view0.json.isolation_rule)), String(view0.json.isolation_rule).slice(0, 60));
@@ -489,6 +497,7 @@ async function main() {
   // ----------------------------------------- a guardian answers: the scoped right, witnessed from two browsers
   const guardianContext = await browser.createBrowserContext();
   const pageB = await guardianContext.newPage();
+  await pageB.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   await pageB.setViewport(DESKTOP);
   watch(pageB, 'parent');
   await open(pageB, '/login');
@@ -562,7 +571,7 @@ async function main() {
   const pbody0 = await text(page);
   check('the page says who the plan belongs to, in the door’s words', has(pbody0, head.json.author.display_name) && shouts(pbody0, `your standing: ${head.json.your_standing.role}`), `${head.json.author.role} wrote it; you are ${head.json.your_standing.role}`);
   check('with no review filed it prints the empty state instead of a table of zeros', has(pbody0, 'No review yet'));
-  check('and the reviews figure is the number of rows beneath it', (await rowsOf(page, 'assessment')).length === 0 && shouts(pbody0, '0 review(s) filed'));
+  check('and the reviews figure is the number of rows beneath it', (await rowsOf(page, 'assessment')).length === 0 && shouts(pbody0, plural(0, 'review', 'reviews')));
   check('the axis table is the published axes, not a fixed five', (await attributeValues(page, 'tr[data-axis]', 'data-axis')).join(',') === axes.join(','), axes.join(', '));
   check('every formula the door publishes is printed beside its own name', (await attributeValues(page, '[data-formula]', 'data-formula')).join(',') === Object.keys(head.json.progress.formulas).join(','), `${Object.keys(head.json.progress.formulas).length} figures`);
   check('the write panel offers one field per axis and the published range', (await page.$$('[data-axis]')).length === 2 * axes.length && shouts(pbody0, `${eduDoor.rating_range[0]}–${eduDoor.rating_range[1]}`), `${axes.length} axes in two panels`);
@@ -632,7 +641,7 @@ async function main() {
   const afterNotes = await call(page, 'GET', planDoor);
   await until(page, '2 note(s) · 0 of them not shown to you');
   const fbody = await text(page);
-  check('the author sees both notes and is told nothing is hidden from them, and the panel prints that figure', afterNotes.json.feedback.length === 2 && afterNotes.json.withheld.coach_feedback === 0 && shouts(fbody, '2 note(s) · 0 of them not shown to you'), `${afterNotes.json.feedback.length} notes, ${afterNotes.json.withheld.coach_feedback} not shown to the author`);
+  check('the author sees both notes and is told nothing is hidden from them, and the panel prints that figure', afterNotes.json.feedback.length === 2 && afterNotes.json.withheld.coach_feedback === 0 && shouts(fbody, `${plural(2, 'note', 'notes')} · 0 of them not shown to you`), `${afterNotes.json.feedback.length} notes, ${afterNotes.json.withheld.coach_feedback} not shown to the author`);
   const asFamily = await call(pageB, 'GET', planDoor);
   check('and the family’s read of the very same plan is the one that hides a note and says so', asFamily.status === 200 && asFamily.json.feedback.length === 1 && asFamily.json.withheld.coach_feedback === 1, `${asFamily.json.feedback?.length ?? '?'} of 2 shown, ${asFamily.json.withheld?.coach_feedback ?? '?'} withheld from the guardian`);
   check('the withheld note is named to its author and absent from the family’s copy', afterNotes.json.feedback.some((row) => row.message.includes('not shown')) && !asFamily.json.feedback.some((row) => row.message.includes('not shown')), asFamily.json.feedback.map((row) => row.message).join(' | '));
@@ -657,7 +666,7 @@ async function main() {
   const paintedDate = await page.$eval('input[aria-label="Session date"]', (node) => node.value).catch(() => '(no field on the page)');
   check('and the form the page paints is open on that day, not on a day it worked out for itself', paintedDate === doorToday, `the field holds ${paintedDate}; the door says ${doorToday}`);
   check('the session door answers an empty log, with a zero and not a missing mean', firstLog.status === 200 && firstLog.json.total === 0 && firstLog.json.total_load_units === 0 && firstLog.json.mean_rpe === null, `${firstLog.json.total} row(s), load ${firstLog.json.total_load_units}, mean rpe ${JSON.stringify(firstLog.json.mean_rpe)}`);
-  check('and the panel says the same thing instead of painting an empty table', (await page.$('[data-load-check]')) !== null && shouts(await text(page), '0 session(s)'), 'an empty log is a zero, not a refusal');
+  check('and the panel says the same thing instead of painting an empty table', (await page.$('[data-load-check]')) !== null && shouts(await text(page), plural(0, 'session', 'sessions')), 'an empty log is a zero, not a refusal');
   check('the recorder prints the caps the door publishes rather than its own', shouts(await text(page), `(${eduDoor.session_limits.duration_range[0]}–${eduDoor.session_limits.duration_range[1]} minutes)`) && shouts(await text(page), `(${eduDoor.session_limits.rpe_range[0]}–${eduDoor.session_limits.rpe_range[1]})`) && shouts(await text(page), `at most ${eduDoor.session_limits.session_focus_max})`) && shouts(await text(page), `at most ${eduDoor.session_limits.attendance_max} may be`), JSON.stringify(eduDoor.session_limits).slice(0, 130));
   check('and the report form, for the window the tier enforces', shouts(await text(page), `at most ${eduDoor.report_limits.window_max_days} days after the start`), `window_max_days ${eduDoor.report_limits.window_max_days}`);
 
@@ -966,6 +975,7 @@ async function main() {
   // ----------------------------------------------------------- an account that was never invited at all
   const strangerContext = await browser.createBrowserContext();
   const pageC = await strangerContext.newPage();
+  await pageC.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   await pageC.setViewport(DESKTOP);
   watch(pageC, 'stranger');
   await open(pageC, '/login');
@@ -1026,7 +1036,9 @@ async function main() {
   await page.setViewport(MOBILE);
   await open(page, plan.path);
   const narrow = await rowsOf(page, 'assessment');
-  check('the review table survives a phone viewport', narrow.length === 2 && narrow[0].cells.length === axes.length + 5, `${narrow.length} rows, ${narrow[0]?.cells.length} columns`);
+  // The date, one column per axis, the mean, the world rating, the axes nobody rated, the
+  // coach's words, and the erase control.
+  check('the review table survives a phone viewport', narrow.length === 2 && narrow[0].cells.length === axes.length + 6, `${narrow.length} rows, ${narrow[0]?.cells.length} columns`);
   check('and the progress formulas are still readable at 375px', (await page.$$('[data-formula]')).length === Object.keys(p2.formulas).length, `${(await page.$$('[data-formula]')).length} rows`);
   await shot(page, 'plan-mobile');
 

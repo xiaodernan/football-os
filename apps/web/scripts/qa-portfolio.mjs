@@ -24,6 +24,11 @@
  *   walk's own knocks rather than a sentence.
  *
  * Env overrides: QA_BASE, CHROME_PATH.
+ *
+ * The page answers in the browser's language (§81), so this walk **pins the locale** to English with the
+ * `fo_locale` cookie: a walk whose needles are English must measure the English surface, and a host whose
+ * browser asks for Chinese would otherwise fail every one of them for a reason that has nothing to do with
+ * the tier. The cookie is written before the first page is opened.
  */
 
 import { mkdir, readFile } from 'node:fs/promises';
@@ -33,6 +38,7 @@ import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
 
 const BASE = (process.env.QA_BASE ?? 'http://127.0.0.1:3218').trim();
+const DIST = (process.env.QA_DIST ?? '.next').trim();
 const CHROME = process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const OUT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../../docs/screenshots');
 const MOBILE = { width: 375, height: 812, deviceScaleFactor: 2, isMobile: true };
@@ -209,13 +215,14 @@ async function main() {
   knocks.push({method: 'GET', path: '/api/v1/portfolio/nope', status: unrouted.status});
   check('a path this tier does not own is not answered as a code it does publish', unrouted.status === 404, `HTTP ${unrouted.status}`);
 
-  const buildId = (await readFile(resolve(dirname(fileURLToPath(import.meta.url)), '../.next/BUILD_ID'), 'utf8')).trim();
+  const buildId = (await readFile(resolve(dirname(fileURLToPath(import.meta.url)), `../${DIST}/BUILD_ID`), 'utf8')).trim();
   const servedHtml = await (await fetch(`${BASE}/`)).text();
   check('the page this walk drives is the build it just compiled, by its own BUILD_ID', has(servedHtml, buildId), `BUILD_ID ${buildId}`);
 
   const browser = await puppeteer.launch({executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage']});
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
+  await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
   await page.setViewport({width: 1440, height: 1000});
   watch(page, 'desktop');
 
@@ -363,6 +370,7 @@ async function main() {
 
     const publicContext = await browser.createBrowserContext();
     const publicPage = await publicContext.newPage();
+    await publicPage.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
     await publicPage.setViewport({width: 1440, height: 1000});
     watch(publicPage, 'public-cv');
     const publicResponse = await publicPage.goto(`${BASE}${publicPath}`, {waitUntil: 'networkidle2', timeout: 90_000});
@@ -382,6 +390,7 @@ async function main() {
     knocks.push({method: 'GET', path: `/api/v1/portfolio/share/${live.token}`, status: closedApi.status});
     check('the revoked token answers the same 404 a stranger gets', closedApi.status === 404, `HTTP ${closedApi.status}`);
     const revokedPage = await publicContext.newPage();
+    await revokedPage.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
     const closedPage = await revokedPage.goto(`${BASE}${publicPath}`, {waitUntil: 'networkidle2', timeout: 90_000});
     const closedSections = await revokedPage.$$eval('div[data-section]', (nodes) => nodes.length);
     check('and the public page stops rendering once the token is closed', closedPage?.status() === 404 && closedSections === 0, `HTTP ${closedPage?.status()} · ${closedSections} section(s)`);

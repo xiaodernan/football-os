@@ -158,7 +158,16 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         title={view.organization.name}
       />
 
-      <Panel eyebrow={`${view.counts.active_members} active member(s) · ${view.counts.owners} owner(s) · ${view.counts.teams} of {view.rules.max_teams_per_organization} sheets · ${view.counts.players_on_sheets} squad rows`} title={t("titleWhatTenantHolds")}>
+      <Panel
+        eyebrow={t("eyebrowWhatTenantHolds", {
+          active: view.counts.active_members,
+          owners: view.counts.owners,
+          teams: view.counts.teams,
+          maxTeams: view.rules.max_teams_per_organization,
+          players: view.counts.players_on_sheets,
+        })}
+        title={t("titleWhatTenantHolds")}
+      >
         <div className="grid grid-2">
           <div>
             <dl className="world-kv">
