@@ -30,6 +30,12 @@
  * The walk's own output is the evidence: it prints every check it made, and the exit code says
  * whether the tree passed. This file prints the frame around it — which build, which port, which
  * database — and a summary at the end.
+ *
+ * It also reads the **tiers' own log** for one line: `MISSING_MESSAGE`, next-intl's answer to a page
+ * that asked its catalogue for a key it does not hold. That error is raised on the server, so the browser
+ * never sees it and the walk's console check cannot either — the page renders an exception where a
+ * sentence should be, and nothing says so. A walk whose tier logged one is a walk that failed, whatever
+ * its own checks said.
  */
 
 import { spawn } from "node:child_process";
@@ -72,6 +78,28 @@ const start = (command, args, options) => {
   child.stdout.on("data", (chunk) => process.stdout.write(chunk));
   child.stderr.on("data", (chunk) => process.stderr.write(chunk));
   return child;
+};
+
+/**
+ * The API's own log, read for the one line that means a page asked its catalogue for something it does
+ * not hold.
+ *
+ * next-intl answers a missing key with an error **on the server**, and the browser never sees it: the page
+ * renders an exception where a sentence should be, the walk's own checks may not touch that cell, and the
+ * walk's console check cannot see it either. The club walk's server log carried `MISSING_MESSAGE:
+ * club.no (en)` for a day before anyone read it — the plan page asked the club catalogue for `yes` and
+ * `no`, which live in common. A walk that reads the server's log for that line catches the class.
+ */
+const missingMessages = [];
+const watchForMissingMessages = (child, label) => {
+  const read = (chunk) => {
+    const text = String(chunk);
+    for (const line of text.split(/\r?\n/)) {
+      if (line.includes("MISSING_MESSAGE")) missingMessages.push(`${label}: ${line.trim().slice(0, 160)}`);
+    }
+  };
+  child.stdout.on("data", read);
+  child.stderr.on("data", read);
 };
 
 const stop = async (child) => {
@@ -117,6 +145,7 @@ async function runWalk(walk) {
       WORLD_AUTO_SYNC: "1",
     },
   });
+  watchForMissingMessages(api, `api:${walk.api}`);
   let web;
   try {
     await waitFor(`http://127.0.0.1:${walk.api}/api/v1/healthz`, api);
@@ -129,6 +158,7 @@ async function runWalk(walk) {
         SITE_URL: `http://127.0.0.1:${walk.web}`,
       },
     });
+    watchForMissingMessages(web, `web:${walk.web}`);
     await waitFor(`http://127.0.0.1:${walk.web}/`, web);
 
     const code = await new Promise((done) => {
@@ -144,6 +174,12 @@ async function runWalk(walk) {
       child.on("exit", (exitCode) => done(exitCode ?? 1));
     });
     console.log(`--- ${walk.name}: exit ${code}`);
+    if (missingMessages.length > 0) {
+      console.log(`--- ${walk.name}: ${missingMessages.length} MISSING_MESSAGE(s) in the tiers' own log`);
+      for (const line of missingMessages.slice(0, 8)) console.log(`      ${line}`);
+      missingMessages.length = 0;
+      return code === 0 ? 1 : code;
+    }
     return code;
   } finally {
     await stop(web);

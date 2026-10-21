@@ -477,3 +477,11 @@ own name rather than an exception.
 it. The walk presses more writes than the door allows, and a refresh the door answers with a refusal paints
 `<Refused>` where the panel was: the form is gone until the page is served again. The walk now re-reads the
 page once and waits for the field again, instead of treating a rate-limited refresh as a missing field.
+
+**The harness now reads the tiers' own log for the fourth defect's cousin.** `MISSING_MESSAGE` is raised on
+the **server**, so the browser never sees it and no walk's console check can either — the page renders an
+exception where a sentence should be, and the walk's checks may simply not touch that cell.
+`scripts/run-walks.mjs` owns the API process, so it is the only place that can see the line, and it now
+fails a walk whose tier logged one, whatever the walk's own checks said. Measured on the build that carries
+the four fixes: **club 252 of 252** and **market 106 of 106**, exit 0, and **no MISSING_MESSAGE in either
+tier's log** — where the build before it carried nine of them.
