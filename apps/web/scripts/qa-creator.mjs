@@ -11,9 +11,10 @@
  * * **the page's own controls must move the door's figures.** A profile the page says it amended has to be amended
  *   at the door, a guide it says it published has to be a row, and a citation it says it recorded has to resolve to
  *   a chunk — every press is re-read through the door rather than trusted from the note it painted;
- * * **the panel that owns the press answers it.** Three panels write here, so a refused guide or citation has to be
- *   answered beside the form that asked: this page shipped with one runner for the whole workbench, which put every
- *   note in the profile panel, and the walk reads each note out of the panel whose control was pressed;
+ * * **the panel that owns the press answers it.** Five panels write here, so a refused guide, citation, program
+ *   or challenge has to be answered beside the form that asked: this page shipped with one runner for the whole
+ *   workbench, which put every note in the profile panel, and the walk reads each note out of the panel whose
+ *   control was pressed;
  * * **the shelf is this account's.** The door's unscoped listing is everybody's public shelf while the panel is
  *   titled "your shelf" beside an Erase button, so the walk has a second account publish a guide and refuses to let
  *   it appear here;
@@ -65,6 +66,7 @@ const shouts = (body, needle) => squeeze(body).toUpperCase().includes(squeeze(ne
 const C = (name) => `[data-creator-${name}]`;
 const rowOf = (guideId) => `tr[data-creator-guide="${guideId}"]`;
 const programRowOf = (programId) => `tr[data-creator-program="${programId}"]`;
+const challengeRowOf = (challengeId) => `tr[data-creator-challenge="${challengeId}"]`;
 const citationOf = (id) => `tr[data-creator-citation="${id}"]`;
 
 async function shot(page, name) {
@@ -295,6 +297,9 @@ async function main() {
   const painted = await authorPage.$$eval('tr[data-refusal]', (rows) => rows.map((row) => ({ code: row.getAttribute('data-refusal'), cells: [...row.querySelectorAll('td')].map((cell) => cell.innerText.trim()) })));
   check('the refusal table on the page is the table the door published, code for code and status for status', painted.length === Object.keys(answers).length && painted.every((row) => String(answers[row.code]) === row.cells[1]), `${painted.length} row(s) painted for ${Object.keys(answers).length} published code(s)`);
   check('and the page says which §42 features this tier names, and that no door refuses on them yet', shouts(studio, (rules?.entitlement_features ?? []).join(', ')) && shouts(studio, 'no door refuses on yet'), `${(rules?.entitlement_features ?? []).length} feature(s) named`);
+  const challengeCaps = rules?.career_challenge_caps ?? {};
+  check('the vocabulary panel prints the challenge caps, targets, windows and rule the door publishes', shouts(studio, `targets ${challengeCaps.career_challenge_target_min}–${challengeCaps.career_challenge_target_max}`) && shouts(studio, `windows ${challengeCaps.career_challenge_window_min}–${challengeCaps.career_challenge_window_max} rounds`) && shouts(studio, rules?.career_challenge_rule ?? 'no challenge rule published'), `targets ${challengeCaps.career_challenge_target_min}–${challengeCaps.career_challenge_target_max}, windows ${challengeCaps.career_challenge_window_min}–${challengeCaps.career_challenge_window_max}`);
+  check('and the challenge row counts it prints are the door\'s own, not numbers typed into the page', shouts(studio, `${rules?.career_challenge_counts?.career_challenges} challenges`) && shouts(studio, `${rules?.career_challenge_counts?.career_attempts} runs recorded`), `${rules?.career_challenge_counts?.career_challenges} challenge(s), ${rules?.career_challenge_counts?.career_attempts} run(s) at the door`);
   await shot(authorPage, 'studio');
   // ------------------------------------------------------------------------------- the profile, written from here
   const empty = await authorPage.$eval(C('profile'), (node) => node.getAttribute('data-creator-profile')).catch(() => '(no panel)');
@@ -464,6 +469,86 @@ async function main() {
   check('and the program is absent afterwards, its author included', afterProgramErase.status === 404 && afterProgramErase.json?.detail?.code === 'no_such_program', `HTTP ${afterProgramErase.status} · ${afterProgramErase.json?.detail?.code}`);
   const sessionsAfter = (await call(authorPage, 'GET', '/api/v1/trainings/sessions')).json ?? [];
   check('and the sessions it planned went with it', !(sessionsAfter.items ?? []).some((row) => row.program_id === programRow.id), 'no session carries the erased program');
+
+  // ------------------------------------------------------- the challenge panel: an authored rule, and a run judged on read
+  // A career challenge stores the author's rule and nothing of the entrant. The walk publishes one from the page,
+  // opens it, enters it with a career of its own, and reads every verdict figure back through the door — the same
+  // standard the guide and program panels are held to, because a panel nothing walks is a panel believed rather
+  // than checked.
+  await openStudio(authorPage, 2);
+  await typeInto(authorPage, C('challenge-title'), 'eight rounds unbeaten');
+  await authorPage.select(C('challenge-objective'), 'unbeaten');
+  await clearField(authorPage, C('challenge-target'));
+  await typeInto(authorPage, C('challenge-target'), '3');
+  await clearField(authorPage, C('challenge-window'));
+  await typeInto(authorPage, C('challenge-window'), '2');
+  await authorPage.select(C('challenge-visibility'), 'public');
+  const challengePublished = await pressWrite(authorPage, C('publish-challenge'), 'challenge', 'answered');
+  check('the page publishes a career challenge from its own controls, and the challenge panel is where the answer lands', challengePublished.ok, `the control ${challengePublished.pressed} after ${challengePublished.attempts} attempt(s); note: ${challengePublished.note.slice(0, 140)}`);
+
+  const challengeShelf = (await call(authorPage, 'GET', `/api/v1/creator/challenges?creator=${authorId}`)).json ?? {};
+  const challengeRow = (challengeShelf.items ?? [])[0] ?? {};
+  check('the door holds the rule the page pressed for — the objective, the target and the window', !!challengeRow.id && challengeRow.objective?.kind === 'unbeaten' && challengeRow.objective?.target === 3 && challengeRow.window_rounds === 2, `${(challengeShelf.items ?? []).length} challenge(s); ${challengeRow.objective?.kind} ${challengeRow.objective?.target} in ${challengeRow.window_rounds} round(s)`);
+  check('and the panel repaints with the challenge on the read that follows the write', await waitForRows(authorPage, 'creator-challenge', 1));
+  const paintedChallenge = (await rowsOf(authorPage, 'creator-challenge'))[0]?.cells ?? [];
+  check('the painted row names the rule the door holds, objective, target and window, and says no run yet', has(paintedChallenge[1] ?? '', 'unbeaten') && has(paintedChallenge[1] ?? '', '3') && paintedChallenge[2] === '2' && !shouts(paintedChallenge[5] ?? '', 'yes'), JSON.stringify(paintedChallenge.slice(0, 6)));
+
+  await typeInto(authorPage, C('challenge-title'), 'a challenge with no target');
+  await clearField(authorPage, C('challenge-target'));
+  await typeInto(authorPage, C('challenge-target'), '0');
+  const zeroTarget = await pressWrite(authorPage, C('publish-challenge'), 'challenge', 'career_challenge_target');
+  check('a target below the published floor is refused by name in the challenge panel, with the floor beside it', zeroTarget.ok && has(zeroTarget.note, String(challengeCaps.career_challenge_target_min)), zeroTarget.note.slice(0, 160));
+  check('and that refusal wrote nothing, so the shelf still holds the one challenge it did', ((await call(authorPage, 'GET', `/api/v1/creator/challenges?creator=${authorId}`)).json?.items ?? []).length === 1);
+
+  const careerOptions = (await call(authorPage, 'GET', '/api/v1/careers/options')).json ?? {};
+  const challengeClub = (careerOptions.clubs ?? [])[0] ?? {};
+  const challengePhilosophy = (careerOptions.philosophies ?? [])[0] ?? 'balanced';
+  const challengeObjectiveKind = Object.keys(careerOptions.objective_kinds ?? {})[0] ?? 'wins';
+  const careerOpened = await call(authorPage, 'POST', '/api/v1/careers', { club: challengeClub.slug, manager_name: 'QA Challenge Manager', philosophy: challengePhilosophy, objectives: [{ kind: challengeObjectiveKind, target: 1 }], season: '2026' });
+  const careerSlug = String(careerOpened.json?.career?.slug ?? '');
+  check('a challenge needs a career to enter, so the walk opens one from the catalogue the career door publishes', careerOpened.status === 200 && careerSlug.length > 0, `HTTP ${careerOpened.status} · ${careerSlug}`);
+
+  await openStudio(authorPage, 2);
+  await press(authorPage, `${challengeRowOf(challengeRow.id)} [data-creator-challenge-open]`);
+  check('opening a challenge from its row paints the run panel for that challenge', await untilTrue(async () => (await authorPage.$eval(C('challenge-detail'), (node) => node.getAttribute('data-creator-challenge-detail')).catch(() => '')) === challengeRow.id), `panel for ${challengeRow.id}`);
+  check('and the open challenge says no run yet, and offers this account\'s own careers to enter with', (await untilTrue(async () => (await authorPage.$(C('challenge-no-attempt'))) !== null)) && (await untilTrue(async () => (await authorPage.$(C('challenge-career'))) !== null)), 'no-attempt marker and the career select both painted');
+  await authorPage.select(C('challenge-career'), careerSlug);
+  const entered = await pressWrite(authorPage, C('challenge-enter'), 'enter', 'answered');
+  check('entering from the panel pins the caller\'s own career, and the run panel is where the answer lands', entered.ok, `the control ${entered.pressed} after ${entered.attempts} attempt(s); note: ${entered.note.slice(0, 140)}`);
+  check('and the panel repaints as an in-progress run whose window opens at the round the career stood on', await untilTrue(async () => (await authorPage.$eval(C('challenge-attempt'), (node) => node.getAttribute('data-creator-challenge-attempt')).catch(() => '')) === 'in_progress'), 'data-creator-challenge-attempt=in_progress');
+  const paintedWindow = await authorPage.$eval(C('challenge-window-line'), (node) => node.innerText.replace(/\s+/g, ' ').trim()).catch(() => '');
+  check('with nothing played inside the window and the rounds remaining the rule asks for', has(paintedWindow, '0 played') && has(paintedWindow, '2 remaining'), paintedWindow.slice(0, 160));
+
+  const runAtDoor = (await call(authorPage, 'GET', `/api/v1/creator/challenges/${challengeRow.id}`)).json ?? {};
+  check('the door sums the run from the entrant\'s own career: in progress, nothing played, the window still open', runAtDoor.attempt?.status === 'in_progress' && runAtDoor.attempt?.window?.played === 0 && runAtDoor.attempt?.window?.remaining === 2 && runAtDoor.attempt?.actual === 0, `status ${runAtDoor.attempt?.status}, played ${runAtDoor.attempt?.window?.played}, remaining ${runAtDoor.attempt?.window?.remaining}, actual ${runAtDoor.attempt?.actual}`);
+  check('and the run names the career the panel chose, at the round the window opened', runAtDoor.attempt?.career?.slug === careerSlug && runAtDoor.attempt?.start_round === 0, `${runAtDoor.attempt?.career?.slug} from round ${runAtDoor.attempt?.start_round}`);
+  check('and the shelf row repaints as entered, on the read that follows the entry', await untilTrue(async () => shouts(((await rowsOf(authorPage, 'creator-challenge'))[0]?.cells ?? [])[5] ?? '', 'yes')), 'the Entered cell says yes');
+
+  const strangerChallenge = await call(readerPage, 'GET', `/api/v1/creator/challenges/${challengeRow.id}`);
+  check('another account reads the public challenge and its rule, but never the author\'s own run', strangerChallenge.status === 200 && strangerChallenge.json?.attempt === null && (strangerChallenge.json?.figures?.attempts ?? 0) === 1, `HTTP ${strangerChallenge.status} · attempt ${strangerChallenge.json?.attempt === null ? 'null' : 'present'}`);
+
+  const secondEntry = await call(authorPage, 'POST', `/api/v1/creator/challenges/${challengeRow.id}/enter`, { career: careerSlug });
+  check('a second entry is refused with the run already held, naming the attempt and its starting round', secondEntry.status === 409 && secondEntry.json?.detail?.code === 'career_challenge_entered' && secondEntry.json?.detail?.start_round === 0, `HTTP ${secondEntry.status} · ${secondEntry.json?.detail?.code} round ${secondEntry.json?.detail?.start_round}`);
+
+  const withdrawn = await pressWrite(authorPage, C('challenge-withdraw'), 'withdraw', 'answered');
+  check('withdrawing from the run panel removes the run and leaves the panel offering the career again', withdrawn.ok && await untilTrue(async () => (await authorPage.$(C('challenge-no-attempt'))) !== null), withdrawn.note.slice(0, 140));
+  const afterWithdraw = (await call(authorPage, 'GET', `/api/v1/creator/challenges/${challengeRow.id}`)).json ?? {};
+  check('and the door agrees: this viewer holds no run and the challenge holds none', afterWithdraw.attempt === null && (afterWithdraw.figures?.attempts ?? -1) === 0, `attempt ${afterWithdraw.attempt === null ? 'null' : 'present'} · figures.attempts ${afterWithdraw.figures?.attempts}`);
+
+  await openStudio(authorPage, 2);
+  await press(authorPage, `${challengeRowOf(challengeRow.id)} [data-creator-challenge-open]`);
+  await untilTrue(async () => (await authorPage.$eval(C('challenge-detail'), (node) => node.getAttribute('data-creator-challenge-detail')).catch(() => '')) === challengeRow.id);
+  await untilTrue(async () => (await authorPage.$(C('challenge-career'))) !== null);
+  await authorPage.select(C('challenge-career'), careerSlug);
+  const reentered = await pressWrite(authorPage, C('challenge-enter'), 'enter', 'answered');
+  check('and the withdrawn run can be entered again with the same career, from a page that has forgotten the first answer', reentered.ok && await untilTrue(async () => (await authorPage.$eval(C('challenge-attempt'), (node) => node.getAttribute('data-creator-challenge-attempt')).catch(() => '')) === 'in_progress'), reentered.note.slice(0, 140));
+
+  const erasedChallenge = await pressWrite(authorPage, `${challengeRowOf(challengeRow.id)} [data-creator-challenge-erase]`, 'challenge-erase', 'answered');
+  check('erasing a challenge from its own row is answered by the door, and the shelf drops the row', erasedChallenge.ok && await waitForRows(authorPage, 'creator-challenge', 0), erasedChallenge.note.slice(0, 140));
+  const afterChallengeErase = await call(authorPage, 'GET', `/api/v1/creator/challenges/${challengeRow.id}`);
+  check('and the challenge is absent afterwards, with the run it held', afterChallengeErase.status === 404 && afterChallengeErase.json?.detail?.code === 'no_such_career_challenge', `HTTP ${afterChallengeErase.status} · ${afterChallengeErase.json?.detail?.code}`);
+  const careerAfter = await call(authorPage, 'GET', `/api/v1/careers/${careerSlug}`);
+  check('while the career that played it is untouched, exactly as the erase confirmation promised', careerAfter.status === 200, `HTTP ${careerAfter.status} for ${careerSlug}`);
 
   // ----------------------------------------------------------- reach is a predicate, and absence is what it answers
   const readFollowers = await call(readerPage, 'GET', `/api/v1/creator/guides/${followersGuide.id}`);

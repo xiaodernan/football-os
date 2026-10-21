@@ -8,6 +8,9 @@ import { Panel } from "@/components/ui";
 import { browserFetch } from "@/lib/api";
 import {
   refusalFigures,
+  type CareerChallengeIn,
+  type CareerChallengeShelfView,
+  type CareerChallengeView,
   type CreatorProfileView,
   type CreatorRulesView,
   type GuideDetailView,
@@ -17,11 +20,19 @@ import {
   type ProgramIn,
   type ProgramShelfView,
 } from "@/lib/creator";
-import type { Drill } from "@/lib/types";
+import type { CareerList, Drill } from "@/lib/types";
 import type { ApiError } from "@/lib/types";
 
 const SECTIONS: GuideIn["section"][] = ["plan", "drill", "match", "tactic", "scout", "video"];
 const VISIBILITIES: GuideIn["visibility"][] = ["public", "unlisted", "followers"];
+/** The verdicts the API publishes for a run; a status nobody has a word for is shown as its own code. */
+const ATTEMPT_STATUS_KEY: Record<string, string> = {
+  in_progress: "challengeStatusInProgress",
+  met: "challengeStatusMet",
+  missed: "challengeStatusMissed",
+  career_retired: "challengeStatusRetired",
+  career_missing: "challengeStatusMissing",
+};
 
 /** What a failed *read* says, in the shape a reader can act on: the code, the sentence, and any figure beside it. */
 function faultLine(error: ApiError): string {
@@ -46,9 +57,10 @@ function shelfEyebrow(
  * * **every write is answered by the door.** `useClubCall` prints what the API said — its status, its code, its
  *   sentence and the figures that came with it — so a press the server refused cannot look like a press that
  *   worked, and `router.refresh()` re-reads the server page so the counts above this panel are the server's.
- * * **the answer is painted where the press was made.** Three panels write here and each holds its own runner, so a
- *   refused guide or citation is answered beside the form that asked: one runner for the whole workbench put every
- *   note in the profile panel, and a reader who pressed "Publish guide" was told about it somewhere else on the page.
+ * * **the answer is painted where the press was made.** Every writing panel holds its own runner, so a refused
+ *   guide, citation, program or challenge is answered beside the form that asked: one runner for the whole
+ *   workbench put every note in the profile panel, and a reader who pressed "Publish guide" was told about it
+ *   somewhere else on the page.
  * * **nothing is remembered here that the door already counts.** The shelf and the open guide are re-read through
  *   `GET` after every write, so a figure in this table is the door's own, counted from its rows at that read.
  * * **a failed read is never folded into an empty state.** "You have published nothing yet" and "the profile door
@@ -87,6 +99,19 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
   const [citationDocument, setCitationDocument] = useState("");
   const [citationOrdinal, setCitationOrdinal] = useState("");
   const [citationNote, setCitationNote] = useState("");
+
+  const challengeCall = useClubCall();
+  const attemptCall = useClubCall();
+  const [challenges, setChallenges] = useState<CareerChallengeShelfView | null>(null);
+  const [careers, setCareers] = useState<CareerList["items"]>([]);
+  const [challengeTitle, setChallengeTitle] = useState("");
+  const [challengeSummary, setChallengeSummary] = useState("");
+  const [challengeObjective, setChallengeObjective] = useState("wins");
+  const [challengeTarget, setChallengeTarget] = useState("3");
+  const [challengeWindow, setChallengeWindow] = useState("5");
+  const [challengeVisibility, setChallengeVisibility] = useState("public");
+  const [selectedChallenge, setSelectedChallenge] = useState<CareerChallengeView | null>(null);
+  const [careerChoice, setCareerChoice] = useState("");
 
   const loadProfile = useCallback(async () => {
     const result = await browserFetch<CreatorProfileView>("/creator/profile");
@@ -135,12 +160,31 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
     if (result.ok) setDrills(result.data);
   }, []);
 
+  const loadChallenges = useCallback(async () => {
+    const result = await browserFetch<CareerChallengeShelfView>(`/creator/challenges?creator=${encodeURIComponent(creator)}`);
+    if (result.ok) setChallenges(result.data);
+    else setReadFault(faultLine(result.error));
+  }, [creator]);
+
+  const loadCareers = useCallback(async () => {
+    const result = await browserFetch<CareerList>("/careers");
+    if (result.ok) {
+      setCareers(result.data.items);
+      setCareerChoice((current) => current || result.data.items[0]?.slug || "");
+      return;
+    }
+    // An empty select because the door did not answer is not "you have no career": the fault is shown instead.
+    setReadFault(faultLine(result.error));
+  }, []);
+
   useEffect(() => {
     void loadProfile();
     void loadShelf();
     void loadPrograms();
     void loadDrills();
-  }, [loadProfile, loadShelf, loadPrograms, loadDrills]);
+    void loadChallenges();
+    void loadCareers();
+  }, [loadProfile, loadShelf, loadPrograms, loadDrills, loadChallenges, loadCareers]);
 
   async function publishProfile() {
     const answer = await profileCall.call("profile", "/creator/profile", { body: { slug: slug.trim() || undefined, headline: headline.trim() || undefined, bio: bio.trim() || undefined } });
@@ -209,6 +253,55 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
     const answer = await programCall.call("erase", `/creator/programs/${programId}`, { method: "DELETE" });
     if (!answer) return;
     await loadPrograms();
+  }
+
+  async function publishChallenge() {
+    if (!challengeTitle.trim()) return;
+    const body: CareerChallengeIn = {
+      title: challengeTitle.trim(),
+      summary: challengeSummary.trim() || undefined,
+      visibility: challengeVisibility,
+      objective: challengeObjective,
+      target: Number(challengeTarget) || 0,
+      window_rounds: Number(challengeWindow) || 0,
+    };
+    const answer = await challengeCall.call("challenge", "/creator/challenges", { body });
+    if (!answer) return;
+    setChallengeTitle("");
+    setChallengeSummary("");
+    await loadChallenges();
+  }
+
+  async function openChallenge(challengeId: string) {
+    // A read through the door, so the verdict painted below is the one summed at this read rather than the
+    // counts the shelf was painted with.
+    const result = await browserFetch<CareerChallengeView>(`/creator/challenges/${challengeId}`);
+    if (result.ok) setSelectedChallenge(result.data);
+    else setReadFault(faultLine(result.error));
+  }
+
+  async function enterChallenge() {
+    if (!selectedChallenge || !careerChoice) return;
+    const answer = await attemptCall.call("enter", `/creator/challenges/${selectedChallenge.id}/enter`, { body: { career: careerChoice } });
+    if (!answer) return;
+    await openChallenge(selectedChallenge.id);
+    await loadChallenges();
+  }
+
+  async function withdrawChallenge() {
+    if (!selectedChallenge) return;
+    const answer = await attemptCall.call("withdraw", `/creator/challenges/${selectedChallenge.id}/enter`, { method: "DELETE" });
+    if (!answer) return;
+    await openChallenge(selectedChallenge.id);
+    await loadChallenges();
+  }
+
+  async function eraseChallenge(challengeId: string) {
+    if (!confirm(tp("challengeEraseConfirm"))) return;
+    const answer = await challengeCall.call("challenge-erase", `/creator/challenges/${challengeId}`, { method: "DELETE" });
+    if (!answer) return;
+    if (selectedChallenge?.id === challengeId) setSelectedChallenge(null);
+    await loadChallenges();
   }
 
   async function eraseGuide(guideId: string) {
@@ -511,9 +604,269 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
         </div>
       </Panel>
 
+      <Panel
+        eyebrow={challenges ? tp("challengesEyebrow", { count: challenges.total }) : tp("challengesUnread")}
+        title={tp("challengesTitle")}
+      >
+        <div className="stack-sm" data-creator-challenges={challenges ? String(challenges.total) : "unread"}>
+          <div className="row wrap" style={{ gap: "0.6rem", alignItems: "flex-end" }}>
+            <input
+              aria-label={tp("challengeLabelTitle")}
+              className="grow"
+              data-creator-challenge-title
+              maxLength={rules.career_challenge_caps.career_challenge_title_max}
+              onChange={(e) => setChallengeTitle(e.target.value)}
+              placeholder={tp("challengePlaceholderTitle")}
+              value={challengeTitle}
+            />
+            <input
+              aria-label={tp("challengeLabelSummary")}
+              className="grow"
+              data-creator-challenge-summary
+              maxLength={rules.career_challenge_caps.career_challenge_summary_max}
+              onChange={(e) => setChallengeSummary(e.target.value)}
+              placeholder={tp("challengePlaceholderSummary")}
+              value={challengeSummary}
+            />
+            <select
+              aria-label={tp("challengeLabelObjective")}
+              className="mono"
+              data-creator-challenge-objective
+              onChange={(e) => setChallengeObjective(e.target.value)}
+              value={challengeObjective}
+            >
+              {Object.keys(rules.career_challenge_objective_kinds).map((kind) => (
+                <option key={kind} value={kind}>
+                  {kind}
+                </option>
+              ))}
+            </select>
+            <input
+              aria-label={tp("challengeLabelTarget")}
+              className="mono"
+              data-creator-challenge-target
+              maxLength={2}
+              min={rules.career_challenge_caps.career_challenge_target_min}
+              max={rules.career_challenge_caps.career_challenge_target_max}
+              onChange={(e) => setChallengeTarget(e.target.value)}
+              type="number"
+              value={challengeTarget}
+            />
+            <input
+              aria-label={tp("challengeLabelWindow")}
+              className="mono"
+              data-creator-challenge-window
+              maxLength={2}
+              min={rules.career_challenge_caps.career_challenge_window_min}
+              max={rules.career_challenge_caps.career_challenge_window_max}
+              onChange={(e) => setChallengeWindow(e.target.value)}
+              type="number"
+              value={challengeWindow}
+            />
+            <select
+              aria-label={tp("labelVisibility")}
+              className="mono"
+              data-creator-challenge-visibility
+              onChange={(e) => setChallengeVisibility(e.target.value)}
+              value={challengeVisibility}
+            >
+              {VISIBILITIES.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+            <button
+              className="btn btn--primary"
+              data-creator-publish-challenge
+              disabled={challengeCall.busy !== null || !challengeTitle.trim()}
+              onClick={() => void publishChallenge()}
+              type="button"
+            >
+              {tp("challengePublish")}
+            </button>
+          </div>
+          {/* The formula the door publishes for the chosen objective, quoted rather than paraphrased. */}
+          <p className="muted mono" data-creator-challenge-formula>
+            {rules.career_challenge_objective_kinds[challengeObjective]}
+          </p>
+          <p className="muted mono">{tp("challengeNote")}</p>
+
+          {challenges && challenges.items.length === 0 && <p className="muted">{tp("challengeNoChallenges")}</p>}
+
+          {challenges && challenges.items.length > 0 && (
+            <div className="world-tablewrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">{tp("thChallenge")}</th>
+                    <th scope="col">{tp("thObjective")}</th>
+                    <th scope="col" className="num">{tp("thWindow")}</th>
+                    <th scope="col">{tp("thVisibility")}</th>
+                    <th scope="col" className="num">{tp("thAttempts")}</th>
+                    <th scope="col">{tp("thEntered")}</th>
+                    <th scope="col">{tp("thPublished")}</th>
+                    <th scope="col">{t("open")}</th>
+                    <th scope="col">{tp("erase")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {challenges.items.map((challenge) => (
+                    <tr data-creator-challenge={challenge.id} key={challenge.id}>
+                      <td>
+                        <strong>{challenge.title}</strong>
+                        <div className="muted mono">{challenge.slug}</div>
+                      </td>
+                      <td className="mono">
+                        {challenge.objective.kind} {challenge.objective.target}
+                      </td>
+                      <td className="num">{challenge.window_rounds}</td>
+                      <td className="mono">{challenge.visibility}</td>
+                      <td className="num">{challenge.attempts}</td>
+                      <td>
+                        {challenge.entered ? <span className="badge badge--live">{t("yes")}</span> : <span className="badge badge--demo">{t("no")}</span>}
+                      </td>
+                      <td className="mono">{challenge.published_on}</td>
+                      <td>
+                        <button className="btn btn--sm" data-creator-challenge-open disabled={challengeCall.busy !== null} onClick={() => void openChallenge(challenge.id)} type="button">
+                          {t("open")}
+                        </button>
+                      </td>
+                      <td>
+                        <button className="btn btn--sm" data-creator-challenge-erase disabled={challengeCall.busy !== null} onClick={() => void eraseChallenge(challenge.id)} type="button">
+                          {tp("erase")}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <CallNote note={challengeCall.note} />
+        </div>
+      </Panel>
+
+      {selectedChallenge && (
+        <Panel
+          eyebrow={tp("challengeDetailEyebrow", {
+            title: selectedChallenge.title,
+            kind: selectedChallenge.objective.kind,
+            target: selectedChallenge.objective.target,
+            window: selectedChallenge.window_rounds,
+            attempts: selectedChallenge.figures.attempts,
+          })}
+          title={tp("challengeDetailTitle")}
+        >
+          <div className="stack-sm" data-creator-challenge-detail={selectedChallenge.id}>
+            <p className="muted">{selectedChallenge.summary || selectedChallenge.rule}</p>
+            <p className="muted mono">{selectedChallenge.objective.formula}</p>
+
+            {!selectedChallenge.attempt && careers.length === 0 && <p className="muted">{tp("challengeNoCareers")}</p>}
+
+            {!selectedChallenge.attempt && careers.length > 0 && (
+              <div className="row wrap" style={{ gap: "0.6rem", alignItems: "flex-end" }}>
+                <select
+                  aria-label={tp("challengeLabelCareer")}
+                  className="grow mono"
+                  data-creator-challenge-career
+                  onChange={(e) => setCareerChoice(e.target.value)}
+                  value={careerChoice}
+                >
+                  {careers.map((career) => (
+                    <option key={career.slug} value={career.slug}>
+                      {career.manager_name} · {career.club_name} · {career.status}
+                    </option>
+                  ))}
+                </select>
+                <button className="btn btn--primary" data-creator-challenge-enter disabled={attemptCall.busy !== null || !careerChoice} onClick={() => void enterChallenge()} type="button">
+                  {tp("challengeEnter")}
+                </button>
+              </div>
+            )}
+
+            {selectedChallenge.attempt ? (
+              <div className="stack-sm" data-creator-challenge-attempt={selectedChallenge.attempt.status}>
+                <p>
+                  <strong data-creator-challenge-status>
+                    {ATTEMPT_STATUS_KEY[selectedChallenge.attempt.status] ? tp(ATTEMPT_STATUS_KEY[selectedChallenge.attempt.status]) : selectedChallenge.attempt.status}
+                  </strong>
+                  {" · "}
+                  {tp("challengeVerdict", {
+                    actual: selectedChallenge.attempt.actual ?? "—",
+                    target: selectedChallenge.attempt.target,
+                    status: selectedChallenge.attempt.status,
+                  })}
+                </p>
+                <p className="muted mono">
+                  {selectedChallenge.attempt.career.stored
+                    ? `${selectedChallenge.attempt.career.slug} · ${selectedChallenge.attempt.career.manager_name ?? ""} · ${selectedChallenge.attempt.career.club_name ?? ""}`
+                    : tp("challengeCareerGone", { slug: selectedChallenge.attempt.career.slug })}
+                </p>
+                <p className="muted mono" data-creator-challenge-window-line>
+                  {tp("challengeWindowLine", {
+                    start: selectedChallenge.attempt.window.start_round,
+                    end: selectedChallenge.attempt.window.end_round,
+                    played: selectedChallenge.attempt.window.played ?? "—",
+                    remaining: selectedChallenge.attempt.window.remaining ?? "—",
+                    closed: selectedChallenge.attempt.window.closed ? tp("challengeWindowClosed") : tp("challengeWindowOpen"),
+                  })}
+                </p>
+                <p className="muted">{selectedChallenge.attempt.reason}</p>
+                <button className="btn" data-creator-challenge-withdraw disabled={attemptCall.busy !== null} onClick={() => void withdrawChallenge()} type="button">
+                  {tp("challengeWithdraw")}
+                </button>
+
+                <h3 style={{ margin: "0.4rem 0 0" }}>{tp("challengeRounds")}</h3>
+                {selectedChallenge.attempt.rounds.length === 0 ? (
+                  <p className="muted">{tp("challengeNoRounds")}</p>
+                ) : (
+                  <div className="world-tablewrap">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th scope="col" className="num">{tp("thRound")}</th>
+                          <th scope="col">{tp("thOutcome")}</th>
+                          <th scope="col">{tp("thScore")}</th>
+                          <th scope="col" className="num">{tp("thPoints")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedChallenge.attempt.rounds.map((round) => (
+                          <tr data-creator-challenge-round={round.round_index} key={round.round_index}>
+                            <td className="num">{round.round_index}</td>
+                            <td className="mono">{round.outcome}</td>
+                            <td className="mono">
+                              {round.club_goals}–{round.opponent_goals}
+                            </td>
+                            <td className="num">{round.points}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="muted" data-creator-challenge-no-attempt>
+                {tp("challengeNoAttempt")}
+              </p>
+            )}
+            <CallNote note={attemptCall.note} />
+          </div>
+        </Panel>
+      )}
+
       {selectedGuide && (
         <Panel
-          eyebrow={`${selectedGuide.title} · ${selectedGuide.section} · ${selectedGuide.visibility} · ${selectedGuide.citations} citation(s) · ${selectedGuide.moved} moved · ${selectedGuide.tokens} tokens`}
+          eyebrow={tp("guideEyebrow", {
+            title: selectedGuide.title,
+            section: selectedGuide.section,
+            visibility: selectedGuide.visibility,
+            citations: selectedGuide.citations,
+            moved: selectedGuide.moved,
+            tokens: selectedGuide.tokens,
+          })}
           title={tp("citationsTitle")}
         >
           <div className="stack-sm" data-creator-citations={selectedGuide.id}>

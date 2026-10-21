@@ -29,6 +29,22 @@ export type CreatorRulesView = {
   routes: { method: string; path: string; door: string }[];
   refusal_answers: Record<string, number>;
   entitlement_features: string[];
+  /** The career challenge's own vocabulary, published beside the other objects' (2026-10-22). */
+  career_challenge_caps: {
+    career_challenge_max: number;
+    career_challenge_title_max: number;
+    career_challenge_slug_max: number;
+    career_challenge_summary_max: number;
+    career_challenge_target_min: number;
+    career_challenge_target_max: number;
+    career_challenge_window_min: number;
+    career_challenge_window_max: number;
+  };
+  /** Each objective kind is a published formula; the panel quotes the formula rather than paraphrasing it. */
+  career_challenge_objective_kinds: Record<string, string>;
+  career_challenge_formulas: Record<string, string>;
+  career_challenge_counts: { career_challenges: number; career_attempts: number };
+  career_challenge_rule: string;
 };
 
 export type CreatorProfileView = {
@@ -162,4 +178,83 @@ export type ProgramIn = {
   summary?: string;
   visibility: string;
   steps: { drill: string; minutes: number; note?: string }[];
+};
+
+/** POST /creator/challenges — the author's rule: an objective, a target and a window of rounds. */
+export type CareerChallengeIn = {
+  title: string;
+  summary?: string;
+  visibility: string;
+  objective: string;
+  target: number;
+  window_rounds: number;
+};
+
+/** One entrant's run, judged on the read from their own career's fixture rows. */
+export type CareerAttemptView = {
+  id: string;
+  career: {
+    slug: string;
+    manager_name: string | null;
+    club_name: string | null;
+    status: string | null;
+    path: string | null;
+    stored: boolean;
+  };
+  start_round: number;
+  window: {
+    start_round: number;
+    end_round: number;
+    rounds: number;
+    played: number | null;
+    remaining: number | null;
+    closed: boolean;
+  };
+  status: string;
+  actual: number | null;
+  target: number;
+  target_met: boolean | null;
+  earned: boolean;
+  formula: string;
+  rounds: { round_index: number; outcome: string; club_goals: number; opponent_goals: number; points: number }[];
+  reason: string;
+};
+
+/** GET /creator/challenges/{id} — the rule every viewer sees, and only the viewer's own run. */
+export type CareerChallengeView = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  visibility: string;
+  published_on: string;
+  author: { id: string; display_name: string };
+  objective: { kind: string; target: number; formula: string };
+  window_rounds: number;
+  figures: { attempts: number };
+  attempt: CareerAttemptView | null;
+  formulas: Record<string, string>;
+  rule: string;
+};
+
+/** GET /creator/challenges — the shelf, each row joined to the viewer's own entry flag. */
+export type CareerChallengeShelfView = {
+  items: {
+    id: string;
+    slug: string;
+    title: string;
+    summary: string;
+    visibility: string;
+    published_on: string;
+    author: { id: string; display_name: string };
+    objective: { kind: string; target: number; formula: string };
+    window_rounds: number;
+    attempts: number;
+    entered: boolean;
+  }[];
+  total: number;
+  limit: number;
+  creator: string | null;
+  formulas: Record<string, string>;
+  rule: string;
 };

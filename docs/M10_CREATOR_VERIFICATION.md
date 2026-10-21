@@ -55,9 +55,10 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
 * Web tier: `tsc --noEmit` rc=0 and `NEXT_DIST_DIR=.next-ci npx next build` rc=0 on this tree (2026-09-28). The
   page is private (`currentUser()` → `redirect("/login?next=%2Fcreator")`), disallowed in robots and absent from
   the sitemap.
-* The walk: **not run for this tier**. Nothing under `apps/web/scripts/` names `/creator`, so `/creator` has no
-  browser evidence of its own — this is the one plane on which §36 stands behind §35, whose page shipped with its
-  own 38-check walk. Named as the next slice rather than implied away.
+* The walk: **not run for this tier** — as of this 2026-09-28 measurement. Nothing under `apps/web/scripts/`
+  named `/creator` then, so `/creator` had no browser evidence of its own. The walk landed on 2026-10-21 and was
+  extended for the career-challenge panel on 2026-10-22; its figures are in the walk paragraphs of the sections
+  below, and this bullet records only the 2026-09-28 plane.
 
 ## What §36 does not claim yet
 
@@ -415,6 +416,68 @@ together answer **157 tests / 0 failures / 0 errors / 0 skipped in 121.069s** (j
 clean on the six touched Python files; the contract is regenerated at **202 paths / 264
 operations**, the six new operations being its only delta; migration `0035` upgrades to head,
 passes `alembic check` silently and downgrades/upgrades cleanly on a scratch SQLite database.
+
+## The career challenge on the page (2026-10-22)
+
+`/creator` gained a fifth writing panel, and it is the first one whose subject is another
+account's play: the author publishes the rule, the shelf shows the runs it drew, and the panel
+that opens a challenge pins **this viewer's own** attempt.
+
+* **The vocabulary panel has readers for the challenge rule.** The eight caps, the four objective
+  kinds with the door's own formula for each, the two row counts and the limitation sentence are
+  printed from `career_challenge_caps` / `career_challenge_objective_kinds` /
+  `career_challenge_counts` / `career_challenge_rule` — no ceiling, kind or count is typed into
+  the page. The walk reads them out of the panel before it publishes anything, and the door's
+  own answer at that moment was `career_challenge_target_min/max = 1/99`,
+  `career_challenge_window_min/max = 1/38`, four objective kinds and `0` challenges / `0` runs.
+* **The shelf is this account's listing.** Each `tr[data-creator-challenge]` is a row of the
+  door's answer: title + slug, `kind target`, the window, the visibility, the attempt count,
+  whether this viewer entered, the publication date and Open/Erase. Erase asks first, exactly as
+  the program and guide rows do.
+* **Opening a row is a read, not a copy of the row.** `openChallenge` calls
+  `GET /creator/challenges/{id}` and paints the author's summary and the objective's formula, the
+  career picker built from `GET /careers` (this account's own careers), and — once a run exists —
+  the verdict: the translated status, `actual` vs `target`, the career address, the window line
+  (`start_round`–end, played, remaining, open/closed), the door's reason, the per-fixture table
+  the sum used, or the no-run marker with the picker.
+* **Each panel answers its own press.** Publish and erase run through one runner, enter and
+  withdraw through another; the note is painted in the submitting panel and names the door's code
+  when it refuses (`career_challenge_target`, `career_challenge_entered`, …). The walk reads the
+  note out of the challenge panel, not the profile panel's.
+* **The panel speaks all three catalogues.** The `creator` namespace went **99 → 148** keys per
+  catalogue (49 added: 48 for the challenge surface and the open guide's eyebrow, which the same
+  commit moves out of an inline literal). English uses ICU plurals; the two Chinese catalogues
+  keep the plain forms. `qa-i18n-literals.mjs` passes **8/8** over **3593** key calls, and
+  `qa-field-labels.mjs` **2/2** over 111 `.tsx` files.
+
+**The browser walk** (`apps/web/scripts/qa-creator.mjs`, extended 2026-10-22): **97 of 97 checks
+passed, exit 0** on a production build (`NEXT_DIST_DIR=.next-ci npm run build`, BUILD_ID
+`G3GPpkpU_Mv57zF3c0X6e` served on `127.0.0.1:3218`) against the API on `127.0.0.1:8741` over a
+fresh SQLite database (`.scratch/m10-challenge-walk.db`, migrated to `0035`). The 25 new checks:
+
+* before anything is published: the vocabulary panel prints the challenge caps/targets/windows
+  and the door's rule, and its two row counts are the door's own;
+* the page publishes an **unbeaten, target 3, window 2** challenge from its own controls, the
+  challenge panel paints the answer, and the door holds exactly that rule; the painted row reads
+  `eight rounds unbeaten / eight-rounds-unbeaten · unbeaten 3 · 2 · public · 0 · NO`;
+* a target of **0** is refused by name with the floor beside it (`422 career_challenge_target`: a
+  target is between 1 and 99 and this one is 0) and writes nothing;
+* the walk opens a career from the career door's own catalogue (`qa-challenge-manager-braa`),
+  opens the challenge from its row, sees the no-run marker and the picker, and enters; the run
+  panel reads *rounds 0–2 · 0 played · 2 remaining · window open* and the door agrees
+  (`in_progress`, `played 0`, `remaining 2`, `actual 0`, start round 0); the shelf's Entered cell
+  flips to yes;
+* a second account reads the public challenge with `attempt: null` and **one** attempt — the rule
+  and the count, never the entrant's career; a second entry is `409 career_challenge_entered` at
+  round 0; withdrawing leaves `attempt: null` and zero attempts; the withdrawn run can be entered
+  again; erasing the challenge answers 200, the row leaves the shelf, the address answers
+  `404 no_such_career_challenge`, and the career that played it still answers 200.
+
+Across the whole walk, **46 knocks** were made and **none answered 400 or 403**; every console line
+left behind is a 4xx the walk knocked for itself, with no 5xx and no page exception. Screenshots:
+`docs/screenshots/202610211719-creator-studio.png` (the challenge panel and its vocabulary rows in
+the studio), `…-creator-shelf-mobile.png`, `…-creator-studio-final.png`,
+`…-creator-stranger-studio.png`. `tsc --noEmit` is clean on the same tree.
 
 ## A finding this milestone corrected
 
