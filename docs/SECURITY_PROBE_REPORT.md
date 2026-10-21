@@ -28,25 +28,31 @@ The floors exist so an empty or half-read contract cannot pass as a clean probe;
 every run and they sit under the counts at HEAD. A door that lands in the contract without a credential
 check is knocked on the next run, which is the point of deriving the population instead of typing it.
 
-## 2. The two runs
+## 2. The three runs
 
-Both runs were made on 2026-10-22 (UTC timestamps in the reports) against a live uvicorn on
+All three runs were made on 2026-10-22 local time (the reports' timestamps are UTC, `2026-10-21T19:2x`)
+against a live uvicorn on
 `127.0.0.1:8751`, with `ENV=development` — the configuration in which the response cache and the rate
 limiter are live, since both return early under `ENV=test`. Each run used a fresh server process and a
-fresh SQLite database, because the limiter's window and the near cache live in process memory.
+fresh database, because the limiter's window and the near cache live in process memory.
 
-| | run A | run B |
-| --- | --- | --- |
-| server cache tier | degraded — the default Redis on 6379 refused the handshake, so the near tier served | **live** — the project's authenticated Redis on 63790 (`REDIS_URL`), connected |
-| CORS origin configured | `http://localhost:3000` (the probe's old default, set on that server) | the project's own `apps/api/.env` pair, `http://localhost:3210` |
-| database | `.scratch/m12-probe.db` | `.scratch/m12-probe-redis.db` |
-| report | `.scratch/security-probe.json` | `.scratch/security-probe-redis.json` |
-| result | **10 passed / 0 failed / 0 server errors**, 7.83 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 19.61 s, rc=0 |
+| | run A | run B | run C |
+| --- | --- | --- | --- |
+| server cache tier | degraded — the default Redis on 6379 refused the handshake, so the near tier served | **live** — the project's authenticated Redis on 63790 (`REDIS_URL`), connected | **live**, same tier and URL as run B |
+| CORS origin configured | `http://localhost:3000` (the probe's old default, set on that server) | the project's own `apps/api/.env` pair, `http://localhost:3210` | `http://localhost:3210` |
+| database | `.scratch/m12-probe.db` (SQLite) | `.scratch/m12-probe-redis.db` (SQLite) | `football_os_probe_m12` on the project's PostgreSQL (port 54321), migrated to head |
+| report | `.scratch/security-probe.json` | `.scratch/security-probe-redis.json` | `.scratch/security-probe-pg.json` |
+| result | **10 passed / 0 failed / 0 server errors**, 7.83 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 19.61 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 11.37 s, rc=0 |
 
-Run B is the one that matters for the cache claim: the shared tier was the source of the cross-account
-replay fixed at M12 Item 6, so the probe was repeated with that tier actually in the request path rather
-than with it degraded. `--allow-origin` now defaults to the project's own web origin (3210); run A had
-used the previous default, and that difference is why the two runs name different origins.
+Run C differs from run B in one input — `DATABASE_URL` — so the engine is the only candidate for any
+difference, and the ten checks read the same evidence: the same 212 doors answering 401, the same
+MISS→HIT pairs for both callers, the same 429 at the 11th login. The probe's claim is therefore not a
+SQLite-only claim, which matters because the deployed API runs on PostgreSQL.
+
+Runs B and C are the ones that matter for the cache claim: the shared tier was the source of the
+cross-account replay fixed at M12 Item 6, so the probe was repeated with that tier actually in the
+request path rather than with it degraded. `--allow-origin` now defaults to the project's own web origin (3210); run A had
+used the previous default, which is why run A names a different origin from runs B and C.
 
 **One red was observed before that green, and it is recorded because a battery whose failure path has
 never been seen has an unproven green.** The first attempt at run B used the probe's then-default
@@ -130,6 +136,16 @@ and, in a second shell:
 cd /d/足球项目
 .venv/Scripts/python.exe scripts/security_probe.py \
   --base http://127.0.0.1:8751 --report .scratch/security-probe.json
+```
+
+For run C, only the database differs — create it once, then point both `alembic` and the server at it:
+
+```bash
+docker exec football_os_db psql -U football -d postgres -c "CREATE DATABASE football_os_probe_m12"
+DB="postgresql+psycopg2://football:football@127.0.0.1:54321/football_os_probe_m12"
+DATABASE_URL="$DB" /d/足球项目/.venv/Scripts/python.exe -m alembic upgrade head   # from apps/api
+ENV=development DATABASE_URL="$DB" REDIS_URL="redis://:football@127.0.0.1:63790/0" \
+  /d/足球项目/.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8751
 ```
 
 Three properties of the invocation matter:

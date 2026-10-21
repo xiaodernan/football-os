@@ -717,13 +717,17 @@ every run. Ten checks, each one an HTTP exchange against a live uvicorn rather t
 | S8 | only a configured origin is echoed; a rogue one is never answered | configured 200 + ACAO + credentials; rogue 200 with **no** ACAO; rogue preflight 400 |
 | S9 | the refresh cookie's flags and path | httpOnly, `SameSite=strict`, `Path=/api/v1/auth`; `Secure` absent in development |
 
-Two runs, because the cache has two configurations worth attacking. Run A had the shared tier degraded
-(the default Redis on 6379 refused the handshake) and answered **10/10, 0 failed, 0 server errors** in
-7.83 s. Run B pointed `REDIS_URL` at the project's own authenticated Redis on 63790 — the tier that was
-the source of the cross-account replay Item 6 fixed — and answered the same **10/10, 0 failed, 0 server
-errors** in 19.61 s. S4 is constructed so the negative is not vacuous: the private `HIT` and the public
-`MISS → HIT` are read before "the stranger never received the owner's row", so the cache is proven to have
-been serving at the moment the isolation held.
+Three runs, because the cache has two configurations worth attacking and the deployment engine should
+not be a claim carried over from SQLite. Run A had the shared tier degraded (the default Redis on 6379
+refused the handshake) and answered **10/10, 0 failed, 0 server errors** in 7.83 s. Run B pointed
+`REDIS_URL` at the project's own authenticated Redis on 63790 — the tier that was the source of the
+cross-account replay Item 6 fixed — and answered the same **10/10, 0 failed, 0 server errors** in 19.61 s.
+Run C repeated run B's configuration against the project's PostgreSQL, the engine the deployed API runs
+on, and answered the same **10/10, 0 failed, 0 server errors** in 11.37 s; its report reads the same 212
+doors answering 401, the same private and public `MISS → HIT` pairs, and the same 429 at the 11th login.
+S4 is constructed so the negative is not vacuous: the private `HIT` and the public `MISS → HIT` are read
+before "the stranger never received the owner's row", so the cache is proven to have been serving at the
+moment the isolation held.
 
 The tier's own legs were re-measured over the same bytes, with the Redis cases now able to run:
 
