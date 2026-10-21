@@ -139,6 +139,48 @@ each against its own API on its own fresh SQLite database:
 | `qa-market.mjs` | 106 | 106/106 | **106/106**, exit 0 |
 | `visual-qa.mjs` | 297 | 141/143 | **297/297**, exit 0 |
 
+### The visual walk, re-run on 2026-10-22 (201/205, exit 1)
+
+The visual walk was run again on the build that carries the catalogue work — build `HRuYA1koLs7jIG6XG1qIS`
+(`.next-i18n13`), API on `:8773`, the web tier on `:3250`, its own fresh SQLite database, by the same
+`scripts/run-walks.mjs` harness that runs every other walk. It read **201 of 205** checks and exited **1**.
+
+What it proved:
+
+* **The sitemap probe is whole.** **1039 URLs probed, 1039 answered 200** — no timeouts, no 408s. The
+  retry the harness carries (`ef584d4`) has now cleared the class of failure that had killed four runs,
+  and the ten slow renders that read as ten broken routes are gone.
+* **Every page the walk visited renders the Chinese catalogue.** Each of the nine per-page checks —
+  the coach screen, the development screen, the training log, the academy index, the knowledge base,
+  the challenges catalogue, the scout screen — read the page again with the Chinese cookie and compared
+  it with `messages/zh.json`, and each also checked that the English copy is *gone* and that switching
+  back leaves the screen in English. All passed.
+* **The tier log carries no `MISSING_MESSAGE`**, so no page asked its catalogue for a key it does not
+  hold — which is what says the catalogue work broke nothing.
+
+What it did not prove, and why:
+
+* **The locale sweep did not run.** It is the last check before the walk's own completion check
+  (`visual-qa.mjs:3337`), and the **career section throws before it**: after clicking "Retire from this
+  club", the page still offers "Play the next round" enabled and carries no retired copy, so the walk's
+  next step — clicking "Take charge again" — finds no such button and the walk ends there. **201/205** is
+  therefore *not* the sweep's number: the sweep is still unobserved, and its blocker is now **named**,
+  which is the thing four dead runs did not have.
+* **Three other checks in the same section fail.** "The record the page prints is the arithmetic of the
+  round it just played" reads **Rounds 0 · W/D/L 0 / 0 / 0** on a season whose own fixture list shows
+  the rounds it played; "the season re-checks its copied score against the stored match report" finds
+  no consistency sentence; and "retiring the season stops the rounds and says so on the page" reports
+  **copy false · button found true · play disabled false**.
+
+These are **not** caused by the catalogue work, and the reason is a measurement rather than an argument:
+the copy gate resolves every read in the tier by the translator's **binding** and checks it against the
+namespace it is asked of — **3600** key calls, none missing — and the tier log carries no
+`MISSING_MESSAGE`. Every key the career components read (`career.playNextRound`,
+`career.retireFromClub`, `career.takeChargeAgain`, `career.onTheRecord`, the `careerDetail.*` row) is
+still in the catalogue. What the walk found is a **product** defect in the career tier: a season that
+has been retired still offers to play, and the record a season prints does not match the rounds it
+played. That is the next slice.
+
 Every one of them ran against the build that carries the arc, each on its own API port over its own fresh
 SQLite database, by `scripts/run-walks.mjs` — the harness that is in the repository now, and that reads the
 tiers' own log for `MISSING_MESSAGE` (an error raised on the server, where no browser console can see it).
