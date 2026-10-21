@@ -38,6 +38,29 @@ from app.models import (
 
 ACCOUNT_DELETE_PHRASE: Final = "DELETE"
 
+#: The account-linked rows the database **cannot** cascade, because their id columns carry no foreign key
+#: to `users.id` — and what happens to each of them: `deleted` removes the row, `anonymised` keeps the
+#: row and takes the account id out of it.
+#:
+#: The list is a contract, and a contract in a service rots the day a table is added. A census holds it
+#: against the schema (`tests/test_account_erasure_coverage.py`): every table that holds an account's row
+#: without a foreign key to `users.id` must be named here, with its fate, or the erasure would leave it
+#: behind and the inventory would not say so.
+NO_FOREIGN_KEY_ACCOUNT_ROWS: Final[dict[str, str]] = {
+    "audit_logs.user_id": "anonymised",
+    "jobs.user_id": "deleted",
+    "model_calls.user_id": "anonymised",
+    "knowledge_queries.user_id": "deleted",
+    "revoked_tokens.user_id": "deleted",
+    "usage_events.subject_id": "deleted",
+}
+
+#: The column names a table uses when it holds an account's id. A table with one of these and no
+#: foreign key to `users.id` cannot be cascaded, so the erasure has to say what happens to it.
+ACCOUNT_ID_COLUMN_NAMES: Final[frozenset[str]] = frozenset(
+    {"user_id", "owner_id", "author_id", "account_id", "created_by"}
+)
+
 
 class AccountDeletionBlocked(RuntimeError):
     """The account is the last owner of a tenant that still has other active members."""
@@ -81,7 +104,7 @@ def _user_foreign_key_counts(session: Session, user_id: str) -> tuple[dict[str, 
 
 def _no_foreign_key_counts(session: Session, user_id: str) -> dict[str, int]:
     """Account-linked rows the DB cannot cascade because their id columns have no foreign key."""
-    return {
+    counts = {
         "audit_logs.user_id": _count(session, AuditLog, AuditLog.user_id == user_id),
         "jobs.user_id": _count(session, Job, Job.user_id == user_id),
         "model_calls.user_id": _count(session, ModelCall, ModelCall.user_id == user_id),
@@ -89,6 +112,16 @@ def _no_foreign_key_counts(session: Session, user_id: str) -> dict[str, int]:
         "revoked_tokens.user_id": _count(session, RevokedToken, RevokedToken.user_id == user_id),
         "usage_events.subject_id": _count(session, UsageEvent, UsageEvent.subject_kind == "user", UsageEvent.subject_id == user_id),
     }
+    # The contract above and the rows below are one list. If they drift, the erasure would leave a row
+    # behind and the inventory would not have said so.
+    missing = set(NO_FOREIGN_KEY_ACCOUNT_ROWS) - set(counts)
+    unexpected = set(counts) - set(NO_FOREIGN_KEY_ACCOUNT_ROWS)
+    if missing or unexpected:
+        raise RuntimeError(
+            "the account erasure's table list has drifted from its contract: "
+            f"missing {sorted(missing)}, unexpected {sorted(unexpected)}"
+        )
+    return counts
 
 
 def _organizations(session: Session, user: User) -> list[Organization]:
