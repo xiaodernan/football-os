@@ -69,9 +69,9 @@ export default async function CreatorPage() {
         <div className="stack-sm">
           <KeyValueGrid
             rows={[
-              [t("rowGuideCaps"), `${data.caps.guide_max} per creator · ${data.caps.guide_title_max}-character titles · ${data.caps.guide_summary_max}-character summaries · ${data.caps.guide_slug_max}-character slugs`],
-              [t("rowCitationCaps"), `${data.caps.citation_max} per guide · ${data.caps.citation_note_max}-character notes`],
-              [t("rowProfileCaps"), `${data.caps.profile_headline_max}-character headlines · ${data.caps.profile_bio_max}-character biographies`],
+              [t("rowGuideCaps"), t("guideCapsValue", { guides: data.caps.guide_max, titles: data.caps.guide_title_max, summaries: data.caps.guide_summary_max, slugs: data.caps.guide_slug_max })],
+              [t("rowCitationCaps"), t("citationCapsValue", { citations: data.caps.citation_max, notes: data.caps.citation_note_max })],
+              [t("rowProfileCaps"), t("profileCapsValue", { headlines: data.caps.profile_headline_max, biographies: data.caps.profile_bio_max })],
               [t("rowSections"), data.caps.sections.join(" · ")],
               [t("rowVisibilities"), data.caps.visibilities.join(" · ")],
               [t("rowVisibilityRule"), data.caps.visibility_rule],

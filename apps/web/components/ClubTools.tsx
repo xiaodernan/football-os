@@ -20,6 +20,7 @@ type Note = { text: string; figures: string[]; refused: boolean; action: string 
  */
 export function useClubCall() {
   const router = useRouter();
+  const tc = useTranslations("club");
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<Note | null>(null);
 
@@ -29,10 +30,10 @@ export function useClubCall() {
     const result = await browserFetch<Record<string, unknown>>(path, { method, body: init.body });
     setBusy(null);
     if (!result.ok) {
-      setNote({ action, refused: true, text: `${method} ${path} was refused with ${result.status}`, figures: [`${result.error.code}: ${result.error.message}`, ...refusalFigures(result.error.details)] });
+      setNote({ action, refused: true, text: tc("refusedWith", { method, path, status: result.status }), figures: [`${result.error.code}: ${result.error.message}`, ...refusalFigures(result.error.details)] });
       return null;
     }
-    setNote({ action, refused: false, text: `${method} ${path} answered ${result.status}. Everything below was re-read from the server after it.`, figures: [] });
+    setNote({ action, refused: false, text: tc("answeredWith", { method, path, status: result.status }), figures: [] });
     router.refresh();
     return result.data;
   }

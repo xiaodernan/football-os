@@ -80,7 +80,7 @@ export default async function GraphNeighborhoodPage({ params }: { params: Promis
         data={{
           "@context": "https://schema.org",
           "@type": "ItemList",
-          name: `Neighbourhood of ${kind}:${slug}`,
+          name: t("neighbourhoodName", { kind, slug }),
           itemListElement: data.edges.map((edge, idx) => ({
             "@type": "ListItem",
             position: idx + 1,

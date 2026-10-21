@@ -211,7 +211,7 @@ export default async function CareerDetailPage({ params }: Props) {
           <KeyValueGrid
             rows={[
               [t("rowRoundsTraced"), `${carry.rounds_played} / ${carry.rounds_traced}`],
-              [t("rowTraceRows"), `${carry.appearances} for ${carry.players_traced} player(s)`],
+              [t("rowTraceRows"), t("traceRowsValue", { appearances: carry.appearances, players: carry.players_traced })],
               [
                 t("rowLoadWindow"),
                 <span key="win">

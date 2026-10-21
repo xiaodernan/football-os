@@ -200,7 +200,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
                       <th scope="col">{t("foot")}</th>
                       <th scope="col" className="num">{t("overall")}</th>
                       <th scope="col" className="num">{t("potential")}</th>
-                      <th scope="col" className="num">{t("headroom")}</th>
+                      <th scope="col" className="num">{t("headroomColumn")}</th>
                       <th scope="col" className="num">{t("askingFee")}</th>
                       <th scope="col">{t("answers")}</th>
                       <th scope="col">{t("report")}</th>
@@ -341,7 +341,7 @@ function CandidateRow({
         </button>
       </td>
       <td>
-        <button aria-label={`Select ${candidate.name} for comparison`} className={slot >= 0 ? "btn btn--sm btn--primary" : "btn btn--sm"} data-slot={candidate.slug} disabled={busy !== null} onClick={onCompare} type="button">
+        <button aria-label={t("selectForComparison", { name: candidate.name })} className={slot >= 0 ? "btn btn--sm btn--primary" : "btn btn--sm"} data-slot={candidate.slug} disabled={busy !== null} onClick={onCompare} type="button">
           {slot === 0 ? "A" : slot === 1 ? "B" : "vs"}
         </button>
       </td>

@@ -26,6 +26,7 @@ type Scopes = { scopes: string[]; default_granted: string[]; rule: string };
  */
 function useAcademyCall() {
   const router = useRouter();
+  const t = useTranslations("academy");
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<Note | null>(null);
 
@@ -35,10 +36,10 @@ function useAcademyCall() {
     const result = await browserFetch<Record<string, unknown>>(path, { body: init.body, method });
     setBusy(null);
     if (!result.ok) {
-      setNote({ action, figures: [`${result.error.code}: ${result.error.message}`, ...refusalFigures(result.error.details)], refused: true, text: `${method} ${path} was refused with ${result.status}` });
+      setNote({ action, figures: [`${result.error.code}: ${result.error.message}`, ...refusalFigures(result.error.details)], refused: true, text: t("refusedWith", { method, path, status: result.status }) });
       return null;
     }
-    setNote({ action, figures: [], refused: false, text: `${method} ${path} answered ${result.status}. The tables on this page were re-read from the server afterwards.` });
+    setNote({ action, figures: [], refused: false, text: t("answeredWith", { method, path, status: result.status }) });
     router.refresh();
     return result.data;
   }

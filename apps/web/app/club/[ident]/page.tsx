@@ -412,7 +412,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
               </p>
             )}
             <p className="muted" data-session-day={sessions.data.today} style={{ fontSize: "0.86rem", margin: 0 }}>
-              {t("sessionDateNote", { today: sessions.data.today, guessed: today })} {sessions.data.today_rule}
+              {t("sessionDateNote", { today: sessions.data.today, guessed: today, rule: sessions.data.today_rule })}
             </p>
             <EraseNotes id="session-erase-wall">
             <div className="world-tablewrap">

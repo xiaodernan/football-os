@@ -113,8 +113,8 @@ export default async function ScoutPage() {
               [t("rowStatedFields"), data.fields.join(" · ")],
               [t("rowSortings"), data.sorts.join(" · ")],
               [t("rowFeet"), data.feet.join(" · ")],
-              [t("rowSearchLimits"), `${data.search.default_limit} by default, ${data.search.max_limit} at most`],
-              [t("rowConnectorsIgnored"), `${data.connector_count} phrases (articles, fillers and conjunctions in six languages)`],
+              [t("rowSearchLimits"), t("searchLimitsValue", { default: data.search.default_limit, max: data.search.max_limit })],
+              [t("rowConnectorsIgnored"), t("connectorsIgnoredValue", { count: data.connector_count })],
             ]}
           />
           <ul className="stack-sm" style={{ listStyle: "none", padding: 0 }}>
@@ -137,7 +137,7 @@ export default async function ScoutPage() {
         <div className="stack-sm">
           <KeyValueGrid
             rows={[
-              [t("rowShortlistCaps"), `${data.shortlists.max_shortlists_per_user} lists per account · ${data.shortlists.max_items_per_shortlist} players each · ${data.shortlists.name_max}-character names · ${data.shortlists.note_max}-character notes`],
+              [t("rowShortlistCaps"), t("shortlistCapsValue", { lists: data.shortlists.max_shortlists_per_user, players: data.shortlists.max_items_per_shortlist, names: data.shortlists.name_max, notes: data.shortlists.note_max })],
               [t("rowListStores"), data.shortlists.stored],
               [t("rowListDoesNotStore"), data.shortlists.not_stored],
               [t("rowWhyNot"), data.shortlists.why_not],

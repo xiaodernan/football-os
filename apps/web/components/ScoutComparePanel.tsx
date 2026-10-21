@@ -9,6 +9,9 @@ import type { CompareDimension, CompareSide, CompareView, Measure, TotalsCheck }
 /** §27 asks for ten dimensions in this order; the payload prints them in this order, and so does the page. */
 const OPEN_BY_DEFAULT = new Set(["technical", "age", "context"]);
 
+/** A translator the page hands to a helper, so a helper can read a key without calling a hook itself. */
+type Translator = (key: string, values?: Record<string, string | number | Date>) => string;
+
 /**
  * The payload names the two sides `left` and `right`; this page has already labelled them A and B, so a badge
  * that said `LEFT` above a column headed `A` would be a second vocabulary for the same two players. The other
@@ -17,7 +20,7 @@ const OPEN_BY_DEFAULT = new Set(["technical", "age", "context"]);
  * The two labels the page invents are the catalogue's, and the helper takes the translator rather than
  * calling one: a hook cannot be called from a plain function.
  */
-function leaderText(leader: string, ts: (key: string) => string): string {
+function leaderText(leader: string, ts: Translator): string {
   if (leader === "left") return ts("leaderLeftAhead");
   if (leader === "right") return ts("leaderRightAhead");
   return (LEADER_LABELS[leader] ?? leader).toUpperCase();
@@ -167,10 +170,10 @@ function DimensionBlock({ dimension }: { dimension: CompareDimension }) {
   );
 }
 
-function MeasureRow({ measure, ts }: { measure: Measure; ts: (key: string) => string }) {
+function MeasureRow({ measure, ts }: { measure: Measure; ts: Translator }) {
   const gap: string[] = [];
-  if (measure.missing?.length) gap.push(`missing on ${measure.missing.join(" + ")}`);
-  if (measure.unobserved?.length) gap.push(`no lines for ${measure.unobserved.join(" + ")}`);
+  if (measure.missing?.length) gap.push(ts("missingOn", { keys: measure.missing.join(" + ") }));
+  if (measure.unobserved?.length) gap.push(ts("noLinesFor", { keys: measure.unobserved.join(" + ") }));
   return (
     <tr data-measure={measure.key}>
       <td className="mono">

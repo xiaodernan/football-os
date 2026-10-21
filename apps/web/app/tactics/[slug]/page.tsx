@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return pageMetadata({
     title: system ? `${system.name} — tactical system` : slug.replace(/-/g, " "),
     description: system
-      ? `${system.idea} In possession: ${width?.toFixed(1)} m wide with ${behind?.toFixed(1)} m behind the back line; out of possession the same eleven players form a ${system.block_depth} m block with its top at ${system.press_line_y} m.`
+      ? t("metaDescriptionSystem", { idea: system.idea, width: width?.toFixed(1) ?? "", behind: behind?.toFixed(1) ?? "", depth: system.block_depth, top: system.press_line_y })
       : t("metaDescriptionFallback"),
     path: `/tactics/${slug}`,
   });
@@ -123,7 +123,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
           "@context": "https://schema.org",
           "@type": "Article",
           headline: system.name,
-          description: `${system.idea} Measured: ${system.metrics_in.map((metric) => `${metric.label.toLowerCase()} ${metric.value.toFixed(1)} ${metric.unit}`).join(", ")} in possession.`,
+          description: t("jsonLdDescription", { idea: system.idea, metrics: system.metrics_in.map((metric) => `${metric.label.toLowerCase()} ${metric.value.toFixed(1)} ${metric.unit}`).join(", ") }),
           url: absolute(system.path),
           mainEntityOfPage: { "@type": "WebPage", "@id": absolute(system.path) },
           author: { "@type": "Organization", name: "FOOTBALL OS" },

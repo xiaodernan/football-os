@@ -270,7 +270,7 @@ export default async function WorldIndexPage() {
                   <div className="world-fixture__teams">
                     <EntityLink href={player.path} label={player.name} />
                     <span className="muted" style={{ fontWeight: 400 }}>
-                      <EntityLink href={player.club?.path ?? null} label={player.club?.name} fallback="no club" />
+                      <EntityLink href={player.club?.path ?? null} label={player.club?.name} fallback={t("noClub")} />
                     </span>
                   </div>
                   <div className="world-fixture__score">

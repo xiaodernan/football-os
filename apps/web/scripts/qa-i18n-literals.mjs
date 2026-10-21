@@ -173,6 +173,134 @@ const isEnglishCopy = (value) => {
   return !words.every((word) => TECHNICAL.has(word));
 };
 
+/**
+ * Whether a string literal is a *token* rather than copy.
+ *
+ * A token is a name, a class, a field the tier owns, a technical value — something the reader never
+ * reads as a sentence. Every rule here is structural rather than a list of words, so a new class name
+ * or a new API field does not have to be added to an allowlist to keep the gate quiet:
+ *
+ *  * an import or export specifier — a module's name;
+ *  * a naming attribute, a class name (written in an expression or held in a variable), a style — a
+ *    name, not a sentence;
+ *  * a comparison operand — the tier's own enum value, which the page quotes rather than writes;
+ *  * a schema.org type or field, and a schema.org vocabulary value — the language of a JSON-LD block;
+ *  * a snake_case property — a field the API owns, printed as itself;
+ *  * a language tag, the framework's own directive, a CSS custom property, a colour, a measurement — tokens;
+ *  * a locale's own name — the switcher writes "English" and "简体中文" on purpose;
+ *  * a marker that matches the tier's own wording — `line.startsWith("not in this build")` matches the
+ *    API's sentence rather than writing one.
+ */
+const literalIsToken = (node, parent) => {
+  const literal = node.text.trim();
+  if (ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent)) return true;
+  if (ts.isJsxExpression(parent) && parent.expression === node) return true;
+  if (ts.isJsxAttribute(parent) && parent.initializer === node) {
+    const name = parent.name.getText();
+    if (NAMING_ATTRIBUTES.has(name) || name === "className" || name === "style") return true;
+    // A `data-` attribute is a hook the page and its tests read, not copy a reader sees.
+    if (name.startsWith("data-")) return true;
+  }
+  const comparison =
+    ts.isBinaryExpression(parent) &&
+    (parent.operatorToken.kind === ts.SyntaxKind.EqualsEqualsToken ||
+      parent.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken ||
+      parent.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken);
+  if (comparison) return true;
+  const schemaType =
+    ts.isPropertyAssignment(parent) &&
+    ((ts.isIdentifier(parent.name) && parent.name.text === "type") ||
+      (ts.isStringLiteral(parent.name) && parent.name.text === "@type"));
+  if (schemaType) return true;
+  if (ts.isPropertyAssignment(parent) && ts.isStringLiteral(parent.name) && /^[a-z]+(-[a-z]+)+$/.test(parent.name.text)) return true;
+  if (ts.isPropertyAssignment(parent) && ts.isIdentifier(parent.name) && SCHEMA_VOCABULARY.has(parent.name.text)) return true;
+  if (
+    ts.isPropertyAssignment(parent) &&
+    ((ts.isIdentifier(parent.name) && isApiFieldName(parent.name.text)) ||
+      (ts.isStringLiteral(parent.name) && isApiFieldName(parent.name.text)))
+  ) {
+    return true;
+  }
+  if (ts.isPropertyAssignment(parent) && ts.isIdentifier(parent.name) && /^(en|zh)(-TW)?$/.test(parent.name.text)) return true;
+  const matchMarker =
+    ts.isCallExpression(parent) &&
+    ts.isPropertyAccessExpression(parent.expression) &&
+    ["startsWith", "endsWith", "includes", "match"].includes(parent.expression.name.text);
+  if (matchMarker) return true;
+  if (literal === "use client" || literal.startsWith("var(--")) return true;
+  if (/^url\(/.test(literal)) return true;
+  if (/^[a-z]{2}(-[A-Za-z0-9]{2,8})+$/.test(literal)) return true;
+  if (/^#[0-9a-f]{3,8}$/i.test(literal)) return true;
+  if (/^\d+(\.\d+)?\s?[A-Za-z%]+$/.test(literal)) return true;
+  for (let up = parent; up; up = up.parent) {
+    if (ts.isJsxAttribute(up) && (up.name.getText() === "className" || up.name.getText() === "style")) return true;
+    if (ts.isVariableDeclaration(up) && ts.isIdentifier(up.name) && /classname$/i.test(up.name.text)) return true;
+    if (ts.isFunctionLike(up)) break;
+  }
+  return false;
+};
+
+/**
+ * Whether a template is a token rather than a sentence: it sits in a class name, a style or a naming
+ * attribute, or every one of its parts is technical — a query parameter, a date format, a unit.
+ */
+const templateIsToken = (node, parts) => {
+  for (let up = node.parent; up; up = up.parent) {
+    if (ts.isJsxAttribute(up)) {
+      const name = up.name.getText();
+      if (NAMING_ATTRIBUTES.has(name) || name === "className" || name === "style") return true;
+    }
+    if (ts.isVariableDeclaration(up) && ts.isIdentifier(up.name) && /classname$/i.test(up.name.text)) return true;
+    if (ts.isFunctionLike(up)) break;
+  }
+  return parts
+    .map((part) => part.text.trim())
+    .filter((text) => text.length > 0)
+    .every((text) => {
+      const bare = text.replace(/^[;,·\s]+/, "");
+      return (
+        /^[?&#]?[A-Za-z_][A-Za-z0-9_]*=/.test(bare) || // a name=value pair: a query parameter, a cookie
+        /^\//.test(bare) || // a path
+        /^url\(/.test(bare) || // an SVG reference
+        /^\d{4}-\d{2}-\d{2}T/.test(bare) || // a date format
+        /^T\d{2}:\d{2}:\d{2}Z?$/.test(bare) || // a time format
+        /^\d+(\.\d+)?\s?[A-Za-z%]+$/.test(bare) || // a measurement
+        /^[KMGT]i?B$/.test(bare) || // a byte unit
+        /^[a-z][A-Za-z0-9_]*:/.test(bare) // a field name
+      );
+    });
+};
+
+/**
+ * The placeholders a message needs.
+ *
+ * ICU's own syntax is read the way next-intl reads it: `{name}` is a placeholder, `{name, plural, one
+ * {…} other {…}}` is a placeholder whose *branches* are the literal words the reader sees — "reply" and
+ * "replies" in `{comments, plural, one {reply} other {replies}}` are text, not values. A parser that
+ * took the branch contents for placeholders would report a page as broken when it is not.
+ */
+const messagePlaceholders = (message) => {
+  const found = [];
+  let index = 0;
+  while (index < message.length) {
+    const open = message.indexOf("{", index);
+    if (open === -1) break;
+    let depth = 1;
+    let close = open + 1;
+    while (close < message.length && depth > 0) {
+      if (message[close] === "{") depth += 1;
+      else if (message[close] === "}") depth -= 1;
+      close += 1;
+    }
+    const inner = message.slice(open + 1, close - 1);
+    const comma = inner.indexOf(",");
+    const name = (comma === -1 ? inner : inner.slice(0, comma)).trim();
+    if (/^\w+$/.test(name)) found.push(name);
+    index = close;
+  }
+  return [...new Set(found)];
+};
+
 const sites = [];
 /**
  * The fourth shape: a string literal that reaches the reader from somewhere the three shapes above do
@@ -186,6 +314,10 @@ const sites = [];
 const literalSites = [];
 /** Per file: the namespaces it binds and the keys it asks for. */
 const keyCalls = new Map();
+/** Which namespace each translator variable reads — `const tb = useTranslations("tactics")`. */
+const translatorNamespaces = new Map();
+/** Key reads that left a placeholder of the message unsupplied. */
+const missingValues = [];
 let parsed = 0;
 let diagnostics = 0;
 
@@ -223,12 +355,24 @@ for (const file of files) {
   const rel = relOf(file);
   const position = (node) => source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
 
+  translatorNamespaces.clear();
   const namespaces = new Set();
   const keys = new Set();
   /** The literal nodes the three shapes already counted, so the fourth shape does not count them twice. */
   const counted = new Set();
 
   const visit = (node) => {
+    // Which namespace a translator variable reads: `const tb = useTranslations("tactics")`.
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+      const initializer = ts.isAwaitExpression(node.initializer) ? node.initializer.expression : node.initializer;
+      if (ts.isCallExpression(initializer) && ts.isIdentifier(initializer.expression)) {
+        const callee = initializer.expression.text;
+        const first = initializer.arguments[0];
+        if ((callee === "useTranslations" || callee === "getTranslations") && ts.isStringLiteral(first)) {
+          translatorNamespaces.set(node.name.text, first.text);
+        }
+      }
+    }
     if (ts.isCallExpression(node) && node.arguments.length > 0) {
       const first = node.arguments[0];
       /**
@@ -248,6 +392,34 @@ for (const file of files) {
         namespaces.add(first.text);
       } else if (callee && /^t[a-z]{0,2}$/.test(callee) && ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
         keys.add(first.text);
+        /**
+         * Every placeholder a message needs must be supplied with it. A key read without its values is
+         * a message printed with its own placeholders in it — `{default} by default, {max} at most` in a
+         * column that should say "Search limits" — and next-intl's own answer to a missing value is a
+         * page that throws where it should read.
+         */
+        const namespace = translatorNamespaces.get(callee);
+        const message = namespace ? CATALOGUE[namespace]?.[first.text] : undefined;
+        if (typeof message === "string") {
+          const needed = messagePlaceholders(message);
+          if (needed.length > 0) {
+            const supplied = new Set();
+            const values = node.arguments[1];
+            // A call whose values are not a literal object (a spread, a variable) is not judged here: the
+            // gate cannot see what it passes, and a guess would be a false red.
+            if (values && ts.isObjectLiteralExpression(values) && values.properties.every((property) => ts.isPropertyAssignment(property))) {
+              for (const property of values.properties) {
+                if (ts.isIdentifier(property.name)) supplied.add(property.name.text);
+              }
+              const missing = needed.filter((name) => !supplied.has(name));
+              if (missing.length > 0) {
+                missingValues.push({ file: rel, line: position(node), key: first.text, namespace, missing });
+              }
+            } else if (!values) {
+              missingValues.push({ file: rel, line: position(node), key: first.text, namespace, missing: needed });
+            }
+          }
+        }
       }
     }
     if (ts.isJsxText(node)) {
@@ -282,83 +454,25 @@ for (const file of files) {
      *  * a snake_case property — a field the API owns, printed as itself;
      *  * a language tag, the framework's own directive and a CSS custom property — tokens.
      */
+    /**
+     * A template is **one** site, not one per part: a sentence assembled from a template's pieces is one
+     * sentence, and it belongs in one catalogue key with placeholders rather than five fragments.
+     */
+    if (ts.isTemplateExpression(node)) {
+      const parts = [node.head, ...node.templateSpans.map((span) => span.literal)].filter(Boolean);
+      const copyParts = parts.filter((part) => isEnglishCopy(part.text));
+      if (copyParts.length > 0 && !templateIsToken(node, parts)) {
+        literalSites.push({
+          file: rel,
+          line: position(node),
+          shape: "template",
+          copy: parts.map((part) => part.text.trim()).filter(Boolean).join(" ").slice(0, 120),
+        });
+      }
+    }
     if (ts.isStringLiteral(node) && !counted.has(node.getStart(source))) {
-      const parent = node.parent;
-      const inImport = ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent);
-      const inJsxAttribute = ts.isJsxAttribute(parent) && parent.initializer === node;
-      const inJsxChild = ts.isJsxExpression(parent) && parent.expression === node;
-      const namingAttribute = ts.isJsxAttribute(parent) && NAMING_ATTRIBUTES.has(parent.name.getText());
-      const comparison =
-        ts.isBinaryExpression(parent) &&
-        (parent.operatorToken.kind === ts.SyntaxKind.EqualsEqualsToken ||
-          parent.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken ||
-          parent.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken);
-      const schemaType =
-        ts.isPropertyAssignment(parent) &&
-        ((ts.isIdentifier(parent.name) && parent.name.text === "type") ||
-          (ts.isStringLiteral(parent.name) && parent.name.text === "@type"));
-      const schemaField =
-        ts.isPropertyAssignment(parent) &&
-        ts.isStringLiteral(parent.name) &&
-        /^[a-z]+(-[a-z]+)+$/.test(parent.name.text);
-      const apiField =
-        ts.isPropertyAssignment(parent) &&
-        ((ts.isIdentifier(parent.name) && isApiFieldName(parent.name.text)) ||
-          (ts.isStringLiteral(parent.name) && isApiFieldName(parent.name.text)));
-      const literal = node.text.trim();
-      const token = literal === "use client" || literal.startsWith("var(--");
-      // A language tag names a locale: "en-GB" and "zh-TW" are not sentences.
-      const languageTag = /^[a-z]{2}(-[A-Za-z0-9]{2,8})+$/.test(literal);
-      // A colour, a measurement, a style value: a value the page prints as itself.
-      const colour = /^#[0-9a-f]{3,8}$/i.test(literal);
-      const measurement = /^\d+(\.\d+)?\s?[A-Za-z%]+$/.test(literal);
-      let inStyle = false;
-      for (let up = parent; up; up = up.parent) {
-        if (ts.isJsxAttribute(up) && up.name.getText() === "style") {
-          inStyle = true;
-          break;
-        }
-        if (ts.isFunctionLike(up)) break;
-      }
-      // A locale's own name, written in that language: the switcher shows "English" and "简体中文" on
-      // purpose, so a reader who cannot read the page can still find their own language in the list.
-      const localeName =
-        ts.isPropertyAssignment(parent) &&
-        ts.isIdentifier(parent.name) &&
-        /^(en|zh)(-TW)?$/.test(parent.name.text);
-      /**
-       * A marker against the tier's own wording: `line.startsWith("not in this build")` matches the API's
-       * sentence rather than writing one. The wording it matches belongs to the API, and the API publishes
-       * it; the page quoting it is not the page writing it.
-       */
-      const matchMarker =
-        ts.isCallExpression(parent) &&
-        ts.isPropertyAccessExpression(parent.expression) &&
-        ["startsWith", "endsWith", "includes", "match"].includes(parent.expression.name.text);
-      // A schema.org vocabulary value: the sport a competition belongs to, not a sentence.
-      const schemaVocabulary =
-        ts.isPropertyAssignment(parent) &&
-        ts.isIdentifier(parent.name) &&
-        SCHEMA_VOCABULARY.has(parent.name.text);
-      let inClassName = false;
-      for (let up = parent; up; up = up.parent) {
-        if (ts.isJsxAttribute(up) && up.name.getText() === "className") {
-          inClassName = true;
-          break;
-        }
-        if (ts.isVariableDeclaration(up) && ts.isIdentifier(up.name) && /classname$/i.test(up.name.text)) {
-          inClassName = true;
-          break;
-        }
-        if (ts.isFunctionLike(up)) break;
-      }
-      if (
-        !inImport && !inJsxAttribute && !inJsxChild && !namingAttribute && !comparison &&
-        !schemaType && !schemaField && !apiField && !token && !languageTag && !inClassName &&
-        !inStyle && !colour && !measurement && !localeName && !schemaVocabulary && !matchMarker &&
-        isEnglishCopy(node.text)
-      ) {
-        literalSites.push({ file: rel, line: position(node), shape: "literal", copy: literal });
+      if (isEnglishCopy(node.text) && !literalIsToken(node, node.parent)) {
+        literalSites.push({ file: rel, line: position(node), shape: "literal", copy: node.text.trim() });
       }
     }
     ts.forEachChild(node, visit);
@@ -424,6 +538,20 @@ check(
     : `${missingKeys.length} key(s) the catalogue does not hold`,
 );
 
+/**
+ * A key read without the values its message needs prints the placeholders themselves, and next-intl
+ * answers a missing value with an error rather than a sentence. The scout's search-limits row is the
+ * case this check was written for: the label was wired to a key that holds a *pattern*, so the column
+ * read `{default} by default, {max} at most` where it should read "Search limits".
+ */
+check(
+  "every placeholder a key needs is supplied with it",
+  missingValues.length === 0,
+  missingValues.length === 0
+    ? `${[...keyCalls.values()].reduce((total, entry) => total + entry.keys.size, 0)} key call(s) checked for their values`
+    : `${missingValues.length} key read(s) left a placeholder unsupplied`,
+);
+
 for (const [file, count] of [...byFile.entries()].sort((a, b) => (b[1] - a[1]) || (a[0] < b[0] ? -1 : 1))) {
   console.log(`      ${String(count).padStart(3)}  ${file}`);
 }
@@ -449,6 +577,13 @@ if (failed.length) {
     console.log("Every key below is asked for and not in the catalogue. next-intl throws MISSING_MESSAGE for it.");
     for (const missing of missingKeys) {
       console.log(`  ${missing.file}: ${missing.namespaces.join("/")} has no key ${JSON.stringify(missing.key)}`);
+    }
+  }
+  if (missingValues.length) {
+    console.log("");
+    console.log("Every key below was read without the values its message needs. The page prints the placeholders.");
+    for (const missing of missingValues) {
+      console.log(`  ${missing.file}:${missing.line}: ${missing.namespace}.${missing.key} is missing ${missing.missing.join(", ")}`);
     }
   }
   process.exitCode = 1;

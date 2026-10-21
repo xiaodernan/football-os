@@ -90,7 +90,7 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
             "@context": "https://schema.org",
             "@type": "Article",
             headline: doc.title,
-            description: `Project-authored ${doc.category.replace(/_/g, " ")} document with ${doc.chunk_count} indexed passages.`,
+            description: tk("jsonLdDescription", { category: doc.category.replace(/_/g, " "), passages: doc.chunk_count }),
             url: absolute(`/knowledge/${doc.slug}`),
             mainEntityOfPage: { "@type": "WebPage", "@id": absolute(`/knowledge/${doc.slug}`) },
             author: { "@type": "Organization", name: SITE_NAME },

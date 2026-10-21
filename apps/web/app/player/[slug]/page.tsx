@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return pageMetadata({
     title: `${name}${club ? ` — ${club}` : ""}`,
     description: player
-      ? `${player.position} · ${player.overall} overall · ${player.goals} goals and ${player.assists} assists in ${player.minutes} minutes. ${player.summary.slice(0, 120)}`
+      ? tp("metaDescriptionPlayer", { position: player.position, overall: player.overall, goals: player.goals, assists: player.assists, minutes: player.minutes, summary: player.summary.slice(0, 120) })
       : tp("metaDescriptionFallback"),
     path: `/player/${slug}`,
   });

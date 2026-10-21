@@ -219,7 +219,7 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
           >
             {radarValues.length >= 3 ? (
               <div className="pg-radar">
-                <AttributeRadar values={radarValues} label={`Attribute profile for ${overview.player.name}`} />
+                <AttributeRadar values={radarValues} label={t("attributeProfileFor", { name: overview.player.name })} />
                 <div className="pg-radar__list">
                   {radarValues.map((item) => (
                     <span key={item.key}>

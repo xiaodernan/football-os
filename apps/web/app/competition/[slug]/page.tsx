@@ -96,7 +96,7 @@ export default async function CompetitionDetailPage({ params, searchParams }: Pr
               [t("rowRegion"), competition.region],
               [t("rowCountry"), competition.country],
               [t("rowSeasonShown"), season],
-              [t("rowRowsOnPage"), `${completed + scheduled} fixtures · ${standings.length} table rows`],
+              [t("rowRowsOnPage"), t("rowsOnPageValue", { fixtures: completed + scheduled, rows: standings.length })],
             ]}
           />
         </div>

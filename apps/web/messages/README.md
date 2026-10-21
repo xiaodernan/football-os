@@ -5,8 +5,8 @@ Three files, one per locale (`apps/api/app/api/v1/meta.py` publishes them as `lo
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 3512 of 3594 keys in Simplified Chinese, and all 3594 present | **yes** |
-| `zh-TW.json` | 3513 of 3594 keys written in Traditional Chinese, not converted from the `zh` file, and all 3594 present | **yes** |
+| `zh.json` | 3536 of 3618 keys in Simplified Chinese, and all 3618 present | **yes** |
+| `zh-TW.json` | 3537 of 3618 keys written in Traditional Chinese, not converted from the `zh` file, and all 3618 present | **yes** |
 
 ## What a reader gets today
 
@@ -17,7 +17,7 @@ Chinese filenames, and nothing read a catalogue anyway — the interface was Eng
 so the locale the middleware had always resolved was invisible. `apps/api/tests/test_locale_claims.py` is what
 stopped that being invisible: it holds `locales` to these files in both directions.
 
-**Every page reads the catalogue.** The arc that wired the interface namespace by namespace is finished: the copy gate (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every `components/**/*.tsx`**, and it holds the count at 0 on two floors: the three shapes the arc knew about (JSX text, a label-ish attribute, a label-ish object property) and the **fifth** shape it found on 2026-10-21 — a string literal that reaches the reader from somewhere else, a sentence a helper returns or a wording a ternary chooses. Both are 0 now, so a page that adds copy in English fails the build; the metadata gate agrees that every page's tab and heading is now locale-driven (**tabs keyed 51 / literal 0, headings keyed 43 / literal 0**). The 82 keys that still fall back are the ones that are *supposed* to: a value that is identical in both catalogues is a technical token - a product name, an enum, a unit - and the figures above are floors rather than pins, so a translation batch raises them without touching this file.
+**Every page reads the catalogue.** The arc that wired the interface namespace by namespace is finished: the copy gate (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every `components/**/*.tsx`**, and it holds the count at 0 on two floors: the three shapes the arc knew about (JSX text, a label-ish attribute, a label-ish object property) and the **fifth** shape it found on 2026-10-21 — a string literal that reaches the reader from somewhere else, a sentence a helper returns, a wording a ternary chooses, or a template that assembles one. Both are 0 now, so a page that adds copy in English fails the build; the metadata gate agrees that every page's tab and heading is now locale-driven (**tabs keyed 51 / literal 0, headings keyed 43 / literal 0**). The gate's **fifth check** holds the other half of the contract: a key read without the values its message needs prints the placeholders themselves, so every key call is checked for its values as well as for its existence. The 82 keys that still fall back are the ones that are *supposed* to: a value that is identical in both catalogues is a technical token - a product name, an enum, a unit - and the figures above are floors rather than pins, so a translation batch raises them without touching this file.
 
 ## The rule
 

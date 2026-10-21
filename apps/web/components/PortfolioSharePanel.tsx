@@ -97,7 +97,7 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
 
   return (
     <Panel
-      eyebrow={`${ledger?.counts.live ?? 0} live · ${ledger?.counts.revoked ?? 0} closed · ${rules.share.minor_age} is the age at which the videos rule changes`}
+      eyebrow={td("ledgerEyebrow", { live: ledger?.counts.live ?? 0, closed: ledger?.counts.revoked ?? 0, age: rules.share.minor_age })}
       title={td("publicLinkTitle")}
     >
       <div className="stack-sm" data-portfolio-share-panel>

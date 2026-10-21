@@ -77,7 +77,7 @@ export function BoardsNew({ systems }: { systems: { slug: string; name: string }
       </div>
       <div>
         <button className="btn btn--primary btn--sm" disabled={busy || !origin} onClick={create} type="button">
-          {busy ? `${t("create")}…` : `${t("create")} and edit`}
+          {busy ? `${t("create")}…` : tt("createAndEdit", { create: t("create") })}
         </button>
       </div>
       <p className="muted world-section-note">
