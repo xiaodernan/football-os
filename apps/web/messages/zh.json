@@ -693,7 +693,17 @@
     "deleting": "正在删除…",
     "deletePlayerButton": "删除球员数据",
     "playersDeleted": "已删除 {count} 份球员档案。",
-    "returningHome": "正在返回首页…"
+    "returningHome": "正在返回首页…",
+    "milestoneM0": "M0 · 基础（账号、训练循环、进度）",
+    "milestoneM1": "M1 · 球员 AI 教练",
+    "milestoneM2": "M2 · RAG 知识库",
+    "milestoneM3": "M3 · 足球世界",
+    "milestoneM4": "M4 · 战术实验室",
+    "milestoneM5": "M5 · 视频分析",
+    "milestoneM6": "M6 · 比赛模拟",
+    "milestoneM7": "M7 · 球探",
+    "milestoneM8": "M8 · 俱乐部 OS",
+    "milestoneM9": "M9 · 社区"
   },
   "validation": {
     "required": "此字段必填",

@@ -693,7 +693,17 @@
     "deleting": "Deleting…",
     "deletePlayerButton": "Delete player data",
     "playersDeleted": "{count, plural, one {# player profile} other {# player profiles}} deleted.",
-    "returningHome": "Returning to home…"
+    "returningHome": "Returning to home…",
+    "milestoneM0": "M0 · Foundation (accounts, training loop, progress)",
+    "milestoneM1": "M1 · Player AI coach",
+    "milestoneM2": "M2 · RAG knowledge base",
+    "milestoneM3": "M3 · Football World",
+    "milestoneM4": "M4 · Tactical Lab",
+    "milestoneM5": "M5 · Video analysis",
+    "milestoneM6": "M6 · Match simulation",
+    "milestoneM7": "M7 · Scouting",
+    "milestoneM8": "M8 · Club OS",
+    "milestoneM9": "M9 · Community"
   },
   "validation": {
     "required": "This field is required",

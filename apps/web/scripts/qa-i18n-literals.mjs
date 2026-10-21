@@ -68,7 +68,7 @@ const COMPONENTS = join(WEB, "components");
  *
  * It may only fall.
  */
-const FLOOR_SITES = 25;
+const FLOOR_SITES = 15;
 
 /**
  * The floor on the fourth shape — a string literal that reaches the reader from somewhere the three
@@ -762,9 +762,13 @@ if (literalSites.length) {
     console.log(`      ${String(count).padStart(3)}  ${file}`);
   }
 }
-if (failed.length) {
+if (failed.length || process.env.QA_I18N_VERBOSE) {
   console.log("");
-  console.log("Every site above is copy the catalogues do not carry. Wire it to a key, or say why it stays in English.");
+  console.log(
+    failed.length
+      ? "Every site above is copy the catalogues do not carry. Wire it to a key, or say why it stays in English."
+      : "Every site below is copy the catalogues do not carry (the floor is met; this is what is left).",
+  );
   for (const site of sites) console.log(`  ${site.file}:${site.line} [${site.shape}] ${site.copy.slice(0, 90)}`);
   for (const site of literalSites) console.log(`  ${site.file}:${site.line} [${site.shape}] ${site.copy.slice(0, 90)}`);
   if (missingKeys.length) {

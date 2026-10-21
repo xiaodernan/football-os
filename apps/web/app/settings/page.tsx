@@ -22,17 +22,17 @@ type MilestoneKey = {
   [K in keyof CapabilitiesResponse]-?: CapabilitiesResponse[K] extends boolean ? K : never;
 }[keyof CapabilitiesResponse];
 
-const MILESTONES: { key: MilestoneKey; label: string }[] = [
-  { key: "m0_foundation", label: "M0 · Foundation (accounts, training loop, progress)" },
-  { key: "m1_player_ai_coach", label: "M1 · Player AI coach" },
-  { key: "m2_rag", label: "M2 · RAG knowledge base" },
-  { key: "m3_football_world", label: "M3 · Football World" },
-  { key: "m4_tactical_lab", label: "M4 · Tactical Lab" },
-  { key: "m5_video_analysis", label: "M5 · Video analysis" },
-  { key: "m6_simulation", label: "M6 · Match simulation" },
-  { key: "m7_scouting", label: "M7 · Scouting" },
-  { key: "m8_club_os", label: "M8 · Club OS" },
-  { key: "m9_community", label: "M9 · Community" },
+const MILESTONES: { key: MilestoneKey; labelKey: string }[] = [
+  { key: "m0_foundation", labelKey: "milestoneM0" },
+  { key: "m1_player_ai_coach", labelKey: "milestoneM1" },
+  { key: "m2_rag", labelKey: "milestoneM2" },
+  { key: "m3_football_world", labelKey: "milestoneM3" },
+  { key: "m4_tactical_lab", labelKey: "milestoneM4" },
+  { key: "m5_video_analysis", labelKey: "milestoneM5" },
+  { key: "m6_simulation", labelKey: "milestoneM6" },
+  { key: "m7_scouting", labelKey: "milestoneM7" },
+  { key: "m8_club_os", labelKey: "milestoneM8" },
+  { key: "m9_community", labelKey: "milestoneM9" },
 ];
 
 function describeProvider(value: unknown): string {
@@ -201,7 +201,7 @@ export default async function SettingsPage() {
                 const live = capabilities[milestone.key] === true;
                 return (
                   <div className="st-status-row" key={milestone.key}>
-                    <span className="st-status-row__label">{milestone.label}</span>
+                    <span className="st-status-row__label">{t(milestone.labelKey)}</span>
                     {live ? (
                       <span className="badge badge--live">{t("live")}</span>
                     ) : (

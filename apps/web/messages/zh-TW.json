@@ -693,7 +693,17 @@
     "deleting": "正在刪除…",
     "deletePlayerButton": "刪除球員資料",
     "playersDeleted": "已刪除 {count} 份球員檔案。",
-    "returningHome": "正在返回首頁…"
+    "returningHome": "正在返回首頁…",
+    "milestoneM0": "M0 · 基礎（帳號、訓練循環、進度）",
+    "milestoneM1": "M1 · 球員 AI 教練",
+    "milestoneM2": "M2 · RAG 知識庫",
+    "milestoneM3": "M3 · 足球世界",
+    "milestoneM4": "M4 · 戰術實驗室",
+    "milestoneM5": "M5 · 影片分析",
+    "milestoneM6": "M6 · 比賽模擬",
+    "milestoneM7": "M7 · 球探",
+    "milestoneM8": "M8 · 俱樂部 OS",
+    "milestoneM9": "M9 · 社群"
   },
   "validation": {
     "required": "此欄位必填",
