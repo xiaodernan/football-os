@@ -439,3 +439,22 @@ accessible name, so a second "Date" column was disambiguated with a suffixed key
 then never read — the panel it was disambiguated from is not on the same page as the panel that needed
 it — so it was a second answer to a question no page was asking. The gate still reads **2/2** after the
 deletion, which is the proof that the disambiguation was never needed.
+
+### The second slice: the shared verb table (2026-10-22)
+
+**67** of the remaining keys were one thing: a **shared vocabulary for copy the interface has not written**.
+`common.or`, `common.and`, `common.of`, `common.in`, `common.for`, `common.with`, `common.by`, `common.on`,
+`common.at`, `common.to`, `common.from`, `common.as`, `common.is`, `common.not` — and the same list of verbs
+around them (`loading`, `error`, `retry`, `cancel`, `edit`, `back`, `submit`, `confirm`, `ok`, `done`, `hide`,
+`show`, `more`, `less`, `none`, `select`, `choose`, `required`, `description`, `details`, `actions`, `active`,
+`inactive`, `enabled`, `disabled`, `public`, `private`, `draft`, `archived`, `deleted`, `restored`, `created`,
+`updated`, `removed`, `added`, `changed`, `duplicated`, `imported`, `exported`, `downloaded`, `uploaded`, `sent`,
+`read`, `unread`, `seen`, `unseen`, `completed`, `pending`, `failed`, `success`, `warning`, `info`, `alert`,
+`critical`).
+
+They were written so that a sentence could be **assembled from parts**. No message in this catalogue is
+assembled from parts: every one is a whole sentence with its own placeholders, which is what the ICU gate
+holds them to. So the table was never used, and it cost **67 × 3 = 201** translated strings that had to be
+right and had to be re-read whenever a message beside them changed.
+
+They are gone from all three catalogues. The floor is **96**, and the catalogue holds **3606** keys (was 3736).

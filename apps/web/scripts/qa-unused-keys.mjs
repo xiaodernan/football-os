@@ -61,8 +61,13 @@ const CATALOGUE = JSON.parse(readFileSync(join(WEB, "messages", "en.json"), "utf
  * **same English sentence as a key that is read** — `nav.video` and `nav.videoShort`, `nav.login` and
  * `auth.signIn`, `common.pitchCaption3d` and `tactics.pitchCaption3d` — two answers to one question,
  * one of them a stale copy. They are gone from all three catalogues, and the floor is where they left it.
+ *
+ * **67** more were a shared vocabulary for copy the interface has not written: the verbs and
+ * prepositions (`common.or`, `common.and`, `common.of`, `common.retry`, `common.cancelled`) that were
+ * written so a sentence could be assembled from parts, and never assembled — every message in this
+ * catalogue is a whole sentence, and no page reads any of them. Those are gone too.
  */
-const FLOOR_UNUSED = 163;
+const FLOOR_UNUSED = 96;
 
 /**
  * Keys the catalogue holds on purpose, for a page that does not exist yet or for a door that is

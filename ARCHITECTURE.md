@@ -175,8 +175,11 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   callback-parameter, and handed across files — so **no namespace was left unjudged**. **63** of the 226 held the
   **same English sentence as a key that is read** (`nav.video` and `nav.videoShort`, `nav.login` and `auth.signIn`,
   `common.pitchCaption3d` and `tactics.pitchCaption3d`, six `scout.kv*` rows and their shorter twins) — two answers to
-  one question, one of them a stale copy no page reads. Those are gone from all three catalogues; the floor is **163**
-  and the catalogue holds **3673** keys.
+  one question, one of them a stale copy no page reads. Those are gone from all three catalogues, and **67** more —
+  a shared vocabulary for copy the interface never wrote (the verbs and prepositions `common.or`, `common.and`,
+  `common.of`, `common.retry` …, written so a sentence could be assembled from parts, and never assembled, because
+  every message here is a whole sentence) — went with them. The floor is **96** and the catalogue holds **3606**
+  keys (was 3736).
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.
