@@ -259,3 +259,78 @@ a class of defect holds its floor for a reason that has nothing to do with the c
 the number it reports is true — of the gate. The arc's own record is the second time this has happened
 here (the first was the fifth shape, the string a helper returns), and the browser is what found both:
 the source is where a gate looks, and the page is where the copy lives.
+
+## 8. The gate could not see a translator it had not been told the name of (2026-10-22)
+
+§7 was about a rule inside the copy gate that decided a string was already translated. This is a rule
+inside the *same* gate about something else: **who is a translator.**
+
+### What the rule actually did
+
+The gate decided that a call was a read of the catalogue by looking at the **name** of the function being
+called:
+
+```js
+} else if (callee && /^t[a-z]{0,2}$/.test(callee) && ts.isStringLiteral(first) && …) {
+```
+
+`t`, `tc`, `tn`, `tw`, `td` are all one or two lowercase letters after a `t`, so they matched. Three
+translators in this tree are named outside that convention:
+
+| name | bound where | namespace |
+| --- | --- | --- |
+| `tAuth` | `components/Nav.tsx` — the sign-in link, the sign-out button | `auth` |
+| `tCommon` | `components/Nav.tsx` — the demo-mode badge | `common` |
+| `settingsT` | `app/register/RegisterForm.tsx` — the display-name field | `settings` |
+
+Seven literal key reads go through them, and the gate saw **none** of them: not checked for existence
+in the catalogue, not checked for the placeholders their messages need, not checked for a word said
+twice. All seven keys are in the catalogue, so **nothing was broken** — the same "green for the wrong
+reason" as §7, one layer down.
+
+### What found it
+
+Not the browser this time. The question asked was a different one — *which catalogue keys does nothing
+read?* — and the answer needed a resolver that could tell a translator from a local function. Reading
+the tree's translator bindings gave sixteen names, and three of them were invisible to the copy gate.
+
+### The rule now
+
+A translator is identified by its **binding**, not by its name, and the binding is resolved in the scope
+that holds it. Four shapes had to be learned:
+
+* **A named binding.** `const t = useTranslations("nav")` says what `t` reads.
+* **A scope.** A function body is a scope. `components/ClubTools.tsx` binds `t` to `club` in one
+  function and to `common` in the next; the old rule's file-wide map resolved the first function's
+  fifteen reads against `common`, which is the wrong catalogue.
+* **A destructured binding.** `const [t, td, ta, tn, tc] = await Promise.all([currentUser(), …,
+  getTranslations("home"), getTranslations("disclaimer"), getTranslations("auth"),
+  getTranslations("nav"), getTranslations("common")])` binds each name **positionally**.
+  `app/layout.tsx` and `app/page.tsx` both read five namespaces that way.
+* **A parameter.** A component that is *handed* a translator reads it through a parameter, and the
+  parameter's name is not the name the caller's translator has: `shelfEyebrow(shelf, tp)` hands the
+  `creator` translator to a parameter called `t`. The call site is the fact, so the resolver records
+  every call site's arguments and binds each callable's parameters from them.
+
+The gate now checks **3600** key calls against the namespace each is asked of — up from 3593 — and
+nothing the old rule saw was lost: every one of the old rule's eighteen unqualified keys is now held
+under a namespace (the old rule could not say which), and fourteen qualified keys are new.
+
+### The red path, watched
+
+The gate's green is only worth what its red is worth, so the red was watched. A file reading two keys
+the catalogue does not hold through `tAuth` and `tCommon`:
+
+```
+FAIL  every key the source asks for is in the catalogue — 2 key(s) the catalogue does not hold
+  components/_gate_probe.tsx: auth has no key "aKeyNobodyHolds"
+  components/_gate_probe.tsx: common has no key "anotherKeyNobodyHolds"
+```
+
+The **old** rule reported **8/8 PASS** on the same file, with the same two missing keys being read.
+
+### The lesson
+
+The name of a thing is not the thing. A gate that recognises a translator by how it is *spelled* holds
+its floor for a reason that has nothing to do with the code it is watching — and the same is true of
+the scope a name is read in, and of the way it was handed over. **A gate must ask about the binding.**

@@ -147,6 +147,20 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   A **formula** (an arithmetic expression whose words are variable names) is exempt structurally, because translating it
   would make the page wrong and copying it into the catalogue would give one rule two sources to drift apart. The
   lesson generalises: **a floor is a statement about the gate before it is a statement about the tree.**
+- **And the gate itself had a blind spot, found by asking it a different question (2026-10-22).** The copy gate recognised a
+  translator by the **name** of its variable — `/^t[a-z]{0,2}$/` — which is a naming convention rather than a fact. Three
+  translators in this tree are named outside it (`tAuth` in the nav, `tCommon` on the demo badge, `settingsT` on the register
+  form), and the **seven** literal key reads through them were therefore never checked for existence, never checked for the
+  placeholders their messages need, and never checked for a word said twice. Every one of those keys is in the catalogue, so
+  nothing was broken — but the gate was green for the wrong reason, which is the same failure as the rule above. The gate now
+  identifies a translator by its **binding**, resolved in the scope that holds it: `const t = useTranslations("nav")` says what
+  `t` reads, a function body is a scope (`components/ClubTools.tsx` binds `t` to `club` in one function and to `common` in the
+  next), a translator **destructured** out of a promise is bound **positionally** (`const [t, td, tc] = await Promise.all([...])`,
+  which `app/layout.tsx` and `app/page.tsx` both do), and a translator **handed to a component as a parameter** is resolved from
+  its **call site** (`shelfEyebrow(shelf, tp)` hands the `creator` translator to a parameter called `t`, and reading the file's
+  other `t` would have answered `common`). The gate now checks **3600** key calls against the namespaces they are asked of, up
+  from 3593, and its red path was watched: a file reading two keys the catalogue does not hold through `tAuth` and `tCommon`
+  made the **old** gate report 8/8 PASS and the new one report the two keys with their namespaces.
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.

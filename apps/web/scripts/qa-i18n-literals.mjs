@@ -348,15 +348,257 @@ const halfTranslated = [];
 const duplicated = [];
 
 /**
+ * The translator bindings in scope, innermost scope last.
+ *
+ * The gate used to recognise a translator by its **name** — `/^t[a-z]{0,2}$/` — which is a naming
+ * convention rather than a fact. Three translators in this tree are named outside that convention:
+ * `tAuth` (the nav's sign-in link), `tCommon` (the nav's demo badge) and `settingsT` (the register
+ * form's display-name field). Seven literal key reads through them were therefore invisible to the
+ * gate: not checked for existence in the catalogue, not checked for the placeholders their messages
+ * need, and not checked for a word said twice. All seven keys are in the catalogue today, so nothing
+ * is broken — but the gate was green for the wrong reason, which is the same failure the arc found
+ * twice already (the "already translated" rule, and the namespace a key is asked of).
+ *
+ * A **binding** is a fact rather than a convention: `const t = useTranslations("nav")` says what `t`
+ * reads, and the **scope** says where that fact holds. Scoping matters because a name is reused —
+ * `components/ClubTools.tsx` binds `t` to `club` in one function and to `common` in the next — and a
+ * file-wide map resolves the first function's calls against whichever binding the walk reached last.
+ */
+const translatorScopes = [];
+/** The marker a scope holds for a name that is *not* a translator, so it hides an outer one. */
+const NOT_A_TRANSLATOR = null;
+const pushScope = () => translatorScopes.push(new Map());
+const popScope = () => translatorScopes.pop();
+/** The namespace a translator name reads in the scope that holds it, or undefined. */
+const translatorOf = (name) => {
+  for (let index = translatorScopes.length - 1; index >= 0; index -= 1) {
+    const scope = translatorScopes[index];
+    if (scope.has(name)) return scope.get(name);
+  }
+  return undefined;
+};
+/** Bind a translator name in the innermost scope. */
+const bindTranslator = (name, namespace) => {
+  if (translatorScopes.length === 0) pushScope();
+  translatorScopes[translatorScopes.length - 1].set(name, namespace);
+};
+/** Hide an outer translator of this name behind a local that is not one. */
+const shadowTranslator = (name) => {
+  if (translatorScopes.length === 0) pushScope();
+  translatorScopes[translatorScopes.length - 1].set(name, NOT_A_TRANSLATOR);
+};
+
+/**
+ * The names a function's parameters bind.
+ *
+ * A component that is handed a translator calls it by that name: `function EdgesPanel({ links, verb, t })`
+ * reads `t("noEdgesTitle")` on the translator its caller passed in. The binding that says what `t`
+ * reads is the caller's, one scope up, so a parameter of a translator's name inherits that translator's
+ * namespace when the function is entered.
+ */
+const parameterNames = (fn) => {
+  const names = [];
+  const collect = (node) => {
+    if (!node) return;
+    if (ts.isIdentifier(node)) {
+      names.push(node.text);
+      return;
+    }
+    if (ts.isObjectBindingPattern(node) || ts.isArrayBindingPattern(node)) {
+      for (const element of node.elements) collect(element.name);
+      return;
+    }
+    if (ts.isBindingElement(node)) collect(node.name);
+  };
+  for (const parameter of fn.parameters ?? []) collect(parameter.name);
+  return names;
+};
+
+/**
+ * The namespaces a translator declaration binds, as `[name, namespace]` pairs.
+ *
+ * A translator is bound in two shapes. The ordinary one **names** it: `const t = useTranslations("nav")`.
+ * The other **destructures** it out of a promise — `const [t, td, tc] = await Promise.all([
+ * getTranslations("home"), getTranslations("disclaimer"), getTranslations("common")])` — where the
+ * namespace of each name is its *position* in that list. `app/layout.tsx` and `app/page.tsx` both read
+ * five namespaces that way, so a rule that only understood the first shape could not say what any of
+ * their keys read.
+ */
+const translatorBindingsOf = (node) => {
+  const pairs = [];
+  if (!ts.isVariableDeclaration(node) || !node.initializer) return pairs;
+  const initializer = ts.isAwaitExpression(node.initializer) ? node.initializer.expression : node.initializer;
+  /** The namespace a translator call asks for, or null. */
+  const namespaceOf = (expression) => {
+    const call = ts.isAwaitExpression(expression) ? expression.expression : expression;
+    if (!ts.isCallExpression(call) || !ts.isIdentifier(call.expression)) return null;
+    const callee = call.expression.text;
+    if (callee !== "useTranslations" && callee !== "getTranslations") return null;
+    return ts.isStringLiteral(call.arguments[0]) ? call.arguments[0].text : null;
+  };
+  if (ts.isIdentifier(node.name)) {
+    const namespace = namespaceOf(initializer);
+    if (namespace) pairs.push([node.name.text, namespace]);
+    return pairs;
+  }
+  if (ts.isArrayBindingPattern(node.name)) {
+    // The list the names are destructured out of: `Promise.all([...])` or a plain array.
+    const isPromiseAll =
+      ts.isCallExpression(initializer) &&
+      ts.isPropertyAccessExpression(initializer.expression) &&
+      ts.isIdentifier(initializer.expression.expression) &&
+      initializer.expression.expression.text === "Promise" &&
+      initializer.expression.name.text === "all";
+    const list = isPromiseAll && ts.isArrayLiteralExpression(initializer.arguments[0])
+      ? initializer.arguments[0].elements
+      : ts.isArrayLiteralExpression(initializer)
+        ? initializer.elements
+        : null;
+    if (!list) return pairs;
+    node.name.elements.forEach((element, index) => {
+      if (!ts.isIdentifier(element.name)) return;
+      const namespace = namespaceOf(list[index]);
+      if (namespace) pairs.push([element.name.text, namespace]);
+    });
+  }
+  return pairs;
+};
+
+/**
+ * The namespace a translator parameter is handed, resolved from the **call site**.
+ *
+ * A component that receives a translator reads it through a parameter, and that parameter's name is not
+ * the name the caller's translator has: `shelfEyebrow(shelf, tp)` hands the *creator* translator to a
+ * parameter called `t`. Reading the file-wide bindings of the name `t` would answer `common` — the
+ * namespace a *different* `t` in the same file is bound to — and the gate would then ask the `common`
+ * catalogue for a key that lives in `creator`, which is a false red rather than a finding.
+ *
+ * The call site is the fact: the argument in position 1 is `tp`, and `tp` is bound to `creator` in the
+ * caller's scope. So the resolver walks the file twice — once to record every call site's arguments,
+ * and once to bind each callable's parameters from what was recorded.
+ */
+const bindingName = (nameNode) => {
+  if (ts.isIdentifier(nameNode)) return nameNode.text;
+  return null;
+};
+
+/** The prop a component's parameter destructures to, and the local name it binds. */
+const propToLocal = (fn) => {
+  const map = new Map();
+  const parameter = fn.parameters?.[0];
+  if (!parameter || !ts.isObjectBindingPattern(parameter.name)) return map;
+  for (const element of parameter.name.elements) {
+    if (!ts.isBindingElement(element) || !ts.isIdentifier(element.name)) continue;
+    const prop = element.propertyName
+      ? element.propertyName.getText()
+      : element.name.text;
+    map.set(prop, element.name.text);
+  }
+  return map;
+};
+
+/** The namespace an expression names, if it names a translator in the scope around it. */
+const translatorNamespaceOf = (expression) => {
+  if (!expression) return undefined;
+  if (ts.isIdentifier(expression)) return translatorOf(expression.text);
+  if (ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.expression)) {
+    return translatorOf(expression.expression.text);
+  }
+  if (ts.isCallExpression(expression) && ts.isIdentifier(expression.expression)) {
+    const callee = expression.expression.text;
+    if ((callee === "useTranslations" || callee === "getTranslations") && ts.isStringLiteral(expression.arguments[0])) {
+      return expression.arguments[0].text;
+    }
+  }
+  return undefined;
+};
+
+/** The functions a file can call, by name. */
+const callableNames = (source) => {
+  const names = new Map();
+  const visit = (node) => {
+    if (ts.isFunctionDeclaration(node) && node.name) names.set(node.name.text, node);
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+      const init = ts.isAwaitExpression(node.initializer) ? node.initializer.expression : node.initializer;
+      if ((ts.isArrowFunction(init) || ts.isFunctionExpression(init)) && node.name.text) {
+        names.set(node.name.text, init);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return names;
+};
+
+/**
+ * The namespace each callable's translator parameter is handed, keyed by the callable's own node.
+ */
+const resolveParameterNamespaces = (source) => {
+  const bindings = new Map();
+  const callables = callableNames(source);
+  const record = (fn, name, namespace) => {
+    if (!bindings.has(fn)) bindings.set(fn, new Map());
+    bindings.get(fn).set(name, namespace);
+  };
+
+  translatorScopes.length = 0;
+  pushScope();
+  const walk = (node) => {
+    const isScope = ts.isFunctionLike(node) && node.body !== undefined;
+    if (isScope) {
+      pushScope();
+      for (const name of parameterNames(node)) {
+        const inherited = translatorOf(name);
+        if (inherited !== undefined) bindTranslator(name, inherited);
+      }
+    }
+    for (const [name, namespace] of translatorBindingsOf(node)) bindTranslator(name, namespace);
+
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+      const fn = callables.get(node.expression.text);
+      if (fn) {
+        node.arguments.forEach((argument, index) => {
+          const parameter = fn.parameters?.[index];
+          const name = parameter ? bindingName(parameter.name) : null;
+          const namespace = translatorNamespaceOf(argument);
+          if (name && namespace) record(fn, name, namespace);
+        });
+      }
+    }
+    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+      const tag = node.tagName;
+      if (ts.isIdentifier(tag)) {
+        const fn = callables.get(tag.text);
+        if (fn) {
+          const locals = propToLocal(fn);
+          for (const attribute of node.attributes.properties) {
+            if (!ts.isJsxAttribute(attribute) || !attribute.initializer) continue;
+            if (!ts.isJsxExpression(attribute.initializer)) continue;
+            const local = locals.get(attribute.name.getText());
+            const namespace = translatorNamespaceOf(attribute.initializer.expression);
+            if (local && namespace) record(fn, local, namespace);
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, walk);
+    if (isScope) popScope();
+  };
+  walk(source);
+  translatorScopes.length = 0;
+  return bindings;
+};
+
+/**
  * The translator calls an expression carries, in the order they appear, each with the namespace it reads.
  */
 const adjacentTranslations = (node) => {
   const calls = [];
   const visit = (child) => {
-    if (ts.isCallExpression(child) && ts.isIdentifier(child.expression) && /^t[a-z]{0,2}$/.test(child.expression.text)) {
+    if (ts.isCallExpression(child) && ts.isIdentifier(child.expression) && translatorOf(child.expression.text) !== undefined) {
       const first = child.arguments[0];
       if (ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
-        calls.push({ namespace: translatorNamespaces.get(child.expression.text), key: first.text });
+        calls.push({ namespace: translatorOf(child.expression.text), key: first.text });
       }
     }
     ts.forEachChild(child, visit);
@@ -374,7 +616,7 @@ const hasTranslatorCall = (node) => {
   let found = false;
   const visit = (child) => {
     if (found) return;
-    if (ts.isCallExpression(child) && ts.isIdentifier(child.expression) && /^t[a-z]{0,2}$/.test(child.expression.text)) {
+    if (ts.isCallExpression(child) && ts.isIdentifier(child.expression) && translatorOf(child.expression.text) !== undefined) {
       found = true;
       return;
     }
@@ -396,8 +638,7 @@ const literalSites = [];
 /** Per file: the namespaces it binds and the keys it asks for. */
 const keyCalls = new Map();
 /** Which namespace each translator variable reads — `const tb = useTranslations("tactics")`. */
-const translatorNamespaces = new Map();
-/** Key reads that left a placeholder of the message unsupplied. */
+const translatorNamespaces = new Map();/** Key reads that left a placeholder of the message unsupplied. */
 const missingValues = [];
 let parsed = 0;
 let diagnostics = 0;
@@ -446,20 +687,79 @@ for (const file of files) {
   const position = (node) => source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
 
   translatorNamespaces.clear();
+  pushScope();
   const namespaces = new Set();
   const keys = new Set();
+  /**
+   * Every namespace a name is bound to anywhere in this file.
+   *
+   * A component that is *handed* a translator cannot be resolved by scope alone: `EdgesPanel({ t })`
+   * is a module-level function, and the binding that says what its `t` reads lives in a sibling
+   * function. The file-wide set is the fallback for that case — a key read through such a parameter
+   * is checked against every namespace the file binds that name to, which is the same shape the gate
+   * already used for a key read with no namespace at all.
+   */
+  const bindingsByName = new Map();
+  /** The namespace each callable's translator parameter is handed, resolved from its call sites. */
+  const parameterBindings = resolveParameterNamespaces(source);
   /** The literal nodes the three shapes already counted, so the fourth shape does not count them twice. */
   const counted = new Set();
 
+  /**
+   * The file-wide map is filled **before** the walk, not during it: a translator handed to a component
+   * as a parameter is resolved against every namespace the file binds that name to, and the binding
+   * that names it may sit *after* the call in the source.
+   */
+  const prePass = (node) => {
+    for (const [name, namespace] of translatorBindingsOf(node)) {
+      if (!bindingsByName.has(name)) bindingsByName.set(name, new Set());
+      bindingsByName.get(name).add(namespace);
+    }
+    ts.forEachChild(node, prePass);
+  };
+  prePass(source);
+
   const visit = (node) => {
+    /**
+     * A function body is a scope: a translator bound inside it belongs to it, and a translator bound
+     * outside it stays visible inside. `components/ClubTools.tsx` binds `t` to `club` in one function
+     * and to `common` in the next, so a file-wide map would resolve the first function's calls against
+     * whichever binding the walk had reached last.
+     */
+    const isScope = ts.isFunctionLike(node) && node.body !== undefined;
+    if (isScope) {
+      pushScope();
+      // A translator handed to a component as a parameter keeps its namespace: the binding that says
+      // what `t` reads is the caller's, one scope up — or, when the parameter is handed a translator
+      // under a different name, the call site that hands it over.
+      const handed = parameterBindings.get(node);
+      if (handed) for (const [name, namespace] of handed) bindTranslator(name, namespace);
+      for (const name of parameterNames(node)) {
+        if (handed && handed.has(name)) continue;
+        const inherited = translatorOf(name);
+        if (inherited !== undefined) bindTranslator(name, inherited);
+      }
+    }
     // Which namespace a translator variable reads: `const tb = useTranslations("tactics")`.
-    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+    const bindings = translatorBindingsOf(node);
+    if (bindings.length > 0) {
+      for (const [name, namespace] of bindings) {
+        translatorNamespaces.set(name, namespace);
+        bindTranslator(name, namespace);
+      }
+    } else if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
       const initializer = ts.isAwaitExpression(node.initializer) ? node.initializer.expression : node.initializer;
       if (ts.isCallExpression(initializer) && ts.isIdentifier(initializer.expression)) {
         const callee = initializer.expression.text;
         const first = initializer.arguments[0];
         if ((callee === "useTranslations" || callee === "getTranslations") && ts.isStringLiteral(first)) {
           translatorNamespaces.set(node.name.text, first.text);
+          bindTranslator(node.name.text, first.text);
+          if (!bindingsByName.has(node.name.text)) bindingsByName.set(node.name.text, new Set());
+          bindingsByName.get(node.name.text).add(first.text);
+        } else if (translatorOf(node.name.text) !== undefined) {
+          // A local of the same name that is not a translator hides the translator of that name.
+          shadowTranslator(node.name.text);
         }
       }
     }
@@ -478,25 +778,34 @@ for (const file of files) {
             node.expression.name.text === "rich"
           ? node.expression.expression.text
           : null;
+      /**
+       * The namespaces a translator name may read: the one it is bound to in this scope, or — for a
+       * translator handed to a component as a parameter — every namespace this file binds that name to.
+       */
+      const scoped = callee ? translatorOf(callee) : undefined;
+      const candidates = scoped
+        ? [scoped]
+        : callee && bindingsByName.has(callee)
+          ? [...bindingsByName.get(callee)]
+          : [];
       if ((callee === "useTranslations" || callee === "getTranslations") && ts.isStringLiteral(first)) {
         namespaces.add(first.text);
-      } else if (callee && /^t[a-z]{0,2}$/.test(callee) && ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
+      } else if (candidates.length > 0 && ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
         /**
          * The key is recorded **with the namespace it was asked of** — `tc("yes")` asks the `common`
          * namespace, not whichever namespace the file happens to bind. Checking the union of a file's
          * namespaces was too coarse: the plan page asked the `club` namespace for `yes` and `no` (which
          * live in `common`), the gate could not see it, and the page threw MISSING_MESSAGE at runtime.
          */
-        const bound = translatorNamespaces.get(callee);
-        keys.add(bound ? `${bound}.${first.text}` : first.text);
+        for (const namespace of candidates) keys.add(`${namespace}.${first.text}`);
         /**
          * Every placeholder a message needs must be supplied with it. A key read without its values is
          * a message printed with its own placeholders in it — `{default} by default, {max} at most` in a
          * column that should say "Search limits" — and next-intl's own answer to a missing value is a
          * page that throws where it should read.
          */
-        const namespace = translatorNamespaces.get(callee);
-        const message = namespace ? CATALOGUE[namespace]?.[first.text] : undefined;
+        const namespace = candidates.find((each) => typeof CATALOGUE[each]?.[first.text] === "string");
+        const message = namespace ? CATALOGUE[namespace][first.text] : undefined;
         if (typeof message === "string") {
           const needed = messagePlaceholders(message);
           if (needed.length > 0) {
@@ -655,8 +964,10 @@ for (const file of files) {
       }
     }
     ts.forEachChild(node, visit);
+    if (isScope) popScope();
   };
   visit(source);
+  popScope();
   keyCalls.set(rel, { namespaces, keys });
 }
 
