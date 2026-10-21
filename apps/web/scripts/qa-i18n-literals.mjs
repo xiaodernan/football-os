@@ -68,14 +68,14 @@ const COMPONENTS = join(WEB, "components");
  *
  * It may only fall.
  */
-const FLOOR_SITES = 0;
+const FLOOR_SITES = 25;
 
 /**
  * The floor on the fourth shape — a string literal that reaches the reader from somewhere the three
  * shapes above do not cover. It starts at the count the gate read when it learned to see the shape,
  * and it may only fall: every site that moves into a catalogue lowers it.
  */
-const FLOOR_LITERAL_SITES = 0;
+const FLOOR_LITERAL_SITES = 22;
 
 /** The population the walk must find, so a scan that narrows itself cannot pass by finding nothing. */
 const FLOOR_FILES = 70;
@@ -104,15 +104,17 @@ const LABEL_PROPERTIES = new Set([
  * `you@example.com`, the export file name, and the product's own name.
  */
 const TECHNICAL_PATTERNS = [
-  /^data_origin\b/,
-  /^is_demo_data\b/,
-  /^(max_depth|max_edges|max_nodes)\b/,
-  /^identity_retained=/,
   // A field's own name, printed as itself: `role_fit: null` is the API saying that the field is
-  // null, and translating the field's name would break the one string an operator greps for.
-  /^role_fit:/,
-  /^team_fit:/,
-  /^comparison:/,
+  // null, and translating the field's name would break the one string an operator greps for. The
+  // name may be preceded by a separator ("· is_demo_data:"), because the separator is a mark and
+  // the name is still the API's word.
+  /(^|[\s·])data_origin\b/,
+  /(^|[\s·])is_demo_data\b/,
+  /(^|[\s·])(max_depth|max_edges|max_nodes)\b/,
+  /(^|[\s·])identity_retained=/,
+  /(^|[\s·])role_fit:/,
+  /(^|[\s·])team_fit:/,
+  /(^|[\s·])comparison:/,
   /^you@example\.com$/,
   /^footballos-export\.json$/,
   /^FOOTBALL OS$/,
@@ -158,7 +160,12 @@ const isEnglishCopy = (value) => {
   if (/^[A-Z0-9_]+$/.test(text)) return false; // a constant
   if (/^[a-z][A-Za-z0-9_]*$/.test(text)) return false; // an identifier: a key, a field name, an enum value
   if (/^[a-z]+[A-Z]/.test(text)) return false; // camelCase identifier
-  if (/[^\x00-\x7F]/.test(text)) return false; // already translated
+  // "Already translated" means a **letter** from another script, not a typographic mark: a middle dot, an
+  // em dash and a curly quote are punctuation, and an English sentence that contains one is still English.
+  // The old rule asked whether the string held *any* character outside ASCII, so `Not played · Data
+  // unavailable` — a real English sentence, with a dot in the middle of it — read as Chinese and was
+  // never counted.
+  if ([...text].some((character) => character.codePointAt(0) > 127 && /\p{L}/u.test(character))) return false;
   if (TECHNICAL_PATTERNS.some((pattern) => pattern.test(text))) return false; // a field name, not copy
   const words = text.match(/[A-Za-z][A-Za-z'’-]*/g) ?? [];
   if (words.length === 0) return false;
