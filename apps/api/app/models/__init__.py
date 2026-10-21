@@ -2198,6 +2198,62 @@ class CreatorMatchAnalysis(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
+class CreatorScoutingList(Base, TimestampMixin):
+    """A creator's scouting list (M10, spec §36's sixth kind): a selection of world players, addressed.
+
+    §36's sixth kind is a *Scouting List*: an author's selection of footballers, published as the
+    addresses of the players and the author's own note on each - never a name, a position, an overall
+    or any other column of the player. Every attribute a read shows is read from `real_players` on
+    that read, so a refreshed world cannot leave the list describing last season's squad.
+
+    The rows are `CreatorScoutingEntry`s, each carrying one plain pointer (`player_slug`) and the
+    witness that player carried at publication. The pointer is not a foreign key for the same reason
+    the player analysis's is not: `services/world/sync.py` retires generated rows, and a list must
+    survive a refresh. A retired player leaves a bare address in the list rather than erasing the
+    author's other selections.
+    """
+
+    __tablename__ = "creator_scouting_lists"
+    __table_args__ = (
+        UniqueConstraint("author_id", "slug", name="uq_creator_scouting_list_slug"),
+        Index("ix_creator_scouting_list_author_date", "author_id", "published_on"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary: Mapped[str] = mapped_column(String(600), nullable=False, default="")
+    visibility: Mapped[str] = mapped_column(String(12), nullable=False, default="public")
+    published_on: Mapped[str] = mapped_column(String(10), nullable=False, default=utc_today)
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class CreatorScoutingEntry(Base, TimestampMixin):
+    """One address in a scouting list, with the author's note and the player's witness.
+
+    `position` is the order the author put the entries in and is unique per list. `player_slug` is
+    unique per list too: a list that names the same footballer twice cannot say which note is the
+    reading. `player_hash` is the content address the player carried when the list was published,
+    compared with the world's on every read so a refreshed player says `moved`.
+    """
+
+    __tablename__ = "creator_scouting_entries"
+    __table_args__ = (
+        UniqueConstraint("list_id", "position", name="uq_creator_scouting_entry_position"),
+        UniqueConstraint("list_id", "player_slug", name="uq_creator_scouting_entry_player"),
+        Index("ix_creator_scouting_entry_player", "player_slug"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    list_id: Mapped[str] = mapped_column(ForeignKey("creator_scouting_lists.id", ondelete="CASCADE"), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    player_slug: Mapped[str] = mapped_column(String(160), nullable=False)
+    player_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    note: Mapped[str] = mapped_column(String(300), nullable=False, default="")
+
+
 class CvShare(Base, TimestampMixin):
     """One public CV link (§38's share output): the token that opens it, the sections it names, and when it closed."""
 

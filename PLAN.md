@@ -831,6 +831,41 @@ claim list now says four kinds have objects of their own — and that the other 
 shelf case also needed the same `creator=` scoping the analyses and matches shelves use: the ceiling cases fill the
 public shelf past its default page, so an unscoped lookup was reading page one only.
 
+## Item 14 — M10: the scouting list, §36's sixth kind of content
+
+**Done 2026-10-21.** Item 13 gave the fourth kind an object. The sixth kind — a **Scouting List** — was still only a
+section, and the tier could anchor one row but not a selection of many.
+
+**Do.** Store a selection of world footballers as addresses, with the author's note on each.
+
+1. **`creator_scouting_lists` + `creator_scouting_entries`** (migration `0034`): the list holds author, slug, title,
+   summary, visibility, date and provenance; each entry holds the list, its position, the **address** of a player, the
+   hash witness and the author's own note. Both column lists are asserted as sets: no name, position, overall or club.
+   `player_slug` is a plain pointer for the same reason the analyses' anchors are (`services/world/sync.py` retires
+   generated rows); publication resolves every address (slug or id) and refuses an unknown one (404
+   `no_such_scouted_player`). Two selections naming one footballer are refused (422 `scouting_duplicate_player`), as
+   are the size bounds 1–50 (`scouting_players`).
+2. **The witness is per entry.** Each entry compares its stored `player_hash` with its own player's `content_hash` on
+   every read, so one refreshed footballer says `moved` on their line while the rest stand still. A retired player
+   leaves a **bare address** (`retired: true`, brief fields null) and the list stays readable — deliberately not the
+   single-anchor absence an analysis uses, because a list is a selection of many.
+3. **The proof is behavioural.** Two scratch players are published, then one is edited between two reads: that entry
+   follows its own row, flips `moved`, and the figures read `players=2, moved=1, retired=0`; a separate case retires a
+   player and reads `retired=1` with the list intact. Erasing a list takes its entries (FK cascade) and touches no
+   player row.
+4. **Four doors** under the tier's prefix: publish, shelf, one list, erase. Reach is §35's follow predicate; an
+   unlisted list is readable at its address and in no listing; another account's list is absence; no door answers 403.
+   Ceiling: 40 lists per creator (409 `scouting_list_limit`).
+
+**Evidence.** `tests/test_creator_scouting.py` (17 cases); the six creator files together answer **131 tests / 0
+failures / 0 errors / 0 skipped in 58.799s** (junit `.scratch/leg_creator6.xml`). mypy is clean over 153 files; ruff is
+clean on the six touched Python files; the contract is regenerated at 199 paths / 258 operations; migration `0034`
+upgrades to head, passes `alembic check` silently and round-trips on a scratch SQLite database. Two defects the first
+run found: the entries were inserted before their parent list (a plain FK and no ORM relationship, so an explicit
+`session.flush()` now fixes the order), and `ROUTE_GUIDE` said `{list}` where the router names `{list_id}`, caught by
+the project-wide guide census. The record now says five kinds have objects of their own; Career Challenge is the
+remaining one.
+
 ---
 
 ## How to work an item

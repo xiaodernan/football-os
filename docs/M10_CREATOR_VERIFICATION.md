@@ -61,7 +61,7 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
 
 ## What §36 does not claim yet
 
-* **The six kinds are six sections, not six objects — and the first four kinds now have objects
+* **The six kinds are six sections, not six objects — and the first five kinds now have objects
   of their own (2026-10-21).** §36 lists Training Program, Tactical Guide, Player Analysis, Match
   Analysis, Career Challenge and Scouting List; the tier's `GUIDE_SECTIONS` is `plan, drill, match,
   tactic, scout, video`, and a guide is a title, a frame, a section and citations in every one of
@@ -73,9 +73,12 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
   witness, and its five rates are computed on the read from the player row's own columns. A
   **Match Analysis** is now a row anchored to a stored fixture: it keeps the fixture's address and a
   hash witness, and its five measurements are computed on the read from the fixture row's own score
-  and stats. What is still not there: the other two kinds have no object of their own, a program is a
-  plan rather than an enrolled course, and there is no progress model beyond the training tier's own
-  sessions.
+  and stats. A **Scouting List** is now a row anchored to many stored footballers: each selection
+  keeps the player's address, a hash witness and the author's own note, every attribute is read
+  from the player row on the read, and a retired player leaves a bare address instead of erasing
+  the list. What is still not there: the **Career Challenge** has no object of its own, a program is
+  a plan rather than an enrolled course, and there is no progress model beyond the training tier's
+  own sessions.
 * **No money, by design.** `creator_publish` and `creator_guide` are ceilings the data holds and **no door refuses
   on** — the caps that actually bite are the lifetime counts in `CAPS` (100 guides, 24 citations a guide).
 * **The feedback half of §36's loop is §35's.** "Users → Feedback → Creator" is reactions, comments and follows on
@@ -301,6 +304,62 @@ answer **110 tests / 0 failures / 0 errors / 0 skipped in 52.428s** (junit,
 on the seven touched Python files; the contract is regenerated at **197 paths / 254 operations**, the
 four new operations being its only delta; migration `0033` upgrades to head, passes `alembic check`
 silently and downgrades/upgrades cleanly on a scratch SQLite database.
+
+## The scouting list — §36's sixth kind of content (2026-10-21)
+
+The sixth kind is the first object anchored to **many** rows, and it keeps the same rule: **an
+address, never a copy**.
+
+* **The anchors are addresses, not foreign keys.** `creator_scouting_entries.player_slug` names a
+  row in `real_players` and is a plain pointer for the same reason the analyses' anchors are:
+  `services/world/sync.py` retires and re-creates generated players. Publication resolves every
+  selection (by slug or id) and refuses one the world does not hold there (404
+  `no_such_scouted_player`) — a list with a broken row would be a page that cannot say whose note it
+  is showing. Two selections naming one footballer are refused (422 `scouting_duplicate_player`,
+  with the player, the first position and the repeated one in the details): a list cannot hold two
+  notes on one address and still say which is the reading.
+* **No attribute of a player is stored.** Both tables' column sets are asserted as sets: the list
+  holds author, slug, title, summary, visibility, the date and provenance; an entry holds the list,
+  the position, the address, the hash witness and the author's note. No name, position, overall,
+  club or sentence about a player. Every attribute a read shows is read from the player row on that
+  read, and the shelf's `players` figure counts entries, not any measurement of a player.
+* **The witness is per entry, because the anchors are.** Each entry stores the player's
+  `content_hash` at publication; a read compares each entry with its own player, so a single
+  refreshed footballer says `moved` on their own line while the rest of the list stands still. A
+  player the world has retired leaves a **bare address** — `retired: true` and the brief's fields
+  null — and the list stays readable. That is deliberately not the single-anchor shape an analysis
+  uses, where a retired anchor is absence: there the whole content is about that one row, while a
+  list is a selection of many and one retirement must not erase the author's other selections.
+* **The proof is behavioural.** Two scratch players are published and then one is edited between
+  two reads of the same list: that entry's answer follows its own row and flips `moved`, the other
+  entry stands still, and the figures read `players=2, moved=1, retired=0`. A stored copy could not
+  pass that case. A retirement is exercised as its own case, not inferred.
+* **Erasing takes the entries and leaves the players.** The entries carry `ondelete="CASCADE"` and
+  SQLite's own `PRAGMA foreign_keys=ON` is on in tests, so erasing a list takes its selection rows
+  and touches no world row; the case asserts both ends.
+* **Reach and four doors.** Publish, the shelf, one list (which carries the entries and figures),
+  and erase — four private doors under the existing prefix. Reach is §35's follow predicate, so a
+  `followers` list opens on a follow and closes on an unfollow without deleting it; an `unlisted`
+  list is readable at its address and in no listing; another account's list is absence, and no door
+  in this tier answers 403. The ceiling is 40 lists per creator (409 `scouting_list_limit`), a list
+  holds 1–50 players (422 `scouting_players`), and the title, summary, visibility and note
+  refusals name the field and its vocabulary.
+
+Measured 2026-10-21: `tests/test_creator_scouting.py` **17 cases**; the six creator files together
+answer **131 tests / 0 failures / 0 errors / 0 skipped in 58.799s** (junit,
+`.scratch/leg_creator6.xml`); `mypy app` clean over **153 source files**; `ruff check` clean on the
+six touched Python files; the contract is regenerated at **199 paths / 258 operations**, the four
+new operations being its only delta; migration `0034` upgrades to head, passes `alembic check`
+silently and downgrades/upgrades cleanly on a scratch SQLite database.
+
+The first run of the new suite answered 409 on every publication: the unit of work had inserted the
+entries before their parent list, because the entry carries a plain FK and no ORM relationship, and
+SQLite's foreign-key enforcement refused it. The fix is an explicit `session.flush()` after the list
+row is added — the order the schema requires is the tier's job, not a relationship's. The
+project-wide guide census then caught the second mismatch before it landed: the router names its
+path parameter `{list_id}` while `ROUTE_GUIDE` said `{list}`, and
+`tests/test_creator.py::test_the_guide_names_exactly_the_doors_that_are_routed` compares the guide
+with the app's own routed paths, so the two now agree on `{list_id}`.
 
 ## A finding this milestone corrected
 
