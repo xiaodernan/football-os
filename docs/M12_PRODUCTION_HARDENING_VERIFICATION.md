@@ -690,8 +690,69 @@ per-video deletion was missing, is corrected in
 pressed it in a browser — what the delete *did* leave behind was the clip's own analysis job, and that is
 fixed.)
 
+## The gate's security half: a first-party probe, and the report it leaves (2026-10-22)
+
+M12's gate says **"load + pen test report clean"**. The load half had a harness, a ceiling and a paired
+measurement. The security half had a code-level census (§60), the answer-table gates (§51) and a list of
+fixed defects — and no report produced by attacking a running server. The project cannot commission a
+third-party penetration test from inside its own repository, so it did the two things it can: it shipped
+the battery, and it left the report.
+
+`scripts/security_probe.py` reads its population from the committed contract rather than from a list in
+the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
+SHA-256 `31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e` that population is **212
+secured operations, 52 public operations and 91 private GET paths**, with floors of 200/40/85 printed on
+every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
+
+| ident | what was measured | result |
+| --- | --- | --- |
+| C0 | the door population comes from the contract and is not empty | 212 / 52 / 91 |
+| S1 | every secured operation refuses a caller with no credential | **212 knocked, 212 × 401**, 0 deviations |
+| S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
+| S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
+| S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |
+| S5 | a login burst is refused, coded, with a retry time | 10 × 200 then **429 at the 11th**, `Retry-After: 295`, `rate_limited` |
+| S6 | refusals are one coded shape, echo nothing and leak nothing | 422 `validation_error`, exactly `loc`/`msg`/`type`, **no leak marker** in four bodies |
+| S7 | the security headers and a request identity are on every answer, including a refusal | `nosniff` on 200 and 401, referrer policy, distinct ids, numeric durations |
+| S8 | only a configured origin is echoed; a rogue one is never answered | configured 200 + ACAO + credentials; rogue 200 with **no** ACAO; rogue preflight 400 |
+| S9 | the refresh cookie's flags and path | httpOnly, `SameSite=strict`, `Path=/api/v1/auth`; `Secure` absent in development |
+
+Two runs, because the cache has two configurations worth attacking. Run A had the shared tier degraded
+(the default Redis on 6379 refused the handshake) and answered **10/10, 0 failed, 0 server errors** in
+7.83 s. Run B pointed `REDIS_URL` at the project's own authenticated Redis on 63790 — the tier that was
+the source of the cross-account replay Item 6 fixed — and answered the same **10/10, 0 failed, 0 server
+errors** in 19.61 s. S4 is constructed so the negative is not vacuous: the private `HIT` and the public
+`MISS → HIT` are read before "the stranger never received the owner's row", so the cache is proven to have
+been serving at the moment the isolation held.
+
+The tier's own legs were re-measured over the same bytes, with the Redis cases now able to run:
+
+| measurement | plane | result |
+| --- | --- | --- |
+| `pytest` over the 23 M12 test files | SQLite, working copy | **180 tests / 0 failures / 0 errors / 3 skipped**, 208.893 s |
+| the same 23 files | PostgreSQL, `REDIS_URL` at the project Redis | **180 / 0 / 0 / 1 skipped**, 421.752 s |
+| `mypy app` | working copy | 154 source files, no issues |
+| `ruff check .` | `apps/api`, plus the probe under `scripts/` | all checks passed |
+
+Two of the three SQLite skips executed on the PostgreSQL leg — the wrong-password degradation and the
+cross-process shared-key case in `test_redis_shared_tier.py`. The one that remains,
+`test_redis_cache_real_integration`, is marked `integration` and needs that selection as well as a live
+server; it is not silently counted as a pass.
+
+The full report, its reproduction commands and its list of boundaries is
+[docs/SECURITY_PROBE_REPORT.md](SECURITY_PROBE_REPORT.md). The boundaries that belong in this document's
+own ledger: an unknown path and a wrong method are still answered by Starlette with a string `detail`
+(recorded by the probe, not converted — they are not doors); the refresh cookie's `Secure` flag is
+production-gated and this server was development; no TLS, CSP or HSTS was exercised; and **no third-party
+penetration test was commissioned**.
+
 ## What M12 does not claim
 
+* **No third-party penetration test.** The gate's security clause is answered by the project's own probe
+  — ten checks, 212 private doors, two live accounts — run against a live server with the report at
+  [docs/SECURITY_PROBE_REPORT.md](SECURITY_PROBE_REPORT.md). An independent tester, a source review by an
+  outsider, dependency and image scanning, and browser-side adversarial testing are all outside what this
+  run did. A clean probe is the absence of ten specific failures, not the absence of vulnerabilities.
 
 * **The Redis tier is live and authenticated (2026-10-20), and what sharing buys is now measured.**
   The project's own cache serves: `infra/docker-compose.yml` publishes an authenticated
