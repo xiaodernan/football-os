@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
@@ -41,7 +40,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ClubRulesPage() {
   const t = await getTranslations("club");
-  const tn = await getTranslations("nav");
   const [club, academy] = await Promise.all([
     serverFetch<ClubCapabilities>("/club/capabilities"),
     serverFetch<AcademyCapabilities>("/club/academy/capabilities"),

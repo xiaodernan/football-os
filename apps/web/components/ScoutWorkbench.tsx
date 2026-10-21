@@ -351,7 +351,6 @@ function CandidateRow({
 
 /** Every requirement the request produced, with the rule it will cut or rank on and where it came from. */
 function RequirementList({ requirements }: { requirements: ParseView["requirements"] }) {
-  const tw = useTranslations("scout");
   const t = useTranslations("scout");
   if (!requirements.length) return <p className="muted">{t("noFilter")}</p>;
   return (

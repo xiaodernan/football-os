@@ -177,7 +177,6 @@ export function SessionRecorder({ formula, ident, limits, teams, today }: { form
  * window and (optionally) a sheet, and the answer is recomputed for whoever reads it afterwards.
  */
 export function ReportSaver({ defaultFrom, ident, kinds, limits, teams, today }: { defaultFrom: string; ident: string; kinds: string[]; limits: ReportLimits; teams: TeamView[]; today: string }) {
-  const t = useTranslations("common");
   const ta = useTranslations("academy");
   const { busy, call, note } = useClubCall();
   const [kind, setKind] = useState(kinds[0] ?? "");

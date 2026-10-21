@@ -15,7 +15,6 @@ const OPEN_BY_DEFAULT = new Set(["technical", "age", "context"]);
  * four answers are the payload's own and are printed as it words them.
  */
 function leaderText(leader: string): string {
-const ts = useTranslations("scout");
   if (leader === "left") return "A AHEAD";
   if (leader === "right") return "B AHEAD";
   return (LEADER_LABELS[leader] ?? leader).toUpperCase();
@@ -92,7 +91,7 @@ export function ScoutComparePanel({ compared }: { compared: CompareView }) {
 }
 
 function SideCard({ side, label }: { side: CompareSide; label: string }) {
-const ts = useTranslations("scout");
+  const ts = useTranslations("scout");
   return (
     <div className="tac-card">
       <div className="row wrap" style={{ gap: "0.5rem" }}>
@@ -127,7 +126,7 @@ const ts = useTranslations("scout");
 }
 
 function DimensionBlock({ dimension }: { dimension: CompareDimension }) {
-const ts = useTranslations("scout");
+  const ts = useTranslations("scout");
   const scorable = dimension.measures.filter((measure) => measure.leader !== "unknown" && measure.leader !== "not_scorable").length;
   return (
     <details className="tac-card" data-dimension={dimension.dimension} open={OPEN_BY_DEFAULT.has(dimension.dimension)}>
@@ -166,7 +165,6 @@ const ts = useTranslations("scout");
 }
 
 function MeasureRow({ measure }: { measure: Measure }) {
-const ts = useTranslations("scout");
   const gap: string[] = [];
   if (measure.missing?.length) gap.push(`missing on ${measure.missing.join(" + ")}`);
   if (measure.unobserved?.length) gap.push(`no lines for ${measure.unobserved.join(" + ")}`);
@@ -190,7 +188,6 @@ const ts = useTranslations("scout");
 }
 
 function TotalsRow({ label, check }: { label: string; check: TotalsCheck }) {
-const ts = useTranslations("scout");
   return (
     <tr>
       <td className="mono">{label}</td>

@@ -115,7 +115,6 @@ export function ConsentTable({ consents, ident }: { consents: ConsentList; ident
 
 /** A guardian's yes, and a coach's first plan for a child that yes permits. */
 export function AcademyTools({ ident, scopes, sheets }: { ident: string; scopes: Scopes; sheets: SheetChild[] }) {
-  const t = useTranslations("common");
   const ta = useTranslations("academy");
   const { busy, call, note } = useAcademyCall();
   const [child, setChild] = useState(sheets[0]?.slug ?? "");

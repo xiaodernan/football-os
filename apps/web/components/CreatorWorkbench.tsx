@@ -16,7 +16,6 @@ import {
   type GuideView,
   type ProgramIn,
   type ProgramShelfView,
-  type ProgramView,
 } from "@/lib/creator";
 import type { Drill } from "@/lib/types";
 import type { ApiError } from "@/lib/types";

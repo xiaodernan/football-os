@@ -47,7 +47,6 @@ export default async function AcademyPlanPage({ params }: Props) {
   if (!user) redirect("/login?next=%2Fclub");
 
   const t = await getTranslations("club");
-  const tn = await getTranslations("nav");
   const tc = await getTranslations("common");
   const { ident, plan } = await params;
   if (!ident || !plan || plan === "plans") notFound();

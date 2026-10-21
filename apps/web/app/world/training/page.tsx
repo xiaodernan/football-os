@@ -14,7 +14,6 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 export async function generateMetadata(): Promise<Metadata> {
   const tw = await getTranslations("world");
-  const tt = await getTranslations("worldTraining");
   return pageMetadata({
     // The key is spelled …Link because the world index reached this page through a link; the page's own
     // heading already reads the same key, so the tab and the heading cannot drift apart.
