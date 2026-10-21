@@ -136,7 +136,24 @@ Six failures on the first two runs, and each one moved a real fact into the open
   against the search table read a matching pair as a mismatch. Both assertions now compare like with like, and
   one waits for the row's own button to stop being disabled rather than sleeping.
 
-## 5. Where this tier stops
+## 5. The copy arc, re-measured in the browser (2026-10-21)
+
+§81 rewired every panel on this screen to the catalogues, and the browser walk had not been run since it
+landed. It was re-run on a production build (`.next-walks3`, served on `127.0.0.1:3241` against the API on
+`127.0.0.1:8764` over a fresh SQLite database), and the arc had broken three things that **the copy gate
+cannot see**: a gate that counts English literals says nothing about a catalogue key used for the wrong
+field.
+
+* **The percentile sentence printed its number twice.** The report's `Percentile` row was a `.num` span
+  holding `97.7%` followed by the catalogue's own sentence — `{value}% of {rows} rows` — so the panel read
+  `97.7% 97.7% of 300 rows`. The walk's check ("both percentile shares are printed against a row count")
+  could not match a doubled number, which is the point of the check: it is the one that holds the row count
+  the share is measured against. The catalogue now carries the value in a **rich-text tag**
+  (`<num>{value}%</num> of {rows} rows`) and the panel prints it through `ts.rich`, so the sentence keeps
+  its word order in Chinese *and* the number keeps its style. `97.7% of 300 rows · 97.5% inside midfield
+  (80 rows)` is what the panel says now.
+
+## 6. Where this tier stops
 
 * **A shortlist is stored; nothing else here is.** The page now has one persistent object — §23's list, behind
   migration `0015` — and it holds membership and the manager's own words, never a figure; the search, the report

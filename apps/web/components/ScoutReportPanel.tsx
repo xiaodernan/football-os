@@ -67,17 +67,17 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
               [
                 ts("kvPercentile"),
                 <span key="p">
-                  <span className="num">{(report.current_level.share_of_pool * 100).toFixed(1)}%</span>{" "}
-                  {ts("percentOfPool", {
+                  {ts.rich("percentOfPool", {
                     value: (report.current_level.share_of_pool * 100).toFixed(1),
                     rows: report.current_level.players_in_pool,
+                    num: (chunks) => <span className="num">{chunks}</span>,
                   })}{" "}
                   ·{" "}
-                  <span className="num">{(report.current_level.share_of_band * 100).toFixed(1)}%</span>{" "}
-                  {ts("percentOfBand", {
+                  {ts.rich("percentOfBand", {
                     value: (report.current_level.share_of_band * 100).toFixed(1),
                     band: report.current_level.band,
                     rows: report.current_level.players_in_band,
+                    num: (chunks) => <span className="num">{chunks}</span>,
                   })}
                 </span>,
               ],
