@@ -48,6 +48,15 @@ replay fixed at M12 Item 6, so the probe was repeated with that tier actually in
 than with it degraded. `--allow-origin` now defaults to the project's own web origin (3210); run A had
 used the previous default, and that difference is why the two runs name different origins.
 
+**One red was observed before that green, and it is recorded because a battery whose failure path has
+never been seen has an unproven green.** The first attempt at run B used the probe's then-default
+`--allow-origin http://localhost:3000` against a server configured with the project's 3210 pair. S8 read
+`allowed: [200, null]` — the request the probe believed was the configured origin came back with no
+`Access-Control-Allow-Origin` — the runner printed `9 passed, 1 failed`, and exited 1. The default was
+changed to the project's own origin, and run B was repeated in a fresh server process to reach the 10/10
+above. S8 is the only check in this battery that has been individually watched failing on a live run; the
+other nine have not, and this report does not claim otherwise.
+
 The JSON reports are written to `.scratch/` and are not committed. This document carries their figures;
 re-running the probe against the same contract is what reproduces them.
 
