@@ -5,8 +5,8 @@ Three files, one per locale (`apps/api/app/api/v1/meta.py` publishes them as `lo
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 3524 of 3606 keys in Simplified Chinese, and all 3606 present | **yes** |
-| `zh-TW.json` | 3525 of 3606 keys written in Traditional Chinese, not converted from the `zh` file, and all 3606 present | **yes** |
+| `zh.json` | 3454 of 3510 keys in Simplified Chinese, and all 3510 present | **yes** |
+| `zh-TW.json` | 3455 of 3510 keys written in Traditional Chinese, not converted from the `zh` file, and all 3510 present | **yes** |
 
 ## What a reader gets today
 
@@ -17,7 +17,7 @@ Chinese filenames, and nothing read a catalogue anyway — the interface was Eng
 so the locale the middleware had always resolved was invisible. `apps/api/tests/test_locale_claims.py` is what
 stopped that being invisible: it holds `locales` to these files in both directions.
 
-**Every page reads the catalogue.** The arc that wired the interface namespace by namespace is finished: the copy gate (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every `components/**/*.tsx`**, and it holds the count at 0 on two floors: the three shapes the arc knew about (JSX text, a label-ish attribute, a label-ish object property) and the **fifth** shape it found on 2026-10-21 — a string literal that reaches the reader from somewhere else, a sentence a helper returns, a wording a ternary chooses, or a template that assembles one. Both are 0 now, so a page that adds copy in English fails the build; the metadata gate agrees that every page's tab and heading is now locale-driven (**tabs keyed 51 / literal 0, headings keyed 43 / literal 0**). The gate's **fifth check** holds the other half of the contract: a key read without the values its message needs prints the placeholders themselves, so every key call is checked for its values as well as for its existence. The 82 keys that still fall back in `zh.json` (81 in `zh-TW.json`) are the ones that are *supposed* to: a value that is identical in both catalogues is a technical token - a product name, an enum, a unit - and the figures above are floors rather than pins, so a translation batch raises them without touching this file.
+**Every page reads the catalogue.** The arc that wired the interface namespace by namespace is finished: the copy gate (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every `components/**/*.tsx`**, and it holds the count at 0 on two floors: the three shapes the arc knew about (JSX text, a label-ish attribute, a label-ish object property) and the **fifth** shape it found on 2026-10-21 — a string literal that reaches the reader from somewhere else, a sentence a helper returns, a wording a ternary chooses, or a template that assembles one. Both are 0 now, so a page that adds copy in English fails the build; the metadata gate agrees that every page's tab and heading is now locale-driven (**tabs keyed 51 / literal 0, headings keyed 43 / literal 0**). The gate's **fifth check** holds the other half of the contract: a key read without the values its message needs prints the placeholders themselves, so every key call is checked for its values as well as for its existence. The 56 keys that still fall back in `zh.json` (55 in `zh-TW.json`) are the ones that are *supposed* to: a value that is identical in both catalogues is a technical token - a product name, an enum, a unit - and the translated counts above are floors rather than pins, so a translation batch raises them without touching this file. The **population** is a pin, not a floor: `test_locale_claims.py` recomputes it from `en.json` and fails if this table's number is not the number of keys the catalogue holds, so a key added or removed here without this table being recomputed fails the suite.
 
 ### The 0 was wrong twice, and the gate that found it (2026-10-21)
 
@@ -75,13 +75,17 @@ were in, and it is the check that would have caught somebody switching the field
 * **A key must be asked for.** The other half of the contract, and the one nothing had ever checked: a key no
   page reads is a translation that ships to nobody — written three times, and re-read whenever the message beside
   it changes. `apps/web/scripts/qa-unused-keys.mjs` resolves every read in the web tier and reports the keys no
-  read can reach. On 2026-10-22 it found **226**, of which **63** held the **same English sentence as a key that
-  is read** (`nav.video` and `nav.videoShort`, `nav.login` and `auth.signIn`, `common.pitchCaption3d` and
-  `tactics.pitchCaption3d`) and **67** were a shared vocabulary for copy the interface never wrote — the verbs and
-  prepositions (`common.or`, `common.and`, `common.of`, `common.retry`) written so a sentence could be assembled
-  from parts, and never assembled, because every message here is a whole sentence. Those **130** are gone from all
-  three files. The gate's floor may only fall. A read it cannot resolve **exempts its whole namespace** rather
-  than guessing, so a key that cannot be shown to be dead is never reported as dead.
+  read can reach. On 2026-10-22 it found **226**, and all of them are now gone from all three files: **63** held
+  the **same English sentence as a key that is read** (`nav.video` and `nav.videoShort`, `nav.login` and
+  `auth.signIn`, `common.pitchCaption3d` and `tactics.pitchCaption3d`); **67** were a shared vocabulary for copy
+  the interface never wrote (the verbs and prepositions `common.or`, `common.and`, `common.of`, `common.retry`,
+  written so a sentence could be assembled from parts, and never assembled, because every message here is a whole
+  sentence); and the last **96** were the club tier's rules, the sign-up and password-reset flows, the validation
+  messages and the nav entries for pages the nav does not offer — of which **36** held nothing but a placeholder
+  name (`club.matrixRule` is `"{rule}"`), so they were not translations at all, and **26** were never translated
+  and were sitting in the Chinese catalogues as English. **The floor is 0**: every key this catalogue holds is
+  asked for by a page. A read the gate cannot resolve **exempts its whole namespace** rather than guessing, so a
+  key that cannot be shown to be dead is never reported as dead.
 
 ## Adding a string
 

@@ -458,3 +458,27 @@ holds them to. So the table was never used, and it cost **67 × 3 = 201** transl
 right and had to be re-read whenever a message beside them changed.
 
 They are gone from all three catalogues. The floor is **96**, and the catalogue holds **3606** keys (was 3736).
+
+### The third slice: the last 96 (2026-10-22)
+
+The floor is now **0**. Every key the catalogue holds is asked for by a page.
+
+| namespace | dead keys | what they were |
+| --- | --- | --- |
+| `club` | 36 | the club tier's rules and table headers — **thirty-six of them hold nothing but a placeholder name** (`club.matrixRule` is `"{rule}"`, `club.figuresFrom` is `"{figures}"`), so they are not translations at all: they are the same string in all three catalogues, and a Chinese page reading one would print the API's English sentence with an empty frame around it |
+| `scout` | 16 | the scouting panel's copy |
+| `auth` | 15 | the sign-up, password-reset and account-state flows — **the plan itself records that `validation` "waits for a form that shows custom messages"**, and the reset and confirm flows are not built |
+| `validation` | 8 | the custom validation messages, for the same reason |
+| `nav` | 6 | labels for entries the nav does not offer (`nav.challenges`, `nav.market`, `nav.onboarding`) and the stale twins of the entries it does |
+| `career` | 6 | the career form's pickers |
+| `settings` | 5 | the settings panel's headings |
+| `creator` | 3 | the creator tier's programme receipts |
+| `disclaimer` | 1 | one sentence the disclaimer does not carry |
+
+The rule the catalogue now holds is the one the nav's own comment states: **a catalogue nothing reads is
+a translation that ships to nobody.** A key is created when a page needs a sentence and removed when no
+page needs it; when a future page needs one, the arc's method writes it from that page's own strings.
+
+The catalogue holds **3510** keys (was 3736). The two Chinese files still fall back on the same
+**82** / **81** technical tokens, because every removed key was translated in every locale — so nothing
+about the *coverage* moved, only the size of the thing being covered.

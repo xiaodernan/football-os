@@ -178,8 +178,11 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   one question, one of them a stale copy no page reads. Those are gone from all three catalogues, and **67** more —
   a shared vocabulary for copy the interface never wrote (the verbs and prepositions `common.or`, `common.and`,
   `common.of`, `common.retry` …, written so a sentence could be assembled from parts, and never assembled, because
-  every message here is a whole sentence) — went with them. The floor is **96** and the catalogue holds **3606**
-  keys (was 3736).
+  every message here is a whole sentence) — went with them, and so did the last **96**: the club tier's rules
+  (**36** of them holding nothing but a placeholder name, `club.matrixRule` is `"{rule}"`, so they were not
+  translations at all), the sign-up and password-reset flows, the validation messages, and the nav entries for
+  pages the nav does not offer. **26** of those 96 were never translated and were sitting in the Chinese
+  catalogues as English. The floor is **0** and the catalogue holds **3510** keys (was 3736).
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.

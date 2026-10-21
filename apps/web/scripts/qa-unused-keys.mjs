@@ -66,8 +66,14 @@ const CATALOGUE = JSON.parse(readFileSync(join(WEB, "messages", "en.json"), "utf
  * prepositions (`common.or`, `common.and`, `common.of`, `common.retry`, `common.cancelled`) that were
  * written so a sentence could be assembled from parts, and never assembled — every message in this
  * catalogue is a whole sentence, and no page reads any of them. Those are gone too.
+ *
+ * The last **96** are gone as well, and the floor is **0**: every key the catalogue holds is asked for
+ * by a page. **26** of those 96 were never translated — their Chinese value was byte-identical to the
+ * English — so they were English sentences sitting in the Chinese catalogues, counting towards a
+ * coverage figure nobody was reading. The two Chinese files now fall back on **56** / **55** keys, the
+ * technical tokens that are *supposed* to fall back.
  */
-const FLOOR_UNUSED = 96;
+const FLOOR_UNUSED = 0;
 
 /**
  * Keys the catalogue holds on purpose, for a page that does not exist yet or for a door that is
