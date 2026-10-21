@@ -247,13 +247,16 @@ English before its first page and passes **39/39, exit 0**: the walk records **3
 400 or a 403, and the **five** console lines it leaves behind are all 4xx refusals it knocked for itself — no 5xx and
 no page exception. The screenshots are in `docs/screenshots/` (untracked, as the other milestones' are).
 
-**The whole suite.** The SQLite leg over the same API bytes — `.scratch/whole-sqlite-2026-10-22.xml`, started
+**The whole suite, both engines.** The SQLite leg over the same API bytes — `.scratch/whole-sqlite-2026-10-22.xml`, started
 2026-10-22T01:41:48 and finished at 02:55 — reads **1850 tests / 0 failures / 0 errors / 4 skipped, rc=0, junit
 4445.577s**. The four skips are named from the report's own `skipped` elements: `test_redis_cache_real_integration`,
 `test_a_wrong_password_degrades_and_still_answers`, `test_a_key_written_by_one_process_is_read_by_another`, and
 `test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]`. The PostgreSQL whole-suite leg over the same
-bytes is **not claimed here**; this section measures the tier on PostgreSQL directly, and the whole-suite pair is the
-next thing worth running.
+bytes — `.scratch/whole-pg-2026-10-22.xml`, started 2026-10-22T02:58:03 — reads the same figures: **1850 tests / 0
+failures / 0 errors / 4 skipped, rc=0, junit 3439.287s**. It skipped the same four cases for the same recorded
+reasons — `REDIS_URL` was not set on this leg either, so the two environment-gated Redis cases did not run — which
+leaves the engine as the one variable and the tallies equal. The API bytes are `c79f2dd`'s: `git diff --stat
+c79f2dd..fab91ce -- apps/api` is empty, and the PG leg started while HEAD was `fab91ce`.
 
 **What this does not claim.** §35's community in this build has no moderation, reporting, blocking or DMs — the
 milestone's list does not ask for them — and there is no entitlement gate and no reader list, as the section above
