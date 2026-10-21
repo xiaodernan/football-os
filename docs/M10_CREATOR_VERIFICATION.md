@@ -503,15 +503,21 @@ browser plane for §36 is therefore not "unwalked yet" in the ordinary sense —
 
 ## Outstanding, and the next slice
 
+*All three were closed after this section was written; the milestone close-out at the end of this file is the
+measurement.*
+
 1. ~~a walk for `/creator`~~ — landed after this section was written, in `ab2d4c8`, at **56 of 56 checks, exit 0**
    on a production build; the figures it measured and the three defects it found are recorded in that commit and in
-   `docs/M10_CREATOR_VERIFICATION.md`'s own walk section, not re-derived here;
-2. §38 Football Career Portfolio — its read landed in `471da30` (ten sections, two doors, 14 cases) and its page in
-   the commit that strikes this line (`/portfolio`, **37 of 37 checks** — see
-   `docs/M10_PORTFOLIO_VERIFICATION.md`). What remains of §38 is its three permitted public outputs: a public
-   player profile, a share link on §17's revocable-token precedent, and a PDF. None of the three exists, and the
-   page prints that sentence rather than being one of them;
-3. §30 Knowledge Graph, still unowned by a milestone and proposed for M11 in `docs/SPEC_COVERAGE_AUDIT.md`.
+   `docs/M10_CREATOR_VERIFICATION.md`'s own walk section, not re-derived here. It was extended to **97 of 97** on
+   2026-10-22 by the career-challenge panel and re-run on a detached plane at `c79f2dd`; that run is in the
+   close-out below.
+2. ~~§38 Football Career Portfolio~~ — its read landed in `471da30` (ten sections, two doors, 14 cases), its page in
+   the commit that struck the original line, and **all three permitted public outputs landed after it**: the share
+   link and its public projection (`/portfolio/share/{token}`, migration `0025`), and the owner-authenticated PDF
+   (`/api/v1/portfolio/cv.pdf`). The sentence this bullet carried — "None of the three exists" — was true when it was
+   written and is false now; the close-out's portfolio walk is **53/53**.
+3. ~~§30 Knowledge Graph~~ — landed under M11 (2026-10-20), with its joint-retrieval evidence and §33's stored trace,
+   in `docs/M11_AGENT_TRACE_VERIFICATION.md`; it was never an M10 noun.
 
 ## The whole-suite legs over §36, recorded late
 
@@ -533,3 +539,42 @@ a superseded background task, while each `.log` file has the same missing last l
 **four** times in this milestone — the junit `generated xml file` line is the last thing either log contains. The
 reports themselves say 0 failures and 0 errors over 1293 tests, which is the substance an `rc=0` would have
 reported, and the absence of the code is named rather than back-filled.
+
+## The milestone, verified at `c79f2dd` (2026-10-22)
+
+§36's six content objects and §38's three outputs are all landed, and this section measures the milestone on the
+commit that carries the last of them. The ten files that hold M10's tiers were run on both engines over the same
+bytes; the wires and the two pages were walked on a detached plane checked out at that commit, so the figures below
+are not a reading of the shared worktree's uncommitted neighbours.
+
+**The tier, on both engines.** One invocation per engine over the ten files:
+
+| leg | tests | failures | errors | skipped | junit duration |
+| --- | --- | --- | --- | --- | --- |
+| per-run SQLite | **211** | **0** | **0** | **0** | 241.922s |
+| PostgreSQL + pgvector | **211** | **0** | **0** | **0** | 1346.638s |
+
+Both `rc=0`. The 211 are `tests/test_creator.py` **64**, the six content objects' files — programs **10**,
+tactical **15**, player analyses **15**, match analyses **16**, scouting **17**, career challenges **20** — §38's
+`tests/test_portfolio.py` **16** and `tests/test_portfolio_share.py` **24**, and §42's `tests/test_entitlements.py`
+**14**. The case counts are the `<testcase>` elements of each engine's own `--junitxml` report, not a declaration.
+
+**The static gates.** `scripts/lint.sh` — the one target both `scripts/check.sh` and CI call — answers *All checks
+passed!*; `mypy app` is clean over **154 source files**; the contract exported in-process from this tree reads
+**202 paths / 264 operations**, of which **21 paths / 38 operations** are `/api/v1/creator/…` (the figure §36's row
+in `docs/SPEC_COVERAGE_AUDIT.md` publishes); `tsc --noEmit` on the plane writes an output file of **0 lines** and
+exits **0**; `NEXT_DIST_DIR=.next-m10 next build` exits **0** with `BUILD_ID` **`wNhMbFrFqP2r54UwK1XNI`**.
+
+**The walks, on that build.** The API answers on `127.0.0.1:8742` over a fresh SQLite database migrated through
+**0035**, the web on `127.0.0.1:3219`, both under the plane's own tree. `qa-creator.mjs` — the walk whose 97 checks
+include the five writing panels, the challenge rule and its verdict — passes **97/97, exit 0**, and
+`qa-portfolio.mjs` passes **53/53, exit 0** with **11** recorded knocks whose statuses are exactly `200, 201, 401,
+404`, **no** 403/400/5xx and **0** console errors. Both walks pin the locale to English with `fo_locale` before
+their first page, so a host whose Chrome asks for Chinese cannot turn their needles red for a reason outside the
+tier.
+
+**What is still owed.** §42's payments remain unimplemented by design, and the two `creator_*` features stay
+ceilings no door refuses on. A program is a plan, not an enrolled course with progress of its own. **The whole-suite
+legs are not part of this claim**: the ten files above are the M10 reading on both engines, the last completed
+whole-suite pair in this file is the 1293-case record over `2c0c5f2` above, and no whole-suite run over `c79f2dd` is
+claimed here. The 2026-09-29 legs' missing exit code is not back-filled either.
