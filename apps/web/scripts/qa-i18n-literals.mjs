@@ -320,6 +320,23 @@ const looksLikeKey = (value) => {
 const sites = [];
 /** The keys a page asks for by name — `t(link.key)` — which the key-existence check cannot read. */
 const namedKeys = [];
+/** The sentences that carry a translated fragment beside a word of their own. */
+const halfTranslated = [];
+
+/** Whether a template carries a translator call. */
+const hasTranslatorCall = (node) => {
+  let found = false;
+  const visit = (child) => {
+    if (found) return;
+    if (ts.isCallExpression(child) && ts.isIdentifier(child.expression) && /^t[a-z]{0,2}$/.test(child.expression.text)) {
+      found = true;
+      return;
+    }
+    ts.forEachChild(child, visit);
+  };
+  ts.forEachChild(node, visit);
+  return found;
+};
 /**
  * The fourth shape: a string literal that reaches the reader from somewhere the three shapes above do
  * not cover — a sentence a helper returns, a wording a ternary chooses, a note a component builds.
@@ -541,6 +558,20 @@ for (const file of files) {
           copy: parts.map((part) => part.text.trim()).filter(Boolean).join(" ").slice(0, 120),
         });
       }
+      /**
+       * A **half-translated sentence**: a template that mixes a translated fragment with a word the
+       * catalogue does not hold. `${t("save")} board` renders "保存 board" in Chinese — the shape the
+       * copy heuristic cannot see, because the untranslated half is a single lowercase word, which the
+       * heuristic has always read as a value. The shape is the signal here, not the word: a template
+       * that carries a translator call *and* a word of its own is a sentence in two languages.
+       */
+      if (hasTranslatorCall(node) && parts.some((part) => /[A-Za-z]{2,}/.test(part.text))) {
+        halfTranslated.push({
+          file: rel,
+          line: position(node),
+          copy: parts.map((part) => part.text.trim()).filter(Boolean).join(" ").slice(0, 120),
+        });
+      }
     }
     if (ts.isStringLiteral(node) && !counted.has(node.getStart(source))) {
       if (isEnglishCopy(node.text) && !literalIsToken(node, node.parent)) {
@@ -631,6 +662,17 @@ check(
 );
 
 /**
+ * A sentence in two languages: a translated fragment with a word of its own beside it. The board editor's
+ * save button read `${t("save")} board` — "保存 board" in Chinese, "保存d" when it was saved — and no
+ * shape the gate read could see it, because the untranslated half is one lowercase word.
+ */
+check(
+  "no sentence mixes a translated fragment with a word of its own",
+  halfTranslated.length === 0,
+  halfTranslated.length === 0 ? "0 half-translated sentence(s)" : `${halfTranslated.length} half-translated sentence(s)`,
+);
+
+/**
  * A key read without the values its message needs prints the placeholders themselves, and next-intl
  * answers a missing value with an error rather than a sentence. The scout's search-limits row is the
  * case this check was written for: the label was wired to a key that holds a *pattern*, so the column
@@ -676,6 +718,13 @@ if (failed.length) {
     console.log("Every key below is named in the page's own data and not in the catalogue. next-intl throws MISSING_MESSAGE for it.");
     for (const missing of missingNamedKeys) {
       console.log(`  ${missing.file}:${missing.line}: ${JSON.stringify(missing.key)}`);
+    }
+  }
+  if (halfTranslated.length) {
+    console.log("");
+    console.log("Every sentence below mixes a translated fragment with a word of its own. It reads in two languages.");
+    for (const half of halfTranslated) {
+      console.log(`  ${half.file}:${half.line}: ${JSON.stringify(half.copy)}`);
     }
   }
   if (missingValues.length) {

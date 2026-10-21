@@ -149,7 +149,7 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
                 {td("copyLink")}
               </button>
               <button className="btn btn--danger" data-portfolio-share-revoke disabled={busy !== null} onClick={() => void closeLink(live.token as string)} type="button">
-                {busy === "revoke" ? `${t("close")}…` : `${t("close")} link`}
+                {busy === "revoke" ? `${t("close")}…` : td("closeLink")}
               </button>
             </>
           )}

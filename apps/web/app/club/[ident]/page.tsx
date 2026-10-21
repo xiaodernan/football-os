@@ -603,7 +603,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
             {mine.ok ? (
               <p className="muted" data-account-meter={mine.data.items.map((row) => row.feature).join(",")} style={{ fontSize: "0.82rem" }}>
                 {t("accountMeterSentence", { name: mine.data.display_name, plan: mine.data.plan })} {" "}
-                {mine.data.items.map((row) => `${row.feature} ${row.used} of ${row.limit} per ${row.period}${row.enforced ? t("refusedOnToday") : t("notRefusedOnToday")}`).join("; ") ||
+                {mine.data.items.map((row) => t("accountMeterItem", { feature: row.feature, used: row.used, limit: row.limit, period: row.period }) + (row.enforced ? t("refusedOnToday") : t("notRefusedOnToday"))).join("; ") ||
                   t("accountMeterNothing")}
                 .
               </p>

@@ -384,7 +384,12 @@ function LedgerPanel({
             [
               t("rowEventsWithoutPlayer"),
               unattributed
-                ? `${unattributed} (${ledger.unattributed.events.ambiguous} ambiguous, ${ledger.unattributed.events.unnamed} naming nobody) — ${ledger.unattributed.ambiguous_names.join(", ") || t("noRepeatedName")}`
+                ? t("unattributedRow", {
+                    unattributed,
+                    ambiguous: ledger.unattributed.events.ambiguous,
+                    unnamed: ledger.unattributed.events.unnamed,
+                    names: ledger.unattributed.ambiguous_names.join(", ") || t("noRepeatedName"),
+                  })
                 : t("everyEventAttributed"),
             ],
             [

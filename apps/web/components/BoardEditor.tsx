@@ -179,7 +179,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
 
           <div className="row wrap" style={{ gap: "0.4rem" }}>
             <button className="btn btn--primary btn--sm" disabled={busy || !dirty} onClick={save} type="button">
-              {busy ? `${t("save")}…` : dirty ? `${t("save")} board` : t("save") + "d"}
+              {busy ? `${t("save")}…` : dirty ? tb("saveBoard") : tb("saved")}
             </button>
             <button className="btn btn--sm" disabled={busy} onClick={derive} type="button">
               {tb("deriveFromThis")}
