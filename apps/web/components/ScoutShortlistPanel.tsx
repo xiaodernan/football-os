@@ -120,7 +120,7 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
   const figures = fault?.details && typeof fault.details === "object" ? JSON.stringify(fault.details) : "";
 
   return (
-    <div className="stack">
+    <div className="stack" data-testid="scout-shortlist">
       <Panel
         eyebrow={ts("listsEyebrow", {
           total: lists?.total ?? 0,
@@ -132,7 +132,7 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
         <div className="stack-sm">
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             <input aria-label={ts("listNameAria")} className="grow" maxLength={rules.name_max} onChange={(event) => setName(event.target.value)} placeholder={ts("listNamePlaceholder")} value={name} />
-            <input aria-label={ts("careerAria")} className="mono" maxLength={80} onChange={(event) => setCareer(event.target.value)} placeholder={ts("careerPlaceholder")} value={career} />
+            <input aria-label={ts("listCareerAria")} className="mono" maxLength={80} onChange={(event) => setCareer(event.target.value)} placeholder={ts("listCareerPlaceholder")} value={career} />
             <button className="btn btn--primary" disabled={busy !== null || !name.trim() || (lists ? lists.total >= lists.limit : false)} onClick={() => void create()} type="button">
               {busy === "create" ? ts("opening") : ts("openAList")}
             </button>

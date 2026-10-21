@@ -5,7 +5,7 @@ against the API's own answers — and that a visitor can check each of them with
 
 * **API tier:** `uvicorn app.main:app --port 8734`, the development PostgreSQL world (300 stored players, 20 clubs).
 * **Web tier:** `API_INTERNAL_URL=http://127.0.0.1:8734 next start -p 3213`, `next build` compiled in 67 s.
-* **Walk:** `QA_BASE=http://127.0.0.1:3213 node scripts/qa-scout.mjs` → **68/68 checks passed** at 00:24, then **97/97** at 02:57 after §23's shortlist panel joined the screen, and **124/124** at 03:47 after M7's transfer-simulation panel did; 8 screenshots in `docs/screenshots/`, exit 0 on the final run. Every run against this tree.
+* **Walk:** `QA_BASE=http://127.0.0.1:3213 node scripts/qa-scout.mjs` → **68/68 checks passed** at 00:24, then **97/97** at 02:57 after §23's shortlist panel joined the screen, and **124/124** at 03:47 after M7's transfer-simulation panel did; 8 screenshots in `docs/screenshots/`, exit 0 on the final run. Every run against this tree. The walk was re-measured after §81's copy arc on 2026-10-21 — **124/124 again, exit 0** — and that run is recorded in §5 below.
 
 The walk is its own script (`apps/web/scripts/qa-scout.mjs`) rather than a section of `visual-qa.mjs`, for the
 same reason `qa-market.mjs` is: that walk is another milestone's live working copy, and a page cannot be folded
@@ -152,6 +152,24 @@ field.
   (`<num>{value}%</num> of {rows} rows`) and the panel prints it through `ts.rich`, so the sentence keeps
   its word order in Chinese *and* the number keeps its style. `97.7% of 300 rows · 97.5% inside midfield
   (80 rows)` is what the panel says now.
+* **Two fields on one page carried one name.** The wiring gave the shortlist's career field and the
+  transfer panel's career field the same `aria-label` — `careerAria`, "Career to simulate for" — where
+  before the arc they read "Career to read the list against" and "Career to simulate for". The walk's
+  page-wide selector therefore filled the **list's** field, the projection's own career stayed empty, the
+  button stayed server-rendered `disabled`, and seventeen checks went red. The list's field has its own
+  name back (`listCareerAria`, `listCareerPlaceholder` — the shortlist's placeholder had also lost its
+  "(optional)"), and the walk now addresses fields **inside the panel it means**
+  (`[data-testid="scout-transfer"] input[…]`), because a page-wide selector cannot tell two fields apart
+  and the failure it produced said nothing about which one it had filled.
+
+**What this says about the gate, and what it does not.** The copy gate's ceiling is **0** over the whole
+tier and the key check now counts **3361 key calls** — including the ten rich-text reads it used to be
+blind to, since `t.rich("key")` is a catalogue read exactly as `t("key")` is, and a rich key the catalogue
+does not hold throws `MISSING_MESSAGE` in the browser just as a plain one does. But a gate that counts
+literals cannot see a *key* used for the wrong field, and that is the class the arc introduced here. The
+answer is a gate that can: **no two panels on one page may give a field the same name** — a census over
+every page's own component graph, which reads **0 collisions over 61 pages** now that the one this walk
+found is closed.
 
 ## 6. Where this tier stops
 

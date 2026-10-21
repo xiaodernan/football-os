@@ -335,6 +335,8 @@
     "listNamePlaceholder": "例如：值得關注的左腳中場",
     "careerAria": "要推演的職業生涯",
     "careerPlaceholder": "職業生涯標識",
+    "listCareerAria": "要對照閱讀該名單的職業生涯",
+    "listCareerPlaceholder": "職業生涯標識（選填）",
     "openAList": "開啟一份名單",
     "carrySentence": "存下我剛搜的那句話（{query}）——每次讀取時都會對每名成員重新套用",
     "noneYet": "還沒有",

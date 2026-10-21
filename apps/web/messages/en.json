@@ -335,6 +335,8 @@
     "listNamePlaceholder": "e.g. Left-footed midfielders to watch",
     "careerAria": "Career to simulate for",
     "careerPlaceholder": "career slug",
+    "listCareerAria": "Career to read the list against",
+    "listCareerPlaceholder": "career slug (optional)",
     "openAList": "Open a list",
     "carrySentence": "store the sentence I just searched ({query}) — it is re-applied to every member on each read",
     "noneYet": "none yet",
