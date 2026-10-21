@@ -125,6 +125,15 @@ jobs:
         # object properties are three shapes and the gate reads all three. The ceiling only falls — wiring a page
         # to its catalogue lowers it, and a page that adds copy in English raises it. Files only.
         run: node scripts/qa-i18n-literals.mjs
+      - name: Catalogue-ICU gate (every message parses, and asks for the same values in every locale)
+        # Same command as `scripts/check.sh`. A catalogue message is a program, not a string: next-intl parses
+        # it when the page renders it, and a message that does not parse throws instead of printing. Nothing in
+        # the build reads a catalogue, so a malformed message compiles, typechecks, lints and then 500s the page
+        # that reads it. This parses every message in all three catalogues with the app's own ICU parser, refuses
+        # a plural or select with no "other" branch, and holds the same key to the same placeholders everywhere.
+        # It found five messages written with mustache placeholders ({{count}}), which ICU reads as an argument
+        # that never began. Files only.
+        run: node scripts/qa-icu-messages.mjs
       - name: Field-name gate (two fields on one page may not share a name)
         # Same command as `scripts/check.sh`. The copy gate above counts English literals; it cannot see a
         # catalogue key used for the wrong field, which is how the scout's shortlist and the scout's transfer

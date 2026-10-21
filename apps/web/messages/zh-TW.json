@@ -245,7 +245,7 @@
     "emptyList": "上面還沒有人",
     "addFromSearch": "從上面的搜尋裡新增球員。他的任何資料都不會被複製進名單，所以你明天看到的就是儲存列明天所說的。",
     "transferTitle": "如果這段職業生涯簽下他會怎樣？",
-    "transferSubtitle": "對 {{min}}–{{max}} 場未來比賽的推演 · 它會寫入 {{writes}}",
+    "transferSubtitle": "對 {min}–{max} 場未來比賽的推演 · 它會寫入 {writes}",
     "careerSlug": "生涯 slug",
     "selectPlayer": "這次搜尋剛返回的球員之一",
     "roundsLabel": "推演的場數",
@@ -707,12 +707,12 @@
   },
   "validation": {
     "required": "此欄位必填",
-    "minLength": "長度至少 {{count}} 個字元",
-    "maxLength": "長度不超過 {{count}} 個字元",
+    "minLength": "長度至少 {count} 個字元",
+    "maxLength": "長度不超過 {count} 個字元",
     "invalidEmail": "電子郵件格式不正確",
     "invalidNumber": "必須是有效數字",
-    "minValue": "不得小於 {{min}}",
-    "maxValue": "不得大於 {{max}}",
+    "minValue": "不得小於 {min}",
+    "maxValue": "不得大於 {max}",
     "patternMismatch": "格式不正確"
   },
   "disclaimer": {

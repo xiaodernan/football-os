@@ -245,7 +245,7 @@
     "emptyList": "上面还没有人",
     "addFromSearch": "从上面的搜索里添加球员。他的任何数据都不会被复制进名单，所以你明天看到的就是存储行明天所说的。",
     "transferTitle": "如果这段职业生涯签下他会怎样？",
-    "transferSubtitle": "对 {{min}}–{{max}} 场未来比赛的推演 · 它会写入 {{writes}}",
+    "transferSubtitle": "对 {min}–{max} 场未来比赛的推演 · 它会写入 {writes}",
     "careerSlug": "生涯 slug",
     "selectPlayer": "这次搜索刚返回的球员之一",
     "roundsLabel": "推演的场数",
@@ -707,12 +707,12 @@
   },
   "validation": {
     "required": "此字段必填",
-    "minLength": "长度至少 {{count}} 个字符",
-    "maxLength": "长度不超过 {{count}} 个字符",
+    "minLength": "长度至少 {count} 个字符",
+    "maxLength": "长度不超过 {count} 个字符",
     "invalidEmail": "邮箱格式不正确",
     "invalidNumber": "必须是有效数字",
-    "minValue": "不能小于 {{min}}",
-    "maxValue": "不能大于 {{max}}",
+    "minValue": "不能小于 {min}",
+    "maxValue": "不能大于 {max}",
     "patternMismatch": "格式不正确"
   },
   "disclaimer": {

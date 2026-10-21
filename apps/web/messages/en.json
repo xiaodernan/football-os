@@ -245,7 +245,7 @@
     "emptyList": "Nobody on it yet",
     "addFromSearch": "Add a player from the search above. Nothing about him is copied into the list, so what you see tomorrow is what the stored row says tomorrow.",
     "transferTitle": "What if this career signed him?",
-    "transferSubtitle": "a projection over {{min}}-{{max}} future fixtures · it writes {{writes}}",
+    "transferSubtitle": "a projection over {min}-{max} future fixtures · it writes {writes}",
     "careerSlug": "career slug",
     "selectPlayer": "one of the players this search just returned",
     "roundsLabel": "Fixtures to project",
@@ -707,12 +707,12 @@
   },
   "validation": {
     "required": "This field is required",
-    "minLength": "Must be at least {{count}} characters",
-    "maxLength": "Must be no more than {{count}} characters",
+    "minLength": "Must be at least {count} characters",
+    "maxLength": "Must be no more than {count} characters",
     "invalidEmail": "Invalid email address",
     "invalidNumber": "Must be a valid number",
-    "minValue": "Must be at least {{min}}",
-    "maxValue": "Must be no more than {{max}}",
+    "minValue": "Must be at least {min}",
+    "maxValue": "Must be no more than {max}",
     "patternMismatch": "Invalid format"
   },
   "disclaimer": {

@@ -106,6 +106,16 @@ echo "── Web: English-literal i18n gate ────────────
 # page that adds copy in English raises it, which is what this gate says. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-i18n-literals.mjs)
 
+echo "── Web: catalogue-ICU gate ───────────────────────────"
+# A catalogue message is a program, not a string: next-intl parses it when the page renders it, and a message
+# that does not parse throws instead of printing. Nothing in the build reads a catalogue — next-intl resolves a
+# key in the browser — so a malformed message compiles, typechecks, lints and then 500s the page that reads it.
+# This gate parses every message in all three catalogues with the app's own ICU parser, refuses a plural or a
+# select with no "other" branch, and holds the same key to the same placeholders in all three files. It found
+# five messages written with mustache placeholders ({{count}}), which ICU reads as an argument that never began.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-icu-messages.mjs)
+
 echo "── Web: field-name i18n gate ─────────────────────────"
 # The arc's third class of defect, which the copy gate above cannot see: a catalogue key used for the *wrong
 # field*. The scout's shortlist and the scout's transfer panel once shared one accessible name, so a script that
