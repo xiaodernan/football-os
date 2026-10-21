@@ -61,8 +61,8 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
 
 ## What §36 does not claim yet
 
-* **The six kinds are six sections, not six objects — and the first five kinds now have objects
-  of their own (2026-10-21).** §36 lists Training Program, Tactical Guide, Player Analysis, Match
+* **The six kinds are six sections, and all six have objects of their own (2026-10-21/2026-10-22).**
+  §36 lists Training Program, Tactical Guide, Player Analysis, Match
   Analysis, Career Challenge and Scouting List; the tier's `GUIDE_SECTIONS` is `plan, drill, match,
   tactic, scout, video`, and a guide is a title, a frame, a section and citations in every one of
   them. A **Training Program** is now a row of its own: a schedule, a dose and a progression, with a
@@ -76,9 +76,11 @@ a document row across re-syncs but mints a fresh chunk id every time. Reach is a
   and stats. A **Scouting List** is now a row anchored to many stored footballers: each selection
   keeps the player's address, a hash witness and the author's own note, every attribute is read
   from the player row on the read, and a retired player leaves a bare address instead of erasing
-  the list. What is still not there: the **Career Challenge** has no object of its own, a program is
-  a plan rather than an enrolled course, and there is no progress model beyond the training tier's
-  own sessions.
+  the list. A **Career Challenge** is now a row carrying the author's rule — an objective, a target
+  and a window of rounds — and an attempt that stores only the entrant's own career address and the
+  round the window opened at, so the verdict is summed from that career's own fixtures on the read.
+  What is still not there: a program is a plan rather than an enrolled course, and there is no
+  progress model beyond the training tier's own sessions.
 * **No money, by design.** `creator_publish` and `creator_guide` are ceilings the data holds and **no door refuses
   on** — the caps that actually bite are the lifetime counts in `CAPS` (100 guides, 24 citations a guide).
 * **The feedback half of §36's loop is §35's.** "Users → Feedback → Creator" is reactions, comments and follows on
@@ -360,6 +362,59 @@ project-wide guide census then caught the second mismatch before it landed: the 
 path parameter `{list_id}` while `ROUTE_GUIDE` said `{list}`, and
 `tests/test_creator.py::test_the_guide_names_exactly_the_doors_that_are_routed` compares the guide
 with the app's own routed paths, so the two now agree on `{list_id}`.
+
+## The career challenge — §36's fifth kind of content (2026-10-22)
+
+The fifth kind is the first object whose figure is **another account's play**, and the tier's rule
+survives it: **an address, never a copy**.
+
+* **The challenge stores the author's rule, and the rule is the whole content.**
+  `creator_career_challenges` holds the author's title and summary and three rule columns —
+  `objective_kind`, `target`, `window_rounds` — over the career tier's own objective vocabulary
+  (`OBJECTIVE_KINDS` and `OBJECTIVE_FORMULA`, imported rather than retyped, so a kind the career
+  tier adds cannot become a challenge the engine cannot judge). Both tables' column sets are
+  asserted as sets; no column could hold a score, a table position or any figure a career produces.
+* **An attempt stores an address and a starting line, nothing else.** `creator_career_attempts`
+  holds the entrant, the challenge, the entrant's own `career_slug` and `start_round` — a plain
+  pointer with no foreign key, for the same reason the analyses' anchors are plain pointers: the
+  career tier allows a career to be erased, and an attempt must not block that or take the
+  challenge with it. A career the entrant no longer holds is a **bare address**
+  (`career_missing`, brief fields null, `stored: false`, nothing summed into a zero), and the
+  challenge stays readable for every other entrant.
+* **The verdict is summed on the read, inside the window.** `_attempt_view` slices the career's
+  `career_fixtures` rows to `start_round < round_index <= start_round + window_rounds` and hands
+  them to the career tier's own `record_of`; `actual` is the objective read off that record
+  (wins / points / goal difference / unbeaten run), and `rounds` lists the fixtures the sum used.
+  The proof is behavioural: a career enters with two wins already behind it, and they do not
+  count; the case then flips one in-window fixture from W to L between two reads and watches
+  `actual` move from 6 to 3 while the career's own stored totals do not move.
+* **The target is earned only when the window closes**, which is the career tier's own
+  `verdict_for` discipline: while `played < window_rounds` the status is `in_progress` and
+  `earned` is false even when `actual` already meets the target; at the closing round it is
+  `met`/`missed`; a career that stops being active before the window closes reads
+  `career_retired` rather than a verdict it did not earn.
+* **Entering is refused twice, with figures.** A career that is not active, or has already spent
+  the career tier's own challenge window, is refused at entry (409 `career_challenge_inactive`,
+  with its status and rounds in the details); a second entry to the same challenge answers 409
+  `career_challenge_entered` with the first attempt, its career and its `start_round`. Withdrawing
+  removes only the attempt and leaves the career. Erasing a challenge takes its attempts (FK
+  cascade) and touches no career row.
+* **Reach and six doors.** Publish, the shelf (each row joined to the viewer's own `entered` flag),
+  one challenge (which carries the viewer's attempt and the challenge's figures), erase, enter and
+  withdraw — six private doors under the existing prefix. Reach is §35's follow predicate again.
+  A stranger reading a public challenge sees `attempt: null` and the attempt **count** but not the
+  entrant's career slug; an unlisted challenge is readable at its address and in no listing;
+  erasing another account's challenge and entering with another account's career are the same
+  absence; no door in this tier answers 403. The ceiling is 30 challenges per creator (409
+  `career_challenge_limit`), a target is 1–99 and a window 1–38 rounds (422
+  `career_challenge_target` / `career_challenge_window`).
+
+Measured 2026-10-22: `tests/test_creator_challenges.py` **20 cases**; the seven creator files
+together answer **157 tests / 0 failures / 0 errors / 0 skipped in 121.069s** (junit,
+`.scratch/leg_challenges_creator.xml`); `mypy app` clean over **154 source files**; `ruff check`
+clean on the six touched Python files; the contract is regenerated at **202 paths / 264
+operations**, the six new operations being its only delta; migration `0035` upgrades to head,
+passes `alembic check` silently and downgrades/upgrades cleanly on a scratch SQLite database.
 
 ## A finding this milestone corrected
 

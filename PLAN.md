@@ -868,6 +868,42 @@ remaining one.
 
 ---
 
+## Item 15 — M10: the career challenge, §36's fifth kind of content
+
+**Done 2026-10-22.** Item 14 gave the sixth kind an object, and its record said five kinds had objects of their own —
+Career Challenge was the remaining one. §36's fifth kind is a **rule** an author publishes and another account enters
+with a career of its own.
+
+**Do.** Store the author's rule and the entrant's address, and judge the run on the read.
+
+1. **`creator_career_challenges` + `creator_career_attempts`** (migration `0035`): the challenge holds the author's
+   title and summary, a visibility and the rule — `objective_kind` over the career tier's own `OBJECTIVE_KINDS`,
+   a target and a `window_rounds`. An attempt holds the entrant, the challenge, the entrant's own `career_slug` and
+   the `start_round` the window opens at. Both column lists are asserted as sets: no win, point, goal or verdict.
+   `career_slug` is a plain pointer, not a foreign key, so an entrant may erase their career without an attempt
+   blocking it.
+2. **The verdict is summed on the read.** `_attempt_view` slices the career's `career_fixtures` to
+   `start_round < round_index <= start_round + window_rounds`, hands them to the career tier's own `record_of`, and
+   reads `wins` / `points` / `goal_difference` / `unbeaten` off that record. The target earns only when the window
+   closes, exactly as M6's scenarios judge a run; a career retired mid-run reads `career_retired`, and a career erased
+   since entry leaves a bare address (`career_missing`, brief fields null, nothing summed into a zero).
+3. **The proof is behavioural.** A career enters with two wins behind it and they do not count; one in-window fixture
+   is flipped from W to L between two reads and `actual` moves 6 → 3 while the career's stored totals do not move.
+   Entering an inactive or exhausted career is refused (409 `career_challenge_inactive`), a second entry is refused
+   with the first run's figures (409 `career_challenge_entered`), and erasing a challenge takes its attempts and
+   touches no career row.
+4. **Six doors** under the tier's prefix: publish, shelf (joined to the viewer's own `entered` flag), one challenge,
+   erase, enter and withdraw. Reach is §35's follow predicate; a stranger reading a public challenge sees the attempt
+   count but `attempt: null` and no career slug; an unlisted challenge is readable at its address and in no listing;
+   another account's challenge is absence; no door answers 403. Ceiling: 30 challenges per creator
+   (409 `career_challenge_limit`), target 1–99, window 1–38 rounds.
+
+**Evidence.** `tests/test_creator_challenges.py` (20 cases); the seven creator files together answer **157 tests / 0
+failures / 0 errors / 0 skipped in 121.069s** (junit `.scratch/leg_challenges_creator.xml`). mypy is clean over 154
+files; ruff is clean on the six touched Python files; the contract is regenerated at 202 paths / 264 operations;
+migration `0035` upgrades to head, passes `alembic check` silently and round-trips on a scratch SQLite database. The
+record now says all six kinds have objects of their own.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

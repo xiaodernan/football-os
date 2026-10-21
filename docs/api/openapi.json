@@ -11722,6 +11722,320 @@
         }
       }
     },
+    "/api/v1/creator/challenges": {
+      "post": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Publish Career Challenge",
+        "description": "Publish a career challenge: an objective, a target, a window and a visibility.\n\nThere is no anchor to resolve, because the rule is the author's own; what publication fixes is\nthe objective kind, the target and the window, and none of the three can move afterwards.",
+        "operationId": "publish_career_challenge_api_v1_creator_challenges_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerChallengeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Publish Career Challenge Api V1 Creator Challenges Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Career Challenge Shelf",
+        "description": "The shelf of career challenges, as far as this reader may reach, each named by its own runs.",
+        "operationId": "read_career_challenge_shelf_api_v1_creator_challenges_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "creator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Creator"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Career Challenge Shelf Api V1 Creator Challenges Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/challenges/{challenge}": {
+      "get": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Read Career Challenge",
+        "description": "One career challenge, with the caller's own run judged from their career's rows on this read.",
+        "operationId": "read_career_challenge_api_v1_creator_challenges__challenge__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "challenge",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Challenge"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Career Challenge Api V1 Creator Challenges  Challenge  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Erase Career Challenge",
+        "description": "Erase your own career challenge. The runs on it go; the careers they pinned stay.",
+        "operationId": "erase_career_challenge_api_v1_creator_challenges__challenge__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "challenge",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Challenge"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Erase Career Challenge Api V1 Creator Challenges  Challenge  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creator/challenges/{challenge}/enter": {
+      "post": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Enter Career Challenge",
+        "description": "Pin your own career to a challenge: the round it stands at is where the window opens.\n\nA career that cannot play another round is refused here rather than entered into a window that\ncould never close; a second entry from the same account is refused with the first run's figures.",
+        "operationId": "enter_career_challenge_api_v1_creator_challenges__challenge__enter_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "challenge",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Challenge"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerAttemptIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Enter Career Challenge Api V1 Creator Challenges  Challenge  Enter Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "creator"
+        ],
+        "summary": "Withdraw Career Challenge",
+        "description": "Withdraw your own run. The career it pinned is untouched.",
+        "operationId": "withdraw_career_challenge_api_v1_creator_challenges__challenge__enter_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "challenge",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Challenge"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Withdraw Career Challenge Api V1 Creator Challenges  Challenge  Enter Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/portfolio/rules": {
       "get": {
         "tags": [
@@ -13714,6 +14028,60 @@
           "listing"
         ],
         "title": "BuyIn"
+      },
+      "CareerAttemptIn": {
+        "properties": {
+          "career": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Career",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CareerAttemptIn"
+      },
+      "CareerChallengeIn": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Title",
+            "default": ""
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 700,
+            "title": "Summary",
+            "default": ""
+          },
+          "visibility": {
+            "type": "string",
+            "maxLength": 12,
+            "title": "Visibility",
+            "default": "public"
+          },
+          "objective": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Objective",
+            "default": "wins"
+          },
+          "target": {
+            "type": "integer",
+            "title": "Target",
+            "default": 0
+          },
+          "window_rounds": {
+            "type": "integer",
+            "title": "Window Rounds",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CareerChallengeIn"
       },
       "CareerIn": {
         "properties": {

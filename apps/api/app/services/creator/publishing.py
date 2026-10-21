@@ -119,6 +119,18 @@ REFUSALS: Final = (
     "scouting_players",
     "scouting_note",
     "scouting_duplicate_player",
+    "no_such_career_challenge",
+    "no_such_career_attempt",
+    "no_such_attempted_career",
+    "career_challenge_title",
+    "career_challenge_summary",
+    "career_challenge_visibility",
+    "career_challenge_objective",
+    "career_challenge_target",
+    "career_challenge_window",
+    "career_challenge_entered",
+    "career_challenge_inactive",
+    "career_challenge_limit",
     "program_title",
     "program_summary",
     "program_visibility",
@@ -158,6 +170,9 @@ NOT_FOUND_CODES: Final = frozenset(
         "no_such_match_analysis",
         "no_such_scouting_list",
         "no_such_scouted_player",
+        "no_such_career_challenge",
+        "no_such_career_attempt",
+        "no_such_attempted_career",
     }
 )
 UNPROCESSABLE_CODES: Final = frozenset(
@@ -191,10 +206,29 @@ UNPROCESSABLE_CODES: Final = frozenset(
         "scouting_players",
         "scouting_note",
         "scouting_duplicate_player",
+        "career_challenge_title",
+        "career_challenge_summary",
+        "career_challenge_visibility",
+        "career_challenge_objective",
+        "career_challenge_target",
+        "career_challenge_window",
     }
 )
 CONFLICT_CODES: Final = frozenset(
-    {"slug_taken", "guide_limit", "citation_limit", "program_limit", "tactical_limit", "analysis_limit", "match_limit", "match_not_played", "scouting_list_limit"}
+    {
+        "slug_taken",
+        "guide_limit",
+        "citation_limit",
+        "program_limit",
+        "tactical_limit",
+        "analysis_limit",
+        "match_limit",
+        "match_not_played",
+        "scouting_list_limit",
+        "career_challenge_entered",
+        "career_challenge_inactive",
+        "career_challenge_limit",
+    }
 )
 #: 403 is the permission matrix's single meaning (§51) and this tier has no matrix of its own.
 FORBIDDEN_CODES: Final[frozenset[str]] = frozenset()

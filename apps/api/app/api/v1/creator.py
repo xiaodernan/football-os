@@ -1,6 +1,6 @@
 """Creator endpoints (M10, spec §36): what an account publishes as a guide, and the addresses it cites.
 
-One public door and thirty-one private ones. `GET /creator/rules` prints only the tier's own vocabulary — the sections,
+One public door and thirty-seven private ones. `GET /creator/rules` prints only the tier's own vocabulary — the sections,
 the ceilings, the formulas, the refusal codes and the limitation sentence — which is §39's and §35's precedent: a
 rulebook is not a person's data, a shelf of guides is.
 
@@ -36,6 +36,7 @@ from app.core.security import current_user, limit
 from app.models import User
 from app.services.club import answers
 from app.services.creator import analyses as can
+from app.services.creator import challenges as cch
 from app.services.creator import matches as cma
 from app.services.creator import programs as cpr
 from app.services.creator import publishing as cre
@@ -84,6 +85,12 @@ ROUTE_GUIDE: tuple[dict[str, str], ...] = (
     {"method": "GET", "path": "/creator/scouting-lists", "door": "the shelf of scouting lists, each named by its own size"},
     {"method": "GET", "path": "/creator/scouting-lists/{list_id}", "door": "one scouting list, every player read from the world on this read"},
     {"method": "DELETE", "path": "/creator/scouting-lists/{list_id}", "door": "erase your own scouting list; the players are untouched"},
+    {"method": "POST", "path": "/creator/challenges", "door": "publish a career challenge: an objective, a target, a window and a visibility"},
+    {"method": "GET", "path": "/creator/challenges", "door": "the shelf of career challenges, each named by how many runs it holds"},
+    {"method": "GET", "path": "/creator/challenges/{challenge}", "door": "one career challenge, with your own run judged from your career's fixtures"},
+    {"method": "DELETE", "path": "/creator/challenges/{challenge}", "door": "erase your own career challenge; the careers it was played with are untouched"},
+    {"method": "POST", "path": "/creator/challenges/{challenge}/enter", "door": "enter a challenge with your own career, pinning the round the window opens at"},
+    {"method": "DELETE", "path": "/creator/challenges/{challenge}/enter", "door": "withdraw your run; the career is untouched"},
 )
 
 
@@ -176,6 +183,24 @@ class ScoutingListIn(BaseModel):
     )
 
 
+class CareerChallengeIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # No anchor: the rule is the author's own, so there is nothing in the world to resolve at publication.
+    title: str = Field(default="", max_length=cch.CAREER_CHALLENGE_TITLE_MAX + 40)
+    summary: str = Field(default="", max_length=cch.CAREER_CHALLENGE_SUMMARY_MAX + 100)
+    visibility: str = Field(default="public", max_length=12)
+    objective: str = Field(default="wins", max_length=20)
+    target: int = Field(default=0)
+    window_rounds: int = Field(default=0)
+
+
+class CareerAttemptIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    career: str = Field(default="", max_length=80)
+
+
 @router.get("/rules")
 def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
     """The rulebook door: no guide, no creator, no figure about anybody — only what may be published.
@@ -193,6 +218,7 @@ def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
         **can.rules(db, ready=True),
         **cma.rules(db, ready=True),
         **csc.rules(db, ready=True),
+        **cch.rules(db, ready=True),
     }
 
 
@@ -653,5 +679,110 @@ def erase_scouting_list(
     limit(request, 20, 3600, scope="erase_scouting_list")
     try:
         return csc.erase_scouting_list(db, user.id, list_id)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.post("/challenges", status_code=status.HTTP_201_CREATED)
+def publish_career_challenge(
+    payload: CareerChallengeIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Publish a career challenge: an objective, a target, a window and a visibility.
+
+    There is no anchor to resolve, because the rule is the author's own; what publication fixes is
+    the objective kind, the target and the window, and none of the three can move afterwards.
+    """
+    limit(request, 20, 3600, scope="publish_career_challenge")
+    try:
+        return cch.publish_career_challenge(
+            db,
+            user.id,
+            title=payload.title,
+            summary=payload.summary,
+            visibility=payload.visibility,
+            objective=payload.objective,
+            target=payload.target,
+            window_rounds=payload.window_rounds,
+        )
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.get("/challenges")
+def read_career_challenge_shelf(
+    creator: str | None = None,
+    page_size: int = 20,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """The shelf of career challenges, as far as this reader may reach, each named by its own runs."""
+    try:
+        return cch.list_career_challenges(db, user.id, creator=creator, limit=page_size)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.get("/challenges/{challenge}")
+def read_career_challenge(
+    challenge: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """One career challenge, with the caller's own run judged from their career's rows on this read."""
+    try:
+        return cch.read_career_challenge(db, challenge, user.id)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.delete("/challenges/{challenge}")
+def erase_career_challenge(
+    challenge: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Erase your own career challenge. The runs on it go; the careers they pinned stay."""
+    limit(request, 20, 3600, scope="erase_career_challenge")
+    try:
+        return cch.erase_career_challenge(db, user.id, challenge)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.post("/challenges/{challenge}/enter", status_code=status.HTTP_201_CREATED)
+def enter_career_challenge(
+    challenge: str,
+    payload: CareerAttemptIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Pin your own career to a challenge: the round it stands at is where the window opens.
+
+    A career that cannot play another round is refused here rather than entered into a window that
+    could never close; a second entry from the same account is refused with the first run's figures.
+    """
+    limit(request, 20, 3600, scope="enter_career_challenge")
+    try:
+        return cch.enter_career_challenge(db, user.id, challenge, career=payload.career)
+    except cre.CreatorRefusal as error:
+        raise _refusal(error) from error
+
+
+@router.delete("/challenges/{challenge}/enter")
+def withdraw_career_challenge(
+    challenge: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """Withdraw your own run. The career it pinned is untouched."""
+    limit(request, 20, 3600, scope="withdraw_career_challenge")
+    try:
+        return cch.withdraw_career_challenge(db, user.id, challenge)
     except cre.CreatorRefusal as error:
         raise _refusal(error) from error

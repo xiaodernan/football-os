@@ -2254,6 +2254,65 @@ class CreatorScoutingEntry(Base, TimestampMixin):
     note: Mapped[str] = mapped_column(String(300), nullable=False, default="")
 
 
+class CreatorCareerChallenge(Base, TimestampMixin):
+    """A creator's authored career challenge (M10, spec §36's fifth kind).
+
+    §36's fifth kind is a *Career Challenge*: an author's scenario - an objective, a target and a window
+    over a career's own fixtures - published for other accounts to enter with a run of their own. The
+    row stores the author's words, a visibility and the rule; it stores no entrant, no result and no
+    measurement of anybody's career. An entrant's verdict is computed on every read from their own
+    career's `career_fixtures` rows (`record_of`, the same sums M6 judges its authored scenarios with).
+
+    `objective_kind` is one of `OBJECTIVE_KINDS` - the same vocabulary M6's career objectives use, so a
+    challenge and a career are judged by one table rather than two.
+    """
+
+    __tablename__ = "creator_career_challenges"
+    __table_args__ = (
+        UniqueConstraint("author_id", "slug", name="uq_creator_career_challenge_slug"),
+        Index("ix_creator_career_challenge_author_date", "author_id", "published_on"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(160), nullable=False)
+    summary: Mapped[str] = mapped_column(String(600), nullable=False, default="")
+    visibility: Mapped[str] = mapped_column(String(12), nullable=False, default="public")
+    objective_kind: Mapped[str] = mapped_column(String(20), nullable=False)
+    target: Mapped[int] = mapped_column(Integer, nullable=False)
+    window_rounds: Mapped[int] = mapped_column(Integer, nullable=False)
+    published_on: Mapped[str] = mapped_column(String(10), nullable=False, default=utc_today)
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class CreatorCareerAttempt(Base, TimestampMixin):
+    """One entrant's pinned run: the address of a career and the round the window opened at.
+
+    `career_slug` is a plain pointer rather than a foreign key: a career is the entrant's own row, and
+    an attempt must not block that account from erasing it. `start_round` is the number of played
+    fixtures the career stood at when the attempt was made - an event fact about the entry, not a
+    cached measurement: every figure a verdict shows is summed from the career's fixture rows on the
+    read, from that round onward for at most the challenge's window.
+    """
+
+    __tablename__ = "creator_career_attempts"
+    __table_args__ = (
+        UniqueConstraint("challenge_id", "account_id", name="uq_creator_career_attempt"),
+        Index("ix_creator_career_attempt_challenge", "challenge_id"),
+        Index("ix_creator_career_attempt_career", "career_slug"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    challenge_id: Mapped[str] = mapped_column(
+        ForeignKey("creator_career_challenges.id", ondelete="CASCADE"), nullable=False
+    )
+    account_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    career_slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    start_round: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
 class CvShare(Base, TimestampMixin):
     """One public CV link (§38's share output): the token that opens it, the sections it names, and when it closed."""
 
