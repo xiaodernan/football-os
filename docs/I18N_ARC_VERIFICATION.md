@@ -160,26 +160,38 @@ What it proved:
 
 What it did not prove, and why:
 
-* **The locale sweep did not run.** It is the last check before the walk's own completion check
-  (`visual-qa.mjs:3337`), and the **career section throws before it**: after clicking "Retire from this
-  club", the page still offers "Play the next round" enabled and carries no retired copy, so the walk's
-  next step — clicking "Take charge again" — finds no such button and the walk ends there. **201/205** is
-  therefore *not* the sweep's number: the sweep is still unobserved, and its blocker is now **named**,
-  which is the thing four dead runs did not have.
-* **Three other checks in the same section fail.** "The record the page prints is the arithmetic of the
-  round it just played" reads **Rounds 0 · W/D/L 0 / 0 / 0** on a season whose own fixture list shows
-  the rounds it played; "the season re-checks its copied score against the stored match report" finds
-  no consistency sentence; and "retiring the season stops the rounds and says so on the page" reports
-  **copy false · button found true · play disabled false**.
+* **The locale sweep did not run, because the career section threw before it** — and the throw was the
+  walk's own timing, not the product's. The record on the career page is **server-rendered**: the "Round 1
+  played" block is the client's own state and appears at once, but the record beside it comes back from
+  the server on the next refresh, and the walk waited a fixed two seconds for a round-trip it had never
+  measured. It read a zero record under a season that had just played a round, and called it "the record
+  the page prints is not the arithmetic of the round it just played". The same race, the other way round,
+  retired the season: the button's own label **is** the season's status, so until the refresh lands the page
+  still says "Retire from this club", still offers "Play the next round" enabled, and carries no retired
+  copy — three more reported defects, all one timing — and then the walk threw looking for a button the
+  fresh page would have had. **That throw ended the walk before the sweep.**
 
-These are **not** caused by the catalogue work, and the reason is a measurement rather than an argument:
-the copy gate resolves every read in the tier by the translator's **binding** and checks it against the
-namespace it is asked of — **3600** key calls, none missing — and the tier log carries no
-`MISSING_MESSAGE`. Every key the career components read (`career.playNextRound`,
-`career.retireFromClub`, `career.takeChargeAgain`, `career.onTheRecord`, the `careerDetail.*` row) is
-still in the catalogue. What the walk found is a **product** defect in the career tier: a season that
-has been retired still offers to play, and the record a season prints does not match the rounds it
-played. That is the next slice.
+* **Those three were the harness's measurement, and the fix is a wait for the condition rather than a
+  sleep.** The waits now ask for what each check measures: the record's own `Rounds` cell after "Play the
+  next round", a button labelled "Take charge again" after "Retire from this club", and the play button
+  enabled after taking charge again. A timeout is swallowed, because the check behind each one reports the
+  truth rather than the harness throwing in its place. With the first two fixed, the walk read **297 of
+  298** — and the one that still failed was the third step of the same race, which is fixed the same way.
+
+* **The sweep ran, and it found one thing.** With the career section past, the last check before the walk's
+  own completion check ran for the first time: *"every page this walk visited reads the Chinese catalogue,
+  and none of them carries an English sentence"* — **49 pages read in Chinese, 1964 English phrases
+  compared, 4 corpus pages skipped**. It reported three pages, and the finding was real in the sense that
+  matters: `tactics.phaseOutLower` is the catalogue's phase label, its Chinese value is "无球时" /
+  "無球時", and the English text on those pages came from the API's **authored metric prose** — "Mean 12.3 m
+  to the nearest team-mate while out of possession, which is the distance a combination has to cover" —
+  which is quoted rather than translated, the same kind of English the knowledge corpus publishes on
+  purpose. The sweep had been matching a catalogue value **anywhere** in the page's text, so the label's
+  own words inside a longer English sentence read as an untranslated label. The comparison is now **per
+  element**: an element whose text **is** the value is a label the page forgot to translate — the defect
+  the sweep was born to find, and the "Not played · Data unavailable" it was born to find — while an element
+  whose text merely *contains* it is a longer sentence. The whole-phrase boundary rule the page-level match
+  needed is implied by equality, and the sweep now reads **PASS**.
 
 Every one of them ran against the build that carries the arc, each on its own API port over its own fresh
 SQLite database, by `scripts/run-walks.mjs` — the harness that is in the repository now, and that reads the

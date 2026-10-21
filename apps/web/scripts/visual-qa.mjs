@@ -2494,7 +2494,26 @@ async function run() {
       const node = document.querySelector('[data-testid="career-round"]');
       return { line: (node?.innerText ?? '').replace(/\s+/gu, ' '), chips: [...(node?.querySelectorAll('.chip') ?? [])].map((chip) => chip.textContent.trim()) };
     });
-    await sleep(2_000);
+    /**
+     * The record on this page is **server-rendered**: the "Round 1 played" block is the client's own
+     * state and appears at once, but the record beside it comes back from the server on the next
+     * refresh, and a fixed sleep races that round-trip. The walk read a page that had not caught up
+     * yet — a zero record under a season that had just played a round — and reported it as a defect
+     * in the career tier. So the wait is for the *condition the check measures*: the record's own
+     * `Rounds` cell. A timeout here is swallowed, because the check below reports the truth.
+     */
+    await page
+      .waitForFunction(
+        () => {
+          const cells = [...document.querySelectorAll('.world-kv dt, .world-kv dd')];
+          for (let index = 0; index < cells.length; index += 2) {
+            if (cells[index].textContent.trim() === 'Rounds') return cells[index + 1]?.textContent.trim() === '1';
+          }
+          return false;
+        },
+        { timeout: 90_000 },
+      )
+      .catch(() => {});
     const afterFirst = await readSeason();
     check(
       'playing a round reports the match that decided it, with digest, seed and model version on the row',
@@ -2560,14 +2579,39 @@ async function run() {
     await open(page, seasonUrl);
     await waitForText(page, 'Play it out');
     await clickByText(page, 'button', 'Retire from this club');
-    await sleep(2_500);
+    /**
+     * The same race, the other way round. The button's own label **is** the season's status — the
+     * component reads `status` as a prop the server rendered — so until the refresh lands the page
+     * still says "Retire from this club", still offers "Play the next round" enabled, and carries no
+     * retired copy. The walk read that stale page, called it three separate defects, and then threw
+     * looking for a button the fresh page would have had. So the wait is for the *label the walk is
+     * about to click*, which is the condition the check behind it measures.
+     */
+    await page
+      .waitForFunction(
+        () => [...document.querySelectorAll('button')].some((node) => node.textContent.includes('Take charge again')),
+        { timeout: 90_000 },
+      )
+      .catch(() => {});
     const retired = await page.evaluate(() => {
       const play = [...document.querySelectorAll('button')].find((node) => node.textContent.includes('Play the next round'));
       return { copy: /retired/iu.test(document.body.innerText), playDisabled: play?.disabled ?? false, found: Boolean(play) };
     });
     check('retiring the season stops the rounds and says so on the page', retired.copy && retired.found && retired.playDisabled, `copy ${retired.copy} · button found ${retired.found} · play disabled ${retired.playDisabled}`);
     await clickByText(page, 'button', 'Take charge again');
-    await sleep(2_500);
+    /**
+     * The same wait, once more: taking charge again is a server round-trip too, and the button the
+     * walk is about to measure — the play button — is enabled by the *refreshed* page.
+     */
+    await page
+      .waitForFunction(
+        () => {
+          const play = [...document.querySelectorAll('button')].find((node) => node.textContent.includes('Play the next round'));
+          return Boolean(play) && play.disabled === false;
+        },
+        { timeout: 90_000 },
+      )
+      .catch(() => {});
     const resumed = await page.evaluate(() => [...document.querySelectorAll('button')].find((node) => node.textContent.includes('Play the next round'))?.disabled ?? true);
     check('taking charge again re-enables the next round', resumed === false, `play still disabled after resuming: ${resumed}`);
 
@@ -3291,20 +3335,32 @@ async function run() {
     // page that forgot its language.
     const corpusPages = (path) => path === '/knowledge' || path.startsWith('/knowledge/');
     /**
-     * A phrase is matched as a **whole phrase**, not as a substring of the page's text.
+     * The comparison is **per element**, so a label and a sentence are told apart.
      *
-     * The tier's own English is quoted rather than translated, and it sometimes *contains* a
-     * catalogue value: the tactics disclaimer reads "Tactical systems are project-authored coaching
-     * structures", which contains the label "Tactical system" — as the beginning of a longer word,
-     * not as the label itself. A substring match would call that an English sentence on a Chinese
-     * page, and it would call it so on every page that quotes the disclaimer. The boundary rule asks
-     * for the phrase with a non-letter on each side, so "Tactical system" standing on its own is
-     * caught and "Tactical systems are…" is not.
+     * The page-level match was right about the label and wrong about the prose: the API's authored
+     * metric sentences are quoted rather than translated — "Mean 12.3 m to the nearest team-mate
+     * while out of possession, which is the distance a combination has to cover" — and "out of
+     * possession" is the catalogue's own phase label, so the label's *text* appears inside a longer
+     * English sentence that the tier publishes on purpose. The sweep called that an untranslated
+     * label on three tactics pages. It is the same class as the corpus the sweep already skips: the
+     * project's own English, published in English on purpose.
+     *
+     * So the question is not "does this phrase appear on the page" but "does this page carry this
+     * phrase **as its own text**". An element whose text IS the value is a label the page forgot to
+     * translate — the defect the sweep was written for, and the "Not played · Data unavailable" it
+     * was born to find. An element whose text merely *contains* the value is a longer sentence, and
+     * the whole-phrase boundary rule the page-level match needed is implied by equality.
      */
-    const phrasePattern = (value) => {
-      const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
-      return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "u");
+    const elementTexts = async () => {
+      const texts = await page.$$eval('body *', (nodes) =>
+        nodes
+          .map((node) => (node.textContent ?? '').replace(/\s+/gu, ' ').trim())
+          .filter((text) => text.length > 0),
+      );
+      return new Set(texts);
     };
+    /** A label, allowing the one trailing mark a label sometimes carries. */
+    const labelOf = (text) => text.replace(/[.,:;·。]+$/u, '').trim();
     const englishPhrases = [];
     for (const [namespace, block] of Object.entries(englishMessages)) {
       if (typeof block !== 'object' || block === null) continue;
@@ -3313,7 +3369,7 @@ async function run() {
         if (value.split(/\s+/).length < 2) continue;
         const chinese = chineseMessages[namespace]?.[key];
         if (typeof chinese !== 'string' || chinese === value) continue;
-        englishPhrases.push({ namespace: `${namespace}.${key}`, value, pattern: phrasePattern(value) });
+        englishPhrases.push({ namespace: `${namespace}.${key}`, value });
       }
     }
     await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
@@ -3327,8 +3383,10 @@ async function run() {
       }
       const response = await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle2', timeout: 60_000 }).catch(() => null);
       const status = response ? response.status() : 0;
-      const text = await bodyText(page);
-      const found = englishPhrases.find((phrase) => phrase.pattern.test(text));
+      const texts = await elementTexts();
+      // A label is an element whose text IS the value. An element whose text merely contains it is
+      // a longer sentence — the tier's own authored prose, published in English on purpose.
+      const found = englishPhrases.find((phrase) => texts.has(phrase.value) || [...texts].some((text) => labelOf(text) === phrase.value));
       swept.push(`${path} ${status}`);
       if (found) offenders.push(`${path} carries ${found.namespace} (“${found.value.slice(0, 60)}”)`);
     }
