@@ -5,8 +5,8 @@ Three files, one per locale (`apps/api/app/api/v1/meta.py` publishes them as `lo
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 3654 of 3736 keys in Simplified Chinese, and all 3736 present | **yes** |
-| `zh-TW.json` | 3655 of 3736 keys written in Traditional Chinese, not converted from the `zh` file, and all 3736 present | **yes** |
+| `zh.json` | 3591 of 3673 keys in Simplified Chinese, and all 3673 present | **yes** |
+| `zh-TW.json` | 3592 of 3673 keys written in Traditional Chinese, not converted from the `zh` file, and all 3673 present | **yes** |
 
 ## What a reader gets today
 
@@ -72,6 +72,14 @@ were in, and it is the check that would have caught somebody switching the field
   shadowed copy watches their change do nothing. All three files carried four such pairs when this was written
   (`common.{no,yes,close,error}`); the test parses the raw text, because every check that reads the parsed object
   is blind to them.
+* **A key must be asked for.** The other half of the contract, and the one nothing had ever checked: a key no
+  page reads is a translation that ships to nobody — written three times, and re-read whenever the message beside
+  it changes. `apps/web/scripts/qa-unused-keys.mjs` resolves every read in the web tier and reports the keys no
+  read can reach; **63** of the **226** it found on 2026-10-22 held the **same English sentence as a key that is
+  read** (`nav.video` and `nav.videoShort`, `nav.login` and `auth.signIn`, `common.pitchCaption3d` and
+  `tactics.pitchCaption3d`), and those are gone from all three files. The gate's floor may only fall. A read it
+  cannot resolve **exempts its whole namespace** rather than guessing, so a key that cannot be shown to be dead is
+  never reported as dead.
 
 ## Adding a string
 

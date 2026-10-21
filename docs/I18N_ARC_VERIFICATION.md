@@ -410,3 +410,32 @@ resolved — and that is the number the finding rests on.
 The floor is **226**, the count this gate read, and it may only fall. A key that is wired to a page
 lowers it; a key that is added and read by nothing raises it, and the gate says so. The list of 226 is
 the work: each is either wired, deleted, or held with a reason.
+
+### The first slice: the stale twins (2026-10-22)
+
+The gate names, for each dead key, the **live key that holds the same English sentence**. That is the
+class with a mechanical answer: two answers to one question, one of them a stale copy that no page
+reads. **63** of the 226 were in it:
+
+| dead key | the same sentence, and it is read |
+| --- | --- |
+| `nav.video` | `nav.videoShort` |
+| `nav.simulate` | `nav.simulator` |
+| `nav.login` | `auth.signIn`, `knowledge.searchSignIn` |
+| `nav.career` | `career.title` |
+| `nav.settings` | `settings.title` |
+| `common.next`, `common.previous` | `common.nextPage`, `common.previousPage` |
+| `common.pitchCaption3d` | `tactics.pitchCaption3d` |
+| `scout.shortlistTitle`, `scout.shortlistName`, `scout.openList`, `scout.addPlayer`, `scout.noLists` | `scout.listsTitle`, `scout.listNamePlaceholder`, `scout.openAList`, `scout.addToList`, `scout.noListYet` |
+| `scout.asksFee`, `scout.releaseClause`, `scout.weeklyWage`, `scout.seasonWage`, `scout.contractYears`, `scout.budgetLeft` | the `scout.kv*` keys the same panel reads |
+| `club.tableHeaderDate2`, `club.tableHeaderCoach2`, `club.tableHeaderErase3` | `club.tableHeaderDate`, `club.tableHeaderCoach`, `club.tableHeaderErase` |
+| `creator.thMinutes`, `creator.thSessions` | `creator.programMinutesLabel`, `club.tableHeaderSessions` |
+
+All **63** are gone from all three catalogues, and the floor is where they left it: **163**.
+
+The interesting one is the `club.tableHeader*2` / `*3` family. The suffixes are the **field-name
+gate** at work: `qa-field-labels.mjs` refuses two panels on one page giving a field the same
+accessible name, so a second "Date" column was disambiguated with a suffixed key. The suffixed key was
+then never read — the panel it was disambiguated from is not on the same page as the panel that needed
+it — so it was a second answer to a question no page was asking. The gate still reads **2/2** after the
+deletion, which is the proof that the disambiguation was never needed.

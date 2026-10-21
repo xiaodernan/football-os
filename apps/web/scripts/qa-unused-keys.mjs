@@ -57,9 +57,12 @@ const CATALOGUE = JSON.parse(readFileSync(join(WEB, "messages", "en.json"), "utf
  * lowers it, and a slice that adds a key no page reads raises it — and the gate says so.
  *
  * The number is the count this gate read on 2026-10-22, with every read in the tree resolved: the
- * catalogue holds 3736 keys and 226 of them are asked for by nothing.
+ * catalogue held 3736 keys and 226 of them were asked for by nothing. **63** of those 226 held the
+ * **same English sentence as a key that is read** — `nav.video` and `nav.videoShort`, `nav.login` and
+ * `auth.signIn`, `common.pitchCaption3d` and `tactics.pitchCaption3d` — two answers to one question,
+ * one of them a stale copy. They are gone from all three catalogues, and the floor is where they left it.
  */
-const FLOOR_UNUSED = 226;
+const FLOOR_UNUSED = 163;
 
 /**
  * Keys the catalogue holds on purpose, for a page that does not exist yet or for a door that is
@@ -566,6 +569,35 @@ for (const { source, rel } of sources) {
 const exempt = new Set();
 for (const read of unresolved) exempt.add(read.namespace);
 
+/**
+ * The English value of every catalogue key, so a dead key can be compared with the live one.
+ *
+ * Two keys that hold the **same sentence** are two answers to one question, and the copy gate cannot
+ * see that — it reads the source, not the catalogue against itself. `nav.video` and `nav.videoShort`
+ * both name the nav's video entry; one of them is read and one is not, and the catalogue holds both
+ * sentences in three languages.
+ */
+const valuesOf = new Map();
+for (const [namespace, block] of Object.entries(CATALOGUE)) {
+  if (!block || typeof block !== "object") continue;
+  for (const [key, value] of Object.entries(block)) {
+    if (typeof value !== "string") continue;
+    const path = `${namespace}.${key}`;
+    if (!valuesOf.has(value)) valuesOf.set(value, []);
+    valuesOf.get(value).push(path);
+  }
+}
+
+/** The keys that are read, so a dead key's twin can be named. */
+const isRead = (path) => {
+  const dot = path.indexOf(".");
+  const namespace = path.slice(0, dot);
+  const key = path.slice(dot + 1);
+  if (asked.get(namespace)?.has(key)) return true;
+  if (named.has(key)) return true;
+  return false;
+};
+
 const orphans = [];
 let total = 0;
 for (const [namespace, block] of Object.entries(CATALOGUE)) {
@@ -622,8 +654,17 @@ console.log(`CHECKS passed=${checks.length - failed.length} total=${checks.lengt
 if (orphans.length || unresolved.length || process.env.QA_UNUSED_VERBOSE) {
   if (orphans.length) {
     console.log("");
-    console.log("Every key below is in the catalogue and asked for by nothing. Wire it, or hold it with a reason:");
-    for (const path of orphans) console.log(`  ${path}`);
+    console.log("Every key below is in the catalogue and asked for by nothing. Wire it, delete it, or hold it with a reason:");
+    for (const path of orphans) {
+      const dot = path.indexOf(".");
+      const namespace = path.slice(0, dot);
+      const key = path.slice(dot + 1);
+      const value = CATALOGUE[namespace]?.[key];
+      // The twin: a key that holds the same English sentence and *is* read.
+      const twins = (valuesOf.get(value) ?? []).filter((candidate) => candidate !== path && isRead(candidate));
+      const note = twins.length > 0 ? `  (same sentence as ${twins.join(", ")}, which is read)` : "";
+      console.log(`  ${path}${note}`);
+    }
   }
   if (unresolved.length) {
     console.log("");
