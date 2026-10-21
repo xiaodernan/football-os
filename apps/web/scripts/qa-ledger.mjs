@@ -60,6 +60,13 @@ const LEDGER_TYPES = [...CHANCE, 'yellow_card', 'red_card', 'injury'];
 const COLUMNS = ['matches_with_events', 'goals', 'attempts', 'expected_goals', 'yellow_cards', 'red_cards', 'injuries'];
 const PANEL_TITLE = 'counted off the event rows';
 
+/**
+ * English plurals, the way the catalogue's ICU forms read them: one for one, and the plural otherwise.
+ * The panel's eyebrow is a sentence, so a walk that spells it with a hand-written "(s)" measures a page
+ * that no longer exists — the catalogue says "1 name" and "2 names", not "1 name(s)".
+ */
+const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`;
+
 const results = [];
 const consoleErrors = [];
 const shots = [];
@@ -318,7 +325,7 @@ async function main() {
   const panel = await panelRoot(page);
   check('the ledger panel is on the page, and it is the only one', Boolean(panel), panel ? 'found' : `no panel carrying “${PANEL_TITLE}”`);
   const body = await text(page);
-  const wantEyebrow = `${ledger.players_shown} of ${ledger.players_with_events} name(s) · ${ledger.fixtures_traced} of ${ledger.fixtures_played} round(s) traced`;
+  const wantEyebrow = `${ledger.players_shown} of ${plural(ledger.players_with_events, 'name', 'names')} · ${ledger.fixtures_traced} of ${plural(ledger.fixtures_played, 'round', 'rounds')} traced`;
   check('its eyebrow is the server’s two counts of names', squeeze(panel?.eyebrow).toUpperCase() === squeeze(wantEyebrow).toUpperCase(), panel?.eyebrow);
   const kv = Object.fromEntries((panel?.kv ?? []).map((row) => [row.key, row.value]));
   check('the club’s goals, attempts and xG on the page are the totals it was given', kv['goals / attempts / xg for the club'] === `${ledger.totals?.goals} · ${ledger.totals?.attempts} · ${(ledger.totals?.expected_goals ?? 0).toFixed(3)}`, kv['goals / attempts / xg for the club']);

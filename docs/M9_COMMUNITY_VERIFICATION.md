@@ -127,6 +127,42 @@ positive-control case stays green — a live pointer still publishes, which is w
 The answer table grows by one row to **229**; the census's floors hold and `test_answer_census.py` is unread of this
 landing, because a `CommunityRefusal` is not an `HTTPException` site.
 
+## The walk was still pointing at an address that answers to nothing (2026-10-21)
+
+This walk's last green run was 2026-09-28. §35's pointer promise landed on 2026-10-09, and the walk had not
+been re-run since: the tier now **resolves the address before it stores the row**, and a pointer to an
+address nothing answers for is refused with `post_artifact` (404). The walk typed a made-up tail
+(`qa-board-0634`) into the composer's pointer field and expected the post to publish, because that is what
+the tier did in September.
+
+The refusal cascaded through the whole walk, and the cascade is what made it worth reading:
+
+* the `my_tactic` post was never written, so the wall held one row instead of two;
+* every later check addressed that row **by the id it never got** (`community-like-undefined`), so the
+  like, repost and reply controls it pressed were "the button missing";
+* the walk finished by timing out on a reply box that had never been asked for — the abort was a symptom,
+  not the finding.
+
+**The walk now points at something that answers.** It draws a board of its own — the catalogue's own
+eleven, read through `GET /api/v1/tactics/{slug}` and stored through `POST /api/v1/boards` — and points the
+post at that board's own slug. That is what §35's promise means: the address answers, and it answers for
+the author. The board is a legal shape (eleven positions, one keeper, in bounds) because it came from the
+catalogue rather than from the walk's imagination.
+
+**Two of the walk's own checks were reading the page before the wall had repainted.** The comment count a
+reply writes and the composer's ceiling badge are painted from the server's own render, which arrives on
+the refresh clock — a cell read straight after the press is the cell the reader had *before* it. The walk
+now reads the door first and then waits for the cell to show the number the door gave
+(`waitForCell(readerPage, likedId, 2, String(detail.json.comments))`), and the badge check waits for the
+page to say `498 of 500 posts left` instead of reading it once.
+
+Measured 2026-10-21: `apps/web/scripts/qa-community.mjs` on a production build (`.next-walks3`, served on
+`127.0.0.1:3242` against the API on `127.0.0.1:8765` over a fresh SQLite database) — **39 of 39 checks
+passed, exit 0**, one check more than the September run because the walk now says so out loud that it drew
+a board to point at: "the account can draw a board for the post to point at — HTTP 201 ·
+qa-board-0759-mlnr", and "the page shares a board by address: the pointer it sent is the prefix the rules
+printed plus the tail typed here — pointer /tactics/boards/qa-board-0759-mlnr".
+
 ## What M9 does not claim
 
 * **No entitlement gate.** The meter has no community feature, so publishing costs nothing and the ceilings are row

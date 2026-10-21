@@ -142,6 +142,15 @@ holes are closed in `finish()` (zero checks is a failure) and in the crash handl
 records a failed check). `qa-timeline.mjs` and `qa-carry.mjs` carried the identical crash handler and were
 hardened the same way.
 
+**A needle that outlived the sentence it checked (2026-10-21).** §81 rewrote the panel's eyebrow from a
+hand-written plural into an **ICU** one — `{shown} of {total, plural, one {# name} other {# names}} · {traced}
+of {played, plural, one {# round} other {# rounds}} traced` — and the walk still expected the old spelling
+("7 of 7 name(s) · 1 of 1 round(s) traced"). The panel was right and the walk was wrong: it compared the
+page's `7 OF 7 NAMES · 1 OF 1 ROUND TRACED` with a sentence no page has printed since the arc, and called
+the difference a failure. The walk now builds the expectation the way English reads it — the same
+`plural(count, one, many)` helper the club walk uses — and the check is **39/39** again on the build the
+arc produced.
+
 ## 7. Not done
 
 * No cross-career, competition-wide or all-time aggregate reads these rows. The ledger is scoped to one

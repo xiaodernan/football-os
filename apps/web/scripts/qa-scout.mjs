@@ -179,6 +179,16 @@ function setInput(page, selector, value) {
   );
 }
 
+/** What the simulation panel's own controls hold right now — the detail a failed press is otherwise silent about. */
+function simFields(page) {
+  return page.evaluate(() => {
+    const panel = document.querySelector('[data-testid="scout-transfer"]');
+    const field = (label) => panel?.querySelector(`[aria-label="${label}"]`)?.value ?? 'absent';
+    const button = [...(panel?.querySelectorAll('button') ?? [])].find((node) => node.innerText.replace(/\s+/g, ' ').trim().startsWith('Simulate the signing') || node.innerText.replace(/\s+/g, ' ').trim().startsWith('Projecting'));
+    return `career=${field('Career to simulate for')} player=${field('Player to simulate signing')} fixtures=${field('Fixtures to project')} button=${button ? `"${button.innerText.trim()}" disabled=${button.disabled}` : 'not found'}`;
+  });
+}
+
 /** A button with no hook of its own is found by the words on it, which is what a visitor has. */
 function clickText(page, want) {
   return page.evaluate((label) => {
@@ -465,7 +475,7 @@ async function main() {
     has(await text(page), `of ${listRules.max_shortlists_per_user} lists`),
     `cap ${listRules.max_shortlists_per_user} lists · ${listRules.max_items_per_shortlist} players each`,
   );
-  check('the shortlist name field takes a name', (await setInput(page, 'input[aria-label="Shortlist name"]', listName)) === 'set');
+  check('the shortlist name field takes a name', (await setInput(page, '[data-testid="scout-shortlist"] input[aria-label="Shortlist name"]', listName)) === 'set');
   check('opening a list is a button the page offers', (await clickText(page, 'Open a list')) === 'clicked');
   check('the new list opens straight away', await untilText(page, `Shortlist · ${listName}`));
   const openedLine = await lineWith(page, 'room left');
@@ -476,8 +486,8 @@ async function main() {
     'the search box text appears in the list row',
   );
 
-  await page.select('select[aria-label="Player to add"]', printed[0].slug);
-  await setInput(page, 'input[aria-label="Note about this player"]', 'walk note: kept from the first search');
+  await page.select('[data-testid="scout-shortlist"] select[aria-label="Player to add"]', printed[0].slug);
+  await setInput(page, '[data-testid="scout-shortlist"] input[aria-label="Note about this player"]', 'walk note: kept from the first search');
   check('adding a player is a button the page offers', (await clickText(page, 'Add to the list')) === 'clicked');
   check('the player appears on the list', await untilDom(page, (slug) => document.querySelectorAll(`tr[data-listed="${slug}"]`).length === 1, printed[0].slug));
 
@@ -571,10 +581,13 @@ async function main() {
 
   check("the simulation panel is on the page", has(await text(page), "What if this career signed him?"), "panel title");
   check("the simulation panel publishes the engine's own seed rule", has(await text(page), "the only thing that differs between the two scorelines is the eleven"), (await lineWith(page, "each future round is played twice")).slice(0, 160));
-  check("the career field takes the slug", (await setInput(page, 'input[aria-label="Career to simulate for"]', simCareer)) === "set");
-  await page.select('select[aria-label="Player to simulate signing"]', printed[0].slug);
-  check("the fixtures field takes a number", (await setInput(page, 'input[aria-label="Fixtures to project"]', "2")) === "set");
-  check("simulating is a button the page offers", (await clickText(page, "Simulate the signing")) === "clicked");
+  const careerSet = await setInput(page, '[data-testid="scout-transfer"] input[aria-label="Career to simulate for"]', simCareer);
+  check("the career field takes the slug", careerSet === "set", careerSet);
+  const simOptions = await page.select('[data-testid="scout-transfer"] select[aria-label="Player to simulate signing"]', printed[0].slug);
+  const fixturesSet = await setInput(page, '[data-testid="scout-transfer"] input[aria-label="Fixtures to project"]', "2");
+  check("the fixtures field takes a number", fixturesSet === "set", fixturesSet);
+  const simClick = await clickText(page, "Simulate the signing");
+  check("simulating is a button the page offers", simClick === "clicked", `${simClick} · options matched: ${simOptions.length || 'none'} · ${await simFields(page)}`);
   check("the projection arrives with two rounds", await untilDom(page, () => document.querySelectorAll("[data-sim-round]").length === 2));
 
   const simGrid = await page.$$eval('[data-testid="scout-transfer"] .world-kv__row', (rows) =>
@@ -613,8 +626,9 @@ async function main() {
   check("the panel prints what the simulation does not do", notDoing.includes("does not write a row") && notDoing.includes("is not called here"), "the five lines are on the page");
   check("the panel prints the limits it worked under", notDoing.includes("a fixture is one draw from a stochastic model"), "the one-sample notice");
 
-  check("asking for too many fixtures is refused with its figures", (await setInput(page, 'input[aria-label="Fixtures to project"]', "99")) === "set");
-  check("the button is clickable again", (await clickText(page, "Simulate the signing")) === "clicked");
+  check("asking for too many fixtures is refused with its figures", (await setInput(page, '[data-testid="scout-transfer"] input[aria-label="Fixtures to project"]', "99")) === "set");
+  const retryClick = await clickText(page, "Simulate the signing");
+  check("the button is clickable again", retryClick === "clicked", `${retryClick} · ${await simFields(page)}`);
   check("the refusal arrives", await untilDom(page, () => /bad_rounds/.test(document.querySelector('[data-sim="refusal"]')?.innerText ?? "")));
   const simRefusal = await page.evaluate(() => document.querySelector('[data-sim="refusal"]')?.innerText ?? "");
   check("the refusal carries the window it fell outside", /"max":\s*6/.test(simRefusal) && /99/.test(simRefusal), simRefusal.replace(/\s+/g, " ").slice(0, 160));

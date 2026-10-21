@@ -639,7 +639,7 @@ async function main() {
   await typeInto(page, 'input[aria-label="Feedback message"]', 'A note the guardian is not shown.');
   check('a withheld note files too', (await press(page, 'feedback-add')) === 'clicked' && (await untilTrue(async () => (await call(page, 'GET', planDoor)).json?.feedback?.length === 2)));
   const afterNotes = await call(page, 'GET', planDoor);
-  await until(page, '2 note(s) · 0 of them not shown to you');
+  await until(page, `${plural(2, 'note', 'notes')} · 0 of them not shown to you`);
   const fbody = await text(page);
   check('the author sees both notes and is told nothing is hidden from them, and the panel prints that figure', afterNotes.json.feedback.length === 2 && afterNotes.json.withheld.coach_feedback === 0 && shouts(fbody, `${plural(2, 'note', 'notes')} · 0 of them not shown to you`), `${afterNotes.json.feedback.length} notes, ${afterNotes.json.withheld.coach_feedback} not shown to the author`);
   const asFamily = await call(pageB, 'GET', planDoor);

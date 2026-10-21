@@ -292,14 +292,29 @@ async function main() {
   const noteRow = (await rowsOf(authorPage, 'post'))[0] ?? {};
   check('a note points at nothing and says so, rather than carrying an empty link', has(noteRow.key, 'post') && shouts(noteRow.cells.join(' '), 'points at nothing'), (noteRow.cells ?? [])[0]);
 
-  // a `my_tactic` post carries its kind's own prefix, chosen from the published vocabulary
+  // a `my_tactic` post carries its kind's own prefix, chosen from the published vocabulary — and the address
+  // has to answer, because §35's pointer promise is that something answers at that address and that it is the
+  // author's. The walk therefore draws a board of its own and points at that, rather than at an address it made
+  // up: the board is drawn from the catalogue's own eleven, so it is a legal shape and not a shortcut.
+  const catalogue = await call(authorPage, 'GET', '/api/v1/tactics');
+  const systemSlug = String(catalogue.json?.items?.[0]?.slug ?? '');
+  const system = await call(authorPage, 'GET', `/api/v1/tactics/${encodeURIComponent(systemSlug)}`);
+  const board = await call(authorPage, 'POST', '/api/v1/boards', {
+    name: `QA board ${stamp.slice(-4)}`,
+    note: 'a board the walk can point at',
+    origin_system: systemSlug,
+    phase_in: system.json?.phase_in ?? [],
+    phase_out: system.json?.phase_out ?? [],
+  });
+  const boardSlug = String(board.json?.slug ?? '');
+  check('the account can draw a board for the post to point at', board.status === 201 && boardSlug.length > 0, `HTTP ${board.status} · ${boardSlug} · ${JSON.stringify(board.json ?? null).slice(0, 160)}`);
   await chooseKind(authorPage, 'my_tactic');
   await typeInto(authorPage, 'textarea[aria-label="Post body"]', 'high press, five seconds');
-  await typeInto(authorPage, 'input[aria-label="Post pointer tail"]', `qa-board-${stamp.slice(-4)}`);
+  await typeInto(authorPage, 'input[aria-label="Post pointer tail"]', boardSlug);
   const shared = await pressWrite(authorPage, 'community-publish', 'composer', 'posted');
   feed = await call(authorPage, 'GET', '/api/v1/community/posts');
   const tactic = (feed.json?.items ?? []).find(item => item.kind === 'my_tactic') ?? {};
-  check('the page shares a board by address: the pointer it sent is the prefix the rules printed plus the tail typed here', shared.ok && tactic.pointer === `${caps.pointer_prefixes?.my_tactic ?? 'no-prefix'}qa-board-${stamp.slice(-4)}`, `pointer ${tactic.pointer}`);
+  check('the page shares a board by address: the pointer it sent is the prefix the rules printed plus the tail typed here', shared.ok && tactic.pointer === `${caps.pointer_prefixes?.my_tactic ?? 'no-prefix'}${boardSlug}`, `pointer ${tactic.pointer} · note ${shared.note.slice(0, 90)} · kinds ${(feed.json?.items ?? []).map((item) => item.kind).join(',') || 'none'}`);
   await open(authorPage, '/community');
   const paintedTwo = await waitForRows(authorPage, 2);
   const tacticCells = (await rowsOf(authorPage, 'post')).find(row => row.key === tactic.id)?.cells?.join(' ') ?? '';
@@ -377,8 +392,10 @@ async function main() {
   check('the reply reader asks the door rather than guessing: an empty list is painted as empty', toggled === 'clicked' && emptied === true, `the button ${toggled}; the empty sentence painted: ${emptied}`);
   await typeInto(readerPage, `textarea[aria-label^="Reply on the post"]`, 'agreed, the trap is the point');
   const replied = await pressWrite(readerPage, `community-reply-send-${likedId}`, `reply-${likedId}`, 'answered');
-  const repainted = await waitForCell(readerPage, likedId, 2, String(detail?.json?.comments ?? 1));
+  // The door is read *after* the reply, and the cell is then waited for: the wall repaints on the
+  // refresh clock, so a cell read straight after the press is the cell the reader had before it.
   detail = await call(readerPage, 'GET', `/api/v1/community/posts/${encodeURIComponent(likedId)}`);
+  const repainted = await waitForCell(readerPage, likedId, 2, String(detail?.json?.comments ?? 1));
   check('the reply lands as a row beside the post, and the count printed beside it is the door second count', replied.ok && detail.json?.comments === 1 && repainted === true && (await pageCellFor(readerPage, likedId, 2)) === '1', `note ${replied.note.slice(0, 60)} · door ${detail.json?.comments} · cell ${(await pageCellFor(readerPage, likedId, 2))}`);
 
   // ---------------------------------------------------------------- unfollow withdraws, erase takes down
@@ -394,7 +411,10 @@ async function main() {
 
   // ---------------------------------------------------------------- the ceiling the tier publishes
   const held = Number(afterErase.json?.total ?? 0);
-  check('the badge beside the composer is the published ceiling minus the rows the door counts, not a number typed here', shouts(await text(authorPage), `${caps.post_max - held} of ${caps.post_max} posts left`), `${caps.post_max} minus ${held}`);
+  // The badge is painted from the profile the server rendered, so it repaints on the refresh clock too.
+  const wantBadge = `${caps.post_max - held} of ${caps.post_max} posts left`;
+  const badgeRepainted = await untilTrue(async () => shouts(await text(authorPage), wantBadge), 45_000);
+  check('the badge beside the composer is the published ceiling minus the rows the door counts, not a number typed here', badgeRepainted === true, `${caps.post_max} minus ${held} · the page says "${wantBadge}"`);
 
   await authorPage.setViewport(MOBILE);
   await open(authorPage, '/community');

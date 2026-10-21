@@ -161,6 +161,12 @@ field.
   "(optional)"), and the walk now addresses fields **inside the panel it means**
   (`[data-testid="scout-transfer"] input[…]`), because a page-wide selector cannot tell two fields apart
   and the failure it produced said nothing about which one it had filled.
+* **The walk's own blind spot.** The failing press reported only "not clicked". It now reports the three
+  controls' values and the button's own state with every press — `disabled · career=sim-qa-0728-braa
+  player=fariel-toban fixtures=2 button="Simulate the signing" disabled=true` — and the diagnosis was read
+  off the page's own React tree: the field the walk had filled belonged to the *other* panel, because the
+  two panels shared a name. A walk that says which field it filled is a walk whose next failure is a
+  sentence instead of a shrug.
 
 **What this says about the gate, and what it does not.** The copy gate's ceiling is **0** over the whole
 tier and the key check now counts **3361 key calls** — including the ten rich-text reads it used to be
