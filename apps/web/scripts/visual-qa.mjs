@@ -2763,7 +2763,9 @@ async function run() {
       const notice = [...document.querySelectorAll('.notice')].find((node) => node.textContent.includes('challenge run'));
       return {
         text: (notice?.textContent ?? '').replace(/\s+/gu, ' ').trim(),
-        slug: notice?.querySelector('.mono')?.textContent.trim() ?? '',
+        // The notice is one sentence now — the arc put the scenario's own words in a catalogue key — so the
+        // scenario it names is read out of that sentence rather than out of a `.mono` element beside it.
+        slug: (notice?.textContent ?? '').match(/scenario ([a-z0-9-]+)/u)?.[1] ?? '',
         href: notice?.querySelector('a')?.getAttribute('href') ?? '',
         objectives: [...document.querySelectorAll('.panel')].find((node) => (node.querySelector('.panel__title')?.textContent ?? '').includes('Objectives'))?.querySelector('.panel__title')?.textContent.trim() ?? '',
       };

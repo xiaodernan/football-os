@@ -205,3 +205,18 @@ excludes the projected view and counts the two phase boards, while the 3D view i
 player would see — it is the plan view bent into a diamond, and the page says so in a sentence of its own. The
 3D view is a second *reading* of the board, not a second source of truth: the metres it projects are the ones the
 2D board already carries.
+
+**Re-measured 2026-10-21, after §81's copy arc, and the arc had broken the walk's own reach.** The walk
+creates a board, drags a player on the lawn and reads the dot's `cy` back; it read the same number before and
+after, twice, on the same build. The page's own geometry said why: the dot sat at **y 1009** in a **900px**
+window — the board editor's form grew above the lawn when the arc put the tier's sentences back — so the
+pointer landed on the page instead of on the pitch and the drag never began. A walk that reads a box and then
+moves the mouse to it does not notice that the box left the window. It now scrolls the dot into view first,
+reads the box after the scroll, and says so in a check of its own: *"the lawn the walk drags on is inside the
+window it drags in — the dot is at y 450 of a 900px window"*. The drag then moved the player (`cy 50 → 40.5`),
+the board section ran to the end for the first time in a while, and the **3D** checks in this section stayed
+green throughout — the projection is still the printed projection of the board's own metres.
+
+Two more of the walk's reads were stale the same way, and both are now read from the page's own words rather
+than from a shape the arc changed: the season page's challenge notice is one catalogue sentence now (the
+scenario's slug and the round window are *in* it), and the walk reads them there.

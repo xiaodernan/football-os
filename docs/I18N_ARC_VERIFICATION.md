@@ -14,7 +14,7 @@ it.
 
 | what | where it lives | what it says |
 | --- | --- | --- |
-| the copy gate | `apps/web/scripts/qa-i18n-literals.mjs` | **6 checks**, three floors at 0, **3495 key calls** checked for existence, for their values, and for the keys the page names in its own data |
+| the copy gate | `apps/web/scripts/qa-i18n-literals.mjs` | **8 checks**, three floors at 0, **3501 key calls** checked for existence, for their values, for the keys the page names in its own data, and for the sentences that say a word twice |
 | the field-name gate | `apps/web/scripts/qa-field-labels.mjs` | **2 checks**: no two panels on one page may give a field the same accessible name |
 | the metadata gate | `apps/web/scripts/qa-metadata-title.mjs` | **165 checks**: every page's tab and heading agree, and neither is a load-time literal |
 | the crawl gate | `apps/web/scripts/qa-crawl-policy.mjs` | **9 checks**: the three files that decide what a crawler may see reconcile against every page's own `robots:` |
@@ -86,6 +86,16 @@ catalogue: **63 named keys** today, 0 missing. The rule that tells a key from a 
 copy heuristic cannot make — a key *is* an identifier, so `labelKey: "attrFirstTouch"` and
 `key: "first_touch"` are separated by their shape (camelCase against snake_case), not by their spelling.
 
+**And two checks hold the sentences that are half-translated or say a word twice.** A template that carries
+a translator call *and* a word of its own is a sentence in two languages — the board editor's save button
+read `` `${t("save")} board` ``, which is "保存 board" in Chinese, and no shape the gate read could see it,
+because the untranslated half is one lowercase word. And two translated fragments side by side, where the
+first is already the beginning of the second, is a sentence that says a word twice: the career's delete
+button read `` `${t("delete")} ${tc("deleteThisCareer")}` `` — "Delete Delete this career" in English, and
+the walk's own cleanup could not find the button it was looking for, because the page said something else.
+Both are checkable, because the catalogue holds the values. The same key twice is a range ("first · last")
+and is not a duplication.
+
 ## 4. The field-name gate, and the collision it exists for
 
 The scout's shortlist and the scout's transfer panel were given one accessible name between them during
@@ -113,6 +123,15 @@ each against its own API on its own fresh SQLite database:
 | `qa-timeline.mjs` | 29 | 29/29 | **29/29**, exit 0 |
 | `qa-carry.mjs` | 45 | 45/45 | **45/45**, exit 0 |
 | `qa-ledger.mjs` | 39 | 38/39 | **39/39**, exit 0 |
+| `qa-club.mjs` | 252 | 199/200 (crashed) | **252/252**, exit 0 |
+| `qa-creator.mjs` | 72 | 72/72 | **72/72**, exit 0 |
+| `qa-portfolio.mjs` | 53 | 53/53 | **53/53**, exit 0 |
+| `qa-market.mjs` | 106 | 106/106 | **106/106**, exit 0 |
+| `visual-qa.mjs` | 291 | 141/143 | **291/291**, exit 0 |
+
+Every one of them ran against the build that carries the arc, each on its own API port over its own fresh
+SQLite database, by `scripts/run-walks.mjs` — the harness that is in the repository now, and that reads the
+tiers' own log for `MISSING_MESSAGE` (an error raised on the server, where no browser console can see it).
 
 What the re-runs found is recorded in each milestone's own document: the doubled percentile in
 [M7_SCOUT_WEB_VERIFICATION.md](M7_SCOUT_WEB_VERIFICATION.md), the walk pointing at an address the tier
