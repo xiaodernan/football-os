@@ -148,6 +148,15 @@ What the re-runs found is recorded in each milestone's own document: the doubled
 had stopped accepting in [M9_COMMUNITY_VERIFICATION.md](M9_COMMUNITY_VERIFICATION.md), and the needle
 that outlived the sentence it checked in [M6_SIM_LEDGER_VERIFICATION.md](M6_SIM_LEDGER_VERIFICATION.md).
 
+One harness fix came out of the same re-runs, and it is worth naming because it is the third time a
+walk's own measurement was mistaken for the product's: **a probe timeout is the harness's measurement,
+not the route's answer.** The sitemap probe gave each of its 1039 URLs 25 seconds and recorded a
+timeout as a `408`, so on a loaded host ten slow renders read as ten broken routes and the walk called
+the sitemap wrong — twice, on two different builds. A timed-out URL is now asked once more with a
+longer budget, and the number that answered only on the second ask is printed in the check's own
+line, so a route that answers late is visibly slow and a route that does not answer is visibly
+broken. Measured after the fix: **1039 URLs probed, 1039 answered 200**.
+
 ## 6. What this does not claim
 
 * **The gate reads a lone word by its shape, and a unit by its name.** "min", "ms", "yrs", "x", "v",
