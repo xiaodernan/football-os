@@ -134,6 +134,16 @@ jobs:
         # It found five messages written with mustache placeholders ({{count}}), which ICU reads as an argument
         # that never began. Files only.
         run: node scripts/qa-icu-messages.mjs
+      - name: Catalogue dead-key gate (every key is asked for, or the floor falls)
+        # Same command as `scripts/check.sh`. The copy gate asks whether every key the source asks for IS in
+        # the catalogue; this asks whether every key the catalogue holds is ASKED FOR. Only one of the two was
+        # ever written, so the catalogue could hold 3736 keys while the tree read 3510 and every gate in the
+        # suite would still have said the catalogue was complete. A key nothing reads is a translation that
+        # ships to nobody — written three times and re-read whenever the message beside it changes. Every read
+        # in the tree is resolved (a translator is identified by its binding; a read whose argument cannot be
+        # resolved exempts its whole namespace rather than being guessed at), and the count may only fall.
+        # Files only.
+        run: node scripts/qa-unused-keys.mjs
       - name: Field-name gate (two fields on one page may not share a name)
         # Same command as `scripts/check.sh`. The copy gate above counts English literals; it cannot see a
         # catalogue key used for the wrong field, which is how the scout's shortlist and the scout's transfer

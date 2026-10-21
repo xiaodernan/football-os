@@ -161,6 +161,18 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   other `t` would have answered `common`). The gate now checks **3600** key calls against the namespaces they are asked of, up
   from 3593, and its red path was watched: a file reading two keys the catalogue does not hold through `tAuth` and `tCommon`
   made the **old** gate report 8/8 PASS and the new one report the two keys with their namespaces.
+- **And the catalogue held 226 keys no page asks for (2026-10-22).** The copy gate asks whether every key the source asks
+  for **is** in the catalogue; the other half of that question — whether every key the catalogue holds is **asked for** —
+  had never been asked, so a catalogue could hold 3736 keys while the tree read 3510 and every gate in the suite would
+  still have said the catalogue was complete. `apps/web/scripts/qa-unused-keys.mjs` is that check: it resolves every read in
+  the web tier and reports the keys no read can reach. **226** of them, in three classes — two answers to one question
+  (`nav.video` and `nav.videoShort` both name the nav's video entry; the nav prints the second, and the page's own title
+  lives in `video.metaTitle`), a vocabulary for pages the spec names and the tree has not built (`auth.forgotPassword`,
+  `validation.*`), and a table of seventy prepositions (`common.or`, `common.and`, `common.of` …) that was written so a
+  sentence could be assembled from parts and never assembled. The gate's only hard job is to be **right about what it calls
+  dead**: a read that cannot be resolved to a literal **exempts its whole namespace**, so a key that cannot be shown to be
+  dead is never reported as dead. Every read in the tree resolved — named, destructured-positionally, dynamic, named-key,
+  callback-parameter, and handed across files — so **no namespace was left unjudged**.
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.

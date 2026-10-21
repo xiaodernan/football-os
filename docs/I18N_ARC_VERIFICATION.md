@@ -334,3 +334,79 @@ The **old** rule reported **8/8 PASS** on the same file, with the same two missi
 The name of a thing is not the thing. A gate that recognises a translator by how it is *spelled* holds
 its floor for a reason that has nothing to do with the code it is watching — and the same is true of
 the scope a name is read in, and of the way it was handed over. **A gate must ask about the binding.**
+
+## 9. The catalogue's dead keys (2026-10-22)
+
+The copy gate asks whether every key the source asks for **is** in the catalogue. The other half of the
+same question had never been asked: whether every key the catalogue holds is **asked for**.
+
+### What the number was
+
+`apps/web/scripts/qa-unused-keys.mjs` resolves every read in the web tier and reports the keys no read
+can reach. On 2026-10-22 it read:
+
+| | |
+| --- | --- |
+| catalogue keys | **3736** |
+| asked for by a page | **3510** |
+| **asked for by nothing** | **226** |
+
+| namespace | dead keys |
+| --- | --- |
+| `common` | 77 |
+| `scout` | 53 |
+| `club` | 42 |
+| `auth` | 15 |
+| `nav` | 9 |
+| `validation` | 8 |
+| `settings` | 7 |
+| `career` | 6 |
+| `creator` | 6 |
+| `disclaimer`, `home`, `worldNews` | 1 each |
+
+### What the number is made of
+
+Three classes, and they are not the same kind of thing:
+
+* **Two answers to one question.** `nav.video` ("Video Analysis") and `nav.videoShort` ("Video") both
+  name the nav's video entry; the nav prints the second. `nav.login` and `auth.signIn` both say "Sign
+  in"; the nav prints the second. `nav.register` and `auth.createAccount`; `nav.simulate` and
+  `nav.simulator`. The page's own title lives in its own namespace (`video.metaTitle`,
+  `simulate.metaTitle`), so the `nav` copy is a second, stale answer to a question the page already
+  answers.
+* **A vocabulary for a page that does not exist yet.** `auth.forgotPassword`, `auth.resetPassword`,
+  `auth.confirmPassword`, `auth.passwordTooShort` — the sign-up and password-reset flows the spec names
+  and the tree has not built. `validation.*` is the same: the plan records that it "waits for a form
+  that shows custom messages".
+* **A preposition table.** `common.or`, `common.and`, `common.of`, `common.in`, `common.for` … seventy
+  entries of the smallest English words, written so that a sentence could be assembled from parts and
+  never assembled.
+
+### Why the gate is shaped the way it is
+
+The gate's only hard job is to be **right about what it calls dead**. A gate that reports a key as
+dead when a read of it is merely *unresolved* would send someone to delete a key the page needs — and
+the tree has four shapes of read that a naive resolver cannot see:
+
+| shape | example |
+| --- | --- |
+| a named read | `t("key")` |
+| a destructured read | `const [t, td, tc] = await Promise.all([…, getTranslations("home"), …])` — the namespace is the **position** |
+| a dynamic read | `t(band.key)` — the value is in the page's own data |
+| a named-key read | `t(link.key)`, `labelKey="rowSession"` — the key is in the page's data, not at the call |
+
+and two more that only a *tree-wide* resolver sees: a **callback parameter**
+(`SUGGESTIONS.map((suggestion) => t(suggestion))`) and a **parameter handed a translator by another
+file** (`EraseRow` reads `t(whatKey)`, and the three call sites that hand it `"rowSession"`,
+`"rowQuestion"` and `"rowReview"` are in two other files).
+
+So the rule is: **a read that cannot be resolved exempts its whole namespace.** A key that cannot be
+shown to be dead is not dead, and the gate reports how many namespaces it had to leave alone rather
+than pretending it judged them. On 2026-10-22 it had to leave **none** — every read in the tree
+resolved — and that is the number the finding rests on.
+
+### The floor
+
+The floor is **226**, the count this gate read, and it may only fall. A key that is wired to a page
+lowers it; a key that is added and read by nothing raises it, and the gate says so. The list of 226 is
+the work: each is either wired, deleted, or held with a reason.

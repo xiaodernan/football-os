@@ -116,6 +116,16 @@ echo "── Web: catalogue-ICU gate ──────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-icu-messages.mjs)
 
+echo "── Web: catalogue's dead keys gate ────────────────────"
+# The copy gate above asks whether every key the source asks for IS in the catalogue. This asks the other
+# half: whether every key the catalogue holds is ASKED FOR. The two are not the same check, and only one of
+# them was ever written — so the catalogue could hold 3736 keys while the tree read 3510, and every gate in
+# the suite would have said the catalogue was complete. A key nothing reads is a translation that ships to
+# nobody, written three times and re-read whenever the message beside it changes. This resolves every read
+# in the tree (a translator is identified by its binding, and a read whose argument cannot be resolved
+# exempts its whole namespace rather than being guessed at) and refuses a count above the floor. Files only.
+(cd apps/web && node scripts/qa-unused-keys.mjs)
+
 echo "── Web: field-name i18n gate ─────────────────────────"
 # The arc's third class of defect, which the copy gate above cannot see: a catalogue key used for the *wrong
 # field*. The scout's shortlist and the scout's transfer panel once shared one accessible name, so a script that
