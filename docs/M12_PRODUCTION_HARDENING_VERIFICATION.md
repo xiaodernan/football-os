@@ -651,7 +651,45 @@ two hundred other processes. They are published because a harness that has never
 nothing, and because the *shape* — saturation at one process, max unreliable, p99 stable — will
 survive the move to quieter hardware even though the absolute figures will not.
 
+## The account's own erasure, and the claim that said it did not exist (2026-10-21)
+
+M12's gate names **account-level erasure** as a condition, and `DATA_POLICY.md` §3 said, in as many
+words, that it was *not implemented, so not claimed as a feature*: "full account erasure (`DELETE /me`
+with cascade and aggregate anonymisation) … a UI that offered them would be a lie, so it does not."
+
+**The door, the service, the preview and the panel have all been there since the account tier landed.**
+`DELETE /api/v1/auth/account` (`apps/api/app/api/v1/auth.py`) erases the account: the rows it owns go
+through the schema's own cascade, the rows with no foreign key to it (jobs, knowledge queries, revoked
+tokens, usage events) are deleted explicitly, the **aggregates are retained with the account id
+removed** rather than deleted — provider cost totals and operational action counts survive, the person
+does not — and the account's private media is unlinked from storage with the byte count reported. A
+phrase (`DELETE`) and the current password are both required; the tenant-orphan case is refused
+**before any write**; and `GET /api/v1/auth/account` prints the whole inventory without changing a row,
+so the panel can name what the button will take before the button is armed.
+
+**What was missing was the evidence, and the record was wrong in the other direction.**
+`apps/api/tests/test_account_deletion.py` had four cases — the session and the phrase, the cascade with
+the media and the identity, a storage key that leaves the private directory, and the last owner of a
+tenant with other members — and **no walk touched the web tier's control at all**: the most destructive
+button the interface offers had never been pressed by a browser. `visual-qa.mjs` §10a now does, on a
+throwaway account (the walk's own account has a season, a club, a training log and eleven published
+screens to its name by now):
+
+| what the walk proves | how |
+| --- | --- |
+| the panel names what it destroys before it destroys it | the inventory's own counts, read out of the DOM |
+| the erase control stays inert until the phrase **and** the password are there | the button's `disabled` before, after the phrase alone, and after both |
+| the wrong password is refused, and the account is still there | the door's own refusal beside `GET /auth/me` still answering with the account's email |
+| the erasure takes the account, and its session stops working | `identity_retained=false` beside `GET /auth/me` answering **401** |
+
+And `DATA_POLICY.md` §3 now says what is true: the account erasure is implemented and walked, and the
+two things that are **not** implemented — per-entity visibility toggles, and a single clip's own delete
+— are still named as unimplemented, because the account's media is purged when the account is erased and
+M5's upload routes have no per-clip delete of their own. A UI that offered *those* would still be a lie,
+so it does not.
+
 ## What M12 does not claim
+
 
 * **The Redis tier is live and authenticated (2026-10-20), and what sharing buys is now measured.**
   The project's own cache serves: `infra/docker-compose.yml` publishes an authenticated

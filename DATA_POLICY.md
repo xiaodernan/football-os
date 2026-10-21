@@ -29,10 +29,22 @@ Rights, stated as what the code actually serves today rather than as a promise l
   rows (attribute history, sessions, XP events). The UI names what that destroys and confirms first.
 - **Consent ledger** — registration requires `accepts_data_policy`, and `/settings` shows the stored
   acceptance plus the policy text it accepted.
-- **Not implemented, so not claimed as a feature:** full account erasure (`DELETE /me` with cascade and
-  aggregate anonymisation), per-entity visibility toggles, and per-video deletion with storage purge —
-  the last depends on M5 existing at all. Each is tracked in [`ROADMAP.md`](ROADMAP.md) (account erasure is
-  an explicit M12 gate), and a UI that offered them would be a lie, so it does not.
+- **Account erasure — implemented, and walked.** `DELETE /api/v1/auth/account` erases the account: the
+  rows it owns are deleted through the schema's own cascade, the rows that have no foreign key to it
+  (jobs, knowledge queries, revoked tokens, usage events) are deleted explicitly, the *aggregates* —
+  provider cost totals and operational action counts — are **retained with the account id removed**
+  rather than deleted, so the platform's own accounting survives while the person does not, and the
+  account's private media is unlinked from storage with the byte count reported. A phrase
+  (`DELETE`) and the current password are both required, the tenant-orphan case is refused **before any
+  write**, and `GET /api/v1/auth/account` prints the whole inventory without changing a row, so the
+  settings page can name what the button will take before the button is armed. The browser walk proves
+  the three refusals and the erasure itself in `apps/web/scripts/visual-qa.mjs` §10a.
+  *This paragraph replaced a claim that it was **not** implemented — the door, the service, the preview
+  and the panel have been there since the account tier landed, and the policy still said otherwise.*
+- **Not implemented, so not claimed as a feature:** per-entity visibility toggles, and per-video
+  deletion on its own (the *account's* media is purged when the account is erased, and M5's upload
+  routes have no single-clip delete of their own). Each is tracked in [`ROADMAP.md`](ROADMAP.md), and a
+  UI that offered them would be a lie, so it does not.
 
 ## 4. Minors
 

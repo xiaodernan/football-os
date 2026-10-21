@@ -565,6 +565,134 @@ async function run() {
     );
     await shot(page, '18-settings-desktop');
 
+    // 10a. §61's account erasure, in the browser. The door, the service, the preview and the panel have
+    // all existed for a while — `DELETE /api/v1/auth/account`, the cascade, the aggregate anonymisation
+    // and the storage purge — while DATA_POLICY.md still said the account could not be deleted and no
+    // walk touched the most destructive control the interface offers. A second account is used, because
+    // the walk's own account has a season, a club, a training log and eleven published screens to its
+    // name by now.
+    const eraseCtx = await browser.createBrowserContext();
+    try {
+      const erasePage = await eraseCtx.newPage();
+      erasePage.setDefaultTimeout(120_000);
+      await erasePage.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
+      const eraseEmail = `visual-qa-erase-${stamp}@footballos.test`;
+      await erasePage.goto(`${BASE}/register`, { waitUntil: 'networkidle2', timeout: 90_000 });
+      await erasePage.type('#email', eraseEmail);
+      await erasePage.type('#password', PASSWORD);
+      await erasePage.type('#display_name', 'QA Erase');
+      await erasePage.click('input[type="checkbox"]');
+      await erasePage.click('button[type="submit"]');
+      await erasePage.waitForFunction(() => location.pathname === '/onboarding', { timeout: 90_000 });
+      await open(erasePage, '/settings');
+      await erasePage.waitForSelector('#st-account-confirm', { visible: true, timeout: 60_000 });
+      const inventory = await erasePage.evaluate(() => {
+        // The settings page holds two danger panels — the player's own football data and the account
+        // itself — and both are `.st-danger`, so the account's panel is the one that holds its confirm
+        // field. Addressing the wrong one would read the other panel's button.
+        const panel = document.querySelector('#st-account-confirm')?.closest('.st-danger') ?? null;
+        const scope = panel?.querySelector('.st-result')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+        const button = panel?.querySelector('button');
+        return { scope, armed: button ? button.disabled === false : null, present: Boolean(button) };
+      });
+      check(
+        'the account panel names what it destroys before it destroys it',
+        inventory.present === true && /\d/iu.test(inventory.scope),
+        inventory.scope.slice(0, 150) || 'the inventory is not printed',
+      );
+      check(
+        'and the erase control stays inert until the phrase and the password are both there',
+        inventory.armed === false,
+        `armed with nothing typed: ${inventory.armed}`,
+      );
+      await erasePage.type('#st-account-confirm', 'DELETE');
+      const armedWithPhrase = await erasePage.$eval(
+        '#st-account-confirm',
+        (node) => node.closest('.st-danger')?.querySelector('button')?.disabled === false,
+      );
+      await erasePage.type('#st-account-password', 'not-the-password');
+      const armedWithBoth = await erasePage.$eval(
+        '#st-account-password',
+        (node) => node.closest('.st-danger')?.querySelector('button')?.disabled === false,
+      );
+      check(
+        'the phrase alone does not arm it, and a password beside the phrase does arm it',
+        armedWithPhrase === false && armedWithBoth === true,
+        `armed with the phrase: ${armedWithPhrase} · armed with the phrase and a password: ${armedWithBoth}`,
+      );
+      // The wrong password is refused by the door, and the account is still there afterwards. The
+      // button is pressed through the panel that holds the confirm field, because the settings page has
+      // two danger panels and only one of them erases the account.
+      await erasePage.$eval('#st-account-confirm', (node) => {
+        node.closest('.st-danger')?.querySelector('button')?.click();
+      });
+      await erasePage.waitForFunction(
+        () =>
+          /password/iu.test(
+            document.querySelector('#st-account-confirm')?.closest('.st-danger')?.querySelector('.notice--warn')?.textContent ?? '',
+          ),
+        { timeout: 30_000 },
+      );
+      const refused = await erasePage.evaluate(async () => {
+        const panel = document.querySelector('#st-account-confirm')?.closest('.st-danger') ?? null;
+        const notice = panel?.querySelector('.notice--warn')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+        const me = await (await fetch('/api/v1/auth/me', { credentials: 'same-origin' })).json();
+        return { notice, me: me?.email ?? '' };
+      });
+      check(
+        'the wrong password is refused, and the account is still there',
+        /password/iu.test(refused.notice) && refused.me === eraseEmail,
+        `${refused.notice.slice(0, 90)} · the account still answers: ${refused.me}`,
+      );
+      // Now the real thing: the right password, and the account is gone. The wrong password is replaced
+      // through the prototype's setter and an `input` event — how React sees a value that did not arrive
+      // as a keypress — and the field is read back, because a field that still holds the wrong password
+      // would be a refusal the walk would have blamed on the door. The signal that the erasure happened
+      // is the confirm field *disappearing*: the success branch replaces the form with the receipt.
+      await erasePage.$eval(
+        '#st-account-password',
+        (node, value) => {
+          const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          setter.call(node, value);
+          node.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+        PASSWORD,
+      );
+      const passwordNow = await erasePage.$eval('#st-account-password', (node) => node.value);
+      check(
+        'the wrong password is replaced by the account’s own before the door is asked again',
+        passwordNow === PASSWORD,
+        `the field holds ${passwordNow.length} character(s)${passwordNow === PASSWORD ? '' : ' and not the account’s own'}`,
+      );
+      await erasePage.$eval('#st-account-confirm', (node) => {
+        node.closest('.st-danger')?.querySelector('button')?.click();
+      });
+      let erased = { summary: 'the form is still there', status: 0 };
+      try {
+        await erasePage.waitForFunction(() => !document.querySelector('#st-account-confirm'), { timeout: 60_000 });
+        erased = await erasePage.evaluate(async () => {
+          const panel =
+            [...document.querySelectorAll('.st-danger')].find((node) => /identity_retained=/u.test(node.textContent ?? '')) ?? null;
+          const summary = panel?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+          const me = await fetch('/api/v1/auth/me', { credentials: 'same-origin' });
+          return { summary, status: me.status };
+        });
+      } catch (error) {
+        erased = {
+          summary: `the form is still there: ${await erasePage.evaluate(() => [...document.querySelectorAll('.st-danger')].map((node) => node.textContent?.replace(/\s+/g, ' ').trim().slice(0, 160) ?? '').join(' | '))}`,
+          status: 0,
+        };
+      }
+      check(
+        'the erasure takes the account, and its session stops working',
+        /identity_retained=false/u.test(erased.summary) && erased.status === 401,
+        `${erased.summary.slice(0, 130)} · the session now answers ${erased.status}`,
+      );
+      await shot(erasePage, '18b-settings-account-erased');
+    } finally {
+      await eraseCtx.close();
+    }
+
     // 10b. The scouting screen (spec §23–§27) — which had no coverage here at all until this. That is how a
     // whole surface (99 catalogue keys, four sub-panels, its own API tier) could sit behind English literals
     // above a fully translated catalogue with nothing to notice: every other private page is walked, and this

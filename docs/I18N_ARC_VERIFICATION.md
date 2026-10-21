@@ -127,7 +127,7 @@ each against its own API on its own fresh SQLite database:
 | `qa-creator.mjs` | 72 | 72/72 | **72/72**, exit 0 |
 | `qa-portfolio.mjs` | 53 | 53/53 | **53/53**, exit 0 |
 | `qa-market.mjs` | 106 | 106/106 | **106/106**, exit 0 |
-| `visual-qa.mjs` | 291 | 141/143 | **291/291**, exit 0 |
+| `visual-qa.mjs` | 297 | 141/143 | **297/297**, exit 0 |
 
 Every one of them ran against the build that carries the arc, each on its own API port over its own fresh
 SQLite database, by `scripts/run-walks.mjs` — the harness that is in the repository now, and that reads the
