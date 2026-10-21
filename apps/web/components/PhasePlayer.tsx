@@ -74,7 +74,7 @@ const tt = useTranslations("tactics");
   return (
     <div className="stack-sm">
       <svg aria-label={tt("boardAria")} role="img" viewBox={PITCH_VIEWBOX} preserveAspectRatio="xMidYMid meet">
-        <PitchFrame />
+        <PitchFrame axisOpponent={tt("pitchAxisOpponent")} axisOwn={tt("pitchAxisOwn")} />
         <g className="pitch-path">
           {inPhase.map((from, index) =>
             from.x === shown[index].x && from.y === shown[index].y ? null : (

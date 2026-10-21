@@ -203,7 +203,7 @@ export default async function AcademyPlanPage({ params }: Props) {
                     {row.strengths || "—"} / {row.areas || "—"} / {row.next_focus || "—"}
                   </td>
                   <td>
-                    <EraseRow action="review-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/plans/${encodeURIComponent(plan)}/reviews/${encodeURIComponent(row.id)}`} what="review" />
+                    <EraseRow action="review-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/plans/${encodeURIComponent(plan)}/reviews/${encodeURIComponent(row.id)}`} whatKey="rowReview" />
                   </td>
                 </tr>
               ))}

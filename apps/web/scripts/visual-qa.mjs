@@ -53,6 +53,8 @@ const PLAYER_NAME = `QA Mid ${stamp.slice(-4)}`;
 const results = [];
 const consoleErrors = [];
 const shots = [];
+/** Every path this walk opened, so the locale sweep can read them all again in Chinese. */
+const visitedPaths = new Set();
 
 function check(name, ok, detail = '') {
   results.push({ name, ok, detail });
@@ -73,6 +75,7 @@ async function shot(page, name) {
 }
 
 async function open(page, path) {
+  visitedPaths.add(path);
   await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle2', timeout: 90_000 });
   await sleep(400);
 }
@@ -111,18 +114,42 @@ async function probeStatuses(urls, concurrency = 6) {
       const index = cursor;
       cursor += 1;
       if (index >= urls.length) return;
-      try {
-        // A stalled render must become a failed check, not a hung run: without the timeout one
-        // page that never answers parks the whole walk until something external kills the process.
-        outcomes[index] = (await fetch(urls[index], { signal: AbortSignal.timeout(25_000) })).status;
-      } catch (error) {
-        outcomes[index] = error?.name === 'TimeoutError' ? 408 : 0;
-      }
+      outcomes[index] = await probeOne(urls[index]);
     }
   });
   await Promise.all(workers);
   return outcomes;
 }
+
+/**
+ * One URL, probed.
+ *
+ * A timeout is **the harness's measurement, not the route's answer**: on a loaded host a render that
+ * takes thirty seconds is still a route that answers 200, and the walk used to record the timeout as a
+ * 408 and call the sitemap broken. So a timed-out URL is asked once more, with a longer budget, and
+ * the retry is counted — a route that answers on the second ask is slow, and a route that does not
+ * answer at all is broken, and the two must not read the same in the report.
+ */
+async function probeOne(url) {
+  const budget = 25_000;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      // A stalled render must become a failed check, not a hung run: without the timeout one
+      // page that never answers parks the whole walk until something external kills the process.
+      return (await fetch(url, { signal: AbortSignal.timeout(attempt === 1 ? budget : budget * 2) })).status;
+    } catch (error) {
+      if (error?.name !== 'TimeoutError') return 0;
+      if (attempt === 2) {
+        retriedTimeouts += 1;
+        return 408;
+      }
+    }
+  }
+  return 408;
+}
+
+/** How many URLs only answered on the second ask. Read by the report, so a slow host is visible. */
+let retriedTimeouts = 0;
 
 async function clickByText(page, selector, text) {
   const handle = await page.evaluateHandle(
@@ -961,7 +988,7 @@ async function run() {
     check(
       'sitemap advertises only routes that answer 200 (no redirect chains)',
       locs.length > 0 && notOk.length === 0,
-      `${locs.length} URLs probed, ${locs.length - notOk.length} answered 200${notOk.length ? ` — e.g. ${locStatuses[locs.indexOf(notOk[0])]} ${notOk[0]}` : ''}`,
+      `${locs.length} URLs probed, ${locs.length - notOk.length} answered 200${notOk.length ? ` — e.g. ${locStatuses[locs.indexOf(notOk[0])]} ${notOk[0]}` : ''}${retriedTimeouts ? ` · ${retriedTimeouts} answer(ed) only on the second ask` : ''}`,
     );
     check(
       'every library document appears in the sitemap',
@@ -3244,6 +3271,75 @@ async function run() {
     await setSelect(page, '.nav__locale', 'en');
     const backToEnglish = await navBecomes('Home');
     check('switching back returns the English catalogue, so the choice is not one-way', backToEnglish, JSON.stringify(await navHome()));
+
+    // 10z. The locale sweep: every page this walk visited, read again in Chinese.
+    //
+    // Nine pages were checked in Chinese by hand above, and the other thirty-odd were not — so the claim
+    // "the interface is in the reader's language" was a claim about nine pages. The sweep makes it a claim
+    // about every page the walk touched: each one is opened with the Chinese cookie, and its text must
+    // carry none of the English catalogue's own sentences.
+    //
+    // The comparison is the catalogue against itself: an English value that the Chinese catalogue holds
+    // differently is copy that did not come from the Chinese file, and a value the two files share is a
+    // technical token ("Play", "Free") that is *supposed* to read the same. The tier's own English — the
+    // API's rule sentences, which are quoted rather than translated — is not in the catalogue and so is
+    // not judged here.
+    //
+    // The knowledge base is skipped, and the reason is the corpus: those pages carry the project's own
+    // English documents, which are published in English on purpose and are not interface copy. A
+    // sentence in a document that happens to be worded like a catalogue value is a coincidence, not a
+    // page that forgot its language.
+    const corpusPages = (path) => path === '/knowledge' || path.startsWith('/knowledge/');
+    /**
+     * A phrase is matched as a **whole phrase**, not as a substring of the page's text.
+     *
+     * The tier's own English is quoted rather than translated, and it sometimes *contains* a
+     * catalogue value: the tactics disclaimer reads "Tactical systems are project-authored coaching
+     * structures", which contains the label "Tactical system" — as the beginning of a longer word,
+     * not as the label itself. A substring match would call that an English sentence on a Chinese
+     * page, and it would call it so on every page that quotes the disclaimer. The boundary rule asks
+     * for the phrase with a non-letter on each side, so "Tactical system" standing on its own is
+     * caught and "Tactical systems are…" is not.
+     */
+    const phrasePattern = (value) => {
+      const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "u");
+    };
+    const englishPhrases = [];
+    for (const [namespace, block] of Object.entries(englishMessages)) {
+      if (typeof block !== 'object' || block === null) continue;
+      for (const [key, value] of Object.entries(block)) {
+        if (typeof value !== 'string' || value.length < 15) continue;
+        if (value.split(/\s+/).length < 2) continue;
+        const chinese = chineseMessages[namespace]?.[key];
+        if (typeof chinese !== 'string' || chinese === value) continue;
+        englishPhrases.push({ namespace: `${namespace}.${key}`, value, pattern: phrasePattern(value) });
+      }
+    }
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    const swept = [];
+    const skipped = [];
+    const offenders = [];
+    for (const path of visitedPaths) {
+      if (corpusPages(path)) {
+        skipped.push(path);
+        continue;
+      }
+      const response = await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle2', timeout: 60_000 }).catch(() => null);
+      const status = response ? response.status() : 0;
+      const text = await bodyText(page);
+      const found = englishPhrases.find((phrase) => phrase.pattern.test(text));
+      swept.push(`${path} ${status}`);
+      if (found) offenders.push(`${path} carries ${found.namespace} (“${found.value.slice(0, 60)}”)`);
+    }
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+    check(
+      'every page this walk visited reads the Chinese catalogue, and none of them carries an English sentence',
+      offenders.length === 0 && swept.length > 0,
+      offenders.length
+        ? offenders.slice(0, 8).join(' | ')
+        : `${swept.length} page(s) read in Chinese, ${englishPhrases.length} English phrase(s) compared, ${skipped.length} corpus page(s) skipped`,
+    );
   } catch (error) {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed
     // check, capture what the browser was actually looking at, and fall through to the summary.
@@ -3278,6 +3374,11 @@ async function run() {
     // by the path that plays a round. Both lines are that refused round.
     /^HTTP 409 \/api\/v1\/careers\/[^/]+\/play$/,
     /^Failed to load resource: the server responded with a status of 409 \(Conflict\) @ \/api\/v1\/careers\/[^/]+\/play$/,
+    // The share block revokes its own link and then reads the old address again, because a revoked link
+    // that still answers would be a board nobody took down. The locale sweep at the end of the walk
+    // re-opens every path it visited, including that one, so the same 404 arrives twice on purpose.
+    /^HTTP 404 \/tactics\/shared\/[^/]+$/,
+    /^Failed to load resource: the server responded with a status of 404 \(Not Found\) @ \/tactics\/shared\/[^/]+$/,
   ];
   const unexpected = [...new Set(consoleErrors)].filter((line) => !provoked.some((pattern) => pattern.test(line)));
   check(

@@ -32,6 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GalleryPage() {
   const t = await getTranslations("gallery");
   const tn = await getTranslations("nav");
+  const tt = await getTranslations("tactics");
   const result = await readWorld<GalleryList>("/boards/gallery/public");
 
   if (!result.ok) {
@@ -97,6 +98,8 @@ export default async function GalleryPage() {
         <Panel eyebrow={t("sampleEyebrow", { name: gallery.items[0].name })} title={t("sampleTitle")}>
           <div className="tac-boards">
             <Pitch
+              axisOpponent={tt("pitchAxisOpponent")}
+              axisOwn={tt("pitchAxisOwn")}
               caption={t("pitchCaption", { count: gallery.items[0].phase_in.length })}
               slots={gallery.items[0].phase_in}
               title={gallery.items[0].name}

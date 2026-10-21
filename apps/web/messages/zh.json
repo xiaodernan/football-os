@@ -153,7 +153,17 @@
     "remove": "移除",
     "paginationAria": "分页",
     "pageOf": "第 {page}/{pages} 页 · 共 {total} 行",
-    "rowsCount": "共 {total} 行。"
+    "rowsCount": "共 {total} 行。",
+    "notPlayed": "未开赛",
+    "unavailableNote": "这里没有任何内容是用虚构的值替代的（规范 §78）。",
+    "pitchCaption3d": "{count} 个位置 · 与上方棋盘相同的米数，以等轴投影呈现——没有第二套坐标",
+    "eraseErased": "{what} 已删除——表格已重新读取",
+    "eraseRefused": "{what} 被拒绝：{reason}",
+    "eraseRefusedReason": "被拒绝：{reason}",
+    "erasing": "正在删除…",
+    "rowSession": "训练记录",
+    "rowQuestion": "提问",
+    "rowReview": "评估"
   },
   "auth": {
     "signIn": "登录",
@@ -533,7 +543,15 @@
     "thCut": "切掉",
     "thRowsOut": "留下的行",
     "thRule": "规则",
-    "closestInCatalogue": "目录中最接近的："
+    "closestInCatalogue": "目录中最接近的：",
+    "decidedBy": "判定依据",
+    "droppedExample": "被丢弃的示例：",
+    "unaccountedTail": "既没有被解析也没有被拒绝，这不应该发生——请报告它，而不是相信这次搜索",
+    "rulesEyebrow": "{players} 名已存储球员 · {attributes} 项属性 · {roles} 个角色",
+    "parseEyebrow": "POST /scout/parse · {filters, plural, other {# 个筛选条件}} · 未读取任何行",
+    "resultsEyebrow": "{matches, plural, other {# 场匹配}}，共检查 {rows} 行 · 按 {sort} 排序",
+    "waterfallEyebrow": "{cuts} 层筛选 · 按请求声明的顺序应用",
+    "reportEyebrow": "POST /scout/report · {fields} 个字段 · {player}"
   },
   "career": {
     "title": "生涯模式",
@@ -605,7 +623,10 @@
     "onTheRecord": "计入战绩，现在读作已踢 {played} 场、{points} 分。",
     "objectiveRequired": "至少写下一条带目标的目标，让这个赛季有据可判。",
     "playNextRound": "进行下一轮",
-    "playingTheRound": "正在踢这一轮…"
+    "playingTheRound": "正在踢这一轮…",
+    "managerNameRequired": "需要至少两个字符的主教练姓名——这份生涯会印上它。",
+    "tacticalSystemLabel": "战术体系——引擎读取的部分",
+    "atLeastOne": "至少一个"
   },
   "settings": {
     "title": "设置",
@@ -864,7 +885,8 @@
     "searchHitsEyebrow": "“{query}”有 {total} 条命中",
     "searchResultsTitle": "结果，按词条重合度排序",
     "thCompetition": "赛事",
-    "thPos": "位置"
+    "thPos": "位置",
+    "searchEmpty": "生成的世界里没有与“{query}”匹配的内容。这是一个真实的回答，而不是一份兜底清单：搜索只读取已存储的行。"
   },
   "coach": {
     "metaTitle": "AI 教练",
@@ -1278,7 +1300,13 @@
     "thMeasure": "度量",
     "thValue": "值",
     "thHowObtained": "如何得到",
-    "copyLink": "复制链接"
+    "copyLink": "复制链接",
+    "metaTitleSystem": "{name}——战术体系",
+    "spatialCoverage": "68 米 × 105 米球场，规则第 1 条",
+    "pitchAxisOpponent": "对方球门 · 沿球场向前 105 米",
+    "pitchAxisOwn": "本方球门线 · 0 米——球队向上进攻",
+    "pitchAxisOwnScreen": "本方球门线 · 0 米——球队向上（屏幕方向）进攻",
+    "pitchCaption3d": "{count} 个位置 · 与上方棋盘相同的米数，以等轴投影呈现——没有第二套坐标"
   },
   "history": {
     "metaTitle": "训练日志",
@@ -1538,7 +1566,8 @@
     "passagesH2": "段落",
     "sectionChars": "{count} 字符",
     "demoExtractiveTitle": "没有配置语言模型密钥；这个答案是从所引段落中抽取拼装的，不是生成的。",
-    "demoRerankTitle": "没有配置语言模型密钥；排序使用特征重排器，结果原样呈现。"
+    "demoRerankTitle": "没有配置语言模型密钥；排序使用特征重排器，结果原样呈现。",
+    "noModelKeyTitle": "没有配置语言模型密钥——问答的答案由引用段落抽取式拼装，绝不生成。"
   },
   "challenges": {
     "title": "经理实时挑战",
@@ -2083,7 +2112,8 @@
     "linkLive": "有效",
     "linkClosed": "已关闭",
     "noSections": "（无）",
-    "unknownTime": "未知"
+    "unknownTime": "未知",
+    "blockedOnMinor": "因未成年人链接而被阻断"
   },
   "gallery": {
     "metaTitle": "阵型画廊",
@@ -2847,7 +2877,11 @@
     "tableHeaderNotRated": "未评的维度",
     "tableHeaderStrengthsAreasNext": "强项 / 待改进 / 下一步",
     "kvOverallChange": "综合变化",
-    "progressMeasuredFrom": "这些数字来自：{source}"
+    "progressMeasuredFrom": "这些数字来自：{source}",
+    "grantEyebrow": "{slug} · 你在这里是{role} · {total} 项权限中的 {granted} 项",
+    "membersEyebrow": "{rows} 行 · 立场只在这里改变，而且只有一行能改变它",
+    "filteredTo": "已筛选为 {audience}",
+    "loadFormulaTitle": "duration_min × rpe ÷ 60，用这一行自己的两列算出"
   },
   "home": {
     "metaTitle": "观看。理解。训练。比赛。管理。成长。",
@@ -3006,7 +3040,8 @@
     "ledgerEmptyAmbiguous": "已追踪的 {traced} 轮里，每个事件都在同一套十一人中不止一次点到同一个名字，因此没有哪一行能认领身份。",
     "ledgerTruncated": "列表在 {total} 人中的 {shown} 人处截断：其余的人参与了比赛，却没有印出足够大的事件进入名单。",
     "carryDecay": "{rounds} 轮，每轮衰减 {decay}",
-    "thGoals": "进球"
+    "thGoals": "进球",
+    "tracedPlayers": "{carrying} 名受追踪球员中的 {found} 名 · {formula}"
   },
   "worldPlayer": {
     "metaDescriptionFallback": "FOOTBALL OS 生成足球世界中的球员档案。",

@@ -68,14 +68,14 @@ const COMPONENTS = join(WEB, "components");
  *
  * It may only fall.
  */
-const FLOOR_SITES = 15;
+const FLOOR_SITES = 0;
 
 /**
  * The floor on the fourth shape — a string literal that reaches the reader from somewhere the three
  * shapes above do not cover. It starts at the count the gate read when it learned to see the shape,
  * and it may only fall: every site that moves into a catalogue lowers it.
  */
-const FLOOR_LITERAL_SITES = 22;
+const FLOOR_LITERAL_SITES = 0;
 
 /** The population the walk must find, so a scan that narrows itself cannot pass by finding nothing. */
 const FLOOR_FILES = 70;
@@ -151,6 +151,20 @@ const relOf = (p) => p.slice(WEB.length + 1).split(sep).join("/");
  * The test is deliberately conservative: a value that could be a key, a path, an identifier or a
  * technical word is not a finding, because a gate that cries wolf gets switched off.
  */
+/**
+ * A formula: the page prints an expression as the rule that produced a figure. Its words are variable
+ * names and function names, which are the same in every language — translating the expression would
+ * make the page wrong, and copying it into the catalogue would give one rule two sources to drift
+ * apart. The test is structural: an arithmetic operator and an equality, with no sentence punctuation
+ * outside the numbers.
+ */
+const isFormula = (value) => {
+  const text = value.trim();
+  if (!/[=+\u00d7\u00f7*/^]/.test(text)) return false;
+  const withoutNumbers = text.replace(/\d+(?:[.,]\d+)?/g, "");
+  return !/[;:!?.,]/.test(withoutNumbers);
+};
+
 const isEnglishCopy = (value) => {
   const text = value.trim();
   if (!text || text.length < 2) return false;
@@ -167,6 +181,7 @@ const isEnglishCopy = (value) => {
   // never counted.
   if ([...text].some((character) => character.codePointAt(0) > 127 && /\p{L}/u.test(character))) return false;
   if (TECHNICAL_PATTERNS.some((pattern) => pattern.test(text))) return false; // a field name, not copy
+  if (isFormula(text)) return false; // an expression, not a sentence
   const words = text.match(/[A-Za-z][A-Za-z'’-]*/g) ?? [];
   if (words.length === 0) return false;
   if (words.length === 1) {
@@ -515,8 +530,12 @@ for (const file of files) {
        * that share a property: `labelKey: "attrFirstTouch"` is a key, while `key: "first_touch"` is the
        * API's own field name — a snake_case value, which the heuristic has always read as a field and not
        * as a sentence.
+       *
+       * Any property whose name ends in `Key` counts, because the naming is the point: a prop called
+       * `whatKey` holds a catalogue key for the same reason `labelKey` does.
        */
-      if (["key", "labelKey", "msg"].includes(node.name.text) && looksLikeKey(node.initializer.text)) {
+      const isKeyProperty = (name) => name === "key" || name === "msg" || name.endsWith("Key");
+      if (isKeyProperty(node.name.text) && looksLikeKey(node.initializer.text)) {
         namedKeys.push({ file: rel, line: position(node), key: node.initializer.text.trim() });
       }
     }
@@ -551,6 +570,12 @@ for (const file of files) {
       if (LABEL_ATTRIBUTES.has(name) && isEnglishCopy(node.initializer.text)) {
         sites.push({ file: rel, line: position(node), shape: `attr:${name}`, copy: node.initializer.text.trim() });
         counted.add(node.initializer.getStart(source));
+      }
+      // A prop whose name ends in `Key` holds a catalogue key, and the page reads it with `t(prop)`:
+      // `whatKey="rowSession"` names the row the erase door is about. A key the catalogue does not hold
+      // is a runtime error, so it belongs to the key-existence check.
+      if (name.endsWith("Key") && looksLikeKey(node.initializer.text)) {
+        namedKeys.push({ file: rel, line: position(node), key: node.initializer.text.trim() });
       }
     }
     if (ts.isPropertyAssignment(node) && node.name && ts.isIdentifier(node.name) && ts.isStringLiteral(node.initializer)) {

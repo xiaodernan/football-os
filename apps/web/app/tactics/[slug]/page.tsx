@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const width = system?.metrics_in.find((metric) => metric.key === "width")?.value;
   const behind = system?.metrics_in.find((metric) => metric.key === "space_behind")?.value;
   return pageMetadata({
-    title: system ? `${system.name} — tactical system` : slug.replace(/-/g, " "),
+    title: system ? t("metaTitleSystem", { name: system.name }) : slug.replace(/-/g, " "),
     description: system
       ? t("metaDescriptionSystem", { idea: system.idea, width: width?.toFixed(1) ?? "", behind: behind?.toFixed(1) ?? "", depth: system.block_depth, top: system.press_line_y })
       : t("metaDescriptionFallback"),
@@ -100,7 +100,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
     <div className="container page stack">
       <WorldHead
         back={{ href: "/tactics", label: tn("tactics") }}
-        eyebrow={`Tactical Lab · ${system.formation} · ${system.temperament_label}`}
+        eyebrow={`${tn("tactics")} · ${system.formation} · ${system.temperament_label}`}
         lede={system.idea}
         provenance={system}
         title={system.name}
@@ -157,6 +157,8 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
         <Panel eyebrow={counterfactual.data.change.label} title={t("boardBeforeAfterTitle")}>
           <div className="tac-boards">
             <Pitch
+              axisOpponent={t("pitchAxisOpponent")}
+              axisOwn={t("pitchAxisOwn")}
               before={counterfactual.data.board_before}
               caption={t("boardBeforeAfterCaption")}
               slots={counterfactual.data.board_after}
@@ -194,11 +196,23 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
         <div className="tac-boards">
           <div className="stack-sm">
             <p className="eyebrow">{t("phaseIn")}</p>
-            <Pitch slots={system.phase_in} title={t("pitchTitleIn", { name: system.name })} />
+            <Pitch
+              axisOpponent={t("pitchAxisOpponent")}
+              axisOwn={t("pitchAxisOwn")}
+              caption={t("pitchCaption", { count: system.phase_in.length })}
+              slots={system.phase_in}
+              title={t("pitchTitleIn", { name: system.name })}
+            />
           </div>
           <div className="stack-sm">
             <p className="eyebrow">{t("phaseOut")}</p>
-            <Pitch slots={system.phase_out} title={t("pitchTitleOut", { name: system.name })} />
+            <Pitch
+              axisOpponent={t("pitchAxisOpponent")}
+              axisOwn={t("pitchAxisOwn")}
+              caption={t("pitchCaption", { count: system.phase_out.length })}
+              slots={system.phase_out}
+              title={t("pitchTitleOut", { name: system.name })}
+            />
           </div>
         </div>
         <div className="stack-sm" style={{ marginTop: "0.75rem" }}>
@@ -223,7 +237,13 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
         <details className="stack-sm" data-testid="pitch-3d">
           <summary>{t("isoSummary")}</summary>
           <div className="stack-sm" style={{ marginTop: "0.75rem" }}>
-            <Pitch3D slots={system.phase_in} title={t("pitchTitleIn", { name: system.name })} />
+            <Pitch3D
+              axisOpponent={t("pitchAxisOpponent")}
+              axisOwnScreen={t("pitchAxisOwnScreen")}
+              caption={t("pitchCaption3d", { count: system.phase_in.length })}
+              slots={system.phase_in}
+              title={t("pitchTitleIn", { name: system.name })}
+            />
             <p className="muted mono" style={{ fontSize: "0.82rem" }} data-iso-formula={ISO_FORMULA}>
               {ISO_FORMULA}
             </p>

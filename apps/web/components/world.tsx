@@ -151,6 +151,7 @@ export function RefLink({ target }: { target: EntityRef }) {
 
 /** The "no score yet" state (spec §65): a scheduled fixture shows a kick-off time, never 0-0. */
 export function MatchRow({ match }: { match: MatchBrief }) {
+  const t = useTranslations("common");
   const played = match.status === "completed" && match.home_goals !== null && match.away_goals !== null;
   return (
     <li className="world-fixture">
@@ -170,7 +171,7 @@ export function MatchRow({ match }: { match: MatchBrief }) {
             {match.home_goals}–{match.away_goals}
           </span>
         ) : (
-          <span className="unavailable">Not played · Data unavailable</span>
+          <span className="unavailable">{t("notPlayed")} · {t("dataUnavailable")}</span>
         )}
       </div>
     </li>
@@ -287,7 +288,7 @@ export function WorldUnavailable({
       <WorldHead eyebrow={eyebrow ?? t("worldTitle")} title={title ?? t("dataUnavailable")} />
       <div className="notice notice--warn">{message}</div>
       <p className="muted" style={{ fontSize: "0.88rem" }}>
-        Nothing here is substituted with invented values (spec §78). {detail}
+        {t("unavailableNote")} {detail}
       </p>
     </div>
   );

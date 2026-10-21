@@ -150,7 +150,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
           style={{ touchAction: "none" }}
           viewBox={PITCH_VIEWBOX}
         >
-          <PitchFrame />
+          <PitchFrame axisOpponent={tb("pitchAxisOpponent")} axisOwn={tb("pitchAxisOwn")} />
           {positions.map((slot, index) => (
             <PlayerMarker
               grabbable

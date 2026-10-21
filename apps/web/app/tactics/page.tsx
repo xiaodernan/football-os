@@ -105,7 +105,7 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
           isAccessibleForFree: true,
           measurementTechnique: world.metrics.map((metric) => `${metric.label}: ${metric.formula}`).join(" · "),
           variableMeasured: world.metric_keys.join(", "),
-          spatialCoverage: "68 m × 105 m pitch, Law 1",
+          spatialCoverage: t("spatialCoverage"),
         }}
       />
 
@@ -204,6 +204,8 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
         <Panel eyebrow={t("boardEyebrow", { name: firstDetail.data.name })} title={t("boardTitle")}>
           <div className="tac-boards">
             <Pitch
+              axisOpponent={t("pitchAxisOpponent")}
+              axisOwn={t("pitchAxisOwn")}
               caption={t("pitchCaption", { count: firstDetail.data.phase_in.length })}
               slots={firstDetail.data.phase_in}
               title={t("pitchTitleIn", { name: firstDetail.data.name })}

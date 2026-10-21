@@ -153,7 +153,17 @@
     "remove": "Remove",
     "paginationAria": "Pagination",
     "pageOf": "Page {page} of {pages} · {total} rows",
-    "rowsCount": "{total} rows."
+    "rowsCount": "{total} rows.",
+    "notPlayed": "Not played",
+    "unavailableNote": "Nothing here is substituted with invented values (spec §78).",
+    "pitchCaption3d": "{count} positions · the same metres as the board above, projected isometrically — no second set of coordinates",
+    "eraseErased": "{what} erased — the table was re-read",
+    "eraseRefused": "{what} refused: {reason}",
+    "eraseRefusedReason": "refused: {reason}",
+    "erasing": "Erasing…",
+    "rowSession": "session",
+    "rowQuestion": "question",
+    "rowReview": "review"
   },
   "auth": {
     "signIn": "Sign in",
@@ -533,7 +543,15 @@
     "thCut": "Cut",
     "thRowsOut": "Rows out",
     "thRule": "Rule",
-    "closestInCatalogue": "closest in the catalogue:"
+    "closestInCatalogue": "closest in the catalogue:",
+    "decidedBy": "decided by",
+    "droppedExample": "dropped example:",
+    "unaccountedTail": "was neither parsed nor refused, which should not happen — report it rather than trusting this search",
+    "rulesEyebrow": "{players} stored players · {attributes} attributes · {roles} roles",
+    "parseEyebrow": "POST /scout/parse · {filters, plural, one {# filter} other {# filters}} · no row read",
+    "resultsEyebrow": "{matches, plural, one {# match} other {# matches}} of {rows} rows examined · sorted by {sort}",
+    "waterfallEyebrow": "{cuts} cuts · applied in the order the request stated them",
+    "reportEyebrow": "POST /scout/report · {fields} fields · {player}"
   },
   "career": {
     "title": "Career Mode",
@@ -605,7 +623,10 @@
     "onTheRecord": "on the record, which now reads {played} played, {points} points.",
     "objectiveRequired": "Name at least one objective with a target, so the season can be judged against something.",
     "playNextRound": "Play the next round",
-    "playingTheRound": "Playing the round…"
+    "playingTheRound": "Playing the round…",
+    "managerNameRequired": "A manager name of at least two characters is required — the career is printed with it.",
+    "tacticalSystemLabel": "Tactical system — the part the engine reads",
+    "atLeastOne": "at least one"
   },
   "settings": {
     "title": "Settings",
@@ -864,7 +885,8 @@
     "searchHitsEyebrow": "{total, plural, one {# hit} other {# hits}} for “{query}”",
     "searchResultsTitle": "Results, ranked by term overlap",
     "thCompetition": "Competition",
-    "thPos": "Pos"
+    "thPos": "Pos",
+    "searchEmpty": "Nothing in the generated world matches “{query}”. That is a real answer, not a fallback list: the search reads the stored rows only."
   },
   "coach": {
     "metaTitle": "AI Coach",
@@ -1278,7 +1300,13 @@
     "thMeasure": "Measure",
     "thValue": "Value",
     "thHowObtained": "How it is obtained",
-    "copyLink": "Copy link"
+    "copyLink": "Copy link",
+    "metaTitleSystem": "{name} — tactical system",
+    "spatialCoverage": "68 m × 105 m pitch, Law 1",
+    "pitchAxisOpponent": "opponent's goal · 105 m up the pitch",
+    "pitchAxisOwn": "own goal line · 0 m — the team attacks upward",
+    "pitchAxisOwnScreen": "own goal line · 0 m — the team attacks up the screen",
+    "pitchCaption3d": "{count} positions · the same metres as the board above, projected isometrically — no second set of coordinates"
   },
   "history": {
     "metaTitle": "Training log",
@@ -1538,7 +1566,8 @@
     "passagesH2": "Passages",
     "sectionChars": "{count} chars",
     "demoExtractiveTitle": "No language-model key is configured; this answer is assembled extractively from the cited passages, not generated.",
-    "demoRerankTitle": "No language-model key is configured; ranking uses the feature reranker and results are shown verbatim."
+    "demoRerankTitle": "No language-model key is configured; ranking uses the feature reranker and results are shown verbatim.",
+    "noModelKeyTitle": "No language-model key is configured — ask/search answers are assembled extractively from the cited passages, never generated."
   },
   "challenges": {
     "title": "Manager live challenges",
@@ -2083,7 +2112,8 @@
     "linkLive": "LIVE",
     "linkClosed": "CLOSED",
     "noSections": "(none)",
-    "unknownTime": "unknown"
+    "unknownTime": "unknown",
+    "blockedOnMinor": "blocked on a minor's link"
   },
   "gallery": {
     "metaTitle": "Board gallery",
@@ -2847,7 +2877,11 @@
     "tableHeaderNotRated": "Not rated",
     "tableHeaderStrengthsAreasNext": "Strengths / areas / next",
     "kvOverallChange": "Overall change",
-    "progressMeasuredFrom": "The figures come from: {source}"
+    "progressMeasuredFrom": "The figures come from: {source}",
+    "grantEyebrow": "{slug} · you are {role} here · {granted} of {total} rights",
+    "membersEyebrow": "{rows} row(s) · a standing changes only here, and only a row can change it",
+    "filteredTo": "filtered to {audience}",
+    "loadFormulaTitle": "duration_min × rpe ÷ 60, over this row's own two columns"
   },
   "home": {
     "metaTitle": "Watch. Understand. Train. Play. Manage. Become.",
@@ -3006,7 +3040,8 @@
     "ledgerEmptyAmbiguous": "Every event of the {traced, plural, one {# traced round} other {# traced rounds}} named a player more than once in the same eleven, so no row could claim an identity.",
     "ledgerTruncated": "The list is cut at {shown} names of {total}: the rest played their part without printing an event big enough to reach the top.",
     "carryDecay": "{rounds} rounds at {decay} decay",
-    "thGoals": "Goals"
+    "thGoals": "Goals",
+    "tracedPlayers": "{found} of {carrying} traced players · {formula}"
   },
   "worldPlayer": {
     "metaDescriptionFallback": "Player profile in the FOOTBALL OS generated football world.",

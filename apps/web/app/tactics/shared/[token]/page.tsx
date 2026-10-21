@@ -64,11 +64,23 @@ export default async function SharedBoardPage({ params }: Props) {
         <div className="tac-boards">
           <div className="stack-sm">
             <p className="eyebrow">{t("phaseIn")}</p>
-            <Pitch caption={t("sharedPitchCaption", { count: board.phase_in.length })} slots={board.phase_in} title={t("pitchTitleIn", { name: board.name })} />
+            <Pitch
+              axisOpponent={t("pitchAxisOpponent")}
+              axisOwn={t("pitchAxisOwn")}
+              caption={t("sharedPitchCaption", { count: board.phase_in.length })}
+              slots={board.phase_in}
+              title={t("pitchTitleIn", { name: board.name })}
+            />
           </div>
           <div className="stack-sm">
             <p className="eyebrow">{t("phaseOut")}</p>
-            <Pitch caption={t("sharedPitchCaption", { count: board.phase_out.length })} slots={board.phase_out} title={t("pitchTitleOut", { name: board.name })} />
+            <Pitch
+              axisOpponent={t("pitchAxisOpponent")}
+              axisOwn={t("pitchAxisOwn")}
+              caption={t("sharedPitchCaption", { count: board.phase_out.length })}
+              slots={board.phase_out}
+              title={t("pitchTitleOut", { name: board.name })}
+            />
           </div>
         </div>
         <div style={{ marginTop: "0.7rem" }}>

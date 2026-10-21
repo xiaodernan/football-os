@@ -59,7 +59,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
       return;
     }
     if (manager.trim().length < 2) {
-      setError("A manager name of at least two characters is required — the career is printed with it.");
+      setError(t("managerNameRequired"));
       setBusy(false);
       return;
     }
@@ -114,7 +114,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
           </select>
         </label>
         <label className="field">
-          <span>{t("tacticalSystem")} — the part the engine reads</span>
+          <span>{t("tacticalSystemLabel")}</span>
           <select aria-label={t("tacticalSystem")} onChange={(event) => setSystem(event.target.value)} value={system}>
             <option value="">
               {tc("clubDefault", { formation: clubFormation || tc("noShape") })}
@@ -138,7 +138,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
       </div>
 
       <div className="stack-sm">
-        <span className="eyebrow">{t("objectives")} · at least one</span>
+        <span className="eyebrow">{t("objectives")} · {t("atLeastOne")}</span>
         {objectives.map((row, index) => (
           <div className="row wrap sim-row" key={`objective-${index}`}>
             <select aria-label={`${t("objectiveKind")} ${index + 1}`} onChange={(event) => setObjective(index, { kind: event.target.value })} value={row.kind}>

@@ -155,6 +155,8 @@ export default async function TacticsComparePage({ searchParams }: Props) {
               >
                 <div className="stack-sm">
                   <Pitch
+                    axisOpponent={t("pitchAxisOpponent")}
+                    axisOwn={t("pitchAxisOwn")}
                     caption={t("sideBoardCaption", { count: boardOf(detail).length, phase: phaseWord })}
                     slots={boardOf(detail)}
                     title={t(phase === "out" ? "pitchTitleOut" : "pitchTitleIn", { name: detail.name })}

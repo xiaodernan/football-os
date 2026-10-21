@@ -121,7 +121,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
 
   return (
     <div className="stack">
-      <Panel eyebrow={`${String(rules.integrity.counts.players_stored)} stored players · ${rules.attributes.length} attributes · ${Object.keys(rules.roles).length} roles`} title={t("askTitle")}>
+      <Panel eyebrow={t("rulesEyebrow", { players: String(rules.integrity.counts.players_stored), attributes: String(rules.attributes.length), roles: String(Object.keys(rules.roles).length) })} title={t("askTitle")}>
         <div className="stack-sm">
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             <input
@@ -171,7 +171,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
       </Panel>
 
       {parsed && (
-        <Panel eyebrow={`POST /scout/parse · ${parsed.filters_applied} filter${parsed.filters_applied === 1 ? "" : "s"} · no row read`} title={t("parseTitle")}>
+        <Panel eyebrow={t("parseEyebrow", { filters: parsed.filters_applied })} title={t("parseTitle")}>
           <div data-testid="scout-parse" className="stack-sm">
             <RequirementList requirements={parsed.requirements} />
             <RefusalBlock refused={parsed.refused} assumptions={parsed.assumptions} unaccounted={parsed.unaccounted} />
@@ -182,7 +182,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
 
       {searched && (
         <>
-          <Panel eyebrow={`${searched.total_matches} match${searched.total_matches === 1 ? "" : "es"} of ${searched.rows_examined} rows examined · sorted by ${searched.sort.key}`} title={t("resultsTitle")}>
+          <Panel eyebrow={t("resultsEyebrow", { matches: searched.total_matches, rows: searched.rows_examined, sort: searched.sort.key })} title={t("resultsTitle")}>
             <div className="stack-sm">
               <RefusalBlock refused={searched.refused} assumptions={searched.assumptions} unaccounted={searched.unaccounted} />
               {searched.truncated && (
@@ -225,7 +225,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
             </div>
           </Panel>
 
-          <Panel eyebrow={`${searched.waterfall.length} cuts · applied in the order the request stated them`} title={t("waterfallTitle")}>
+          <Panel eyebrow={t("waterfallEyebrow", { cuts: searched.waterfall.length })} title={t("waterfallTitle")}>
             <div className="world-tablewrap">
               <table className="table">
                 <thead>
@@ -248,7 +248,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
                       <td className="num">{step.rows_out}</td>
                       <td className="muted">
                         {step.rule}
-                        {step.example_of_a_row_dropped ? <span className="mono"> · dropped example: {JSON.stringify(step.example_of_a_row_dropped)}</span> : null}
+                        {step.example_of_a_row_dropped ? <span className="mono"> · {t("droppedExample")} {JSON.stringify(step.example_of_a_row_dropped)}</span> : null}
                       </td>
                     </tr>
                   ))}
@@ -259,7 +259,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
           </Panel>
 
           {report?.data && (
-            <Panel eyebrow={`POST /scout/report · ${report.data.fields.length} fields · ${report.data.player.name}`} title={t("reportTitle")}>
+            <Panel eyebrow={t("reportEyebrow", { fields: report.data.fields.length, player: report.data.player.name })} title={t("reportTitle")}>
               <div data-testid="scout-report">
                 <ScoutReportPanel report={report.data} />
               </div>
@@ -377,7 +377,7 @@ function RefusalBlock({ refused, assumptions, unaccounted }: { refused: ParseVie
         <ul className="notice notice--warn">
           {unaccounted.map((phrase) => (
             <li key={phrase}>
-              <span className="mono">{phrase}</span> was neither parsed nor refused, which should not happen — report it rather than trusting this search
+              <span className="mono">{phrase}</span> {tw("unaccountedTail")}
             </li>
           ))}
         </ul>

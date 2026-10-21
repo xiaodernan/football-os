@@ -69,6 +69,7 @@ const WALKS = [
   { name: "creator", api: 8770, web: 3247 },
   { name: "portfolio", api: 8771, web: 3248 },
   { name: "market", api: 8772, web: 3249 },
+  { name: "visual", script: "visual-qa.mjs", api: 8773, web: 3250 },
 ];
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -162,7 +163,7 @@ async function runWalk(walk) {
     await waitFor(`http://127.0.0.1:${walk.web}/`, web);
 
     const code = await new Promise((done) => {
-      const child = start("node", [`scripts/qa-${walk.name}.mjs`], {
+      const child = start("node", [`scripts/${walk.script ?? `qa-${walk.name}.mjs`}`], {
         cwd: WEB,
         env: {
           ...process.env,

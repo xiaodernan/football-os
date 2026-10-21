@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function GalleryBoardPage({ params }: Props) {
   const { slug } = await params;
   const t = await getTranslations("gallery");
+  const tt = await getTranslations("tactics");
   const result = await readWorld<GalleryRow>(`/boards/gallery/public/${encodeURIComponent(slug)}`);
 
   if (!result.ok) {
@@ -63,7 +64,13 @@ export default async function GalleryBoardPage({ params }: Props) {
         <div className="tac-boards">
           <div className="stack-sm">
             <p className="eyebrow">{t("phaseIn")}</p>
-            <Pitch caption={t("pitchCaption", { count: board.phase_in.length })} slots={board.phase_in} title={board.name} />
+            <Pitch
+              axisOpponent={tt("pitchAxisOpponent")}
+              axisOwn={tt("pitchAxisOwn")}
+              caption={t("pitchCaption", { count: board.phase_in.length })}
+              slots={board.phase_in}
+              title={board.name}
+            />
           </div>
         </div>
         <div style={{ marginTop: "0.7rem" }}>

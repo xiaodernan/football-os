@@ -128,7 +128,7 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
                     <span>{titleByKey[section] ?? section}</span>
                   </span>
                   <span className="muted mono" style={{ fontSize: "0.76rem" }}>
-                    {section}{blockedForMinor ? " · blocked on a minor's link" : ""}
+                    {section}{blockedForMinor ? ` · ${td("blockedOnMinor")}` : ""}
                   </span>
                 </label>
               );

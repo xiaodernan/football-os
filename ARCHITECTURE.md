@@ -137,6 +137,16 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   field the same accessible name) and `qa-proxy-gate.mjs` (a browser may only reach the API through the cookie proxy,
   because the access token is httpOnly). The key counts live in `apps/web/messages/README.md`, which the suite
   recomputes, and the arc's own record is `docs/I18N_ARC_VERIFICATION.md`.
+- **The "0" above was green for the wrong reason, and a browser found it (2026-10-21).** The gate decided a string was
+  "already translated" by asking whether it held *any* character outside ASCII — and a middle dot, an em dash and a
+  curly apostrophe are all outside ASCII. Every English sentence carrying one of those marks was therefore read as
+  Chinese and never counted. The rule now asks whether the string holds a **letter** from another script, and the gate
+  immediately reported **47 English strings over 15 files** that the arc had left behind (the settings page's ten
+  milestone labels, the pitch's axis labels and captions, the scout workbench's eyebrows, the erase row's sentence, the
+  page-title template). All of them are in the catalogue now and both floors are 0 again — with a gate that can see them.
+  A **formula** (an arithmetic expression whose words are variable names) is exempt structurally, because translating it
+  would make the page wrong and copying it into the catalogue would give one rule two sources to drift apart. The
+  lesson generalises: **a floor is a statement about the gate before it is a statement about the tree.**
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.

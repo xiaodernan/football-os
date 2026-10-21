@@ -5,8 +5,8 @@ Three files, one per locale (`apps/api/app/api/v1/meta.py` publishes them as `lo
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 3560 of 3642 keys in Simplified Chinese, and all 3642 present | **yes** |
-| `zh-TW.json` | 3561 of 3642 keys written in Traditional Chinese, not converted from the `zh` file, and all 3642 present | **yes** |
+| `zh.json` | 3654 of 3736 keys in Simplified Chinese, and all 3736 present | **yes** |
+| `zh-TW.json` | 3655 of 3736 keys written in Traditional Chinese, not converted from the `zh` file, and all 3736 present | **yes** |
 
 ## What a reader gets today
 
@@ -17,7 +17,26 @@ Chinese filenames, and nothing read a catalogue anyway — the interface was Eng
 so the locale the middleware had always resolved was invisible. `apps/api/tests/test_locale_claims.py` is what
 stopped that being invisible: it holds `locales` to these files in both directions.
 
-**Every page reads the catalogue.** The arc that wired the interface namespace by namespace is finished: the copy gate (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every `components/**/*.tsx`**, and it holds the count at 0 on two floors: the three shapes the arc knew about (JSX text, a label-ish attribute, a label-ish object property) and the **fifth** shape it found on 2026-10-21 — a string literal that reaches the reader from somewhere else, a sentence a helper returns, a wording a ternary chooses, or a template that assembles one. Both are 0 now, so a page that adds copy in English fails the build; the metadata gate agrees that every page's tab and heading is now locale-driven (**tabs keyed 51 / literal 0, headings keyed 43 / literal 0**). The gate's **fifth check** holds the other half of the contract: a key read without the values its message needs prints the placeholders themselves, so every key call is checked for its values as well as for its existence. The 82 keys that still fall back are the ones that are *supposed* to: a value that is identical in both catalogues is a technical token - a product name, an enum, a unit - and the figures above are floors rather than pins, so a translation batch raises them without touching this file.
+**Every page reads the catalogue.** The arc that wired the interface namespace by namespace is finished: the copy gate (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every `components/**/*.tsx`**, and it holds the count at 0 on two floors: the three shapes the arc knew about (JSX text, a label-ish attribute, a label-ish object property) and the **fifth** shape it found on 2026-10-21 — a string literal that reaches the reader from somewhere else, a sentence a helper returns, a wording a ternary chooses, or a template that assembles one. Both are 0 now, so a page that adds copy in English fails the build; the metadata gate agrees that every page's tab and heading is now locale-driven (**tabs keyed 51 / literal 0, headings keyed 43 / literal 0**). The gate's **fifth check** holds the other half of the contract: a key read without the values its message needs prints the placeholders themselves, so every key call is checked for its values as well as for its existence. The 82 keys that still fall back in `zh.json` (81 in `zh-TW.json`) are the ones that are *supposed* to: a value that is identical in both catalogues is a technical token - a product name, an enum, a unit - and the figures above are floors rather than pins, so a translation batch raises them without touching this file.
+
+### The 0 was wrong twice, and the gate that found it (2026-10-21)
+
+The "0 English literal sites" above was **an artefact of a rule**, not a measurement, and it took a
+browser to find it. The gate decided a string was "already translated" by asking whether it held
+*any* character outside ASCII — and a middle dot, an em dash, a curly apostrophe and a `×` are all
+outside ASCII. Every English sentence in this project that contained one of those marks was read as
+Chinese and was never counted. The rule now asks whether the string holds a **letter** from another
+script, and the moment it did, the gate reported **47 English strings across 15 files** that the arc
+had left behind: the settings page's ten milestone labels, the pitch's axis labels and captions, the
+scout workbench's eyebrows, the erase row's sentence, the page title template. All of them are now in
+the catalogue, and both floors are 0 again — with a gate that can see them.
+
+The lesson is the one the project's gates exist for: **a floor is a statement about the gate before it
+is a statement about the tree.** A gate that cannot see a class of defect holds its floor for a
+reason that has nothing to do with the code it is watching. This is the second time the arc's own
+ceiling has been found to be narrower than it looked — the first was the fifth shape, a string a helper
+returns that no JSX-shaped scan reaches — and both times the **browser** found it, because the source
+is where a gate looks and the page is where the copy lives.
 
 ## The rule
 
@@ -41,6 +60,14 @@ were in, and it is the check that would have caught somebody switching the field
 * **A key must exist in all three files.** A translation may be *missing* — it falls back — but a catalogue that
   is *short* is worse than one that is absent, because a dropped key is a blank on a page in a language nobody
   on this project reads.
+* **A key must parse.** A catalogue message is a program, not a string: next-intl parses it when the page
+  renders it, and a message that does not parse throws instead of printing. Nothing in the build reads a
+  catalogue — next-intl resolves a key in the browser — so a malformed message compiles, typechecks, lints and
+  then 500s the page that reads it. `apps/web/scripts/qa-icu-messages.mjs` parses **every** message in all
+  three files with the app's own ICU parser, refuses a plural or a select with no `other` branch, and holds the
+  same key to the same placeholders in all three. It was written on 2026-10-21 and found five messages written
+  with mustache placeholders (`{{count}}`), which ICU reads as an argument that never began: they are fixed,
+  and the gate now keeps that class out.
 * **No key twice.** `json.load` keeps the last duplicate and drops the rest silently, so a translator editing the
   shadowed copy watches their change do nothing. All three files carried four such pairs when this was written
   (`common.{no,yes,close,error}`); the test parses the raw text, because every check that reads the parsed object

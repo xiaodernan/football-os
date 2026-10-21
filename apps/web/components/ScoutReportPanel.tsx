@@ -42,7 +42,7 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
       </div>
 
       <p className="notice">
-        <strong>{report.recommendation.verdict}</strong> — decided by{" "}
+        <strong>{report.recommendation.verdict}</strong> — {ts("decidedBy")}{" "}
         {report.recommendation.decided_by.map((figure) => (
           <span className="chip mono" key={figure}>
             {figure}

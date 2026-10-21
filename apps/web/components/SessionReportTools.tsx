@@ -274,21 +274,30 @@ export function EraseNotes({ children, id }: { children: ReactNode; id: string }
  * server says so. Inside an `EraseNotes` the sentence is published upward and the row paints nothing of its own,
  * because the row is about to stop existing.
  */
-export function EraseRow({ action, label, path, what }: { action: string; label: string; path: string; what: string }) {
+export function EraseRow({ action, label, path, whatKey }: { action: string; label: string; path: string; whatKey: string }) {
   const { busy, call, note } = useClubCall();
   const announce = useContext(EraseSlot);
+  const t = useTranslations("common");
+  const what = t(whatKey);
   useEffect(() => {
     if (!note) return;
-    announce?.({ ...note, text: note.refused ? `${what} refused: ${note.figures[0] ?? note.text}` : `${what} erased — the table was re-read` });
-  }, [announce, note, what]);
+    announce?.({
+      ...note,
+      text: note.refused
+        ? t("eraseRefused", { what, reason: note.figures[0] ?? note.text })
+        : t("eraseErased", { what }),
+    });
+  }, [announce, note, t, what]);
   return (
     <span className="stack-sm">
       <button className="btn btn--sm btn--ghost" data-act={action} disabled={busy !== null} onClick={() => void call(action, path, { method: "DELETE" })} type="button">
-        {busy === action ? "Erasing…" : label}
+        {busy === action ? t("erasing") : label}
       </button>
       {note && !announce && (
         <span className="mono" data-note={action} style={{ display: "block", fontSize: "0.74rem" }}>
-          {note.refused ? `refused: ${note.figures[0] ?? note.text}` : `${what} erased — the table was re-read`}
+          {note.refused
+            ? t("eraseRefusedReason", { reason: note.figures[0] ?? note.text })
+            : t("eraseErased", { what })}
         </span>
       )}
     </span>

@@ -120,8 +120,7 @@ export default async function WorldSearchPage({ searchParams }: Props) {
             {result.data.results.length === 0 ? (
               <div className="stack-sm">
                 <p className="muted">
-                  Nothing in the generated world matches “{result.data.query}”. That is a real answer, not a fallback list: the search reads
-                  the stored rows only.
+                  {tw("searchEmpty", { query: result.data.query })}
                 </p>
                 <p className="muted world-section-note">{result.data.note}</p>
               </div>

@@ -153,7 +153,17 @@
     "remove": "移除",
     "paginationAria": "分頁",
     "pageOf": "第 {page}/{pages} 頁 · 共 {total} 列",
-    "rowsCount": "共 {total} 列。"
+    "rowsCount": "共 {total} 列。",
+    "notPlayed": "未開賽",
+    "unavailableNote": "這裡沒有任何內容是用虛構的值替代的（規範 §78）。",
+    "pitchCaption3d": "{count} 個位置 · 與上方棋盤相同的公尺數，以等軸投影呈現——沒有第二套座標",
+    "eraseErased": "{what} 已刪除——表格已重新讀取",
+    "eraseRefused": "{what} 被拒絕：{reason}",
+    "eraseRefusedReason": "被拒絕：{reason}",
+    "erasing": "正在刪除…",
+    "rowSession": "訓練紀錄",
+    "rowQuestion": "提問",
+    "rowReview": "評估"
   },
   "auth": {
     "signIn": "登入",
@@ -533,7 +543,15 @@
     "thCut": "切掉",
     "thRowsOut": "留下的列",
     "thRule": "規則",
-    "closestInCatalogue": "目錄中最接近的："
+    "closestInCatalogue": "目錄中最接近的：",
+    "decidedBy": "判定依據",
+    "droppedExample": "被丟棄的範例：",
+    "unaccountedTail": "既沒有被解析也沒有被拒絕，這不應該發生——請回報它，而不是相信這次搜尋",
+    "rulesEyebrow": "{players} 名已儲存球員 · {attributes} 項屬性 · {roles} 個角色",
+    "parseEyebrow": "POST /scout/parse · {filters, plural, other {# 個篩選條件}} · 未讀取任何列",
+    "resultsEyebrow": "{matches, plural, other {# 場相符}}，共檢查 {rows} 列 · 依 {sort} 排序",
+    "waterfallEyebrow": "{cuts} 層篩選 · 依請求宣告的順序套用",
+    "reportEyebrow": "POST /scout/report · {fields} 個欄位 · {player}"
   },
   "career": {
     "title": "生涯模式",
@@ -605,7 +623,10 @@
     "onTheRecord": "計入戰績，現在讀作已踢 {played} 場、{points} 分。",
     "objectiveRequired": "至少寫下一條帶目標的目標，讓這個賽季有據可判。",
     "playNextRound": "進行下一輪",
-    "playingTheRound": "正在踢這一輪…"
+    "playingTheRound": "正在踢這一輪…",
+    "managerNameRequired": "需要至少兩個字元的主教練姓名——這份生涯會印上它。",
+    "tacticalSystemLabel": "戰術體系——引擎讀取的部分",
+    "atLeastOne": "至少一個"
   },
   "settings": {
     "title": "設定",
@@ -864,7 +885,8 @@
     "searchHitsEyebrow": "“{query}”有 {total} 筆命中",
     "searchResultsTitle": "結果，按詞條重疊度排序",
     "thCompetition": "賽事",
-    "thPos": "位置"
+    "thPos": "位置",
+    "searchEmpty": "生成的世界裡沒有與「{query}」相符的內容。這是一個真實的回答，而不是一份備援清單：搜尋只讀取已儲存的列。"
   },
   "coach": {
     "metaTitle": "AI 教練",
@@ -1278,7 +1300,13 @@
     "thMeasure": "度量",
     "thValue": "值",
     "thHowObtained": "如何得到",
-    "copyLink": "複製連結"
+    "copyLink": "複製連結",
+    "metaTitleSystem": "{name}——戰術體系",
+    "spatialCoverage": "68 公尺 × 105 公尺球場，規則第 1 條",
+    "pitchAxisOpponent": "對方球門 · 沿球場向前 105 公尺",
+    "pitchAxisOwn": "本方球門線 · 0 公尺——球隊向上進攻",
+    "pitchAxisOwnScreen": "本方球門線 · 0 公尺——球隊向上（螢幕方向）進攻",
+    "pitchCaption3d": "{count} 個位置 · 與上方棋盤相同的公尺數，以等軸投影呈現——沒有第二套座標"
   },
   "history": {
     "metaTitle": "訓練日誌",
@@ -1538,7 +1566,8 @@
     "passagesH2": "段落",
     "sectionChars": "{count} 字元",
     "demoExtractiveTitle": "沒有設定語言模型金鑰；這個答案是從所引段落中抽取拼裝的，不是生成的。",
-    "demoRerankTitle": "沒有設定語言模型金鑰；排序使用特徵重排器，結果原樣呈現。"
+    "demoRerankTitle": "沒有設定語言模型金鑰；排序使用特徵重排器，結果原樣呈現。",
+    "noModelKeyTitle": "沒有設定語言模型金鑰——問答的答案由引用段落抽取式拼裝，絕不生成。"
   },
   "challenges": {
     "title": "經理即時挑戰",
@@ -2083,7 +2112,8 @@
     "linkLive": "有效",
     "linkClosed": "已關閉",
     "noSections": "（無）",
-    "unknownTime": "未知"
+    "unknownTime": "未知",
+    "blockedOnMinor": "因未成年人連結而被阻擋"
   },
   "gallery": {
     "metaTitle": "陣型畫廊",
@@ -2847,7 +2877,11 @@
     "tableHeaderNotRated": "未評的維度",
     "tableHeaderStrengthsAreasNext": "強項 / 待改進 / 下一步",
     "kvOverallChange": "綜合變化",
-    "progressMeasuredFrom": "這些數字來自：{source}"
+    "progressMeasuredFrom": "這些數字來自：{source}",
+    "grantEyebrow": "{slug} · 你在這裡是{role} · {total} 項權限中的 {granted} 項",
+    "membersEyebrow": "{rows} 列 · 立場只在這裡改變，而且只有一列能改變它",
+    "filteredTo": "已篩選為 {audience}",
+    "loadFormulaTitle": "duration_min × rpe ÷ 60，用這一列自己的兩欄算出"
   },
   "home": {
     "metaTitle": "觀看。理解。訓練。比賽。管理。成長。",
@@ -3006,7 +3040,8 @@
     "ledgerEmptyAmbiguous": "已追蹤的 {traced} 輪裡，每個事件都在同一套十一人中不止一次點到同一個名字，因此沒有哪一列能認領身分。",
     "ledgerTruncated": "列表在 {total} 人中的 {shown} 人處截斷：其餘的人參與了比賽，卻沒有印出足夠大的事件進入名單。",
     "carryDecay": "{rounds} 輪，每輪衰減 {decay}",
-    "thGoals": "進球"
+    "thGoals": "進球",
+    "tracedPlayers": "{carrying} 名受追蹤球員中的 {found} 名 · {formula}"
   },
   "worldPlayer": {
     "metaDescriptionFallback": "FOOTBALL OS 生成足球世界中的球員檔案。",

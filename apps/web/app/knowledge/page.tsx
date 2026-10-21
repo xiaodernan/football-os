@@ -82,7 +82,7 @@ export default async function KnowledgePage({
 
       {statusResult.ok && statusResult.data.demo_mode && (
         <div className="notice notice--warn" style={{ fontSize: "0.85rem" }}>
-          <span className="badge badge--demo" title="No language-model key is configured — ask/search answers are assembled extractively from the cited passages, never generated.">
+          <span className="badge badge--demo" title={t("noModelKeyTitle")}>
             {tc("demoMode")}
           </span>{" "}
           {t("demoNotice", {

@@ -51,7 +51,19 @@ export function snapToGrass(x: number, y: number): { x: number; y: number } {
 }
 
 /** Turf, markings, goals and the two captions. No players, no behaviour. */
-export function PitchFrame() {
+/**
+ * The axis labels the frame draws.
+ *
+ * The grass is shared by the server pages and the client editors, so the words on it cannot come from
+ * this module: a module that reads a catalogue needs to know whether it is rendered on the server or
+ * in the browser, and this one is both. So the caller passes the reader's own words in, and a caller
+ * that forgets is a type error rather than an English sentence in a Chinese page.
+ *
+ * `axisOpponent` is the far end — the opponent's goal, and how far up the pitch it is. `axisOwn` is
+ * the near end on the flat view, where "up" is up the pitch; `axisOwnScreen` is the near end on the
+ * projected view, where "up" is up the screen.
+ */
+export function PitchFrame({ axisOpponent, axisOwn }: { axisOpponent: string; axisOwn: string }) {
   return (
     <>
       <rect className="pitch-turf" x={-HALF} y={0} width={PITCH_WIDTH} height={PITCH_LENGTH} rx={1.5} />
@@ -81,10 +93,10 @@ export function PitchFrame() {
         <circle cx={0} cy={PITCH_LENGTH - toY(PENALTY_SPOT)} r={0.5} />
       </g>
       <text className="pitch-axis" x={-HALF} y={-1}>
-        opponent&apos;s goal · 105 m up the pitch
+        {axisOpponent}
       </text>
       <text className="pitch-axis" x={-HALF} y={PITCH_LENGTH + 4}>
-        own goal line · 0 m — the team attacks upward
+        {axisOwn}
       </text>
     </>
   );
@@ -156,11 +168,16 @@ export function Pitch({
   before,
   title,
   caption,
+  axisOpponent,
+  axisOwn,
 }: {
   slots: SlotLike[];
   before?: SlotLike[];
   title: string;
-  caption?: string;
+  /** The caption is the caller's own sentence about this board, so it has no default to fall back on. */
+  caption: string;
+  axisOpponent: string;
+  axisOwn: string;
 }) {
   const moved = before
     ? slots.map((slot, index) => ({ slot, from: before[index] })).filter((pair) => pair.from && (pair.from.x !== pair.slot.x || pair.from.y !== pair.slot.y))
@@ -173,7 +190,7 @@ export function Pitch({
             <path d="M 0 0 L 6 3 L 0 6 z" />
           </marker>
         </defs>
-        <PitchFrame />
+        <PitchFrame axisOpponent={axisOpponent} axisOwn={axisOwn} />
         {moved.length > 0 && (
           <g className="pitch-moves">
             {moved.map(({ slot, from }) => (
@@ -184,7 +201,7 @@ export function Pitch({
         {before && <Markers hollow slots={before} />}
         <Markers ring={moved.length > 0} slots={slots} />
       </svg>
-      <figcaption className="pitch__caption muted">{caption ?? `${slots.length} positions · metres, 68 × 105 (Law 1) · attack upward`}</figcaption>
+      <figcaption className="pitch__caption muted">{caption}</figcaption>
     </figure>
   );
 }
@@ -261,7 +278,7 @@ function isoArcPath(spotY: number, outward: 1 | -1, steps = 40): string {
 }
 
 /** Turf, markings, goals and the two captions — the 2D frame's own measurements, projected. */
-export function PitchFrame3D() {
+export function PitchFrame3D({ axisOpponent, axisOwnScreen }: { axisOpponent: string; axisOwnScreen: string }) {
   const near = iso(-HALF, PITCH_LENGTH);
   const far = iso(HALF, 0);
   return (
@@ -298,10 +315,10 @@ export function PitchFrame3D() {
         <circle cx={iso(0, PITCH_LENGTH - PENALTY_SPOT).x} cy={iso(0, PITCH_LENGTH - PENALTY_SPOT).y} r={0.5} />
       </g>
       <text className="pitch-axis" x={far.x} y={far.y - 2.5}>
-        opponent&apos;s goal · 105 m up the pitch
+        {axisOpponent}
       </text>
       <text className="pitch-axis" x={near.x} y={near.y + 4}>
-        own goal line · 0 m — the team attacks up the screen
+        {axisOwnScreen}
       </text>
     </>
   );
@@ -335,18 +352,28 @@ export function PlayerMarker3D({ slot, index = 0 }: { slot: SlotLike; index?: nu
 }
 
 /** The third view as a figure: the projected frame plus the projected eleven. */
-export function Pitch3D({ slots, title, caption }: { slots: SlotLike[]; title: string; caption?: string }) {
+export function Pitch3D({
+  slots,
+  title,
+  caption,
+  axisOpponent,
+  axisOwnScreen,
+}: {
+  slots: SlotLike[];
+  title: string;
+  caption: string;
+  axisOpponent: string;
+  axisOwnScreen: string;
+}) {
   return (
     <figure className="pitch">
       <svg aria-label={title} data-iso-constants={ISO_CONSTANTS} role="img" viewBox={ISO_VIEWBOX} preserveAspectRatio="xMidYMid meet">
-        <PitchFrame3D />
+        <PitchFrame3D axisOpponent={axisOpponent} axisOwnScreen={axisOwnScreen} />
         {slots.map((slot, index) => (
           <PlayerMarker3D index={index} key={`${slot.role}-${index}`} slot={slot} />
         ))}
       </svg>
-      <figcaption className="pitch__caption muted">
-        {caption ?? `${slots.length} positions · the same metres as the board above, projected isometrically — no second set of coordinates`}
-      </figcaption>
+      <figcaption className="pitch__caption muted">{caption}</figcaption>
     </figure>
   );
 }

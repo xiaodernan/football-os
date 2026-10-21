@@ -14,15 +14,25 @@ it.
 
 | what | where it lives | what it says |
 | --- | --- | --- |
-| the copy gate | `apps/web/scripts/qa-i18n-literals.mjs` | **8 checks**, three floors at 0, **3501 key calls** checked for existence, for their values, for the keys the page names in its own data, and for the sentences that say a word twice |
+| the copy gate | `apps/web/scripts/qa-i18n-literals.mjs` | **8 checks**, three floors at 0, **3593 key calls** checked for existence, for their values, for the keys the page names in its own data, and for the sentences that say a word twice |
 | the field-name gate | `apps/web/scripts/qa-field-labels.mjs` | **2 checks**: no two panels on one page may give a field the same accessible name |
 | the metadata gate | `apps/web/scripts/qa-metadata-title.mjs` | **165 checks**: every page's tab and heading agree, and neither is a load-time literal |
 | the crawl gate | `apps/web/scripts/qa-crawl-policy.mjs` | **9 checks**: the three files that decide what a crawler may see reconcile against every page's own `robots:` |
 
-The three catalogues hold **3636 keys each** — 3554 translated in Simplified Chinese, 3555 in
-Traditional, and 82 that are *identical* in every catalogue because they are technical tokens (a product
-name, an enum, a unit). `apps/web/messages/README.md` carries those figures, and
-`apps/api/tests/test_locale_claims.py` recomputes them.
+The three catalogues hold **3736 keys each** — 3654 translated in Simplified Chinese, 3655 in
+Traditional, and 82 (81 in `zh-TW.json`) that are *identical* in every catalogue because they are
+technical tokens (a product name, an enum, a unit). `apps/web/messages/README.md` carries those
+figures, and `apps/api/tests/test_locale_claims.py` recomputes them.
+
+> **The "0 English literal sites" was green for the wrong reason, and a browser found it.** The gate
+> decided a string was "already translated" by asking whether it held *any* character outside ASCII.
+> A middle dot, an em dash, a curly apostrophe and a `×` are all outside ASCII, so every English
+> sentence in this project carrying one of those marks was read as Chinese and never counted. The rule
+> now asks whether the string holds a **letter** from another script, and the gate immediately reported
+> **47 English strings over 15 files** the arc had left behind. All of them are in the catalogue and both
+> floors are 0 again — with a gate that can see them. The lesson is the one this arc exists to teach:
+> **a floor is a statement about the gate before it is a statement about the tree.** Section 7 records
+> the finding in full.
 
 ## 2. The shapes, and what each one is
 
@@ -153,3 +163,90 @@ that outlived the sentence it checked in [M6_SIM_LEDGER_VERIFICATION.md](M6_SIM_
 * **The copy gate counts; it does not judge.** It cannot tell a wrong sentence from a right one, and it
   cannot tell whether a key means what the page needs it to mean. The gates hold the *shape* of the
   contract; the walks and the API's own tests hold the meaning.
+
+## 7. The floor was a statement about the gate, not about the tree (2026-10-21)
+
+The arc closed with **0 English literal sites** over every `.tsx` in the web tier, on two floors at 0,
+and the claim was checked by a gate that had been read and re-read. It was also **wrong**, and a browser
+found it.
+
+### What the rule actually did
+
+The gate asked, of every string: *is this already translated?* — and the answer was "yes" whenever the
+string held **any character outside ASCII**:
+
+```js
+if (/[^\x00-\x7F]/.test(text)) return false; // already translated
+```
+
+This project's copy is full of typographic marks: the separators in a row of figures (` · `), the dashes
+that join a clause to its consequence (` — `), the apostrophe in `opponent's goal` (`’`), the `×` in
+`68 m × 105 m`, the `§` in `spec §78`. **Every one of them is outside ASCII.** So every English sentence
+containing one of them was read as Chinese and was never counted — and the arc wired what the gate could
+still see, which was the copy with no marks in it.
+
+### What found it
+
+The **locale sweep** — a new check in `apps/web/scripts/visual-qa.mjs` that opens every page the walk
+visited with the Chinese cookie and asks whether the page carries any of the English catalogue's own
+sentences. It answered with three pages, and one of them was this, on the world's match rows:
+
+```jsx
+<span className="unavailable">Not played · Data unavailable</span>
+```
+
+A hard-written English sentence, on the world's own fixture rows, invisible to a gate that thought a
+middle dot meant Chinese.
+
+Two rules the sweep had to learn before it could be trusted, both from what it found on its own second
+run:
+
+* **The corpus is skipped.** The knowledge base's pages carry the project's own English documents, which
+  are published in English on purpose and are not interface copy; a sentence in a document that happens
+  to be worded like a catalogue value is a coincidence, not a page that forgot its language.
+* **A phrase is matched as a whole phrase.** The tier's own English is quoted rather than translated,
+  and it sometimes *contains* a catalogue value: the tactics disclaimer reads "Tactical systems are
+  project-authored coaching structures", which contains the label "Tactical system" — as the beginning
+  of a longer word, not as the label itself. A substring match called that an English sentence on a
+  Chinese page, on every page that quotes the disclaimer. The boundary rule asks for the phrase with a
+  non-letter on each side, so "Tactical system" standing on its own is caught and "Tactical systems
+  are…" is not.
+
+### The rule now
+
+A string is "already translated" when it holds a **letter** from another script — not a mark:
+
+```js
+if ([...text].some((character) => character.codePointAt(0) > 127 && /\p{L}/u.test(character))) return false;
+```
+
+The moment that was true, the gate reported **47 English strings over 15 files**:
+
+| where | what was left behind |
+| --- | --- |
+| `app/settings/page.tsx` | the ten milestone labels (`M0 · Foundation (accounts, training loop, progress)`) |
+| `components/pitch.tsx` | the two axis labels, the 2D and 3D captions, and the projection formula |
+| `components/ScoutWorkbench.tsx` | five eyebrows and two sentences |
+| `app/club/[ident]/page.tsx` | the grant eyebrow, the members eyebrow, the filtered-to clause, the load formula's tooltip |
+| `components/SessionReportTools.tsx` | the erase row's sentence and its button |
+| the rest | the career form, the scout report, the creator workbench, the portfolio panel, the world components, the tactics pages, the knowledge page, the layout's title template |
+
+All of them are in the catalogue now, in three languages, and both floors are **0** again — with a gate
+that can see them.
+
+### One exemption, and why it is structural
+
+The projection **formula** (`screen_x = ((x + 34) − (105 − y)) × cos30 + 105 × cos30   ·   screen_y = …`)
+is now exempt, because it is an expression rather than a sentence: its words are variable names and
+function names, which are the same in every language, and translating it would make the page wrong.
+The test is structural — an arithmetic operator and an equality, with no sentence punctuation outside
+the numbers — so a new formula is exempt without an allowlist entry, and a sentence that merely *holds*
+a formula (`duration_min × rpe ÷ 60, over this row's own two columns`) is still copy and was wired.
+
+### The lesson
+
+**A floor is a statement about the gate before it is a statement about the tree.** A gate that cannot see
+a class of defect holds its floor for a reason that has nothing to do with the code it is watching, and
+the number it reports is true — of the gate. The arc's own record is the second time this has happened
+here (the first was the fifth shape, the string a helper returns), and the browser is what found both:
+the source is where a gate looks, and the page is where the copy lives.

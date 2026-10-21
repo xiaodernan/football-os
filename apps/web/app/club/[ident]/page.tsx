@@ -152,7 +152,12 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
     <div className="container page stack">
       <WorldHead
         back={{ href: "/club", label: t("backLabel") }}
-        eyebrow={`${view.organization.slug} · you are ${view.my_grant.role} here · ${view.my_grant.permissions.length} of ${view.rules.matrix.permissions.length} rights`}
+        eyebrow={t("grantEyebrow", {
+          slug: view.organization.slug,
+          role: view.my_grant.role,
+          granted: view.my_grant.permissions.length,
+          total: view.rules.matrix.permissions.length,
+        })}
         lede={view.my_grant.why}
         provenance={{ data_origin: view.data_origin, is_demo_data: view.is_demo_data }}
         title={view.organization.name}
@@ -218,7 +223,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
         </div>
       </Panel>
 
-      <Panel eyebrow={`${view.members.length} row(s) · a standing changes only here, and only a row can change it`} title={t("titleMembers")}>
+      <Panel eyebrow={t("membersEyebrow", { rows: view.members.length })} title={t("titleMembers")}>
         <TenantTools ident={view.organization.slug} members={view.members} rules={view.rules} teams={view.teams} />
       </Panel>
 
@@ -247,7 +252,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
       <Panel
         eyebrow={
           notices.ok
-            ? t("eyebrowNotices", { total: notices.data.total, held: notices.data.announcements_held, limit: notices.data.limit, audience: audience ? ` · filtered to ${audience}` : "" })
+            ? t("eyebrowNotices", { total: notices.data.total, held: notices.data.announcements_held, limit: notices.data.limit, audience: audience ? ` · ${t("filteredTo", { audience })}` : "" })
             : t("noticesDoorMissing")
         }
         title={t("titleNotices")}
@@ -442,7 +447,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                       <td className="muted">{row.curriculum || "—"}</td>
                       <td className="num">{row.duration_min} min</td>
                       <td className="num">{row.rpe}</td>
-                      <td className="num" title="duration_min × rpe ÷ 60, over this row's own two columns">
+                      <td className="num" title={t("loadFormulaTitle")}>
                         {row.load_units.toFixed(2)}
                       </td>
                       <td className="muted">{row.focus.join(", ") || "—"}</td>
@@ -452,7 +457,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                       </td>
                       <td className="muted">{row.note || "—"}</td>
                       <td>
-                        <EraseRow action="session-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/sessions/${encodeURIComponent(row.id)}`} what="session" />
+                        <EraseRow action="session-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/sessions/${encodeURIComponent(row.id)}`} whatKey="rowSession" />
                       </td>
                     </tr>
                   ))}
@@ -527,7 +532,7 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                         {row.body.empty_window ? t("emptyWindow") : (row.body.formulas.total_load_units ?? t("recomputedOnRead"))}
                       </td>
                       <td>
-                        <EraseRow action="report-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/reports/${encodeURIComponent(row.id)}`} what="question" />
+                        <EraseRow action="report-erase" label={tc("delete")} path={`/club/academy/${encodeURIComponent(ident)}/reports/${encodeURIComponent(row.id)}`} whatKey="rowQuestion" />
                       </td>
                     </tr>
                   ))}

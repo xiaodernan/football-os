@@ -230,7 +230,11 @@ export default async function CareerDetailPage({ params }: Props) {
               ],
               [
                 t("rowSessionsFound"),
-                `${carry.training_records_found} of ${carry.carrying_load} traced players · ${carry.reserve_formula}`,
+                t("tracedPlayers", {
+                  found: carry.training_records_found,
+                  carrying: carry.carrying_load,
+                  formula: carry.reserve_formula,
+                }),
               ],
             ]}
           />
