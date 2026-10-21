@@ -574,7 +574,11 @@ their first page, so a host whose Chrome asks for Chinese cannot turn their need
 tier.
 
 **What is still owed.** §42's payments remain unimplemented by design, and the two `creator_*` features stay
-ceilings no door refuses on. A program is a plan, not an enrolled course with progress of its own. **The whole-suite
-legs are not part of this claim**: the ten files above are the M10 reading on both engines, the last completed
-whole-suite pair in this file is the 1293-case record over `2c0c5f2` above, and no whole-suite run over `c79f2dd` is
-claimed here. The 2026-09-29 legs' missing exit code is not back-filled either.
+ceilings no door refuses on. A program is a plan, not an enrolled course with progress of its own. **The whole suite,
+partly measured.** The SQLite leg over the same API bytes — `.scratch/whole-sqlite-2026-10-22.xml`, started while HEAD
+was `c79f2dd` and finished after two ledger-only commits — reads **1850 tests / 0 failures / 0 errors / 4 skipped,
+rc=0, 4445.577s**; `git diff --stat c79f2dd..fab91ce -- apps/api` is empty, so the API code measured is `c79f2dd`'s.
+The four skips are named in `docs/M9_COMMUNITY_VERIFICATION.md`'s close-out. The PostgreSQL whole-suite leg over these
+bytes is not run; this section measures the ten M10 files on PostgreSQL directly, and the last completed whole-suite
+pair in this file remains the 1293-case record over `2c0c5f2` above. The 2026-09-29 legs' missing exit code is not
+back-filled either.

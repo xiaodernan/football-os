@@ -221,3 +221,42 @@ reading: it aims at the note branch specifically, and it did turn exactly the ca
 What the probe does not claim: it says nothing about the HTTP layer (the twelve doors are held by their own cases,
 including the eleven 401-before-any-row checks), and it does not touch `answers.ANSWERS`, whose collision blindness —
 two tiers, one code, the same status — is what `no_such_account` was renamed for and is now held by a test instead.
+
+## The milestone, verified at `fab91ce` (2026-10-22)
+
+M9's gate is the creator→content→feedback loop, and this section measures it at HEAD. No API source changed after
+`c79f2dd` — `git diff --stat c79f2dd..fab91ce -- apps/api` is empty; the two commits between them are a catalogue
+gate and these ledgers — so the tier measured here is the tier those commits carry.
+
+**The tier, on both engines.** One invocation per engine over the two files that hold it:
+
+| leg | tests | failures | errors | skipped | junit duration |
+| --- | --- | --- | --- | --- | --- |
+| per-run SQLite | **137** | **0** | **0** | **0** | 76.566s |
+| PostgreSQL + pgvector | **137** | **0** | **0** | **0** | 378.104s |
+
+Both `rc=0`. The 137 are `tests/test_community.py` **50** and `tests/test_club_answers.py` **87** — the answer table
+this tier appends itself to. The counts are the `<testcase>` elements of each engine's own `--junitxml` report, not a
+declaration.
+
+**The static gates and the walk.** On a detached plane checked out at `fab91ce`: `mypy app` is clean over **154**
+source files, `tsc --noEmit` writes **0** lines and exits 0, and `NEXT_DIST_DIR=.next-m9 next build` exits 0 with
+`BUILD_ID` **`AhnyZFKOqnfMreVVIppv6`**. The API answers on `127.0.0.1:8743` over a fresh SQLite database migrated
+through **0035**, the web on `127.0.0.1:3220`, both under the plane's own tree. `qa-community.mjs` pins the locale to
+English before its first page and passes **39/39, exit 0**: the walk records **30** knocks, none of which earned a
+400 or a 403, and the **five** console lines it leaves behind are all 4xx refusals it knocked for itself — no 5xx and
+no page exception. The screenshots are in `docs/screenshots/` (untracked, as the other milestones' are).
+
+**The whole suite.** The SQLite leg over the same API bytes — `.scratch/whole-sqlite-2026-10-22.xml`, started
+2026-10-22T01:41:48 and finished at 02:55 — reads **1850 tests / 0 failures / 0 errors / 4 skipped, rc=0, junit
+4445.577s**. The four skips are named from the report's own `skipped` elements: `test_redis_cache_real_integration`,
+`test_a_wrong_password_degrades_and_still_answers`, `test_a_key_written_by_one_process_is_read_by_another`, and
+`test_each_sorting_orders_the_survivors_by_its_published_key[need_fit]`. The PostgreSQL whole-suite leg over the same
+bytes is **not claimed here**; this section measures the tier on PostgreSQL directly, and the whole-suite pair is the
+next thing worth running.
+
+**What this does not claim.** §35's community in this build has no moderation, reporting, blocking or DMs — the
+milestone's list does not ask for them — and there is no entitlement gate and no reader list, as the section above
+already says. The pointer's promise is held by five cases of its own; the walk presses the same address space but
+does not replace them.
+
