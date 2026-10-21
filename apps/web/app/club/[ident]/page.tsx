@@ -362,12 +362,12 @@ export default async function ClubTenantPage({ params, searchParams }: Props) {
                     </td>
                     <td className="num">
                       {row.player.age}
-                      {row.player.is_minor && <span className="chip mono"> minor</span>}
+                      {row.player.is_minor && <span className="chip mono">{t("minorChip")}</span>}
                     </td>
                     <td>
                       <span className={row.status === "active" ? "badge badge--live" : "badge badge--demo"}>{row.status.toUpperCase()}</span>
                     </td>
-                    <td className="num">every {row.review_weeks} weeks</td>
+                    <td className="num">{t("everyWeeks", { weeks: row.review_weeks })}</td>
                     <td className="num">{row.assessments}</td>
                     <td className="num">{row.goals}</td>
                     <td className="num" title={t("reviewProgressTitle")}>

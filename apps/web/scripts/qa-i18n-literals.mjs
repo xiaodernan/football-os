@@ -347,6 +347,15 @@ const isApiFieldName = (name) => /^[a-z][a-z0-9]*(_[a-z0-9]+)+$/.test(name);
  */
 const SCHEMA_VOCABULARY = new Set(["sport", "genre"]);
 
+/**
+ * The units a page prints beside a figure. A unit is a measurement, not a sentence, and a unit is the
+ * same word in every language — which is why it is named here rather than translated.
+ */
+const UNITS = new Set([
+  "s", "ms", "m", "h", "km", "cm", "mm", "kg", "g", "k", "b", "n", "x", "y", "v", "sha", "xp",
+  "min", "yrs", "yr", "mb", "kb", "gb", "tb", "mib", "gib", "tib", "sqm", "hz", "w", "kw",
+]);
+
 for (const file of files) {
   const text = readFileSync(file, "utf8");
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -424,7 +433,29 @@ for (const file of files) {
     }
     if (ts.isJsxText(node)) {
       const copy = node.text.replace(/\s+/g, " ").trim();
-      if (isEnglishCopy(copy)) sites.push({ file: rel, line: position(node), shape: "jsx", copy });
+      /**
+       * A lone lowercase word is copy in JSX text — a reader sees it standing between two tags — unless
+       * it is a **unit** ("min", "ms", "yrs", "x") or a **field name printed as itself** ("integrity:").
+       * The general rule cannot tell those apart from a word, but the shape can: text standing between
+       * tags is read by a person, and a measurement or a field name is not a sentence.
+       */
+      const word = copy.replace(/[·:,.;—–-]\s*$/, "").trim();
+      const loneWord = /^[a-z][a-z'-]*$/.test(word);
+      const unit = UNITS.has(word);
+      // A field name printed as itself: the word stands alone and the colon after it says so — either
+      // inside the same element or in the element that follows it.
+      const nextSibling = (() => {
+        const parent = node.parent;
+        if (!ts.isJsxElement(parent) || !ts.isJsxElement(parent.parent)) return "";
+        const siblings = parent.parent.children;
+        const index = siblings.indexOf(parent);
+        const next = siblings[index + 1];
+        return next && ts.isJsxText(next) ? next.text.trim() : "";
+      })();
+      const fieldName = copy.endsWith(":") || nextSibling.startsWith(":");
+      if (loneWord ? !unit && !fieldName : isEnglishCopy(copy)) {
+        sites.push({ file: rel, line: position(node), shape: "jsx", copy });
+      }
     }
     if (ts.isJsxAttribute(node) && node.initializer && ts.isStringLiteral(node.initializer)) {
       const name = node.name.getText().replace(/^aria-/, "aria-");

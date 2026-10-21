@@ -221,7 +221,7 @@ export function BoardEditor({ board: initial }: { board: BoardDetail }) {
               </button>
             )}
             <button className="btn btn--danger btn--sm" disabled={busy} onClick={remove} type="button">
-              {t("delete")} board
+              {tb("deleteBoard", { delete: t("delete") })}
             </button>
           </div>
 

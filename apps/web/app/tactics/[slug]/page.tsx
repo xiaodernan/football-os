@@ -277,7 +277,7 @@ export default async function TacticsDetailPage({ params, searchParams }: Props)
                     <Link className="world-link" href={point.citation.ref}>
                       {point.citation.title} · passage {point.citation.ordinal}
                     </Link>{" "}
-                    <span className="muted mono">score {point.score.toFixed(3)}</span>
+                    <span className="muted mono">{t("scoreChip", { score: point.score.toFixed(3) })}</span>
                   </footer>
                 </blockquote>
                 <p className="tac-formula">{point.metric.formula}</p>

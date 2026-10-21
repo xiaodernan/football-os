@@ -232,19 +232,19 @@ export function FilterChips({
   query: Record<string, string>;
   drop?: string[];
 }) {
+  const t = useTranslations("common");
   const href = (value?: string) => {
     const params = new URLSearchParams(query);
     for (const key of [param, "page", ...drop]) params.delete(key);
     if (value) params.set(param, value);
-    const qs = params.toString();
-    return qs ? `${base}?${qs}` : base;
+    const qs = params.toString();    return qs ? `${base}?${qs}` : base;
   };
   return (
     <div className="stack-sm">
       <span className="eyebrow">{label}</span>
       <div className="tag-list">
         <Link className={`chip ${active ? "" : "chip--accent"}`} href={href()}>
-          all
+          {t("all")}
         </Link>
         {options.map((option) => (
           <Link className={`chip ${active === option ? "chip--accent" : ""}`} href={href(option)} key={option}>

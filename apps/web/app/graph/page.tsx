@@ -162,7 +162,7 @@ async function GraphPage() {
         {t("provenanceNote")}
         <span className="chip mono">data_origin: synthetic</span>
         <span className="chip mono">is_demo_data: true</span>
-        <span className="chip mono">{rules.edge_verbs.length} verbs</span>
+        <span className="chip mono">{t("verbsChip", { verbs: rules.edge_verbs.length })}</span>
         <span className="chip mono">depth ≤ {rules.max_depth}</span>
         <span className="chip mono">edges ≤ {rules.max_edges}</span>
         <span className="chip mono">nodes ≤ {rules.max_nodes}</span>

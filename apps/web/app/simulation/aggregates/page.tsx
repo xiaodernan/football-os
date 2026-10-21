@@ -57,7 +57,7 @@ export default async function AggregatesIndexPage() {
                     {competition.name}
                   </Link>
                   <span className="muted" style={{ fontSize: "0.82rem" }}>
-                    {competition.kind} · {competition.team_count} teams · {competition.season}
+                    {t("teamsChip", { kind: competition.kind, teams: competition.team_count })} · {competition.season}
                   </span>
                 </li>
               ))}

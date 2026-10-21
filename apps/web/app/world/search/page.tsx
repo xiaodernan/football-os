@@ -131,7 +131,7 @@ export default async function WorldSearchPage({ searchParams }: Props) {
                   <li className="world-fixture" key={`${hit.type}-${hit.slug}`}>
                     <div className="world-fixture__when">
                       <span className="world-pos">{hit.type}</span>
-                      <span className="world-fixture__round mono">score {hit.score}</span>
+                      <span className="world-fixture__round mono">{tw("scoreChip", { score: hit.score })}</span>
                     </div>
                     <div className="world-fixture__teams" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.2rem" }}>
                       <Link className="world-link" href={hit.path}>

@@ -47,7 +47,7 @@ export function ScoutComparePanel({ compared }: { compared: CompareView }) {
 
       <div className="row wrap" style={{ gap: "0.5rem" }}>
         <span className="chip mono">
-          {compared.counts.dimensions} dimensions · {compared.counts.measures} measures
+          {ts("dimensionsMeasures", { dimensions: compared.counts.dimensions, measures: compared.counts.measures })}
         </span>
         {Object.entries(compared.counts.dimension_leaders).map(([leader, count]) => (
           <span className={`chip mono ${leaderTone(leader) === "demo" ? "" : "chip--accent"}`} key={leader}>
@@ -116,7 +116,11 @@ function SideCard({ side, label }: { side: CompareSide; label: string }) {
       <p className="muted">
         {side.club ? (
           <>
-            at <Link href={side.club.path}>{side.club.name}</Link> (overall {side.club.overall})
+            {ts.rich("clubAtOverall", {
+              name: side.club.name,
+              overall: side.club.overall,
+              link: (chunks) => <Link href={side.club?.path ?? "#"}>{chunks}</Link>,
+            })}
           </>
         ) : (
           ts("noClubInWorld")
@@ -140,7 +144,7 @@ function DimensionBlock({ dimension }: { dimension: CompareDimension }) {
         <strong>{dimension.dimension}</strong>{" "}
         <span className={`badge ${leaderTone(dimension.leader) === "demo" ? "badge--demo" : "badge--live"}`}>{leaderText(dimension.leader, ts)}</span>{" "}
         <span className="muted mono">
-          {dimension.measures.length} measures · {scorable} scorable
+          {ts("measuresScorable", { measures: dimension.measures.length, scorable })}
         </span>
       </summary>
       <p className="muted">{dimension.source}</p>

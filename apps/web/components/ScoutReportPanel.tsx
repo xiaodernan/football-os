@@ -34,7 +34,7 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
         <span className="chip mono">{player.preferred_foot}-foot</span>
         {player.club && (
           <span className="chip mono">
-            at <Link href={player.club.path}>{player.club.name}</Link>
+            {ts.rich("clubAt", { name: player.club.name, link: (chunks) => <Link href={player.club?.path ?? "#"}>{chunks}</Link> })}
           </span>
         )}
         <span className={player.observed ? "badge badge--live" : "badge badge--demo"}>{player.observed ? ts("observed") : ts("noAppearances")}</span>
@@ -118,7 +118,7 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
           </thead>
           <tbody>
             {GROUPS.map((group) => (
-              <GroupRow key={group} score={report[group]} />
+              <GroupRow key={group} score={report[group]} ts={ts} />
             ))}
           </tbody>
         </table>
@@ -272,7 +272,10 @@ export function ScoutReportPanel({ report }: { report: ReportView }) {
   );
 }
 
-function GroupRow({ score }: { score: GroupScore }) {
+/** A translator the page hands to a helper, so a helper can read a key without calling a hook itself. */
+type Translator = (key: string, values?: Record<string, string | number | Date>) => string;
+
+function GroupRow({ score, ts }: { score: GroupScore; ts: Translator }) {
   return (
     <tr>
       <td>
@@ -280,7 +283,7 @@ function GroupRow({ score }: { score: GroupScore }) {
       </td>
       <td className="num">{score.mean}</td>
       <td className="num">
-        {score.measured} of {score.measured + score.missing.length}
+        {ts("measuredOf", { measured: score.measured, total: score.measured + score.missing.length })}
       </td>
       <td className="mono">
         {score.strongest} <span className="num">{score.attributes[score.strongest]}</span>

@@ -177,7 +177,7 @@ export default async function VideoReportPage({ params }: Props) {
           <div className="stack-sm" style={{ gap: "0.5rem" }}>
             {asset.player_id ? (
               <p className="muted" style={{ fontSize: "0.86rem" }}>
-                <span className="chip mono">player</span> {asset.player_id}
+                <span className="chip mono">{t("playerChip")}</span> {asset.player_id}
               </p>
             ) : (
               <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/link-player`} method="POST" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -187,7 +187,7 @@ export default async function VideoReportPage({ params }: Props) {
             )}
             {asset.match_id ? (
               <p className="muted" style={{ fontSize: "0.86rem" }}>
-                <span className="chip mono">match</span> {asset.match_id}
+                <span className="chip mono">{t("matchChip")}</span> {asset.match_id}
               </p>
             ) : (
               <form action={`/api/v1/video/${encodeURIComponent(asset.id)}/link-match`} method="POST" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>

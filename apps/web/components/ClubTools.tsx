@@ -256,7 +256,7 @@ export function TenantTools({ ident, members, teams, rules }: { ident: string; m
                   {!row.known_role && <span className="chip mono">{tc("roleNotInMatrix")}</span>}
                 </td>
                 <td className="muted" style={{ fontSize: "0.8rem" }}>
-                  {row.permissions.length} of {rules.matrix.permissions.length}
+                  {tc("permissionsOf", { granted: row.permissions.length, total: rules.matrix.permissions.length })}
                   <div className="muted" style={{ fontSize: "0.76rem" }}>
                     {row.why}
                   </div>

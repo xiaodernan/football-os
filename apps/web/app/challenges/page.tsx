@@ -101,7 +101,7 @@ export default async function ChallengesPage() {
                     </td>
                     <td>{item.club_name}</td>
                     <td className="num">
-                      {item.verdict?.rounds_played ?? item.rounds_played} of {item.verdict?.window_rounds ?? "—"}
+                      {t("playedOfWindow", { played: item.verdict?.rounds_played ?? item.rounds_played, window: item.verdict?.window_rounds ?? "—" })}
                     </td>
                     <td className="num">
                       {item.verdict ? `${item.verdict.objectives_met} of ${item.verdict.objectives_total}` : "—"}

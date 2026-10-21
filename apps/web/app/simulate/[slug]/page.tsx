@@ -90,7 +90,7 @@ export default async function SimulationReportPage({ params }: Props) {
           <span className="chip num">{t("blocksChip", { count: report.blocks.length, minutes: report.model.block_minutes })}</span>
           <span className="chip num">{t("eventsChip", { count: report.events.length })}</span>
           <span className="chip num">{t("goalsChip", { count: scored.length })}</span>
-          <span className="badge badge--sim">simulation</span>
+          <span className="badge badge--sim">{t("simulationBadge")}</span>
         </div>
       </WorldHead>
 
