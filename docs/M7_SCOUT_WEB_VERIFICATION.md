@@ -173,9 +173,13 @@ tier and the key check now counts **3361 key calls** — including the ten rich-
 blind to, since `t.rich("key")` is a catalogue read exactly as `t("key")` is, and a rich key the catalogue
 does not hold throws `MISSING_MESSAGE` in the browser just as a plain one does. But a gate that counts
 literals cannot see a *key* used for the wrong field, and that is the class the arc introduced here. The
-answer is a gate that can: **no two panels on one page may give a field the same name** — a census over
-every page's own component graph, which reads **0 collisions over 61 pages** now that the one this walk
-found is closed.
+answer is a gate that can: **`apps/web/scripts/qa-field-labels.mjs`**, which reads every page's own
+component graph and refuses two different components on one page declaring the same constant
+`aria-label` key. It is **2/2** on today's tree — **111 `.tsx` files, 61 pages, 104 constant
+`aria-label` keys, 0 unresolved imports, 0 collisions** — and it is green because the one collision this
+walk found is closed, not because it cannot see one: the defect planted back into a scratch copy of the
+tree turns it red and names it (`app/scout/page.tsx: "careerAria" is declared by
+components/ScoutTransferPanel.tsx, components/ScoutShortlistPanel.tsx`), exit 1.
 
 ## 6. Where this tier stops
 

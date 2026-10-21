@@ -106,6 +106,14 @@ echo "── Web: English-literal i18n gate ────────────
 # page that adds copy in English raises it, which is what this gate says. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-i18n-literals.mjs)
 
+echo "── Web: field-name i18n gate ─────────────────────────"
+# The arc's third class of defect, which the copy gate above cannot see: a catalogue key used for the *wrong
+# field*. The scout's shortlist and the scout's transfer panel once shared one accessible name, so a script that
+# filled a field by name filled the wrong one, and the browser walk went red over a projection that never ran. This
+# gate reads every page's own component graph and refuses two different components on one page declaring the same
+# constant aria-label key. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-field-labels.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 

@@ -125,6 +125,12 @@ jobs:
         # object properties are three shapes and the gate reads all three. The ceiling only falls — wiring a page
         # to its catalogue lowers it, and a page that adds copy in English raises it. Files only.
         run: node scripts/qa-i18n-literals.mjs
+      - name: Field-name gate (two fields on one page may not share a name)
+        # Same command as `scripts/check.sh`. The copy gate above counts English literals; it cannot see a
+        # catalogue key used for the wrong field, which is how the scout's shortlist and the scout's transfer
+        # panel came to share one accessible name. This reads every page's own component graph and refuses two
+        # different components on one page declaring the same constant aria-label key. Files only.
+        run: node scripts/qa-field-labels.mjs
       - name: Crawl-policy gate (gated routes disallowed, advertised routes reachable, Allow exceptions live)
         # Same command as `scripts/check.sh`. Three files split one decision — who may crawl what — and each only
         # described the others in prose. This transpiles and calls all three, reconciles them against every page's
