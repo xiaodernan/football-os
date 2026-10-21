@@ -172,12 +172,24 @@ for (const file of files) {
   const keys = new Set();
 
   const visit = (node) => {
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.arguments.length > 0) {
-      const callee = node.expression.text;
+    if (ts.isCallExpression(node) && node.arguments.length > 0) {
       const first = node.arguments[0];
+      /**
+       * A translator read, in both of its forms: `t("key")` and the rich-text form `t.rich("key")`.
+       * Rich text is the same read of the same catalogue — next-intl throws MISSING_MESSAGE for a
+       * rich key it does not hold, exactly as it does for a plain one — so a check that only saw the
+       * identifier form would stop counting the moment a sentence needed a tag inside it.
+       */
+      const callee = ts.isIdentifier(node.expression)
+        ? node.expression.text
+        : ts.isPropertyAccessExpression(node.expression) &&
+            ts.isIdentifier(node.expression.expression) &&
+            node.expression.name.text === "rich"
+          ? node.expression.expression.text
+          : null;
       if ((callee === "useTranslations" || callee === "getTranslations") && ts.isStringLiteral(first)) {
         namespaces.add(first.text);
-      } else if (/^t[a-z]{0,2}$/.test(callee) && ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
+      } else if (callee && /^t[a-z]{0,2}$/.test(callee) && ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
         keys.add(first.text);
       }
     }
