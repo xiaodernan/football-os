@@ -183,6 +183,17 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   translations at all), the sign-up and password-reset flows, the validation messages, and the nav entries for
   pages the nav does not offer. **26** of those 96 were never translated and were sitting in the Chinese
   catalogues as English. The floor is **0** and the catalogue holds **3510** keys (was 3736).
+- **And two of the locale's claims were conventions, not measurements (2026-10-22).** "The identical values are
+  the ones that are supposed to be identical" was true of every key anybody had looked at and false of **eleven**:
+  the club tier's cap names (`visibility defaults`, `weekly minutes`, `focus items / goals` …) and the academy's
+  example placeholders (`technique, tactics`) were English sentences a Chinese reader was shown — and the five caps
+  beside them are named by the API's own field name (`name_max`, `country`, `kinds`), so the row was half field names
+  and half English. "The English catalogue is English" was false too: `en.json` held `scout.placeholder` as a
+  **Chinese** sentence, so an English reader saw Chinese, and the identical Chinese copy made the coverage figure
+  call it translated. Neither the copy gate (which reads the source) nor the locale sweep (which looks for *English*
+  on a Chinese page) could see either. `apps/web/scripts/qa-locale-tokens.mjs` holds both now: the English file may
+  hold no Chinese, and the **44** values the Chinese files share with the English are **named**, each with the reason
+  it is the same in every language.
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.

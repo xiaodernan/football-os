@@ -126,7 +126,7 @@
     "searchWorld": "Search the world",
     "parsing": "Reading…",
     "searching": "Searching…",
-    "placeholder": "e.g. 找一个 22 岁以下、左脚、能踢 CM、预算 2000 万以下的球员",
+    "placeholder": "e.g. a player under 22, left-footed, able to play CM, under a 20m budget",
     "roleLabel": "role (optional)",
     "careerLabel": "career slug (optional)",
     "careerHelps": "career lets a search rank against the band this club is thinnest in; role adds a fit column and is quoted by the report. Neither is a guess about who you are.",

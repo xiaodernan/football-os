@@ -126,6 +126,16 @@ echo "── Web: catalogue's dead keys gate ───────────�
 # exempts its whole namespace rather than being guessed at) and refuses a count above the floor. Files only.
 (cd apps/web && node scripts/qa-unused-keys.mjs)
 
+echo "── Web: locale-token gate ─────────────────────────────"
+# The locale's technical tokens: the values that are the same in every language, and only those. Two claims
+# in this project were conventions rather than measurements. "The identical values are the ones that are
+# supposed to be identical" was never checked, so an English *phrase* could sit in the Chinese catalogue
+# untranslated — a Chinese reader saw "weekly minutes" as a cap's name — and the set of identical values is
+# now named, key by key, with the reason each one is the same in every language. And "the English catalogue
+# is English" was never checked either: en.json held a Chinese sentence, so an English reader saw Chinese,
+# and the Chinese copy of it made the coverage figures call it translated. Files only.
+(cd apps/web && node scripts/qa-locale-tokens.mjs)
+
 echo "── Web: field-name i18n gate ─────────────────────────"
 # The arc's third class of defect, which the copy gate above cannot see: a catalogue key used for the *wrong
 # field*. The scout's shortlist and the scout's transfer panel once shared one accessible name, so a script that

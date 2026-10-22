@@ -144,6 +144,16 @@ jobs:
         # resolved exempts its whole namespace rather than being guessed at), and the count may only fall.
         # Files only.
         run: node scripts/qa-unused-keys.mjs
+      - name: Locale-token gate (the values that are the same in every language, and only those)
+        # Same command as `scripts/check.sh`. Two claims in this project were conventions rather than
+        # measurements. "The identical values are the ones that are supposed to be identical" was never
+        # checked, so an English *phrase* could sit in the Chinese catalogue untranslated -- a Chinese reader
+        # saw "weekly minutes" as a cap's name, and "pressing, transitions" as an example of what to type.
+        # The set of identical values is now named, key by key, with the reason each one is the same in
+        # every language, and a key that is not named is a finding. And "the English catalogue is English" was
+        # never checked either: `en.json` held a Chinese sentence, so an English reader saw Chinese, and the
+        # Chinese copy of it made the coverage figures call it translated. Files only.
+        run: node scripts/qa-locale-tokens.mjs
       - name: Field-name gate (two fields on one page may not share a name)
         # Same command as `scripts/check.sh`. The copy gate above counts English literals; it cannot see a
         # catalogue key used for the wrong field, which is how the scout's shortlist and the scout's transfer

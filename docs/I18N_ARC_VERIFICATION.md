@@ -543,3 +543,63 @@ page needs it; when a future page needs one, the arc's method writes it from tha
 The catalogue holds **3510** keys (was 3736). The two Chinese files still fall back on the same
 **82** / **81** technical tokens, because every removed key was translated in every locale — so nothing
 about the *coverage* moved, only the size of the thing being covered.
+
+## 10. The two locale claims that were conventions (2026-10-22)
+
+The arc made two claims about the catalogues that were **conventions rather than measurements**, and
+neither had ever been checked.
+
+### "The identical values are the ones that are supposed to be identical"
+
+A key whose Chinese value is byte-identical to its English value is, by that claim, a technical token. The
+claim was never checked, so an English **phrase** could sit in the Chinese catalogue untranslated and nobody
+would know. Eleven did:
+
+| key | the English a Chinese reader was shown |
+| --- | --- |
+| `club.capVisibilityDefaults` | visibility defaults |
+| `club.capAddressing` | addressing |
+| `club.capInvitations` | invitations |
+| `club.capAxes` | axes |
+| `club.capWeeklyMinutes` | weekly minutes |
+| `club.capFocusItemsGoals` | focus items / goals |
+| `club.capGoalKeys` | goal keys |
+| `club.capFeedbackAssessment` | feedback / assessment text |
+| `club.capPlanStatuses` | plan statuses |
+| `academy.focusPlaceholder` | technique, tactics |
+| `academy.sessionFocusPlaceholder` | pressing, transitions |
+
+They are the club tier's **cap names** — the row that prints each cap's ceiling — and the academy's
+**example placeholders**. A cap is named in English while the five caps beside it are named by the API's
+own field name (`name_max`, `team_name_max`, `note_max`, `country`, `kinds`), so the row was half field
+names and half English sentences. All eleven are translated now.
+
+The five that *are* field names stay as they are: a field name printed as itself is the convention, and it
+is the same in every language.
+
+### "The English catalogue is English"
+
+`en.json` held `scout.placeholder` in **Chinese** — "e.g. 找一个 22 岁以下、左脚、能踢 CM、预算 2000 万以下的球员" —
+so an English reader was shown a Chinese sentence. And because the Chinese catalogue held the same Chinese
+sentence, the *identical values* counted it as translated, and the coverage figure was wrong about it.
+
+Neither the copy gate nor the locale sweep could see it: the copy gate reads the source rather than the
+catalogue, and the sweep looks for **English** on a Chinese page. The defect was found by listing the
+identical values and reading them.
+
+### The gate
+
+`apps/web/scripts/qa-locale-tokens.mjs` holds both claims, and the set of identical values is **named** —
+44 keys, each with the reason it is the same in every language: an acronym or a unit (`OVR`, `POT`, `RPE`,
+`xG`, `PDF`, `HTTP`, `API`, `bm25`), an API field name printed as itself (`name_max`, `country`, `kinds`,
+`rating_range`, `recent_form`, `shared_with_guardian`, `comparison: null`), a template whose parts are names
+or figures (`{name} · {formation} · {overall}`, `{kind}: {slug}`), a proper name used as an example
+(`Riverside Academy`, `ada-doler`), or a punctuation mark. A value that is identical **without** a name is
+a finding, and a name that is no longer a token is a finding.
+
+Its red path was watched: an English phrase planted in the Chinese catalogue and a Chinese sentence planted
+in the English catalogue, and the gate named both.
+
+**The lesson.** A claim about what *should* be true is a convention until something checks it. "The
+identical values are the technical tokens" was true of every key anybody had looked at, and false of eleven
+that nobody had.
