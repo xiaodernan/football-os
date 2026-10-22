@@ -929,3 +929,36 @@ This is §7's lesson in a new place. The floor was **0** and it was green, and t
 the gate could see what it looked at. The tree was full of English copy in files the gate had never
 opened. The **lesson** is the one the arc keeps teaching: *a floor is a statement about the gate before
 it is a statement about the tree* — and a population is a statement about the gate too.
+
+## 14. The reader's sentence, on every path an answer can take (2026-10-22)
+
+### The shape the slice left behind
+
+The tier's own generic answers now carry **a code and no sentence** — the reader's sentence is the call
+site's fallback, and the localiser fills the rest on the paths that can read the catalogue. That left
+two paths where the reader could have been shown a code and an empty sentence, and both were closed.
+
+**The proxy.** The browser cannot read the catalogue, so every answer has to be localised on the way,
+and the proxy is the door. It already localised the refusals, but an answer it could **not parse** used
+to travel as the API's own bytes: the proxy forwarded the raw body, the browser could not read it
+either, and the tier's answer for it carried no sentence at all. The proxy now asks the localiser for
+every answer it forwards, parsed or not.
+
+**The twelve client sites.** They printed `error.message` and nothing else, so a generic answer reached
+the reader as a code and an empty sentence. They now print the code *and* the sentence, and the sentence
+is the catalogue's when the answer named none. Each site uses the translator already in scope at its
+printing site, which is not the same translator in every file: three of them had a "common" translator
+of their own, two had a translator of their own namespace (so two namespaces gained the sentence), and
+the workbench's module-level line has none at all — so the sentence is **handed to it** as an argument,
+and seven call sites hand it over. The callbacks that now read the translator name it in their
+dependency lists, which the hook rule holds.
+
+### The last English, and why it is the crawler's
+
+The site's brand line and its metadata sentence are still English in every language, and that is now
+settled rather than open. The locale is a **cookie**, not a URL segment, so a crawler and a share
+scraper arrive without one and read the default locale — which is English, and so is the description
+they read. A reader never sees a meta description, because it is not rendered. The one thing that stays
+English in every language is the **share card's own pixels**: a single picture cannot be two languages,
+and the card is a scraper's surface too. Making it a per-locale card is a design question, not a copy
+fix, and it is the arc's next open item in this area.
