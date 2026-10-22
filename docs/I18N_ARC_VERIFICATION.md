@@ -705,6 +705,28 @@ left implied.
 Its red path was watched: a catalogue sentence that no longer matched the API's message, and a key for
 a refusal the API does not publish, both made it fail by name.
 
+And the walk was re-run on the build that carries it: the nine tier walks are green (**scout 124,
+community 39, timeline 29, carry 45, ledger 39, club 252, creator 97, portfolio 53, market 106**) and the
+visual walk **298/298, exit 0**. The sweep printed its exemption's surface for the first time — the
+elements that carry a catalogue value inside a longer text — and it is the API's own prose, quoted rather
+than translated.
+
+### The read, in the reader's language
+
+The claim was read through the **proxy** — the browser's path — because that is the path a reader takes
+and because the proxy is where the locale had to be learned from the `fo_locale` cookie. One door, one
+refusal, three languages:
+
+```
+EN      401  "Email or password is incorrect"
+zh      401  "邮箱或密码不正确"
+zh-TW   401  "信箱或密碼不正確"
+```
+
+The English rendering is the API's own message, byte for byte; the other two are the catalogue's. That is
+the whole slice in three lines: a refusal used to be English on a Chinese page whatever the reader had
+chosen, and now it is the reader's language with the English untouched.
+
 ### The honest remainder
 
 The claim "the interface is in the reader's language" now holds for the interface's **own** copy **and**
