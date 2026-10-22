@@ -3354,6 +3354,12 @@ async function run() {
     const elementTexts = async () => {
       const texts = await page.$$eval('body *', (nodes) =>
         nodes
+          // Structured data lives in a script the reader never sees, and it is data rather than prose:
+          // the label/prose distinction the sweep makes is about what a reader reads, and a JSON-LD
+          // block that happens to quote a catalogue value is not a label the page forgot to translate.
+          // Its own surface is the structured-data read the SEO checks make, not this prose comparison,
+          // so it must not reach the label/prose logic and be mistaken for one.
+          .filter((node) => !(node.tagName === 'SCRIPT' && (node.getAttribute('type') ?? '').toLowerCase() === 'application/ld+json'))
           .map((node) => (node.textContent ?? '').replace(/\s+/gu, ' ').trim())
           .filter((text) => text.length > 0),
       );
