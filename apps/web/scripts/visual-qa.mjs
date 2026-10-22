@@ -3403,6 +3403,18 @@ async function run() {
       }
     }
     await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    // The pages no other walk reads, opened here so the sweep judges them in the reader's language.
+    // A page the walk does not open is a page nobody has judged, and the route-coverage check below
+    // says so by name; these are the ones the census found unvisited.
+    for (const path of [
+      '/tactics/gallery',
+      '/world/competitions',
+      '/world/matches',
+      '/world/news',
+      '/world/teams',
+    ]) {
+      await open(page, path);
+    }
     const swept = [];
     const skipped = [];
     const offenders = [];
