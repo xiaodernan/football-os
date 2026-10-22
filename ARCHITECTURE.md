@@ -194,6 +194,16 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   on a Chinese page) could see either. `apps/web/scripts/qa-locale-tokens.mjs` holds both now: the English file may
   hold no Chinese, and the **44** values the Chinese files share with the English are **named**, each with the reason
   it is the same in every language.
+- **The gates the i18n arc now runs, and the evidence.** `qa-i18n-literals.mjs` (8 checks: 0 English literal sites over
+  every `app/**/*.tsx` and `components/**/*.tsx`, 3600 key calls checked against the namespace each is asked of, every
+  placeholder supplied) · `qa-icu-messages.mjs` (2: every message in all three catalogues parses as ICU) ·
+  `qa-unused-keys.mjs` (3: **every key the catalogue holds is asked for by a page**; floor 0) ·
+  `qa-locale-tokens.mjs` (3: the English file holds no Chinese; the identical values are the 44 named ones) ·
+  `qa-field-labels.mjs` (2) · `qa-metadata-title.mjs` (165). The **browser** evidence is the visual walk, which now
+  reads **298/298, exit 0** — including the locale sweep, the check that reads every page the walk touched again in
+  Chinese and holds that none of them carries an untranslated label: *49 pages read in Chinese, 1964 English phrases
+  compared*. The sweep prints the English it **tolerated** — the API's authored prose, quoted rather than translated —
+  because an exemption nobody can see is a claim nobody can check.
 - SEO (spec §80): `lib/site.ts` turns `SITE_URL` into absolute canonical/OpenGraph URLs; `app/sitemap.ts` and `app/robots.ts` are
   generated from live API reads, so only routes that answer 200 for a signed-out visitor are advertised. Per-route metadata sets
   its own canonical — never the root layout, which every child would inherit.
