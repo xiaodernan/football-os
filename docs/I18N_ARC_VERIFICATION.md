@@ -760,6 +760,19 @@ named in `NOT_FIXED_CODES`; a named code that carries one is held to the same dr
 its English value must still be the API's message — and a catalogue sentence must name a code the API
 publishes at all.
 
+### What the census can and cannot see (2026-10-22)
+
+The contract test's census reads a refusal's message **where it is written**, so a message a helper
+takes as an argument — `password_refusal(message=...)` — is not a literal it can see, and the code is
+named as one the catalogue cannot reproduce. That is **conservative in the safe direction**: a code the
+census cannot resolve is named rather than silently left uncovered, and `invalid_password` was carried
+by hand for exactly that reason — the API's message at every call site is "The current password is
+incorrect", but the census cannot prove it by looking at the helper.
+
+The next step is a census that follows the call: find the helper that raises a refusal, find its
+call sites, and see what they pass. That would make the named list the *truly* varying messages rather
+than the ones the census cannot see through, and it would let the list shrink by facts.
+
 ### The honest remainder
 
 The claim "the interface is in the reader's language" now holds for the interface's **own** copy **and**
