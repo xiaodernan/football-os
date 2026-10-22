@@ -911,10 +911,14 @@ The population is now the whole tier: `.tsx` and `.ts`, under `app/`, `component
   site's fallback, and the localiser fills the rest on the two paths that can read the catalogue (the
   server's own read and the browser's proxy). `errorMessage`'s fallback is now **required**, so a call
   site that passes none is a compile error rather than an English default;
-* `lib/site.ts` is the one file the gate does not read, and it is **named** as such: the site's brand
-  line and the metadata sentence it is printed into are the SEO surface's copy, and the SEO surface has
-  its own gate. It is the arc's one open item in this area, and the doc says so rather than leaving it
-  implied.
+* `lib/site.ts` is the one file the gate does not read, and it is **named** as such. Its two sentences are
+  the site's brand line and the metadata sentence it is printed into — the layout's description, the
+  `WebSite` graph, the share card's alt text — and that is the **crawler's** surface, not a reader's.
+  The reader never sees a meta description: it is not rendered. And the locale is a **cookie**, not a URL
+  segment, so a crawler and a share scraper arrive without one and read the default locale — which is
+  English, and so is the description they read. The English metadata is the right sentence for the
+  reader it is written for. The one thing that stays English in every language is the **OG image's own
+  pixels** (a single picture cannot be two languages), and that is the card a scraper sees.
 
 The error-shape gate's contract moved with it: **an answer the API named carries its sentence; the
 tier's own generic answer does not.** And the locale-token gate holds the new "xG" token by name.
