@@ -644,9 +644,11 @@ check(
 );
 
 check(
-  "every read that could not be resolved left its namespace unjudged",
+  "every read that could not be resolved left its namespace unjudged, and says which",
   exempt.size === 0 || unresolved.length > 0,
-  `${unresolved.length} unresolved read(s) across ${exempt.size} namespace(s) left unjudged`,
+  exempt.size === 0
+    ? "every read in the tree resolved, so every namespace was judged"
+    : `${unresolved.length} unresolved read(s) left ${exempt.size} namespace(s) unjudged — ${[...exempt].sort().join(", ")} (${unresolved.map((read) => `${read.file}:${read.line}`).join(", ")})`,
 );
 
 const byNamespace = new Map();
