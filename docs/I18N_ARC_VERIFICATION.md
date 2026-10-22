@@ -8,6 +8,11 @@ and what it could not see turned out to be most of the copy in the tree. Every n
 on the tree this document names, and every figure in it is reproducible by running the gate that produced
 it.
 
+**The figures in §1 are the arc's opening figures.** The tree as the arc left it is in **§14** (the
+walk on it: 298/298, exit 0) and **§15** (the boundary), and the catalogue's own current table is
+`apps/web/messages/README.md` — which the locale-claims test recomputes and holds to the live key
+count.
+
 ---
 
 ## 1. The claim
