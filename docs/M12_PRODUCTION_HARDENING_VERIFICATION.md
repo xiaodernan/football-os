@@ -392,7 +392,9 @@ would break:
   failure result; the batch processor then drops the batch. Measured: a store whose session factory
   raises answers `FAILURE` and raises nothing into the caller.
 * **The store is bounded.** Every export also deletes the spans older than the retention window
-  (seven days), so an instance that runs for months does not accumulate traces forever.
+  (seven days), so an instance that runs for months does not accumulate traces forever. Measured: a
+  row dated eight days back is deleted by an export while one dated six days back and the span the
+  export itself wrote survive; the two ages are literal, so widening the window reds the case.
 
 **The door.** `GET /api/v1/traces/{trace_id}` returns the spans of one trace, oldest first, each
 with the parent it hung from. It is an **operator's window**, and it asks for the operator's
@@ -413,16 +415,20 @@ because it writes a row per span, and a deployment that runs a collector has a b
 them. The OTLP path is untouched, and the two are independent: a deployment can send spans to a
 collector and keep them in the database, or use either alone.
 
-**Measured** (`tests/test_trace_store.py`, 7 cases): a finished span is stored with its own timings
+**Measured** (`tests/test_trace_store.py`, 8 cases): a finished span is stored with its own timings
 and identifiers; a child span names the span it hung from, read back through the door; a broken
-store reports failure without raising; an admin reads a stored trace and gets 404 for an unknown
-one; a player is refused `403 insufficient_role` for both a stored id and an unknown one, while an
-admin control reads the same stored trace back. Two arms on copies of the tree: removing the
-standing check reds the refusal case alone, at `assert 200 == 403` with the stored span — including
-`http.target` — in the refusal's own response; changing the standing to `("fan",)` reds the refusal
-at `required == ['fan']` and reds both admin door cases at `assert 403 == 200` and
-`assert 403 == 404`. The door's docstring changed, so `docs/api/openapi.json` was regenerated, and
-the contract, spec-audit and both census gates are green at the new tree.
+store reports failure without raising; an export deletes an eight-day-old row, keeps a six-day-old
+one and the span it just wrote; an admin reads a stored trace and gets 404 for an unknown one; a
+player is refused `403 insufficient_role` for both a stored id and an unknown one, while an admin
+control reads the same stored trace back. Arms on copies of the tree: removing the standing check
+reds the refusal case alone, at `assert 200 == 403` with the stored span — including `http.target`
+— in the refusal's own response; changing the standing to `("fan",)` reds the refusal at
+`required == ['fan']` and reds both admin door cases at `assert 403 == 200` and `assert 403 == 404`;
+removing the prune call reds the retention case alone (`an eight-day-old span survived`), widening
+`RETENTION` to 365 days reds the same case alone, and a prune that deletes every row reds it at
+`a six-day-old span was deleted with the expired ones` plus the two store-shape cases. The door's
+docstring changed, so `docs/api/openapi.json` was regenerated, and the contract, spec-audit and
+both census gates are green at the new tree.
 
 ### What sharing buys, measured with the tier live
 
@@ -687,7 +693,7 @@ harness env var is part of the recorded command.
 | `mypy` over `cost_advisor`, `latency_profile`, `metrics`, `request_metrics`, `percentile`, `runtime`, `response_headers`, `cache`, `redis_cache`, `logging`, `main` | same | no issues |
 | `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same, against `HEAD` | 13 tests, rc=0; since 2026-10-23 the contract's byte case normalises the checkout's line endings — a fresh `core.autocrlf=true` worktree at `394cd10` checked the contract out 484939 bytes / CRLF against the exporter's 467634 / LF, and the raw comparison was red on equal content; on that still-CRLF plane the five documentation gates are **38/38 rc=0**, and a one-byte contract change (`3.1.0` → `3.1.1`) still reds the case |
 | `pytest tests/test_tracing.py -q` | SQLite, working copy | **7 tests / 0 failures**, rc=0; forced always-on reds only the sampling case (`got 2`), forced always-off reds it (`got 0`) |
-| `pytest tests/test_trace_store.py -q` | SQLite, working copy; arms on a copy of the tree | **7 tests / 0 failures**, rc=0; guard removed → only the refusal case red (`assert 200 == 403`, the stored span in its response); standing `("fan",)` → refusal red at `required == ['fan']`, both admin door cases red (`assert 403 == 200`, `assert 403 == 404`) |
+| `pytest tests/test_trace_store.py -q` | SQLite, working copy; arms on a copy of the tree | **8 tests / 0 failures**, rc=0; guard removed → only the refusal case red (`assert 200 == 403`, the stored span in its response); standing `("fan",)` → refusal red at `required == ['fan']`, both admin door cases red (`assert 403 == 200`, `assert 403 == 404`); prune call removed or `RETENTION` widened to 365 days → only the retention case red (the eight-day row survives); prune deletes all rows → retention case red at the six-day row, plus the two store-shape cases |
 | one `GET /healthz` through a live API with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318` | live uvicorn + `otel/opentelemetry-collector:0.111.0`, debug exporter, SQLite | `SERVER` span `GET /healthz` read back from the collector log, resource `service.name=football-os-api`, `deployment.environment=development`; **before the `/v1/traces` fix the same walk logged `404 Not Found` and exported nothing** |
 | `node scripts/qa-proxy-gate.mjs` | `apps/web`, working copy | **6 checks / 0 failures**, 131 files; 8/8 arm planes matched |
 | one `GET /api/v1/traces/…` through a production web build with `traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01` | web `next start` on 3221 → API with `TRACE_STORE_ENABLED=1`, fresh SQLite | 401 from the auth-gated door, and four `request_spans` rows with the caller's `trace_id`, the `SERVER` row parented by `00f067aa0ba902b7`; the no-header control left an unparented `SERVER` span in trace `964b3f829197972596588c36b1848188` |

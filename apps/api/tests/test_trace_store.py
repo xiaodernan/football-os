@@ -5,7 +5,7 @@ OpenTelemetry was wired with an OTLP exporter, and a host that runs no collector
 send a span. The store is that backend - an ordinary OpenTelemetry exporter that writes each
 finished span into the database - and this file is the gate for it.
 
-Three claims, in the order they can be checked:
+Four claims, in the order they can be checked:
 
 * **A span reaches the store.** A request through an instrumented app leaves rows in
   `request_spans`, and the door reads them back by trace id.
@@ -13,6 +13,8 @@ Three claims, in the order they can be checked:
   the shape of the work rather than a flat list.
 * **A store failure is not a request failure.** The exporter catches everything: a database that
   is down loses the spans, not the request.
+* **The store is bounded.** An export deletes the rows older than the published seven-day window
+  and keeps the younger ones, so a long-running instance does not accumulate traces forever.
 
 The door asks for the platform's operator standing (`admin`), because a span carries the
 request's concrete `http.target` and the store does not record whose request it was - an
@@ -219,6 +221,74 @@ class TestTheStore:
         result = store.export(spans)
         assert result.name == "FAILURE", "a broken store reported success"
         store.shutdown()
+
+    def test_an_export_prunes_spans_older_than_the_published_window(self, store_on: None) -> None:
+        """The store is bounded, and the bound is the published seven days, not any prune.
+
+        The two ages are literal on purpose: deriving them from `RETENTION` would keep this case
+        green for whatever window the module was changed to, which is the drift it exists to
+        catch. Eight days old is outside the window, six is inside; the span the exporter writes
+        is the third row, so a prune that deletes everything fails on a different row than one
+        that never runs.
+        """
+        from datetime import timedelta
+
+        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+        from app.core import tracing
+
+        now = _now()
+        old_trace, kept_trace = "1" * 32, "2" * 32
+        with SessionLocal() as db:
+            for trace_id, span_id, age in (
+                (old_trace, "1" * 16, timedelta(days=8)),
+                (kept_trace, "2" * 16, timedelta(days=6)),
+            ):
+                start = now - age
+                db.add(
+                    RequestSpan(
+                        trace_id=trace_id,
+                        span_id=span_id,
+                        parent_span_id=None,
+                        name="GET /aged",
+                        kind="SERVER",
+                        status="OK",
+                        start_time=start,
+                        end_time=start + timedelta(seconds=1),
+                        duration_ms=1000,
+                        attributes_json={},
+                    )
+                )
+            db.commit()
+
+        exporter = InMemorySpanExporter()
+        provider = tracing.build_provider(None, SimpleSpanProcessor(exporter))
+        assert provider is not None
+
+        from fastapi import FastAPI
+
+        app = FastAPI()
+
+        @app.get("/prune")
+        def prune() -> dict[str, str]:
+            return {"ok": "1"}
+
+        tracing.instrument_fastapi(app, tracer_provider=provider)  # type: ignore[arg-type]
+        with TestClient(app) as client:
+            assert client.get("/prune").status_code == 200
+
+        spans = exporter.get_finished_spans()
+        assert spans, "the instrumented app produced no span to export"
+        result = SpanStoreExporter(SessionLocal).export(spans)
+        assert result.name == "SUCCESS", f"the store refused a batch of {len(spans)} spans"
+
+        exported = {f"{span.get_span_context().trace_id:032x}" for span in spans}
+        with SessionLocal() as db:
+            stored = set(db.scalars(select(RequestSpan.trace_id)).all())
+        assert old_trace not in stored, "an eight-day-old span survived an export; the store is not bounded"
+        assert kept_trace in stored, "a six-day-old span was deleted with the expired ones"
+        assert exported <= stored, f"the exported span(s) {sorted(exported - stored)} were not stored"
 
 
 class TestTheDoor:
