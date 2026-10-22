@@ -3590,6 +3590,9 @@
     "ai_budget_exhausted": "Today's AI spend cap is reached. Retrieval still works.",
     "already_completed": "This session is already logged",
     "bad_date": "Dates must be ISO-8601, e.g. 2026-11-08",
+    "bad_minutes": "That is not one of the durations the engine accepts.",
+    "bad_objective": "That is not one of the objective kinds the engine accepts.",
+    "bad_philosophy": "That is not one of the philosophies the engine accepts.",
     "career_retired": "this career is retired; its squad is closed",
     "conflict": "That record conflicts with existing data",
     "email_taken": "An account already uses this email",
@@ -3601,6 +3604,9 @@
     "no_objectives": "a career needs at least one objective to be judged by",
     "no_player": "Create your player profile first",
     "no_refresh": "No active session",
+    "no_such_club": "That is not a club in the generated world.",
+    "no_such_system": "That is not one of the authored tactical systems.",
+    "no_such_team": "That is not a club in the generated world.",
     "organization_owner_required": "This account is the last active owner of an organisation with other active members",
     "player_exists": "One player profile per account in M1; multiple squads arrive with Club OS (M8)",
     "provider_switch_unavailable": "Provider switching requires environment variable changes and server restart.",
@@ -3613,6 +3619,7 @@
     "token_invalid": "Invalid session",
     "token_wrong_type": "Invalid token type",
     "unauthenticated": "Authentication required",
+    "unknown_change": "That is not one of the changes the tactics catalogue holds.",
     "validation_error": "Request validation failed"
   }
 }

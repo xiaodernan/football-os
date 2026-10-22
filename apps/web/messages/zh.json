@@ -3590,6 +3590,9 @@
     "ai_budget_exhausted": "今日的 AI 支出上限已用尽，检索仍可使用。",
     "already_completed": "这次训练已经记录过了",
     "bad_date": "日期必须是 ISO-8601 格式，例如 2026-11-08",
+    "bad_minutes": "这不是引擎接受的时长之一。",
+    "bad_objective": "这不是引擎接受的目标类型之一。",
+    "bad_philosophy": "这不是引擎接受的管理哲学之一。",
     "career_retired": "这个赛季已经退役，阵容已关闭",
     "conflict": "该记录与已有数据冲突",
     "email_taken": "该邮箱已被一个账号使用",
@@ -3601,6 +3604,9 @@
     "no_objectives": "一个赛季至少需要一个目标才能评判",
     "no_player": "请先创建你的球员档案",
     "no_refresh": "没有有效的会话",
+    "no_such_club": "这不是生成世界里的俱乐部。",
+    "no_such_system": "这不是本项目编写的战术体系之一。",
+    "no_such_team": "这不是生成世界里的球队。",
     "organization_owner_required": "这个账号是该组织唯一仍活跃的所有者，而组织中还有其他活跃成员",
     "player_exists": "M1 中每个账号只有一个球员档案；多阵容随 Club OS（M8）到来",
     "provider_switch_unavailable": "切换模型服务需要修改环境变量并重启服务器。",
@@ -3613,6 +3619,7 @@
     "token_invalid": "会话无效",
     "token_wrong_type": "令牌类型无效",
     "unauthenticated": "需要登录",
+    "unknown_change": "这不是战术目录中的改动之一。",
     "validation_error": "请求校验未通过"
   }
 }

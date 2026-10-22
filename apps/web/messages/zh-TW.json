@@ -3590,6 +3590,9 @@
     "ai_budget_exhausted": "今日的 AI 支出上限已用盡，檢索仍可使用。",
     "already_completed": "這次訓練已經記錄過了",
     "bad_date": "日期必須是 ISO-8601 格式，例如 2026-11-08",
+    "bad_minutes": "這不是引擎接受的時長之一。",
+    "bad_objective": "這不是引擎接受的目標類型之一。",
+    "bad_philosophy": "這不是引擎接受的管理哲學之一。",
     "career_retired": "這個賽季已經退役，陣容已關閉",
     "conflict": "該記錄與已有資料衝突",
     "email_taken": "該信箱已被一個帳號使用",
@@ -3601,6 +3604,9 @@
     "no_objectives": "一個賽季至少需要一個目標才能評判",
     "no_player": "請先建立你的球員檔案",
     "no_refresh": "沒有有效的會話",
+    "no_such_club": "這不是生成世界裡的俱樂部。",
+    "no_such_system": "這不是本專案編寫的戰術體系之一。",
+    "no_such_team": "這不是生成世界裡的球隊。",
     "organization_owner_required": "這個帳號是該組織唯一仍活躍的所有者，而組織中還有其他活躍成員",
     "player_exists": "M1 中每個帳號只有一個球員檔案；多陣容隨 Club OS（M8）到來",
     "provider_switch_unavailable": "切換模型服務需要修改環境變數並重新啟動伺服器。",
@@ -3613,6 +3619,7 @@
     "token_invalid": "會話無效",
     "token_wrong_type": "權杖類型無效",
     "unauthenticated": "需要登入",
+    "unknown_change": "這不是戰術目錄中的改動之一。",
     "validation_error": "請求驗證未通過"
   }
 }
