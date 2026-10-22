@@ -804,8 +804,21 @@ A second batch followed the same day — the family the API publishes the same w
 "No such board in the gallery", "This link no longer points at a clip"), the three **ids**
 (`no_such_job`, `no_such_trace`, `no_such_memory`) and `no_such_challenge`.
 
-The catalogue holds **44** of the API's **65** refusal codes, and the two Chinese files still fall
-back on the same **44** technical tokens — every key added here is translated in every locale.
+A third batch finished it — the account and role doors (the phrase deleting an account asks for, the
+switched-off account, the role that does not allow it), the job and board refusals (a job that has
+already finished, a board that could not be read), the media refusals (the clip the server cannot read,
+the byte range past the end, the file that is too large, the container it does not know), and the rest
+(no fixture to play, no frame with that id, the scenario whose window has closed, the path that does not
+serve this, the challenge played without transfers).
+
+**The catalogue holds all 65** — every refusal code the API publishes — and the contract is stronger
+than it was: **every** code carries a sentence, not "a sentence or a name in the list". The two Chinese
+files still fall back on the same **44** technical tokens, because every key added here is translated
+in every locale.
+
+The list that remains is therefore the census's **verdict** rather than a gap: it names the codes whose
+API message varies with the request, and it is checked in both directions, so a new refusal has to be
+classified before it can be published.
 
 **What the walk covered.** The walk that proved this slice ran on the build that carries the *first*
 batch (the seven career-form and tactics refusals), which is the commit the arc's §11 numbers. The
