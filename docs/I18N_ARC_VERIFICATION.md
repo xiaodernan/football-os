@@ -958,7 +958,11 @@ dependency lists, which the hook rule holds.
 The site's brand line and its metadata sentence are still English in every language, and that is now
 settled rather than open. The locale is a **cookie**, not a URL segment, so a crawler and a share
 scraper arrive without one and read the default locale — which is English, and so is the description
-they read. A reader never sees a meta description, because it is not rendered. The one thing that stays
-English in every language is the **share card's own pixels**: a single picture cannot be two languages,
-and the card is a scraper's surface too. Making it a per-locale card is a design question, not a copy
-fix, and it is the arc's next open item in this area.
+they read. A reader never sees a meta description, because it is not rendered.
+
+The **share card's own pixels** are the same argument, one step further: a picture cannot be two
+languages, and the card is fetched by a scraper that sends no cookie, so the card it fetches is the
+default locale's card whatever the layout's metadata says. A per-locale card would need the locale to
+travel in the **URL** — a change to how the site addresses its pages, not a change to a sentence — and
+so it is a design question rather than a copy fix. Until that question is answered, the card is English
+on purpose: it is the picture a scraper without a cookie receives.
