@@ -3262,6 +3262,11 @@ async function run() {
     // 16. Sign out clears the cookies; the login screen must still work at 375px.
     await open(page, '/settings');
     const signedOut = await page.evaluate(async () => {
+      // The pages that need a session, opened before the sign-out: the walk signs out before the
+      // sweep, and a page that redirects to the login is not a page the sweep has read.
+      for (const path of ['/portfolio', '/club/rules']) {
+        await open(page, path);
+      }
       const response = await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'same-origin' });
       return response.status;
     });
