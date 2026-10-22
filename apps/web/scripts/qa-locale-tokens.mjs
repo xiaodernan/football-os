@@ -164,6 +164,65 @@ check(
   stale.length === 0 ? `${TOKENS.size} token(s) checked` : `${stale.length} stale name(s): ${stale.slice(0, 8).join(" | ")}`,
 );
 
+/**
+ * The catalogue's own table: the figures it publishes, checked against the catalogue itself.
+ *
+ * `apps/web/messages/README.md` states how many keys the catalogue holds and how many of them are
+ * translated, and that table is the number a reader is given. It was stale twice in this arc — once
+ * because nothing recomputed it, and once because four keys landed after the last recompute and only
+ * the API's suite could see it. This gate can see it too: the population and the translated count are
+ * both derivable from the three catalogues, and the two numbers the table states are the two numbers
+ * a reader is given.
+ */
+const keyCount = (block) =>
+  Object.values(block ?? {}).reduce(
+    (total, value) => total + (value && typeof value === "object" ? Object.keys(value).length : 0),
+    0,
+  );
+const translatedCount = (locale) => {
+  const other = catalogue(locale);
+  let count = 0;
+  for (const [namespace, block] of Object.entries(english)) {
+    for (const [key, value] of Object.entries(block ?? {})) {
+      if (other[namespace]?.[key] !== value) count += 1;
+    }
+  }
+  return count;
+};
+
+let readme = "";
+try {
+  readme = readFileSync(join(MESSAGES, "README.md"), "utf8");
+} catch {
+  readme = "";
+}
+const population = keyCount(english);
+const staleRows = [];
+for (const locale of LOCALES) {
+  const row = new RegExp(`\\|\\s*\`?${locale}\\.json\`?\\s*\\|\\s*(\\d+) of (\\d+)`, "u").exec(readme);
+  if (!row) {
+    staleRows.push(`${locale}: the table states no figure`);
+    continue;
+  }
+  const stated = Number(row[1]);
+  const statedPopulation = Number(row[2]);
+  const translated = translatedCount(locale);
+  if (statedPopulation !== population) {
+    staleRows.push(`${locale}: the table counts a population of ${statedPopulation}; the catalogue holds ${population}`);
+  }
+  if (stated !== translated) {
+    staleRows.push(`${locale}: the table claims ${stated} translated keys; the catalogue holds ${translated}`);
+  }
+}
+
+check(
+  "the catalogue's own table states the figures the catalogue holds",
+  staleRows.length === 0,
+  staleRows.length === 0
+    ? `${population} key(s), ${translatedCount("zh")} translated in Simplified Chinese`
+    : staleRows.join(" | "),
+);
+
 const failed = checks.filter((entry) => !entry.ok);
 console.log(`CHECKS passed=${checks.length - failed.length} total=${checks.length} failed=${failed.length}`);
 if (failed.length) {
