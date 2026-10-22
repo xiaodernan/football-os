@@ -223,6 +223,55 @@ check(
     : staleRows.join(" | "),
 );
 
+/**
+ * The sentences held under two keys, and whether they are worded the same way in every language.
+ *
+ * A sentence written twice is a translation written twice, and the two will drift: the reader meets
+ * one button written two ways. The count is a **floor** for now, at the count this gate read when it
+ * learned to see the shape, and it may only fall — every sentence that is brought into line lowers
+ * it. A repeat inside one namespace is a tier's own name in its own surfaces, which is deliberate.
+ */
+const DRIFT_FLOORS = { zh: 13, "zh-TW": 15 };
+const holders = new Map();
+for (const [namespace, block] of Object.entries(english)) {
+  for (const [key, value] of Object.entries(block ?? {})) {
+    if (typeof value !== "string" || value.length <= 12) continue;
+    if (!holders.has(value)) holders.set(value, []);
+    holders.get(value).push(`${namespace}.${key}`);
+  }
+}
+const drift = { zh: [], "zh-TW": [] };
+for (const [value, keys] of holders) {
+  if (keys.length < 2) continue;
+  if (new Set(keys.map((path) => path.split(".")[0])).size === 1) continue;
+  for (const locale of LOCALES) {
+    const wordings = new Set(
+      keys.map((path) => {
+        const [namespace, key] = path.split(".");
+        return catalogue(locale)[namespace]?.[key];
+      }),
+    );
+    if (wordings.size > 1) drift[locale].push(`${value.slice(0, 40)} — ${keys.join(", ")}`);
+  }
+}
+const driftFindings = [];
+for (const locale of LOCALES) {
+  const found = drift[locale];
+  if (found.length > DRIFT_FLOORS[locale]) {
+    driftFindings.push(
+      `${locale}: ${found.length} sentence(s) held under two keys are worded more than one way (floor ${DRIFT_FLOORS[locale]}): ${found.slice(0, 4).join(" | ")}`,
+    );
+  }
+}
+
+check(
+  "a sentence held under two keys is worded the same way in every language",
+  driftFindings.length === 0,
+  driftFindings.length === 0
+    ? `${holders.size} distinct sentence(s), ${DRIFT_FLOORS.zh} / ${DRIFT_FLOORS["zh-TW"]} worded two ways`
+    : driftFindings.join(" | "),
+);
+
 const failed = checks.filter((entry) => !entry.ok);
 console.log(`CHECKS passed=${checks.length - failed.length} total=${checks.length} failed=${failed.length}`);
 if (failed.length) {
