@@ -231,7 +231,7 @@ check(
  * learned to see the shape, and it may only fall — every sentence that is brought into line lowers
  * it. A repeat inside one namespace is a tier's own name in its own surfaces, which is deliberate.
  */
-const DRIFT_FLOORS = { zh: 13, "zh-TW": 15 };
+const DRIFT_FLOORS = { zh: 0, "zh-TW": 0 };
 const holders = new Map();
 for (const [namespace, block] of Object.entries(english)) {
   for (const [key, value] of Object.entries(block ?? {})) {
