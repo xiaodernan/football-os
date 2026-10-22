@@ -94,9 +94,14 @@ async function main() {
     const result = await reader.browserFetch('/shape-probe');
     const error = result?.error ?? {};
     check(`${entry.name}: the call is reported as a refusal at ${entry.status}`, result?.ok === false && result?.status === entry.status, JSON.stringify(result).slice(0, 160));
-    check(`${entry.name}: a code and a message are always present`, typeof error.code === 'string' && error.code.length > 0 && typeof error.message === 'string' && error.message.length > 0, JSON.stringify(error));
+    // An answer the API named carries its sentence; the tier's own generic answer does not, because
+    // the reader's sentence is the call site's fallback and the localiser fills the rest.
+    const named = entry.producer.kind === 'handler' || entry.producer.kind === 'door';
+    check(`${entry.name}: a code is always present${named ? ', and a message when the API named one' : ''}`,
+      typeof error.code === 'string' && error.code.length > 0 && (!named || (typeof error.message === 'string' && error.message.length > 0)),
+      JSON.stringify(error));
 
-    if (entry.producer.kind === 'handler' || entry.producer.kind === 'door') {
+    if (named) {
       const detail = entry.body.json.detail;
       const figures = Object.keys(detail).filter((key) => key !== 'code' && key !== 'message');
       check(`${entry.name}: the code the API spelled is the code the page is given`, error.code === detail.code, `got ${JSON.stringify(error.code)}`);
@@ -129,9 +134,10 @@ async function main() {
     throw new TypeError('connection refused');
   };
   const offline = await reader.browserFetch('/shape-probe');
-  check('a refusal to connect answers network_error with a sentence', offline?.ok === false && offline?.status === 502
-    && offline?.error?.code === 'network_error' && typeof offline?.error?.message === 'string' && offline.error.message.length > 20,
-    JSON.stringify(offline));
+  // The tier's own answers carry a code and no sentence: the reader's sentence is the call site's
+  // fallback, and the localiser fills the rest on the paths that can read the catalogue.
+  check('a refusal to connect answers network_error', offline?.ok === false && offline?.status === 502
+    && offline?.error?.code === 'network_error', JSON.stringify(offline));
 
   return finish();
 }

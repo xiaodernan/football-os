@@ -7,6 +7,8 @@
  * is unavailable, never substitute a value for it).
  */
 
+import { getTranslations } from "next-intl/server";
+
 import { errorMessage } from "@/lib/api";
 import { serverFetch } from "@/lib/server";
 import type { ApiResult } from "@/lib/api";
@@ -36,18 +38,19 @@ export function buildHref(base: string, query: WorldQuery, overrides: WorldQuery
 
 export type WorldRead<T> = { ok: true; data: T; result: ApiResult<T> } | { ok: false; message: string; status: number; notFound: boolean };
 
-function read<T>(result: ApiResult<T>): WorldRead<T> {
+function read<T>(result: ApiResult<T>, fallback: string): WorldRead<T> {
   if (result.ok) return { ok: true, data: result.data, result };
   return {
     ok: false,
     status: result.status,
     notFound: result.status === 404 || result.error.code === "not_found",
-    message: errorMessage(result.error, "The generated world could not be read right now."),
+    message: errorMessage(result.error, fallback),
   };
 }
 
 export async function readWorld<T>(path: string, query?: Record<string, string | number | undefined>): Promise<WorldRead<T>> {
-  return read(await serverFetch<T>(path, { query }));
+  const tc = await getTranslations("common");
+  return read(await serverFetch<T>(path, { query }), tc("requestFailed"));
 }
 
 /** All five list routes share this `page`/`page_size` convention. */

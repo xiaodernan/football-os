@@ -6,6 +6,8 @@
 import { cookies } from "next/headers";
 
 import { ACCESS_COOKIE, apiBase, readError, type ApiResult } from "@/lib/api";
+import { getTranslations } from "next-intl/server";
+
 import { localiseRefusal } from "@/lib/refusals";
 import type { UserOut } from "@/lib/types";
 
@@ -34,10 +36,11 @@ export async function serverFetch<T>(path: string, init: ServerFetchOptions = {}
   try {
     response = await fetch(url, { method: init.method ?? "GET", headers, body, cache: init.cache ?? "no-store" });
   } catch {
+    const tc = await getTranslations("common");
     return {
       ok: false,
       status: 503,
-      error: { code: "api_unreachable", message: "The API is not reachable. Start it with scripts/dev.sh." },
+      error: { code: "api_unreachable", message: tc("apiUnreachable") },
     };
   }
   if (!response.ok) return { ok: false, status: response.status, error: await readError(response, localiseRefusal) };

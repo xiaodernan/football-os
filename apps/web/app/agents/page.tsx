@@ -35,7 +35,7 @@ export default async function AgentsPage() {
       </div>
       <AgentConsole
         agents={roster.ok ? roster.data.available_agents : []}
-        rosterError={roster.ok ? null : errorMessage(roster.error)}
+        rosterError={roster.ok ? null : errorMessage(roster.error, t("requestFailed"))}
       />
     </div>
   );

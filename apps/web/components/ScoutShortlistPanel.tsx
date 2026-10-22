@@ -150,7 +150,7 @@ export function ScoutShortlistPanel({ rules, candidates, searchedQuery }: { rule
           )}
           {fault && (
             <p className="notice notice--warn">
-              <strong>{fault.code ?? "error"}</strong> — {errorMessage(fault)}
+              <strong>{fault.code ?? "error"}</strong> — {errorMessage(fault, t("requestFailed"))}
               {figures ? <span className="mono"> {figures}</span> : null}
             </p>
           )}

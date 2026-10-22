@@ -83,7 +83,7 @@ export function ScoutTransferPanel({ candidates, rules, career }: { candidates: 
           <p className="muted mono">{rules.seed_rule}</p>
           {fault && (
             <p className="notice notice--warn" data-sim="refusal">
-              <strong>{fault.code ?? "error"}</strong> — {errorMessage(fault)}
+              <strong>{fault.code ?? "error"}</strong> — {errorMessage(fault, ts("requestFailed"))}
               {figures ? <span className="mono"> {figures}</span> : null}
             </p>
           )}

@@ -419,8 +419,8 @@ function LedgerPanel({
                   <th scope="col">{t("thPlayer")}</th>
                   <th scope="col">{t("thPosition")}</th>
                   {LEDGER_COLUMNS.map((column) => (
-                    <th key={column.key} scope="col" title={column.hint}>
-                      {column.label}
+                    <th key={column.key} scope="col" title={t(column.hintKey)}>
+                      {t(column.labelKey)}
                     </th>
                   ))}
                 </tr>

@@ -37,6 +37,7 @@ type Note = {figures: string[]; ok: boolean; text: string};
  */
 function useCommunityCall(announce?: (value: Note) => void) {
   const router = useRouter();
+  const t = useTranslations("community");
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<Note | null>(null);
   function paint(value: Note) {
@@ -59,7 +60,7 @@ function useCommunityCall(announce?: (value: Note) => void) {
       router.refresh();
       return true;
     }
-    paint({ figures: refusalFigures(result.error.details), ok: false, text: `${result.error.code} · ${errorMessage(result.error)}` });
+    paint({ figures: refusalFigures(result.error.details), ok: false, text: `${result.error.code} · ${errorMessage(result.error, t("requestFailed"))}` });
     return false;
   }
 

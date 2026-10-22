@@ -46,6 +46,7 @@ const TOKENS = new Map([
   ["worldTeam.thPot", "the rating scale's own name"],
   ["worldPlayer.thRpe", "the scale's own name"],
   ["worldTraining.thRpe", "the scale's own name"],
+  ["careerDetail.thLedgerXg", "the metric's own name"],
   ["simulationAggregates.thXg", "the metric's own name"],
   ["simulate.blockThXG", "the metric's own name"],
   ["club.tableHeaderRPE", "the scale's own name"],

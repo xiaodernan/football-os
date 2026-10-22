@@ -156,7 +156,7 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
           </div>
           {fault && (
             <p className="notice notice--warn">
-              <strong>{fault.code}</strong> — {errorMessage(fault)}
+              <strong>{fault.code}</strong> — {errorMessage(fault, t("requestFailed"))}
               {fault.details ? <span className="mono"> {JSON.stringify(fault.details)}</span> : null}
             </p>
           )}

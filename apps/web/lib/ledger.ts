@@ -71,15 +71,21 @@ export type SeasonLedger = {
   is_demo_data: boolean;
 };
 
-/** The seven counts a season's panel offers per player, in the order it prints them. */
 export type LedgerStatKey = "matches_with_events" | "goals" | "attempts" | "expected_goals" | "yellow_cards" | "red_cards" | "injuries";
 
-export const LEDGER_COLUMNS: { key: LedgerStatKey; label: string; hint: string }[] = [
-  { key: "matches_with_events", label: "Matches", hint: "fixtures with at least one event for this player" },
-  { key: "goals", label: "Goals", hint: "goal events naming this player" },
-  { key: "attempts", label: "Attempts", hint: "goals, saved shots and shots off target" },
-  { key: "expected_goals", label: "xG", hint: "the chance quality the engine gave those attempts" },
-  { key: "yellow_cards", label: "Yellow", hint: "bookings naming this player" },
-  { key: "red_cards", label: "Red", hint: "sendings-off naming this player" },
-  { key: "injuries", label: "Injury", hint: "injuries recorded against this player" },
+/**
+ * The seven counts a season's panel offers per player, in the order it prints them.
+ *
+ * The labels and the hints are **catalogue keys**, not sentences: the panel is read in the reader's
+ * language, and a label held in this file would be English in every language — which is what the copy
+ * gate found when it was taught to read the tier's `.ts` files, where this module had been invisible.
+ */
+export const LEDGER_COLUMNS: { key: LedgerStatKey; labelKey: string; hintKey: string }[] = [
+  { key: "matches_with_events", labelKey: "thLedgerMatches", hintKey: "hintLedgerMatches" },
+  { key: "goals", labelKey: "thLedgerGoals", hintKey: "hintLedgerGoals" },
+  { key: "attempts", labelKey: "thLedgerAttempts", hintKey: "hintLedgerAttempts" },
+  { key: "expected_goals", labelKey: "thLedgerXg", hintKey: "hintLedgerXg" },
+  { key: "yellow_cards", labelKey: "thLedgerYellow", hintKey: "hintLedgerYellow" },
+  { key: "red_cards", labelKey: "thLedgerRed", hintKey: "hintLedgerRed" },
+  { key: "injuries", labelKey: "thLedgerInjury", hintKey: "hintLedgerInjury" },
 ];

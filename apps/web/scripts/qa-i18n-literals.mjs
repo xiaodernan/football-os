@@ -58,6 +58,15 @@ const APP = join(WEB, "app");
  * of `app/` could see them. The population is therefore both directories.
  */
 const COMPONENTS = join(WEB, "components");
+/**
+ * The tier's own modules carry copy too, and the gate could not see any of it: it read every `.tsx`
+ * under `app/` and `components/`, and not a single `.ts` — while the reader-facing sentences live in
+ * exactly those files. `lib/api.ts` holds the tier's own error sentences ("The web tier could not reach
+ * the API."), and `lib/world.ts` holds a fallback a Chinese reader would be shown.
+ *
+ * So the population is the whole tier: `.tsx` and `.ts`, under `app/`, `components/` and `lib/`.
+ */
+const LIB = join(WEB, "lib");
 
 /** The committed ceiling on English literal sites. i18n work lowers it; nothing else may. */
 /**
@@ -121,8 +130,8 @@ const TECHNICAL_PATTERNS = [
 ];
 
 const TECHNICAL = new Set([
-  "AI", "API", "CV", "DRI", "FM", "GB", "GPS", "HTML", "HTTP", "ID", "JSON", "MB", "MVP", "PDF",
-  "PM", "RPE", "SQL", "TBD", "URL", "UTC", "U19", "U21", "VS", "X", "XGD", "xG", "xT",
+  "AI", "API", "Bearer", "CV", "DRI", "FM", "GB", "GPS", "HTML", "HTTP", "ID", "JSON", "MB",
+  "MVP", "PDF", "PM", "RPE", "SQL", "TBD", "URL", "UTC", "U19", "U21", "VS", "X", "XGD", "xG", "xT",
 ]);
 
 /**
@@ -131,17 +140,30 @@ const TECHNICAL = new Set([
  */
 const CATALOGUE = JSON.parse(readFileSync(join(WEB, "messages", "en.json"), "utf8"));
 
+/**
+ * The files the gate does not read, and why.
+ *
+ * `lib/site.ts` holds the site's own brand line and the metadata sentence it is printed into — the
+ * layout's description, the `WebSite` graph, the share card's alt text. That is the **SEO surface's**
+ * own copy, and the SEO surface has its own gate; the interface's copy is everywhere else. A file the
+ * gate does not read is a claim, so it is named here rather than left implied.
+ */
+const EXEMPT_FILES = new Set(["lib/site.ts"]);
+
 const files = [];
-const walk = (dir) => {
+const walk = (dir, extension) => {
   if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
     const p = join(dir, entry.name);
-    if (entry.isDirectory()) walk(p);
-    else if (entry.name.endsWith(".tsx")) files.push(p);
+    if (entry.isDirectory()) walk(p, extension);
+    else if (entry.name.endsWith(extension) && !EXEMPT_FILES.has(p.slice(WEB.length + 1).split(sep).join("/"))) files.push(p);
   }
 };
-walk(APP);
-walk(COMPONENTS);
+walk(APP, ".tsx");
+walk(COMPONENTS, ".tsx");
+walk(APP, ".ts");
+walk(COMPONENTS, ".ts");
+walk(LIB, ".ts");
 
 const relOf = (p) => p.slice(WEB.length + 1).split(sep).join("/");
 
@@ -288,7 +310,9 @@ const templateIsToken = (node, parts) => {
         /^T\d{2}:\d{2}:\d{2}Z?$/.test(bare) || // a time format
         /^\d+(\.\d+)?\s?[A-Za-z%]+$/.test(bare) || // a measurement
         /^[KMGT]i?B$/.test(bare) || // a byte unit
-        /^[a-z][A-Za-z0-9_]*:/.test(bare) // a field name
+        /^[a-z][A-Za-z0-9_]*:/.test(bare) || // a field name
+        /^[=;,]*\s*(?:HttpOnly|Secure|Path|Max-Age|Expires|Domain|SameSite)\b/iu.test(bare) || // a cookie's attribute
+        /^[=;,./\s]*$/u.test(bare) // a separator between the cookie's parts
       );
     });
 };
@@ -1036,7 +1060,14 @@ check(
 const missingNamedKeys = [];
 for (const named of namedKeys) {
   const { namespaces } = keyCalls.get(named.file) ?? { namespaces: new Set() };
-  const held = [...namespaces].some((namespace) => Object.prototype.hasOwnProperty.call(CATALOGUE[namespace] ?? {}, named.key));
+  const held = namespaces.size
+    ? [...namespaces].some((namespace) => Object.prototype.hasOwnProperty.call(CATALOGUE[namespace] ?? {}, named.key))
+    : // A data module names no namespace of its own -- `lib/ledger.ts` holds the ledger's labels -- so
+      // its key is held if the catalogue holds it *somewhere*: the page that renders the module is the
+      // one that reads it, and it reads it from the namespace the key belongs to.
+      Object.values(CATALOGUE).some(
+        (block) => block && typeof block === "object" && Object.prototype.hasOwnProperty.call(block, named.key),
+      );
   if (!held) missingNamedKeys.push(named);
 }
 

@@ -38,11 +38,11 @@ function normalizeError(status: number, payload: unknown): ApiError {
     const figures = Object.fromEntries(Object.entries(d).filter(([key]) => key !== "code" && key !== "message"));
     return {
       code: typeof d.code === "string" ? d.code : "error",
-      message: typeof d.message === "string" ? d.message : "Request failed",
+      message: typeof d.message === "string" ? d.message : "",
       details: d.details ?? d.detail ?? (Object.keys(figures).length ? figures : undefined),
     };
   }
-  return { code: "error", message: `Request failed with status ${status}` };
+  return { code: "error", message: "" };
 }
 
 /**
@@ -59,11 +59,11 @@ export async function readError(response: Response, transform?: (payload: unknow
     const payload = await response.json();
     return normalizeError(response.status, transform ? await transform(payload) : payload);
   } catch {
-    return { code: "error", message: `Request failed with status ${response.status}` };
+    return { code: "error", message: "" };
   }
 }
 
-export function errorMessage(error: ApiError | undefined, fallback = "Something went wrong"): string {
+export function errorMessage(error: ApiError | undefined, fallback: string): string {
   if (!error) return fallback;
   return error.message || fallback;
 }
@@ -85,7 +85,7 @@ export async function browserFetch<T>(path: string, init: { method?: string; bod
       credentials: "same-origin",
     });
   } catch {
-    return { ok: false, status: 502, error: { code: "network_error", message: "The web tier could not reach the API." } };
+    return { ok: false, status: 502, error: { code: "network_error", message: "" } };
   }
   if (!response.ok) return { ok: false, status: response.status, error: await readError(response) };
   if (response.status === 204) return { ok: true, status: 204, data: null as T };

@@ -71,7 +71,15 @@ function withMessage(body: unknown, message: string): unknown {
  */
 export async function localiseRefusal(body: unknown): Promise<unknown> {
   const refusal = readRefusal(body);
-  if (!refusal || !KNOWN.has(refusal.code)) return body;
+  if (!refusal) {
+    // An answer that is not a refusal: a validation error, a gateway's own body, anything without a
+    // code. The tier's own sentence for it is the catalogue's, in the reader's language -- and it is
+    // the only place the tier's sentence is allowed to come from, because the browser cannot read
+    // the catalogue and the server can.
+    const tc = await getTranslations("common");
+    return withMessage({ code: "error" }, tc("requestFailed"));
+  }
+  if (!KNOWN.has(refusal.code)) return body;
   const locale = await getLocale();
   if (locale === "en") return body;
   const te = await getTranslations("errors");
