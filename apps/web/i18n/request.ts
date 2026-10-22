@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
 
 import { defaultLocale, locales, type Locale } from "@/i18n/locales";
@@ -18,6 +19,23 @@ const messagesMap = {
 } as const;
 
 /**
+ * The locale the **cookie** holds, for the requests the middleware does not run for.
+ *
+ * The middleware skips `/api` — the cookie proxy lives there — so the proxy's own request carries no
+ * `x-next-intl-locale` header and next-intl would answer it in English, whatever the reader chose. The
+ * reader's choice is in the `fo_locale` cookie, which the middleware writes on every response, so the
+ * proxy reads it from there. A build-time call has no request at all and falls back to English.
+ */
+async function cookieLocale(): Promise<string | undefined> {
+  try {
+    const value = (await cookies()).get("fo_locale")?.value;
+    return value && (locales as readonly string[]).includes(value) ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * The message bundle for the locale `middleware.ts` decided from the `fo_locale` cookie and the caller's
  * `Accept-Language`. This file was the *routing* half of next-intl until 2026-09-28, when its sibling
  * `i18n/navigation.ts` fed a middleware that rewrote every path to `/{locale}/…` and 404'd the whole site.
@@ -25,7 +43,7 @@ const messagesMap = {
  * a route guard, and an unknown language must not take a page down with it.
  */
 export default getRequestConfig(async ({ requestLocale }) => {
-  const requested = (await requestLocale) ?? defaultLocale;
+  const requested = (await requestLocale) ?? (await cookieLocale()) ?? defaultLocale;
   const locale = (locales as readonly string[]).includes(requested) ? (requested as Locale) : defaultLocale;
   return {
     locale,

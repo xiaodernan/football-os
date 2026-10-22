@@ -6,6 +6,7 @@
 import { cookies } from "next/headers";
 
 import { ACCESS_COOKIE, apiBase, readError, type ApiResult } from "@/lib/api";
+import { localiseRefusal } from "@/lib/refusals";
 import type { UserOut } from "@/lib/types";
 
 export type ServerFetchOptions = {
@@ -39,7 +40,7 @@ export async function serverFetch<T>(path: string, init: ServerFetchOptions = {}
       error: { code: "api_unreachable", message: "The API is not reachable. Start it with scripts/dev.sh." },
     };
   }
-  if (!response.ok) return { ok: false, status: response.status, error: await readError(response) };
+  if (!response.ok) return { ok: false, status: response.status, error: await readError(response, localiseRefusal) };
   if (response.status === 204) return { ok: true, status: 204, data: null as T };
   return { ok: true, status: response.status, data: (await response.json()) as T };
 }

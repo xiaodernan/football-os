@@ -10,6 +10,7 @@
 import { cookies } from "next/headers";
 
 import { ACCESS_COOKIE, REFRESH_COOKIE, REFRESH_COOKIE_PATH, apiBase } from "@/lib/api";
+import { localiseRefusal } from "@/lib/refusals";
 
 type Params = { params: Promise<{ path: string[] }> };
 
@@ -147,12 +148,33 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
     }
   }
 
-  const out = new Response(response.body, {
+  /**
+   * A refusal's sentence is the API's own English, and the reader is the one who has to read it. The
+   * proxy is where the browser's traffic meets the API, so this is where the sentence becomes the
+   * catalogue's — one place, for every client-side error, and nothing below it changes.
+   */
+  let outBody: BodyInit | null = response.body;
+  const headers = new Headers({
+    "content-type": response.headers.get("content-type") ?? "application/json",
+    ...byteRangeHeaders(response),
+  });
+  if (!response.ok && (headers.get("content-type") ?? "").includes("application/json")) {
+    const raw = await response.text();
+    let payload: unknown = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      payload = null;
+    }
+    const localised = payload ? await localiseRefusal(payload) : null;
+    outBody = localised ? JSON.stringify(localised) : raw;
+    // The body changed, so the length the API sent no longer describes it.
+    headers.delete("content-length");
+  }
+
+  const out = new Response(outBody, {
     status: response.status,
-    headers: new Headers({
-      "content-type": response.headers.get("content-type") ?? "application/json",
-      ...byteRangeHeaders(response),
-    }),
+    headers,
   });
 
   if (path.join("/") === "auth/logout" && response.status === 204) return applyCookies(out, {}, { clear: true });

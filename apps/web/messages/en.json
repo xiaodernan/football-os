@@ -3585,5 +3585,33 @@
     "reportsPerTenant": "{max} reports per tenant — and no figure is sent with it: the answer is computed when somebody reads it.",
     "refusedWith": "{method} {path} was refused with {status}",
     "answeredWith": "{method} {path} answered {status}. The tables on this page were re-read from the server afterwards."
+  },
+  "errors": {
+    "ai_budget_exhausted": "Today's AI spend cap is reached. Retrieval still works.",
+    "already_completed": "This session is already logged",
+    "bad_date": "Dates must be ISO-8601, e.g. 2026-11-08",
+    "career_retired": "this career is retired; its squad is closed",
+    "conflict": "That record conflicts with existing data",
+    "email_taken": "An account already uses this email",
+    "entity_type_required": "Pass entity_type with entity",
+    "internal_error": "Unexpected server error",
+    "invalid_credentials": "Email or password is incorrect",
+    "missing_records": "Session references are incomplete",
+    "no_objectives": "a career needs at least one objective to be judged by",
+    "no_player": "Create your player profile first",
+    "no_refresh": "No active session",
+    "organization_owner_required": "This account is the last active owner of an organisation with other active members",
+    "player_exists": "One player profile per account in M1; multiple squads arrive with Club OS (M8)",
+    "provider_switch_unavailable": "Provider switching requires environment variable changes and server restart.",
+    "rate_limited": "Too many requests, slow down",
+    "refresh_invalid": "Session expired, please sign in again",
+    "refresh_reused": "This session was signed out because its token was presented twice",
+    "same_team": "a fixture needs two different clubs; the model has no self-play",
+    "tactics_not_synced": "The tactical catalogue has not been stored on this database yet",
+    "token_expired": "Session expired",
+    "token_invalid": "Invalid session",
+    "token_wrong_type": "Invalid token type",
+    "unauthenticated": "Authentication required",
+    "validation_error": "Request validation failed"
   }
 }

@@ -3585,5 +3585,33 @@
     "reportsPerTenant": "每個租戶 {max} 份報告——而且不附帶任何數字：答案是在有人讀取時才算出來的。",
     "refusedWith": "{method} {path} 被拒絕，回傳 {status}",
     "answeredWith": "{method} {path} 回傳 {status}。本頁的表格隨後從伺服器重新讀取。"
+  },
+  "errors": {
+    "ai_budget_exhausted": "今日的 AI 支出上限已用盡，檢索仍可使用。",
+    "already_completed": "這次訓練已經記錄過了",
+    "bad_date": "日期必須是 ISO-8601 格式，例如 2026-11-08",
+    "career_retired": "這個賽季已經退役，陣容已關閉",
+    "conflict": "該記錄與已有資料衝突",
+    "email_taken": "該信箱已被一個帳號使用",
+    "entity_type_required": "請在 entity 中同時傳入 entity_type",
+    "internal_error": "伺服器出現意外錯誤",
+    "invalid_credentials": "信箱或密碼不正確",
+    "missing_records": "這次訓練的關聯記錄不完整",
+    "no_objectives": "一個賽季至少需要一個目標才能評判",
+    "no_player": "請先建立你的球員檔案",
+    "no_refresh": "沒有有效的會話",
+    "organization_owner_required": "這個帳號是該組織唯一仍活躍的所有者，而組織中還有其他活躍成員",
+    "player_exists": "M1 中每個帳號只有一個球員檔案；多陣容隨 Club OS（M8）到來",
+    "provider_switch_unavailable": "切換模型服務需要修改環境變數並重新啟動伺服器。",
+    "rate_limited": "請求過多，請放慢速度",
+    "refresh_invalid": "會話已過期，請重新登入",
+    "refresh_reused": "因為權杖被重複使用，這個會話已被登出",
+    "same_team": "一場比賽需要兩支不同的球隊，模型不支持自己打自己",
+    "tactics_not_synced": "戰術目錄尚未寫入這個資料庫",
+    "token_expired": "會話已過期",
+    "token_invalid": "會話無效",
+    "token_wrong_type": "權杖類型無效",
+    "unauthenticated": "需要登入",
+    "validation_error": "請求驗證未通過"
   }
 }

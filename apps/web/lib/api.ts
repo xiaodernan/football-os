@@ -45,9 +45,19 @@ function normalizeError(status: number, payload: unknown): ApiError {
   return { code: "error", message: `Request failed with status ${status}` };
 }
 
-export async function readError(response: Response): Promise<ApiError> {
+/**
+ * The refusal the API answered with, as the web tier's own error shape.
+ *
+ * The optional **transform** is how a server-side caller localises the refusal's sentence before it is
+ * normalised: the API's `message` is its own English, and `lib/refusals.ts` replaces it with the
+ * catalogue's sentence for the same code. The transform is optional so this module stays free of the
+ * catalogue — it is imported by client components, and the messages reach the browser through
+ * next-intl's provider, not through a bundle of its own.
+ */
+export async function readError(response: Response, transform?: (payload: unknown) => unknown | Promise<unknown>): Promise<ApiError> {
   try {
-    return normalizeError(response.status, await response.json());
+    const payload = await response.json();
+    return normalizeError(response.status, transform ? await transform(payload) : payload);
   } catch {
     return { code: "error", message: `Request failed with status ${response.status}` };
   }

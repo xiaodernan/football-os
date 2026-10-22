@@ -256,3 +256,165 @@ def test_no_other_carrier_states_a_locale_figure() -> None:
     assert not offenders, f"{len(offenders)} locale figure(s) stated outside {README}, which no reader recomputes: {' · '.join(offenders[:3])}"
     charged = [f"{rel} carries {text!r}" for rel, text in CHARGED_CLAIMS if any(text in line for line in _prose(rel))]
     assert not charged, f"a retired claim about i18n is back: {' · '.join(charged)}"
+
+
+#: The API's own source, for the refusal census below.
+APP_SOURCE = Path(__file__).resolve().parents[1] / "app"
+
+#: A refusal's code and message, as a door writes them: `detail={"code": ..., "message": ...}`.
+#: The code is a literal or a module-level constant; the message is a literal, an f-string, or a
+#: variable a helper filled in — which is what makes a message *not* fixed.
+_REFUSAL = re.compile(
+    r"""["']code["']\s*:\s*(?:["']([a-z][a-z0-9_]{2,48})["']|([A-Z][A-Z0-9_]{2,}))"""
+    r"""\s*,\s*["']message["']\s*:\s*(?:(f?)(["'])(.*?)(?<!\\)\4|([A-Za-z_][A-Za-z0-9_]*))""",
+    re.DOTALL,
+)
+
+#: The four handlers' own answers: `_answer("code", "message")`.
+_ANSWERED = re.compile(r"""_answer\(\s*["']([a-z][a-z0-9_]{2,48})["']\s*,\s*(f?)(["'])(.*?)(?<!\\)\3""", re.DOTALL)
+
+#: A module-level constant: `NAME = "value"` or `NAME: Final = "value"`.
+_CONSTANT = re.compile(r"""^([A-Z][A-Z0-9_]{2,})\s*(?::[^=]+)?=\s*["']([a-z][a-z0-9_]{2,48})["']""", re.MULTILINE)
+
+#: The refusal codes whose message the catalogue cannot reproduce, and why they are named rather than
+#: translated. Every one of them either names a value the request supplied ("philosophy must be one of
+#: [...]") or is chosen by a helper at the raise site ("The current password is incorrect"). The
+#: catalogue cannot hold a sentence that changes with the request, so these keep the API's own words —
+#: and a new code has to be added here before it can be published, which is the point of the list.
+NOT_FIXED_CODES: frozenset[str] = frozenset(
+    {
+        "account_delete_confirmation",
+        "account_inactive",
+        "bad_minutes",
+        "bad_objective",
+        "bad_philosophy",
+        "bad_status",
+        "board_limit",
+        "cannot_choose_club",
+        "cannot_play",
+        "career_limit",
+        "insufficient_role",
+        "invalid_board",
+        "invalid_password",
+        "job_not_cancellable",
+        "job_not_deletable",
+        "media_tools_missing",
+        "no_fixture",
+        "no_such_challenge",
+        "no_such_club",
+        "no_such_frame",
+        "no_such_input",
+        "no_such_job",
+        "no_such_memory",
+        "no_such_system",
+        "no_such_team",
+        "no_such_trace",
+        "not_found",
+        "private_media_not_erased",
+        "range_not_satisfiable",
+        "run_limit",
+        "simulation_limit",
+        "too_large",
+        "transfers_forbidden",
+        "unknown_agent_type",
+        "unknown_change",
+        "unsupported_container",
+        "video_limit",
+        "window_closed",
+        "wrong_path",
+    }
+)
+
+
+def _refusals() -> dict[str, dict[str, Any]]:
+    """Every refusal code the API publishes, with the messages it publishes for it."""
+    constants: dict[str, str] = {}
+    found: dict[str, dict[str, Any]] = {}
+    for path in sorted(APP_SOURCE.rglob("*.py")):
+        if "tests" in path.parts:
+            continue
+        source = path.read_text(encoding="utf-8", errors="replace")
+        constants.update(dict(_CONSTANT.findall(source)))
+        pairs = [(code, "", f, q, message, "") for code, f, q, message in _ANSWERED.findall(source)]
+        for literal, name, is_f, _quote, message, variable in _REFUSAL.findall(source) + pairs:
+            code = literal or constants.get(name)
+            if not code:
+                continue
+            entry = found.setdefault(code, {"messages": set(), "dynamic": False})
+            if variable or is_f or "{" in message or not re.search(r"[A-Za-z]", message):
+                entry["dynamic"] = True
+            else:
+                entry["messages"].add(message)
+    return found
+
+
+def test_every_refusal_the_api_publishes_has_a_catalogue_sentence() -> None:
+    """A refusal is the reader's copy, so the catalogue holds it — and the two cannot drift.
+
+    The API answers a refusal with a **code** and a **sentence**, and the web tier shows the sentence:
+    `errorMessage()` returns `error.message`. So a Chinese reader was told "The current password is
+    incorrect" in English, on a page whose every other sentence came from the Chinese catalogue.
+
+    The catalogue now holds one key per refusal code, with the **English value being the API's message
+    verbatim** — so the English rendering is byte-identical and this is a translation rather than a copy
+    change — and the code needs no translation at all.
+
+    This case holds the two in step in both directions:
+
+    * every code the API publishes with a **fixed** message has a catalogue key, and the catalogue's
+      English value is that message, so the two cannot drift apart;
+    * every `errors.*` key the catalogue holds is such a code, so a key nothing reads cannot sit in
+      the catalogue;
+    * every code whose message is **not** fixed is named in `NOT_FIXED_CODES`, so a new refusal has to
+      be classified before it can be published — a list without reasons is the same as no list at all.
+    """
+    refusals = _refusals()
+    assert refusals, "the refusal census found no code at all, so every check below would pass by finding nothing"
+
+    fixed = {
+        code: sorted(entry["messages"])
+        for code, entry in refusals.items()
+        if not entry["dynamic"] and len(entry["messages"]) == 1
+    }
+    not_fixed = {code for code, entry in refusals.items() if code not in fixed}
+
+    catalogue = _catalogues()[FALLBACK]
+    sentences = {key.split(".", 1)[1]: value for key, value in catalogue.items() if key.startswith("errors.")}
+
+    missing = [
+        f"{code} -> {messages[0]!r}"
+        for code, messages in sorted(fixed.items())
+        if code not in sentences
+    ]
+    assert not missing, (
+        f"{len(missing)} refusal code(s) the API publishes with a fixed message have no catalogue "
+        f"sentence, so a reader is shown the API's English: {missing[:4]}"
+    )
+
+    drifted = [
+        f"{code}: catalogue {sentences[code]!r} != API {messages[0]!r}"
+        for code, messages in sorted(fixed.items())
+        if sentences[code] != messages[0]
+    ]
+    assert not drifted, (
+        f"{len(drifted)} catalogue sentence(s) no longer match the API's message, so the English "
+        f"rendering would change: {drifted[:4]}"
+    )
+
+    unheld = sorted(sentences.keys() - set(fixed))
+    assert not unheld, (
+        f"{len(unheld)} catalogue sentence(s) name a code the API does not publish with a fixed "
+        f"message: {unheld[:4]}"
+    )
+
+    unnamed = sorted(not_fixed - NOT_FIXED_CODES)
+    assert not unnamed, (
+        f"{len(unnamed)} refusal code(s) publish a message the catalogue cannot reproduce and are "
+        f"not named in NOT_FIXED_CODES: {unnamed[:4]}"
+    )
+
+    stale = sorted(NOT_FIXED_CODES - not_fixed)
+    assert not stale, (
+        f"{len(stale)} named code(s) now publish a fixed message, so the catalogue should carry them: "
+        f"{stale[:4]}"
+    )

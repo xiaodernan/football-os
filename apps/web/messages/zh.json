@@ -3585,5 +3585,33 @@
     "reportsPerTenant": "每个租户 {max} 份报告——而且不附带任何数字：答案是在有人读取时才算出来的。",
     "refusedWith": "{method} {path} 被拒绝，返回 {status}",
     "answeredWith": "{method} {path} 返回 {status}。本页的表格随后从服务器重新读取。"
+  },
+  "errors": {
+    "ai_budget_exhausted": "今日的 AI 支出上限已用尽，检索仍可使用。",
+    "already_completed": "这次训练已经记录过了",
+    "bad_date": "日期必须是 ISO-8601 格式，例如 2026-11-08",
+    "career_retired": "这个赛季已经退役，阵容已关闭",
+    "conflict": "该记录与已有数据冲突",
+    "email_taken": "该邮箱已被一个账号使用",
+    "entity_type_required": "请在 entity 中同时传入 entity_type",
+    "internal_error": "服务器出现意外错误",
+    "invalid_credentials": "邮箱或密码不正确",
+    "missing_records": "这次训练的关联记录不完整",
+    "no_objectives": "一个赛季至少需要一个目标才能评判",
+    "no_player": "请先创建你的球员档案",
+    "no_refresh": "没有有效的会话",
+    "organization_owner_required": "这个账号是该组织唯一仍活跃的所有者，而组织中还有其他活跃成员",
+    "player_exists": "M1 中每个账号只有一个球员档案；多阵容随 Club OS（M8）到来",
+    "provider_switch_unavailable": "切换模型服务需要修改环境变量并重启服务器。",
+    "rate_limited": "请求过多，请放慢速度",
+    "refresh_invalid": "会话已过期，请重新登录",
+    "refresh_reused": "因为令牌被重复使用，这个会话已被登出",
+    "same_team": "一场比赛需要两支不同的球队，模型不支持自己打自己",
+    "tactics_not_synced": "战术目录尚未写入这个数据库",
+    "token_expired": "会话已过期",
+    "token_invalid": "会话无效",
+    "token_wrong_type": "令牌类型无效",
+    "unauthenticated": "需要登录",
+    "validation_error": "请求校验未通过"
   }
 }
