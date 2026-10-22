@@ -18,7 +18,7 @@
  */
 
 import { execFile } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { mkdir, stat, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -3463,6 +3463,42 @@ async function run() {
     // nobody has judged in the reader's language. Printed rather than summarised, because the point of
     // an exemption nobody can see is that it stays visible.
     console.log(`      the pages the sweep read in Chinese (${swept.length}): ${swept.map((entry) => entry.split(' ')[0]).join(' ')}`);
+
+    /**
+     * Every route the tree holds, and the pages the sweep read under them.
+     *
+     * A route nobody read in the reader's language is a page the claim does not cover, so the coverage
+     * is held here rather than assumed. The corpus routes are the exception the sweep already names:
+     * they carry the project's own English documents, published in English on purpose.
+     */
+    const routePatterns = [];
+    const collectRoutes = (dir, prefix = '') => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          const segment = entry.name.startsWith('[') ? entry.name.slice(1, -1) : entry.name;
+          collectRoutes(full, `${prefix}/${segment}`);
+          continue;
+        }
+        if (entry.name === 'page.tsx') routePatterns.push(prefix || '/');
+      }
+    };
+    collectRoutes(join(resolve(dirname(fileURLToPath(import.meta.url)), '..'), 'app'));
+    const readPaths = swept.map((entry) => entry.split(' ')[0]);
+    const uncovered = routePatterns.filter((pattern) => {
+      if (pattern.startsWith('/knowledge')) return false;
+      const matcher = new RegExp(
+        `^${pattern.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&').replace(/:[^/]+/gu, '[^/]+')}(/.*)?$`,
+      );
+      return !readPaths.some((path) => matcher.test(path));
+    });
+    check(
+      'the sweep read a page under every route the tree holds',
+      uncovered.length === 0,
+      uncovered.length === 0
+        ? `${routePatterns.length} route(s), ${readPaths.length} page(s) read in Chinese`
+        : `${uncovered.length} route(s) no page was read under: ${uncovered.slice(0, 8).join(' | ')}`,
+    );
   } catch (error) {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed
     // check, capture what the browser was actually looking at, and fall through to the summary.
