@@ -1081,3 +1081,16 @@ either.
 
 A page no walk reads is a page whose copy is unjudged and unproven: the sweep's claim is about the
 pages it read, and the route-coverage check now says so at runtime, in the walk that can see it.
+
+### The three fixes that question asked for
+
+The same question, asked one layer deeper each time, found three things:
+
+| the question | the finding | the fix |
+| --- | --- | --- |
+| does the sweep judge every page? | it judges the pages the walk **visited**, and that list was not printed | the sweep prints the pages it read, in full |
+| does the walk visit every route the tree holds? | five routes are named by **no** walk, three more only by their own tier's | the visual walk opens the five, and the two that need a session **before it signs out** |
+| is "visited" the same as "read"? | **no** — the walk signs out before the sweep, so a session-gated page redirects to the login | the sweep records the path the browser **landed on**, so a redirect is not a read |
+
+The third is the one that would have lied: a coverage check that counted the path it asked for would
+have called a redirected page read, and the check would have been green about a page nobody saw.
