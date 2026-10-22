@@ -55,7 +55,7 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
     }
     setFault(`${result.error.code}: ${errorMessage(result.error, t("requestFailed"))}`);
     return null;
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!initialLedger) void loadLedger();

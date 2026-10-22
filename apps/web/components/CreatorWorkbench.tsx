@@ -130,7 +130,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
       return;
     }
     setReadFault(faultLine(result.error, t("requestFailed")));
-  }, []);
+  }, [t]);
 
   const loadShelf = useCallback(async () => {
     // Scoped to this account, because the panel is titled "your shelf" and the door's unscoped listing is
@@ -139,13 +139,13 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
     const result = await browserFetch<GuideShelfView>(`/creator/guides?creator=${encodeURIComponent(creator)}`);
     if (result.ok) setShelf(result.data);
     else setReadFault(faultLine(result.error, t("requestFailed")));
-  }, [creator]);
+  }, [creator, t]);
 
   const readGuide = useCallback(async (guideId: string) => {
     const result = await browserFetch<GuideDetailView>(`/creator/guides/${guideId}`);
     if (result.ok) setSelectedGuide(result.data);
     else setReadFault(faultLine(result.error, t("requestFailed")));
-  }, []);
+  }, [t]);
 
   const loadPrograms = useCallback(async () => {
     // Scoped to this account for the same reason the guide shelf is: the panel is titled "your
@@ -153,18 +153,18 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
     const result = await browserFetch<ProgramShelfView>(`/creator/programs?creator=${encodeURIComponent(creator)}`);
     if (result.ok) setPrograms(result.data);
     else setReadFault(faultLine(result.error, t("requestFailed")));
-  }, [creator]);
+  }, [creator, t]);
 
   const loadDrills = useCallback(async () => {
     const result = await browserFetch<Drill[]>("/trainings/drills");
     if (result.ok) setDrills(result.data);
-  }, []);
+  }, [t]);
 
   const loadChallenges = useCallback(async () => {
     const result = await browserFetch<CareerChallengeShelfView>(`/creator/challenges?creator=${encodeURIComponent(creator)}`);
     if (result.ok) setChallenges(result.data);
     else setReadFault(faultLine(result.error, t("requestFailed")));
-  }, [creator]);
+  }, [creator, t]);
 
   const loadCareers = useCallback(async () => {
     const result = await browserFetch<CareerList>("/careers");
@@ -175,7 +175,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
     }
     // An empty select because the door did not answer is not "you have no career": the fault is shown instead.
     setReadFault(faultLine(result.error, t("requestFailed")));
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadProfile();
