@@ -158,7 +158,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
   const loadDrills = useCallback(async () => {
     const result = await browserFetch<Drill[]>("/trainings/drills");
     if (result.ok) setDrills(result.data);
-  }, [t]);
+  }, []);
 
   const loadChallenges = useCallback(async () => {
     const result = await browserFetch<CareerChallengeShelfView>(`/creator/challenges?creator=${encodeURIComponent(creator)}`);
