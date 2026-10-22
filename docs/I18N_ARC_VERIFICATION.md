@@ -1035,3 +1035,16 @@ the tree's own failure boundary is now part of what a broken page shows the read
 
 That is the arc's evidence and the arc's tree, in one run: the numbers and the code are the same
 thing, and the doc's figures are the figures that run read.
+
+### The surface of the sweep's claim
+
+The sweep's claim is about *the pages this walk visited* — so the list of those pages **is** the surface
+of the claim, and a page the sweep never read is a page nobody has judged in the reader's language.
+The sweep now prints the pages it read, in full, beside the check that says they are all in the
+Chinese catalogue.
+
+The static census says the tree holds **61 route patterns** and the walk's own source names **54**
+concrete paths, leaving **33** routes with no named path under them — and most of those are the
+dynamic ones the walk reaches at runtime (the career it opened, the team it read out of the API, the
+share link it minted). The runtime list is the one that settles it, and it is now printed rather than
+assumed.
