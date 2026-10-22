@@ -166,8 +166,11 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
     } catch {
       payload = null;
     }
-    const localised = payload ? await localiseRefusal(payload) : null;
-    outBody = localised ? JSON.stringify(localised) : raw;
+    // The proxy is the browser's door, and it is a server: it can read the catalogue, and the browser
+    // cannot. So the answer it forwards is localised here -- including the one it could not parse,
+    // which used to travel as the API's own bytes and reach a Chinese reader as English.
+    const localised = await localiseRefusal(payload);
+    outBody = JSON.stringify(localised);
     // The body changed, so the length the API sent no longer describes it.
     headers.delete("content-length");
   }
