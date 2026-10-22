@@ -966,3 +966,11 @@ default locale's card whatever the layout's metadata says. A per-locale card wou
 travel in the **URL** — a change to how the site addresses its pages, not a change to a sentence — and
 so it is a design question rather than a copy fix. Until that question is answered, the card is English
 on purpose: it is the picture a scraper without a cookie receives.
+
+### The figures, on the day
+
+The three catalogues hold **3596 keys** each — 3551 translated in Simplified Chinese and 3551 in
+Traditional, and **45** the same in every language because they are technical tokens. The `errors`
+namespace holds all **65** refusal codes, and `careerDetail` holds **115** keys — fourteen of them the
+ledger's labels and hints, which are the copy the copy gate found on the day it was taught to read the
+tier's `.ts` files.
