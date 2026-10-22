@@ -200,7 +200,7 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   `qa-unused-keys.mjs` (3: **every key the catalogue holds is asked for by a page**; floor 0) ·
   `qa-locale-tokens.mjs` (3: the English file holds no Chinese; the identical values are the 44 named ones) ·
   `qa-field-labels.mjs` (2) · `qa-metadata-title.mjs` (165). The **browser** evidence is the visual walk, which now
-  reads **298/298, exit 0** — including the locale sweep, the check that reads every page the walk touched again in
+  reads **298 checks, every one of them passing, exit 0** — including the sweep, the check that reads every page the walk touched again in
   Chinese and holds that none of them carries an untranslated label: *49 pages read in Chinese, 1964 English phrases
   compared*. The sweep prints the English it **tolerated** — the API's authored prose, quoted rather than translated —
   because an exemption nobody can see is a claim nobody can check.
