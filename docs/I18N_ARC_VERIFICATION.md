@@ -999,3 +999,29 @@ after them, because the web tier's own gates do not run it and the pre-commit ho
 not the repository's gate. The repository's gate is `scripts/check.sh`, and it *does* run
 `python -m pytest` over the API — so the rule the arc records is its own: **after a change to the
 catalogue, run the API's suite, not only the web's gates.** The table is recomputed and the pin holds.
+
+## 15. The failure the reader meets most often (2026-10-22)
+
+### The question
+
+The tree had a `not-found.tsx` in the catalogue — so what did a page that **throws** show? The
+framework's own error screen: "Application error: a server-side exception has occurred while loading
+the page", in every language, on a page whose every other sentence comes from the catalogue. The tree
+had a localised way to say *this page does not exist* and no localised way to say *this page failed* —
+and the failure is the one a reader meets far more often.
+
+### The fix, and the gate
+
+`app/error.tsx` is the tree's own boundary: it says the page could not be loaded, it offers the one
+thing a reader can do with a page that failed — ask for it again — and it shows the reader nothing the
+server already has in its log. Four keys in three languages, in their own `errorBoundary` namespace.
+
+`apps/web/scripts/qa-error-boundary.mjs` holds it: **2/2**, in `scripts/check.sh` and in CI. The
+boundary must be there, it must be a client component, and its sentences must be in the catalogue with
+the same keys in all three languages. Its red path was watched: with the file moved aside the gate
+reads **0/2** and names both findings — that the boundary does not exist, and that it reads no
+catalogue namespace.
+
+A `global-error.tsx` — the boundary for a failure in the *root layout* — is deliberately absent: it
+replaces the layout itself, so it has no locale provider, and a page that never renders is not worth a
+catalogue in the bundle. The framework's default is the honest answer for that case.
