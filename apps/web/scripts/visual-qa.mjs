@@ -3362,6 +3362,8 @@ async function run() {
     /** A label, allowing the one trailing mark a label sometimes carries. */
     const labelOf = (text) => text.replace(/[.,:;·。]+$/u, '').trim();
     const englishPhrases = [];
+    /** The same phrases, indexed by their first word — the sweep compares thousands of elements per page. */
+    const phrasesByFirstWord = new Map();
     for (const [namespace, block] of Object.entries(englishMessages)) {
       if (typeof block !== 'object' || block === null) continue;
       for (const [key, value] of Object.entries(block)) {
@@ -3369,7 +3371,11 @@ async function run() {
         if (value.split(/\s+/).length < 2) continue;
         const chinese = chineseMessages[namespace]?.[key];
         if (typeof chinese !== 'string' || chinese === value) continue;
-        englishPhrases.push({ namespace: `${namespace}.${key}`, value });
+        const phrase = { namespace: `${namespace}.${key}`, value };
+        englishPhrases.push(phrase);
+        const word = value.split(/\s+/)[0];
+        if (!phrasesByFirstWord.has(word)) phrasesByFirstWord.set(word, []);
+        phrasesByFirstWord.get(word).push(phrase);
       }
     }
     await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
@@ -3394,12 +3400,22 @@ async function run() {
        * translated, the same kind the corpus pages carry — but they are printed rather than swallowed,
        * because an exemption nobody can see is the kind of claim this project has been wrong about
        * twice: the surface of the exemption is the list of what it covers.
+       *
+       * The comparison is indexed by the phrase's **first word**, because a page holds thousands of
+       * elements and the catalogue holds two thousand phrases: the naive cross-product is hundreds of
+       * millions of string searches per page, and the sweep stopped finishing.
        */
-      for (const phrase of englishPhrases) {
-        for (const text of texts) {
-          if (text === phrase.value || labelOf(text) === phrase.value) continue;
-          if (text.includes(phrase.value)) {
-            tolerated.push(`${path} — ${phrase.namespace} inside “${text.slice(0, 90)}”`);
+      for (const text of texts) {
+        // The words the text holds, so only the phrases that could start inside it are looked at.
+        const words = new Set(text.split(/[^\p{L}\p{N}]+/u).filter(Boolean));
+        for (const word of words) {
+          const candidates = phrasesByFirstWord.get(word);
+          if (!candidates) continue;
+          for (const phrase of candidates) {
+            if (text === phrase.value || labelOf(text) === phrase.value) continue;
+            if (text.includes(phrase.value)) {
+              tolerated.push(`${path} — ${phrase.namespace} inside “${text.slice(0, 90)}”`);
+            }
           }
         }
       }
@@ -3412,10 +3428,10 @@ async function run() {
       offenders.length === 0 && swept.length > 0,
       offenders.length
         ? offenders.slice(0, 8).join(' | ')
-        : `${swept.length} page(s) read in Chinese, ${englishPhrases.length} English phrase(s) compared, ${skipped.length} corpus page(s) skipped, ${tolerated.length} authored sentence(s) quoted rather than translated`,
+        : `${swept.length} page(s) read in Chinese, ${englishPhrases.length} English phrase(s) compared, ${skipped.length} corpus page(s) skipped, ${tolerated.length} element(s) carrying a catalogue value inside a longer text`,
     );
     if (tolerated.length) {
-      console.log(`      the tier's own English, quoted rather than translated (${tolerated.length}):`);
+      console.log(`      the elements that carried a catalogue value inside a longer text (${tolerated.length}) — the API's own prose, quoted rather than translated:`);
       for (const line of [...new Set(tolerated)].slice(0, 12)) console.log(`        ${line}`);
     }
   } catch (error) {
