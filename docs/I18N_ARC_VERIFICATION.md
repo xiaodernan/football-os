@@ -139,6 +139,14 @@ each against its own API on its own fresh SQLite database:
 | `qa-market.mjs` | 106 | 106/106 | **106/106**, exit 0 |
 | `visual-qa.mjs` | **298** | 141/143 | **298/298**, exit 0 — including the locale sweep, which had never been observed |
 
+**All ten were re-run together on 2026-10-22**, on build `eSZ6okbO84ws9gJKLQbxQ` — the build that carries the
+catalogue as committed — each against its own API on its own port over its own fresh SQLite database, by the
+same harness: **10/10 walks green**, every one of them exit 0. That run is the evidence for the catalogue work
+that followed: **226** keys removed from all three catalogues, **eleven** English phrases translated, and the
+English catalogue's one Chinese sentence replaced with English. Three of those pages render differently now —
+the club page's cap row, the academy's placeholders and the scout's search placeholder — and the walks are the
+only thing that can say the change did not break them.
+
 ### The visual walk, re-run on 2026-10-22 (201/205, exit 1)
 
 The visual walk was run again on the build that carries the catalogue work — build `HRuYA1koLs7jIG6XG1qIS`
