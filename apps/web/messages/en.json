@@ -3673,5 +3673,11 @@
     "video_limit": "This account already holds as many clips as it may.",
     "window_closed": "That scenario's window has closed, so its squad is final.",
     "wrong_path": "That path is not the one that serves this."
+  },
+  "errorBoundary": {
+    "eyebrow": "Something went wrong",
+    "lede": "The page failed while it was being prepared. Trying again often works; if it does not, the club's own log has the reason.",
+    "retry": "Try again",
+    "title": "This page could not be loaded"
   }
 }
