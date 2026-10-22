@@ -12941,7 +12941,7 @@
           "model-router"
         ],
         "summary": "Router Status",
-        "description": "Report which provider serves each surface and today's spending.",
+        "description": "Report which provider serves each surface and today's spending.\n\nAdmin standing only: the provider mix and the shared budget are platform configuration, and the\nspend row is every account's calls read from the ledger.",
         "operationId": "router_status_api_v1_model_router_status_get",
         "responses": {
           "200": {
@@ -12968,7 +12968,7 @@
           "model-router"
         ],
         "summary": "Router Switch",
-        "description": "Switch a provider type at runtime (requires valid credentials).\n\nThis is a configuration change that affects all users. Only admins should be able to do this.\nFor now, we refuse all switches since provider selection is driven by environment variables.",
+        "description": "Switch a provider type at runtime (requires valid credentials).\n\nThis is a configuration change that affects all users, so the door asks for the admin standing\nbefore it answers. For now every admin call is refused: provider selection is driven by\nenvironment variables.",
         "operationId": "router_switch_api_v1_model_router_switch_post",
         "requestBody": {
           "content": {
@@ -13015,7 +13015,7 @@
           "model-router"
         ],
         "summary": "Router Costs",
-        "description": "Report today's AI spending from the model call ledger.",
+        "description": "Report today's AI spending from the model call ledger.\n\nAdmin standing only: the total is the whole platform's spend, not the caller's.",
         "operationId": "router_costs_api_v1_model_router_costs_get",
         "responses": {
           "200": {

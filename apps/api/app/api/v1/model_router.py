@@ -7,24 +7,49 @@ runtime provider switching when credentials exist, and reports cost/usage metric
 The router does not invent capabilities — it exposes what is already configured via settings
 and the provider factory functions. Without API keys, surfaces run in DEMO MODE with self-labelled
 responses (ADR-005).
+
+Every row describes the platform rather than the caller: the provider serving each surface, today's AI
+spend against the shared budget, and a switch that would change the configuration for every account. So
+every door asks for the platform's `admin` standing. The status row's `budget_spent_today` is read from
+the same ledger `/costs` totals; until this landing it was a hardcoded zero behind a comment.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Final
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.core.security import current_user
+from app.core.security import current_user, role_refusal, standing_check
 from app.models import User
 from app.providers import provider_status
 from app.services.club import answers
 from app.services.model_ledger import spend_today_usd
 
-router = APIRouter(prefix="/model-router", tags=["model-router"])
+MODEL_ROUTER_STANDING: Final = standing_check(("admin",))
+
+
+def require_operator(user: User = Depends(current_user)) -> User:
+    """The standing every model-router door asks for, carried by the router.
+
+    The costs door publishes the whole platform's spend and the status door publishes the provider
+    configuration and the shared budget; the switch door is documented as an admin-only change although
+    it refuses everyone today. A session proves none of that, so the standing is mounted on the router:
+    a fourth door inherits it along with the bearer check the dependency already carries.
+    """
+    if user.role not in MODEL_ROUTER_STANDING:
+        raise role_refusal(
+            held=user.role,
+            required=MODEL_ROUTER_STANDING,
+            message="Only an admin account may inspect or switch the model router",
+        )
+    return user
+
+
+router = APIRouter(prefix="/model-router", tags=["model-router"], dependencies=[Depends(require_operator)])
 
 
 class ProviderStatusResponse(BaseModel):
@@ -54,8 +79,12 @@ class ProviderSwitchResponse(BaseModel):
 
 
 @router.get("/status", response_model=ProviderStatusResponse)
-def router_status(user: User = Depends(current_user)) -> ProviderStatusResponse:
-    """Report which provider serves each surface and today's spending."""
+def router_status(db: Session = Depends(get_db)) -> ProviderStatusResponse:
+    """Report which provider serves each surface and today's spending.
+
+    Admin standing only: the provider mix and the shared budget are platform configuration, and the
+    spend row is every account's calls read from the ledger.
+    """
     status = provider_status()
     from app.core.config import settings
 
@@ -68,7 +97,7 @@ def router_status(user: User = Depends(current_user)) -> ProviderStatusResponse:
         storage=status["storage"],
         football_data=status["football_data"],
         news=status["news"],
-        budget_spent_today=0.0,  # Placeholder - would need db access
+        budget_spent_today=round(spend_today_usd(db), 4),
         budget_limit=settings.ai_daily_budget_usd,
     )
 
@@ -76,13 +105,12 @@ def router_status(user: User = Depends(current_user)) -> ProviderStatusResponse:
 @router.post("/switch", response_model=ProviderSwitchResponse)
 def router_switch(
     body: ProviderSwitchRequest,
-    user: User = Depends(current_user),
-    db: Session = Depends(get_db),
 ) -> ProviderSwitchResponse:
     """Switch a provider type at runtime (requires valid credentials).
 
-    This is a configuration change that affects all users. Only admins should be able to do this.
-    For now, we refuse all switches since provider selection is driven by environment variables.
+    This is a configuration change that affects all users, so the door asks for the admin standing
+    before it answers. For now every admin call is refused: provider selection is driven by
+    environment variables.
     """
     # Provider switching is intentionally not implemented here.
     # Providers are selected by environment variables (settings.*) at startup.
@@ -104,11 +132,11 @@ def router_switch(
 
 
 @router.get("/costs")
-def router_costs(
-    user: User = Depends(current_user),
-    db: Session = Depends(get_db),
-) -> dict[str, Any]:
-    """Report today's AI spending from the model call ledger."""
+def router_costs(db: Session = Depends(get_db)) -> dict[str, Any]:
+    """Report today's AI spending from the model call ledger.
+
+    Admin standing only: the total is the whole platform's spend, not the caller's.
+    """
     spent = spend_today_usd(db)
     from app.core.config import settings
 
