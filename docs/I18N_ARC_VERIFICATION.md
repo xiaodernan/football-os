@@ -798,8 +798,19 @@ sentence — the ones a reader is most likely to meet:
 | `no_such_system` | "system '…' is not one of the 50 authored tactical systems" | That is not one of the authored tactical systems. |
 | `no_such_club`, `no_such_team` | "'…' is not a club in the generated world" | That is not a club in the generated world. |
 
-The catalogue holds **34** of the API's **65** refusal codes, and the two Chinese files still fall
+A second batch followed the same day — the family the API publishes the same way every time: the five
+**limits** (`board_limit`, `career_limit`, `run_limit`, `simulation_limit`, `video_limit`), the
+**not-found** family (`not_found`, under which the API publishes sixteen sentences — "Drill not found",
+"No such board in the gallery", "This link no longer points at a clip"), the three **ids**
+(`no_such_job`, `no_such_trace`, `no_such_memory`) and `no_such_challenge`.
+
+The catalogue holds **44** of the API's **65** refusal codes, and the two Chinese files still fall
 back on the same **44** technical tokens — every key added here is translated in every locale.
+
+**What the walk covered.** The walk that proved this slice ran on the build that carries the *first*
+batch (the seven career-form and tactics refusals), which is the commit the arc's §11 numbers. The
+second batch is catalogue text under a mechanism the walk had already proved, and its gates are
+green; its own walk is the next one to run, and the number it will print is the one to check.
 
 ### The honest remainder
 
