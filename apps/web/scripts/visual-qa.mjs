@@ -3376,6 +3376,7 @@ async function run() {
     const swept = [];
     const skipped = [];
     const offenders = [];
+    const tolerated = [];
     for (const path of visitedPaths) {
       if (corpusPages(path)) {
         skipped.push(path);
@@ -3384,9 +3385,24 @@ async function run() {
       const response = await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle2', timeout: 60_000 }).catch(() => null);
       const status = response ? response.status() : 0;
       const texts = await elementTexts();
-      // A label is an element whose text IS the value. An element whose text merely contains it is
-      // a longer sentence — the tier's own authored prose, published in English on purpose.
+      // A label is an element whose text IS the value. An element whose text merely contains it is a
+      // longer sentence — the tier's own authored prose, published in English on purpose.
       const found = englishPhrases.find((phrase) => texts.has(phrase.value) || [...texts].some((text) => labelOf(text) === phrase.value));
+      /**
+       * The **tolerated** English: the elements that carry a catalogue value's words inside a longer
+       * sentence. They are not findings — they are the API's authored prose, quoted rather than
+       * translated, the same kind the corpus pages carry — but they are printed rather than swallowed,
+       * because an exemption nobody can see is the kind of claim this project has been wrong about
+       * twice: the surface of the exemption is the list of what it covers.
+       */
+      for (const phrase of englishPhrases) {
+        for (const text of texts) {
+          if (text === phrase.value || labelOf(text) === phrase.value) continue;
+          if (text.includes(phrase.value)) {
+            tolerated.push(`${path} — ${phrase.namespace} inside “${text.slice(0, 90)}”`);
+          }
+        }
+      }
       swept.push(`${path} ${status}`);
       if (found) offenders.push(`${path} carries ${found.namespace} (“${found.value.slice(0, 60)}”)`);
     }
@@ -3396,8 +3412,12 @@ async function run() {
       offenders.length === 0 && swept.length > 0,
       offenders.length
         ? offenders.slice(0, 8).join(' | ')
-        : `${swept.length} page(s) read in Chinese, ${englishPhrases.length} English phrase(s) compared, ${skipped.length} corpus page(s) skipped`,
+        : `${swept.length} page(s) read in Chinese, ${englishPhrases.length} English phrase(s) compared, ${skipped.length} corpus page(s) skipped, ${tolerated.length} authored sentence(s) quoted rather than translated`,
     );
+    if (tolerated.length) {
+      console.log(`      the tier's own English, quoted rather than translated (${tolerated.length}):`);
+      for (const line of [...new Set(tolerated)].slice(0, 12)) console.log(`        ${line}`);
+    }
   } catch (error) {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed
     // check, capture what the browser was actually looking at, and fall through to the summary.
