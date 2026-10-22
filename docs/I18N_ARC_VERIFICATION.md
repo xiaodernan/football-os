@@ -137,7 +137,7 @@ each against its own API on its own fresh SQLite database:
 | `qa-creator.mjs` | 72 | 72/72 | **72/72**, exit 0 |
 | `qa-portfolio.mjs` | 53 | 53/53 | **53/53**, exit 0 |
 | `qa-market.mjs` | 106 | 106/106 | **106/106**, exit 0 |
-| `visual-qa.mjs` | 297 | 141/143 | **297/297**, exit 0 |
+| `visual-qa.mjs` | **298** | 141/143 | **298/298**, exit 0 — including the locale sweep, which had never been observed |
 
 ### The visual walk, re-run on 2026-10-22 (201/205, exit 1)
 
@@ -175,8 +175,7 @@ What it did not prove, and why:
   sleep.** The waits now ask for what each check measures: the record's own `Rounds` cell after "Play the
   next round", a button labelled "Take charge again" after "Retire from this club", and the play button
   enabled after taking charge again. A timeout is swallowed, because the check behind each one reports the
-  truth rather than the harness throwing in its place. With the first two fixed, the walk read **297 of
-  298** — and the one that still failed was the third step of the same race, which is fixed the same way.
+  truth rather than the harness throwing in its place. With the first two fixed the walk read **297 of 298**, and the one that still failed was the third step of the same race — fixed the same way, and the walk then read **298 of 298**, exit **0**, on the fourth run.
 
 * **The sweep ran, and it found one thing.** With the career section past, the last check before the walk's
   own completion check ran for the first time: *"every page this walk visited reads the Chinese catalogue,
