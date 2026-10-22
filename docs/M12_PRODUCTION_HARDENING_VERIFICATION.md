@@ -510,6 +510,44 @@ The case that pinned the definition found a mistake in the *test*: it asserted `
 right and the assertion was wrong; the test now carries the formula in a comment so the next reader
 does not have to re-derive it.
 
+### Authorization — the metrics tier named an administrator and asked for a session
+
+Every door under `/api/v1/metrics` describes the platform rather than the caller: `system` counts the
+accounts and this process's requests, `database` totals the model ledger and the video assets,
+`providers` and `cost-optimisation` read the whole AI spend and name the provider mix, `latency`
+profiles every feature's calls, and `cache` publishes the tiers the process runs, down to the parsed
+Redis URL. The module's own docstring put the audience in writing — "allowing administrators to
+monitor system health" — while each handler depended only on `current_user`, the dependency that
+proves a session and says nothing about standing. Measured on an isolated worktree at `339ef38^`, a
+freshly registered player read all six: account totals, AI spend, provider mix, the latency sample
+and the cache tiers, every one answered **200**. No web consumer calls these doors, so the standing
+narrowed nothing a page depended on.
+
+`require_operator` is one dependency mounted on the router
+(`dependencies=[Depends(require_operator)]`), not six checks in six handlers: a seventh metrics door
+is behind the operator standing the moment it is added, and it cannot forget the bearer check either,
+because the dependency takes the platform's `current_user` itself. The standing is built by
+`standing_check(("admin",))` and refused through `role_refusal`, so the answer is §60's single 403
+shape — `insufficient_role` with `held`, `required` and the registered code — and it is raised before
+the handler reads a row. The handlers lost their now-unused `user` parameter, and each docstring names
+the standing beside what the row answers.
+
+The gate is `TestTheOperatorStanding` in `apps/api/tests/test_metrics.py`: six parametrised paths, each
+asserting the player's 403 *and* the admin's 200, because a gate that checked only the refusal would
+pass on a router that refuses everyone. The admin fixture writes the row directly — registration
+refuses `admin` by design, so no door can create one — and mints the token with the login door's own
+helper. The success cases in the five metrics files moved to it; their anonymous cases were already
+401 and stay there.
+
+Five arms over an isolated worktree at `339ef38`, mutants restored between runs: the pre-fix file reds
+exactly the six parametrised refusals (`200 == 403`), as do `if False` in place of the standing check
+and a widened `("admin", "player")` standing; removing the router dependency reds ten — the six plus
+the four anonymous-auth cases, because that dependency carried the bearer check too, a mechanism the
+first battery had not predicted; changing only the refusal message leaves all 51 green, the control
+that says the six reds are the standing and not any diff. The contract was regenerated: **202 paths /
+264 operations / 91 schemas**, all six metrics operations still declare `HTTPBearer`, and their
+descriptions carry the standing.
+
 ### Observability — the system row answers the system
 
 `GET /api/v1/metrics/system` had four rows that answered something else, and two of them answered it
@@ -704,6 +742,10 @@ harness env var is part of the recorded command.
 | `--endpoint /api/v1/players --concurrency 10` (unauthenticated) | same | **76.08 req/s**, p50 84.93 / p95 325.97 / p99 1646.32 ms, 923 responses all 401 |
 | `--healthz --concurrency 10`, **`--workers 4`** | same, four uvicorn workers | **117.43 req/s**, p50 77.36 / p95 188.24 / p99 385.36 ms, **max 655.91 ms**, 0 errors |
 | `--healthz --concurrency 50`, **`--workers 4`** | same | **55.83 req/s**, p50 564.11 / p95 2843.56 / p99 4070.82 ms, 0 errors |
+| `pytest tests/test_metrics.py tests/test_cost_advisor.py tests/test_latency_profile.py tests/test_request_metrics.py tests/test_redis_shared_tier.py -q` | SQLite, local venv, working copy at `339ef38` plus a docstring correction | **51 tests / 0 failures / 0 errors / 2 skipped**, rc=0; arms on an isolated worktree at `339ef38`: pre-fix file → **6 red** (the six refusals), `if False` → **6**, `("admin","player")` → **6**, router dependency removed → **10** (the six plus four anonymous-auth), message-only control → **0 red** |
+| one registered player against the six `/api/v1/metrics/*` doors | isolated worktree at `339ef38^` | **200 at all six** before; **403 `insufficient_role`** with `held: player` / `required: ["admin"]` after |
+| contract after the metrics standing | `docs/api/openapi.json` committed | **202 paths / 264 operations / 91 schemas**; `HTTPBearer` retained on all six metrics operations, descriptions carry the standing |
+| `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same | 13 tests, rc=0 |
 
 The contract and audit figures were recomputed against the committed tree, not the working copy,
 because `test_spec_audit_currency.py` reads `git show HEAD:…`. Two doc landings were needed to make

@@ -12,8 +12,8 @@ Three claims, in the order they can be checked:
   compose file, the CI workflow and the app name the same instance. The host port is not 6379,
   because 6379 belongs to another application's cache on this host.
 * **The password does not leave the process.** The URL is where the credential lives, and the
-  metrics door publishes that URL to any signed-in caller. The redaction is on the parsed URL, so
-  a password containing `@` or `/` is still removed.
+  metrics door publishes that URL to the operator standing it asks for. The redaction is on the
+  parsed URL, so a password containing `@` or `/` is still removed.
 * **It is actually shared.** A key written by one process is read by *another operating system
   process* through its own client. Two objects in one process would prove nothing: the fallback
   tier inside `RedisCache` would answer both.
