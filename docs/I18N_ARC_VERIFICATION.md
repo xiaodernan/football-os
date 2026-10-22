@@ -784,6 +784,23 @@ and joins the covered ones, where the drift rule holds it to the API's message. 
 **38** codes, and each is a message that genuinely varies with the request or that a helper is called
 with more than one sentence.
 
+### The first batch of the varying ones (2026-10-22)
+
+Seven of the codes whose API message names a value the request supplied now carry a catalogue
+sentence — the ones a reader is most likely to meet:
+
+| code | the API's message | the catalogue's sentence (English) |
+| --- | --- | --- |
+| `bad_philosophy` | "philosophy must be one of `['balanced', 'counter', …]`" | That is not one of the philosophies the engine accepts. |
+| `bad_objective` | "objective kind '…' is not one of `[…]`" | That is not one of the objective kinds the engine accepts. |
+| `bad_minutes` | "minutes must be one of `[…]`" | That is not one of the durations the engine accepts. |
+| `unknown_change` | "change must be one of `[…]`" | That is not one of the changes the tactics catalogue holds. |
+| `no_such_system` | "system '…' is not one of the 50 authored tactical systems" | That is not one of the authored tactical systems. |
+| `no_such_club`, `no_such_team` | "'…' is not a club in the generated world" | That is not a club in the generated world. |
+
+The catalogue holds **34** of the API's **65** refusal codes, and the two Chinese files still fall
+back on the same **44** technical tokens — every key added here is translated in every locale.
+
 ### The honest remainder
 
 The claim "the interface is in the reader's language" now holds for the interface's **own** copy **and**
