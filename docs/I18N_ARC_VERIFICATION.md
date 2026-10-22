@@ -820,15 +820,22 @@ The list that remains is therefore the census's **verdict** rather than a gap: i
 API message varies with the request, and it is checked in both directions, so a new refusal has to be
 classified before it can be published.
 
-**What the walk covered.** The walk that proved this slice ran on the build that carries the *first*
-batch (the seven career-form and tactics refusals), which is the commit the arc's §11 numbers. The
-second batch is catalogue text under a mechanism the walk had already proved, and its gates are
-green; its own walk is the next one to run, and the number it will print is the one to check.
+**What the walk covered.** The walk that proved this slice ran on the build that carries the **third**
+and final batch — the catalogue as it now holds it, **all 65** codes, build `.next-i18n18` — which made
+the evidence and the tree the same tree: **298/298 checks passed, exit 0**, on the web tier `:3250` and
+the API `:8773`, its own fresh SQLite database, by the same `scripts/run-walks.mjs` harness. The locale
+sweep read **49 pages in Chinese, 2035 English phrases compared, 4 corpus pages skipped**, and printed
+its exemption's surface for the first time — the **101 elements** that carry a catalogue value inside a
+longer text. The refusal read was then taken on that same build through the proxy, in **English** with the
+API's own message and in **Chinese** and **Traditional** with the catalogue's, and all three came back
+true.
 
 ### The honest remainder
 
 The claim "the interface is in the reader's language" now holds for the interface's **own** copy **and**
-for the refusals the catalogue can reproduce. It does **not** hold for the refusals whose message names
-a value the request supplied — those are the API's own words, and the catalogue cannot carry a value it
-does not have. Each of them needs a catalogue sentence written for the reader, and each one lowers the
-named list; that is the next slice, and it is text work rather than mechanism.
+for the refusals the catalogue can reproduce, and the catalogue has since written a sentence for **every**
+one of the **65** the API publishes — three batches of text work, and the final batch taken on a build
+that carried it, which proved it: **298/298, exit 0**, with the refusal read in three languages coming
+back true. There is no code left that the catalogue cannot speak for; the list that remains is the
+census's verdict about which messages vary with the request, and it is checked in both directions, so a
+new refusal has to be classified before it can be published.
