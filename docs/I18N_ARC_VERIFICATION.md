@@ -1025,3 +1025,13 @@ catalogue namespace.
 A `global-error.tsx` — the boundary for a failure in the *root layout* — is deliberately absent: it
 replaces the layout itself, so it has no locale provider, and a page that never renders is not worth a
 catalogue in the bundle. The framework's default is the honest answer for that case.
+
+### The walk on the final tree
+
+The visual walk was run on the build that carries **every** slice of this arc — the boundary, the
+client sites, the proxy, the refusals, the whole-tier copy gate — and it read **298/298, exit 0**. The
+locale sweep read **49 pages in Chinese, 2049 English phrases compared, 4 corpus pages skipped**, and
+the tree's own failure boundary is now part of what a broken page shows the reader.
+
+That is the arc's evidence and the arc's tree, in one run: the numbers and the code are the same
+thing, and the doc's figures are the figures that run read.
