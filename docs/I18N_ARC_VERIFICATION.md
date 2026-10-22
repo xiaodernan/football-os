@@ -1010,6 +1010,12 @@ landed after the last recompute, the web's gates said nothing (they do not read 
 API's suite named the stale population and the stale count. The rule is not advice — it is the only
 thing standing between the table and a silent lie, and the table is the number a reader is given.
 
+**And now the web's gates can see it too.** The population and the translated count are both derivable
+from the three catalogues, so `qa-locale-tokens.mjs` holds the two numbers the table states against the
+catalogue itself — the cross-tier check that used to live only in the API's suite now lives in the tier
+that owns the catalogue. Its red path was watched: a table one key out of date is named, in both
+locales.
+
 ## 15. The failure the reader meets most often (2026-10-22)
 
 ### The question
