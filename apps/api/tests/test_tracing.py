@@ -1,6 +1,6 @@
 """M12 Observability: the tracing gate answers for what it switches on and leaves off.
 
-Two claims are held here, both about the boundary the `OTEL_EXPORTER_OTLP_ENDPOINT`
+Three claims are held here, all about the boundary the `OTEL_EXPORTER_OTLP_ENDPOINT`
 variable guards:
 
 * without the variable, tracing is a **no-op** — no provider is installed, no
@@ -8,12 +8,18 @@ variable guards:
 * with the variable, a request through an instrumented app produces **one server
   span** carrying the service resource — measured through an in-memory exporter,
   never through a network call, and without touching the process-global tracer
-  provider the rest of the suite shares.
+  provider the rest of the suite shares;
+* the collector the repository ships is the one the document points at — the
+  compose profile, image, loopback ports, config mount and traces pipeline agree
+  with the endpoint example, so the witness recorded in the M12 document cannot
+  go stale behind a changed compose file.
 """
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -24,6 +30,10 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from app.core import tracing
+
+ROOT = Path(__file__).resolve().parents[3]
+COMPOSE = ROOT / "infra" / "docker-compose.yml"
+M12_DOC = ROOT / "docs" / "M12_PRODUCTION_HARDENING_VERIFICATION.md"
 
 
 @pytest.fixture()
@@ -90,14 +100,15 @@ def test_with_endpoint_a_request_produces_a_server_span(endpoint: None) -> None:
     assert span.context is not None and span.context.trace_id != 0
 
 
-def test_the_base_endpoint_posts_to_the_traces_path() -> None:
+def test_the_endpoint_always_posts_to_the_traces_path() -> None:
     """`OTEL_EXPORTER_OTLP_ENDPOINT` is a base URL by specification, so the exporter
-    must POST to `/v1/traces` — not to the base itself. The receiver is a real local
-    HTTP server; it records the path it was actually sent.
+    must POST to `/v1/traces` — not to the base itself. A value a deployment already
+    wrote in full form must not gain a second `/v1/traces`. The receiver is a real
+    local HTTP server; it records the path it was actually sent.
 
-    The other cases in this file pass a full `/v1/traces` URL, which is why none of
-    them could see this: the argument form and the documented environment variable
-    are not the same contract.
+    The other cases in this file never observe a POST (their collector port is dead),
+    which is why none of them could see the base-form defect: the argument form and
+    the documented environment variable were not the same contract.
     """
     import threading
     from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -122,16 +133,77 @@ def test_the_base_endpoint_posts_to_the_traces_path() -> None:
     thread.start()
     try:
         port = server.server_address[1]
-        provider = tracing.build_provider(f"http://127.0.0.1:{port}")
-        with provider.get_tracer("test").start_as_current_span("probe"):
-            pass
-        provider.force_flush()
-        provider.shutdown()
+        base = f"http://127.0.0.1:{port}"
+        for endpoint in (base, f"{base}/", f"{base}/v1/traces"):
+            provider = tracing.build_provider(endpoint)
+            with provider.get_tracer("test").start_as_current_span("probe"):
+                pass
+            provider.force_flush()
+            provider.shutdown()
     finally:
         server.shutdown()
         thread.join(timeout=5)
 
-    assert seen == ["/v1/traces"], f"the exporter posted to {seen!r}, not the traces path"
+    assert seen == ["/v1/traces"] * 3, f"the exporter posted to {seen!r}, not the traces path"
+
+
+COLLECTOR_SERVICE = "otel-collector"
+COLLECTOR_IMAGE = "otel/opentelemetry-collector:0.111.0"
+COLLECTOR_MOUNT = "./otel-collector.yaml:/etc/otelcol/config.yaml:ro"
+COLLECTOR_PORTS = {"127.0.0.1:4317:4317", "127.0.0.1:4318:4318"}
+
+
+def _collector_defects(compose_path: Path, doc_path: Path) -> list[str]:
+    """Named disagreements between the shipped collector, its config and the document.
+
+    Empty when they agree. The judgement lives apart from the test so witness arms can
+    run it over mutated copies without touching the tracked files.
+    """
+    import yaml
+
+    defects: list[str] = []
+    compose = yaml.safe_load(compose_path.read_text(encoding="utf-8"))
+    service = (compose.get("services") or {}).get(COLLECTOR_SERVICE)
+    if service is None:
+        return [f"compose: no {COLLECTOR_SERVICE} service"]
+    if service.get("profiles") != ["observability"]:
+        defects.append(f"compose: profiles is {service.get('profiles')!r}, not ['observability']")
+    if service.get("image") != COLLECTOR_IMAGE:
+        defects.append(f"compose: image is {service.get('image')!r}, not {COLLECTOR_IMAGE!r}")
+    ports = set(service.get("ports") or [])
+    if not COLLECTOR_PORTS <= ports:
+        defects.append(f"compose: ports are {sorted(ports)!r}, missing {sorted(COLLECTOR_PORTS - ports)!r}")
+    volumes = service.get("volumes") or []
+    if COLLECTOR_MOUNT not in volumes:
+        defects.append(f"compose: volumes are {volumes!r}, no {COLLECTOR_MOUNT!r}")
+    config_path = compose_path.parent / COLLECTOR_MOUNT.split(":")[0]
+    if not config_path.is_file():
+        defects.append(f"config: {config_path} does not exist")
+        return defects
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    protocols = ((config.get("receivers") or {}).get("otlp") or {}).get("protocols") or {}
+    if set(protocols) != {"grpc", "http"}:
+        defects.append(f"config: otlp protocols are {sorted(protocols)!r}, not ['grpc', 'http']")
+    pipeline = {"receivers": ["otlp"], "exporters": ["debug"]}
+    traces = ((config.get("service") or {}).get("pipelines") or {}).get("traces")
+    if traces != pipeline:
+        defects.append(f"config: traces pipeline is {traces!r}, not {pipeline!r}")
+    doc = doc_path.read_text(encoding="utf-8")
+    documented = set(re.findall(r"OTEL_EXPORTER_OTLP_ENDPOINT=http://127\.0\.0\.1:(\d+)", doc))
+    host_ports = {entry.split(":")[1] for entry in ports if entry.count(":") == 2}
+    if not documented:
+        defects.append("doc: no OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:<port> example")
+    elif not documented <= host_ports:
+        defects.append(f"doc: examples {sorted(documented)!r} are not published host ports {sorted(host_ports)!r}")
+    return defects
+
+
+def test_the_shipped_collector_is_the_one_the_doc_points_at() -> None:
+    """The collector witness in the M12 document names a compose profile, an image, a
+    loopback port and a config pipeline. If any of them moves, the witness describes a
+    container nobody runs — so the three files must agree, not just exist."""
+    defects = _collector_defects(COMPOSE, M12_DOC)
+    assert defects == [], f"the shipped collector disagrees with itself: {defects!r}"
 
 
 def test_instrumented_app_still_serves_when_collector_is_absent(endpoint: None) -> None:

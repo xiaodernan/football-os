@@ -73,7 +73,7 @@ was supposed to prevent — the first version of this module imported OpenTeleme
 while promising "tests run without external dependencies", which was exactly the kind of claim this
 project exists to catch.
 
-What is measured (`tests/test_tracing.py`, four cases): without the variable, no provider is
+What is measured (`tests/test_tracing.py`, five cases): without the variable, no provider is
 installed and a FastAPI app gains no middleware; with it, a request through an instrumented app
 produces exactly one `SERVER` span carrying the service resource — observed through an
 `InMemorySpanExporter` injected as the span processor, never through a network call, and without
@@ -82,8 +82,14 @@ exactly this reason, and `instrument_fastapi` takes the provider explicitly). Th
 that exporter sees are the httpx CLIENT spans TestClient itself produces — the same instrumentation
 a real outgoing call gets. The third case points the real OTLP exporter at a port nothing listens
 on and holds the request to 200: a down collector degrades telemetry, not the API. The fourth case
-listens on a socket of its own and asserts the exporter's request path is `/v1/traces` — that case
-was written after a live walk found the opposite, below.
+listens on a socket of its own and asserts every accepted endpoint form — base, base with a trailing
+slash, and one that already names `/v1/traces` — POSTs to `/v1/traces` and nothing else; that case
+was written after a live walk found the base form POSTing to the collector root, below. The fifth
+reads the repository instead of the process: `_collector_defects` compares the compose file, the
+collector's own config and this document and returns named disagreements — the `observability`
+profile, the pinned image, both loopback ports, the config mount and its file, the OTLP protocols,
+the traces pipeline, and the port in the documented endpoint example. Ten planted defects across
+those clauses were each named by it, and the unmutated copies read none.
 
 **The collector leg (2026-10-22).** The repository now ships the collector it exports to:
 `infra/otel-collector.yaml` receives OTLP over gRPC (4317) and HTTP (4318) and prints spans through
@@ -106,7 +112,7 @@ Found`, and the collector saw no spans. A direct POST to `http://127.0.0.1:4318/
 `200 {"partialSuccess":{}}`, which named the sender as the culprit rather than the receiver.
 `_traces_endpoint()` now appends `/v1/traces` unless the value already names it. The new case was
 run against the unfixed code first and failed exactly there (`At index 0 diff: '/' !=
-'/v1/traces'`); after the fix the four cases pass and the live walk exports the span described
+'/v1/traces'`); after the fix that case passes and the live walk exports the span described
 above.
 
 What is deliberately **not** claimed: no production or third-party trace backend — the witness is a
@@ -621,7 +627,7 @@ harness env var is part of the recorded command.
 | `ruff format --check` over the new modules | same | all formatted |
 | `mypy` over `cost_advisor`, `latency_profile`, `metrics`, `request_metrics`, `percentile`, `runtime`, `response_headers`, `cache`, `redis_cache`, `logging`, `main` | same | no issues |
 | `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same, against `HEAD` | 13 tests, rc=0 |
-| `pytest tests/test_tracing.py -q` | SQLite, working copy | **4 tests / 0 failures**, rc=0 |
+| `pytest tests/test_tracing.py -q` | SQLite, working copy | **5 tests / 0 failures**, rc=0 |
 | one `GET /healthz` through a live API with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318` | live uvicorn + `otel/opentelemetry-collector:0.111.0`, debug exporter, SQLite | `SERVER` span `GET /healthz` read back from the collector log, resource `service.name=football-os-api`, `deployment.environment=development`; **before the `/v1/traces` fix the same walk logged `404 Not Found` and exported nothing** |
 | contract paths after the three metrics doors | `docs/api/openapi.json` committed | 179 → **182** |
 | `git grep -li agents -- apps/api/app` | committed tree | 13 → **14** (`services/agents/orchestrator.py`) |
