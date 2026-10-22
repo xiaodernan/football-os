@@ -168,18 +168,8 @@ def test_demo_share_is_the_free_share_printed_beside_the_paid_one(session: Sessi
 
 
 class TestCostOptimisationDoor:
-    def _client(self) -> TestClient:
-        client = TestClient(app)
-        response = client.post(
-            "/api/v1/auth/register",
-            json={"email": f"cost-{uuid4().hex[:8]}@example.test", "password": "TestPass1234!", "display_name": "Cost", "role": "player", "accepts_data_policy": True},
-        )
-        assert response.status_code == 201, response.text
-        client.headers.update({"Authorization": f"Bearer {response.json()['access_token']}"})
-        return client
-
-    def test_the_door_answers_the_advisor_whole(self) -> None:
-        resp = self._client().get("/api/v1/metrics/cost-optimisation")
+    def test_the_door_answers_the_advisor_whole(self, admin_client: TestClient) -> None:
+        resp = admin_client.get("/api/v1/metrics/cost-optimisation")
         assert resp.status_code == 200
         body = resp.json()
         assert set(body) == {"window_days", "totals", "by_feature", "by_model", "recommendations", "limitation"}
@@ -188,12 +178,12 @@ class TestCostOptimisationDoor:
     def test_the_door_is_auth_gated(self) -> None:
         assert TestClient(app).get("/api/v1/metrics/cost-optimisation").status_code == 401
 
-    def test_the_window_is_clamped_to_a_year(self) -> None:
-        assert self._client().get("/api/v1/metrics/cost-optimisation?days=400").status_code == 422
-        assert self._client().get("/api/v1/metrics/cost-optimisation?days=0").status_code == 422
+    def test_the_window_is_clamped_to_a_year(self, admin_client: TestClient) -> None:
+        assert admin_client.get("/api/v1/metrics/cost-optimisation?days=400").status_code == 422
+        assert admin_client.get("/api/v1/metrics/cost-optimisation?days=0").status_code == 422
 
-    def test_the_cache_stats_door_reports_every_tier(self) -> None:
-        resp = self._client().get("/api/v1/metrics/cache")
+    def test_the_cache_stats_door_reports_every_tier(self, admin_client: TestClient) -> None:
+        resp = admin_client.get("/api/v1/metrics/cache")
         assert resp.status_code == 200
         body = resp.json()
         # Was `{"response_cache", "compute_cache"}` until Redis landed; an exact set is

@@ -37,7 +37,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.redis_cache import RedisCache, redact_url
-from app.main import app
 
 ROOT = Path(__file__).resolve().parents[3]
 API = ROOT / "apps" / "api"
@@ -53,8 +52,6 @@ DEV_PASSWORD = "football"
 #: password, which is why the project's own cache is published on 63790 and why an unauthenticated
 #: default URL is a degraded tier rather than a working one.
 OTHER_REDIS_PORT = 6379
-
-PASSWORD = "TestPass1234!"
 
 
 def _compose_text() -> str:
@@ -169,24 +166,9 @@ class TestThePasswordDoesNotLeaveTheProcess:
 
         assert "hunter2" not in logged, f"the connection line carries the password: {logged!r}"
 
-    def test_the_metrics_door_publishes_no_password(self) -> None:
+    def test_the_metrics_door_publishes_no_password(self, admin_client: TestClient) -> None:
         """The door itself, not just the function behind it."""
-        client = TestClient(app)
-        email = f"cache-metrics-{uuid4().hex[:8]}@example.test"
-        registered = client.post(
-            "/api/v1/auth/register",
-            json={
-                "email": email,
-                "password": PASSWORD,
-                "display_name": "Cache Metrics Tester",
-                "role": "player",
-                "accepts_data_policy": True,
-            },
-        )
-        assert registered.status_code == 201, f"registration failed: {registered.json()}"
-        client.headers.update({"Authorization": f"Bearer {registered.json()['access_token']}"})
-
-        response = client.get("/api/v1/metrics/cache")
+        response = admin_client.get("/api/v1/metrics/cache")
         assert response.status_code == 200, f"the cache door answered {response.status_code}"
         body = response.text
         secret = os.environ.get("REDIS_URL", "")

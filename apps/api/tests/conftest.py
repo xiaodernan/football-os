@@ -183,6 +183,38 @@ def auth_client(client) -> Iterator:  # type: ignore[no-untyped-def]
 
 
 @pytest.fixture()
+def admin_client(client) -> Iterator:  # type: ignore[no-untyped-def]
+    """A client holding the platform's operator standing.
+
+    The register door refuses `admin` by design, so the row is written straight to the database —
+    the only way an admin account exists. The token is minted with the same helper the login door
+    uses rather than by signing in, because an admin has no password a test knows.
+    """
+    from app.core import security
+    from app.core.db import SessionLocal
+    from app.models import User
+
+    session = SessionLocal()
+    try:
+        row = User(
+            id=security.new_public_id("usr"),
+            email=f"admin-{uuid.uuid4().hex[:10]}@example.test",
+            password_hash=security.hash_password("strong-pass-1234"),
+            display_name="Test Admin",
+            role="admin",
+            is_active=True,
+        )
+        session.add(row)
+        session.commit()
+        user_id = row.id
+    finally:
+        session.close()
+    client.headers.update({"Authorization": f"Bearer {security.create_access_token(user_id, 'admin')}"})
+    yield client
+    client.headers.pop("Authorization", None)
+
+
+@pytest.fixture()
 def player_id(auth_client) -> str:  # type: ignore[no-untyped-def]
     response = auth_client.post(
         "/api/v1/players",

@@ -13043,7 +13043,7 @@
           "metrics"
         ],
         "summary": "System Metrics",
-        "description": "Report system-level metrics including uptime, request counts, and latency.",
+        "description": "Report system-level metrics including uptime, request counts, and latency.\n\nAdmin standing only: the rows describe the platform's accounts and this process, not the caller.",
         "operationId": "system_metrics_api_v1_metrics_system_get",
         "responses": {
           "200": {
@@ -13070,7 +13070,7 @@
           "metrics"
         ],
         "summary": "Database Metrics",
-        "description": "Report database-level metrics including table sizes and query performance.",
+        "description": "Report database-level metrics including table sizes and query performance.\n\nAdmin standing only: the ledger and asset totals are platform-wide.",
         "operationId": "database_metrics_api_v1_metrics_database_get",
         "responses": {
           "200": {
@@ -13097,7 +13097,7 @@
           "metrics"
         ],
         "summary": "Provider Metrics",
-        "description": "Report AI provider usage metrics including costs and latency.",
+        "description": "Report AI provider usage metrics including costs and latency.\n\nAdmin standing only: spend and the provider mix are budget figures.",
         "operationId": "provider_metrics_api_v1_metrics_providers_get",
         "responses": {
           "200": {
@@ -13124,7 +13124,7 @@
           "metrics"
         ],
         "summary": "Cost Optimisation",
-        "description": "Where the AI budget went and what a cheaper call would have been (spec §46, §76).\n\nReads the model-call ledger over a stated window and answers four breakdowns (by feature, by\nmodel, reasoning share, demo share) with every figure recomputed on the request. The\nrecommendations name the arithmetic that produced them, and the answer says plainly that it is an\nadvisor, not an enforcer: nothing here changes which provider a door calls (§45 owns that).",
+        "description": "Where the AI budget went and what a cheaper call would have been (spec §46, §76).\n\nReads the model-call ledger over a stated window and answers four breakdowns (by feature, by\nmodel, reasoning share, demo share) with every figure recomputed on the request. The\nrecommendations name the arithmetic that produced them, and the answer says plainly that it is an\nadvisor, not an enforcer: nothing here changes which provider a door calls (§45 owns that).\nAdmin standing only: it reads the whole platform's spend.",
         "operationId": "cost_optimisation_api_v1_metrics_cost_optimisation_get",
         "security": [
           {
@@ -13176,7 +13176,7 @@
           "metrics"
         ],
         "summary": "Latency Profile Endpoint",
-        "description": "Latency percentiles over the model-call ledger, per feature or overall (spec §58).\n\nThe percentiles are nearest-rank over the newest rows the profile read, which is the same figure\non SQLite and PostgreSQL — SQL has `percentile_cont` on one engine and nothing on the other. The\nanswer prints the sample size and whether the sample is full, so a percentile over 20 rows is never\nmistaken for one over 2,000.",
+        "description": "Latency percentiles over the model-call ledger, per feature or overall (spec §58).\n\nThe percentiles are nearest-rank over the newest rows the profile read, which is the same figure\non SQLite and PostgreSQL — SQL has `percentile_cont` on one engine and nothing on the other. The\nanswer prints the sample size and whether the sample is full, so a percentile over 20 rows is never\nmistaken for one over 2,000. Admin standing only: the sample is every feature's calls.",
         "operationId": "latency_profile_endpoint_api_v1_metrics_latency_get",
         "security": [
           {
@@ -13245,7 +13245,7 @@
           "metrics"
         ],
         "summary": "Cache Stats",
-        "description": "Cache statistics for every tier the process runs: the two in-memory caches and Redis.\n\nRedis is reported whether or not it is serving. `get_redis_cache()` is a lazy singleton\nthat attempts the connection once and then remembers the answer, so this door costs a\nfailed connect at most once per process on a host with no usable instance — and what it\nreturns there is the fact an operator needs: the tier exists, and it is not serving.",
+        "description": "Cache statistics for every tier the process runs: the two in-memory caches and Redis.\n\nRedis is reported whether or not it is serving. `get_redis_cache()` is a lazy singleton\nthat attempts the connection once and then remembers the answer, so this door costs a\nfailed connect at most once per process on a host with no usable instance — and what it\nreturns there is the fact an operator needs: the tier exists, and it is not serving.\nAdmin standing only: the statistics describe the process.",
         "operationId": "cache_stats_api_v1_metrics_cache_get",
         "responses": {
           "200": {

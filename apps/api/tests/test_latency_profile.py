@@ -105,32 +105,21 @@ def test_the_feature_filter_reads_only_that_feature(session: Session) -> None:
 
 
 class TestLatencyDoor:
-    def _client(self) -> TestClient:
-        client = TestClient(app)
-        response = client.post(
-            "/api/v1/auth/register",
-            json={"email": f"lat-{uuid4().hex[:8]}@example.test", "password": "TestPass1234!", "display_name": "Lat", "role": "player", "accepts_data_policy": True},
-        )
-        assert response.status_code == 201, response.text
-        client.headers.update({"Authorization": f"Bearer {response.json()['access_token']}"})
-        return client
-
-    def test_the_door_answers_the_profile_whole(self) -> None:
-        resp = self._client().get("/api/v1/metrics/latency")
+    def test_the_door_answers_the_profile_whole(self, admin_client: TestClient) -> None:
+        resp = admin_client.get("/api/v1/metrics/latency")
         assert resp.status_code == 200
         body = resp.json()
         assert {"p50_latency_ms", "p95_latency_ms", "p99_latency_ms", "sample_size", "sampled_from", "limitation"} <= set(body)
 
-    def test_the_system_door_now_carries_a_p95_figure(self) -> None:
+    def test_the_system_door_now_carries_a_p95_figure(self, admin_client: TestClient) -> None:
         """The row this landing replaced: p95_latency_ms used to answer None with a comment."""
-        resp = self._client().get("/api/v1/metrics/system")
+        resp = admin_client.get("/api/v1/metrics/system")
         assert resp.status_code == 200
         assert isinstance(resp.json()["p95_latency_ms"], float)
 
     def test_the_door_is_auth_gated(self) -> None:
         assert TestClient(app).get("/api/v1/metrics/latency").status_code == 401
 
-    def test_the_window_and_feature_are_clamped(self) -> None:
-        client = self._client()
-        assert client.get("/api/v1/metrics/latency?days=0").status_code == 422
-        assert client.get("/api/v1/metrics/latency?days=999").status_code == 422
+    def test_the_window_and_feature_are_clamped(self, admin_client: TestClient) -> None:
+        assert admin_client.get("/api/v1/metrics/latency?days=0").status_code == 422
+        assert admin_client.get("/api/v1/metrics/latency?days=999").status_code == 422

@@ -16,23 +16,6 @@ from fastapi.testclient import TestClient
 from app.core.request_metrics import SAMPLE_SIZE, record, reset, snapshot
 
 
-def _client() -> TestClient:
-    """A TestClient holding a fresh authorised session, as the other route suites build theirs."""
-    from uuid import uuid4
-
-    from app.main import app
-
-    client = TestClient(app)
-    email = f"reqmetrics-{uuid4().hex[:8]}@example.test"
-    reply = client.post(
-        "/api/v1/auth/register",
-        json={"email": email, "password": "TestPass1234!", "display_name": "Request Metrics", "role": "player", "accepts_data_policy": True},
-    )
-    assert reply.status_code == 201, reply.text
-    client.headers.update({"Authorization": f"Bearer {reply.json()['access_token']}"})
-    return client
-
-
 class TestArithmetic:
     """What the sample is asked to answer, answered from the durations it was given."""
 
@@ -80,19 +63,18 @@ class TestArithmetic:
 class TestTheDoor:
     """The rows as the door reports them, through the real middleware that does the recording."""
 
-    def test_it_reports_the_requests_this_process_has_served(self) -> None:
-        client = _client()
+    def test_it_reports_the_requests_this_process_has_served(self, admin_client: TestClient) -> None:
         before = snapshot()["request_count"]
 
         # Two calls that buy no AI at all, so the arithmetic this replaced could not have moved.
-        assert client.get("/api/v1/healthz").status_code == 200
-        assert client.get("/api/v1/healthz").status_code == 200
+        assert admin_client.get("/api/v1/healthz").status_code == 200
+        assert admin_client.get("/api/v1/healthz").status_code == 200
         assert snapshot()["request_count"] - before == 2
 
         # The door reports what this process served. Its own request is recorded after the route has
         # answered — the response cannot carry a figure about a request that has not finished — so the
         # row it reads is the count as of the request that arrived just before it.
-        assert client.get("/api/v1/metrics/system").json()["request_count"] == before + 2
+        assert admin_client.get("/api/v1/metrics/system").json()["request_count"] == before + 2
 
     def test_a_500_is_counted_even_though_the_middleware_that_serves_it_never_finishes(self) -> None:
         """The crash answer is produced outside every user middleware, so the count needs the second path."""

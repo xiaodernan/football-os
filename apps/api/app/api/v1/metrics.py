@@ -1,13 +1,17 @@
 """Metrics and observability endpoints (spec §58-§60).
 
 Exposes platform health metrics including request latency, error rates, database performance,
-AI provider usage, cost optimisation advice, and cache statistics. All endpoints are auth-gated to
-prevent information leakage while allowing administrators to monitor system health.
+AI provider usage, cost optimisation advice, and cache statistics.
+
+Every door here asks for the platform's `admin` standing, because every figure describes the whole
+platform rather than the caller: account totals, what the AI ledger spent, the provider mix, and the
+cache tiers the process runs. This module always named administrators as its audience; until the
+standing was wired, any registered account could read the same rows.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Final
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -19,13 +23,34 @@ from app.core.db import get_db
 from app.core.redis_cache import get_redis_cache
 from app.core.request_metrics import snapshot as request_metrics_snapshot
 from app.core.runtime import uptime_seconds
-from app.core.security import current_user
+from app.core.security import current_user, role_refusal, standing_check
 from app.models import ModelCall, User, VideoAsset
 from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
 from app.services.cost_advisor import recommend as cost_recommend
 from app.services.latency_profile import profile as latency_profile
 
-router = APIRouter(prefix="/metrics", tags=["metrics"])
+METRICS_STANDING: Final = standing_check(("admin",))
+
+
+def require_operator(user: User = Depends(current_user)) -> User:
+    """The standing every metrics door asks for, carried by the router so the tier inherits it.
+
+    A metrics row is about the platform, never about the caller: how many accounts exist, what the
+    AI budget bought, how the cache tiers are doing. The module's own description named operators as
+    the audience while each door admitted any signed-in account, so a player could read the
+    business's scale and spend. Mounting the check on the router rather than in six handlers means a
+    seventh metrics door is behind the same standing the moment it is added.
+    """
+    if user.role not in METRICS_STANDING:
+        raise role_refusal(
+            held=user.role,
+            required=METRICS_STANDING,
+            message="Only an admin account may read platform metrics",
+        )
+    return user
+
+
+router = APIRouter(prefix="/metrics", tags=["metrics"], dependencies=[Depends(require_operator)])
 
 
 class SystemMetricsResponse(BaseModel):
@@ -57,10 +82,12 @@ class ProviderMetricsResponse(BaseModel):
 
 @router.get("/system", response_model=SystemMetricsResponse)
 def system_metrics(
-    user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ) -> SystemMetricsResponse:
-    """Report system-level metrics including uptime, request counts, and latency."""
+    """Report system-level metrics including uptime, request counts, and latency.
+
+    Admin standing only: the rows describe the platform's accounts and this process, not the caller.
+    """
     from datetime import UTC, datetime
 
     now = datetime.now(UTC)
@@ -95,10 +122,12 @@ def system_metrics(
 
 @router.get("/database", response_model=DatabaseMetricsResponse)
 def database_metrics(
-    user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ) -> DatabaseMetricsResponse:
-    """Report database-level metrics including table sizes and query performance."""
+    """Report database-level metrics including table sizes and query performance.
+
+    Admin standing only: the ledger and asset totals are platform-wide.
+    """
     from datetime import UTC, datetime
 
     now = datetime.now(UTC)
@@ -122,10 +151,12 @@ def database_metrics(
 
 @router.get("/providers", response_model=ProviderMetricsResponse)
 def provider_metrics(
-    user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ) -> ProviderMetricsResponse:
-    """Report AI provider usage metrics including costs and latency."""
+    """Report AI provider usage metrics including costs and latency.
+
+    Admin standing only: spend and the provider mix are budget figures.
+    """
     from datetime import UTC, datetime
 
     now = datetime.now(UTC)
@@ -162,7 +193,6 @@ def provider_metrics(
 @router.get("/cost-optimisation")
 def cost_optimisation(
     days: int = Query(DEFAULT_WINDOW_DAYS, ge=1, le=365),
-    user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Where the AI budget went and what a cheaper call would have been (spec §46, §76).
@@ -171,6 +201,7 @@ def cost_optimisation(
     model, reasoning share, demo share) with every figure recomputed on the request. The
     recommendations name the arithmetic that produced them, and the answer says plainly that it is an
     advisor, not an enforcer: nothing here changes which provider a door calls (§45 owns that).
+    Admin standing only: it reads the whole platform's spend.
     """
     return cost_recommend(db, days=days)
 
@@ -179,7 +210,6 @@ def cost_optimisation(
 def latency_profile_endpoint(
     days: int = Query(DEFAULT_WINDOW_DAYS, ge=1, le=365),
     feature: str | None = Query(None, max_length=60),
-    user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Latency percentiles over the model-call ledger, per feature or overall (spec §58).
@@ -187,21 +217,20 @@ def latency_profile_endpoint(
     The percentiles are nearest-rank over the newest rows the profile read, which is the same figure
     on SQLite and PostgreSQL — SQL has `percentile_cont` on one engine and nothing on the other. The
     answer prints the sample size and whether the sample is full, so a percentile over 20 rows is never
-    mistaken for one over 2,000.
+    mistaken for one over 2,000. Admin standing only: the sample is every feature's calls.
     """
     return latency_profile(db, days=days, feature=feature)
 
 
 @router.get("/cache")
-def cache_stats(
-    user: User = Depends(current_user),
-) -> dict[str, Any]:
+def cache_stats() -> dict[str, Any]:
     """Cache statistics for every tier the process runs: the two in-memory caches and Redis.
 
     Redis is reported whether or not it is serving. `get_redis_cache()` is a lazy singleton
     that attempts the connection once and then remembers the answer, so this door costs a
     failed connect at most once per process on a host with no usable instance — and what it
     returns there is the fact an operator needs: the tier exists, and it is not serving.
+    Admin standing only: the statistics describe the process.
     """
     stats: dict[str, Any] = get_cache_stats()
     stats["redis"] = get_redis_cache().get_stats()
