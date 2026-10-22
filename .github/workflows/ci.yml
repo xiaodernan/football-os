@@ -165,6 +165,13 @@ jobs:
         # paths a refusal arrives through, and that every refusal code's sentence is translated in both
         # Chinese catalogues. Files only.
         run: node scripts/qa-api-strings.mjs
+      - name: Error-boundary gate (the tree holds a failure boundary, in the reader's language)
+        # Same command as `scripts/check.sh`. A page that throws is caught by the framework's own error
+        # screen unless the tree holds a boundary, and that screen is English in every language. The
+        # tree had a not-found page in the reader's language and no boundary at all. This holds that the
+        # boundary is there, that it is a client component, and that its sentences are in the catalogue
+        # in all three languages. Files only.
+        run: node scripts/qa-error-boundary.mjs
       - name: Field-name gate (two fields on one page may not share a name)
         # Same command as `scripts/check.sh`. The copy gate above counts English literals; it cannot see a
         # catalogue key used for the wrong field, which is how the scout's shortlist and the scout's transfer

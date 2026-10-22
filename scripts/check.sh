@@ -163,6 +163,14 @@ echo "── Web: API-string gate ───────────────�
 # refusal code's sentence is translated in both Chinese catalogues. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-api-strings.mjs)
 
+echo "── Web: error-boundary gate ───────────────────────────"
+# A page that throws is caught by the framework's own error screen unless the tree holds a boundary --
+# and that screen is English in every language, on a page whose every other sentence comes from the
+# catalogue. The tree had a not-found page in the reader's language and no boundary at all. This gate
+# holds that the boundary is there, that it is a client component, and that its sentences are in the
+# catalogue in all three languages. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-error-boundary.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 
