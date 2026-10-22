@@ -1129,3 +1129,11 @@ the challenges tier; "Data unavailable" is "数据不可用" in one place and "�
 That is a reader-visible inconsistency, and it is checkable without naming anything: **a sentence held
 under two keys must be worded the same way in every language** — with the handful of deliberate
 exceptions named, the two sentences that are not the same sentence wearing the same English.
+
+**The gate, and the fix.** `qa-locale-tokens.mjs` holds a fifth check: **a sentence held under two keys
+is worded the same way in every language**. It counted **13** drifted sentences in Simplified Chinese
+and **15** in Traditional when it learned to see the shape, and the count was a floor. Every sentence
+brought into line lowered it, and all twenty-eight of them were brought into line — the wording that
+won being the one the group already used, so the change was a consistency fix rather than a copy
+decision, and no pair's placeholders differed, so the ICU contract was never in question. The floor is
+**zero** now: a new drift is a finding, not a count.
