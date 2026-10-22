@@ -3352,17 +3352,35 @@ async function run() {
      * the whole-phrase boundary rule the page-level match needed is implied by equality.
      */
     const elementTexts = async () => {
-      const texts = await page.$$eval('body *', (nodes) =>
-        nodes
-          // Structured data lives in a script the reader never sees, and it is data rather than prose:
-          // the label/prose distinction the sweep makes is about what a reader reads, and a JSON-LD
-          // block that happens to quote a catalogue value is not a label the page forgot to translate.
-          // Its own surface is the structured-data read the SEO checks make, not this prose comparison,
-          // so it must not reach the label/prose logic and be mistaken for one.
-          .filter((node) => !(node.tagName === 'SCRIPT' && (node.getAttribute('type') ?? '').toLowerCase() === 'application/ld+json'))
-          .map((node) => (node.textContent ?? '').replace(/\s+/gu, ' ').trim())
-          .filter((text) => text.length > 0),
-      );
+      const texts = await page.$$eval('body *', (nodes) => {
+        /**
+         * The text of an element, without the text of a script.
+         *
+         * `textContent` includes a script's own text, so a page carrying structured data hands **every
+         * ancestor** of that script the English description inside its own text — and the sweep's
+         * label/prose comparison then reads a data block as if it were prose. Excluding the script
+         * element alone is not enough, because the ancestors still carry it. The reader never sees a
+         * script, so the sweep must not read one either.
+         */
+        const rendered = (node) => {
+          let out = '';
+          for (const child of node.childNodes) {
+            if (child.nodeType === 3) {
+              out += child.nodeValue ?? '';
+              continue;
+            }
+            if (child.nodeType !== 1) continue;
+            const tag = child.tagName;
+            if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'TEMPLATE') continue;
+            out += rendered(child);
+          }
+          return out;
+        };
+        return nodes
+          .filter((node) => !['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE'].includes(node.tagName))
+          .map((node) => rendered(node).replace(/\s+/gu, ' ').trim())
+          .filter((text) => text.length > 0);
+      });
       return new Set(texts);
     };
     /** A label, allowing the one trailing mark a label sometimes carries. */
