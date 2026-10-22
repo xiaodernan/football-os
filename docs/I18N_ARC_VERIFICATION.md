@@ -763,15 +763,26 @@ publishes at all.
 ### What the census can and cannot see (2026-10-22)
 
 The contract test's census reads a refusal's message **where it is written**, so a message a helper
-takes as an argument — `password_refusal(message=...)` — is not a literal it can see, and the code is
-named as one the catalogue cannot reproduce. That is **conservative in the safe direction**: a code the
-census cannot resolve is named rather than silently left uncovered, and `invalid_password` was carried
-by hand for exactly that reason — the API's message at every call site is "The current password is
-incorrect", but the census cannot prove it by looking at the helper.
+takes as an argument — `password_refusal(message=...)` — is not a literal it can see, and the code was
+named as one the catalogue cannot reproduce. That is **conservative in the safe direction** — a code the
+census cannot resolve is named rather than silently left uncovered — and `invalid_password` was carried
+by hand for exactly that reason.
 
-The next step is a census that follows the call: find the helper that raises a refusal, find its
-call sites, and see what they pass. That would make the named list the *truly* varying messages rather
-than the ones the census cannot see through, and it would let the list shrink by facts.
+**The census now follows the call** (2026-10-22), and finding that took two bugs of its own:
+
+* it read the API's **documentation** as if it were code — `security.py` explains the refusal it
+  documents by quoting the line that raises it, so the census counted a comment as a second raise site.
+  The census now strips the comments first, with a small state machine that knows a `#` inside a
+  string is not a comment;
+* it classified a helper's message as an f-string, because the check for "a message with no letters in
+  it" ran before the check for "a message that is a parameter" — and an empty literal has no letters in
+  it either.
+
+With both fixed, the census resolves `invalid_password` through `password_refusal()` to the one
+message its callers pass — **"The current password is incorrect"** — and the code leaves the named list
+and joins the covered ones, where the drift rule holds it to the API's message. The named list is
+**38** codes, and each is a message that genuinely varies with the request or that a helper is called
+with more than one sentence.
 
 ### The honest remainder
 

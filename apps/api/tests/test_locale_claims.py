@@ -295,8 +295,7 @@ NOT_FIXED_CODES: frozenset[str] = frozenset(
         "career_limit",
         "insufficient_role",
         "invalid_board",
-        "invalid_password",
-        "job_not_cancellable",
+            "job_not_cancellable",
         "job_not_deletable",
         "media_tools_missing",
         "no_fixture",
@@ -326,27 +325,108 @@ NOT_FIXED_CODES: frozenset[str] = frozenset(
 )
 
 
+#: The API's own documentation quotes the refusal it documents, so a census that reads the raw text
+#: counts a comment as a second raise site. The stripper is a small state machine over each line: a
+#: `#` inside a string is not a comment.
+def _strip_comments(source: str) -> str:
+    kept: list[str] = []
+    for line in source.splitlines(keepends=True):
+        quote: str | None = None
+        index = 0
+        cut = len(line)
+        while index < len(line):
+            char = line[index]
+            if quote:
+                if char == "\\":
+                    index += 2
+                    continue
+                if char == quote:
+                    quote = None
+            elif char in "\"'":
+                quote = char
+            elif char == "#":
+                cut = index
+                break
+            index += 1
+        kept.append(line[:cut])
+    return "".join(kept)
+
+
+#: A refusal's message is sometimes a parameter of the function that raises it: the helper takes the
+#: sentence and the caller fixes it. `password_refusal(message="The current password is incorrect")`
+#: is fixed at every call site even though the helper's own body cannot see it.
+_CALL = r"""\b{}\(\s*(?:message\s*=\s*)?(f?)(["'])(.*?)(?<!\\)\2"""
+
+#: The function a refusal sits in, found by scanning back to the nearest `def`.
+_DEF = re.compile(r"^def\s+([a-z_][a-z0-9_]*)", re.MULTILINE)
+
+
+def _callers_pass(helper: str, whole: str) -> tuple[set[str], bool]:
+    """The literal messages the callers of `helper` pass, and whether any of them is an f-string."""
+    literals: set[str] = set()
+    dynamic = False
+    for match in re.compile(_CALL.format(re.escape(helper)), re.DOTALL).finditer(whole):
+        if match.group(1):
+            dynamic = True
+        else:
+            literals.add(match.group(3))
+    return literals, dynamic
+
+
+def _helper_of(text: str, position: int) -> str | None:
+    name = None
+    for match in _DEF.finditer(text, 0, position):
+        name = match.group(1)
+    return name
+
+
 def _refusals() -> dict[str, dict[str, Any]]:
-    """Every refusal code the API publishes, with the messages it publishes for it."""
+    """Every refusal code the API publishes, with the messages it publishes for it.
+
+    A message is **fixed** when the API publishes exactly one message for the code and that message is
+    a literal — the catalogue can carry it verbatim. Two shapes need looking through: a message the
+    API builds with an f-string, and a message a **helper** takes as an argument, where the caller
+    fixes it and the helper's own body cannot see it.
+    """
     constants: dict[str, str] = {}
-    found: dict[str, dict[str, Any]] = {}
+    sources: dict[Path, str] = {}
     for path in sorted(APP_SOURCE.rglob("*.py")):
         if "tests" in path.parts:
             continue
-        source = path.read_text(encoding="utf-8", errors="replace")
-        constants.update(dict(_CONSTANT.findall(source)))
-        pairs = [(code, "", f, q, message, "") for code, f, q, message in _ANSWERED.findall(source)]
-        for literal, name, is_f, _quote, message, variable in _REFUSAL.findall(source) + pairs:
+        text = _strip_comments(path.read_text(encoding="utf-8", errors="replace"))
+        sources[path] = text
+        constants.update(dict(_CONSTANT.findall(text)))
+    whole = "\n".join(sources.values())
+
+    resolved: dict[str, set[str | None]] = {}
+    for path, text in sources.items():
+        for match in _REFUSAL.finditer(text):
+            literal, name, is_f, _quote, body, variable = match.groups()
             code = literal or constants.get(name)
             if not code:
                 continue
-            entry = found.setdefault(code, {"messages": set(), "dynamic": False})
-            if variable or is_f or "{" in message or not re.search(r"[A-Za-z]", message):
-                entry["dynamic"] = True
+            body = body or ""
+            if variable:
+                helper = _helper_of(text, match.start())
+                literals, dynamic = _callers_pass(helper, whole) if helper else (set(), True)
+                message: str | None = None if (dynamic or len(literals) != 1) else next(iter(literals))
+            elif is_f or "{" in body or not re.search(r"[A-Za-z]", body):
+                message = None
             else:
-                entry["messages"].add(message)
-    return found
+                message = body
+            resolved.setdefault(code, set()).add(message)
+        for code, is_f, _quote, body in _ANSWERED.findall(text):
+            message = None if (is_f or "{" in body or not re.search(r"[A-Za-z]", body)) else body
+            resolved.setdefault(code, set()).add(message)
 
+    found: dict[str, dict[str, Any]] = {}
+    for code, messages in resolved.items():
+        fixed = sorted(message for message in messages if message is not None)
+        found[code] = {
+            "messages": set(fixed),
+            "dynamic": len(messages) != 1 or not fixed,
+        }
+    return found
 
 def test_every_refusal_the_api_publishes_has_a_catalogue_sentence() -> None:
     """A refusal is the reader's copy, so the catalogue holds it — and the two cannot drift.
