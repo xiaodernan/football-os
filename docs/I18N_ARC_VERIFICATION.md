@@ -727,6 +727,11 @@ The English rendering is the API's own message, byte for byte; the other two are
 the whole slice in three lines: a refusal used to be English on a Chinese page whatever the reader had
 chosen, and now it is the reader's language with the English untouched.
 
+The same read, taken after the asymmetry slice added `invalid_password` and the rule that the English
+reader keeps the API's wording, reads the same way — the English is unchanged and the Chinese is the
+catalogue's — which is what "the English does not move" means in practice. The walk was re-run on the
+build that carries it: **298/298, exit 0**.
+
 ### Which language gets which words (2026-10-22)
 
 The second slice added `invalid_password` — "The current password is incorrect", which the API's helper
