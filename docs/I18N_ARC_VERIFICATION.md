@@ -1119,3 +1119,13 @@ wherever it appears ("Tactical system", five namespaces) and are deliberate, whi
 ordinary sentences that happen to be written twice. The gate to hold them would name each one with the
 reason it is allowed, the way the locale-token gate names the technical tokens: a list without reasons
 is the same as no list at all.
+
+**And some of them have already drifted.** The repeats are not only a risk of future drift: **13** of
+them are worded two ways in Simplified Chinese and **15** in Traditional — the same English sentence
+under two keys, and the reader meets one button written twice. "PROJECT AUTHORED" is "项目原创" in one
+place and "本项目编写" in another; "Play the next round" is one thing in the career tier and another in
+the challenges tier; "Data unavailable" is "数据不可用" in one place and "数据暂不可用" in another.
+
+That is a reader-visible inconsistency, and it is checkable without naming anything: **a sentence held
+under two keys must be worded the same way in every language** — with the handful of deliberate
+exceptions named, the two sentences that are not the same sentence wearing the same English.
