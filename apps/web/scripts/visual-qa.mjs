@@ -3458,6 +3458,11 @@ async function run() {
       console.log(`      the elements that carried a catalogue value inside a longer text (${tolerated.length}) — the API's own prose, quoted rather than translated:`);
       for (const line of [...new Set(tolerated)].slice(0, 12)) console.log(`        ${line}`);
     }
+    // The pages the sweep read, in full. The check's claim is about *the pages this walk visited*, so
+    // the list of those pages is the surface of the claim — and a page the sweep never read is a page
+    // nobody has judged in the reader's language. Printed rather than summarised, because the point of
+    // an exemption nobody can see is that it stays visible.
+    console.log(`      the pages the sweep read in Chinese (${swept.length}): ${swept.map((entry) => entry.split(' ')[0]).join(' ')}`);
   } catch (error) {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed
     // check, capture what the browser was actually looking at, and fall through to the summary.
