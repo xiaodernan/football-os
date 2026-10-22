@@ -34,9 +34,9 @@ def no_endpoint(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 @pytest.fixture()
 def endpoint(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    # Any syntactically valid URL; the in-memory processor below means nothing is
-    # ever sent to it.
-    monkeypatch.setenv(tracing.ENDPOINT_ENV, "http://127.0.0.1:9/v1/traces")
+    # The variable's documented shape is a *base* URL; the in-memory processor below
+    # means nothing is ever sent to it.
+    monkeypatch.setenv(tracing.ENDPOINT_ENV, "http://127.0.0.1:9")
     # The production path installs the provider globally and patches the httpx
     # client. The global install is process-wide state the rest of the suite must
     # not inherit, so this run replaces it with a no-op — `instrument_fastapi` takes
@@ -90,12 +90,56 @@ def test_with_endpoint_a_request_produces_a_server_span(endpoint: None) -> None:
     assert span.context is not None and span.context.trace_id != 0
 
 
+def test_the_base_endpoint_posts_to_the_traces_path() -> None:
+    """`OTEL_EXPORTER_OTLP_ENDPOINT` is a base URL by specification, so the exporter
+    must POST to `/v1/traces` — not to the base itself. The receiver is a real local
+    HTTP server; it records the path it was actually sent.
+
+    The other cases in this file pass a full `/v1/traces` URL, which is why none of
+    them could see this: the argument form and the documented environment variable
+    are not the same contract.
+    """
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    seen: list[str] = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:
+            seen.append(self.path)
+            length = int(self.headers.get("content-length", "0"))
+            self.rfile.read(length)
+            self.send_response(200)
+            self.send_header("content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(b"{}")
+
+        def log_message(self, fmt: str, *args: object) -> None:
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        port = server.server_address[1]
+        provider = tracing.build_provider(f"http://127.0.0.1:{port}")
+        with provider.get_tracer("test").start_as_current_span("probe"):
+            pass
+        provider.force_flush()
+        provider.shutdown()
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert seen == ["/v1/traces"], f"the exporter posted to {seen!r}, not the traces path"
+
+
 def test_instrumented_app_still_serves_when_collector_is_absent(endpoint: None) -> None:
     """The batch processor exports on a background thread: a down collector must
     not fail a request. Measured with the real OTLP exporter pointed at a port
     nothing listens on — the request answers 200 and the exporter's failure stays
     on its thread."""
-    provider = tracing.build_provider("http://127.0.0.1:9/v1/traces")
+    provider = tracing.build_provider("http://127.0.0.1:9")
     app: Any = FastAPI()
 
     @app.get("/ping")

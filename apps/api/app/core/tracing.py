@@ -61,6 +61,18 @@ def init_tracing(*, span_processor: SpanProcessor | None = None, store: bool | N
     return provider
 
 
+def _traces_endpoint(endpoint: str) -> str:
+    """The full traces URL for a base endpoint.
+
+    `OTEL_EXPORTER_OTLP_ENDPOINT` is a base URL by specification, and the SDK appends the
+    signal path when it reads the variable itself. This module reads it and hands it to
+    `OTLPSpanExporter(endpoint=...)`, which treats the argument as the *full* URL — so the
+    append is ours to do. A value that already names the traces path is left alone.
+    """
+    base = endpoint.rstrip("/")
+    return base if base.endswith("/v1/traces") else f"{base}/v1/traces"
+
+
 def build_provider(
     endpoint: str | None,
     span_processor: SpanProcessor | None = None,
@@ -83,7 +95,9 @@ def build_provider(
     if span_processor is not None:
         provider.add_span_processor(span_processor)
     elif endpoint:
-        provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
+        provider.add_span_processor(
+            BatchSpanProcessor(OTLPSpanExporter(endpoint=_traces_endpoint(endpoint)))
+        )
     if store:
         from opentelemetry.sdk.trace.export import BatchSpanProcessor as _Batch
 

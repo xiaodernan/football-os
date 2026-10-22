@@ -1,0 +1,21 @@
+# The collector this project's tracing claim is measured against. It is deliberately the
+# smallest pipeline that can witness a span: OTLP in, the debug exporter out. It is not a
+# production sink; docs/M12_PRODUCTION_HARDENING_VERIFICATION.md says what the measurement
+# does and does not cover.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug]

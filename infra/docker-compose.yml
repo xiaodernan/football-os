@@ -54,5 +54,21 @@ services:
       timeout: 3s
       retries: 10
 
+  # The trace collector the API exports to when OTEL_EXPORTER_OTLP_ENDPOINT is set. It sits
+  # behind a profile rather than in the default stack: the API stays silent without that
+  # variable, so booting a collector by default would spend a container on a pipeline nothing
+  # writes to. `docker compose --profile observability up -d otel-collector` starts it. The
+  # ports are bound to loopback because this is a dev collector, not a shared backend.
+  otel-collector:
+    image: otel/opentelemetry-collector:0.111.0
+    container_name: football_os_otel
+    profiles: ["observability"]
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+
 volumes:
   db-data:
