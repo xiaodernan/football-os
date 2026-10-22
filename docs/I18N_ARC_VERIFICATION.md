@@ -974,3 +974,12 @@ Traditional, and **45** the same in every language because they are technical to
 namespace holds all **65** refusal codes, and `careerDetail` holds **115** keys — fourteen of them the
 ledger's labels and hints, which are the copy the copy gate found on the day it was taught to read the
 tier's `.ts` files.
+
+### The walk, on the tree this arc left
+
+The visual walk was re-run on the build that carries this arc's work — **298/298, exit 0** — and the locale
+sweep read **49 pages in Chinese, 2047 English phrases compared, 4 corpus pages skipped**. The number
+that moved most is the sweep's **tolerated list**: the elements that carry a catalogue value inside a
+longer text fell from **101 to 55**, because the JSON-LD block's text no longer reaches the comparison
+through every ancestor that contains it. Structured data is data; the reader never sees it, so the
+sweep must not read it, and the surface of the exemption is now what it says it is.
