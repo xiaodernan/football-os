@@ -120,13 +120,41 @@ run against the unfixed code first and failed exactly there (`At index 0 diff: '
 '/v1/traces'`); after the fix that case passes and the live walk exports the span described
 above.
 
+**The proxy leg (2026-10-23).** The sixth case proved the API continues a caller's `traceparent`; the
+browser reaches that API only through the Next.js cookie proxy, and the proxy built its outgoing
+headers from an allowlist (`accept`, `authorization`, `cookie`, `content-type`, `range`), so an
+upstream caller's trace context — a load balancer's, an edge worker's, a gateway's — stopped at the
+tier and the API began a second trace for one request. `apps/web/lib/trace-context.ts` validates the
+incoming header against the W3C format and forwards `traceparent` and `tracestate` only when it is
+valid: two lowercase hex version digits that are not `ff`, a 32-hex trace id and 16-hex parent id that
+are not all zero, two hex flags, and no trailing field on version `00` (a higher version's extra
+fields travel unread). With no incoming header the tier sends nothing — it does not mint ids, because
+it has no span to name.
+
+**Measured.** `qa-proxy-gate.mjs` holds three more checks (six total over 131 files): it compiles and
+**calls** the shipped helper for three valid shapes (bare, with `tracestate`, a future version), drops
+nine invalid ones — including a `tracestate` with no `traceparent`, the control that the tier starts
+no trace — and reads the route's own AST to prove `handle` computes the context off the incoming
+request, both calls that forward `target` carry it, and `callApi` spreads it into the outgoing
+headers. Eight arm planes matched, predictions written first: the control 6/6 green; four helper
+mutations (uppercase accepted, all-zero trace id, orphan `tracestate`, version `00` with a trailing
+field) each red on the propagation check naming that shape; three route mutations (the spread removed,
+the retry loses the context, `handle` stops reading the request) each red on the reach check naming the
+missing seam. The live walk: a production web build (`NEXT_DIST_DIR=.next-m12trace`, port 3221)
+proxying to an API with `TRACE_STORE_ENABLED=1` over a fresh SQLite database, one
+`GET /api/v1/traces/…` carrying `traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01`
+answered 401 (the door is auth-gated) and left four `request_spans` rows whose `trace_id` is the
+caller's, the `SERVER` row naming `00f067aa0ba902b7` as its parent; the same request with no header
+left an unparented `SERVER` span in a different trace (`964b3f829197972596588c36b1848188`).
+
 What is deliberately **not** claimed: no production or third-party trace backend — the witness is a
 local container whose exporter prints to its own log, so nothing survives the container and nothing
 is queryable; no sampling policy beyond the SDK default; no collector authentication, TLS or
-retention configuration; and **the web tier sends no trace context**: the API continues an incoming
-W3C `traceparent` (the sixth case holds that), but the browser has no tracer and the Next.js proxy is
-not instrumented, so in this deployment a trace starts at the API unless an upstream caller supplies
-one. Span export is deployment configuration, the same boundary the log sink sits behind.
+retention configuration; and **the web tier sends no trace context of its own**: the browser has no
+tracer and the proxy is not instrumented, so the tier starts no trace; it forwards a valid upstream
+`traceparent` and drops an invalid one, which means a trace crosses the proxy only when a caller
+upstream of it supplies one. Span export is deployment configuration, the same boundary the log sink
+sits behind.
 
 ### Performance — an in-memory TTL cache and a response middleware
 
@@ -635,6 +663,8 @@ harness env var is part of the recorded command.
 | `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same, against `HEAD` | 13 tests, rc=0 |
 | `pytest tests/test_tracing.py -q` | SQLite, working copy | **6 tests / 0 failures**, rc=0 |
 | one `GET /healthz` through a live API with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318` | live uvicorn + `otel/opentelemetry-collector:0.111.0`, debug exporter, SQLite | `SERVER` span `GET /healthz` read back from the collector log, resource `service.name=football-os-api`, `deployment.environment=development`; **before the `/v1/traces` fix the same walk logged `404 Not Found` and exported nothing** |
+| `node scripts/qa-proxy-gate.mjs` | `apps/web`, working copy | **6 checks / 0 failures**, 131 files; 8/8 arm planes matched |
+| one `GET /api/v1/traces/…` through a production web build with `traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01` | web `next start` on 3221 → API with `TRACE_STORE_ENABLED=1`, fresh SQLite | 401 from the auth-gated door, and four `request_spans` rows with the caller's `trace_id`, the `SERVER` row parented by `00f067aa0ba902b7`; the no-header control left an unparented `SERVER` span in trace `964b3f829197972596588c36b1848188` |
 | contract paths after the three metrics doors | `docs/api/openapi.json` committed | 179 → **182** |
 | `git grep -li agents -- apps/api/app` | committed tree | 13 → **14** (`services/agents/orchestrator.py`) |
 | `python -m scripts.bench_api --endpoint /api/v1/healthz --concurrency 10 --duration 15` | live uvicorn, one worker, Postgres 54321, demo mode, response cache **on** | **90.80 req/s**, p50 71.50 / p95 99.29 / p99 153.21 ms, **0 errors**, 1375 requests |

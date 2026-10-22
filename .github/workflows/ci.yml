@@ -178,10 +178,12 @@ jobs:
         # panel came to share one accessible name. This reads every page's own component graph and refuses two
         # different components on one page declaring the same constant aria-label key. Files only.
         run: node scripts/qa-field-labels.mjs
-      - name: Cookie-proxy gate (a browser may only reach the API through the proxy)
+      - name: Cookie-proxy gate (a browser may only reach the API through the proxy, and a caller's trace crosses it)
         # Same command as `scripts/check.sh`. The access token is httpOnly, so a browser may not hold it, and every
         # call it makes has to reach the API through the cookie proxy. This reads every fetch in the tree and
-        # refuses one that names a target outside /api/. Files only.
+        # refuses one that names a target outside /api/. It also compiles and calls the proxy's trace-context
+        # helper — a valid caller's traceparent/tracestate crosses unchanged, an invalid one is dropped and no id
+        # is minted — and holds the route's three seams that carry it to the API. Files only.
         run: node scripts/qa-proxy-gate.mjs
       - name: Crawl-policy gate (gated routes disallowed, advertised routes reachable, Allow exceptions live)
         # Same command as `scripts/check.sh`. Three files split one decision — who may crawl what — and each only

@@ -148,7 +148,10 @@ echo "── Web: cookie-proxy gate ──────────────�
 # The web tier's session design is one sentence: the access token is httpOnly, so no script can read it, and every
 # call a browser makes reaches the API through the cookie proxy. Nothing held that. This gate reads every fetch in
 # the tree and refuses one that names a target outside /api/ — an absolute URL, or a base built from one — because
-# a browser that reached the API directly would have to hold the token. Files only: no server, no browser.
+# a browser that reached the API directly would have to hold the token. It also compiles and calls the proxy's
+# trace-context helper (a valid caller's traceparent/tracestate crosses unchanged, an invalid one is dropped and
+# nothing is minted) and reads the route's AST to prove the context is computed, carried by both proxied calls, and
+# spread into the API request — so an upstream caller's trace is not restarted at the API. Files only.
 (cd apps/web && node scripts/qa-proxy-gate.mjs)
 
 echo "── Web: API-string gate ──────────────────────────────"

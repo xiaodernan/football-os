@@ -11,6 +11,7 @@ import { cookies } from "next/headers";
 
 import { ACCESS_COOKIE, REFRESH_COOKIE, REFRESH_COOKIE_PATH, apiBase } from "@/lib/api";
 import { localiseRefusal } from "@/lib/refusals";
+import { traceContextHeaders } from "@/lib/trace-context";
 
 type Params = { params: Promise<{ path: string[] }> };
 
@@ -47,9 +48,10 @@ function requestAccept(range?: string | null): string {
 async function callApi(
   method: string,
   path: string,
-  options: { body?: ArrayBuffer | null; token?: string | null; refreshCookie?: string | null; contentType?: string | null; range?: string | null },
+  options: { body?: ArrayBuffer | null; token?: string | null; refreshCookie?: string | null; contentType?: string | null; range?: string | null; trace?: Record<string, string> },
 ): Promise<{ response: Response; captured: Captured }> {
-  const headers: Record<string, string> = { accept: requestAccept(options.range) };
+  // The caller's trace follows the request, so the API's span belongs to the trace that started upstream.
+  const headers: Record<string, string> = { accept: requestAccept(options.range), ...options.trace };
   if (options.token) headers.authorization = `Bearer ${options.token}`;
   if (options.refreshCookie) headers.cookie = `${REFRESH_COOKIE}=${options.refreshCookie}`;
   if (options.body && options.contentType) headers["content-type"] = options.contentType;
@@ -119,6 +121,7 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
   const body = method === "GET" || method === "HEAD" ? null : await request.arrayBuffer();
   const contentType = request.headers.get("content-type");
   const range = request.headers.get("range");
+  const trace = traceContextHeaders(request.headers);
   const jar = await cookies();
   let token = jar.get(ACCESS_COOKIE)?.value ?? null;
   const refreshCookie = jar.get(REFRESH_COOKIE)?.value ?? null;
@@ -136,12 +139,12 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
     }
   }
 
-  let { response, captured } = await callApi(method, target, { body, token, refreshCookie, contentType, range });
+  let { response, captured } = await callApi(method, target, { body, token, refreshCookie, contentType, range, trace });
 
   if (response.status === 401 && !isAuthRoute && !attemptedRefresh) {
     const minted = await refreshSession(refreshCookie);
     if (minted?.accessToken) {
-      const retry = await callApi(method, target, { body, token: minted.accessToken, refreshCookie, contentType, range });
+      const retry = await callApi(method, target, { body, token: minted.accessToken, refreshCookie, contentType, range, trace });
       response = retry.response;
       captured = retry.captured;
       mintedCookies = minted;
