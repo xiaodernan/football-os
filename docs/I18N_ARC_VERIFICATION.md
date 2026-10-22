@@ -983,3 +983,19 @@ that moved most is the sweep's **tolerated list**: the elements that carry a cat
 longer text fell from **101 to 55**, because the JSON-LD block's text no longer reaches the comparison
 through every ancestor that contains it. Structured data is data; the reader never sees it, so the
 sweep must not read it, and the surface of the exemption is now what it says it is.
+
+### The table that went stale, and the floor beside the pin
+
+The catalogue's own table (`apps/web/messages/README.md`) said **3531 of 3575** when the catalogue held
+**3551 of 3596** — and nothing said so, because the test that recomputes the table asserts the
+**translated count** as a *floor* (`stated <= translated`). A floor is right there: a translation batch
+raises the count without touching the file, and the file is not supposed to be rewritten for every
+sentence that lands. But the **population** beside it is a **pin** — the test fails if the table's
+denominator is not the live key count — and the population was stale too, so the pin would have caught
+the whole table had the test been run.
+
+It had not been run: the arc added **61** keys over its last stretch and the API's suite was not run
+after them, because the web tier's own gates do not run it and the pre-commit hook's fast checks are
+not the repository's gate. The repository's gate is `scripts/check.sh`, and it *does* run
+`python -m pytest` over the API — so the rule the arc records is its own: **after a change to the
+catalogue, run the API's suite, not only the web's gates.** The table is recomputed and the pin holds.
