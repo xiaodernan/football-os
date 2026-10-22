@@ -72,6 +72,7 @@ were in, and it is the check that would have caught somebody switching the field
   shadowed copy watches their change do nothing. All three files carried four such pairs when this was written
   (`common.{no,yes,close,error}`); the test parses the raw text, because every check that reads the parsed object
   is blind to them.
+* **A refusal is the reader's copy too.** The `errors` namespace holds one key per refusal code the API publishes, and the **English value is the API's message verbatim** — so the English rendering is byte-identical and the change is a translation rather than a copy change. The code itself needs no translation: it is the locale-neutral handle the page prints beside the sentence. The API's other 39 codes publish a message that names a value the request supplied (“philosophy must be one of […]”) or that a helper chooses at the raise site (“The current password is incorrect”), so the catalogue cannot reproduce them; they keep the API's own words and are **named** in `apps/api/tests/test_locale_claims.py`, which holds the catalogue and the API in step in both directions.
 * **A key must be asked for.** The other half of the contract, and the one nothing had ever checked: a key no
   page reads is a translation that ships to nobody — written three times, and re-read whenever the message beside
   it changes. `apps/web/scripts/qa-unused-keys.mjs` resolves every read in the web tier and reports the keys no

@@ -260,8 +260,7 @@ broken. Measured after the fix: **1039 URLs probed, 1039 answered 200**.
     catalogue key whose English value is the API's message, and every `errors.*` key the catalogue
     holds is a code the API publishes.
 
-  Until that lands, the claim "the interface is in the reader's language" holds for the interface's
-  **own** copy and not for the refusals the API answers with.
+  **It landed on 2026-10-22** — see §11.
 * **A key's *existence* is not a key's *use*, and neither gate can see the third thing.** The copy gate
   asks whether every key asked for is held; the dead-key gate asks whether every key held is asked for.
   Between them, they hold that the catalogue and the tree agree — and neither can see a key that a page
@@ -640,3 +639,75 @@ in the English catalogue, and the gate named both.
 **The lesson.** A claim about what *should* be true is a convention until something checks it. "The
 identical values are the technical tokens" was true of every key anybody had looked at, and false of eleven
 that nobody had.
+
+## 11. The refusals the API answers with (2026-10-22)
+
+### What was found
+
+The API answers a refusal with a **code** and a **sentence**. The code is the stable handle — the
+operator's, the log's, the page's — and the sentence is the API's own English. The web tier shows the
+sentence: `errorMessage()` in `lib/api.ts` returns `error.message`, and the forty-two call sites that
+pass it a translated fallback never see that fallback used. So a Chinese reader was told *"The current
+password is incorrect"* in English, on a page whose every other sentence came from the Chinese
+catalogue.
+
+It is the same shape as §7 and §10 — a convention the implementation did not match. `SessionReportTools.tsx`
+says a refusal is printed as "the code and the figure the API answered with rather than a shrug", and
+what the reader got was the API's English sentence.
+
+### Why neither gate could see it
+
+The copy gate reads the **web tier's source**, and the English was in the **API's answer**. The locale
+sweep looks for **catalogue values** on a page, and the API's sentences are not catalogue values. The
+sweep's *tolerated* list — the API's authored prose it prints and does not judge — could not have shown
+it either, because the refusal never reaches the page as a catalogue value at all.
+
+### The fix, and its shape
+
+The arc's method, applied to the other side of the wire: **the catalogue holds one key per refusal
+code, and the English value is the API's message verbatim.** So the English rendering is byte-identical
+and this is a *translation* rather than a copy change — and the code needs no translation at all, because
+it is already the locale-neutral handle the page prints beside the sentence.
+
+The switch is **one place, not thirty-one files**:
+
+| where | what it does |
+| --- | --- |
+| `apps/web/lib/refusals.ts` | the shared shape handling and the lookup, read through next-intl's translator so the locale is the reader's own |
+| `lib/server.ts`'s `serverFetch` | the server's own reads |
+| `app/api/v1/[...path]/route.ts` | the browser's traffic |
+
+`errorMessage()` and the forty-two call sites that pass it a fallback are **untouched**, and the
+fallback they pass is still what a reader sees when the API sends no message at all.
+
+The proxy had to learn the locale for itself: the middleware skips `/api`, so the proxy's own request
+carries no `x-next-intl-locale` header and next-intl would answer it in English whatever the reader
+chose. The reader's choice is in the `fo_locale` cookie, which the middleware writes on every response,
+so `i18n/request.ts` now falls back to it.
+
+### What is covered, and what is named
+
+The catalogue holds **26** codes. The API publishes **65**, and the other **39** have a message that
+names a value the request supplied ("philosophy must be one of [...]") or that a helper chooses at the
+raise site ("The current password is incorrect"). A catalogue cannot reproduce a sentence that changes
+with the request, so those keep the API's own words — and they are **named** in the test rather than
+left implied.
+
+`apps/api/tests/test_locale_claims.py` holds the two in step in **both directions**:
+
+* every code the API publishes with a fixed message has a catalogue key, and the catalogue's English
+  value is that message, so the two cannot drift apart;
+* every `errors.*` key the catalogue holds is such a code, so a key nothing reads cannot sit in the
+  catalogue;
+* every code whose message is not fixed is named in `NOT_FIXED_CODES`, so a new refusal has to be
+  classified before it can be published.
+
+Its red path was watched: a catalogue sentence that no longer matched the API's message, and a key for
+a refusal the API does not publish, both made it fail by name.
+
+### The honest remainder
+
+The claim "the interface is in the reader's language" now holds for the interface's **own** copy **and**
+for the refusals the catalogue can reproduce. It does **not** hold for the 39 refusals whose message
+changes with the request — those are the API's own words, and translating them means changing what the
+API answers rather than what the page shows. That is the next project, not this slice.
