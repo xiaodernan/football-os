@@ -1048,3 +1048,9 @@ concrete paths, leaving **33** routes with no named path under them — and most
 dynamic ones the walk reaches at runtime (the career it opened, the team it read out of the API, the
 share link it minted). The runtime list is the one that settles it, and it is now printed rather than
 assumed.
+
+And the walk now **holds** it: it reads the tree's own routes and refuses to finish green while one of
+them has no page the sweep read under it. The corpus routes are the exception the sweep already names
+— they carry the project's own English documents, published in English on purpose. A route nobody read
+in the reader's language is a page the claim does not cover, so the coverage is a check rather than an
+assumption.
