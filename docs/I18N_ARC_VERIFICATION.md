@@ -1070,3 +1070,14 @@ them has no page the sweep read under it. The corpus routes are the exception th
 — they carry the project's own English documents, published in English on purpose. A route nobody read
 in the reader's language is a page the claim does not cover, so the coverage is a check rather than an
 assumption.
+
+### The pages no walk reads
+
+A static census of the tree's routes against the ten walks' own paths says five of them are named by
+**no** walk at all: `/tactics/gallery`, `/world/competitions`, `/world/matches`, `/world/news` and
+`/world/teams`. Three more — `/portfolio`, `/club` and `/club/rules` — are read by their own tier's
+walk and by no other, so the locale sweep, which is the visual walk's, never reads them in Chinese
+either.
+
+A page no walk reads is a page whose copy is unjudged and unproven: the sweep's claim is about the
+pages it read, and the route-coverage check now says so at runtime, in the walk that can see it.
