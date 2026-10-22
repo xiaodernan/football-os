@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { CallNote, useClubCall } from "@/components/ClubTools";
 import { Panel } from "@/components/ui";
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import type { PortfolioRules, PortfolioShareLedger, PortfolioShareRecord } from "@/lib/portfolio";
 
 type Props = {
@@ -53,7 +53,7 @@ export function PortfolioSharePanel({ rules, initialLedger, initialFault = "" }:
       setFault("");
       return result.data;
     }
-    setFault(`${result.error.code}: ${result.error.message}`);
+    setFault(`${result.error.code}: ${errorMessage(result.error, t("requestFailed"))}`);
     return null;
   }, []);
 

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import type { CareerView } from "@/lib/types";
 
 /**
@@ -29,7 +29,7 @@ export function CareerTools({ ident, status, available }: { ident: string; statu
     setError(null);
     const result = await browserFetch<CareerView>(`/careers/${encodeURIComponent(ident)}${path}`, { method: "POST" });
     if (!result.ok) {
-      setError(`${result.error.code}: ${result.error.message}`);
+      setError(`${result.error.code}: ${errorMessage(result.error, t("requestFailed"))}`);
       setBusy(null);
       return;
     }
@@ -43,7 +43,7 @@ export function CareerTools({ ident, status, available }: { ident: string; statu
     setError(null);
     const result = await browserFetch<{ matches_kept: boolean }>(`/careers/${encodeURIComponent(ident)}`, { method: "DELETE" });
     if (!result.ok) {
-      setError(`${result.error.code}: ${result.error.message}`);
+      setError(`${result.error.code}: ${errorMessage(result.error, t("requestFailed"))}`);
       setBusy(null);
       return;
     }

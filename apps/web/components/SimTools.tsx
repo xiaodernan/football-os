@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import type { SimReplay } from "@/lib/types";
 
 /**
@@ -18,6 +18,7 @@ import type { SimReplay } from "@/lib/types";
 export function SimTools({ ident, digest }: { ident: string; digest: string }) {
   const router = useRouter();
   const t = useTranslations("simulate");
+  const tCommon = useTranslations("common");
   const [busy, setBusy] = useState<null | "replay" | "delete">(null);
   const [error, setError] = useState<string | null>(null);
   const [replay, setReplay] = useState<SimReplay | null>(null);
@@ -26,7 +27,7 @@ export function SimTools({ ident, digest }: { ident: string; digest: string }) {
     setBusy("replay");
     setError(null);
     const result = await browserFetch<SimReplay>(`/simulate/${encodeURIComponent(ident)}/replay`);
-    if (!result.ok) setError(`${result.error.code}: ${result.error.message}`);
+    if (!result.ok) setError(`${result.error.code}: ${errorMessage(result.error, tCommon("requestFailed"))}`);
     else setReplay(result.data);
     setBusy(null);
   }
@@ -36,7 +37,7 @@ export function SimTools({ ident, digest }: { ident: string; digest: string }) {
     setError(null);
     const result = await browserFetch<null>(`/simulate/${encodeURIComponent(ident)}`, { method: "DELETE" });
     if (!result.ok) {
-      setError(`${result.error.code}: ${result.error.message}`);
+      setError(`${result.error.code}: ${errorMessage(result.error, tCommon("requestFailed"))}`);
       setBusy(null);
       return;
     }

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import { refusalFigures, type ConsentList } from "@/lib/club";
 
 type Note = { text: string; figures: string[]; refused: boolean; action: string };
@@ -27,6 +27,7 @@ type Scopes = { scopes: string[]; default_granted: string[]; rule: string };
 function useAcademyCall() {
   const router = useRouter();
   const t = useTranslations("academy");
+  const tCommon = useTranslations("common");
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<Note | null>(null);
 
@@ -36,7 +37,7 @@ function useAcademyCall() {
     const result = await browserFetch<Record<string, unknown>>(path, { body: init.body, method });
     setBusy(null);
     if (!result.ok) {
-      setNote({ action, figures: [`${result.error.code}: ${result.error.message}`, ...refusalFigures(result.error.details)], refused: true, text: t("refusedWith", { method, path, status: result.status }) });
+      setNote({ action, figures: [`${result.error.code}: ${errorMessage(result.error, tCommon("requestFailed"))}`, ...refusalFigures(result.error.details)], refused: true, text: t("refusedWith", { method, path, status: result.status }) });
       return null;
     }
     setNote({ action, figures: [], refused: false, text: t("answeredWith", { method, path, status: result.status }) });

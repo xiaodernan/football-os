@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import type { SimOptions, SimRow } from "@/lib/types";
 
 /**
@@ -21,6 +21,7 @@ const NO_SYSTEM = "";
 
 export function SimulatorForm({ options }: { options: SimOptions }) {
   const t = useTranslations("simulate");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [home, setHome] = useState(options.teams[0]?.slug ?? "");
   const [away, setAway] = useState(options.teams[1]?.slug ?? "");
@@ -71,7 +72,7 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
       },
     });
     if (!result.ok) {
-      setError(`${result.error.code}: ${result.error.message}`);
+      setError(`${result.error.code}: ${errorMessage(result.error, tCommon("requestFailed"))}`);
       setBusy(false);
       return;
     }

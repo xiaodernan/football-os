@@ -21,6 +21,7 @@ const RATING_KEYS: Record<string, string[]> = {
 
 export function SessionLogger({ session }: { session: SessionListItem }) {
   const t = useTranslations("training");
+  const tCommon = useTranslations("common");
   const router = useRouter();
 
   const ratingLabel = (kind: string, value: number): string => {

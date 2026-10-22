@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Link from "next/link";
 
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import type { CareerView, ChallengeVerdict } from "@/lib/types";
 
 type ClosedDetail = { code?: string; message?: string; rounds_played?: number; window_rounds?: number; verdict?: ChallengeVerdict };
@@ -29,6 +29,7 @@ type ClosedDetail = { code?: string; message?: string; rounds_played?: number; w
  */
 export function ChallengeRunTools({ ident, status, available, windowClosed, windowRounds }: { ident: string; status: string; available: boolean; windowClosed: boolean; windowRounds: number }) {
   const t = useTranslations("challenges");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [busy, setBusy] = useState<null | "play" | "delete">(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export function ChallengeRunTools({ ident, status, available, windowClosed, wind
     if (!result.ok) {
       const detail = (result.error.details ?? {}) as ClosedDetail;
       if (detail.code === "window_closed") setClosed(detail);
-      else setError(`${result.error.code}: ${result.error.message}`);
+      else setError(`${result.error.code}: ${errorMessage(result.error, tCommon("requestFailed"))}`);
       setBusy(null);
       return;
     }
@@ -56,7 +57,7 @@ export function ChallengeRunTools({ ident, status, available, windowClosed, wind
     setError(null);
     const result = await browserFetch<null>(`/careers/${encodeURIComponent(ident)}`, { method: "DELETE" });
     if (!result.ok) {
-      setError(`${result.error.code}: ${result.error.message}`);
+      setError(`${result.error.code}: ${errorMessage(result.error, tCommon("requestFailed"))}`);
       setBusy(null);
       return;
     }

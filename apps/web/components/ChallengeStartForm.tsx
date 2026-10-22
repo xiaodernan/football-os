@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import type { ChallengeCatalogue, ChallengeEntry, ChallengeRunView } from "@/lib/types";
 
 /**
@@ -64,7 +64,7 @@ export function ChallengeStartForm({ catalogue }: { catalogue: ChallengeCatalogu
       },
     });
     if (!result.ok) {
-      setError(`${result.error.code}: ${result.error.message}`);
+      setError(`${result.error.code}: ${errorMessage(result.error, t("requestFailed"))}`);
       setBusy(false);
       return;
     }

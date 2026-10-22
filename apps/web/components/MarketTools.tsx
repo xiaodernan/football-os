@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import type { Fielding, Listing, MarketBudget, MarketRefusalDetail, MarketView, NegotiationResult, SquadAccount, SquadPlayer, Transferable } from "@/lib/market";
 
 type Action = "open" | "negotiate" | "buy" | "clause" | "loan" | "sell" | "release";
@@ -68,6 +68,7 @@ export function MarketTools({
   loanRounds: number;
 }) {
   const t = useTranslations("market");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [busy, setBusy] = useState<Action | null>(null);
   const [offers, setOffers] = useState<Record<string, string>>({});
@@ -84,7 +85,7 @@ export function MarketTools({
     if (!result.ok) {
       const detail = (result.error.details ?? {}) as MarketRefusalDetail;
       setRefused({
-        text: `${result.error.code} — ${result.error.message}`,
+        text: `${result.error.code} — ${errorMessage(result.error, tCommon("requestFailed"))}`,
         figures: figuresOf(detail, t),
       });
       setBusy(null);

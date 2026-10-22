@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import type { CareerOptions, CareerView } from "@/lib/types";
 
 /**
@@ -28,6 +28,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
   // chosen language reaches the form itself, not just the bar above it.
   const t = useTranslations("career");
   const tc = useTranslations("career");
+  const tCommon = useTranslations("common");
   const [club, setClub] = useState(options.clubs[0]?.slug ?? "");
   const [manager, setManager] = useState("");
   const [philosophy, setPhilosophy] = useState(options.philosophies.includes("balanced") ? "balanced" : options.philosophies[0] ?? "");
@@ -76,7 +77,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
       },
     });
     if (!result.ok) {
-      setError(`${result.error.code}: ${result.error.message}`);
+      setError(`${result.error.code}: ${errorMessage(result.error, tCommon("requestFailed"))}`);
       setBusy(false);
       return;
     }

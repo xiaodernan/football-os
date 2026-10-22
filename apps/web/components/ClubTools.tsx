@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import { refusalFigures, type ClubRules, type InvitationItem, type MemberRow, type TeamView } from "@/lib/club";
 
 type Note = { text: string; figures: string[]; refused: boolean; action: string };
@@ -30,7 +30,7 @@ export function useClubCall() {
     const result = await browserFetch<Record<string, unknown>>(path, { method, body: init.body });
     setBusy(null);
     if (!result.ok) {
-      setNote({ action, refused: true, text: tc("refusedWith", { method, path, status: result.status }), figures: [`${result.error.code}: ${result.error.message}`, ...refusalFigures(result.error.details)] });
+      setNote({ action, refused: true, text: tc("refusedWith", { method, path, status: result.status }), figures: [`${result.error.code}: ${errorMessage(result.error, tc("requestFailed"))}`, ...refusalFigures(result.error.details)] });
       return null;
     }
     setNote({ action, refused: false, text: tc("answeredWith", { method, path, status: result.status }), figures: [] });

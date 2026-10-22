@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { CallNote, useClubCall } from "@/components/ClubTools";
 import { Panel } from "@/components/ui";
-import { browserFetch } from "@/lib/api";
+import { browserFetch, errorMessage } from "@/lib/api";
 import {
   refusalFigures,
   type CareerChallengeIn,
@@ -35,8 +35,8 @@ const ATTEMPT_STATUS_KEY: Record<string, string> = {
 };
 
 /** What a failed *read* says, in the shape a reader can act on: the code, the sentence, and any figure beside it. */
-function faultLine(error: ApiError): string {
-  return [`${error.code}: ${error.message}`, ...refusalFigures(error.details)].join(" · ");
+function faultLine(error: ApiError, fallback: string): string {
+  return [`${error.code}: ${errorMessage(error, fallback)}`, ...refusalFigures(error.details)].join(" 路 ");
 }
 
 function shelfEyebrow(
@@ -46,7 +46,7 @@ function shelfEyebrow(
   if (!shelf) return t("shelfUnread");
   const parts = [t("shelfCount", { count: shelf.total })];
   if (shelf.section) parts.push(t("shelfSection", { section: shelf.section }));
-  return parts.join(" · ");
+  return parts.join(" 路 ");
 }
 
 /**
@@ -54,8 +54,8 @@ function shelfEyebrow(
  *
  * Four rules are held by the shape of this component rather than by a comment in it:
  *
- * * **every write is answered by the door.** `useClubCall` prints what the API said — its status, its code, its
- *   sentence and the figures that came with it — so a press the server refused cannot look like a press that
+ * * **every write is answered by the door.** `useClubCall` prints what the API said 鈥?its status, its code, its
+ *   sentence and the figures that came with it 鈥?so a press the server refused cannot look like a press that
  *   worked, and `router.refresh()` re-reads the server page so the counts above this panel are the server's.
  * * **the answer is painted where the press was made.** Every writing panel holds its own runner, so a refused
  *   guide, citation, program or challenge is answered beside the form that asked: one runner for the whole
@@ -129,22 +129,22 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
       setReadFault("");
       return;
     }
-    setReadFault(faultLine(result.error));
+    setReadFault(faultLine(result.error, t("requestFailed")));
   }, []);
 
   const loadShelf = useCallback(async () => {
     // Scoped to this account, because the panel is titled "your shelf" and the door's unscoped listing is
     // everybody's public shelf. Without the scope the page showed other people's guides beside an Erase button
-    // that only ever answered absence — the door was right and the page was describing a different list.
+    // that only ever answered absence 鈥?the door was right and the page was describing a different list.
     const result = await browserFetch<GuideShelfView>(`/creator/guides?creator=${encodeURIComponent(creator)}`);
     if (result.ok) setShelf(result.data);
-    else setReadFault(faultLine(result.error));
+    else setReadFault(faultLine(result.error, t("requestFailed")));
   }, [creator]);
 
   const readGuide = useCallback(async (guideId: string) => {
     const result = await browserFetch<GuideDetailView>(`/creator/guides/${guideId}`);
     if (result.ok) setSelectedGuide(result.data);
-    else setReadFault(faultLine(result.error));
+    else setReadFault(faultLine(result.error, t("requestFailed")));
   }, []);
 
   const loadPrograms = useCallback(async () => {
@@ -152,7 +152,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
     // shelf", and the door's unscoped listing is everybody's.
     const result = await browserFetch<ProgramShelfView>(`/creator/programs?creator=${encodeURIComponent(creator)}`);
     if (result.ok) setPrograms(result.data);
-    else setReadFault(faultLine(result.error));
+    else setReadFault(faultLine(result.error, t("requestFailed")));
   }, [creator]);
 
   const loadDrills = useCallback(async () => {
@@ -163,7 +163,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
   const loadChallenges = useCallback(async () => {
     const result = await browserFetch<CareerChallengeShelfView>(`/creator/challenges?creator=${encodeURIComponent(creator)}`);
     if (result.ok) setChallenges(result.data);
-    else setReadFault(faultLine(result.error));
+    else setReadFault(faultLine(result.error, t("requestFailed")));
   }, [creator]);
 
   const loadCareers = useCallback(async () => {
@@ -174,7 +174,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
       return;
     }
     // An empty select because the door did not answer is not "you have no career": the fault is shown instead.
-    setReadFault(faultLine(result.error));
+    setReadFault(faultLine(result.error, t("requestFailed")));
   }, []);
 
   useEffect(() => {
@@ -277,7 +277,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
     // counts the shelf was painted with.
     const result = await browserFetch<CareerChallengeView>(`/creator/challenges/${challengeId}`);
     if (result.ok) setSelectedChallenge(result.data);
-    else setReadFault(faultLine(result.error));
+    else setReadFault(faultLine(result.error, t("requestFailed")));
   }
 
   async function enterChallenge() {
@@ -329,8 +329,8 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
               <div className="grow">
                 <strong data-creator-slug-shown>{profile.slug}</strong>
                 <div className="muted mono" data-creator-account>
-                  {profile.account.display_name} · {tp("profileSince", { date: profile.since })} ·{" "}
-                  {tp("guidesCount", { count: profile.guides })} ·{" "}
+                  {profile.account.display_name} 路 {tp("profileSince", { date: profile.since })} 路{" "}
+                  {tp("guidesCount", { count: profile.guides })} 路{" "}
                   {tp("subscribersCount", { count: profile.subscribers })}
                 </div>
               </div>
@@ -495,7 +495,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
                 }
                 value={step.drill}
               >
-                <option value="">—</option>
+                <option value="">鈥?/option>
                 {drills.map((drill) => (
                   <option key={drill.id} value={drill.slug}>
                     {drill.title}
@@ -775,7 +775,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
                 >
                   {careers.map((career) => (
                     <option key={career.slug} value={career.slug}>
-                      {career.manager_name} · {career.club_name} · {career.status}
+                      {career.manager_name} 路 {career.club_name} 路 {career.status}
                     </option>
                   ))}
                 </select>
@@ -791,24 +791,24 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
                   <strong data-creator-challenge-status>
                     {ATTEMPT_STATUS_KEY[selectedChallenge.attempt.status] ? tp(ATTEMPT_STATUS_KEY[selectedChallenge.attempt.status]) : selectedChallenge.attempt.status}
                   </strong>
-                  {" · "}
+                  {" 路 "}
                   {tp("challengeVerdict", {
-                    actual: selectedChallenge.attempt.actual ?? "—",
+                    actual: selectedChallenge.attempt.actual ?? "鈥?,
                     target: selectedChallenge.attempt.target,
                     status: selectedChallenge.attempt.status,
                   })}
                 </p>
                 <p className="muted mono">
                   {selectedChallenge.attempt.career.stored
-                    ? `${selectedChallenge.attempt.career.slug} · ${selectedChallenge.attempt.career.manager_name ?? ""} · ${selectedChallenge.attempt.career.club_name ?? ""}`
+                    ? `${selectedChallenge.attempt.career.slug} 路 ${selectedChallenge.attempt.career.manager_name ?? ""} 路 ${selectedChallenge.attempt.career.club_name ?? ""}`
                     : tp("challengeCareerGone", { slug: selectedChallenge.attempt.career.slug })}
                 </p>
                 <p className="muted mono" data-creator-challenge-window-line>
                   {tp("challengeWindowLine", {
                     start: selectedChallenge.attempt.window.start_round,
                     end: selectedChallenge.attempt.window.end_round,
-                    played: selectedChallenge.attempt.window.played ?? "—",
-                    remaining: selectedChallenge.attempt.window.remaining ?? "—",
+                    played: selectedChallenge.attempt.window.played ?? "鈥?,
+                    remaining: selectedChallenge.attempt.window.remaining ?? "鈥?,
                     closed: selectedChallenge.attempt.window.closed ? tp("challengeWindowClosed") : tp("challengeWindowOpen"),
                   })}
                 </p>
@@ -837,7 +837,7 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
                             <td className="num">{round.round_index}</td>
                             <td className="mono">{round.outcome}</td>
                             <td className="mono">
-                              {round.club_goals}–{round.opponent_goals}
+                              {round.club_goals}鈥搟round.opponent_goals}
                             </td>
                             <td className="num">{round.points}</td>
                           </tr>
@@ -900,9 +900,9 @@ export function CreatorWorkbench({ rules, creator }: { rules: CreatorRulesView; 
                       <tr data-creator-citation={citation.id} key={citation.id}>
                         <td className="mono">{citation.document}</td>
                         <td className="num">{citation.ordinal}</td>
-                        <td>{citation.heading ?? <span className="muted">—</span>}</td>
+                        <td>{citation.heading ?? <span className="muted">鈥?/span>}</td>
                         <td>{citation.moved ? <span className="badge badge--demo">YES</span> : <span className="badge badge--live">NO</span>}</td>
-                        <td className="muted">{citation.note || <span className="mono">—</span>}</td>
+                        <td className="muted">{citation.note || <span className="mono">鈥?/span>}</td>
                         <td>
                           <button className="btn btn--sm" data-creator-citation-remove disabled={citationCall.busy !== null} onClick={() => void removeCitation(citation.id)} type="button">
                             {t("remove")}
