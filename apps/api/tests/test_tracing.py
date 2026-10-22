@@ -1,6 +1,6 @@
 """M12 Observability: the tracing gate answers for what it switches on and leaves off.
 
-Three claims are held here, all about the boundary the `OTEL_EXPORTER_OTLP_ENDPOINT`
+The claims held here, all about the boundary the `OTEL_EXPORTER_OTLP_ENDPOINT`
 variable guards:
 
 * without the variable, tracing is a **no-op** — no provider is installed, no
@@ -15,7 +15,10 @@ variable guards:
   go stale behind a changed compose file;
 * an incoming W3C `traceparent` is **continued**, not replaced — the API's server
   span carries the caller's trace id and names the caller's span as its parent,
-  while a request without the header starts a trace of its own.
+  while a request without the header starts a trace of its own;
+* a caller's sampling decision is **honoured** — a `traceparent` whose flags say
+  `sampled=0` produces no server span, while the same request with `sampled=1` does,
+  so an upstream trace that declined sampling is not silently completed here.
 """
 
 from __future__ import annotations
@@ -249,6 +252,46 @@ def test_an_incoming_traceparent_is_continued(endpoint: None) -> None:
     assert continued.parent.is_remote, "the server span does not name the caller as a remote parent"
     assert fresh.context is not None and fresh.context.trace_id != trace_id, (
         "a request with no traceparent inherited the previous request's trace"
+    )
+
+
+def test_a_callers_sampled_flag_is_honoured(endpoint: None) -> None:
+    """A caller that sends `sampled=0` has decided the trace is not worth recording; a
+    provider built on the SDK's parent-based default must drop the server span. The
+    second request carries the same trace id with `sampled=1` and is the control: it
+    proves the emptiness came from the flag, not from a request that could never
+    produce a span."""
+    from opentelemetry.trace import SpanKind
+
+    exporter = InMemorySpanExporter()
+    provider = tracing.init_tracing(span_processor=SimpleSpanProcessor(exporter))
+    assert provider is not None
+
+    app = FastAPI()
+
+    @app.get("/ping")
+    def ping() -> dict[str, str]:
+        return {"ok": "1"}
+
+    tracing.instrument_fastapi(app, tracer_provider=provider)  # type: ignore[arg-type]
+    trace_id = 0x4BF92F3577B34DA6A3CE929D0E0E4736
+    parent_id = 0x00F067AA0BA902B7
+    unsampled = f"00-{trace_id:032x}-{parent_id:016x}-00"
+    sampled = f"00-{trace_id:032x}-{parent_id:016x}-01"
+    with TestClient(app) as client:
+        assert client.get("/ping", headers={"traceparent": unsampled}).status_code == 200
+        assert client.get("/ping", headers={"traceparent": sampled}).status_code == 200
+
+    server_spans = [s for s in exporter.get_finished_spans() if s.kind == SpanKind.SERVER]
+    assert len(server_spans) == 1, (
+        f"two requests, one sampled: expected exactly one server span, got {len(server_spans)}"
+    )
+    only = server_spans[0]
+    assert only.context is not None and only.context.trace_id == trace_id, (
+        "the exported server span does not belong to the caller's trace"
+    )
+    assert only.parent is not None and only.parent.is_remote and only.parent.span_id == parent_id, (
+        "the exported server span is not the sampled continuation of the caller's span"
     )
 
 

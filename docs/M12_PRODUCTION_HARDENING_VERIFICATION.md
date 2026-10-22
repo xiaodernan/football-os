@@ -73,7 +73,7 @@ was supposed to prevent — the first version of this module imported OpenTeleme
 while promising "tests run without external dependencies", which was exactly the kind of claim this
 project exists to catch.
 
-What is measured (`tests/test_tracing.py`, six cases): without the variable, no provider is
+What is measured (`tests/test_tracing.py`, seven cases): without the variable, no provider is
 installed and a FastAPI app gains no middleware; with it, a request through an instrumented app
 produces exactly one `SERVER` span carrying the service resource — observed through an
 `InMemorySpanExporter` injected as the span processor, never through a network call, and without
@@ -94,7 +94,14 @@ those clauses were each named by it, and the unmutated copies read none. The six
 caller's span as its remote parent, while a second request with no header starts a different trace —
 the control that makes the first reading mean the header was believed. With extraction disabled,
 the same case fails naming the caller's span id (`the server span has no parent; the caller's span
-00f067aa0ba902b7 was not extracted`).
+00f067aa0ba902b7 was not extracted`). The seventh pins the other half of the W3C contract: the
+provider is built on the SDK's parent-based default, so a caller that sends `sampled=0` (flags
+`00`) is honoured and **no** `SERVER` span is exported, while the same trace id sent with `sampled=1`
+(`01`) is exported as the continuation of the caller's span — two requests, one span, and the
+control makes the emptiness attributable to the flag. Forcing the provider's sampler always-on
+turns that case red alone on its count (`expected exactly one server span, got 2`); forcing it
+always-off reds it on the same count (`got 0`), which is the control half proving the sampled
+request is the one that produced the span.
 
 **The collector leg (2026-10-22).** The repository now ships the collector it exports to:
 `infra/otel-collector.yaml` receives OTLP over gRPC (4317) and HTTP (4318) and prints spans through
@@ -149,8 +156,10 @@ left an unparented `SERVER` span in a different trace (`964b3f829197972596588c36
 
 What is deliberately **not** claimed: no production or third-party trace backend — the witness is a
 local container whose exporter prints to its own log, so nothing survives the container and nothing
-is queryable; no sampling policy beyond the SDK default; no collector authentication, TLS or
-retention configuration; and **the web tier sends no trace context of its own**: the browser has no
+is queryable; no configurable sampling policy beyond the SDK's parent-based default, whose honouring
+of a caller's `sampled=0` and `sampled=1` is now measured (the provider exposes no sampler knob); no
+collector authentication, TLS or retention configuration; and **the web tier sends no trace context of
+its own**: the browser has no
 tracer and the proxy is not instrumented, so the tier starts no trace; it forwards a valid upstream
 `traceparent` and drops an invalid one, which means a trace crosses the proxy only when a caller
 upstream of it supplies one. Span export is deployment configuration, the same boundary the log sink
@@ -661,7 +670,7 @@ harness env var is part of the recorded command.
 | `ruff format --check` over the new modules | same | all formatted |
 | `mypy` over `cost_advisor`, `latency_profile`, `metrics`, `request_metrics`, `percentile`, `runtime`, `response_headers`, `cache`, `redis_cache`, `logging`, `main` | same | no issues |
 | `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same, against `HEAD` | 13 tests, rc=0 |
-| `pytest tests/test_tracing.py -q` | SQLite, working copy | **6 tests / 0 failures**, rc=0 |
+| `pytest tests/test_tracing.py -q` | SQLite, working copy | **7 tests / 0 failures**, rc=0; forced always-on reds only the sampling case (`got 2`), forced always-off reds it (`got 0`) |
 | one `GET /healthz` through a live API with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318` | live uvicorn + `otel/opentelemetry-collector:0.111.0`, debug exporter, SQLite | `SERVER` span `GET /healthz` read back from the collector log, resource `service.name=football-os-api`, `deployment.environment=development`; **before the `/v1/traces` fix the same walk logged `404 Not Found` and exported nothing** |
 | `node scripts/qa-proxy-gate.mjs` | `apps/web`, working copy | **6 checks / 0 failures**, 131 files; 8/8 arm planes matched |
 | one `GET /api/v1/traces/…` through a production web build with `traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01` | web `next start` on 3221 → API with `TRACE_STORE_ENABLED=1`, fresh SQLite | 401 from the auth-gated door, and four `request_spans` rows with the caller's `trace_id`, the `SERVER` row parented by `00f067aa0ba902b7`; the no-header control left an unparented `SERVER` span in trace `964b3f829197972596588c36b1848188` |
@@ -877,10 +886,12 @@ penetration test was commissioned**.
   *exporter* that writes each finished span into `request_spans`, and `GET
   /api/v1/traces/{trace_id}` reads a request's spans back. The store is off by default
   (`TRACE_STORE_ENABLED=1` turns it on) because it writes a row per span; the OTLP collector path is
-  untouched and the two are independent. What is still not claimed: **sampling** and
-  **propagation through the proxy** are deployment concerns, not claims — the store keeps what the
-  SDK produced, and the SDK's sampling decision is the deployment's; the collector witness is a
-  local container with the debug exporter, not a durable or queryable backend.
+  untouched and the two are independent. What is still not claimed: a **configurable sampling
+  policy** and **propagation past the proxy's allowlist** are deployment concerns — the store keeps
+  what the SDK produced, the provider runs the SDK's parent-based default and the tests pin both
+  halves of it (a valid caller `traceparent` is continued, a `sampled=0` one is honoured), but no
+  sampler or rate is exposed as configuration; the collector witness is a local container with the
+  debug exporter, not a durable or queryable backend.
 * **No off-host backup pathway executed.** The restore drill ran `pg_dump` → `pg_restore` inside
   the project's own container; S3 upload and WAL archiving remain inspection-verified only.
 * **The load figures are a floor, and both worker counts were measured on one host.** Five runs are
