@@ -151,6 +151,18 @@ echo "── Web: cookie-proxy gate ──────────────�
 # a browser that reached the API directly would have to hold the token. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-proxy-gate.mjs)
 
+echo "── Web: API-string gate ──────────────────────────────"
+# The other half of the dead-key gate, asked of the other side of the wire: the API publishes sentences, the
+# web tier reads them, and where else does the web tier hold a copy? A copy in the web tier's own code is a
+# dead string — the API's sentence is the live one, so the API's wording could change and the page would
+# not follow it, and there would be a second place to fix when it does. The API's refusal sentences reach
+# the web tier through the catalogue (the `errors` namespace, one key per code, the English value being
+# the API's own message, held by apps/api/tests/test_locale_claims.py), so the catalogue is the source of
+# truth and this gate reads them from there rather than teaching a second census of the API's source. It
+# also holds that the refusal boundary is wired on both paths a refusal arrives through, and that every
+# refusal code's sentence is translated in both Chinese catalogues. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-api-strings.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 

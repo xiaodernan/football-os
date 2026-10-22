@@ -154,6 +154,17 @@ jobs:
         # never checked either: `en.json` held a Chinese sentence, so an English reader saw Chinese, and the
         # Chinese copy of it made the coverage figures call it translated. Files only.
         run: node scripts/qa-locale-tokens.mjs
+      - name: API-string gate (the API's sentences, and the copies the web tier holds)
+        # Same command as `scripts/check.sh`. The dead-key gate above asks whether every key the
+        # catalogue holds is asked for; this asks the same question of the other side of the wire --
+        # the API publishes sentences, the web tier reads them, and where else does the web tier hold a
+        # copy? A copy in the web tier's own code is a dead string: the API's sentence is the live one,
+        # so the API's wording could change and the page would not follow it. The API's refusal
+        # sentences reach the web tier through the catalogue, so the catalogue is the source of truth
+        # and the gate reads them from there. It also holds that the refusal boundary is wired on both
+        # paths a refusal arrives through, and that every refusal code's sentence is translated in both
+        # Chinese catalogues. Files only.
+        run: node scripts/qa-api-strings.mjs
       - name: Field-name gate (two fields on one page may not share a name)
         # Same command as `scripts/check.sh`. The copy gate above counts English literals; it cannot see a
         # catalogue key used for the wrong field, which is how the scout's shortlist and the scout's transfer
