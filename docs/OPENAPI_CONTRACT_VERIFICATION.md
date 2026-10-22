@@ -93,6 +93,39 @@ assertion four times.
 * `spec_from_tree()`'s `is_relative_to` refusal has **no arm**, because `sys.path.insert(0, API)` makes our tree win
   first and a foreign `app` cannot be reached from a test on this plane. It is a belt, stated as such.
 
+## Follow-up (2026-10-23): the gate read the checkout's newline policy, not the artifact
+
+The byte case compared `CONTRACT.read_bytes()` with the exporter's output directly. That is right for the
+artifact and wrong for the checkout: this repository has no `.gitattributes`, and with `core.autocrlf=true`
+(the setting on the Windows host this project is developed on) a fresh checkout turns the committed LF blob
+into CRLF on disk.
+
+**Measured.** A clean `git worktree` at `394cd10` (the commit that landed the trace door): the contract on disk
+was **484939 bytes / 17305 CRLF pairs**, the exporter wrote **467634 bytes / LF**, and the case failed at
+`assert b'{…' == b'{…'` with *equal content* — the same shape the 2026-10-06 PLAN row recorded and predicted
+would recur. Regenerating fixes that working copy; it does nothing for the next clone, which checks out CRLF
+again.
+
+**Fix.** The case normalises the checkout side (`replace(b"\r\n", b"\n")`) before comparing; the separate
+assertion that `export_openapi.py` itself wrote no CRLF is unchanged, so the artifact's own newline is still
+pinned. The message now says the line endings were normalised and prints both lengths.
+
+**Witness, in order.**
+
+* The old case on the untouched CRLF worktree: 1 failed (`the committed contract is 484939 bytes, the tree
+  serialises to 467634`), which is the defect reproduced.
+* The fixed case on the same worktree, contract still 484939 bytes / 17305 CRLF: **4 passed**.
+* The five documentation gates on that worktree (`test_openapi_contract_currency`, `test_spec_audit_currency`,
+  `test_answer_census`, `test_authorization_census`, `test_trace_store`): **38 passed, rc=0**.
+* A one-byte content arm on the same CRLF plane — `"openapi": "3.1.0"` → `"3.1.1"`, same byte count — still
+  reds the exporter case, so normalisation does not blunt the content comparison.
+* The shared working tree: same five gates **38 passed, rc=0**; `ruff check` clean; the tracked contract and
+  app bytes are unchanged.
+
+**Not claimed.** No `.gitattributes` was added; the gate tolerates a translated checkout rather than changing
+what git writes. This file is the only committed text artifact in `apps/api/tests` compared byte-for-byte
+(`grep read_bytes` over the suite finds only video fixtures besides it), so no other gate was changed.
+
 ## Reproduce
 
     git archive <landing-ref> | tar -x -C /tmp/plane79

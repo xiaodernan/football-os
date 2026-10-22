@@ -78,7 +78,12 @@ def test_the_exporter_derives_the_contract_from_the_tree_and_reproduces_the_comm
         written = out.read_bytes()
     assert b"\r\n" not in written, "the exporter wrote CRLF: the committed contract is LF, so a gate on its bytes " \
                                    "would fail for the host's newline policy rather than for the artifact"
-    assert written == CONTRACT.read_bytes(), (
-        "`scripts/export_openapi.py` and `docs/api/openapi.json` disagree on the same tree: the committed contract is "
-        f"{len(CONTRACT.read_bytes())} bytes, the tree serialises to {len(written)}. Edit the app, never the file."
+    # The checkout's newline policy is not the artifact's content: with `core.autocrlf=true` the committed LF blob
+    # arrives on disk as CRLF, so a raw comparison is red on every Windows clone while the tree still serialises
+    # exactly what was committed. Normalise the checkout side; a different byte still fails below.
+    committed = CONTRACT.read_bytes().replace(b"\r\n", b"\n")
+    assert written == committed, (
+        "`scripts/export_openapi.py` and `docs/api/openapi.json` disagree on the same tree (line endings normalised "
+        f"to LF): the committed contract is {len(committed)} bytes, the tree serialises to {len(written)}. "
+        "Edit the app, never the file."
     )
