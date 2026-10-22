@@ -73,7 +73,7 @@ was supposed to prevent — the first version of this module imported OpenTeleme
 while promising "tests run without external dependencies", which was exactly the kind of claim this
 project exists to catch.
 
-What is measured (`tests/test_tracing.py`, five cases): without the variable, no provider is
+What is measured (`tests/test_tracing.py`, six cases): without the variable, no provider is
 installed and a FastAPI app gains no middleware; with it, a request through an instrumented app
 produces exactly one `SERVER` span carrying the service resource — observed through an
 `InMemorySpanExporter` injected as the span processor, never through a network call, and without
@@ -89,7 +89,12 @@ reads the repository instead of the process: `_collector_defects` compares the c
 collector's own config and this document and returns named disagreements — the `observability`
 profile, the pinned image, both loopback ports, the config mount and its file, the OTLP protocols,
 the traces pipeline, and the port in the documented endpoint example. Ten planted defects across
-those clauses were each named by it, and the unmutated copies read none.
+those clauses were each named by it, and the unmutated copies read none. The sixth sends a known W3C
+`traceparent` through the real instrumentation: the server span continues that trace and names the
+caller's span as its remote parent, while a second request with no header starts a different trace —
+the control that makes the first reading mean the header was believed. With extraction disabled,
+the same case fails naming the caller's span id (`the server span has no parent; the caller's span
+00f067aa0ba902b7 was not extracted`).
 
 **The collector leg (2026-10-22).** The repository now ships the collector it exports to:
 `infra/otel-collector.yaml` receives OTLP over gRPC (4317) and HTTP (4318) and prints spans through
@@ -118,9 +123,10 @@ above.
 What is deliberately **not** claimed: no production or third-party trace backend — the witness is a
 local container whose exporter prints to its own log, so nothing survives the container and nothing
 is queryable; no sampling policy beyond the SDK default; no collector authentication, TLS or
-retention configuration; no trace-context propagation assertion across the web tier (the browser
-does not send `traceparent`, and the proxy is not instrumented). Span export is deployment
-configuration, the same boundary the log sink sits behind.
+retention configuration; and **the web tier sends no trace context**: the API continues an incoming
+W3C `traceparent` (the sixth case holds that), but the browser has no tracer and the Next.js proxy is
+not instrumented, so in this deployment a trace starts at the API unless an upstream caller supplies
+one. Span export is deployment configuration, the same boundary the log sink sits behind.
 
 ### Performance — an in-memory TTL cache and a response middleware
 
@@ -327,7 +333,7 @@ cache that refuses the handshake degrades and says so rather than pretending to 
 written by one operating system process is read by **another operating system process** through
 its own client.
 
-### The trace backend: a span that reaches somewhere without a collector
+### The trace backend: spans the project stores itself, beside the collector that now runs
 
 The observability claim this milestone could not make was about OpenTelemetry: the SDK was wired,
 the span path was measured through an in-memory exporter, and **no collector ran on this host** at
@@ -627,7 +633,7 @@ harness env var is part of the recorded command.
 | `ruff format --check` over the new modules | same | all formatted |
 | `mypy` over `cost_advisor`, `latency_profile`, `metrics`, `request_metrics`, `percentile`, `runtime`, `response_headers`, `cache`, `redis_cache`, `logging`, `main` | same | no issues |
 | `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same, against `HEAD` | 13 tests, rc=0 |
-| `pytest tests/test_tracing.py -q` | SQLite, working copy | **5 tests / 0 failures**, rc=0 |
+| `pytest tests/test_tracing.py -q` | SQLite, working copy | **6 tests / 0 failures**, rc=0 |
 | one `GET /healthz` through a live API with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318` | live uvicorn + `otel/opentelemetry-collector:0.111.0`, debug exporter, SQLite | `SERVER` span `GET /healthz` read back from the collector log, resource `service.name=football-os-api`, `deployment.environment=development`; **before the `/v1/traces` fix the same walk logged `404 Not Found` and exported nothing** |
 | contract paths after the three metrics doors | `docs/api/openapi.json` committed | 179 → **182** |
 | `git grep -li agents -- apps/api/app` | committed tree | 13 → **14** (`services/agents/orchestrator.py`) |

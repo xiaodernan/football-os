@@ -12,7 +12,10 @@ variable guards:
 * the collector the repository ships is the one the document points at — the
   compose profile, image, loopback ports, config mount and traces pipeline agree
   with the endpoint example, so the witness recorded in the M12 document cannot
-  go stale behind a changed compose file.
+  go stale behind a changed compose file;
+* an incoming W3C `traceparent` is **continued**, not replaced — the API's server
+  span carries the caller's trace id and names the caller's span as its parent,
+  while a request without the header starts a trace of its own.
 """
 
 from __future__ import annotations
@@ -204,6 +207,49 @@ def test_the_shipped_collector_is_the_one_the_doc_points_at() -> None:
     container nobody runs — so the three files must agree, not just exist."""
     defects = _collector_defects(COMPOSE, M12_DOC)
     assert defects == [], f"the shipped collector disagrees with itself: {defects!r}"
+
+
+def test_an_incoming_traceparent_is_continued(endpoint: None) -> None:
+    """The API is the far end of a W3C trace, so a caller's `traceparent` must be
+    continued rather than replaced. The second request, with no header, is the control:
+    it proves the first trace id came from the header, not from the SDK's own choice."""
+    from opentelemetry.trace import SpanKind
+
+    exporter = InMemorySpanExporter()
+    provider = tracing.init_tracing(span_processor=SimpleSpanProcessor(exporter))
+    assert provider is not None
+
+    app = FastAPI()
+
+    @app.get("/ping")
+    def ping() -> dict[str, str]:
+        return {"ok": "1"}
+
+    tracing.instrument_fastapi(app, tracer_provider=provider)  # type: ignore[arg-type]
+    trace_id = 0x4BF92F3577B34DA6A3CE929D0E0E4736
+    parent_id = 0x00F067AA0BA902B7
+    header = f"00-{trace_id:032x}-{parent_id:016x}-01"
+    with TestClient(app) as client:
+        assert client.get("/ping", headers={"traceparent": header}).status_code == 200
+        assert client.get("/ping").status_code == 200
+
+    server_spans = [s for s in exporter.get_finished_spans() if s.kind == SpanKind.SERVER]
+    assert len(server_spans) == 2, f"expected two server spans, got {len(server_spans)}"
+    continued, fresh = server_spans
+    assert continued.context is not None, "the continued server span has no span context"
+    assert continued.parent is not None, (
+        f"the server span has no parent; the caller's span {parent_id:016x} was not extracted"
+    )
+    assert continued.context.trace_id == trace_id, (
+        f"the server span belongs to trace {continued.context.trace_id:032x}, not the caller's {trace_id:032x}"
+    )
+    assert continued.parent.span_id == parent_id, (
+        f"the server span's parent is {continued.parent.span_id:016x}, not the caller's {parent_id:016x}"
+    )
+    assert continued.parent.is_remote, "the server span does not name the caller as a remote parent"
+    assert fresh.context is not None and fresh.context.trace_id != trace_id, (
+        "a request with no traceparent inherited the previous request's trace"
+    )
 
 
 def test_instrumented_app_still_serves_when_collector_is_absent(endpoint: None) -> None:
