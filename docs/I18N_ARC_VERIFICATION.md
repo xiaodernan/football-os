@@ -1005,6 +1005,11 @@ not the repository's gate. The repository's gate is `scripts/check.sh`, and it *
 `python -m pytest` over the API — so the rule the arc records is its own: **after a change to the
 catalogue, run the API's suite, not only the web's gates.** The table is recomputed and the pin holds.
 
+**And the pin has now caught it twice.** The second time was the `errorBoundary` namespace: four keys
+landed after the last recompute, the web's gates said nothing (they do not read the table), and the
+API's suite named the stale population and the stale count. The rule is not advice — it is the only
+thing standing between the table and a silent lie, and the table is the number a reader is given.
+
 ## 15. The failure the reader meets most often (2026-10-22)
 
 ### The question
