@@ -3497,7 +3497,7 @@ async function run() {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
         const full = join(dir, entry.name);
         if (entry.isDirectory()) {
-          const segment = entry.name.startsWith('[') ? entry.name.slice(1, -1) : entry.name;
+          const segment = entry.name.startsWith('[') ? `:${entry.name.slice(1, -1)}` : entry.name;
           collectRoutes(full, `${prefix}/${segment}`);
           continue;
         }
@@ -3506,8 +3506,17 @@ async function run() {
     };
     collectRoutes(join(resolve(dirname(fileURLToPath(import.meta.url)), '..'), 'app'));
     const readPaths = swept.map((entry) => entry.split(' ')[0]);
+    // The routes another walk reads. The suite's coverage is the union of ten walks and this one is
+    // the visual walk, so the routes it cannot reach are named here with the walk that does.
+    const READ_ELSEWHERE = new Map([
+      ['/club', "the club tier's own walk (qa-club.mjs)"],
+      ['/club/rules', "the club tier's own walk (qa-club.mjs)"],
+      ['/club/:ident', "the club tier's own walk (qa-club.mjs)"],
+      ['/club/:ident/plans/:plan', "the club tier's own walk (qa-club.mjs)"],
+    ]);
     const uncovered = routePatterns.filter((pattern) => {
       if (pattern.startsWith('/knowledge')) return false;
+      if (READ_ELSEWHERE.has(pattern)) return false;
       const matcher = new RegExp(
         `^${pattern.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&').replace(/:[^/]+/gu, '[^/]+')}(/.*)?$`,
       );
