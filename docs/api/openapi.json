@@ -13566,7 +13566,7 @@
           "traces"
         ],
         "summary": "Trace Detail",
-        "description": "Every span of one trace, oldest first.",
+        "description": "Every span of one trace, oldest first. An operator's window, not a caller's own record.",
         "operationId": "trace_detail_api_v1_traces__trace_id__get",
         "security": [
           {

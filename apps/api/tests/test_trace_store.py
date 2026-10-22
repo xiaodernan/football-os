@@ -14,8 +14,11 @@ Three claims, in the order they can be checked:
 * **A store failure is not a request failure.** The exporter catches everything: a database that
   is down loses the spans, not the request.
 
-The door is auth-gated like every other door in this API, and a trace id nobody stored answers
-404 - absence must not confirm which ids exist.
+The door asks for the platform's operator standing (`admin`), because a span carries the
+request's concrete `http.target` and the store does not record whose request it was - an
+authenticated player holding a trace id could otherwise read another account's path and
+query string. A trace id nobody stored answers 404 for an operator - absence must not
+confirm which ids exist - and every other account is refused before the lookup.
 """
 
 from __future__ import annotations
@@ -70,6 +73,36 @@ def _client() -> TestClient:
     )
     assert response.status_code == 201, f"registration failed: {response.text}"
     client.headers.update({"Authorization": f"Bearer {response.json()['access_token']}"})
+    return client
+
+
+def _admin_client() -> TestClient:
+    """An operator: the only standing that may read the store.
+
+    The account is written straight to the database because the register door's `Literal`
+    refuses `admin` by design; `test_authorization_census` holds that gap as a policy.
+    """
+    from app.core import security
+    from app.main import app
+    from app.models import User
+
+    db = SessionLocal()
+    try:
+        row = User(
+            id=security.new_public_id("usr"),
+            email=f"trace-admin-{uuid4().hex[:8]}@example.test",
+            password_hash=security.hash_password(PASSWORD),
+            display_name="Trace Store Operator",
+            role="admin",
+            is_active=True,
+        )
+        db.add(row)
+        db.commit()
+        user_id = row.id
+    finally:
+        db.close()
+    client = TestClient(app)
+    client.headers.update({"Authorization": f"Bearer {security.create_access_token(user_id, 'admin')}"})
     return client
 
 
@@ -190,7 +223,7 @@ class TestTheStore:
 
 class TestTheDoor:
     def test_the_door_reads_a_stored_trace_back(self) -> None:
-        client = _client()
+        client = _admin_client()
         with SessionLocal() as db:
             db.add(
                 RequestSpan(
@@ -233,10 +266,49 @@ class TestTheDoor:
         assert child["parent_span_id"] == "b" * 16
 
     def test_an_unknown_trace_answers_404(self) -> None:
-        client = _client()
+        client = _admin_client()
         response = client.get("/api/v1/traces/does-not-exist")
         assert response.status_code == 404
         assert response.json()["detail"]["code"] == "no_such_trace"
+
+    def test_a_player_is_refused_before_the_lookup(self) -> None:
+        """A trace carries another request's concrete target, so the door is an operator's.
+
+        The same id is read successfully by an admin afterwards: the refusal is the player's
+        standing, not a disguised 404. The refusal runs before the lookup, so it answers the
+        same way for an id that exists and one that never did.
+        """
+        trace_id = "d" * 32
+        with SessionLocal() as db:
+            db.add(
+                RequestSpan(
+                    trace_id=trace_id,
+                    span_id="e" * 16,
+                    parent_span_id=None,
+                    name="GET /api/v1/share/boards/secret-share-token",
+                    kind="SERVER",
+                    status="OK",
+                    start_time=_now(),
+                    end_time=_now(),
+                    duration_ms=12,
+                    attributes_json={"http.target": "/api/v1/share/boards/secret-share-token"},
+                )
+            )
+            db.commit()
+
+        player = _client()
+        refused = player.get(f"/api/v1/traces/{trace_id}")
+        assert refused.status_code == 403, refused.text
+        detail = refused.json()["detail"]
+        assert detail["code"] == "insufficient_role", f"the refusal named {detail['code']!r}, not the standing code"
+        assert detail["held"] == "player", f"the refusal says the caller held {detail['held']!r}"
+        assert detail["required"] == ["admin"], f"the refusal asks for {detail['required']!r}"
+        missing = player.get("/api/v1/traces/does-not-exist")
+        assert missing.status_code == 403, f"a player learned whether an id exists: {missing.status_code}"
+
+        allowed = _admin_client().get(f"/api/v1/traces/{trace_id}")
+        assert allowed.status_code == 200, allowed.text
+        assert allowed.json()["trace_id"] == trace_id
 
     def test_the_door_needs_a_session(self) -> None:
         from app.main import app

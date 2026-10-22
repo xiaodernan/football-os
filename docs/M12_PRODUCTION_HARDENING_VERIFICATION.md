@@ -395,18 +395,34 @@ would break:
   (seven days), so an instance that runs for months does not accumulate traces forever.
 
 **The door.** `GET /api/v1/traces/{trace_id}` returns the spans of one trace, oldest first, each
-with the parent it hung from. It is auth-gated like every other door in this API, and a trace id
-nobody stored answers `404 no_such_trace` — absence must not confirm which ids exist.
+with the parent it hung from. It is an **operator's window**, and it asks for the operator's
+standing: only an `admin` account may read a stored trace. A trace id nobody stored answers
+`404 no_such_trace` — absence must not confirm which ids exist — and a non-admin is refused
+`403 insufficient_role` before the lookup, so the refusal does not differ between an id that exists
+and one that does not.
+
+**Why the standing is the fix.** A stored `SERVER` span carries the request's concrete
+`http.target`: measured on a share route as `/api/v1/share/boards/secret-share-token`, the token
+itself, in a span whose attributes also carry the full `http.url`. `request_spans` has no column
+that says whose request a trace was, so with the door open to any authenticated account, a player
+holding (or guessing) a trace id could read another account's path and query string. The door had
+been `current_user`-gated only.
 
 **What it is off by default for.** `TRACE_STORE_ENABLED=1` turns the store on; the default is off
 because it writes a row per span, and a deployment that runs a collector has a better place for
 them. The OTLP path is untouched, and the two are independent: a deployment can send spans to a
 collector and keep them in the database, or use either alone.
 
-**Measured** (`tests/test_trace_store.py`, 6 cases): a finished span is stored with its own timings
+**Measured** (`tests/test_trace_store.py`, 7 cases): a finished span is stored with its own timings
 and identifiers; a child span names the span it hung from, read back through the door; a broken
-store reports failure without raising; the door reads a stored trace, answers 404 for an unknown one,
-and needs a session.
+store reports failure without raising; an admin reads a stored trace and gets 404 for an unknown
+one; a player is refused `403 insufficient_role` for both a stored id and an unknown one, while an
+admin control reads the same stored trace back. Two arms on copies of the tree: removing the
+standing check reds the refusal case alone, at `assert 200 == 403` with the stored span — including
+`http.target` — in the refusal's own response; changing the standing to `("fan",)` reds the refusal
+at `required == ['fan']` and reds both admin door cases at `assert 403 == 200` and
+`assert 403 == 404`. The door's docstring changed, so `docs/api/openapi.json` was regenerated, and
+the contract, spec-audit and both census gates are green at the new tree.
 
 ### What sharing buys, measured with the tier live
 
@@ -671,6 +687,7 @@ harness env var is part of the recorded command.
 | `mypy` over `cost_advisor`, `latency_profile`, `metrics`, `request_metrics`, `percentile`, `runtime`, `response_headers`, `cache`, `redis_cache`, `logging`, `main` | same | no issues |
 | `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same, against `HEAD` | 13 tests, rc=0 |
 | `pytest tests/test_tracing.py -q` | SQLite, working copy | **7 tests / 0 failures**, rc=0; forced always-on reds only the sampling case (`got 2`), forced always-off reds it (`got 0`) |
+| `pytest tests/test_trace_store.py -q` | SQLite, working copy; arms on a copy of the tree | **7 tests / 0 failures**, rc=0; guard removed → only the refusal case red (`assert 200 == 403`, the stored span in its response); standing `("fan",)` → refusal red at `required == ['fan']`, both admin door cases red (`assert 403 == 200`, `assert 403 == 404`) |
 | one `GET /healthz` through a live API with `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318` | live uvicorn + `otel/opentelemetry-collector:0.111.0`, debug exporter, SQLite | `SERVER` span `GET /healthz` read back from the collector log, resource `service.name=football-os-api`, `deployment.environment=development`; **before the `/v1/traces` fix the same walk logged `404 Not Found` and exported nothing** |
 | `node scripts/qa-proxy-gate.mjs` | `apps/web`, working copy | **6 checks / 0 failures**, 131 files; 8/8 arm planes matched |
 | one `GET /api/v1/traces/…` through a production web build with `traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01` | web `next start` on 3221 → API with `TRACE_STORE_ENABLED=1`, fresh SQLite | 401 from the auth-gated door, and four `request_spans` rows with the caller's `trace_id`, the `SERVER` row parented by `00f067aa0ba902b7`; the no-header control left an unparented `SERVER` span in trace `964b3f829197972596588c36b1848188` |
@@ -886,12 +903,14 @@ penetration test was commissioned**.
   *exporter* that writes each finished span into `request_spans`, and `GET
   /api/v1/traces/{trace_id}` reads a request's spans back. The store is off by default
   (`TRACE_STORE_ENABLED=1` turns it on) because it writes a row per span; the OTLP collector path is
-  untouched and the two are independent. What is still not claimed: a **configurable sampling
-  policy** and **propagation past the proxy's allowlist** are deployment concerns — the store keeps
-  what the SDK produced, the provider runs the SDK's parent-based default and the tests pin both
-  halves of it (a valid caller `traceparent` is continued, a `sampled=0` one is honoured), but no
-  sampler or rate is exposed as configuration; the collector witness is a local container with the
-  debug exporter, not a durable or queryable backend.
+  untouched and the two are independent. The door is an **operator's window**: only an admin may
+  read a stored trace, because a stored `SERVER` span carries the request's concrete `http.target`
+  (measured on a share route, token included) and the store has no ownership column. What is still
+  not claimed: a **configurable sampling policy** is a deployment concern — the store keeps what the
+  SDK produced, the provider runs the SDK's parent-based default and the tests pin both halves of it
+  (a valid caller `traceparent` is continued, a `sampled=0` one is honoured), but no sampler or rate
+  is exposed as configuration; the collector witness is a local container with the debug exporter,
+  not a durable or queryable backend.
 * **No off-host backup pathway executed.** The restore drill ran `pg_dump` → `pg_restore` inside
   the project's own container; S3 upload and WAL archiving remain inspection-verified only.
 * **The load figures are a floor, and both worker counts were measured on one host.** Five runs are
