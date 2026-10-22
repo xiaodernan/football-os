@@ -1094,3 +1094,16 @@ The same question, asked one layer deeper each time, found three things:
 
 The third is the one that would have lied: a coverage check that counted the path it asked for would
 have called a redirected page read, and the check would have been green about a page nobody saw.
+
+### The catalogue's own shape
+
+A census of the catalogue's shape, asked because nobody had asked it: **41 namespaces and 3600 keys**,
+the largest `club` at 449 and the smallest `validation` at **zero** — the namespace the dead-key
+deletions left behind, holding nothing. It is gone: a namespace nothing reads is a translation that
+ships to nobody, and this one shipped nothing at all. Forty namespaces, 3600 keys.
+
+The census also counted the **sentences more than one key holds: 82** — "Tactical system" five times,
+"Clear filters" and "Attribute profile" four each. A sentence written twice is a translation written
+twice, and the two will drift, so that surface is measured now. Some of the repeats are the nav's
+label and the page's own title, which differ in case by convention; the rest are the same sentence
+under two surfaces, and the decision about them is its own slice rather than a gate's blind sweep.
