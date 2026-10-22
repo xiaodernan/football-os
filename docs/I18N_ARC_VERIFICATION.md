@@ -233,6 +233,35 @@ broken. Measured after the fix: **1039 URLs probed, 1039 answered 200**.
 * **The copy gate counts; it does not judge.** It cannot tell a wrong sentence from a right one, and it
   cannot tell whether a key means what the page needs it to mean. The gates hold the *shape* of the
   contract; the walks and the API's own tests hold the meaning.
+* **The API's refusal messages are still English, and the reader sees them.** This is the arc's open
+  edge, and it is named here rather than left implied. The API publishes **66 refusal codes**, each with
+  an English sentence (`detail.code` + `detail.message`), and the web tier's `errorMessage()` returns
+  `error.message` — so a Chinese reader is told "The current password is incorrect" in English. It is
+  the same shape as the two claims above: a convention ("a refusal is printed as the code and the
+  figure the API answered with rather than a shrug", which is what `SessionReportTools.tsx` says) that
+  the implementation does not match (what it prints is the message, not the code). Neither the copy gate
+  (it reads the web tier's source) nor the locale sweep (it looks for *catalogue values* on a page)
+  can see it, because the English is in the **API's** answer.
+
+  The design that was worked out, for whoever takes it:
+
+  * the catalogue holds one key per refusal code — `errors.<code>` — with the **English value being the
+    API's message verbatim**, so the English rendering is byte-identical and the change is a translation
+    rather than a copy change, exactly as the arc's method requires;
+  * the **code** is the stable half of a refusal and is already locale-neutral, so it needs no
+    translation and stays the operator's handle;
+  * the switch is **one place, not 31 files**: every browser request passes through
+    `app/api/v1/[...path]/route.ts` (the cookie proxy) and every server read passes through
+    `lib/server.ts`'s `serverFetch`, so the refusal's message can be rewritten in one of those two
+    places — or, better, in `lib/api.ts`'s `errorMessage`, which both paths already share. The 42 call
+    sites across 31 files pass a *generic* fallback today ("askFailed", "signInFailed"), so the
+    specificity of the API's message is the thing a per-code catalogue would restore;
+  * a gate then holds the two in step **in both directions**: every code the API publishes has a
+    catalogue key whose English value is the API's message, and every `errors.*` key the catalogue
+    holds is a code the API publishes.
+
+  Until that lands, the claim "the interface is in the reader's language" holds for the interface's
+  **own** copy and not for the refusals the API answers with.
 * **A key's *existence* is not a key's *use*, and neither gate can see the third thing.** The copy gate
   asks whether every key asked for is held; the dead-key gate asks whether every key held is asked for.
   Between them, they hold that the catalogue and the tree agree — and neither can see a key that a page
