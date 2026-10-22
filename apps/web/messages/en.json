@@ -3596,6 +3596,7 @@
     "entity_type_required": "Pass entity_type with entity",
     "internal_error": "Unexpected server error",
     "invalid_credentials": "Email or password is incorrect",
+    "invalid_password": "The current password is incorrect",
     "missing_records": "Session references are incomplete",
     "no_objectives": "a career needs at least one objective to be judged by",
     "no_player": "Create your player profile first",

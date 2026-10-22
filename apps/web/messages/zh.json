@@ -3596,6 +3596,7 @@
     "entity_type_required": "请在 entity 中同时传入 entity_type",
     "internal_error": "服务器出现意外错误",
     "invalid_credentials": "邮箱或密码不正确",
+    "invalid_password": "那不是此账号当前的密码",
     "missing_records": "这次训练的关联记录不完整",
     "no_objectives": "一个赛季至少需要一个目标才能评判",
     "no_player": "请先创建你的球员档案",

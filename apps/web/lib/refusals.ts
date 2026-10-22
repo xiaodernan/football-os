@@ -21,7 +21,7 @@
  * exactly as they are, and the fallback they pass is still what a reader sees when the API sends no
  * message at all.
  */
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import enMessages from "@/messages/en.json";
 
@@ -61,10 +61,19 @@ function withMessage(body: unknown, message: string): unknown {
  * A body the catalogue has no sentence for is returned **untouched**: the API's own words are better
  * than a guess, and the codes whose message names a value the request supplied — "philosophy must be
  * one of [...]" — are named in `qa-api-refusals.mjs` as the ones the catalogue cannot reproduce.
+ *
+ * **The English reader is shown the API's own message**, not the catalogue's. That is not a
+ * preference: the catalogue's sentence for a code whose message varies with the request cannot carry
+ * the value ("philosophy must be one of ['balanced', 'counter', ...]"), so the API's words are the ones
+ * that say what actually happened, and the catalogue's sentence is the general one every other
+ * language reads. Where the API's message is fixed — twenty-six of the codes — the catalogue's English
+ * value **is** that message, so the two rules agree and nothing changes.
  */
 export async function localiseRefusal(body: unknown): Promise<unknown> {
   const refusal = readRefusal(body);
   if (!refusal || !KNOWN.has(refusal.code)) return body;
+  const locale = await getLocale();
+  if (locale === "en") return body;
   const te = await getTranslations("errors");
   return withMessage(body, te(refusal.code));
 }

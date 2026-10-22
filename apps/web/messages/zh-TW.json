@@ -3596,6 +3596,7 @@
     "entity_type_required": "請在 entity 中同時傳入 entity_type",
     "internal_error": "伺服器出現意外錯誤",
     "invalid_credentials": "信箱或密碼不正確",
+    "invalid_password": "那不是此帳號目前的密碼",
     "missing_records": "這次訓練的關聯記錄不完整",
     "no_objectives": "一個賽季至少需要一個目標才能評判",
     "no_player": "請先建立你的球員檔案",

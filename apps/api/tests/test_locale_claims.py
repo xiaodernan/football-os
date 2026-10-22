@@ -401,20 +401,39 @@ def test_every_refusal_the_api_publishes_has_a_catalogue_sentence() -> None:
         f"rendering would change: {drifted[:4]}"
     )
 
-    unheld = sorted(sentences.keys() - set(fixed))
+    unheld = sorted(sentences.keys() - set(refusals))
     assert not unheld, (
-        f"{len(unheld)} catalogue sentence(s) name a code the API does not publish with a fixed "
-        f"message: {unheld[:4]}"
+        f"{len(unheld)} catalogue sentence(s) name a code the API does not publish at all: {unheld[:4]}"
     )
 
-    unnamed = sorted(not_fixed - NOT_FIXED_CODES)
+    # A code the census calls *not fixed* may still carry a catalogue sentence: the message names a
+    # value the request supplied, and a helper chooses it at the raise site, but the sentence itself
+    # can be fixed by the caller — `invalid_password` is "The current password is incorrect" at every
+    # call site, even though the helper takes it as an argument. So the rule is: every code either
+    # carries a sentence or is named, and a named code that carries one is held to the same contract.
+    unnamed = sorted(not_fixed - set(NOT_FIXED_CODES) - set(sentences))
     assert not unnamed, (
-        f"{len(unnamed)} refusal code(s) publish a message the catalogue cannot reproduce and are "
-        f"not named in NOT_FIXED_CODES: {unnamed[:4]}"
+        f"{len(unnamed)} refusal code(s) publish a message the catalogue neither carries nor names: "
+        f"{unnamed[:4]}"
     )
 
     stale = sorted(NOT_FIXED_CODES - not_fixed)
     assert not stale, (
         f"{len(stale)} named code(s) now publish a fixed message, so the catalogue should carry them: "
         f"{stale[:4]}"
+    )
+
+    # A sentence that does not match the API's message is a drift, and the English rendering would
+    # change with it: the catalogue's English value IS what an English reader is shown.
+    drifted = [
+        f"{code}: catalogue {sentences[code]!r} != API {entry['messages']!r}"
+        for code, entry in sorted(refusals.items())
+        if code in sentences
+        and not entry["dynamic"]
+        and len(entry["messages"]) == 1
+        and sentences[code] != next(iter(entry["messages"]))
+    ]
+    assert not drifted, (
+        f"{len(drifted)} catalogue sentence(s) no longer match the API's message, so the English "
+        f"rendering would change: {drifted[:4]}"
     )
