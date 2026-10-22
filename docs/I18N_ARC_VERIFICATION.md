@@ -727,9 +727,38 @@ The English rendering is the API's own message, byte for byte; the other two are
 the whole slice in three lines: a refusal used to be English on a Chinese page whatever the reader had
 chosen, and now it is the reader's language with the English untouched.
 
+### Which language gets which words (2026-10-22)
+
+The second slice added `invalid_password` — "The current password is incorrect", which the API's helper
+takes as an argument and every call site fixes — and it needed a decision the first slice had not
+forced: **which of the two sentences does a reader see?**
+
+The API's message names a value the request supplied ("philosophy must be one of
+`['balanced', 'counter', ...]`"), so the catalogue's sentence for such a code is the *general* one, and
+the API's message is the one that says what actually happened. Where the API's message is fixed — 26 of
+the codes — the catalogue's English value **is** that message, so the two agree and nothing changes.
+
+So the rule is:
+
+* the **English** reader is shown the API's own message, byte for byte;
+* **every other language** is shown the catalogue's sentence for the code;
+* a code the catalogue does not name keeps the API's words in every language.
+
+The English does not move, because the arc's own rule is that an i18n change should not be a copy
+change — and the API's wording is the more specific of the two ("The current password is incorrect"
+names what is wrong; a general sentence does not). The catalogue's English value for a code whose
+message varies is the general sentence, and it is the fallback for the case where the API sends no
+message at all.
+
+The contract test now holds the wider contract: a code **either** carries a catalogue sentence **or** is
+named in `NOT_FIXED_CODES`; a named code that carries one is held to the same drift rule as the rest —
+its English value must still be the API's message — and a catalogue sentence must name a code the API
+publishes at all.
+
 ### The honest remainder
 
 The claim "the interface is in the reader's language" now holds for the interface's **own** copy **and**
-for the refusals the catalogue can reproduce. It does **not** hold for the 39 refusals whose message
-changes with the request — those are the API's own words, and translating them means changing what the
-API answers rather than what the page shows. That is the next project, not this slice.
+for the refusals the catalogue can reproduce. It does **not** hold for the refusals whose message names
+a value the request supplied — those are the API's own words, and the catalogue cannot carry a value it
+does not have. Each of them needs a catalogue sentence written for the reader, and each one lowers the
+named list; that is the next slice, and it is text work rather than mechanism.
