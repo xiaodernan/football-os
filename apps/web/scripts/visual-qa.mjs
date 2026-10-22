@@ -3455,7 +3455,11 @@ async function run() {
           }
         }
       }
-      swept.push(`${path} ${status}`);
+      // The path the browser actually landed on, not the one that was asked for: a page that redirects
+      // (a signed-out reader sent to the login, say) is not that page, and the coverage check below
+      // must not count it as read.
+      const landed = new URL(page.url()).pathname.replace(/\/$/u, '') || '/';
+      swept.push(`${landed} ${status}`);
       if (found) offenders.push(`${path} carries ${found.namespace} (“${found.value.slice(0, 60)}”)`);
     }
     await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
