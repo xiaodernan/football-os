@@ -1107,3 +1107,15 @@ The census also counted the **sentences more than one key holds: 82** — "Tacti
 twice, and the two will drift, so that surface is measured now. Some of the repeats are the nav's
 label and the page's own title, which differ in case by convention; the rest are the same sentence
 under two surfaces, and the decision about them is its own slice rather than a gate's blind sweep.
+
+**The split is what makes the 82 readable.** One of them is the nav's label against a page's own title
+— the convention, and deliberate. **29** are inside one namespace: a tier's own name in its own
+surfaces, which is deliberate too (the video tier's title is the same in its page title, its
+unavailable notice and its link back). **52** are across namespaces, which is a translation written
+twice, and the two will drift.
+
+So the surface that needs a decision is the 52, not the 82 — and within them, some are a tier's name
+wherever it appears ("Tactical system", five namespaces) and are deliberate, while the rest are
+ordinary sentences that happen to be written twice. The gate to hold them would name each one with the
+reason it is allowed, the way the locale-token gate names the technical tokens: a list without reasons
+is the same as no list at all.
