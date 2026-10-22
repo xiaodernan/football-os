@@ -486,15 +486,13 @@ def test_every_refusal_the_api_publishes_has_a_catalogue_sentence() -> None:
         f"{len(unheld)} catalogue sentence(s) name a code the API does not publish at all: {unheld[:4]}"
     )
 
-    # A code the census calls *not fixed* may still carry a catalogue sentence: the message names a
-    # value the request supplied, and a helper chooses it at the raise site, but the sentence itself
-    # can be fixed by the caller — `invalid_password` is "The current password is incorrect" at every
-    # call site, even though the helper takes it as an argument. So the rule is: every code either
-    # carries a sentence or is named, and a named code that carries one is held to the same contract.
-    unnamed = sorted(not_fixed - set(NOT_FIXED_CODES) - set(sentences))
+    # **Every** code the API publishes carries a catalogue sentence. The codes whose API message
+    # varies with the request carry the *general* sentence — the catalogue cannot carry a value it
+    # does not have — and the localiser shows the API's own message to the English reader and the
+    # catalogue's to everyone else.
+    unnamed = sorted(set(refusals) - set(sentences))
     assert not unnamed, (
-        f"{len(unnamed)} refusal code(s) publish a message the catalogue neither carries nor names: "
-        f"{unnamed[:4]}"
+        f"{len(unnamed)} refusal code(s) the API publishes have no catalogue sentence: {unnamed[:4]}"
     )
 
     stale = sorted(NOT_FIXED_CODES - not_fixed)
