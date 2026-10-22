@@ -885,3 +885,43 @@ as a **reference** (`readError(response, localiseRefusal)`). The check now asks 
 and used outside the import that brings it in — which is the question the check meant to ask.
 
 The gate joins `scripts/check.sh` and CI; the gate inventory is **93/93**.
+
+## 13. The copy gate had never read a `.ts` file (2026-10-22)
+
+### The claim
+
+The copy gate's population was "every `.tsx` under `app/` and every `.tsx` under `components/`" — and
+**not one `.ts`**, while the reader-facing sentences live in exactly those files. So the gate's claim, "0
+English literal sites", was true of the files it read and untested of the rest of the tier.
+
+The population is now the whole tier: `.tsx` and `.ts`, under `app/`, `components/` and `lib/`.
+
+### What it found the moment it could see
+
+| what | where | what the reader saw |
+| --- | --- | --- |
+| seven column headers and seven tooltips | `lib/ledger.ts` | "Matches", "Goals", "Attempts", "Yellow", "Red", "Injury" — in **every** language, on the career page's ledger panel |
+| the tier's own error sentences | `lib/api.ts`, `lib/world.ts`, `lib/server.ts` | "Request failed with status 422", "Something went wrong", "The web tier could not reach the API.", "The generated world could not be read right now." — English, on a Chinese page |
+| five call sites with no fallback at all | `app/agents/page.tsx`, `components/CommunityTools.tsx`, the three scout panels | the tier's English default |
+
+### The fix, and the shape it took
+
+* the ledger's labels and hints are **catalogue keys** now, in three languages, and the panel reads them;
+* the tier's own generic answers carry a **code and no sentence** — the reader's sentence is the call
+  site's fallback, and the localiser fills the rest on the two paths that can read the catalogue (the
+  server's own read and the browser's proxy). `errorMessage`'s fallback is now **required**, so a call
+  site that passes none is a compile error rather than an English default;
+* `lib/site.ts` is the one file the gate does not read, and it is **named** as such: the site's brand
+  line and the metadata sentence it is printed into are the SEO surface's copy, and the SEO surface has
+  its own gate. It is the arc's one open item in this area, and the doc says so rather than leaving it
+  implied.
+
+The error-shape gate's contract moved with it: **an answer the API named carries its sentence; the
+tier's own generic answer does not.** And the locale-token gate holds the new "xG" token by name.
+
+### The lesson, again
+
+This is §7's lesson in a new place. The floor was **0** and it was green, and the green said only that
+the gate could see what it looked at. The tree was full of English copy in files the gate had never
+opened. The **lesson** is the one the arc keeps teaching: *a floor is a statement about the gate before
+it is a statement about the tree* — and a population is a statement about the gate too.
