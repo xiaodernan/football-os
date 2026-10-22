@@ -1137,3 +1137,20 @@ brought into line lowered it, and all twenty-eight of them were brought into lin
 won being the one the group already used, so the change was a consistency fix rather than a copy
 decision, and no pair's placeholders differed, so the ICU contract was never in question. The floor is
 **zero** now: a new drift is a finding, not a count.
+
+### The list, and the two defects it showed
+
+The sweep now prints the pages it read, and the list is the surface of the claim: **49 pages**, from
+`/login` and `/register` through the tiers' indexes to the concrete dynamic pages the walk opened (a
+career, a team, a match, a tactics system, a report, a share link).
+
+Printing it earned its keep twice over, by showing two defects in the check that reads it:
+
+* the collected route patterns carried **bare names** (`career/slug`) where the matcher wanted
+  **placeholders** (`:slug`), so a dynamic route could never have matched the page the walk actually
+  read — the check would have called uncovered the routes the walk had read;
+* the suite's coverage is the **union of ten walks**, and this check is one of them, so the club tier's
+  four routes are read by the club tier's *own* walk and are **named** here with the walk that does.
+
+Both are the arc's own lesson in a new place: a check that has never run against real data is a claim
+about a shape, not about the tree.
