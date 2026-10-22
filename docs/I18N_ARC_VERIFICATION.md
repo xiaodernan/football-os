@@ -839,3 +839,49 @@ that carried it, which proved it: **298/298, exit 0**, with the refusal read in 
 back true. There is no code left that the catalogue cannot speak for; the list that remains is the
 census's verdict about which messages vary with the request, and it is checked in both directions, so a
 new refusal has to be classified before it can be published.
+
+## 12. The API's sentences, and the copies the web tier holds (2026-10-22)
+
+### The question the dead-key gate asked of the other tier
+
+The dead-key gate (§9) asks whether every key the catalogue holds is **asked for**. It found 226 that were
+read by nothing, and the floor is now zero. That question was never asked of the **other side of the
+wire**: the API publishes sentences — 65 refusal messages, the metric prose the sweep tolerates, the
+corpus's own English — and the web tier reads some of them. Where else does the web tier hold a **copy**?
+
+A copy is a **dead string**. The API's sentence is the live one: it is what the API answers with, and the
+refusal boundary hands it to the reader. A copy in a page is a sentence the API can change without the
+page following it, and a second place to fix when it does.
+
+### Where the API's sentences live
+
+The API's refusal sentences reach the web tier through the **catalogue** — the `errors` namespace, one key
+per code — and the contract test in `apps/api/tests/test_locale_claims.py` holds the English value to be
+the API's own message. So the catalogue is the source of truth for "the API's sentences", and the gate
+reads them from there rather than teaching a second census of the API's source — which is how the census's
+own two bugs (a comment read as code, and a helper's parameter read as a literal) would have been written
+twice.
+
+### The gate
+
+`apps/web/scripts/qa-api-strings.mjs` is **3/3** today, over **65** sentences and the web tier's own
+source:
+
+| check | what it holds |
+| --- | --- |
+| no copy in the web tier's code | no file may hold a sentence the catalogue owns — and a comment is not a literal, and a regular expression is not a string, so the boundary's own comment (which quotes the API's sentence to explain why the sentence is the API's) is not a copy |
+| the boundary is wired | the localiser is **used**, not merely imported, on both paths a refusal arrives through: the server's own read and the browser's proxy |
+| every refusal is translated | no refusal code's sentence may be the English one in a Chinese catalogue |
+
+### Its red path was watched
+
+A copy planted in the web tier's own code was named with the file and the line
+(`lib/_qa_probe.ts:1 holds a copy of errors.invalid_credentials`); the server's own read losing the
+localiser was named; and a refusal's sentence left in English in the Chinese catalogue was named.
+
+**The first version of the second check reported a false finding**, and the arc's own lesson applies to
+the gate as much as to the tree: it looked for a **call** where the server's own read passes the localiser
+as a **reference** (`readError(response, localiseRefusal)`). The check now asks whether the name is used,
+and used outside the import that brings it in — which is the question the check meant to ask.
+
+The gate joins `scripts/check.sh` and CI; the gate inventory is **93/93**.
