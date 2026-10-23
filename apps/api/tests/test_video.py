@@ -240,6 +240,33 @@ class TestPipelineAndOwnership:
         assert result["job"]["status"] == "COMPLETED"
         assert result["analysis"]["green_fraction_mean"] > 0.9, "the generated clip really is mostly pitch-green"
 
+    def test_the_run_ledger_counts_the_run_that_made_the_report(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
+        report = upload(auth_client, clips["moving"]).json()
+        analysed = auth_client.post(f"{API}/{report['asset']['id']}/analyse?target_frames=8")
+        assert analysed.status_code == 200, analysed.text
+        ledger = auth_client.get(f"{API}/{report['asset']['id']}/jobs")
+        assert ledger.status_code == 200, ledger.text
+        rows = ledger.json()["items"]
+        assert len(rows) == 1, f"one analysis wrote {len(rows)} job rows"
+        assert rows[0]["status"] == "COMPLETED", rows[0]
+        assert rows[0]["attempts"] == 1, f"a completed run reports {rows[0]['attempts']} attempts; it ran once"
+
+    def test_a_failed_run_still_counts_as_an_attempt(self, auth_client, clips, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+        report = upload(auth_client, clips["moving"]).json()
+
+        def no_ffmpeg(*args: Any, **kwargs: Any) -> None:
+            raise MediaToolMissing("ffmpeg is not installed on this host")
+
+        monkeypatch.setattr("app.services.video.pipeline.extract_frames", no_ffmpeg)
+        analysed = auth_client.post(f"{API}/{report['asset']['id']}/analyse")
+        assert analysed.status_code == 200, analysed.text
+        body = analysed.json()
+        assert body["job"]["status"] == "FAILED", body["job"]
+        assert body["failure"], "the run failed but the report names no failure"
+        rows = auth_client.get(f"{API}/{report['asset']['id']}/jobs").json()["items"]
+        assert len(rows) == 1, f"one failed analysis wrote {len(rows)} job rows"
+        assert rows[0]["attempts"] == 1, f"a failed run reports {rows[0]['attempts']} attempts; it was tried once"
+
     def test_frames_and_file_are_served_to_the_owner_as_png_and_mp4(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
         report = upload(auth_client, clips["moving"]).json()
         asset_id = report["asset"]["id"]

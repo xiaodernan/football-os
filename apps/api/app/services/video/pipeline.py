@@ -159,6 +159,8 @@ def analyse_asset(session: Session, asset: VideoAsset, *, target_frames: int = 2
         id=new_public_id("job"),
         type="video.analyse",
         status="RUNNING",
+        # The run begins in this request, so the row that records it has already made one attempt.
+        attempts=1,
         payload={"asset_id": asset.id, "target_frames": target_frames},
         progress=5,
         user_id=user_id or asset.owner_id,
