@@ -579,6 +579,65 @@ hardcoded `0.0` reds the parity case alone, and a message-only change leaves all
 contract was regenerated: the three descriptions carry the standing; 202 paths / 264 operations / 91
 schemas unchanged, `HTTPBearer` retained.
 
+### Ownership — the jobs tier never asked whose work it was, and its pipeline ended where the ADR does not
+
+`/api/v1/jobs` is the tier every long-running feature publishes its work through, and it answered
+neither of the two questions a job tier has to answer. `POST /jobs` created the row without a
+`user_id`; `GET /jobs` selected every account's rows; and the three id doors — read, cancel, delete —
+looked the job up and acted on it without asking who was calling. Any registered account could read
+another account's payloads (a video job's payload names the asset, a simulation's the fixture) and
+cancel or delete work it did not own. The list's `created_at` ordering made the leak look like a
+feature: it was a complete activity feed of the platform.
+
+The second question was what "finished" means. ADR-006's machine is
+`QUEUED → RUNNING → COMPLETED | FAILED | CANCELLED | RETRYING`, and a successful run ends at
+`COMPLETED`. The video pipeline wrote `DONE` — a seventh state the ADR never named, and one no reader
+in the tier knew. `cancel_job` refused only `QUEUED` and `RUNNING`, so a finished video job was still
+cancellable; `delete_job` refused only those two as well, so a `RETRYING` job could be deleted while
+it was waiting to run; and `completed_at` was the constant `None`, because it asked the terminal
+question with the same two-state list and would have missed `COMPLETED` anyway.
+
+Creation now names its owner (`user_id=user.id`), and the list is
+`select(Job).where(Job.user_id == user.id)` — an admin included, because a list of "the work" is the
+caller's work everywhere else in this API (`simulations.py`, `boards.py`), and the admin's override
+is for a *known* id, not for browsing. The three id doors call
+`ownership_or_admin(user, job.user_id or "", "Job")`, so a foreign id answers the platform's 404
+`not_found` before any row is read, while an unknown id keeps its own `no_such_job`. One tuple,
+`TERMINAL_JOB_STATUSES = ("COMPLETED", "FAILED", "CANCELLED")`, is now the only author of "this job
+is over": delete refuses every terminal state with 409 `job_not_deletable`, cancel refuses every
+terminal state with 409 `job_not_cancellable`, and `completed_at` names `updated_at`'s instant for a
+terminal row. The pipeline writes `COMPLETED`, and migration `0036` rewrites rows already written as
+`DONE` (and back on downgrade), so the fix does not leave older rows in a state no reader names.
+
+The file's sixteen cases pin the ownership at both ends: the creator's row carries its creator, the
+list is the caller's own even for an admin, a foreign id reads as absent on all three doors while the
+owner still reads `QUEUED`, and an admin reads a foreign id but not the list. The terminal cases plant
+a `RETRYING` job and a `CANCELLED` one, assert each refusal's code, assert that cancel refuses every
+terminal state, and assert `completed_at` names the terminal instant. The two video cases now read
+`COMPLETED` off the job the pipeline finished, and the migration has two cases that load `0036` by
+path, plant `DONE`/`COMPLETED`/`FAILED`/`QUEUED` rows in an in-memory SQLite table, run `upgrade` and
+`downgrade`, and assert the exact resulting map and the round trip.
+
+The pre-fix file reds eight of the sixteen — the four ownership cases, both cancel cases, the
+`RETRYING` delete and `completed_at` — and the pipeline arm reds the two video cases. Nine arms over
+an isolated worktree at `cf144b7`: `baseline` 52/0; the pre-fix jobs file reds its eight; dropping
+`user_id` reds eleven — the three ownership cases plus every case that creates a job through the API
+and then reads, cancels, deletes or lists it, because an ownerless row is foreign to its own creator
+under the new guard, and each of those eight was re-derived from its case body after the first run
+showed the narrower prediction was wrong; unfiltering the list reds two (own list and
+admin-not-list); removing the ownership guard reds one (foreign id); dropping `CANCELLED` from the
+terminal tuple reds both cancel cases; restoring the old two-state delete predicate reds the
+`RETRYING` delete alone; `completed_at=None` reds the terminal-instant case alone; a migration whose
+`WHERE` names nothing reds its upgrade case alone; and a message-only change leaves all fifty-two
+green. Delete's *admission* of a cancelled row is the one combination no case exercises: the tuple's
+membership is pinned from the cancel side and delete's use of the tuple from the `RETRYING` side, but
+no case deletes a cancelled job; that is named here rather than counted as covered.
+
+The contract was regenerated: the jobs descriptions carry the ownership and the terminal vocabulary,
+202 paths / 264 operations / 91 schemas unchanged, `HTTPBearer` retained. The audit's migration
+figure moved **36 → 37** with the migration, because `test_spec_audit_currency.py` counts what the
+committed tree contains.
+
 ### Observability — the system row answers the system
 
 `GET /api/v1/metrics/system` had four rows that answered something else, and two of them answered it
@@ -781,6 +840,11 @@ harness env var is part of the recorded command.
 | one registered player against `/model-router/{status,costs,switch}` | isolated worktree at `203a38a^` | **200 / 200 / 503** before, and `budget_spent_today: 0.0` while `/costs` reported the planted spend; **403** after, admin still **200 / 200 / 503** |
 | contract after the provider standing | `docs/api/openapi.json` committed | 202 paths / 264 operations / 91 schemas unchanged; the three descriptions carry the standing, `HTTPBearer` retained |
 | `pytest tests/test_openapi_contract_currency.py tests/test_answer_census.py tests/test_authorization_census.py tests/test_model_router.py -q` | same | **34 tests / 0 failures / 0 errors / 0 skipped**, rc=0 |
+| `pytest tests/test_jobs.py tests/test_video.py tests/test_migration_jobs_done.py -q` | SQLite, local venv, working copy at `cf144b7` | **52 tests / 0 failures / 0 errors / 0 skipped**, rc=0; arms on an isolated worktree at `cf144b7`: pre-fix jobs file -> **8 red** (four ownership, two cancel, the `RETRYING` delete, `completed_at`), a dropped `user_id` -> **11** (the three ownership plus every case that creates through the API and then reads, cancels, deletes or lists the ownerless row), unfiltered list -> **2**, removed guard -> **1**, a two-state terminal tuple -> **2**, the old delete predicate -> **1**, `completed_at=None` -> **1**, pipeline writes `DONE` -> **2** (video), no-op migration -> **1**, message-only control -> **0** |
+| `pytest tests/test_jobs.py tests/test_migration_jobs_done.py -q` | same | **18 tests / 0 failures / 0 errors / 0 skipped**, rc=0 |
+| migration chain `0036` on a fresh SQLite file | `alembic upgrade head` -> `downgrade -1` -> `upgrade head` | single head `0036`; the migration's two cases plant `DONE`/`COMPLETED`/`FAILED`/`QUEUED` rows, read `COMPLETED` for the `DONE` rows after `upgrade` and `DONE` after `downgrade`; the chain runs rc=0 |
+| contract after the jobs ownership | `docs/api/openapi.json` committed | 202 paths / 264 operations / 91 schemas unchanged; the jobs descriptions carry the ownership and the terminal vocabulary, `HTTPBearer` retained |
+| `docs/SPEC_COVERAGE_AUDIT.md` | committed tree | `migrations=37` (was 36); the quoted triple in `ROADMAP.md` reads 202 / 61 / 37 |
 
 The contract and audit figures were recomputed against the committed tree, not the working copy,
 because `test_spec_audit_currency.py` reads `git show HEAD:…`. Two doc landings were needed to make
