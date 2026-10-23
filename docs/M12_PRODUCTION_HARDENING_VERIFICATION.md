@@ -646,6 +646,14 @@ The contract was regenerated: the jobs descriptions carry the ownership and the 
 figure moved **36 → 37** with the migration, because `test_spec_audit_currency.py` counts what the
 committed tree contains.
 
+### The run ledger counts the run that made the report
+
+`/api/v1/video/{id}/jobs` exists so a report can be traced back to the job that made it, and it renders `attempts`. The synchronous pipeline created that job with the model's default `attempts=0`; the work ran inside the same request, so the row a report pointed at said the run had been attempted zero times — on success and on failure alike. `max_attempts` (3) beside it made the reading worse: the row looked like a run that had never begun. The pipeline now names `attempts=1` at creation, where the attempt begins. There is still no worker and no retry, and the field is not used to claim otherwise; the generic `POST /jobs` queue is untouched, because a row it creates has not run and zero is the honest count there.
+
+The two new cases read the door rather than the table: a completed analysis reports one attempt, and a forced `MediaToolMissing` (the frame extractor is replaced in-process) still reports one attempt on the `FAILED` row the report points at. Before the fix both red at `assert 0 == 1`.
+
+Five arms over an isolated worktree at `62c4e8c`: baseline **36 tests / 0 failures / 0 errors / 0 skipped**; removing `attempts=1` reds both cases and the failure text reports `0`; writing `attempts=2` reds both and reports `2`; blanking the door's `attempts` field reds both and reports `0`; and a message-only edit to the door's `note` leaves all 36 green. The count is asserted exactly, so `2` is as red as `0`. Bytecode writes are disabled and every `__pycache__` in the plane is removed before each run, because the equal-size `attempts=2` mutation can otherwise be served the previous `.pyc` (importlib validates by mtime second and size).
+
 ### Observability — the system row answers the system
 
 `GET /api/v1/metrics/system` had four rows that answered something else, and two of them answered it
