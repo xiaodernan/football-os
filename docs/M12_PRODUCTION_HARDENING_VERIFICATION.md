@@ -609,6 +609,14 @@ terminal state with 409 `job_not_cancellable`, and `completed_at` names `updated
 terminal row. The pipeline writes `COMPLETED`, and migration `0036` rewrites rows already written as
 `DONE` (and back on downgrade), so the fix does not leave older rows in a state no reader names.
 
+What the migration cannot repair is ownership. Rows created before the fix carry `user_id NULL`, and
+nothing in the row says who created it, so they fail closed: absent from every caller's list and a
+404 on a known id for anyone but an admin, who can still read and manage a known id. That is the cost
+of a tier that never recorded its owners — the alternative was to keep the platform-wide feed — and
+it is stated here rather than left for a support ticket to find. No case seeds such a row: the
+ownerless branch is what the `user_id or ""` fallback exists for, and it is exercised only as the
+absence of a foreign owner, not as a legacy row.
+
 The file's sixteen cases pin the ownership at both ends: the creator's row carries its creator, the
 list is the caller's own even for an admin, a foreign id reads as absent on all three doors while the
 owner still reads `QUEUED`, and an admin reads a foreign id but not the list. The terminal cases plant
