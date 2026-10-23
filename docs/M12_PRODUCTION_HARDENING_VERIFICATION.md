@@ -845,6 +845,7 @@ harness env var is part of the recorded command.
 | migration chain `0036` on a fresh SQLite file | `alembic upgrade head` -> `downgrade -1` -> `upgrade head` | single head `0036`; the migration's two cases plant `DONE`/`COMPLETED`/`FAILED`/`QUEUED` rows, read `COMPLETED` for the `DONE` rows after `upgrade` and `DONE` after `downgrade`; the chain runs rc=0 |
 | contract after the jobs ownership | `docs/api/openapi.json` committed | 202 paths / 264 operations / 91 schemas unchanged; the jobs descriptions carry the ownership and the terminal vocabulary, `HTTPBearer` retained |
 | `docs/SPEC_COVERAGE_AUDIT.md` | committed tree | `migrations=37` (was 36); the quoted triple in `ROADMAP.md` reads 202 / 61 / 37 |
+| `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | HEAD `323bbe6`, committed tree | **13 tests / 0 failures / 0 errors / 0 skipped**, rc=0; the audit's `migrations=37` and the roadmap's quoted 202 / 61 / 37 agree — before this record the roadmap still quoted 36 and the case red at `(202, 61, 36) == (202, 61, 37)` |
 
 The contract and audit figures were recomputed against the committed tree, not the working copy,
 because `test_spec_audit_currency.py` reads `git show HEAD:…`. Two doc landings were needed to make
