@@ -3517,8 +3517,9 @@ async function run() {
     const uncovered = routePatterns.filter((pattern) => {
       if (pattern.startsWith('/knowledge')) return false;
       if (READ_ELSEWHERE.has(pattern)) return false;
+      const route = pattern.replace(/\/+$/, "") || "/";
       const matcher = new RegExp(
-        `^${pattern.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&').replace(/:[^/]+/gu, '[^/]+')}(/.*)?$`,
+        `^${route.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&').replace(/:[^/]+/gu, '[^/]+')}(/.*)?$`,
       );
       return !readPaths.some((path) => matcher.test(path));
     });
