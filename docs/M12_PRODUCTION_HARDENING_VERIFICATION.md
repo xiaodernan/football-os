@@ -1010,6 +1010,43 @@ own ledger: an unknown path and a wrong method are still answered by Starlette w
 production-gated and this server was development; no TLS, CSP or HSTS was exercised; and **no third-party
 penetration test was commissioned**.
 
+### The probe report's figures get readers (2026-10-24)
+
+`docs/SECURITY_PROBE_REPORT.md` recorded a SHA-256 for the contract its first runs read, a census table, three
+floors and the S1 row the run measured — and nothing in `apps/api/tests` opened the file. The contract's
+descriptions changed four times after those runs (the trace, metrics, provider and jobs tiers), which moved
+its bytes and its SHA-256; the three ledgers that quote the probe (the report, this file and `ROADMAP.md`)
+still named the contract of 2026-10-22.
+
+Run D reread the contract as committed today: a fresh PostgreSQL database `football_os_probe_m12_d` on port
+54321 migrated to head `0036`, the project's authenticated Redis on 63790 in the request path,
+`ENV=development`, a fresh uvicorn on port 8752. It answered all ten checks (**10 passed / 0 failed / 0 server
+errors**, 6.88 s), and the census this run read was unchanged at 212 secured operations / 52 public / 91
+private `GET` paths — so the intervening edits changed descriptions, not doors. The report now records run D
+as the current run and labels runs A–C with the contract they were made against; the ROADMAP and this file
+name the current SHA in the sentences run D was added beside.
+
+`apps/api/tests/test_security_probe_report_currency.py` (12 cases) reads each document from the committed
+tree and recomputes the census through `scripts/security_probe.py`'s own `private_operations()` and
+`public_operations()`, not a retyped predicate: three cases bind the three current SHA declarations (report,
+this file, ROADMAP), three bind each census row, one binds the floors to the probe's constants, one binds the
+census and floors this file quotes, three bind the S1 rows (report, this file) and the ROADMAP's secured
+ratio to the contract's secured population, and one requires the run table's latest column to be green. The
+historical SHA that runs A–C name is deliberately outside the gate: it is provenance, and each case's
+grammar anchors on the sentence that declares the current run.
+
+The battery at `b42f954` ran 12 mutation arms and one message-only control on a detached worktree: the stale
+report SHA, a 213 secured row, a 51 public row, a 92 private-`GET` row, a 199 floor, the stale M12 SHA, a 51
+public count in this file, the stale ROADMAP SHA, a 211/212 ROADMAP ratio, a 211-knock S1 row in each of the
+report and this file, and a 9-passed run row each red exactly the case predicted from its body; the control
+stayed 12/0. One prediction was re-derived before the green: moving the report's secured row reds the census
+case only, because the S1 case compares its own row to the contract — the two carriers cannot confirm each
+other, which is the property the gate wants. The focused set (this gate, the contract-currency and
+spec-audit-currency gates) read **25 tests / 0 failures / 0 errors / 0 skipped**.
+
+The gate proves the ledgers agree with the contract's census. It does not re-run the live probe in CI — the
+run D transcript is the live evidence, and a contract change now reds a ledger until someone reruns it.
+
 ## What M12 does not claim
 
 * **No third-party penetration test.** The gate's security clause is answered by the project's own probe
