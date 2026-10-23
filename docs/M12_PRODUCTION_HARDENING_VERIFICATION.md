@@ -548,6 +548,37 @@ that says the six reds are the standing and not any diff. The contract was regen
 264 operations / 91 schemas**, all six metrics operations still declare `HTTPBearer`, and their
 descriptions carry the standing.
 
+### Authorization — the provider tier's spend row was a constant and its doors asked for a session
+
+`/api/v1/model-router/{status,costs,switch}` is the same shape one module over. `costs` totals
+`model_calls` over every account, `status` publishes the provider configuration and the shared budget,
+and `switch` is documented as a change "that affects all users. Only admins should be able to do this."
+All three were guarded by `current_user` alone, so a player read today's platform AI spend and reached
+the switch refusal; and `status`'s `budget_spent_today` was `0.0` with `# Placeholder - would need db
+access` beside it, while its own docstring promised "today's spending". Two doors published the same
+spend: `/metrics/providers` behind the operator standing and `/model-router/costs` behind a session.
+
+`require_operator` now sits on the router, built from `standing_check(("admin",))` and refusing through
+`role_refusal` (403 `insufficient_role`, `held: player`, `required: ["admin"]`), so the bearer check and
+the standing travel together and a fourth door inherits both. The status handler reads
+`spend_today_usd(db)` and rounds it the way the costs door does, so the two rows agree by construction
+rather than by a comment. `/switch` still refuses every caller with its registered 503; a non-admin no
+longer reaches it.
+
+The file's twelve cases pin both ends of each door and the parity: three parametrised doors, a player
+refused with the platform's role shape and an admin answered (200 / 200 / 503), the same three refused
+anonymously with 401 `unauthenticated`, and one ledger case that writes a paid call and asserts the
+status row is at least that cost and exactly the number `/costs` reports. The pre-fix file reds four:
+the three refusals and the parity; the anonymous cases were already green because a session was the
+only thing either guard asked for.
+
+Six arms over an isolated worktree at `203a38a`: the pre-fix file reds four, `if False` and a widened
+`("admin", "player")` standing red the three refusals, removing the router dependency reds six (the
+three plus the three anonymous cases, since the dependency carried the bearer check), restoring the
+hardcoded `0.0` reds the parity case alone, and a message-only change leaves all twelve green. The
+contract was regenerated: the three descriptions carry the standing; 202 paths / 264 operations / 91
+schemas unchanged, `HTTPBearer` retained.
+
 ### Observability — the system row answers the system
 
 `GET /api/v1/metrics/system` had four rows that answered something else, and two of them answered it
@@ -746,6 +777,10 @@ harness env var is part of the recorded command.
 | one registered player against the six `/api/v1/metrics/*` doors | isolated worktree at `339ef38^` | **200 at all six** before; **403 `insufficient_role`** with `held: player` / `required: ["admin"]` after |
 | contract after the metrics standing | `docs/api/openapi.json` committed | **202 paths / 264 operations / 91 schemas**; `HTTPBearer` retained on all six metrics operations, descriptions carry the standing |
 | `pytest tests/test_openapi_contract_currency.py tests/test_spec_audit_currency.py -q` | same | 13 tests, rc=0 |
+| `pytest tests/test_model_router.py -q` | SQLite, local venv, working copy at `203a38a` | **12 tests / 0 failures / 0 errors / 0 skipped**, rc=0; arms on an isolated worktree: pre-fix file → **4 red** (three refusals + parity), `if False` → **3**, `("admin","player")` → **3**, router dependency removed → **6** (three + three anonymous), `0.0` restored → **1** (parity), message-only control → **0** |
+| one registered player against `/model-router/{status,costs,switch}` | isolated worktree at `203a38a^` | **200 / 200 / 503** before, and `budget_spent_today: 0.0` while `/costs` reported the planted spend; **403** after, admin still **200 / 200 / 503** |
+| contract after the provider standing | `docs/api/openapi.json` committed | 202 paths / 264 operations / 91 schemas unchanged; the three descriptions carry the standing, `HTTPBearer` retained |
+| `pytest tests/test_openapi_contract_currency.py tests/test_answer_census.py tests/test_authorization_census.py tests/test_model_router.py -q` | same | **34 tests / 0 failures / 0 errors / 0 skipped**, rc=0 |
 
 The contract and audit figures were recomputed against the committed tree, not the working copy,
 because `test_spec_audit_currency.py` reads `git show HEAD:…`. Two doc landings were needed to make
