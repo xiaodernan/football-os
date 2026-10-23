@@ -981,9 +981,8 @@ on, and answered the same **10/10, 0 failed, 0 server errors** in 11.37 s; its r
 doors answering 401, the same private and public `MISS → HIT` pairs, and the same 429 at the 11th login.
 Run D repeated run C's configuration on 2026-10-24 on a fresh database migrated to head `0036`, against
 the contract as committed then — the same 212 doors, the same pairs, the same 429 at the 11th — and
-answered **10/10, 0 failed, 0 server errors** in 6.88 s at SHA-256
-`6c1ce207455422ae4784969433cf33d166fe75e53b91f7940187083847190972`, which is the run
-[the report](SECURITY_PROBE_REPORT.md) now records as current. Runs A–C were made against the contract
+answered **10/10, 0 failed, 0 server errors** in 6.88 s at the contract SHA named above, which is
+the run [the report](SECURITY_PROBE_REPORT.md) now records as current. Runs A–C were made against the contract
 at the earlier SHA `31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e`; their census was
 the same 212 / 52 / 91, because the intervening commits changed descriptions, not doors.
 S4 is constructed so the negative is not vacuous: the private `HIT` and the public `MISS → HIT` are read
