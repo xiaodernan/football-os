@@ -1120,6 +1120,34 @@ ordinary sentences that happen to be written twice. The gate to hold them would 
 reason it is allowed, the way the locale-token gate names the technical tokens: a list without reasons
 is the same as no list at all.
 
+## 16. The catalogue's ownership shape (2026-10-23)
+
+### The question the arc has not asked
+
+The catalogue has **40 namespaces and 3600 keys**. The arc has measured size, dead keys, drift, table — but not **ownership**: which namespaces are "one-key" (a page reads once, coverage claim) and which are "many-key" (a tier's own vocabulary, a design question about sharing).
+
+### The census
+
+A key that lives in only one namespace is a coverage claim; a key that lives in two is a design question — is the shared sentence the same meaning in both places, or did it drift?
+
+| namespace | total | unique | shared | what it shares |
+|---|---|---|---|---|
+| `errors` | **65** | **65** | **0** | — |
+| `club` | 449 | 404 | 45 | `backLabel`, `answeredWith`... |
+| `scout` | 279 | 238 | 41 | `backLabel`, `adding`... |
+| `tactics` | 241 | 205 | 36 | `backLabel`, `boardEyebrow`... |
+| `careerDetail` | 115 | 80 | 35 | `backLabel`, `clubGone`... |
+| `world` | 145 | 115 | 30 | `backLabel`, `aiGenerated`... |
+| ... | ... | ... | ... | ... |
+
+**Only one namespace is purely unique: `errors` (65 keys).** The other 39 share at least one key.
+
+The most shared key is **`backLabel` — 15 namespaces** (`career`, `careerDetail`, `challenges`, `club`, `creator`, `graph`, `market`, `scout`, `simulate`, `simulationAggregates`, `worldCompetition`, `worldMatch`, `worldNews`, `worldPlayer`, `worldTeam`). The next is `authoredBadge` (2 namespaces).
+
+### The question
+
+A shared key is a **design question**, not a coverage claim. The same English sentence under two namespaces might mean the same thing (the "back" button is the same everywhere) or it might have drifted (the word "coach" in `coach` vs `common`). The arc has not asked: *which shared keys are deliberate, and which are accidental?*
+
 **And some of them have already drifted.** The repeats are not only a risk of future drift: **13** of
 them are worded two ways in Simplified Chinese and **15** in Traditional — the same English sentence
 under two keys, and the reader meets one button written twice. "PROJECT AUTHORED" is "项目原创" in one
