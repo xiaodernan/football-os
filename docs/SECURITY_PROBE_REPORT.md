@@ -15,8 +15,8 @@ answer rather than from an assertion about the code.
 artifact the web client and the currency gates read — and takes every operation that declares a
 `security` requirement as a private door, every operation that declares none as a public one.
 
-At the run recorded here the contract's SHA-256 was
-`31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e`, and the census read:
+At the latest run recorded here (run D, §2) the contract's SHA-256 was
+`6c1ce207455422ae4784969433cf33d166fe75e53b91f7940187083847190972`, and the census read:
 
 | measurement | value | floor |
 | --- | --- | --- |
@@ -28,26 +28,38 @@ The floors exist so an empty or half-read contract cannot pass as a clean probe;
 every run and they sit under the counts at HEAD. A door that lands in the contract without a credential
 check is knocked on the next run, which is the point of deriving the population instead of typing it.
 
-## 2. The three runs
+Runs A–C were made against the contract at
+`31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e`; the census they read was the same
+212 / 52 / 91, so the description edits that landed since (the trace, metrics, provider and jobs tiers)
+changed no door. Run D is the run against the contract as committed today, and
+`apps/api/tests/test_security_probe_report_currency.py` now reads this document's SHA, census, floors
+and S1 count and compares them to the committed contract and the probe's own constants.
 
-All three runs were made on 2026-10-22 local time (the reports' timestamps are UTC, `2026-10-21T19:2x`)
-against a live uvicorn on
-`127.0.0.1:8751`, with `ENV=development` — the configuration in which the response cache and the rate
-limiter are live, since both return early under `ENV=test`. Each run used a fresh server process and a
-fresh database, because the limiter's window and the near cache live in process memory.
+## 2. The four runs
 
-| | run A | run B | run C |
-| --- | --- | --- | --- |
-| server cache tier | degraded — the default Redis on 6379 refused the handshake, so the near tier served | **live** — the project's authenticated Redis on 63790 (`REDIS_URL`), connected | **live**, same tier and URL as run B |
-| CORS origin configured | `http://localhost:3000` (the probe's old default, set on that server) | the project's own `apps/api/.env` pair, `http://localhost:3210` | `http://localhost:3210` |
-| database | `.scratch/m12-probe.db` (SQLite) | `.scratch/m12-probe-redis.db` (SQLite) | `football_os_probe_m12` on the project's PostgreSQL (port 54321), migrated to head |
-| report | `.scratch/security-probe.json` | `.scratch/security-probe-redis.json` | `.scratch/security-probe-pg.json` |
-| result | **10 passed / 0 failed / 0 server errors**, 7.83 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 19.61 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 11.37 s, rc=0 |
+Runs A–C were made on 2026-10-22 local time (their reports' timestamps are UTC, `2026-10-21T19:2x`)
+against a live uvicorn on `127.0.0.1:8751`; run D was made on 2026-10-24 local time (`2026-10-23T19:16`
+UTC) on port 8752. All four used `ENV=development` — the configuration in which the response cache and
+the rate limiter are live, since both return early under `ENV=test`. Each run used a fresh server
+process and a fresh database, because the limiter's window and the near cache live in process memory.
+
+| | run A | run B | run C | run D |
+| --- | --- | --- | --- | --- |
+| server cache tier | degraded — the default Redis on 6379 refused the handshake, so the near tier served | **live** — the project's authenticated Redis on 63790 (`REDIS_URL`), connected | **live**, same tier and URL as run B | **live**, same tier and URL as run B |
+| CORS origin configured | `http://localhost:3000` (the probe's old default, set on that server) | the project's own `apps/api/.env` pair, `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` |
+| database | `.scratch/m12-probe.db` (SQLite) | `.scratch/m12-probe-redis.db` (SQLite) | `football_os_probe_m12` on the project's PostgreSQL (port 54321), migrated to head | `football_os_probe_m12_d` on the project's PostgreSQL (port 54321), migrated to head `0036` |
+| report | `.scratch/security-probe.json` | `.scratch/security-probe-redis.json` | `.scratch/security-probe-pg.json` | `.scratch/security-probe-d.json` |
+| result | **10 passed / 0 failed / 0 server errors**, 7.83 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 19.61 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 11.37 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 6.88 s, rc=0 |
 
 Run C differs from run B in one input — `DATABASE_URL` — so the engine is the only candidate for any
 difference, and the ten checks read the same evidence: the same 212 doors answering 401, the same
 MISS→HIT pairs for both callers, the same 429 at the 11th login. The probe's claim is therefore not a
 SQLite-only claim, which matters because the deployed API runs on PostgreSQL.
+
+Run D repeated run C's configuration on a fresh database migrated to head `0036`, after the contract's
+descriptions changed and the jobs pipeline's terminal state was renamed. It answered the same ten
+checks, so the green recorded here is against the contract committed today and not only against an
+earlier snapshot of it.
 
 Runs B and C are the ones that matter for the cache claim: the shared tier was the source of the
 cross-account replay fixed at M12 Item 6, so the probe was repeated with that tier actually in the
@@ -68,14 +80,14 @@ re-running the probe against the same contract is what reproduces them.
 
 ## 3. The ten checks
 
-| ident | claim | measured in run B |
+| ident | claim | measured in run D |
 | --- | --- | --- |
 | C0 | the private-door population is read from the committed contract and is not empty | 212 secured / 52 public / 91 private GET paths, contract SHA-256 above |
 | S1 | every secured operation refuses a caller with no credential, and asks for one | **212 knocked, 212 answered 401**, 0 deviations |
 | S2 | a token whose signature no longer verifies is refused | 401, body keys `code`, `message` |
 | S3 | one account's row is absent to another, in both the direct read and the listing | create 201; owner read 200; stranger read **404**; stranger patch **404**; stranger's listing 200 with the owner's row absent; `/auth/me` caller-scoped |
 | S4 | a public answer is served from cache under its own request id, and a cached private answer never crosses callers | private: A MISS → HIT, B MISS → HIT, **stranger never received the owner's row**; public: MISS → HIT, bodies byte-identical, request ids different |
-| S5 | a login burst is refused with a coded 429 that says when to retry | 10 × 200, then **429 at the 11th hit**, `Retry-After: 295`, code `rate_limited` |
+| S5 | a login burst is refused with a coded 429 that says when to retry | 10 × 200, then **429 at the 11th hit**, `Retry-After: 297`, code `rate_limited` |
 | S6 | refusals are one coded shape, name the field and rule, echo no submitted value and leak no internals | malformed JSON → 422 `validation_error`, row keys exactly `loc`/`msg`/`type` (no `input`, no `ctx`); short board → 422 with one detail row; **no leak marker** in any of the four bodies |
 | S7 | every answer carries the security headers and its own request identity, including a refusal | `nosniff` on both 200 and 401, `Referrer-Policy: strict-origin-when-cross-origin`, distinct `X-Request-ID`s, numeric durations |
 | S8 | only a configured origin is echoed, with credentials, and a rogue origin is never answered | configured origin: 200 + `Access-Control-Allow-Origin: http://localhost:3210` + credentials; rogue: 200 with **no** ACAO; preflight 200 with the configured origin; rogue preflight 400 with no ACAO |
@@ -147,6 +159,9 @@ DATABASE_URL="$DB" /d/足球项目/.venv/Scripts/python.exe -m alembic upgrade h
 ENV=development DATABASE_URL="$DB" REDIS_URL="redis://:football@127.0.0.1:63790/0" \
   /d/足球项目/.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8751
 ```
+
+Run D repeated that shape with its own database and port — `football_os_probe_m12_d`, port 8752,
+`--report .scratch/security-probe-d.json` — after `alembic upgrade head` reached `0036`.
 
 Three properties of the invocation matter:
 

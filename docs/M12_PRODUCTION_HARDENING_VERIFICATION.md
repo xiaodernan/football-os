@@ -944,7 +944,7 @@ per-video deletion was missing, is corrected in
 pressed it in a browser — what the delete *did* leave behind was the clip's own analysis job, and that is
 fixed.)
 
-## The gate's security half: a first-party probe, and the report it leaves (2026-10-22)
+## The gate's security half: a first-party probe, and the report it leaves (2026-10-22, rerun 2026-10-24)
 
 M12's gate says **"load + pen test report clean"**. The load half had a harness, a ceiling and a paired
 measurement. The security half had a code-level census (§60), the answer-table gates (§51) and a list of
@@ -954,7 +954,7 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e` that population is **212
+SHA-256 `6c1ce207455422ae4784969433cf33d166fe75e53b91f7940187083847190972` that population is **212
 secured operations, 52 public operations and 91 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
@@ -965,7 +965,7 @@ every run. Ten checks, each one an HTTP exchange against a live uvicorn rather t
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |
-| S5 | a login burst is refused, coded, with a retry time | 10 × 200 then **429 at the 11th**, `Retry-After: 295`, `rate_limited` |
+| S5 | a login burst is refused, coded, with a retry time | 10 × 200 then **429 at the 11th**, `Retry-After: 297`, `rate_limited` |
 | S6 | refusals are one coded shape, echo nothing and leak nothing | 422 `validation_error`, exactly `loc`/`msg`/`type`, **no leak marker** in four bodies |
 | S7 | the security headers and a request identity are on every answer, including a refusal | `nosniff` on 200 and 401, referrer policy, distinct ids, numeric durations |
 | S8 | only a configured origin is echoed; a rogue one is never answered | configured 200 + ACAO + credentials; rogue 200 with **no** ACAO; rogue preflight 400 |
@@ -979,6 +979,13 @@ cross-account replay Item 6 fixed — and answered the same **10/10, 0 failed, 0
 Run C repeated run B's configuration against the project's PostgreSQL, the engine the deployed API runs
 on, and answered the same **10/10, 0 failed, 0 server errors** in 11.37 s; its report reads the same 212
 doors answering 401, the same private and public `MISS → HIT` pairs, and the same 429 at the 11th login.
+Run D repeated run C's configuration on 2026-10-24 on a fresh database migrated to head `0036`, against
+the contract as committed then — the same 212 doors, the same pairs, the same 429 at the 11th — and
+answered **10/10, 0 failed, 0 server errors** in 6.88 s at SHA-256
+`6c1ce207455422ae4784969433cf33d166fe75e53b91f7940187083847190972`, which is the run
+[the report](SECURITY_PROBE_REPORT.md) now records as current. Runs A–C were made against the contract
+at the earlier SHA `31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e`; their census was
+the same 212 / 52 / 91, because the intervening commits changed descriptions, not doors.
 S4 is constructed so the negative is not vacuous: the private `HIT` and the public `MISS → HIT` are read
 before "the stranger never received the owner's row", so the cache is proven to have been serving at the
 moment the isolation held.
