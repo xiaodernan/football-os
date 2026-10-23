@@ -1154,3 +1154,7 @@ Printing it earned its keep twice over, by showing two defects in the check that
 
 Both are the arc's own lesson in a new place: a check that has never run against real data is a claim
 about a shape, not about the tree.
+
+**And a third defect it showed:** the collected route patterns carried **trailing slashes** where the
+read paths did not, so every route was reported uncovered — the matcher fix normalizes trailing
+slashes before comparing.
