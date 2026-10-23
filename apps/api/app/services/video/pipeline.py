@@ -240,7 +240,7 @@ def analyse_asset(session: Session, asset: VideoAsset, *, target_frames: int = 2
         asset.media = {**(asset.media or {}), "last_analysis": {stage.name: stage.detail for stage in stages}, "commands": {"probe": info.probe_command}}
         asset.status = "analysed"
         asset.error = None
-        job.status = "DONE"
+        job.status = "COMPLETED"
         job.progress = 100
         job.result = {
             "events": len(result["events"]),

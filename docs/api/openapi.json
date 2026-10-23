@@ -13273,7 +13273,7 @@
           "jobs"
         ],
         "summary": "List Jobs",
-        "description": "List jobs with optional filtering by status and type.",
+        "description": "List the caller's own jobs, with optional filtering by status and type.",
         "operationId": "list_jobs_api_v1_jobs_get",
         "security": [
           {
@@ -13294,10 +13294,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by status (QUEUED, RUNNING, COMPLETED, FAILED)",
+              "description": "Filter by status (QUEUED, RUNNING, COMPLETED, FAILED, CANCELLED, RETRYING)",
               "title": "Status"
             },
-            "description": "Filter by status (QUEUED, RUNNING, COMPLETED, FAILED)"
+            "description": "Filter by status (QUEUED, RUNNING, COMPLETED, FAILED, CANCELLED, RETRYING)"
           },
           {
             "name": "type",
@@ -13416,7 +13416,7 @@
           "jobs"
         ],
         "summary": "Get Job Status",
-        "description": "Get detailed status of a specific job including result or error.",
+        "description": "Get detailed status of a specific job including result or error.\n\n`completed_at` is derived rather than stored: the model has no completion column, and\n`updated_at` is the instant of the row's last transition — which, for one of the three\nterminal states, is its completion.",
         "operationId": "get_job_status_api_v1_jobs__job_id__get",
         "security": [
           {
@@ -13462,7 +13462,7 @@
           "jobs"
         ],
         "summary": "Delete Job",
-        "description": "Delete a completed or failed job. Cannot delete running jobs.",
+        "description": "Delete a job in a terminal state. A queued, running or retrying job cannot be deleted.",
         "operationId": "delete_job_api_v1_jobs__job_id__delete",
         "security": [
           {
@@ -13514,7 +13514,7 @@
           "jobs"
         ],
         "summary": "Cancel Job",
-        "description": "Cancel a queued or running job.",
+        "description": "Cancel a queued, running or retrying job. A terminal job cannot be cancelled again.",
         "operationId": "cancel_job_api_v1_jobs__job_id__cancel_post",
         "security": [
           {

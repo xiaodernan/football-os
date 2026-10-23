@@ -11,7 +11,7 @@ carries its noun; a service file with no door is **partial**.
 Every figure in this sentence is re-checked against the committed tree by
 `apps/api/tests/test_spec_audit_currency.py`, which reads the machine-readable line below rather than the prose:
 
-`AUDIT_FIGURES contract_paths=202 page_routes=61 migrations=36`
+`AUDIT_FIGURES contract_paths=202 page_routes=61 migrations=37`
 
 ## A. The 30 product modules (spec §3's list, §4–§42)
 

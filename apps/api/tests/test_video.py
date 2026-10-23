@@ -216,7 +216,7 @@ class TestPipelineAndOwnership:
         assert [stage["name"] for stage in result["stages"]] == ["probe", "extract_frames", "analyse"]
         sampled = result["analysis"]["frames_seen"]
         assert 4 <= sampled <= 16, sampled
-        assert result["job"]["status"] == "DONE"
+        assert result["job"]["status"] == "COMPLETED", "ADR-006's machine ends a successful run at COMPLETED"
         assert result["job"]["result"]["frames"] == sampled == result["asset"]["frame_count"]
         assert result["stages"][1]["detail"]["sample_times"] == [round(index * result["asset"]["frame_interval_s"], 3) for index in range(min(8, sampled))]
         assert result["analysis"]["demo_mode"] is True
@@ -237,7 +237,7 @@ class TestPipelineAndOwnership:
         result = auth_client.post(f"{API}/{report['asset']['id']}/analyse").json()
         assert result["detections"] == [], "a static field has no movement to find"
         assert result["analysis"]["frames_seen"] > 1
-        assert result["job"]["status"] == "DONE"
+        assert result["job"]["status"] == "COMPLETED"
         assert result["analysis"]["green_fraction_mean"] > 0.9, "the generated clip really is mostly pitch-green"
 
     def test_frames_and_file_are_served_to_the_owner_as_png_and_mp4(self, auth_client, clips) -> None:  # type: ignore[no-untyped-def]
@@ -345,7 +345,7 @@ class TestPipelineAndOwnership:
                 Job(
                     id="job_clip_delete_probe",
                     type="video.analyse",
-                    status="DONE",
+                    status="COMPLETED",
                     payload={"asset_id": asset_id, "target_frames": 8},
                 )
             )
