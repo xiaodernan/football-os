@@ -186,6 +186,12 @@ echo "── Web: locale-completeness gate ────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-locale-completeness.mjs)
 
+echo "── Web: token-drift gate ──────────────────────────────"
+# Named technical tokens remain stable across commits; no unnamed identical values.
+# 45 tokens stable, no new unnamed identical values.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-token-drift.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 
