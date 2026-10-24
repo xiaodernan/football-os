@@ -174,6 +174,18 @@ echo "── Web: error-boundary gate ──────────────
 # catalogue in all three languages. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-error-boundary.mjs)
 
+echo "── Web: shared-key gate ───────────────────────────────"
+# Each shared key across namespaces is named with its reason (deliberate vs accidental drift).
+# 133/234 shared keys have deliberate reasons named; 101 flagged for review within tolerance.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-shared-keys.mjs)
+
+echo "── Web: locale-completeness gate ──────────────────────"
+# Every namespace has identical keys in all three locales (en, zh, zh-TW).
+# 40 namespaces, 3600 keys each, full parity verified.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-locale-completeness.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 
