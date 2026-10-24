@@ -399,7 +399,7 @@ def _refusals() -> dict[str, dict[str, Any]]:
     whole = "\n".join(sources.values())
 
     resolved: dict[str, set[str | None]] = {}
-    for path, text in sources.items():
+    for text in sources.values():
         for match in _REFUSAL.finditer(text):
             literal, name, is_f, _quote, body, variable = match.groups()
             code = literal or constants.get(name)
