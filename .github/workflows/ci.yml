@@ -203,6 +203,8 @@ jobs:
         run: node scripts/qa-plural-select.mjs
       - name: Key-drift gate (semantic drift detection across namespaces)
         run: node scripts/qa-key-drift.mjs
+      - name: Locale-content gate (locale-specific content differences tracked)
+        run: node scripts/qa-locale-content.mjs
       - name: Locale-completeness gate (every namespace has identical keys in all three locales)
         run: node scripts/qa-locale-completeness.mjs
       - name: Token-drift gate (named technical tokens remain stable)

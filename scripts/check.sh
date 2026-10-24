@@ -216,6 +216,12 @@ echo "── Web: key-drift gate ───────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-key-drift.mjs)
 
+echo "── Web: locale-content gate ───────────────────────────"
+# Locale-specific content differences tracked (measurement units, currency, legal, cultural).
+# 28 differences found - imperial/metric units, currency, properly adapted in Chinese.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-locale-content.mjs)
+
 echo "── Web: locale-completeness gate ──────────────────────"
 # Every namespace has identical keys in all three locales (en, zh, zh-TW).
 # 40 namespaces, 3600 keys each, full parity verified.
