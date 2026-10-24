@@ -46,7 +46,7 @@ import { fileURLToPath } from "node:url";
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const WEB = join(REPO, "apps", "web");
 const API_DIR = join(REPO, "apps", "api");
-const SCRATCH = join(REPO, ".scratch");
+const SCRATCH = "D:\\football_os_scratch";
 const DIST = process.env.QA_DIST ?? ".next";
 const CHROME = process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 /** The pause between walks, in milliseconds: the tier's rate door needs the clock to turn. */
