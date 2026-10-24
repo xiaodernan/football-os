@@ -55,6 +55,7 @@ def engine_description() -> dict[str, Any]:
         "factors": list(FACTOR_EXPRESSIONS),
         "minute_choices": list(MINUTES_CHOICES),
         "block_minutes": BLOCK_MINUTES,
+        "substitutions_range": [0, 11],
         "inputs_are_from": ["teams", "real_players", "tactical_systems"],
     }
 
@@ -102,6 +103,7 @@ def run_simulation(
     away_system: str | None = None,
     seed: int | None = None,
     minutes: int = 90,
+    substitutions: int = 0,
     home_squad: SquadOverlay | None = None,
     away_squad: SquadOverlay | None = None,
 ) -> SimulationMatch:
@@ -116,7 +118,7 @@ def run_simulation(
     """
     home = team_profile(session, home_team_id, system_slug=home_system, squad=home_squad)
     away = team_profile(session, away_team_id, system_slug=away_system, squad=away_squad)
-    inputs = MatchInputs(home=home, away=away, seed=seed if seed is not None else secrets.randbelow(2_147_483_647), minutes=minutes, block_minutes=BLOCK_MINUTES)
+    inputs = MatchInputs(home=home, away=away, seed=seed if seed is not None else secrets.randbelow(2_147_483_647), minutes=minutes, block_minutes=BLOCK_MINUTES, substitutions=substitutions)
     report = simulate_match(inputs)
 
     slug = slugify(f"{home.short_name}-v-{away.short_name}-{report['digest']}")[:70]
@@ -130,6 +132,7 @@ def run_simulation(
         seed=inputs.seed,
         minutes=inputs.minutes,
         block_minutes=inputs.block_minutes,
+        substitutions=inputs.substitutions,
         home_team_id=home_team_id,
         away_team_id=away_team_id,
         home_system=home.system_slug,
@@ -199,7 +202,7 @@ def replay_is_identical(session: Session, match: SimulationMatch) -> dict[str, A
             "squad": squad_note,
             "model_version": match.model_version,
         }
-    report = simulate_match(MatchInputs(home=home, away=away, seed=match.seed, minutes=match.minutes, block_minutes=match.block_minutes))
+    report = simulate_match(MatchInputs(home=home, away=away, seed=match.seed, minutes=match.minutes, block_minutes=match.block_minutes, substitutions=match.substitutions))
     return {
         "possible": True,
         "stored_digest": match.digest,
@@ -275,6 +278,7 @@ def row(match: SimulationMatch, *, full: bool = False, session: Session | None =
         "seed": match.seed,
         "minutes": match.minutes,
         "block_minutes": match.block_minutes,
+        "substitutions": match.substitutions,
         "home_team_id": match.home_team_id,
         "away_team_id": match.away_team_id,
         "home_system": match.home_system,

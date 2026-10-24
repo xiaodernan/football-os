@@ -28,13 +28,16 @@ Every phase below follows the house rules already proven across M0–M12:
 The engine's own `model["what_it_does_not_model"]` names the two biggest realism gaps. Closing them is
 the single highest-leverage work.
 
-1. **Substitutions.** **Engine landed (2026-10-24):** `simulate_match` takes `substitutions: int = 0`
-   and, when set, applies a deterministic, bounded fresh-legs bonus to each side's `midfield` and `attack`
-   from a fixed minute via `dataclasses.replace` — no named-player swap, no shape change. Default `0` keeps
-   the selected eleven on the pitch and the digest byte-identical (all existing determinism tests stay
-   green); 4 new `TestSubstitutions` cases pin the contract. **Pending:** plumb `substitutions` through
-   `SimulateIn` → `service` → `MatchInputs` and store it on `SimulationMatch` (a migration) so a replay with
-   subs re-derives the same report; the web `SimulatorForm` then gets a selector with `en`/`zh`/`zh-TW` keys.
+1. **Substitutions.** **Done (2026-10-25):** the engine takes `substitutions: int = 0` and, when set,
+   applies a deterministic, bounded fresh-legs bonus to each side's `midfield` and `attack` from a fixed
+   minute via `dataclasses.replace` — no named-player swap, no shape change. Default `0` keeps the selected
+   eleven on the pitch and the digest byte-identical (all existing determinism tests stay green); 4 new
+   `TestSubstitutions` cases pin the contract. The parameter is plumbed end-to-end: `SimulateIn.substitutions`
+   (0–11) → `run_simulation` → `MatchInputs` → stored on `SimulationMatch.substitutions` (migration `0037`,
+   SQLite-safe nullable→backfill→NOT NULL, no `server_default` to avoid drift), surfaced in `row()` and
+   `engine_description()`, and replayed through `replay_is_identical` so a stored match re-derives identically.
+   **Pending:** the web `SimulatorForm` selector with `en`/`zh`/`zh-TW` keys (i18n, owned by the concurrent
+   session's message set — slot after the current locale gates land).
 2. **In-match tactical shift.** Let a formation change at a minute boundary move possession share and
    chance quality, tracing the new multipliers into `report["model"]["factors"]` exactly as today.
 3. **Momentum / form carry.** A side on a win streak gets a bounded, documented edge; the edge is a

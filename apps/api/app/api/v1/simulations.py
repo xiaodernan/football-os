@@ -49,6 +49,7 @@ class SimulateIn(BaseModel):
     away_system: str | None = Field(default=None, max_length=160)
     seed: int | None = Field(default=None, ge=0, le=2_147_483_647)
     minutes: int = Field(default=90)
+    substitutions: int = Field(default=0, ge=0, le=11)
 
 
 def _team(db: Session, ident: str) -> Team:
@@ -134,6 +135,7 @@ def play(
             away_system=payload.away_system,
             seed=payload.seed,
             minutes=payload.minutes,
+            substitutions=payload.substitutions,
         )
     except LookupError as error:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "no_such_input", "message": str(error)}) from error
