@@ -186,6 +186,12 @@ echo "── Web: ICU-coverage gate ──────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-icu-coverage.mjs)
 
+echo "── Web: translation-freshness gate ────────────────────"
+# No stale translations: en changed but cn unchanged since last baseline.
+# Baseline set at a2ac19f. Run with --init-baseline to update.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-translation-freshness.mjs)
+
 echo "── Web: locale-completeness gate ──────────────────────"
 # Every namespace has identical keys in all three locales (en, zh, zh-TW).
 # 40 namespaces, 3600 keys each, full parity verified.
