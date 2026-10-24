@@ -245,7 +245,7 @@ predated M13's four match-input fields (`substitutions`, `tactical_shift_minute`
 ROADMAP quoting the same number). The sweep brought the contract current, the audit to 40, and the three
 documents that declare the contract's SHA-256 — `docs/SECURITY_PROBE_REPORT.md`,
 `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`, `ROADMAP.md` — from `6c1ce207…` to
-`4b283580fb4268049d0cfb8dd3e76b984b092eb4b574afa8fc13b7b4cb2f2279`. Those gates read `git show HEAD:`,
+`71a5f9bcd1ba3aa0cf8436ae7fde9dcd881ebd080d5e842249492e37e4fa4a04`. Those gates read `git show HEAD:`,
 so they stay red until the commit that contains the bytes; measured after it: **38 passed** across the
 five files (contract 4, spec audit, probe report, rules 6, aggregates 7), `ruff check app` clean,
 `mypy app` clean in 155 files, `tsc --noEmit` clean, `next lint` clean.

@@ -206,19 +206,22 @@ def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
     """The rulebook door: no guide, no creator, no figure about anybody — only what may be published.
 
     `refusal_answers` is derived here from the same table `_refusal` reads, so the printed status and the raised
-    one cannot be written apart, and the limits are the shipped ones rather than a copy.
+    one cannot be written apart, and the limits are the shipped ones rather than a copy. `ready` is measured here,
+    from the presence of the twelve tables the seven sub-tiers count, so a database without the migration answers
+    zeros instead of a 500.
     """
+    ready = cre.creator_tables_present(db)
     return {
         "routes": [dict(item) for item in ROUTE_GUIDE],
         "refusal_answers": answers.published(cre.REFUSALS),
         "entitlement_features": ["creator_publish", "creator_guide"],
-        **cre.rules(db, ready=True),
-        **cpr.rules(db, ready=True),
-        **ctr.rules(db, ready=True),
-        **can.rules(db, ready=True),
-        **cma.rules(db, ready=True),
-        **csc.rules(db, ready=True),
-        **cch.rules(db, ready=True),
+        **cre.rules(db, ready=ready),
+        **cpr.rules(db, ready=ready),
+        **ctr.rules(db, ready=ready),
+        **can.rules(db, ready=ready),
+        **cma.rules(db, ready=ready),
+        **csc.rules(db, ready=ready),
+        **cch.rules(db, ready=ready),
     }
 
 

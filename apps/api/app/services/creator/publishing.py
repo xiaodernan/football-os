@@ -31,14 +31,23 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from sqlalchemy import func, select
+from sqlalchemy import func, inspect, select
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
 from app.models import (
     CommunityFollow,
+    CreatorCareerAttempt,
+    CreatorCareerChallenge,
     CreatorGuide,
+    CreatorMatchAnalysis,
+    CreatorPlayerAnalysis,
     CreatorProfile,
+    CreatorProgram,
+    CreatorProgramStep,
+    CreatorScoutingEntry,
+    CreatorScoutingList,
+    CreatorTacticalGuide,
     GuideCitation,
     KnowledgeChunk,
     KnowledgeDocument,
@@ -258,6 +267,33 @@ LIMITATION: Final = (
     "(`creator_publish`, `creator_guide`) are ceilings the data holds and no door refuses on yet, so the caps "
     "published above are what actually bites"
 )
+
+CREATOR_TABLES: Final = (
+    CreatorProfile.__tablename__,
+    CreatorGuide.__tablename__,
+    GuideCitation.__tablename__,
+    CreatorProgram.__tablename__,
+    CreatorProgramStep.__tablename__,
+    CreatorTacticalGuide.__tablename__,
+    CreatorPlayerAnalysis.__tablename__,
+    CreatorMatchAnalysis.__tablename__,
+    CreatorScoutingList.__tablename__,
+    CreatorScoutingEntry.__tablename__,
+    CreatorCareerChallenge.__tablename__,
+    CreatorCareerAttempt.__tablename__,
+)
+
+READY_RULE: Final = (
+    "`ready` is one condition: this database holds every table this tier counts across its seven sub-tiers. When "
+    "it does not, every door still answers, every count is a zero, and the vocabulary is the tier's own — a "
+    "database that has not run the migration is empty, not broken."
+)
+
+
+def creator_tables_present(session: Session) -> bool:
+    """Whether all twelve tables this tier counts exist — presence, not usage."""
+    existing = set(inspect(session.get_bind()).get_table_names())
+    return all(table in existing for table in CREATOR_TABLES)
 
 
 def _today() -> str:
@@ -623,9 +659,15 @@ def erase_guide(session: Session, guide_id: str, actor_id: str) -> dict[str, Any
     return {"erased": row.id, "author_id": actor_id, **gone}
 
 
-def rules(session: Session, *, ready: bool = True) -> dict[str, Any]:
-    """The vocabulary door: what may be published, what each figure means, and what a caller can be refused with."""
+def rules(session: Session, *, ready: bool) -> dict[str, Any]:
+    """The vocabulary door: what may be published, what each figure means, and what a caller can be refused with.
+
+    `ready` has no default on purpose: the caller measures it from the tables' presence, so a door that forgot
+    to would fail loudly here rather than publish a zero for a database that merely looked empty.
+    """
     return {
+        "ready": ready,
+        "ready_rule": READY_RULE,
         "caps": dict(CAPS),
         "counts": creator_counts(session, ready=ready),
         "formulas": dict(FORMULAS),

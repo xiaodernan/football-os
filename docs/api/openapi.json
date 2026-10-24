@@ -9496,7 +9496,7 @@
           "community"
         ],
         "summary": "Read Rules",
-        "description": "The tier's own rulebook: no post, no profile, no figure about anybody — only what may be published.\n\n`refusal_answers` is derived here, from the same table `_refusal` reads, rather than written beside the route:\na page that prints a status the door does not use teaches a caller to expect an answer that never comes.",
+        "description": "The tier's own rulebook: no post, no profile, no figure about anybody — only what may be published.\n\n`refusal_answers` is derived here, from the same table `_refusal` reads, rather than written beside the route:\na page that prints a status the door does not use teaches a caller to expect an answer that never comes.\n`ready` is measured here, from the presence of the five tables this tier counts, so the counts below are a\nreading of this database rather than a literal.",
         "operationId": "read_rules_api_v1_community_rules_get",
         "responses": {
           "200": {
@@ -10092,7 +10092,7 @@
           "creator"
         ],
         "summary": "Read Rules",
-        "description": "The rulebook door: no guide, no creator, no figure about anybody — only what may be published.\n\n`refusal_answers` is derived here from the same table `_refusal` reads, so the printed status and the raised\none cannot be written apart, and the limits are the shipped ones rather than a copy.",
+        "description": "The rulebook door: no guide, no creator, no figure about anybody — only what may be published.\n\n`refusal_answers` is derived here from the same table `_refusal` reads, so the printed status and the raised\none cannot be written apart, and the limits are the shipped ones rather than a copy. `ready` is measured here,\nfrom the presence of the twelve tables the seven sub-tiers count, so a database without the migration answers\nzeros instead of a 500.",
         "operationId": "read_rules_api_v1_creator_rules_get",
         "responses": {
           "200": {

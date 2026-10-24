@@ -313,7 +313,7 @@ def test_no_answer_in_this_tier_carries_a_money_shaped_key(session: Session, cas
     cre.ensure_profile(session, cast["ada"].id, slug=f"ada-{TAG}")
     guide = _guide(session, cast["ada"])
     cre.cite(session, guide["id"], cast["ada"].id, document=document.slug, ordinal=passage.ordinal)
-    answers = [cre.rules(session), cre.list_guides(session, cast["ada"].id), cre.read_guide(session, guide["id"], cast["ada"].id), cre.profile(session, cast["ada"].id)]
+    answers = [cre.rules(session, ready=cre.creator_tables_present(session)), cre.list_guides(session, cast["ada"].id), cre.read_guide(session, guide["id"], cast["ada"].id), cre.profile(session, cast["ada"].id)]
 
     def names(node: Any) -> set[str]:
         if isinstance(node, dict):
@@ -328,7 +328,7 @@ def test_no_answer_in_this_tier_carries_a_money_shaped_key(session: Session, cas
 
 
 def test_the_rulebook_publishes_the_vocabulary_the_guards_apply(session: Session) -> None:
-    rules = cre.rules(session)
+    rules = cre.rules(session, ready=cre.creator_tables_present(session))
     assert rules["caps"]["guide_max"] == cre.MAX_GUIDES_PER_CREATOR and rules["caps"]["citation_max"] == cre.MAX_CITATIONS_PER_GUIDE
     assert sorted(rules["refusals"]) == sorted(cre.PUBLISHED)
     assert rules["formulas"] == cre.FORMULAS and rules["limitation"] == cre.LIMITATION

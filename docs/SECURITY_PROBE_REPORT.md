@@ -16,7 +16,7 @@ artifact the web client and the currency gates read — and takes every operatio
 `security` requirement as a private door, every operation that declares none as a public one.
 
 At the latest run recorded here (run D, §2) the contract's SHA-256 was
-`4b283580fb4268049d0cfb8dd3e76b984b092eb4b574afa8fc13b7b4cb2f2279`, and the census read:
+`71a5f9bcd1ba3aa0cf8436ae7fde9dcd881ebd080d5e842249492e37e4fa4a04`, and the census read:
 
 | measurement | value | floor |
 | --- | --- | --- |

@@ -295,7 +295,7 @@ def test_the_columns_a_post_stores_are_the_minimisation_rule(cast: dict[str, Use
 def test_no_answer_in_this_tier_carries_a_recipient_shaped_key(cast: dict[str, User], session: Session) -> None:
     post = _post(session, cast["ada"])
     com.react(session, post["id"], cast["bo"].id)
-    answers = [com.rules(session), com.list_posts(session, cast["ada"].id), com.read_post(session, post["id"], cast["bo"].id), com.profile(session, cast["ada"].id)]
+    answers = [com.rules(session, ready=com.community_tables_present(session)), com.list_posts(session, cast["ada"].id), com.read_post(session, post["id"], cast["bo"].id), com.profile(session, cast["ada"].id)]
 
     def names(node: Any) -> set[str]:
         if isinstance(node, dict):

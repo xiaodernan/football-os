@@ -91,8 +91,15 @@ def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
 
     `refusal_answers` is derived here, from the same table `_refusal` reads, rather than written beside the route:
     a page that prints a status the door does not use teaches a caller to expect an answer that never comes.
+    `ready` is measured here, from the presence of the five tables this tier counts, so the counts below are a
+    reading of this database rather than a literal.
     """
-    return {"routes": [dict(item) for item in ROUTE_GUIDE], "refusal_answers": answers.published(com.REFUSALS), **com.rules(db, ready=True)}
+    ready = com.community_tables_present(db)
+    return {
+        "routes": [dict(item) for item in ROUTE_GUIDE],
+        "refusal_answers": answers.published(com.REFUSALS),
+        **com.rules(db, ready=ready),
+    }
 
 
 @router.post("/posts")

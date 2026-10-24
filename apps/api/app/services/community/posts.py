@@ -35,7 +35,7 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, inspect, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.db import Base
@@ -167,6 +167,26 @@ LIMITATION: Final = (
     "and can never carry a child's data either. Nothing in this tier is gated on a plan — the entitlement table "
     "has no community feature today, so posting costs nothing and the ceiling is a row count, not a price"
 )
+
+COMMUNITY_TABLES: Final = (
+    CommunityPost.__tablename__,
+    CommunityComment.__tablename__,
+    CommunityReaction.__tablename__,
+    CommunityRepost.__tablename__,
+    CommunityFollow.__tablename__,
+)
+
+READY_RULE: Final = (
+    "`ready` is one condition: this database holds every table this tier counts. When it does not, the door "
+    "still answers, every count is a zero, and the vocabulary is the tier's own — a database that has not run "
+    "the migration is empty, not broken."
+)
+
+
+def community_tables_present(session: Session) -> bool:
+    """Whether the five tables this tier counts exist — presence, not usage."""
+    existing = set(inspect(session.get_bind()).get_table_names())
+    return all(table in existing for table in COMMUNITY_TABLES)
 
 
 def _today() -> str:
@@ -560,9 +580,15 @@ def profile(session: Session, ident: str) -> dict[str, Any]:
     }
 
 
-def rules(session: Session, *, ready: bool = True) -> dict[str, Any]:
-    """The vocabulary door: what may be published, what it costs, and what each figure on an answer means."""
+def rules(session: Session, *, ready: bool) -> dict[str, Any]:
+    """The vocabulary door: what may be published, what it costs, and what each figure on an answer means.
+
+    `ready` has no default on purpose: the caller measures it from the tables' presence, so a door that forgot
+    to would fail loudly here rather than publish a zero for a database that merely looked empty.
+    """
     return {
+        "ready": ready,
+        "ready_rule": READY_RULE,
         "caps": dict(CAPS),
         "counts": community_counts(session, ready=ready),
         "formulas": dict(FORMULAS),
