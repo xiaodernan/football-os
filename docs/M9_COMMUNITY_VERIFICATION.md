@@ -263,3 +263,69 @@ milestone's list does not ask for them — and there is no entitlement gate and 
 already says. The pointer's promise is held by five cases of its own; the walk presses the same address space but
 does not replace them.
 
+## The rulebook promised zeros before the migration, and a 500 answered (2026-10-25)
+
+`community_counts` and the creator tier's seven `*_counts` functions each carried a `ready=False` branch that
+returned true zeros, and their docstrings said why: a database that has not run the migration is empty, not
+broken. But both `rules()` functions defaulted `ready=True` and both doors passed `ready=True` by hand, so that
+branch could not be reached from HTTP. The probe — a `get_db` override onto an empty SQLite file, with
+`raise_server_exceptions=False` — measured `GET /api/v1/community/rules` and `GET /api/v1/creator/rules` both
+answering **500** on the same empty database where `/graph/rules`, `/club/capabilities` and
+`/simulation/aggregates/rules` answered **200**. The creator traceback ended at `creator.py:215 … cre.rules(db,
+ready=True)` with `sqlite3.OperationalError: no such table: creator_profiles`. Every sibling rulebook already
+measures readiness (`world_ready`, `club_ready`, `academy_ready`, `scout_ready`); these two were the exception.
+
+The fix (`512c184`) derives `COMMUNITY_TABLES` (five) and `CREATOR_TABLES` (twelve) from the models' own
+`__tablename__`, asks `inspect(session.get_bind()).get_table_names()` whether all of them exist, measures that once
+per request in each door, and passes the value. `rules` no longer defaults `ready`, so a door that forgot to
+measure fails loudly instead of publishing a zero; the body publishes `ready` beside `ready_rule`, the sentence
+that says a database without the migration is empty rather than broken. Both route docstrings say where readiness
+comes from, and the regenerated contract's two rulebook descriptions carry that sentence (the only change in
+`docs/api/openapi.json`).
+
+The gate `tests/test_rules_readiness.py` has ten cases: empty community (five true zeros), empty creator (twelve
+zeros across the seven key groups), one-table-each, the last table dropped from a fully created tier for each, a
+migrated database via the shared client, the readiness tuple as a literal table universe (named in the gate, not
+derived from the tuple), the two signatures without a default, and the contract sentence. Pre-fix on a plane at
+`90f3453` with only this gate copied in: **10 failed, 0 passed** — six on 500 `internal_error`, the migrated case on
+`KeyError: 'ready'`, the tuple on `AttributeError: … has no attribute 'COMMUNITY_TABLES'`, the default pin on the
+signature's `True`, and the contract case on the missing sentence.
+
+Twelve arms plus a baseline, run in a worktree at `114edec` by byte splice with junit tallies, bytecode disabled
+and the plane verified clean before and after: **13/13 MATCHED**, each red set exactly as predicted.
+
+| arm | red cases |
+| --- | --- |
+| community door passes `ready=True` | the three community zero/partial cases |
+| creator door passes `ready=True` | the three creator zero/partial cases |
+| community presence check inverted | the three community cases and the migrated one |
+| creator presence check inverted | the three creator cases and the migrated one |
+| community `ready` key dropped | the three community cases and the migrated one |
+| community `ready_rule` key dropped | empty community and the migrated one |
+| `COMMUNITY_TABLES` loses `community_follows` | the tuple pin and the drop-the-last-table case |
+| `CREATOR_TABLES` loses `creator_career_attempts` | the tuple pin and its drop-the-last-table case |
+| community counts guard deleted (`if not ready` → `if False`) | the three community zero/partial cases |
+| `rules` default `ready=True` restored | the default pin, alone |
+| the contract sentence removed from the route docstring | the contract case, alone |
+| control: `usage.` → `use.` in a service docstring | none |
+
+A dropped table entry is killed twice on purpose: by the literal tuple pin, and behaviourally by the case that
+creates the whole tier, drops one table and expects `ready: false`. The behavioural half is what a presence check
+that silently narrowed to a prefix would fail.
+
+**Measured.** `ruff check` is clean on the touched files and `mypy app` reports no issues in 155 source files; the
+contract exporter's diff is the two descriptions and nothing else; the three currency gates that declare the
+contract's SHA-256 pass (**25 passed**) after the four declarations moved to
+`71a5f9bcd1ba3aa0cf8436ae7fde9dcd881ebd080d5e842249492e37e4fa4a04`. The gate also ran on PostgreSQL 16 +
+pgvector (a throwaway database through `FOOTBALL_OS_TEST_DATABASE_URL`): **10 passed, 38.71s**. The empty and
+partial cases keep their own temporary SQLite files by design, so the engine-crossed case is the migrated one,
+where `inspect(session.get_bind()).get_table_names()` reads PostgreSQL's catalogue through the same call. The full
+SQLite suite at `114edec` (the fix and the pin, with only this record's edits in the tree) read **1928 passed, 4
+skipped, 0 failed in 1134.89s**. One measurement that is not this unit's:
+`bash scripts/lint.sh` is red at HEAD in `tests/test_locale_claims.py:402` (`B007`, an unmodified committed file);
+it was red before this fix and is left for its own unit rather than swept into this commit.
+
+**What it does not claim.** Presence is not schema compatibility: a database whose twelve tables exist with an
+older column set is counted as ready, and a count that then lacks a column fails loudly. Readiness answers only
+"has the migration run", which is the question the zero branch existed for.
+
