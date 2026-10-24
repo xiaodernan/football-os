@@ -153,9 +153,12 @@ arc produced.
 
 ## 7. Not done
 
-* No cross-career, competition-wide or all-time aggregate reads these rows. The ledger is scoped to one
-  career's fixtures by design; a league-wide top-scorer is a different query with a different honesty
-  problem (it would mix synthetic squads whose names repeat across clubs), and it is not claimed here.
+* ~~No cross-career, competition-wide or all-time aggregate reads these rows.~~ **Corrected 2026-10-25:**
+  that tier exists. It landed 2026-10-02 in `30e9d37` (`/simulation/aggregates/league/{competition_slug}`
+  and `/simulation/aggregates/player/{player_slug}`), and §9 records the defect its own rules door carried
+  until 2026-10-25. The ledger described above remains the career-scoped reading; the aggregate tier is a
+  different query with its own honesty problem (synthetic squads whose names repeat across clubs), which
+  its doors state rather than hide.
 * The `ambiguous` and gap branches are proven in the suite but not by the walk: the generated world
   happened to give this career ten distinct names and three intact reports, and a walk that could only
   ever report "nothing ambiguous today" would be a green that teaches nothing.
@@ -178,6 +181,74 @@ cd apps/web && NEXT_DIST_DIR=.next-ledger npx next build \
   && API_INTERNAL_URL=http://127.0.0.1:8736 NEXT_DIST_DIR=.next-ledger npx next start -p 3216
 cd apps/web && QA_BASE=http://127.0.0.1:3216 node scripts/qa-ledger.mjs    # 39/39
 ```
+
+## 9. The aggregate rules door published ten figures it could not derive (2026-10-25)
+
+The tier added in `30e9d37` shipped a `/simulation/aggregates/rules` door with **sixteen** top-level keys.
+Ten of them had no source on this tier:
+
+* three walk ceilings — `max_depth: 1`, `max_edges: 1000`, `max_nodes: 5000` — for a tier with no
+  traversal. The ceilings belong to the knowledge-graph tier, whose `/graph/rules` measures its clause
+  census from live metadata;
+* six clause-census fields — `spec_verbs_declined: {}`, `refusal_answers: {}`, `public_clauses: 0`,
+  `clauses_with_a_verb: 0`, `clauses_declined: 0`, `private_tables_excluded: 0` — invented zeros. A
+  caller receiving `clauses_declined: 0` cannot tell "nothing was declined" from "nobody measured";
+* `world_ready: True`, typed by hand — the worst of the ten, because it is a claim about **the caller's
+  database** made without reading it.
+
+Under it sat the docstring "Nothing here is typed by hand: the caps are the constants the walk guards
+with", which the published OpenAPI description repeated. Nothing in `apps/web` read the six census
+fields, the three ceilings or `world_ready`: the index page reads `node_kinds` and `edge_verbs` and
+renders two lists, and the visual walk's check is titled "publishes the vocabulary and ceilings" but
+asserts only those two arrays. The invented fields were not a harmless superset with no reader — a public
+door publishing a number is a claim about the thing the number names.
+
+**The fix (`6a95540`).** `world_ready(db)` is now imported from `app.services.world` — the same
+measurement `/graph/rules` uses over `world_counts` — and the nine unbacked keys are gone. The door keeps
+its own vocabulary (`node_kinds`, `edge_verbs`), its own two ledger doors, the aggregate service's `caps`
+and `formulas` constants, the measured readiness and the disclaimer. The docstring and published
+description name where each figure comes from, and `SimAggLeagueRules` in `apps/web/lib/types.ts` was
+trimmed to the same seven keys.
+
+**The gate.** `apps/api/tests/test_simulation_aggregates_rules.py`, six cases. Before the fix, three were
+red — the exact key set, readiness on a database with no tables, and the contract description — and three
+were green — the caps/formulas equality, the route list against `app.routes`, and readiness after a real
+`sync_world`. The green three were the fields that already derived something; the red three were the ones
+this unit is about.
+
+**The arms**, run from an isolated worktree at `d7bc120` (`PYTHONDONTWRITEBYTECODE=1`, every
+`__pycache__` cleared per run, byte splices with count assertions, files restored from git): **10/10
+MATCHED**, exact red sets, plane clean afterwards.
+
+| arm | mutation | reds |
+| --- | --- | --- |
+| baseline | — | none |
+| `world-ready-constant` | `world_ready(db)` → `True` | empty-database case |
+| `world-ready-inverted` | `world_ready(db)` → `not world_ready(db)` | empty and seeded cases |
+| `census-field-back` | re-adds `"public_clauses": 0` | key-set case |
+| `drop-derived-key` | deletes `disclaimer` | key-set case |
+| `cap-differs-from-service` | `ledger_limit` → 41 | caps case |
+| `route-list-drifts` | `league` → `leagues` in the published route | routes case |
+| `docstring-claim-back` | restores "Nothing here is typed by hand" | contract-description case |
+| `control-punctuation` | `request's database.` → `!` | none |
+| `service-constant-moves` | `LEDGER_LIMIT = 40` → `41` in the service | none |
+
+The two no-red arms are load-bearing. `control-punctuation` says the gate does not go red on any edit to
+the file, and `service-constant-moves` says the door reads the service's constant instead of restating
+its value — the caps case stays green *because* the door follows. `world-ready-inverted` makes the
+readiness claim a measurement from both sides: an empty database and a just-seeded one fail in opposite
+directions.
+
+**Currency owed, paid here.** Regenerating the contract exposed that the committed `openapi.json`
+predated M13's four match-input fields (`substitutions`, `tactical_shift_minute`, `home_momentum`,
+`away_momentum`; +30/−2 lines), and the spec audit still said 37 migrations against 40 committed (with
+ROADMAP quoting the same number). The sweep brought the contract current, the audit to 40, and the three
+documents that declare the contract's SHA-256 — `docs/SECURITY_PROBE_REPORT.md`,
+`docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`, `ROADMAP.md` — from `6c1ce207…` to
+`4b283580fb4268049d0cfb8dd3e76b984b092eb4b574afa8fc13b7b4cb2f2279`. Those gates read `git show HEAD:`,
+so they stay red until the commit that contains the bytes; measured after it: **38 passed** across the
+five files (contract 4, spec audit, probe report, rules 6, aggregates 7), `ruff check app` clean,
+`mypy app` clean in 155 files, `tsc --noEmit` clean, `next lint` clean.
 
 Every figure in this document is fictional, produced by the labelled simulation engine over the generated
 demo world. No real match, competition or player is modelled, and no real-world statistic is asserted.
