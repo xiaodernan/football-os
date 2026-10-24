@@ -151,6 +151,11 @@ class TestPlayingASeason:
         assert sum(entry["played"] for entry in body["table"]) == 6, "each round touches two clubs"
         seeds = [fixture["seed"] for fixture in body["fixtures"]]
         assert len(set(seeds)) == 3 and all(seed > 0 for seed in seeds)
+        # The development projection is part of the career payload and reads from the rounds just played.
+        dev = body["development"]
+        assert dev["players_developed"] > 0 and dev["total_minutes"] > 0
+        assert dev["development_formula"].startswith("developed(value, potential, minutes)")
+        assert all(entry["effective_minutes"] >= entry["minutes"] for entry in dev["top_developed"])
 
     def test_the_same_career_played_twice_gives_the_same_opponents(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
         """The fixture list is a rotation, so who is met is decided by the career — not by the draw that
