@@ -192,6 +192,12 @@ echo "── Web: translation-freshness gate ───────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-translation-freshness.mjs)
 
+echo "── Web: population-floor gate ─────────────────────────"
+# Catalogue population never regresses; per-namespace floors enforced.
+# Baseline: 3600 keys across 40 namespaces. Run with --init-baseline to update.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-population-floor.mjs)
+
 echo "── Web: locale-completeness gate ──────────────────────"
 # Every namespace has identical keys in all three locales (en, zh, zh-TW).
 # 40 namespaces, 3600 keys each, full parity verified.
