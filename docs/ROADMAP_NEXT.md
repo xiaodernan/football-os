@@ -38,8 +38,15 @@ the single highest-leverage work.
    `engine_description()`, and replayed through `replay_is_identical` so a stored match re-derives identically.
    **Pending:** the web `SimulatorForm` selector with `en`/`zh`/`zh-TW` keys (i18n, owned by the concurrent
    session's message set — slot after the current locale gates land).
-2. **In-match tactical shift.** Let a formation change at a minute boundary move possession share and
-   chance quality, tracing the new multipliers into `report["model"]["factors"]` exactly as today.
+2. **In-match tactical shift.** **Done (2026-10-25):** `MatchInputs` gains `tactical_shift_minute: int = 0`.
+   From that minute the side trailing on goals pushes — a bounded, authored midfield (+12%) and attack (+10%)
+   lift that recomputes `possession_share` and raises chance quality for the rest of the match, applied once
+   through `dataclasses.replace`, naming no player and changing no shape. Default `0` never triggers it, so the
+   digest is untouched unless a caller opts in; 4 new `TestTacticalShift` cases pin determinism, no-named-player,
+   published factor, and digest change when a side is behind. Plumbed `SimulateIn.tactical_shift_minute` (0–120)
+   → `run_simulation` → stored on `SimulationMatch.tactical_shift_minute` (migration `0038`) → exposed in `row()`
+   and `engine_description()` → replayed through `replay_is_identical`. **Pending:** the web `SimulatorForm`
+   control with `en`/`zh`/`zh-TW` keys (i18n).
 3. **Momentum / form carry.** A side on a win streak gets a bounded, documented edge; the edge is a
    coefficient, not a fitted curve, and is printed with its formula.
 4. **Career-linked development.** Player attributes drift across a career's fixtures from minutes played

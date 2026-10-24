@@ -50,6 +50,7 @@ class SimulateIn(BaseModel):
     seed: int | None = Field(default=None, ge=0, le=2_147_483_647)
     minutes: int = Field(default=90)
     substitutions: int = Field(default=0, ge=0, le=11)
+    tactical_shift_minute: int = Field(default=0, ge=0, le=120)
 
 
 def _team(db: Session, ident: str) -> Team:
@@ -136,6 +137,7 @@ def play(
             seed=payload.seed,
             minutes=payload.minutes,
             substitutions=payload.substitutions,
+            tactical_shift_minute=payload.tactical_shift_minute,
         )
     except LookupError as error:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "no_such_input", "message": str(error)}) from error

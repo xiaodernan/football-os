@@ -64,6 +64,8 @@ COEFFICIENTS: dict[str, float] = {
     "man_down_attack": 0.88,
     "man_down_concede": 1.12,
     "substitution_fresh_legs_bonus": 0.05,
+    "tactical_shift_midfield_boost": 0.12,
+    "tactical_shift_attack_boost": 0.10,
 }
 
 # A shot is one of three kinds, each with its own modelled quality before the two squads adjust it.
@@ -128,6 +130,11 @@ FACTOR_EXPRESSIONS: tuple[dict[str, str], ...] = (
         "expression": "midfield and attack × (1 + 0.05) from the block at minute round(0.6·minutes); the shape and possession share are unchanged",
         "reads": "the authored fresh-legs bonus, applied once per side after the fixed minute",
     },
+    {
+        "key": "tactical_shift",
+        "expression": "from a set minute the side trailing on goals pushes: midfield × (1 + 0.12) and attack × (1 + 0.10) recompute possession share and raise chance quality from there; the shape is unchanged and no player is named",
+        "reads": "the authored in-match adjustment, applied once to whichever side is behind at the set minute (none if level)",
+    },
 )
 
 
@@ -141,6 +148,7 @@ class MatchInputs:
     minutes: int = 90
     block_minutes: int = 6
     substitutions: int = 0
+    tactical_shift_minute: int = 0
 
     @property
     def blocks(self) -> int:
@@ -434,6 +442,35 @@ def _apply_substitution(side: _Side, minute: int, events: list[dict[str, Any]], 
     log.append({"minute": minute, "side": side.key, "team": side.profile.short_name, "detail": detail})
 
 
+def _apply_tactical_shift(home: _Side, away: _Side, events: list[dict[str, Any]], log: list[dict[str, Any]], minute: int) -> bool:
+    """If a side trails at `minute` it pushes: a bounded midfield and attack lift that recomputes possession
+    share and raises chance quality from here. Deterministic (no random draw), applied once, names no player,
+    changes no shape — a scripted set-minute adjustment, not the live scoreline nudging the ball. The default
+    (tactical_shift_minute=0) never calls this, so the digest is untouched unless a caller opts in.
+    """
+    if home.goals == away.goals:
+        return False
+    behind = home if home.goals < away.goals else away
+    mid_boost = COEFFICIENTS["tactical_shift_midfield_boost"]
+    att_boost = COEFFICIENTS["tactical_shift_attack_boost"]
+    behind.profile = replace(
+        behind.profile,
+        midfield=_clamp(behind.profile.midfield * (1.0 + mid_boost), 0.0, 1.0),
+        attack=_clamp(behind.profile.attack * (1.0 + att_boost), 0.0, 1.0),
+    )
+    new_share = possession_share(home.profile, away.profile, home.profile.tactics, away.profile.tactics)
+    home.possession = new_share
+    away.possession = 1.0 - new_share
+    detail = (
+        f"Tactical shift for {behind.profile.name}: trailing, the side pushes from here with a modelled "
+        f"{mid_boost * 100:.0f}% midfield and {att_boost * 100:.0f}% attack lift that moves possession share "
+        f"and chance quality. The engine names no player and changes no shape."
+    )
+    _record(events, behind, minute, "tactical_shift", "", "", detail)
+    log.append({"minute": minute, "side": behind.key, "team": behind.profile.short_name, "detail": detail})
+    return True
+
+
 def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
     """Play a match from two profiles. The database has already been read; this is pure arithmetic."""
     home_profile, away_profile = inputs.home, inputs.away
@@ -451,6 +488,8 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
     sub_minute = max(1, round(inputs.minutes * 0.6))
     sub_applied: dict[str, bool] = {"home": False, "away": False}
     substitutions_log: list[dict[str, Any]] = []
+    shift_applied: bool = False
+    tactical_shift_log: list[dict[str, Any]] = []
 
     for index in range(inputs.blocks):
         start = index * inputs.block_minutes + 1
@@ -459,6 +498,9 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
         progress = end / max(1, inputs.minutes)
         opening = {side.key: (side.goals, side.xg, side.shots) for side in (home, away)}
         block_terms: dict[str, dict[str, float]] = {}
+
+        if inputs.tactical_shift_minute > 0 and not shift_applied and start >= inputs.tactical_shift_minute:
+            shift_applied = _apply_tactical_shift(home, away, events, tactical_shift_log, inputs.tactical_shift_minute)
 
         for side, opponent in pairs:
             if inputs.substitutions > 0 and not sub_applied[side.key] and start >= sub_minute:
@@ -570,6 +612,7 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
     report: dict[str, Any] = {
         "status": "completed",
         "substitutions": substitutions_log,
+        "tactical_shift": tactical_shift_log,
         "model": {
             "name": ENGINE_NAME,
             "version": ENGINE_VERSION,
@@ -583,7 +626,7 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
             "factors": list(FACTOR_EXPRESSIONS),
             "what_it_does_not_model": [
                 "substituted players are not named and the shape does not change — a substitution is a fresh-legs bonus to midfield and attack from a fixed minute",
-                "possession shifting with the scoreline",
+                "possession drifting automatically with the live scoreline — a tactical shift is a scripted, set-minute push the caller chooses, not the scoreline itself nudging the ball",
                 "set-piece routines beyond a corner count against",
                 "goalkeeping as its own attribute — this world's player model has none",
                 "weather, referee identity, crowd, travel",
@@ -606,9 +649,9 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
             "goal_events": sum(1 for event in events if event["type"] == "goal"),
         },
         "possession_share": {
-            "home": round(share, 3),
-            "away": round(1.0 - share, 3),
-            "formula": "0.5 + 0.5·tanh(Δ/18), clipped to 0.24–0.76 — see model.factors[key=possession_share]",
+            "home": round(home.possession, 3),
+            "away": round(away.possession, 3),
+            "formula": "0.5 + 0.5·tanh(Δ/18), clipped to 0.24–0.76 — see model.factors[key=possession_share]; a tactical shift recomputes it from the set minute",
         },
         "events": events,
         "blocks": blocks,

@@ -380,6 +380,44 @@ class TestSubstitutions:
         assert {"substitution_fresh_legs"}.issubset({factor["key"] for factor in report["model"]["factors"]})
 
 
+class TestTacticalShift:
+    """A tactical shift is a scripted, set-minute push by the side trailing on goals: a bounded midfield and
+    attack lift that recomputes possession share and raises chance quality. The default
+    (tactical_shift_minute=0) must stay untouched, so the digest is identical to before.
+    """
+
+    def test_default_path_leaves_no_shift_and_replays_identically(self) -> None:
+        first = simulate_match(_inputs(seed=7))
+        second = simulate_match(_inputs(seed=7))
+        assert first["tactical_shift"] == []
+        assert first["digest"] == second["digest"]
+
+    def _seed_with_a_shift(self, minute: int = 60) -> tuple[int, dict[str, Any]]:
+        for seed in range(1, 200):
+            report = simulate_match(_inputs(seed=seed, tactical_shift_minute=minute))
+            if report["tactical_shift"]:
+                return seed, report
+        raise AssertionError("no seed in range produced a trailing side at the shift minute")
+
+    def test_a_shift_is_deterministic_names_no_player_and_is_published(self) -> None:
+        seed, report = self._seed_with_a_shift()
+        again = simulate_match(_inputs(seed=seed, tactical_shift_minute=60))
+        assert report["digest"] == again["digest"]
+        events = [event for event in report["events"] if event["type"] == "tactical_shift"]
+        assert len(events) == 1, f"exactly one shift event expected, saw {events!r}"
+        assert events[0]["player"] == "", "a tactical shift names no player — it is a posture change"
+        assert events[0]["side"] in {"home", "away"}
+        assert {"tactical_shift", "substitution_fresh_legs"}.issubset(
+            {factor["key"] for factor in report["model"]["factors"]}
+        )
+
+    def test_a_shift_changes_the_digest_when_a_side_is_behind(self) -> None:
+        seed, _ = self._seed_with_a_shift()
+        default = simulate_match(_inputs(seed=seed))
+        shifted = simulate_match(_inputs(seed=seed, tactical_shift_minute=60))
+        assert default["digest"] != shifted["digest"]
+
+
 class TestProfilesFromStoredRows:
     """`team_profile` must compute from the world the generator wrote, not from numbers this test picks."""
 
