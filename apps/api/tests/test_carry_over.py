@@ -312,7 +312,7 @@ class TestCarryOverView:
         limits = career_service.limitations()
         assert "carry_over" in limits
         text = limits["carry_over"]
-        assert "career_appearances" in text and "form index" in text and "growth" in text
+        assert "career_appearances" in text and "form index" in text and "stored" in text and "development" in text
         assert "no trace" in text, "the sentence says where the rule stops as well as where it starts"
 
 

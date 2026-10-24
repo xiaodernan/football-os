@@ -218,3 +218,33 @@ class TestJudging:
         view = career_service.career_view(session, career)
         assert rows[0].club_goals == view["record"]["goals_for"], "the copy on the row is what the sum reports"
         assert "no longer stored" in view["consistency"], view["consistency"]
+
+
+class TestDevelopment:
+    def test_a_fresh_career_projected_no_development(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        view = career_service.career_view(session, career)
+        dev = view["development"]
+        assert dev["players_developed"] == 0
+        assert dev["total_minutes"] == 0
+        assert dev["top_developed"] == []
+        assert "fixture-minutes" in dev["note"]
+        assert dev["tau"] == career_service.DEVELOPMENT_TAU and dev["rate"] == career_service.DEVELOPMENT_RATE
+
+    def test_played_rounds_project_development_from_minutes(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(3):
+            career_service.play_round(session, career)
+        view = career_service.career_view(session, career)
+        dev = view["development"]
+        assert dev["players_developed"] > 0, "a played career traces appearances the projection can read"
+        assert dev["total_minutes"] > 0
+        for entry in dev["top_developed"]:
+            assert "effective_minutes" in entry and "training_units" in entry
+            assert entry["effective_minutes"] >= entry["minutes"], "training load never subtracts from match minutes"
+            for attr in entry["before"]:
+                assert entry["after"][attr] - entry["before"][attr] == entry["delta"][attr], "delta is always after minus before"
+                assert entry["after"][attr] >= entry["before"][attr], "development never lowers an attribute"
+                assert entry["after"][attr] <= max(entry["before"][attr], entry["potential"]), "development never crosses potential from below, and leaves an attribute already above it untouched"
+        assert "stored" in dev["note"], "the projection is read-only and says so"
+        assert dev["development_formula"].startswith("developed(value, potential, minutes)")

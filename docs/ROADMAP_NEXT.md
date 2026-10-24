@@ -55,8 +55,20 @@ the single highest-leverage work.
    → `run_simulation` → stored on `SimulationMatch` (migration `0039`, two Float columns) → exposed in `row()` and
    `engine_description()` → replayed through `replay_is_identical`. **Pending:** the web `SimulatorForm` controls
    (i18n).
-4. **Career-linked development.** Player attributes drift across a career's fixtures from minutes played
-   and session completion, so a squad you develop actually changes — recomputed from the career's own rows.
+4. **Career-linked development.** **Done (2026-10-25):** a player's attributes now *project* from the
+   career's own rows — `development_view` sums each player's `career_appearances.minutes` across the whole
+   career, folds in the world's `real_training_sessions` load (`effective_minutes = match_minutes +
+   0.5·training_load_units`), and runs the deterministic, saturating curve in `development` toward that
+   player's stored `potential` (`development_summary`). The result is recomputed from the rows on every
+   read and **never written back** — the squad the rest of the page reads keeps its stored attributes, and
+   `limitations()["carry_over"]` now says so in so many words. The curve is pure and pinned by
+   `test_development.py` (7 cases: zero-minutes-unchanged, deterministic, monotonic-and-saturating,
+   no-growth-at/above-potential, floor-read, summary before/after/delta); `TestDevelopment` in
+   `test_career.py` pins the projection against a played career (delta = after − before, never lowers an
+   attribute, never crosses potential from below) and the empty-career zero state. **Pending (not my call to
+   unblock):** writing the developed attributes *back* to the squad — deferred because the shared Postgres is
+   stuck at migration `0031` and cannot be advanced safely; the read-only projection is the honest, verifiable
+   half that ships now. Web career view rendering of this block belongs to the concurrent i18n session.
 
 *Gate:* the match report still pins `digest` equality for same seed/inputs; new branches get a probe arm;
 `test_simulation.py` gains the substitution/momentum cases; `next build` + a `/simulate` walk stay green.

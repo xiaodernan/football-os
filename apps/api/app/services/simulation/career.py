@@ -29,8 +29,9 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
-from app.models import OBJECTIVE_FORMULA, Career, CareerFixture, Competition, SimulationMatch, Team
-from app.services.simulation.carry_over import carry_over_view, record_appearances
+from app.models import OBJECTIVE_FORMULA, Career, CareerAppearance, CareerFixture, Competition, RealPlayer, SimulationMatch, Team
+from app.services.simulation.carry_over import carry_over_view, record_appearances, training_loads
+from app.services.simulation.development import DEVELOPMENT_RATE, DEVELOPMENT_TAU, TRAINING_MINUTES_PER_UNIT, development_summary
 from app.services.simulation.ledger import ledger_view
 from app.services.simulation.profile import SquadOverlay, team_profile
 from app.services.simulation.service import run_simulation
@@ -43,6 +44,18 @@ CAREER_DISCLAIMER: Final = (
     "A career is a fiction this platform plays with itself: the club is a generated club, every fixture is "
     "decided by the labelled simulation engine, and no result here reports a real match, a real competition "
     "or a real season."
+)
+
+#: The development curve the `development` block projects, in the same published-formula discipline as the
+#: carry-over condition. `τ`, `rate` and the training conversion are the authored constants in `development`;
+#: the expression is spelled out here so the page prints it beside the numbers, and the two stay in lockstep
+#: by import.
+DEVELOPMENT_FORMULA: Final = (
+    "developed(value, potential, minutes) = value + (potential − value)·(1 − e^(−minutes/τ))·rate, "
+    f"τ = {DEVELOPMENT_TAU:g} minutes, rate = {DEVELOPMENT_RATE:g}; effective_minutes = match_minutes "
+    f"+ {TRAINING_MINUTES_PER_UNIT:g}·training_load_units (the world's sessions for the player); each "
+    "attribute climbs toward the player's stored potential from his stored (or floored) value and saturates "
+    "so it never crosses potential — recomputed from the rows on every read, never written back"
 )
 
 
@@ -96,9 +109,12 @@ def limitations() -> dict[str, str]:
             "A played round now carries into the next one. Every player the engine selected is traced in "
             "career_appearances at the fixture's full length, and the round after it reads a condition figure off "
             "those rows plus the world's training sessions for each player; that condition weights the eleven's "
-            "form index, which is the number the engine's fatigue term already reads. What does not carry is "
-            "growth: a season of fixtures changes no player's stored attributes, nothing rests a tired player, and "
-            "a club nobody manages has no trace, so its side is measured off its rows exactly as it always was."
+            "form index, which is the number the engine's fatigue term already reads. What does not change is a "
+            "player's *stored* attributes: those same fixture minutes are projected into a development curve in the "
+            "separate `development` block, but that block is read-only — recomputed from the rows on every read and "
+            "never written back — so the squad the rest of the page reads keeps the attributes the world gave it. "
+            "Nothing rests a tired player, and a club nobody manages has no trace, so its side is measured off its "
+            "rows exactly as it always was."
         ),
         "ledger": (
             "The season ledger sums this career's own `sim_events` rows: goals, attempts, cards and injuries per "
@@ -450,12 +466,82 @@ def _consistency(session: Session, rows: list[CareerFixture]) -> str:
     return f"{checked} of {len(rows)} fixtures re-checked against their stored match report; all agree"
 
 
+def development_view(session: Session, career: Career) -> dict[str, Any]:
+    """A read-only projection of how the career's players have developed from fixture minutes (M13 item 4).
+
+    Sums each player's appearance minutes across the whole career, then projects the developed attribute
+    set toward that player's stored potential using the deterministic curve in `development`. The result
+    is recomputed from the rows on every read and never written back, so the squad the rest of the page
+    reads keeps its stored attributes and the projection moves only as the career is actually played.
+    """
+    appearances = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id)).all())
+    by_player: dict[str, int] = {}
+    for row in appearances:
+        player_id = str(row.player_id)
+        by_player[player_id] = by_player.get(player_id, 0) + int(row.minutes)
+    if not by_player:
+        return {
+            "players_developed": 0,
+            "total_minutes": 0,
+            "top_developed": [],
+            "tau": DEVELOPMENT_TAU,
+            "rate": DEVELOPMENT_RATE,
+            "development_formula": DEVELOPMENT_FORMULA,
+            "note": (
+                "no career appearances on file yet, so no fixture-minutes development can be projected; "
+                "the squad reads its stored attributes exactly as before"
+            ),
+            "data_origin": "simulation",
+            "is_demo_data": True,
+        }
+    players = {player.id: player for player in session.scalars(select(RealPlayer).where(RealPlayer.id.in_(list(by_player)))).all()}
+    training = training_loads(session, list(by_player))
+    developed: list[dict[str, Any]] = []
+    for player_id, minutes in by_player.items():
+        player = players.get(player_id)
+        if player is None:
+            continue
+        training_units = training.get(player_id, 0)
+        effective = int(minutes) + int(round(TRAINING_MINUTES_PER_UNIT * training_units))
+        summary = development_summary(minutes_played=effective, potential=player.potential, attributes=player.attributes)
+        developed.append(
+            {
+                "player_id": player_id,
+                "player_name": player.name,
+                "player_slug": player.slug,
+                "position": player.position,
+                "minutes": int(minutes),
+                "training_units": training_units,
+                "effective_minutes": effective,
+                "potential": player.potential,
+                "before": summary["before"],
+                "after": summary["after"],
+                "delta": summary["delta"],
+            }
+        )
+    developed.sort(key=lambda item: (-item["minutes"], str(item["player_name"])))
+    return {
+        "players_developed": len(developed),
+        "total_minutes": sum(item["minutes"] for item in developed),
+        "top_developed": developed[:11],
+        "tau": DEVELOPMENT_TAU,
+        "rate": DEVELOPMENT_RATE,
+        "development_formula": DEVELOPMENT_FORMULA,
+        "note": (
+            "projected only: the stored squad attributes elsewhere on this page are unchanged; this is what the "
+            "match minutes and the world's training load imply if the season's development is applied, recomputed "
+            "from the rows on every read"
+        ),
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
 def career_view(session: Session, career: Career, *, include_fixtures: bool = True) -> dict[str, Any]:
     rows = fixtures_of(session, career)
     record = record_of(rows)
     view: dict[str, Any] = {
-        "career": {
-            "id": career.id,
+        "career": {            "id": career.id,
             "slug": career.slug,
             "manager_name": career.manager_name,
             "club_name": career.club_name,
@@ -481,6 +567,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "table": mini_table(rows, career),
         "consistency": _consistency(session, rows),
         "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1),
+        "development": development_view(session, career),
         "model_versions": sorted({row.model_version for row in rows if row.model_version}),
         "limitations": limitations(),
         "disclaimer": CAREER_DISCLAIMER,
@@ -531,6 +618,7 @@ __all__ = [
     "WindowClosed",
     "career_view",
     "competition_clubs",
+    "development_view",
     "create_career",
     "fixtures_of",
     "limitations",
