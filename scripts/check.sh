@@ -204,6 +204,12 @@ echo "── Web: locale-formatting gate ─────────────
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-locale-formatting.mjs)
 
+echo "── Web: plural-select gate ────────────────────────────"
+# ICU plural/select branches are complete per locale (en: one/other; zh: other).
+# Currently 0 plurals/selects in catalogue.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-plural-select.mjs)
+
 echo "── Web: locale-completeness gate ──────────────────────"
 # Every namespace has identical keys in all three locales (en, zh, zh-TW).
 # 40 namespaces, 3600 keys each, full parity verified.

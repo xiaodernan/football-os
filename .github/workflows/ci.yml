@@ -199,6 +199,8 @@ jobs:
         run: node scripts/qa-population-floor.mjs
       - name: Locale-formatting gate (date/number/currency format patterns are locale-appropriate)
         run: node scripts/qa-locale-formatting.mjs
+      - name: Plural-select gate (ICU plural/select branches complete per locale)
+        run: node scripts/qa-plural-select.mjs
       - name: Locale-completeness gate (every namespace has identical keys in all three locales)
         run: node scripts/qa-locale-completeness.mjs
       - name: Token-drift gate (named technical tokens remain stable)
