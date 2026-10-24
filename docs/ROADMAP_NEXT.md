@@ -28,9 +28,13 @@ Every phase below follows the house rules already proven across M0–M12:
 The engine's own `model["what_it_does_not_model"]` names the two biggest realism gaps. Closing them is
 the single highest-leverage work.
 
-1. **Substitutions.** Bench → pitch swaps after a fatigue threshold, deterministic, with a re-derived
-   `SideProfile` for the altered eleven. Keep the digest reproducible; add a mutation probe over the
-   substitution decision (≥1 survivor must red the right case). Update `what_it_does_not_model`.
+1. **Substitutions.** **Engine landed (2026-10-24):** `simulate_match` takes `substitutions: int = 0`
+   and, when set, applies a deterministic, bounded fresh-legs bonus to each side's `midfield` and `attack`
+   from a fixed minute via `dataclasses.replace` — no named-player swap, no shape change. Default `0` keeps
+   the selected eleven on the pitch and the digest byte-identical (all existing determinism tests stay
+   green); 4 new `TestSubstitutions` cases pin the contract. **Pending:** plumb `substitutions` through
+   `SimulateIn` → `service` → `MatchInputs` and store it on `SimulationMatch` (a migration) so a replay with
+   subs re-derives the same report; the web `SimulatorForm` then gets a selector with `en`/`zh`/`zh-TW` keys.
 2. **In-match tactical shift.** Let a formation change at a minute boundary move possession share and
    chance quality, tracing the new multipliers into `report["model"]["factors"]` exactly as today.
 3. **Momentum / form carry.** A side on a win streak gets a bounded, documented edge; the edge is a

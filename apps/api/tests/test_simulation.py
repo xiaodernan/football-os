@@ -338,6 +338,48 @@ class TestModelledEffects:
         assert any(gap > 0.4 for gap in gaps) or any(gap < -0.4 for gap in gaps)
 
 
+class TestSubstitutions:
+    """A substitution is modelled as fresh legs — a bounded, deterministic boost to midfield and attack
+    from a fixed minute. The default path (substitutions=0) must stay byte-identical to before, so the
+    selected eleven still plays on and every existing determinism test still holds.
+    """
+
+    def test_default_path_leaves_no_substitution_and_replays_identically(self) -> None:
+        first = simulate_match(_inputs(seed=7))
+        second = simulate_match(_inputs(seed=7))
+        assert first["substitutions"] == []
+        assert first["digest"] == second["digest"]
+
+    def test_a_substitution_is_deterministic_and_reported_for_both_sides(self) -> None:
+        """The same seed and inputs replay identically, and each side records one fresh-legs sub."""
+        first = simulate_match(_inputs(seed=7, substitutions=1))
+        second = simulate_match(_inputs(seed=7, substitutions=1))
+        assert first["digest"] == second["digest"]
+        subs = first["substitutions"]
+        assert len(subs) == 2, f"both sides should record a substitution, saw {subs!r}"
+        assert {entry["side"] for entry in subs} == {"home", "away"}
+        for entry in subs:
+            assert entry["minute"] >= 54, f"the sub fires from the fixed minute, saw {entry!r}"
+            assert "fresh legs" in entry["detail"]
+
+    def test_a_substitution_changes_the_digest_but_names_no_player(self) -> None:
+        """The fresh-legs path is a different match from the default one, and the engine still refuses to
+        credit a player it never selected: the substitution event carries an empty player name."""
+        default = simulate_match(_inputs(seed=7))
+        with_sub = simulate_match(_inputs(seed=7, substitutions=1))
+        assert default["digest"] != with_sub["digest"]
+
+        sub_events = [event for event in with_sub["events"] if event["type"] == "substitution"]
+        assert len(sub_events) == 2, f"two substitution events expected, saw {len(sub_events)}"
+        for event in sub_events:
+            assert event["player"] == "", "a substitution names no player — it is an energy effect"
+            assert event["type"] == "substitution"
+
+    def test_substitution_fresh_legs_is_a_published_factor(self) -> None:
+        report = simulate_match(_inputs(seed=7, substitutions=1))
+        assert {"substitution_fresh_legs"}.issubset({factor["key"] for factor in report["model"]["factors"]})
+
+
 class TestProfilesFromStoredRows:
     """`team_profile` must compute from the world the generator wrote, not from numbers this test picks."""
 

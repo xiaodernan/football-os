@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from app.services.simulation.profile import SideProfile, possession_share
@@ -63,6 +63,7 @@ COEFFICIENTS: dict[str, float] = {
     "fatigue_slope": 0.18,
     "man_down_attack": 0.88,
     "man_down_concede": 1.12,
+    "substitution_fresh_legs_bonus": 0.05,
 }
 
 # A shot is one of three kinds, each with its own modelled quality before the two squads adjust it.
@@ -122,6 +123,11 @@ FACTOR_EXPRESSIONS: tuple[dict[str, str], ...] = (
         "expression": "a shot off target becomes a corner conceded with probability 0.35; no set-piece goal model",
         "reads": "stated so the absence is visible rather than guessed at",
     },
+    {
+        "key": "substitution_fresh_legs",
+        "expression": "midfield and attack × (1 + 0.05) from the block at minute round(0.6·minutes); the shape and possession share are unchanged",
+        "reads": "the authored fresh-legs bonus, applied once per side after the fixed minute",
+    },
 )
 
 
@@ -134,6 +140,7 @@ class MatchInputs:
     seed: int
     minutes: int = 90
     block_minutes: int = 6
+    substitutions: int = 0
 
     @property
     def blocks(self) -> int:
@@ -405,6 +412,28 @@ def _digest(report: dict[str, Any]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
+def _apply_substitution(side: _Side, minute: int, events: list[dict[str, Any]], log: list[dict[str, Any]]) -> None:
+    """Model a substitution as fresh legs: a bounded boost to the side's midfield and attack indices from a
+    fixed minute. It does NOT name a player or change the shape — the engine still cannot credit a player it
+    never selected, so the effect is an energy number, not a personnel change.
+
+    The bonus is deterministic (no random draw), so a substitution leaves the seed in charge of every other
+    number in the match; it only shifts the indices the rest of the match reads.
+    """
+    bonus = COEFFICIENTS["substitution_fresh_legs_bonus"]
+    side.profile = replace(
+        side.profile,
+        attack=_clamp(side.profile.attack * (1.0 + bonus), 0.0, 1.0),
+        midfield=_clamp(side.profile.midfield * (1.0 + bonus), 0.0, 1.0),
+    )
+    detail = (
+        f"Substitution for {side.profile.name}: fresh legs bring a modelled {bonus * 100:.0f}% boost to "
+        f"midfield and attack from here. The engine does not name the player or change the shape."
+    )
+    _record(events, side, minute, "substitution", "", "", detail)
+    log.append({"minute": minute, "side": side.key, "team": side.profile.short_name, "detail": detail})
+
+
 def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
     """Play a match from two profiles. The database has already been read; this is pure arithmetic."""
     home_profile, away_profile = inputs.home, inputs.away
@@ -416,6 +445,12 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
     rng = WorldRng(inputs.seed).fork(f"{MODEL_VERSION}:{home_profile.team_id}v{away_profile.team_id}:{inputs.seed}")
     events: list[dict[str, Any]] = []
     blocks: list[dict[str, Any]] = []
+    # A substitution is modelled as fresh legs: a bounded boost to a side's midfield and attack from a
+    # fixed minute. The default (substitutions=0) applies nothing, so the selected eleven plays on and the
+    # digest is unchanged; this is the only branch that distinguishes the two paths.
+    sub_minute = max(1, round(inputs.minutes * 0.6))
+    sub_applied: dict[str, bool] = {"home": False, "away": False}
+    substitutions_log: list[dict[str, Any]] = []
 
     for index in range(inputs.blocks):
         start = index * inputs.block_minutes + 1
@@ -426,6 +461,9 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
         block_terms: dict[str, dict[str, float]] = {}
 
         for side, opponent in pairs:
+            if inputs.substitutions > 0 and not sub_applied[side.key] and start >= sub_minute:
+                _apply_substitution(side, sub_minute, events, substitutions_log)
+                sub_applied[side.key] = True
             ball_minutes = span * side.possession
             opp_ball_minutes = span * opponent.possession
             volume, quality, terms = _volume_and_quality(side, opponent, progress)
@@ -531,6 +569,7 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
 
     report: dict[str, Any] = {
         "status": "completed",
+        "substitutions": substitutions_log,
         "model": {
             "name": ENGINE_NAME,
             "version": ENGINE_VERSION,
@@ -543,7 +582,7 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
             "coefficients": COEFFICIENTS,
             "factors": list(FACTOR_EXPRESSIONS),
             "what_it_does_not_model": [
-                "substitutions and their tactical effect — the selected eleven plays on",
+                "substituted players are not named and the shape does not change — a substitution is a fresh-legs bonus to midfield and attack from a fixed minute",
                 "possession shifting with the scoreline",
                 "set-piece routines beyond a corner count against",
                 "goalkeeping as its own attribute — this world's player model has none",
