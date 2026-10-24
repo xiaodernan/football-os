@@ -193,6 +193,8 @@ jobs:
         run: node scripts/qa-crawl-policy.mjs
       - name: ICU-coverage gate (every placeholder used in source is declared in catalogue)
         run: node scripts/qa-icu-coverage.mjs
+      - name: Translation-freshness gate (no stale translations since baseline)
+        run: node scripts/qa-translation-freshness.mjs
       - name: Locale-completeness gate (every namespace has identical keys in all three locales)
         run: node scripts/qa-locale-completeness.mjs
       - name: Token-drift gate (named technical tokens remain stable)
