@@ -192,7 +192,10 @@ async function run() {
   page.setDefaultTimeout(120_000);
   await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
   /** Where an error was seen matters more than the minified React code Chrome prints. */
-  const note = (line, where = new URL(page.url()).pathname) => consoleErrors.push(`${line} @ ${where}`);
+  const note = (line, where) => {
+    const path = page ? new URL(page.url()).pathname : 'unknown-page';
+    consoleErrors.push(`${line} @ ${where ?? path}`);
+  };
   page.on('console', (message) => {
     if (message.type() !== 'error') return;
     const text = message.text();
@@ -3534,9 +3537,11 @@ async function run() {
     // An abort used to print one line and discard the other ~100 results. Record it as a failed
     // check, capture what the browser was actually looking at, and fall through to the summary.
     check('the walk completed without an unhandled error', false, String(error?.message ?? error).slice(0, 220));
-    await shot(page, 'abort-state');
-    await open(page, '/login').catch(() => {});
-    await shot(page, 'abort-login').catch(() => {});
+    if (page) {
+      await shot(page, 'abort-state');
+      await open(page, '/login').catch(() => {});
+      await shot(page, 'abort-login').catch(() => {});
+    }
   } finally {
     // If Chrome died mid-walk, closing must not throw from the finally — that would swallow the
     // report for the ~80 checks that already passed and leave one silent exit code behind.
