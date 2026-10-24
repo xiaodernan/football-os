@@ -198,6 +198,12 @@ echo "── Web: population-floor gate ─────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-population-floor.mjs)
 
+echo "── Web: locale-formatting gate ────────────────────────"
+# Date/number/currency format patterns are locale-appropriate.
+# Currently 0 messages with ICU format patterns.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-locale-formatting.mjs)
+
 echo "── Web: locale-completeness gate ──────────────────────"
 # Every namespace has identical keys in all three locales (en, zh, zh-TW).
 # 40 namespaces, 3600 keys each, full parity verified.

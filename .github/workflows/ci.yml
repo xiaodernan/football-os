@@ -197,6 +197,8 @@ jobs:
         run: node scripts/qa-translation-freshness.mjs
       - name: Population-floor gate (catalogue population never regresses)
         run: node scripts/qa-population-floor.mjs
+      - name: Locale-formatting gate (date/number/currency format patterns are locale-appropriate)
+        run: node scripts/qa-locale-formatting.mjs
       - name: Locale-completeness gate (every namespace has identical keys in all three locales)
         run: node scripts/qa-locale-completeness.mjs
       - name: Token-drift gate (named technical tokens remain stable)
