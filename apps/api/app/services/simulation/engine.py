@@ -66,6 +66,8 @@ COEFFICIENTS: dict[str, float] = {
     "substitution_fresh_legs_bonus": 0.05,
     "tactical_shift_midfield_boost": 0.12,
     "tactical_shift_attack_boost": 0.10,
+    "momentum_attack_boost": 0.10,
+    "momentum_press_boost": 0.10,
 }
 
 # A shot is one of three kinds, each with its own modelled quality before the two squads adjust it.
@@ -135,6 +137,11 @@ FACTOR_EXPRESSIONS: tuple[dict[str, str], ...] = (
         "expression": "from a set minute the side trailing on goals pushes: midfield × (1 + 0.12) and attack × (1 + 0.10) recompute possession share and raise chance quality from there; the shape is unchanged and no player is named",
         "reads": "the authored in-match adjustment, applied once to whichever side is behind at the set minute (none if level)",
     },
+    {
+        "key": "momentum",
+        "expression": "a side riding form (momentum in 0..1) gets attack and press × (1 + 0.10·momentum) from kick-off; applied to the profile at match start, names no player, changes no shape",
+        "reads": "the authored pre-match edge, documented so a team's recent run is visible rather than silent",
+    },
 )
 
 
@@ -149,6 +156,8 @@ class MatchInputs:
     block_minutes: int = 6
     substitutions: int = 0
     tactical_shift_minute: int = 0
+    home_momentum: float = 0.0
+    away_momentum: float = 0.0
 
     @property
     def blocks(self) -> int:
@@ -471,12 +480,29 @@ def _apply_tactical_shift(home: _Side, away: _Side, events: list[dict[str, Any]]
     return True
 
 
+def _apply_momentum(side: _Side, momentum: float) -> None:
+    """A side riding form (momentum in 0..1) attacks and presses with more conviction from kick-off. A bounded,
+    deterministic, authored edge applied to the profile at match start — no named player, no shape change, default
+    0 leaves the profile untouched.
+    """
+    if momentum <= 0.0:
+        return
+    clamped = _clamp(momentum, 0.0, 1.0)
+    side.profile = replace(
+        side.profile,
+        attack=_clamp(side.profile.attack * (1.0 + COEFFICIENTS["momentum_attack_boost"] * clamped), 0.0, 1.0),
+        press=_clamp(side.profile.press * (1.0 + COEFFICIENTS["momentum_press_boost"] * clamped), 0.0, 1.0),
+    )
+
+
 def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
     """Play a match from two profiles. The database has already been read; this is pure arithmetic."""
     home_profile, away_profile = inputs.home, inputs.away
     share = possession_share(home_profile, away_profile, home_profile.tactics, away_profile.tactics)
     home = _Side(key="home", profile=home_profile, possession=share)
     away = _Side(key="away", profile=away_profile, possession=1.0 - share)
+    _apply_momentum(home, inputs.home_momentum)
+    _apply_momentum(away, inputs.away_momentum)
     pairs = (home, away), (away, home)
 
     rng = WorldRng(inputs.seed).fork(f"{MODEL_VERSION}:{home_profile.team_id}v{away_profile.team_id}:{inputs.seed}")
@@ -613,6 +639,7 @@ def simulate_match(inputs: MatchInputs) -> dict[str, Any]:
         "status": "completed",
         "substitutions": substitutions_log,
         "tactical_shift": tactical_shift_log,
+        "momentum": {"home": inputs.home_momentum, "away": inputs.away_momentum},
         "model": {
             "name": ENGINE_NAME,
             "version": ENGINE_VERSION,

@@ -418,6 +418,41 @@ class TestTacticalShift:
         assert default["digest"] != shifted["digest"]
 
 
+class TestMomentum:
+    """Momentum is a pre-match, per-side authored edge (0..1): a side riding form attacks and presses with
+    more conviction from kick-off. Default 0 leaves the profile untouched, so the digest is identical to before.
+    """
+
+    def test_default_path_leaves_no_momentum_effect_and_replays_identically(self) -> None:
+        first = simulate_match(_inputs(seed=7))
+        second = simulate_match(_inputs(seed=7))
+        assert first["momentum"] == {"home": 0.0, "away": 0.0}
+        assert first["digest"] == second["digest"]
+
+    def test_momentum_is_deterministic_and_changes_the_digest(self) -> None:
+        first = simulate_match(_inputs(seed=7, home_momentum=1.0))
+        second = simulate_match(_inputs(seed=7, home_momentum=1.0))
+        assert first["digest"] == second["digest"]
+        default = simulate_match(_inputs(seed=7))
+        assert default["digest"] != first["digest"]
+
+    def test_momentum_boosts_only_the_named_side(self) -> None:
+        default = simulate_match(_inputs(seed=7))
+        with_momentum = simulate_match(_inputs(seed=7, home_momentum=1.0))
+        home_default = default["sides"]["home"]["indices"]
+        home_boosted = with_momentum["sides"]["home"]["indices"]
+        away_default = default["sides"]["away"]["indices"]
+        away_boosted = with_momentum["sides"]["away"]["indices"]
+        assert home_boosted["attack"] > home_default["attack"], "home momentum should lift home attack"
+        assert home_boosted["press"] > home_default["press"], "home momentum should lift home press"
+        assert away_boosted["attack"] == away_default["attack"], "away should be untouched by home momentum"
+        assert away_boosted["press"] == away_default["press"]
+
+    def test_momentum_is_a_published_factor(self) -> None:
+        report = simulate_match(_inputs(seed=7, home_momentum=1.0))
+        assert {"momentum"}.issubset({factor["key"] for factor in report["model"]["factors"]})
+
+
 class TestProfilesFromStoredRows:
     """`team_profile` must compute from the world the generator wrote, not from numbers this test picks."""
 

@@ -57,6 +57,7 @@ def engine_description() -> dict[str, Any]:
         "block_minutes": BLOCK_MINUTES,
         "substitutions_range": [0, 11],
         "tactical_shift_minute_range": [0, 120],
+        "momentum_range": [0.0, 1.0],
         "inputs_are_from": ["teams", "real_players", "tactical_systems"],
     }
 
@@ -106,6 +107,8 @@ def run_simulation(
     minutes: int = 90,
     substitutions: int = 0,
     tactical_shift_minute: int = 0,
+    home_momentum: float = 0.0,
+    away_momentum: float = 0.0,
     home_squad: SquadOverlay | None = None,
     away_squad: SquadOverlay | None = None,
 ) -> SimulationMatch:
@@ -120,7 +123,7 @@ def run_simulation(
     """
     home = team_profile(session, home_team_id, system_slug=home_system, squad=home_squad)
     away = team_profile(session, away_team_id, system_slug=away_system, squad=away_squad)
-    inputs = MatchInputs(home=home, away=away, seed=seed if seed is not None else secrets.randbelow(2_147_483_647), minutes=minutes, block_minutes=BLOCK_MINUTES, substitutions=substitutions, tactical_shift_minute=tactical_shift_minute)
+    inputs = MatchInputs(home=home, away=away, seed=seed if seed is not None else secrets.randbelow(2_147_483_647), minutes=minutes, block_minutes=BLOCK_MINUTES, substitutions=substitutions, tactical_shift_minute=tactical_shift_minute, home_momentum=home_momentum, away_momentum=away_momentum)
     report = simulate_match(inputs)
 
     slug = slugify(f"{home.short_name}-v-{away.short_name}-{report['digest']}")[:70]
@@ -136,6 +139,8 @@ def run_simulation(
         block_minutes=inputs.block_minutes,
         substitutions=inputs.substitutions,
         tactical_shift_minute=inputs.tactical_shift_minute,
+        home_momentum=inputs.home_momentum,
+        away_momentum=inputs.away_momentum,
         home_team_id=home_team_id,
         away_team_id=away_team_id,
         home_system=home.system_slug,
@@ -205,7 +210,7 @@ def replay_is_identical(session: Session, match: SimulationMatch) -> dict[str, A
             "squad": squad_note,
             "model_version": match.model_version,
         }
-    report = simulate_match(MatchInputs(home=home, away=away, seed=match.seed, minutes=match.minutes, block_minutes=match.block_minutes, substitutions=match.substitutions, tactical_shift_minute=match.tactical_shift_minute))
+    report = simulate_match(MatchInputs(home=home, away=away, seed=match.seed, minutes=match.minutes, block_minutes=match.block_minutes, substitutions=match.substitutions, tactical_shift_minute=match.tactical_shift_minute, home_momentum=match.home_momentum, away_momentum=match.away_momentum))
     return {
         "possible": True,
         "stored_digest": match.digest,
@@ -283,6 +288,8 @@ def row(match: SimulationMatch, *, full: bool = False, session: Session | None =
         "block_minutes": match.block_minutes,
         "substitutions": match.substitutions,
         "tactical_shift_minute": match.tactical_shift_minute,
+        "home_momentum": match.home_momentum,
+        "away_momentum": match.away_momentum,
         "home_team_id": match.home_team_id,
         "away_team_id": match.away_team_id,
         "home_system": match.home_system,

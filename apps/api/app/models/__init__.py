@@ -928,6 +928,8 @@ class SimulationMatch(Base, TimestampMixin):
     block_minutes: Mapped[int] = mapped_column(Integer, default=6, nullable=False)
     substitutions: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     tactical_shift_minute: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    home_momentum: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    away_momentum: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     home_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
     away_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
     home_system: Mapped[str] = mapped_column(String(160), default="", nullable=False)

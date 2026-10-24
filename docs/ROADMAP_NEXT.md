@@ -47,8 +47,14 @@ the single highest-leverage work.
    → `run_simulation` → stored on `SimulationMatch.tactical_shift_minute` (migration `0038`) → exposed in `row()`
    and `engine_description()` → replayed through `replay_is_identical`. **Pending:** the web `SimulatorForm`
    control with `en`/`zh`/`zh-TW` keys (i18n).
-3. **Momentum / form carry.** A side on a win streak gets a bounded, documented edge; the edge is a
-   coefficient, not a fitted curve, and is printed with its formula.
+3. **Momentum / form carry.** **Done (2026-10-25):** `MatchInputs` gains `home_momentum` / `away_momentum`
+   (0..1, default 0). A side riding form gets a bounded, authored attack (+10%·m) and press (+10%·m) lift from
+   kick-off, applied once through `dataclasses.replace` — no named player, no shape change, default 0 leaves the
+   profile untouched so the digest is identical. 4 new `TestMomentum` cases pin default-clean, determinism +
+   digest change, per-side-only boost, and the published factor. Plumbed `SimulateIn.home_momentum/away_momentum`
+   → `run_simulation` → stored on `SimulationMatch` (migration `0039`, two Float columns) → exposed in `row()` and
+   `engine_description()` → replayed through `replay_is_identical`. **Pending:** the web `SimulatorForm` controls
+   (i18n).
 4. **Career-linked development.** Player attributes drift across a career's fixtures from minutes played
    and session completion, so a squad you develop actually changes — recomputed from the career's own rows.
 
