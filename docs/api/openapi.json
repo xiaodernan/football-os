@@ -5115,7 +5115,7 @@
           "simulation-aggregates"
         ],
         "summary": "Read Rules",
-        "description": "The vocabulary and ceilings for the simulation aggregates tier.\n\nNothing here is typed by hand: the caps are the constants the walk guards with.",
+        "description": "The vocabulary, the caps and the formulas the simulation aggregates tier publishes.\n\nThe two node kinds and two verbs are this router's own vocabulary; the tier has no traversal, so it\npublishes no walk ceilings — that clause census is the knowledge-graph tier's, measured from live\nmetadata at `/graph/rules`. The caps and formulas below are the aggregate service's own constants,\n`routes` is this router's two ledger doors, and `world_ready` is measured on this request's database.",
         "operationId": "read_rules_api_v1_simulation_aggregates_rules_get",
         "responses": {
           "200": {
@@ -16690,6 +16690,34 @@
             "type": "integer",
             "title": "Minutes",
             "default": 90
+          },
+          "substitutions": {
+            "type": "integer",
+            "maximum": 11.0,
+            "minimum": 0.0,
+            "title": "Substitutions",
+            "default": 0
+          },
+          "tactical_shift_minute": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Tactical Shift Minute",
+            "default": 0
+          },
+          "home_momentum": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Home Momentum",
+            "default": 0.0
+          },
+          "away_momentum": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Away Momentum",
+            "default": 0.0
           }
         },
         "type": "object",

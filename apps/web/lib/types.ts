@@ -1800,17 +1800,19 @@ export type SimAggPlayerAggregate = {
 export type SimAggLeagueRules = {
   node_kinds: string[];
   edge_verbs: string[];
-  max_depth: number;
-  max_edges: number;
-  max_nodes: number;
   routes: { method: string; path: string; what: string }[];
-  spec_verbs_declined: Record<string, string>;
-  refusal_answers: Record<string, number>;
   world_ready: boolean;
-  public_clauses: number;
-  clauses_with_a_verb: number;
-  clauses_declined: number;
-  private_tables_excluded: number;
+  caps: {
+    ledger_limit: number;
+    chance_types: string[];
+    ledger_types: string[];
+  };
+  formulas: {
+    ledger: string;
+    consistency: string;
+    attribution: string;
+  };
+  disclaimer: string;
 };
 
 /** GET /agents/list */

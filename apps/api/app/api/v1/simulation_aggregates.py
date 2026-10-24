@@ -18,8 +18,18 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.security import limit
 from app.models import Career, CareerAppearance, Competition, RealPlayer
-from app.services.simulation.aggregates import league_ledger_view, player_career_aggregate_view
+from app.services.simulation.aggregates import (
+    _CHANCE_TYPES,
+    _LEDGER_TYPES,
+    ATTRIBUTION_FORMULA,
+    CONSISTENCY_FORMULA,
+    LEDGER_FORMULA,
+    LEDGER_LIMIT,
+    league_ledger_view,
+    player_career_aggregate_view,
+)
 from app.services.simulation.engine import SIMULATION_DISCLAIMER
+from app.services.world import world_ready
 
 router = APIRouter(prefix="/simulation/aggregates", tags=["simulation-aggregates"])
 
@@ -27,36 +37,22 @@ NOT_FOUND = {"code": "not_found", "message": "No such resource"}
 
 
 @router.get("/rules")
-def read_rules() -> dict[str, Any]:
-    """The vocabulary and ceilings for the simulation aggregates tier.
+def read_rules(db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The vocabulary, the caps and the formulas the simulation aggregates tier publishes.
 
-    Nothing here is typed by hand: the caps are the constants the walk guards with.
+    The two node kinds and two verbs are this router's own vocabulary; the tier has no traversal, so it
+    publishes no walk ceilings — that clause census is the knowledge-graph tier's, measured from live
+    metadata at `/graph/rules`. The caps and formulas below are the aggregate service's own constants,
+    `routes` is this router's two ledger doors, and `world_ready` is measured on this request's database.
     """
-    from app.services.simulation.aggregates import (
-        _CHANCE_TYPES,
-        _LEDGER_TYPES,
-        ATTRIBUTION_FORMULA,
-        CONSISTENCY_FORMULA,
-        LEDGER_FORMULA,
-        LEDGER_LIMIT,
-    )
     return {
         "node_kinds": ["competition", "player"],
         "edge_verbs": ["league_ledger", "player_aggregate"],
-        "max_depth": 1,
-        "max_edges": 1000,
-        "max_nodes": 5000,
         "routes": [
             {"method": "GET", "path": "/simulation/aggregates/league/{competition_slug}", "what": "league-wide ledger"},
             {"method": "GET", "path": "/simulation/aggregates/player/{player_slug}", "what": "player career aggregate"},
         ],
-        "spec_verbs_declined": {},
-        "refusal_answers": {},
-        "world_ready": True,
-        "public_clauses": 0,
-        "clauses_with_a_verb": 0,
-        "clauses_declined": 0,
-        "private_tables_excluded": 0,
+        "world_ready": world_ready(db),
         "caps": {
             "ledger_limit": LEDGER_LIMIT,
             "chance_types": list(_CHANCE_TYPES),
