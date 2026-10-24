@@ -14,6 +14,7 @@ one it measured.
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Iterator
 from contextlib import contextmanager
 
@@ -232,6 +233,14 @@ def test_the_readiness_tuple_is_exactly_the_tables_the_counts_read() -> None:
         len({name for group in CREATOR_COUNTS.values() for name in group})
         == len(CREATOR_TABLES)
     ), "the readiness universe and the count keys disagree about how many tables exist"
+
+
+def test_the_rulebooks_do_not_default_readiness() -> None:
+    for module in (com, cre):
+        default = inspect.signature(module.rules).parameters["ready"].default
+        assert (
+            default is inspect.Parameter.empty
+        ), f"{module.__name__}.rules defaults `ready` to {default!r}, so a door can skip the measurement"
 
 
 def test_the_published_contract_says_where_readiness_comes_from() -> None:
