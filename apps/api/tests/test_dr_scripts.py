@@ -109,6 +109,27 @@ for a in "$@"; do
 done
 exit "${STUB_PY_RC-0}"
 """,
+    # The off-host hop. `aws s3 cp <src> s3://<bucket>/<name> --storage-class STANDARD_IA` is the one line that
+    # decides whether a backup ever leaves the host, and it was inspection-verified only until this gate ran it.
+    # The stub copies the source into a local "bucket" directory (the name after the s3:// prefix) so the leg can
+    # prove the artifact actually landed off-host without a real S3 credential in the tree.
+    "aws": """#!/usr/bin/env bash
+record() { [ -n "${STUB_ARGV-}" ] && printf '%s\\n' "$*" >>"$STUB_ARGV"; }
+record "aws $*"
+src=""; dst=""; prev=""
+for a in "$@"; do
+  [ "$prev" = "cp" ] && src="$a"
+  case "$a" in
+    s3://*) dst="$a" ;;
+  esac
+  prev="$a"
+done
+if [ -n "$dst" ] && [ -n "${STUB_S3_DIR-}" ]; then
+  name="${dst##*/}"
+  cat "$src" > "${STUB_S3_DIR}/$name"
+fi
+exit "${STUB_AWS_RC-0}"
+""",
 }
 
 
@@ -517,3 +538,53 @@ def test_backup_db_still_names_what_it_cannot_do(shell: str) -> None:
     code = "\n".join(_code_lines(BACKUP))
     for sentence in ("REFUSED", "archive_mode", "backup_db.sh full"):
         assert sentence in code, f"the incremental refusal no longer says {sentence!r}, which is the way out it offers"
+
+
+def test_the_off_host_upload_fires_when_a_bucket_is_named(tmp_path: Path, shell: str) -> None:
+    """The one line that decides whether a backup leaves the host must actually run, with the named bucket and the
+    storage class, and the artifact must land off-host. Until this gate it was inspection-verified only.
+
+    No leg reaches a database server: the `pg_dump` stub writes the dump, and the `aws` stub copies it into a local
+    "bucket" directory, so the off-host hop is exercised without a real S3 credential in the tree.
+    """
+    backups = tmp_path / "backups"
+    backups.mkdir()
+    bucket = tmp_path / "s3-bucket"
+    bucket.mkdir()
+    result = _run(
+        tmp_path,
+        [BACKUP, "full"],
+        env={
+            "BACKUP_DIR": str(backups).replace("\\", "/"),
+            "BACKUP_S3_BUCKET": "test-bucket",
+            "STUB_S3_DIR": str(bucket).replace("\\", "/"),
+        },
+    )
+    assert result.returncode == 0, (
+        f"`backup_db.sh full` with a bucket failed: {result.stdout!r} {result.stderr!r}"
+    )
+    uploads = [line for line in _argv(tmp_path) if line.startswith("aws ")]
+    assert len(uploads) == 1, f"the off-host leg expected exactly one aws call, read {uploads!r}"
+    assert "s3 cp" in uploads[0] and "s3://test-bucket/" in uploads[0], (
+        f"the upload did not target the named bucket: {uploads[0]!r}"
+    )
+    assert "--storage-class STANDARD_IA" in uploads[0], (
+        f"the upload omitted the storage class the script promises: {uploads[0]!r}"
+    )
+    landed = list(bucket.glob("football_os_*.dump"))
+    assert len(landed) == 1, f"the off-host upload must land the artifact in the bucket; saw {landed!r}"
+
+
+def test_no_off_host_upload_without_a_bucket(tmp_path: Path, shell: str) -> None:
+    """An unset `BACKUP_S3_BUCKET` means the off-host hop never runs — the default is a local-only dump."""
+    backups = tmp_path / "backups"
+    backups.mkdir()
+    result = _run(tmp_path, [BACKUP, "full"], env={"BACKUP_DIR": str(backups).replace("\\", "/")})
+    assert result.returncode == 0, (
+        f"`backup_db.sh full` without a bucket failed: {result.stdout!r} {result.stderr!r}"
+    )
+    uploads = [line for line in _argv(tmp_path) if line.startswith("aws ")]
+    assert not uploads, f"no S3_BUCKET must mean no upload call; saw {uploads!r}"
+    assert "Uploading to s3://" not in result.stdout, (
+        f"the log claimed an upload with no bucket: {result.stdout!r}"
+    )
