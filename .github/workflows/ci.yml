@@ -191,6 +191,14 @@ jobs:
         # own `robots:` declaration, and refuses the class it found: 8 session-gated pages in no disallowed prefix,
         # whose `noindex` a crawler never reads because a 307 carries no head. Files only.
         run: node scripts/qa-crawl-policy.mjs
+      - name: Locale-completeness gate (every namespace has identical keys in all three locales)
+        run: node scripts/qa-locale-completeness.mjs
+      - name: Token-drift gate (named technical tokens remain stable)
+        run: node scripts/qa-token-drift.mjs
+      - name: Namespace-ownership gate (every namespace has a declared owner and purpose)
+        run: node scripts/qa-namespace-ownership.mjs
+      - name: Shared-key gate (each shared key across namespaces is named with its reason)
+        run: node scripts/qa-shared-keys.mjs
       - name: Types
         run: npm run typecheck
       - name: Build
