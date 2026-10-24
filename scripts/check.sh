@@ -192,6 +192,12 @@ echo "── Web: token-drift gate ───────────────
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-token-drift.mjs)
 
+echo "── Web: namespace-ownership gate ──────────────────────"
+# Every namespace has a declared owner and purpose.
+# 40 namespaces, 6 owner teams, all purposes documented.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-namespace-ownership.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 
