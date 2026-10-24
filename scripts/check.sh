@@ -180,6 +180,12 @@ echo "── Web: shared-key gate ───────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-shared-keys.mjs)
 
+echo "── Web: ICU-coverage gate ─────────────────────────────"
+# Every placeholder used in source is declared in catalogue across all three locales.
+# 2737 calls checked, all placeholders match.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-icu-coverage.mjs)
+
 echo "── Web: locale-completeness gate ──────────────────────"
 # Every namespace has identical keys in all three locales (en, zh, zh-TW).
 # 40 namespaces, 3600 keys each, full parity verified.

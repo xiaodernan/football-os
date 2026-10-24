@@ -191,6 +191,8 @@ jobs:
         # own `robots:` declaration, and refuses the class it found: 8 session-gated pages in no disallowed prefix,
         # whose `noindex` a crawler never reads because a 307 carries no head. Files only.
         run: node scripts/qa-crawl-policy.mjs
+      - name: ICU-coverage gate (every placeholder used in source is declared in catalogue)
+        run: node scripts/qa-icu-coverage.mjs
       - name: Locale-completeness gate (every namespace has identical keys in all three locales)
         run: node scripts/qa-locale-completeness.mjs
       - name: Token-drift gate (named technical tokens remain stable)
