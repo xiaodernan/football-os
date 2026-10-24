@@ -46,6 +46,15 @@ check_pg() {
     fi
 }
 
+# Copy a finished dump to the off-host bucket. The branch used to be inline, which hid the single line that decides
+# whether a backup ever leaves the host; a function names it so the gate can call it directly and the operator reads
+# the contract in one place. `aws s3 cp` is the project's only off-host hop, and it is invoked exactly here.
+upload_backup_to_s3() {
+    local file="$1" bucket="$2"
+    log "Uploading to s3://$bucket/$(basename "$file")"
+    aws s3 cp "$file" "s3://$bucket/$(basename "$file")" --storage-class STANDARD_IA
+}
+
 full_backup() {
     require_cmd pg_dump
     require_cmd pg_restore
@@ -76,8 +85,7 @@ full_backup() {
 
     # Upload to S3 if configured
     if [[ -n "$S3_BUCKET" ]]; then
-        log "Uploading to s3://$S3_BUCKET/$(basename "$file")"
-        aws s3 cp "$file" "s3://$S3_BUCKET/$(basename "$file")" --storage-class STANDARD_IA
+        upload_backup_to_s3 "$file" "$S3_BUCKET"
     fi
 
     # Cleanup old local backups (keep last 7). The count is read from the same listing that is deleted: this line
