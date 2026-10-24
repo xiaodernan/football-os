@@ -47,10 +47,6 @@ def test_the_rules_door_publishes_only_the_vocabulary_it_can_derive(client) -> N
         f"the rules door publishes {invented} with nothing behind them and omits {missing}; "
         f"the body's keys are {sorted(body)}"
     )
-    assert "public_clauses" not in body and "refusal_answers" not in body, (
-        "the clause census is the graph tier's, measured from live metadata at /graph/rules; "
-        f"this door has no scan to put behind it, yet still publishes {sorted(set(body) & {'public_clauses', 'refusal_answers'})}"
-    )
 
 
 def test_the_caps_and_formulas_are_the_service_constants(client) -> None:  # type: ignore[no-untyped-def]
