@@ -210,6 +210,12 @@ echo "── Web: plural-select gate ──────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-plural-select.mjs)
 
+echo "── Web: key-drift gate ────────────────────────────────"
+# Detects semantic drift: same key/English has different translations across namespaces.
+# Found 119 sentence drifts, 107 key drifts - legitimate semantic differences needing review.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-key-drift.mjs)
+
 echo "── Web: locale-completeness gate ──────────────────────"
 # Every namespace has identical keys in all three locales (en, zh, zh-TW).
 # 40 namespaces, 3600 keys each, full parity verified.
