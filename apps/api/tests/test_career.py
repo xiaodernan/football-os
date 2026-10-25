@@ -216,6 +216,9 @@ class TestJudging:
         assert aff["signing"]["price"] == 0 and aff["signing"]["fee_affordable"] is True
         assert aff["timeline"]["entries"] == 0 and aff["timeline"]["disagreements"] == 0
         assert aff["timeline"]["opening_balance"] == aff["timeline"]["closing_balance"] == aff["remaining"]
+        # The board projection is wired and reads the same record the page prints.
+        assert view["board"]["played"] == 1 and view["board"]["season_rounds"] > 0
+        assert view["board"]["points_per_round"] == round(view["record"]["points"] / 1, 3)
 
     def test_a_deleted_match_report_leaves_the_career_readable(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
@@ -256,3 +259,39 @@ class TestDevelopment:
                 assert entry["after"][attr] <= max(entry["before"][attr], entry["potential"]), "development never crosses potential from below, and leaves an attribute already above it untouched"
         assert "stored" in dev["note"], "the projection is read-only and says so"
         assert dev["development_formula"].startswith("developed(value, potential, minutes)")
+
+
+class TestBoard:
+    def test_a_fresh_career_projects_nothing_and_names_its_horizon(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        board = career_service.board_view(session, career, [], career_service.record_of([]))
+        assert board["played"] == 0 and board["projected"] == {}
+        assert board["on_track"] is None and board["points_per_round"] is None
+        assert board["season_rounds"] == 2 * len(world["opponents"]), "an open career's horizon is a double round-robin"
+        assert "round-robin" in board["season_source"]
+        assert board["formula"].startswith("projected = round(actual ÷ played × season_rounds)")
+
+    def test_the_projection_is_the_record_at_the_seasons_pace(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(3):
+            career_service.play_round(session, career)
+        rows = career_service.fixtures_of(session, career)
+        record = career_service.record_of(rows)
+        board = career_service.board_view(session, career, rows, record)
+        rounds = 2 * len(world["opponents"])
+        assert board["season_rounds"] == rounds and board["played"] == 3
+        assert board["projected"]["points"] == round(record["points"] / 3 * rounds)
+        assert board["projected"]["wins"] == round(record["won"] / 3 * rounds)
+        assert board["projected"]["goal_difference"] == round(record["goal_difference"] / 3 * rounds)
+        assert board["points_per_round"] == round(record["points"] / 3, 3)
+        verdict = next(item for item in board["objectives"] if item["kind"] == "wins")
+        assert verdict["projected"] == board["projected"]["wins"]
+        assert verdict["on_pace"] == (verdict["projected"] >= verdict["target"])
+        assert board["on_track"] == verdict["on_pace"]
+
+    def test_a_challenge_window_is_the_horizon_when_it_has_one(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career.challenge_window = 5
+        session.commit()
+        board = career_service.board_view(session, career, [], career_service.record_of([]))
+        assert board["season_rounds"] == 5 and "window" in board["season_source"]

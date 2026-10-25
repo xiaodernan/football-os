@@ -443,6 +443,71 @@ def objectives_of(career: Career, record: dict[str, Any]) -> list[dict[str, Any]
     return report
 
 
+#: The season projection's arithmetic, published beside the numbers so a reader can reproduce it.
+BOARD_FORMULA: Final = (
+    "projected = round(actual ÷ played × season_rounds), where season_rounds is the challenge's window when it has "
+    "one, else a double round-robin over the competition's clubs (2 × clubs); only additive objectives (wins, "
+    "points, goal difference) are projected — an unbeaten run is a streak, not a sum, so it is reported as it stands"
+)
+
+
+def season_horizon(session: Session, career: Career) -> dict[str, Any]:
+    """How many rounds a full season is for this career, and where that number comes from.
+
+    A challenge career carries its own round window; an open career's competition is the horizon, and the
+    career's fixture list rotates through its clubs home and away, so a full season is a double round-robin
+    over them. With no competition the horizon is 0 and nothing is projected rather than guessed at.
+    """
+    window = int(career.challenge_window or 0)
+    if window > 0:
+        return {"rounds": window, "source": "the challenge's own round window"}
+    opponents = competition_clubs(session, career.competition_id, exclude_id=career.club_id or "")
+    return {"rounds": 2 * len(opponents), "source": "a double round-robin over the competition's clubs (home and away)"}
+
+
+def board_view(session: Session, career: Career, rows: list[CareerFixture], record: dict[str, Any]) -> dict[str, Any]:
+    """Where the season is heading at the current pace, and whether the board's targets are on track.
+
+    A linear projection over the career's own played rounds, never a stored figure: the board reads the same
+    sums the record prints, so it cannot drift from them. Only additive objectives are projected; an unbeaten
+    run is a streak, not a sum, so it is reported as it stands rather than extrapolated.
+    """
+    horizon = season_horizon(session, career)
+    rounds = int(horizon["rounds"])
+    played = int(record["played"])
+    additive = {"wins": int(record["won"]), "points": int(record["points"]), "goal_difference": int(record["goal_difference"])}
+    projected = {kind: round(value / played * rounds) for kind, value in additive.items()} if played > 0 and rounds > 0 else {}
+    verdicts: list[dict[str, Any]] = []
+    for verdict in objectives_of(career, record):
+        kind = str(verdict["kind"])
+        projected_actual = projected.get(kind)
+        verdicts.append(
+            {
+                **verdict,
+                "projected": projected_actual,
+                "on_pace": None if projected_actual is None else projected_actual >= int(verdict["target"]),
+            }
+        )
+    trackable = [item["on_pace"] for item in verdicts if item["on_pace"] is not None]
+    return {
+        "season_rounds": rounds,
+        "season_source": horizon["source"],
+        "played": played,
+        "points_per_round": round(int(record["points"]) / played, 3) if played else None,
+        "goals_for_per_round": round(int(record["goals_for"]) / played, 3) if played else None,
+        "projected": projected,
+        "objectives": verdicts,
+        "on_track": all(trackable) if trackable else None,
+        "formula": BOARD_FORMULA,
+        "note": (
+            "a linear pace projection over the rounds played so far, not a forecast: the board reads the same sums "
+            "the record prints, and an objective with no additive projection is reported as it stands"
+        ),
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
 def _consistency(session: Session, rows: list[CareerFixture]) -> str:
     """Re-read each fixture's linked match and confirm the copied score still agrees."""
     if not rows:
@@ -571,6 +636,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         },
         "record": record,
         "objectives": objectives_of(career, record),
+        "board": board_view(session, career, rows, record),
         "table": mini_table(rows, career),
         "consistency": _consistency(session, rows),
         "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1),
@@ -623,7 +689,9 @@ __all__ = [
     "CAREER_DISCLAIMER",
     "OBJECTIVE_FORMULA",
     "POINTS_FOR",
+    "BOARD_FORMULA",
     "WindowClosed",
+    "board_view",
     "career_view",
     "competition_clubs",
     "development_view",
@@ -636,4 +704,5 @@ __all__ = [
     "play_round",
     "record_of",
     "resolve_club",
+    "season_horizon",
 ]

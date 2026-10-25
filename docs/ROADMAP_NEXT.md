@@ -96,8 +96,13 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    session), and a budget *ceiling* (a hard cap distinct from a balance).
 7. **Youth academy outcomes.** Academy trainees graduate into the squad with attributes derived from
    their `Sessions`/`Reports` (M8 already stores the load); the graduation is a deterministic roll.
-8. **Board expectations & relegation.** A season target (points / position) and a pyramid move at the
-   ledger boundary, both read from the season's own `sim_events` rows.
+8. **Board expectations & relegation.** **Read-only half done (2026-10-25):** `board_view` (career.py)
+   projects the season at the career's current pace — `projected = round(actual ÷ played × season_rounds)`,
+   where the horizon is the challenge's window or a double round-robin over the competition's clubs — and
+   marks each additive objective (wins / points / goal difference) `on_pace`; an unbeaten run is a streak,
+   not a sum, so it is reported as it stands rather than extrapolated. Surfaced read-only on
+   `career_view["board"]`, pinned by `TestBoard` in `test_career.py`. **Pending:** the pyramid move itself
+   (promotion/relegation) needs a multi-tier league structure (see item 9).
 
 *Gate:* the season ledger still sums from `sim_events` rows; a new door gets a route-citation entry;
 isolation walk over any new tenant-scoped door.
@@ -106,10 +111,15 @@ isolation walk over any new tenant-scoped door.
 
 M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" world needs a structure.
 
-9. **League pyramid.** Multiple divisions with promotion/relegation computed from the fixture table the
-   engine already produces; the table is a read-time aggregation, never a stored total.
-10. **Fixture calendar.** A deterministic season schedule (round-robin + cup) generated from the world
-    seed, reproducible across both databases.
+9. **League pyramid.** **Partially present (verified 2026-10-25):** `Competition.tier` exists and
+   `api/v1/world.py` already computes a read-time `standings` table from `real_matches` (never a stored
+   total). **Pending:** a second league tier in the generated world and the promotion/relegation move
+   computed from that table at the season boundary — blocked by the same content expansion as item 11,
+   which changes the world fingerprint and the `population-floor` baseline.
+10. **Fixture calendar.** **Already implemented (verified 2026-10-25):** `world/builder.py` generates a
+    deterministic double round-robin per league and a 7-game knockout per cup (`_round_robin`,
+    `_league_fixtures`, `_cup_fixtures`, `_simulate`) from the world seed; `real_matches` is the result and
+    the world fingerprint gate keeps it reproducible. No new work needed here.
 11. **Content expansion.** More teams/players/competitions behind the existing `population-floor` gate so
     the catalogue never regresses; each addition is a seeded, fictional, fingerprint-stable generator.
 12. **Real-structure simulation tie-in.** Career clubs play the generated fixtures; results feed the
