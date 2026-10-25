@@ -208,6 +208,12 @@ class TestJudging:
         fixture = view["fixtures"][0]
         assert fixture["match_path"] == f"/simulate/{fixture['match_slug']}"
         assert fixture["opponent_path"].startswith("/team/") and view["career"]["club_path"].startswith("/team/")
+        # The affordability block is the same arithmetic the transfers page prints, read-only.
+        aff = view["affordability"]
+        assert aff["formula"] and aff["units"] == career.budget_units
+        assert aff["remaining"] == view["career"]["budget"], "a career with no move and no wage row has spent nothing"
+        assert aff["weekly_wage_bill"] == 0 and aff["wage_runway_rounds"] is None
+        assert aff["signing"]["price"] == 0 and aff["signing"]["fee_affordable"] is True
 
     def test_a_deleted_match_report_leaves_the_career_readable(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)

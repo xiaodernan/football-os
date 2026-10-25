@@ -515,6 +515,78 @@ def budget_position(session: Session, career: Career) -> dict[str, Any]:
     }
 
 
+#: The affordability arithmetic, published beside the numbers so a reader can reproduce it.
+AFFORDABILITY_FORMULA: Final = (
+    "wage_runway_rounds = max(0, floor(remaining ÷ wage_committed_per_week)) when the weekly bill is "
+    "positive; a signing is affordable when remaining − price ≥ 0, and its new runway is computed on the "
+    "balance after the fee against the wage bill the signing would add"
+)
+
+
+def wage_runway(remaining: int, weekly_wage: int) -> int | None:
+    """How many further rounds the current balance covers the current weekly wage bill.
+
+    `None` when there is no wage obligation at all (the bill is zero), because a career that pays no
+    wages has no wage-driven limit rather than an infinite one a page would have to print as a number.
+    A balance already below zero yields 0: the runway is spent, which is the same thing the market says
+    when it stops spending from a negative balance.
+    """
+    weekly = int(weekly_wage)
+    if weekly <= 0:
+        return None
+    return max(0, int(remaining) // weekly)
+
+
+def signing_impact(remaining: int, weekly_wage: int, *, price: int, proposed_weekly_wage: int) -> dict[str, Any]:
+    """What one prospective signing would do to the balance and the wage runway, before it is made.
+
+    Pure arithmetic over the figures the ledger already publishes, so a page can answer "can I afford
+    this" without writing anything: `fee_affordable` is the balance after the fee staying non-negative,
+    and the new runway is that balance against the wage bill the signing would add. It is a preview of
+    the rules `buy`/`loan` enforce, not a second copy of them.
+    """
+    price = int(price)
+    proposed = int(proposed_weekly_wage)
+    after_fee = int(remaining) - price
+    new_bill = int(weekly_wage) + proposed
+    return {
+        "price": price,
+        "proposed_weekly_wage": proposed,
+        "fee_affordable": after_fee >= 0,
+        "remaining_after_fee": after_fee,
+        "new_weekly_wage_bill": new_bill,
+        "new_wage_runway_rounds": wage_runway(after_fee, new_bill),
+    }
+
+
+def affordability_view(session: Session, career: Career, *, price: int = 0, weekly_wage: int = 0) -> dict[str, Any]:
+    """This career's finance standing and what a signing at `price`/`weekly_wage` would do to it.
+
+    Everything is read from `budget_position` — the same arithmetic the transfers page prints — and
+    recomputed on the request, so the runway and the signing preview cannot drift from the balance they
+    are derived from. With no prospective signing passed, the preview is the arithmetic for a move at
+    zero fee and zero wage, which is the standing position itself.
+    """
+    position = budget_position(session, career)
+    remaining = int(position["remaining"])
+    weekly = int(position["wage_committed_per_week"])
+    return {
+        "remaining": remaining,
+        "weekly_wage_bill": weekly,
+        "wage_players": int(position["wage_players"]),
+        "wage_runway_rounds": wage_runway(remaining, weekly),
+        "signing": signing_impact(remaining, weekly, price=price, proposed_weekly_wage=weekly_wage),
+        "units": position["units"],
+        "formula": AFFORDABILITY_FORMULA,
+        "note": (
+            "a read-only preview: the runway is how many more rounds the balance covers the wage bill the career "
+            "already holds, and the signing block is the same arithmetic with one prospective deal added"
+        ),
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
 def pay_wages(session: Session, career: Career, *, round_index: int) -> CareerWageCharge | None:
     """Charge one played round what its deals cost, and write the row that says so.
 
@@ -926,6 +998,7 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
 
 
 __all__ = [
+    "AFFORDABILITY_FORMULA",
     "BUDGET_FORMULA",
     "FIT_FORMULA",
     "MARKET_DISCLAIMER",
@@ -940,6 +1013,7 @@ __all__ = [
     "SELL_FORMULA",
     "VALUATION_FORMULA",
     "WAGE_FORMULA",
+    "affordability_view",
     "age_curve",
     "budget_position",
     "buy",
@@ -957,11 +1031,13 @@ __all__ = [
     "pay_wages",
     "release",
     "sell",
+    "signing_impact",
     "squad_rows",
     "tactical_fit",
     "transferable",
     "valuation",
     "wage_bill",
     "wage_row",
+    "wage_runway",
     "wages_as_of",
 ]

@@ -79,8 +79,15 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
 
 5. **Transfer windows.** Open/closed windows gate `POST /transfers`; a career tracks window state and
    rejects out-of-window moves with a published sentence.
-6. **Contracts & wages.** A wage bill per club, a budget ceiling, and a "can I afford this signing"
-   arithmetic that the scout already reasons over — make it a stored, recomputed figure.
+6. **Contracts & wages.** **Read-only half done (2026-10-25):** the wage bill and budget were already
+   recomputed from `career_squad_moves`/`career_wage_charges` (`wage_bill`, `budget_position`). Added
+   `affordability_view` (market.py) composing them into a **wage runway** (`max(0, remaining ÷
+   weekly_wage_committed)`, `None` when the bill is zero) and a **signing preview** (`signing_impact`:
+   `fee_affordable = remaining − price ≥ 0`, the balance after the fee, the new wage bill and its new
+   runway). Pure helpers `wage_runway`/`signing_impact` are pinned by `test_affordability.py`; the block is
+   surfaced read-only on `career_view["affordability"]` and asserted in `test_career.py`. Everything is
+   recomputed on the read — no stored counter. **Pending:** a per-listing "can I afford this" figure on the
+   transfers page (web/i18n, concurrent session), and a budget *ceiling* (a hard cap distinct from a balance).
 7. **Youth academy outcomes.** Academy trainees graduate into the squad with attributes derived from
    their `Sessions`/`Reports` (M8 already stores the load); the graduation is a deterministic roll.
 8. **Board expectations & relegation.** A season target (points / position) and a pyramid move at the

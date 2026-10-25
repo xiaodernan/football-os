@@ -466,6 +466,13 @@ def _consistency(session: Session, rows: list[CareerFixture]) -> str:
     return f"{checked} of {len(rows)} fixtures re-checked against their stored match report; all agree"
 
 
+def _affordability(session: Session, career: Career) -> dict[str, Any]:
+    """The finance standing, read through a local import: `market` reaches `challenges`, which imports this module."""
+    from app.services.simulation.market import affordability_view
+
+    return affordability_view(session, career)
+
+
 def development_view(session: Session, career: Career) -> dict[str, Any]:
     """A read-only projection of how the career's players have developed from fixture minutes (M13 item 4).
 
@@ -568,6 +575,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "consistency": _consistency(session, rows),
         "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1),
         "development": development_view(session, career),
+        "affordability": _affordability(session, career),
         "model_versions": sorted({row.model_version for row in rows if row.model_version}),
         "limitations": limitations(),
         "disclaimer": CAREER_DISCLAIMER,
