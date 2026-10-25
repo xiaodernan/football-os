@@ -214,6 +214,8 @@ class TestJudging:
         assert aff["remaining"] == view["career"]["budget"], "a career with no move and no wage row has spent nothing"
         assert aff["weekly_wage_bill"] == 0 and aff["wage_runway_rounds"] is None
         assert aff["signing"]["price"] == 0 and aff["signing"]["fee_affordable"] is True
+        assert aff["timeline"]["entries"] == 0 and aff["timeline"]["disagreements"] == 0
+        assert aff["timeline"]["opening_balance"] == aff["timeline"]["closing_balance"] == aff["remaining"]
 
     def test_a_deleted_match_report_leaves_the_career_readable(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)

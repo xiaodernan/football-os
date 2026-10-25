@@ -522,6 +522,13 @@ AFFORDABILITY_FORMULA: Final = (
     "balance after the fee against the wage bill the signing would add"
 )
 
+#: The budget timeline's arithmetic: opening balance plus each ledger row's delta, in round order.
+TIMELINE_FORMULA: Final = (
+    "balance starts at career.budget and moves by each ledger row in round order (a round's moves before its "
+    "wage charge): sell +fee, buy/loan −fee, release 0, wage −fee; each row's stored budget_after is compared "
+    "with the running figure and any disagreement is counted"
+)
+
 
 def wage_runway(remaining: int, weekly_wage: int) -> int | None:
     """How many further rounds the current balance covers the current weekly wage bill.
@@ -581,6 +588,75 @@ def affordability_view(session: Session, career: Career, *, price: int = 0, week
         "note": (
             "a read-only preview: the runway is how many more rounds the balance covers the wage bill the career "
             "already holds, and the signing block is the same arithmetic with one prospective deal added"
+        ),
+        "timeline": budget_timeline(session, career, limit=8),
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
+def budget_timeline(session: Session, career: Career, *, limit: int = 12) -> dict[str, Any]:
+    """The balance over time, recomputed from the ledger rows and checked against each row's stored figure.
+
+    Moves and wage charges are the whole ledger, and each row stores the `budget_after` it produced. This
+    walks them in round order (a round's moves before its wage charge, then by creation), recomputes the
+    running balance from `career.budget`, and counts every row whose stored figure disagrees — so a page
+    can print the trajectory and a reader can add the column up to the same total.
+    """
+    round_index = int(career.rounds_played) + 1
+    keyed: list[tuple[tuple[int, int, str, str], dict[str, Any]]] = []
+    for move in moves_as_of(session, career.id, round_index):
+        kind = str(move.kind)
+        delta = int(move.fee) if kind == "sell" else -int(move.fee) if kind in IN_KINDS else 0
+        keyed.append(
+            (
+                (int(move.round_index), 0, str(move.created_at or ""), str(move.id)),
+                {
+                    "round_index": int(move.round_index),
+                    "kind": kind,
+                    "label": f"{kind} {move.player_name}".strip(),
+                    "delta": delta,
+                    "stored_budget_after": int(move.budget_after),
+                },
+            )
+        )
+    for charge in wages_as_of(session, career.id, round_index):
+        keyed.append(
+            (
+                (int(charge.round_index), 1, str(charge.created_at or ""), str(charge.id)),
+                {
+                    "round_index": int(charge.round_index),
+                    "kind": "wage",
+                    "label": f"wages for {int(charge.players)} player(s)",
+                    "delta": -int(charge.fee),
+                    "stored_budget_after": int(charge.budget_after),
+                },
+            )
+        )
+    keyed.sort(key=lambda item: item[0])
+    balance = int(career.budget)
+    rows: list[dict[str, Any]] = []
+    disagreements = 0
+    for _key, entry in keyed:
+        balance += int(entry["delta"])
+        agrees = int(entry["stored_budget_after"]) == balance
+        if not agrees:
+            disagreements += 1
+        rows.append({**entry, "balance": balance, "agrees": agrees})
+    shown = rows[-limit:] if limit > 0 else rows
+    return {
+        "entries": len(rows),
+        "entries_shown": len(shown),
+        "truncated": len(shown) < len(rows),
+        "opening_balance": int(career.budget),
+        "closing_balance": balance,
+        "disagreements": disagreements,
+        "rows": shown,
+        "units": career.budget_units,
+        "formula": TIMELINE_FORMULA,
+        "note": (
+            "recomputed in round order from career.budget; a row whose stored budget_after disagrees with the "
+            "running figure is counted, not hidden"
         ),
         "data_origin": "simulation",
         "is_demo_data": True,
@@ -924,10 +1000,22 @@ def wage_row(charge: CareerWageCharge) -> dict[str, Any]:
 
 
 def ledger_of(moves: list[dict[str, Any]], charges: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """The two money tables as one ledger, in the order a reader has to add them up."""
+    """The two money tables as one ledger, in the order a reader has to add them up.
+
+    Within a round a career's moves come before its wage charge: the moves were made before the fixture
+    and the charge was written after it, so the running total only matches each row's stored
+    `budget_after` in that order. Ordering by timestamp alone is not enough — two rows written in the
+    same instant tie, and the tie-break by id is arbitrary, which made the ledger's total disagree with
+    a stored `budget_after` depending on how fast the rows were written.
+    """
     return sorted(
         [*moves, *charges],
-        key=lambda entry: (int(entry["round_index"]), str(entry["created_at"] or ""), str(entry["id"])),
+        key=lambda entry: (
+            int(entry["round_index"]),
+            1 if str(entry.get("kind", "")) == "wage" else 0,
+            str(entry["created_at"] or ""),
+            str(entry["id"]),
+        ),
     )
 
 
@@ -1011,11 +1099,13 @@ __all__ = [
     "NOT_FOUND_CODES",
     "RULES",
     "SELL_FORMULA",
+    "TIMELINE_FORMULA",
     "VALUATION_FORMULA",
     "WAGE_FORMULA",
     "affordability_view",
     "age_curve",
     "budget_position",
+    "budget_timeline",
     "buy",
     "club_need",
     "held_deals",

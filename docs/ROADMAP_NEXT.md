@@ -86,8 +86,14 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    `fee_affordable = remaining − price ≥ 0`, the balance after the fee, the new wage bill and its new
    runway). Pure helpers `wage_runway`/`signing_impact` are pinned by `test_affordability.py`; the block is
    surfaced read-only on `career_view["affordability"]` and asserted in `test_career.py`. Everything is
-   recomputed on the read — no stored counter. **Pending:** a per-listing "can I afford this" figure on the
-   transfers page (web/i18n, concurrent session), and a budget *ceiling* (a hard cap distinct from a balance).
+   recomputed on the read — no stored counter. Also added **`budget_timeline`**: the running balance walked
+   in round order from `career.budget`, cross-checked against each row's stored `budget_after`, with any
+   disagreement counted (`test_transfers.py::TestLedger` pins it). That walk exposed a latent ordering bug:
+   `ledger_of` sorted only by timestamp, so a round's move and wage charge written in the same instant could
+   tie and be ordered arbitrarily, breaking the stored-balance invariant depending on write speed. Fixed by
+   ordering a round's moves before its wage charge explicitly (the order they are actually written in).
+   **Pending:** a per-listing "can I afford this" figure on the transfers page (web/i18n, concurrent
+   session), and a budget *ceiling* (a hard cap distinct from a balance).
 7. **Youth academy outcomes.** Academy trainees graduate into the squad with attributes derived from
    their `Sessions`/`Reports` (M8 already stores the load); the graduation is a deterministic roll.
 8. **Board expectations & relegation.** A season target (points / position) and a pyramid move at the

@@ -343,6 +343,26 @@ class TestLedger:
         assert position["formula"] == BUDGET_FORMULA and "wage_charges" in BUDGET_FORMULA
         assert position["units"] == career.budget_units
 
+    def test_the_timeline_walks_the_ledger_in_round_order_and_agrees_with_every_row(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        _sign(session, world, career, band="attack")
+        career_service.play_round(session, career)
+        _sign(session, world, career, band="midfield", rounds=2)
+        career_service.play_round(session, career)
+        timeline = market.budget_timeline(session, career, limit=0)
+        position = market.budget_position(session, career)
+        assert timeline["opening_balance"] == BUDGET
+        assert timeline["closing_balance"] == position["remaining"]
+        assert timeline["entries"] == timeline["entries_shown"] > 0 and timeline["truncated"] is False
+        assert timeline["disagreements"] == 0, "every stored budget_after matches the recomputed running total"
+        assert timeline["formula"] == market.TIMELINE_FORMULA and timeline["units"] == career.budget_units
+        running = BUDGET
+        for entry in timeline["rows"]:
+            running += entry["delta"]
+            assert entry["balance"] == running, "each row's balance is the running total"
+            assert entry["agrees"] is True
+        assert running == position["remaining"]
+
     def test_a_deal_the_balance_cannot_cover_refuses_with_its_numbers(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world, budget=0)
         market.open_market(session, career)
