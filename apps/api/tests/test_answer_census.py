@@ -225,7 +225,10 @@ def test_no_router_keeps_a_local_status_routing_set() -> None:
 def test_the_census_actually_saw_the_tree() -> None:
     """A scanner that parses nothing would find no disagreement; these floors make that red."""
     sites, table_driven, unresolved = _tree_sites()
-    assert len(sites) >= 95, f"only {len(sites)} resolvable raise sites — the walk stopped early"
+    # The floor tracks the *total* raise sites (below), not this bucket alone: a raise that asks the table
+    # for its status is counted as table-driven, and twelve such conversions moved sites from 95 to 83
+    # without losing a raise. 80 still catches a scanner that parses nothing, which is what this guards.
+    assert len(sites) >= 80, f"only {len(sites)} resolvable raise sites — the walk stopped early"
     assert len(ANSWERS) >= 228, f"the answer table shrank to {len(ANSWERS)} rows"
     # The refusal-class builders (`_ANSWERS.get(error.code, …)`) and the `to_dict()` shapes resolve to
     # neither bucket's assertion above, so each bucket is counted here: a sudden collapse to zero means

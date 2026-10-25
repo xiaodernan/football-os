@@ -238,6 +238,20 @@ class TestOpeningTheMarket:
             assert (row.overall, row.potential, row.age, row.position, row.player_slug) == (player.overall, player.potential, player.age, player.position, player.slug)
             assert row.from_team_name == str(session.scalar(select(Team.name).where(Team.id == player.team_id)))
 
+    def test_each_offer_says_what_the_signing_would_do_to_the_balance_and_the_runway(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        market.open_market(session, career)
+        view = market.market_view(session, career)
+        assert view["listings"], "an opened market offers rows"
+        budget = view["budget"]
+        for listing in view["listings"]:
+            signing = listing["signing"]
+            assert signing["price"] == listing["price_to_pay"]
+            assert signing["proposed_weekly_wage"] == listing["weekly_wage"]
+            assert signing["fee_affordable"] == listing["affordable"], "the per-listing preview agrees with the flag beside it"
+            assert signing["remaining_after_fee"] == budget["remaining"] - listing["price_to_pay"]
+            assert signing["new_weekly_wage_bill"] == budget["wage_committed_per_week"] + listing["weekly_wage"]
+
     def test_the_same_squad_offers_the_same_market(self, session, world) -> None:  # type: ignore[no-untyped-def]
         """No draw anywhere: the twelve are a function of the world's rows and this career's squad."""
         first, second = _career(session, world), _career(session, world)

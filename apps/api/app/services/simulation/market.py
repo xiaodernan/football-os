@@ -932,6 +932,15 @@ def listing_row(session: Session, career: Career, row: TransferListing, balance:
         "rival": rival,
         "price_to_pay": price,
         "affordable": price <= int(standing["remaining"]),
+        # What this offer would do to the balance and the wage runway, from the same arithmetic the
+        # affordability block publishes: `fee_affordable` here is exactly `affordable` above, and the
+        # runway is the balance after the fee against the bill the signing would add.
+        "signing": signing_impact(
+            int(standing["remaining"]),
+            int(standing["wage_committed_per_week"]),
+            price=price,
+            proposed_weekly_wage=int(row.weekly_wage),
+        ),
         "clause_required": rival,
         "data_origin": row.data_origin,
         "is_demo_data": row.is_demo_data,
