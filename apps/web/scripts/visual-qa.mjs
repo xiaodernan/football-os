@@ -27,6 +27,11 @@ import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
 
 const BASE = process.env.QA_BASE ?? 'http://127.0.0.1:3210';
+// The API's own address, for the one walk actor that is a client rather than a browser: the
+// notification section's stranger authenticates with Bearer, and the web proxy deliberately
+// drops inbound Authorization headers (ADR-003 — the browser never sees a token), so the
+// stranger cannot ride the proxy the way the page's own fetches do.
+const API_BASE = process.env.QA_API ?? 'http://127.0.0.1:8731';
 const CHROME =
   process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const OUT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../../docs/screenshots');
@@ -3261,6 +3266,67 @@ async function run() {
     // 15. An authenticated visitor is bounced off the public auth pages, then signs out.
     await open(page, '/login');
     check('signed-in visitor is redirected away from /login', new URL(page.url()).pathname !== '/login', new URL(page.url()).pathname);
+
+    // 15b. Notifications (spec module 27): three community verbs write rows for the recipient,
+    // never for the actor. The stranger acts through the API directly; the walk user reads the
+    // tray in the browser, marks it all read, and reads the badge go quiet.
+    const post_id = await page.evaluate(async () => {
+      const response = await fetch('/api/v1/community/posts', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ kind: 'note', body: 'A post the notification walk will hear about.' }),
+      });
+      return (await response.json()).post?.id ?? null;
+    });
+    check('the notification walk publishes its own post through the wall', Boolean(post_id), String(post_id));
+
+    const strangerActions = await fetch(`${API_BASE}/api/v1/auth/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: `ntf-walk-${Date.now()}@example.test`, password: 'strong-pass-1234', display_name: 'Ntf Stranger', role: 'fan', accepts_data_policy: true }),
+    });
+    const strangerToken = (await strangerActions.json()).access_token;
+    const asStranger = async (path, method = 'GET', body) => {
+      const response = await fetch(`${API_BASE}${path}`, {
+        method,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${strangerToken}` },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      return { status: response.status, body: await response.json().catch(() => null) };
+    };
+    // the walk account's member id: the community's members door is the address book
+    const meId = await page.evaluate(async () => (await fetch('/api/v1/auth/me', { credentials: 'same-origin' })).json().id);
+    const followPress = await asStranger(`/api/v1/community/follows/${meId}`, 'POST');
+    const reactionPress = await asStranger(`/api/v1/community/posts/${post_id}/reactions`, 'POST', { reaction: 'like' });
+    const commentPress = await asStranger(`/api/v1/community/posts/${post_id}/comments`, 'POST', { body: "The notification walk reply." });
+    check(
+      'a stranger can reach the wall verbs that write notifications',
+      followPress.status === 200 && reactionPress.status === 200 && commentPress.status === 200,
+      `follow ${followPress.status} · reaction ${reactionPress.status} · comment ${commentPress.status}`,
+    );
+
+    await open(page, '/notifications');
+    await waitForText(page, 'Notifications');
+    const trayBody = await bodyText(page);
+    check(
+      'the tray holds all three events, named for the reader and with the actor the sentence carries',
+      /Follower/iu.test(trayBody) && /Comment/iu.test(trayBody) && /Reaction/iu.test(trayBody) && /Ntf Stranger/u.test(trayBody),
+      `unread chip text: ${trayBody.match(/\d+ unread of \d+/iu)?.[0] ?? 'none'}`,
+    );
+    check(
+      'the tray names its own arithmetic',
+      /unread_total = count/iu.test(trayBody),
+    );
+
+    await clickByText(page, 'button', 'Mark all read');
+    await waitForText(page, '0 unread', 30_000);
+    const trayAfter = await bodyText(page);
+    check('marking all read empties the badge arithmetic on the page', /0 unread of \d+/iu.test(trayAfter), trayAfter.match(/\d+ unread of \d+/iu)?.[0] ?? 'none');
+
+    await open(page, '/notifications');
+    const badgeGone = await page.evaluate(() => !document.querySelector('.nav__link[href="/notifications"] .chip--accent'));
+    check('the nav badge goes quiet once the tray is read', badgeGone);
 
     // 16. Sign out clears the cookies; the login screen must still work at 375px.
     await open(page, '/settings');
