@@ -418,6 +418,81 @@ def mini_table(rows: list[CareerFixture], career: Career) -> list[dict[str, Any]
     return table
 
 
+HEAD_TO_HEAD_FORMULA: Final = (
+    "played/won/drawn/lost and goals are sums over career_fixtures where opponent_team_id = this opponent; "
+    "points are 3 per win, 1 per draw, 0 per loss"
+)
+
+
+def head_to_head(session: Session, career: Career, opponent_team_id: str | None) -> dict[str, Any]:
+    """This career's own record against one opponent, summed from its fixtures and nothing else.
+
+    A page that showed the opponent's record against everyone, or this career's record against all
+    opponents, would be answering a different question. This answers the one a manager asks before a
+    fixture: how have *we* done against *them*.
+    """
+    if not opponent_team_id:
+        return {
+            "available": False,
+            "reason": "there is no next opponent to compare against",
+            "formula": HEAD_TO_HEAD_FORMULA,
+            "data_origin": "simulation",
+            "is_demo_data": True,
+        }
+    rows = [row for row in fixtures_of(session, career) if row.opponent_team_id == opponent_team_id]
+    if not rows:
+        return {
+            "available": True,
+            "opponent_team_id": opponent_team_id,
+            "opponent_name": "",
+            "played": 0,
+            "won": 0,
+            "drawn": 0,
+            "lost": 0,
+            "goals_for": 0,
+            "goals_against": 0,
+            "goal_difference": 0,
+            "points": 0,
+            "meetings": [],
+            "formula": HEAD_TO_HEAD_FORMULA,
+            "note": "this career has not met this opponent yet",
+            "data_origin": "simulation",
+            "is_demo_data": True,
+        }
+    won = sum(1 for row in rows if row.outcome == "W")
+    drawn = sum(1 for row in rows if row.outcome == "D")
+    lost = sum(1 for row in rows if row.outcome == "L")
+    scored = sum(int(row.club_goals) for row in rows)
+    conceded = sum(int(row.opponent_goals) for row in rows)
+    return {
+        "available": True,
+        "opponent_team_id": opponent_team_id,
+        "opponent_name": rows[0].opponent_name,
+        "played": len(rows),
+        "won": won,
+        "drawn": drawn,
+        "lost": lost,
+        "goals_for": scored,
+        "goals_against": conceded,
+        "goal_difference": scored - conceded,
+        "points": sum(int(row.points) for row in rows),
+        "meetings": [
+            {
+                "round_index": row.round_index,
+                "side": row.side,
+                "club_goals": row.club_goals,
+                "opponent_goals": row.opponent_goals,
+                "outcome": row.outcome,
+            }
+            for row in rows[-5:]
+        ],
+        "formula": HEAD_TO_HEAD_FORMULA,
+        "note": "only this career's own fixtures; it is not the opponent's record against anyone else",
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
 def objectives_of(career: Career, record: dict[str, Any]) -> list[dict[str, Any]]:
     actual_by_kind = {
         "wins": record["won"],
@@ -650,6 +725,8 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "demo_data": True,
     }
     if include_fixtures:
+        plan = next_fixture_plan(session, career)
+        view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None)
         view["ledger"] = ledger_view(session, career)
         view["fixtures"] = [
             {
@@ -690,6 +767,7 @@ __all__ = [
     "OBJECTIVE_FORMULA",
     "POINTS_FOR",
     "BOARD_FORMULA",
+    "HEAD_TO_HEAD_FORMULA",
     "WindowClosed",
     "board_view",
     "career_view",
@@ -697,6 +775,7 @@ __all__ = [
     "development_view",
     "create_career",
     "fixtures_of",
+    "head_to_head",
     "limitations",
     "mini_table",
     "next_fixture_plan",

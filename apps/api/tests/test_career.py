@@ -295,3 +295,37 @@ class TestBoard:
         session.commit()
         board = career_service.board_view(session, career, [], career_service.record_of([]))
         assert board["season_rounds"] == 5 and "window" in board["season_source"]
+
+
+class TestHeadToHead:
+    def test_an_unseen_opponent_reads_as_zero_not_as_broken(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        view = career_service.head_to_head(session, career, "wtem_nobody")
+        assert view["available"] is True and view["played"] == 0
+        assert view["goals_for"] == view["goals_against"] == 0 and view["meetings"] == []
+        assert "not met" in view["note"]
+
+    def test_a_met_opponent_sums_only_this_careers_fixtures(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(3):
+            career_service.play_round(session, career)
+        rows = career_service.fixtures_of(session, career)
+        opponent_id = rows[0].opponent_team_id
+        met = [row for row in rows if row.opponent_team_id == opponent_id]
+        view = career_service.head_to_head(session, career, opponent_id)
+        assert view["played"] == len(met)
+        assert view["won"] == sum(1 for row in met if row.outcome == "W")
+        assert view["drawn"] == sum(1 for row in met if row.outcome == "D")
+        assert view["lost"] == sum(1 for row in met if row.outcome == "L")
+        assert view["goals_for"] == sum(row.club_goals for row in met)
+        assert view["goals_against"] == sum(row.opponent_goals for row in met)
+        assert view["points"] == 3 * view["won"] + view["drawn"]
+        assert len(view["meetings"]) == min(5, len(met))
+
+    def test_the_view_carries_head_to_head_for_the_next_opponent(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(3):
+            career_service.play_round(session, career)
+        view = career_service.career_view(session, career)
+        assert "head_to_head" in view and view["head_to_head"]["available"] is True
+        assert view["head_to_head"]["played"] == 0, "the fourth round of the first cycle meets an opponent this career has not played"
