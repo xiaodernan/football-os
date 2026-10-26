@@ -61,8 +61,8 @@ def upgrade() -> None:
         sa.Column("note", sa.String(length=280), nullable=False, server_default=""),
         sa.Column("data_origin", sa.String(length=20), nullable=False, server_default="user"),
         sa.Column("is_demo_data", sa.Boolean(), nullable=False, server_default=sa.false()),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"], name=op.f("fk_club_fixtures_organizations"), ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["team_id"], ["club_teams.id"], name=op.f("fk_club_fixtures_club_teams"), ondelete="CASCADE"),
         # A borrowed world club that vanishes leaves the arrangement standing as a row with no opponent row
@@ -98,8 +98,8 @@ def upgrade() -> None:
         sa.Column("note", sa.String(length=280), nullable=False, server_default=""),
         sa.Column("data_origin", sa.String(length=20), nullable=False, server_default="user"),
         sa.Column("is_demo_data", sa.Boolean(), nullable=False, server_default=sa.false()),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"], name=op.f("fk_club_match_appearances_organizations"), ondelete="CASCADE"),
         # Erasing the fixture erases the record of who played it: the appearance is a fact *about* that fixture,
         # and §40's deletion rule asks for the child's rows to follow their own tenant's erasure, not to outlive it.
