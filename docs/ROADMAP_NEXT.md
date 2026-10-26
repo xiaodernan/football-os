@@ -180,7 +180,8 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 - **Career-view depth, all read-only and recomputed from rows.** `development` (fixture minutes + training
   projected toward potential), `affordability` (wage runway + signing preview + budget timeline),
   `contracts` (the deal book: projected expiry from the stored terms, flagged inside a warning window, and
-  explicitly not enforced), `board` (season pace projection against the objectives), and `head_to_head`
+  explicitly not enforced — plus the squad's age profile and retirement flags from the stored ages),
+  `board` (season pace projection against the objectives), and `head_to_head`
   (this career's own record against the next opponent, from its fixtures and nothing else). Each has its
   own formula in the payload and its own tests; none writes a stored counter. `limitations()["projections"]`
   now says all five are read-only projections that change no stored attribute, expire no contract and trigger

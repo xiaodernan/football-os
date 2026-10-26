@@ -803,3 +803,16 @@ class TestContracts:
         row = book["rows"][0]
         assert row["rounds_remaining"] <= market.EXPIRY_WARNING_ROUNDS and row["expiring_soon"] is True
         assert book["expiring_soon"] == 1 and book["expiring_weekly_wage"] == row["weekly_wage"]
+
+    def test_the_book_carries_the_squads_age_profile_from_stored_ages(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        squad, _account = squad_service.current_squad(session, career)
+        ages = sorted(int(player.age) for player in squad)
+        profile = market.contract_book(session, career, season_rounds=6)["age_profile"]
+        assert profile["players"] == len(ages) == len(squad) > 0
+        assert profile["mean"] == round(sum(ages) / len(ages), 1)
+        assert profile["median"] == ages[len(ages) // 2]
+        assert sum(profile["bands"].values()) == len(ages), "every player falls in exactly one band"
+        assert all(item["age"] >= market.RETIREMENT_AGE for item in profile["retirement_risk"])
+        assert profile["retirement_age"] == market.RETIREMENT_AGE
+        assert "stored" in profile["note"], "the profile says the ages are the world's, not this build's"

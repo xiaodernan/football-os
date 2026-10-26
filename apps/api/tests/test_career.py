@@ -222,6 +222,7 @@ class TestJudging:
         assert view["board"]["points_per_round"] == round(view["record"]["points"] / 1, 3)
         # A career that has made no deal has an empty contract book, not a missing one.
         assert view["contracts"]["deals"] == 0 and view["contracts"]["rows"] == []
+        assert view["contracts"]["age_profile"]["players"] > 0 and view["contracts"]["age_profile"]["mean"] > 0
 
     def test_a_deleted_match_report_leaves_the_career_readable(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)

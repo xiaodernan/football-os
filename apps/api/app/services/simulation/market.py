@@ -537,6 +537,10 @@ CONTRACT_FORMULA: Final = (
 )
 EXPIRY_WARNING_ROUNDS: Final = 3
 
+#: The age at which the squad profile flags a player as a retirement risk. Nothing in this build ages or
+#: retires a player, so this is a flag on the world's stored age, not a projection.
+RETIREMENT_AGE: Final = 35
+
 
 def wage_runway(remaining: int, weekly_wage: int) -> int | None:
     """How many further rounds the current balance covers the current weekly wage bill.
@@ -681,6 +685,8 @@ def contract_book(session: Session, career: Career, *, season_rounds: int) -> di
     """
     round_index = int(career.rounds_played) + 1
     held = held_deals(session, career.id, round_index)
+    squad, _account = current_squad(session, career)
+    ages = sorted(int(player.age) for player in squad)
     rows: list[dict[str, Any]] = []
     for move in held:
         kind = effective_kind(move, round_index)
@@ -712,6 +718,24 @@ def contract_book(session: Session, career: Career, *, season_rounds: int) -> di
         )
     rows.sort(key=lambda item: (item["rounds_remaining"] is None, item["rounds_remaining"] or 0, str(item["player_name"])))
     expiring = [row for row in rows if row["expiring_soon"]]
+    age_profile = {
+        "players": len(ages),
+        "mean": round(sum(ages) / len(ages), 1) if ages else None,
+        "median": ages[len(ages) // 2] if ages else None,
+        "bands": {
+            "under_21": sum(1 for age in ages if age < 21),
+            "21_to_25": sum(1 for age in ages if 21 <= age <= 25),
+            "26_to_29": sum(1 for age in ages if 26 <= age <= 29),
+            "30_to_33": sum(1 for age in ages if 30 <= age <= 33),
+            "34_plus": sum(1 for age in ages if age >= 34),
+        },
+        "retirement_age": RETIREMENT_AGE,
+        "retirement_risk": sorted(
+            [{"player_name": player.name, "age": int(player.age)} for player in squad if int(player.age) >= RETIREMENT_AGE],
+            key=lambda item: (-item["age"], item["player_name"]),
+        ),
+        "note": "ages are the world's stored figures; nothing in this build ages a player or retires one",
+    }
     return {
         "deals": len(rows),
         "expiring_soon": len(expiring),
@@ -721,6 +745,7 @@ def contract_book(session: Session, career: Career, *, season_rounds: int) -> di
         "total_weekly_wage": sum(row["weekly_wage"] for row in rows),
         "expiring_weekly_wage": sum(row["weekly_wage"] for row in expiring),
         "rows": rows,
+        "age_profile": age_profile,
         "units": career.budget_units,
         "formula": CONTRACT_FORMULA,
         "note": (
@@ -1177,6 +1202,7 @@ __all__ = [
     "MarketRefusal",
     "NEGOTIATION_FORMULA",
     "NOT_FOUND_CODES",
+    "RETIREMENT_AGE",
     "RULES",
     "SELL_FORMULA",
     "TIMELINE_FORMULA",
