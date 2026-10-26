@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
+import { CareerBoard } from "@/components/CareerBoard";
 import { CareerFinance } from "@/components/CareerFinance";
 import { CareerTools } from "@/components/CareerTools";
 import { LEDGER_COLUMNS, type SeasonLedger } from "@/lib/ledger";
@@ -144,6 +145,8 @@ export default async function CareerDetailPage({ params }: Props) {
           <p className="muted">{view.limitations.objectives}</p>
         </Panel>
       </div>
+
+      <CareerBoard t={t} view={view.board} limitation={view.limitations.projections} />
 
       <CareerFinance t={t} view={view.affordability} limitation={view.limitations.projections} />
 

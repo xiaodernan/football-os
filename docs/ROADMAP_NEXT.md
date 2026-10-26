@@ -118,8 +118,17 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    where the horizon is the challenge's window or a double round-robin over the competition's clubs — and
    marks each additive objective (wins / points / goal difference) `on_pace`; an unbeaten run is a streak,
    not a sum, so it is reported as it stands rather than extrapolated. Surfaced read-only on
-   `career_view["board"]`, pinned by `TestBoard` in `test_career.py`. **Pending:** the pyramid move itself
-   (promotion/relegation) needs a multi-tier league structure (see item 9).
+   `career_view["board"]`, pinned by `TestBoard` in `test_career.py`. **Career-page rendering done
+   (2026-10-27):** `components/CareerBoard.tsx` renders the block on `/career/{slug}` — the horizon and
+   its source, both per-round paces, the three projected figures or an explicit "nothing projected yet",
+   the on-track verdict, and one row per objective with target / so far / at this pace / on pace / off the
+   pace / as it stands. Twenty-five keys per locale (population **3,657**, **3,612** translated; shared-key
+   ceiling stays **234 bindings / 98 rows**). Verified on a production build: **93/93** checks across three
+   careers — 3 rounds with all three row verdicts (projection 3 wins · 8 points · −5 GD, one target off
+   pace), a never-played career (empty projection, unprojectable verdict), and a two-round career whose
+   target is on pace — in `en` and `zh`. Recorded in
+   [M13_BOARD_PROJECTION_VERIFICATION.md](M13_BOARD_PROJECTION_VERIFICATION.md). **Pending:** the pyramid
+   move itself (promotion/relegation) needs a multi-tier league structure (see item 9).
 
 *Gate:* the season ledger still sums from `sim_events` rows; a new door gets a route-citation entry;
 isolation walk over any new tenant-scoped door.

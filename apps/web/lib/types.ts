@@ -1519,6 +1519,36 @@ export type AffordabilityView = {
   is_demo_data: boolean;
 };
 
+/** One stored objective, with the pace projection the board reads onto it (career.py `board_view`). */
+export type CareerBoardObjective = CareerObjective & {
+  /** The additive projection for this kind, or `null` when the kind is a streak and cannot be summed. */
+  projected: number | null;
+  /** `null` when there is no projection at all, as on a career that has not played a round. */
+  on_pace: boolean | null;
+};
+
+/**
+ * The season at its current pace: the record extended over the season's own horizon, and each
+ * additive objective set against it. Recomputed from the career's rows on every read; nothing stored.
+ */
+export type CareerBoard = {
+  season_rounds: number;
+  /** Where the horizon came from, in the API's words: a challenge window, or a double round-robin. */
+  season_source: string;
+  played: number;
+  points_per_round: number | null;
+  goals_for_per_round: number | null;
+  /** Empty on a career that has not played yet, or one with no horizon to project over. */
+  projected: Record<string, number>;
+  objectives: CareerBoardObjective[];
+  /** `null` when no objective has an additive projection, so nothing can be on or off pace. */
+  on_track: boolean | null;
+  formula: string;
+  note: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
@@ -1531,6 +1561,8 @@ export type CareerView = {
   carry_over: import("./carryOver").CarryOverView;
   /** Phase 2: the wage runway and the budget timeline, recomputed from the ledger on every read. */
   affordability: AffordabilityView;
+  /** ROADMAP item 8: the season projected at the current pace, recomputed from the fixtures on every read. */
+  board: CareerBoard;
   /** ROADMAP item 10: this season per player, counted off `sim_events`. Absent on a list row or run view. */
   ledger?: import("./ledger").SeasonLedger;
   limitations: {
