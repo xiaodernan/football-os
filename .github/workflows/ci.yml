@@ -220,8 +220,14 @@ jobs:
         run: node scripts/qa-locale-formatting.mjs
       - name: Plural-select gate (ICU plural/select branches complete per locale)
         run: node scripts/qa-plural-select.mjs
-      - name: Key-drift gate (semantic drift detection across namespaces)
+      - name: Key-drift gate (same-context drift named, cross-namespace drift under its ceiling)
         run: node scripts/qa-key-drift.mjs
+      - name: Key-drift behaviour gate (each verdict, on scratch catalogues)
+        # Same command as `scripts/check.sh`. The step above is green on a correct tree because the 12
+        # same-context sites are named and the cross-namespace count is a ceiling; this one holds that a new
+        # same-context drift, a missing key, a tree past the ceilings and an empty catalogue are each red.
+        # Files only: no server, no browser.
+        run: node scripts/qa-key-drift-witness.mjs
       - name: Locale-content gate (locale-specific content differences tracked)
         run: node scripts/qa-locale-content.mjs
       - name: Locale-completeness gate (every namespace has identical keys in all three locales)

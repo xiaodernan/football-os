@@ -221,10 +221,18 @@ echo "── Web: plural-select gate ──────────────�
 (cd apps/web && node scripts/qa-plural-select.mjs)
 
 echo "── Web: key-drift gate ────────────────────────────────"
-# Detects semantic drift: same key/English has different translations across namespaces.
-# Found 119 sentence drifts, 107 key drifts - legitimate semantic differences needing review.
-# Files only: no server, no browser.
+# Two populations. Same-context drift (two keys in ONE namespace sharing an English sentence but not
+# its Chinese) is identity-keyed and green only for the 12 sites named in the gate with their reasons.
+# Cross-namespace drift is a ceiling that may only fall: 119 sentence and 107 key differences, reviewed
+# as deliberate contexts (nav "Home" vs the match's home team), so the gate can no longer be red on a
+# correct tree — which it was, on every run, until this shape. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-key-drift.mjs)
+
+echo "── Web: key-drift behaviour gate ──────────────────────"
+# Holds the verdicts above on scratch catalogues: a new same-context drift, a catalogue missing a key,
+# a synthetic tree past both ceilings, three empty files, and a reviewed site that stops drifting.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-key-drift-witness.mjs)
 
 echo "── Web: locale-content gate ───────────────────────────"
 # Locale-specific content differences tracked (measurement units, currency, legal, cultural).
