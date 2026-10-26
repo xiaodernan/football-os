@@ -730,10 +730,13 @@ def contract_book(session: Session, career: Career, *, season_rounds: int) -> di
             "34_plus": sum(1 for age in ages if age >= 34),
         },
         "retirement_age": RETIREMENT_AGE,
-        "retirement_risk": sorted(
-            [{"player_name": player.name, "age": int(player.age)} for player in squad if int(player.age) >= RETIREMENT_AGE],
-            key=lambda item: (-item["age"], item["player_name"]),
-        ),
+        "retirement_risk": [
+            {"player_name": name, "age": age}
+            for name, age in sorted(
+                [(player.name, int(player.age)) for player in squad if int(player.age) >= RETIREMENT_AGE],
+                key=lambda row: (-row[1], row[0]),
+            )
+        ],
         "note": "ages are the world's stored figures; nothing in this build ages a player or retires one",
     }
     return {
