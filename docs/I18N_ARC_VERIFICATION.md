@@ -1186,3 +1186,111 @@ about a shape, not about the tree.
 **And a third defect it showed:** the collected route patterns carried **trailing slashes** where the
 read paths did not, so every route was reported uncovered — the matcher fix normalizes trailing
 slashes before comparing.
+
+## 17. A shared key name is not a shared sentence (2026-10-26)
+
+### The claim the gate was making
+
+`qa-shared-keys.mjs` was written to answer *which shared keys are deliberate and which are accidental*.
+It answered a different question: it collected every key **name** that appeared in more than one
+namespace and asked a human to name a reason for each row — **234 rows** on 2026-10-26, of which
+**133** were named by a pattern or by hand and **101** were admitted by a tolerance ("allow up to 120
+unnamed keys … within tolerance"). Two consequences, both measured:
+
+* **A tolerance cannot see a new site.** A new key sharing a name with one in another namespace took
+  101 to 102 and passed. The gate could not tell a deliberate reuse from the first day of a drift.
+* **Most of its rows were not shared at all.** `backLabel` appears in fifteen namespaces and holds
+  fifteen different sentences; `askFailed` holds three. They share a convention of naming, not copy:
+  **136 of the 234 rows** are like that.
+
+The defect a cross-namespace gate exists for is the other thing: one English sentence stored in two
+namespaces must be *translated* the same way. **The old gate never compared a value.**
+
+### What the value comparison found
+
+Of the **98** rows whose English sentence is the same in every namespace that holds the key, **24**
+carried different Chinese. `community.publishing` said "发布中…" where `creator.publishing` said
+"正在发布…"; `community.thAnswer` said "回答" where three other namespaces said "作答";
+`myFootball.openDrill` said "打开动作" where the coach page said "打开训练". None of them could move the
+old gate's verdict.
+
+**And no other gate could see them either.** `qa-locale-tokens.mjs` holds a floor at zero for the same
+sentence under two keys — but its population skips values of **12 characters or fewer**, and every one
+of the 24 sentences is in that range (the longest, "Publishing…", is 11). The two gates partition the
+catalogue by length, and the short half had no value comparison at all.
+
+### The gate, now
+
+The population is value-shared rows (key plus the namespaces that hold it), and there are two verdicts:
+
+1. **A divergence** is green only for the rows named in the gate's ledger, each with the reason the two
+   contexts really differ. Nine rows survive review: `home` is the nav's Home page (首页) and a
+   fixture's home side (主队); `nobody` is no opponent (无对手) and no person (无人); `searching` is a
+   library's retrieval (检索) and a scout's player search (搜索); `thFixture` is the match-up in two
+   tables (对阵) and the scheduled round in the others (赛程); `thGd` abbreviates the column to one
+   character (净) to fit; `vs` is a token in the challenge card and 对阵 in the fixture line; `erase`
+   deletes a post (删除) and erases an account's own data (擦除); `playing` is a round in progress
+   (正在开踢) and a stored match being played back (播放中); `thP` is played in the league table (场)
+   and passes in the match table (传).
+2. **The duplicated-sentence population is a ceiling that may only fall** — 98 sentences in **234
+   namespace bindings**. The binding is the unit, not the row: a sentence added to a sixth namespace is
+   a sixth copy to keep in step, and counting rows alone would let it spread without a word. (The old
+   census's 234 rows are the same population partitioned — 98 value-shared and 136 independent; the
+   234 bindings are a different count that happens to equal the row total.)
+
+### The alignment
+
+The other **15 diverging rows** were the same phrase translated twice, and were aligned rather than
+named — 28 cross-namespace catalogue values (thirteen rows in both Chinese files, `adding` in
+Traditional only, `opening` in Simplified only), using the wording the other namespaces already had.
+The suite caught one interaction the alignment itself caused: bringing `challenges.met` into line with
+`careerDetail.met` broke its **same-namespace** pair with `challenges.metMissed`, and the key-drift
+gate said so at once (`1 site(s) not in the ledger: challenges|met,metMissed`). `metMissed` is the
+badge printed when an objective *is* met (`components/ChallengeRunTools.tsx:116`), so it took the same
+wording — **2 more edits**, 30 in total, across 16 distinct keys.
+
+### The witness, and the reverse control
+
+`qa-shared-keys-witness.mjs` runs the **shipped** gate against scratch catalogue copies through
+`QA_I18N_WEB`: **8/8 checks**. It holds an unreviewed divergence (and that the red names the row), a
+sixth namespace for an existing sentence (ceiling), a named divergence aligned away (stale ledger
+entry), three empty catalogues (population guard), and a shared key name holding a different sentence
+(which must stay green).
+
+Building the witness found two defects in the witness itself, both recorded because they are the
+arc's recurring lesson: the first run read 4/8 because a green check printed no `PASS` line, so the
+harness read green as "absent"; and the ceiling arm read green because the ceiling counted **rows**
+(98) rather than namespace bindings (234), so a sixth namespace changed nothing.
+
+The reverse control runs **HEAD's** gate over six fixtures — the real catalogues, an injected
+divergence, a sixth binding, a named row aligned away, three empty files, and a shared name with a
+different sentence. It is green on all six, including the three empty files: the old gate's one check
+was a name census that an unreadable catalogue satisfies vacuously.
+
+### The figures
+
+| | HEAD | now |
+|---|---|---|
+| key names held in two namespaces (the old population) | 234 (133 named, 101 tolerated) | not the population |
+| rows whose English is one sentence in every holder | 98 | 98 |
+| … translated differently in Chinese | **24** | **9, all named** |
+| namespace bindings of a duplicated sentence | 234 | 234 (ceiling) |
+| `qa-shared-keys.mjs` | 1/1 (name census) | **4/4** |
+| new witness | — | **8/8** |
+| old gate over six fixtures (reverse control) | **6/6 green** | — |
+
+Every catalogue and structural gate that the change touches reads green on this tree:
+`qa-locale-completeness` 2/2, `qa-locale-content` 3/3, `qa-locale-tokens` 5/5, `qa-token-drift` 2/2,
+`qa-unused-keys` 3/3, `qa-icu-coverage` 2/2, `qa-icu-messages` 2/2, `qa-plural-select` 2/2,
+`qa-namespace-ownership` 2/2, `qa-i18n-literals` 8/8, `qa-api-strings` 3/3,
+`qa-translation-freshness` 2/2, `qa-field-labels` 2/2, `qa-shared-keys` 4/4, `qa-key-drift` 4/4 and
+its witness 10/10; `qa-baseline-gates` 16/16 and `qa-population-floor` 3/3. `npm run typecheck` is
+clean. `qa-gate-inventory` reads **167/169**: the two reds charge `qa-translation-quality.mjs`, which
+is staged by another lane and is not invoked by `scripts/check.sh` or CI — not this change's file.
+The two server-bodied walks (`qa-carry`, `qa-ledger`) were not part of this measurement; no server was
+started for it.
+
+What this gate does **not** claim: that two namespaces holding one English sentence should share a key.
+The catalogue is namespace-scoped on purpose, and `nobody` is the proof that one word can be two
+sentences. That is exactly why the divergence ledger is written row by row instead of derived from the
+English.

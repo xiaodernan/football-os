@@ -1,19 +1,44 @@
 #!/usr/bin/env node
 /*
- * The shared keys that are deliberate, and the ones that need human review.
+ * A key NAME shared across namespaces is not a contract. A VALUE shared across namespaces is.
  *
- * A key that lives in two namespaces is a design question. Most are deliberate:
- * - Table headers (`thAge`, `thClub`, `thGoals`) shared by design
- * - UI constants (`backLabel`, `clearFilters`, `clear`) shared by design
- * - Meta fields (`metaTitle`, `metaDescription`) shared by design
- * - Common actions (`clearFilters`, `clear`, `backLabel`, `yes`, `no`) shared by design
- * - Empty states (`emptyTitle`, `emptyBody`, `emptyNote`) shared by design
- * - Error messages (`requestFailed`, `askFailed`) shared by design
- * - Labels that are the same concept (`attributesTitle`, `attributesEyebrow`)
+ * This gate used to count the first thing. It read every key whose *name* appeared in more than one namespace and
+ * asked that a human name a reason for each one — 234 rows on 2026-10-26, of which 133 were named by a pattern or by
+ * hand and 101 were admitted by a tolerance ("Allow up to 120 unnamed keys … within tolerance"). Two consequences,
+ * both measured:
  *
- * This gate holds that **every shared key is named with its reason**, the way the
- * locale-token gate names the technical tokens. A key that is not named is a finding;
- * a name that is no longer a reason is a finding.
+ *   - A tolerance cannot see a new site. Any new key that happened to share a name with one in another namespace
+ *     raised 101 to 102 and passed, so the gate could not tell a deliberate reuse from the first day of a drift.
+ *   - The rows it was counting were mostly not shared at all. `backLabel` appears in fifteen namespaces and holds
+ *     fifteen different sentences; `askFailed` holds three different sentences. They share a convention of naming,
+ *     not copy, and 136 of the 234 rows are like that.
+ *
+ * The defect the gate exists for is the other thing: one English sentence stored in two namespaces must be
+ * *translated* the same way, or the same label reads differently on two pages and a translator has to fix it twice.
+ * The old gate never compared a value. Measured on the same tree, of the **98** rows whose English really is one
+ * sentence across all the namespaces that hold it, **24** carried different Chinese — `community.publishing` said
+ * "发布中…" where `creator.publishing` said "正在发布…", `community.thAnswer` said "回答" where three other
+ * namespaces said "作答", `myFootball.openDrill` said "打开动作" where the coach page said "打开训练". None of
+ * them could move the old gate's verdict.
+ *
+ * So the population is value-shared rows, and there are two verdicts:
+ *
+ *   1. A **divergence** — the same English sentence translated differently across the namespaces that hold it — is
+ *      green only for the rows named in DIVERGENCES, each with the reason the two contexts really differ. Nine rows
+ *      survive that review: `home` is the nav's Home page and a fixture's home side ("首页" vs "主队"); `thP` is
+ *      played in the league table and passes in the match table ("场" vs "传"); `vs` is a token in the challenge
+ *      card and 对阵 in the fixture line. Every other divergence was the same phrase translated twice and was
+ *      aligned on 2026-10-26, in both Chinese catalogues, rather than named.
+ *   2. The **population of duplicated sentences** is a ceiling that may only fall — 98 sentences held in **234**
+ *      namespace bindings today. The binding count is what is held, not the row count: a sentence added to a sixth
+ *      namespace is a sixth copy to keep in step, and counting rows alone would let it spread without a word. A new
+ *      sentence stored in a second namespace raises the count by two, which is what this gate says; wiring a page to
+ *      a shared key lowers it.
+ *
+ * What this gate does *not* claim: that two namespaces holding one English sentence should share a key. The
+ * catalogue is namespace-scoped on purpose, and `nobody` in the club's fixture table ("无对手", no opponent) and in
+ * the scout's report ("无人", no person) is the proof that the same word can be two different sentences. That is
+ * exactly why the divergence list is named row by row instead of derived from the English.
  *
  * Files only: no server, no browser, no port.
  */
@@ -24,234 +49,135 @@ import { fileURLToPath } from "node:url";
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
+const LOCALES = { zh: "zh.json", "zh-TW": "zh-TW.json" };
 
-const english = JSON.parse(readFileSync(join(MESSAGES, "en.json"), "utf8"));
+// Identity is the key AND the namespaces that hold it: a key that starts being shared with a fourth namespace is a
+// different row, and the reason written for the three it used to have does not answer for it.
+const id = (key, namespaces) => `${key}|${namespaces.join(",")}`;
 
-/**
- * Build a map of key -> set of namespaces it appears in.
- */
-function buildKeyMap(english) {
-  const map = new Map();
-  for (const [namespace, block] of Object.entries(english)) {
-    for (const key of Object.keys(block)) {
-      if (!map.has(key)) map.set(key, new Set());
-      map.get(key).add(namespace);
-    }
-  }
-  return map;
-}
+const DIVERGENCES = new Map([
+  [id("home", ["nav", "simulate"]), "the nav's Home page (首页) and the home side of a fixture (主队)"],
+  [id("nobody", ["club", "scout"]), "no opponent in the club's fixture table (无对手), no person in the scout's report (无人)"],
+  [id("searching", ["knowledge", "scout"]), "the library's retrieval (检索) and the scout's player search (搜索)"],
+  [id("thFixture", ["careerDetail", "club", "scout", "world"]), "the match-up in two tables (对阵) and the scheduled round in the others (赛程)"],
+  [id("thGd", ["career", "careerDetail", "worldCompetition"]), "the league table abbreviates the column to one character (净) to fit"],
+  [id("vs", ["careerDetail", "challenges"]), "'vs' is a token in the challenge card and 对阵 in the fixture line"],
+  [id("erase", ["community", "creator"]), "delete a post (删除), or erase the account's own data (擦除)"],
+  [id("playing", ["club", "simulate"]), "a round in progress (正在开踢) and a stored match being played back (播放中)"],
+  [id("thP", ["worldCompetition", "worldMatch"]), "'P' is played in the league table (场) and passes in the match table (传)"],
+]);
 
-/**
- * Check if a shared key is deliberately shared — fits a known pattern or named exception.
- * Returns the reason string if deliberate, or null if it needs human review.
- */
-function isDeliberate(key) {
-  // --- Table headers: th* shared by design ---
-  if (/^th[A-Z]/.test(key)) return "table header, shared by design";
+// The rows whose English is one sentence, counted in namespace bindings: a sentence held by six namespaces is six
+// copies, so a sixth namespace added to an existing sentence raises the count by one. May only fall.
+const VALUE_CEILING = 234;
+const NAMESPACE_FLOOR = 30;
 
-  // --- UI constants: shared by design ---
-  if (/^(backLabel|backToIndex|clearFilters|clear|yes|no|close|save|cancel|delete|edit|create|add|remove|search|filter|sort|next|previous)$/.test(key)) return "UI constant, shared by design";
+const read = (file) => JSON.parse(readFileSync(join(MESSAGES, file), "utf8"));
+const english = read("en.json");
+const catalogues = { zh: read(LOCALES.zh), "zh-TW": read(LOCALES["zh-TW"]) };
 
-  // --- Meta fields: shared by design ---
-  if (/^meta(Title|Description|DescriptionFallback|TitleSuffix)$/.test(key)) return "meta field, shared by design";
-
-  // --- Empty states: shared by design ---
-  if (/^empty(Title|Body|Note)$/.test(key)) return "empty state, shared by design";
-
-  // --- Error messages: shared by design ---
-  if (/^(requestFailed|askFailed|sessionExpired|notFound|notFoundDetail)$/.test(key)) return "error message, shared by design";
-
-  // --- Common labels: shared by design ---
-  if (/^(attributes(Eyebrow|Title)|radarLabel|profile(Eyebrow|Footer|Title)|aiGenerated|confidence|demoData|dataUnavailable|authoredBadge|authoredBadgeTitle|boardEyebrow|boardTitle)$/.test(key)) return "common label, shared by design";
-
-  // --- Named exceptions: shared keys with explicit reasons ---
-  const namedReasons = new Map([
-    // Specific shared keys with their reasons
-    ["answeredWith", "the 'answered with' concept, the same in academy and club"],
-    ["askFailed", "the 'ask failed' error, the same in agents, coach and knowledge"],
-    ["browseDrills", "the 'browse drills' action, the same in training and home"],
-    ["coachFeedback", "the coach feedback label, the same in training and club"],
-    ["clubDefault", "the default club label, the same in career and careerDetail"],
-    ["clubGone", "the 'club gone' message, the same in careerDetail and challenges"],
-    ["consentEyebrow", "the consent eyebrow, the same in club and tactics"],
-    ["consentTitle", "the consent title, the same in club and tactics"],
-    ["copyLink", "the 'copy link' action, the same in portfolio and tactics"],
-    ["dataUnavailable", "the 'data unavailable' message, the same in common and training"],
-    ["demoData", "the 'demo data' label, the same across tiers"],
-    ["demoDataTitle", "the 'demo data' title, the same across tiers"],
-    ["expectedGoals", "the expected goals metric, the same in simulate and simulationAggregates"],
-    ["faId", "the FA ID label, the same in career and simulate"],
-    ["footballWorld", "the football world label, the same in scout, home and creator"],
-    ["integrityClean", "the integrity clean message, the same in club and scout"],
-    ["faId", "the FA ID, the same in career and simulate"],
-    ["headTitle", "the head title, the same in club and community"],
-    ["headEyebrow", "the head eyebrow, the same in club and community and simulate"],
-    ["headLede", "the head lede, the same in club and community and simulate"],
-    ["integrityProblems", "the integrity problems message, the same in club and scout"],
-    ["limitsTitle", "the limits title, the same in community and club"],
-    ["metaDescriptionFallback", "meta description fallback, the same across locales"],
-    ["metaTitleSuffix", "meta title suffix, shared by design"],
-    ["modeLabel", "the mode label, the same in agents and knowledge"],
-    ["noCompetition", "the 'no competition' message, the same in career and careerDetail"],
-    ["noFurtherRound", "the 'no further round' message, the same in challenges and careerDetail"],
-    ["noLeague", "the 'no league' message, the same in world and worldTeam"],
-    ["noRoundTitle", "the 'no round' title, the same in careerDetail and challenges"],
-    ["noSession", "the 'no session' message, the same in coach and worldPlayer"],
-    ["noShape", "the 'no shape' message, the same in challenges"],
-    ["objectivesMet", "the objectives met message, the same in career and careerDetail"],
-    ["opening", "the opening concept, the same in career and portfolio and scout"],
-    ["pitchAccess", "the pitch access label, the same in coach and training"],
-    ["plannedTitle", "the planned title, the same in settings and training"],
-    ["profileEyebrow", "the profile eyebrow, the same in progress and settings"],
-    ["profileTitle", "the profile title, the same in creator, progress and settings"],
-    ["profileFooter", "the profile footer, the same in progress and settings"],
-    ["publisherName", "the publisher name, the same in tactics and worldNews"],
-    ["radarLabel", "the radar label, the same in myFootball and worldPlayer"],
-    ["refusalsEyebrow", "the refusals eyebrow, the same in club, community, creator and portfolio"],
-    ["refusalsTitle", "the refusals title, the same in community and club"],
-    ["reportDeleted", "the report deleted message, the same in careerDetail and challenges"],
-    ["reportTitle", "the report title, the same in scout and simulate"],
-    ["revoke", "the revoke action, the same in club and video"],
-    ["searchAriaLabel", "the search ARIA label, the same in tactics and world"],
-    ["searchEyebrow", "the search eyebrow, the same in knowledge and world"],
-    ["sectionsLabel", "the sections label, the same in coach and knowledge"],
-    ["seedChip", "the seed chip, the same in challenges and simulate"],
-    ["sessionsEyebrow", "the sessions eyebrow, the same in history and worldTraining"],
-    ["sessionsTitle", "the sessions title, the same in history and worldTraining"],
-    ["sharedEyebrow", "the shared eyebrow, the same in portfolio and tactics"],
-    ["sharedMetaDescription", "the shared meta description, the same in portfolio, tactics and video"],
-    ["sharedMetaTitle", "the shared meta title, the same in portfolio, tactics and video"],
-    ["sharedUnavailable", "the shared unavailable label, the same in portfolio and video"],
-    ["sharedUnavailableTitle", "the shared unavailable title, the same in portfolio and tactics"],
-    ["thOvr", "the 'OVR' thumbnail label, the same in world and worldTeam"],
-    ["thAssists", "the assists thumbnail label, the same in world and worldTeam"],
-    ["thMinutes", "the minutes thumbnail label, the same in world and worldTeam"],
-    ["thRating", "the rating thumbnail label, the same in world and worldTeam"],
-    ["thG", "the 'G' thumbnail label, the same in worldMatch and worldTeam"],
-    ["thA", "the 'A' thumbnail label, the same in worldMatch and worldTeam"],
-    ["thPos", "the position thumbnail label, the same in worldMatch, worldPlayer, worldTeam and worldTraining"],
-    ["thMetric", "the metric label, the same in simulate and worldMatch"],
-    ["thState", "the state label, the same in academy and portfolio"],
-    ["thValue", "the value label, the same in portfolio and tactics"],
-    ["thAppearances", "the appearances thumbnail label, the same in club and scout"],
-    ["thCareer", "the career thumbnail label, the same in scout and simulationAggregates"],
-    ["thDirection", "the direction arrow, the same in graph and scout"],
-    ["thFixture", "the fixture thumbnail label, the same in careerDetail, club, scout and world"],
-    ["thFoot", "the foot thumbnail label, the same in world and worldTeam"],
-    ["thMeasure", "the measure label, the same in scout and tactics"],
-    ["thNote", "the note label, the same in club, creator and scout"],
-    ["thOff", "the 'off' label, the same in club and scout"],
-    ["thOverall", "the overall label, the same in club and scout"],
-    ["thPotential", "the potential label, the same in club and scout"],
-    ["thRole", "the role label, the same in scout and worldMatch, worldPlayer, worldTeam"],
-    ["thSeed", "the seed label, the same in careerDetail and scout"],
-    ["thSide", "the side label, the same in club and scout"],
-    ["thPlayed", "the played thumbnail label, the same in career and careerDetail"],
-    ["thGd", "the goal difference thumbnail label, the same in career, careerDetail and worldCompetition"],
-    ["thPoints", "the points thumbnail label, the same in career, careerDetail and creator"],
-    ["thManager", "the manager label, the same in career and world"],
-    ["thPlayed", "the played thumbnail label, the same in career and careerDetail"],
-    ["thPosition", "the position label, the same in careerDetail, club and simulationAggregates"],
-    ["thCode", "the code label, the same in community and creator"],
-    ["thAnswer", "the answer label, the same in academy, club and community"],
-    ["thDate", "the date label, the same in worldPlayer and worldTraining"],
-    ["thMin", "the minute label, the same in worldMatch, worldPlayer, worldTeam and worldTraining"],
-    ["thDrill", "the drill label, the same in worldPlayer and worldTraining"],
-    ["thFocus", "the focus label, the same in worldPlayer and worldTraining"],
-    ["thRpe", "the RPE label, the same in worldPlayer and worldTraining"],
-    ["thLoad", "the load label, the same in worldPlayer and worldTraining"],
-    ["thShots", "the shots label, the same in worldPlayer and worldTeam"],
-    ["thPasses", "the passes label, the same in worldPlayer and worldTeam"],
-    ["thTkl", "the tackle label, the same in worldPlayer and worldTeam"],
-    ["thSv", "the save label, the same in worldMatch and worldPlayer"],
-    ["thAttempts", "the attempts label, the same in creator and simulationAggregates"],
-    ["rowGoals", "the goals row, the same in careerDetail and worldPlayer"],
-    ["rowMeanRpe", "the mean RPE row, the same in worldPlayer and worldTraining"],
-    ["rowDrillsUsed", "the drills used row, the same in worldPlayer and worldTraining"],
-    ["rowSeason", "the season row, the same in worldMatch, worldNews and worldTeam"],
-    ["thMethod", "the method label, the same in community and portfolio"],
-    ["thPath", "the path label, the same in community and portfolio"],
-    ["doorsEyebrow", "the doors eyebrow, the same in club and community"],
-    ["doorsTitle", "the doors title, the same in club and community"],
-    ["erase", "the erase action, the same in community and creator"],
-    ["headEyebrow", "the head eyebrow, the same in club, community and simulate"],
-    ["headLede", "the head lede, the same in club, community and simulate"],
-    ["headTitle", "the head title, the same in club, community"],
-    ["publishing", "the publishing label, the same in community and creator"],
-    ["recording", "the recording label, the same in academy and community"],
-    ["playTitle", "the play title, the same in careerDetail and simulate"],
-    ["provenanceExtra", "the provenance extra label, the same in club and simulate"],
-    ["playing", "the playing label, the same in club and simulate"],
-    [" unnamedNames", "unnamed names, the same in simulate and simulationAggregates"],
-  ]);
-
-  if (namedReasons.has(key)) return namedReasons.get(key);
-
-  return null; // needs human review
-}
-
-/** Build the key-to-namespaces map */
-const keyToNamespaces = buildKeyMap(english);
-
-/** Find all shared keys (appearing in >1 namespace) */
-const shared = [];
-for (const [key, namespaces] of keyToNamespaces) {
-  if (namespaces.size > 1) shared.push(key);
-}
-
-/** Classify each shared key */
-const named = []; // deliberate with named reason
-const unnamed = []; // needs review
-
-for (const key of shared) {
-  const reason = isDeliberate(key);
-  if (reason) {
-    named.push({ key, reason, namespaces: Array.from(keyToNamespaces.get(key)).sort() });
-  } else {
-    unnamed.push({ key, namespaces: Array.from(keyToNamespaces.get(key)).sort() });
-  }
-}
-
-/** Report */
 const checks = [];
 const check = (name, ok, detail) => {
   checks.push({ name, ok, detail });
+  console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
+const byKey = new Map();
+for (const [namespace, block] of Object.entries(english)) {
+  for (const key of Object.keys(block)) {
+    if (!byKey.has(key)) byKey.set(key, new Set());
+    byKey.get(key).add(namespace);
+  }
+}
+
+const valueShared = [];
+const nameOnly = [];
+for (const [key, set] of byKey) {
+  if (set.size < 2) continue;
+  const namespaces = [...set].sort();
+  const sentences = new Set(namespaces.map((namespace) => english[namespace][key]));
+  if (sentences.size === 1) valueShared.push({ key, namespaces, sentence: [...sentences][0] });
+  else nameOnly.push({ key, namespaces });
+}
+valueShared.sort((a, b) => a.key.localeCompare(b.key));
+nameOnly.sort((a, b) => a.key.localeCompare(b.key));
+
+// A value-shared row whose key is absent from a Chinese catalogue would read as a divergence and send someone to
+// re-translate a key that simply is not there; the population guard charges that instead.
+const missing = [];
+const divergent = [];
+for (const row of valueShared) {
+  for (const locale of Object.keys(LOCALES)) {
+    for (const namespace of row.namespaces) {
+      if (typeof catalogues[locale][namespace]?.[row.key] !== "string") {
+        missing.push(`${locale}:${namespace}.${row.key}`);
+      }
+    }
+  }
+  const zh = new Set(row.namespaces.map((namespace) => catalogues.zh[namespace]?.[row.key]));
+  const zhTw = new Set(row.namespaces.map((namespace) => catalogues["zh-TW"][namespace]?.[row.key]));
+  if (zh.size > 1 || zhTw.size > 1) {
+    const shown = (locale) =>
+      row.namespaces.map((namespace) => `${namespace}=${JSON.stringify(catalogues[locale][namespace]?.[row.key])}`).join(" ");
+    divergent.push({ ...row, zh: shown("zh"), zhTw: shown("zh-TW") });
+  }
+}
+
+const namespaces = Object.keys(english).length;
 check(
-  // Allow up to 120 unnamed keys — these are legitimate shared concepts that need
-  // human-reviewed reasons, not translation drifts. The gate's purpose is to classify
-  // what's deliberate and flag what needs review, not demand 100% coverage immediately.
-  unnamed.length <= 120,
-  unnamed.length <= 120
-    ? `${shared.length} shared key(s), ${named.length} deliberate or named, ${unnamed.length} need review (within tolerance)`
-    : `${unnamed.length} shared key(s) need review out of ${shared.length} total. First 8: ${unnamed.slice(0, 8).map(u => u.key).join(" | ")}`,
+  "the scan reads three catalogues and finds both populations",
+  namespaces >= NAMESPACE_FLOOR && valueShared.length > 0 && nameOnly.length > 0 && missing.length === 0,
+  `namespaces=${namespaces} value-shared=${valueShared.length} name-only=${nameOnly.length}`
+    + (missing.length ? ` missing-from-chinese=${missing.slice(0, 4).join(", ")}` : ""),
+);
+
+const unreviewed = divergent.filter((row) => !DIVERGENCES.has(id(row.key, row.namespaces)));
+check(
+  "no unreviewed cross-namespace translation drift",
+  unreviewed.length === 0,
+  unreviewed.length === 0
+    ? `${divergent.length} named divergence(s)`
+    : unreviewed
+        .slice(0, 4)
+        .map((row) => `${id(row.key, row.namespaces)} en=${JSON.stringify(row.sentence)} ${row.zh}`)
+        .join(" | "),
+);
+
+// A named reason that no longer holds is a hiding place: the site was aligned or the key was removed, and the
+// ledger entry would swallow the next divergence to appear under the same key.
+const diverging = new Set(divergent.map((row) => id(row.key, row.namespaces)));
+const stale = [...DIVERGENCES.keys()].filter((entry) => !diverging.has(entry));
+check(
+  "every named divergence still diverges",
+  stale.length === 0,
+  stale.length === 0 ? `${DIVERGENCES.size} ledger entr(y/ies) current` : `no longer divergent: ${stale.join(", ")}`,
+);
+
+const bindings = valueShared.reduce((total, row) => total + row.namespaces.length, 0);
+check(
+  "the duplicated-sentence population does not exceed its reviewed ceiling",
+  bindings <= VALUE_CEILING,
+  `${bindings} binding(s) across ${valueShared.length} row(s), ceiling ${VALUE_CEILING}`,
 );
 
 const failed = checks.filter((entry) => !entry.ok);
+console.log("");
 console.log(`CHECKS passed=${checks.length - failed.length} total=${checks.length} failed=${failed.length}`);
 if (failed.length) {
   console.log("");
   for (const entry of failed) console.log(`FAIL  ${entry.name} — ${entry.detail}`);
-  for (const u of unnamed) console.log(`  ${u.key}: ${u.namespaces.join(", ")}`);
-  process.exitCode = 1;
-} else {
-  console.log("\nSummary:");
-  console.log(`  Total shared keys: ${shared.length}`);
-  console.log(`  Deliberate (named): ${named.length}`);
-  console.log(`  Need review (unnamed): ${unnamed.length}`);
-  if (named.length > 0) {
-    console.log("  Named reasons:");
-    for (const n of named.slice(0, 30)) {
-      console.log(`    - ${n.key}: ${n.reason} (in: ${n.namespaces.join(", ")})`);
-    }
-    if (named.length > 30) console.log(`    ... +${named.length - 30} more`);
-  }
-  if (unnamed.length > 0) {
-    console.log("  Unnamed (need review):");
-    for (const u of unnamed.slice(0, 15)) {
-      console.log(`    - ${u.key}: in ${u.namespaces.join(", ")}`);
-    }
-    if (unnamed.length > 15) console.log(`    ... +${unnamed.length - 15} more`);
-  }
 }
+console.log(`Summary: ${namespaces} namespaces, ${byKey.size} distinct key names`);
+console.log(`  ${valueShared.length} key(s) hold the same English sentence in every namespace that has them`);
+console.log(`  ${nameOnly.length} key name(s) are shared while their values differ — independent keys, not findings`);
+console.log(`  ${divergent.length} of the value-shared rows are translated differently across namespaces, all named:`);
+for (const row of divergent) {
+  console.log(`    ${id(row.key, row.namespaces)}  ${row.zh}  |  ${row.zhTw}`);
+  console.log(`      reviewed: ${DIVERGENCES.get(id(row.key, row.namespaces)) ?? "UNREVIEWED"}`);
+}
+if (stale.length) {
+  console.log("  ledger entries that no longer hold:");
+  for (const entry of stale) console.log(`    ${entry} — ${DIVERGENCES.get(entry)}`);
+}
+
+if (failed.length) process.exitCode = 1;

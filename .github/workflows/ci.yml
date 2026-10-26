@@ -236,8 +236,10 @@ jobs:
         run: node scripts/qa-token-drift.mjs
       - name: Namespace-ownership gate (every namespace has a declared owner and purpose)
         run: node scripts/qa-namespace-ownership.mjs
-      - name: Shared-key gate (each shared key across namespaces is named with its reason)
+      - name: Shared-sentence gate (cross-namespace translations agree or are named; binding ceiling)
         run: node scripts/qa-shared-keys.mjs
+      - name: Shared-sentence behaviour gate (each verdict, on scratch catalogues)
+        run: node scripts/qa-shared-keys-witness.mjs
       - name: Types
         run: npm run typecheck
       - name: Build

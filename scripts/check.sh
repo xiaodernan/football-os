@@ -174,11 +174,22 @@ echo "── Web: error-boundary gate ──────────────
 # catalogue in all three languages. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-error-boundary.mjs)
 
-echo "── Web: shared-key gate ───────────────────────────────"
-# Each shared key across namespaces is named with its reason (deliberate vs accidental drift).
-# 133/234 shared keys have deliberate reasons named; 101 flagged for review within tolerance.
-# Files only: no server, no browser.
+echo "── Web: shared-sentence gate ──────────────────────────"
+# A shared key NAME is not a contract; a shared VALUE is. This gate used to ask every key name used in
+# two namespaces to be named with a reason — 234 rows, 136 of which were independent keys whose
+# sentences differ — and admitted the 101 that were not named under a tolerance of 120, so a new site
+# never moved the verdict. It now reads the 98 keys whose English sentence is the same in every
+# namespace that holds them: a translation that differs across those namespaces is green only for the
+# nine rows named in the gate (`home` is the nav's Home page and a fixture's home side, `thP` is
+# played in one table and passes in another), and the population is a ceiling of 234 namespace
+# bindings that may only fall. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-shared-keys.mjs)
+
+echo "── Web: shared-sentence behaviour gate ────────────────"
+# Holds those verdicts on scratch catalogues: an unreviewed divergence, a sixth namespace for an
+# existing sentence, a named divergence aligned away, three empty files, and a shared name with a
+# different sentence (which must stay green). Files only: no server, no browser.
+(cd apps/web && node scripts/qa-shared-keys-witness.mjs)
 
 echo "── Web: ICU-coverage gate ─────────────────────────────"
 # Every placeholder used in source is declared in catalogue across all three locales.
