@@ -92,10 +92,11 @@ populated-page run gained the matching positive assertion. This is the same clas
 ## 5. Catalogue and gates
 
 Twenty-four keys were added to each of `en.json`, `zh.json` and `zh-TW.json` (the finance panel, its
-figures, the timeline table, the summary, both empty states and both formulas). The catalogue now holds
-**3,624 keys**, **3,579** of them translated (the other 45 fall back to English), and the table in
-`messages/README.md` was updated to those counts — `qa-locale-tokens` check 4 and the API's
-`test_locale_claims.py` both recompute the population from the catalogues, so a stale README fails.
+figures, the timeline table, the summary, both empty states and both formulas); §7 then adds eight
+listing keys per locale. With the finance unit alone the catalogue held **3,624 keys**, **3,579** of them
+translated (the other 45 fall back to English); with §7 it holds **3,632** / **3,587**. The table in
+`messages/README.md` carries the current counts, and `qa-locale-tokens` check 4 together with the API's
+`test_locale_claims.py` recompute the population from the catalogues, so a stale README fails.
 
 The English values were chosen to stay unique catalogue-wide, because `qa-shared-keys` compares values:
 `Movement` rather than `Change` (the latter is already `tactics.deltaChange`), and no sentence was reused
@@ -136,14 +137,52 @@ assert the figures from the API response. The API-side invariants are committed 
 `tests/test_affordability.py` (the pure helpers), `tests/test_career.py` (`TestAffordability`, the empty
 zero state) and `tests/test_transfers.py` (`TestLedger`, the stored-balance check).
 
-## 7. Not claimed by this increment
+## 7. The transfers board: what signing would do
 
-* **The transfers listing still does not print its `signing` block.** `listing_row` publishes it
-  (`fee_affordable`, `remaining_after_fee`, the new bill and runway), and nothing on the page reads it yet.
+`listing_row` has carried a `signing` block since `3c47b56`; the page did not read it. This unit closes
+that: `Listing` in `lib/market.ts` now imports the `SigningImpact` shape from `lib/types.ts` and carries
+`signing`, and `MarketTools` gains an **After signing** column between *Offers* and *Deal*. It is a new
+column at the end of the data cells, so the existing market walk's index-based reads (cells 0–10) are
+untouched.
+
+Each cell prints the listing's own block and decides nothing:
+
+* the verdict (`covered` / `over budget`, from `fee_affordable`);
+* the balance the fee would leave (`leaves {amount} {units}`) or how far short the price is
+  (`short {amount} {units}`, the absolute value of the negative balance);
+* the new weekly wage bill (`bill {amount}`);
+* the runway at that bill (`runway {rounds}`, or `no wage limit` when the block's
+  `new_wage_runway_rounds` is `null`).
+
+The Sign button's disabled state was already driven by `affordable`, which the API computes as the same
+comparison as `fee_affordable`; the walk asserts the two agree rather than assuming it.
+
+Eight keys were added to each locale, taking the catalogue to **3,632 keys / 3,587 translated** (the
+`messages/README.md` table carries those counts). English values were kept unique catalogue-wide, so the
+shared-key gate stayed at **234 bindings / 98 rows**.
+
+The live walk opened the market on two careers:
+
+| Branch | Career | Listings | First row (API → rendered) |
+| --- | --- | --- | --- |
+| wages already on the books | `finance-walk-braa` (balance after one signing and two rounds) | 12, all affordable | `covered`, leaves 7,754,080 career credits, bill 3,435, runway 2,257 |
+| 100,000 budget | `signing-walk-braa` (fresh, no signings) | 12, all priced above the balance | `over budget`, short 1,475,000 career credits, bill 2,100, runway 0; Sign disabled |
+
+**156 checks, all passing.** For every one of the 24 listings the check reads the cell back out of the
+served HTML and compares all four figures plus the verdict and the button state against the API response
+saved by the walk; it also asserts the structural header in both languages, one fully translated cell per
+branch, and that each locale's header is absent from the other page. `tsc --noEmit` and `next build` are
+clean; `qa-locale-tokens` 5/5, `qa-shared-keys` 4/4 (234 / 98), its witness 8/8, `qa-key-drift` 4/4 and
+its witness 10/10, with the remaining catalogue gates green.
+
+## 8. Not claimed by this increment
+
+* **The `no wage limit` sentence was not exercised live.** Every listed player carried a wage, so the new
+  bill was always positive and the runway was a number; the `null` branch is rendered but unproven here.
 * **There is no budget ceiling.** A balance is what is left; a hard cap on what may be committed is a
   different object and does not exist.
-* **The truncation and disagreement branches were not exercised live.** The walk had three entries and zero
-  disagreements; the API tests pin the disagreement count, and the truncation notice is untested against a
-  career long enough to trigger it.
-* **The page does no arithmetic and stores nothing.** It prints the API's figures and formulas; a change to
-  the derivation is a change to `market.py`, and the page follows without an edit.
+* **The truncation and disagreement branches of the career timeline were not exercised live.** The walk had
+  three entries and zero disagreements; the API tests pin the disagreement count, and the truncation
+  notice is untested against a career long enough to trigger it.
+* **Neither page does arithmetic or stores anything.** They print the API's figures and formulas; a change
+  to the derivation is a change to `market.py`, and the pages follow without an edit.

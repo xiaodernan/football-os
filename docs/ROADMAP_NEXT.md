@@ -103,8 +103,14 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    on a production build: 31/31 checks on a career that signed one player and played two rounds (rows
    9,331,750 / 9,330,415 / 9,329,080, all agreeing; runway 6,988) and 9/9 on a zero-wage, empty-timeline
    career, in `en` and `zh`. Recorded in [M13_CAREER_FINANCE_VERIFICATION.md](M13_CAREER_FINANCE_VERIFICATION.md).
-   **Pending:** rendering the per-listing `signing` block on the transfers page, and a budget *ceiling*
-   (a hard cap distinct from a balance).
+   **Transfers rendering done (2026-10-27):** each buying-board row now has an **After signing** cell —
+   the balance verdict (`covered` / `over budget`), the balance the fee would leave (or how short it is),
+   the new weekly bill and its runway (`no wage limit` when the signing would leave no wage obligation).
+   The figures are the listing's own `signing` block; the page prints them and decides nothing. Verified
+   on a production build over 12 listings on each side — a career with wages already on the books (all
+   affordable) and a fresh 100,000-budget career (all 12 over budget, sign buttons disabled) — for
+   **156/156** checks in `en` and `zh`, including each listing's four figures and the button state.
+   **Pending:** a budget *ceiling* (a hard cap distinct from a balance).
 7. **Youth academy outcomes.** Academy trainees graduate into the squad with attributes derived from
    their `Sessions`/`Reports` (M8 already stores the load); the graduation is a deterministic roll.
 8. **Board expectations & relegation.** **Read-only half done (2026-10-25):** `board_view` (career.py)

@@ -6,6 +6,8 @@
  * invent and nothing to re-derive in the browser.
  */
 
+import type { SigningImpact } from "./types";
+
 export type MarketCareer = {
   slug: string;
   club_name: string;
@@ -127,6 +129,8 @@ export type Listing = {
   rival: boolean;
   price_to_pay: number;
   affordable: boolean;
+  /** What signing this offer would leave: the same `signing_impact` the career's runway uses. */
+  signing: SigningImpact;
   clause_required: boolean;
 };
 

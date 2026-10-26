@@ -219,6 +219,7 @@ export function MarketTools({
                 <th scope="col">{t("buyThWage")}</th>
                 <th scope="col">{t("buyThFit")}</th>
                 <th scope="col">{t("buyThOffers")}</th>
+                <th scope="col">{t("buyThSigning")}</th>
                 <th scope="col">{t("buyThDeal")}</th>
               </tr>
             </thead>
@@ -256,6 +257,23 @@ export function MarketTools({
                   <td className="num">
                     {t("attemptsLeft", { n: row.attempts_left })}
                     <span className="muted">{row.last_offer > 0 ? t("lastOffer", { amount: money(row.last_offer) }) : ""}</span>
+                  </td>
+                  <td className="num" data-signing={row.id}>
+                    <span className={row.signing.fee_affordable ? "badge badge--live" : "badge badge--demo"}>
+                      {row.signing.fee_affordable ? t("buySigningFits") : t("buySigningOver")}
+                    </span>
+                    <p className="muted">
+                      {row.signing.fee_affordable
+                        ? t("buySigningLeft", { amount: money(row.signing.remaining_after_fee), units: budget.units })
+                        : t("buySigningShort", { amount: money(Math.abs(row.signing.remaining_after_fee)), units: budget.units })}
+                    </p>
+                    <p className="muted">
+                      {t("buySigningBill", { amount: money(row.signing.new_weekly_wage_bill) })}
+                      {" · "}
+                      {row.signing.new_wage_runway_rounds === null
+                        ? t("buySigningNoRunway")
+                        : t("buySigningRunway", { rounds: row.signing.new_wage_runway_rounds })}
+                    </p>
                   </td>
                   <td>{offerFor(row)}</td>
                 </tr>
