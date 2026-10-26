@@ -94,8 +94,17 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    ordering a round's moves before its wage charge explicitly (the order they are actually written in).
    The per-listing "can I afford this" arithmetic is now on the wire too: `listing_row` carries a
    `signing` block (`fee_affordable`, `remaining_after_fee`, the new wage bill and its runway) computed by
-   the same `signing_impact`, pinned by `test_transfers.py`. **Pending:** rendering that block on the
-   transfers page (web/i18n, concurrent session), and a budget *ceiling* (a hard cap distinct from a balance).
+   the same `signing_impact`, pinned by `test_transfers.py`. **Career-page rendering done (2026-10-27):**
+   `components/CareerFinance.tsx` now renders `career_view["affordability"]` on `/career/{slug}` — the
+   standing figures, the wage runway with the API's own formula, and the budget timeline row by row with
+   each row's stored `budget_after` beside the recomputed balance and an agreement badge; a career with no
+   ledger rows gets an explicit empty state. The page does no arithmetic of its own, and the zero-deal
+   `signing` block is deliberately not printed (a preview at no fee and no wage states nothing). Verified
+   on a production build: 31/31 checks on a career that signed one player and played two rounds (rows
+   9,331,750 / 9,330,415 / 9,329,080, all agreeing; runway 6,988) and 9/9 on a zero-wage, empty-timeline
+   career, in `en` and `zh`. Recorded in [M13_CAREER_FINANCE_VERIFICATION.md](M13_CAREER_FINANCE_VERIFICATION.md).
+   **Pending:** rendering the per-listing `signing` block on the transfers page, and a budget *ceiling*
+   (a hard cap distinct from a balance).
 7. **Youth academy outcomes.** Academy trainees graduate into the squad with attributes derived from
    their `Sessions`/`Reports` (M8 already stores the load); the graduation is a deterministic roll.
 8. **Board expectations & relegation.** **Read-only half done (2026-10-25):** `board_view` (career.py)

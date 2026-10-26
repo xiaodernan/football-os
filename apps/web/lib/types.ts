@@ -1464,6 +1464,61 @@ export type CareerNextFixture = {
   seed?: number;
 };
 
+/** What one prospective deal would do to the balance and the wage runway (market.py `signing_impact`). */
+export type SigningImpact = {
+  price: number;
+  proposed_weekly_wage: number;
+  fee_affordable: boolean;
+  remaining_after_fee: number;
+  new_weekly_wage_bill: number;
+  /** `null` when the signing would leave no wage obligation at all. */
+  new_wage_runway_rounds: number | null;
+};
+
+export type BudgetTimelineRow = {
+  round_index: number;
+  kind: string;
+  label: string;
+  delta: number;
+  /** The figure the ledger row stored when it was written, beside the recomputed `balance`. */
+  stored_budget_after: number;
+  balance: number;
+  agrees: boolean;
+};
+
+/** The balance walked in round order and cross-checked against each row's stored figure. */
+export type BudgetTimeline = {
+  entries: number;
+  entries_shown: number;
+  truncated: boolean;
+  opening_balance: number;
+  closing_balance: number;
+  disagreements: number;
+  rows: BudgetTimelineRow[];
+  units: string;
+  formula: string;
+  note: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** The read-only finance standing on `career_view["affordability"]` (market.py `affordability_view`). */
+export type AffordabilityView = {
+  remaining: number;
+  weekly_wage_bill: number;
+  wage_players: number;
+  /** `null` when the career pays no wages at all, so the balance sets no wage-driven limit. */
+  wage_runway_rounds: number | null;
+  /** With no prospective signing passed, this is the arithmetic for a zero-fee, zero-wage move. */
+  signing: SigningImpact;
+  units: string;
+  formula: string;
+  note: string;
+  timeline: BudgetTimeline;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
@@ -1474,9 +1529,21 @@ export type CareerView = {
   model_versions: string[];
   /** §20: what this career's played rounds left on its players, summed from `career_appearances`. */
   carry_over: import("./carryOver").CarryOverView;
+  /** Phase 2: the wage runway and the budget timeline, recomputed from the ledger on every read. */
+  affordability: AffordabilityView;
   /** ROADMAP item 10: this season per player, counted off `sim_events`. Absent on a list row or run view. */
   ledger?: import("./ledger").SeasonLedger;
-  limitations: { budget: string; wages: string; carry_over: string; ledger: string; philosophy: string; table: string; objectives: string };
+  limitations: {
+    budget: string;
+    wages: string;
+    carry_over: string;
+    projections: string;
+    scouting: string;
+    ledger: string;
+    philosophy: string;
+    table: string;
+    objectives: string;
+  };
   next_fixture?: CareerNextFixture;
   played?: boolean;
   match?: { slug: string; path: string; digest: string; seed: number; model_version: string };

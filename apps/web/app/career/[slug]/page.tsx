@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
+import { CareerFinance } from "@/components/CareerFinance";
 import { CareerTools } from "@/components/CareerTools";
 import { LEDGER_COLUMNS, type SeasonLedger } from "@/lib/ledger";
 import { KeyValueGrid, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
@@ -143,6 +144,8 @@ export default async function CareerDetailPage({ params }: Props) {
           <p className="muted">{view.limitations.objectives}</p>
         </Panel>
       </div>
+
+      <CareerFinance t={t} view={view.affordability} limitation={view.limitations.projections} />
 
       <Panel eyebrow={t("roundsCount", { count: fixtures.length })} title={t("fixtureListTitle")}>
         {fixtures.length === 0 ? (
