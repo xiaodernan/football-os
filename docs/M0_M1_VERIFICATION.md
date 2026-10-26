@@ -241,15 +241,217 @@ behaviour.
 
 ---
 
-## 3. Known gaps (not hidden)
+## 3. CI had never run: the workflow watched a branch that does not exist
+
+**The defect.** `.github/workflows/ci.yml` was written in the initial commit (`c9e48cb`) with
+`on: push: branches: [main]`. The repository's only branch — the one every commit lands on — is
+`master`. GitHub therefore recorded **zero** runs for the life of the project:
+
+```
+$ gh api repos/xiaodernan/football-os/actions/runs --jq .total_count
+0
+```
+
+That number was still `0` after the `f297951` push, so it was not a queue delay. The same commit
+range also made the shared lint target red (`tests/test_locale_claims.py:402`, `B007`, introduced
+by `525fe4d`), which CI would have reported first.
+
+**The fix (`cc4939f`).** The trigger names `master`, and the lint target is green again.
+`tests/test_ci_trigger.py` (7 cases) keeps both honest:
+
+- it reads each workflow's own `on:` block and asks it about the branch the run is about —
+  `GITHUB_REF_NAME` on a push, `GITHUB_BASE_REF` on a pull request, `git rev-parse` locally — so a
+  renamed default branch fails the gate instead of silently disarming the workflow;
+- it pins exactly one `Lint` step, running `bash scripts/lint.sh` from the repository root, and
+  that no second lint target exists;
+- it runs the shared target for real (green, on the population it announces) and again with an
+  interpreter stub first on `PATH`, whose recorded argv must equal `-m ruff check` plus every
+  directory the target announces — the printed population and the enforced population are one list.
+
+At `f297951` (the parent) the file is **2 failed / 5 passed** on a plane — the coverage case and the
+lint-green case. At `cc4939f` 11/11 arms matched their predictions, plane clean; `mypy app` read
+155 files clean and the full SQLite suite read **1935 passed, 4 skipped, 0 failed in 832.90s**.
+
+**What the first run found.** Run
+[`40131268450`](https://github.com/xiaodernan/football-os/actions/runs/40131268450) is the first
+this project has ever had. Its `api` job passed lint, types and the SQLite tests, then failed at
+the migrations step; its `web` job failed at `npm ci`. Both are fresh-checkout defects no local leg
+could see — a long-lived database in one case, npm 11 instead of npm 10 in the other — and both
+are fixed:
+
+- `e8fa575` — the lock records the optional peer npm 10 resolves (`@swc/helpers` 0.5.23 under
+  `next-intl`), one nested entry and nothing else. `npx npm@10.9.4 ci --dry-run` is red before the
+  fix and green after, as is the local npm 11; the plane at `ce0bb4e` is green under npm 10.
+- `ce0bb4e` — see §3.1.
+
+### 3.1 The migrations built naive timestamps
+
+`alembic check` refused the first database CI ever built from scratch with 27 `modify_type`
+operations. `0021`–`0025` declared `created_at`/`updated_at` (`cv_shares.revoked_at` as well) as
+`sa.DateTime()`, while `TimestampMixin` declares `DateTime(timezone=True)`. PostgreSQL keeps
+`timestamp` and `timestamptz` apart; SQLite stores both as `DATETIME`, so every local leg was blind
+to it, and the check had only ever run against a database migrated long ago.
+
+The five migrations now declare the type the models do — what a fresh database replays — and
+`0040` moves the 27 columns on databases that already applied the older bytes. The repair skips
+SQLite in both directions (one timestamp type there, and no drift to repair), and its downgrade
+restores the naive shape.
+
+Measured on this host, with `football_os_db` at 16.15:
+
+```
+# a database migrated at 0039 from the pre-fix bytes: 27 naive timestamp columns
+$ ... alembic upgrade head        # 0039 -> 0040
+$ ... alembic check
+No new upgrade operations detected.
+$ ... alembic downgrade 0039      # 27 naive columns again
+$ ... alembic upgrade head        # and back
+$ ... alembic check
+No new upgrade operations detected.
+
+# fresh PostgreSQL, 0001 -> 0040
+$ ... alembic check
+No new upgrade operations detected.   # 0 naive timestamp columns
+
+# fresh SQLite, 0001 -> 0040 (41 revisions)
+$ ... alembic check
+No new upgrade operations detected.
+```
+
+`tests/test_migration_timestamps.py` (4 cases) reads the upgrade body of every migration by AST —
+prose cannot be charged — and refuses a naive `sa.DateTime()`, a `timezone=False` type and a bare
+`sa.DateTime` reference, with a self-test for each spelling it must refuse. It also walks `0040`'s
+map against the models, so a column the models call timezone-aware cannot fall out of the repair.
+The audit's migration census moved 40 → 41 in the same commit.
+
+### 3.2 The chain's own note called `0021` a parked draft
+
+Found while correcting the same file in §3.1: `0021_club_fixtures.py` opened with "PARKED DRAFT — not in
+the tree on purpose … Move to `apps/api/migrations/versions/0021_club_fixtures.py` once the leg is green,
+together with the model block sitting beside it in this directory". Every clause was false by then: the
+file is tracked at that path, `alembic upgrade head` replays it on fresh databases, `0022` names it as its
+`down_revision`, and the models live in `app/models/__init__.py`. It was a note from before the file moved,
+and nothing read it afterwards.
+
+Fixed at `a0af642`: the paragraph says what is true — the rows are complemented by `ClubFixture` and
+`club_match_appearances` in the models, and by the club fixtures door that reads them. The design notes
+below it are unchanged.
+
+`tests/test_migration_docstrings.py` (2 cases) reads each migration's module docstring and refuses the
+drafting residue: a claim that the file is outside the tree ("not in the tree", "not committed",
+"untracked", "parked"), the word "draft", and any `migrations/versions/*.py` path — in a docstring that is
+an instruction to move the file, not a description of what it creates. A self-test feeds the scanner each
+spelling it must refuse and a plain description it must accept, so "no residue" cannot pass by matching
+nothing. A census over the 41 docstrings found `0021` as the only carrier.
+
+Reverse control: the scanner over `git show HEAD:apps/api/migrations/versions/0021_club_fixtures.py` charges
+`['not in the tree', 'PARKED', 'DRAFT', 'migrations/versions/0021_club_fixtures.py']`; over the fixed file it
+charges nothing. Seven arms at `a0af642`, each restoring the file by bytes and asserting the restore: the HEAD
+bytes, a "not committed" sentence, a move instruction, a "draft" sentence and an emptied docstring each red the
+population case (1 failed / 1 passed), while an untouched plane and a punctuation-only edit stayed green.
+
+Whole-suite leg, owed above and now measured: the SQLite suite on a plane at `a0af642` — which carries this
+change and §3.1's migration — read **1963 passed, 4 skipped, 0 failed, 328 warnings in 1259.47s (20:59)**, run
+with `GITHUB_EVENT_NAME=push` and `GITHUB_REF_NAME=master` so the CI-trigger cases judge the ref a push runs on.
+
+### 3.3 The two catalogue gates asserted nothing on a clean checkout
+
+The freshness and population-floor gates each compared the catalogues with a baseline they read from an
+**untracked file** — `.gate-baseline` and `.population-baseline`, neither of which is in `git ls-files`. On a
+checkout without them, which is every clean checkout and therefore CI's:
+
+* `qa-translation-freshness.mjs` printed `No baseline commit found`, then `CHECKS passed=0 total=0 failed=0`,
+  and exited 0.
+* `qa-population-floor.mjs` printed the same zero-check tally and exit 0 — and its **three-locale parity**
+  check, the one claim that needs no baseline at all, lived inside the same `else` branch, so it vanished with
+  the other two.
+* If a baseline commit *was* named but this clone could not read it (CI's checkout is depth 1), the freshness
+  gate printed "Could not retrieve baseline catalogues. Resetting baseline.", **rewrote the file to HEAD** and
+  exited 0: a shallow clone certified its own stale keys and moved the baseline past them.
+
+Measured on a scratch repository of five commits (a translated baseline, a translated follow-up, an
+English-only change, a key deleted from all three locales, a key added to English only): at the parity-broken
+commit — English 3 keys, both Chinese catalogues 2 — with no baseline file, both gates reported
+`CHECKS passed=0 total=0 failed=0`, exit 0. With `.gate-baseline` naming a commit this repository did not
+contain, the freshness gate rewrote the file to HEAD and exited 0. With a `.population-baseline` file, the
+floor gate did charge a deleted key (one pass, two failures) — the file path worked; the absence path was the
+defect.
+
+The repair, in both gates:
+
+* The baseline comes from `--base <commit>`, then `QA_BASELINE_COMMIT`, then the local file. CI sets the
+  variable from the event that started the run — `github.event.before` on a push, `pull_request.base.sha` on a
+  pull request — and the web job's checkout now asks for `fetch-depth: 0`, because the base commit has to be
+  in the clone for any comparison to read it.
+* A run with no baseline **refuses**: one failing check naming the three ways to supply one, exit 1. A named
+  baseline this clone cannot read, or one that shares no ancestor with HEAD, refuses *by name* and is **never
+  rewritten**.
+* A shallow clone refuses before comparing — `git rev-parse --is-shallow-repository` — because `merge-base`
+  would otherwise answer from the commits it happens to hold and present a truncated history as a baseline.
+* The freshness gate compares against `merge-base HEAD <baseline>`, and a baseline equal to HEAD now runs the
+  two checks instead of "Gate passes trivially" with a zero tally.
+* The floor gate's parity check left the baseline branch and is charged whether or not a baseline exists, so
+  its tally is never fewer than two checks. Its baseline can now be read out of a commit
+  (`git show <base>:apps/web/messages/en.json`) — the `getPopulationAtCommit` helper had existed since the
+  gate was written and had never been called.
+
+**Witness.** `apps/web/scripts/qa-baseline-gates.mjs` builds a seven-commit scratch repository in `mkdtemp`
+whose commits differ from the baseline by exactly one edit each — a stale Simplified translation, a stale
+Traditional one, both stale, a key deleted from all three catalogues, and a key added to English only — and
+runs the two **shipped** scripts against it through `QA_I18N_WEB`. It is wired into `scripts/check.sh` and the
+CI web job. 16 checks, **16/16 green** at `4564708`, where the two catalogue gates read 2/2 and 3/3 against the
+commit CI would name for that push and the script inventory is green. Two of the
+sixteen written predictions were wrong on the first run and were corrected before the green was accepted: the
+unreadable-baseline floor case expected `total=1`, and the floor's unconditional parity check makes its minimum
+two; and the harness's first check was a placeholder that could not fail, replaced with a real assertion that
+all seven fixture commits exist.
+
+**Reverse control.** The same harness over `git show HEAD:apps/web/scripts/qa-translation-freshness.mjs` and
+`…/qa-population-floor.mjs` (the pre-fix bytes, in a scratch directory) reports
+`CHECKS passed=3 total=16 failed=13`. The three greens are the ones the old gates did perform: the fixture
+build, the freshness comparison driven by a **baseline file**, and `--init-baseline` followed by a read. The
+thirteen reds are exactly the absence, refusal and reset cases.
+
+Local runs on the real catalogue tree at the fixed bytes: freshness **2/2**, floor **3/3** (3600 → 3600,
++0), the behaviour gate **16/16**. The script-inventory gate reports **157/159**, its two failures naming
+`qa-translation-quality.mjs` — a file another unit has staged in the shared worktree; it is not in HEAD and
+not part of this change.
+
+### 3.4 The age profile's sort key stopped type-checking
+
+The first CI run after §3's branch fix (`40338019930`) got past the steps that had never run — Lint, the web
+lock — and exited 1 in the api job's `Types` step:
+
+```
+app/services/simulation/market.py:735: error: Unsupported operand type for unary - ("object")  [operator]
+```
+
+M13's retirement-risk list (`cdba698`) built its rows with a dict comprehension, and mypy infers
+`dict[str, object]` from one; the sort key's `-item["age"]` therefore negates an `object`. Nothing on this host
+runs `mypy app` per commit — `scripts/lint.sh` is ruff-only, the web type-check does not read Python, and the
+SQLite suite exercises the door without a type checker — so every local leg was green while CI's type gate was
+red. That is the gate CI adds, working as intended.
+
+The block now sorts typed `(name, age)` pairs and builds the dictionaries from the sorted pairs afterwards. The
+key is still `(-age, name)` and each dictionary's field order is unchanged, so the door answers the same rows in
+the same order.
+
+**Pre-fix control.** `git show HEAD:apps/api/app/services/simulation/market.py` (the committed bytes) was
+swapped into the worktree and `python -m mypy app` read `1 error in 1 file (checked 155 source files)`, rc 1,
+naming the same line and message CI named. The worktree file was then restored from a saved copy and verified by
+`sha256 ac41d847…`. With the fix: `Success: no issues found in 155 source files`, and `tests/test_transfers.py`
+**46 passed**. Landed at `8aa8b93`.
+
+## 4. Known gaps (not hidden)
 
 - **The QA PNGs are on disk, not in git.** `docs/screenshots/*.png` is ignored because each run re-stamps 9 MB
   of images and because the global pre-commit hook scans staged bytes for conflict markers and false-positives
   on the deflate streams inside two of them. The checks those images prove are reproduced as text in §2.2 and
   indexed in `docs/screenshots/README.md`. The hook was not bypassed.
-- **CI has never run.** The repository has no git remote yet, so `.github/workflows/ci.yml` — including the
-  Postgres test step added in this pass — is unexecuted automation. Everything it claims to run was instead
-  executed by hand on this host and is reproduced in §1.
+- **CI had never run until 2026-10-25.** The workflow's push trigger named `main` while the only branch is
+  `master`; GitHub held zero runs for the project's whole history (§3). Fixed at `cc4939f`, and the first run
+  (`40131268450`) then found two fresh-checkout defects, fixed at `e8fa575` and `ce0bb4e`. Every claim in §1–§2
+  was executed by hand on this host before that; the workflow now runs the same commands on GitHub's runners.
 - **The mobile pass covers 6 surfaces.** `/history` and a drill detail page are not yet checked at 375px.
 - **`progress.export` and account deletion are tested via the API only**, not through the settings UI.
 - Achievement awards now work on both databases, but the achievement *pages* (spec §37 surfaces) are M4+ scope.
