@@ -116,6 +116,14 @@ def limitations() -> dict[str, str]:
             "Nothing rests a tired player, and a club nobody manages has no trace, so its side is measured off its "
             "rows exactly as it always was."
         ),
+        "projections": (
+            "The `development`, `affordability`, `contracts`, `board` and `head_to_head` blocks are read-only "
+            "projections recomputed from this career's own rows on every read: fixture minutes and training projected "
+            "toward potential, a wage runway and a signing preview, a deal book whose projected expiry nothing "
+            "enforces, a season pace projection against the objectives, and this career's record against one "
+            "opponent. None of them writes a stored attribute, expires or renews a contract, triggers a board "
+            "decision or keeps a counter — each is what the rows imply, printed beside the formula that produced it."
+        ),
         "ledger": (
             "The season ledger sums this career's own `sim_events` rows: goals, attempts, cards and injuries per "
             "player, each event credited to the side that printed it. Two things keep it honest and one keeps it "

@@ -182,7 +182,9 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   `contracts` (the deal book: projected expiry from the stored terms, flagged inside a warning window, and
   explicitly not enforced), `board` (season pace projection against the objectives), and `head_to_head`
   (this career's own record against the next opponent, from its fixtures and nothing else). Each has its
-  own formula in the payload and its own tests; none writes a stored counter.
+  own formula in the payload and its own tests; none writes a stored counter. `limitations()["projections"]`
+  now says all five are read-only projections that change no stored attribute, expire no contract and trigger
+  no board decision — the page's own statement of what it does not claim.
 - **Off-host backup leg now runs and is gated.** `scripts/backup_db.sh` extracts
   `upload_backup_to_s3`; two gate tests in `apps/api/tests/test_dr_scripts.py` run the real script with
   stubbed `aws`/`pg_dump` to prove the off-host hop fires with the named bucket + `STANDARD_IA` and lands

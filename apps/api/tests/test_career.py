@@ -203,7 +203,8 @@ class TestJudging:
         view = career_service.career_view(session, career)
         assert view["is_demo_data"] is True and view["data_origin"] == "simulation"
         assert "fiction" in view["disclaimer"]
-        assert set(view["limitations"]) == {"budget", "wages", "carry_over", "ledger", "scouting", "philosophy", "table", "objectives"}
+        assert set(view["limitations"]) == {"budget", "wages", "carry_over", "projections", "ledger", "scouting", "philosophy", "table", "objectives"}
+        assert "read-only" in view["limitations"]["projections"] and "contracts" in view["limitations"]["projections"]
         assert "re-checked" in view["consistency"]
         fixture = view["fixtures"][0]
         assert fixture["match_path"] == f"/simulate/{fixture['match_slug']}"
