@@ -16,7 +16,8 @@
     "myBoards": "我的戰術板",
     "videoShort": "影片",
     "footballCv": "足球履歷",
-    "simulator": "模擬器"
+    "simulator": "模擬器",
+    "notifications": "通知"
   },
   "common": {
     "accept": "接受",
@@ -3735,5 +3736,25 @@
     "lede": "頁面在準備時失敗了。再試一次通常就會好；如果沒有，俱樂部自己的日誌裡有原因。",
     "retry": "再試一次",
     "title": "這個頁面沒有載入出來"
+  },
+  "notifications": {
+    "metaTitle": "通知",
+    "metaDescription": "你的帳號應該聽到的事件：新追蹤者、留言、反應——每個都在事件發生的那一刻寫入。",
+    "eyebrow": "你的托盤",
+    "title": "通知",
+    "lede": "一個事件一列，在事件發生的那一刻寫入：有人追蹤了你、留言了你的貼文、或對它作出了反應。你自己的行為不是給你的新聞，所以永遠不會出現在這裡。",
+    "trayEyebrow": "{total} 列中 {unread} 列未讀",
+    "trayTitle": "托盤",
+    "markAll": "全部標為已讀",
+    "markRead": "標為已讀",
+    "openWall": "開啟牆",
+    "emptyTitle": "這裡還沒有東西",
+    "emptyNote": "當有人追蹤你，或回應了你的貼文，事件就會落到這裡。",
+    "kindFollower": "追蹤",
+    "kindComment": "留言",
+    "kindReaction": "反應",
+    "lineFollower": "{name} 現在追蹤了你。",
+    "lineComment": "{name} 留言了：「{excerpt}」",
+    "lineReaction": "{name} 對你的貼文作出了反應。"
   }
 }

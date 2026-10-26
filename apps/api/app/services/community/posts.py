@@ -54,6 +54,7 @@ from app.models import (
     VideoAsset,
     utc_today,
 )
+from app.services.notifications import notify
 
 
 class CommunityRefusal(RuntimeError):
@@ -323,6 +324,12 @@ def _body(body: Any, maximum: int, code: str, field: str) -> str:
     return words
 
 
+def _display_name_of(session: Session, user_id: str) -> str:
+    """The one identity fact a notification carries: the display name the community already shows."""
+    row = session.scalar(select(User.display_name).where(User.id == user_id))
+    return row or "a FOOTBALL OS account"
+
+
 def author_of(session: Session, ident: str) -> dict[str, Any]:
     """The two things a post says about who wrote it. A departed account is answered as absence, not as a blank."""
     row = _member(session, ident)
@@ -483,6 +490,9 @@ def add_comment(session: Session, post_id: str, actor_id: str, *, body: Any) -> 
     session.add(comment)
     session.commit()
     session.refresh(comment)
+    # spec 27: the post author hears about the comment, unless it is their own.
+    if row.author_id != actor_id:
+        notify(session, row.author_id, kind="comment", payload={"post_id": row.id, "actor_name": _display_name_of(session, actor_id), "excerpt": words[:80]})
     return {
         "comment": {"id": comment.id, "body": comment.body, "author": author_of(session, actor_id), "commented_on": comment.commented_on},
         **measures(session, row),
@@ -519,6 +529,9 @@ def react(session: Session, post_id: str, actor_id: str, *, reaction: Any = "lik
     if not already:
         session.add(CommunityReaction(id=new_public_id("rct"), post_id=row.id, user_id=actor_id, reaction=word, reacted_on=_today(), data_origin="user", is_demo_data=False))
         session.commit()
+        # spec 27: the author hears about the first reaction, never about their own.
+        if row.author_id != actor_id:
+            notify(session, row.author_id, kind="reaction", payload={"post_id": row.id, "actor_name": _display_name_of(session, actor_id), "reaction": word})
     return {"reaction": "already recorded" if already else "recorded", "recorded_now": not already, **measures(session, row), "formulas": dict(FORMULAS)}
 
 
@@ -548,6 +561,9 @@ def follow(session: Session, follower_id: str, followee_id: Any) -> dict[str, An
     if not already:
         session.add(CommunityFollow(id=new_public_id("fol"), follower_id=follower_id, followee_id=target.id, followed_on=_today(), data_origin="user", is_demo_data=False))
         session.commit()
+        # spec 27: the followed account hears about the new reach. Self-follows are refused
+        # above, so no self-notification can happen here.
+        notify(session, target.id, kind="follower", payload={"follower_id": follower_id, "follower_name": _display_name_of(session, follower_id)})
     return {"follow": "already recorded" if already else "recorded", "recorded_now": not already, **profile(session, follower_id)}
 
 

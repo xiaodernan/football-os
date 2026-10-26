@@ -16,7 +16,8 @@
     "myBoards": "My boards",
     "videoShort": "Video",
     "footballCv": "Football CV",
-    "simulator": "Simulator"
+    "simulator": "Simulator",
+    "notifications": "Notifications"
   },
   "common": {
     "accept": "Accept",
@@ -3735,5 +3736,25 @@
     "lede": "The page failed while it was being prepared. Trying again often works; if it does not, the club's own log has the reason.",
     "retry": "Try again",
     "title": "This page could not be loaded"
+  },
+  "notifications": {
+    "metaTitle": "Notifications",
+    "metaDescription": "The events your account should hear about: a new follower, a comment, a reaction — each written when it happened.",
+    "eyebrow": "Your tray",
+    "title": "Notifications",
+    "lede": "One row per event, written when the event happened: someone followed you, commented on your post, or reacted to it. Your own acts are not news to you, so they never appear here.",
+    "trayEyebrow": "{unread} unread of {total}",
+    "trayTitle": "The tray",
+    "markAll": "Mark all read",
+    "markRead": "Mark read",
+    "openWall": "Open the wall",
+    "emptyTitle": "Nothing here yet",
+    "emptyNote": "When somebody follows you, or answers a post of yours, the event lands here.",
+    "kindFollower": "Follower",
+    "kindComment": "Comment",
+    "kindReaction": "Reaction",
+    "lineFollower": "{name} now follows you.",
+    "lineComment": "{name} commented: “{excerpt}”",
+    "lineReaction": "{name} reacted to your post."
   }
 }

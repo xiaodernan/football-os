@@ -2388,3 +2388,25 @@ class RequestSpan(Base, TimestampMixin):
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     duration_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     attributes_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+
+
+class Notification(Base, TimestampMixin):
+    """One event an account should hear about, written when the event happened (spec module 27).
+
+    The recipient is the only reader: a notification the caller does not own reads as 404,
+    the same absence every private tier answers with. `payload` carries the addresses the
+    reader needs to reach the row the event is about — never another account's identity
+    beyond the display name the community already shows.
+    """
+
+    __tablename__ = "notifications"
+    __table_args__ = (
+        Index("ix_notification_user_created", "user_id", "created_at"),
+        Index("ix_notification_user_unread", "user_id", "read_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=lambda: new_public_id("ntf"))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

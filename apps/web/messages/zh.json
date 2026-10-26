@@ -16,7 +16,8 @@
     "myBoards": "我的战术板",
     "videoShort": "视频",
     "footballCv": "足球履历",
-    "simulator": "模拟器"
+    "simulator": "模拟器",
+    "notifications": "通知"
   },
   "common": {
     "accept": "接受",
@@ -3735,5 +3736,25 @@
     "lede": "页面在准备时失败了。再试一次通常就会好；如果没有，俱乐部自己的日志里有原因。",
     "retry": "再试一次",
     "title": "这个页面没有加载出来"
+  },
+  "notifications": {
+    "metaTitle": "通知",
+    "metaDescription": "你的账号应该听到的事件：新关注者、评论、反应——每个都在事件发生的那一刻写入。",
+    "eyebrow": "你的托盘",
+    "title": "通知",
+    "lede": "一个事件一行，在事件发生的那一刻写入：有人关注了你、评论了你的帖子、或对它作出了反应。你自己的行为不是给你的新闻，所以永远不会出现在这里。",
+    "trayEyebrow": "{total} 条中 {unread} 条未读",
+    "trayTitle": "托盘",
+    "markAll": "全部标为已读",
+    "markRead": "标为已读",
+    "openWall": "打开墙",
+    "emptyTitle": "这里还没有东西",
+    "emptyNote": "当有人关注你，或回应了你的帖子，事件就会落到这里。",
+    "kindFollower": "关注",
+    "kindComment": "评论",
+    "kindReaction": "反应",
+    "lineFollower": "{name} 现在关注了你。",
+    "lineComment": "{name} 评论了：“{excerpt}”",
+    "lineReaction": "{name} 对你的帖子作出了反应。"
   }
 }

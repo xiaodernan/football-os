@@ -1998,3 +1998,22 @@ export type GalleryList = {
   is_demo_data: boolean;
   disclaimer: string;
 };
+
+/** GET /notifications — the recipient's own tray, newest first, with the unread total beside it. */
+export type NotificationRow = {
+  id: string;
+  kind: string;
+  payload: { post_id?: string; follower_name?: string; follower_id?: string; actor_name?: string; reaction?: string; excerpt?: string };
+  created_at: string | null;
+  read_at: string | null;
+  formula: string;
+};
+
+export type NotificationList = {
+  items: NotificationRow[];
+  page: number;
+  pages: number;
+  total: number;
+  unread_total: number;
+  formula: string;
+};

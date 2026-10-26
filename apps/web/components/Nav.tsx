@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { browserFetch } from "@/lib/api";
@@ -45,6 +45,22 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
   const pathname = usePathname();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  // The tray's unread count, fetched once per mount for a signed-in reader: the badge is
+  // an invitation to look, and the tray itself is the source of truth for what it holds.
+  const [unread, setUnread] = useState<number | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    fetch("/api/v1/notifications/unread-total", { credentials: "same-origin" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => {
+        if (!cancelled && body && typeof body.unread_total === "number") setUnread(body.unread_total);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user, pathname]);
 
   async function signOut() {
     setBusy(true);
@@ -71,6 +87,10 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
           {/* A board is private working material, so the only door to it is an authenticated one. */}
           {user && (
             <>
+              <Link className={`nav__link ${pathname.startsWith("/notifications") ? "nav__link--active" : ""}`} href="/notifications">
+                {t("notifications")}
+                {unread !== null && unread > 0 && <span className="chip chip--accent" style={{ marginLeft: "0.3rem", fontSize: "0.72rem" }}>{unread}</span>}
+              </Link>
               <Link className={`nav__link ${pathname.startsWith("/tactics/boards") ? "nav__link--active" : ""}`} href="/tactics/boards">
                 {t("myBoards")}
               </Link>

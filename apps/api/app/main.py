@@ -33,6 +33,7 @@ from app.api.v1 import (
     meta,
     metrics,
     model_router,
+    notifications,
     players,
     portfolio,
     progress,
@@ -422,6 +423,7 @@ def create_app() -> FastAPI:
     app.include_router(agent_memory.router, prefix=api)
     app.include_router(agents.router, prefix=api)
     app.include_router(model_router.router, prefix=api)
+    app.include_router(notifications.router, prefix=api)
     app.include_router(metrics.router, prefix=api)
     app.include_router(jobs.router, prefix=api)
     app.include_router(traces.router, prefix=api)

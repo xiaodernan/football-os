@@ -971,6 +971,37 @@ made, none answered 400 or 403, and no console line left behind is a 5xx or a pa
 `qa-i18n-literals.mjs` **8/8** over 3593 key calls; `qa-field-labels.mjs` **2/2**. The measured figures and the
 screenshots are recorded in `docs/M10_CREATOR_VERIFICATION.md` ("The career challenge on the page").
 
+## Item 17 — spec module 27: the notification tier, its producers, and the tray on the page
+
+**The gap.** The spec's 28 modules list carried "27 Notifications" with nothing in the tree — no model, no door,
+no page, no mention. The community's three verbs (follow, comment, reaction) were events that happened silently:
+the follow landed, the comment landed, and the only way to learn of them was to re-read the wall.
+
+**The shape.** `notifications` (migration `0041`): one row per event, written when the event happens — recipient,
+kind (`follower`/`comment`/`reaction`), a payload of addresses (post id, actor display name, an 80-char excerpt),
+and `read_at`, whose null/not-null is the entire read-state machinery. Producers are wired inside the three
+community verbs themselves: a first follow notifies the followed, a first reaction and a comment notify the post's
+author — and `actor == recipient` writes nothing, because an account's own act is not news to it. Four doors under
+`/api/v1/notifications` (list with page arithmetic and `unread_total` beside it, `unread-total` for the nav badge,
+`read-all`, `/{id}/read`), every one private, another account's row answering 404 — the same absence every private
+tier gives a caller probing for ids. The tray caps at 200 rows, and the overflow policy is written in the service:
+the oldest **read** row makes room; a tray with no read rows drops the new event, because a tray that grows without
+bound is a leak wearing a feature's clothes.
+
+**The page.** `/notifications` — session-gated, in the middleware's protected prefixes and robots' disallowed list
+(a tray is the account's own correspondence), the crawl-policy gate reconciling it at 9/9. Each row names its kind
+in the reader's language and carries the sentence the payload supports ("{name} now follows you", "{name} commented:
+…"), a Mark read button per unread row and Mark all read above, and the tier's own formula printed under the panel.
+The nav gains a Notifications link with the unread count as a badge, fetched once per mount, quiet at zero.
+
+**Evidence.** `tests/test_notifications.py` (8 cases): an empty tray answers zeroes; another account's
+notification and read-marking are 404; the badge arithmetic moves 3 → 2 → 0 through one- and all-marking, marking
+twice staying the same state; the tray pages newest-first with page arithmetic; and the three producers fire — the
+followed account hears (`follower_name` in the payload), the author hears with the actor's display name and the
+comment excerpt, the actor hears nothing, and an author's own reaction writes no row. ruff and mypy (157 files)
+clean; the metadata gate at 168/168 and the crawl gate at 9/9 with the new prefix; tsc green. The walk section
+(15b) publishes its own post, acts as a stranger through the API, and reads in the browser.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
