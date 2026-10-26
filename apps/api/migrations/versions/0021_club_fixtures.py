@@ -1,10 +1,9 @@
 """§39's Matches row as one table: a fixture the tenant arranged, and no figure about the match.
 
-PARKED DRAFT — not in the tree on purpose: a full test leg is running and `migrations/versions/` is read by
-the alembic-chain checks. Move to `apps/api/migrations/versions/0021_club_fixtures.py` once the leg is green,
-together with the model block sitting beside it in this directory.
+The rows this migration creates are complemented by the models — `ClubFixture` and `club_match_appearances` in
+`app/models/__init__.py` — and by the club fixtures door that reads them.
 
-Two design decisions that the draft makes and the docstring keeps:
+Two design decisions the table's shape makes:
 
 * **A lineup is a selection, an appearance is a record — so they live apart.** Who the tenant *named* is a
   selection over its sheet, and §41 already stores one of those: `club_sessions.attendees` is a JSON list of
