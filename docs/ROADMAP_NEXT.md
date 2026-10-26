@@ -181,11 +181,13 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   projected toward potential), `affordability` (wage runway + signing preview + budget timeline),
   `contracts` (the deal book: projected expiry from the stored terms, flagged inside a warning window, and
   explicitly not enforced — plus the squad's age profile and retirement flags from the stored ages),
-  `board` (season pace projection against the objectives), and `head_to_head`
-  (this career's own record against the next opponent, from its fixtures and nothing else). Each has its
-  own formula in the payload and its own tests; none writes a stored counter. `limitations()["projections"]`
-  now says all five are read-only projections that change no stored attribute, expire no contract and trigger
-  no board decision — the page's own statement of what it does not claim.
+  `board` (season pace projection against the objectives), `head_to_head`
+  (this career's own record against the next opponent, from its fixtures and nothing else), and
+  `next_fixture_brief` (the engine's own band measurements of the next fixture's two sides, side by side,
+  with the delta — a comparison, not a forecast). Each has its own formula in the payload and its own
+  tests; none writes a stored counter. `limitations()["projections"]` says all of them are read-only
+  projections that change no stored attribute, expire no contract and trigger no board decision — the
+  page's own statement of what it does not claim.
 - **Off-host backup leg now runs and is gated.** `scripts/backup_db.sh` extracts
   `upload_backup_to_s3`; two gate tests in `apps/api/tests/test_dr_scripts.py` run the real script with
   stubbed `aws`/`pg_dump` to prove the off-host hop fires with the named bucket + `STANDARD_IA` and lands

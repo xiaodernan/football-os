@@ -117,12 +117,13 @@ def limitations() -> dict[str, str]:
             "rows exactly as it always was."
         ),
         "projections": (
-            "The `development`, `affordability`, `contracts`, `board` and `head_to_head` blocks are read-only "
-            "projections recomputed from this career's own rows on every read: fixture minutes and training projected "
-            "toward potential, a wage runway and a signing preview, a deal book whose projected expiry nothing "
-            "enforces, a season pace projection against the objectives, and this career's record against one "
-            "opponent. None of them writes a stored attribute, expires or renews a contract, triggers a board "
-            "decision or keeps a counter — each is what the rows imply, printed beside the formula that produced it."
+            "The `development`, `affordability`, `contracts`, `board`, `head_to_head` and `next_fixture_brief` blocks "
+            "are read-only projections recomputed from this career's own rows on every read: fixture minutes and "
+            "training projected toward potential, a wage runway and a signing preview, a deal book whose projected "
+            "expiry nothing enforces, a season pace projection against the objectives, this career's record against "
+            "one opponent, and the engine's own band measurements of the next fixture's two sides. None of them "
+            "writes a stored attribute, expires or renews a contract, triggers a board decision or keeps a counter — "
+            "each is what the rows imply, printed beside the formula that produced it."
         ),
         "ledger": (
             "The season ledger sums this career's own `sim_events` rows: goals, attempts, cards and injuries per "
@@ -501,6 +502,67 @@ def head_to_head(session: Session, career: Career, opponent_team_id: str | None)
     }
 
 
+NEXT_FIXTURE_FORMULA: Final = (
+    "bands are the engine's own band indices ((mean of the band's attributes − 28) ÷ 68) measured on the same rows "
+    "the fixture will be played from; delta = career band − opponent band, so a positive delta is this career's side "
+    "stronger in that band"
+)
+
+
+def next_fixture_brief(session: Session, career: Career, *, plan: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The next fixture's two sides as the engine measures them, side by side.
+
+    Both profiles come from `team_profile` — the career's with its transfer overlay and chosen system, the
+    opponent's from its stored rows — so the comparison is the engine's own measurement of the eleven it
+    will play, not a second estimate. It is a comparison, not a forecast: no scoreline is predicted.
+    """
+    plan = plan or next_fixture_plan(session, career)
+    if not plan.get("available"):
+        return {"available": False, "reason": str(plan.get("reason", "no next fixture")), "data_origin": "simulation", "is_demo_data": True}
+    overlay = squad_as_of(session, career, int(plan["round_index"]))
+    try:
+        mine = team_profile(session, career.club_id or "", system_slug=career.system_slug or None, squad=overlay)
+        theirs = team_profile(session, str(plan["opponent_team_id"]))
+    except LookupError as error:
+        return {"available": False, "reason": str(error), "data_origin": "simulation", "is_demo_data": True}
+    bands = ("attack", "midfield", "defence", "keeper", "press")
+    mine_bands = {band: round(float(getattr(mine, band)), 3) for band in bands}
+    theirs_bands = {band: round(float(getattr(theirs, band)), 3) for band in bands}
+    delta = {band: round(mine_bands[band] - theirs_bands[band], 3) for band in bands}
+    return {
+        "available": True,
+        "round_index": int(plan["round_index"]),
+        "side": plan["side"],
+        "opponent_name": plan["opponent_name"],
+        "venue_name": plan["venue_name"],
+        "career": {
+            "team_id": mine.team_id,
+            "name": mine.name,
+            "formation": mine.formation,
+            "system_slug": mine.system_slug,
+            "bands": mine_bands,
+            "overall": round(float(mine.overall), 3),
+            "form": round(float(mine.form), 3),
+        },
+        "opponent": {
+            "team_id": theirs.team_id,
+            "name": theirs.name,
+            "formation": theirs.formation,
+            "system_slug": theirs.system_slug,
+            "bands": theirs_bands,
+            "overall": round(float(theirs.overall), 3),
+            "form": round(float(theirs.form), 3),
+        },
+        "delta": delta,
+        "stronger_bands": [band for band in bands if delta[band] > 0],
+        "weaker_bands": [band for band in bands if delta[band] < 0],
+        "formula": NEXT_FIXTURE_FORMULA,
+        "note": "the engine's own measurement of the same rows it will play; a comparison, not a forecast",
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
 def objectives_of(career: Career, record: dict[str, Any]) -> list[dict[str, Any]]:
     actual_by_kind = {
         "wins": record["won"],
@@ -743,6 +805,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
     if include_fixtures:
         plan = next_fixture_plan(session, career)
         view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None)
+        view["next_fixture_brief"] = next_fixture_brief(session, career, plan=plan)
         view["ledger"] = ledger_view(session, career)
         view["fixtures"] = [
             {
@@ -784,6 +847,7 @@ __all__ = [
     "POINTS_FOR",
     "BOARD_FORMULA",
     "HEAD_TO_HEAD_FORMULA",
+    "NEXT_FIXTURE_FORMULA",
     "WindowClosed",
     "board_view",
     "career_view",
@@ -794,6 +858,7 @@ __all__ = [
     "head_to_head",
     "limitations",
     "mini_table",
+    "next_fixture_brief",
     "next_fixture_plan",
     "objectives_of",
     "play_round",

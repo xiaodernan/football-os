@@ -223,6 +223,8 @@ class TestJudging:
         # A career that has made no deal has an empty contract book, not a missing one.
         assert view["contracts"]["deals"] == 0 and view["contracts"]["rows"] == []
         assert view["contracts"]["age_profile"]["players"] > 0 and view["contracts"]["age_profile"]["mean"] > 0
+        # The next fixture's brief is wired to the round after the one just played.
+        assert view["next_fixture_brief"]["available"] is True and view["next_fixture_brief"]["round_index"] == 2
 
     def test_a_deleted_match_report_leaves_the_career_readable(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
@@ -333,3 +335,18 @@ class TestHeadToHead:
         view = career_service.career_view(session, career)
         assert "head_to_head" in view and view["head_to_head"]["available"] is True
         assert view["head_to_head"]["played"] == 0, "the fourth round of the first cycle meets an opponent this career has not played"
+
+
+class TestNextFixtureBrief:
+    def test_the_brief_compares_the_engines_own_measurements(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        brief = career_service.next_fixture_brief(session, career)
+        assert brief["available"] is True and brief["round_index"] == 1
+        bands = ("attack", "midfield", "defence", "keeper", "press")
+        for band in bands:
+            assert brief["delta"][band] == round(brief["career"]["bands"][band] - brief["opponent"]["bands"][band], 3)
+        assert all(brief["delta"][band] > 0 for band in brief["stronger_bands"])
+        assert all(brief["delta"][band] < 0 for band in brief["weaker_bands"])
+        assert set(brief["stronger_bands"]) | set(brief["weaker_bands"]) <= set(bands)
+        assert brief["career"]["bands"] and brief["opponent"]["bands"]
+        assert "comparison" in brief["note"] and brief["formula"].startswith("bands are the engine's own band indices")
