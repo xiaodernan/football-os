@@ -994,7 +994,11 @@ in the reader's language and carries the sentence the payload supports ("{name} 
 …"), a Mark read button per unread row and Mark all read above, and the tier's own formula printed under the panel.
 The nav gains a Notifications link with the unread count as a badge, fetched once per mount, quiet at zero.
 
-**Evidence.** `tests/test_notifications.py` (8 cases): an empty tray answers zeroes; another account's
+**The walk's first two runs failed on the host, not the tier, and the failures are the record.** Run 1: the API
+process died mid-walk (connection refused during the erasure probe), so every check after it starved. Run 2: the
+port had changed hands — a second uvicorn bound 8731 while the first still held it, the stranger's register met the
+restart window, and its token was `undefined`, so all three stranger verbs answered 401 and the tray stayed empty.
+Both runs' other 285 checks passed. **Evidence.** `tests/test_notifications.py` (8 cases): an empty tray answers zeroes; another account's
 notification and read-marking are 404; the badge arithmetic moves 3 → 2 → 0 through one- and all-marking, marking
 twice staying the same state; the tray pages newest-first with page arithmetic; and the three producers fire — the
 followed account hears (`follower_name` in the payload), the author hears with the actor's display name and the
