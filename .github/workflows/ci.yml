@@ -92,6 +92,12 @@ jobs:
         working-directory: apps/web
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The freshness and population-floor gates compare the catalogues with a baseline commit, and the
+          # default depth-1 clone holds none: `git show <baseline>:apps/web/messages/…` failed there, and both
+          # gates reported `CHECKS passed=0 total=0 failed=0` — a green build that checked nothing. The whole
+          # history is fetched so the commit a push replaced (or a pull request's base) is present.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -193,10 +199,23 @@ jobs:
         run: node scripts/qa-crawl-policy.mjs
       - name: ICU-coverage gate (every placeholder used in source is declared in catalogue)
         run: node scripts/qa-icu-coverage.mjs
-      - name: Translation-freshness gate (no stale translations since baseline)
+      - name: Translation-freshness gate (no stale translations since the base commit)
+        # The baseline commit comes from the event that started the run: the commit a push replaced, or a pull
+        # request's base. Without one the gate refuses rather than reporting zero checks — which is what it did
+        # on a clean checkout, whose baseline file is not in the tree.
+        env:
+          QA_BASELINE_COMMIT: ${{ github.event.before || github.event.pull_request.base.sha }}
         run: node scripts/qa-translation-freshness.mjs
       - name: Population-floor gate (catalogue population never regresses)
+        env:
+          QA_BASELINE_COMMIT: ${{ github.event.before || github.event.pull_request.base.sha }}
         run: node scripts/qa-population-floor.mjs
+      - name: Baseline-gate behaviour gate (the two gates' verdicts, on a scratch repository)
+        # Same command as `scripts/check.sh`. The two steps above compare against whatever baseline CI supplies;
+        # this one builds a repository where a stale key, a deleted key and a parity break are the only changes,
+        # and holds each gate red where it must be and red — as a refusal — when the baseline cannot be read.
+        # Files only: git and the two gates, no server, no browser.
+        run: node scripts/qa-baseline-gates.mjs
       - name: Locale-formatting gate (date/number/currency format patterns are locale-appropriate)
         run: node scripts/qa-locale-formatting.mjs
       - name: Plural-select gate (ICU plural/select branches complete per locale)

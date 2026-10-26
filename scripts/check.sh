@@ -187,16 +187,26 @@ echo "── Web: ICU-coverage gate ──────────────�
 (cd apps/web && node scripts/qa-icu-coverage.mjs)
 
 echo "── Web: translation-freshness gate ────────────────────"
-# No stale translations: en changed but cn unchanged since last baseline.
-# Baseline set at a2ac19f. Run with --init-baseline to update.
-# Files only: no server, no browser.
+# No stale translations: the English value changed and the Chinese one did not. The baseline is
+# `--base <commit>`, then QA_BASELINE_COMMIT (CI names the commit a push replaced, or a PR's base),
+# then the untracked `.gate-baseline` that `--init-baseline` writes. A run with none of them has
+# nothing to compare, so the gate refuses instead of printing zero checks — the shape that let a
+# clean checkout pass it without reading a single key.
 (cd apps/web && node scripts/qa-translation-freshness.mjs)
 
 echo "── Web: population-floor gate ─────────────────────────"
-# Catalogue population never regresses; per-namespace floors enforced.
-# Baseline: 3600 keys across 40 namespaces. Run with --init-baseline to update.
-# Files only: no server, no browser.
+# The catalogue's total and per-namespace counts never fall below the baseline commit's (or the
+# `.population-baseline` file's), and all three locales always hold the same number of keys — that
+# last check needs no baseline, so it runs even when the gate has to refuse for want of one.
 (cd apps/web && node scripts/qa-population-floor.mjs)
+
+echo "── Web: baseline-gate behaviour gate ──────────────────"
+# The two gates above are only as good as their verdicts, and both reported zero checks on a checkout
+# with no baseline file — CI's shape — including for a tree whose locales disagreed. This builds a
+# scratch repository where a stale key, a deleted key and a parity break are the only changes, and
+# holds each gate red where it must be, and red as a refusal when the baseline cannot be read.
+# Files only: git and the two gates, no server, no browser.
+(cd apps/web && node scripts/qa-baseline-gates.mjs)
 
 echo "── Web: locale-formatting gate ────────────────────────"
 # Date/number/currency format patterns are locale-appropriate.
