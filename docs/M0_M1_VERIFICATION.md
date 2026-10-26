@@ -442,6 +442,61 @@ naming the same line and message CI named. The worktree file was then restored f
 `sha256 ac41d847…`. With the fix: `Success: no issues found in 155 source files`, and `tests/test_transfers.py`
 **46 passed**. Landed at `8aa8b93`.
 
+### 3.5 The key-drift gate was red on a correct tree
+
+CI run `40338019930` reached the web job's `Key-drift gate` and stopped: `CHECKS passed=0 total=2 failed=2`,
+with 119 sentence drifts and 107 key drifts. Reproduced locally against the same catalogues.
+
+Both checks demanded one translation for every English sentence shared **across namespaces** and for every key
+name shared across namespaces. That premise is false in a product with several contexts. A review of all 226
+differences on 2026-10-25 found no defect:
+
+* `nav.home` is 首页 (the homepage) while `simulate.home` and `worldMatch.thHome` are 主队 (the home team).
+* `settings.plan` is 套餐 (a subscription) while `coach.tabPlan` is 计划 (a training programme).
+* `thP` is "played" in one table and "passes" in another; `thSv` is "saves" in one and "save percentage" in the
+  next.
+* `errors.no_such_club` and `errors.no_such_team` share the API's sentence, whose noun the API fixes as *club*;
+  the two Chinese files name it with two synonyms.
+
+So the gate could not be green on a correct tree, and it never had been. The consequence is larger than one red
+line: **the six web gates after it — locale-content, locale-completeness, token-drift, namespace-ownership,
+`tsc --noEmit` and `next build` — had never run in CI.**
+
+The gate now asks the question in the population where it is a defect: **two keys inside one namespace** that
+share an English sentence are the same sentence in the same context, so they must share its Chinese. That
+population is **115** groups, of which **12** diverge. Every one is named in `REVIEWED`, keyed on **identity**
+(`namespace|sorted keys`) with the reason it differs, so a group whose keys change, or a new group, is red, while
+fixing one group cannot pay for another. The cross-namespace figures are still measured, as **ceilings that may
+only fall** (119 sentence issues, 107 key issues). A population guard — three catalogues with the same keys, at
+least one shared sentence, one shared key and one same-context group — refuses a scan that read nothing, so an
+empty or misparsed catalogue cannot pass as clean. The gate prints every same-context site with its reason and
+names any ledger entry that no longer drifts.
+
+**Witness.** `apps/web/scripts/qa-key-drift-witness.mjs` (10 checks, wired into `scripts/check.sh` and CI) runs
+the **shipped** gate over scratch catalogues through `QA_I18N_WEB`:
+
+| arm | fixture | expected | read |
+| --- | --- | --- | --- |
+| A | the real catalogues | 4/4 green | 4/4, rc 0 |
+| B | one namespace's sentence given a second Chinese value | check 2 alone | 3/4, rc 1; the red names `scout\|headroomColumn,kvHeadroom,thHeadroom` |
+| C | a key deleted from `zh` | the population guard alone | 3/4, rc 1 |
+| D | 60 sentences and 60 keys shared by two namespaces, translated differently | both ceilings | 2/4; 120 sentence issues, 240 key issues, guard green |
+| E | three empty catalogues | the population guard alone | 3/4, rc 1 |
+| F | one reviewed site made to agree | green, one prunable entry | 4/4; `11 drifting site(s)`, `1 ledger entry no longer drift` |
+| G | the real catalogues again | 4/4 green | 4/4, rc 0 |
+
+The witness's **first run was 0/8**. The gate itself crashed on a leftover `sameContext` identifier after the
+rename in this change — a defect the witness caught in the gate rather than in the fixture — and the same-context
+arm counted sentence occurrences instead of distinct namespaces, so it found no group to break. Both were fixed
+before the green was accepted, and the arm now refuses to count if no such group exists (B's red is on the
+fixture, not on a skip).
+
+**Reverse control.** The pre-fix gate's bytes, saved from `1140f81`, over a copy of the real catalogues:
+`CHECKS passed=0 total=2 failed=2`, rc 1, naming the same 119 and 107 issues.
+
+Local runs: the gate **4/4** and the witness **10/10**. The script inventory reads **162/164**, its two reds
+naming the foreign staged `qa-translation-quality.mjs`. Landed at `dce0734`.
+
 ## 4. Known gaps (not hidden)
 
 - **The QA PNGs are on disk, not in git.** `docs/screenshots/*.png` is ignored because each run re-stamps 9 MB
