@@ -765,3 +765,41 @@ class TestMarketView:
         assert "career_wage_charges" in limits["wages"] and "not charged is the club's own" in limits["wages"]
         assert "no default" in limits["wages"], "the wage bill's own limit is named rather than left out"
         assert "AI Scout" in limits["scouting"] and "not built" in limits["scouting"]
+
+
+class TestContracts:
+    def test_a_career_with_no_deals_has_an_empty_book(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        book = market.contract_book(session, career, season_rounds=6)
+        assert book["deals"] == 0 and book["rows"] == [] and book["expiring_soon"] == 0
+        assert book["total_weekly_wage"] == 0 and book["formula"] == market.CONTRACT_FORMULA
+
+    def test_a_signing_projects_its_expiry_from_the_stored_terms(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _sign(session, world, career, band="attack")
+        move = session.scalar(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id, CareerSquadMove.player_id == player.id))
+        book = market.contract_book(session, career, season_rounds=6)
+        assert book["deals"] == 1
+        row = book["rows"][0]
+        assert row["player_id"] == player.id and row["kind"] == "buy"
+        assert row["expiry_round"] == int(move.round_index) + int(move.contract_years) * 6 - 1
+        assert row["rounds_remaining"] == row["expiry_round"] - book["current_round"] + 1
+        assert row["weekly_wage"] == int(move.weekly_wage) == book["total_weekly_wage"]
+        assert "year(s)" in row["basis"]
+
+    def test_a_loan_expires_on_its_agreed_round(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _sign(session, world, career, band="midfield", rounds=2)
+        move = session.scalar(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id, CareerSquadMove.player_id == player.id))
+        book = market.contract_book(session, career, season_rounds=6)
+        row = book["rows"][0]
+        assert row["kind"] == "loan" and row["expiry_round"] == int(move.loan_until_round)
+        assert "loan" in row["basis"]
+
+    def test_a_deal_inside_the_warning_window_is_flagged(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        _sign(session, world, career, band="midfield", rounds=1)
+        book = market.contract_book(session, career, season_rounds=6)
+        row = book["rows"][0]
+        assert row["rounds_remaining"] <= market.EXPIRY_WARNING_ROUNDS and row["expiring_soon"] is True
+        assert book["expiring_soon"] == 1 and book["expiring_weekly_wage"] == row["weekly_wage"]

@@ -613,6 +613,13 @@ def _affordability(session: Session, career: Career) -> dict[str, Any]:
     return affordability_view(session, career)
 
 
+def _contracts(session: Session, career: Career) -> dict[str, Any]:
+    """The deal book, read through the same local import for the same cycle reason as `_affordability`."""
+    from app.services.simulation.market import contract_book
+
+    return contract_book(session, career, season_rounds=int(season_horizon(session, career)["rounds"]))
+
+
 def development_view(session: Session, career: Career) -> dict[str, Any]:
     """A read-only projection of how the career's players have developed from fixture minutes (M13 item 4).
 
@@ -717,6 +724,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1),
         "development": development_view(session, career),
         "affordability": _affordability(session, career),
+        "contracts": _contracts(session, career),
         "model_versions": sorted({row.model_version for row in rows if row.model_version}),
         "limitations": limitations(),
         "disclaimer": CAREER_DISCLAIMER,

@@ -219,6 +219,8 @@ class TestJudging:
         # The board projection is wired and reads the same record the page prints.
         assert view["board"]["played"] == 1 and view["board"]["season_rounds"] > 0
         assert view["board"]["points_per_round"] == round(view["record"]["points"] / 1, 3)
+        # A career that has made no deal has an empty contract book, not a missing one.
+        assert view["contracts"]["deals"] == 0 and view["contracts"]["rows"] == []
 
     def test_a_deleted_match_report_leaves_the_career_readable(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)

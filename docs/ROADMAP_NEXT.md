@@ -179,9 +179,10 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 
 - **Career-view depth, all read-only and recomputed from rows.** `development` (fixture minutes + training
   projected toward potential), `affordability` (wage runway + signing preview + budget timeline),
-  `board` (season pace projection against the objectives), and `head_to_head` (this career's own record
-  against the next opponent, from its fixtures and nothing else). Each has its own formula in the payload
-  and its own tests; none writes a stored counter.
+  `contracts` (the deal book: projected expiry from the stored terms, flagged inside a warning window, and
+  explicitly not enforced), `board` (season pace projection against the objectives), and `head_to_head`
+  (this career's own record against the next opponent, from its fixtures and nothing else). Each has its
+  own formula in the payload and its own tests; none writes a stored counter.
 - **Off-host backup leg now runs and is gated.** `scripts/backup_db.sh` extracts
   `upload_backup_to_s3`; two gate tests in `apps/api/tests/test_dr_scripts.py` run the real script with
   stubbed `aws`/`pg_dump` to prove the off-host hop fires with the named bucket + `STANDARD_IA` and lands

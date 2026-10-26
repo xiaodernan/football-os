@@ -529,6 +529,14 @@ TIMELINE_FORMULA: Final = (
     "with the running figure and any disagreement is counted"
 )
 
+#: The contract book's arithmetic, and how close to expiry a deal is called "soon".
+CONTRACT_FORMULA: Final = (
+    "expiry_round = signed_round + contract_years × season_rounds − 1 for a permanent deal, or the loan's agreed "
+    "loan_until_round for a loan; rounds_remaining = max(0, expiry_round − current_round + 1); nothing in this "
+    "build expires or renews a contract, so the book is a projection from the stored terms, not an enforcement"
+)
+EXPIRY_WARNING_ROUNDS: Final = 3
+
 
 def wage_runway(remaining: int, weekly_wage: int) -> int | None:
     """How many further rounds the current balance covers the current weekly wage bill.
@@ -657,6 +665,67 @@ def budget_timeline(session: Session, career: Career, *, limit: int = 12) -> dic
         "note": (
             "recomputed in round order from career.budget; a row whose stored budget_after disagrees with the "
             "running figure is counted, not hidden"
+        ),
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
+def contract_book(session: Session, career: Career, *, season_rounds: int) -> dict[str, Any]:
+    """The deals this career holds and when their stored terms project them to expire.
+
+    A permanent deal's expiry is `signed_round + contract_years × season_rounds − 1`; a loan's is the
+    `loan_until_round` it was agreed at. `rounds_remaining` counts from the round about to be played, and
+    a deal inside `EXPIRY_WARNING_ROUNDS` is flagged. Nothing in this build expires or renews a contract,
+    so this is a projection from the terms the market stored — stated as such rather than enforced.
+    """
+    round_index = int(career.rounds_played) + 1
+    held = held_deals(session, career.id, round_index)
+    rows: list[dict[str, Any]] = []
+    for move in held:
+        kind = effective_kind(move, round_index)
+        if kind in ("loan", "loan_out"):
+            expiry: int | None = int(move.loan_until_round or 0) or None
+            basis = "the loan's agreed last round"
+        elif int(season_rounds) > 0 and int(move.contract_years) > 0:
+            expiry = int(move.round_index) + int(move.contract_years) * int(season_rounds) - 1
+            basis = f"{int(move.contract_years)} year(s) × {int(season_rounds)} rounds"
+        else:
+            expiry = None
+            basis = "no contract length to project from"
+        remaining = max(0, expiry - round_index + 1) if expiry is not None else None
+        rows.append(
+            {
+                "player_id": move.player_id,
+                "player_name": move.player_name,
+                "player_slug": move.player_slug,
+                "position": move.position,
+                "kind": kind,
+                "weekly_wage": int(move.weekly_wage),
+                "signed_round": int(move.round_index),
+                "contract_years": int(move.contract_years),
+                "expiry_round": expiry,
+                "rounds_remaining": remaining,
+                "expiring_soon": remaining is not None and remaining <= EXPIRY_WARNING_ROUNDS,
+                "basis": basis,
+            }
+        )
+    rows.sort(key=lambda item: (item["rounds_remaining"] is None, item["rounds_remaining"] or 0, str(item["player_name"])))
+    expiring = [row for row in rows if row["expiring_soon"]]
+    return {
+        "deals": len(rows),
+        "expiring_soon": len(expiring),
+        "warning_rounds": EXPIRY_WARNING_ROUNDS,
+        "current_round": round_index,
+        "season_rounds": int(season_rounds),
+        "total_weekly_wage": sum(row["weekly_wage"] for row in rows),
+        "expiring_weekly_wage": sum(row["weekly_wage"] for row in expiring),
+        "rows": rows,
+        "units": career.budget_units,
+        "formula": CONTRACT_FORMULA,
+        "note": (
+            "a projection from the stored terms; nothing in this build expires or renews a contract, and the club's "
+            "own stored squad carries no contract of its own"
         ),
         "data_origin": "simulation",
         "is_demo_data": True,
@@ -1097,6 +1166,8 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
 __all__ = [
     "AFFORDABILITY_FORMULA",
     "BUDGET_FORMULA",
+    "CONTRACT_FORMULA",
+    "EXPIRY_WARNING_ROUNDS",
     "FIT_FORMULA",
     "MARKET_DISCLAIMER",
     "MARKET_SIZE",
@@ -1117,6 +1188,7 @@ __all__ = [
     "budget_timeline",
     "buy",
     "club_need",
+    "contract_book",
     "held_deals",
     "ledger_of",
     "listing_row",
