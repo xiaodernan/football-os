@@ -343,3 +343,18 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   stubbed `aws`/`pg_dump` to prove the off-host hop fires with the named bucket + `STANDARD_IA` and lands
   the artifact, and that an unset bucket performs no upload. Committed into the tree (carried by the
   concurrent session's push) and on `origin/master`.
+- **The API's load story is published and gated.** `scripts/bench_api.py` gained a `sims` scenario alongside
+  the M12 duration loop: a task-count career walk (register accounts, open careers, play a fixed number of
+  rounds each, then re-read every career and check its own count) whose concurrency is *across* careers — one
+  worker owns a career and plays its rounds sequentially, because the same-career race is refused by the
+  database layer: a probe (`K=2` concurrent plays, 10 trials, rounds read back from the SQLite rows) returned
+  10/10 one-200-one-409 with zero duplicate rounds and `rounds_played` never disagreeing with the rows; the
+  loser's 409 is the global `IntegrityError` handler's coarse `conflict`, not a domain answer. `docs/LOAD_ENVELOPE.md`
+  publishes the envelope (measured 2026-10-28: p95 1745 ms at 36 plays, 3.44 plays/s; gate shape 2×2×2 = 8
+  plays p95 1656 ms) as the single JSON author of two generous ceilings (p95 ≤ 15000 ms ≈ 9× headroom,
+  subprocess ≤ 600 s), and `apps/api/tests/test_load_envelope.py` boots a real `uvicorn.Server` in a thread
+  against the test run's own seeded database — both legs — drives the script as a subprocess three times, and
+  requires the gate shape green on every invariant (0 non-2xx, exact rounds per career, p95 under the ceiling)
+  and both refusal arms red: a wrong prefix exits 1 naming the setup 404, and `--careers 6` exits 1 naming the
+  409 `career_limit` after exactly 5 careers opened. Throughput is reported, not gated — a floor measured on
+  one machine flakes on a slower one for reasons that are not defects.
