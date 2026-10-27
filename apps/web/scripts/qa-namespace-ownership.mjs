@@ -101,6 +101,9 @@ const NAMESPACE_OWNERS = {
 
   // Disclaimer
   "disclaimer": { owner: "core", purpose: "Legal disclaimer messages" },
+
+  // Notification tier
+  "notifications": { owner: "core", purpose: "Notification and alert messages" },
 };
 
 /** Check that every namespace in the catalogue has an owner declaration */
