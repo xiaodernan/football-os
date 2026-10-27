@@ -691,14 +691,15 @@ def season_horizon(session: Session, career: Career) -> dict[str, Any]:
     return {"rounds": 2 * len(opponents), "source": "a double round-robin over the competition's clubs (home and away)"}
 
 
-def board_view(session: Session, career: Career, rows: list[CareerFixture], record: dict[str, Any]) -> dict[str, Any]:
+def board_view(session: Session, career: Career, rows: list[CareerFixture], record: dict[str, Any], *, horizon: dict[str, Any] | None = None) -> dict[str, Any]:
     """Where the season is heading at the current pace, and whether the board's targets are on track.
 
     A linear projection over the career's own played rounds, never a stored figure: the board reads the same
     sums the record prints, so it cannot drift from them. Only additive objectives are projected; an unbeaten
-    run is a streak, not a sum, so it is reported as it stands rather than extrapolated.
+    run is a streak, not a sum, so it is reported as it stands rather than extrapolated. `horizon` lets the
+    career view hand in the season length it already computed rather than re-reading the competition's clubs.
     """
-    horizon = season_horizon(session, career)
+    horizon = horizon if horizon is not None else season_horizon(session, career)
     rounds = int(horizon["rounds"])
     played = int(record["played"])
     additive = {"wins": int(record["won"]), "points": int(record["points"]), "goal_difference": int(record["goal_difference"])}
@@ -767,14 +768,15 @@ def _affordability(session: Session, career: Career) -> dict[str, Any]:
     return affordability_view(session, career)
 
 
-def _contracts(session: Session, career: Career) -> dict[str, Any]:
+def _contracts(session: Session, career: Career, *, horizon: dict[str, Any] | None = None) -> dict[str, Any]:
     """The deal book, read through the same local import for the same cycle reason as `_affordability`."""
     from app.services.simulation.market import contract_book
 
-    return contract_book(session, career, season_rounds=int(season_horizon(session, career)["rounds"]))
+    horizon = horizon if horizon is not None else season_horizon(session, career)
+    return contract_book(session, career, season_rounds=int(horizon["rounds"]))
 
 
-def _window(session: Session, career: Career) -> dict[str, Any]:
+def _window(session: Session, career: Career, *, horizon: dict[str, Any] | None = None) -> dict[str, Any]:
     """The signing window state, read through the same local import for the same cycle reason as `_contracts`.
 
     The career payload is otherwise self-contained (board, affordability, contracts, next fixture); the window is
@@ -782,7 +784,7 @@ def _window(session: Session, career: Career) -> dict[str, Any]:
     """
     from app.services.simulation.market import transfer_window
 
-    return transfer_window(session, career)
+    return transfer_window(session, career, horizon=horizon)
 
 
 def development_view(
@@ -901,6 +903,9 @@ def career_summary(session: Session, career: Career) -> dict[str, Any]:
 def career_view(session: Session, career: Career, *, include_fixtures: bool = True) -> dict[str, Any]:
     rows = fixtures_of(session, career)
     record = record_of(rows)
+    # The season length feeds the board, the contract book and the signing window; compute it once here
+    # rather than let each block re-read the competition's clubs.
+    horizon = season_horizon(session, career)
     # `carry_over` and `development` both need the career's appearances and the world's training load; read
     # each table once here and hand the same rows to both, rather than let each block re-query them.
     appearance_rows = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id).order_by(CareerAppearance.round_index)).all())
@@ -910,15 +915,15 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "record": record,
         "highlights": season_highlights(rows, career),
         "objectives": objectives_of(career, record),
-        "board": board_view(session, career, rows, record),
+        "board": board_view(session, career, rows, record, horizon=horizon),
         "table": mini_table(rows, career),
         "consistency": _consistency(session, rows),
         "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1, appearances=appearance_rows, training=training_all),
         "development": development_view(session, career, appearances=appearance_rows, training=training_all),
         "academy": academy_view(session, career, appearances=appearance_rows, training=training_all),
         "affordability": _affordability(session, career),
-        "contracts": _contracts(session, career),
-        "window": _window(session, career),
+        "contracts": _contracts(session, career, horizon=horizon),
+        "window": _window(session, career, horizon=horizon),
         "model_versions": sorted({row.model_version for row in rows if row.model_version}),
         "limitations": limitations(),
         "disclaimer": CAREER_DISCLAIMER,

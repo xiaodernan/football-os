@@ -248,6 +248,9 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     row just to read `record` and `objectives` — a whole view per career over a list. `career_summary` now
     computes the brief, record and objectives from the fixture rows alone, skipping the projection blocks
     (pinned by a test that the summary reads neither `career_appearances` nor `real_training_sessions`).
+    **Eighth fix (2026-10-28):** `season_horizon` was computed three times per detail read (board, contract book,
+    signing window), each re-reading the competition's clubs; `career_view` computes it once and passes it to all
+    three (pinned by a test bounding the `where teams.competition_id = ?` reads to the horizon plus the rotation).
 15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
     M12 cost/rate-limit work already gives the scaffolding.
 

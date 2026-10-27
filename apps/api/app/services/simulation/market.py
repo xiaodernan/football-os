@@ -402,17 +402,18 @@ def season_windows(season_rounds: int) -> list[dict[str, Any]]:
     return merged
 
 
-def transfer_window(session: Session, career: Career) -> dict[str, Any]:
+def transfer_window(session: Session, career: Career, *, horizon: dict[str, Any] | None = None) -> dict[str, Any]:
     """Where this career's next round falls against its season's signing windows.
 
     The round a deal would be made in is `rounds_played + 1`. Rounds are grouped into seasons of
     `season_rounds` — the horizon the season board projects against — so a career that has played past
     its first season is judged against the next season's windows rather than locked out for good. A
     career with no horizon has no window to police and reads open, which is stated rather than assumed.
+    `horizon` lets the career view hand in the season length it already computed.
     """
     from app.services.simulation.career import season_horizon
 
-    horizon = season_horizon(session, career)
+    horizon = horizon if horizon is not None else season_horizon(session, career)
     season_rounds = int(horizon["rounds"])
     next_round = int(career.rounds_played) + 1
     if season_rounds <= 0:

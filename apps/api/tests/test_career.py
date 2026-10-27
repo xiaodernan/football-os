@@ -467,6 +467,26 @@ class TestReadEfficiency:
         assert summary["record"]["played"] == 1 and summary["career"]["slug"] == career.slug
         assert isinstance(summary["objectives"], list) and summary["objectives"]
 
+    def test_the_season_horizon_is_computed_once(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career_service.play_round(session, career)
+        statements: list[str] = []
+        engine = session.get_bind()
+
+        def before(conn: object, cursor: object, statement: str, params: object, context: object, executemany: bool) -> None:  # type: ignore[no-untyped-def]
+            statements.append(statement.lower())
+
+        event.listen(engine, "before_cursor_execute", before)
+        try:
+            career_service.career_view(session, career)
+        finally:
+            event.remove(engine, "before_cursor_execute", before)
+        normalized = [" ".join(statement.split()) for statement in statements]
+        # The board, contract book and window share one horizon now; the other read is the fixture rotation.
+        # Match the WHERE predicate, not the column list (a full-row select also names competition_id).
+        club_reads = [s for s in normalized if "where teams.competition_id =" in s]
+        assert len(club_reads) <= 2, f"the competition's clubs were read {len(club_reads)} times (horizon + rotation is 2)"
+
 
 class TestSeasonHighlights:
     def test_a_fresh_career_has_no_highlights_to_report(self, session, world) -> None:  # type: ignore[no-untyped-def]
