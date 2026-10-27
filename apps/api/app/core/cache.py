@@ -137,6 +137,23 @@ class TTLCache:
             self._evict_expired()
             return list(self._cache.keys())
 
+    def drop_identity(self, identity: str) -> int:
+        """Delete every key that names this caller. Returns how many entries died.
+
+        The response cache keys a private answer as `http:{path}:{query}:{origin}:{identity}`
+        (see `app.main.response_cache_key`), and every component is percent-encoded with
+        `safe=""`, so no component can contain a colon and the identity is the text after
+        the final one. `identity=""` names the anonymous caller, whose keys simply end in
+        a colon.
+        """
+        suffix = f":{identity}"
+        with self._lock:
+            self._evict_expired()
+            doomed = [key for key in self._cache if key.endswith(suffix)]
+            for key in doomed:
+                del self._cache[key]
+            return len(doomed)
+
 
 # Global cache instances
 _response_cache = TTLCache(max_size=5000, default_ttl=60.0)  # 1 min for responses

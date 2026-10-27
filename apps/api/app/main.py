@@ -177,6 +177,8 @@ class CacheTier(Protocol):
 
     def set(self, key: str, value: Any, ttl: float | None = None) -> Any: ...
 
+    def drop_identity(self, identity: str) -> int: ...
+
 
 async def cached_response_for(
     cache: CacheTier,
@@ -207,7 +209,9 @@ async def cached_response_for(
     is passed through and marked MISS — caching a 500 would replay a failure for the
     whole TTL, and caching a non-JSON body would break the contract the payload is built
     on. `no-cache` from the caller defeats a warm entry, because a caller who asks for a
-    fresh answer is entitled to one.
+    fresh answer is entitled to one. So is a caller whose own write just succeeded: the
+    write drops every entry keyed to that caller, so the next GET cannot serve the answer
+    the write made false.
 
     **A private answer belongs to the caller who asked for it, so the key names the
     caller.** Measured 2026-10-20 against a live server: the key was path + query +
@@ -236,7 +240,19 @@ async def cached_response_for(
     about, and that no user data is written to a store another process can read.
     """
     if request.method != "GET":
-        return await call_next(request)
+        response = await call_next(request)
+        # Read-your-writes: a caller whose write succeeded must not be served their own
+        # pre-write answers for the rest of the TTL. Measured 2026-10-27 on a live server:
+        # after a career's `POST /play`, five consecutive plain GETs returned the pre-play
+        # career view — the cache held the answer the write had just made false. The drop
+        # is scoped to the caller because the key already is: every private answer sits
+        # under that caller's identity, and no other caller's answer may be dropped for
+        # this one's write. An anonymous write drops nothing — an anonymous caller holds no
+        # identity their future reads could be keyed under, and their next read after
+        # registering or signing in runs under a fresh identity with no entries at all.
+        if 200 <= response.status_code < 300 and caller_identity(request.headers.get("authorization", "")):
+            cache.drop_identity(caller_identity(request.headers["authorization"]))
+        return response
 
     if "no-cache" in request.headers.get("Cache-Control", "").lower():
         return await call_next(request)

@@ -23,7 +23,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse, Response
 
 from app.core.cache import TTLCache
-from app.main import cached_response_for, response_cache_key
+from app.main import cached_response_for, caller_identity, response_cache_key
 
 Origin = Callable[[Request], Awaitable[Response]]
 
@@ -151,6 +151,103 @@ def test_a_non_get_request_is_not_cached() -> None:
     header, body = asyncio.run(run())
     assert header is None, "a POST is not a cache candidate, so it is not labelled a miss"
     assert b"ok" in body
+
+
+def _authed_request(method: str = "GET", token: bytes = b"Bearer token-a") -> Request:
+    return _request(method=method, headers=[(b"authorization", token)])
+
+
+def _counting_origin(body: dict[str, object] | None = None, status: int = 200) -> tuple[Origin, list[int]]:
+    """An origin that reports how many times its GET was reached — a POST is a write, not a read."""
+    calls: list[int] = []
+
+    async def call_next(request: Request) -> Response:
+        if request.method == "GET":
+            calls.append(len(calls) + 1)
+        return JSONResponse(content=body if body is not None else {"read": max(len(calls), 1)}, status_code=status)
+
+    return call_next, calls
+
+
+def test_a_successful_write_drops_the_callers_cached_answers() -> None:
+    cache: TTLCache = TTLCache()
+    origin, calls = _counting_origin()
+
+    async def run() -> tuple[str, str, int]:
+        await cached_response_for(cache, _authed_request(), origin)
+        assert len(calls) == 1
+        await cached_response_for(cache, _authed_request(method="POST"), origin)
+        third = await cached_response_for(cache, _authed_request(), origin)
+        return third.headers["X-Cache"], third.body.decode(), len(calls)
+
+    header, body, reached = asyncio.run(run())
+    assert header == "MISS", "the write's own caller may not be served the answer the write made false"
+    assert reached == 2, f"the read after the write must reach the origin again, reached {reached}"
+    assert '"read":2' in body
+
+
+def test_a_failed_write_leaves_the_callers_cache_warm() -> None:
+    cache: TTLCache = TTLCache()
+    origin, calls = _counting_origin()
+
+    async def run() -> str:
+        await cached_response_for(cache, _authed_request(), origin)
+        await cached_response_for(cache, _authed_request(method="POST"), _origin(status=500))
+        replayed = await cached_response_for(cache, _authed_request(), origin)
+        return replayed.headers["X-Cache"]
+
+    header = asyncio.run(run())
+    assert header == "HIT", "a write that changed nothing may not drop answers that are still true"
+
+
+def test_another_callers_answers_survive_one_callers_write() -> None:
+    cache: TTLCache = TTLCache()
+    origin, calls = _counting_origin()
+
+    async def run() -> tuple[str, str]:
+        await cached_response_for(cache, _authed_request(token=b"Bearer token-a"), origin)
+        await cached_response_for(cache, _authed_request(token=b"Bearer token-b"), origin)
+        assert len(calls) == 2
+        await cached_response_for(cache, _authed_request(method="POST", token=b"Bearer token-a"), origin)
+        a_again = await cached_response_for(cache, _authed_request(token=b"Bearer token-a"), origin)
+        b_again = await cached_response_for(cache, _authed_request(token=b"Bearer token-b"), origin)
+        return a_again.headers["X-Cache"], b_again.headers["X-Cache"]
+
+    a_header, b_header = asyncio.run(run())
+    assert a_header == "MISS", "the writer's own next read goes to the origin"
+    assert b_header == "HIT", "another caller's answer is not false just because someone else wrote"
+
+
+def test_an_anonymous_write_drops_nothing() -> None:
+    cache: TTLCache = TTLCache()
+    origin, calls = _counting_origin()
+
+    async def run() -> str:
+        await cached_response_for(cache, _request(), origin)
+        await cached_response_for(cache, _request(method="POST"), origin)
+        replayed = await cached_response_for(cache, _request(), origin)
+        return replayed.headers["X-Cache"]
+
+    header = asyncio.run(run())
+    assert header == "HIT", "an anonymous caller's future reads run under a fresh identity, so there is nothing to drop"
+    assert len(calls) == 1
+
+
+def test_drop_identity_deletes_only_the_entries_that_name_the_caller() -> None:
+    cache: TTLCache = TTLCache()
+    key_a = response_cache_key("/api/v1/careers/x", "", identity=caller_identity("Bearer token-a"))
+    key_b = response_cache_key("/api/v1/careers/x", "", identity=caller_identity("Bearer token-b"))
+    key_anon = response_cache_key("/api/v1/world", "")
+    cache.set(key_a, {"answer": "a"})
+    cache.set(key_b, {"answer": "b"})
+    cache.set(key_anon, {"answer": "anon"})
+
+    assert cache.drop_identity(caller_identity("Bearer token-a")) == 1
+    assert cache.get(key_b) == {"answer": "b"}, "another caller's entry survives"
+    assert cache.get(key_anon) == {"answer": "anon"}, "an anonymous entry survives a named caller's drop"
+    assert cache.drop_identity(caller_identity("Bearer token-b")) == 1
+    assert cache.drop_identity("") == 1, 'the empty identity names the anonymous keys, whose keys end in ":"'
+    assert cache.get(key_anon) is None
 
 
 def test_a_miss_is_labelled_and_a_non_candidate_is_not() -> None:

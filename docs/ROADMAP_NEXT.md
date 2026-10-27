@@ -248,6 +248,14 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   level-in-every-band sentence has no reachable pairing in the generated world (0 of 190 measured), and
   the API's 60-second response cache can still serve the page a minute of pre-play data — queued as its
   own unit.
+- **A write drops the answers it made false (2026-10-27).** The response cache's read-your-writes
+  defect, measured live and closed: after a 2xx non-GET the middleware drops every cache entry keyed
+  to the writing caller (`CacheTier.drop_identity`; the key's percent-encoded colon-free components
+  make the identity suffix exact), while an anonymous write and a non-2xx write drop nothing. The
+  shared Redis tier is never swept — it holds no private answer by RFC 9111 §3.5. Five unit tests, a
+  five-arm mutation battery (control clean, zero extra reds), and a live leg: A's post-write read is a
+  MISS of the new round, A's next read is a HIT of the *new* answer, B's warm entry survives. Recorded
+  in [M13_READ_YOUR_WRITES_VERIFICATION.md](M13_READ_YOUR_WRITES_VERIFICATION.md).
 - **Season leaders, with true per-90.** `ledger_view` now also names the top scorer, top xG, most-booked and
   best goals-per-90, and adds each player's appearance count and minutes from `career_appearances` so the
   per-90 is read from the minutes the rounds actually stored (no appearance minutes ⇒ no per-90, not a zero;

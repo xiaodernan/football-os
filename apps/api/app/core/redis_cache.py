@@ -183,6 +183,18 @@ class RedisCache:
                 logger.warning("Redis clear failed: %s", e)
                 self._available = False
 
+    def drop_identity(self, identity: str) -> int:
+        """Delete this caller's entries from the process-local fallback.
+
+        The shared store never holds a private answer (a credentialed response is never
+        written to it, per RFC 9111 §3.5), so a caller's own cached answers live only in
+        a near tier — this process's `_response_cache`, or this class's fallback when it
+        is standing in for one. Dropping therefore touches the fallback and not Redis;
+        sweeping the shared store would delete other callers' public answers for no
+        correctness gain.
+        """
+        return self._fallback.drop_identity(identity)
+
     @property
     def available(self) -> bool:
         """Whether Redis is actually serving, as opposed to configured.
