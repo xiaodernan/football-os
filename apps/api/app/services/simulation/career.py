@@ -433,7 +433,7 @@ HEAD_TO_HEAD_FORMULA: Final = (
 )
 
 
-def head_to_head(session: Session, career: Career, opponent_team_id: str | None) -> dict[str, Any]:
+def head_to_head(session: Session, career: Career, opponent_team_id: str | None, *, fixtures: list[CareerFixture] | None = None) -> dict[str, Any]:
     """This career's own record against one opponent, summed from its fixtures and nothing else.
 
     A page that showed the opponent's record against everyone, or this career's record against all
@@ -448,7 +448,8 @@ def head_to_head(session: Session, career: Career, opponent_team_id: str | None)
             "data_origin": "simulation",
             "is_demo_data": True,
         }
-    rows = [row for row in fixtures_of(session, career) if row.opponent_team_id == opponent_team_id]
+    source = fixtures if fixtures is not None else fixtures_of(session, career)
+    rows = [row for row in source if row.opponent_team_id == opponent_team_id]
     if not rows:
         return {
             "available": True,
@@ -900,9 +901,9 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
     }
     if include_fixtures:
         plan = next_fixture_plan(session, career)
-        view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None)
+        view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None, fixtures=rows)
         view["next_fixture_brief"] = next_fixture_brief(session, career, plan=plan, appearances=appearance_rows, training=training_all)
-        view["ledger"] = ledger_view(session, career, appearances=appearance_rows)
+        view["ledger"] = ledger_view(session, career, appearances=appearance_rows, fixtures=rows)
         # One batch lookup for every opponent's slug, rather than a `_team_slug` query per fixture.
         opponent_ids = {str(row.opponent_team_id) for row in rows if row.opponent_team_id}
         team_slugs = {str(team_id): str(slug) for team_id, slug in session.execute(select(Team.id, Team.slug).where(Team.id.in_(opponent_ids))).all()} if opponent_ids else {}

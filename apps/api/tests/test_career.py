@@ -421,6 +421,25 @@ class TestReadEfficiency:
         per_id = [s for s in normalized if "from sim_matches" in s and "sim_matches.id in" not in s and "sim_matches.id =" in s]
         assert per_id == [], f"the consistency check read sim_matches one row at a time: {len(per_id)} per-id reads"
 
+    def test_the_view_reads_the_fixture_list_once(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(3):
+            career_service.play_round(session, career)
+        statements: list[str] = []
+        engine = session.get_bind()
+
+        def before(conn: object, cursor: object, statement: str, params: object, context: object, executemany: bool) -> None:  # type: ignore[no-untyped-def]
+            statements.append(statement.lower())
+
+        event.listen(engine, "before_cursor_execute", before)
+        try:
+            career_service.career_view(session, career)
+        finally:
+            event.remove(engine, "before_cursor_execute", before)
+        normalized = [" ".join(statement.split()) for statement in statements]
+        fixture_reads = [s for s in normalized if "from career_fixtures" in s and s.lstrip().startswith("select")]
+        assert len(fixture_reads) == 1, f"career_fixtures read {len(fixture_reads)} times; head_to_head should reuse the view's list"
+
 
 class TestSeasonHighlights:
     def test_a_fresh_career_has_no_highlights_to_report(self, session, world) -> None:  # type: ignore[no-untyped-def]

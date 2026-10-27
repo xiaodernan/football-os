@@ -270,9 +270,9 @@ def _consistency(goals_from_events: int, club_goals: int, traced: int, untraced:
     return f"{goals_from_events} goal(s) on the event rows and {club_goals} on this career's fixture list, over {traced} traced fixture(s): the two readings agree{missing}"
 
 
-def ledger_view(session: Session, career: Career, *, appearances: list[CareerAppearance] | None = None) -> dict[str, Any]:
+def ledger_view(session: Session, career: Career, *, appearances: list[CareerAppearance] | None = None, fixtures: list[CareerFixture] | None = None) -> dict[str, Any]:
     """This career's season as the event rows give it: per-player counts, and the checks beside them."""
-    fixtures = fixtures_of_career(session, career)
+    fixtures = fixtures if fixtures is not None else fixtures_of_career(session, career)
     played = [row for row in fixtures if row.match_id]
     match_ids = [str(row.match_id) for row in played if row.match_id]
     club_id = career.club_id or None
