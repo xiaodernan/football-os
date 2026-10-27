@@ -13,14 +13,16 @@
  *
  * This file asks the question the old one was reaching for, in the population where the answer means
  * something: **inside one namespace**, two keys with the same English sentence are the same sentence in
- * the same context, so they must carry the same Chinese. That population is **115** groups today and
- * **12** of them diverge; every one is named in `REVIEWED` with its reason, and a group that is not named
- * is red. The ledger is keyed on **identity** (`namespace|key1,key2`), not a count, so fixing one group
- * cannot pay for a new one.
+ * the same context, so they must carry the same Chinese. That population is **117** groups at the
+ * 2026-10-28 ratchet and **13** of them diverge; every one is named in `REVIEWED` with its reason, and a
+ * group that is not named is red. The ledger is keyed on **identity** (`namespace|key1,key2`), not a
+ * count, so fixing one group cannot pay for a new one.
  *
  * The cross-namespace population is still **measured**, as a ceiling that may only fall: a new shared
  * sentence with a divergent translation, or a new shared key name that diverges, raises the count and is
- * red. Its ceilings are the reviewed 2026-10-25 figures.
+ * red. Its ceilings were the reviewed 2026-10-25 figures (119/107) and were ratcheted on 2026-10-28 to
+ * the figures the tree actually measures — the review's population dissolved under the alignment cures,
+ * so a stale ceiling would stop biting.
  *
  * Checks:
  *   1  the scan reads three parallel catalogues, and finds both populations — a parse that returns
@@ -64,9 +66,13 @@ const REVIEWED = {
   "simulate|ariaSubstitutions,substitutionsLabel": "a field label and its accessible name; the aria reads as a count ('换人次数'), the label as the action ('换人'), mirrored in both CJK locales",
 };
 
-/** Cross-namespace drift measured and reviewed on 2026-10-25; these may only fall. */
-const SENTENCE_CEILING = 119;
-const KEY_CEILING = 107;
+/** Cross-namespace drift, measured. Ratcheted on 2026-10-28 to the figures this HEAD measures
+ * (99 sentence issues over 241 shared sentences, 42 key issues over 260 shared keys) — the
+ * same-sense alignment cures of 2026-10-27..28 dissolved most of the 2026-10-25 review's 119/107
+ * and no new drift arrived (dce0734 measured 119/107 exactly; b59544b measured 99/42). These may
+ * only fall further. */
+const SENTENCE_CEILING = 99;
+const KEY_CEILING = 42;
 
 const catalogues = {};
 for (const locale of LOCALES) {

@@ -324,6 +324,15 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   [M13_DEVELOPMENT_PANEL_VERIFICATION.md](M13_DEVELOPMENT_PANEL_VERIFICATION.md). **Disclosed:**
   master's api CI job is red from the foreign market batch (`bb712f0`, 13 mypy errors in
   `market.py` whose file carries that lane's uncommitted edits) — not cured here.
+- **The key-drift ceilings ratcheted onto the measured drift (2026-10-28).** The cross-namespace
+  ceilings in `qa-key-drift.mjs` were still the 2026-10-25 review's 119/107 while the tree measures
+  **99 / 42** — the same-sense alignment cures of 2026-10-27..28 (16 changed values per CJK file)
+  dissolved most of the reviewed population and no new drift arrived. Both constants now sit exactly
+  on the measured counts, so any new divergence is red; a three-plane arm battery proves it bites
+  (control green; one mutated shared sentence reds check 3 at 100>99; one mutated shared key name
+  reds check 4 at 44>42 — the count is once per namespace holding the key). The gate's docstring
+  re-reads the census it quotes (117 groups / 13 sites, was stale at 115/12). Recorded in
+  [M13_KEY_DRIFT_CEILING_RATCHET.md](M13_KEY_DRIFT_CEILING_RATCHET.md).
 - **Season leaders, with true per-90.** `ledger_view` now also names the top scorer, top xG, most-booked and
   best goals-per-90, and adds each player's appearance count and minutes from `career_appearances` so the
   per-90 is read from the minutes the rounds actually stored (no appearance minutes ⇒ no per-90, not a zero;
