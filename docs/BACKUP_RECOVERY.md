@@ -137,12 +137,17 @@ for FOOTBALL OS production systems.
 
 ## Runbooks
 
-Detailed step-by-step runbooks maintained in `docs/runbooks/`:
-- `pitr_recovery.md`
-- `full_restore.md`
-- `region_failover.md`
-- `partial_restore.md`
-- `secret_rotation.md`
+Step-by-step runbooks in [`docs/runbooks/`](runbooks/), each grounded in the scripts that actually run
+(`scripts/backup_db.sh`, `scripts/restore_db.sh`, `scripts/dr_lib.sh`):
+
+- [`full_restore.md`](runbooks/full_restore.md) — logical dump and restore into a scratch database.
+- [`pitr_recovery.md`](runbooks/pitr_recovery.md) — PITR, and the honest check that this container has no WAL archive.
+- [`partial_restore.md`](runbooks/partial_restore.md) — restore a slice into scratch, copy the missing rows back.
+- [`region_failover.md`](runbooks/region_failover.md) — promote a replica if one exists, otherwise restore.
+- [`secret_rotation.md`](runbooks/secret_rotation.md) — `APP_SECRET`, provider keys and database credentials.
+
+The scripts are the source of truth: where a runbook and a script disagree, the script is right and the runbook is
+the bug.
 
 ## Contacts
 
