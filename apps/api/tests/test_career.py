@@ -229,7 +229,9 @@ class TestJudging:
         assert view["window"]["round"] == 2 and view["window"]["state"] in ("open", "closed")
         # Two code paths, one figure: the contract book's wage total and the affordability bill are the same held deals.
         assert view["contracts"]["total_weekly_wage"] == view["affordability"]["weekly_wage_bill"]
-        # The next fixture's brief is wired to the round after the one just played.
+        # The next fixture's plan is on the view itself (so the endpoint does not compute it again), and the
+        # brief is wired to the same round.
+        assert view["next_fixture"]["available"] is True and view["next_fixture"]["round_index"] == 2
         assert view["next_fixture_brief"]["available"] is True and view["next_fixture_brief"]["round_index"] == 2
         assert view["highlights"]["available"] is True and view["highlights"]["played"] == 1
 

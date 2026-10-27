@@ -933,6 +933,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
     }
     if include_fixtures:
         plan = next_fixture_plan(session, career)
+        view["next_fixture"] = plan
         view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None, fixtures=rows)
         view["next_fixture_brief"] = next_fixture_brief(session, career, plan=plan, appearances=appearance_rows, training=training_all)
         view["ledger"] = ledger_view(session, career, appearances=appearance_rows, fixtures=rows)

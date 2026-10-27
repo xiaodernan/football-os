@@ -146,7 +146,7 @@ def open_career(payload: CareerIn, request: Request, db: Session = Depends(get_d
         objectives=objectives,
         season=payload.season,
     )
-    return {"created": True, "next_fixture": next_fixture_plan(db, career), **career_view(db, career)}
+    return {"created": True, **career_view(db, career)}
 
 
 @router.get("")
@@ -172,7 +172,7 @@ def list_careers(request: Request, db: Session = Depends(get_db), user: User = D
 def read_career(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
     limit(request, 60, 60, scope="career_detail")
     career = _career(db, user, ident)
-    return {"next_fixture": next_fixture_plan(db, career), **career_view(db, career)}
+    return career_view(db, career)
 
 
 @router.post("/{ident}/play")

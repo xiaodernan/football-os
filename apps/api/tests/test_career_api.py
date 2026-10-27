@@ -163,6 +163,7 @@ class TestPlayingASeason:
         assert body["affordability"]["formula"] and {"signing", "timeline"} <= set(body["affordability"])
         assert body["contracts"]["formula"] and "age_profile" in body["contracts"] and body["contracts"]["positions"]
         assert body["window"]["state"] in ("open", "closed") and body["window"]["round"] == 4
+        assert body["next_fixture"]["round_index"] == 4, "the detail carries its next-fixture plan on the view itself"
         assert body["head_to_head"]["available"] is True
         assert body["next_fixture_brief"]["available"] is True
         assert body["ledger"]["leaders"]["per90_formula"]

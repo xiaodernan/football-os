@@ -251,6 +251,11 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     **Eighth fix (2026-10-28):** `season_horizon` was computed three times per detail read (board, contract book,
     signing window), each re-reading the competition's clubs; `career_view` computes it once and passes it to all
     three (pinned by a test bounding the `where teams.competition_id = ?` reads to the horizon plus the rotation).
+    **Ninth fix (2026-10-28):** `read_career` and `create_career` called `next_fixture_plan` and then
+    `career_view`, which computed the same plan again; `career_view` now carries `next_fixture` itself (the plan
+    it already needed for the brief), so both endpoints read it from the view. The play endpoint keeps its
+    pre-play plan — that is the availability check for the round about to be played, a different round from the
+    post-play next fixture.
 15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
     M12 cost/rate-limit work already gives the scaffolding.
 
