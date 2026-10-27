@@ -208,8 +208,10 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     test pins it at no per-round slug reads. The consistency re-check was the same shape — `session.get(
     SimulationMatch, …)` once per fixture — and now reads every linked report in one batch, pinned by the
     same test class. The fixture list itself was also re-read by `head_to_head` and `ledger_view`; both now
-    take the view's list, so `career_fixtures` is read once per detail read (pinned by a test). **Pending:** a
-    full-scale profile (a league season) to decide whether an index is worth more than the plumbing.
+    take the view's list, so `career_fixtures` is read once per detail read (pinned by a test). **Profiled
+    (2026-10-28):** a detail read on a 2-round career and on a 4-round career issues the *same* number of
+    SELECTs — the view is O(1) in rounds, not O(N) — so no index is needed on this path; the per-table batch
+    reads above are the whole cost.
 15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
     M12 cost/rate-limit work already gives the scaffolding.
 

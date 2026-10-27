@@ -470,6 +470,22 @@ class TestSeasonHighlights:
         assert 0 <= highlights["longest_winning_run"] <= highlights["longest_unbeaten_run"] <= 3
 
 
+def _count_selects(session: Session, fn) -> int:  # type: ignore[no-untyped-def]
+    """How many SELECTs `fn` issues, counted on the session's own bind."""
+    statements: list[str] = []
+    engine = session.get_bind()
+
+    def before(conn: object, cursor: object, statement: str, params: object, context: object, executemany: bool) -> None:  # type: ignore[no-untyped-def]
+        statements.append(statement)
+
+    event.listen(engine, "before_cursor_execute", before)
+    try:
+        fn()
+    finally:
+        event.remove(engine, "before_cursor_execute", before)
+    return sum(1 for statement in statements if statement.lstrip().lower().startswith("select"))
+
+
 class TestDeterminism:
     def test_reading_the_view_twice_gives_the_same_json(self, session, world) -> None:  # type: ignore[no-untyped-def]
         import json
@@ -479,3 +495,13 @@ class TestDeterminism:
         first = json.dumps(career_service.career_view(session, career), sort_keys=True, default=str)
         second = json.dumps(career_service.career_view(session, career), sort_keys=True, default=str)
         assert first == second, "a view that changes between two reads is inventing state"
+
+    def test_the_query_count_does_not_grow_with_the_season(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(2):
+            career_service.play_round(session, career)
+        early = _count_selects(session, lambda: career_service.career_view(session, career))
+        for _ in range(2):
+            career_service.play_round(session, career)
+        later = _count_selects(session, lambda: career_service.career_view(session, career))
+        assert later == early, f"a detail read grew from {early} to {later} SELECTs as the season lengthened — an N+1 is back"
