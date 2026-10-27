@@ -143,6 +143,8 @@ composition, not the wire:
 | `qa-locale-completeness.mjs` | 3811 / 3811 / 3811 |
 | `qa-unused-keys.mjs` | 0 keys asked for by nothing, floor 0 |
 | `qa-key-drift.mjs` | 4/4, the reviewed ledger current |
+| `qa-population-floor.mjs` | 3/3 on the **committed** tree (it reads `git show HEAD:`): every namespace at or above baseline, 3811 × 3 |
+| `qa-translation-freshness.mjs` | 2/2 on the committed tree: no stale `zh`/`zh-TW` row left behind by the 20 new English sentences |
 | `apps/api/tests/test_locale_claims.py` | 7 passed (it pins this README's figures against `en.json`) |
 
 ## 6. Disclosures
