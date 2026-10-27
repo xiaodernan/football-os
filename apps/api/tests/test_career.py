@@ -227,6 +227,8 @@ class TestJudging:
         assert sum(row["players"] for row in view["contracts"]["positions"]) == view["contracts"]["age_profile"]["players"]
         # The signing window is on the career payload too, so the page does not need `/market` for it.
         assert view["window"]["round"] == 2 and view["window"]["state"] in ("open", "closed")
+        # Two code paths, one figure: the contract book's wage total and the affordability bill are the same held deals.
+        assert view["contracts"]["total_weekly_wage"] == view["affordability"]["weekly_wage_bill"]
         # The next fixture's brief is wired to the round after the one just played.
         assert view["next_fixture_brief"]["available"] is True and view["next_fixture_brief"]["round_index"] == 2
         assert view["highlights"]["available"] is True and view["highlights"]["played"] == 1

@@ -161,7 +161,8 @@ class TestPlayingASeason:
         assert body["board"]["season_rounds"] > 0 and body["board"]["formula"]
         assert body["highlights"]["available"] is True and body["highlights"]["played"] == 3
         assert body["affordability"]["formula"] and {"signing", "timeline"} <= set(body["affordability"])
-        assert body["contracts"]["formula"] and "age_profile" in body["contracts"]
+        assert body["contracts"]["formula"] and "age_profile" in body["contracts"] and body["contracts"]["positions"]
+        assert body["window"]["state"] in ("open", "closed") and body["window"]["round"] == 4
         assert body["head_to_head"]["available"] is True
         assert body["next_fixture_brief"]["available"] is True
         assert body["ledger"]["leaders"]["per90_formula"]
