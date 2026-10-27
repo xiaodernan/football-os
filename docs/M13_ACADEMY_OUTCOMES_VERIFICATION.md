@@ -6,7 +6,7 @@ published on the wire, shaped what landed:
 
 * **There is no organisation-to-career link, and this unit did not invent one.** M8's academy tier
   (development plans, assessments, sessions) hangs off user-created `organizations`
-  (`organizations.py:406` is the only constructor; the demo world seeds none) and shares no rows with
+  (`app/services/club/organizations.py:406` is the only constructor; the demo world seeds none) and shares no rows with
   careers. Bridging the tiers would require an invented org↔career link — new data nobody's door
   writes. So the block reads the load the career domain actually stores: the world's own training
   sessions (`carry_over.training_loads`) and the career's own appearance rows — the same two sources
