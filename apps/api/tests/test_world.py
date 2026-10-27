@@ -187,6 +187,8 @@ class TestReads:
         assert body["counts"]["training_sessions"] >= GATE["training_sessions"]
         assert body["gate"] == dict(GATE)
         assert isinstance(body["seed"], int)
+        # The cache-key contract: a client keys a cache on (version, seed), so both must be on the wire.
+        assert isinstance(body["version"], str) and body["version"], "the world publishes its version for cache keying"
         assert body["disclaimer"]
 
     @pytest.mark.parametrize("path", ["/competitions", "/teams", "/players", "/matches", "/news"])

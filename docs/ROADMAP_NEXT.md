@@ -200,8 +200,12 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 
 ## Phase 4 — Performance & scale
 
-13. **Read-path caching.** Cache the deterministic, seed-keyed world reads and the catalogue compiles;
-    a cache key is the seed + version, so a coefficient bump invalidates cleanly.
+13. **Read-path caching.** **Closed as served (2026-10-28):** the HTTP response cache (with the Redis shared
+    tier) already caches every world GET, and `/world/status` publishes `version` + `seed` so an external cache
+    can key on exactly that pair (now pinned by a test). A computation-layer cache over the remaining internal
+    reads was considered and **not** added: the candidate reads (`competition_clubs`, `fixtures_of`,
+    `current_squad`) return session-bound ORM objects that must not be cached across requests, and
+    `compute_cache` has no safe candidate — its `sets: 0` on `/metrics/cache` says so rather than hiding it.
 14. **Query profiling.** **First fix landed (2026-10-27):** the career-detail finance block was reading the
     ledger several times per request — `budget_position` fetched `career_squad_moves` twice (once directly,
     once through `wage_bill`→`held_deals`), and `affordability_view` then had `budget_timeline` fetch both
