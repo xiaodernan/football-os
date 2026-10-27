@@ -1549,6 +1549,72 @@ export type CareerBoard = {
   is_demo_data: boolean;
 };
 
+export type HeadToHeadMeeting = {
+  round_index: number;
+  side: "home" | "away";
+  club_goals: number;
+  opponent_goals: number;
+  outcome: "W" | "D" | "L";
+};
+
+/**
+ * This career's own record against the next opponent (career.py `head_to_head`), summed from its
+ * fixtures. The arithmetic fields are absent only in the `available: false` branch, which carries a
+ * reason instead — there is no opponent to compare against when no further round is scheduled.
+ */
+export type CareerHeadToHead = {
+  available: boolean;
+  reason?: string;
+  opponent_team_id?: string;
+  /** Empty in the "not met yet" branch, where the fixture list has no row to take a name from. */
+  opponent_name?: string;
+  played?: number;
+  won?: number;
+  drawn?: number;
+  lost?: number;
+  goals_for?: number;
+  goals_against?: number;
+  goal_difference?: number;
+  points?: number;
+  /** The last five meetings, oldest first. */
+  meetings?: HeadToHeadMeeting[];
+  formula: string;
+  note?: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** One side of the next fixture as `team_profile` measures it (career.py `next_fixture_brief`). */
+export type TeamBandProfile = {
+  team_id: string;
+  name: string;
+  formation: string;
+  system_slug: string;
+  bands: Record<string, number>;
+  overall: number;
+  form: number;
+};
+
+/** The next fixture's two sides, measured by the engine on the rows it will play from. */
+export type CareerNextFixtureBrief = {
+  available: boolean;
+  reason?: string;
+  round_index?: number;
+  side?: "home" | "away";
+  opponent_name?: string;
+  venue_name?: string;
+  career?: TeamBandProfile;
+  opponent?: TeamBandProfile;
+  /** Band by band, the career's figure minus the opponent's. */
+  delta?: Record<string, number>;
+  stronger_bands?: string[];
+  weaker_bands?: string[];
+  formula?: string;
+  note?: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
@@ -1563,6 +1629,10 @@ export type CareerView = {
   affordability: AffordabilityView;
   /** ROADMAP item 8: the season projected at the current pace, recomputed from the fixtures on every read. */
   board: CareerBoard;
+  /** Phase 2: this career's record against the next opponent, summed from its own fixtures. */
+  head_to_head?: CareerHeadToHead;
+  /** Phase 2: the next fixture's two sides as the engine's own band measurements, side by side. */
+  next_fixture_brief?: CareerNextFixtureBrief;
   /** ROADMAP item 10: this season per player, counted off `sim_events`. Absent on a list row or run view. */
   ledger?: import("./ledger").SeasonLedger;
   limitations: {

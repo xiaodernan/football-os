@@ -235,6 +235,19 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   projections that change no stored attribute, expire no contract and trigger no board decision — the
   page's own statement of what it does not claim. A determinism test reads the whole view twice and asserts
   byte-identical JSON, so no block can quietly start inventing state.
+- **The next opponent's two measurements are rendered (2026-10-27).** `components/CareerNextOpponent.tsx`
+  reads `career_view["head_to_head"]` and `career_view["next_fixture_brief"]` on `/career/{slug}` in one
+  panel: the never-met empty state or the meetings grid and table, the two sides' venue/formation/system/
+  overall/form grid, the five-band table with signed deltas, and the stronger / weaker / level sentence
+  the API's own lists select; the page formats numbers and does no arithmetic. Thirty-six keys per locale
+  (population **3,712**, **3,667** translated; shared-key ceiling stays **234 bindings / 98 rows**).
+  Verified on a production build: **23/23** checks across four careers (never-met all-weaker, all-stronger,
+  mixed with a `0.000` level band, a two-meeting head-to-head) in `en` plus the mixed career in `zh`;
+  a reverse control on the pre-change build shows none of the panel's strings. Recorded in
+  [M13_NEXT_OPPONENT_VERIFICATION.md](M13_NEXT_OPPONENT_VERIFICATION.md). **Disclosed:** the
+  level-in-every-band sentence has no reachable pairing in the generated world (0 of 190 measured), and
+  the API's 60-second response cache can still serve the page a minute of pre-play data — queued as its
+  own unit.
 - **Season leaders, with true per-90.** `ledger_view` now also names the top scorer, top xG, most-booked and
   best goals-per-90, and adds each player's appearance count and minutes from `career_appearances` so the
   per-90 is read from the minutes the rounds actually stored (no appearance minutes ⇒ no per-90, not a zero;

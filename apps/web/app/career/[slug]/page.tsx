@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { Panel } from "@/components/ui";
 import { CareerBoard } from "@/components/CareerBoard";
 import { CareerFinance } from "@/components/CareerFinance";
+import { CareerNextOpponent } from "@/components/CareerNextOpponent";
 import { CareerTools } from "@/components/CareerTools";
 import { LEDGER_COLUMNS, type SeasonLedger } from "@/lib/ledger";
 import { KeyValueGrid, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
@@ -147,6 +148,13 @@ export default async function CareerDetailPage({ params }: Props) {
       </div>
 
       <CareerBoard t={t} view={view.board} limitation={view.limitations.projections} />
+
+      <CareerNextOpponent
+        t={t}
+        headToHead={view.head_to_head}
+        brief={view.next_fixture_brief}
+        limitation={view.limitations.projections}
+      />
 
       <CareerFinance t={t} view={view.affordability} limitation={view.limitations.projections} />
 
