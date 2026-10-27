@@ -62,6 +62,20 @@ MARKET_DISCLAIMER: Final = (
     "real transfer, a real fee or a real contract."
 )
 
+# --- the season's signing windows, published as rounds ------------------------------------------------------
+#: This project has no calendar beyond its round list, so a transfer window is a range of round numbers: the
+#: opening window runs from round 1 to this round, and a second window sits around the season's midpoint.
+EARLY_WINDOW_LAST_ROUND: Final = 4
+MID_WINDOW_HALF_WIDTH: Final = 1
+WINDOW_FORMULA: Final = (
+    f"a season opens two signing windows: rounds 1–{EARLY_WINDOW_LAST_ROUND}, and the {2 * MID_WINDOW_HALF_WIDTH + 1} rounds around its "
+    f"midpoint (mid − {MID_WINDOW_HALF_WIDTH} to mid + {MID_WINDOW_HALF_WIDTH}, mid = floor(season_rounds ÷ 2)); windows that overlap or "
+    "touch are published merged; season_rounds = the challenge's own round window when it has one, else 2 × the competition's other "
+    "clubs, the same horizon the season board projects against; rounds are grouped into seasons of that length, so the round a deal "
+    "would be made in is round ((rounds_played) mod season_rounds) + 1 of season floor(rounds_played ÷ season_rounds) + 1; a career "
+    "with no horizon (0 rounds) has no window to police and reads open"
+)
+
 # --- the valuation's constants, published rather than hidden ------------------------------------------------
 MARKET_SIZE: Final = 12
 MAX_NEGOTIATION_ROUNDS: Final = 3
@@ -128,6 +142,7 @@ RULES: Final[dict[str, str]] = {
     "sell": SELL_FORMULA,
     "release": RELEASE_FORMULA,
     "wages": WAGE_FORMULA,
+    "window": WINDOW_FORMULA,
     "budget": BUDGET_FORMULA,
     "squad": "the eleven is then selected from the club's stored squad with these moves applied, so a signing changes the indices the engine plays with (app/services/simulation/squad.py)",
 }
@@ -167,6 +182,7 @@ CONFLICT_CODES: Final = frozenset(
         "not_your_player",
         "rival_will_not_sell",
         "transfers_forbidden",
+        "transfer_window_closed",
         "window_closed",
         "would_not_field_a_side",
     }
@@ -290,7 +306,10 @@ def open_market(session: Session, career: Career) -> dict[str, Any]:
 
     A listing is an offer, so re-listing re-prices it: a negotiated discount does not survive into the
     next round, and the response says how many rows were repriced rather than quietly rewriting them.
+    Opening a market is a market act too, so the same verdict every move answers to is asked here first:
+    a closed season window does not price a new round's offers.
     """
+    _require_transferable(session, career)
     round_index = int(career.rounds_played) + 1
     need = club_need(session, career, round_index=round_index)
     chosen, account = market_selection(session, career, round_index=round_index, need=need)
@@ -361,6 +380,88 @@ def _is_rival(session: Session, career: Career, listing: TransferListing) -> boo
     return bool(session.scalar(select(Team.id).where(Team.id == listing.from_team_id, Team.competition_id == career.competition_id)))
 
 
+def season_windows(season_rounds: int) -> list[dict[str, Any]]:
+    """A season's windows as round ranges, clipped to the season and merged wherever they overlap or touch."""
+    raw = [
+        (1, min(EARLY_WINDOW_LAST_ROUND, season_rounds), "the opening window"),
+        (
+            max(1, season_rounds // 2 - MID_WINDOW_HALF_WIDTH),
+            min(season_rounds, season_rounds // 2 + MID_WINDOW_HALF_WIDTH),
+            "the mid-season window",
+        ),
+    ]
+    merged: list[dict[str, Any]] = []
+    for low, high, label in raw:
+        if low > high:
+            continue
+        if merged and low <= int(merged[-1]["to_round"]) + 1:
+            merged[-1]["to_round"] = max(int(merged[-1]["to_round"]), high)
+            merged[-1]["label"] = "the season's signing windows, merged"
+        else:
+            merged.append({"from_round": low, "to_round": high, "label": label})
+    return merged
+
+
+def transfer_window(session: Session, career: Career) -> dict[str, Any]:
+    """Where this career's next round falls against its season's signing windows.
+
+    The round a deal would be made in is `rounds_played + 1`. Rounds are grouped into seasons of
+    `season_rounds` — the horizon the season board projects against — so a career that has played past
+    its first season is judged against the next season's windows rather than locked out for good. A
+    career with no horizon has no window to police and reads open, which is stated rather than assumed.
+    """
+    from app.services.simulation.career import season_horizon
+
+    horizon = season_horizon(session, career)
+    season_rounds = int(horizon["rounds"])
+    next_round = int(career.rounds_played) + 1
+    if season_rounds <= 0:
+        return {
+            "state": "open",
+            "round": next_round,
+            "round_in_season": 0,
+            "season_index": 0,
+            "season_rounds": 0,
+            "season_source": horizon["source"],
+            "windows": [],
+            "in_window": "",
+            "opens_at_round": None,
+            "opens_at_season": None,
+            "opens_in_rounds": 0,
+            "formula": WINDOW_FORMULA,
+        }
+    season_index = (next_round - 1) // season_rounds + 1
+    round_in_season = (next_round - 1) % season_rounds + 1
+    windows = season_windows(season_rounds)
+    containing = next((window for window in windows if int(window["from_round"]) <= round_in_season <= int(window["to_round"])), None)
+    opens_at_round: int | None = None
+    opens_at_season: int | None = None
+    if containing is None:
+        forward = next((window for window in windows if int(window["from_round"]) > round_in_season), None)
+        if forward is not None:
+            opens_at_round, opens_at_season = int(forward["from_round"]), season_index
+        elif windows:
+            # Past the last window of this season, the next one is the following season's opening round.
+            opens_at_round, opens_at_season = int(windows[0]["from_round"]), season_index + 1
+    opens_in_rounds = 0
+    if opens_at_round is not None and opens_at_season is not None:
+        opens_in_rounds = (opens_at_season - 1) * season_rounds + opens_at_round - next_round
+    return {
+        "state": "open" if containing is not None else "closed",
+        "round": next_round,
+        "round_in_season": round_in_season,
+        "season_index": season_index,
+        "season_rounds": season_rounds,
+        "season_source": horizon["source"],
+        "windows": windows,
+        "in_window": str(containing["label"]) if containing is not None else "",
+        "opens_at_round": opens_at_round,
+        "opens_at_season": opens_at_season,
+        "opens_in_rounds": opens_in_rounds,
+        "formula": WINDOW_FORMULA,
+    }
+
+
 def transferable(session: Session, career: Career) -> dict[str, Any]:
     """Whether this career may change its squad right now, with the rule that says so.
 
@@ -390,6 +491,28 @@ def transferable(session: Session, career: Career) -> dict[str, Any]:
             "challenge_slug": challenge.slug,
             "enforced": True,
             "enforced_by": "app.services.simulation.market.transferable, checked by every move in this module",
+        }
+    window = transfer_window(session, career)
+    if window["state"] == "closed":
+        opens_at = f"round {window['opens_at_round']}"
+        if window["opens_at_season"] != window["season_index"]:
+            opens_at = f"round {window['opens_at_round']} of the next season"
+        return {
+            "ok": False,
+            "code": "transfer_window_closed",
+            "message": (
+                f"the signing window is closed after round {window['round_in_season']} of this {window['season_rounds']}-round season; "
+                f"the next one opens at {opens_at}, {window['opens_in_rounds']} rounds from now"
+            ),
+            "constraint": "transfer_window",
+            "round": window["round"],
+            "round_in_season": window["round_in_season"],
+            "season_index": window["season_index"],
+            "season_rounds": window["season_rounds"],
+            "opens_at_round": window["opens_at_round"],
+            "opens_at_season": window["opens_at_season"],
+            "opens_in_rounds": window["opens_in_rounds"],
+            "formula": WINDOW_FORMULA,
         }
     return {"ok": True, "code": "", "message": "", "constraint": ""}
 
@@ -1150,6 +1273,8 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
     squad, account = current_squad(session, career)
     balance = budget_position(session, career)
     open_rows = [row for row in listings if row.status == "open"]
+    window = transfer_window(session, career)
+    verdict = transferable(session, career)
     return {
         "career": {
             "slug": career.slug,
@@ -1162,7 +1287,8 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
             "status": career.status,
             "challenge_slug": career.challenge_slug,
         },
-        "transfers_allowed": transferable(session, career),
+        "transfers_allowed": verdict,
+        "window": window,
         "market": {
             "round_index": round_index,
             "opened": bool(listings),
@@ -1185,6 +1311,8 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
         "rules": RULES,
         "constants": {
             "market_size": MARKET_SIZE,
+            "early_window_last_round": EARLY_WINDOW_LAST_ROUND,
+            "mid_window_half_width": MID_WINDOW_HALF_WIDTH,
             "negotiation_rounds": MAX_NEGOTIATION_ROUNDS,
             "negotiation_floor_share": NEGOTIATION_FLOOR_SHARE,
             "release_clause_share": RELEASE_CLAUSE_SHARE,
@@ -1204,11 +1332,13 @@ __all__ = [
     "AFFORDABILITY_FORMULA",
     "BUDGET_FORMULA",
     "CONTRACT_FORMULA",
+    "EARLY_WINDOW_LAST_ROUND",
     "EXPIRY_WARNING_ROUNDS",
     "FIT_FORMULA",
     "MARKET_DISCLAIMER",
     "MARKET_SIZE",
     "MAX_NEGOTIATION_ROUNDS",
+    "MID_WINDOW_HALF_WIDTH",
     "MOVE_EFFECT",
     "CONFLICT_CODES",
     "MarketRefusal",
@@ -1220,6 +1350,7 @@ __all__ = [
     "TIMELINE_FORMULA",
     "VALUATION_FORMULA",
     "WAGE_FORMULA",
+    "WINDOW_FORMULA",
     "affordability_view",
     "age_curve",
     "budget_position",
@@ -1240,9 +1371,11 @@ __all__ = [
     "pay_wages",
     "release",
     "sell",
+    "season_windows",
     "signing_impact",
     "squad_rows",
     "tactical_fit",
+    "transfer_window",
     "transferable",
     "valuation",
     "wage_bill",

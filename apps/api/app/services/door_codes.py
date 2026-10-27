@@ -56,6 +56,7 @@ CONFLICT_CODES: Final = frozenset(
         "run_limit",  # challenges
         "simulation_limit",  # simulations
         "video_limit",  # video
+        "transfer_window_closed",  # careers (simulation.market's season-window verdict)
         "window_closed",  # careers (WindowClosed.to_dict), simulation.market's transferable verdict
     }
 )

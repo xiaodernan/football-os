@@ -23,7 +23,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from app.core.db import SessionLocal
-from app.models import BUDGET_FORMULA, Team
+from app.models import BUDGET_FORMULA, Career, Team
 from app.services.simulation.market import MARKET_SIZE, MAX_NEGOTIATION_ROUNDS, RULES
 from app.services.world import sync_world
 
@@ -161,6 +161,31 @@ class TestReadingAndOpening:
         assert result["floor"] == int(round(result["asking"] * 0.8 / 5) * 5), "the floor is the published rounding of 80% of the asking fee"
         assert "round_5(asking × 0.8)" in result["formula"]
         assert result["data_origin"] == "simulation" and result["is_demo_data"] is True
+
+
+class TestTheSeasonWindow:
+    """§22's window over the wire: the page prints where the career stands, and a closed window refuses at the door."""
+
+    def test_a_closed_window_is_named_by_the_read_and_refuses_the_post(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id)
+        body = auth_client.get(f"{API}/{slug}").json()
+        assert body["window"]["state"] == "open" and body["transfers_allowed"]["ok"] is True
+        assert body["window"]["round_in_season"] == 1 and body["window"]["windows"], "an open market still publishes its round ranges"
+        last_open = int(body["window"]["windows"][-1]["to_round"])
+        session = SessionLocal()
+        career = session.scalar(select(Career).where(Career.slug == slug))
+        assert career is not None
+        career.rounds_played = last_open
+        session.commit()
+        session.close()
+        body = auth_client.get(f"{API}/{slug}").json()
+        assert body["window"]["state"] == "closed" and body["window"]["opens_at_round"] == 1
+        assert body["transfers_allowed"]["code"] == "transfer_window_closed"
+        refused = auth_client.post(f"{API}/{slug}/market")
+        assert refused.status_code == 409 and refused.json()["detail"]["code"] == "transfer_window_closed"
+        detail = refused.json()["detail"]
+        assert detail["round_in_season"] == last_open + 1 and detail["opens_in_rounds"] == int(body["window"]["season_rounds"]) - last_open
+        assert "closed after round" in detail["message"] and "rounds from now" in detail["message"]
 
 
 class TestTrading:

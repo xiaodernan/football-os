@@ -34,7 +34,7 @@ from app.services.simulation.service import replay_is_identical, run_simulation
 from app.services.world import sync_world
 
 BUDGET = 4_000_000
-RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "budget", "squad"}
+RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "window", "budget", "squad"}
 
 
 def _round5(value: float) -> int:
@@ -785,6 +785,104 @@ class TestMarketView:
         assert "career_wage_charges" in limits["wages"] and "not charged is the club's own" in limits["wages"]
         assert "no default" in limits["wages"], "the wage bill's own limit is named rather than left out"
         assert "AI Scout" in limits["scouting"] and "not built" in limits["scouting"]
+
+
+class TestTransferWindow:
+    """§22's *window*, measured in rounds rather than dates: two per season, and a move is judged against the round it would be made in.
+
+    The claim is that the market is shut when the season's published windows are shut — not that a
+    page hides a button. Every refusal below carries the round it was judged on, the season's length and
+    the round that opens the next window, so a manager can count the rounds rather than trust a notice.
+    """
+
+    def test_the_seasons_windows_are_published_as_round_ranges(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        window = market.transfer_window(session, career)
+        season_rounds = 2 * len(world["rival_ids"])
+        assert window["season_rounds"] == season_rounds, "the horizon is the double round-robin the board projects against"
+        assert window["round"] == 1 and window["round_in_season"] == 1 and window["season_index"] == 1
+        assert window["state"] == "open" and window["windows"] == market.season_windows(season_rounds)
+        assert window["opens_at_round"] is None and window["opens_at_season"] is None and window["opens_in_rounds"] == 0
+        assert window["formula"] == market.WINDOW_FORMULA
+        # The arithmetic on a full-size season, where the two windows are separated by closed rounds.
+        assert [(row["from_round"], row["to_round"], row["label"]) for row in market.season_windows(34)] == [
+            (1, market.EARLY_WINDOW_LAST_ROUND, "the opening window"),
+            (16, 18, "the mid-season window"),
+        ]
+        # This fixture's competition is short, so its opening window runs into the mid-season one: the
+        # published list says so instead of presenting two windows a reader could count separately.
+        assert [(row["from_round"], row["to_round"], row["label"]) for row in market.season_windows(8)] == [
+            (1, 5, "the season's signing windows, merged")
+        ]
+
+    def test_the_first_round_after_the_windows_is_closed_and_names_the_next_season(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        season_rounds = market.transfer_window(session, career)["season_rounds"]
+        last_open = market.season_windows(season_rounds)[-1]["to_round"]
+        assert last_open < season_rounds, "the fixture's windows leave at least one closed round in its season"
+        career.rounds_played = last_open
+        session.commit()
+        closed = market.transfer_window(session, career)
+        assert closed["state"] == "closed" and closed["round_in_season"] == last_open + 1 and closed["in_window"] == ""
+        assert closed["opens_at_round"] == 1 and closed["opens_at_season"] == 2
+        assert closed["opens_in_rounds"] == season_rounds + 1 - (last_open + 1), "the count is measured from the round the deal would be made in"
+
+    def test_a_move_between_windows_is_refused_with_the_rounds_that_decided_it(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        season_rounds = market.transfer_window(session, career)["season_rounds"]
+        last_open = market.season_windows(season_rounds)[-1]["to_round"]
+        career.rounds_played = last_open
+        session.commit()
+        verdict = market.transferable(session, career)
+        assert verdict["ok"] is False and verdict["code"] == "transfer_window_closed" and verdict["constraint"] == "transfer_window"
+        assert verdict["round_in_season"] == last_open + 1 and verdict["season_index"] == 1
+        assert verdict["opens_at_round"] == 1 and verdict["opens_at_season"] == 2
+        assert f"closed after round {last_open + 1} of this {season_rounds}-round season" in verdict["message"]
+        assert f"{verdict['opens_in_rounds']} rounds from now" in verdict["message"]
+        with pytest.raises(market.MarketRefusal) as opening:
+            market.open_market(session, career)
+        assert opening.value.code == "transfer_window_closed" and opening.value.detail["opens_in_rounds"] == verdict["opens_in_rounds"]
+        outsider = _best_of(session, [world["outsider_id"]], band="midfield")
+        listing = _listed(session, career, outsider)  # a row on file buys nothing by itself
+        with pytest.raises(market.MarketRefusal) as signing:
+            market.buy(session, career, ident=listing.id)
+        assert signing.value.code == "transfer_window_closed"
+        career.rounds_played = season_rounds
+        session.commit()
+        assert market.transferable(session, career)["ok"] is True, "the next season's opening round is a round it is open"
+        market.buy(session, career, ident=listing.id)
+
+    def test_a_career_past_its_first_season_is_judged_against_the_next_seasons_windows(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        season_rounds = market.transfer_window(session, career)["season_rounds"]
+        career.rounds_played = season_rounds
+        session.commit()
+        window = market.transfer_window(session, career)
+        assert window["season_index"] == 2 and window["round_in_season"] == 1, "the round after a full season is the next season's first"
+        assert window["state"] == "open" and window["in_window"] == market.season_windows(season_rounds)[0]["label"]
+
+    def test_a_career_with_no_horizon_reads_open_rather_than_guessed(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career.competition_id = None
+        career.rounds_played = 30
+        session.commit()
+        window = market.transfer_window(session, career)
+        assert window["state"] == "open" and window["season_rounds"] == 0 and window["windows"] == []
+        assert window["opens_at_round"] is None and window["opens_in_rounds"] == 0
+        assert market.transferable(session, career)["ok"] is True, "with no horizon there is no window to police"
+
+    def test_the_view_publishes_the_window_beside_the_verdict(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        view = market.market_view(session, career)
+        assert view["window"]["state"] == "open" and view["transfers_allowed"]["ok"] is True
+        assert view["rules"]["window"] == market.WINDOW_FORMULA
+        assert view["constants"]["early_window_last_round"] == market.EARLY_WINDOW_LAST_ROUND
+        assert view["constants"]["mid_window_half_width"] == market.MID_WINDOW_HALF_WIDTH
+        career.rounds_played = int(market.season_windows(view["window"]["season_rounds"])[-1]["to_round"])
+        session.commit()
+        view = market.market_view(session, career)
+        assert view["window"]["state"] == "closed" and view["window"]["opens_at_round"] == 1
+        assert view["transfers_allowed"]["code"] == "transfer_window_closed", "one reading, two keys that agree"
 
 
 class TestContracts:
