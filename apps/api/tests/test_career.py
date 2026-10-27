@@ -223,6 +223,8 @@ class TestJudging:
         # A career that has made no deal has an empty contract book, not a missing one.
         assert view["contracts"]["deals"] == 0 and view["contracts"]["rows"] == []
         assert view["contracts"]["age_profile"]["players"] > 0 and view["contracts"]["age_profile"]["mean"] > 0
+        # The position depth covers the whole squad: it sums to the same player count the age profile walked.
+        assert sum(row["players"] for row in view["contracts"]["positions"]) == view["contracts"]["age_profile"]["players"]
         # The next fixture's brief is wired to the round after the one just played.
         assert view["next_fixture_brief"]["available"] is True and view["next_fixture_brief"]["round_index"] == 2
         assert view["highlights"]["available"] is True and view["highlights"]["played"] == 1

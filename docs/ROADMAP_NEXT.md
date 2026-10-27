@@ -140,7 +140,9 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    on a production build over 12 listings on each side — a career with wages already on the books (all
    affordable) and a fresh 100,000-budget career (all 12 over budget, sign buttons disabled) — for
    **156/156** checks in `en` and `zh`, including each listing's four figures and the button state.
-   **Pending:** a budget *ceiling* (a hard cap distinct from a balance).
+   **Squad depth (2026-10-28):** `contract_book` also publishes `positions` — the player count at each position in
+   the current squad, from the same squad the age profile walked (no extra query), so a manager can see a thin
+   position before signing. **Pending:** a budget *ceiling* (a hard cap distinct from a balance).
 7. **Youth academy outcomes.** **Career-domain block done (2026-10-28):** `career_view["academy"]`
    (`academy_view` in `simulation/academy.py`) reads the career's under-21 squad players and judges
    each against the eleven the engine's own selection picks from the career's current squad (the

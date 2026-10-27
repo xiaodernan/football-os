@@ -871,6 +871,13 @@ def contract_book(session: Session, career: Career, *, season_rounds: int) -> di
         ],
         "note": "ages are the world's stored figures; nothing in this build ages a player or retires one",
     }
+    # How many players the current squad carries at each position — the depth a manager checks before
+    # signing, read from the same squad `age_profile` already walked, so no extra query.
+    position_counts: dict[str, int] = {}
+    for player in squad:
+        position = str(player.position or "unknown")
+        position_counts[position] = position_counts.get(position, 0) + 1
+    positions = [{"position": position, "players": count} for position, count in sorted(position_counts.items())]
     return {
         "deals": len(rows),
         "expiring_soon": len(expiring),
@@ -880,6 +887,7 @@ def contract_book(session: Session, career: Career, *, season_rounds: int) -> di
         "total_weekly_wage": sum(row["weekly_wage"] for row in rows),
         "expiring_weekly_wage": sum(row["weekly_wage"] for row in expiring),
         "rows": rows,
+        "positions": positions,
         "age_profile": age_profile,
         "units": career.budget_units,
         "formula": CONTRACT_FORMULA,
