@@ -156,6 +156,14 @@ class TestPlayingASeason:
         assert dev["players_developed"] > 0 and dev["total_minutes"] > 0
         assert dev["development_formula"].startswith("developed(value, potential, minutes)")
         assert all(entry["effective_minutes"] >= entry["minutes"] for entry in dev["top_developed"])
+        # Every read-only projection the career page renders is on the wire, with its own formula. This is
+        # the contract the web tier consumes; losing a block here would blank a section silently.
+        assert body["board"]["season_rounds"] > 0 and body["board"]["formula"]
+        assert body["affordability"]["formula"] and {"signing", "timeline"} <= set(body["affordability"])
+        assert body["contracts"]["formula"] and "age_profile" in body["contracts"]
+        assert body["head_to_head"]["available"] is True
+        assert body["next_fixture_brief"]["available"] is True
+        assert body["ledger"]["leaders"]["per90_formula"]
 
     def test_the_same_career_played_twice_gives_the_same_opponents(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
         """The fixture list is a rotation, so who is met is decided by the career — not by the draw that

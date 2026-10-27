@@ -119,18 +119,21 @@ def _open_career(auth_client, world: dict[str, Any], manager_name: str = "Api Ma
     return str(response.json()["career"]["slug"])
 
 
-def _season_with_a_goal(session: Session, world: dict[str, Any], rounds: int = 8) -> Career:
+def _season_with_a_goal(session: Session, world: dict[str, Any], rounds: int = 20) -> Career:
     """One career, played round by round until the ledger reports a goal.
 
     Incremental on purpose: a fresh career per attempt would replay the same opening rounds over again
-    and turn a slow world into a slow test suite.
+    and turn a slow world into a slow test suite. The cap is 20, not 8, because a fixture's seed is
+    `_digest_seed(career.id, round)` and `career.id` is random — a single unlucky run of eight goalless
+    rounds is rare but real, and the helper returns as soon as the first goal lands, so the higher cap
+    costs nothing on the common path and removes the flake.
     """
     career = _career(session, world)
     for _ in range(rounds):
         career_service.play_round(session, career)
         if ledger_view(session, career)["totals"]["goals"] > 0:
             return career
-    pytest.fail("eight rounds at the world's strongest club produced no goal event — the fixture has stopped meaning anything")
+    pytest.fail(f"{rounds} rounds at the world's strongest club produced no goal event — the fixture has stopped meaning anything")
 
 
 def _match_with_a_goal(session: Session, career: Career) -> str:
