@@ -225,6 +225,8 @@ class TestJudging:
         assert view["contracts"]["age_profile"]["players"] > 0 and view["contracts"]["age_profile"]["mean"] > 0
         # The position depth covers the whole squad: it sums to the same player count the age profile walked.
         assert sum(row["players"] for row in view["contracts"]["positions"]) == view["contracts"]["age_profile"]["players"]
+        # The signing window is on the career payload too, so the page does not need `/market` for it.
+        assert view["window"]["round"] == 2 and view["window"]["state"] in ("open", "closed")
         # The next fixture's brief is wired to the round after the one just played.
         assert view["next_fixture_brief"]["available"] is True and view["next_fixture_brief"]["round_index"] == 2
         assert view["highlights"]["available"] is True and view["highlights"]["played"] == 1

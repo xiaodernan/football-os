@@ -774,6 +774,17 @@ def _contracts(session: Session, career: Career) -> dict[str, Any]:
     return contract_book(session, career, season_rounds=int(season_horizon(session, career)["rounds"]))
 
 
+def _window(session: Session, career: Career) -> dict[str, Any]:
+    """The signing window state, read through the same local import for the same cycle reason as `_contracts`.
+
+    The career payload is otherwise self-contained (board, affordability, contracts, next fixture); the window is
+    the one figure a career page would otherwise have to fetch from `/market`, so it is published here too.
+    """
+    from app.services.simulation.market import transfer_window
+
+    return transfer_window(session, career)
+
+
 def development_view(
     session: Session,
     career: Career,
@@ -890,6 +901,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "academy": academy_view(session, career, appearances=appearance_rows, training=training_all),
         "affordability": _affordability(session, career),
         "contracts": _contracts(session, career),
+        "window": _window(session, career),
         "model_versions": sorted({row.model_version for row in rows if row.model_version}),
         "limitations": limitations(),
         "disclaimer": CAREER_DISCLAIMER,

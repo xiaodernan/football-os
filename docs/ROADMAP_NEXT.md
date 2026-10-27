@@ -106,9 +106,11 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    `POST /market` answers 409 `transfer_window_closed` with `opens_in_rounds = season_rounds − 5`.
    `pytest tests/test_transfers.py tests/test_transfers_api.py tests/test_answer_census.py
    tests/test_challenges.py tests/test_scout_transfer_sim.py tests/test_career.py tests/test_carry_over.py`
-   all green. Not yet surfaced as its own panel on `/career/[slug]/market`; the blocked-tools notice
-   already prints the refusal sentence. Next: the window block on the page, and a window that spans
-   several rounds of real fixtures.
+   all green. **Career payload (2026-10-28):** `career_view["window"]` now carries the same block (read through
+   the same local import as `_affordability`), so the career page is self-contained and need not fetch `/market`
+   for the window state. Not yet surfaced as its own panel on `/career/[slug]/market`; the blocked-tools notice
+   already prints the refusal sentence. Next: the window block on the page, and a window that spans several
+   rounds of real fixtures.
 6. **Contracts & wages.** **Read-only half done (2026-10-25):** the wage bill and budget were already
    recomputed from `career_squad_moves`/`career_wage_charges` (`wage_bill`, `budget_position`). Added
    `affordability_view` (market.py) composing them into a **wage runway** (`max(0, remaining ÷
@@ -157,8 +159,19 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    door, not this block's assumption), and **the graduation is measured, not drawn** (a "deterministic
    roll" is a contradiction; a roll would break the replay identity the career mode's determinism
    guard owns, so the block measures the engine's own selection instead). Recorded in
-   [M13_ACADEMY_OUTCOMES_VERIFICATION.md](M13_ACADEMY_OUTCOMES_VERIFICATION.md). **Pending:** the
-   career page's panel (types, `CareerAcademy.tsx`, three locales, shipped-build walk).
+   [M13_ACADEMY_OUTCOMES_VERIFICATION.md](M13_ACADEMY_OUTCOMES_VERIFICATION.md). **Career-page panel
+   done (2026-10-28):** `lib/types.ts` types the block (`CareerAcademy`, `CareerAcademyTrainee`) and
+   `components/CareerAcademy.tsx` renders it on `/career/{slug}` between the development and board
+   panels — eight columns (player, position, age, minutes, stored→projected, potential headroom,
+   standing against the band's seats, verdict), the API's own `note`, `academy_formula` and six
+   `formulas` sentences, and an explicit empty branch. 20 new `careerDetail` keys in all three
+   locales. Walked on a fresh `next build`/`next start` by surgery on the walked player's stored
+   overall — restart the API between phases, the response cache replays the previous answer — so all
+   three verdicts, all three badge classes and the gap interpolation are each reached live: **686
+   checks over four phase runs (171 + 172 + 172 + 171), 0 red**, with an anti-vacuity clause per
+   surgery phase that a trainee row really carries that phase's verdict on the wire. Recorded in
+   [M13_ACADEMY_PANEL_VERIFICATION.md](M13_ACADEMY_PANEL_VERIFICATION.md). **Pending:** the gate gap
+   the panel's own first run exposed, opened as item 22.
 8. **Board expectations & relegation.** **Read-only half done (2026-10-25):** `board_view` (career.py)
    projects the season at the career's current pace — `projected = round(actual ÷ played × season_rounds)`,
    where the horizon is the challenge's window or a double round-robin over the competition's clubs — and
@@ -267,6 +280,23 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     no ceiling it says so rather than inventing one. Pinned by `TestMonthlyCeiling` and the door's key-set
     assertion. **Pending:** wiring the recommendation to an out-of-band alert channel (email/pager), which needs
     a delivery decision.
+22. **Gate the bare key calls a prop-translator component makes.** **Opened by item 7's first walk run
+    (2026-10-28).** `qa-i18n-literals.mjs` records a bare `t("key")` call against the namespace the
+    *calling file itself* binds (`apps/web/scripts/qa-i18n-literals.mjs:804`-`:824`); when the translator
+    arrives as a prop and the file never calls `getTranslations`/`useTranslations`, the candidate list is
+    empty and the call contributes nothing — the key is never checked, and neither are its placeholders.
+    Measured population today: **7 files under `apps/web/components/` make 167 bare `t("…")` calls that are
+    outside the gate's recorded set** (`CareerNextOpponent` 34, `CareerContracts` 29, `CareerBoard` 25,
+    `CareerFinance` 24, `CareerAcademy` 23, `CareerHighlights` 18, `CareerDevelopment` 14). The defect is
+    not hypothetical: the academy panel's first run died at runtime on `KeyError: 'thAge'` — two header keys
+    borrowed from namespaces the page's `t` does not hold — and a reversible probe (plant the old spelling,
+    run the gate, restore byte-identically) showed **8/8 PASS at the same 3661 call count** with the bad keys
+    in the file, i.e. the gate could not have caught it. The paired control names the boundary exactly: the
+    same planted key in `app/career/[slug]/page.tsx`, which binds `careerDetail` itself, is answered
+    **7/8 — 1 key the catalogue does not hold, at 3662 calls**. The fix is to bind a prop translator to the
+    namespace its *caller* passes, at the page/component seam, rather than widening the component's own file;
+    every panel already walks a page that binds exactly one namespace. *Gate:* the recorded-call count must
+    move when a key is planted in a prop-translator component — that reaction, not the pass, is the witness.
 
 *Gate:* each runbook cites the door it documents (§83 pattern); the cost ceiling is a tested boundary.
 
