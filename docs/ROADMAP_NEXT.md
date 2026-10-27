@@ -233,7 +233,8 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   retrospective read off the same fixture list, no extra query). Each has its own formula in the payload
   and its own tests; none writes a stored counter. `limitations()["projections"]` says all of them are read-only
   projections that change no stored attribute, expire no contract and trigger no board decision — the
-  page's own statement of what it does not claim.
+  page's own statement of what it does not claim. A determinism test reads the whole view twice and asserts
+  byte-identical JSON, so no block can quietly start inventing state.
 - **Season leaders, with true per-90.** `ledger_view` now also names the top scorer, top xG, most-booked and
   best goals-per-90, and adds each player's appearance count and minutes from `career_appearances` so the
   per-90 is read from the minutes the rounds actually stored (no appearance minutes ⇒ no per-90, not a zero;

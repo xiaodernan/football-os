@@ -468,3 +468,14 @@ class TestSeasonHighlights:
             worst = highlights["worst_loss"]
             assert worst["club_goals"] - worst["opponent_goals"] == min(margins) < 0
         assert 0 <= highlights["longest_winning_run"] <= highlights["longest_unbeaten_run"] <= 3
+
+
+class TestDeterminism:
+    def test_reading_the_view_twice_gives_the_same_json(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        import json
+
+        career = _career(session, world)
+        career_service.play_round(session, career)
+        first = json.dumps(career_service.career_view(session, career), sort_keys=True, default=str)
+        second = json.dumps(career_service.career_view(session, career), sort_keys=True, default=str)
+        assert first == second, "a view that changes between two reads is inventing state"
