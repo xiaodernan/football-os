@@ -179,10 +179,10 @@ def _season_leaders(session: Session, career: Career, players: list[dict[str, An
         return {"leaders": {}, "per90_formula": PER90_FORMULA, "per90_min_minutes": _PER90_MIN_MINUTES, "note": "no player has an event in this career's fixtures yet"}
     if appearances is not None:
         agg: dict[str, list[int]] = {}
-        for row in appearances:
-            slug = str(row.player_slug or "")
+        for seen in appearances:
+            slug = str(seen.player_slug or "")
             slot = agg.setdefault(slug, [0, 0])
-            slot[0] += int(row.minutes)
+            slot[0] += int(seen.minutes)
             slot[1] += 1
         by_slug = {slug: (minutes, apps) for slug, (minutes, apps) in agg.items()}
     else:
