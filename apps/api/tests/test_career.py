@@ -377,6 +377,29 @@ class TestReadEfficiency:
         assert len(appearance_reads) == 1, f"career_appearances read {len(appearance_reads)} times"
         assert len(training_reads) == 1, f"real_training_sessions read {len(training_reads)} times"
 
+    def test_the_fixtures_loop_batches_the_opponent_slugs_instead_of_one_query_per_round(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(3):
+            career_service.play_round(session, career)
+        statements: list[str] = []
+        engine = session.get_bind()
+
+        def before(conn: object, cursor: object, statement: str, params: object, context: object, executemany: bool) -> None:  # type: ignore[no-untyped-def]
+            statements.append(statement.lower())
+
+        event.listen(engine, "before_cursor_execute", before)
+        try:
+            view = career_service.career_view(session, career)
+        finally:
+            event.remove(engine, "before_cursor_execute", before)
+        assert len(view["fixtures"]) == 3
+        normalized = [" ".join(statement.split()) for statement in statements]
+        # `_team_slug`'s query is `select teams.slug from teams where teams.id = ?`; only the club's own
+        # path still uses it, and the three opponents are resolved in one `where teams.id in (...)` batch.
+        single_slug_reads = [s for s in normalized if "select teams.slug from teams" in s and "teams.id in" not in s]
+        assert len(single_slug_reads) <= 1, f"opponent slugs resolved one round at a time: {len(single_slug_reads)} per-id reads"
+        assert any("teams.id in" in s for s in normalized), "the batch opponent-slug lookup did not run"
+
 
 class TestSeasonHighlights:
     def test_a_fresh_career_has_no_highlights_to_report(self, session, world) -> None:  # type: ignore[no-untyped-def]

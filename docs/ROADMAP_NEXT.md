@@ -172,8 +172,11 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     A `before_cursor_execute` test in `test_career.py` now pins appearances/training at exactly **1** each:
     the last read came from `next_fixture_brief`'s `squad_as_of`→`condition_map` (the career side's condition
     for its profile), and `condition_map`/`squad_as_of` now accept the pre-fetched rows too, so the whole
-    detail read shares one fetch. **Pending:** a full-scale profile (a league season) to decide whether an
-    index is worth more than the plumbing.
+    detail read shares one fetch. **Third fix landed (2026-10-27):** the fixtures loop called `_team_slug`
+    once per round (`select teams.slug … where teams.id = ?`), an N+1 over the season; the view now
+    resolves every opponent's slug in one `where teams.id in (...)` batch, and a `before_cursor_execute`
+    test pins it at no per-round slug reads. **Pending:** a full-scale profile (a league season) to decide
+    whether an index is worth more than the plumbing.
 15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
     M12 cost/rate-limit work already gives the scaffolding.
 

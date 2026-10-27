@@ -900,13 +900,16 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None)
         view["next_fixture_brief"] = next_fixture_brief(session, career, plan=plan, appearances=appearance_rows, training=training_all)
         view["ledger"] = ledger_view(session, career, appearances=appearance_rows)
+        # One batch lookup for every opponent's slug, rather than a `_team_slug` query per fixture.
+        opponent_ids = {str(row.opponent_team_id) for row in rows if row.opponent_team_id}
+        team_slugs = {str(team_id): str(slug) for team_id, slug in session.execute(select(Team.id, Team.slug).where(Team.id.in_(opponent_ids))).all()} if opponent_ids else {}
         view["fixtures"] = [
             {
                 "round_index": row.round_index,
                 "side": row.side,
                 "opponent_name": row.opponent_name,
                 "opponent_short": row.opponent_short,
-                "opponent_path": f"/team/{_team_slug(session, row.opponent_team_id)}",
+                "opponent_path": f"/team/{team_slugs.get(str(row.opponent_team_id), '')}",
                 "venue_name": row.venue_name,
                 "club_goals": row.club_goals,
                 "opponent_goals": row.opponent_goals,
