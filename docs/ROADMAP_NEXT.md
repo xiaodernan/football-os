@@ -212,6 +212,11 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   tests; none writes a stored counter. `limitations()["projections"]` says all of them are read-only
   projections that change no stored attribute, expire no contract and trigger no board decision — the
   page's own statement of what it does not claim.
+- **Season leaders, with true per-90.** `ledger_view` now also names the top scorer, top xG, most-booked and
+  best goals-per-90, and adds each player's appearance count and minutes from `career_appearances` so the
+  per-90 is read from the minutes the rounds actually stored (no appearance minutes ⇒ no per-90, not a zero;
+  the per-90 board ignores anyone under a 90-minute floor). Recomputed from the rows, pinned by
+  `TestSeasonLeaders` in `test_sim_ledger.py`.
 - **Off-host backup leg now runs and is gated.** `scripts/backup_db.sh` extracts
   `upload_backup_to_s3`; two gate tests in `apps/api/tests/test_dr_scripts.py` run the real script with
   stubbed `aws`/`pg_dump` to prove the off-host hop fires with the named bucket + `STANDARD_IA` and lands

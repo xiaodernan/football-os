@@ -410,3 +410,24 @@ class TestTheLedgerGoesWithItsSeason:
         assert session.scalar(select(func.count()).select_from(SimulationEvent).where(SimulationEvent.match_id == stored.id)) > 0, (
             "a report that survives keeps its rows, and so keeps its own ledger elsewhere"
         )
+
+
+class TestSeasonLeaders:
+    def test_the_leaders_are_the_tops_of_the_rows_and_per90_uses_appearance_minutes(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _season(session, world, 3)
+        view = ledger_view(session, career)
+        block = view["leaders"]
+        assert block["per90_formula"] and block["per90_min_minutes"] == 90
+        rows = view["players"]
+        assert rows and all({"minutes", "appearances", "goals_per90"} <= set(row) for row in rows)
+        for row in rows:
+            if row["minutes"] > 0:
+                assert row["goals_per90"] == round(row["goals"] / row["minutes"] * 90, 2)
+            else:
+                assert row["goals_per90"] is None, "no appearance minutes means no per-90, not a zero"
+        top = block["leaders"]["top_scorer"]
+        assert top is not None and top["value"] == max(row["goals"] for row in rows)
+        best = block["leaders"]["best_per90"]
+        assert best is not None, "eight rounds give at least one player over the minutes floor"
+        winner = next(row for row in rows if row["slug"] == best["player_slug"])
+        assert winner["minutes"] >= 90 and best["value"] == winner["goals_per90"]

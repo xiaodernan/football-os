@@ -28,7 +28,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Career, CareerFixture, SimulationEvent
+from app.models import Career, CareerAppearance, CareerFixture, SimulationEvent
 from app.services.simulation.engine import SIMULATION_DISCLAIMER
 from app.services.simulation.events import ATTRIBUTION_FORMULA
 
@@ -43,6 +43,15 @@ _CHANCE_TYPES = ("goal", "shot_saved", "shot_off_target")
 _LEDGER_TYPES = ("goal", "shot_saved", "shot_off_target", "yellow_card", "red_card", "injury")
 # Generous enough that the cap only bites on an abnormal career — and `truncated` says so when it does.
 LEDGER_LIMIT = 40
+
+#: Goals per 90, read from the minutes `career_appearances` stored for this career's rounds.
+PER90_FORMULA = (
+    "goals per 90 = goals ÷ career_appearances minutes × 90, for a player with at least one appearance minute; a "
+    "player with no appearance minutes has no per-90 (None, not zero), and the per-90 leaderboard ignores players "
+    "under the minimum-minutes floor so one substitute goal cannot top it"
+)
+#: The minutes floor below which a player is not ranked on per-90.
+_PER90_MIN_MINUTES = 90
 
 
 def fixtures_of_career(session: Session, career: Career) -> list[CareerFixture]:
@@ -158,6 +167,52 @@ def _player_rows(session: Session, match_ids: list[str], club_id: str | None) ->
     return rows
 
 
+def _season_leaders(session: Session, career: Career, players: list[dict[str, Any]]) -> dict[str, Any]:
+    """The season's leaders, with goals per 90 read from the appearance minutes the rounds stored.
+
+    The player rows are the ledger's own; this adds each player's appearance count and minutes from
+    `career_appearances`, then names the top of four categories. A player with no appearance minutes has no
+    per-90 rather than a zero, and the per-90 board ignores anyone under the minutes floor.
+    """
+    if not players:
+        return {"leaders": {}, "per90_formula": PER90_FORMULA, "per90_min_minutes": _PER90_MIN_MINUTES, "note": "no player has an event in this career's fixtures yet"}
+    appearance = (
+        select(
+            CareerAppearance.player_slug,
+            func.coalesce(func.sum(CareerAppearance.minutes), 0).label("minutes"),
+            func.count().label("appearances"),
+        )
+        .where(CareerAppearance.career_id == career.id)
+        .group_by(CareerAppearance.player_slug)
+    )
+    by_slug = {str(slug): (int(minutes), int(apps)) for slug, minutes, apps in session.execute(appearance)}
+    for row in players:
+        minutes, apps = by_slug.get(str(row.get("slug") or ""), (0, 0))
+        row["appearances"] = apps
+        row["minutes"] = minutes
+        row["goals_per90"] = round(row["goals"] / minutes * 90, 2) if minutes > 0 else None
+        row["cards"] = int(row["yellow_cards"]) + int(row["red_cards"])
+
+    def leader(key: str, *, minimum_minutes: int = 0) -> dict[str, Any] | None:
+        pool = [row for row in players if int(row["minutes"]) >= minimum_minutes and row.get(key) is not None]
+        if not pool:
+            return None
+        best = max(pool, key=lambda row: (row[key], row["goals"]))
+        return {"player_id": best["player_id"], "player_slug": best["slug"], "player_name": best["name"], "value": best[key]}
+
+    return {
+        "leaders": {
+            "top_scorer": leader("goals"),
+            "top_xg": leader("expected_goals"),
+            "most_cards": leader("cards"),
+            "best_per90": leader("goals_per90", minimum_minutes=_PER90_MIN_MINUTES),
+        },
+        "per90_min_minutes": _PER90_MIN_MINUTES,
+        "per90_formula": PER90_FORMULA,
+        "note": "per-90 uses the career_appearances minutes this career's rounds stored; a player with no appearance minutes has no per-90 rather than a zero",
+    }
+
+
 def _unattributed_names(session: Session, match_ids: list[str], club_id: str | None) -> dict[str, list[str]]:
     """The names this ledger could not turn into a player, so no total silently stands for them."""
     if not match_ids:
@@ -213,6 +268,7 @@ def ledger_view(session: Session, career: Career) -> dict[str, Any]:
     club_id = career.club_id or None
     totals = _totals_by_type(session, match_ids, club_id)
     players = _player_rows(session, match_ids, club_id)
+    leaders = _season_leaders(session, career, players)
     names = _unattributed_names(session, match_ids, club_id)
     traced_ids = _traced_match_ids(session, match_ids)
     traced = len(traced_ids)
@@ -229,6 +285,7 @@ def ledger_view(session: Session, career: Career) -> dict[str, Any]:
         "players_with_events": len(players),
         "players_shown": len(shown),
         "truncated": len(players) > len(shown),
+        "leaders": leaders,
         "totals": {
             "events": sum(int(entry["events"]) for entry in totals.values()),
             "goals": goals,
@@ -264,4 +321,4 @@ def ledger_view(session: Session, career: Career) -> dict[str, Any]:
     }
 
 
-__all__ = ["CONSISTENCY_FORMULA", "LEDGER_FORMULA", "LEDGER_LIMIT", "fixtures_of_career", "ledger_view"]
+__all__ = ["CONSISTENCY_FORMULA", "LEDGER_FORMULA", "LEDGER_LIMIT", "PER90_FORMULA", "fixtures_of_career", "ledger_view"]
