@@ -690,15 +690,22 @@ def _contracts(session: Session, career: Career) -> dict[str, Any]:
     return contract_book(session, career, season_rounds=int(season_horizon(session, career)["rounds"]))
 
 
-def development_view(session: Session, career: Career) -> dict[str, Any]:
+def development_view(
+    session: Session,
+    career: Career,
+    *,
+    appearances: list[CareerAppearance] | None = None,
+    training: dict[str, int] | None = None,
+) -> dict[str, Any]:
     """A read-only projection of how the career's players have developed from fixture minutes (M13 item 4).
 
     Sums each player's appearance minutes across the whole career, then projects the developed attribute
     set toward that player's stored potential using the deterministic curve in `development`. The result
     is recomputed from the rows on every read and never written back, so the squad the rest of the page
     reads keeps its stored attributes and the projection moves only as the career is actually played.
+    `appearances`/`training` let the career view hand in the rows it already fetched for `carry_over_view`.
     """
-    appearances = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id)).all())
+    appearances = appearances if appearances is not None else list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id)).all())
     by_player: dict[str, int] = {}
     for row in appearances:
         player_id = str(row.player_id)
@@ -719,7 +726,7 @@ def development_view(session: Session, career: Career) -> dict[str, Any]:
             "is_demo_data": True,
         }
     players = {player.id: player for player in session.scalars(select(RealPlayer).where(RealPlayer.id.in_(list(by_player)))).all()}
-    training = training_loads(session, list(by_player))
+    training = training if training is not None else training_loads(session, list(by_player))
     developed: list[dict[str, Any]] = []
     for player_id, minutes in by_player.items():
         player = players.get(player_id)
@@ -764,6 +771,10 @@ def development_view(session: Session, career: Career) -> dict[str, Any]:
 def career_view(session: Session, career: Career, *, include_fixtures: bool = True) -> dict[str, Any]:
     rows = fixtures_of(session, career)
     record = record_of(rows)
+    # `carry_over` and `development` both need the career's appearances and the world's training load; read
+    # each table once here and hand the same rows to both, rather than let each block re-query them.
+    appearance_rows = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id).order_by(CareerAppearance.round_index)).all())
+    training_all = training_loads(session, sorted({str(row.player_id) for row in appearance_rows}))
     view: dict[str, Any] = {
         "career": {            "id": career.id,
             "slug": career.slug,
@@ -791,8 +802,8 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "board": board_view(session, career, rows, record),
         "table": mini_table(rows, career),
         "consistency": _consistency(session, rows),
-        "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1),
-        "development": development_view(session, career),
+        "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1, appearances=appearance_rows, training=training_all),
+        "development": development_view(session, career, appearances=appearance_rows, training=training_all),
         "affordability": _affordability(session, career),
         "contracts": _contracts(session, career),
         "model_versions": sorted({row.model_version for row in rows if row.model_version}),
@@ -806,7 +817,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         plan = next_fixture_plan(session, career)
         view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None)
         view["next_fixture_brief"] = next_fixture_brief(session, career, plan=plan)
-        view["ledger"] = ledger_view(session, career)
+        view["ledger"] = ledger_view(session, career, appearances=appearance_rows)
         view["fixtures"] = [
             {
                 "round_index": row.round_index,

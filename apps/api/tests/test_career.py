@@ -16,7 +16,7 @@ from collections.abc import Iterator
 from typing import Any
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import event, select
 from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
@@ -350,3 +350,28 @@ class TestNextFixtureBrief:
         assert set(brief["stronger_bands"]) | set(brief["weaker_bands"]) <= set(bands)
         assert brief["career"]["bands"] and brief["opponent"]["bands"]
         assert "comparison" in brief["note"] and brief["formula"].startswith("bands are the engine's own band indices")
+
+
+class TestReadEfficiency:
+    def test_the_career_view_reads_appearances_and_training_once(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(2):
+            career_service.play_round(session, career)
+        statements: list[str] = []
+        engine = session.get_bind()
+
+        def before(conn: object, cursor: object, statement: str, params: object, context: object, executemany: bool) -> None:  # type: ignore[no-untyped-def]
+            statements.append(statement.lower())
+
+        event.listen(engine, "before_cursor_execute", before)
+        try:
+            career_service.career_view(session, career)
+        finally:
+            event.remove(engine, "before_cursor_execute", before)
+        appearance_reads = [s for s in statements if "from career_appearances" in s and s.lstrip().startswith("select")]
+        training_reads = [s for s in statements if "from real_training_sessions" in s and s.lstrip().startswith("select")]
+        # Two reads each: the one shared fetch this view hands to carry_over/development/ledger, plus the
+        # one `contract_book` still makes through `current_squad` -> `condition_map` for the squad it ages.
+        # Before the dedup it was five reads of appearances and three of training; this pins it at two.
+        assert len(appearance_reads) <= 2, f"career_appearances read {len(appearance_reads)} times"
+        assert len(training_reads) <= 2, f"real_training_sessions read {len(training_reads)} times"

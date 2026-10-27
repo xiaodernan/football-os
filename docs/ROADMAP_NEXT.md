@@ -163,9 +163,16 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     once through `wage_bill`→`held_deals`), and `affordability_view` then had `budget_timeline` fetch both
     tables again. `held_deals`/`wage_bill`/`budget_position`/`budget_timeline` now take optional pre-fetched
     rows, and `affordability_view` fetches the ledger once and hands it to both. A `before_cursor_execute`
-    test in `test_transfers.py` pins it at exactly one read of each table. **Pending:** a full-scale profile
-    (a league season) to see whether the remaining per-block reads (carry_over, development, contract_book,
-    next_fixture_brief) need the same treatment or an index.
+    test in `test_transfers.py` pins it at exactly one read of each table. **Second fix landed (2026-10-27):**
+    `carry_over_view` read `career_appearances` twice (once via `appearances_as_of`, once for the full list),
+    and `development_view` and `ledger_view`'s `_season_leaders` each read it again — five reads of the
+    appearance table and three of `real_training_sessions` per career-detail read. `carry_over_view`,
+    `development_view` and `ledger_view` now take pre-fetched `appearances`/`training`, and `career_view`
+    fetches both once and hands them to all three (carry-over derives its round window from the same list).
+    A `before_cursor_execute` test in `test_career.py` pins appearances/training at ≤2 each (the remaining
+    read is `contract_book`→`current_squad`→`condition_map`). **Pending:** the same treatment for
+    `current_squad`/`condition_map`, and a full-scale profile (a league season) to decide whether an index
+    is worth more than the plumbing.
 15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
     M12 cost/rate-limit work already gives the scaffolding.
 

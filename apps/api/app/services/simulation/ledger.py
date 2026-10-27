@@ -167,25 +167,35 @@ def _player_rows(session: Session, match_ids: list[str], club_id: str | None) ->
     return rows
 
 
-def _season_leaders(session: Session, career: Career, players: list[dict[str, Any]]) -> dict[str, Any]:
+def _season_leaders(session: Session, career: Career, players: list[dict[str, Any]], *, appearances: list[CareerAppearance] | None = None) -> dict[str, Any]:
     """The season's leaders, with goals per 90 read from the appearance minutes the rounds stored.
 
     The player rows are the ledger's own; this adds each player's appearance count and minutes from
     `career_appearances`, then names the top of four categories. A player with no appearance minutes has no
-    per-90 rather than a zero, and the per-90 board ignores anyone under the minutes floor.
+    per-90 rather than a zero, and the per-90 board ignores anyone under the minutes floor. `appearances`
+    lets the career view hand in the rows it already fetched rather than read the table again.
     """
     if not players:
         return {"leaders": {}, "per90_formula": PER90_FORMULA, "per90_min_minutes": _PER90_MIN_MINUTES, "note": "no player has an event in this career's fixtures yet"}
-    appearance = (
-        select(
-            CareerAppearance.player_slug,
-            func.coalesce(func.sum(CareerAppearance.minutes), 0).label("minutes"),
-            func.count().label("appearances"),
+    if appearances is not None:
+        agg: dict[str, list[int]] = {}
+        for row in appearances:
+            slug = str(row.player_slug or "")
+            slot = agg.setdefault(slug, [0, 0])
+            slot[0] += int(row.minutes)
+            slot[1] += 1
+        by_slug = {slug: (minutes, apps) for slug, (minutes, apps) in agg.items()}
+    else:
+        appearance = (
+            select(
+                CareerAppearance.player_slug,
+                func.coalesce(func.sum(CareerAppearance.minutes), 0).label("minutes"),
+                func.count().label("appearances"),
+            )
+            .where(CareerAppearance.career_id == career.id)
+            .group_by(CareerAppearance.player_slug)
         )
-        .where(CareerAppearance.career_id == career.id)
-        .group_by(CareerAppearance.player_slug)
-    )
-    by_slug = {str(slug): (int(minutes), int(apps)) for slug, minutes, apps in session.execute(appearance)}
+        by_slug = {str(slug): (int(minutes), int(apps)) for slug, minutes, apps in session.execute(appearance)}
     for row in players:
         minutes, apps = by_slug.get(str(row.get("slug") or ""), (0, 0))
         row["appearances"] = apps
@@ -260,7 +270,7 @@ def _consistency(goals_from_events: int, club_goals: int, traced: int, untraced:
     return f"{goals_from_events} goal(s) on the event rows and {club_goals} on this career's fixture list, over {traced} traced fixture(s): the two readings agree{missing}"
 
 
-def ledger_view(session: Session, career: Career) -> dict[str, Any]:
+def ledger_view(session: Session, career: Career, *, appearances: list[CareerAppearance] | None = None) -> dict[str, Any]:
     """This career's season as the event rows give it: per-player counts, and the checks beside them."""
     fixtures = fixtures_of_career(session, career)
     played = [row for row in fixtures if row.match_id]
@@ -268,7 +278,7 @@ def ledger_view(session: Session, career: Career) -> dict[str, Any]:
     club_id = career.club_id or None
     totals = _totals_by_type(session, match_ids, club_id)
     players = _player_rows(session, match_ids, club_id)
-    leaders = _season_leaders(session, career, players)
+    leaders = _season_leaders(session, career, players, appearances=appearances)
     names = _unattributed_names(session, match_ids, club_id)
     traced_ids = _traced_match_ids(session, match_ids)
     traced = len(traced_ids)

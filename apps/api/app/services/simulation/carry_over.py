@@ -221,17 +221,26 @@ def _row(appearance: CareerAppearance) -> dict[str, Any]:
     }
 
 
-def carry_over_view(session: Session, career: Career, *, next_round: int) -> dict[str, Any]:
+def carry_over_view(
+    session: Session,
+    career: Career,
+    *,
+    next_round: int,
+    appearances: list[CareerAppearance] | None = None,
+    training: dict[str, int] | None = None,
+) -> dict[str, Any]:
     """What this career's played rounds have left on its players, and what round `next_round` reads.
 
     Everything here is summed from `career_appearances` and `real_training_sessions` on the request, in
     the same discipline as the record and the budget: the figures a page prints are the figures these
-    rows give, with the expression beside them.
+    rows give, with the expression beside them. `appearances`/`training` let a caller that already fetched
+    them (the career view, for `development_view` too) hand them in rather than read the tables again; the
+    round window is derived from the one appearance list, so the table is read once.
     """
-    history = appearances_as_of(session, career.id, next_round)
-    all_rows = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id).order_by(CareerAppearance.round_index)).all())
+    all_rows = appearances if appearances is not None else list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id).order_by(CareerAppearance.round_index)).all())
+    history = [row for row in all_rows if int(row.round_index) < int(next_round)]
     windows = load_windows(history, round_index=next_round)
-    training = training_loads(session, list(windows))
+    training = training if training is not None else training_loads(session, list(windows))
     conditions = {player_id: condition_of(entry["load"], training.get(player_id, 0)) for player_id, entry in windows.items()}
     last_round = max((row.round_index for row in all_rows), default=0)
     traced = {row.round_index for row in all_rows}
