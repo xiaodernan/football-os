@@ -446,6 +446,27 @@ class TestReadEfficiency:
         fixture_reads = [s for s in normalized if "from career_fixtures" in s and s.lstrip().startswith("select")]
         assert len(fixture_reads) == 1, f"career_fixtures read {len(fixture_reads)} times; head_to_head should reuse the view's list"
 
+    def test_the_list_summary_skips_the_heavy_blocks(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career_service.play_round(session, career)
+        statements: list[str] = []
+        engine = session.get_bind()
+
+        def before(conn: object, cursor: object, statement: str, params: object, context: object, executemany: bool) -> None:  # type: ignore[no-untyped-def]
+            statements.append(statement.lower())
+
+        event.listen(engine, "before_cursor_execute", before)
+        try:
+            summary = career_service.career_summary(session, career)
+        finally:
+            event.remove(engine, "before_cursor_execute", before)
+        normalized = [" ".join(statement.split()) for statement in statements]
+        # A list row needs the brief, the record and the objectives — not the projection blocks' tables.
+        assert not any("from career_appearances" in s for s in normalized), "the list summary read the appearance table"
+        assert not any("from real_training_sessions" in s for s in normalized), "the list summary read the training table"
+        assert summary["record"]["played"] == 1 and summary["career"]["slug"] == career.slug
+        assert isinstance(summary["objectives"], list) and summary["objectives"]
+
 
 class TestSeasonHighlights:
     def test_a_fresh_career_has_no_highlights_to_report(self, session, world) -> None:  # type: ignore[no-untyped-def]

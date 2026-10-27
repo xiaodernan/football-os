@@ -860,6 +860,44 @@ def development_view(
     }
 
 
+def _career_brief(session: Session, career: Career) -> dict[str, Any]:
+    """The career's own fields, without any projection block — the shape a list row and a detail share."""
+    return {
+        "id": career.id,
+        "slug": career.slug,
+        "manager_name": career.manager_name,
+        "club_name": career.club_name,
+        "club_short": career.club_short,
+        "club_id": career.club_id,
+        "club_path": f"/team/{_club_slug(session, career)}" if career.club_id else None,
+        "competition_name": career.competition_name,
+        "season": career.season,
+        "philosophy": career.philosophy,
+        "system_slug": career.system_slug,
+        "system_path": f"/tactics/{career.system_slug}" if career.system_slug else None,
+        "budget": career.budget,
+        "budget_units": career.budget_units,
+        "rounds_played": career.rounds_played,
+        "status": career.status,
+        "challenge_slug": career.challenge_slug,
+        "challenge_window": career.challenge_window,
+        "data_origin": career.data_origin,
+        "is_demo_data": career.is_demo_data,
+    }
+
+
+def career_summary(session: Session, career: Career) -> dict[str, Any]:
+    """What a career-list row needs — brief, record and objectives — without the heavy projection blocks.
+
+    The list endpoint used to call `career_view(include_fixtures=False)` per row, which built carry-over,
+    development, finance, contracts, the window and the board only to read `record` and `objectives` back
+    out of it. That is a whole view per row over a list; this is the same three fields from the fixture rows.
+    """
+    rows = fixtures_of(session, career)
+    record = record_of(rows)
+    return {"career": _career_brief(session, career), "record": record, "objectives": objectives_of(career, record)}
+
+
 def career_view(session: Session, career: Career, *, include_fixtures: bool = True) -> dict[str, Any]:
     rows = fixtures_of(session, career)
     record = record_of(rows)
@@ -868,28 +906,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
     appearance_rows = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id).order_by(CareerAppearance.round_index)).all())
     training_all = training_loads(session, sorted({str(row.player_id) for row in appearance_rows}))
     view: dict[str, Any] = {
-        "career": {
-            "id": career.id,
-            "slug": career.slug,
-            "manager_name": career.manager_name,
-            "club_name": career.club_name,
-            "club_short": career.club_short,
-            "club_id": career.club_id,
-            "club_path": f"/team/{_club_slug(session, career)}" if career.club_id else None,
-            "competition_name": career.competition_name,
-            "season": career.season,
-            "philosophy": career.philosophy,
-            "system_slug": career.system_slug,
-            "system_path": f"/tactics/{career.system_slug}" if career.system_slug else None,
-            "budget": career.budget,
-            "budget_units": career.budget_units,
-            "rounds_played": career.rounds_played,
-            "status": career.status,
-            "challenge_slug": career.challenge_slug,
-            "challenge_window": career.challenge_window,
-            "data_origin": career.data_origin,
-            "is_demo_data": career.is_demo_data,
-        },
+        "career": _career_brief(session, career),
         "record": record,
         "highlights": season_highlights(rows, career),
         "objectives": objectives_of(career, record),
@@ -961,6 +978,7 @@ __all__ = [
     "NEXT_FIXTURE_FORMULA",
     "WindowClosed",
     "board_view",
+    "career_summary",
     "career_view",
     "competition_clubs",
     "development_view",

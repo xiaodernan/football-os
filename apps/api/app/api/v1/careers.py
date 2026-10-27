@@ -26,6 +26,7 @@ from app.services.club import answers
 from app.services.simulation.career import (
     CAREER_DISCLAIMER,
     WindowClosed,
+    career_summary,
     career_view,
     create_career,
     next_fixture_plan,
@@ -154,8 +155,8 @@ def list_careers(request: Request, db: Session = Depends(get_db), user: User = D
     rows = list(db.scalars(select(Career).where(Career.owner_id == user.id).order_by(Career.created_at.desc())).all())
     items = []
     for career in rows:
-        view = career_view(db, career, include_fixtures=False)
-        items.append(view["career"] | {"record": view["record"], "objectives_met": sum(1 for item in view["objectives"] if item["met"]), "objectives_total": len(view["objectives"])})
+        summary = career_summary(db, career)
+        items.append(summary["career"] | {"record": summary["record"], "objectives_met": sum(1 for item in summary["objectives"] if item["met"]), "objectives_total": len(summary["objectives"])})
     return {
         "items": items,
         "total": len(items),

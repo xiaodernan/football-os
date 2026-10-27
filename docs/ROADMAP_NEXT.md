@@ -244,7 +244,10 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     take the view's list, so `career_fixtures` is read once per detail read (pinned by a test). **Profiled
     (2026-10-28):** a detail read on a 2-round career and on a 4-round career issues the *same* number of
     SELECTs — the view is O(1) in rounds, not O(N) — so no index is needed on this path; the per-table batch
-    reads above are the whole cost.
+    reads above are the whole cost. **Seventh fix (2026-10-28):** the career **list** called `career_view` per
+    row just to read `record` and `objectives` — a whole view per career over a list. `career_summary` now
+    computes the brief, record and objectives from the fixture rows alone, skipping the projection blocks
+    (pinned by a test that the summary reads neither `career_appearances` nor `real_training_sessions`).
 15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
     M12 cost/rate-limit work already gives the scaffolding.
 
