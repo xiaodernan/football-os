@@ -159,6 +159,7 @@ class TestPlayingASeason:
         # Every read-only projection the career page renders is on the wire, with its own formula. This is
         # the contract the web tier consumes; losing a block here would blank a section silently.
         assert body["board"]["season_rounds"] > 0 and body["board"]["formula"]
+        assert body["highlights"]["available"] is True and body["highlights"]["played"] == 3
         assert body["affordability"]["formula"] and {"signing", "timeline"} <= set(body["affordability"])
         assert body["contracts"]["formula"] and "age_profile" in body["contracts"]
         assert body["head_to_head"]["available"] is True

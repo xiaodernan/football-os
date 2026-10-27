@@ -570,6 +570,80 @@ def next_fixture_brief(
     }
 
 
+HIGHLIGHTS_FORMULA: Final = (
+    "margins are club_goals − opponent_goals over this career's own fixtures; the biggest win is the largest "
+    "positive margin (ties: more goals scored), the worst loss the largest negative one; a run is consecutive "
+    "rounds with that outcome read oldest first; the home/away split is the same fixtures by the side played"
+)
+
+
+def season_highlights(rows: list[CareerFixture], career: Career) -> dict[str, Any]:
+    """The season's story from its own fixtures: margins, streaks, clean sheets and the home/away split.
+
+    A retrospective, not a forecast: it reads only rounds already played, so it cannot disagree with the
+    record or the table beside it. No query of its own — it walks the fixture list the view already has.
+    """
+    played = [row for row in rows if row.outcome in ("W", "D", "L")]
+    if not played:
+        return {"available": False, "reason": "no played round yet", "formula": HIGHLIGHTS_FORMULA, "data_origin": "simulation", "is_demo_data": True}
+
+    def margin(row: CareerFixture) -> int:
+        return int(row.club_goals) - int(row.opponent_goals)
+
+    def meeting(row: CareerFixture) -> dict[str, Any]:
+        return {
+            "round_index": int(row.round_index),
+            "side": row.side,
+            "opponent_name": row.opponent_name,
+            "club_goals": int(row.club_goals),
+            "opponent_goals": int(row.opponent_goals),
+            "outcome": row.outcome,
+        }
+
+    biggest = max(played, key=lambda row: (margin(row), int(row.club_goals)))
+    worst = min(played, key=lambda row: (margin(row), int(row.club_goals)))
+    longest_win = longest_unbeaten = run = unbeaten = 0
+    for row in played:
+        if row.outcome == "W":
+            run += 1
+            longest_win = max(longest_win, run)
+        else:
+            run = 0
+        if row.outcome in ("W", "D"):
+            unbeaten += 1
+            longest_unbeaten = max(longest_unbeaten, unbeaten)
+        else:
+            unbeaten = 0
+
+    def split(subset: list[CareerFixture]) -> dict[str, Any]:
+        return {
+            "played": len(subset),
+            "won": sum(1 for row in subset if row.outcome == "W"),
+            "drawn": sum(1 for row in subset if row.outcome == "D"),
+            "lost": sum(1 for row in subset if row.outcome == "L"),
+            "goals_for": sum(int(row.club_goals) for row in subset),
+            "goals_against": sum(int(row.opponent_goals) for row in subset),
+            "points": sum(int(row.points) for row in subset),
+        }
+
+    return {
+        "available": True,
+        "played": len(played),
+        "biggest_win": meeting(biggest) if margin(biggest) > 0 else None,
+        "worst_loss": meeting(worst) if margin(worst) < 0 else None,
+        "longest_winning_run": longest_win,
+        "longest_unbeaten_run": longest_unbeaten,
+        "clean_sheets": sum(1 for row in played if int(row.opponent_goals) == 0),
+        "failed_to_score": sum(1 for row in played if int(row.club_goals) == 0),
+        "home": split([row for row in played if row.side == "home"]),
+        "away": split([row for row in played if row.side == "away"]),
+        "formula": HIGHLIGHTS_FORMULA,
+        "note": "a retrospective over this career's own played rounds; nothing here is a forecast",
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
 def objectives_of(career: Career, record: dict[str, Any]) -> list[dict[str, Any]]:
     actual_by_kind = {
         "wins": record["won"],
@@ -805,6 +879,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
             "is_demo_data": career.is_demo_data,
         },
         "record": record,
+        "highlights": season_highlights(rows, career),
         "objectives": objectives_of(career, record),
         "board": board_view(session, career, rows, record),
         "table": mini_table(rows, career),
@@ -865,6 +940,7 @@ __all__ = [
     "POINTS_FOR",
     "BOARD_FORMULA",
     "HEAD_TO_HEAD_FORMULA",
+    "HIGHLIGHTS_FORMULA",
     "NEXT_FIXTURE_FORMULA",
     "WindowClosed",
     "board_view",
@@ -882,5 +958,6 @@ __all__ = [
     "play_round",
     "record_of",
     "resolve_club",
+    "season_highlights",
     "season_horizon",
 ]

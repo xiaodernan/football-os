@@ -225,6 +225,7 @@ class TestJudging:
         assert view["contracts"]["age_profile"]["players"] > 0 and view["contracts"]["age_profile"]["mean"] > 0
         # The next fixture's brief is wired to the round after the one just played.
         assert view["next_fixture_brief"]["available"] is True and view["next_fixture_brief"]["round_index"] == 2
+        assert view["highlights"]["available"] is True and view["highlights"]["played"] == 1
 
     def test_a_deleted_match_report_leaves_the_career_readable(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
@@ -375,3 +376,32 @@ class TestReadEfficiency:
         # it was five reads of appearances and three of training.
         assert len(appearance_reads) == 1, f"career_appearances read {len(appearance_reads)} times"
         assert len(training_reads) == 1, f"real_training_sessions read {len(training_reads)} times"
+
+
+class TestSeasonHighlights:
+    def test_a_fresh_career_has_no_highlights_to_report(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        highlights = career_service.season_highlights(career_service.fixtures_of(session, career), career)
+        assert highlights["available"] is False and "no played round" in highlights["reason"]
+        assert highlights["formula"].startswith("margins are club_goals")
+
+    def test_the_highlights_are_read_off_the_fixtures_and_split_by_side(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(3):
+            career_service.play_round(session, career)
+        rows = career_service.fixtures_of(session, career)
+        highlights = career_service.season_highlights(rows, career)
+        record = career_service.record_of(rows)
+        assert highlights["available"] is True and highlights["played"] == 3
+        assert highlights["home"]["played"] + highlights["away"]["played"] == 3
+        assert highlights["home"]["points"] + highlights["away"]["points"] == record["points"]
+        assert highlights["clean_sheets"] == sum(1 for row in rows if int(row.opponent_goals) == 0)
+        assert highlights["failed_to_score"] == sum(1 for row in rows if int(row.club_goals) == 0)
+        margins = [int(row.club_goals) - int(row.opponent_goals) for row in rows]
+        if highlights["biggest_win"] is not None:
+            best = highlights["biggest_win"]
+            assert best["club_goals"] - best["opponent_goals"] == max(margins) > 0
+        if highlights["worst_loss"] is not None:
+            worst = highlights["worst_loss"]
+            assert worst["club_goals"] - worst["opponent_goals"] == min(margins) < 0
+        assert 0 <= highlights["longest_winning_run"] <= highlights["longest_unbeaten_run"] <= 3

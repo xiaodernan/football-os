@@ -222,8 +222,10 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   `board` (season pace projection against the objectives), `head_to_head`
   (this career's own record against the next opponent, from its fixtures and nothing else), and
   `next_fixture_brief` (the engine's own band measurements of the next fixture's two sides, side by side,
-  with the delta — a comparison, not a forecast). Each has its own formula in the payload and its own
-  tests; none writes a stored counter. `limitations()["projections"]` says all of them are read-only
+  with the delta — a comparison, not a forecast), and `highlights` (the season's story: biggest win, worst
+  loss, longest winning and unbeaten runs, clean sheets, failed-to-score, and the home/away split — a
+  retrospective read off the same fixture list, no extra query). Each has its own formula in the payload
+  and its own tests; none writes a stored counter. `limitations()["projections"]` says all of them are read-only
   projections that change no stored attribute, expire no contract and trigger no board decision — the
   page's own statement of what it does not claim.
 - **Season leaders, with true per-90.** `ledger_view` now also names the top scorer, top xG, most-booked and
