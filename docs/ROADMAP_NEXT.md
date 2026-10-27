@@ -308,6 +308,22 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   concurrent momentum batch (`b05804e`..`08199bb`) had staled `qa-key-drift` (a new label/aria pair
   sharing "Substitutions" with deliberately divergent Chinese) and `qa-locale-tokens` (README census)
   on master; both cured in `b59544b` before this unit landed — their CI run caught both reds.
+- **The development curve is on the page (2026-10-28).** `career_view["development"]` was published
+  but unrendered and untyped. The career page now carries the development panel, directly under the
+  season's story: `components/CareerDevelopment.tsx` prints the curve's own constants (τ, rate),
+  minutes on the pitch, and the top players by minutes with each player's moved attributes rebuilt
+  from the wire's own `delta` dict (`ball control 43→44 · first touch 41→43`) — the attribute names
+  are the wire's machine keys printed spaced, the player-page idiom, not new catalogue keys. Ten new
+  keys per locale, worded to avoid the taken "Potential" value; column headers reuse
+  `thPlayer`/`thPosition`/`thTrainingLoad`/`thTimelineChange`, so the shared-key ceiling stays at
+  exactly 234 bindings / 98 rows; 111/111 checks against the API's own response on a shipped build,
+  both branches (a career played to its season's end and an untouched career) × en/zh/zh-TW. The
+  walk's first attempt recorded a real curve property: at three played rounds the τ=3000 saturating
+  curve had not moved a single attribute, so the walk plays the season out to give the movement cell
+  a live population. Recorded in
+  [M13_DEVELOPMENT_PANEL_VERIFICATION.md](M13_DEVELOPMENT_PANEL_VERIFICATION.md). **Disclosed:**
+  master's api CI job is red from the foreign market batch (`bb712f0`, 13 mypy errors in
+  `market.py` whose file carries that lane's uncommitted edits) — not cured here.
 - **Season leaders, with true per-90.** `ledger_view` now also names the top scorer, top xG, most-booked and
   best goals-per-90, and adds each player's appearance count and minutes from `career_appearances` so the
   per-90 is read from the minutes the rounds actually stored (no appearance minutes ⇒ no per-90, not a zero;

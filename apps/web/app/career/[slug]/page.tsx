@@ -8,6 +8,7 @@ import { CareerBoard } from "@/components/CareerBoard";
 import { CareerContracts } from "@/components/CareerContracts";
 import { CareerFinance } from "@/components/CareerFinance";
 import { CareerHighlights } from "@/components/CareerHighlights";
+import { CareerDevelopment } from "@/components/CareerDevelopment";
 import { CareerNextOpponent } from "@/components/CareerNextOpponent";
 import { CareerTools } from "@/components/CareerTools";
 import { LEDGER_COLUMNS, type SeasonLedger } from "@/lib/ledger";
@@ -150,6 +151,7 @@ export default async function CareerDetailPage({ params }: Props) {
       </div>
 
       <CareerHighlights t={t} view={view.highlights} limitation={view.limitations.projections} />
+      <CareerDevelopment t={t} view={view.development} limitation={view.limitations.projections} />
 
       <CareerBoard t={t} view={view.board} limitation={view.limitations.projections} />
 

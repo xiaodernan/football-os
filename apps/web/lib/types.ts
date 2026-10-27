@@ -1724,6 +1724,38 @@ export type CareerHighlights = {
   is_demo_data: boolean;
 };
 
+/** One developed attribute set: the wire's own before/after/delta, keyed by the attribute's machine name. */
+export type CareerDevelopmentPlayer = {
+  player_id: string;
+  player_name: string;
+  player_slug: string;
+  position: string;
+  minutes: number;
+  training_units: number;
+  effective_minutes: number;
+  potential: number;
+  before: Record<string, number>;
+  after: Record<string, number>;
+  delta: Record<string, number>;
+};
+
+/**
+ * M13 item 4: how the career's players have developed from fixture minutes — a read-only projection
+ * recomputed from `career_appearances` on every read and never written back, so the stored squad the
+ * rest of the page reads keeps its own attributes.
+ */
+export type CareerDevelopment = {
+  players_developed: number;
+  total_minutes: number;
+  top_developed: CareerDevelopmentPlayer[];
+  tau: number;
+  rate: number;
+  development_formula: string;
+  note: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
@@ -1744,6 +1776,8 @@ export type CareerView = {
   contracts: CareerContracts;
   /** M13 Phase 2: the season's story — margins, runs, clean sheets and the venue split, read off the fixture rows. */
   highlights: CareerHighlights;
+  /** M13 item 4: the minutes-based development curve, projected from the appearance rows on every read. */
+  development: CareerDevelopment;
   /** Phase 2: the next fixture's two sides as the engine's own band measurements, side by side. */
   next_fixture_brief?: CareerNextFixtureBrief;
   /** ROADMAP item 10: this season per player, counted off `sim_events`. Absent on a list row or run view. */
