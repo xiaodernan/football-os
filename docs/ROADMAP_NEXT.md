@@ -256,6 +256,14 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   five-arm mutation battery (control clean, zero extra reds), and a live leg: A's post-write read is a
   MISS of the new round, A's next read is a HIT of the *new* answer, B's warm entry survives. Recorded
   in [M13_READ_YOUR_WRITES_VERIFICATION.md](M13_READ_YOUR_WRITES_VERIFICATION.md).
+- **The deal book is on the page (2026-10-28).** `career_view["contracts"]` (landed in `90739d7`) was
+  published but unrendered and untyped. The career page now carries the contract book:
+  `components/CareerContracts.tsx` prints each held deal's projected expiry, its "expiring" flag
+  inside the 3-round warning window, the API's own basis string, and the squad's stored age profile
+  with its bands and retirement risks — in all three locales. Signed one buy through a rival's
+  release clause and one 2-round loan on a live career; 46/46 checks against the API's own response,
+  plus the zero-deal career's empty branch. Recorded in
+  [M13_CONTRACTS_PANEL_VERIFICATION.md](M13_CONTRACTS_PANEL_VERIFICATION.md).
 - **Season leaders, with true per-90.** `ledger_view` now also names the top scorer, top xG, most-booked and
   best goals-per-90, and adds each player's appearance count and minutes from `career_appearances` so the
   per-90 is read from the minutes the rounds actually stored (no appearance minutes ⇒ no per-90, not a zero;

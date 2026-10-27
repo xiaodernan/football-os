@@ -1615,6 +1615,67 @@ export type CareerNextFixtureBrief = {
   is_demo_data: boolean;
 };
 
+/** One held deal, as `contract_book` projects its expiry from the stored terms (market.py). */
+export type CareerContractRow = {
+  player_id: string;
+  player_name: string;
+  /** `null` when the world row carried no slug. */
+  player_slug: string | null;
+  position: string;
+  /** The move's kind as it acts this round: `buy`, `loan`, or an expired loan read as `loan_out`. */
+  kind: string;
+  weekly_wage: number;
+  signed_round: number;
+  contract_years: number;
+  /** `null` when no stored length projects from — the row keeps its `basis` instead. */
+  expiry_round: number | null;
+  /** Counts from the round about to be played; `null` alongside `expiry_round`. */
+  rounds_remaining: number | null;
+  expiring_soon: boolean;
+  /** In the API's own words: which stored terms the projection read. */
+  basis: string;
+};
+
+/** The squad's stored ages, banded (market.py `contract_book`). */
+export type CareerAgeProfile = {
+  players: number;
+  mean: number | null;
+  median: number | null;
+  bands: {
+    under_21: number;
+    "21_to_25": number;
+    "26_to_29": number;
+    "30_to_33": number;
+    "34_plus": number;
+  };
+  retirement_age: number;
+  retirement_risk: { player_name: string; age: number }[];
+  note: string;
+};
+
+/**
+ * The deal book (M13 Phase 2): when each held deal's stored terms project it to expire, flagged
+ * inside a warning window, plus the squad's age profile. A projection, not an enforcement —
+ * nothing in this build expires or renews a contract.
+ */
+export type CareerContracts = {
+  deals: number;
+  expiring_soon: number;
+  warning_rounds: number;
+  current_round: number;
+  season_rounds: number;
+  total_weekly_wage: number;
+  expiring_weekly_wage: number;
+  rows: CareerContractRow[];
+  age_profile: CareerAgeProfile;
+  /** The budget's own unit name, shared with `affordability`. */
+  units: string;
+  formula: string;
+  note: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
@@ -1631,6 +1692,8 @@ export type CareerView = {
   board: CareerBoard;
   /** Phase 2: this career's record against the next opponent, summed from its own fixtures. */
   head_to_head?: CareerHeadToHead;
+  /** M13 Phase 2: the deal book — each held deal's projected expiry, and the squad's age profile. */
+  contracts: CareerContracts;
   /** Phase 2: the next fixture's two sides as the engine's own band measurements, side by side. */
   next_fixture_brief?: CareerNextFixtureBrief;
   /** ROADMAP item 10: this season per player, counted off `sim_events`. Absent on a list row or run view. */

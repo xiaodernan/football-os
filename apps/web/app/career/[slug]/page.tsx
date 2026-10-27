@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { CareerBoard } from "@/components/CareerBoard";
+import { CareerContracts } from "@/components/CareerContracts";
 import { CareerFinance } from "@/components/CareerFinance";
 import { CareerNextOpponent } from "@/components/CareerNextOpponent";
 import { CareerTools } from "@/components/CareerTools";
@@ -157,6 +158,8 @@ export default async function CareerDetailPage({ params }: Props) {
       />
 
       <CareerFinance t={t} view={view.affordability} limitation={view.limitations.projections} />
+
+      <CareerContracts t={t} view={view.contracts} limitation={view.limitations.projections} />
 
       <Panel eyebrow={t("roundsCount", { count: fixtures.length })} title={t("fixtureListTitle")}>
         {fixtures.length === 0 ? (
