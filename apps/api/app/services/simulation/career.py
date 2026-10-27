@@ -738,11 +738,14 @@ def _consistency(session: Session, rows: list[CareerFixture]) -> str:
     """Re-read each fixture's linked match and confirm the copied score still agrees."""
     if not rows:
         return "no fixture has been played, so there is nothing to re-check yet"
+    match_ids = [str(row.match_id) for row in rows if row.match_id]
+    # One batch read of every linked report, rather than a `session.get` per fixture (an N+1 over the season).
+    matches = {str(match.id): match for match in session.scalars(select(SimulationMatch).where(SimulationMatch.id.in_(match_ids))).all()} if match_ids else {}
     missing = 0
     checked = 0
     mismatched: list[str] = []
     for row in rows:
-        match = session.get(SimulationMatch, row.match_id) if row.match_id else None
+        match = matches.get(str(row.match_id)) if row.match_id else None
         if match is None:
             missing += 1
             continue

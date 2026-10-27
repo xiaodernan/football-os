@@ -175,8 +175,10 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     detail read shares one fetch. **Third fix landed (2026-10-27):** the fixtures loop called `_team_slug`
     once per round (`select teams.slug … where teams.id = ?`), an N+1 over the season; the view now
     resolves every opponent's slug in one `where teams.id in (...)` batch, and a `before_cursor_execute`
-    test pins it at no per-round slug reads. **Pending:** a full-scale profile (a league season) to decide
-    whether an index is worth more than the plumbing.
+    test pins it at no per-round slug reads. The consistency re-check was the same shape — `session.get(
+    SimulationMatch, …)` once per fixture — and now reads every linked report in one batch, pinned by the
+    same test class. **Pending:** a full-scale profile (a league season) to decide whether an index is
+    worth more than the plumbing.
 15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
     M12 cost/rate-limit work already gives the scaffolding.
 
