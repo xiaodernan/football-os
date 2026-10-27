@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
+import { CareerAcademy } from "@/components/CareerAcademy";
 import { CareerBoard } from "@/components/CareerBoard";
 import { CareerContracts } from "@/components/CareerContracts";
 import { CareerFinance } from "@/components/CareerFinance";
@@ -152,6 +153,7 @@ export default async function CareerDetailPage({ params }: Props) {
 
       <CareerHighlights t={t} view={view.highlights} limitation={view.limitations.projections} />
       <CareerDevelopment t={t} view={view.development} limitation={view.limitations.projections} />
+      <CareerAcademy t={t} view={view.academy} limitation={view.limitations.projections} />
 
       <CareerBoard t={t} view={view.board} limitation={view.limitations.projections} />
 

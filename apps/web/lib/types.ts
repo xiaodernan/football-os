@@ -1756,6 +1756,56 @@ export type CareerDevelopment = {
   is_demo_data: boolean;
 };
 
+/**
+ * One under-21 squad player judged against the eleven the engine's own selection picks: the verdict is
+ * the engine's read of his standing, and the projection is the development curve applied to the stored
+ * overall. The same rows the `development` block projects from.
+ */
+export type CareerAcademyTrainee = {
+  player_id: string;
+  player_slug: string;
+  player_name: string;
+  position: string;
+  band: string;
+  age: number;
+  stored_overall: number;
+  stored_potential: number;
+  minutes: number;
+  training_units: number;
+  effective_minutes: number;
+  projected_overall: number;
+  potential_headroom: number;
+  band_rank: number | null;
+  band_size: number;
+  seats_in_band: number;
+  verdict: string;
+  gap_to_last_seat: number | null;
+};
+
+/**
+ * ROADMAP item 7: the youth academy's outcomes — graduation measured, not drawn. `available` is false
+ * with the API's own `reason` on the empty branches; `formulas` carries each published figure's derivation.
+ */
+export type CareerAcademy = {
+  available: boolean;
+  youth_age_max: number;
+  class_size: number;
+  selected_count: number;
+  next_in_line_count: number;
+  squad_size: number;
+  formation?: string;
+  system_slug?: string;
+  trainees: CareerAcademyTrainee[];
+  reason?: string;
+  tau: number;
+  rate: number;
+  academy_formula: string;
+  formulas: Record<string, string>;
+  note: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
@@ -1778,6 +1828,8 @@ export type CareerView = {
   highlights: CareerHighlights;
   /** M13 item 4: the minutes-based development curve, projected from the appearance rows on every read. */
   development: CareerDevelopment;
+  /** M13 item 7: the youth class judged against the engine's own eleven, graduation measured not drawn. */
+  academy: CareerAcademy;
   /** Phase 2: the next fixture's two sides as the engine's own band measurements, side by side. */
   next_fixture_brief?: CareerNextFixtureBrief;
   /** ROADMAP item 10: this season per player, counted off `sim_events`. Absent on a list row or run view. */
