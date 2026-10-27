@@ -90,8 +90,25 @@ the single highest-leverage work.
 
 M6 shipped Career Mode, the market and the season ledger. What is intentionally shallow:
 
-5. **Transfer windows.** Open/closed windows gate `POST /transfers`; a career tracks window state and
-   rejects out-of-window moves with a published sentence.
+5. **Transfer windows.** **Done (2026-10-27):** `market.transfer_window()` reads the career's next round
+   (`rounds_played + 1`) against the season's two published windows — rounds 1–4 and three rounds around
+   the midpoint (`mid ± 1`, `mid = floor(season_rounds ÷ 2)`), clipped to the season and merged where they
+   overlap — with `season_rounds` taken from `career.season_horizon` (a challenge's window, else the
+   competition's double round-robin). Rounds group into seasons of that length, so a career past round
+   `season_rounds` is judged against the next season rather than locked out. A closed window answers
+   `transfer_window_closed` (409) from `transferable()` and therefore from `open_market`, `negotiate`,
+   `buy`, `loan`, `sell` and `release`; the refusal carries the round, the season's length and
+   `opens_in_rounds`. `market_view()` now publishes `window` beside `transfers_allowed` and
+   `RULES["window"]` = `WINDOW_FORMULA`. **Measured:** on the test world's five-club competition
+   (`season_rounds = 8`) the windows merge to rounds 1–5 and rounds 6–8 are closed; a 34-round season
+   publishes `[(1, 4), (16, 18)]`. `tests/test_transfers.py` grows `TestTransferWindow` (6 tests) and
+   `tests/test_transfers_api.py` proves the wire: `GET` prints `window.state="closed"` at round 6,
+   `POST /market` answers 409 `transfer_window_closed` with `opens_in_rounds = season_rounds − 5`.
+   `pytest tests/test_transfers.py tests/test_transfers_api.py tests/test_answer_census.py
+   tests/test_challenges.py tests/test_scout_transfer_sim.py tests/test_career.py tests/test_carry_over.py`
+   all green. Not yet surfaced as its own panel on `/career/[slug]/market`; the blocked-tools notice
+   already prints the refusal sentence. Next: the window block on the page, and a window that spans
+   several rounds of real fixtures.
 6. **Contracts & wages.** **Read-only half done (2026-10-25):** the wage bill and budget were already
    recomputed from `career_squad_moves`/`career_wage_charges` (`wage_bill`, `budget_position`). Added
    `affordability_view` (market.py) composing them into a **wage runway** (`max(0, remaining ÷
@@ -277,6 +294,18 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   release clause and one 2-round loan on a live career; 46/46 checks against the API's own response,
   plus the zero-deal career's empty branch. Recorded in
   [M13_CONTRACTS_PANEL_VERIFICATION.md](M13_CONTRACTS_PANEL_VERIFICATION.md).
+- **The season's story is on the page (2026-10-28).** `career_view["highlights"]` was published but
+  unrendered and untyped. The career page now carries the highlights panel:
+  `components/CareerHighlights.tsx` prints the biggest win and worst loss as meeting lines, the two
+  runs, clean sheets kept, rounds without a goal, and the same played rounds split by venue — in all
+  three locales, with an explicit empty branch for the career that has not kicked off. Four sentences
+  reuse the namespace's existing keys (`thPlayed`, `rowPoints`, `rowUnbeaten`, the venue names) so the
+  shared-key ceiling stays at exactly 234 bindings / 98 rows; 78/78 checks against the API's own
+  response on a shipped build (three-round career and an untouched career, en/zh/zh-TW). Recorded in
+  [M13_HIGHLIGHTS_PANEL_VERIFICATION.md](M13_HIGHLIGHTS_PANEL_VERIFICATION.md). **Disclosed:** the
+  concurrent momentum batch (`b05804e`..`08199bb`) had staled `qa-key-drift` (a new label/aria pair
+  sharing "Substitutions" with deliberately divergent Chinese) and `qa-locale-tokens` (README census)
+  on master; both cured in `b59544b` before this unit landed — their CI run caught both reds.
 - **Season leaders, with true per-90.** `ledger_view` now also names the top scorer, top xG, most-booked and
   best goals-per-90, and adds each player's appearance count and minutes from `career_appearances` so the
   per-90 is read from the minutes the rounds actually stored (no appearance minutes ⇒ no per-90, not a zero;

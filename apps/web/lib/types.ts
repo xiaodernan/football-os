@@ -1676,6 +1676,54 @@ export type CareerContracts = {
   is_demo_data: boolean;
 };
 
+/**
+ * One meeting the season's story points at (M13 Phase 2): a played round read off the career's own
+ * fixture rows, named by round, venue side and score.
+ */
+export type CareerHighlightMeeting = {
+  round_index: number;
+  side: "home" | "away";
+  opponent_name: string | null;
+  club_goals: number;
+  opponent_goals: number;
+  outcome: string;
+};
+
+/** The home or away half of the same played rounds, summed. */
+export type CareerHighlightSplit = {
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goals_for: number;
+  goals_against: number;
+  points: number;
+};
+
+/**
+ * The season's story (M13 Phase 2): the biggest win, the worst loss, the runs, the clean sheets and
+ * the home/away split — a retrospective over the rounds already played, so it cannot disagree with
+ * the record beside it. Absent fields mean the career has not played a round yet (`available: false`).
+ */
+export type CareerHighlights = {
+  available: boolean;
+  /** The API's own sentence for why there is no story yet. */
+  reason?: string;
+  played?: number;
+  biggest_win?: CareerHighlightMeeting | null;
+  worst_loss?: CareerHighlightMeeting | null;
+  longest_winning_run?: number;
+  longest_unbeaten_run?: number;
+  clean_sheets?: number;
+  failed_to_score?: number;
+  home?: CareerHighlightSplit;
+  away?: CareerHighlightSplit;
+  formula: string;
+  note?: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
@@ -1694,6 +1742,8 @@ export type CareerView = {
   head_to_head?: CareerHeadToHead;
   /** M13 Phase 2: the deal book — each held deal's projected expiry, and the squad's age profile. */
   contracts: CareerContracts;
+  /** M13 Phase 2: the season's story — margins, runs, clean sheets and the venue split, read off the fixture rows. */
+  highlights: CareerHighlights;
   /** Phase 2: the next fixture's two sides as the engine's own band measurements, side by side. */
   next_fixture_brief?: CareerNextFixtureBrief;
   /** ROADMAP item 10: this season per player, counted off `sim_events`. Absent on a list row or run view. */
