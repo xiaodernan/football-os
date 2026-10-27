@@ -158,8 +158,14 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 
 13. **Read-path caching.** Cache the deterministic, seed-keyed world reads and the catalogue compiles;
     a cache key is the seed + version, so a coefficient bump invalidates cleanly.
-14. **Query profiling.** The career/season aggregates are read-time sums today; profile them at scale
-    (a full league season) and add the minimal index/query fix if a walk shows drift.
+14. **Query profiling.** **First fix landed (2026-10-27):** the career-detail finance block was reading the
+    ledger several times per request — `budget_position` fetched `career_squad_moves` twice (once directly,
+    once through `wage_bill`→`held_deals`), and `affordability_view` then had `budget_timeline` fetch both
+    tables again. `held_deals`/`wage_bill`/`budget_position`/`budget_timeline` now take optional pre-fetched
+    rows, and `affordability_view` fetches the ledger once and hands it to both. A `before_cursor_execute`
+    test in `test_transfers.py` pins it at exactly one read of each table. **Pending:** a full-scale profile
+    (a league season) to see whether the remaining per-block reads (carry_over, development, contract_book,
+    next_fixture_brief) need the same treatment or an index.
 15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
     M12 cost/rate-limit work already gives the scaffolding.
 

@@ -447,14 +447,15 @@ def _record_move(
     return move
 
 
-def held_deals(session: Session, career_id: str, round_index: int) -> list[CareerSquadMove]:
+def held_deals(session: Session, career_id: str, round_index: int, *, moves: list[CareerSquadMove] | None = None) -> list[CareerSquadMove]:
     """The deals this career stands behind in one round, one row per player, in the order they were made.
 
     The last move for a player is the one that binds: a signing sold on again is not held, and a loan
     whose rounds have run out is not either — `effective_kind` says so without editing the history.
+    `moves` lets a caller that already fetched `moves_as_of` hand the list in rather than query it again.
     """
     latest: dict[str, CareerSquadMove] = {}
-    for move in moves_as_of(session, career_id, round_index):
+    for move in (moves if moves is not None else moves_as_of(session, career_id, round_index)):
         latest[move.player_id] = move
     return [move for player_id, move in latest.items() if effective_kind(move, round_index) in IN_KINDS]
 
@@ -470,14 +471,15 @@ def wages_as_of(session: Session, career_id: str, round_index: int) -> list[Care
     )
 
 
-def wage_bill(session: Session, career: Career, *, round_index: int) -> dict[str, Any]:
+def wage_bill(session: Session, career: Career, *, round_index: int, held: list[CareerSquadMove] | None = None) -> dict[str, Any]:
     """What the deals this career holds would cost for one round, named player by player.
 
     The same figure is published twice over: as the standing rate beside the budget, and as the `fee` of
     the row written when a round is played. Both come out of this one function, so a page that printed
-    one and charged the other would be caught by a test rather than by a reader.
+    one and charged the other would be caught by a test rather than by a reader. `held` lets a caller that
+    already resolved the deals hand them in rather than query them again.
     """
-    held = held_deals(session, career.id, round_index)
+    held = held if held is not None else held_deals(session, career.id, round_index)
     names = [f"{move.player_name} {move.weekly_wage:,}" for move in sorted(held, key=lambda move: (-move.weekly_wage, move.player_name))]
     return {
         "players": len(held),
@@ -488,15 +490,19 @@ def wage_bill(session: Session, career: Career, *, round_index: int) -> dict[str
     }
 
 
-def budget_position(session: Session, career: Career) -> dict[str, Any]:
-    """The budget as an arithmetic: what was stated, what left, what arrived, and what is standing."""
+def budget_position(session: Session, career: Career, *, moves: list[CareerSquadMove] | None = None, charges: list[CareerWageCharge] | None = None) -> dict[str, Any]:
+    """The budget as an arithmetic: what was stated, what left, what arrived, and what is standing.
+
+    `moves`/`charges` let a caller that already fetched the ledger hand the rows in rather than query
+    them again — the same figures, one fewer round trip each.
+    """
     round_index = int(career.rounds_played) + 1
-    moves = moves_as_of(session, career.id, round_index)
+    moves = moves if moves is not None else moves_as_of(session, career.id, round_index)
     spent = sum(move.fee for move in moves if move.kind in IN_KINDS)
     received = sum(move.fee for move in moves if move.kind == "sell")
-    charges = wages_as_of(session, career.id, round_index)
+    charges = charges if charges is not None else wages_as_of(session, career.id, round_index)
     wages_paid = sum(int(row.fee) for row in charges)
-    standing = wage_bill(session, career, round_index=round_index)
+    standing = wage_bill(session, career, round_index=round_index, held=held_deals(session, career.id, round_index, moves=moves))
     return {
         "budget": int(career.budget),
         "spent": spent,
@@ -586,7 +592,10 @@ def affordability_view(session: Session, career: Career, *, price: int = 0, week
     are derived from. With no prospective signing passed, the preview is the arithmetic for a move at
     zero fee and zero wage, which is the standing position itself.
     """
-    position = budget_position(session, career)
+    round_index = int(career.rounds_played) + 1
+    moves = moves_as_of(session, career.id, round_index)
+    charges = wages_as_of(session, career.id, round_index)
+    position = budget_position(session, career, moves=moves, charges=charges)
     remaining = int(position["remaining"])
     weekly = int(position["wage_committed_per_week"])
     return {
@@ -601,13 +610,13 @@ def affordability_view(session: Session, career: Career, *, price: int = 0, week
             "a read-only preview: the runway is how many more rounds the balance covers the wage bill the career "
             "already holds, and the signing block is the same arithmetic with one prospective deal added"
         ),
-        "timeline": budget_timeline(session, career, limit=8),
+        "timeline": budget_timeline(session, career, limit=8, moves=moves, charges=charges),
         "data_origin": "simulation",
         "is_demo_data": True,
     }
 
 
-def budget_timeline(session: Session, career: Career, *, limit: int = 12) -> dict[str, Any]:
+def budget_timeline(session: Session, career: Career, *, limit: int = 12, moves: list[CareerSquadMove] | None = None, charges: list[CareerWageCharge] | None = None) -> dict[str, Any]:
     """The balance over time, recomputed from the ledger rows and checked against each row's stored figure.
 
     Moves and wage charges are the whole ledger, and each row stores the `budget_after` it produced. This
@@ -617,7 +626,7 @@ def budget_timeline(session: Session, career: Career, *, limit: int = 12) -> dic
     """
     round_index = int(career.rounds_played) + 1
     keyed: list[tuple[tuple[int, int, str, str], dict[str, Any]]] = []
-    for move in moves_as_of(session, career.id, round_index):
+    for move in (moves if moves is not None else moves_as_of(session, career.id, round_index)):
         kind = str(move.kind)
         delta = int(move.fee) if kind == "sell" else -int(move.fee) if kind in IN_KINDS else 0
         keyed.append(
@@ -632,7 +641,7 @@ def budget_timeline(session: Session, career: Career, *, limit: int = 12) -> dic
                 },
             )
         )
-    for charge in wages_as_of(session, career.id, round_index):
+    for charge in (charges if charges is not None else wages_as_of(session, career.id, round_index)):
         keyed.append(
             (
                 (int(charge.round_index), 1, str(charge.created_at or ""), str(charge.id)),

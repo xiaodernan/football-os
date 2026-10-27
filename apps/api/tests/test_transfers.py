@@ -19,7 +19,7 @@ from collections.abc import Iterator
 from typing import Any
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import event, select
 from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
@@ -376,6 +376,26 @@ class TestLedger:
             assert entry["balance"] == running, "each row's balance is the running total"
             assert entry["agrees"] is True
         assert running == position["remaining"]
+
+    def test_affordability_fetches_the_ledger_once_for_the_balance_and_the_timeline(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        _sign(session, world, career, band="attack")
+        career_service.play_round(session, career)
+        statements: list[str] = []
+        engine = session.get_bind()
+
+        def before(conn: Any, cursor: Any, statement: str, params: Any, context: Any, executemany: bool) -> None:  # type: ignore[no-untyped-def]
+            statements.append(statement.lower())
+
+        event.listen(engine, "before_cursor_execute", before)
+        try:
+            market.affordability_view(session, career)
+        finally:
+            event.remove(engine, "before_cursor_execute", before)
+        move_selects = [s for s in statements if "from career_squad_moves" in s and s.lstrip().startswith("select")]
+        charge_selects = [s for s in statements if "from career_wage_charges" in s and s.lstrip().startswith("select")]
+        assert len(move_selects) == 1, f"the ledger was re-fetched: {len(move_selects)} reads of career_squad_moves"
+        assert len(charge_selects) == 1, f"the wage rows were re-fetched: {len(charge_selects)} reads of career_wage_charges"
 
     def test_a_deal_the_balance_cannot_cover_refuses_with_its_numbers(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world, budget=0)
