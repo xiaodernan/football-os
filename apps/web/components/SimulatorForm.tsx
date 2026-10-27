@@ -29,6 +29,11 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
   const [awaySystem, setAwaySystem] = useState(NO_SYSTEM);
   const [minutes, setMinutes] = useState(90);
   const [seed, setSeed] = useState("");
+  // The engine's substitution is a switch rather than a count: any value above zero plays one bounded
+  // fresh-legs lift per side, so the form offers the two states it can actually honour. The API keeps
+  // its 0–11 range for callers that store a manager's intent.
+  const [substitutions, setSubstitutions] = useState(0);
+  const [shiftMinute, setShiftMinute] = useState("0");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +65,12 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
       setBusy(false);
       return;
     }
+    const shifted = shiftMinute.trim() === "" ? 0 : Number(shiftMinute.trim());
+    if (!Number.isInteger(shifted) || shifted < 0 || shifted > 120) {
+      setError(t("shiftError"));
+      setBusy(false);
+      return;
+    }
     const result = await browserFetch<SimRow>("/simulate", {
       method: "POST",
       body: {
@@ -69,6 +80,8 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
         away_system: awaySystem === NO_SYSTEM ? null : awaySystem,
         minutes,
         seed: parsed,
+        substitutions,
+        tactical_shift_minute: shifted,
       },
     });
     if (!result.ok) {
@@ -137,6 +150,37 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
           </select>
         </label>
       </div>
+
+      <div className="row wrap sim-controls">
+        <label className="stack-sm">
+          <span className="eyebrow">{t("substitutionsLabel")}</span>
+          <select
+            aria-label={t("ariaSubstitutions")}
+            className="input"
+            onChange={(event) => setSubstitutions(Number(event.target.value))}
+            value={substitutions}
+          >
+            <option value={0}>{t("substitutionsNone")}</option>
+            <option value={1}>{t("substitutionsOne")}</option>
+          </select>
+        </label>
+        <label className="stack-sm">
+          <span className="eyebrow">{t("shiftLabel")}</span>
+          <input
+            aria-label={t("ariaShiftMinute")}
+            className="input"
+            inputMode="numeric"
+            max={120}
+            min={0}
+            onChange={(event) => setShiftMinute(event.target.value)}
+            placeholder={t("shiftNone")}
+            step={1}
+            type="number"
+            value={shiftMinute}
+          />
+        </label>
+      </div>
+      <p className="muted world-section-note">{t("knobsNote")}</p>
 
       <div className="row wrap sim-controls">
         <label className="stack-sm">

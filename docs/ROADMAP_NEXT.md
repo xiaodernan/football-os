@@ -36,8 +36,13 @@ the single highest-leverage work.
    (0–11) → `run_simulation` → `MatchInputs` → stored on `SimulationMatch.substitutions` (migration `0037`,
    SQLite-safe nullable→backfill→NOT NULL, no `server_default` to avoid drift), surfaced in `row()` and
    `engine_description()`, and replayed through `replay_is_identical` so a stored match re-derives identically.
-   **Pending:** the web `SimulatorForm` selector with `en`/`zh`/`zh-TW` keys (i18n, owned by the concurrent
-   session's message set — slot after the current locale gates land).
+   **Done (2026-10-27):** the web `SimulatorForm` carries the substitution select with `en`/`zh`/`zh-TW` keys.
+   The select offers 0 and 1 rather than 0–11 because the engine distinguishes only on/off — any count above
+   zero plays the same single lift — and an in-place note says so; the API keeps its wider range for callers
+   that store a manager's intent. Measured on `:8731` / `opp.db`: the default replay is byte-identical
+   (`a9c43d63…` twice), `substitutions: 1` moves the digest to `4412ff05…`, records one fresh-legs lift per side
+   at 54' naming no player, and the stored row echoes the count. The rendered page was checked in `en` and `zh`
+   (17/17 assertions, no `MISSING_MESSAGE`).
 2. **In-match tactical shift.** **Done (2026-10-25):** `MatchInputs` gains `tactical_shift_minute: int = 0`.
    From that minute the side trailing on goals pushes — a bounded, authored midfield (+12%) and attack (+10%)
    lift that recomputes `possession_share` and raises chance quality for the rest of the match, applied once
@@ -45,8 +50,12 @@ the single highest-leverage work.
    digest is untouched unless a caller opts in; 4 new `TestTacticalShift` cases pin determinism, no-named-player,
    published factor, and digest change when a side is behind. Plumbed `SimulateIn.tactical_shift_minute` (0–120)
    → `run_simulation` → stored on `SimulationMatch.tactical_shift_minute` (migration `0038`) → exposed in `row()`
-   and `engine_description()` → replayed through `replay_is_identical`. **Pending:** the web `SimulatorForm`
-   control with `en`/`zh`/`zh-TW` keys (i18n).
+   and `engine_description()` → replayed through `replay_is_identical`. **Done (2026-10-27):** the web
+   `SimulatorForm` carries the shift-minute input (0–120, 0 = never) with `en`/`zh`/`zh-TW` keys and an inline
+   range error. Measured on `:8731`: at seed `12345` a side leads 2–0 after 60', and `tactical_shift_minute: 60`
+   moves the digest `a9c43d63…` → `41edeef6…`, records exactly one shift at minute 60 naming no player, while
+   `130` is refused `422`. The page states the rule in place: the shift pushes only the side that trails at that
+   minute.
 3. **Momentum / form carry.** **Done (2026-10-25):** `MatchInputs` gains `home_momentum` / `away_momentum`
    (0..1, default 0). A side riding form gets a bounded, authored attack (+10%·m) and press (+10%·m) lift from
    kick-off, applied once through `dataclasses.replace` — no named player, no shape change, default 0 leaves the
