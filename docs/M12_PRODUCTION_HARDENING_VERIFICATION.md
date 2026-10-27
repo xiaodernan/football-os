@@ -952,7 +952,7 @@ per-video deletion was missing, is corrected in
 pressed it in a browser — what the delete *did* leave behind was the clip's own analysis job, and that is
 fixed.)
 
-## The gate's security half: a first-party probe, and the report it leaves (2026-10-22, rerun 2026-10-24)
+## The gate's security half: a first-party probe, and the report it leaves (2026-10-22, rerun 2026-10-24, rerun 2026-10-28)
 
 M12's gate says **"load + pen test report clean"**. The load half had a harness, a ceiling and a paired
 measurement. The security half had a code-level census (§60), the answer-table gates (§51) and a list of
@@ -962,18 +962,18 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `71a5f9bcd1ba3aa0cf8436ae7fde9dcd881ebd080d5e842249492e37e4fa4a04` that population is **212
-secured operations, 52 public operations and 91 private GET paths**, with floors of 200/40/85 printed on
+SHA-256 `e9eb6c8ea4d554cf57c338636d32b00ee29e7fb7b4ec54ce329eb8c7e4f7ca8a` that population is **216
+secured operations, 52 public operations and 93 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 212 / 52 / 91 |
-| S1 | every secured operation refuses a caller with no credential | **212 knocked, 212 × 401**, 0 deviations |
+| C0 | the door population comes from the contract and is not empty | 216 / 52 / 93 |
+| S1 | every secured operation refuses a caller with no credential | **216 knocked, 216 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |
-| S5 | a login burst is refused, coded, with a retry time | 10 × 200 then **429 at the 11th**, `Retry-After: 297`, `rate_limited` |
+| S5 | a login burst is refused, coded, with a retry time | 10 × 200 then **429 at the 11th**, `Retry-After: 295`, `rate_limited` |
 | S6 | refusals are one coded shape, echo nothing and leak nothing | 422 `validation_error`, exactly `loc`/`msg`/`type`, **no leak marker** in four bodies |
 | S7 | the security headers and a request identity are on every answer, including a refusal | `nosniff` on 200 and 401, referrer policy, distinct ids, numeric durations |
 | S8 | only a configured origin is echoed; a rogue one is never answered | configured 200 + ACAO + credentials; rogue 200 with **no** ACAO; rogue preflight 400 |
@@ -989,10 +989,15 @@ on, and answered the same **10/10, 0 failed, 0 server errors** in 11.37 s; its r
 doors answering 401, the same private and public `MISS → HIT` pairs, and the same 429 at the 11th login.
 Run D repeated run C's configuration on 2026-10-24 on a fresh database migrated to head `0036`, against
 the contract as committed then — the same 212 doors, the same pairs, the same 429 at the 11th — and
-answered **10/10, 0 failed, 0 server errors** in 6.88 s at the contract SHA named above, which is
-the run [the report](SECURITY_PROBE_REPORT.md) now records as current. Runs A–C were made against the contract
-at the earlier SHA `31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e`; their census was
-the same 212 / 52 / 91, because the intervening commits changed descriptions, not doors.
+answered **10/10, 0 failed, 0 server errors** in 6.88 s. Run E repeated the shape again on 2026-10-28 on
+a fresh database migrated to head `0041`, after the notifications tier added four doors (two of them
+`GET`s) to the contract as committed today — **216 doors answered 401, the same pairs, the same 429 at
+the 11th** — and answered **10/10, 0 failed, 0 server errors** in 9.27 s, which is the run
+[the report](SECURITY_PROBE_REPORT.md) now records as current. Runs A–D were made against contracts
+at the earlier SHAs `31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e` (A–C) and
+`71a5f9bcd1ba3aa0cf8436ae7fde9dcd881ebd080d5e842249492e37e4fa4a04` (D); their census was
+the same 212 / 52 / 91, because the intervening commits changed descriptions, not doors — the door
+population moved only when the notifications tier landed its four private doors.
 S4 is constructed so the negative is not vacuous: the private `HIT` and the public `MISS → HIT` are read
 before "the stranger never received the owner's row", so the cache is proven to have been serving at the
 moment the isolation held.
@@ -1054,6 +1059,18 @@ spec-audit-currency gates) read **25 tests / 0 failures / 0 errors / 0 skipped**
 
 The gate proves the ledgers agree with the contract's census. It does not re-run the live probe in CI — the
 run D transcript is the live evidence, and a contract change now reds a ledger until someone reruns it.
+
+### The contract grew four doors, and the ledgers followed (2026-10-28)
+
+That last sentence was tested in practice: the notifications tier landed (its router in `7f17b30`, the
+contract regenerated to list its four paths in `d9f3d98`), the committed contract's bytes moved from
+`71a5f9bcd1ba3aa0cf8436ae7fde9dcd881ebd080d5e842249492e37e4fa4a04` to
+`e9eb6c8ea4d554cf57c338636d32b00ee29e7fb7b4ec54ce329eb8c7e4f7ca8a`, and this gate went red on CI exactly
+as designed — stale SHA in three documents, census 212 / 52 / 91 where the contract now answers 216 / 52 / 93.
+The cure was the gate's own prescription: run E, a fresh PostgreSQL database `football_os_probe_m12_e`
+migrated to head `0041`, the project's Redis on 63790 in the request path, `ENV=development`, a fresh
+uvicorn on port 8753. **10 passed / 0 failed / 0 server errors**, 9.27 s; 216 doors knocked, 216 × 401.
+The report, the ROADMAP row and this section's figures were refreshed to the numbers run E measured.
 
 ## What M12 does not claim
 
