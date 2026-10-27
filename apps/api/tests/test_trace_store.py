@@ -31,7 +31,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.core.config import settings
 from app.core.db import SessionLocal
@@ -392,3 +392,70 @@ def _now() -> Any:
     from datetime import UTC, datetime
 
     return datetime.now(UTC)
+
+
+class TestTheSummary:
+    """The operator's dashboard over the store: slowest routes and error rate, read not counted."""
+
+    def test_the_summary_groups_recent_server_spans_by_route(self) -> None:
+        client = _admin_client()
+        with SessionLocal() as db:
+            db.execute(delete(RequestSpan))
+            for index, (route, duration, span_status, code) in enumerate(
+                [
+                    ("/players", 10, "OK", 200),
+                    ("/players", 30, "OK", 200),
+                    ("/players", 90, "ERROR", 500),
+                    ("/careers/{slug}", 20, "OK", 200),
+                ]
+            ):
+                db.add(
+                    RequestSpan(
+                        trace_id=f"{index:032x}",
+                        span_id=f"{index:016x}",
+                        parent_span_id=None,
+                        name=f"GET {route}",
+                        kind="SERVER",
+                        status=span_status,
+                        start_time=_now(),
+                        end_time=_now(),
+                        duration_ms=duration,
+                        attributes_json={"http.route": route, "http.status_code": code},
+                    )
+                )
+            db.commit()
+
+        response = client.get("/api/v1/traces/summary")
+        assert response.status_code == 200, response.text
+        body = response.json()
+        routes = {row["route"]: row for row in body["routes"]}
+        players = routes["/players"]
+        assert players["count"] == 3 and players["errors"] == 1
+        assert players["error_rate"] == round(1 / 3, 4)
+        assert players["p50_ms"] == 30 and players["max_ms"] == 90
+        assert routes["/careers/{slug}"]["count"] == 1
+        assert body["spans_scanned"] == 4 and body["truncated"] is False
+        assert body["formula"].startswith("SERVER spans started in the window")
+
+    def test_the_summary_ignores_internal_and_out_of_window_spans(self) -> None:
+        from datetime import UTC, datetime, timedelta
+
+        client = _admin_client()
+        old = datetime.now(UTC) - timedelta(hours=2)
+        with SessionLocal() as db:
+            db.execute(delete(RequestSpan))
+            db.add(RequestSpan(trace_id="1" * 32, span_id="1" * 16, parent_span_id=None, name="SELECT players", kind="INTERNAL", status="OK", start_time=_now(), end_time=_now(), duration_ms=5, attributes_json={}))
+            db.add(RequestSpan(trace_id="2" * 32, span_id="2" * 16, parent_span_id=None, name="GET /old", kind="SERVER", status="OK", start_time=_now(), end_time=_now(), duration_ms=5, attributes_json={"http.route": "/old"}))
+            db.add(RequestSpan(trace_id="3" * 32, span_id="3" * 16, parent_span_id=None, name="GET /ancient", kind="SERVER", status="OK", start_time=old, end_time=old, duration_ms=5, attributes_json={"http.route": "/ancient"}))
+            db.commit()
+
+        response = client.get("/api/v1/traces/summary?window_minutes=1")
+        assert response.status_code == 200, response.text
+        routes = {row["route"] for row in response.json()["routes"]}
+        assert routes == {"/old"}, "an INTERNAL span is not a route and an out-of-window span is not counted"
+
+    def test_a_player_is_refused_the_summary(self) -> None:
+        player = _client()
+        response = player.get("/api/v1/traces/summary")
+        assert response.status_code == 403, response.text
+        assert response.json()["detail"]["code"] == "insufficient_role"

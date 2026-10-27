@@ -244,8 +244,13 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 
 ## Phase 6 — Operational maturity
 
-19. **Trace dashboards.** The M12 OTEL/`request_spans` store is an operator window; a minimal read-only
-    dashboard over it (slowest paths, error rate by route) reuses the existing trace door's RBAC.
+19. **Trace dashboards.** **Backend done (2026-10-28):** `GET /api/v1/traces/summary` (admin, the same
+    `TRACE_STANDING` as the detail door) reads the `request_spans` store over a window (`window_minutes`, 1–1440,
+    default 60; `limit` caps the scan and `truncated` says when it bit) and publishes, per route, the span count,
+    error count and rate, and nearest-rank p50/p95/max — grouped by `attributes.http.route` (else the span name),
+    SERVER spans only, error = `status == ERROR` or `http.status_code ≥ 500`. Declared before `/{trace_id}` so
+    `summary` is a door, not a trace id. `span_store.route_summary` + `ROUTE_SUMMARY_FORMULA`; pinned by
+    `TestTheSummary` in `test_trace_store.py`. **Pending:** the Web panel over this door.
 20. **Runbooks.** A one-page runbook per M12 subsystem (backup/DR, erasure, rate limits, tracing) drawn
     from the verification docs already written.
 21. **Cost guardrails.** The provider abstraction (M0) + M12 cost work get a published monthly ceiling

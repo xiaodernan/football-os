@@ -24,13 +24,34 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.security import current_user, role_refusal, standing_check
-from app.core.span_store import read_trace
+from app.core.span_store import read_trace, route_summary
 from app.models import User
 
 router = APIRouter(prefix="/traces", tags=["traces"])
 
 #: The standing this door asks for, validated against the platform's vocabulary at import.
 TRACE_STANDING: Final = standing_check(("admin",))
+
+
+@router.get("/summary")
+def trace_summary(
+    window_minutes: int = 60,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """The operator's dashboard: slowest routes and error rate over the recent SERVER spans.
+
+    Declared before `/{trace_id}` so `summary` is a door, not a trace id. Same standing as the detail
+    door: a span carries a request's concrete target, so the store is an operator's window.
+    """
+    if user.role not in TRACE_STANDING:
+        raise role_refusal(
+            held=user.role,
+            required=TRACE_STANDING,
+            message="Only an admin account may read stored request traces",
+        )
+    minutes = max(1, min(int(window_minutes), 1440))
+    return route_summary(db, window_minutes=minutes)
 
 
 @router.get("/{trace_id}")

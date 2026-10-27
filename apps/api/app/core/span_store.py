@@ -22,13 +22,14 @@ Two rules the exporter holds to:
 from __future__ import annotations
 
 import logging
+import math
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, Final
 
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter, SpanExportResult
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models import RequestSpan
@@ -104,7 +105,75 @@ class SpanStoreExporter(SpanExporter):
 
 def read_trace(db: Session, trace_id: str) -> list[RequestSpan]:
     """Every span of one trace, oldest first."""
-    from sqlalchemy import select
-
     rows = db.scalars(select(RequestSpan).where(RequestSpan.trace_id == trace_id).order_by(RequestSpan.start_time)).all()
     return list(rows)
+
+
+#: What the route summary groups and how its figures are derived, published beside them.
+ROUTE_SUMMARY_FORMULA: Final = (
+    "SERVER spans started in the window, grouped by the route the span names (attributes.http.route, else its name); "
+    "a span counts as an error when its status is ERROR or its attributes.http_status_code is 500 or more; "
+    "error rate is errors ÷ the group's count; p50/p95 are nearest-rank over the group's duration_ms"
+)
+
+
+def _nearest_rank(sorted_values: list[int], percentile: int) -> int:
+    """The nearest-rank percentile of an ascending list (0 for an empty one)."""
+    if not sorted_values:
+        return 0
+    rank = max(1, math.ceil(percentile / 100 * len(sorted_values)))
+    return sorted_values[min(rank, len(sorted_values)) - 1]
+
+
+def route_summary(db: Session, *, window_minutes: int = 60, limit: int = 50_000) -> dict[str, Any]:
+    """Slowest routes and error rate over the recent SERVER spans — an operator's read, not a counter.
+
+    The store keeps seven days; the window bounds what this reads, and `limit` bounds the scan so a
+    busy instance cannot make the dashboard the thing that falls over. `truncated` says when the scan
+    hit the cap, because a summary that silently read only part of the window is a wrong summary.
+    """
+    since = datetime.now(UTC) - timedelta(minutes=window_minutes)
+    rows = list(
+        db.scalars(
+            select(RequestSpan)
+            .where(RequestSpan.kind == "SERVER", RequestSpan.start_time >= since)
+            .order_by(RequestSpan.start_time.desc())
+            .limit(limit + 1)
+        ).all()
+    )
+    truncated = len(rows) > limit
+    rows = rows[:limit]
+    groups: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        attributes = row.attributes_json if isinstance(row.attributes_json, dict) else {}
+        route = str(attributes.get("http.route") or row.name or "")
+        slot = groups.setdefault(route, {"route": route, "count": 0, "errors": 0, "durations": []})
+        slot["count"] += 1
+        status_code = attributes.get("http.status_code")
+        if str(row.status or "").upper() == "ERROR" or (isinstance(status_code, int) and status_code >= 500):
+            slot["errors"] += 1
+        slot["durations"].append(int(row.duration_ms or 0))
+    routes: list[dict[str, Any]] = []
+    for slot in groups.values():
+        durations = sorted(slot["durations"])
+        routes.append(
+            {
+                "route": slot["route"],
+                "count": slot["count"],
+                "errors": slot["errors"],
+                "error_rate": round(slot["errors"] / slot["count"], 4) if slot["count"] else 0.0,
+                "p50_ms": _nearest_rank(durations, 50),
+                "p95_ms": _nearest_rank(durations, 95),
+                "max_ms": durations[-1] if durations else 0,
+            }
+        )
+    routes.sort(key=lambda item: (-item["p95_ms"], -item["count"], item["route"]))
+    return {
+        "window_minutes": window_minutes,
+        "since": since.isoformat(),
+        "spans_scanned": len(rows),
+        "truncated": truncated,
+        "routes": routes,
+        "formula": ROUTE_SUMMARY_FORMULA,
+        "note": "read from the span store over the window, recomputed on every request; no counter is stored",
+    }
