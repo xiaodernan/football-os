@@ -2850,6 +2850,8 @@
     "opponentH2hThResult": "Result",
     "opponentH2hThWhere": "Home or away",
     "opponentH2hTitle": "This career's record against them",
+    "opponentH2hVenueAway": "Away",
+    "opponentH2hVenueHome": "Home",
     "opponentTitle": "The next opponent, measured two ways",
     "ownFormationDefault": "the club's own formation default",
     "playTitle": "Play it out",

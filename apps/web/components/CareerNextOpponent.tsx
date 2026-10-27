@@ -97,7 +97,7 @@ export function CareerNextOpponent({
                   {meetings.map((meeting) => (
                     <tr key={meeting.round_index}>
                       <td className="num">{meeting.round_index}</td>
-                      <td className="muted">{meeting.side === "home" ? t("venueHome") : t("venueAway")}</td>
+                      <td className="muted">{meeting.side === "home" ? t("opponentH2hVenueHome") : t("opponentH2hVenueAway")}</td>
                       <td className="num">
                         {meeting.club_goals}–{meeting.opponent_goals}
                       </td>
