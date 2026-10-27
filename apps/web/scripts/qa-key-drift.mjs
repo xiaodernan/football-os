@@ -61,6 +61,7 @@ const REVIEWED = {
   "club|eraseFixture,noticeErase,tableHeaderErase,tableHeaderErase2": "the action, the notice and two column headers",
   "club|kvChild,tableHeaderChild": "a family member and a minor",
   "errors|no_such_club,no_such_team": "one club, whose noun the API fixes as 'club'; the Chinese files use two synonyms",
+  "simulate|ariaSubstitutions,substitutionsLabel": "a field label and its accessible name; the aria reads as a count ('换人次数'), the label as the action ('换人'), mirrored in both CJK locales",
 };
 
 /** Cross-namespace drift measured and reviewed on 2026-10-25; these may only fall. */
