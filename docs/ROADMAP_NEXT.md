@@ -253,8 +253,14 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     `TestTheSummary` in `test_trace_store.py`. **Pending:** the Web panel over this door.
 20. **Runbooks.** A one-page runbook per M12 subsystem (backup/DR, erasure, rate limits, tracing) drawn
     from the verification docs already written.
-21. **Cost guardrails.** The provider abstraction (M0) + M12 cost work get a published monthly ceiling
-    alert, not just a rate limit.
+21. **Cost guardrails.** **Monthly ceiling done (2026-10-28):** `settings.ai_monthly_ceiling_usd`
+    (`AI_MONTHLY_CEILING_USD`, `0` = not configured) and `cost_advisor.monthly_state()` — month-to-date spend
+    since the first instant of the UTC month, the ceiling, remaining, used_pct, a pace projection to month end,
+    and `exceeded` / `projected_over`. `recommend()` publishes it as a `monthly` block and adds a
+    `monthly_ceiling` recommendation when a ceiling is configured and the month is over or projected over; with
+    no ceiling it says so rather than inventing one. Pinned by `TestMonthlyCeiling` and the door's key-set
+    assertion. **Pending:** wiring the recommendation to an out-of-band alert channel (email/pager), which needs
+    a delivery decision.
 
 *Gate:* each runbook cites the door it documents (§83 pattern); the cost ceiling is a tested boundary.
 

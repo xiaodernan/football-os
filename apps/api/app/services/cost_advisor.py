@@ -27,8 +27,9 @@ sentence saying so rather than an error: a platform that has never made a call h
 
 from __future__ import annotations
 
+import calendar
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, Final
 
 from sqlalchemy import Float, Integer, case, func, select
 from sqlalchemy.orm import Session
@@ -130,6 +131,58 @@ def _by_model(db: Session, since: datetime) -> list[dict[str, Any]]:
     return out
 
 
+#: How the monthly figure is derived, published beside it.
+MONTHLY_FORMULA: Final = (
+    "month-to-date is the actual_cost_usd of model_calls since the first instant of the current UTC month; "
+    "the projection is that spend ÷ the days elapsed × the month's length, so it is a pace, not a forecast "
+    "of a different traffic pattern"
+)
+
+
+def _month_start(moment: datetime) -> datetime:
+    return moment.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
+def monthly_state(db: Session, *, now: datetime | None = None) -> dict[str, Any]:
+    """Month-to-date spend against the published ceiling (`AI_MONTHLY_CEILING_USD`), and its pace.
+
+    A ceiling of 0 means none is configured, and the answer says so rather than inventing one: the
+    projection is still published, because a spend rate is useful even with no ceiling beside it.
+    """
+    moment = now or datetime.now(UTC)
+    start = _month_start(moment)
+    row = db.execute(
+        select(
+            func.coalesce(func.sum(ModelCall.actual_cost_usd), 0.0).cast(Float),
+            func.count(ModelCall.id).cast(Integer),
+        ).where(ModelCall.created_at >= start)
+    ).one()
+    spend = round(float(row[0]), 4)
+    calls = int(row[1])
+    ceiling = float(settings.ai_monthly_ceiling_usd)
+    configured = ceiling > 0
+    days_in_month = calendar.monthrange(moment.year, moment.month)[1]
+    projected = round(spend / max(1, moment.day) * days_in_month, 4) if spend > 0 else 0.0
+    return {
+        "month": f"{moment.year:04d}-{moment.month:02d}",
+        "spend_usd": spend,
+        "calls": calls,
+        "ceiling_usd": round(ceiling, 2) if configured else None,
+        "configured": configured,
+        "remaining_usd": round(max(0.0, ceiling - spend), 4) if configured else None,
+        "used_pct": round(spend / ceiling, 4) if configured else None,
+        "projected_month_end_usd": projected,
+        "exceeded": bool(configured and spend > ceiling),
+        "projected_over": bool(configured and projected > ceiling),
+        "formula": MONTHLY_FORMULA,
+        "note": (
+            f"month-to-date spend against AI_MONTHLY_CEILING_USD=${ceiling:.2f}"
+            if configured
+            else "no monthly ceiling is configured (set AI_MONTHLY_CEILING_USD); the projection is still published"
+        ),
+    }
+
+
 def recommend(db: Session, *, days: int = DEFAULT_WINDOW_DAYS) -> dict[str, Any]:
     """The advisor's whole answer for one window, every figure recomputed from the ledger."""
     since = _window_start(days)
@@ -198,8 +251,24 @@ def recommend(db: Session, *, days: int = DEFAULT_WINDOW_DAYS) -> dict[str, Any]
                 }
             )
 
+    monthly = monthly_state(db)
+    if monthly["configured"] and (monthly["exceeded"] or monthly["projected_over"]):
+        recommendations.append(
+            {
+                "code": "monthly_ceiling",
+                "summary": (
+                    f"${monthly['spend_usd']:.2f} spent of a ${monthly['ceiling_usd']:.2f} monthly ceiling"
+                    if monthly["exceeded"]
+                    else f"${monthly['spend_usd']:.2f} spent, projected ${monthly['projected_month_end_usd']:.2f} by month end against a ${monthly['ceiling_usd']:.2f} ceiling"
+                ),
+                "spend_usd": monthly["spend_usd"],
+                "why": "the monthly ceiling is a published budget, not a rate limit; this names the month-to-date figure and its pace",
+            }
+        )
+
     return {
         "window_days": max(1, days),
+        "monthly": monthly,
         "totals": {
             **totals,
             "demo_share": round(_share(float(totals["demo_calls"]), float(calls)), 4),
@@ -216,4 +285,4 @@ def recommend(db: Session, *, days: int = DEFAULT_WINDOW_DAYS) -> dict[str, Any]
     }
 
 
-__all__ = ["DEFAULT_WINDOW_DAYS", "recommend"]
+__all__ = ["DEFAULT_WINDOW_DAYS", "MONTHLY_FORMULA", "monthly_state", "recommend"]

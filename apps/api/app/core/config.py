@@ -62,6 +62,9 @@ class Settings:
     news_api_key: str = field(default_factory=lambda: _env("NEWS_API_KEY"))
     football_data_api_key: str = field(default_factory=lambda: _env("FOOTBALL_DATA_API_KEY"))
     ai_daily_budget_usd: float = field(default_factory=lambda: float(_env("AI_DAILY_BUDGET_USD", "5.00") or 5.0))
+    # A published monthly ceiling, distinct from the daily budget: 0 means "no ceiling configured",
+    # and the advisor says so rather than inventing one. Set AI_MONTHLY_CEILING_USD to publish one.
+    ai_monthly_ceiling_usd: float = field(default_factory=lambda: float(_env("AI_MONTHLY_CEILING_USD", "0") or 0.0))
     # M12 observability: keep every finished span in the database, so a request can be read back
     # without a collector. Off by default because it writes a row per span; a deployment turns it on
     # (or points OpenTelemetry at a collector and leaves this off).

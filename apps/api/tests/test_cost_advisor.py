@@ -16,10 +16,11 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.db import SessionLocal
 from app.main import app
 from app.models import ModelCall, User
-from app.services.cost_advisor import recommend
+from app.services.cost_advisor import monthly_state, recommend
 
 
 @pytest.fixture()
@@ -172,8 +173,9 @@ class TestCostOptimisationDoor:
         resp = admin_client.get("/api/v1/metrics/cost-optimisation")
         assert resp.status_code == 200
         body = resp.json()
-        assert set(body) == {"window_days", "totals", "by_feature", "by_model", "recommendations", "limitation"}
+        assert set(body) == {"window_days", "monthly", "totals", "by_feature", "by_model", "recommendations", "limitation"}
         assert body["totals"]["budget_usd_per_day"] > 0, "the budget the pace recommendation reads is published"
+        assert body["monthly"]["configured"] is False, "no ceiling is set in the test environment, and the answer says so"
 
     def test_the_door_is_auth_gated(self) -> None:
         assert TestClient(app).get("/api/v1/metrics/cost-optimisation").status_code == 401
@@ -192,3 +194,33 @@ class TestCostOptimisationDoor:
         assert set(body) == {"response_cache", "compute_cache", "redis"}
         assert body["response_cache"]["hits"] >= 0 and body["response_cache"]["hit_rate"] >= 0.0
         assert isinstance(body["redis"]["redis_available"], bool)
+
+
+class TestMonthlyCeiling:
+    def test_a_month_without_a_ceiling_still_publishes_the_projection(self, session: Session) -> None:
+        _call(session, cost=1.0)
+        _call(session, cost=1.0)
+        state = monthly_state(session)
+        assert state["configured"] is False
+        assert state["ceiling_usd"] is None and state["remaining_usd"] is None and state["used_pct"] is None
+        assert state["spend_usd"] == 2.0
+        assert state["projected_month_end_usd"] > 0
+        assert "no monthly ceiling is configured" in state["note"]
+        assert state["formula"].startswith("month-to-date is the actual_cost_usd")
+
+    def test_the_ceiling_flags_an_exceeded_month_and_names_it(self, session: Session) -> None:
+        was = settings.ai_monthly_ceiling_usd
+        object.__setattr__(settings, "ai_monthly_ceiling_usd", 1.5)
+        try:
+            _call(session, cost=1.0)
+            _call(session, cost=1.0)
+            state = monthly_state(session)
+            assert state["configured"] is True and state["ceiling_usd"] == 1.5
+            assert state["spend_usd"] == 2.0 and state["exceeded"] is True
+            assert state["remaining_usd"] == 0.0
+            assert state["used_pct"] == round(2.0 / 1.5, 4)
+            answer = recommend(session, days=30)
+            assert answer["monthly"]["exceeded"] is True
+            assert "monthly_ceiling" in _codes(answer)
+        finally:
+            object.__setattr__(settings, "ai_monthly_ceiling_usd", was)
