@@ -34,6 +34,10 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
   // its 0–11 range for callers that store a manager's intent.
   const [substitutions, setSubstitutions] = useState(0);
   const [shiftMinute, setShiftMinute] = useState("0");
+  // Momentum is a pre-match edge read at kick-off, per side, in 0..1. Both default to 0, which leaves
+  // the profile exactly as the stored squad made it, so an untouched form is the plain fixture.
+  const [homeMomentum, setHomeMomentum] = useState(0);
+  const [awayMomentum, setAwayMomentum] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,6 +86,8 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
         seed: parsed,
         substitutions,
         tactical_shift_minute: shifted,
+        home_momentum: homeMomentum,
+        away_momentum: awayMomentum,
       },
     });
     if (!result.ok) {
@@ -181,6 +187,36 @@ export function SimulatorForm({ options }: { options: SimOptions }) {
         </label>
       </div>
       <p className="muted world-section-note">{t("knobsNote")}</p>
+
+      <div className="row wrap sim-controls">
+        <label className="stack-sm">
+          <span className="eyebrow">{t("momentumHome", { value: homeMomentum.toFixed(2) })}</span>
+          <input
+            aria-label={t("ariaHomeMomentum")}
+            className="input"
+            max={1}
+            min={0}
+            onChange={(event) => setHomeMomentum(Number(event.target.value))}
+            step={0.05}
+            type="range"
+            value={homeMomentum}
+          />
+        </label>
+        <label className="stack-sm">
+          <span className="eyebrow">{t("momentumAway", { value: awayMomentum.toFixed(2) })}</span>
+          <input
+            aria-label={t("ariaAwayMomentum")}
+            className="input"
+            max={1}
+            min={0}
+            onChange={(event) => setAwayMomentum(Number(event.target.value))}
+            step={0.05}
+            type="range"
+            value={awayMomentum}
+          />
+        </label>
+      </div>
+      <p className="muted world-section-note">{t("momentumHint")}</p>
 
       <div className="row wrap sim-controls">
         <label className="stack-sm">

@@ -62,8 +62,12 @@ the single highest-leverage work.
    profile untouched so the digest is identical. 4 new `TestMomentum` cases pin default-clean, determinism +
    digest change, per-side-only boost, and the published factor. Plumbed `SimulateIn.home_momentum/away_momentum`
    → `run_simulation` → stored on `SimulationMatch` (migration `0039`, two Float columns) → exposed in `row()` and
-   `engine_description()` → replayed through `replay_is_identical`. **Pending:** the web `SimulatorForm` controls
-   (i18n).
+   `engine_description()` → replayed through `replay_is_identical`. **Done (2026-10-27):** the web
+   `SimulatorForm` carries one range control per side (0.00–1.00, step 0.05, default 0) with `en`/`zh`/`zh-TW`
+   copy and a note naming the ten-per-cent edge. Measured on `:8731` at seed `12345`: `home_momentum: 1` moves
+   the digest `a9c43d63…` → `41268c21…`, `away_momentum: 1` moves it to `d51abf66…`, the two sides' rows differ
+   from each other, and every row echoes its own `home_momentum` / `away_momentum` into the stored report; the
+   rendered page was checked in both locales (26/26 assertions, no `MISSING_MESSAGE`).
 4. **Career-linked development.** **Done (2026-10-25):** a player's attributes now *project* from the
    career's own rows — `development_view` sums each player's `career_appearances.minutes` across the whole
    career, folds in the world's `real_training_sessions` load (`effective_minutes = match_minutes +
