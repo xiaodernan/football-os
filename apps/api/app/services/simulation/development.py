@@ -74,10 +74,25 @@ def developed_attributes(
     from the career's appearance rows instead of trusting a stored figure.
     """
     potential_f = float(potential)
-    return {
-        attribute: int(round(_develop_one(float(attributes.get(attribute, ATTRIBUTE_FLOOR)), potential_f, minutes_played, tau=tau, rate=rate)))
-        for attribute in ALL_ATTRIBUTES
-    }
+    return {attribute: int(round(_develop_one(float(attributes.get(attribute, ATTRIBUTE_FLOOR)), potential_f, minutes_played, tau=tau, rate=rate))) for attribute in ALL_ATTRIBUTES}
+
+
+def developed_overall(
+    value: float,
+    *,
+    potential: int,
+    minutes_played: int,
+    tau: float = DEVELOPMENT_TAU,
+    rate: float = DEVELOPMENT_RATE,
+) -> float:
+    """The same curve applied to one scalar quantity, left unrounded.
+
+    The academy outcomes block projects the stored `overall` toward the stored `potential` with the
+    exact arithmetic the attribute curve uses — same saturation, same rate, same ceiling — so the two
+    projections can never disagree about how developed a player is. The float is returned unrounded;
+    the caller decides the precision it prints.
+    """
+    return _develop_one(float(value), float(potential), minutes_played, tau=tau, rate=rate)
 
 
 def development_summary(
@@ -113,5 +128,6 @@ __all__ = [
     "DEVELOPMENT_TAU",
     "TRAINING_MINUTES_PER_UNIT",
     "developed_attributes",
+    "developed_overall",
     "development_summary",
 ]

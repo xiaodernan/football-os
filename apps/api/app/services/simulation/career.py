@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
 from app.models import OBJECTIVE_FORMULA, Career, CareerAppearance, CareerFixture, Competition, RealPlayer, SimulationMatch, Team
+from app.services.simulation.academy import academy_view
 from app.services.simulation.carry_over import carry_over_view, record_appearances, training_loads
 from app.services.simulation.development import DEVELOPMENT_RATE, DEVELOPMENT_TAU, TRAINING_MINUTES_PER_UNIT, development_summary
 from app.services.simulation.ledger import ledger_view
@@ -117,9 +118,10 @@ def limitations() -> dict[str, str]:
             "rows exactly as it always was."
         ),
         "projections": (
-            "The `development`, `affordability`, `contracts`, `board`, `head_to_head` and `next_fixture_brief` blocks "
+            "The `development`, `academy`, `affordability`, `contracts`, `board`, `head_to_head` and `next_fixture_brief` blocks "
             "are read-only projections recomputed from this career's own rows on every read: fixture minutes and "
-            "training projected toward potential, a wage runway and a signing preview, a deal book whose projected "
+            "training projected toward potential, the youth class judged against the eleven the engine would "
+            "select next, a wage runway and a signing preview, a deal book whose projected "
             "expiry nothing enforces, a season pace projection against the objectives, this career's record against "
             "one opponent, and the engine's own band measurements of the next fixture's two sides. None of them "
             "writes a stored attribute, expires or renews a contract, triggers a board decision or keeps a counter — "
@@ -427,10 +429,7 @@ def mini_table(rows: list[CareerFixture], career: Career) -> list[dict[str, Any]
     return table
 
 
-HEAD_TO_HEAD_FORMULA: Final = (
-    "played/won/drawn/lost and goals are sums over career_fixtures where opponent_team_id = this opponent; "
-    "points are 3 per win, 1 per draw, 0 per loss"
-)
+HEAD_TO_HEAD_FORMULA: Final = "played/won/drawn/lost and goals are sums over career_fixtures where opponent_team_id = this opponent; " "points are 3 per win, 1 per draw, 0 per loss"
 
 
 def head_to_head(session: Session, career: Career, opponent_team_id: str | None, *, fixtures: list[CareerFixture] | None = None) -> dict[str, Any]:
@@ -803,10 +802,7 @@ def development_view(
             "tau": DEVELOPMENT_TAU,
             "rate": DEVELOPMENT_RATE,
             "development_formula": DEVELOPMENT_FORMULA,
-            "note": (
-                "no career appearances on file yet, so no fixture-minutes development can be projected; "
-                "the squad reads its stored attributes exactly as before"
-            ),
+            "note": ("no career appearances on file yet, so no fixture-minutes development can be projected; " "the squad reads its stored attributes exactly as before"),
             "data_origin": "simulation",
             "is_demo_data": True,
         }
@@ -861,7 +857,8 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
     appearance_rows = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id).order_by(CareerAppearance.round_index)).all())
     training_all = training_loads(session, sorted({str(row.player_id) for row in appearance_rows}))
     view: dict[str, Any] = {
-        "career": {            "id": career.id,
+        "career": {
+            "id": career.id,
             "slug": career.slug,
             "manager_name": career.manager_name,
             "club_name": career.club_name,
@@ -890,6 +887,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "consistency": _consistency(session, rows),
         "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1, appearances=appearance_rows, training=training_all),
         "development": development_view(session, career, appearances=appearance_rows, training=training_all),
+        "academy": academy_view(session, career, appearances=appearance_rows, training=training_all),
         "affordability": _affordability(session, career),
         "contracts": _contracts(session, career),
         "model_versions": sorted({row.model_version for row in rows if row.model_version}),

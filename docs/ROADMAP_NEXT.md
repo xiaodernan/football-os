@@ -141,8 +141,22 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    affordable) and a fresh 100,000-budget career (all 12 over budget, sign buttons disabled) — for
    **156/156** checks in `en` and `zh`, including each listing's four figures and the button state.
    **Pending:** a budget *ceiling* (a hard cap distinct from a balance).
-7. **Youth academy outcomes.** Academy trainees graduate into the squad with attributes derived from
-   their `Sessions`/`Reports` (M8 already stores the load); the graduation is a deterministic roll.
+7. **Youth academy outcomes.** **Career-domain block done (2026-10-28):** `career_view["academy"]`
+   (`academy_view` in `simulation/academy.py`) reads the career's under-21 squad players and judges
+   each against the eleven the engine's own selection picks from the career's current squad (the
+   transfer overlay applied, the career's system formation or the team's own) — `selected`,
+   `next_in_line` (band rank = seats + 1), or `off_the_pace` at band rank — and projects the stored
+   overall toward the stored potential with the same curve the `development` block runs, via the new
+   scalar `developed_overall`. Pinned by `TestAcademyBlock` plus 8 pure cases in
+   `test_academy_outcomes.py`, green on both database legs (11 + 38 SQLite, 49 PostgreSQL). Two
+   re-scopes are published on the wire rather than silently taken: **the M8-tenant bridge is
+   deliberately not built** (M8's academy tier hangs off user-created organizations, the demo world
+   seeds none, and no door writes an org↔career link — inventing one is a migration with its own
+   door, not this block's assumption), and **the graduation is measured, not drawn** (a "deterministic
+   roll" is a contradiction; a roll would break the replay identity the career mode's determinism
+   guard owns, so the block measures the engine's own selection instead). Recorded in
+   [M13_ACADEMY_OUTCOMES_VERIFICATION.md](M13_ACADEMY_OUTCOMES_VERIFICATION.md). **Pending:** the
+   career page's panel (types, `CareerAcademy.tsx`, three locales, shipped-build walk).
 8. **Board expectations & relegation.** **Read-only half done (2026-10-25):** `board_view` (career.py)
    projects the season at the career's current pace — `projected = round(actual ÷ played × season_rounds)`,
    where the horizon is the challenge's window or a double round-robin over the competition's clubs — and
@@ -358,3 +372,16 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   and both refusal arms red: a wrong prefix exits 1 naming the setup 404, and `--careers 6` exits 1 naming the
   409 `career_limit` after exactly 5 careers opened. Throughput is reported, not gated — a floor measured on
   one machine flakes on a slower one for reasons that are not defects.
+- **The youth academy outcomes block landed in the career domain (2026-10-28).** `career_view["academy"]`
+  reads the under-21 squad players and judges each against the eleven the engine's own selection picks
+  from the career's current squad — `selected` / `next_in_line` / `off_the_pace` — and projects the
+  stored overall toward the stored potential with the development curve's new scalar `developed_overall`
+  (one `_develop_one` behind both projections, so they cannot disagree). Two re-scopes are published on
+  the wire, not silently taken: no invented org↔career link to M8's tenant tier, and graduation
+  **measured, not drawn** — a deterministic roll would break the replay identity the Phase 2 guard owns.
+  11 pure+DB cases green on both legs (SQLite 11+38, PostgreSQL 49); the career page's panel is the
+  next unit. The unit also burned a real trap into the record: `FOOTBALL_OS_TEST_DATABASE_URL` is
+  conftest-only, while `apps/api/.env`'s `DATABASE_URL` wins in any other process — the live read first
+  created its rows in the PG dev database and was cleaned by counted deletes (33 appearances, 53 events,
+  3 matches, 3 fixtures, 1 career, 1 user, zero leftovers verified). Recorded in
+  [M13_ACADEMY_OUTCOMES_VERIFICATION.md](M13_ACADEMY_OUTCOMES_VERIFICATION.md).
