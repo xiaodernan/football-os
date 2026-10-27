@@ -148,16 +148,29 @@ def condition_of(load: float, training: int) -> float:
     return round(_clamp(CONDITION_CEILING - fatigue + reserve, CONDITION_FLOOR, CONDITION_CEILING), 4)
 
 
-def condition_map(session: Session, career_id: str, *, round_index: int) -> dict[str, float]:
+def condition_map(
+    session: Session,
+    career_id: str,
+    *,
+    round_index: int,
+    appearances: list[CareerAppearance] | None = None,
+    training: dict[str, int] | None = None,
+) -> dict[str, float]:
     """player id → condition for everyone this career has played in its last rounds.
 
     Only players with a trace appear: a side drawn from untouched rows must keep the stored-form mean
     exactly, which is what lets a match stored before this rule still replay to its own digest.
+    `appearances`/`training` let a caller that already fetched them (the career view) hand them in; the
+    round window is derived from that one list by filtering to rounds before `round_index`.
     """
-    windows = load_windows(appearances_as_of(session, career_id, round_index), round_index=round_index)
+    if appearances is not None:
+        rows = [row for row in appearances if int(row.round_index) < int(round_index)]
+    else:
+        rows = appearances_as_of(session, career_id, round_index)
+    windows = load_windows(rows, round_index=round_index)
     if not windows:
         return {}
-    training = training_loads(session, list(windows))
+    training = training if training is not None else training_loads(session, list(windows))
     return {player_id: condition_of(entry["load"], training.get(player_id, 0)) for player_id, entry in windows.items()}
 
 

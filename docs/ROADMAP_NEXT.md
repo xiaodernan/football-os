@@ -169,10 +169,11 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     appearance table and three of `real_training_sessions` per career-detail read. `carry_over_view`,
     `development_view` and `ledger_view` now take pre-fetched `appearances`/`training`, and `career_view`
     fetches both once and hands them to all three (carry-over derives its round window from the same list).
-    A `before_cursor_execute` test in `test_career.py` pins appearances/training at ≤2 each (the remaining
-    read is `contract_book`→`current_squad`→`condition_map`). **Pending:** the same treatment for
-    `current_squad`/`condition_map`, and a full-scale profile (a league season) to decide whether an index
-    is worth more than the plumbing.
+    A `before_cursor_execute` test in `test_career.py` now pins appearances/training at exactly **1** each:
+    the last read came from `next_fixture_brief`'s `squad_as_of`→`condition_map` (the career side's condition
+    for its profile), and `condition_map`/`squad_as_of` now accept the pre-fetched rows too, so the whole
+    detail read shares one fetch. **Pending:** a full-scale profile (a league season) to decide whether an
+    index is worth more than the plumbing.
 15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
     M12 cost/rate-limit work already gives the scaffolding.
 

@@ -370,8 +370,8 @@ class TestReadEfficiency:
             event.remove(engine, "before_cursor_execute", before)
         appearance_reads = [s for s in statements if "from career_appearances" in s and s.lstrip().startswith("select")]
         training_reads = [s for s in statements if "from real_training_sessions" in s and s.lstrip().startswith("select")]
-        # Two reads each: the one shared fetch this view hands to carry_over/development/ledger, plus the
-        # one `contract_book` still makes through `current_squad` -> `condition_map` for the squad it ages.
-        # Before the dedup it was five reads of appearances and three of training; this pins it at two.
-        assert len(appearance_reads) <= 2, f"career_appearances read {len(appearance_reads)} times"
-        assert len(training_reads) <= 2, f"real_training_sessions read {len(training_reads)} times"
+        # One read each: the shared fetch this view hands to carry_over, development, ledger and the
+        # next-fixture brief (which needs the career side's condition for its profile). Before the dedup
+        # it was five reads of appearances and three of training.
+        assert len(appearance_reads) == 1, f"career_appearances read {len(appearance_reads)} times"
+        assert len(training_reads) == 1, f"real_training_sessions read {len(training_reads)} times"

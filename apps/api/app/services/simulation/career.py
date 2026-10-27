@@ -509,7 +509,14 @@ NEXT_FIXTURE_FORMULA: Final = (
 )
 
 
-def next_fixture_brief(session: Session, career: Career, *, plan: dict[str, Any] | None = None) -> dict[str, Any]:
+def next_fixture_brief(
+    session: Session,
+    career: Career,
+    *,
+    plan: dict[str, Any] | None = None,
+    appearances: list[CareerAppearance] | None = None,
+    training: dict[str, int] | None = None,
+) -> dict[str, Any]:
     """The next fixture's two sides as the engine measures them, side by side.
 
     Both profiles come from `team_profile` — the career's with its transfer overlay and chosen system, the
@@ -519,7 +526,7 @@ def next_fixture_brief(session: Session, career: Career, *, plan: dict[str, Any]
     plan = plan or next_fixture_plan(session, career)
     if not plan.get("available"):
         return {"available": False, "reason": str(plan.get("reason", "no next fixture")), "data_origin": "simulation", "is_demo_data": True}
-    overlay = squad_as_of(session, career, int(plan["round_index"]))
+    overlay = squad_as_of(session, career, int(plan["round_index"]), appearances=appearances, training=training)
     try:
         mine = team_profile(session, career.club_id or "", system_slug=career.system_slug or None, squad=overlay)
         theirs = team_profile(session, str(plan["opponent_team_id"]))
@@ -816,7 +823,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
     if include_fixtures:
         plan = next_fixture_plan(session, career)
         view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None)
-        view["next_fixture_brief"] = next_fixture_brief(session, career, plan=plan)
+        view["next_fixture_brief"] = next_fixture_brief(session, career, plan=plan, appearances=appearance_rows, training=training_all)
         view["ledger"] = ledger_view(session, career, appearances=appearance_rows)
         view["fixtures"] = [
             {

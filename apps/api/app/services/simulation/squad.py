@@ -33,7 +33,7 @@ from typing import Any, Final
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Career, CareerFixture, CareerSquadMove, RealPlayer, Team
+from app.models import Career, CareerAppearance, CareerFixture, CareerSquadMove, RealPlayer, Team
 from app.services.simulation.carry_over import condition_map
 from app.services.simulation.profile import SquadOverlay
 
@@ -81,7 +81,14 @@ def squad_state(session: Session, career: Career, round_index: int) -> dict[str,
     return state
 
 
-def squad_as_of(session: Session, career: Career, round_index: int) -> SquadOverlay | None:
+def squad_as_of(
+    session: Session,
+    career: Career,
+    round_index: int,
+    *,
+    appearances: list[CareerAppearance] | None = None,
+    training: dict[str, int] | None = None,
+) -> SquadOverlay | None:
     """The overlay that turns the club's stored rows into the squad this career plays with.
 
     `None` when the career has changed nothing by that round: no move applied, and no played round to
@@ -90,7 +97,7 @@ def squad_as_of(session: Session, career: Career, round_index: int) -> SquadOver
     """
     if not career.club_id:
         return None
-    condition = condition_map(session, career.id, round_index=round_index)
+    condition = condition_map(session, career.id, round_index=round_index, appearances=appearances, training=training)
     stored = {player.id: player for player in session.scalars(select(RealPlayer).where(RealPlayer.team_id == career.club_id))}
     added: list[RealPlayer] = []
     removed: set[str] = set()
