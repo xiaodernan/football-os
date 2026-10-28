@@ -324,8 +324,14 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     the layout, `/auth/me` from `currentUser()`, `/traces/summary`), so the summary moved between the API's answer
     and the rendered table — the exporter's write path is pinned by `test_trace_store.py`, and this walk pins the
     panel's read of a fixed store.
-20. **Runbooks.** A one-page runbook per M12 subsystem (backup/DR, erasure, rate limits, tracing) drawn
-    from the verification docs already written.
+20. **Runbooks.** **Done (2026-10-28):** [`docs/RUNBOOKS.md`](RUNBOOKS.md) indexes one page per subsystem —
+    backup/DR (`full_restore`, `pitr_recovery`, `partial_restore`, `region_failover`, `secret_rotation`),
+    erasure (`erasure`), rate limits (`rate_limits`) and tracing (`tracing`) — each grounded in the script or
+    door it documents and each carrying a "what this runbook does not claim" section. The backup/DR pages were
+    written against `scripts/backup_db.sh`/`restore_db.sh`/`dr_lib.sh` (the `docs/runbooks/` directory
+    `BACKUP_RECOVERY.md` referenced did not exist); erasure cites `/api/v1/auth/account` and the academy's
+    player-data door; rate limits cites `limit()` in `security.py` and ADR-001's Redis caveat; tracing cites the
+    span store and both admin doors.
 21. **Cost guardrails.** **Monthly ceiling done (2026-10-28):** `settings.ai_monthly_ceiling_usd`
     (`AI_MONTHLY_CEILING_USD`, `0` = not configured) and `cost_advisor.monthly_state()` — month-to-date spend
     since the first instant of the UTC month, the ceiling, remaining, used_pct, a pace projection to month end,

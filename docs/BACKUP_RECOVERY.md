@@ -147,7 +147,8 @@ Step-by-step runbooks in [`docs/runbooks/`](runbooks/), each grounded in the scr
 - [`secret_rotation.md`](runbooks/secret_rotation.md) — `APP_SECRET`, provider keys and database credentials.
 
 The scripts are the source of truth: where a runbook and a script disagree, the script is right and the runbook is
-the bug.
+the bug. The full index of every operational runbook — including erasure, rate limits and tracing — is
+[`docs/RUNBOOKS.md`](RUNBOOKS.md).
 
 ## Contacts
 
