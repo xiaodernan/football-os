@@ -506,6 +506,8 @@
     "apiStatusRow": "API 狀態",
     "providerWiring": "供應商接線",
     "providers": "供應商",
+    "unreported": "未回報",
+    "configured": "已設定",
     "operatorNotes": "維運備註",
     "featureMapEyebrow": "功能地圖",
     "featureMapTitle": "已建與未建",

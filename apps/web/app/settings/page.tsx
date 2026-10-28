@@ -35,10 +35,10 @@ const MILESTONES: { key: MilestoneKey; labelKey: string }[] = [
   { key: "m9_community", labelKey: "milestoneM9" },
 ];
 
-function describeProvider(value: unknown): string {
+function describeProvider(value: unknown, labels: { unreported: string; configured: string }): string {
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
-  if (value === null || value === undefined) return "unreported";
-  return "configured";
+  if (value === null || value === undefined) return labels.unreported;
+  return labels.configured;
 }
 
 export default async function SettingsPage() {
@@ -157,7 +157,7 @@ export default async function SettingsPage() {
                   <div className="tag-list">
                     {Object.entries(health.providers).map(([key, value]) => (
                       <span className="chip mono" key={key}>
-                        {key}: {describeProvider(value)}
+                        {key}: {describeProvider(value, { unreported: t("unreported"), configured: t("configured") })}
                       </span>
                     ))}
                   </div>

@@ -506,6 +506,8 @@
     "apiStatusRow": "API status",
     "providerWiring": "Provider wiring",
     "providers": "Providers",
+    "unreported": "unreported",
+    "configured": "configured",
     "operatorNotes": "Operator notes",
     "featureMapEyebrow": "Feature map",
     "featureMapTitle": "Built vs. not built",
