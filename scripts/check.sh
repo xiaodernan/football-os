@@ -181,6 +181,23 @@ echo "── Web: error-boundary gate ──────────────
 # catalogue in all three languages. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-error-boundary.mjs)
 
+echo "── Web: accessibility gate ────────────────────────────"
+# §17: the shell's accessibility floor, re-measured rather than remembered. The contrast of eight text tokens is
+# recomputed from the token table in styles/globals.css on every surface they are painted on, `--line-control` is held
+# at 3:1 against its field, every `outline: none` must be answered by a focus rule declared after it, the layout must
+# hold a skip link to a focusable `<main id="main">`, the nav must carry an accessible name and `aria-current`, and
+# every `<th>` in the tree must carry a `scope` while every `<img>` carries an `alt`. Files only: no server, no
+# browser.
+(cd apps/web && node scripts/qa-a11y.mjs)
+
+echo "── Web: accessibility behaviour gate ─────────────────"
+# Holds those verdicts on scratch copies of the shell: a missing skip link, an anchor in front of it, a `<main>` with
+# no id or no tab stop, a dimmed `--text-3`, a removed or misordered focus ring, an on-screen skip link, no
+# reduced-motion block, an unnamed nav, no `aria-current`, a bare `<img>`, an unscoped `<th>`, a text colour pointed
+# at a border token and a dimmed `--line-control` — each must be the named red, and an untouched copy must be green.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-a11y-witness.mjs)
+
 echo "── Web: shared-sentence gate ──────────────────────────"
 # A shared key NAME is not a contract; a shared VALUE is. This gate used to ask every key name used in
 # two namespaces to be named with a reason — 234 rows, 136 of which were independent keys whose

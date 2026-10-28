@@ -18,7 +18,9 @@
     "footballCv": "足球履历",
     "simulator": "模拟器",
     "notifications": "通知",
-    "traces": "追踪"
+    "traces": "追踪",
+    "skipToContent": "跳到主要内容",
+    "primaryNav": "主导航"
   },
   "common": {
     "accept": "接受",

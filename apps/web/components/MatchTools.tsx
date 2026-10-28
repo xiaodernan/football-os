@@ -158,14 +158,14 @@ export function FixtureBoard({ busy, list, onErase, onPlay }: { busy: string | n
         <table>
           <thead>
             <tr>
-              <th>{tc("thFixture")}</th>
-              <th>{tc("thSide")}</th>
-              <th>{tc("thOpponent")}</th>
-              <th>{tc("thCompetition")}</th>
-              <th>{tc("thNames")}</th>
-              <th>{tc("thAppearances")}</th>
-              <th>{tc("thEngineRow")}</th>
-              <th />
+              <th scope="col">{tc("thFixture")}</th>
+              <th scope="col">{tc("thSide")}</th>
+              <th scope="col">{tc("thOpponent")}</th>
+              <th scope="col">{tc("thCompetition")}</th>
+              <th scope="col">{tc("thNames")}</th>
+              <th scope="col">{tc("thAppearances")}</th>
+              <th scope="col">{tc("thEngineRow")}</th>
+              <th scope="col" />
             </tr>
           </thead>
           <tbody>

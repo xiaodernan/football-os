@@ -278,8 +278,22 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     seed 7, digest `206150031e3e7ee0…` (0, complete sentence). **523 checks, 0 red**, three locales at
     every stage; absence claims read the rendered body with scripts stripped, because the catalogue
     itself travels in the RSC payload. All eleven web gates plus `tsc --noEmit` green.
-17. **Accessibility & mobile.** The walk checks already run mobile viewports; lift the remaining
-    contrast/focus/aria findings to green and keep them green via a gate.
+17. **Accessibility & mobile.** **Done (2026-10-28):** every finding the audit raised is fixed, and the
+    fix is held by `apps/web/scripts/qa-a11y.mjs`, which recomputes it on every run: eight text tokens hold
+    ≥4.5:1 on all five surfaces (`--text-3` moved #6f8098 → #788aa1, worst 4.20 → 4.79:1 on `--bg-panel-2`),
+    `--line-control` (#556a86) holds 3.05–3.45:1 against the field and panel it draws (`--line` is a 1.2:1
+    border), every `outline: none` is answered by a `:focus` rule declared after it and one global
+    `:where(…):focus-visible` paints a 2px accent ring, the layout's first focusable element is
+    `<a class="skip-link" href="#main">` backed by `<main id="main" tabIndex={-1}>`, `<nav>` is named from
+    `nav.primaryNav` and the current page is `aria-current="page"`, `prefers-reduced-motion` zeroes transitions,
+    all 614 `<th>` carry `scope` (17 were bare) and the tree's one `<img>` carries `alt`.
+    `qa-a11y-witness.mjs` plants fifteen defects in scratch copies of the shell and holds each named red
+    (**16/16**). Walked live: **58/58** HTTP checks over three locales and two pages — the served CSS carries
+    the five new rules — and **8/8** Chrome checks: the first Tab lands on the off-screen skip link, Enter moves
+    focus into `<main>`, the next Tab paints `2px solid rgb(53, 240, 164)` at `2px` offset, 375×812 has no
+    page-level horizontal scroll with all 12 nav links laid out, and a reduced-motion reader gets `1e-05s`
+    transitions. All 32 web gates named in `scripts/check.sh`, `next lint`, and `tsc --noEmit` green; catalogue
+    3876 keys, 3831 translated in both Chinese files.
 18. **More surfaces.** Remaining read-only pages (academy public view, scout public report) rendered from
     the same live reads the private doors use.
 

@@ -45,10 +45,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const localeHeader = headersList.get("x-next-intl-locale") ?? headersList.get("next-intl-locale");
   const locale = (locales as readonly string[]).includes(localeHeader ?? "") ? (localeHeader as typeof locales[number]) : defaultLocale;
 
-  const [user, capabilities, t] = await Promise.all([
+  const [user, capabilities, t, tNav] = await Promise.all([
     currentUser().catch(() => null),
     serverFetch<CapabilitiesResponse>("/capabilities").then((result) => (result.ok ? result.data : null)),
     getTranslations("disclaimer"),
+    getTranslations("nav"),
   ]);
   const messages = messagesMap[locale];
   const demoMode = capabilities?.demo_mode ?? true;
@@ -57,8 +58,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale}>
       <body>
         <LocaleProvider locale={locale} messages={messages}>
+          {/* The nav is 11–18 links deep, so a keyboard reader who lands on the page would tab through every one of
+              them on every page. The skip link is the first focusable thing in the document and moves the reader to
+              `<main id="main">`, which carries `tabIndex={-1}` so the target can take focus at all. */}
+          <a className="skip-link" href="#main">
+            {tNav("skipToContent")}
+          </a>
           <Nav user={user} demoMode={demoMode} />
-          <main>{children}</main>
+          <main id="main" tabIndex={-1}>
+            {children}
+          </main>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{

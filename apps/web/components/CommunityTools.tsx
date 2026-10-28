@@ -339,11 +339,11 @@ export function CommunityWall({caps, feed, following, profile, viewer}: {caps: C
         <table>
           <thead>
             <tr>
-              <th>{t("thPost")}</th>
-              <th>{t("thLikes")}</th>
-              <th>{t("thReplies")}</th>
-              <th>{t("thReposts")}</th>
-              <th />
+              <th scope="col">{t("thPost")}</th>
+              <th scope="col">{t("thLikes")}</th>
+              <th scope="col">{t("thReplies")}</th>
+              <th scope="col">{t("thReposts")}</th>
+              <th scope="col" />
             </tr>
           </thead>
           <tbody>

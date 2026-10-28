@@ -70,7 +70,7 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
   }
 
   return (
-    <nav className="nav">
+    <nav className="nav" aria-label={t("primaryNav")}>
       <div className="nav__inner">
         <Link className="nav__brand" href="/">
           FOOTBALL<span>OS</span>
@@ -79,7 +79,12 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
           {LINKS.map((link) => {
             const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
             return (
-              <Link className={`nav__link ${active ? "nav__link--active" : ""}`} href={link.href} key={link.href}>
+              <Link
+                aria-current={active ? "page" : undefined}
+                className={`nav__link ${active ? "nav__link--active" : ""}`}
+                href={link.href}
+                key={link.href}
+              >
                 {t(link.key)}
               </Link>
             );

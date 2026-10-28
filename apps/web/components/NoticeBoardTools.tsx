@@ -164,12 +164,12 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
         <table>
           <thead>
             <tr>
-              <th>{tc("thNotice")}</th>
-              <th>{tc("thAudience")}</th>
-              <th>{tc("thPostedBy")}</th>
-              <th>{tc("thReadership")}</th>
-              <th>{tc("thYourReceipt")}</th>
-              <th />
+              <th scope="col">{tc("thNotice")}</th>
+              <th scope="col">{tc("thAudience")}</th>
+              <th scope="col">{tc("thPostedBy")}</th>
+              <th scope="col">{tc("thReadership")}</th>
+              <th scope="col">{tc("thYourReceipt")}</th>
+              <th scope="col" />
             </tr>
           </thead>
           <tbody>

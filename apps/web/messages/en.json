@@ -18,7 +18,9 @@
     "footballCv": "Football CV",
     "simulator": "Simulator",
     "notifications": "Notifications",
-    "traces": "Traces"
+    "traces": "Traces",
+    "skipToContent": "Skip to content",
+    "primaryNav": "Primary navigation"
   },
   "common": {
     "accept": "Accept",
