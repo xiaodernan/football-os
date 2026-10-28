@@ -263,8 +263,21 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 
 ## Phase 5 — Product finish
 
-16. **Onboarding.** A first-run path that creates a player → joins/creates a club → runs a match, reusing
-    the M1 vertical slice but inside the M8 club OS.
+16. **Onboarding.** **Done (2026-10-28).** `/onboarding` keeps the M1 creation form while the account has
+    no player row, and stops redirecting once one exists: it reads the account's own `/club` list and the
+    first club's `/club/{slug}/fixtures`, then prints five steps — player, club, team, fixture, result —
+    each with a badge (`Step done` / `Step unknown` / `Next step`), an evidence line counted from those
+    rows (`Player: …`, `Club: …`, `Teams: n`, `Fixtures: n`, `Played: n`, `No club yet`), and the link
+    that opens the surface for the next step. No step is ticked by hand, and a club list that cannot be
+    read prints the steps after the player as **unknown** rather than done. 23 new `onboarding` keys in
+    all three locales (catalogue **3,836** keys, **3,791** translated; copy gate **3,849** key calls,
+    9/9). Walked live against the running API and a dev server with a fresh account
+    (`onboarding-walk-20261028200845@footballos.test`): form → player (4 steps next) → club
+    `walk-club-20261028200845` (3) → team `First Team` bound to `braeford-athletic`, sheet of 11 adults
+    including a keeper (2) → fixture `cfx_5e9Prl-INx0q7dAD` against `cordale-town` (1) → played with
+    seed 7, digest `206150031e3e7ee0…` (0, complete sentence). **523 checks, 0 red**, three locales at
+    every stage; absence claims read the rendered body with scripts stripped, because the catalogue
+    itself travels in the RSC payload. All eleven web gates plus `tsc --noEmit` green.
 17. **Accessibility & mobile.** The walk checks already run mobile viewports; lift the remaining
     contrast/focus/aria findings to green and keep them green via a gate.
 18. **More surfaces.** Remaining read-only pages (academy public view, scout public report) rendered from
