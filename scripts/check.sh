@@ -264,6 +264,13 @@ echo "── Web: locale-completeness gate ────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-locale-completeness.mjs)
 
+echo "── Web: locale-fallback gate ──────────────────────────"
+# Every key in en.json has a non-empty value in zh.json and zh-TW.json. A key that falls
+# back to English is an English sentence on a page that says it is Chinese.
+# 3813 keys, 0 missing or empty in either Chinese locale.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-locale-fallback.mjs)
+
 echo "── Web: token-drift gate ──────────────────────────────"
 # Named technical tokens remain stable across commits; no unnamed identical values.
 # 45 tokens stable, no new unnamed identical values.

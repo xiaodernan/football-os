@@ -232,6 +232,8 @@ jobs:
         run: node scripts/qa-locale-content.mjs
       - name: Locale-completeness gate (every namespace has identical keys in all three locales)
         run: node scripts/qa-locale-completeness.mjs
+      - name: Locale-fallback gate (no key falls back to English in a Chinese locale)
+        run: node scripts/qa-locale-fallback.mjs
       - name: Token-drift gate (named technical tokens remain stable)
         run: node scripts/qa-token-drift.mjs
       - name: Namespace-ownership gate (every namespace has a declared owner and purpose)
