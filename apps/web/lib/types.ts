@@ -2286,3 +2286,31 @@ export type NotificationList = {
   unread_total: number;
   formula: string;
 };
+
+/**
+ * GET /traces/summary — one group per route the window's SERVER spans name.
+ *
+ * The API publishes the grouping rule beside the figures: a span counts as an error when its
+ * status is ERROR or its http.status_code is 500 or more, and p50/p95 are nearest-rank over the
+ * group's duration_ms. The page recomputes the totals from these rows rather than trusting a
+ * summary line, so every figure it prints is one it can point back to.
+ */
+export type TraceRouteSummary = {
+  route: string;
+  count: number;
+  errors: number;
+  error_rate: number;
+  p50_ms: number;
+  p95_ms: number;
+  max_ms: number;
+};
+
+export type TraceSummary = {
+  window_minutes: number;
+  since: string;
+  spans_scanned: number;
+  truncated: boolean;
+  routes: TraceRouteSummary[];
+  formula: string;
+  note: string;
+};

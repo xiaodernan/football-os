@@ -109,6 +109,12 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
               <Link className={`nav__link ${pathname.startsWith("/simulate") ? "nav__link--active" : ""}`} href="/simulate">
                 {t("simulator")}
               </Link>
+              {/* The trace store is an operator's window, so its door is named only to the standing it asks for. */}
+              {user.role === "admin" && (
+                <Link className={`nav__link ${pathname.startsWith("/traces") ? "nav__link--active" : ""}`} href="/traces">
+                  {t("traces")}
+                </Link>
+              )}
             </>
           )}
         </div>

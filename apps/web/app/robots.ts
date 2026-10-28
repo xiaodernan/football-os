@@ -73,6 +73,9 @@ const DISALLOWED = [
   // account's own rows. A shared link is public to the person holding it, but it is still user content and is not
   // offered to crawlers, on the same rule as §17's shared tactical boards.
   "/portfolio",
+  // The trace dashboard is an operator's window over stored request spans: every route behind it asks for
+  // the admin standing, so a crawler has nothing to read and no reason to be sent.
+  "/traces",
 ];
 
 /** The one `/club` path that is not a person's data. */

@@ -72,6 +72,9 @@ const run = (dir, unset) => {
 };
 const verdict = (out, label) => (out.includes(`FAIL  ${label}`) ? "FAIL" : out.includes(`PASS  ${label}`) ? "PASS" : "absent");
 const tally = (r) => `rc=${r.status} passed=${r.passed} total=${r.total} failed=${r.failed}`;
+// The name-only census is counted against the run's own baseline rather than a pinned literal: the arm's claim is
+// that it adds exactly one row, and a catalogue that grows legitimately must not turn that claim into a stale number.
+const nameOnlyRows = (out) => Number(/(\d+) key name\(s\) are shared while their values differ/u.exec(out)?.[1] ?? -1);
 
 const SCAN = "the scan reads three catalogues and finds both populations";
 const DRIFT = "no unreviewed cross-namespace translation drift";
@@ -166,7 +169,7 @@ for (const [locale, sentence] of [["en", "A different question"], ["zh", "另一
 const e = run(nameOnly);
 check(
   "E a shared key name with a different sentence stays green",
-  e.status === 0 && e.passed === 4 && e.total === 4 && e.out.includes("137 key name(s) are shared while their values differ"),
+  e.status === 0 && e.passed === 4 && e.total === 4 && nameOnlyRows(e.out) === nameOnlyRows(zero.out) + 1,
   tally(e),
 );
 

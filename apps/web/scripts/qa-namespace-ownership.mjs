@@ -104,6 +104,9 @@ const NAMESPACE_OWNERS = {
 
   // Notification tier
   "notifications": { owner: "core", purpose: "Notification and alert messages" },
+
+  // Operator tier
+  "traces": { owner: "core", purpose: "The operator's trace dashboard over the span store" },
 };
 
 /** Check that every namespace in the catalogue has an owner declaration */

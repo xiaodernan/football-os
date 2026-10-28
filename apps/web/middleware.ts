@@ -55,6 +55,7 @@ const PROTECTED_PREFIXES = [
   "/scout",
   "/simulate",
   "/simulation",
+  "/traces",
 ];
 
 /**

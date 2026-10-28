@@ -293,7 +293,23 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     error count and rate, and nearest-rank p50/p95/max — grouped by `attributes.http.route` (else the span name),
     SERVER spans only, error = `status == ERROR` or `http.status_code ≥ 500`. Declared before `/{trace_id}` so
     `summary` is a door, not a trace id. `span_store.route_summary` + `ROUTE_SUMMARY_FORMULA`; pinned by
-    `TestTheSummary` in `test_trace_store.py`. **Pending:** the Web panel over this door.
+    `TestTheSummary` in `test_trace_store.py`. **Web panel done (2026-10-28):** `/traces` reads the door with the
+    reader's own session, so a non-admin is shown the door's 403 `insufficient_role` sentence instead of a page that
+    pre-judges the role. It renders the window chips (15 / 60 / 1440; a window the page does not offer falls back to
+    60 rather than erroring), four totals recomputed from the rows it prints (routes, spans, errors, errors ÷ spans)
+    and a seven-column table whose cells are recomposed per row (route, count, errors, errors ÷ count, p50 / p95 /
+    slowest in the locale's own unit). The nav door is admin-only (`Nav.tsx`), `/traces` is in `middleware.ts`'s
+    protected prefixes, `robots.ts` disallows it and the tab is `noindex`. Copy is 37 keys × three locales plus
+    `nav.traces`. Verified by `.scratch/walk-traces.py` — **190/190 checks** on `:3218` against a frozen store: 60
+    minutes over six seeded SERVER spans in three routes with one failure (1/4, p50 15, p95 250), 15 minutes drops
+    the thirty-minute span (5 spans, 2 routes), `?window=999` falls back to 60, INTERNAL and two-day-old spans are
+    never read, an unnamed route renders its em-dash row, all three locales match the API cell by cell, a non-admin
+    reads the localized refusal with no nav door, an anonymous reader is 307'd to `/login?next=%2Ftraces`, and an
+    empty store renders the empty panel. The store is frozen for the walk **because the first run proved a live one
+    cannot be compared cell by cell**: every page render writes three SERVER spans of its own (`/capabilities` from
+    the layout, `/auth/me` from `currentUser()`, `/traces/summary`), so the summary moved between the API's answer
+    and the rendered table — the exporter's write path is pinned by `test_trace_store.py`, and this walk pins the
+    panel's read of a fixed store.
 20. **Runbooks.** A one-page runbook per M12 subsystem (backup/DR, erasure, rate limits, tracing) drawn
     from the verification docs already written.
 21. **Cost guardrails.** **Monthly ceiling done (2026-10-28):** `settings.ai_monthly_ceiling_usd`
