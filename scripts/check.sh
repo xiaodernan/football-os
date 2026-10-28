@@ -144,6 +144,13 @@ echo "── Web: field-name i18n gate ─────────────�
 # constant aria-label key. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-field-labels.mjs)
 
+echo "── Web: translation-quality gate ─────────────────────"
+# Translation quality beyond completeness: no untranslated English words in Chinese translations, proper
+# punctuation per locale, no encoding issues (mojibake), no overly literal English structures. Four checks
+# that hold translation quality above the floor that completeness gates measure. Files only: no server,
+# no browser.
+(cd apps/web && node scripts/qa-translation-quality.mjs)
+
 echo "── Web: cookie-proxy gate ─────────────────────────────"
 # The web tier's session design is one sentence: the access token is httpOnly, so no script can read it, and every
 # call a browser makes reaches the API through the cookie proxy. Nothing held that. This gate reads every fetch in

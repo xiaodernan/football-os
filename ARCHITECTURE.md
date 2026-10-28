@@ -161,6 +161,18 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   other `t` would have answered `common`). The gate now checks **3600** key calls against the namespaces they are asked of, up
   from 3593, and its red path was watched: a file reading two keys the catalogue does not hold through `tAuth` and `tCommon`
   made the **old** gate report 8/8 PASS and the new one report the two keys with their namespaces.
+- **And that call-site rule stopped at the file boundary (2026-10-28).** The shape above resolves a translator handed to a
+  *same-file* helper from its call site. A panel under `components/` is handed its translator by a **page**, and nothing in the
+  panel's own source says what `t` reads — so the read resolved to no namespace, was recorded as nothing, and the count of key
+  calls never moved. **7** career panels, **167** key reads, outside the check whose job is to stop a page throwing
+  MISSING_MESSAGE; the academy panel found it by planting the same key twice — in the page it went red (7/8, 3662 calls), in the
+  panel it stayed green (8/8, 3661). `qa-i18n-literals.mjs` now resolves the hand-off where it happens: an imported component's
+  translator prop is bound to the namespace its caller passes, followed across a second hop when a panel hands the translator to
+  a sub-panel of its own. The recorded count is **3824** key calls, up from 3661, and the ninth check refuses the silence that
+  made the gap unmeasurable: a key-shaped read through a parameter that no seam reached is named at its file and line, so a
+  hand-off through a barrel or a positional argument into an imported helper cannot go uncounted. The witness is the reaction,
+  not the pass: planting a key in a panel moves the count by one and goes red, deleting one `t={t}` from the career page lowers
+  it by **23** and names the panel it left blind.
 - **And the catalogue held 226 keys no page asks for (2026-10-22).** The copy gate asks whether every key the source asks
   for **is** in the catalogue; the other half of that question — whether every key the catalogue holds is **asked for** —
   had never been asked, so a catalogue could hold 3736 keys while the tree read 3510 and every gate in the suite would
@@ -195,9 +207,9 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   hold no Chinese, and the **44** values the Chinese files share with the English are **named**, each with the reason
   it is the same in every language.
 - **And a refusal is the reader's copy, so the catalogue holds the API's refusals (2026-10-22).** The API answers a refusal with a **code** (the stable handle) and a **sentence** (the API's own English), and the web tier shows the sentence — so a Chinese reader was told “The current password is incorrect” in English. The catalogue now holds one key per refusal code with **the English value being the API's message verbatim**, so the English rendering is byte-identical and the change is a translation rather than a copy change; the code needs no translation at all. The switch is **one place**: `lib/refusals.ts` holds the shape and the lookup, `serverFetch` uses it for the server's reads and the cookie proxy for the browser's (the middleware skips `/api`, so the proxy reads the reader's locale from the `fo_locale` cookie). `errorMessage()` and its 42 call sites are untouched. **26** codes are covered; the API's other **39** publish a message that names a value the request supplied, and those are **named** in the test that holds the catalogue and the API in step in both directions.
-- **The gates the i18n arc now runs, and the evidence.** `qa-i18n-literals.mjs` (8 checks: 0 English literal sites over
-  every `app/**/*.tsx` and `components/**/*.tsx`, 3600 key calls checked against the namespace each is asked of, every
-  placeholder supplied) · `qa-icu-messages.mjs` (2: every message in all three catalogues parses as ICU) ·
+- **The gates the i18n arc now runs, and the evidence.** `qa-i18n-literals.mjs` (9 checks: 0 English literal sites over
+  every `app/**/*.tsx` and `components/**/*.tsx`, 3824 key calls checked against the namespace each is asked of, every
+  placeholder supplied, and no translator read left without a namespace) · `qa-icu-messages.mjs` (2: every message in all three catalogues parses as ICU) ·
   `qa-unused-keys.mjs` (3: **every key the catalogue holds is asked for by a page**; floor 0) ·
   `qa-locale-tokens.mjs` (3: the English file holds no Chinese; the identical values are the 44 named ones) ·
   `qa-field-labels.mjs` (2) · `qa-metadata-title.mjs` (165). The **browser** evidence is the visual walk, which now

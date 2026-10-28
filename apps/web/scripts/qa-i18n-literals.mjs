@@ -37,6 +37,19 @@ English raises the count, and the gate says so. The floor is this file's own `FL
 the message names the file and line of every site it found, so the work is a list and not a hunt. The
 fifth shape has its own floor, `FLOOR_LITERAL_SITES`, and the same rule: it may only fall.
 
+The other half of this gate is the catalogue: every key the source asks for must be in the namespace it
+was asked of, because next-intl throws MISSING_MESSAGE at the first reader, not at the build. That half is
+only as wide as the reads it *recorded*, and until 2026-10-28 it silently excluded one shape: a panel under
+`components/` that is handed its translator as a prop. Inside such a panel `t` binds a parameter and
+nothing else, so the read resolved to no namespace, was recorded as nothing, and the count of key calls
+stayed what it had been — 7 career panels and 167 reads outside the check. Two things closed it: the seam,
+which binds a prop translator to the namespace its **caller** passes (a cross-file resolution, repeated
+until it stops growing so a panel handing the translator to a sub-panel is followed too), and a ninth check
+that no translator read is left without a namespace, so a hand-off the seam cannot follow — a barrel, a
+re-export, a positional argument into an imported helper — is named at its file and line instead of being
+uncounted. The witness is the count moving: planting a key in a panel now raises it by one and goes red,
+where it used to answer 8/8.
+
 Files only: no server, no browser, no port — which is why it belongs with the other file-only gates in
 `scripts/check.sh` and in CI, and why the script-inventory gate requires a runner to name it.
 */
@@ -664,6 +677,11 @@ const keyCalls = new Map();
 /** Which namespace each translator variable reads — `const tb = useTranslations("tactics")`. */
 const translatorNamespaces = new Map();/** Key reads that left a placeholder of the message unsupplied. */
 const missingValues = [];
+/**
+ * Key reads whose translator name resolves to **no namespace at all** — the shape the seam cannot follow,
+ * so the read is named instead of dropped.
+ */
+const unresolvedReads = [];
 let parsed = 0;
 let diagnostics = 0;
 
@@ -702,9 +720,221 @@ const UNITS = new Set([
   "min", "yrs", "yr", "mb", "kb", "gb", "tb", "mib", "gib", "tib", "sqm", "hz", "w", "kw",
 ]);
 
+/**
+ * The page/component seam: the namespace a translator *prop* is handed, read from the file that hands it.
+ *
+ * A panel under `components/` receives its translator as a prop, so inside the panel the namespace is a
+ * fact about a **different** file. Nothing in the panel's own source names it — `export function
+ * CareerAcademy({ t, view })` binds a parameter and stops — so the scope stack never bound `t`, the
+ * candidates list came back empty, and every key the panel read left the recorded set. Seven career
+ * panels, 167 key reads: invisible to the check whose whole job is to stop a page throwing
+ * MISSING_MESSAGE. The academy panel found the gap by planting a key in a panel and watching the gate
+ * answer 8/8, then planting the same key in the page and watching it answer 7/8.
+ *
+ * So the seam resolves a hand-off where the hand-off happens: `<CareerAcademy t={t} />` inside a page
+ * that binds `t` to `careerDetail` binds `careerDetail` to the prop's local name *inside the panel*. It
+ * repeats until the records stop growing, because a panel can hand the translator to a sub-panel it
+ * imports. A hand-off the seam cannot follow — a barrel, a name the target does not export, a positional
+ * argument into an imported function — is not silently dropped either: `unresolvedReads` names the file
+ * and line it left uncounted.
+ */
+const population = new Map(files.map((file) => [relOf(file), file]));
+
+/** The source files, parsed once here and reused by the walk below — the population is read twice. */
+const sourceCache = new Map();
+const parseOnce = (file) => {
+  if (!sourceCache.has(file)) {
+    sourceCache.set(file, ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX));
+  }
+  return sourceCache.get(file);
+};
+
+/** The file a module specifier names, when the gate reads that file too. */
+const moduleRel = (specifier) => {
+  if (!specifier.startsWith("@/")) return undefined;
+  const base = join(WEB, ...specifier.slice(2).split("/"));
+  for (const candidate of [`${base}.tsx`, `${base}.ts`, join(base, "index.tsx"), join(base, "index.ts")]) {
+    const rel = relOf(candidate);
+    if (population.has(rel)) return rel;
+  }
+  return undefined;
+};
+
+/** What a file imports, keyed by the local name the file writes. */
+const importsOf = (source) => {
+  const map = new Map();
+  for (const statement of source.statements) {
+    if (!ts.isImportDeclaration(statement) || !statement.importClause || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+    const target = moduleRel(statement.moduleSpecifier.text);
+    if (!target) continue;
+    if (statement.importClause.name && ts.isIdentifier(statement.importClause.name)) {
+      map.set(statement.importClause.name.text, { target, imported: "default" });
+    }
+    const bindings = statement.importClause.namedBindings;
+    if (bindings && ts.isNamedImports(bindings)) {
+      for (const element of bindings.elements) {
+        map.set(element.name.text, { target, imported: element.propertyName ? element.propertyName.text : element.name.text });
+      }
+    }
+  }
+  return map;
+};
+
+/** The functions a file exports, keyed by the name its importers use — `default` for the default one. */
+const exportsOf = (source) => {
+  const byName = new Map();
+  const functions = callableNames(source);
+  const has = (node, kind) =>
+    (ts.canHaveModifiers?.(node) ? ts.getModifiers(node) : undefined)?.some((modifier) => modifier.kind === kind) ?? false;
+  const bind = (node, name) => {
+    if (!node) return;
+    const target = ts.isIdentifier(node) ? functions.get(node.text) : node;
+    if (target) byName.set(name, target);
+  };
+  for (const statement of source.statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name && has(statement, ts.SyntaxKind.ExportKeyword)) {
+      byName.set(statement.name.text, statement);
+      if (has(statement, ts.SyntaxKind.DefaultKeyword)) byName.set("default", statement);
+    }
+    if (ts.isVariableStatement(statement) && has(statement, ts.SyntaxKind.ExportKeyword)) {
+      for (const declaration of statement.declarationList.declarations) {
+        if (!ts.isIdentifier(declaration.name) || !declaration.initializer) continue;
+        const initializer = ts.isAwaitExpression(declaration.initializer) ? declaration.initializer.expression : declaration.initializer;
+        if (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer)) {
+          byName.set(declaration.name.text, initializer);
+        }
+      }
+    }
+    if (ts.isExportAssignment(statement)) bind(statement.expression, "default");
+    if (ts.isExportDeclaration(statement) && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
+      for (const element of statement.exportClause.elements) bind(element.propertyName ?? element.name, element.name.text);
+    }
+  }
+  return byName;
+};
+
+/** The namespaces this file's own translator declarations bind. */
+const declaredOf = (source) => {
+  const map = new Map();
+  const visit = (node) => {
+    for (const [name, namespace] of translatorBindingsOf(node)) {
+      if (!map.has(name)) map.set(name, new Set());
+      map.get(name).add(namespace);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return map;
+};
+
+/** Every parameter name the file binds — a translator whose value arrives from outside this file. */
+const parametersOf = (source) => {
+  const names = new Set();
+  const visit = (node) => {
+    if (ts.isFunctionLike(node)) for (const name of parameterNames(node)) names.add(name);
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return names;
+};
+
+/** Where a file hands a translator across the boundary: an attribute on an imported component. */
+const handoffsOf = (source, imports, exportsByFile) => {
+  const list = [];
+  const visit = (node) => {
+    if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) && ts.isIdentifier(node.tagName)) {
+      const imported = imports.get(node.tagName.text);
+      const target = imported ? exportsByFile.get(imported.target)?.get(imported.imported) : undefined;
+      if (target) {
+        const locals = propToLocal(target);
+        for (const attribute of node.attributes.properties) {
+          if (!ts.isJsxAttribute(attribute) || !attribute.initializer || !ts.isJsxExpression(attribute.initializer)) continue;
+          const local = locals.get(attribute.name.getText());
+          if (local) list.push({ targetRel: imported.target, local, expression: attribute.initializer.expression });
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return list;
+};
+
+/**
+ * The namespace(s) an argument carries in the file that writes it: the file's own declaration first, then
+ * what that file was itself handed. Several namespaces is the honest answer when the name reads more than
+ * one, and the key-existence check then asks every of them — the same permissive rule the walk already
+ * uses for a translator handed to a component within one file.
+ */
+const namespacesOfArgument = (expression, declared, handed) => {
+  if (!expression) return [];
+  if (ts.isIdentifier(expression)) {
+    const own = declared.get(expression.text);
+    if (own?.size === 1) return [...own];
+    const received = handed?.get(expression.text);
+    if (received?.size === 1) return [...received];
+    return [...(own ?? []), ...(received ?? [])];
+  }
+  if (ts.isCallExpression(expression) && ts.isIdentifier(expression.expression)) {
+    const callee = expression.expression.text;
+    const first = expression.arguments[0];
+    if ((callee === "useTranslations" || callee === "getTranslations") && ts.isStringLiteral(first)) return [first.text];
+  }
+  return [];
+};
+
+const importsByFile = new Map();
+const exportsByFile = new Map();
+const declaredByFile = new Map();
+const parametersByFile = new Map();
+const handoffsByFile = new Map();
 for (const file of files) {
-  const text = readFileSync(file, "utf8");
-  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const rel = relOf(file);
+  const source = parseOnce(file);
+  importsByFile.set(rel, importsOf(source));
+  exportsByFile.set(rel, exportsOf(source));
+  declaredByFile.set(rel, declaredOf(source));
+  parametersByFile.set(rel, parametersOf(source));
+}
+/**
+ * The hand-offs are read **after** every file's exports are known: a page walks before its components in
+ * the population, and resolving `<CareerAcademy t={t} />` needs the panel's export already on the table.
+ */
+for (const file of files) {
+  const rel = relOf(file);
+  handoffsByFile.set(rel, handoffsOf(parseOnce(file), importsByFile.get(rel), exportsByFile));
+}
+
+/** The namespace each file's translator prop was handed, by the file's own name for it. */
+const seam = new Map();
+const handSeam = (targetRel, local, namespace) => {
+  if (!seam.has(targetRel)) seam.set(targetRel, new Map());
+  const entry = seam.get(targetRel);
+  if (!entry.has(local)) entry.set(local, new Set());
+  const before = entry.get(local).size;
+  entry.get(local).add(namespace);
+  return entry.get(local).size !== before;
+};
+{
+  let grown = true;
+  let rounds = 0;
+  while (grown && rounds < 6) {
+    grown = false;
+    rounds += 1;
+    for (const file of files) {
+      const rel = relOf(file);
+      const declared = declaredByFile.get(rel);
+      for (const site of handoffsByFile.get(rel)) {
+        for (const namespace of namespacesOfArgument(site.expression, declared, seam.get(rel))) {
+          if (handSeam(site.targetRel, site.local, namespace)) grown = true;
+        }
+      }
+    }
+  }
+}
+
+for (const file of files) {
+  const source = parseOnce(file);
   if (source.parseDiagnostics?.length) diagnostics += source.parseDiagnostics.length;
   parsed += 1;
   const rel = relOf(file);
@@ -742,6 +972,28 @@ for (const file of files) {
     ts.forEachChild(node, prePass);
   };
   prePass(source);
+
+  /**
+   * The seam, merged in: the namespaces the *importing* files handed to this file's translator props.
+   *
+   * Two places, for two different readers. The file-wide fallback map is where a key read through a prop
+   * translator becomes countable at all — nothing in this file binds the name, which is precisely the
+   * blind spot. A name the seam resolves to exactly one namespace also enters the scope stack, so the
+   * checks that read a template's translator calls (`adjacentTranslations`, `hasTranslatorCall`) and every
+   * nested function that inherits the name reach the panel too. A name a file both declares and is handed
+   * keeps its declaration here: the walk's own bindings are the more specific fact, and the fallback map
+   * already holds both.
+   */
+  for (const [name, received] of seam.get(rel) ?? []) {
+    if (!bindingsByName.has(name)) bindingsByName.set(name, new Set());
+    for (const namespace of received) {
+      bindingsByName.get(name).add(namespace);
+      namespaces.add(namespace);
+    }
+    if (received.size === 1 && !declaredByFile.get(rel)?.has(name)) {
+      bindTranslator(name, [...received][0]);
+    }
+  }
 
   const visit = (node) => {
     /**
@@ -812,6 +1064,23 @@ for (const file of files) {
         : callee && bindingsByName.has(callee)
           ? [...bindingsByName.get(callee)]
           : [];
+      /**
+       * The read the seam could not follow — a key-shaped literal asked of a name that arrives into this
+       * file as a parameter and resolves to **no namespace anywhere**. Recording zero keys for it is how
+       * 167 reads went invisible while the gate reported 8/8, so the gate names the file and the line
+       * instead of passing: a hand-off through a barrel, a re-export, or a positional argument into an
+       * imported helper is a finding, not a silence.
+       */
+      if (
+        callee &&
+        scoped === undefined &&
+        candidates.length === 0 &&
+        ts.isStringLiteral(first) &&
+        /^[A-Za-z0-9_]+$/.test(first.text) &&
+        parametersByFile.get(rel)?.has(callee)
+      ) {
+        unresolvedReads.push({ file: rel, line: position(node), key: first.text, name: callee });
+      }
       if ((callee === "useTranslations" || callee === "getTranslations") && ts.isStringLiteral(first)) {
         namespaces.add(first.text);
       } else if (candidates.length > 0 && ts.isStringLiteral(first) && /^[A-Za-z0-9_]+$/.test(first.text)) {
@@ -1051,6 +1320,25 @@ check(
   missingKeys.length === 0
     ? `${[...keyCalls.values()].reduce((total, entry) => total + entry.keys.size, 0)} key call(s) checked`
     : `${missingKeys.length} key(s) the catalogue does not hold`,
+);
+
+/**
+ * The check above is only as wide as the reads it *recorded*, and a read whose translator resolves to no
+ * namespace was recorded as nothing. That is how seven career panels — every panel the career page hands a
+ * translator to — held 167 key reads the gate never asked about, and it is why the panel's planted key
+ * passed 8/8 in the component while the same key in the page failed 7/8: the population was not the same
+ * population. The seam closes the shape; this closes the *silence*: a key-shaped read through a parameter
+ * that no seam reached is named, so a blind side cannot grow back quietly.
+ */
+check(
+  "no translator read is left without a namespace",
+  unresolvedReads.length === 0,
+  unresolvedReads.length === 0
+    ? `${[...seam.values()].reduce((total, entry) => total + entry.size, 0)} translator prop(s) bound across the seam`
+    : `${unresolvedReads.length} read(s) the seam could not follow: ${unresolvedReads
+        .slice(0, 8)
+        .map((read) => `${read.file}:${read.line} ${read.name}("${read.key}")`)
+        .join(", ")}`,
 );
 
 /**
