@@ -291,7 +291,7 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     no ceiling it says so rather than inventing one. Pinned by `TestMonthlyCeiling` and the door's key-set
     assertion. **Pending:** wiring the recommendation to an out-of-band alert channel (email/pager), which needs
     a delivery decision.
-22. **Gate the bare key calls a prop-translator component makes.** **Opened by item 7's first walk run
+22. **Gate the bare key calls a prop-translator component makes.** **Opened by item 7's first walk run; Done
     (2026-10-28).** `qa-i18n-literals.mjs` records a bare `t("key")` call against the namespace the
     *calling file itself* binds (`apps/web/scripts/qa-i18n-literals.mjs:804`-`:824`); when the translator
     arrives as a prop and the file never calls `getTranslations`/`useTranslations`, the candidate list is
@@ -306,8 +306,14 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     same planted key in `app/career/[slug]/page.tsx`, which binds `careerDetail` itself, is answered
     **7/8 — 1 key the catalogue does not hold, at 3662 calls**. The fix is to bind a prop translator to the
     namespace its *caller* passes, at the page/component seam, rather than widening the component's own file;
-    every panel already walks a page that binds exactly one namespace. *Gate:* the recorded-call count must
-    move when a key is planted in a prop-translator component — that reaction, not the pass, is the witness.
+    every panel already walks a page that binds exactly one namespace. **Fixed (2026-10-28):** the gate now
+    resolves a prop translator across files at the seam — the caller's namespace is bound to the component's
+    `t`, repeated until the resolution stops growing, so a panel handing the translator to a sub-panel is
+    followed too — and a ninth check refuses any translator read left without a namespace. Measured witness:
+    with `t("seamProbe")` planted in `components/CareerAcademy.tsx` (a prop-translator panel) the gate answers
+    **8/9 — `careerDetail` has no key "seamProbe", at 3827 calls**; the restored file is **9/9 at 3826 calls**,
+    and the tree's 7 prop translations are bound across the seam. *Gate:* the recorded-call count must move
+    when a key is planted in a prop-translator component — that reaction, not the pass, is the witness.
 
 *Gate:* each runbook cites the door it documents (§83 pattern); the cost ceiling is a tested boundary.
 
