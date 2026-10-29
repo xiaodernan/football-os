@@ -3,7 +3,7 @@
 Method (all figures from the tree, not from memory): the committed contract `docs/api/openapi.json` (126 paths when
 this audit was written, **144** re-read 2026-09-28, **160** re-read 2026-10-04, **162** re-read 2026-10-06, **206** re-read 2026-10-28, **218** re-read 2026-10-30), `find apps/web/app -name page.tsx`
 (47 routes then, **48** re-read 2026-09-28, **56** re-read 2026-10-04, **57** re-read 2026-10-06, **62** re-read 2026-10-28, **65** re-read 2026-10-30), the committed files in
-`apps/api/migrations/versions` (21 then, **24** re-read 2026-09-28, **26** re-read 2026-10-04, **42** re-read 2026-10-28, **44** re-read 2026-10-30),
+`apps/api/migrations/versions` (21 then, **24** re-read 2026-09-28, **26** re-read 2026-10-04, **42** re-read 2026-10-28, **45** re-read 2026-10-30),
 `ls apps/api/app/services[/**]`, and `grep` for the vocabulary
 each module is written in. A module is **landed** only when a route or page a caller can knock on
 carries its noun; a service file with no door is **partial**.
@@ -11,7 +11,7 @@ carries its noun; a service file with no door is **partial**.
 Every figure in this sentence is re-checked against the committed tree by
 `apps/api/tests/test_spec_audit_currency.py`, which reads the machine-readable line below rather than the prose:
 
-`AUDIT_FIGURES contract_paths=218 page_routes=65 migrations=44`
+`AUDIT_FIGURES contract_paths=218 page_routes=65 migrations=45`
 
 ## A. The 30 product modules (spec §3's list, §4–§42)
 

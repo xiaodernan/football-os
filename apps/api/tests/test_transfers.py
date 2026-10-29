@@ -34,7 +34,7 @@ from app.services.simulation.service import replay_is_identical, run_simulation
 from app.services.world import sync_world
 
 BUDGET = 4_000_000
-RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "window", "budget", "squad"}
+RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "wage_ceiling", "window", "budget", "squad"}
 
 
 def _round5(value: float) -> int:

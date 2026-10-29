@@ -989,6 +989,10 @@ class Career(Base, TimestampMixin):
     system_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
     budget: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     budget_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    # The board's wage ceiling: the most one round's wage bill may commit. A hard cap the balance cannot
+    # stand in for (a career can be cash-rich and still unable to take on another wage); 0 means the
+    # career has none, which is what a row opened before migration 0044 would hold.
+    wage_ceiling: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     objectives: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     rounds_played: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     status: Mapped[str] = mapped_column(String(12), default="active", nullable=False)

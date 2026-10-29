@@ -9,6 +9,8 @@
  * print the same arithmetic for a real listing.
  */
 
+import type { ReactNode } from "react";
+
 import { Panel } from "@/components/ui";
 import { KeyValueGrid } from "@/components/world";
 import type { AffordabilityView } from "@/lib/types";
@@ -28,28 +30,34 @@ export function CareerFinance({
 }) {
   const timeline = view.timeline;
   const unit = timeline.units;
+  const rows: [string, ReactNode][] = [
+    [t("rowFinanceRemaining"), `${money(view.remaining)} ${view.units}`],
+    [t("rowFinanceWeeklyBill"), `${money(view.weekly_wage_bill)} ${view.units}`],
+    [t("rowFinanceWagePlayers"), `${view.wage_players}`],
+    [
+      t("rowFinanceRunway"),
+      view.wage_runway_rounds === null
+        ? t("financeRunwayNone")
+        : t("financeRunwayRounds", { rounds: view.wage_runway_rounds }),
+    ],
+    [
+      t("rowFinanceWageCeiling"),
+      view.wage_ceiling > 0 ? `${money(view.wage_ceiling)} ${view.units}` : t("financeCeilingNone"),
+    ],
+  ];
+  if (view.wage_headroom !== null) {
+    rows.push([t("rowFinanceWageHeadroom"), `${money(view.wage_headroom)} ${view.units}`]);
+  }
+  rows.push([
+    t("financeRunwayFormula"),
+    <span className="mono" key="runway-formula">
+      {view.formula}
+    </span>,
+  ]);
   return (
     <Panel eyebrow={t("financeEyebrow")} title={t("financeTitle")}>
       <div className="stack-sm">
-        <KeyValueGrid
-          rows={[
-            [t("rowFinanceRemaining"), `${money(view.remaining)} ${view.units}`],
-            [t("rowFinanceWeeklyBill"), `${money(view.weekly_wage_bill)} ${view.units}`],
-            [t("rowFinanceWagePlayers"), `${view.wage_players}`],
-            [
-              t("rowFinanceRunway"),
-              view.wage_runway_rounds === null
-                ? t("financeRunwayNone")
-                : t("financeRunwayRounds", { rounds: view.wage_runway_rounds }),
-            ],
-            [
-              t("financeRunwayFormula"),
-              <span className="mono" key="runway-formula">
-                {view.formula}
-              </span>,
-            ],
-          ]}
-        />
+        <KeyValueGrid rows={rows} />
         <p className="muted">{view.note}</p>
 
         <h3 className="h3">{t("timelineTitle")}</h3>

@@ -218,6 +218,7 @@ def create_career(
     budget: int,
     objectives: list[dict[str, Any]],
     season: str,
+    wage_ceiling: int = 0,
 ) -> Career:
     """Open a career. The club's competition is copied from the world row, never asked for.
 
@@ -242,6 +243,7 @@ def create_career(
         philosophy=philosophy,
         system_slug=system_slug,
         budget=budget,
+        wage_ceiling=max(0, int(wage_ceiling)),
         objectives=objectives,
         status="active",
     )

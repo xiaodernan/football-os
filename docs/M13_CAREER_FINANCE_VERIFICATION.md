@@ -179,8 +179,9 @@ its witness 10/10, with the remaining catalogue gates green.
 
 * **The `no wage limit` sentence was not exercised live.** Every listed player carried a wage, so the new
   bill was always positive and the runway was a number; the `null` branch is rendered but unproven here.
-* **There is no budget ceiling.** A balance is what is left; a hard cap on what may be committed is a
-  different object and does not exist.
+* **There is no budget ceiling.** A balance is what is left; a hard cap on what may be committed was a
+  different object and did not exist when this walk ran. **Superseded 2026-10-30:** the wage ceiling landed
+  as Phase 2 item 6's close -- see [M13_WAGE_CEILING_VERIFICATION.md](M13_WAGE_CEILING_VERIFICATION.md).
 * **The truncation and disagreement branches of the career timeline were not exercised live.** The walk had
   three entries and zero disagreements; the API tests pin the disagreement count, and the truncation
   notice is untested against a career long enough to trigger it.

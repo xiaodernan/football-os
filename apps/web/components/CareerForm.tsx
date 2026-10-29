@@ -34,6 +34,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
   const [philosophy, setPhilosophy] = useState(options.philosophies.includes("balanced") ? "balanced" : options.philosophies[0] ?? "");
   const [system, setSystem] = useState("");
   const [budget, setBudget] = useState("250000");
+  const [wageCeiling, setWageCeiling] = useState("0");
   const [objectives, setObjectives] = useState<ObjectiveDraft[]>([{ kind: "points", target: "7", label: "" }]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +73,7 @@ export function CareerForm({ options }: { options: CareerOptions }) {
         philosophy,
         system: system || null,
         budget: Number(budget) || 0,
+        wage_ceiling: Number(wageCeiling) || 0,
         objectives: chosen,
         season: "2026",
       },
@@ -133,8 +135,12 @@ export function CareerForm({ options }: { options: CareerOptions }) {
           </span>
           <input aria-label={t("budget")} min={0} onChange={(event) => setBudget(event.target.value)} type="number" value={budget} />
         </label>
+        <label className="field">
+          <span>{t("wageCeiling")}</span>
+          <input aria-label={t("wageCeiling")} min={0} onChange={(event) => setWageCeiling(event.target.value)} type="number" value={wageCeiling} />
+        </label>
         <p className="muted" role="note">
-          {t("budgetHelp")} {t("wageBillHelp")}
+          {t("budgetHelp")} {t("wageBillHelp")} {t("wageCeilingHelp")}
         </p>
       </div>
 

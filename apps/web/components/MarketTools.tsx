@@ -274,6 +274,13 @@ export function MarketTools({
                         ? t("buySigningNoRunway")
                         : t("buySigningRunway", { rounds: row.signing.new_wage_runway_rounds })}
                     </p>
+                    {row.signing.wage_ceiling > 0 && (
+                      <p className="muted" data-wage-ceiling={row.id}>
+                        {row.signing.wage_affordable
+                          ? t("buySigningCeilingOkay", { amount: money(row.signing.wage_headroom_after ?? 0) })
+                          : t("buySigningCeilingOver", { amount: money(Math.abs(row.signing.wage_headroom_after ?? 0)) })}
+                      </p>
+                    )}
                   </td>
                   <td>{offerFor(row)}</td>
                 </tr>

@@ -131,6 +131,14 @@ WAGE_FORMULA: Final = (
     "(a buy until it is sold or released, a loan until loan_until_round), written as one row when the round is played; "
     "a career holding no deal of its own is charged nothing and writes no row"
 )
+#: The board's wage ceiling is stated when the career is opened, like the budget: the most one round's
+#: wage bill may commit. A balance is what is left; this is what may be committed, which sales income
+#: cannot widen and a cash-rich career can still run into. 0 means the board set none.
+WAGE_CEILING_FORMULA: Final = (
+    "career.wage_ceiling is stated when the career is opened, in the budget's units per round (0 = the board "
+    "sets no cap); a buy or loan is refused with wage_ceiling_exceeded when the weekly bill after the deal "
+    "would exceed it (a bill equal to the ceiling is within it)"
+)
 
 RULES: Final[dict[str, str]] = {
     "valuation": VALUATION_FORMULA,
@@ -142,6 +150,7 @@ RULES: Final[dict[str, str]] = {
     "sell": SELL_FORMULA,
     "release": RELEASE_FORMULA,
     "wages": WAGE_FORMULA,
+    "wage_ceiling": WAGE_CEILING_FORMULA,
     "window": WINDOW_FORMULA,
     "budget": BUDGET_FORMULA,
     "squad": "the eleven is then selected from the club's stored squad with these moves applied, so a signing changes the indices the engine plays with (app/services/simulation/squad.py)",
@@ -183,6 +192,7 @@ CONFLICT_CODES: Final = frozenset(
         "rival_will_not_sell",
         "transfers_forbidden",
         "transfer_window_closed",
+        "wage_ceiling_exceeded",
         "window_closed",
         "would_not_field_a_side",
     }
@@ -640,6 +650,8 @@ def budget_position(session: Session, career: Career, *, moves: list[CareerSquad
         "wage_committed_per_week": standing["fee"],
         "wage_players": standing["players"],
         "wage_detail": standing["detail"],
+        "wage_ceiling": int(career.wage_ceiling),
+        "wage_headroom": wage_headroom(int(career.wage_ceiling), int(standing["fee"])),
         "wage_note": ("charged every round this career plays: the deals it holds cost their agreed weekly wage, and each round's charge is a row of its own below"),
         "formula": BUDGET_FORMULA,
     }
@@ -649,7 +661,8 @@ def budget_position(session: Session, career: Career, *, moves: list[CareerSquad
 AFFORDABILITY_FORMULA: Final = (
     "wage_runway_rounds = max(0, floor(remaining ÷ wage_committed_per_week)) when the weekly bill is "
     "positive; a signing is affordable when remaining − price ≥ 0, and its new runway is computed on the "
-    "balance after the fee against the wage bill the signing would add"
+    "balance after the fee against the wage bill the signing would add; when the board's wage ceiling is "
+    "set, a signing is also wage-affordable only when the new bill is at or under it"
 )
 
 #: The budget timeline's arithmetic: opening balance plus each ledger row's delta, in round order.
@@ -686,18 +699,32 @@ def wage_runway(remaining: int, weekly_wage: int) -> int | None:
     return max(0, int(remaining) // weekly)
 
 
-def signing_impact(remaining: int, weekly_wage: int, *, price: int, proposed_weekly_wage: int) -> dict[str, Any]:
+def wage_headroom(ceiling: int, weekly_wage: int) -> int | None:
+    """What the current bill leaves under the ceiling, or `None` when the career has no ceiling.
+
+    Signed, not clamped: a bill above the ceiling reports the overrun as a negative number rather than
+    pretending the career is exactly at its cap.
+    """
+    if int(ceiling) <= 0:
+        return None
+    return int(ceiling) - int(weekly_wage)
+
+
+def signing_impact(remaining: int, weekly_wage: int, *, price: int, proposed_weekly_wage: int, wage_ceiling: int = 0) -> dict[str, Any]:
     """What one prospective signing would do to the balance and the wage runway, before it is made.
 
     Pure arithmetic over the figures the ledger already publishes, so a page can answer "can I afford
     this" without writing anything: `fee_affordable` is the balance after the fee staying non-negative,
-    and the new runway is that balance against the wage bill the signing would add. It is a preview of
-    the rules `buy`/`loan` enforce, not a second copy of them.
+    and the new runway is that balance against the wage bill the signing would add. When the career has
+    a wage ceiling, the same preview also answers the hard cap: `wage_affordable` is the new bill at or
+    under it, and `wage_headroom_after` is what would be left. It is a preview of the rules
+    `buy`/`loan` enforce, not a second copy of them.
     """
     price = int(price)
     proposed = int(proposed_weekly_wage)
     after_fee = int(remaining) - price
     new_bill = int(weekly_wage) + proposed
+    ceiling = int(wage_ceiling)
     return {
         "price": price,
         "proposed_weekly_wage": proposed,
@@ -705,6 +732,9 @@ def signing_impact(remaining: int, weekly_wage: int, *, price: int, proposed_wee
         "remaining_after_fee": after_fee,
         "new_weekly_wage_bill": new_bill,
         "new_wage_runway_rounds": wage_runway(after_fee, new_bill),
+        "wage_ceiling": ceiling,
+        "wage_affordable": None if ceiling <= 0 else new_bill <= ceiling,
+        "wage_headroom_after": None if ceiling <= 0 else ceiling - new_bill,
     }
 
 
@@ -727,12 +757,16 @@ def affordability_view(session: Session, career: Career, *, price: int = 0, week
         "weekly_wage_bill": weekly,
         "wage_players": int(position["wage_players"]),
         "wage_runway_rounds": wage_runway(remaining, weekly),
-        "signing": signing_impact(remaining, weekly, price=price, proposed_weekly_wage=weekly_wage),
+        "wage_ceiling": int(career.wage_ceiling),
+        "wage_headroom": wage_headroom(int(career.wage_ceiling), weekly),
+        "within_ceiling": int(career.wage_ceiling) <= 0 or weekly <= int(career.wage_ceiling),
+        "signing": signing_impact(remaining, weekly, price=price, proposed_weekly_wage=weekly_wage, wage_ceiling=int(career.wage_ceiling)),
         "units": position["units"],
         "formula": AFFORDABILITY_FORMULA,
         "note": (
             "a read-only preview: the runway is how many more rounds the balance covers the wage bill the career "
-            "already holds, and the signing block is the same arithmetic with one prospective deal added"
+            "already holds, the ceiling is the board's hard cap on one round's wage bill, and the signing block is "
+            "the same arithmetic with one prospective deal added"
         ),
         "timeline": budget_timeline(session, career, limit=8, moves=moves, charges=charges),
         "data_origin": "simulation",
@@ -930,6 +964,32 @@ def pay_wages(session: Session, career: Career, *, round_index: int) -> CareerWa
     return charge
 
 
+def _require_wage_headroom(career: Career, balance: dict[str, Any], *, proposed_weekly_wage: int, player_name: str) -> None:
+    """Refuse a deal that would take the weekly bill over the board's ceiling.
+
+    `buy` and `loan` both call this after the affordability check, so the two doors cannot answer
+    differently about the same cap. A career with no ceiling (`0`) passes; a bill exactly at the
+    ceiling is within it.
+    """
+    ceiling = int(career.wage_ceiling)
+    bill = int(balance["wage_committed_per_week"])
+    if ceiling <= 0:
+        return
+    new_bill = bill + int(proposed_weekly_wage)
+    if new_bill <= ceiling:
+        return
+    raise MarketRefusal(
+        "wage_ceiling_exceeded",
+        f"signing {player_name} would take the weekly wage bill to {new_bill:,} {career.budget_units}, over the board's {ceiling:,} ceiling",
+        weekly_wage_bill=bill,
+        proposed_weekly_wage=int(proposed_weekly_wage),
+        new_weekly_wage_bill=new_bill,
+        wage_ceiling=ceiling,
+        wage_headroom=max(0, ceiling - bill),
+        formula=WAGE_CEILING_FORMULA,
+    )
+
+
 def buy(session: Session, career: Career, *, ident: str, use_clause: bool = False) -> tuple[CareerSquadMove, dict[str, Any]]:
     """Sign a listed player for good. The fee leaves the balance before the next round is played."""
     _require_transferable(session, career)
@@ -955,6 +1015,7 @@ def buy(session: Session, career: Career, *, ident: str, use_clause: bool = Fals
             remaining=int(balance["remaining"]),
             formula=BUDGET_FORMULA,
         )
+    _require_wage_headroom(career, balance, proposed_weekly_wage=int(row.weekly_wage), player_name=row.player_name)
     player = session.get(RealPlayer, row.player_id)
     if player is None:
         raise MarketRefusal("player_gone", f"the row for {row.player_name} is no longer stored, so there is nobody to sign", listing_id=row.id)
@@ -986,6 +1047,7 @@ def loan(session: Session, career: Career, *, ident: str, rounds: int = DEFAULT_
             remaining=int(balance["remaining"]),
             formula=LOAN_FORMULA,
         )
+    _require_wage_headroom(career, balance, proposed_weekly_wage=int(row.weekly_wage), player_name=row.player_name)
     player = session.get(RealPlayer, row.player_id)
     if player is None:
         raise MarketRefusal("player_gone", f"the row for {row.player_name} is no longer stored, so there is nobody to loan", listing_id=row.id)
@@ -1171,13 +1233,15 @@ def listing_row(session: Session, career: Career, row: TransferListing, balance:
         "price_to_pay": price,
         "affordable": price <= int(standing["remaining"]),
         # What this offer would do to the balance and the wage runway, from the same arithmetic the
-        # affordability block publishes: `fee_affordable` here is exactly `affordable` above, and the
-        # runway is the balance after the fee against the bill the signing would add.
+        # affordability block publishes: `fee_affordable` here is exactly `affordable` above, the runway
+        # is the balance after the fee against the bill the signing would add, and `wage_affordable`
+        # answers the board's hard cap on that bill.
         "signing": signing_impact(
             int(standing["remaining"]),
             int(standing["wage_committed_per_week"]),
             price=price,
             proposed_weekly_wage=int(row.weekly_wage),
+            wage_ceiling=int(career.wage_ceiling),
         ),
         "clause_required": rival,
         "data_origin": row.data_origin,
@@ -1358,6 +1422,7 @@ __all__ = [
     "SELL_FORMULA",
     "TIMELINE_FORMULA",
     "VALUATION_FORMULA",
+    "WAGE_CEILING_FORMULA",
     "WAGE_FORMULA",
     "WINDOW_FORMULA",
     "affordability_view",
@@ -1388,6 +1453,7 @@ __all__ = [
     "transferable",
     "valuation",
     "wage_bill",
+    "wage_headroom",
     "wage_row",
     "wage_runway",
     "wages_as_of",

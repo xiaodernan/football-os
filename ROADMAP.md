@@ -467,7 +467,7 @@ Still open: a season's ledger is only as complete as the rounds whose reports ar
 ## Spec modules no milestone owns (audit 2026-09-27)
 
 `[docs/SPEC_COVERAGE_AUDIT.md](docs/SPEC_COVERAGE_AUDIT.md)` maps all 30 product modules to measured evidence (218 contract paths, 65 page
-routes, 44 migrations). Everything in §4–�?2 has a door except none, and the row below is what it still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every `�?N file(s)` count any
+routes, 45 migrations). Everything in §4–�?2 has a door except none, and the row below is what it still lacks; `apps/api/tests/test_spec_audit_currency.py` recomputes the three figures, every `�?N file(s)` count any
 committed markdown publishes �?here, in the audit and in a verification record alike, every path the audit's §A table
 cites, every door-and-page census that table publishes and every
 `/api/v1/…` route citation in the ledger:

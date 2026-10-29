@@ -57,6 +57,9 @@ class CareerIn(BaseModel):
     philosophy: str = Field(default="balanced", max_length=20)
     system: str | None = Field(default=None, max_length=160)
     budget: int = Field(default=1_000_000, ge=0, le=BUDGET_CEILING)
+    # The board's cap on one round's wage bill. 0 is "no cap", the same convention the platform's other
+    # ceilings use; a stated cap is enforced by buy and loan and previewed in every signing block.
+    wage_ceiling: int = Field(default=0, ge=0, le=BUDGET_CEILING)
     objectives: list[ObjectiveIn] = Field(default_factory=list, max_length=4)
     season: str = Field(default="2026", max_length=12)
 
@@ -118,6 +121,7 @@ def read_options(request: Request, db: Session = Depends(get_db)) -> dict[str, A
         "objective_kinds": {kind: OBJECTIVE_FORMULA[kind] for kind in OBJECTIVE_KINDS},
         "budget_ceiling": BUDGET_CEILING,
         "budget_units": "career credits",
+        "wage_ceiling_units": "career credits per round",
         "max_careers_per_user": MAX_CAREERS_PER_USER,
         "data_origin": "simulation",
         "is_demo_data": True,
@@ -144,6 +148,7 @@ def open_career(payload: CareerIn, request: Request, db: Session = Depends(get_d
         system_slug=payload.system or "",
         budget=payload.budget,
         objectives=objectives,
+        wage_ceiling=payload.wage_ceiling,
         season=payload.season,
     )
     return {"created": True, **career_view(db, career)}

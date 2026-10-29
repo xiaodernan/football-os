@@ -65,6 +65,7 @@ def _career(auth_client: TestClient, club: str, **kwargs: Any) -> str:
             "manager_name": "Market Manager",
             "philosophy": "balanced",
             "budget": kwargs.pop("budget", BUDGET),
+            "wage_ceiling": kwargs.pop("wage_ceiling", 0),
             "objectives": [{"kind": "wins", "target": 1, "label": "win once"}],
             **kwargs,
         },
@@ -267,6 +268,56 @@ class TestMarketReachesTheMatch:
         report = auth_client.get(f"/api/v1/simulate/{played['match']['slug']}").json()["report"]
         assert report["sides"][played["fixtures"][0]["side"]]["squad_label"] == ""
         assert played["limitations"]["budget"], "the sentence about the budget is still printed when it was never spent"
+
+
+class TestTheWageCeiling:
+    """The board's hard cap on one round's wage bill, over the wire: a 409 with figures, then the same deal allowed."""
+
+    def test_the_market_publishes_the_ceiling_and_the_preview_answers_it(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id, wage_ceiling=50_000)
+        opened = _opened(auth_client, slug)
+        assert opened["budget"]["wage_ceiling"] == 50_000
+        assert opened["budget"]["wage_headroom"] == 50_000
+        listing = opened["listings"][0]
+        assert listing["signing"]["wage_ceiling"] == 50_000
+        assert listing["signing"]["wage_affordable"] is True
+        unbounded = _career(auth_client, club_id)
+        assert _opened(auth_client, unbounded)["budget"]["wage_ceiling"] == 0
+
+    def test_a_bill_over_the_ceiling_is_refused_then_allowed_once_raised(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id)
+        opened = _opened(auth_client, slug)
+        listing = min(opened["listings"], key=lambda row: (row["price_to_pay"], row["id"]))
+        _set_ceiling(slug, int(listing["weekly_wage"]) - 1)  # the door states it; a lower cap is planted to refuse
+        refused = auth_client.post(f"{API}/{slug}/buy", json={"listing": listing["id"], "use_clause": True})
+        assert refused.status_code == 409
+        detail = refused.json()["detail"]
+        assert detail["code"] == "wage_ceiling_exceeded"
+        assert detail["wage_ceiling"] == int(listing["weekly_wage"]) - 1
+        assert detail["proposed_weekly_wage"] == int(listing["weekly_wage"])
+        assert detail["new_weekly_wage_bill"] == int(listing["weekly_wage"])
+        assert detail["wage_headroom"] == int(listing["weekly_wage"]) - 1
+        after = auth_client.get(f"{API}/{slug}").json()
+        assert next(row for row in after["listings"] if row["id"] == listing["id"])["status"] == "open"
+        assert after["budget"]["moves"] == 0
+
+        _set_ceiling(slug, int(listing["weekly_wage"]))
+        bought = auth_client.post(f"{API}/{slug}/buy", json={"listing": listing["id"], "use_clause": True})
+        assert bought.status_code == 200, bought.text
+        body = bought.json()
+        assert body["budget"]["wage_ceiling"] == int(listing["weekly_wage"])
+        assert body["budget"]["wage_committed_per_week"] == int(listing["weekly_wage"])
+        assert body["budget"]["wage_headroom"] == 0
+
+
+def _set_ceiling(slug: str, ceiling: int) -> None:
+    session = SessionLocal()
+    try:
+        career = session.scalars(select(Career).where(Career.slug == slug)).one()
+        career.wage_ceiling = ceiling
+        session.commit()
+    finally:
+        session.close()
 
 
 def career_squad(slug: str, label: str) -> bool:

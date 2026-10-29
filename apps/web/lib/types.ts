@@ -1473,6 +1473,12 @@ export type SigningImpact = {
   new_weekly_wage_bill: number;
   /** `null` when the signing would leave no wage obligation at all. */
   new_wage_runway_rounds: number | null;
+  /** The board's hard cap on one round's wage bill; `0` means this career has none. */
+  wage_ceiling: number;
+  /** `null` when there is no ceiling; otherwise whether the new bill stays at or under it. */
+  wage_affordable: boolean | null;
+  /** `null` when there is no ceiling; signed, so an overrun shows as negative. */
+  wage_headroom_after: number | null;
 };
 
 export type BudgetTimelineRow = {
@@ -1509,6 +1515,12 @@ export type AffordabilityView = {
   wage_players: number;
   /** `null` when the career pays no wages at all, so the balance sets no wage-driven limit. */
   wage_runway_rounds: number | null;
+  /** The board's hard cap on one round's wage bill; `0` means this career has none. */
+  wage_ceiling: number;
+  /** `null` when there is no ceiling; otherwise what the current bill leaves under it. */
+  wage_headroom: number | null;
+  /** `true` when there is no ceiling or the current bill is at or under it. */
+  within_ceiling: boolean;
   /** With no prospective signing passed, this is the arithmetic for a zero-fee, zero-wage move. */
   signing: SigningImpact;
   units: string;
