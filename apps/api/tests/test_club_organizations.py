@@ -118,6 +118,9 @@ DOORS: tuple[tuple[str, str, dict[str, Any]], ...] = (
     ("post", "/academy/{ident}/plans/{plan}/feedback", {"message": "a line for a child they cannot reach"}),
     ("post", "/academy/{ident}/plans/{plan}/evidence", {"clip": "vid_somebody_elses", "t_start": 1, "t_end": 4}),
     ("delete", "/academy/{ident}/plans/{plan}/evidence/{evidence}", {}),
+    # The share door names a tenant before it resolves a plan, so the walk reaches it here and a stranger is
+    # refused at `standing()` rather than at the plan — the order in which the answer cannot confirm the row.
+    ("post", "/academy/{ident}/plans/{plan}/share", {}),
     ("get", "/academy/{ident}/consents", {}),
     ("post", "/academy/{ident}/consents", {"player": "whoever"}),
     ("delete", "/academy/{ident}/consents/{player}", {}),
@@ -555,8 +558,8 @@ class TestIsolationAcrossTenants:
         living = _tenant_naming_doors()
         assert living == declared, sorted(living ^ declared)
         assert (
-            len(declared) == 51
-        ), "this class is the isolation proof for every door that names a tenant: §39's twenty-four (fourteen of §41's spine, five fixtures and five notices), §40's eighteen academy doors, §41's eight session and report doors and §42's one tenant-meter door, counted from the route table above rather than remembered"
+            len(declared) == 52
+        ), "this class is the isolation proof for every door that names a tenant: §39's twenty-four (fourteen of §41's spine, five fixtures and five notices), §40's nineteen academy doors, §41's eight session and report doors and §42's one tenant-meter door, counted from the route table above rather than remembered"
 
     def test_an_unaccepted_invitation_and_a_revoked_standing_are_both_not_a_foothold(self) -> None:
         owner = _account("Suspender")

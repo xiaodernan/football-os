@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
+import { AcademySharePanel } from "@/components/AcademySharePanel";
 import { PlanTools } from "@/components/AcademyTools";
 import { Panel } from "@/components/ui";
 import { KeyValueGrid, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
@@ -317,6 +318,8 @@ export default async function AcademyPlanPage({ params }: Props) {
           </p>
         )}
       </Panel>
+
+      <AcademySharePanel ident={view.organization} plan={view.plan.id} />
 
       <Panel
         eyebrow={t("writePanelEyebrow", { count: axes.length, from: range[0], to: range[1] })}

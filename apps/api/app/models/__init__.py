@@ -2359,6 +2359,35 @@ class ScoutReportShare(Base, TimestampMixin):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class AcademyPlanShare(Base, TimestampMixin):
+    """One public link over a child's development plan (§40): the plan, and when its door shut.
+
+    The row stores a pointer and no figure at all. Every number a reader sees is recomputed from the plan's own
+    `plan_assessments` rows on the request that prints it, which is what lets a shared page age in the open: a
+    review filed after the link was minted is on the page the next reader opens, and a plan whose reviews were
+    erased stops claiming progress it no longer holds.
+
+    Both foreign keys cascade on delete, because §40's erasure is a promise about the child rather than about a
+    page: erasing a plan takes its public links with it, and an account that goes takes its links too. The public
+    read still answers `share_subject_gone` when a database has foreign keys switched off and the row outlives
+    the plan it names.
+    """
+
+    __tablename__ = "academy_plan_shares"
+    __table_args__ = (
+        UniqueConstraint("share_token", name="uq_academy_plan_share_token"),
+        Index("ix_academy_plan_share_owner_live", "user_id", "revoked_at"),
+        Index("ix_academy_plan_share_plan", "plan_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    share_token: Mapped[str] = mapped_column(String(64), nullable=False)
+    organization_id: Mapped[str] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    plan_id: Mapped[str] = mapped_column(ForeignKey("development_plans.id", ondelete="CASCADE"), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class AgentMemory(Base, TimestampMixin):
     """One persisted fact or context fragment for an M11 agent (spec §34 agent memory).
 

@@ -42,6 +42,7 @@ from app.services.club import matches as mat
 from app.services.club import organizations as club
 from app.services.club import reports as rep
 from app.services.club import sessions as sess
+from app.services.club import sharing as plan_share
 from app.services.club.organizations import ClubRefusal
 from app.services.community import posts as community
 from app.services.creator import publishing as creator
@@ -132,6 +133,7 @@ TIERS: Final = (
     scout_share,
     scout_shortlist,
     scout_transfer_sim,
+    plan_share,
 )
 
 

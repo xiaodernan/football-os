@@ -314,7 +314,27 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     (20 candidates → `Corand Ruceek` → `/scout/shared/9f19…` → anonymous 200 with no leak → 375px overflow 0 →
     close → 404). `test_scout_share.py` + `test_response_cache.py` (32 tests) pin the mint, the ledger and the
     sweep; `ruff` and `mypy app` (159 files) clean; web gates green.
-    **Academy public view still to do** — the other half of this item.
+    **Academy public view done (2026-10-30):** four doors over §40's plan — `POST
+    /club/academy/{ident}/plans/{plan}/share` mints or returns a link whose gate is the private read's
+    (`plan_for_reader`) plus the minors' one (`plan_consent`); `GET /club/academy/shares` is the account's
+    ledger (`opened` / `live` / `revoked`, 20 open), owner-scoped so it outlives a membership; `DELETE
+    /club/academy/shares/{token}` closes one and sweeps the public answer from both cache tiers; `GET
+    /club/academy/shared/{token}` recomputes status, focus, goals, stage, progress, review rows and the
+    feedback/evidence counts from the plan's own rows, and names all nine omissions in `redacted`. The
+    defect this half had to fix: the page recomputed per request but the sixty-second response cache could
+    still answer for it, so a review filed after a public read was missing from the next page. Every plan
+    write (edit, erase, assessment, feedback, evidence add/remove, player-data erase) now drops each live
+    token's cached path — collected before a delete, because the share rows cascade with the plan. Web:
+    `/academy/shared/[token]` (no session, `noindex`, canonical `/club`) and `AcademySharePanel` on the
+    plan page (create / view / copy with the URL printed when the clipboard is denied / revoke; the ledger
+    is re-read after every write). 42 new `club` keys × three locales; catalogue 3956 / 3911. Evidence:
+    `test_academy_share.py` **21/21** (progress equality field for field, exact private-key set absent,
+    ageing, the four gates, ledger / ceiling / revoke / owner scoping, three cache sweeps);
+    `.scratch/walk-share.py` **46/46** live in three locales (revoke → 404 on the same request, minor
+    consent on both sides of the yes); `.scratch/panel-share.mjs` **20/20** in Chrome (login → panel → copy
+    → public page → note filed while cached → reload counts it → revoke → 404 → Chinese labels); adjacent
+    academy + organization suites **237/237**; `ruff`, `mypy`, `tsc`, `eslint` clean. Record:
+    [M13_ACADEMY_SHARE_VERIFICATION.md](M13_ACADEMY_SHARE_VERIFICATION.md).
 
 *Gate:* `visual-qa.mjs` gains the new flows; `npm run lint` + `tsc --noEmit` clean.
 

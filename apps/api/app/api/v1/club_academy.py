@@ -30,6 +30,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
+from app.core.cache import drop_public_response
 from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
@@ -38,6 +39,7 @@ from app.services.club import answers
 from app.services.club import organizations as club
 from app.services.club import reports as rep
 from app.services.club import sessions as sess
+from app.services.club import sharing as plan_share
 from app.services.club.organizations import ClubRefusal
 
 router = APIRouter(prefix="/club/academy", tags=["youth-academy"])
@@ -86,6 +88,10 @@ ROUTE_GUIDE: Final = (
     {"methods": ["POST"], "path": "/api/v1/club/academy/{ident}/plans/{plan}/feedback", "purpose": "say one thing to the player, and decide whether the guardian reads it too"},
     {"methods": ["POST"], "path": "/api/v1/club/academy/{ident}/plans/{plan}/evidence", "purpose": "cite a window of a clip the caller uploaded; this does not hand out a way to watch it"},
     {"methods": ["DELETE"], "path": "/api/v1/club/academy/{ident}/plans/{plan}/evidence/{evidence}", "purpose": "remove one citation; the clip itself is the uploader's and stays"},
+    {"methods": ["POST"], "path": "/api/v1/club/academy/{ident}/plans/{plan}/share", "purpose": "mint a public link over one plan, or return the live one this account already holds for it"},
+    {"methods": ["GET"], "path": "/api/v1/club/academy/shares", "purpose": "this account's plan-link ledger, owner-scoped so it survives a membership ending"},
+    {"methods": ["DELETE"], "path": "/api/v1/club/academy/shares/{token}", "purpose": "close one plan link; the row stays and the door shuts at once"},
+    {"methods": ["GET"], "path": "/api/v1/club/academy/shared/{token}", "purpose": "the public read: one plan's shape recomputed from its own rows, with the child's identity left out"},
     {
         "methods": ["GET", "POST"],
         "path": "/api/v1/club/academy/{ident}/consents",
@@ -232,7 +238,10 @@ def read_academy_capabilities(request: Request, db: Session = Depends(get_db)) -
         # arithmetic while still looking complete to a reader. Codes §40 already answers with are not claimed twice.
         "session_refusals": answers.published(sess.PUBLISHED),
         "report_refusals": answers.published(rep.REFUSALS),
-        "limitations": [*edu.limitations(), sess.LIMITATION, rep.LIMITATION],
+        # A share is a second way into this tier's rows, so its codes are published beside the others rather than
+        # left to be discovered by a caller who tripped one.
+        "share_refusals": answers.published(plan_share.REFUSALS),
+        "limitations": [*edu.limitations(), sess.LIMITATION, rep.LIMITATION, plan_share.LIMITATION],
         "consent_scopes": {
             "scopes": list(edu.SCOPES),
             "default_granted": list(edu.DEFAULT_SCOPES),
@@ -416,6 +425,64 @@ def drop_evidence(ident: str, plan: str, evidence: str, request: Request, db: Se
     limit(request, 30, 60, scope="academy_write")
     try:
         return {**edu.unlink_evidence(db, user, ident, plan, evidence), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.post("/{ident}/plans/{plan}/share")
+def open_plan_share(ident: str, plan: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Mint a public link over one plan, or return the live one this account already holds for it.
+
+    The gate is the private read's (`plan_for_reader`) plus §40's minors' gate (`plan_consent`): a link may only
+    exist over a plan the caller could open, and a child's plan needs a granted `plan` consent before it can leave
+    the tenant. Both refusals are the academy service's own codes and answer from the same table as every door here.
+    """
+    limit(request, 20, 60, scope="academy_share_write")
+    try:
+        return {**plan_share.open_share(db, user, ident, plan), "demo_data": False}
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+
+
+@router.get("/shares")
+def read_plan_shares(request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """This account's plan-link ledger, owner-scoped so it survives a membership ending.
+
+    The rows are this account's own: a link is a key its holder carries, not a tenant's property, so the read is
+    answered without resolving an organisation — a guardian removed from a club can still close what they opened.
+    """
+    limit(request, 60, 60, scope="academy_share_list")
+    return {**plan_share.list_shares(db, user.id), "demo_data": False}
+
+
+@router.delete("/shares/{token}")
+def close_plan_share(token: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Close one plan link. §38's output is revocable, which is the whole difference between a link and a leak.
+
+    The row is committed before anything is returned, and then the public answer the cache may still hold for this
+    token is dropped from both tiers — a public answer is stored under the empty identity, so `drop_identity`
+    cannot reach it and the path sweep must.
+    """
+    limit(request, 20, 60, scope="academy_share_write")
+    try:
+        record = plan_share.revoke(db, user.id, token)
+    except ClubRefusal as error:
+        raise _refusal(error) from None
+    drop_public_response(plan_share.PUBLIC_PATH.format(token=token))
+    return {**record, "demo_data": False}
+
+
+@router.get("/shared/{token}")
+def read_shared_plan(token: str, request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The public read. No `current_user` dependency: the token is the whole credential, as at §38's CV link.
+
+    The answer carries the plan's shape and the tenant that wrote it, and no name, age, position, rating, team,
+    coach, free text or clip. Every figure is recomputed from the plan's own rows on this request, so a link minted
+    last season reports the plan as it stands now rather than as it stood the day it was handed over.
+    """
+    limit(request, 60, 60, scope="academy_share_read")
+    try:
+        return plan_share.public_plan(db, token)
     except ClubRefusal as error:
         raise _refusal(error) from None
 

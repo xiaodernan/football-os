@@ -461,6 +461,71 @@ export type PlanView = {
   your_standing: { guardian_of_this_child: boolean; read_through: string; role: string; scopes_held: string[]; staff: boolean };
 };
 
+/** One row of `GET …/academy/shares`: a link's plan and child, and a closed row's token left out. */
+export type AcademyShareRecord = {
+  live: boolean;
+  opened_at: string;
+  organization: string;
+  plan: string;
+  plan_status: string | null;
+  player: { name: string; slug: string } | null;
+  revoked_at: string | null;
+  share: string;
+  token: string | null;
+};
+
+export type AcademyShareMinted = AcademyShareRecord & {
+  consented_by: { consent: string; guardian: string; scopes: string[] } | null;
+  created: boolean;
+  max_live: number;
+  demo_data: boolean;
+};
+
+export type AcademyShareLedger = {
+  counts: { live: number; opened: number; revoked: number };
+  demo_data: boolean;
+  max_live: number;
+  rule: string;
+  shares: AcademyShareRecord[];
+};
+
+/**
+ * `GET …/academy/shared/{token}` — the shape of one plan, read live, with the child left out.
+ *
+ * There is deliberately no child here: no name, age, position, rating, team, coach or free text. `redacted`
+ * names every omission with its reason, because a minimised page and a thin page look alike from outside.
+ */
+export type PublicPlan = {
+  assessments: {
+    assessed_on: string;
+    axes_missing: string[];
+    mean_rating: number | null;
+    measured_from: string;
+    overall_observed: number;
+    ratings: Record<string, number>;
+  }[];
+  counts: { assessments: number; evidence: number; feedback: number; feedback_shared_with_guardian: number };
+  demo_data: boolean;
+  figures_from: string;
+  plan: {
+    focus: string[];
+    goals: { by: string; measure: string; title: string }[];
+    minor_at_open: boolean;
+    opened_at: string | null;
+    review_weeks: number;
+    stage: string;
+    status: string;
+  };
+  progress: PlanProgress;
+  redacted: { field: string; why: string }[];
+  shared: {
+    note: string;
+    opened_at: string;
+    organization: { kind: string; name: string; slug: string };
+    plan: string;
+  };
+};
+
 /** `GET …/players/{player}/data` — what is held about this child here, printed before anything is erased. */
 export type ChildDataView = {
   columns: Record<string, string[]>;

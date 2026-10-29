@@ -6456,6 +6456,185 @@
         }
       }
     },
+    "/api/v1/club/academy/{ident}/plans/{plan}/share": {
+      "post": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Open Plan Share",
+        "description": "Mint a public link over one plan, or return the live one this account already holds for it.\n\nThe gate is the private read's (`plan_for_reader`) plus §40's minors' gate (`plan_consent`): a link may only\nexist over a plan the caller could open, and a child's plan needs a granted `plan` consent before it can leave\nthe tenant. Both refusals are the academy service's own codes and answer from the same table as every door here.",
+        "operationId": "open_plan_share_api_v1_club_academy__ident__plans__plan__share_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          },
+          {
+            "name": "plan",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Open Plan Share Api V1 Club Academy  Ident  Plans  Plan  Share Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/shares": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Plan Shares",
+        "description": "This account's plan-link ledger, owner-scoped so it survives a membership ending.\n\nThe rows are this account's own: a link is a key its holder carries, not a tenant's property, so the read is\nanswered without resolving an organisation — a guardian removed from a club can still close what they opened.",
+        "operationId": "read_plan_shares_api_v1_club_academy_shares_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Plan Shares Api V1 Club Academy Shares Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/club/academy/shares/{token}": {
+      "delete": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Close Plan Share",
+        "description": "Close one plan link. §38's output is revocable, which is the whole difference between a link and a leak.\n\nThe row is committed before anything is returned, and then the public answer the cache may still hold for this\ntoken is dropped from both tiers — a public answer is stored under the empty identity, so `drop_identity`\ncannot reach it and the path sweep must.",
+        "operationId": "close_plan_share_api_v1_club_academy_shares__token__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Close Plan Share Api V1 Club Academy Shares  Token  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club/academy/shared/{token}": {
+      "get": {
+        "tags": [
+          "youth-academy"
+        ],
+        "summary": "Read Shared Plan",
+        "description": "The public read. No `current_user` dependency: the token is the whole credential, as at §38's CV link.\n\nThe answer carries the plan's shape and the tenant that wrote it, and no name, age, position, rating, team,\ncoach, free text or clip. Every figure is recomputed from the plan's own rows on this request, so a link minted\nlast season reports the plan as it stands now rather than as it stood the day it was handed over.",
+        "operationId": "read_shared_plan_api_v1_club_academy_shared__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Shared Plan Api V1 Club Academy Shared  Token  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/club/academy/{ident}/consents": {
       "get": {
         "tags": [
@@ -9572,7 +9751,7 @@
           "scouting"
         ],
         "summary": "Close Report Share",
-        "description": "Take the link back. §38's output is revocable, which is the whole difference between a link and a leak.",
+        "description": "Take the link back. §38's output is revocable, which is the whole difference between a link and a leak.\n\nThe row is committed before anything is returned, and then the public answer the cache may still hold for\nthis token is dropped from both tiers. Without that drop the revocation would be true in the table and false\nat the door for up to the response TTL: measured 2026-10-29 against a live server, the link answered 200 on\nthe read right after its owner closed it. The key names nobody — a public answer is stored under the empty\nidentity — so `drop_identity` cannot reach it; the path sweep can (see `cache.drop_public_response`).",
         "operationId": "close_report_share_api_v1_scout_share__token__delete",
         "security": [
           {

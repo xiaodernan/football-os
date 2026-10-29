@@ -13,8 +13,8 @@
  *
  * This file asks the question the old one was reaching for, in the population where the answer means
  * something: **inside one namespace**, two keys with the same English sentence are the same sentence in
- * the same context, so they must carry the same Chinese. That population is **117** groups at the
- * 2026-10-28 ratchet and **13** of them diverge; every one is named in `REVIEWED` with its reason, and a
+ * the same context, so they must carry the same Chinese. That population is **125** groups at the
+ * 2026-10-29 ratchet and **12** of them diverge; every one is named in `REVIEWED` with its reason, and a
  * group that is not named is red. The ledger is keyed on **identity** (`namespace|key1,key2`), not a
  * count, so fixing one group cannot pay for a new one.
  *
@@ -61,17 +61,17 @@ const REVIEWED = {
   "tactics|framesTitle,playPhaseChange": "the panel title and the action it offers",
   "knowledge|askEyebrow,askLibrary": "the eyebrow and the action",
   "club|eraseFixture,noticeErase,tableHeaderErase,tableHeaderErase2": "the action, the notice and two column headers",
-  "club|kvChild,tableHeaderChild": "a family member and a minor",
   "errors|no_such_club,no_such_team": "one club, whose noun the API fixes as 'club'; the Chinese files use two synonyms",
   "simulate|ariaSubstitutions,substitutionsLabel": "a field label and its accessible name; the aria reads as a count ('换人次数'), the label as the action ('换人'), mirrored in both CJK locales",
 };
 
-/** Cross-namespace drift, measured. Ratcheted on 2026-10-28 to the figures this HEAD measures
- * (99 sentence issues over 241 shared sentences, 42 key issues over 260 shared keys) — the
- * same-sense alignment cures of 2026-10-27..28 dissolved most of the 2026-10-25 review's 119/107
- * and no new drift arrived (dce0734 measured 119/107 exactly; b59544b measured 99/42). These may
- * only fall further. */
-const SENTENCE_CEILING = 99;
+/** Cross-namespace drift, measured. Ratcheted on 2026-10-29 to the figures this HEAD measures
+ * (96 sentence issues over 248 shared sentences, 42 key issues over 260 shared keys) — the
+ * same-sense alignment cures of 2026-10-27..29 dissolved most of the 2026-10-25 review's 119/107
+ * and no new drift arrived (dce0734 measured 119/107 exactly; b59544b measured 99/42; the plan-share
+ * landing measured 106 before its Opened/Closed/Career/Child/Token/Link-ready alignments took it to
+ * 96). These may only fall further. */
+const SENTENCE_CEILING = 96;
 const KEY_CEILING = 42;
 
 const catalogues = {};

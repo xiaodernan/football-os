@@ -341,6 +341,17 @@ def _require_scope(session: Session, organization: Organization, player: RealPla
     )
 
 
+def plan_consent(session: Session, organization: Organization, player: RealPlayer) -> GuardianConsent | None:
+    """The guardian row §40 asks for before a minor's plan can become a public page — `None` for an adult.
+
+    This is `_require_scope(..., "plan")` said in one place rather than a second copy of the minors' gate: a public
+    link is the strongest read this tier can hand out, so the row that lets a tenant *work* on a child's plan is
+    also the row that lets the plan leave the tenant. Sharing an adult's plan needs no consent, because there is no
+    guardian to ask.
+    """
+    return _require_scope(session, organization, player, "plan")
+
+
 def _plan(session: Session, organization: Organization, ident: str) -> DevelopmentPlan:
     plan = session.scalar(select(DevelopmentPlan).where(DevelopmentPlan.organization_id == organization.id, DevelopmentPlan.id == str(ident)))
     if plan is None:
@@ -949,15 +960,20 @@ def open_plan(
     }
 
 
-def get_plan(session: Session, user: User, ident: str, plan_ident: str) -> dict[str, Any]:
-    """One plan, read through the right that opens it — and a child nobody here consented for is not in the answer."""
+def plan_for_reader(session: Session, user: User, ident: str, plan_ident: str) -> tuple[Organization, DevelopmentPlan, dict[str, Any]]:
+    """The gate one plan read passes through, answered as rows so a second door can hand the read on.
+
+    `get_plan` is this function plus the payload, and the share link is minted over this same gate rather than a
+    second copy of the question: a link may only exist over a plan its owner could open at the moment the link was
+    made, so `no_such_plan` and `insufficient_role` at the share door are the private read's own answers. A parent
+    asking for another family's child is answered as a plan that does not exist, because the useful half of a 403 —
+    "your role is below this" — would tell them the row is real.
+    """
     organization, member = standing(session, user, ident)
     plan = _plan(session, organization, plan_ident)
     reader = _reader(session, organization, user, plan.player_id)
     if not reader["can_read"]:
         if access.may(member.role, "plan.read_own_child"):
-            # A parent asking for another family's child: answered as a plan that does not exist, because the
-            # useful half of a 403 — "your role is below this" — would tell them the row is real.
             raise ClubRefusal("no_such_plan", f"no development plan of {organization.slug} that you may read answers to {str(plan_ident)!r}", ident=str(plan_ident), organization=organization.slug)
         raise ClubRefusal(
             "insufficient_role",
@@ -966,7 +982,32 @@ def get_plan(session: Session, user: User, ident: str, plan_ident: str) -> dict[
             permission="plan.read_all",
             **access.grant(member.role, member.status),
         )
+    return organization, plan, reader
+
+
+def get_plan(session: Session, user: User, ident: str, plan_ident: str) -> dict[str, Any]:
+    """One plan, read through the right that opens it — and a child nobody here consented for is not in the answer."""
+    organization, plan, reader = plan_for_reader(session, user, ident, plan_ident)
     return {**plan_view(session, plan, reader), "organization": organization.slug, "integrity": academy_problems(session, user), "demo_data": False}
+
+
+def _public_share_paths(session: Session, plan_ids: list[str]) -> list[str]:
+    """The cached public answers a plan write is about to make false, by the paths they are stored under.
+
+    Imported inside the function because `services.club.sharing` imports this module for the private read gate;
+    resolving it at call time keeps that dependency one-way at import time. A caller that deletes the plan must
+    collect these paths *before* the delete, because the share rows cascade away with it.
+    """
+    from app.services.club.sharing import public_paths_of
+
+    return public_paths_of(session, plan_ids)
+
+
+def _retire_public_shares(paths: list[str]) -> None:
+    """Drop each cached public answer after the write that made it false has committed."""
+    from app.services.club.sharing import drop_public_paths
+
+    drop_public_paths(paths)
 
 
 def update_plan(
@@ -1011,6 +1052,7 @@ def update_plan(
     if curriculum is not None:
         plan.curriculum_id = changed["curriculum"] = _curriculum(session, organization, curriculum).id
     session.commit()
+    _retire_public_shares(_public_share_paths(session, [plan.id]))
     return {
         **plan_view(session, plan, reader),
         "changed": changed,
@@ -1061,6 +1103,7 @@ def add_assessment(session: Session, user: User, ident: str, plan_ident: str, *,
     )
     session.add(row)
     session.commit()
+    _retire_public_shares(_public_share_paths(session, [plan.id]))
     return {
         "assessment": assessment_view(row),
         "progress": progress_of(session, plan),
@@ -1089,6 +1132,7 @@ def add_feedback(session: Session, user: User, ident: str, plan_ident: str, *, m
     row = CoachFeedback(id=new_public_id("cfb"), plan_id=plan.id, coach_user_id=user.id, message=text, shared_with_guardian=bool(shared_with_guardian))
     session.add(row)
     session.commit()
+    _retire_public_shares(_public_share_paths(session, [plan.id]))
     return {
         "feedback": feedback_view(row),
         "feedback_rows": held + 1,
@@ -1139,6 +1183,7 @@ def link_evidence(session: Session, user: User, ident: str, plan_ident: str, *, 
     )
     session.add(row)
     session.commit()
+    _retire_public_shares(_public_share_paths(session, [plan.id]))
     return {
         "evidence": evidence_view(session, row),
         "evidence_rows": len(rows) + 1,
@@ -1157,6 +1202,7 @@ def unlink_evidence(session: Session, user: User, ident: str, plan_ident: str, e
     label = row.label
     session.delete(row)
     session.commit()
+    _retire_public_shares(_public_share_paths(session, [plan.id]))
     return {"deleted": True, "evidence": label, "rule": "the citation goes and the clip stays: an upload belongs to the account that uploaded it, and unlinking it from a plan edits nobody's file"}
 
 
@@ -1363,6 +1409,7 @@ def erase_player_data(session: Session, user: User, ident: str, player: str, *, 
             confirm_required=True,
         )
     plans = list(session.scalars(select(DevelopmentPlan).where(DevelopmentPlan.organization_id == organization.id, DevelopmentPlan.player_id == person.id)))
+    public_paths = _public_share_paths(session, [plan.id for plan in plans])
     clips_linked = sum(1 for plan in plans for row in _evidence(session, plan) if row.asset_id)
     consents = list(session.scalars(select(GuardianConsent).where(GuardianConsent.organization_id == organization.id, GuardianConsent.player_id == person.id)))
     for plan in plans:
@@ -1370,6 +1417,7 @@ def erase_player_data(session: Session, user: User, ident: str, player: str, *, 
     for consent in consents:
         session.delete(consent)
     session.commit()
+    _retire_public_shares(public_paths)
     after = _rows_about(session, organization, person)
     return {
         "organization": organization.slug,
@@ -1398,8 +1446,10 @@ def erase_plan(session: Session, user: User, ident: str, plan_ident: str, *, con
         raise ClubRefusal(
             "erase_confirmation", f"this plan holds {sum(counts.values())} rows of review and feedback; send confirm=true to erase them with it", plan=plan.id, **counts, confirm_required=True
         )
+    public_paths = _public_share_paths(session, [plan.id])
     session.delete(plan)
     session.commit()
+    _retire_public_shares(public_paths)
     return {
         "deleted": True,
         "plan": plan_ident,
