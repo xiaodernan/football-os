@@ -26,6 +26,7 @@ from typing import Final
 #: with the platform module rather than being duplicated in this one.
 NOT_FOUND_CODES: Final = frozenset(
     {
+        "no_such_alert",  # metrics — one operator alert by id
         "no_such_challenge",  # challenges
         "no_such_club",  # careers
         "no_such_frame",  # video
