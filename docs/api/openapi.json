@@ -13674,6 +13674,152 @@
         }
       }
     },
+    "/api/v1/metrics/alerts": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "List Alerts",
+        "description": "The alert ledger, newest first: what the platform raised about itself and how far delivery got.\n\nAdmin standing is the router's, so this door inherits it like every other metrics door. `state` filters the\noperator's half (`open` / `acknowledged`); a value outside that vocabulary is a 422 rather than an empty list,\nbecause an unknown filter silently answering nothing is how a triage page comes to look calm.",
+        "operationId": "list_alerts_api_v1_metrics_alerts_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(open|acknowledged)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response List Alerts Api V1 Metrics Alerts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics/alerts/check": {
+      "post": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Check Alerts",
+        "description": "One sweep: raise the alert this month warrants, once, then deliver what is still undelivered.\n\nThis is the door a scheduler calls. It is a POST because it writes -- the row is the delivery guarantee -- and\nit answers with the month it recomputed, the rows it raised, the rows it already held, and what each delivery\nattempt returned.",
+        "operationId": "check_alerts_api_v1_metrics_alerts_check_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Check Alerts Api V1 Metrics Alerts Check Post"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics/alerts/{alert}/acknowledge": {
+      "post": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Acknowledge Alert",
+        "description": "Mark one alert read by the operator who read it. An unknown id is 404 `no_such_alert`.",
+        "operationId": "acknowledge_alert_api_v1_metrics_alerts__alert__acknowledge_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Alert"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Acknowledge Alert Api V1 Metrics Alerts  Alert  Acknowledge Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/metrics/latency": {
       "get": {
         "tags": [

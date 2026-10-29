@@ -377,8 +377,20 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     and `exceeded` / `projected_over`. `recommend()` publishes it as a `monthly` block and adds a
     `monthly_ceiling` recommendation when a ceiling is configured and the month is over or projected over; with
     no ceiling it says so rather than inventing one. Pinned by `TestMonthlyCeiling` and the door's key-set
-    assertion. **Pending:** wiring the recommendation to an out-of-band alert channel (email/pager), which needs
-    a delivery decision.
+    assertion. **Done (2026-10-30):** the channel is a signed webhook plus a stored ledger, the delivery decision
+    this item asked for. `services/ops_alerts.py` recomputes `monthly_state` at each sweep, raises at
+    most one row per `(kind, month, condition)` (`...:projected_over` and `...:exceeded` are separate
+    rows, so a month first over its pace and later over its ceiling raises both), writes the row before
+    any POST, and retries an undelivered row on each sweep up to five attempts, recording the
+    receiver's own words on failure. With no `OPS_ALERT_WEBHOOK_URL` the ledger is the channel, and a
+    webhook configured later delivers the backlog on the next sweep. Each POST is signed with
+    `APP_SECRET` over the exact bytes (`X-Football-Alert-Signature: sha256=<hex>`, plus
+    `X-Football-Alert-Id`); the body is canonical JSON. Three admin doors under the metrics standing:
+    `GET /api/v1/metrics/alerts` (state filter `open` / `acknowledged`; an unknown value is 422, not an
+    empty list), `POST /api/v1/metrics/alerts/check` (the sweep), and
+    `POST /api/v1/metrics/alerts/{alert}/acknowledge` (404 `no_such_alert`). Migration `0043`;
+    `tests/test_ops_alerts.py` (17 cases), `.scratch/walk-alerts.py` **29/29** against a live API and a
+    real sink, and the runbook [`docs/runbooks/cost_alerts.md`](runbooks/cost_alerts.md).
 22. **Gate the bare key calls a prop-translator component makes.** **Opened by item 7's first walk run; Done
     (2026-10-28).** `qa-i18n-literals.mjs` records a bare `t("key")` call against the namespace the
     *calling file itself* binds (`apps/web/scripts/qa-i18n-literals.mjs:804`-`:824`); when the translator

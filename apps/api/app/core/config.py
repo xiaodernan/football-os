@@ -65,6 +65,10 @@ class Settings:
     # A published monthly ceiling, distinct from the daily budget: 0 means "no ceiling configured",
     # and the advisor says so rather than inventing one. Set AI_MONTHLY_CEILING_USD to publish one.
     ai_monthly_ceiling_usd: float = field(default_factory=lambda: float(_env("AI_MONTHLY_CEILING_USD", "0") or 0.0))
+    # M13 item 21's out-of-band channel: a signed POST to this URL when the monthly ceiling is projected over
+    # or exceeded. Empty means none is configured, and an alert is recorded in `ops_alerts` without leaving the
+    # platform (a webhook configured later delivers the undelivered rows on the next sweep).
+    ops_alert_webhook_url: str = field(default_factory=lambda: _env("OPS_ALERT_WEBHOOK_URL"))
     # M12 observability: keep every finished span in the database, so a request can be read back
     # without a collector. Off by default because it writes a row per span; a deployment turns it on
     # (or points OpenTelemetry at a collector and leaves this off).

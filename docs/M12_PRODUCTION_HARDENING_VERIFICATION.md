@@ -962,14 +962,14 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `350a93fa9919965e5780993e3aacff15d3b35eb5fd692f206fe46cb3cd9af1f6` that population is **220
-secured operations, 53 public operations and 95 private GET paths**, with floors of 200/40/85 printed on
+SHA-256 `59ed99d469adb1b2d9e43b1aa9160af6eb9432dfcede521a00891b0c481640e2` that population is **226
+secured operations, 54 public operations and 97 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 220 / 53 / 95 |
-| S1 | every secured operation refuses a caller with no credential | **220 knocked, 220 × 401**, 0 deviations |
+| C0 | the door population comes from the contract and is not empty | 226 / 54 / 97 |
+| S1 | every secured operation refuses a caller with no credential | **226 knocked, 226 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |

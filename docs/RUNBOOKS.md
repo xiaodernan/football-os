@@ -31,3 +31,9 @@ the script is right and the runbook is the bug.
 - [`tracing.md`](runbooks/tracing.md) — the OTLP backend and the database span store (`request_spans`,
   seven-day retention), the two admin doors (`/api/v1/traces/{id}` and `/api/v1/traces/summary`), and the
   live-store caveat that a page render writes spans of its own.
+
+## Cost alerts
+
+- [`cost_alerts.md`](runbooks/cost_alerts.md) — the monthly ceiling's out-of-band channel: the sweep
+  (`POST /api/v1/metrics/alerts/check`), the signed webhook (`OPS_ALERT_WEBHOOK_URL`), the `ops_alerts` ledger and
+  its retry ceiling, and the delivery decision behind all three.

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -25,6 +25,7 @@ from app.core.request_metrics import snapshot as request_metrics_snapshot
 from app.core.runtime import uptime_seconds
 from app.core.security import current_user, role_refusal, standing_check
 from app.models import ModelCall, User, VideoAsset
+from app.services import ops_alerts
 from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
 from app.services.cost_advisor import recommend as cost_recommend
 from app.services.latency_profile import profile as latency_profile
@@ -204,6 +205,41 @@ def cost_optimisation(
     Admin standing only: it reads the whole platform's spend.
     """
     return cost_recommend(db, days=days)
+
+
+@router.get("/alerts")
+def list_alerts(
+    state: str | None = Query(None, pattern="^(open|acknowledged)$"),
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """The alert ledger, newest first: what the platform raised about itself and how far delivery got.
+
+    Admin standing is the router's, so this door inherits it like every other metrics door. `state` filters the
+    operator's half (`open` / `acknowledged`); a value outside that vocabulary is a 422 rather than an empty list,
+    because an unknown filter silently answering nothing is how a triage page comes to look calm.
+    """
+    return ops_alerts.list_alerts(db, state=state, limit=limit)
+
+
+@router.post("/alerts/check")
+def check_alerts(db: Session = Depends(get_db)) -> dict[str, Any]:
+    """One sweep: raise the alert this month warrants, once, then deliver what is still undelivered.
+
+    This is the door a scheduler calls. It is a POST because it writes -- the row is the delivery guarantee -- and
+    it answers with the month it recomputed, the rows it raised, the rows it already held, and what each delivery
+    attempt returned.
+    """
+    return ops_alerts.evaluate(db)
+
+
+@router.post("/alerts/{alert}/acknowledge")
+def acknowledge_alert(alert: str, user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict[str, Any]:
+    """Mark one alert read by the operator who read it. An unknown id is 404 `no_such_alert`."""
+    record = ops_alerts.acknowledge(db, user, alert)
+    if record is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "no_such_alert", "message": f"no operator alert {alert!r}"})
+    return record
 
 
 @router.get("/latency")

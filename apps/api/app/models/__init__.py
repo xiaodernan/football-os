@@ -2445,6 +2445,45 @@ class RequestSpan(Base, TimestampMixin):
     attributes_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
 
 
+class OpsAlert(Base, TimestampMixin):
+    """One alert the platform raised about itself, and what became of its delivery (M13 Phase 6 item 21).
+
+    The row is the delivery guarantee: a webhook can be down, a receiver can be new, but a condition that fired
+    is in the database before any POST leaves it, and the sweep retries undelivered rows. `dedupe_key` names the
+    condition rather than the reader -- one month over its ceiling is one row however many sweeps see it -- so a
+    pager hears about a breach once, and a month that crosses its pace and then its ceiling owns two rows because
+    those are two facts.
+
+    `state` is the operator's half (`open` / `acknowledged`), `delivery_*` is the channel's half. Keeping both on
+    one row is what makes "raised, delivered, read" answerable without joining three places that could disagree.
+    """
+
+    __tablename__ = "ops_alerts"
+    __table_args__ = (
+        UniqueConstraint("dedupe_key", name="uq_ops_alert_dedupe"),
+        Index("ix_ops_alert_state_created", "state", "created_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=lambda: new_public_id("alert"))
+    kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    #: `warning` (a pace that would breach) or `critical` (a ceiling already crossed).
+    level: Mapped[str] = mapped_column(String(12), nullable=False)
+    dedupe_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    #: The sentence a pager reads, and the arithmetic behind it. The detail is the recomputed monthly block, not
+    #: a copy of what the page said when the alert was raised.
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    detail: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    state: Mapped[str] = mapped_column(String(16), nullable=False, default="open")
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    acknowledged_by: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    #: `webhook` once an attempt was made, `recorded` while no URL is configured. Never a claim of delivery:
+    #: `delivered_at` is the only field that says a receiver answered 2xx.
+    delivery_channel: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    delivery_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    delivery_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
 class Notification(Base, TimestampMixin):
     """One event an account should hear about, written when the event happened (spec module 27).
 

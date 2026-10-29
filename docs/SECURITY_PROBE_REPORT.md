@@ -15,14 +15,14 @@ answer rather than from an assertion about the code.
 artifact the web client and the currency gates read — and takes every operation that declares a
 `security` requirement as a private door, every operation that declares none as a public one.
 
-At the latest run recorded here (run F, §2) the contract's SHA-256 was
-`350a93fa9919965e5780993e3aacff15d3b35eb5fd692f206fe46cb3cd9af1f6`, and the census read:
+At the latest run recorded here (run G, §2) the contract's SHA-256 was
+`59ed99d469adb1b2d9e43b1aa9160af6eb9432dfcede521a00891b0c481640e2`, and the census read:
 
 | measurement | value | floor |
 | --- | --- | --- |
-| secured operations | 220 | 200 |
-| public operations | 53 | 40 |
-| private `GET` paths | 95 | 85 |
+| secured operations | 226 | 200 |
+| public operations | 54 | 40 |
+| private `GET` paths | 97 | 85 |
 
 The floors exist so an empty or half-read contract cannot pass as a clean probe; they are printed with
 every run and they sit under the counts at HEAD. A door that lands in the contract without a credential
@@ -40,23 +40,29 @@ the four) — so the census moved to 220 / 53 / 95. `apps/api/tests/test_securit
 reads this document's SHA, census, floors and S1 count and compares them to the committed contract and
 the probe's own constants.
 
+Run G is the run against the contract as committed today: item 18's academy plan share added four
+doors — three private (`POST /club/academy/{ident}/plans/{plan}/share`, `GET /club/academy/shares`,
+`DELETE /club/academy/shares/{token}`) and one public (`GET /club/academy/shared/{token}`) — and item
+21's cost-alert tier added three private doors (`GET /metrics/alerts`, `POST /metrics/alerts/check`,
+`POST /metrics/alerts/{alert}/acknowledge`), so the census moved to 226 / 54 / 97.
+
 ## 2. The runs
 
 Runs A–C were made on 2026-10-22 local time (their reports' timestamps are UTC, `2026-10-21T19:2x`)
 against a live uvicorn on `127.0.0.1:8751`; run D was made on 2026-10-24 local time (`2026-10-23T19:16`
 UTC) on port 8752; run E was made on 2026-10-28 local time (`2026-10-27T16:32` UTC) on port 8753; run F
-was made on 2026-10-29 local time (`2026-10-29T12:17` UTC) on port 8732. All six used
+was made on 2026-10-29 local time (`2026-10-29T12:17` UTC) on port 8732; run G was made on 2026-10-30 local time (`2026-10-29T19:27` UTC) on port 8751. All seven used
 `ENV=development` — the configuration in which the response cache and the rate limiter are live, since
 both return early under `ENV=test`. Each run used a fresh server process and a fresh database, because
 the limiter's window and the near cache live in process memory.
 
-| | run A | run B | run C | run D | run E | run F |
-| --- | --- | --- | --- | --- | --- | --- |
-| server cache tier | degraded — the default Redis on 6379 refused the handshake, so the near tier served | **live** — the project's authenticated Redis on 63790 (`REDIS_URL`), connected | **live**, same tier and URL as run B | **live**, same tier and URL as run B | **live**, same tier and URL as run B | degraded — Redis unavailable, so the near tier served |
-| CORS origin configured | `http://localhost:3000` (the probe's old default, set on that server) | the project's own `apps/api/.env` pair, `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` | `http://127.0.0.1:3218` (the web shell this run's page walk used) |
-| database | `.scratch/m12-probe.db` (SQLite) | `.scratch/m12-probe-redis.db` (SQLite) | `football_os_probe_m12` on the project's PostgreSQL (port 54321), migrated to head | `football_os_probe_m12_d` on the project's PostgreSQL (port 54321), migrated to head `0036` | `football_os_probe_m12_e` on the project's PostgreSQL (port 54321), migrated to head `0041` | `.scratch/walk-academy.db` (SQLite, the world-synced walking database) |
-| report | `.scratch/security-probe.json` | `.scratch/security-probe-redis.json` | `.scratch/security-probe-pg.json` | `.scratch/security-probe-d.json` | `.scratch/security-probe-e.json` | `.scratch/probe-18.json` |
-| result | **10 passed / 0 failed / 0 server errors**, 7.83 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 19.61 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 11.37 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 6.88 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 9.27 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 1.58 s, rc=0 |
+| | run A | run B | run C | run D | run E | run F | run G |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| server cache tier | degraded — the default Redis on 6379 refused the handshake, so the near tier served | **live** — the project's authenticated Redis on 63790 (`REDIS_URL`), connected | **live**, same tier and URL as run B | **live**, same tier and URL as run B | **live**, same tier and URL as run B | degraded — Redis unavailable, so the near tier served | degraded — no `REDIS_URL` was set on this server, so the near tier served |
+| CORS origin configured | `http://localhost:3000` (the probe's old default, set on that server) | the project's own `apps/api/.env` pair, `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` | `http://127.0.0.1:3218` (the web shell this run's page walk used) | `http://localhost:3210` |
+| database | `.scratch/m12-probe.db` (SQLite) | `.scratch/m12-probe-redis.db` (SQLite) | `football_os_probe_m12` on the project's PostgreSQL (port 54321), migrated to head | `football_os_probe_m12_d` on the project's PostgreSQL (port 54321), migrated to head `0036` | `football_os_probe_m12_e` on the project's PostgreSQL (port 54321), migrated to head `0041` | `.scratch/walk-academy.db` (SQLite, the world-synced walking database) | `.scratch/probe-g.db` (SQLite, created by the app on startup) |
+| report | `.scratch/security-probe.json` | `.scratch/security-probe-redis.json` | `.scratch/security-probe-pg.json` | `.scratch/security-probe-d.json` | `.scratch/security-probe-e.json` | `.scratch/probe-18.json` | `.scratch/security-probe-g.json` |
+| result | **10 passed / 0 failed / 0 server errors**, 7.83 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 19.61 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 11.37 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 6.88 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 9.27 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 1.58 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 17.58 s, rc=0 |
 
 Run C differs from run B in one input — `DATABASE_URL` — so the engine is the only candidate for any
 difference, and the ten checks read the same evidence: the same 212 doors answering 401, the same
@@ -82,6 +88,13 @@ is the evidence the near tier alone can give. The origin this run configured was
 `http://127.0.0.1:3218` rather than the 3210 pair, because the page walk in the same session needed the
 shell on that port; S8 read the configured origin echoed and the rogue one refused.
 
+Run G repeated the shape on a fresh SQLite database that the app created on startup, against the
+contract as committed after item 18's academy plan share and item 21's cost-alert tier. It answered
+the ten checks on a server with no `REDIS_URL`, so the near tier served the cache checks; S4 read the
+same MISS→HIT pairs and the same separation between callers. The three alert doors are admin-only, and
+S1 knocked each of them with no credential and recorded 401. The census it read is the one printed in
+§1 for that run: 226 secured / 54 public / 97 private `GET` paths.
+
 Runs B and C are the ones that matter for the cache claim: the shared tier was the source of the
 cross-account replay fixed at M12 Item 6, so the probe was repeated with that tier actually in the
 request path rather than with it degraded. `--allow-origin` now defaults to the project's own web origin (3210); run A had
@@ -101,10 +114,10 @@ re-running the probe against the same contract is what reproduces them.
 
 ## 3. The ten checks
 
-| ident | claim | measured in run F |
+| ident | claim | measured in run G |
 | --- | --- | --- |
-| C0 | the private-door population is read from the committed contract and is not empty | 220 secured / 53 public / 95 private GET paths, contract SHA-256 above |
-| S1 | every secured operation refuses a caller with no credential, and asks for one | **220 knocked, 220 answered 401**, 0 deviations |
+| C0 | the private-door population is read from the committed contract and is not empty | 226 secured / 54 public / 97 private GET paths, contract SHA-256 above |
+| S1 | every secured operation refuses a caller with no credential, and asks for one | **226 knocked, 226 answered 401**, 0 deviations |
 | S2 | a token whose signature no longer verifies is refused | 401, body keys `code`, `message` |
 | S3 | one account's row is absent to another, in both the direct read and the listing | create 201; owner read 200; stranger read **404**; stranger patch **404**; stranger's listing 200 with the owner's row absent; `/auth/me` caller-scoped |
 | S4 | a public answer is served from cache under its own request id, and a cached private answer never crosses callers | private: A MISS → HIT, B MISS → HIT, **stranger never received the owner's row**; public: MISS → HIT, bodies byte-identical, request ids different |

@@ -3938,6 +3938,7 @@
     "no_objectives": "a career needs at least one objective to be judged by",
     "no_player": "Create your player profile first",
     "no_refresh": "No active session",
+    "no_such_alert": "There is no operator alert with that id.",
     "no_such_challenge": "That is not one of the authored challenges.",
     "no_such_club": "That is not a club in the generated world.",
     "no_such_frame": "That clip has no sampled frame with that id.",

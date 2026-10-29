@@ -3938,6 +3938,7 @@
     "no_objectives": "一个赛季至少需要一个目标才能评判",
     "no_player": "请先创建你的球员档案",
     "no_refresh": "没有有效的会话",
+    "no_such_alert": "没有这个编号的运维告警。",
     "no_such_challenge": "这不是本项目编写的挑战之一。",
     "no_such_club": "这不是生成世界里的俱乐部。",
     "no_such_frame": "该片段没有这个编号的采样帧。",
