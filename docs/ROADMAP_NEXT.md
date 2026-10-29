@@ -296,6 +296,25 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     3876 keys, 3831 translated in both Chinese files.
 18. **More surfaces.** Remaining read-only pages (academy public view, scout public report) rendered from
     the same live reads the private doors use.
+    **Scout public report done (2026-10-29):** `POST /scout/share` mints a link over the question a report
+    answered — player, role, career, comparator, round — and stores the question rather than any figure;
+    `GET /scout/shares` is the account's ledger (`live` / `revoked` / `max_live` 20), `DELETE /scout/share/{token}`
+    closes one and then drops the public answer from **both** cache tiers, and `GET /scout/shared/{token}`
+    rebuilds all thirteen fields from the stored rows on every read. A token is 32 hex in a `String(64)` unique
+    column; an unknown, a revoked and another account's token are one 404 `no_such_share`, and a closed row keeps
+    its question while losing its token. The web half is `/scout/shared/[token]` (no session, `noindex`,
+    middleware exception) plus `ScoutSharePanel` on `/scout`, placed **outside** the search block so a manager
+    reads and closes doors without running a new search. 38 new `scout` keys × three locales. The measured bug
+    this unit had to fix: revocation was true in the table and false at the door for up to a minute, because a
+    public answer is cached under the empty identity and the per-caller drop could not reach it — hence
+    `cache.drop_public_response` sweeping anonymous keys by path in `TTLCache` and `RedisCache`. Evidence:
+    `.scratch/walk-18.py` **44/44** (mint idempotence, ceiling, public read matching the private report
+    field-for-field, no account key, three locales, revoke → immediate 404, the other link untouched); `visual-qa.mjs`
+    now carries the flow as **10b-2**, and the same nine browser steps passed **9/9** on the running stack
+    (20 candidates → `Corand Ruceek` → `/scout/shared/9f19…` → anonymous 200 with no leak → 375px overflow 0 →
+    close → 404). `test_scout_share.py` + `test_response_cache.py` (32 tests) pin the mint, the ledger and the
+    sweep; `ruff` and `mypy app` (159 files) clean; web gates green.
+    **Academy public view still to do** — the other half of this item.
 
 *Gate:* `visual-qa.mjs` gains the new flows; `npm run lint` + `tsc --noEmit` clean.
 

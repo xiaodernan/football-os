@@ -51,6 +51,7 @@ from app.services.portfolio import sharing as portfolio_share
 from app.services.scouting import report as scout_report
 from app.services.scouting import requirements as scout_requirements
 from app.services.scouting import search as scout_search
+from app.services.scouting import sharing as scout_share
 from app.services.scouting import shortlist as scout_shortlist
 from app.services.scouting import transfer_sim as scout_transfer_sim
 from app.services.simulation import market as market
@@ -128,6 +129,7 @@ TIERS: Final = (
     scout_report,
     scout_requirements,
     scout_search,
+    scout_share,
     scout_shortlist,
     scout_transfer_sim,
 )

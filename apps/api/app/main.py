@@ -8,7 +8,6 @@ import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable
 from contextlib import asynccontextmanager
 from typing import Any, Protocol
-from urllib.parse import quote
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,7 +46,7 @@ from app.api.v1 import (
     video,
     world,
 )
-from app.core.cache import _response_cache
+from app.core.cache import _response_cache, response_cache_key
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.errors import install_error_handlers
@@ -109,36 +108,6 @@ def caller_identity(credential: str) -> str:
     if not credential:
         return ""
     return hashlib.sha256(credential.encode("utf-8")).hexdigest()[:32]
-
-
-def response_cache_key(path: str, query: str, origin: str = "", identity: str = "") -> str:
-    """The cache identity of a request: path, query, the origin that asked, and the caller.
-
-    `origin` belongs here for the same reason it belongs in HTTP's own `Vary`:
-    `Access-Control-Allow-Origin` is a function of the request's `Origin`, so a response
-    carrying it is not one answer but one answer per origin. With this project's own
-    configuration — `localhost:3210` and `127.0.0.1:3210` both allowlisted — keying on
-    path alone meant the first caller warmed the cache and every later caller was served
-    the first caller's `Access-Control-Allow-Origin`; a browser rejects that mismatch, so
-    the second allowlisted origin stopped working as soon as a path was warm.
-
-    `identity` is the fourth component, and it is the one that was missing until
-    2026-10-20: a private answer belongs to the caller who asked for it, and a key that
-    names no caller hands it to the next caller who asks the same question. Measured live:
-    account B was served account A's player row. The identity is a hash of the
-    credential, never the credential (see `caller_identity`).
-
-    Each component is percent-encoded with `safe=""` so that none of them can contain a
-    colon. The parts are then separated by colons without ambiguity, which the previous
-    `path:query` join could not promise — `("/a:b", "c")` and `("/a", "b:c")` produced the
-    same key.
-    """
-    return "http:{}:{}:{}:{}".format(
-        quote(path, safe=""),
-        quote(query, safe=""),
-        quote(origin, safe=""),
-        quote(identity, safe=""),
-    )
 
 
 PER_REQUEST_HEADERS = frozenset({"x-request-id", "x-request-duration-ms"})

@@ -962,14 +962,14 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `e9eb6c8ea4d554cf57c338636d32b00ee29e7fb7b4ec54ce329eb8c7e4f7ca8a` that population is **216
-secured operations, 52 public operations and 93 private GET paths**, with floors of 200/40/85 printed on
+SHA-256 `350a93fa9919965e5780993e3aacff15d3b35eb5fd692f206fe46cb3cd9af1f6` that population is **220
+secured operations, 53 public operations and 95 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 216 / 52 / 93 |
-| S1 | every secured operation refuses a caller with no credential | **216 knocked, 216 × 401**, 0 deviations |
+| C0 | the door population comes from the contract and is not empty | 220 / 53 / 95 |
+| S1 | every secured operation refuses a caller with no credential | **220 knocked, 220 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |
@@ -991,13 +991,16 @@ Run D repeated run C's configuration on 2026-10-24 on a fresh database migrated 
 the contract as committed then — the same 212 doors, the same pairs, the same 429 at the 11th — and
 answered **10/10, 0 failed, 0 server errors** in 6.88 s. Run E repeated the shape again on 2026-10-28 on
 a fresh database migrated to head `0041`, after the notifications tier added four doors (two of them
-`GET`s) to the contract as committed today — **216 doors answered 401, the same pairs, the same 429 at
-the 11th** — and answered **10/10, 0 failed, 0 server errors** in 9.27 s, which is the run
+`GET`s) to the contract as committed then — **216 doors answered 401, the same pairs, the same 429 at
+the 11th** — and answered **10/10, 0 failed, 0 server errors** in 9.27 s. Run F repeated the shape on
+2026-10-29 against the walk database after §24's scouting report gained its share token's four doors
+(three private, one public) — **220 doors answered 401, the same pairs, the same 429 at the 11th** —
+and answered **10/10, 0 failed, 0 server errors** in 1.58 s, which is the run
 [the report](SECURITY_PROBE_REPORT.md) now records as current. Runs A–D were made against contracts
 at the earlier SHAs `31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e` (A–C) and
 `71a5f9bcd1ba3aa0cf8436ae7fde9dcd881ebd080d5e842249492e37e4fa4a04` (D); their census was
 the same 212 / 52 / 91, because the intervening commits changed descriptions, not doors — the door
-population moved only when the notifications tier landed its four private doors.
+population moved only when the notifications tier and then the share token landed their doors.
 S4 is constructed so the negative is not vacuous: the private `HIT` and the public `MISS → HIT` are read
 before "the stranger never received the owner's row", so the cache is proven to have been serving at the
 moment the isolation held.

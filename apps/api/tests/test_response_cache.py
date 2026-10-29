@@ -250,6 +250,31 @@ def test_drop_identity_deletes_only_the_entries_that_name_the_caller() -> None:
     assert cache.get(key_anon) is None
 
 
+def test_drop_public_path_sweeps_every_anonymous_origin_and_no_credentialed_answer() -> None:
+    """§24's closed link: the answer names nobody, so the sweep has to name the path instead.
+
+    A public answer can sit under one key per allowlisted `Origin`, and a closed link must close for all of
+    them. A credentialed answer for the same path shares the prefix but carries an identity after the origin,
+    and a write about one link must never take another caller's answer with it.
+    """
+    cache: TTLCache = TTLCache()
+    path = "/api/v1/scout/shared/" + "a" * 32
+    origin_a = response_cache_key(path, "", "http://localhost:3210")
+    origin_b = response_cache_key(path, "", "http://127.0.0.1:3210")
+    plain = response_cache_key(path, "")
+    credentialed = response_cache_key(path, "", "http://localhost:3210", caller_identity("Bearer token-a"))
+    other_path = response_cache_key("/api/v1/scout/shared/" + "b" * 32, "")
+    for key in (origin_a, origin_b, plain, credentialed, other_path):
+        cache.set(key, {"answer": key})
+
+    assert cache.drop_public_path(path) == 3, "both origin keys and the originless one are the same public answer"
+    assert cache.get(origin_a) is None
+    assert cache.get(origin_b) is None
+    assert cache.get(plain) is None
+    assert cache.get(credentialed) == {"answer": credentialed}, "a credentialed answer is not a public one"
+    assert cache.get(other_path) == {"answer": other_path}, "another token's answer survives"
+
+
 def test_a_miss_is_labelled_and_a_non_candidate_is_not() -> None:
     """The distinction the two cases above turn on, stated once.
 

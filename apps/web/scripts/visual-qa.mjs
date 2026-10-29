@@ -761,6 +761,87 @@ async function run() {
       englishMessages.scout.askTitle,
     );
 
+    // 10b-2. §24's public link, driven the way a manager drives it: the ledger is an account-level door, so it has
+    // to be readable before a search; the question is minted from a report this walk actually produced; a client
+    // with no cookie opens the page; and closing the link has to turn that page into a 404 at the same moment.
+    //
+    // The bug this section exists for was measured, not imagined: before the path sweep in `app/core/cache.py`, a
+    // revoked link kept answering 200 from the response cache for up to a minute. A public answer is stored under
+    // the empty identity, so the per-caller drop that runs on every write could not reach it — the revocation was
+    // true in the table and false at the door.
+    await open(page, '/scout');
+    await waitForText(page, englishMessages.scout.shareNone);
+    const ledgerBefore = await page.evaluate(() => ({
+      panel: Boolean(document.querySelector('[data-scout-share-panel]')),
+      needs: Boolean(document.querySelector('[data-scout-share-needs-report]')),
+    }));
+    check(
+      'the report ledger is on the screen before any search, and says there is nothing in it',
+      ledgerBefore.panel && ledgerBefore.needs,
+      'panel and its "read a report first" sentence with no report behind them',
+    );
+
+    await page.type(`input[aria-label="${englishMessages.scout.requestAria}"]`, 'midfielder');
+    await clickByText(page, 'button', englishMessages.scout.searchWorld);
+    await page.waitForSelector('button[data-report]', { timeout: 120_000 });
+    await page.click('button[data-report]');
+    await page.waitForSelector('[data-testid="scout-report"]', { timeout: 120_000 });
+    const reported = await page.evaluate(() => ({
+      slug: document.querySelector('button[data-report]')?.getAttribute('data-report') ?? '',
+      name: document.querySelector('[data-testid="scout-report"] a.world-link')?.textContent?.trim() ?? '',
+    }));
+    check(
+      'the walk reported a stored player, which is the only question a link may name',
+      reported.name.length > 0,
+      `${reported.slug} · ${reported.name}`,
+    );
+
+    await clickByText(page, 'button', englishMessages.scout.shareOpen);
+    await page.waitForSelector('a[data-scout-share-view]', { timeout: 120_000 });
+    const publicPath = await page.evaluate(() => document.querySelector('a[data-scout-share-view]')?.getAttribute('href') ?? '');
+    check('the mint prints a link the panel can hand over', publicPath.startsWith('/scout/shared/'), publicPath.slice(0, 48));
+
+    const publicRead = await fetch(`${BASE}${publicPath}`, { signal: AbortSignal.timeout(120_000) });
+    const publicBody = await publicRead.text();
+    const ownerLeaks = [EMAIL, PLAYER_NAME, 'visual-qa-'].filter((secret) => publicBody.includes(secret));
+    check(
+      'the link opens for a client with no session, names the player it measured and no owner',
+      publicRead.status === 200 &&
+        publicBody.includes(reported.name) &&
+        publicBody.includes('scout-shared-report') &&
+        ownerLeaks.length === 0 &&
+        !publicBody.includes('data-scout-share-panel'),
+      `HTTP ${publicRead.status} · ${reported.name} · leaks: ${ownerLeaks.length ? ownerLeaks.join(',') : 'none'}`,
+    );
+    check('a shared report is not offered to the crawler', /noindex/iu.test(publicBody), 'noindex on the shared page');
+
+    const guest = await browser.createBrowserContext();
+    try {
+      const guestPage = await guest.newPage();
+      guestPage.setDefaultTimeout(120_000);
+      await guestPage.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
+      await guestPage.setViewport(DESKTOP);
+      await guestPage.goto(`${BASE}${publicPath}`, { waitUntil: 'networkidle2', timeout: 120_000 });
+      await shot(guestPage, '18c-scout-shared-desktop');
+      await guestPage.setViewport(MOBILE);
+      const narrow = await guestPage.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      check('mobile 375px: the shared report has no horizontal overflow', narrow <= 1, `overflow ${narrow}px`);
+      await shot(guestPage, '18d-mobile-scout-shared');
+    } finally {
+      await guest.close();
+    }
+
+    await open(page, '/scout');
+    await page.waitForSelector('button[data-scout-share-revoke]', { timeout: 120_000 });
+    await page.click('button[data-scout-share-revoke]');
+    await page.waitForFunction(() => !document.querySelector('button[data-scout-share-revoke]'), { timeout: 120_000 });
+    const afterClosing = await fetch(`${BASE}${publicPath}`, { signal: AbortSignal.timeout(120_000) });
+    check(
+      'closing the link turns the page a stranger just read into a 404, not a cached 200',
+      afterClosing.status === 404,
+      `the old link now answers ${afterClosing.status}`,
+    );
+
     // 10c. §81 2c: the coach screen reads its own catalogue now — a 78-key namespace that did not exist before
     // this, across three files (the server page, `CoachAsk`, `PlanBuilder`). Same three-way read as 10b, and the
     // negative half as well: the English sentence must be *gone*, not merely accompanied by a Chinese one.

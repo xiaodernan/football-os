@@ -637,3 +637,38 @@ export type TransferSimView = {
 
 /** The index names the side block reports, in the order a reader expects them. */
 export const SIM_INDEX_ORDER: string[] = ["attack", "midfield", "defence", "keeper", "press", "form", "overall"];
+
+/** §24's question as it is stored on a share row: the player plus the four ways a report can be narrowed. */
+export type ScoutShareQuestion = {
+  player: string;
+  role: string | null;
+  career: string | null;
+  compare_to: string | null;
+  round_index: number | null;
+};
+
+/** One row of §24's link ledger. A closed row's token is null: the row survives, the key does not. */
+export type ScoutShareRecord = ScoutShareQuestion & {
+  share: string;
+  token: string | null;
+  opened_at: string | null;
+  revoked_at: string | null;
+  live: boolean;
+};
+
+export type ScoutShareLedger = {
+  shares: ScoutShareRecord[];
+  counts: { opened: number; live: number; revoked: number };
+  max_live: number;
+};
+
+/** The public read: the same thirteen fields as `ReportView`, plus the link's own provenance block. */
+export type ScoutSharedReport = ReportView & {
+  shared: {
+    opened_at: string | null;
+    player_slug: string;
+    career_named: boolean;
+    career_available: boolean;
+    note: string;
+  };
+};

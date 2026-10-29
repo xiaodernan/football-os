@@ -21,7 +21,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 import redis
 
-from app.core.cache import TTLCache
+from app.core.cache import TTLCache, public_key_prefix
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +194,36 @@ class RedisCache:
         correctness gain.
         """
         return self._fallback.drop_identity(identity)
+
+    def drop_public_path(self, path: str) -> int:
+        """Delete every anonymous answer for one path from Redis and the fallback.
+
+        A public answer is written to both tiers (see `cached_response_for`), so closing
+        the link it answers has to clear both — otherwise a worker that does not hold the
+        answer locally keeps serving a shut door for the rest of the TTL. The shared sweep
+        is a `SCAN` over the path's prefix, the same traversal `clear` uses; only keys
+        ending in a colon are deleted, because that colon is the empty identity and a
+        credentialed answer must never be swept by a public path.
+        """
+        dropped = self._fallback.drop_public_path(path)
+        pattern = f"{self._key(public_key_prefix(path))}*"
+
+        client = self._redis
+        if self._available and client is not None:
+            try:
+                cursor = 0
+                while True:
+                    cursor, keys = cast("tuple[int, list[str]]", client.scan(cursor, match=pattern, count=1000))
+                    anonymous = [key for key in keys if key.endswith(":")]
+                    if anonymous:
+                        dropped += int(cast("Any", client.delete(*anonymous)))
+                    if cursor == 0:
+                        break
+            except Exception as e:
+                logger.warning("Redis scan/delete failed: %s", e)
+                self._available = False
+
+        return dropped
 
     @property
     def available(self) -> bool:

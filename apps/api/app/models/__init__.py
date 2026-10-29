@@ -2333,6 +2333,32 @@ class CvShare(Base, TimestampMixin):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class ScoutReportShare(Base, TimestampMixin):
+    """One public scouting-report link (§24's report behind a token): the question asked, and when it closed.
+
+    Only the *question* is stored — a player, a role, a career, a comparator and a round. No figure is: every
+    number is re-read from the stored rows on each request, so a link cannot go on quoting a rating the world
+    has moved away from. The columns mirror `ReportIn` rather than a built report, which is what makes the
+    stored row small enough to audit by eye.
+    """
+
+    __tablename__ = "scout_report_shares"
+    __table_args__ = (
+        UniqueConstraint("share_token", name="uq_scout_report_share_token"),
+        Index("ix_scout_report_share_owner_live", "user_id", "revoked_at"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    share_token: Mapped[str] = mapped_column(String(64), nullable=False)
+    player: Mapped[str] = mapped_column(String(80), nullable=False)
+    role: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    career: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    compare_to: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    round_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class AgentMemory(Base, TimestampMixin):
     """One persisted fact or context fragment for an M11 agent (spec §34 agent memory).
 

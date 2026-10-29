@@ -472,15 +472,15 @@ def transferable(session: Session, career: Career) -> dict[str, Any]:
     """
     if career.status != "active":
         return {"ok": False, "code": "career_retired", "message": "this career is retired; its squad is closed", "constraint": "career_status"}
-    window = int(career.challenge_window or 0)
-    if window and int(career.rounds_played) >= window:
+    window_rounds = int(career.challenge_window or 0)
+    if window_rounds and int(career.rounds_played) >= window_rounds:
         return {
             "ok": False,
             "code": "window_closed",
-            "message": f"the scenario's window closed after {career.rounds_played} of {window} rounds, so its squad is final",
+            "message": f"the scenario's window closed after {career.rounds_played} of {window_rounds} rounds, so its squad is final",
             "constraint": "window",
             "rounds_played": int(career.rounds_played),
-            "window_rounds": window,
+            "window_rounds": window_rounds,
         }
     challenge = challenge_by_slug(career.challenge_slug) if career.challenge_slug else None
     if challenge is not None and any(constraint.key == "no_transfers" for constraint in challenge.constraints):

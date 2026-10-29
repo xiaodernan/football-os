@@ -43,10 +43,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.cache import drop_public_response
 from app.core.db import get_db
 from app.core.security import current_user, limit, ownership_or_admin
 from app.models import Career, User
 from app.services.club import answers
+from app.services.scouting import sharing as scout_share
 from app.services.scouting.compare import (
     DIMENSION_LEADERS,
     DIMENSIONS,
@@ -565,4 +567,89 @@ def simulate_a_transfer(payload: TransferSimIn, request: Request, db: Session = 
             "demo_data": True,
         }
     except TransferRefusal as error:
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_409_CONFLICT), detail=error.to_dict()) from None
+
+
+# --- §24's share link: the report behind a token -------------------------------------------------
+
+
+def _share_refusal(error: scout_share.ShareRefusal) -> HTTPException:
+    """The HTTP answer a link refusal deserves, from the table every tier answers from (§51)."""
+    return HTTPException(_ANSWERS.get(str(error.code), status.HTTP_400_BAD_REQUEST), detail=error.to_dict())
+
+
+@router.post("/share")
+def open_report_share(payload: ReportIn, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Mint a public link over this account's §24 question, or return the live one that already answers it.
+
+    The body is the report door's own: a player, and optionally a role, a career, a comparator and a round. The
+    report is built before the token exists, so a link cannot be minted for a player, role or comparator this build
+    cannot answer; those refusals are the private door's, answered from the same table. A career is resolved through
+    `_career`, which keeps §61's wall: a foreign or absent career is the same 404 here as there.
+    """
+    limit(request, 20, 60, scope="scout_share_write")
+    career: Career | None = None
+    if payload.career:
+        career = _career(db, user, str(payload.career))
+    try:
+        record = scout_share.open_share(
+            db,
+            user.id,
+            player=payload.player,
+            role=payload.role,
+            career=career,
+            compare_to=payload.compare_to,
+            round_index=payload.round_index,
+        )
+    except scout_share.ShareRefusal as error:
+        raise _share_refusal(error) from None
+    except ReportRefusal as error:
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_422_UNPROCESSABLE_ENTITY), detail=error.to_dict()) from None
+    except MarketRefusal as error:
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_409_CONFLICT), detail=error.to_dict()) from None
+    return {**record, "demo_data": True}
+
+
+@router.get("/shares")
+def read_report_shares(request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """This account's report-link ledger: the question each link asks, and when each closed one shut."""
+    limit(request, 60, 60, scope="scout_share_list")
+    return {**scout_share.list_shares(db, user.id), "demo_data": True}
+
+
+@router.delete("/share/{token}")
+def close_report_share(token: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Take the link back. §38's output is revocable, which is the whole difference between a link and a leak.
+
+    The row is committed before anything is returned, and then the public answer the cache may still hold for
+    this token is dropped from both tiers. Without that drop the revocation would be true in the table and false
+    at the door for up to the response TTL: measured 2026-10-29 against a live server, the link answered 200 on
+    the read right after its owner closed it. The key names nobody — a public answer is stored under the empty
+    identity — so `drop_identity` cannot reach it; the path sweep can (see `cache.drop_public_response`).
+    """
+    limit(request, 20, 60, scope="scout_share_write")
+    try:
+        record = scout_share.revoke(db, user.id, token)
+    except scout_share.ShareRefusal as error:
+        raise _share_refusal(error) from None
+    drop_public_response(f"/api/v1/scout/shared/{token}")
+    return {**record, "demo_data": True}
+
+
+@router.get("/shared/{token}")
+def read_shared_report(token: str, request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The public read. No `current_user` dependency: the token is the whole credential, as at §38's CV link.
+
+    Rate-limited on its own scope because a public door is the one a stranger can knock on. The answer carries the
+    question and a live report over the stored rows; the account behind the link is not part of the payload, and a
+    career the link names is only ever read if it is still owned by that account.
+    """
+    limit(request, 60, 60, scope="scout_share_read")
+    try:
+        return scout_share.public_report(db, token)
+    except scout_share.ShareRefusal as error:
+        raise _share_refusal(error) from None
+    except ReportRefusal as error:
+        raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_422_UNPROCESSABLE_ENTITY), detail=error.to_dict()) from None
+    except MarketRefusal as error:
         raise HTTPException(_ANSWERS.get(str(error.code), status.HTTP_409_CONFLICT), detail=error.to_dict()) from None

@@ -9490,6 +9490,175 @@
         ]
       }
     },
+    "/api/v1/scout/share": {
+      "post": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Open Report Share",
+        "description": "Mint a public link over this account's §24 question, or return the live one that already answers it.\n\nThe body is the report door's own: a player, and optionally a role, a career, a comparator and a round. The\nreport is built before the token exists, so a link cannot be minted for a player, role or comparator this build\ncannot answer; those refusals are the private door's, answered from the same table. A career is resolved through\n`_career`, which keeps §61's wall: a foreign or absent career is the same 404 here as there.",
+        "operationId": "open_report_share_api_v1_scout_share_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__api__v1__scout__ReportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Open Report Share Api V1 Scout Share Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/scout/shares": {
+      "get": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Read Report Shares",
+        "description": "This account's report-link ledger: the question each link asks, and when each closed one shut.",
+        "operationId": "read_report_shares_api_v1_scout_shares_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Report Shares Api V1 Scout Shares Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/scout/share/{token}": {
+      "delete": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Close Report Share",
+        "description": "Take the link back. §38's output is revocable, which is the whole difference between a link and a leak.",
+        "operationId": "close_report_share_api_v1_scout_share__token__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Close Report Share Api V1 Scout Share  Token  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scout/shared/{token}": {
+      "get": {
+        "tags": [
+          "scouting"
+        ],
+        "summary": "Read Shared Report",
+        "description": "The public read. No `current_user` dependency: the token is the whole credential, as at §38's CV link.\n\nRate-limited on its own scope because a public door is the one a stranger can knock on. The answer carries the\nquestion and a live report over the stored rows; the account behind the link is not part of the payload, and a\ncareer the link names is only ever read if it is still owned by that account.",
+        "operationId": "read_shared_report_api_v1_scout_shared__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Shared Report Api V1 Scout Shared  Token  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/community/rules": {
       "get": {
         "tags": [
@@ -14205,7 +14374,7 @@
         "properties": {
           "file": {
             "type": "string",
-            "contentMediaType": "application/octet-stream",
+            "format": "binary",
             "title": "File"
           }
         },
@@ -17312,13 +17481,6 @@
           "type": {
             "type": "string",
             "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
           }
         },
         "type": "object",

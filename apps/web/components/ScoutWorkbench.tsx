@@ -8,6 +8,7 @@ import { ScoutComparePanel } from "@/components/ScoutComparePanel";
 import { ScoutShortlistPanel } from "@/components/ScoutShortlistPanel";
 import { ScoutTransferPanel } from "@/components/ScoutTransferPanel";
 import { ScoutReportPanel } from "@/components/ScoutReportPanel";
+import { ScoutSharePanel } from "@/components/ScoutSharePanel";
 import { Panel } from "@/components/ui";
 import { browserFetch, errorMessage } from "@/lib/api";
 import type { ApiError } from "@/lib/types";
@@ -291,6 +292,11 @@ export function ScoutWorkbench({ rules }: { rules: ScoutRulesView }) {
           <ScoutTransferPanel candidates={searched.candidates} career={career} rules={rules.transfer_simulation} />
         </>
       )}
+
+      {/* §24's links are an account-level ledger, so this panel sits outside the search: a manager can read and
+          close the doors they opened without running a new search first, and the mint button still names the
+          question of the report above when there is one. */}
+      <ScoutSharePanel asked={report?.data?.asked_for ?? null} />
     </div>
   );
 }
