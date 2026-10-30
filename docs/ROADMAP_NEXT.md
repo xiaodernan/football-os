@@ -283,7 +283,16 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     gone. The career page's World fixture column prints that score with the link ("world fixture deleted"
     when the row is gone, "—" on a rotation round) and prints the new `world_calendar` limitation saying
     the tie is one-way, in all three locales. Pinned by `TestWorldTie` (six cases) and the live tie walk
-    (`.scratch/walk-tie.py`: three rounds, 0 world rows changed).
+    (`.scratch/walk-tie.py`: three rounds, 0 world rows changed); the page itself was walked on the
+    production build (`.scratch/walk-career-world-column.py`: 10/10 — the column, the world's score, the
+    link, the limitation, `en`/`zh`, no missing-message marker). **The boundary fix that followed (item 8
+    follow-up, same day):** closing a challenge window wrote a `career_seasons` row that `season_bounds` read
+    as a finished season, so the span advanced past a window `play_round` refuses to fill and every season
+    read summed zero rows while the fixture table still listed the rounds (`Pts 8 / Points 0 / 0-0-0` on the
+    challenge walk). A challenge career's one season is its window: the span now stays rounds 1…window, the
+    one row is returned rather than decided again, and the regression case reads `(1, 1, 2, 2)` where the old
+    code read `(2, 3, 2, 4)`; the live six-round run reads Points 9 = the Pts column's 9, record 2-3-1
+    (`.scratch/walk-challenge-record.py`).
 
 *Gate:* `qa-population-floor` stays green; world seed fingerprint unchanged for equal seed; public
 `/world/*` walks stay 200.
