@@ -56,7 +56,9 @@ export default async function CompetitionDetailPage({ params, searchParams }: Pr
         back={{ href: "/world/competitions", label: t("backLabel") }}
         eyebrow={t("eyebrow", {
           kind: competition.kind,
-          tier: competition.tier,
+          // A cup sits outside the league pyramid, so the API gives it tier 0 — a number that is
+          // true and reads as a division. The page prints a dash instead of inventing a level.
+          tier: competition.kind === "league" ? competition.tier : "—",
           region: competition.region,
         })}
         lede={competition.summary}
@@ -92,7 +94,7 @@ export default async function CompetitionDetailPage({ params, searchParams }: Pr
           <KeyValueGrid
             rows={[
               [t("rowFormat"), competition.kind],
-              [t("rowTier"), competition.tier],
+              [t("rowTier"), competition.kind === "league" ? competition.tier : "—"],
               [t("rowRegion"), competition.region],
               [t("rowCountry"), competition.country],
               [t("rowSeasonShown"), season],

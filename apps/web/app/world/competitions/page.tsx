@@ -83,7 +83,7 @@ export default async function CompetitionsPage({ searchParams }: Props) {
                     <td className="muted">{row.kind}</td>
                     <td className="muted">{row.region}</td>
                     <td className="num">{row.season}</td>
-                    <td className="num">{row.tier}</td>
+                    <td className="num">{row.kind === "league" ? row.tier : "—"}</td>
                     <td className="num">{row.team_count}</td>
                   </tr>
                 ))}

@@ -28,15 +28,21 @@ Spec anchors: §4 data model · §7 entities · §25 news schema · §26 fact/an
 
 | Entity | Required | Present |
 | --- | --- | --- |
-| competitions | — | 10 |
-| teams | 20 | 20 |
-| players | 300 | 300 |
-| matches | 100 | 130 (122 completed + 8 scheduled) |
-| articles | 500 | 500 |
-| stat lines | — | 3,172 |
-| article↔entity links | — | 9,058 |
+| competitions | — | 12 (4 leagues over two tiers + 8 cups) |
+| teams | 20 | 32 (8 per league) |
+| players | 300 | 480 |
+| matches | 100 | 288 (280 completed + 8 scheduled) |
+| articles | 500 | 824 |
+| stat lines | — | 7,280 |
+| article↔entity links | — | 15,393 |
 
-`world_ready()` is `True`; the planned total is 13,190 rows across seven tables.
+`world_ready()` is `True`; the planned total is 24,409 rows across eight tables. The world is a
+two-tier pyramid since 2026-10-30 (`WorldSizes.tiers = (2, 2)`, item 11): tier-1 clubs are drawn
+from the 0.52–0.95 strength band and tier-2 clubs from 0.30–0.66, and the bands overlap so a
+promoted side can compete. Cups sit outside the pyramid at `tier = 0` — a cup has no level.
+The newsroom grows with the world: one report per completed fixture, one preview per scheduled
+fixture, three notes per club, two per competition, a spotlight for every second player and a
+transfer line for every fifth.
 
 ## 3. Determinism and idempotence
 

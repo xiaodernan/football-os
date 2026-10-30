@@ -12,9 +12,10 @@ structurally rather than in prose:
 * the byline is a desk, not a person, and `source_name` is the generator itself — there is no
   provider call, no crawl and nothing external to cite (spec §62, `AI_POLICY.md`).
 
-Quotas are sized off the world the builder actually makes (122 played fixtures, 8 scheduled,
-20 clubs, 300 players, 10 competitions), so every article has a distinct subject and the total
-lands exactly on the spec §65 gate of 500.
+Quotas are sized off the world the builder actually makes (every completed fixture, every club,
+every competition, half the players), so an article never repeats a subject and the total is a
+property of the world rather than a constant. When the world grew to 32 clubs and 480 players the
+feed grew with it; a fixed total would have left most of the new clubs without a note.
 """
 
 from __future__ import annotations
@@ -29,16 +30,6 @@ from app.services.world.rng import WorldRng
 
 if TYPE_CHECKING:
     from app.services.world.builder import WorldDraft, _Club, _Fixture
-
-NEWS_QUOTAS: Final[dict[str, int]] = {
-    "match_report": 122,
-    "tactical_analysis": 80,
-    "player_spotlight": 150,
-    "team_news": 60,
-    "transfer_note": 60,
-    "competition_note": 20,
-    "match_preview": 8,
-}
 
 DESKS: Final[dict[str, str]] = {
     "match_report": "Synthetic World match desk",
@@ -78,6 +69,26 @@ TRANSFER_ANGLES: Final = ("link", "contract talk", "loan interest")
 COMPETITION_ANGLES: Final = ("season review", "format note")
 ENTITY_KINDS: Final = {"competitions": "competition", "teams": "team", "players": "player", "matches": "match"}
 NOTICE: Final = "Synthetic demo data: this item was generated locally from the FOOTBALL OS world seed. It names no real person, club, competition or event and reports nothing measured."
+
+
+def news_quotas(draft: WorldDraft) -> dict[str, int]:
+    """How many articles each desk files, sized off the world the builder already made.
+
+    Everything but the tactical desk scales with the world: one report per completed fixture, one
+    preview per scheduled fixture, three notes per club, two per competition, a spotlight for
+    every second player and a transfer line for every fifth. The tactical desk keeps a fixed
+    editorial budget of the most lopsided fixtures, which is a choice about the feed rather than
+    a property of the world.
+    """
+    return {
+        "match_report": len(draft.played()),
+        "tactical_analysis": 80,
+        "player_spotlight": len(draft.players) // 2,
+        "team_news": len(TEAM_ANGLES) * len(draft.clubs),
+        "transfer_note": len(draft.players) // 5,
+        "competition_note": len(COMPETITION_ANGLES) * len(draft.competitions),
+        "match_preview": len(draft.upcoming()),
+    }
 
 
 def _slug_key(*parts: str) -> str:
@@ -179,9 +190,9 @@ class _Emitter:
         return NEWS_ANCHOR - dt.timedelta(hours=hours * index + local.randint(0, max(hours - 1, 0)))
 
 
-def _match_reports(emitter: _Emitter, draft: WorldDraft) -> None:
+def _match_reports(emitter: _Emitter, draft: WorldDraft, quotas: dict[str, int]) -> None:
     played = sorted(draft.played(), key=lambda fixture: (fixture.kickoff, fixture.slug))
-    for fixture in played[: NEWS_QUOTAS["match_report"]]:
+    for fixture in played[: quotas["match_report"]]:
         stats = fixture.stats
         edge = float(stats["possession"]["home"]) - float(stats["possession"]["away"])
         best = max(fixture.lines, key=lambda line: (line.rating, line.player.slug), default=None)
@@ -216,12 +227,12 @@ def _match_reports(emitter: _Emitter, draft: WorldDraft) -> None:
         )
 
 
-def _tactical_analysis(emitter: _Emitter, draft: WorldDraft) -> None:
+def _tactical_analysis(emitter: _Emitter, draft: WorldDraft, quotas: dict[str, int]) -> None:
     played = sorted(
         draft.played(),
         key=lambda fixture: (-abs(float(fixture.stats["possession"]["home"]) - float(fixture.stats["possession"]["away"])), fixture.slug),
     )
-    for fixture in played[: NEWS_QUOTAS["tactical_analysis"]]:
+    for fixture in played[: quotas["tactical_analysis"]]:
         stats = fixture.stats
         hosts, visitors = (fixture.home, fixture.away) if int(fixture.home_goals or 0) >= int(fixture.away_goals or 0) else (fixture.away, fixture.home)
         fact = (
@@ -253,10 +264,10 @@ def _tactical_analysis(emitter: _Emitter, draft: WorldDraft) -> None:
         )
 
 
-def _player_spotlights(emitter: _Emitter, draft: WorldDraft) -> None:
+def _player_spotlights(emitter: _Emitter, draft: WorldDraft, quotas: dict[str, int]) -> None:
     ranked = sorted(draft.players, key=lambda player: (-player.overall, player.slug))
     played = sorted(draft.played(), key=lambda fixture: fixture.kickoff)
-    for index, player in enumerate(ranked[: NEWS_QUOTAS["player_spotlight"]]):
+    for index, player in enumerate(ranked[: quotas["player_spotlight"]]):
         club = draft.club(player.club)
         scored = [
             f"{fixture.round_label}: {line.goals} goals, {line.assists} assists" for fixture in played for line in fixture.lines if line.player.slug == player.slug and line.goals + line.assists > 0
@@ -332,10 +343,10 @@ def _team_news(emitter: _Emitter, draft: WorldDraft) -> None:
             )
 
 
-def _transfer_notes(emitter: _Emitter, draft: WorldDraft) -> None:
+def _transfer_notes(emitter: _Emitter, draft: WorldDraft, quotas: dict[str, int]) -> None:
     ranked = sorted(draft.players, key=lambda player: (-player.overall, player.slug))
     clubs = sorted(draft.clubs, key=lambda item: item.slug)
-    for index, player in enumerate(ranked[: NEWS_QUOTAS["transfer_note"]]):
+    for index, player in enumerate(ranked[: quotas["transfer_note"]]):
         angle = TRANSFER_ANGLES[index % len(TRANSFER_ANGLES)]
         home_club = draft.club(player.club)
         others = [club for club in clubs if club.slug != home_club.slug]
@@ -373,10 +384,11 @@ def _competition_notes(emitter: _Emitter, draft: WorldDraft) -> None:
         members = sorted((club for club in draft.clubs if club.league == competition.slug), key=lambda club: club.slug)
         participants = {line.player.slug: line.player for fixture in fixtures for line in fixture.lines}
         leaders = sorted(participants.values(), key=lambda player: (-player.goals, player.slug))[:3]
+        level = f"a tier-{competition.tier} league" if competition.kind == "league" else "a cup open to every club"
         for angle_index, angle in enumerate(COMPETITION_ANGLES):
             fact = (
-                f"{competition.name} is a fictional {competition.kind} in the {competition.region} region of the generated world, "
-                f"listed at tier {competition.tier} for the {draft.sizes.season} season. {len(fixtures)} completed fixtures and "
+                f"{competition.name} is {level} in the {competition.region} region of the generated world for the "
+                f"{draft.sizes.season} season. {len(fixtures)} completed fixtures and "
                 f"{sum(int(fixture.home_goals or 0) + int(fixture.away_goals or 0) for fixture in fixtures)} generated goals are stored"
                 + (f" across {len(members)} registered clubs." if members else " across the eight seeded entrants.")
             )
@@ -402,8 +414,8 @@ def _competition_notes(emitter: _Emitter, draft: WorldDraft) -> None:
             )
 
 
-def _match_previews(emitter: _Emitter, draft: WorldDraft) -> None:
-    for fixture in sorted(draft.upcoming(), key=lambda item: (item.kickoff, item.slug))[: NEWS_QUOTAS["match_preview"]]:
+def _match_previews(emitter: _Emitter, draft: WorldDraft, quotas: dict[str, int]) -> None:
+    for fixture in sorted(draft.upcoming(), key=lambda item: (item.kickoff, item.slug))[: quotas["match_preview"]]:
         fact = (
             f"{fixture.home.name} host {fixture.away.name} at {fixture.venue} on {fixture.kickoff.date().isoformat()} in the "
             f"{fixture.competition.name} {fixture.season} round. The fixture is marked 'scheduled', so no score, line-up or statistic "
@@ -428,19 +440,20 @@ def _match_previews(emitter: _Emitter, draft: WorldDraft) -> None:
 
 
 def plan_articles(draft: WorldDraft) -> tuple[list[Planned], list[Planned]]:
-    """Build the 500-article feed and its entity edges from an already-consistent draft."""
+    """Build the article feed and its entity edges from an already-consistent draft."""
+    quotas = news_quotas(draft)
     emitter = _Emitter(draft.seed)
-    _match_reports(emitter, draft)
-    _tactical_analysis(emitter, draft)
-    _player_spotlights(emitter, draft)
+    _match_reports(emitter, draft, quotas)
+    _tactical_analysis(emitter, draft, quotas)
+    _player_spotlights(emitter, draft, quotas)
     _team_news(emitter, draft)
-    _transfer_notes(emitter, draft)
+    _transfer_notes(emitter, draft, quotas)
     _competition_notes(emitter, draft)
-    _match_previews(emitter, draft)
-    short = sorted(category for category, quota in NEWS_QUOTAS.items() if len([a for a in emitter.articles if a.payload["category"] == category]) != quota)
+    _match_previews(emitter, draft, quotas)
+    short = sorted(category for category, quota in quotas.items() if len([a for a in emitter.articles if a.payload["category"] == category]) != quota)
     if short:
         raise ValueError(f"news quota unmet: {short}")
     return emitter.articles, emitter.links
 
 
-__all__ = ["NEWS_QUOTAS", "plan_articles"]
+__all__ = ["news_quotas", "plan_articles"]

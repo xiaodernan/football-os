@@ -67,12 +67,29 @@ class TestPlan:
 
     def test_default_sizes_are_the_documented_gate(self, plan: WorldPlan) -> None:
         sizes = WorldSizes()
-        assert (sizes.teams, sizes.squad_size, sizes.competitions) == (20, 15, 10)
+        assert sizes.tiers == (2, 2), "two top-flight leagues over two second-division leagues"
+        assert (sizes.teams, sizes.squad_size, sizes.competitions) == (32, 15, 12)
         assert sizes.played_matches >= 100
         counts = plan.counts()
-        assert counts["players"] == sizes.players == 300
+        assert counts["players"] == sizes.players == 480
         assert counts["competitions"] == sizes.competitions
+        assert counts["matches"] == sizes.played_matches + sizes.scheduled_matches
         assert counts["matches"] >= 100
+
+    def test_the_leagues_form_a_two_tier_pyramid(self, plan: WorldPlan) -> None:
+        """A second division exists, cups sit outside it, and every league is a full slate."""
+        from app.services.world.plan import world_id
+
+        sizes = WorldSizes()
+        leagues = [row for row in plan.collections["competitions"] if row.payload["kind"] == "league"]
+        assert [row.payload["tier"] for row in leagues] == [1, 1, 2, 2]
+        assert [row.payload["tier"] for row in plan.collections["competitions"] if row.payload["kind"] == "cup"] == [0] * sizes.cups
+        membership: dict[str, int] = {}
+        for row in plan.collections["teams"]:
+            key = str(row.payload["competition_id"])
+            membership[key] = membership.get(key, 0) + 1
+        for league in leagues:
+            assert membership[world_id("competition", league.natural_key)] == sizes.teams_per_league
 
     @pytest.mark.parametrize("collection", ["competitions", "teams", "players", "matches", "articles"])
     def test_public_slugs_are_url_safe(self, plan: WorldPlan, collection: str) -> None:
@@ -81,7 +98,7 @@ class TestPlan:
         assert all(key == slugify(key) and len(key) <= 200 for key in keys)
 
     def test_article_urls_survive_a_percent_round_trip(self, plan: WorldPlan) -> None:
-        assert len(plan.collections["articles"]) == 500
+        assert len(plan.collections["articles"]) >= 500, "the feed clears the spec's 500-article floor"
         for row in plan.collections["articles"]:
             url = web_path("article", row.natural_key)
             assert unquote(quote(url, safe="/")) == url
@@ -164,7 +181,7 @@ class TestSync:
     def test_article_links_never_point_at_a_deleted_article(self, session) -> None:
         orphans = session.scalar(select(func.count()).select_from(NewsArticleLink).where(NewsArticleLink.article_id.not_in(select(NewsArticle.id))))
         assert orphans == 0
-        assert session.scalar(select(func.count()).select_from(NewsArticle)) == 500
+        assert session.scalar(select(func.count()).select_from(NewsArticle)) >= GATE["articles"]
 
     def test_a_squad_and_its_fixtures_agree_with_the_club_row(self, session) -> None:
         team = session.scalars(select(Team).order_by(Team.slug).limit(1)).one()

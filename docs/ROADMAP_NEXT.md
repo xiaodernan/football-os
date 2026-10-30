@@ -198,15 +198,24 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 
 9. **League pyramid.** **Partially present (verified 2026-10-25):** `Competition.tier` exists and
    `api/v1/world.py` already computes a read-time `standings` table from `real_matches` (never a stored
-   total). **Pending:** a second league tier in the generated world and the promotion/relegation move
-   computed from that table at the season boundary — blocked by the same content expansion as item 11,
-   which changes the world fingerprint and the `population-floor` baseline.
+   total). **Second tier done (2026-10-30, item 11):** the generated world now holds two tier-1 leagues
+   over two tier-2 leagues of eight clubs each, with tier-banded strengths and cups at `tier = 0`.
+   **Pending:** the promotion/relegation move computed from the standings at the season boundary, and
+   its publication.
 10. **Fixture calendar.** **Already implemented (verified 2026-10-25):** `world/builder.py` generates a
     deterministic double round-robin per league and a 7-game knockout per cup (`_round_robin`,
     `_league_fixtures`, `_cup_fixtures`, `_simulate`) from the world seed; `real_matches` is the result and
     the world fingerprint gate keeps it reproducible. No new work needed here.
-11. **Content expansion.** More teams/players/competitions behind the existing `population-floor` gate so
-    the catalogue never regresses; each addition is a seeded, fictional, fingerprint-stable generator.
+11. **Content expansion.** **Done (2026-10-30):** the world grew from 20 clubs / 300 players / 130
+    matches / 500 articles to 32 clubs / 480 players / 288 matches / 824 articles, in a two-tier pyramid
+    (`WorldSizes.tiers = (2, 2)`, eight clubs per league, eight cups). Clubs are drawn from tier bands
+    (0.52–0.95 and 0.30–0.66, overlapping), so the top flight is stronger by construction rather than by
+    luck. The newsroom's quotas are now derived from the world it is given (one report per completed
+    fixture, one preview per scheduled fixture, three notes per club, two per competition, a spotlight
+    for every second player, a transfer line for every fifth); the tactical desk keeps a fixed budget of
+    80. The §65 floors in `GATE` are unchanged — the world sits above them — and the plan is still a
+    pure function of the seed. Pinned by `tests/test_world.py` (`test_default_sizes_are_the_documented_gate`,
+    `test_the_leagues_form_a_two_tier_pyramid`).
 12. **Real-structure simulation tie-in.** Career clubs play the generated fixtures; results feed the
     public world pages (M3) and the career ledger (M6) from the same rows.
 

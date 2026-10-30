@@ -212,7 +212,7 @@ export default async function WorldIndexPage() {
                 <li className="world-fixture" key={row.id}>
                   <div className="world-fixture__when">
                     <span className="mono muted">{row.kind}</span>
-                    <span className="world-fixture__round">{t("tierChip", { tier: row.tier })}</span>
+                    {row.kind === "league" && <span className="world-fixture__round">{t("tierChip", { tier: row.tier })}</span>}
                   </div>
                   <div className="world-fixture__teams">
                     <CompetitionLink competition={{ id: row.id, slug: row.slug, name: row.name, kind: row.kind, path: row.path }} />

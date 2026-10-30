@@ -1,5 +1,6 @@
-"""Seeded synthesis of the Football World (spec §65 gate: 10 competitions / 20 teams / 300 players /
-100+ matches / 100 training sessions / 500 articles).
+"""Seeded synthesis of the Football World: 12 competitions / 32 teams / 480 players / 288 matches /
+100 training sessions / 824 articles from a two-tier pyramid of four leagues, well above the spec
+§65 floors of 10 competitions / 20 teams / 300 players / 100 matches / 100 sessions / 500 articles.
 
 Two rules shape everything below:
 
@@ -37,7 +38,7 @@ from app.services.world.news import plan_articles
 from app.services.world.plan import Planned, WorldPlan, world_id
 from app.services.world.rng import WorldRng
 
-WORLD_VERSION: Final = "3.2"
+WORLD_VERSION: Final = "4.0"
 SEASON_START: Final = dt.date(2026, 8, 8)
 KICKOFF_SLOTS: Final = ((12, 30), (15, 0), (17, 30), (20, 15))
 WORLD_COUNTRY: Final = "Generated World"
@@ -90,18 +91,39 @@ STAT_METHOD: Final = {
 }
 
 
+#: The strength band each league tier draws its clubs from. Tier 1 is the top flight; the ranges
+#: overlap (0.52-0.66) so a promoted club is not outclassed by construction.
+TIER_STRENGTH: Final[dict[int, tuple[float, float]]] = {
+    1: (0.52, 0.95),
+    2: (0.30, 0.66),
+}
+
+
 @dataclass(frozen=True)
 class WorldSizes:
-    """The M3 gate. `players == teams * squad_size` by construction."""
+    """The M3 gate, two divisions deep. `players == teams * squad_size` by construction.
 
-    leagues: int = 4
-    cups: int = 6
-    teams: int = 20
+    `tiers` is the league pyramid, shallowest first: `(2, 2)` means two tier-1 leagues and two
+    tier-2 leagues. A club's tier decides which strength band it is drawn from, so the world has
+    a top flight and a second division rather than four parallel leagues. Cups are not part of the
+    pyramid — they are open to every club and carry `tier = 0`, which is no level at all.
+    """
+
+    tiers: tuple[int, ...] = (2, 2)
+    cups: int = 8
+    teams_per_league: int = 8
     squad_size: int = 15
-    teams_per_league: int = 5
     season: str = "2026"
     next_season: str = "2027"
     training_sessions: int = 100
+
+    @property
+    def leagues(self) -> int:
+        return sum(self.tiers)
+
+    @property
+    def teams(self) -> int:
+        return self.leagues * self.teams_per_league
 
     @property
     def competitions(self) -> int:
@@ -383,15 +405,32 @@ def _round_robin(size: int) -> list[list[tuple[int, int]]]:
 def _make_competitions(rng: WorldRng, sizes: WorldSizes) -> list[_Competition]:
     regions: set[str] = set()
     competitions: list[_Competition] = []
-    for index in range(sizes.competitions):
-        kind = "league" if index < sizes.leagues else "cup"
+    for tier, count in enumerate(sizes.tiers, start=1):
+        for _ in range(count):
+            index = len(competitions)
+            local = rng.fork(f"competition-{index}")
+            region = local.unique(60, region_name, regions)
+            regions.add(region)
+            name = competition_name(local, region, "league")
+            summary = f"The {name} is a fictional tier-{tier} league in the generated FOOTBALL OS world around {region}. It belongs to no real federation and reports no real results."
+            competitions.append(_Competition(slug=slugify(name), name=name, kind="league", tier=tier, region=region, summary=summary))
+    for _ in range(sizes.cups):
+        index = len(competitions)
         local = rng.fork(f"competition-{index}")
         region = local.unique(60, region_name, regions)
         regions.add(region)
-        name = competition_name(local, region, kind)
-        summary = f"The {name} is a fictional {kind} in the generated FOOTBALL OS world around {region}. It belongs to no real federation and reports no real results."
-        competitions.append(_Competition(slug=slugify(name), name=name, kind=kind, tier=1 if kind == "league" else 2, region=region, summary=summary))
+        name = competition_name(local, region, "cup")
+        summary = f"The {name} is a fictional cup in the generated FOOTBALL OS world around {region}. It belongs to no real federation and reports no real results."
+        # Cups are open to every club, so they sit at no level of the pyramid: `tier = 0` is
+        # the honest answer, and a page that prints "tier 0" is printing a number that means
+        # "not in the pyramid" rather than a second division.
+        competitions.append(_Competition(slug=slugify(name), name=name, kind="cup", tier=0, region=region, summary=summary))
     return competitions
+
+
+def _tier_strength(tier: int) -> tuple[float, float]:
+    """The band a club in this tier is drawn from; the bands overlap so a promoted side can compete."""
+    return TIER_STRENGTH.get(tier, (0.30, 0.95))
 
 
 def _make_clubs(rng: WorldRng, sizes: WorldSizes, leagues: Sequence[_Competition]) -> list[_Club]:
@@ -402,7 +441,9 @@ def _make_clubs(rng: WorldRng, sizes: WorldSizes, leagues: Sequence[_Competition
         title, city, short = club_name(local)
         while any(existing.name == title or existing.city == city for existing in clubs):
             title, city, short = club_name(local)
-        strength = round(_clamp(0.32 + 0.62 * local.random(), 0.30, 0.95), 4)
+        league = leagues[index % len(leagues)]
+        low, high = _tier_strength(league.tier)
+        strength = round(_clamp(low + (high - low) * local.random(), 0.30, 0.95), 4)
         clubs.append(
             _Club(
                 slug=slugify(title),
