@@ -215,7 +215,10 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     for every second player, a transfer line for every fifth); the tactical desk keeps a fixed budget of
     80. The §65 floors in `GATE` are unchanged — the world sits above them — and the plan is still a
     pure function of the seed. Pinned by `tests/test_world.py` (`test_default_sizes_are_the_documented_gate`,
-    `test_the_leagues_form_a_two_tier_pyramid`).
+    `test_the_leagues_form_a_two_tier_pyramid`). The larger world also re-measured the graph's
+    depth-2 ceiling (`MAX_EDGES` 400 -> 800: the narrowest articles walk 656-774 edges) and moved
+    the career ledger's away half to round 8, derived from the competition; the record is
+    `docs/M13_WORLD_EXPANSION_VERIFICATION.md`.
 12. **Real-structure simulation tie-in.** Career clubs play the generated fixtures; results feed the
     public world pages (M3) and the career ledger (M6) from the same rows.
 
