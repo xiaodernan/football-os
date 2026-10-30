@@ -1004,6 +1004,16 @@ in the reader's language and carries the sentence the payload supports ("{name} 
 …"), a Mark read button per unread row and Mark all read above, and the tier's own formula printed under the panel.
 The nav gains a Notifications link with the unread count as a badge, fetched once per mount, quiet at zero.
 
+**Run 3 exposed a real limiter defect the suite could not see.** The erasure check answered 429 for an account
+that had never erased anything: `account_delete`'s bucket was keyed by client address alone, and the Nth
+verification walk of the day had spent the address's three-an-hour budget. The door already requires a valid
+session, so the per-address bound added nothing the register and login limiters don't already provide — the bucket
+now keys on the account, keeping one hijacked session bounded at three an hour, and `tests/test_rate_limiter.py`
+drives the two-accounts-behind-one-address case directly. **Also named for another lane**: the career-challenge
+verdict check read `Pts 8 / Points 0 / record 0-0-0` against a career whose fixtures played — landed the same day
+as "a career's season boundary decides its league", so the boundary change is the first suspect; the fixture table
+and the record disagree on which rounds count.
+
 **The walk's first two runs failed on the host, not the tier, and the failures are the record.** Run 1: the API
 process died mid-walk (connection refused during the erasure probe), so every check after it starved. Run 2: the
 port had changed hands — a second uvicorn bound 8731 while the first still held it, the stranger's register met the
