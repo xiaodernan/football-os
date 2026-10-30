@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
+import { MarkAllButton, MarkReadButton } from "@/components/NotificationActions";
 import { Panel } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
 import { pageMetadata } from "@/lib/site";
@@ -57,15 +58,7 @@ export default async function NotificationsPage() {
       <Panel
         eyebrow={result.ok ? t("trayEyebrow", { unread: result.data.unread_total, total: result.data.total }) : t("eyebrow")}
         title={t("trayTitle")}
-        action={
-          result.ok && result.data.unread_total > 0 ? (
-            <form action="/api/v1/notifications/read-all" method="POST">
-              <button className="btn btn--ghost btn--sm" type="submit">
-                {t("markAll")}
-              </button>
-            </form>
-          ) : null
-        }
+        action={result.ok ? <MarkAllButton unreadTotal={result.data.unread_total} /> : null}
       >
         {result.ok ? (
           result.data.items.length === 0 ? (
@@ -84,13 +77,7 @@ export default async function NotificationsPage() {
                       {row.created_at?.slice(0, 16).replace("T", " ") ?? ""}
                     </span>
                   </div>
-                  {!row.read_at && (
-                    <form action={`/api/v1/notifications/${row.id}/read`} method="POST">
-                      <button className="btn btn--ghost btn--sm" type="submit">
-                        {t("markRead")}
-                      </button>
-                    </form>
-                  )}
+                  {!row.read_at && <MarkReadButton id={row.id} />}
                   {row.payload.post_id && (
                     <Link className="world-link" href={`/community`}>
                       {t("openWall")}

@@ -3699,6 +3699,12 @@ async function run() {
   // nobody to read them. The lines below are the ones this walk provokes on purpose, each from a row
   // it has already deleted or refused.
   const provoked = [
+    // Chrome fetches /favicon.ico for tab states regardless of the <link rel="icon"> the layout declares —
+    // and this app's icon is an SVG served at /icon.svg, which Chrome honours for the tab but still probes
+    // the legacy path for. The 404 is the browser's own fallback asking for a file the product never had,
+    // not a resource the page referenced and lost.
+    /^HTTP 404 \/favicon\.ico$/,
+    /^Failed to load resource: the server responded with a status of 404 \(Not Found\) @ \/favicon\.ico$/,
     // Deleting a clip while its report still has the file open: Chromium's in-flight byte-range read of a row
     // that no longer exists answers 404, once as a response and once as a resource error on the request itself.
     /^HTTP 404 \/api\/v1\/video\/[^/]+\/file$/,
