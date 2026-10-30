@@ -167,7 +167,9 @@ class TestPlan:
         assert fixtures, "the next season has an opening round on the calendar"
         for fixture in fixtures:
             for team_id in (fixture["home_team_id"], fixture["away_team_id"]):
-                assert registered[team_id] == fixture["competition_id"], (fixture["slug"], team_id)
+                assert registered[team_id] == fixture["competition_id"], (
+                    f"{fixture['slug']} names {team_id}, which is registered in {registered[team_id]} rather than in {fixture['competition_id']}"
+                )
 
     @pytest.mark.parametrize("collection", ["competitions", "teams", "players", "matches", "articles"])
     def test_public_slugs_are_url_safe(self, plan: WorldPlan, collection: str) -> None:
@@ -283,7 +285,10 @@ class TestSync:
         assert lower is not None and (lower.kind, lower.tier) == ("league", 2)
         assert above.competition_id == top.id, "the club above the bottom did not stay up"
         promoted = [team for team in session.scalars(select(Team).where(Team.competition_id == top.id)).all() if team.id not in {row.id for row in table}]
-        assert len(promoted) == 1, [team.slug for team in promoted]
+        assert len(promoted) == 1, (
+            f"{len(promoted)} club(s) joined {top.slug} besides the clubs the completed season tabled: "
+            + ", ".join(team.slug for team in promoted)
+        )
         assert _stored_table(session, lower.id)[0].id == promoted[0].id, "the club that came up was not top of the league below"
 
     def test_every_club_is_registered_in_exactly_one_league(self, session) -> None:  # type: ignore[no-untyped-def]
@@ -301,7 +306,9 @@ class TestSync:
             fixtures = session.scalars(select(RealMatch).where(RealMatch.competition_id == league.id, RealMatch.season == "2027")).all()
             assert fixtures, league.slug
             named = {match.home_team_id for match in fixtures} | {match.away_team_id for match in fixtures}
-            assert named <= registered, (league.slug, named - registered)
+            assert named <= registered, (
+                f"{league.slug}'s 2027 fixtures name {sorted(named - registered)}, which the league's membership does not hold"
+            )
 
 
 class TestReads:
