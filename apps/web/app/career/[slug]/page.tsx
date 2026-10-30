@@ -84,7 +84,7 @@ export default async function CareerDetailPage({ params }: Props) {
                 venue: next.side === "home" ? t("venueHome") : t("venueAway"),
                 opponent: next.opponent_name ?? "",
                 at: next.venue_name ? t("atVenue", { venue: next.venue_name }) : "",
-                rotation: next.rotation ?? "",
+                rotation: next.basis ?? "",
                 seed: next.seed ?? 0,
               })}
             </p>

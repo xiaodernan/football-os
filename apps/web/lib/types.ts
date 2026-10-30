@@ -1466,15 +1466,22 @@ export type CareerFixtureRow = {
 export type CareerNextFixture = {
   available: boolean;
   reason?: string;
+  /** `world_calendar` when the round is the club's own generated fixture, `career_rotation` once that calendar ends. */
+  source?: "world_calendar" | "career_rotation";
   round_index: number;
   side?: string;
   opponent_name?: string;
   opponent_short?: string;
   venue_name?: string;
   venue_club?: string;
+  /** The generated fixture a calendar round is played from, and its own label ("Matchday 3"). */
+  match_slug?: string;
+  round_label?: string;
+  calendar?: { season: string; position: number; of: number };
+  /** How the round was chosen, in the API's own words; the page prints it rather than re-deriving it. */
+  basis?: string;
   cycle?: number;
   of?: number;
-  rotation?: string;
   seed?: number;
 };
 

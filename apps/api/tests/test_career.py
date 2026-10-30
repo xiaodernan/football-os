@@ -1,10 +1,10 @@
-"""M6 Career Mode, the service layer: a rotation, an engine call, and sums of stored rows (spec §20).
+"""M6 Career Mode, the service layer: the generated calendar, an engine call, and sums of stored rows (spec §20).
 
 The claims worth testing here are the ones a reader would be misled by if they were false:
 
 * the career does not have its own match model — every round is decided by `possession-block-v1` and
   lands in `sim_matches` with its own digest;
-* the fixture list is a *rotation* anyone can reproduce, and the seed of a round comes from the career
+* the fixture list is the club's own generated calendar, and the seed of a round comes from the career
   and the round number alone;
 * the record, the table and the objective verdicts are sums of `career_fixtures`, and the copied
   scores are re-checked against the stored match when it is still there.
@@ -101,28 +101,62 @@ class TestOpening:
         assert first.slug.startswith(base[:12]) and second.slug.startswith(base[:12]), f"two careers must share the 12-char prefix {base[:12]!r}, got {first.slug!r} and {second.slug!r}"
 
 
-class TestRotation:
-    def test_the_first_cycle_meets_every_club_once_at_home(self, session, world) -> None:  # type: ignore[no-untyped-def]
+class TestCalendar:
+    def test_every_round_is_the_clubs_own_generated_fixture(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
-        career.rounds_played = 0
-        plan_first = career_service.next_fixture_plan(session, career)
-        assert plan_first["available"] is True and plan_first["side"] == "home"
-        assert plan_first["opponent_name"] == session.scalars(select(Team).where(Team.slug == world["opponents"][0])).one().name
-        sequence: list[tuple[str, str]] = []
-        for round_index in range(1, len(world["opponents"]) + 1):
-            career.rounds_played = round_index - 1
-            plan = career_service.next_fixture_plan(session, career)
-            sequence.append((plan["opponent_name"], plan["side"]))
-        assert len({name for name, _ in sequence}) == len(world["opponents"]), "the first cycle must meet each club exactly once"
-        assert {side for _, side in sequence} == {"home"}
+        bounds = career_service.season_bounds(session, career)
+        calendar = career_service.calendar_fixtures(session, career, bounds=bounds)
+        assert calendar, "the world drew this club no fixtures, so there is no calendar to follow"
+        for position, row in enumerate(calendar, start=1):
+            plan = career_service.next_fixture_plan(session, _at(career, position), bounds=bounds)
+            home = row.home_team_id == career.club_id
+            opponent_id = row.away_team_id if home else row.home_team_id
+            opponent = session.get(Team, opponent_id)
+            assert plan["available"] is True and plan["source"] == "world_calendar"
+            assert plan["side"] == ("home" if home else "away") and plan["opponent_team_id"] == opponent_id and plan["opponent_name"] == opponent.name
+            assert plan["match_slug"] == row.slug and plan["round_label"] == row.round_label and plan["venue_name"] == row.venue_name
+            assert plan["round_in_season"] == position and plan["season_index"] == 1
+            assert plan["calendar"] == {"season": bounds["season"], "position": position, "of": len(calendar)}
 
-    def test_the_second_cycle_is_the_same_order_away(self, session, world) -> None:  # type: ignore[no-untyped-def]
+    def test_the_calendar_meets_every_club_once_at_home_and_once_away(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
-        size = len(world["opponents"])
-        first = [career_service.next_fixture_plan(session, _at(career, index))["opponent_name"] for index in range(1, size + 1)]
-        second_pairs = [(plan["opponent_name"], plan["side"]) for plan in (career_service.next_fixture_plan(session, _at(career, size + index)) for index in range(1, size + 1))]
-        assert [name for name, _ in second_pairs] == first, "the rotation repeats its order, it does not reshuffle"
-        assert {side for _, side in second_pairs} == {"away"}
+        bounds = career_service.season_bounds(session, career)
+        size = len(career_service.calendar_fixtures(session, career, bounds=bounds))
+        pairs = [(plan["opponent_team_id"], plan["side"]) for plan in (career_service.next_fixture_plan(session, _at(career, index), bounds=bounds) for index in range(1, size + 1))]
+        assert len(pairs) == 2 * len(world["opponents"]), "a double round-robin has two fixtures per opponent"
+        for opponent in {team_id for team_id, _side in pairs}:
+            assert sorted(side for team_id, side in pairs if team_id == opponent) == ["away", "home"], "each opponent is met once at home and once away"
+        assert {side for _team, side in pairs} == {"home", "away"}, "the club itself travels in its own calendar"
+
+    def test_a_round_after_the_generated_calendar_continues_on_the_careers_rotation(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        bounds = career_service.season_bounds(session, career)
+        size = len(career_service.calendar_fixtures(session, career, bounds=bounds))
+        plan = career_service.next_fixture_plan(session, _at(career, size + 1), bounds=bounds)
+        assert plan["available"] is True and plan["source"] == "career_rotation"
+        assert plan["cycle"] == 1 and plan["of"] == len(world["opponents"]) and plan["round_in_season"] == size + 1
+        assert f"holds {size} fixtures" in plan["basis"], "the fallback names the calendar it outlived"
+
+    def test_a_scheduled_opening_round_is_still_the_worlds_calendar(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career.season = "2027"
+        bounds = career_service.season_bounds(session, career)
+        calendar = career_service.calendar_fixtures(session, career, bounds=bounds)
+        assert len(calendar) == 1 and calendar[0].status == "scheduled", "the world publishes one unplayed opening round for 2027"
+        plan = career_service.next_fixture_plan(session, career, bounds=bounds)
+        assert plan["source"] == "world_calendar" and plan["match_slug"] == calendar[0].slug
+        beyond = career_service.next_fixture_plan(session, career, round_index=2, bounds=bounds)
+        assert beyond["source"] == "career_rotation", "one drawn round is a calendar of one, not a season"
+
+    def test_a_season_the_world_never_drew_keeps_the_careers_rotation(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career.season = "2031"
+        bounds = career_service.season_bounds(session, career)
+        plan = career_service.next_fixture_plan(session, career, bounds=bounds)
+        assert plan["available"] is True and plan["source"] == "career_rotation"
+        assert "no 2031 calendar" in plan["basis"]
+        assert plan["opponent_name"] == session.scalars(select(Team).where(Team.slug == world["opponents"][0])).one().name
+        assert plan["side"] == "home" and plan["cycle"] == 1
 
     def test_a_round_seed_comes_from_the_career_and_the_round_only(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
@@ -354,7 +388,7 @@ class TestHeadToHead:
             career_service.play_round(session, career)
         view = career_service.career_view(session, career)
         assert "head_to_head" in view and view["head_to_head"]["available"] is True
-        assert view["head_to_head"]["played"] == 0, "the fourth round of the first cycle meets an opponent this career has not played"
+        assert view["head_to_head"]["played"] == 0, "the fourth round of the calendar meets an opponent this career has not played"
 
 
 class TestNextFixtureBrief:
@@ -496,10 +530,10 @@ class TestReadEfficiency:
             event.remove(engine, "before_cursor_execute", before)
         normalized = [" ".join(statement.split()) for statement in statements]
         # The board, contract book and window share one horizon now; the other reads are the fixture
-        # rotation and the pyramid edge `seasons_view` asks the world's own boundary about. Match the WHERE
+        # fallback and the pyramid edge `seasons_view` asks the world's own boundary about. Match the WHERE
         # predicate, not the column list (a full-row select also names competition_id).
         club_reads = [s for s in normalized if "where teams.competition_id =" in s]
-        assert len(club_reads) <= 3, f"the competition's clubs were read {len(club_reads)} times (horizon + rotation + pyramid edge is 3)"
+        assert len(club_reads) <= 3, f"the competition's clubs were read {len(club_reads)} times (horizon + rotation fallback + pyramid edge is 3)"
 
 
 class TestSeasonHighlights:

@@ -232,14 +232,16 @@ class TestOnlyTheClubsOwnSide:
 
     def test_an_away_round_contributes_the_clubs_events_from_the_away_side(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
-        opponents = career_service.competition_clubs(session, career.competition_id, exclude_id=career.club_id or "")
-        assert opponents, "the career's club has no competition, so its season cannot travel"
-        # The rotation plays the whole first cycle at home; away starts with the second, whatever the
-        # size of the competition, so the rounds are derived from the world instead of a remembered 6.
-        for _ in range(len(opponents) + 1):
+        calendar = career_service.calendar_fixtures(session, career)
+        assert calendar, "the career's club has no generated calendar, so its season cannot travel"
+        # Which rounds travel is the generated calendar's business, so the first away round is read from the
+        # same plan the career plays by rather than remembered as a cycle length.
+        away_rounds = [index for index in range(1, len(calendar) + 1) if career_service.next_fixture_plan(session, career, round_index=index)["side"] == "away"]
+        assert away_rounds, "the generated calendar gives this club no away fixture, so there is no away side to count"
+        for _ in range(away_rounds[0]):
             career_service.play_round(session, career)
         away = list(session.scalars(select(CareerFixture).where(CareerFixture.career_id == career.id, CareerFixture.side == "away")).all())
-        assert away, f"a {len(opponents) + 1}-club competition plays its first cycle at home, so round {len(opponents) + 1} travels"
+        assert away, f"round {away_rounds[0]} is an away fixture in the generated calendar, so it has to travel"
         for fixture in away:
             by_team = int(session.scalar(select(func.count()).select_from(SimulationEvent).where(SimulationEvent.match_id == str(fixture.match_id), SimulationEvent.team_id == career.club_id)) or 0)
             by_side = int(session.scalar(select(func.count()).select_from(SimulationEvent).where(SimulationEvent.match_id == str(fixture.match_id), SimulationEvent.side == "away")) or 0)

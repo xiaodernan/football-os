@@ -132,7 +132,7 @@ export default async function ChallengeRunPage({ params }: Props) {
           <ChallengeRunTools available={Boolean(next?.available)} ident={career.slug} status={career.status} windowClosed={Boolean(verdict?.window_closed)} windowRounds={windowRounds} />
           {next?.available ? (
             <p className="muted">
-              {t("nextUp", { round: next.round_index, side: next.side === "home" ? t("sideHome") : t("sideAway"), opponent: next.opponent_name ?? "", venue: next.venue_name ? ` at ${next.venue_name}` : "", rotation: next.rotation ?? "", seed: next.seed ?? "" })}
+              {t("nextUp", { round: next.round_index, side: next.side === "home" ? t("sideHome") : t("sideAway"), opponent: next.opponent_name ?? "", venue: next.venue_name ? ` at ${next.venue_name}` : "", rotation: next.basis ?? "", seed: next.seed ?? "" })}
             </p>
           ) : (
             <p className="muted">{next?.reason ?? t("noFurtherRound")}</p>

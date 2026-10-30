@@ -9,9 +9,11 @@ Three rules keep this honest in the same way the single-match layer is honest.
    computed from `career_fixtures` on the request, each with the formula that produced it. `points` and
    `outcome` on a fixture are copies of what the linked match said — kept so a career still reads after
    its report is deleted — and `_consistency` re-checks them against the live match when it exists.
-3. **The fixture list is a rotation, not a shuffle.** Opponents are the clubs of the career's own
-   competition ordered by slug, taken in turn, with home and away alternating per cycle. A reader can
-   reproduce round 7 without a random number, which is the point of calling it fictional.
+3. **The fixture list is the one the world drew.** Rounds are read in kickoff order from the club's
+   own `real_matches` rows for the career's competition and the season's label, so the season's Nth round
+   is the generated fixture N — the same opponent, side and venue the public pages show. Once that
+   calendar is exhausted (or when the world has none for the season), the career continues on a published
+   rotation instead of dead-ending, and the plan's `source` says which rule answered.
 
 The philosophy is *stated intent*: it shapes what the page says the manager asked for, and the engine
 reads the tactical system rather than the word. The budget is not stated intent any more — §22's
@@ -182,18 +184,51 @@ def competition_clubs(session: Session, competition_id: str | None, *, exclude_i
     return list(session.scalars(select(Team).where(Team.competition_id == competition_id, Team.id != exclude_id).order_by(Team.slug)).all())
 
 
+def calendar_fixtures(session: Session, career: Career, *, bounds: dict[str, Any] | None = None) -> list[RealMatch]:
+    """The club's own fixtures for the career's current season, in the order the generated world drew them.
+
+    The season label is the one the boundary arithmetic gives the season being played (season two of a 2026
+    career asks the world for 2027), and the competition is the career's own — after a promotion or relegation
+    the club's world membership has not moved, so the new league's calendar usually holds no fixture for it
+    and the plan falls back to the career's rotation. Ordered by kickoff: the world spaces matchdays a week
+    apart and jitters a fixture by at most two days, so kickoff order is matchday order. Empty when the world
+    has no calendar for that season and competition — a career is never handed a calendar the world did not
+    draw.
+    """
+    bounds = bounds if bounds is not None else season_bounds(session, career)
+    if not career.competition_id or not career.club_id:
+        return []
+    season = str(bounds.get("season") or career.season)
+    return list(
+        session.scalars(
+            select(RealMatch)
+            .where(
+                RealMatch.competition_id == career.competition_id,
+                RealMatch.season == season,
+                or_(RealMatch.home_team_id == career.club_id, RealMatch.away_team_id == career.club_id),
+            )
+            .order_by(RealMatch.kickoff_at, RealMatch.slug)
+        ).all()
+    )
+
+
 def next_fixture_plan(session: Session, career: Career, *, round_index: int | None = None, bounds: dict[str, Any] | None = None) -> dict[str, Any]:
     """Which club is next, on which side, and where it is played.
 
-    `round_index` lets a caller ask about a round it has not reached yet — the rotation is a pure function of
+    The season is the one the world drew for this club: the season's Nth round is the club's Nth generated
+    fixture, read from `real_matches` for the career's competition and the season's label, so the career plays
+    the generated fixture list — same opponents, same sides, same venues — rather than a list invented here.
+    Once that calendar is exhausted (or when the world has none for the season), the career continues on its
+    own published rotation instead of dead-ending, counted within the season; `source` says which of the two
+    answered.
+
+    `round_index` lets a caller ask about a round it has not reached yet — both rules are pure functions of
     the round number, so §M7's transfer simulation can look at the next three fixtures without pretending a
     round has been played. Left out, it is the round after the last one this career actually played, which is
     what every caller here has always meant.
 
-    The rotation is counted *within the season* (`round_in_season`), so a promotion does not leave the club
-    halfway through a cycle in a league it joined: season two tees off against the new league's first club.
-    A round asked about beyond the current season's last one keeps rotating as if the season never ended,
-    which is all a projection of a future fixture can honestly mean before the boundary is played.
+    A round asked about beyond the current season's last one keeps using the same rule as if the season never
+    ended, which is all a projection of a future fixture can honestly mean before the boundary is played.
     """
     bounds = bounds if bounds is not None else season_bounds(session, career)
     round_index = career.rounds_played + 1 if round_index is None else max(1, int(round_index))
@@ -201,13 +236,48 @@ def next_fixture_plan(session: Session, career: Career, *, round_index: int | No
     if not opponents:
         return {"available": False, "reason": "the career's club has no competition to rotate through", "round_index": round_index}
     round_in_season = max(1, round_index - int(bounds["first_round"]) + 1)
-    cycle, position = divmod(round_in_season - 1, len(opponents))
+    season = str(bounds.get("season") or career.season)
+    calendar = calendar_fixtures(session, career, bounds=bounds)
+    if calendar and round_in_season <= len(calendar):
+        row = calendar[round_in_season - 1]
+        home = row.home_team_id == career.club_id
+        opponent_id = row.away_team_id if home else row.home_team_id
+        opponent = session.get(Team, opponent_id)
+        return {
+            "available": True,
+            "source": "world_calendar",
+            "round_index": round_index,
+            "round_in_season": round_in_season,
+            "season_index": int(bounds["index"]),
+            "side": "home" if home else "away",
+            "opponent_team_id": opponent_id,
+            "opponent_name": opponent.name if opponent else "",
+            "opponent_short": opponent.short_name if opponent else "",
+            "venue_name": row.venue_name,
+            "venue_club": career.club_name if home else (opponent.name if opponent else ""),
+            "match_slug": row.slug,
+            "round_label": row.round_label,
+            "calendar": {"season": season, "position": round_in_season, "of": len(calendar)},
+            "basis": f"the club's {row.round_label} fixture in the generated {season} calendar, season fixture {round_in_season} of {len(calendar)}, as the world drew it",
+            "seed": _digest_seed(career.id, round_index),
+        }
+    # The fallback is the career's own rotation, and it begins at its own first round: a career that has just
+    # played a fourteen-fixture calendar continues at home, not in whatever phase season round fifteen would
+    # have had in a rotation that never ran. `cycle`/`of` therefore count rounds since the calendar ended.
+    fallback_round = round_in_season - len(calendar) if calendar else round_in_season
+    cycle, position = divmod(fallback_round - 1, len(opponents))
     opponent = opponents[position]
     home = cycle % 2 == 0
     venue_club = career.club_name if home else opponent.name
     stadium = session.scalar(select(Team.stadium).where(Team.id == (career.club_id if home else opponent.id)))
+    rotation = f"opponents ordered by slug, position {position + 1} of {len(opponents)} in cycle {cycle + 1} of season {int(bounds['index'])}; the first cycle is played at home and the second away"
+    if calendar:
+        why = f"the generated {season} calendar holds {len(calendar)} fixtures for this club, so season round {round_in_season} begins the career's own rotation"
+    else:
+        why = f"the generated world has no {season} calendar for this competition, so the career rotates its own opponents"
     return {
         "available": True,
+        "source": "career_rotation",
         "round_index": round_index,
         "round_in_season": round_in_season,
         "season_index": int(bounds["index"]),
@@ -219,7 +289,7 @@ def next_fixture_plan(session: Session, career: Career, *, round_index: int | No
         "venue_club": venue_club,
         "cycle": cycle + 1,
         "of": len(opponents),
-        "rotation": f"opponents ordered by slug, position {position + 1} of {len(opponents)} in cycle {cycle + 1} of season {int(bounds['index'])}; a career plays every club at home in its first cycle and away in its second",
+        "basis": f"{why}: {rotation}",
         "seed": _digest_seed(career.id, round_index),
     }
 
@@ -702,9 +772,10 @@ BOARD_FORMULA: Final = (
 def season_horizon(session: Session, career: Career) -> dict[str, Any]:
     """How many rounds a full season is for this career, and where that number comes from.
 
-    A challenge career carries its own round window; an open career's competition is the horizon, and the
-    career's fixture list rotates through its clubs home and away, so a full season is a double round-robin
-    over them. With no competition the horizon is 0 and nothing is projected rather than guessed at.
+    A challenge career carries its own round window; an open career's competition is the horizon. Its
+    generated calendar is a double round-robin over the competition's clubs, and its fallback rotation visits
+    the same clubs home and away, so the season is 2 x clubs either way. With no competition the horizon is 0
+    and nothing is projected rather than guessed at.
     """
     window = int(career.challenge_window or 0)
     if window > 0:
@@ -1362,6 +1433,7 @@ __all__ = [
     "career_summary",
     "career_view",
     "close_season",
+    "calendar_fixtures",
     "competition_clubs",
     "development_view",
     "create_career",

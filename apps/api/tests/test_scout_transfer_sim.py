@@ -47,7 +47,7 @@ from app.services.scouting.transfer_sim import (
     transfer_sim_ready,
 )
 from app.services.simulation import market
-from app.services.simulation.career import next_fixture_plan
+from app.services.simulation.career import calendar_fixtures, next_fixture_plan
 from app.services.simulation.profile import team_profile
 from app.services.world import sync_world, world_ready
 
@@ -180,7 +180,7 @@ class TestSameSeedTwoElevens:
             assert int(line["without"]["seed"]) == int(line["with_signing"]["seed"]) == int(line["seed"])
             assert line["without"]["outcome"] in {"W", "D", "L"} and line["with_signing"]["outcome"] in {"W", "D", "L"}
 
-    def test_the_rounds_follow_the_rotation_the_career_would_really_play(self, session: Session, world: dict[str, Any]) -> None:
+    def test_the_rounds_follow_the_plan_the_career_would_really_play(self, session: Session, world: dict[str, Any]) -> None:
         career = _career(session, world["career_slug"])
         result = simulate_transfer(session, career, player=world["outsider"], rounds=3)
         for line in result["projection"]["rounds"]:
@@ -448,15 +448,17 @@ class TestFixturePlannerSeam:
         assert (int(career.rounds_played), int(career.budget)) == before
         assert far["seed"] != next_fixture_plan(session, career, round_index=11)["seed"]
 
-    def test_a_side_flips_when_the_career_reaches_the_second_cycle(self, session: Session, world: dict[str, Any]) -> None:
+    def test_the_second_half_mirrors_the_first_on_the_other_side(self, session: Session, world: dict[str, Any]) -> None:
         career = _career(session, world["career_slug"])
+        calendar = calendar_fixtures(session, career)
+        assert calendar and len(calendar) % 2 == 0, "a double round-robin calendar has two halves"
+        half = len(calendar) // 2
         first = next_fixture_plan(session, career, round_index=1)
-        opponents = int(first["of"])
-        assert opponents == len(list(session.scalars(select(Team.id).where(Team.competition_id == career.competition_id)))) - 1
-        later = next_fixture_plan(session, career, round_index=opponents + 1)
-        assert first["side"] == "home" and later["side"] == "away", "a career plays every club at home in its first cycle and away in its second"
-        assert later["of"] == opponents and later["opponent_team_id"] == first["opponent_team_id"], "the second cycle meets the same club, on the other side"
-        assert later["cycle"] == 2 and first["cycle"] == 1
+        later = next_fixture_plan(session, career, round_index=half + 1)
+        assert first["source"] == later["source"] == "world_calendar"
+        assert later["opponent_team_id"] == first["opponent_team_id"], "the mirror round meets the same club"
+        assert first["side"] != later["side"], "and meets it on the other side"
+        assert later["calendar"]["position"] == half + 1
 
     def test_the_profile_a_projection_selects_from_is_the_one_the_engine_would_play(self, session: Session, world: dict[str, Any]) -> None:
         career = _career(session, world["career_slug"])

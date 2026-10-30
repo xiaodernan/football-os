@@ -4,7 +4,7 @@ Four questions, in the order a reviewer would ask them:
 
 * **Is the season private?** The knobs are already public fiction under `/world`; a career, its rounds
   and its record belong to the account that opened them, and a foreign slug reads as 404.
-* **Is every number traceable?** A response prints the formula it summed by, the rotation rule that
+* **Is every number traceable?** A response prints the formula it summed by, the calendar rule that
   picked the opponent, and the digest of the match that decided the round.
 * **Is the fiction said out loud?** `data_origin='simulation'`, the career disclaimer, and a
   `limitations` block that admits what the layer still does not do — wages are recorded rather than
@@ -114,7 +114,7 @@ class TestOpening:
         assert body["record"]["played"] == 0 and body["record"]["points"] == 0
         assert body["objectives"][0]["target"] == 2 and body["objectives"][0]["met"] is False
         assert body["objectives"][0]["formula"] == OBJECTIVE_FORMULA["wins"]
-        assert body["next_fixture"]["available"] is True and body["next_fixture"]["rotation"]
+        assert body["next_fixture"]["available"] is True and body["next_fixture"]["basis"]
         assert body["is_demo_data"] is True and "fiction" in body["disclaimer"]
         assert set(body["limitations"]) == {"budget", "wages", "carry_over", "projections", "ledger", "scouting", "philosophy", "table", "objectives"}
 
@@ -169,8 +169,8 @@ class TestPlayingASeason:
         assert body["ledger"]["leaders"]["per90_formula"]
 
     def test_the_same_career_played_twice_gives_the_same_opponents(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
-        """The fixture list is a rotation, so who is met is decided by the career — not by the draw that
-        decides the score. Two accounts managing the same club must face the same order."""
+        """The fixture list is the generated calendar, so two accounts managing the same club face the
+        same order — the career's own seed decides the score, not the opponent."""
         first = auth_client.post(API, json=_body(club_id)).json()["career"]["slug"]
         with _signed_in() as other:
             second = other.post(API, json=_body(club_id)).json()["career"]["slug"]

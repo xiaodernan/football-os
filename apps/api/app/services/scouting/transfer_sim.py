@@ -41,7 +41,7 @@ from app.services.simulation.profile import SideProfile, SquadOverlay, team_prof
 from app.services.simulation.service import BLOCK_MINUTES
 from app.services.simulation.squad import squad_as_of
 
-#: How many future fixtures a projection looks at, and the ceiling on that. The rotation is a pure function of the
+#: How many future fixtures a projection looks at, and the ceiling on that. The plan is a pure function of the
 #: round number, so a projection may read ahead — but a few rounds, not a season, and every round it prints names
 #: the opponent and the seed it used.
 DEFAULT_ROUNDS: Final = 3
@@ -335,7 +335,7 @@ def rules() -> dict[str, Any]:
         "writes": "nothing: no sim match row, no move row, no wage charge, no budget change, no listing, no offer",
         "price_from": "market.valuation of the player's row, set against market.budget_position and market.wage_bill for the career",
         "side_from": "profile.team_profile run twice — the squad the career holds at the round, and that squad with the signing added",
-        "fixtures_from": "career.next_fixture_plan at a round number, so the projection follows the rotation the career would really go through",
+        "fixtures_from": "career.next_fixture_plan at a round number, so the projection follows the generated calendar the career's season drew (or, once that calendar is exhausted, the career's own published rotation)",
         "seed_rule": SIMULATION_RULE,
         "refusals": list(REFUSALS),
     }
