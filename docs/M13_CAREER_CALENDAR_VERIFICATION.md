@@ -124,7 +124,7 @@ three catalogues; the dead-key scan (`qa-unused-keys.mjs`) finds them used on th
 | `mypy app` | **Success: no issues found in 161 source files** |
 | web `tsc --noEmit` | clean |
 | `next lint` | clean |
-| full API suite | *(recorded below once the run on `af6abda` finishes)* |
+| full API suite | **2,115 collected; one red, cured.** Run in `.scratch/wt-head` at `d6b5b48` with `GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master` (a detached worktree otherwise fails the CI-trigger gate). Every case passed except `test_spec_audit_currency.py::test_the_roadmap_quotes_the_audit_s_current_figures_not_an_older_snapshot`, which read `ROADMAP.md`'s quoted triple as 46 migrations against the audit's declared 47 — the external lane's audit fix (`e18f6a1`) moved the audit and left the roadmap's quotation behind. Cured in `0534b80` (one figure), and the case is green on it. |
 
 The seven calendar cases: `test_every_round_is_the_clubs_own_generated_fixture`,
 `test_the_calendar_meets_every_club_once_at_home_and_once_away`,
