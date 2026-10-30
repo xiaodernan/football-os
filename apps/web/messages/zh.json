@@ -3628,11 +3628,18 @@
     "thGd": "净",
     "thPts": "积分",
     "noLeagueTable": "没有积分榜",
+    "tablePending": "这个赛季还没有已踢的比赛，所以没有可读的积分榜。注册参加这个赛季的俱乐部列在“参赛俱乐部”之下。",
     "cupNote": "这是一项{kind}：晋级由下方 {count} 场抽签对阵的签位决定，所以积分榜只能靠编造而不是读出来。参赛俱乐部列在“参赛俱乐部”之下。",
     "entrantsEyebrow": "{count} 支俱乐部",
     "entrantsTitle": "参赛俱乐部",
     "fixturesEyebrow": "{season} 的 {count} 场赛程",
     "fixturesTitle": "赛程与结果",
+    "movementEyebrow": "赛季边界 · {season}",
+    "movementTitle": "升级与降级",
+    "movementRule": "联赛归属在赛季边界变化，决定它的是已存储的积分榜。下面每支球队都标出它在 {season} 赛季所在的联赛，以及它现在注册的联赛。",
+    "movementPromoted": "升级",
+    "movementRelegated": "降级",
+    "movementPath": "从 {from} 到 {to}",
     "thClub": "俱乐部"
   },
   "worldNews": {

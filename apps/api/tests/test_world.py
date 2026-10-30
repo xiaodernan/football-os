@@ -16,11 +16,11 @@ import pytest
 from sqlalchemy import func, select
 
 from app.core.db import SessionLocal
-from app.models import NewsArticle, NewsArticleLink, RealMatch, RealPlayer, RealTrainingSession, Team
+from app.models import Competition, NewsArticle, NewsArticleLink, RealMatch, RealPlayer, RealTrainingSession, Team
 from app.services.world import search_world, sync_world, web_path, world_counts, world_ready
 from app.services.world.builder import TRAINING_RPE, WorldSizes, plan_world
 from app.services.world.names import slugify
-from app.services.world.plan import WorldPlan, duplicate_keys
+from app.services.world.plan import WorldPlan, duplicate_keys, world_id
 from app.services.world.sync import COLLECTIONS, GATE, plan_problems
 
 SAFE_SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -55,6 +55,63 @@ def _item(client, path: str):  # type: ignore[no-untyped-def]
     return client.get(f"{API}{path}", params={"page_size": 1}).json()["items"][0]
 
 
+def _played_leagues(plan: WorldPlan) -> dict[str, set[str]]:
+    """Team id -> the league ids it played its completed 2026 fixtures in."""
+    league_ids = {world_id("competition", row.natural_key) for row in plan.collections["competitions"] if row.payload["kind"] == "league"}
+    played: dict[str, set[str]] = {}
+    for row in plan.collections["matches"]:
+        payload = row.payload
+        if payload["season"] != "2026" or payload["competition_id"] not in league_ids:
+            continue
+        for team_id in (payload["home_team_id"], payload["away_team_id"]):
+            played.setdefault(str(team_id), set()).add(str(payload["competition_id"]))
+    return played
+
+
+def _moved_clubs(plan: WorldPlan) -> list[str]:
+    """Clubs whose registered league is not the league their 2026 fixtures were played in."""
+    played = _played_leagues(plan)
+    moved = []
+    for row in plan.collections["teams"]:
+        team_id = world_id("team", row.natural_key)
+        registered = str(row.payload["competition_id"])
+        if played.get(team_id, set()) != {registered}:
+            moved.append(row.natural_key)
+    return moved
+
+
+def _stored_table(session, competition_id: str, season: str = "2026") -> list[Team]:  # type: ignore[no-untyped-def]
+    """The table recomputed in the test from stored fixtures: points, goal difference, goals for, slug."""
+    totals: dict[str, dict[str, int]] = {}
+    for match in session.scalars(select(RealMatch).where(RealMatch.competition_id == competition_id, RealMatch.season == season)).all():
+        if match.status != "completed" or match.home_goals is None or match.away_goals is None:
+            continue
+        home = totals.setdefault(match.home_team_id, {"points": 0, "scored": 0, "conceded": 0})
+        away = totals.setdefault(match.away_team_id, {"points": 0, "scored": 0, "conceded": 0})
+        home["scored"] += match.home_goals
+        home["conceded"] += match.away_goals
+        away["scored"] += match.away_goals
+        away["conceded"] += match.home_goals
+        if match.home_goals == match.away_goals:
+            home["points"] += 1
+            away["points"] += 1
+        elif match.home_goals > match.away_goals:
+            home["points"] += 3
+        else:
+            away["points"] += 3
+    teams = {team.id: team for team in session.scalars(select(Team).where(Team.id.in_(totals))).all()}
+    order = sorted(
+        totals,
+        key=lambda team_id: (
+            -totals[team_id]["points"],
+            -(totals[team_id]["scored"] - totals[team_id]["conceded"]),
+            -totals[team_id]["scored"],
+            teams[team_id].slug,
+        ),
+    )
+    return [teams[team_id] for team_id in order]
+
+
 class TestPlan:
     def test_same_seed_rebuilds_the_identical_world(self, plan: WorldPlan, rebuilt_plan: WorldPlan) -> None:
         assert plan.fingerprint() == rebuilt_plan.fingerprint()
@@ -78,8 +135,6 @@ class TestPlan:
 
     def test_the_leagues_form_a_two_tier_pyramid(self, plan: WorldPlan) -> None:
         """A second division exists, cups sit outside it, and every league is a full slate."""
-        from app.services.world.plan import world_id
-
         sizes = WorldSizes()
         leagues = [row for row in plan.collections["competitions"] if row.payload["kind"] == "league"]
         assert [row.payload["tier"] for row in leagues] == [1, 1, 2, 2]
@@ -90,6 +145,29 @@ class TestPlan:
             membership[key] = membership.get(key, 0) + 1
         for league in leagues:
             assert membership[world_id("competition", league.natural_key)] == sizes.teams_per_league
+
+    def test_the_season_boundary_moves_one_club_per_pairing(self, plan: WorldPlan) -> None:
+        """Two tier-1/tier-2 pairings, one club down and one up in each, at the default one slot."""
+        moved = _moved_clubs(plan)
+        assert len(moved) == 4, moved
+        played = _played_leagues(plan)
+        registered = {world_id("team", row.natural_key): str(row.payload["competition_id"]) for row in plan.collections["teams"]}
+        for club in moved:
+            team_id = world_id("team", club)
+            assert played[team_id], f"{club} was registered somewhere it never played"
+            assert registered[team_id] not in played[team_id], f"{club} is registered in the league it already played"
+
+    def test_the_boundary_can_be_switched_off(self) -> None:
+        """`movement_slots = 0` leaves every club in the league it played, which is what the switch promises."""
+        assert _moved_clubs(plan_world(13, WorldSizes(movement_slots=0))) == []
+
+    def test_next_seasons_fixtures_are_drawn_from_the_new_membership(self, plan: WorldPlan) -> None:
+        registered = {world_id("team", row.natural_key): str(row.payload["competition_id"]) for row in plan.collections["teams"]}
+        fixtures = [row.payload for row in plan.collections["matches"] if row.payload["season"] == "2027"]
+        assert fixtures, "the next season has an opening round on the calendar"
+        for fixture in fixtures:
+            for team_id in (fixture["home_team_id"], fixture["away_team_id"]):
+                assert registered[team_id] == fixture["competition_id"], (fixture["slug"], team_id)
 
     @pytest.mark.parametrize("collection", ["competitions", "teams", "players", "matches", "articles"])
     def test_public_slugs_are_url_safe(self, plan: WorldPlan, collection: str) -> None:
@@ -193,6 +271,38 @@ class TestSync:
             played = match.status == "completed"
             assert (match.home_goals is not None) is played
 
+    def test_the_league_boundary_is_computed_from_the_stored_table(self, session) -> None:  # type: ignore[no-untyped-def]
+        """The relegated club is the last row of the table the fixtures aggregate to, not a seeded pick."""
+        top = session.scalars(select(Competition).where(Competition.kind == "league", Competition.tier == 1).order_by(Competition.slug)).first()
+        assert top is not None
+        table = _stored_table(session, top.id)
+        assert len(table) == 8
+        bottom, above = table[-1], table[-2]
+        assert bottom.competition_id != top.id, f"{bottom.slug} finished last but was not relegated"
+        lower = session.get(Competition, bottom.competition_id)
+        assert lower is not None and (lower.kind, lower.tier) == ("league", 2)
+        assert above.competition_id == top.id, "the club above the bottom did not stay up"
+        promoted = [team for team in session.scalars(select(Team).where(Team.competition_id == top.id)).all() if team.id not in {row.id for row in table}]
+        assert len(promoted) == 1, [team.slug for team in promoted]
+        assert _stored_table(session, lower.id)[0].id == promoted[0].id, "the club that came up was not top of the league below"
+
+    def test_every_club_is_registered_in_exactly_one_league(self, session) -> None:  # type: ignore[no-untyped-def]
+        leagues = session.scalars(select(Competition).where(Competition.kind == "league")).all()
+        counts = {league.id: 0 for league in leagues}
+        for team in session.scalars(select(Team)).all():
+            assert team.competition_id in counts, f"{team.slug} is registered outside the pyramid"
+            counts[team.competition_id] += 1
+        assert sum(counts.values()) == 32 and set(counts.values()) == {8}
+
+    def test_next_seasons_fixtures_name_only_the_new_membership(self, session) -> None:  # type: ignore[no-untyped-def]
+        leagues = session.scalars(select(Competition).where(Competition.kind == "league")).all()
+        for league in leagues:
+            registered = {team.id for team in session.scalars(select(Team).where(Team.competition_id == league.id)).all()}
+            fixtures = session.scalars(select(RealMatch).where(RealMatch.competition_id == league.id, RealMatch.season == "2027")).all()
+            assert fixtures, league.slug
+            named = {match.home_team_id for match in fixtures} | {match.away_team_id for match in fixtures}
+            assert named <= registered, (league.slug, named - registered)
+
 
 class TestReads:
     """The world is public fiction: readable without an account, never without its labels."""
@@ -244,6 +354,62 @@ class TestReads:
         assert cup["standings"] == [], "a knockout does not have a league table"
         assert all(fixture["home"] and fixture["away"] for fixture in cup["fixtures"]), cup["fixtures"][0]
         assert {team["id"] for team in cup["teams"]} == {fixture["home"]["id"] for fixture in cup["fixtures"]} | {fixture["away"]["id"] for fixture in cup["fixtures"]}
+
+    def _league_pages(self, client):  # type: ignore[no-untyped-def]
+        listed = client.get(f"{API}/competitions", params={"page_size": 50}).json()["items"]
+        return [client.get(f"{API}/competitions/{item['slug']}").json() for item in listed if item["kind"] == "league"]
+
+    def test_a_league_page_names_the_clubs_that_played_not_just_the_ones_left(self, client) -> None:  # type: ignore[no-untyped-def]
+        """A relegated club is still a row of the table it earned, and the direction follows the club."""
+        page = next((body for body in self._league_pages(client) if body["movement"]), None)
+        assert page is not None, "no league page published its boundary move"
+        competition_id = page["competition"]["id"]
+        promoted, relegated = page["movement"]["promoted"], page["movement"]["relegated"]
+        assert len(promoted) == len(relegated) == 1, page["movement"]
+
+        def tier(slug: str) -> int:
+            return client.get(f"{API}/competitions/{slug}").json()["competition"]["tier"]
+
+        errors = []
+        for entry in relegated:
+            assert entry["from"]["id"] != entry["to"]["id"]
+            if tier(entry["to"]["slug"]) <= tier(entry["from"]["slug"]):
+                errors.append(("relegated", entry["from"]["name"], entry["to"]["name"]))
+        for entry in promoted:
+            assert entry["from"]["id"] != entry["to"]["id"]
+            if tier(entry["to"]["slug"]) >= tier(entry["from"]["slug"]):
+                errors.append(("promoted", entry["from"]["name"], entry["to"]["name"]))
+        assert not errors, f"tier 1 is the top flight, so these directions are inverted: {errors}"
+        table = {row["team_id"] for row in page["standings"]}
+        leaving = next((entry for entry in (*relegated, *promoted) if entry["from"]["id"] == competition_id), None)
+        arriving = next((entry for entry in (*relegated, *promoted) if entry["to"]["id"] == competition_id), None)
+        assert leaving is not None and arriving is not None, "the page does not show both sides of its boundary"
+        assert leaving["team"]["id"] in table, "the club that left this league vanished from the table it earned"
+        assert arriving["team"]["id"] not in table
+        assert all(row["team"] is not None and row["name"] != "Data unavailable" for row in page["standings"])
+        assert {team["id"] for team in page["teams"]} == table
+        assert all(fixture["home"] and fixture["away"] for fixture in page["fixtures"]), "a fixture lost a side after the move"
+
+    def test_a_future_season_page_lists_the_membership_registered_for_it(self, client) -> None:  # type: ignore[no-untyped-def]
+        """No results to table yet, so the page shows the field registered for the season, not the last one's entrants."""
+        page = next((body for body in self._league_pages(client) if body["movement"]), None)
+        assert page is not None
+        competition_id = page["competition"]["id"]
+        entrants = {team["id"] for team in page["teams"]}
+        moves = [*page["movement"]["promoted"], *page["movement"]["relegated"]]
+        leaving = next(entry for entry in moves if entry["from"]["id"] == competition_id)
+        arriving = next(entry for entry in moves if entry["to"]["id"] == competition_id)
+        membership = (entrants - {leaving["team"]["id"]}) | {arriving["team"]["id"]}
+        slug = page["competition"]["slug"]
+        future = client.get(f"{API}/competitions/{slug}", params={"season": "2027"}).json()
+        assert future["movement"] is None, "a season with no stored results has no boundary to publish"
+        assert {team["id"] for team in future["teams"]} == membership
+        named = {fixture["home"]["id"] for fixture in future["fixtures"]} | {fixture["away"]["id"] for fixture in future["fixtures"]}
+        assert named and named <= membership
+
+    def test_a_cup_publishes_no_tier_movement(self, client) -> None:  # type: ignore[no-untyped-def]
+        cup = next(item for item in client.get(f"{API}/competitions", params={"page_size": 50}).json()["items"] if item["kind"] == "cup")
+        assert client.get(f"{API}/competitions/{cup['slug']}").json()["movement"] is None
 
     def test_unknown_ident_is_a_404_not_an_empty_page(self, client) -> None:  # type: ignore[no-untyped-def]
         for path in ("/competitions", "/teams", "/players", "/matches", "/news"):

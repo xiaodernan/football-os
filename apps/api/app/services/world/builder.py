@@ -10,6 +10,9 @@ Two rules shape everything below:
    those scores; season totals sum from those lines; club ratings average those players. A number
    shown anywhere in M3 traces upward to the seed, which is what makes it demo data rather than a
    fake measurement (spec §62, §89, `DATA_POLICY.md` §2).
+3. **The table decides who moves.** The completed season is aggregated into a final table from the
+   stored scores, and the bottom club of every league swaps with the top club of the league below
+   it. No promotion is hand-picked and no tier is frozen.
 """
 
 from __future__ import annotations
@@ -107,6 +110,10 @@ class WorldSizes:
     tier-2 leagues. A club's tier decides which strength band it is drawn from, so the world has
     a top flight and a second division rather than four parallel leagues. Cups are not part of the
     pyramid — they are open to every club and carry `tier = 0`, which is no level at all.
+
+    `movement_slots` is how many clubs cross each tier boundary at the end of the season: the
+    bottom clubs of a league swap with the top clubs of the league below it. Zero switches the
+    movement off and leaves the pyramid frozen.
     """
 
     tiers: tuple[int, ...] = (2, 2)
@@ -116,6 +123,7 @@ class WorldSizes:
     season: str = "2026"
     next_season: str = "2027"
     training_sessions: int = 100
+    movement_slots: int = 1
 
     @property
     def leagues(self) -> int:
@@ -165,6 +173,7 @@ class _Club:
     colour: str
     nation: str
     league: str
+    season_league: str
     strength: float
     manager: str = ""
     players: list[_Player] = field(default_factory=list)
@@ -455,7 +464,8 @@ def _make_clubs(rng: WorldRng, sizes: WorldSizes, leagues: Sequence[_Competition
                 formation=formation(local),
                 colour=brand_colour(local),
                 nation=nation_name(local),
-                league=leagues[index % len(leagues)].slug,
+                league=league.slug,
+                season_league=league.slug,
                 strength=strength,
             )
         )
@@ -464,6 +474,67 @@ def _make_clubs(rng: WorldRng, sizes: WorldSizes, leagues: Sequence[_Competition
 
 def _league_of(clubs: Sequence[_Club], league_slug: str) -> list[_Club]:
     return sorted([club for club in clubs if club.league == league_slug], key=lambda club: club.slug)
+
+
+def _league_table(fixtures: Sequence[_Fixture], league_slug: str) -> list[_Club]:
+    """One league's final table, best first, aggregated from its completed fixtures.
+
+    Ordering is points, then goal difference, then goals scored, then slug — the same order the
+    public standings read, so a club is never relegated by a table nobody can see.
+    """
+    totals: dict[str, dict[str, Any]] = {}
+    for fixture in fixtures:
+        score = fixture.score()
+        if fixture.competition.slug != league_slug or score is None:
+            continue
+        home_goals, away_goals = score
+        home = totals.setdefault(fixture.home.slug, {"club": fixture.home, "points": 0, "scored": 0, "conceded": 0})
+        away = totals.setdefault(fixture.away.slug, {"club": fixture.away, "points": 0, "scored": 0, "conceded": 0})
+        home["scored"] += home_goals
+        home["conceded"] += away_goals
+        away["scored"] += away_goals
+        away["conceded"] += home_goals
+        if home_goals == away_goals:
+            home["points"] += 1
+            away["points"] += 1
+        elif home_goals > away_goals:
+            home["points"] += 3
+        else:
+            away["points"] += 3
+    return [
+        row["club"]
+        for row in sorted(totals.values(), key=lambda row: (-row["points"], -(row["scored"] - row["conceded"]), -row["scored"], row["club"].slug))
+    ]
+
+
+def _apply_promotion_relegation(sizes: WorldSizes, leagues: Sequence[_Competition], fixtures: Sequence[_Fixture]) -> None:
+    """Move clubs across the tier boundaries the completed fixtures decided.
+
+    Every tier-n league sends its bottom `movement_slots` clubs down and takes the top clubs of the
+    tier-(n+1) league paired with it. `league` is rewritten in place, so everything built afterwards
+    — next season's fixture list, `Team.competition_id` — carries the new membership, while
+    `season_league` keeps naming the league the completed season was actually played in.
+    A gap in the pyramid is not a boundary, and a field is never emptied wholesale.
+    """
+    if sizes.movement_slots <= 0:
+        return
+    by_tier: dict[int, list[_Competition]] = {}
+    for league in leagues:
+        by_tier.setdefault(league.tier, []).append(league)
+    tiers = sorted(by_tier)
+    for upper_tier, lower_tier in zip(tiers, tiers[1:], strict=False):
+        if lower_tier != upper_tier + 1:
+            continue
+        for upper, lower in zip(by_tier[upper_tier], by_tier[lower_tier], strict=False):
+            upper_table = _league_table(fixtures, upper.slug)
+            lower_table = _league_table(fixtures, lower.slug)
+            slots = min(sizes.movement_slots, len(upper_table) // 2, len(lower_table) // 2)
+            if slots <= 0:
+                continue
+            for club in upper_table[len(upper_table) - slots :]:
+                club.league = lower.slug
+            for club in lower_table[:slots]:
+                club.league = upper.slug
 
 
 def _level_for(strength: float) -> str:
@@ -1018,7 +1089,11 @@ def plan_world(seed: int, sizes: WorldSizes | None = None) -> WorldPlan:
     taken_names: set[str] = {club.name for club in clubs}
     _make_players(rng, clubs, taken_names)
     _assign_managers(rng, clubs, taken_names)
-    fixtures = [*_league_fixtures(rng, dims, clubs, leagues), *_cup_fixtures(rng, dims, clubs, cups), *_upcoming_fixtures(rng, dims, clubs, leagues)]
+    fixtures = [*_league_fixtures(rng, dims, clubs, leagues), *_cup_fixtures(rng, dims, clubs, cups)]
+    # The completed season decides who moves; only then is next season's calendar drawn, so the
+    # 2027 fixtures and the team rows carry the membership the boundary created.
+    _apply_promotion_relegation(dims, leagues, fixtures)
+    fixtures.extend(_upcoming_fixtures(rng, dims, clubs, leagues))
     fixtures.sort(key=lambda fixture: (fixture.kickoff, fixture.slug))
     for fixture in fixtures:
         if fixture.completed:

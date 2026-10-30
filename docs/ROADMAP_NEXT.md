@@ -196,12 +196,25 @@ isolation walk over any new tenant-scoped door.
 
 M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" world needs a structure.
 
-9. **League pyramid.** **Partially present (verified 2026-10-25):** `Competition.tier` exists and
-   `api/v1/world.py` already computes a read-time `standings` table from `real_matches` (never a stored
-   total). **Second tier done (2026-10-30, item 11):** the generated world now holds two tier-1 leagues
-   over two tier-2 leagues of eight clubs each, with tier-banded strengths and cups at `tier = 0`.
-   **Pending:** the promotion/relegation move computed from the standings at the season boundary, and
-   its publication.
+9. **League pyramid.** **Done (2026-10-30).** `Competition.tier` and the read-time `standings` table
+   (aggregated from `real_matches`, never a stored total) were already present; item 11 added the second
+   division — two tier-1 leagues over two tier-2 leagues of eight clubs, tier-banded strengths, cups at
+   `tier = 0`. **The season boundary:** `builder._league_table` aggregates each league's final table from
+   the stored scores (points, goal difference, goals scored, slug) and `_apply_promotion_relegation` swaps
+   the bottom club of every tier-1 league with the top club of its paired tier-2 league before next
+   season's opening round is drawn. `Team.competition_id` carries the new membership; `_Club.season_league`
+   keeps naming the league the completed season was played in, so the newsroom's 2026 notes still quote
+   it. The competition page builds its table from the season's fixtures rather than from membership today,
+   so a relegated club still has a row, and publishes `movement: {season, promoted[], relegated[]}` with
+   each club's old and new league (`null` for cups). `WorldSizes.movement_slots` switches the move off at
+   0. Pinned by `tests/test_world.py` (`test_the_season_boundary_moves_one_club_per_pairing`,
+   `test_the_boundary_can_be_switched_off`, `test_next_seasons_fixtures_are_drawn_from_the_new_membership`,
+   `test_the_league_boundary_is_computed_from_the_stored_table`,
+   `test_every_club_is_registered_in_exactly_one_league`,
+   `test_next_seasons_fixtures_name_only_the_new_membership`,
+   `test_a_league_page_names_the_clubs_that_played_not_just_the_ones_left`,
+   `test_a_future_season_page_lists_the_membership_registered_for_it`,
+   `test_a_cup_publishes_no_tier_movement`).
 10. **Fixture calendar.** **Already implemented (verified 2026-10-25):** `world/builder.py` generates a
     deterministic double round-robin per league and a 7-game knockout per cup (`_round_robin`,
     `_league_fixtures`, `_cup_fixtures`, `_simulate`) from the world seed; `real_matches` is the result and
@@ -268,8 +281,12 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     it already needed for the brief), so both endpoints read it from the view. The play endpoint keeps its
     pre-play plan — that is the availability check for the round about to be played, a different round from the
     post-play next fixture.
-15. **Load envelope.** A recorded load test (concurrent career sims) with a published ceiling; the
-    M12 cost/rate-limit work already gives the scaffolding.
+15. **Load envelope.** **Done (2026-10-28).** `docs/LOAD_ENVELOPE.md` records the measured envelope
+    (concurrent career sims: `p95_ms_ceiling: 15000`, `subprocess_seconds_ceiling: 600`; measured gate
+    p95 1,655.61 ms, measure shape p95 1,745.49 ms), the two refusal arms (wrong prefix, career cap), and
+    the gate that boots uvicorn and reruns `scripts/bench_api --scenario sims`
+    (`apps/api/tests/test_load_envelope.py`, commit `ec5cd0b`). The M12 cost/rate-limit scaffolding is used
+    as the ceiling reference rather than left implied.
 
 *Gate:* load test exits within the published envelope; `next build` + API suite stay green on both legs.
 

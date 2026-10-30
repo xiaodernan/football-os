@@ -274,7 +274,7 @@ def _player_spotlights(emitter: _Emitter, draft: WorldDraft, quotas: dict[str, i
         ]
         fact = (
             f"{player.name}, {player.age}, {player.position} for {club.name} in the {draft.sizes.season} season of the "
-            f"{draft.competition(club.league).name}: {player.appearances} appearances ({player.starts} starts), "
+            f"{draft.competition(club.season_league).name}: {player.appearances} appearances ({player.starts} starts), "
             f"{player.minutes} minutes, {player.goals} goals, {player.assists} assists, {player.clean_sheets} clean sheets, "
             f"{player.yellow_cards} yellow and {player.red_cards} red cards, average generated rating {player.rating:.2f}."
         )
@@ -290,7 +290,7 @@ def _player_spotlights(emitter: _Emitter, draft: WorldDraft, quotas: dict[str, i
             summary=f"A generated profile of {player.name}: overall {player.overall}, {player.goals} goals, archetype {player.archetype}.",
             body=_sections(fact, analysis, "Speculation about a real career is out of scope: this player does not exist."),
             season=draft.sizes.season,
-            entities={"competitions": [club.league], "teams": [club.slug], "players": [player.slug], "matches": []},
+            entities={"competitions": [club.season_league], "teams": [club.slug], "players": [player.slug], "matches": []},
             published_at=emitter.stamp(index, hours=11),
         )
 
@@ -301,7 +301,7 @@ def _team_news(emitter: _Emitter, draft: WorldDraft) -> None:
         scheduled = _team_fixtures(draft, club, played=False)
         used = {line.player.slug for fixture in completed for line in fixture.lines if line.team_slug == club.slug}
         leaders = sorted(club.players, key=lambda player: (-player.goals, player.slug))[:3]
-        league_name = draft.competition(club.league).name
+        league_name = draft.competition(club.season_league).name
         for angle_index, angle in enumerate(TEAM_ANGLES):
             if angle == "selection":
                 fact = (
@@ -334,7 +334,7 @@ def _team_news(emitter: _Emitter, draft: WorldDraft) -> None:
                 body=_sections(fact, analysis, ""),
                 season=draft.sizes.season,
                 entities={
-                    "competitions": [club.league],
+                    "competitions": [club.season_league],
                     "teams": [club.slug],
                     "players": sorted(player.slug for player in club.players),
                     "matches": [fixture.slug for fixture in completed[:12]],
@@ -369,7 +369,7 @@ def _transfer_notes(emitter: _Emitter, draft: WorldDraft, quotas: dict[str, int]
             ),
             season=draft.sizes.season,
             entities={
-                "competitions": [home_club.league, suitor.league],
+                "competitions": [home_club.season_league, suitor.season_league],
                 "teams": [home_club.slug, suitor.slug],
                 "players": [player.slug],
                 "matches": [],
@@ -381,7 +381,7 @@ def _transfer_notes(emitter: _Emitter, draft: WorldDraft, quotas: dict[str, int]
 def _competition_notes(emitter: _Emitter, draft: WorldDraft) -> None:
     for index, competition in enumerate(sorted(draft.competitions, key=lambda item: item.slug)):
         fixtures = [fixture for fixture in draft.played() if fixture.competition.slug == competition.slug]
-        members = sorted((club for club in draft.clubs if club.league == competition.slug), key=lambda club: club.slug)
+        members = sorted((club for club in draft.clubs if club.season_league == competition.slug), key=lambda club: club.slug)
         participants = {line.player.slug: line.player for fixture in fixtures for line in fixture.lines}
         leaders = sorted(participants.values(), key=lambda player: (-player.goals, player.slug))[:3]
         level = f"a tier-{competition.tier} league" if competition.kind == "league" else "a cup open to every club"

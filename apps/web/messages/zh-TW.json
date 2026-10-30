@@ -3628,11 +3628,18 @@
     "thGd": "淨",
     "thPts": "積分",
     "noLeagueTable": "沒有積分榜",
+    "tablePending": "這個賽季還沒有已踢的比賽，所以沒有可讀的積分榜。註冊參加這個賽季的俱樂部列在「參賽俱樂部」之下。",
     "cupNote": "這是一項{kind}：晉級由下方 {count} 場抽籤對陣的籤位決定，所以積分榜只能靠編造而不是讀出來。參賽俱樂部列在「參賽俱樂部」之下。",
     "entrantsEyebrow": "{count} 支俱樂部",
     "entrantsTitle": "參賽俱樂部",
     "fixturesEyebrow": "{season} 的 {count} 場賽程",
     "fixturesTitle": "賽程與結果",
+    "movementEyebrow": "賽季邊界 · {season}",
+    "movementTitle": "升級與降級",
+    "movementRule": "聯賽歸屬在賽季邊界變化，決定它的是已儲存的積分榜。下面每支球隊都標出它在 {season} 賽季所在的聯賽，以及它現在註冊的聯賽。",
+    "movementPromoted": "升級",
+    "movementRelegated": "降級",
+    "movementPath": "從 {from} 到 {to}",
     "thClub": "俱樂部"
   },
   "worldNews": {

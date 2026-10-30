@@ -44,11 +44,13 @@ export default async function CompetitionDetailPage({ params, searchParams }: Pr
     return <WorldUnavailable message={result.message} />;
   }
 
-  const { competition, standings, teams, fixtures, completed, scheduled, format_note: formatNote, season } = result.data;
+  const { competition, standings, teams, movement, fixtures, completed, scheduled, format_note: formatNote, season } = result.data;
   const t = await getTranslations("worldCompetition");
   const path = `/competition/${competition.slug}`;
   const isLeague = standings.length > 0;
+  const isCup = competition.kind !== "league";
   const entrants = teams.filter((team): team is NonNullable<typeof team> => Boolean(team));
+  const moved = movement ? movement.promoted.length + movement.relegated.length : 0;
 
   return (
     <div className="container page stack">
@@ -152,11 +154,43 @@ export default async function CompetitionDetailPage({ params, searchParams }: Pr
           <div className="stack-sm">
             <span className="unavailable">{t("noLeagueTable")}</span>
             <p className="muted" style={{ fontSize: "0.9rem" }}>
-              {t("cupNote", { kind: competition.kind, count: fixtures.length })}
+              {isCup
+                ? t("cupNote", { kind: competition.kind, count: fixtures.length })
+                : t("tablePending")}
             </p>
           </div>
         )}
       </Panel>
+
+      {movement && moved > 0 && (
+        <Panel eyebrow={t("movementEyebrow", { season: movement.season })} title={t("movementTitle")}>
+          <div className="stack-sm">
+            <p className="muted" style={{ fontSize: "0.9rem" }}>
+              {t("movementRule", { season: movement.season })}
+            </p>
+            <ul className="world-list">
+              {movement.relegated.map((entry) => (
+                <li className="world-move" key={`relegated-${entry.team?.id ?? entry.to?.slug ?? "none"}`}>
+                  <span className="world-move__direction">{t("movementRelegated")}</span>
+                  <span className="world-move__path">
+                    <EntityLink href={entry.team?.path} label={entry.team?.name ?? "—"} />
+                    <span className="muted">{t("movementPath", { from: entry.from?.name ?? "—", to: entry.to?.name ?? "—" })}</span>
+                  </span>
+                </li>
+              ))}
+              {movement.promoted.map((entry) => (
+                <li className="world-move" key={`promoted-${entry.team?.id ?? entry.to?.slug ?? "none"}`}>
+                  <span className="world-move__direction">{t("movementPromoted")}</span>
+                  <span className="world-move__path">
+                    <EntityLink href={entry.team?.path} label={entry.team?.name ?? "—"} />
+                    <span className="muted">{t("movementPath", { from: entry.from?.name ?? "—", to: entry.to?.name ?? "—" })}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Panel>
+      )}
 
       <Panel
         eyebrow={t("entrantsEyebrow", { count: entrants.length })}

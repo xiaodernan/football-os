@@ -7,7 +7,8 @@ disclaimer, so no client can render one of these pages without also rendering wh
 Two things are never served: a score for a fixture that has not been played (`status='scheduled'`
 rows carry NULL, not 0-0), and a number that is not in the tables. Standings are aggregated from
 `real_matches` on each request rather than stored, so the league page and the fixtures page cannot
-drift apart.
+drift apart. Promotion and relegation are read the same way: the clubs this season's fixtures name
+against the clubs registered in the competition today.
 """
 
 from __future__ import annotations
@@ -382,17 +383,72 @@ def _entrant_map(session: Session) -> dict[str, tuple[str, ...]]:
     return {key: tuple(sorted(value)) for key, value in clubs.items()}
 
 
+def _movement(db: Session, competition: Competition, season: str, registered: dict[str, Team], played: dict[str, Team]) -> dict[str, Any] | None:
+    """Promotion and relegation as the stored rows tell it.
+
+    `registered` is who the competition holds today; `played` is who its fixtures for this season
+    name. The difference between the two is the set of clubs that crossed the boundary. The
+    direction is the clubs' own: a move to a higher tier is promotion, a move to a lower one is
+    relegation, whichever league's page is being read. Each club's old league comes from its own
+    fixtures that season and its new league from its current registration.
+    """
+    moved = [team for team_id, team in registered.items() if team_id not in played]
+    moved += [team for team_id, team in played.items() if team_id not in registered]
+    if not moved:
+        return None
+    moved_ids = [team.id for team in moved]
+    rows = db.execute(
+        select(RealMatch.home_team_id, RealMatch.away_team_id, RealMatch.competition_id)
+        .join(Competition, Competition.id == RealMatch.competition_id)
+        .where(
+            RealMatch.season == season,
+            Competition.kind == "league",
+            or_(RealMatch.home_team_id.in_(moved_ids), RealMatch.away_team_id.in_(moved_ids)),
+        )
+    ).all()
+    played_in: dict[str, str] = {}
+    for home_id, away_id, competition_id in rows:
+        for team_id in (home_id, away_id):
+            if team_id in moved_ids:
+                played_in.setdefault(str(team_id), str(competition_id))
+    league_ids = set(played_in.values()) | {team.competition_id for team in moved if team.competition_id}
+    leagues = {row.id: row for row in db.scalars(select(Competition).where(Competition.id.in_(league_ids))).all()}
+
+    promoted: list[dict[str, Any]] = []
+    relegated: list[dict[str, Any]] = []
+    for team in sorted(moved, key=lambda team: team.name):
+        old = leagues.get(played_in.get(team.id, ""))
+        new = leagues.get(team.competition_id or "")
+        if old is None or new is None or old.tier == new.tier:
+            # Without both leagues there is no direction to state; the row is still on its season
+            # page and no club is silently called promoted or relegated.
+            continue
+        entry = {"team": _team_brief(team), "from": _competition_brief(old), "to": _competition_brief(new)}
+        (promoted if new.tier < old.tier else relegated).append(entry)
+    if not promoted and not relegated:
+        return None
+    return {"season": season, "promoted": promoted, "relegated": relegated}
+
+
 @router.get("/competitions/{ident}")
 def competition_detail(ident: str, request: Request, season: str | None = Query(default=None, max_length=12), db: Session = Depends(get_db)) -> dict[str, Any]:
     limit(request, 120, 60, scope="world_competition_detail")
     competition = _one(db, Competition, ident)
     wanted_season = season or competition.season
-    teams = {team.id: team for team in db.scalars(select(Team).where(Team.competition_id == competition.id).order_by(Team.name)).all()}
+    registered = {team.id: team for team in db.scalars(select(Team).where(Team.competition_id == competition.id).order_by(Team.name)).all()}
     fixtures = list(db.scalars(select(RealMatch).where(RealMatch.competition_id == competition.id, RealMatch.season == wanted_season).order_by(RealMatch.kickoff_at)).all())
     knockout = competition.kind != "league"
     if knockout:
         # A cup draw, not a membership list: these are the clubs its fixtures name.
-        teams = {**teams, **_team_map(db, fixtures)}
+        teams = {**registered, **_team_map(db, fixtures)}
+        movement = None
+    else:
+        # The stored season's table names the clubs that played it, not the clubs registered for
+        # the next one: membership moves at the boundary. A later season's page has no results to
+        # table yet, so it shows the membership registered for it instead.
+        entrants = _team_map(db, fixtures) if wanted_season == competition.season else {}
+        teams = entrants or registered
+        movement = _movement(db, competition, wanted_season, registered, entrants) if entrants else None
     return _envelope(
         competition={
             **_competition_fields(competition),
@@ -407,6 +463,7 @@ def competition_detail(ident: str, request: Request, season: str | None = Query(
         season=wanted_season,
         standings=[] if knockout else _standings(teams, fixtures),
         teams=[_team_brief(team) for team in sorted(teams.values(), key=lambda team: team.name)],
+        movement=movement,
         fixtures=[_match_brief(fixture, teams) for fixture in fixtures],
         completed=sum(1 for fixture in fixtures if fixture.status == "completed"),
         scheduled=sum(1 for fixture in fixtures if fixture.status != "completed"),

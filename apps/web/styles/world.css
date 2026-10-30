@@ -47,6 +47,17 @@
 .world-pageinfo { font-size: 0.82rem; }
 .world-list { display: flex; flex-direction: column; gap: 0; margin: 0; padding: 0; list-style: none; }
 
+/* Promotion & relegation: one line per club, its direction, and the two leagues it crossed. */
+.world-move {
+  display: grid; grid-template-columns: 92px 1fr; gap: 0.75rem; align-items: baseline;
+  padding: 0.55rem 0.25rem; border-bottom: 1px solid var(--line-soft);
+}
+.world-move:last-child { border-bottom: 0; }
+.world-move__direction {
+  font-size: 0.7rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-3);
+}
+.world-move__path { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: baseline; font-weight: 600; }
+
 /* The public search box (spec §56): a plain GET form, so it works with JS disabled. */
 .world-search { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .world-search .input { flex: 1 1 220px; }
@@ -95,6 +106,7 @@
   .world-fixture { grid-template-columns: 1fr auto; }
   .world-fixture__when { grid-column: 1 / -1; flex-direction: row; gap: 0.5rem; align-items: baseline; }
   .world-kv__row { flex-direction: column; gap: 0.1rem; align-items: flex-start; }
+  .world-move { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
   .world-scoreline { grid-template-columns: 1fr; text-align: center; }
   .world-scoreline__side--away { text-align: center; }
 }

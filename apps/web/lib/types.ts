@@ -718,11 +718,25 @@ export type StandingRow = {
   points: number;
 };
 
+/** A club that crossed a tier boundary: the league it played and the league it is registered in now. */
+export type CompetitionMovementEntry = {
+  team: TeamBrief | null;
+  from: CompetitionBrief | null;
+  to: CompetitionBrief | null;
+};
+
+export type CompetitionMovement = {
+  season: string;
+  promoted: CompetitionMovementEntry[];
+  relegated: CompetitionMovementEntry[];
+};
+
 export type CompetitionDetail = WorldEnvelope & {
   competition: CompetitionRow;
   season: string;
   standings: StandingRow[];
   teams: (TeamBrief | null)[];
+  movement?: CompetitionMovement | null;
   fixtures: MatchBrief[];
   completed: number;
   scheduled: number;

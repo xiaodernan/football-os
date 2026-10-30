@@ -44,6 +44,15 @@ The newsroom grows with the world: one report per completed fixture, one preview
 fixture, three notes per club, two per competition, a spotlight for every second player and a
 transfer line for every fifth.
 
+**The season boundary (2026-10-30, item 9).** The completed season is aggregated into a final
+table per league from the stored scores (points, goal difference, goals scored, then slug); the
+bottom club of each tier-1 league and the top club of the tier-2 league paired with it swap places
+before the 2027 opening round is drawn. `Team.competition_id` therefore names next season's league,
+while every 2026 fact — the fixtures, the table, the newsroom's season notes — keeps naming the
+league that was actually played. The competition page builds its table from the season's fixtures
+rather than from current membership, so the relegated club still has a row with its own name, and it
+publishes `movement` with each moved club's old and new league. Cups publish `movement: null`.
+
 ## 3. Determinism and idempotence
 
 * `plan_world(3)` rebuilt after `cache_clear()` yields an identical `fingerprint()`; seed 4 differs —
@@ -61,6 +70,10 @@ transfer line for every fifth.
 * Standings are aggregated from `real_matches` on each request, never stored, so the league page
   and the fixture list cannot drift apart. A cup returns `standings: []` with a `format_note`
   saying why, and its entrants come from the drawn fixtures rather than a membership column.
+* Promotion and relegation are read from the stored table, not seeded. The bottom row of every
+  tier-1 league and the top row of its paired tier-2 league change league; `WorldSizes(movement_slots=0)`
+  freezes the pyramid. A club that moved still appears in the 2026 table, and next season's fixtures
+  name only its new league.
 * Every list/detail/search payload repeats `data_origin: "synthetic"`, `is_demo_data: true`,
   `WORLD_DISCLAIMER`, and (for stats) `stat_method`, which names how rating and season totals were
   derived. News articles name their own desk and `source_name='synthetic-world'`, and the detail
