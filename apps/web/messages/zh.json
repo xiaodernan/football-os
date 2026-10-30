@@ -4050,7 +4050,9 @@
     "kindReaction": "反应",
     "lineFollower": "{name} 现在关注了你。",
     "lineComment": "{name} 评论了：“{excerpt}”",
-    "lineReaction": "{name} 对你的帖子作出了反应。"
+    "lineReaction": "{name} 对你的帖子作出了反应。",
+    "working": "处理中…",
+    "markFailed": "托盘更新失败。请重试。"
   },
   "traces": {
     "metaTitle": "追踪面板",

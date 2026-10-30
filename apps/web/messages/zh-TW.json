@@ -4050,7 +4050,9 @@
     "kindReaction": "反應",
     "lineFollower": "{name} 現在追蹤了你。",
     "lineComment": "{name} 留言了：「{excerpt}」",
-    "lineReaction": "{name} 對你的貼文作出了反應。"
+    "lineReaction": "{name} 對你的貼文作出了反應。",
+    "working": "處理中…",
+    "markFailed": "托盤更新失敗。請重試。"
   },
   "traces": {
     "metaTitle": "追蹤面板",

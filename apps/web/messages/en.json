@@ -4050,7 +4050,9 @@
     "kindReaction": "Reaction",
     "lineFollower": "{name} now follows you.",
     "lineComment": "{name} commented: “{excerpt}”",
-    "lineReaction": "{name} reacted to your post."
+    "lineReaction": "{name} reacted to your post.",
+    "working": "Working…",
+    "markFailed": "The tray could not be updated. Try again."
   },
   "traces": {
     "metaTitle": "Trace dashboard",
