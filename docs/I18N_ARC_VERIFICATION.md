@@ -1379,5 +1379,93 @@ its **whole namespace**. Three dynamic reads do exactly that today: `t(column.hi
 `t(column.labelKey)` in `app/career/[slug]/page.tsx`, and `t(refusal.code)` in `lib/refusals.ts`. The gate
 prints the exemption (3 reads, 2 namespaces) and still reads 3/3 with **0 keys asked for by nothing** —
 which is true of the namespaces it judges and vacuous for `careerDetail` (**288** keys) and `errors`
-(**66**), i.e. **354 of the 3971 keys in the catalogue are never checked for a reader at all**.
+(**66**), i.e. **354 of the 3971 keys in the catalogue are never checked for a reader at all**. That
+paragraph is the 2026-10-28 measurement and stays as it was read; **item 23 closed on 2026-10-31 in §19**.
+
+## 19. The dead-key gate counts the keys it leaves unjudged, and names who judges them (2026-10-31)
+
+§18's mirror finding was that a sound rule can still spend too much: `qa-unused-keys.mjs` refuses to call a
+key dead when a read of it is merely **unresolved**, and it pays for that safety by exempting the read's
+**whole namespace** — three dynamic reads were exempting two namespaces, so a green gate was silent about
+nine keys in a hundred. The fix keeps the rule and shrinks what it costs. Three mechanisms, and each of them
+is a claim about a shape in the source rather than a figure.
+
+**(a) A key the source names in its own data is a key that source reads.** `app/career/[slug]/page.tsx`
+reads `t(column.hintKey)` and `t(column.labelKey)` over `LEDGER_COLUMNS`, and `LEDGER_COLUMNS` is declared in
+`lib/ledger.ts` and imported — so the reader follows an identifier to the file that declares it (local
+declaration first, then the file's import table, then that file's export), and it resolves the collection a
+**chained iteration** started from, because `MILESTONES.filter(…).map(…)` iterates `MILESTONES` and not the
+filter's result. The second half was learned the hard way: the first resolution pass was *more* precise than
+the scan it replaced and made `app/settings/page.tsx`'s `milestone.labelKey` an unresolved read, which
+exempted `settings` — the same defect wearing a new name, and it surfaced only because the exemption list was
+re-read rather than the pass count.
+
+**(b) A translator is followed across the seam as far as the tree hands it on, to a fixed point.** Pass 1
+records the bindings a call site hands a function, but it did not *apply* them when it entered that function,
+so a read two links deep — the page hands `t` to `CareerAcademy`, the panel hands `t` to `standingCell` and
+`verdictLabel` — was invisible. Applying the handed bindings, one round per link, until nothing grows, is
+what the copy gate (`qa-i18n-literals.mjs`) had to learn first; the dead-key gate now runs the same discipline
+and reports **2 seam rounds** on today's tree.
+
+**(c) An exemption is graded in keys, and it counts only while a named gate holds the clause that judges.**
+The third check no longer asks *how many namespaces* went unjudged — one unread call can hide 288 keys — it
+asks *how many keys*, against a floor that may only fall. And a namespace may be left to another gate only if
+the carrier file exists **and** contains the exact clause: an exemption that is not re-found at run time is a
+hiding place, so a renamed or deleted judge re-charges its keys.
+
+**The one namespace the web tier's bytes cannot judge.** `lib/refusals.ts` reads `t(refusal.code)`, and the
+code is whatever the API answered with; the file's own `KNOWN` table is `Object.keys(enMessages.errors)`,
+which is derived from the catalogue it would be evidence about, so it proves no reader exists. And
+`qa-api-strings.mjs` deliberately refuses to "teach a second census of the API's source". So `errors` is
+**delegated by name** to `apps/api/tests/test_locale_claims.py`, whose `unheld` assertion recomputes those
+keys from the refusal codes the API publishes — the same 66 keys, judged from the side that can see them.
+
+**The reading today**, dated because the population moves: `CHECKS passed=3 total=3 failed=0` —
+`149 file(s), 149 parsed, 0 parse diagnostic(s), 2 seam round(s) to a fixed point` ·
+`0 key(s) asked for by nothing, against a floor of 0` ·
+`3905 key(s) judged here, 66 delegated to errors by apps/api/tests/test_locale_claims.py`, and the footer
+`lib/refusals.ts:86 [errors] refusal.code — judged by apps/api/tests/test_locale_claims.py`. The two figures
+are the catalogue: 3905 + 66 = 3971, so **nothing is unjudged**, and the single namespace this gate hands off
+is handed to a gate that is read, at run time, in the file it names.
+
+**Eight runs on a plane — two baselines, five arms and one control — every prediction written before the run.** The battery ran on `D:/unused-arms`, a
+detached `git worktree` — the tier as HEAD held it, with the shipped gate copied in and `cmp`-verified
+identical to the `5a7d987` blob, so what follows grades the shipped bytes and not a draft. The plane's
+`typescript` resolves through `NODE_PATH`, which is why no byte of the gate was patched to run it.
+
+| arm | what it does | predicted | read |
+| --- | --- | --- | --- |
+| B0 | the shipped gate, pristine plane | 3/3, 0 orphans, 3905 + 66 | `CHECKS passed=3 total=3 failed=0`, the figures above |
+| B0c | the **pre-fix** gate (`a38adb8`'s own bytes) on the same pristine tier | 3/3 green, and it prints what it cannot see | 3/3, `3 unresolved read(s) left 2 namespace(s) unjudged — careerDetail, errors` |
+| A1 | plant a key nothing reads in `common`, a namespace already judged | red, names it | rc=1, `1 key(s) asked for by nothing`, `common.qa_probe_dead_code` |
+| A2 | plant the same key in `careerDetail` — **the inversion item 23 asked for** | red, names it, exactly as A1 | rc=1, `1 key(s) asked for by nothing`, `careerDetail.qa_probe_dead_code` |
+| C1 | the **pre-fix** gate over the same `careerDetail` plant | green: the blind spot, measured | rc=0 `passed=3 total=3`, still `2 namespace(s) unjudged` |
+| A3 | plant a key in the **delegated** `errors` namespace | JS gate green, the carrier red | gate `passed=3 total=3 failed=0`; pytest rc=1, `1 catalogue sentence(s) name a code the API does not publish at all: ['qa_probe_dead_code']` at `test_every_refusal_the_api_publishes_has_a_catalogue_sentence` |
+| A4 | neutralise the carrier's clause (`sentences.keys() - set(refusals)` → `set()`) | the delegation dies with the clause | rc=1, `66 key(s) unjudged against a floor of 0`, footer `lib/refusals.ts:86 [errors] refusal.code — NOT JUDGED BY ANY READER` |
+| S1 | neuter pass 1's handed bindings (`const handed = undefined`) in the plane's copy | the six seam keys come back as orphans | rc=1, `6 key(s) asked for by nothing`: `careerDetail.academyGap`, `academyStanding`, `academyVerdictNextInLine`, `academyVerdictOffThePace`, `academyVerdictSelected`, `highlightsMeeting` |
+
+A1, A2 and C1 are the item's own gate: the differential **inverted**, because the same planted key is now red
+in the namespace the old gate exempted and green-for-the-old-gate is what makes the exemption's cost visible.
+A3 and A4 together are what makes (c) more than a comment: a delegated namespace is not a hiding place,
+because the gate it is delegated to reds the same plant — and the delegation is void the moment the clause it
+names stops existing. S1 is the mechanism arm, not a bug claim: it names which line of the fix carries those
+six keys. **Two harness faults are disclosed rather than smoothed over.** S1 first ran as a deletion of the
+`const handed` declaration, which left the guard below it reading an undefined name and the gate crashing
+with no verdict at all — a crash is not a red, so the arm was re-cast as the assignment above and re-run. And
+a first re-run of A3 and S1 lost `NODE_PATH`, so its JS legs exited 1 without a `CHECKS` line; the figures in
+the table are from the corrected runs.
+
+**What is not claimed.** The gate still cannot resolve `t(refusal.code)` — it delegates that namespace rather
+than judging it, and the delegation is only as strong as A4 shows. And `0 keys asked for by nothing` is a
+statement about *reads*: it says nothing about whether a read asks for the **right** key, which is
+`qa-field-labels.mjs` and `qa-i18n-literals.mjs`'s job, not this one.
+
+**The family witness.** All **32** file-only gates in `scripts/check.sh` — the population derived from the
+script rather than typed out — ran against this tree: `REDS 0`. The neighbours item 22 moved together:
+`qa-i18n-literals.mjs` 9/9, `qa-gate-inventory.mjs` 183/183, `qa-shared-keys.mjs` 4/4, `qa-api-strings.mjs`
+3/3.
+
+**Landing note.** `5a7d987` carried the gate and `docs/ROADMAP_NEXT.md` item 23's closure; this section, the
+ARCHITECTURE.md cure of the two claims that gate's old shape, and the `PLAN.md` row are the record after the
+bytes — which is why the arms above ran against the blob rather than a working draft.
 

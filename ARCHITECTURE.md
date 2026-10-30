@@ -183,9 +183,12 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   lives in `video.metaTitle`), a vocabulary for pages the spec names and the tree has not built (`auth.forgotPassword`,
   `validation.*`), and a table of seventy prepositions (`common.or`, `common.and`, `common.of` …) that was written so a
   sentence could be assembled from parts and never assembled. The gate's only hard job is to be **right about what it calls
-  dead**: a read that cannot be resolved to a literal **exempts its whole namespace**, so a key that cannot be shown to be
-  dead is never reported as dead. Every read in the tree resolved — named, destructured-positionally, dynamic, named-key,
-  callback-parameter, and handed across files — so **no namespace was left unjudged**. **63** of the 226 held the
+  dead**: a read that cannot be resolved to a literal **exempts its whole namespace**, so a key that cannot be shown to
+  be dead is never reported as dead. The reading on that day was that **every** read resolved — named,
+  destructured-positionally, dynamic, named-key, callback-parameter, and handed across files — so **no namespace was left
+  unjudged**; the panels that landed after it made that false, and item 23 (closed 2026-10-31, §19 of
+  [I18N_ARC_VERIFICATION.md](docs/I18N_ARC_VERIFICATION.md)) cured it by resolving the reads whose key lives in another
+  file and grading what remains in keys rather than namespaces. **63** of the 226 held the
   **same English sentence as a key that is read** (`nav.video` and `nav.videoShort`, `nav.login` and `auth.signIn`,
   `common.pitchCaption3d` and `tactics.pitchCaption3d`, six `scout.kv*` rows and their shorter twins) — two answers to
   one question, one of them a stale copy no page reads. Those are gone from all three catalogues, and **67** more —
@@ -212,8 +215,10 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   every `app/**/*.tsx` and `components/**/*.tsx`, every recorded key call checked against the namespace each is asked of — the
   count is what the gate prints on each run, not a figure this file may copy — every placeholder supplied, and no translator
   read left without a namespace) · `qa-icu-messages.mjs` (2: every message in all three catalogues parses as ICU) ·
-  `qa-unused-keys.mjs` (3: **every key in a namespace it can judge is asked for by a page**; floor 0, and the third check
-  names the reads it could not resolve together with the namespaces those reads leave unjudged) ·
+  `qa-unused-keys.mjs` (3: **every key the catalogue holds is asked for by a page**, floor 0; and its third check is
+  graded in **keys left unjudged** rather than namespaces, because one unread call can hide a whole namespace's worth of
+  keys, and each exemption must name the gate that judges it — a delegation counts only while that carrier file is found,
+  at run time, holding the clause that does the judging) ·
   `qa-locale-tokens.mjs` (3: the English file holds no Chinese; the identical values are the 44 named ones) ·
   `qa-field-labels.mjs` (2) · `qa-metadata-title.mjs` (one check per page, so its tally is the page population). The **browser** evidence is the visual walk, whose
   reading each walk's own record carries — the career walk landed 2026-10-28 at **686 checks, every one of them passing, exit 0** — including the sweep, the check that reads every page the walk touched again in
