@@ -129,6 +129,14 @@ screenshot). Logged in as a fresh account, completed onboarding, then:
   over the board's 500 ceiling`, followed by the published formula. A rival listing clicked first answered
   `rival_will_not_sell` — the clause rule runs before the cap, as the doors order them.
 
+### The post-merge gate: what it caught
+
+`bash scripts/check.sh` on the merged tree ran **2,080 passed / 4 skipped / 1 failed** — the failure was
+`test_openapi_contract_currency`: the tree serialised 492,817 bytes against the committed 492,620, because
+`CareerIn.wage_ceiling` had reached the app and not `docs/api/openapi.json`. The exporter derives the file
+from the tree, so it was regenerated (a seven-line diff adding the field and its `0..10,000,000` bounds) and
+the currency test then passed **4/4**. No other gate failed.
+
 ## 6. What this does not claim
 
 * **No door changes a ceiling after the career is opened.** The stated cap is fixed at creation; the wire
