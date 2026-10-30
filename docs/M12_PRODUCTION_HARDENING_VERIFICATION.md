@@ -962,7 +962,7 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `59ed99d469adb1b2d9e43b1aa9160af6eb9432dfcede521a00891b0c481640e2` that population is **226
+SHA-256 `c6cf3bffb52d487fcc563c417cee53a5278b3617cefa430f2cecccf575026134` that population is **226
 secured operations, 54 public operations and 97 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
