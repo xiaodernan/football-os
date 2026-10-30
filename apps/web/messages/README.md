@@ -85,8 +85,7 @@ were in, and it is the check that would have caught somebody switching the field
   messages and the nav entries for pages the nav does not offer — of which **36** held nothing but a placeholder
   name (`club.matrixRule` is `"{rule}"`), so they were not translations at all, and **26** were never translated
   and were sitting in the Chinese catalogues as English. **The floor is 0**: every key this catalogue holds is
-  asked for by a page. A read the gate cannot resolve **exempts its whole namespace** rather than guessing, so a
-  key that cannot be shown to be dead is never reported as dead.
+  asked for by a page. A read the gate cannot resolve no longer spends a whole namespace: the reader follows the value back to the file that declares it (`lib/ledger.ts`'s column table reaches `t(column.hintKey)`) and folds a translator handed across the component seam to a fixed point, and the one read still unresolved - `t(refusal.code)` in `lib/refusals.ts` - delegates the `errors` namespace **by name** to `apps/api/tests/test_locale_claims.py`, which recomputes those 66 keys from the refusal codes the API publishes. What the gate now charges for is the **size** of its blind spot: the unjudged keys are a floor that may only fall, and an exemption counts only while a named gate is found, in the file it names, holding the clause that judges the namespace. A dead key in `careerDetail` reds it exactly as one in `common` does.
 
 ## Adding a string
 

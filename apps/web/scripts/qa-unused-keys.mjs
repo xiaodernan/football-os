@@ -28,14 +28,24 @@
  *  * a **destructured** read — `const [t, td] = await Promise.all([…, getTranslations("home"), …])`,
  *    where each name's namespace is its position in the list;
  *  * a **dynamic** read — `t(band.key)`, where the key is a value in the page's own data, resolved
- *    back to the literals that can reach it;
+ *    back to the literals that can reach it. The table holding that value may sit in another file —
+ *    `lib/ledger.ts` declares `LEDGER_COLUMNS`, the career page maps over it and reads
+ *    `t(column.hintKey)` — so an import is followed to the file that declares the name;
  *  * a **named-key** read — `t(link.key)`, `labelKey="rowSession"`, `whatKey="…"`: the key is in the
  *    page's data rather than at the call, so it is credited to every namespace that file binds.
  *
+ * A translator is followed across the **seam** as far as the tree hands it on: the career page gives `t`
+ * to `CareerAcademy`, and `CareerAcademy` gives the same `t` to the module-level helper that reads
+ * `t("academyVerdictSelected")`. The seam pass therefore runs to a **fixed point** — one round per link,
+ * which is what the copy gate (`qa-i18n-literals.mjs`) had to learn first, and this gate is the other
+ * half of that arc.
+ *
  * **Soundness is the whole game here.** A gate that reports a key as dead when a read of it is
  * merely *unresolved* would send someone to delete a key the page needs. So a read whose argument
- * cannot be resolved to literals **exempts its whole namespace**: no key in that namespace is
- * reported, and the gate says how many namespaces it had to leave alone and why.
+ * cannot be resolved to literals **exempts its whole namespace**: no key in that namespace is reported.
+ * What the gate charges for is now the **size** of that blind spot — the keys left unjudged, against a
+ * floor that may only fall — and an exemption counts as judged only while a named gate is found, in the
+ * file it names, holding the clause that judges the namespace.
  *
  * Files only: no server, no browser, no port — which is why it belongs with the other file-only
  * gates in `scripts/check.sh` and in CI.
@@ -43,7 +53,7 @@
 
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";
-import { join, resolve, sep } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
@@ -76,6 +86,48 @@ const CATALOGUE = JSON.parse(readFileSync(join(WEB, "messages", "en.json"), "utf
 const FLOOR_UNUSED = 0;
 
 /**
+ * The ceiling on the catalogue keys **no reader judges at all**.
+ *
+ * A read whose argument cannot be resolved used to exempt its whole namespace, and the gate printed how
+ * many namespaces it had left alone — which is a count of *namespaces*, so one unread call in a big
+ * namespace hid as much as a hundred. On 2026-10-29 the figure said "2 namespaces unjudged", and the
+ * population behind it was **354 keys** of the 3971 the catalogue held: `careerDetail`'s 288 and
+ * `errors`' 66. Both are judged now, one by this gate and one by the reader named below, and the floor
+ * counts keys rather than namespaces so that the next time a slice leaves a namespace unread it cannot
+ * hide behind a tally of one.
+ *
+ * It may only fall: a resolution that reaches a key lowers it, and a new unread call that cannot be
+ * resolved raises it — and the gate says so.
+ */
+const FLOOR_UNJUDGED = 0;
+
+/**
+ * The namespaces this gate does not judge, and the reader that does.
+ *
+ * `errors` holds one key per API refusal code, and its only read is `te(refusal.code)` in
+ * `lib/refusals.ts` — the code arrives from the wire at run time, so no census of the web tier's own
+ * bytes can say which key a reader will ask for. `KNOWN` in that file cannot serve either: it is built
+ * with `Object.keys(enMessages.errors)`, i.e. from this very catalogue, so a gate that judged the
+ * catalogue by it would be asking the file to prove itself.
+ *
+ * The census that can answer is the API's own, and it is already a test.
+ * `apps/api/tests/test_locale_claims.py` reds when the catalogue holds a sentence naming a code the API
+ * does not publish — the same verdict this gate gives a dead `common` key, from the one population that
+ * can be enumerated. The exemption is therefore **earned by that clause's presence**, checked below: a
+ * judge that cannot be found leaves its namespace in the unjudged population rather than excusing it.
+ */
+const JUDGED_ELSEWHERE = new Map([
+  [
+    "errors",
+    {
+      carrier: join("..", "..", "apps", "api", "tests", "test_locale_claims.py"),
+      label: "apps/api/tests/test_locale_claims.py",
+      clause: "sentences.keys() - set(refusals)",
+    },
+  ],
+]);
+
+/**
  * Keys the catalogue holds on purpose, for a page that does not exist yet or for a door that is
  * refused by name. Each one says why it is held, because a list without reasons is the same as no
  * list at all: it is a place where a dead key goes to stop the gate from noticing.
@@ -97,6 +149,96 @@ const walk = (dir) => {
 walk(WEB);
 
 const relOf = (p) => p.slice(WEB.length + 1).split(sep).join("/");
+
+/** The methods whose callback parameter holds the elements of the collection it iterates. */
+const ITERATING = ["map", "forEach", "filter", "flatMap", "some", "every", "find"];
+
+/** A value with its type assertion, satisfies clause or parentheses removed. */
+const unwrapValue = (node) => {
+  let current = node;
+  while (
+    current &&
+    (ts.isAsExpression(current) || ts.isSatisfiesExpression(current) || ts.isParenthesizedExpression(current))
+  ) {
+    current = current.expression;
+  }
+  return current;
+};
+
+/** The `<name> = <value>` declarations in one file, as their initialiser nodes. */
+const declarationsIn = (name, home) => {
+  const out = [];
+  const visit = (node) => {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === name && node.initializer) {
+      out.push(node.initializer);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(home);
+  return out;
+};
+
+/**
+ * Where a name's value is declared: this file, or — when the name is imported — the file that exports it.
+ *
+ * Same-file declarations were the whole population until a page's table of catalogue keys turned out to
+ * sit in the module that describes the table: `lib/ledger.ts` holds `LEDGER_COLUMNS`, with a `labelKey`
+ * and a `hintKey` per column, and `app/career/[slug]/page.tsx` maps over it. The read at the call site
+ * is `t(column.hintKey)`, so the key is in the imported file and the translator is in the page — and a
+ * gate that only reads the page cannot resolve it, which leaves 288 keys unjudged. Following the import
+ * is what makes the namespace judgeable.
+ */
+const valueHomes = (name, source, depth) => {
+  if (depth > 4) return [];
+  const local = declarationsIn(name, source);
+  if (local.length > 0) return local.map((node) => ({ node, source }));
+  const imported = importsBySource.get(source)?.get(name);
+  if (!imported) return [];
+  return declarationsIn(imported.name, imported.source).map((node) => ({ node, source: imported.source }));
+};
+
+/** The object literals a collection expression holds, each with the file that declares it. */
+const objectsOf = (valueNode, home) => {
+  const node = unwrapValue(valueNode);
+  if (!node) return [];
+  if (ts.isObjectLiteralExpression(node)) return [{ node, source: home }];
+  if (ts.isArrayLiteralExpression(node)) {
+    return node.elements.filter(ts.isObjectLiteralExpression).map((element) => ({ node: element, source: home }));
+  }
+  return [];
+};
+
+/**
+ * The object literals a property access can be reading through — the `column` of `column.hintKey`.
+ *
+ * Three shapes, in the order the tree uses them: a table the file declares, a table it imports, and a
+ * callback parameter iterating one of those. The last is the one the dead-key gate had never followed,
+ * and it is why a namespace whose keys live in a column table looked unreadable.
+ */
+const holderObjects = (base, source, depth) => {
+  if (depth > 4) return [];
+  if (!ts.isIdentifier(base)) {
+    // A chained iteration — `MILESTONES.filter(…).map(…)` — hands the same elements on, so the
+    // collection is whatever the previous call iterated.
+    if (ts.isCallExpression(base) && ts.isPropertyAccessExpression(base.expression) && ITERATING.includes(base.expression.name.text)) {
+      return holderObjects(base.expression.expression, source, depth + 1);
+    }
+    return objectsOf(base, source);
+  }
+  const holders = [];
+  for (const home of valueHomes(base.text, source, depth)) holders.push(...objectsOf(home.node, home.source));
+  if (holders.length > 0) return holders;
+  for (let up = base.parent; up; up = up.parent) {
+    if (!ts.isFunctionLike(up)) continue;
+    if (!parameterNames(up).includes(base.text)) continue;
+    const call = up.parent;
+    if (!call || !ts.isCallExpression(call)) return [];
+    const callee = call.expression;
+    if (!ts.isPropertyAccessExpression(callee) || !ITERATING.includes(callee.name.text)) return [];
+    return holderObjects(iteratedCollection(callee.expression), source, depth + 1);
+  }
+  return [];
+};
 
 /**
  * The literals an expression can hold.
@@ -123,15 +265,11 @@ const resolveStrings = (expr, source, depth = 0, parameterSets = new Map()) => {
   if (ts.isIdentifier(expr)) {
     // A function parameter: the value is what the caller passed, and the caller is recorded.
     if (parameterSets.has(expr.text)) return [...parameterSets.get(expr.text)];
-    // A variable in the file.
+    // A variable in this file, or one this file imported from the file that declares it.
     const out = [];
-    const declarations = (node) => {
-      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === expr.text) {
-        out.push(...resolveStrings(node.initializer, source, depth + 1, parameterSets));
-      }
-      ts.forEachChild(node, declarations);
-    };
-    declarations(source);
+    for (const home of valueHomes(expr.text, source, depth)) {
+      out.push(...resolveStrings(home.node, home.source, depth + 1, parameterSets));
+    }
     if (out.length > 0) return [...new Set(out)];
     // A callback parameter: `ARRAY.map((item) => t(item))` — the parameter holds the array's elements.
     return resolveCallbackParameter(expr, source, depth);
@@ -161,24 +299,15 @@ const resolveStrings = (expr, source, depth = 0, parameterSets = new Map()) => {
   if (ts.isPropertyAccessExpression(expr)) {
     // `band.key` — the holder is an array of objects, and each object's `key` is a candidate.
     const out = [];
-    const holders = (node) => {
-      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
-        // The table is often written `as const`, which wraps the literal.
-        const init = ts.isAsExpression(node.initializer) ? node.initializer.expression : node.initializer;
-        const elements = ts.isArrayLiteralExpression(init) ? init.elements : ts.isObjectLiteralExpression(init) ? [init] : [];
-        for (const element of elements) {
-          if (!ts.isObjectLiteralExpression(element)) continue;
-          for (const property of element.properties) {
-            if (!ts.isPropertyAssignment(property)) continue;
-            const name = ts.isIdentifier(property.name) ? property.name.text : ts.isStringLiteral(property.name) ? property.name.text : null;
-            if (name !== expr.name.text) continue;
-            out.push(...resolveStrings(property.initializer, source, depth + 1, parameterSets));
-          }
-        }
+    for (const holder of holderObjects(expr.expression, source, depth)) {
+      for (const property of holder.node.properties) {
+        if (!ts.isPropertyAssignment(property)) continue;
+        const name = ts.isIdentifier(property.name) ? property.name.text : ts.isStringLiteral(property.name) ? property.name.text : null;
+        if (name !== expr.name.text) continue;
+        // The value is read where the table is declared, so a nested value resolves in that file.
+        out.push(...resolveStrings(property.initializer, holder.source, depth + 1, parameterSets));
       }
-      ts.forEachChild(node, holders);
-    };
-    holders(source);
+    }
     return [...new Set(out)];
   }
   if (ts.isElementAccessExpression(expr)) {
@@ -222,13 +351,19 @@ const resolveCallbackParameter = (identifier, source, depth) => {
     const call = up.parent;
     if (!call || !ts.isCallExpression(call)) return [];
     const callee = call.expression;
-    if (!ts.isPropertyAccessExpression(callee) || !ts.isIdentifier(callee.expression)) return [];
-    const method = callee.name.text;
-    if (!["map", "forEach", "filter", "flatMap", "some", "every", "find"].includes(method)) return [];
-    const values = resolveStrings(callee.expression, source, depth + 1);
-    return values;
+    if (!ts.isPropertyAccessExpression(callee) || !ITERATING.includes(callee.name.text)) return [];
+    return resolveStrings(iteratedCollection(callee.expression), source, depth + 1);
   }
   return [];
+};
+
+/** The collection a chained iteration started from: `A.filter(…).map(…)` iterates `A`. */
+const iteratedCollection = (expr) => {
+  let current = expr;
+  while (ts.isCallExpression(current) && ts.isPropertyAccessExpression(current.expression) && ITERATING.includes(current.expression.name.text)) {
+    current = current.expression.expression;
+  }
+  return current;
 };
 
 /**
@@ -361,8 +496,14 @@ const recordValue = (fn, name, values) => {
 };
 const recordBinding = (fn, name, namespace) => {
   if (!parameterBindings.has(fn)) parameterBindings.set(fn, new Map());
+  if (parameterBindings.get(fn).get(name) !== namespace) seamGrew = true;
   parameterBindings.get(fn).set(name, namespace);
 };
+
+/** Whether a round of the seam pass recorded a binding that was not there before. */
+let seamGrew = false;
+/** The rounds the seam pass needed to reach its fixed point — one per link in the longest hand-off. */
+let seamRounds = 0;
 
 const scopes = [];
 const translatorOf = (name) => {
@@ -408,80 +549,157 @@ for (const { source } of sources) {
   visit(source);
 }
 
-for (const { source, rel } of sources) {
-  const position = (node) => source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
-
-  const bindingsByName = new Map();
-  const namespaces = new Set();
-  const callables = callableNames(source);
-  /* --- pass 1: the file-wide bindings, and what each call site hands over --- */
-  const prePass = (node) => {
-    for (const [name, namespace] of translatorBindingsOf(node)) {
-      namespaces.add(namespace);
-      if (!bindingsByName.has(name)) bindingsByName.set(name, new Set());
-      bindingsByName.get(name).add(namespace);
+/**
+ * The file a module specifier names, inside the parsed population.
+ *
+ * `@/lib/ledger` is the web tier's own alias for its root and `../components/ui` is relative to the
+ * importing file; both may point at `foo.ts`, `foo.tsx` or a directory's `index`. A specifier the gate
+ * cannot resolve is not an error: the read it feeds stays unresolved, which exempts its namespace —
+ * the conservative direction, because a miss hides a dead key rather than deleting a live one.
+ */
+const sourceByKey = new Map();
+for (const entry of sources) {
+  const key = entry.file.split(sep).join("/").toLowerCase();
+  sourceByKey.set(key.replace(/\.(?:tsx?|jsx?|mjs|cjs)$/i, ""), entry);
+  sourceByKey.set(key.replace(/\/index\.(?:tsx?|jsx?|mjs|cjs)$/i, ""), entry);
+}
+const resolveSpecifier = (spec, fromFile) => {
+  if (!spec.startsWith("@/") && !spec.startsWith(".")) return null;
+  const base = spec.startsWith("@/") ? join(WEB, spec.slice(2)) : resolve(dirname(fromFile), spec);
+  for (const suffix of ["", "/index"]) {
+    for (const ext of [".ts", ".tsx", ".js", ".mjs"]) {
+      const hit = sourceByKey.get((base + suffix + ext).split(sep).join("/").toLowerCase());
+      if (hit) return hit;
     }
-    ts.forEachChild(node, prePass);
-  };
-  prePass(source);
+  }
+  return null;
+};
 
-  scopes.length = 0;
-  scopes.push(new Map());
-  const pass1 = (node) => {
-    const isScope = ts.isFunctionLike(node) && node.body !== undefined;
-    if (isScope) {
-      scopes.push(new Map());
-      for (const name of parameterNames(node)) {
-        const inherited = translatorOf(name);
-        if (inherited !== undefined) bindTranslator(name, inherited);
-      }
-    }
-    for (const [name, namespace] of translatorBindingsOf(node)) bindTranslator(name, namespace);
-
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
-      const fn = callables.get(node.expression.text) ?? exportedComponents.get(node.expression.text);
-      if (fn) {
-        node.arguments.forEach((argument, index) => {
-          const parameter = fn.parameters?.[index];
-          const name = parameter ? bindingName(parameter.name) : null;
-          let namespace = undefined;
-          if (ts.isIdentifier(argument)) namespace = translatorOf(argument.text);
-          if (name && namespace) recordBinding(fn, name, namespace);
-          // The literal the caller passes, for a read of a parameter's value.
-          const values = ts.isStringLiteral(argument) ? [argument.text] : [];
-          if (name) recordValue(fn, name, values);
-        });
-      }
-    }
-    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
-      const tag = node.tagName;
-      if (ts.isIdentifier(tag)) {
-        const fn = callables.get(tag.text) ?? exportedComponents.get(tag.text);
-        if (fn) {
-          const locals = propToLocal(fn);
-          for (const attribute of node.attributes.properties) {
-            if (!ts.isJsxAttribute(attribute) || !attribute.initializer) continue;
-            const local = locals.get(attribute.name.getText());
-            if (!local) continue;
-            if (ts.isStringLiteral(attribute.initializer)) {
-              recordValue(fn, local, [attribute.initializer.text]);
-              continue;
-            }
-            if (!ts.isJsxExpression(attribute.initializer)) continue;
-            const value = attribute.initializer.expression;
-            let namespace = undefined;
-            if (ts.isIdentifier(value)) namespace = translatorOf(value.text);
-            if (namespace) recordBinding(fn, local, namespace);
-          }
+/**
+ * What each parsed file imports, by the local name it uses.
+ *
+ * Keyed by the source file object, so a resolution that steps into another file finds that file's own
+ * imports and can step again. One hop would be enough for the tree today; the table is built for every
+ * file precisely so the second hop cannot silently return nothing.
+ */
+const importsBySource = new Map();
+for (const { file, source } of sources) {
+  const table = new Map();
+  const visit = (node) => {
+    if (ts.isImportDeclaration(node) && node.importClause && ts.isStringLiteral(node.moduleSpecifier)) {
+      const target = resolveSpecifier(node.moduleSpecifier.text, file);
+      const bindings = node.importClause.namedBindings;
+      if (target && bindings && ts.isNamedImports(bindings)) {
+        for (const element of bindings.elements) {
+          const exported = element.propertyName ? element.propertyName.text : element.name.text;
+          table.set(element.name.text, { source: target.source, name: exported });
         }
       }
     }
-    ts.forEachChild(node, pass1);
-    if (isScope) scopes.pop();
+    ts.forEachChild(node, visit);
   };
-  pass1(source);
-  scopes.length = 0;
-  fileBindings.set(rel, bindingsByName);
+  visit(source);
+  importsBySource.set(source, table);
+}
+
+/**
+ * The seam pass — what every call site hands to every callable.
+ *
+ * Run to a **fixed point**, because a hand-off is only visible from the file that hands it: the career
+ * page gives `t` to `CareerAcademy`, whose body gives the same `t` to `verdictLabel`, which is where
+ * `t("academyVerdictSelected")` sits. One round learns the first link, the next round the second, and
+ * the pass stops when a round adds nothing. The copy gate (`qa-i18n-literals.mjs`) had to learn the
+ * same shape; this gate is the other half of that arc, and a key it cannot attribute is a key it cannot
+ * protect.
+ */
+const seamRound = () => {
+  for (const { source, rel } of sources) {
+    const bindingsByName = new Map();
+    const namespaces = new Set();
+    const callables = callableNames(source);
+    /* --- pass 1: the file-wide bindings, and what each call site hands over --- */
+    const prePass = (node) => {
+      for (const [name, namespace] of translatorBindingsOf(node)) {
+        namespaces.add(namespace);
+        if (!bindingsByName.has(name)) bindingsByName.set(name, new Set());
+        bindingsByName.get(name).add(namespace);
+      }
+      ts.forEachChild(node, prePass);
+    };
+    prePass(source);
+
+    scopes.length = 0;
+    scopes.push(new Map());
+    const pass1 = (node) => {
+      const isScope = ts.isFunctionLike(node) && node.body !== undefined;
+      if (isScope) {
+        scopes.push(new Map());
+        // A translator a caller handed this function is in scope inside it — and the call sites *within*
+        // it hand that translator on again, which is how a panel's `t` reaches the helper that reads
+        // `t("academyVerdictSelected")`. Without this the seam stops at the component's own body.
+        const handed = parameterBindings.get(node);
+        if (handed) for (const [name, namespace] of handed) bindTranslator(name, namespace);
+        for (const name of parameterNames(node)) {
+          if (handed && handed.has(name)) continue;
+          const inherited = translatorOf(name);
+          if (inherited !== undefined) bindTranslator(name, inherited);
+        }
+      }
+      for (const [name, namespace] of translatorBindingsOf(node)) bindTranslator(name, namespace);
+
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+        const fn = callables.get(node.expression.text) ?? exportedComponents.get(node.expression.text);
+        if (fn) {
+          node.arguments.forEach((argument, index) => {
+            const parameter = fn.parameters?.[index];
+            const name = parameter ? bindingName(parameter.name) : null;
+            let namespace = undefined;
+            if (ts.isIdentifier(argument)) namespace = translatorOf(argument.text);
+            if (name && namespace) recordBinding(fn, name, namespace);
+            // The literal the caller passes, for a read of a parameter's value.
+            const values = ts.isStringLiteral(argument) ? [argument.text] : [];
+            if (name) recordValue(fn, name, values);
+          });
+        }
+      }
+      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+        const tag = node.tagName;
+        if (ts.isIdentifier(tag)) {
+          const fn = callables.get(tag.text) ?? exportedComponents.get(tag.text);
+          if (fn) {
+            const locals = propToLocal(fn);
+            for (const attribute of node.attributes.properties) {
+              if (!ts.isJsxAttribute(attribute) || !attribute.initializer) continue;
+              const local = locals.get(attribute.name.getText());
+              if (!local) continue;
+              if (ts.isStringLiteral(attribute.initializer)) {
+                recordValue(fn, local, [attribute.initializer.text]);
+                continue;
+              }
+              if (!ts.isJsxExpression(attribute.initializer)) continue;
+              const value = attribute.initializer.expression;
+              let namespace = undefined;
+              if (ts.isIdentifier(value)) namespace = translatorOf(value.text);
+              if (namespace) recordBinding(fn, local, namespace);
+            }
+          }
+        }
+      }
+      ts.forEachChild(node, pass1);
+      if (isScope) scopes.pop();
+    };
+    pass1(source);
+    scopes.length = 0;
+    fileBindings.set(rel, bindingsByName);
+  }
+};
+
+/* --- the seam runs until a round adds no binding (a hand-off is only visible from its caller) --- */
+for (let round = 0; round < 6; round += 1) {
+  seamGrew = false;
+  seamRound();
+  seamRounds = round + 1;
+  if (!seamGrew) break;
 }
 
 /**
@@ -625,6 +843,41 @@ for (const [namespace, block] of Object.entries(CATALOGUE)) {
   }
 }
 
+/**
+ * The exemptions this gate may claim, and the reader standing behind each.
+ *
+ * Checked, not trusted: the carrier file has to be present and has to hold the clause that compares the
+ * catalogue with the API's refusal census. A named judge that cannot be found is not a judge, so its
+ * namespace stays in the population below and the floor charges for it — which is what stops an
+ * exemption from becoming a hiding place the day the test is renamed, moved or deleted.
+ */
+const judgedElsewhere = new Map();
+for (const [namespace, entry] of JUDGED_ELSEWHERE) {
+  const path = resolve(WEB, entry.carrier);
+  const holds = existsSync(path) && readFileSync(path, "utf8").includes(entry.clause);
+  if (holds) judgedElsewhere.set(namespace, path);
+}
+
+/** The keys the delegated namespaces hold: judged by the named reader, so not this gate's to count. */
+const delegatedKeyCount = [...judgedElsewhere.keys()].reduce(
+  (sum, namespace) => sum + Object.keys(CATALOGUE[namespace] ?? {}).length,
+  0,
+);
+
+/**
+ * The catalogue keys no reader judges.
+ *
+ * The old third check counted *namespaces*, which is not the population at risk: one unread call hides a
+ * whole namespace, and a namespace can be 288 keys. Counting keys makes the size of the blind spot
+ * visible, which is the only way a later slice can be measured against it.
+ */
+const unjudged = [];
+for (const [namespace, block] of Object.entries(CATALOGUE)) {
+  if (!block || typeof block !== "object") continue;
+  if (!exempt.has(namespace) || judgedElsewhere.has(namespace)) continue;
+  for (const key of Object.keys(block)) unjudged.push(`${namespace}.${key}`);
+}
+
 const checks = [];
 const check = (name, ok, detail) => {
   checks.push({ name, ok, detail });
@@ -634,7 +887,7 @@ const check = (name, ok, detail) => {
 check(
   "the walk finds the population",
   files.length > 0 && parsed === files.length && diagnostics === 0,
-  `${files.length} file(s), ${parsed} parsed, ${diagnostics} parse diagnostic(s)`,
+  `${files.length} file(s), ${parsed} parsed, ${diagnostics} parse diagnostic(s), ${seamRounds} seam round(s) to a fixed point`,
 );
 
 check(
@@ -644,11 +897,17 @@ check(
 );
 
 check(
-  "every read that could not be resolved left its namespace unjudged, and says which",
-  exempt.size === 0 || unresolved.length > 0,
-  exempt.size === 0
-    ? "every read in the tree resolved, so every namespace was judged"
-    : `${unresolved.length} unresolved read(s) left ${exempt.size} namespace(s) unjudged — ${[...exempt].sort().join(", ")} (${unresolved.map((read) => `${read.file}:${read.line}`).join(", ")})`,
+  "every catalogue key is judged by a reader, and every exemption names the gate that judges it",
+  unjudged.length <= FLOOR_UNJUDGED,
+  unjudged.length === 0
+    ? `${total - delegatedKeyCount} key(s) judged here${
+        judgedElsewhere.size === 0
+          ? ", every read in the tree resolved"
+          : `, ${delegatedKeyCount} delegated to ${[...judgedElsewhere.keys()].sort().map((namespace) => `${namespace} by ${JUDGED_ELSEWHERE.get(namespace).label}`).join(", ")}`
+      }`
+    : `${unjudged.length} key(s) unjudged against a floor of ${FLOOR_UNJUDGED} — ${unjudged
+        .slice(0, 6)
+        .join(", ")}${unjudged.length > 6 ? ", …" : ""} (from ${[...exempt].filter((n) => !judgedElsewhere.has(n)).sort().join(", ") || "none"})`,
 );
 
 const byNamespace = new Map();
@@ -681,8 +940,12 @@ if (orphans.length || unresolved.length || process.env.QA_UNUSED_VERBOSE) {
   }
   if (unresolved.length) {
     console.log("");
-    console.log("Every read below could not be resolved to a literal, so its namespace was left unjudged:");
-    for (const read of unresolved) console.log(`  ${read.file}:${read.line} [${read.namespace}] ${read.snippet}`);
+    console.log("Every read below could not be resolved to a literal, so this gate left its namespace unjudged:");
+    for (const read of unresolved) {
+      const judge = judgedElsewhere.get(read.namespace);
+      const suffix = judge ? `  — judged by ${JUDGED_ELSEWHERE.get(read.namespace).label}` : "  — NOT JUDGED BY ANY READER";
+      console.log(`  ${read.file}:${read.line} [${read.namespace}] ${read.snippet}${suffix}`);
+    }
   }
 }
 if (failed.length) process.exitCode = 1;

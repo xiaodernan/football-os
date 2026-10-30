@@ -446,7 +446,7 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     **8/9 — `careerDetail` has no key "seamProbe", at 3827 calls**; the restored file is **9/9 at 3826 calls**,
     and the tree's 7 prop translations are bound across the seam. *Gate:* the recorded-call count must move
     when a key is planted in a prop-translator component — that reaction, not the pass, is the witness.
-23. **The dead-key gate exempts a whole namespace on one dynamic read.** **Opened (2026-10-28).**
+23. **The dead-key gate exempts a whole namespace on one dynamic read.** **Opened 2026-10-28; Done 2026-10-30.**
     `qa-unused-keys.mjs` holds the other half of item 22's contract: is every key the catalogue holds
     asked for by a page? Its soundness rule is right in principle — a read whose argument cannot be
     resolved to literals must not let the gate promise completeness — but the exemption it applies is
@@ -466,6 +466,21 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     "namespaces unjudged" to **keys unjudged against a floor that may only fall**, so a new dynamic read
     cannot quietly exempt a namespace again. *Gate:* the differential must invert — a dead key in
     `careerDetail` must red the gate exactly as one in `common` does, and the unjudged count must reach 0.
+
+    **Done (2026-10-30):** the rule is kept and what it spends is measured rather than assumed. (a) A read
+    whose key lives in the source's **own data** is resolved instead of exempted: the reader follows the
+    identifier to the file that declares it — `lib/ledger.ts`'s `LEDGER_COLUMNS` reaches
+    `t(column.hintKey)` in the career page — and folds a translator handed across a component seam to a
+    **fixed point** (149 files parsed, 2 seam rounds here), so `careerDetail`'s dynamic reads are judged.
+    (b) `errors` is the one read left unresolved (`t(refusal.code)` in `lib/refusals.ts`), so it is
+    **delegated by name** to `apps/api/tests/test_locale_claims.py`, which recomputes those 66 keys from the
+    refusal codes the API publishes; an exemption no longer counts unless a named gate is found, in the file
+    it names, holding the clause that judges the namespace. (c) The check is re-graded from namespaces to
+    **keys**: 3905 judged here + 66 delegated = 3971, **0 unjudged**, against a floor that may only fall.
+    The differential inverted, measured by `.scratch/probe-dead-keys.py` **6/6**: a key nothing reads,
+    planted in `careerDetail`, now answers **1 orphan and rc 1** exactly as the same key in `common` does;
+    the catalogue is restored **byte-identically** between arms (`sha256 db436ca4…` both ways), and the
+    unplanted gate is **3/3**.
 
 *Gate:* each runbook cites the door it documents (§83 pattern); the cost ceiling is a tested boundary.
 
