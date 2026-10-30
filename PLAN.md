@@ -1004,6 +1004,14 @@ in the reader's language and carries the sentence the payload supports ("{name} 
 …"), a Mark read button per unread row and Mark all read above, and the tier's own formula printed under the panel.
 The nav gains a Notifications link with the unread count as a badge, fetched once per mount, quiet at zero.
 
+**The targeted verification that settled the section** (after four full-walk attempts died on host contention —
+the sitemap probe's 1715 SSR renders, up from 1039 before M13, saturate the web tier on this shared host): a
+puppeteer run against the production build registers an author through the proxy and a stranger against the API
+(the two shapes this tier actually has), follows the author's member id read from `/auth/me` — the walk's meId fix
+proven live — reacts and comments, and reads the tray in the browser: `tray total: 3, unread: 3`, kinds
+`comment,follower,reaction`, every payload naming the stranger, **the nav badge rendering 3**, and Mark all read
+clearing the badge. The full walk's 15b section now carries these same assertions for every future run.
+
 **Run 3 exposed a real limiter defect the suite could not see.** The erasure check answered 429 for an account
 that had never erased anything: `account_delete`'s bucket was keyed by client address alone, and the Nth
 verification walk of the day had spent the address's three-an-hour budget. The door already requires a valid
