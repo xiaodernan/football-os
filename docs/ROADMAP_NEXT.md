@@ -214,7 +214,8 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
    `test_next_seasons_fixtures_name_only_the_new_membership`,
    `test_a_league_page_names_the_clubs_that_played_not_just_the_ones_left`,
    `test_a_future_season_page_lists_the_membership_registered_for_it`,
-   `test_a_cup_publishes_no_tier_movement`); the record is
+   `test_a_cup_publishes_no_tier_movement`,
+   `test_the_competitions_list_counts_membership_not_every_club_that_ever_played`); the record is
    `docs/M13_PROMOTION_RELEGATION_VERIFICATION.md`.
 10. **Fixture calendar.** **Already implemented (verified 2026-10-25):** `world/builder.py` generates a
     deterministic double round-robin per league and a 7-game knockout per cup (`_round_robin`,

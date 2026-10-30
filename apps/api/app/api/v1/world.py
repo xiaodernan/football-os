@@ -361,7 +361,10 @@ def list_competitions(
             "region": row.region,
             "season": row.season,
             "summary": row.summary,
-            "team_count": max(team_counts.get(row.id, 0), len(entrants.get(row.id, ()))),
+            # A league's count is its membership today: a club that played here last season and went
+            # down is not one of its clubs now, and counting it printed nine clubs for an eight-club
+            # league. A cup has no membership, so its drawn entrants are the only honest count.
+            "team_count": team_counts.get(row.id, 0) if row.kind == "league" else len(entrants.get(row.id, ())),
             "data_origin": row.data_origin,
             "is_demo_data": row.is_demo_data,
         }

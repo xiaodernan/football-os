@@ -81,6 +81,13 @@ fixtures alone left the 2027 page showing the four clubs named by its two schedu
 season with no results has membership as its truth, so `entrants` is used only when the requested
 season equals `competition.season`.
 
+The boundary also exposed a count that had been true only while both seasons had the same members:
+the competitions list built `team_count` as `max(registered, every club named by any fixture)`, so a
+tier-2 league read **9 clubs** on `/world/competitions` — the club that went down still counted —
+while its own page listed 8. A league is counted by membership today; a cup, which has no
+membership, by its drawn entrants. Pinned by
+`test_the_competitions_list_counts_membership_not_every_club_that_ever_played`.
+
 ## 3. The web panel, and the direction defect it surfaced twice
 
 `apps/web/app/competition/[slug]/page.tsx` renders a `Panel` between the table and the entrant
@@ -124,7 +131,7 @@ byte-identically.
 
 | Check | Result |
 | --- | --- |
-| `pytest tests/test_world.py` | **57 passed** (9 of them new: 3 plan-level, 3 DB-level, 3 API-level) |
+| `pytest tests/test_world.py` | **58 passed** (10 of them new: 3 plan-level, 3 DB-level, 4 API-level) |
 | `pytest tests/test_world.py tests/test_openapi_contract_currency.py tests/test_locale_claims.py` | **exit 0** — the contract still reproduces its committed bytes; the catalogue README is recomputed |
 | `scripts/lint.sh` | **All checks passed!** |
 | `mypy app` | **Success: no issues found in 161 source files** |
@@ -163,6 +170,8 @@ evaluation), not screenshots:
   without the promoted one, and the new `tablePending` sentence («这个赛季还没有已踢的比赛…» /
   «No fixture in this season has been played yet…» / «這個賽季還沒有已踢的比賽…»).
 * The cup page: no movement panel, the cup note unchanged.
+* `/world/competitions` after the count fix: every league row prints **8** clubs and every cup row
+  **8** entrants, agreeing with each page.
 
 ## 5. What this does not claim
 

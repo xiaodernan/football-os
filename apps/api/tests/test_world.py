@@ -355,6 +355,19 @@ class TestReads:
         assert all(fixture["home"] and fixture["away"] for fixture in cup["fixtures"]), cup["fixtures"][0]
         assert {team["id"] for team in cup["teams"]} == {fixture["home"]["id"] for fixture in cup["fixtures"]} | {fixture["away"]["id"] for fixture in cup["fixtures"]}
 
+    def test_the_competitions_list_counts_membership_not_every_club_that_ever_played(self, client) -> None:  # type: ignore[no-untyped-def]
+        """A tier-2 league lost one club and gained one at the boundary; its count is still eight."""
+        listed = client.get(f"{API}/competitions", params={"page_size": 50}).json()["items"]
+        leagues = [item for item in listed if item["kind"] == "league"]
+        assert leagues, "the world lists no league, so there is no membership to count"
+        wrong = []
+        for item in leagues:
+            page = client.get(f"{API}/competitions/{item['slug']}").json()
+            registered = {team["id"] for team in page["teams"]}
+            if item["team_count"] != len(registered):
+                wrong.append((item["slug"], item["team_count"], len(registered)))
+        assert not wrong, f"the list counts a club that played here last season as a member: {wrong}"
+
     def _league_pages(self, client):  # type: ignore[no-untyped-def]
         listed = client.get(f"{API}/competitions", params={"page_size": 50}).json()["items"]
         return [client.get(f"{API}/competitions/{item['slug']}").json() for item in listed if item["kind"] == "league"]
