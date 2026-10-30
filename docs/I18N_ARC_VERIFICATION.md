@@ -1,7 +1,8 @@
 # §81 — the interface in the reader's language, and the gates that hold it there
 
 What this certifies: that every string a reader sees on the web tier is read from a **catalogue**, in one
-of three languages, and that four gates refuse the day it stops being true.
+of three languages, and that the gates named below refuse the day it stops being true. §1 lists the four
+the arc opened with; each section after it adds a gate and re-reads the tree.
 
 The arc began as a copy gate with a ceiling and became something else: a gate can count what it can see,
 and what it could not see turned out to be most of the copy in the tree. Every number below is measured
@@ -9,7 +10,10 @@ on the tree this document names, and every figure in it is reproducible by runni
 it.
 
 **The figures in §1 are the arc's opening figures.** The tree as the arc left it is in **§14** (the
-walk on it: 298/298, exit 0) and **§15** (the boundary), and the catalogue's own current table is
+walk on it: 298/298, exit 0) and **§15** (the boundary), and each section that landed after them re-reads
+the tree it changed — **§17** the shared-sentence gate, **§18** the copy gate's reach across a file
+boundary (9/9, 4012 key calls on the tree as it stands on 2026-10-28). A figure quoted here without a date
+is a claim about a run, not about the tree; the catalogue's own current table is
 `apps/web/messages/README.md` — which the locale-claims test recomputes and holds to the live key
 count.
 
@@ -1294,3 +1298,86 @@ What this gate does **not** claim: that two namespaces holding one English sente
 The catalogue is namespace-scoped on purpose, and `nobody` is the proof that one word can be two
 sentences. That is exactly why the divergence ledger is written row by row instead of derived from the
 English.
+
+---
+
+## 18. The key reads the copy gate could not see across a file boundary (2026-10-28)
+
+**The claim charged.** `qa-i18n-literals.mjs` checks that every key a page asks for exists in the
+catalogue, under the namespace that page's translator was built with. It found that namespace inside the
+file: a `useTranslations("careerDetail")` declaration, or a same-file helper handed the translator as a
+parameter. A panel under `components/` is handed its translator as a **prop** by a page — nothing in the
+panel's own source says what `t` reads — so the candidate list came back empty, the call contributed
+nothing, and the gate answered its full pass with those reads uncounted.
+
+**The measurement, before.** **7** career panels making **167** bare `t("…")` calls
+(`CareerNextOpponent` 34, `CareerContracts` 29, `CareerBoard` 25, `CareerFinance` 24, `CareerAcademy` 23,
+`CareerHighlights` 18, `CareerDevelopment` 14). The defect was reachable, not hypothetical: the academy
+panel's first browser run died at runtime on `KeyError: 'thAge'` — two header keys borrowed from
+namespaces the page's `t` does not hold. A reversible probe planted exactly that: the bad pair in the
+panel answered **8/8 PASS at 3661 calls**; the same pair in `app/career/[slug]/page.tsx`, which binds its
+own namespace, answered **7/8 — `careerDetail` has no key "thAge" — at 3662 calls**. The gate could not
+have caught the crash it was written to catch.
+
+**The fix.** The seam is resolved where the hand-off happens, not by widening the panel's own file: the
+import map gives the exported component, the component's parameter list gives the prop's local name, and
+the call site in the importing file gives the namespace of the expression passed into it. Three shapes
+needed the resolution rather than a lookup — `.tsx` and `.ts` under `app/`, `components/` and `lib/`,
+parsed once and reused by the main walk; a component that is exported under another name; a `Promise.all`
+destructure whose translator arrives positionally. The resolution is then iterated to a fixed point (≤6
+rounds, because a panel may hand the translator to a sub-panel of its own), and the two passes matter:
+the hand-offs are read **after** every file's exports are known, since the population walks `app/` before
+`components/` — a single pass resolves nothing and reports the whole 167 as unfollowable.
+
+**The two halves of the merge are deliberate and asymmetric.** Into the permissive set
+(`bindingsByName`) the panel's translator takes **every** namespace it has been handed anywhere in the
+tree, so a panel used by two pages with different namespaces is checked against both rather than
+silently dropped. Into the scope stack it is bound only when it was handed **exactly one** namespace and
+the file declares none of its own — that is what lets `adjacentTranslations` and `hasTranslatorCall`
+reach panels without guessing an ambiguous case into a wrong answer.
+
+**The ninth check removes the silence.** A key-shaped read through a name that is a *parameter* of this
+file and resolves to no namespace is now named with its file, line, key and parameter name, and reds the
+gate. Before it existed, the failure mode of a seam the resolver could not follow was indistinguishable
+from the failure mode of a file with no reads at all.
+
+**The witness is the reaction, not the pass.** Five arms, each run against a plane copy of the tier
+outside the repository (so no mutation ever touched the working tree), each predicting both the check that
+must go red and the direction of the count, and each restored byte-identically with sha256 compared:
+
+| arm | change | predicted | measured |
+|---|---|---|---|
+| baseline | none | green, count as landed | **9/9, 3824 calls, 7 props bound, 138 files** |
+| A1 | plant `t("seamProbe")` in `CareerAcademy` | catalogue check red, count +1 | **8/9 red, 3825** |
+| A2 | plant a key that exists — in *another* namespace | red, count unchanged | **8/9 red at 3824** |
+| A3 | delete one `t={t}` from the career page | seam check names the blind panel, count −23 | **8/9 red, 3801, `components/CareerAcademy.tsx:17 …`** |
+| A4 | a second hop: panel → sub-panel | count +1, props 7→8, files +1 | **8/9 red, 3825, props 8, 139 files** |
+| control | restore, re-run | green at baseline | **9/9, 3824, rc 0** |
+
+A3 is the causal one: the panel's own file is untouched, only the hand-off is removed, and the count falls
+by **23** — the exact figure the independent census measured for that panel. A2 is the one that matters
+for the crash: a key borrowed from the wrong namespace is now refused *at the same count*, which is the
+shape the pre-fix gate answered green.
+
+**Disclosed, not papered over.** The "N translator prop(s) bound across the seam" figure is printed on the
+green path only, so an arm that reddens the seam check cannot be read for its prop count — A3 and A4 were
+graded on the count and the named file, not on that figure. And the seam binds a translator to a
+*namespace*; it does not prove the key names the right **field**, which is a different claim and a
+different gate — `qa-field-labels.mjs` grades that one, and its population already reaches panels (it walks
+every `.tsx` under `app/` and `components/` and each page's transitive component graph: **125 files,
+65 pages, 116 constant aria-label keys, 0 collisions**). The seam widens what the copy gate can *see*; it
+widens nothing about what a key *means*.
+
+**Re-read on today's tree.** The count moves with the tree, which is why §1's opening figures and this
+section's landing figures are both dated rather than quoted as present tense: the gate now answers
+**9/9 — 143 `.tsx` files, 4012 key calls, 97 named keys, 7 props bound**. The gate code itself landed in
+`df1675e`, carried by the concurrent i18n lane's commit alongside the working-copy bytes this unit wrote.
+
+**The mirror finding, opened as item 23.** `qa-unused-keys.mjs` holds the other half of the same contract —
+is every key the catalogue holds asked for? — and its soundness rule is that an unresolvable read exempts
+its **whole namespace**. Three dynamic reads do exactly that today: `t(column.hintKey)` and
+`t(column.labelKey)` in `app/career/[slug]/page.tsx`, and `t(refusal.code)` in `lib/refusals.ts`. The gate
+prints the exemption (3 reads, 2 namespaces) and still reads 3/3 with **0 keys asked for by nothing** —
+which is true of the namespaces it judges and vacuous for `careerDetail` (**288** keys) and `errors`
+(**66**), i.e. **354 of the 3971 keys in the catalogue are never checked for a reader at all**.
+

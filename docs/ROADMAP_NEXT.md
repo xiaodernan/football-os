@@ -424,7 +424,8 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     real sink, and the runbook [`docs/runbooks/cost_alerts.md`](runbooks/cost_alerts.md).
 22. **Gate the bare key calls a prop-translator component makes.** **Opened by item 7's first walk run; Done
     (2026-10-28).** `qa-i18n-literals.mjs` records a bare `t("key")` call against the namespace the
-    *calling file itself* binds (`apps/web/scripts/qa-i18n-literals.mjs:804`-`:824`); when the translator
+    *calling file itself* binds (the `candidates` list built in its translator-read branch; cited here by its identifier
+    rather than by line numbers, which move under every other lane's commit); when the translator
     arrives as a prop and the file never calls `getTranslations`/`useTranslations`, the candidate list is
     empty and the call contributes nothing — the key is never checked, and neither are its placeholders.
     Measured population today: **7 files under `apps/web/components/` make 167 bare `t("…")` calls that are
@@ -445,6 +446,26 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     **8/9 — `careerDetail` has no key "seamProbe", at 3827 calls**; the restored file is **9/9 at 3826 calls**,
     and the tree's 7 prop translations are bound across the seam. *Gate:* the recorded-call count must move
     when a key is planted in a prop-translator component — that reaction, not the pass, is the witness.
+23. **The dead-key gate exempts a whole namespace on one dynamic read.** **Opened (2026-10-28).**
+    `qa-unused-keys.mjs` holds the other half of item 22's contract: is every key the catalogue holds
+    asked for by a page? Its soundness rule is right in principle — a read whose argument cannot be
+    resolved to literals must not let the gate promise completeness — but the exemption it applies is
+    **namespace-wide**, so one dynamic read spends the whole namespace. Measured on today's tree, the gate
+    reads 3/3 with **0 keys asked for by nothing** and prints the cost itself: *3 unresolved read(s) left
+    2 namespace(s) unjudged — `careerDetail`, `errors`* (`t(column.hintKey)` and `t(column.labelKey)` in
+    `app/career/[slug]/page.tsx`, `t(refusal.code)` in `lib/refusals.ts`). Those two namespaces hold
+    **288 + 66 = 354 of the 3971 keys** in `en.json` (42 namespaces), so nine keys in a hundred are never
+    asked whether anything reads them. A two-arm probe on a plane copy of the tier proves it is the
+    exemption and not a dead check: a key nothing reads, planted in **`careerDetail`, leaves the gate at
+    3/3 and 0 orphans (rc 0)**; the same key planted in **`common` reds it at 1 orphan (rc 1)**; the plane
+    restores to 3/3 and 0. The fix keeps the rule and shrinks what it spends: (a) a key the source names
+    in its **own data** is a key that source reads — the copy gate's third check already resolves that
+    shape over the tree (97 named keys), and the reader census can use the same resolution instead of
+    exempting; (b) `errors` is judged against the refusal codes the API publishes, which `qa-api-strings`
+    and the locale-claims test already enumerate from both sides; (c) the third check is re-graded from
+    "namespaces unjudged" to **keys unjudged against a floor that may only fall**, so a new dynamic read
+    cannot quietly exempt a namespace again. *Gate:* the differential must invert — a dead key in
+    `careerDetail` must red the gate exactly as one in `common` does, and the unjudged count must reach 0.
 
 *Gate:* each runbook cites the door it documents (§83 pattern); the cost ceiling is a tested boundary.
 

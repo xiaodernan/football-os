@@ -168,7 +168,8 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   MISSING_MESSAGE; the academy panel found it by planting the same key twice — in the page it went red (7/8, 3662 calls), in the
   panel it stayed green (8/8, 3661). `qa-i18n-literals.mjs` now resolves the hand-off where it happens: an imported component's
   translator prop is bound to the namespace its caller passes, followed across a second hop when a panel hands the translator to
-  a sub-panel of its own. The recorded count is **3824** key calls, up from 3661, and the ninth check refuses the silence that
+  a sub-panel of its own. The count the gate printed as this landed was **3824** key calls, up from 3661 — the figure moves with
+  the tree and the gate is its own reader, so no prose here may quote it as a present-tense claim — and the ninth check refuses the silence that
   made the gap unmeasurable: a key-shaped read through a parameter that no seam reached is named at its file and line, so a
   hand-off through a barrel or a positional argument into an imported helper cannot go uncounted. The witness is the reaction,
   not the pass: planting a key in a panel moves the count by one and goes red, deleting one `t={t}` from the career page lowers
@@ -208,12 +209,14 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
   it is the same in every language.
 - **And a refusal is the reader's copy, so the catalogue holds the API's refusals (2026-10-22).** The API answers a refusal with a **code** (the stable handle) and a **sentence** (the API's own English), and the web tier shows the sentence — so a Chinese reader was told “The current password is incorrect” in English. The catalogue now holds one key per refusal code with **the English value being the API's message verbatim**, so the English rendering is byte-identical and the change is a translation rather than a copy change; the code needs no translation at all. The switch is **one place**: `lib/refusals.ts` holds the shape and the lookup, `serverFetch` uses it for the server's reads and the cookie proxy for the browser's (the middleware skips `/api`, so the proxy reads the reader's locale from the `fo_locale` cookie). `errorMessage()` and its 42 call sites are untouched. **26** codes are covered; the API's other **39** publish a message that names a value the request supplied, and those are **named** in the test that holds the catalogue and the API in step in both directions.
 - **The gates the i18n arc now runs, and the evidence.** `qa-i18n-literals.mjs` (9 checks: 0 English literal sites over
-  every `app/**/*.tsx` and `components/**/*.tsx`, 3824 key calls checked against the namespace each is asked of, every
-  placeholder supplied, and no translator read left without a namespace) · `qa-icu-messages.mjs` (2: every message in all three catalogues parses as ICU) ·
-  `qa-unused-keys.mjs` (3: **every key the catalogue holds is asked for by a page**; floor 0) ·
+  every `app/**/*.tsx` and `components/**/*.tsx`, every recorded key call checked against the namespace each is asked of — the
+  count is what the gate prints on each run, not a figure this file may copy — every placeholder supplied, and no translator
+  read left without a namespace) · `qa-icu-messages.mjs` (2: every message in all three catalogues parses as ICU) ·
+  `qa-unused-keys.mjs` (3: **every key in a namespace it can judge is asked for by a page**; floor 0, and the third check
+  names the reads it could not resolve together with the namespaces those reads leave unjudged) ·
   `qa-locale-tokens.mjs` (3: the English file holds no Chinese; the identical values are the 44 named ones) ·
-  `qa-field-labels.mjs` (2) · `qa-metadata-title.mjs` (165). The **browser** evidence is the visual walk, which now
-  reads **298 checks, every one of them passing, exit 0** — including the sweep, the check that reads every page the walk touched again in
+  `qa-field-labels.mjs` (2) · `qa-metadata-title.mjs` (one check per page, so its tally is the page population). The **browser** evidence is the visual walk, whose
+  reading each walk's own record carries — the career walk landed 2026-10-28 at **686 checks, every one of them passing, exit 0** — including the sweep, the check that reads every page the walk touched again in
   Chinese and holds that none of them carries an untranslated label: *49 pages read in Chinese, 1964 English phrases
   compared*. The sweep prints the English it **tolerated** — the API's authored prose, quoted rather than translated —
   because an exemption nobody can see is a claim nobody can check.
