@@ -3144,6 +3144,7 @@
     "thTimelineStored": "存储余额",
     "thTrainingLoad": "训练负荷",
     "thVenue": "场地",
+    "thWorld": "世界赛程",
     "timelineAgrees": "一致",
     "timelineAllAgree": "每条存储数字都与滚动余额一致",
     "timelineDisagreements": "{count, plural, other {# 条存储数字与滚动余额不符}}",
@@ -3160,7 +3161,9 @@
     "unavailableTitle": "赛季",
     "venueAway": "客场对阵",
     "venueHome": "主场对阵",
-    "vs": "对阵"
+    "vs": "对阵",
+    "worldFixtureDeleted": "世界赛程已删除",
+    "worldTieHint": "生成赛程自身的记录——本职业的轮次从不会改写它。"
   },
   "worldPlayer": {
     "metaDescriptionFallback": "FOOTBALL OS 生成足球世界中的球员档案。",

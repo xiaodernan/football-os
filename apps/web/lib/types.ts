@@ -1461,6 +1461,13 @@ export type CareerFixtureRow = {
   match_slug: string;
   match_path: string | null;
   match_still_stored: boolean;
+  /** M13 item 12: the generated fixture this round played, recorded by value on the round's own row. */
+  world_match_slug: string | null;
+  world_match_path: string | null;
+  world_match_still_stored: boolean;
+  /** The world's own status and score for that fixture — read beside the career's, never merged with it. */
+  world_status: string | null;
+  world_goals: { home: number | null; away: number | null } | null;
 };
 
 export type CareerNextFixture = {
@@ -1932,6 +1939,8 @@ export type CareerView = {
     philosophy: string;
     table: string;
     objectives: string;
+    /** M13 item 12: the generated fixture a round played is named, and the tie is one-way. */
+    world_calendar: string;
   };
   next_fixture?: CareerNextFixture;
   played?: boolean;

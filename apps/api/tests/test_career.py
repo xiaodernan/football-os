@@ -29,6 +29,7 @@ from app.models import (
     CareerFixture,
     CareerSeason,
     Competition,
+    RealMatch,
     SimulationMatch,
     Team,
     User,
@@ -178,6 +179,64 @@ def _at(career: Career, round_index: int) -> Career:
     return career
 
 
+class TestWorldTie:
+    """M13 item 12, the tie half: a round that played the world's fixture says so, and neither side is rewritten."""
+
+    def test_a_calendar_round_records_the_generated_fixture_it_played(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        plan = career_service.next_fixture_plan(session, career)
+        fixture, _match = career_service.play_round(session, career)
+        drawn = session.scalars(select(RealMatch).where(RealMatch.slug == plan["match_slug"])).one()
+        assert fixture.round_index == 1
+        assert fixture.world_match_id == drawn.id and fixture.world_match_slug == drawn.slug
+
+    def test_the_generated_fixture_keeps_the_score_the_world_played(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        plan = career_service.next_fixture_plan(session, career)
+        drawn = session.scalars(select(RealMatch).where(RealMatch.slug == plan["match_slug"])).one()
+        before = (drawn.status, drawn.home_goals, drawn.away_goals, drawn.summary, drawn.content_hash)
+        fixture, _match = career_service.play_round(session, career)
+        session.refresh(drawn)
+        assert (drawn.status, drawn.home_goals, drawn.away_goals, drawn.summary, drawn.content_hash) == before, "a career round never rewrites the generated fixture"
+        assert fixture.world_match_id == drawn.id, "the round names the fixture it played, not one it rewrote"
+
+    def test_a_rotation_round_names_no_generated_fixture(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        bounds = career_service.season_bounds(session, career)
+        size = len(career_service.calendar_fixtures(session, career, bounds=bounds))
+        _at(career, size + 1)
+        fixture, _match = career_service.play_round(session, career)
+        assert fixture.round_index == size + 1
+        assert fixture.world_match_id is None and fixture.world_match_slug is None, "a round the world never drew invents no fixture"
+
+    def test_the_view_prints_the_careers_score_beside_the_worlds_own(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        plan = career_service.next_fixture_plan(session, career)
+        career_service.play_round(session, career)
+        drawn = session.scalars(select(RealMatch).where(RealMatch.slug == plan["match_slug"])).one()
+        row = career_service.career_view(session, career)["fixtures"][0]
+        assert row["world_match_slug"] == plan["match_slug"] and row["world_match_path"] == f"/match/{plan['match_slug']}"
+        assert row["world_match_still_stored"] is True
+        assert row["world_status"] == drawn.status
+        assert row["world_goals"] == {"home": drawn.home_goals, "away": drawn.away_goals}
+
+    def test_a_fixture_the_world_no_longer_holds_keeps_the_slug_and_loses_the_link(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career_service.play_round(session, career)
+        stored = career_service.fixtures_of(session, career)
+        kept_slug = stored[0].world_match_slug
+        stored[0].world_match_id = "removed-world-fixture"
+        session.commit()
+        row = career_service.career_view(session, career)["fixtures"][0]
+        assert kept_slug and row["world_match_slug"] == kept_slug
+        assert row["world_match_path"] is None and row["world_match_still_stored"] is False
+        assert row["world_status"] is None and row["world_goals"] is None
+
+    def test_the_limitation_says_the_tie_is_one_way(self) -> None:
+        text = career_service.limitations()["world_calendar"]
+        assert "one-way" in text and "no career result is written into it" in text
+
+
 class TestPlaying:
     def test_a_round_is_decided_by_the_engine_and_stored_twice(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
@@ -248,7 +307,7 @@ class TestJudging:
         view = career_service.career_view(session, career)
         assert view["is_demo_data"] is True and view["data_origin"] == "simulation"
         assert "fiction" in view["disclaimer"]
-        assert set(view["limitations"]) == {"budget", "wages", "carry_over", "projections", "ledger", "scouting", "philosophy", "table", "objectives"}
+        assert set(view["limitations"]) == {"budget", "wages", "carry_over", "projections", "ledger", "scouting", "philosophy", "table", "objectives", "world_calendar"}
         assert "read-only" in view["limitations"]["projections"] and "contracts" in view["limitations"]["projections"]
         assert "re-checked" in view["consistency"]
         fixture = view["fixtures"][0]

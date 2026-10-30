@@ -190,6 +190,7 @@ export default async function CareerDetailPage({ params }: Props) {
                   <th scope="col">{t("thRound")}</th>
                   <th scope="col">{t("thFixture")}</th>
                   <th scope="col">{t("thScore")}</th>
+                  <th scope="col">{t("thWorld")}</th>
                   <th scope="col">{t("thVenue")}</th>
                   <th scope="col">{t("thPoints")}</th>
                   <th scope="col">{t("thDigest")}</th>
@@ -212,6 +213,19 @@ export default async function CareerDetailPage({ params }: Props) {
                     <td className="num">
                       {fixture.club_goals}–{fixture.opponent_goals} <span className={fixture.outcome === "W" ? "badge badge--live" : "badge badge--demo"}>{fixture.outcome}</span>
                     </td>
+                    <td>
+                      {fixture.world_match_path ? (
+                        <Link className="world-link" href={fixture.world_match_path} title={t("worldTieHint")}>
+                          {fixture.world_goals && fixture.world_goals.home !== null && fixture.world_goals.away !== null
+                            ? `${fixture.world_goals.home}–${fixture.world_goals.away}`
+                            : fixture.world_status}
+                        </Link>
+                      ) : fixture.world_match_slug ? (
+                        <span className="unavailable">{t("worldFixtureDeleted")}</span>
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
+                    </td>
                     <td className="muted">{fixture.venue_name || "—"}</td>
                     <td className="num">{fixture.points}</td>
                     <td className="mono">{fixture.digest}</td>
@@ -233,6 +247,7 @@ export default async function CareerDetailPage({ params }: Props) {
           </div>
         )}
         <p className="muted">{view.consistency}</p>
+        {fixtures.some((fixture) => fixture.world_match_slug) ? <p className="notice">{view.limitations.world_calendar}</p> : null}
       </Panel>
 
       <Panel

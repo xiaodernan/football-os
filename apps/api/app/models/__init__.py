@@ -1020,12 +1020,20 @@ class CareerFixture(Base, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("career_id", "round_index", name="uq_career_round"),
         Index("ix_career_fixture_match", "match_id"),
+        Index("ix_career_fixture_world_match", "world_match_id"),
     )
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
     career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
     round_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     match_id: Mapped[str | None] = mapped_column(ForeignKey("sim_matches.id", ondelete="SET NULL"), nullable=True)
+    # The generated world fixture this round played, when the world drew this round (M13 Phase 3 item 12).
+    # Recorded *by value* rather than as a foreign key: the world can be re-synced under a career that is
+    # still being played, and the career's own row must keep the fixture it played even when the world row
+    # it named is gone. `world_match_slug` is what a link and a re-read use; both are null on a round that
+    # continued on the career's rotation after the generated calendar ran out.
+    world_match_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    world_match_slug: Mapped[str | None] = mapped_column(String(200), nullable=True)
     match_slug: Mapped[str] = mapped_column(String(80), default="", nullable=False)
     digest: Mapped[str] = mapped_column(String(16), default="", nullable=False)
     model_version: Mapped[str] = mapped_column(String(60), default="", nullable=False)

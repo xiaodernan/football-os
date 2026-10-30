@@ -3144,6 +3144,7 @@
     "thTimelineStored": "Stored after",
     "thTrainingLoad": "Training load",
     "thVenue": "Venue",
+    "thWorld": "World fixture",
     "timelineAgrees": "AGREES",
     "timelineAllAgree": "every stored figure agrees with the running balance",
     "timelineDisagreements": "{count, plural, one {# stored figure disagrees with the running balance} other {# stored figures disagree with the running balance}}",
@@ -3160,7 +3161,9 @@
     "unavailableTitle": "Season",
     "venueAway": "away at",
     "venueHome": "at home against",
-    "vs": "vs"
+    "vs": "vs",
+    "worldFixtureDeleted": "world fixture deleted",
+    "worldTieHint": "The generated fixture's own record — this career's round never rewrites it."
   },
   "worldPlayer": {
     "metaDescriptionFallback": "Player profile in the FOOTBALL OS generated football world.",

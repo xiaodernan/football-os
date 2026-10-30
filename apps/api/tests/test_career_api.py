@@ -116,7 +116,7 @@ class TestOpening:
         assert body["objectives"][0]["formula"] == OBJECTIVE_FORMULA["wins"]
         assert body["next_fixture"]["available"] is True and body["next_fixture"]["basis"]
         assert body["is_demo_data"] is True and "fiction" in body["disclaimer"]
-        assert set(body["limitations"]) == {"budget", "wages", "carry_over", "projections", "ledger", "scouting", "philosophy", "table", "objectives"}
+        assert set(body["limitations"]) == {"budget", "wages", "carry_over", "projections", "ledger", "scouting", "philosophy", "table", "objectives", "world_calendar"}
 
     def test_the_career_appears_in_the_accounts_own_list(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
         opened = auth_client.post(API, json=_body(club_id)).json()

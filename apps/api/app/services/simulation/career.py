@@ -162,6 +162,15 @@ def limitations() -> dict[str, str]:
             "here and the lines are authored constants printed beside the pace rather than a position in a table. No "
             "prize money follows a season; the budget only moves when the market or a wage does."
         ),
+        "world_calendar": (
+            "A round whose plan says `source: \"world_calendar\"` is the club's own generated fixture, and the "
+            "played round records that fixture's id and slug on its row so the page can link to the world's "
+            "record beside the career's. The tie is one-way. The career's score, line-up and events belong to "
+            "its own engine and live in its own rows; the generated fixture keeps the score the world played, "
+            "and no career result is written into it or summed into a world table. A fixture the world no "
+            "longer stores leaves the round's stored slug in place and drops the link, the same way a deleted "
+            "simulation report does."
+        ),
     }
 
 
@@ -256,6 +265,7 @@ def next_fixture_plan(session: Session, career: Career, *, round_index: int | No
             "venue_name": row.venue_name,
             "venue_club": career.club_name if home else (opponent.name if opponent else ""),
             "match_slug": row.slug,
+            "world_match_id": row.id,
             "round_label": row.round_label,
             "calendar": {"season": season, "position": round_in_season, "of": len(calendar)},
             "basis": f"the club's {row.round_label} fixture in the generated {season} calendar, season fixture {round_in_season} of {len(calendar)}, as the world drew it",
@@ -416,6 +426,11 @@ def play_round(session: Session, career: Career) -> tuple[CareerFixture, Simulat
         round_index=int(plan["round_index"]),
         match_id=match.id,
         match_slug=match.slug,
+        # The world fixture is named only when the round *is* the generated fixture (M13 item 12): a round
+        # that continued on the career's own rotation after the calendar ran out has no world row to name,
+        # and one is not invented for it.
+        world_match_id=plan.get("world_match_id") if plan.get("source") == "world_calendar" else None,
+        world_match_slug=plan.get("match_slug") if plan.get("source") == "world_calendar" else None,
         digest=match.digest,
         model_version=match.model_version,
         seed=match.seed,
@@ -1383,6 +1398,22 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         # One batch lookup for every opponent's slug, rather than a `_team_slug` query per fixture.
         opponent_ids = {str(row.opponent_team_id) for row in rows if row.opponent_team_id}
         team_slugs = {str(team_id): str(slug) for team_id, slug in session.execute(select(Team.id, Team.slug).where(Team.id.in_(opponent_ids))).all()} if opponent_ids else {}
+        # ...and one for the generated fixtures the rounds played. The stored slug is repeated on the round's
+        # own row; the world's status and score are read here so both records can be printed side by side. A
+        # row whose world match no longer exists keeps its stored slug but loses the link, the same way
+        # `match_still_stored` reports a deleted report.
+        world_ids = {str(row.world_match_id) for row in rows if row.world_match_id}
+        world_rows = {str(found.id): found for found in session.scalars(select(RealMatch).where(RealMatch.id.in_(sorted(world_ids)))).all()} if world_ids else {}
+        world_tie: dict[int, dict[str, Any]] = {}
+        for row in rows:
+            found = world_rows.get(str(row.world_match_id)) if row.world_match_id else None
+            world_tie[int(row.round_index)] = {
+                "path": f"/match/{row.world_match_slug}" if found and row.world_match_slug else None,
+                "status": found.status if found else None,
+                # The world's own score, home and away as the world drew it — never placed on the career's
+                # side, because the career's round has its own score on the same row.
+                "goals": {"home": found.home_goals, "away": found.away_goals} if found else None,
+            }
         view["fixtures"] = [
             {
                 "round_index": row.round_index,
@@ -1401,6 +1432,11 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
                 "match_slug": row.match_slug,
                 "match_path": f"/simulate/{row.match_slug}" if row.match_slug else None,
                 "match_still_stored": bool(row.match_id),
+                "world_match_slug": row.world_match_slug,
+                "world_match_path": world_tie[int(row.round_index)]["path"],
+                "world_match_still_stored": bool(row.world_match_id) and str(row.world_match_id) in world_rows,
+                "world_status": world_tie[int(row.round_index)]["status"],
+                "world_goals": world_tie[int(row.round_index)]["goals"],
             }
             for row in rows
         ]
