@@ -106,6 +106,13 @@ The first full-suite run of the branch (before the rebase) ended **EXIT=1** with
 `test_sim_ledger` (3a) and `test_knowledge_graph_api` (3b). The latter three were fixed or became
 non-issues by the rebase; the ci trigger is a property of running the suite on a feature branch.
 
+The second full-suite run, on the rebased branch, ended **EXIT=1** with four reds and no regressions:
+`test_ci_trigger` again (the branch), and the three `test_security_probe_report_currency` cases. The
+three were measured **red on master at `1184614` as well** before attributing them: `f5ce28a`
+regenerated `docs/api/openapi.json` for the wage ceiling (SHA-256 `c6cf3bff…`) without refreshing the
+probe ledger, which still names run G's `59ed99d4…`. They are a master defect, fixed on master when
+the probe is rerun against the current contract; this branch neither caused nor leaves them.
+
 ## 6. What this does not claim
 
 * **The floors are floors.** §65 asks for 20 clubs / 300 players / 100 matches / 500 articles; the
