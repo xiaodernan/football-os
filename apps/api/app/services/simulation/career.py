@@ -844,12 +844,26 @@ def season_bounds(session: Session, career: Career, *, horizon: dict[str, Any] |
     because a promotion can change the length of the season that follows; the stored boundary rows are what
     make that readable. `rounds` of 0 means the career has no horizon (no competition and no challenge window),
     and then there is no last round and nothing to close.
+
+    A challenge career has exactly one season — its round window. The row `close_season` writes when the
+    window is used is the decision on that same season, not a boundary into a second one the career cannot
+    play: `play_round` refuses past the window, so a span that advanced would leave every season read
+    (record, table, objectives, board) summing zero rows while the fixture list still shows the window.
     """
     closed = closed if closed is not None else seasons_of(session, career)
     horizon = horizon if horizon is not None else season_horizon(session, career)
+    rounds = int(horizon["rounds"])
+    if int(career.challenge_window or 0) > 0:
+        return {
+            "index": 1,
+            "season": season_label(career.season, 1),
+            "first_round": 1,
+            "rounds": rounds,
+            "last_round": rounds if rounds > 0 else None,
+            "source": horizon["source"],
+        }
     index = len(closed) + 1
     first_round = int(closed[-1].last_round) + 1 if closed else 1
-    rounds = int(horizon["rounds"])
     return {
         "index": index,
         "season": season_label(career.season, index),
@@ -1011,14 +1025,17 @@ def close_season(
     Nothing is closed twice. The row for the season the career has just finished is returned as it stands —
     a second call after the boundary round is the same request, not a second season — and a season index is
     `len(closed) + 1`, backed by `uq_career_season_index`. A season with no horizon (`rounds = 0`) has no
-    last round and is never closed. The verdict is written from the season's own fixtures, and the career's
+    last round and is never closed. A challenge career has exactly one season — its window — so once its
+    row exists it is returned as it stands rather than decided again. The verdict is written from the
+    season's own fixtures, and the career's
     competition moves only when the rule sends it somewhere — the club's *world* membership is not touched,
     because another manager's world is not this career's to rewrite.
     """
     closed = closed if closed is not None else seasons_of(session, career)
     # The career stands at the boundary the last closed row already describes: the season is closed, and
-    # asking again returns the decision rather than deciding a second time.
-    if closed and int(career.rounds_played) == int(closed[-1].last_round):
+    # asking again returns the decision rather than deciding a second time. A challenge career's one row
+    # answers every later call, because the window admits no round that could open a second season.
+    if closed and (int(career.challenge_window or 0) > 0 or int(career.rounds_played) == int(closed[-1].last_round)):
         return closed[-1]
     bounds = season_bounds(session, career, horizon=horizon, closed=closed)
     last = bounds["last_round"]

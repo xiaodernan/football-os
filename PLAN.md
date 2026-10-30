@@ -1034,6 +1034,18 @@ comment excerpt, the actor hears nothing, and an author's own reaction writes no
 clean; the metadata gate at 168/168 and the crawl gate at 9/9 with the new prefix; tsc green. The walk section
 (15b) publishes its own post, acts as a stranger through the API, and reads in the browser.
 
+## The challenge record after its window closes (fixed 2026-10-31)
+
+The defect filed above is fixed. `season_bounds` advanced a challenge career into a second season the moment
+`close_season` wrote the window's boundary row — `play_round` refuses past the window, so no round could ever fill
+that span, and every season read (record, table, objectives, board) summed zero rows while the fixture list still
+showed the played rounds. A challenge career now has exactly one season, its window: `season_bounds` returns rounds
+1…window whatever boundary rows exist, `close_season` returns the one row rather than deciding again, and the view
+reads `Points 9 = Pts column 9, record 2-3-1` after a six-round `win-with-academy-players` run on a fresh
+alembic-built SQLite (`.scratch/walk-challenge-record.py` → `.scratch/challenge-walk.json`). Pinned by
+`tests/test_career.py::TestSeasons::test_a_closed_challenge_window_still_sums_its_own_rounds`, which reads
+`(2, 3, 2, 4)` for the span on the old code and `(1, 1, 2, 2)` on the fixed one.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

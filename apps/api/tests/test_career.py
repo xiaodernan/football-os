@@ -752,6 +752,35 @@ class TestSeasons:
         with pytest.raises(career_service.WindowClosed):
             career_service.play_round(session, career)
 
+    def test_a_closed_challenge_window_still_sums_its_own_rounds(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        """The window that closed is still the season the page reads.
+
+        The boundary row is written when the window's last round is played. A span that advanced past it
+        left every season read (record, table, objectives, board) summing zero rows while the fixture
+        table still listed the window — the state the challenge walk reported as `Pts 8 / Points 0 /
+        record 0-0-0`. The row is a decision on the one season a challenge career has, not the start of
+        a second one `play_round` would refuse.
+        """
+        career = _career(session, world)
+        career.challenge_window = 2
+        session.commit()
+        _fabricate_season(session, career, "WD")
+        closed = career_service.close_season(session, career)
+        assert closed is not None and closed.verdict == "challenge"
+        bounds = career_service.season_bounds(session, career)
+        assert (bounds["index"], bounds["first_round"], bounds["rounds"], bounds["last_round"]) == (1, 1, 2, 2), (
+            "the closed window is the career's one season, so the span does not advance"
+        )
+        view = career_service.career_view(session, career)
+        assert view["record"]["played"] == 2 and view["record"]["won"] == 1
+        assert view["record"]["points"] == sum(int(row["points"]) for row in view["fixtures"]) == 4, (
+            "the record and the fixture table count the same rounds after the window closed"
+        )
+        assert view["objectives"][0]["actual"] == view["record"]["won"]
+        assert view["seasons"]["current"]["season_index"] == view["seasons"]["closed"][0]["season_index"] == 1
+        again = career_service.close_season(session, career)
+        assert again is not None and again.id == closed.id, "the window closes once, whatever the round count says"
+
     def test_a_top_tier_season_at_exactly_the_relegation_line_stays(self, session, world) -> None:  # type: ignore[no-untyped-def]
         upper = _pyramid_pair(session)[0]
         career = _career_at(session, world, _club_in(session, upper))
