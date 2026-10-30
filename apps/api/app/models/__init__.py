@@ -1009,6 +1009,7 @@ class Career(Base, TimestampMixin):
     listings: Mapped[list[TransferListing]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="TransferListing.listed_round")
     moves: Mapped[list[CareerSquadMove]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSquadMove.round_index")
     wage_charges: Mapped[list[CareerWageCharge]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerWageCharge.round_index")
+    seasons: Mapped[list[CareerSeason]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSeason.season_index")
     appearances: Mapped[list[CareerAppearance]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerAppearance.round_index")
 
 
@@ -1174,6 +1175,53 @@ class CareerWageCharge(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     career: Mapped[Career] = relationship(back_populates="wage_charges")
+
+
+class CareerSeason(Base, TimestampMixin):
+    """One completed season of a career, and the boundary decision it ended in (M13 item 8).
+
+    A row is written the moment the round that completes a season is played, and it records the *decision*
+    the boundary rule made — the league the season was played in, the rounds it spanned, the line the club
+    was judged against and where it went next. It does **not** record the club's record: that is summed
+    from `career_fixtures` on every read, and the page prints the sums beside the stored verdict so the
+    two can disagree out loud. The row is a fact about what happened, not a cache of a figure.
+
+    `first_round`/`last_round` are absolute round indices on the career, which is what lets the season
+    read find its own fixtures after a promotion changed the length of the season that followed.
+    """
+
+    __tablename__ = "career_seasons"
+    __table_args__ = (
+        UniqueConstraint("career_id", "season_index", name="uq_career_season_index"),
+        Index("ix_career_season_career_round", "career_id", "first_round"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    season_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    #: The calendar label the season is played under: the career's opening season for the first boundary,
+    #: then the one after it. A label is a string because a scenario may name its season anything.
+    season: Mapped[str] = mapped_column(String(12), default="", nullable=False)
+    competition_id: Mapped[str | None] = mapped_column(ForeignKey("competitions.id", ondelete="SET NULL"), nullable=True)
+    competition_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    tier: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    first_round: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    last_round: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    rounds: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: `promoted`, `relegated`, `stayed`, or `challenge` for a scenario whose window is its whole season:
+    #: a challenge is judged by its objectives, and no pyramid move follows it.
+    verdict: Mapped[str] = mapped_column(String(20), default="stayed", nullable=False)
+    #: The rule that produced the verdict: `promotion`, `relegation`, `none` (no partner league or no
+    #: boundary), or `challenge`.
+    rule: Mapped[str] = mapped_column(String(20), default="none", nullable=False)
+    #: The points-per-round line the verdict was read against. Null when no line applied.
+    line: Mapped[float | None] = mapped_column(Float, nullable=True)
+    next_competition_id: Mapped[str | None] = mapped_column(ForeignKey("competitions.id", ondelete="SET NULL"), nullable=True)
+    next_competition_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="seasons")
 
 
 APPEARANCE_NOTE: Final = (

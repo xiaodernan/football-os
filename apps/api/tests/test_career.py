@@ -21,7 +21,18 @@ from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
 from app.core.security import hash_password, new_public_id
-from app.models import CAREER_PHLOSOPHIES, OBJECTIVE_FORMULA, OBJECTIVE_KINDS, Career, SimulationMatch, Team, User
+from app.models import (
+    CAREER_PHLOSOPHIES,
+    OBJECTIVE_FORMULA,
+    OBJECTIVE_KINDS,
+    Career,
+    CareerFixture,
+    CareerSeason,
+    Competition,
+    SimulationMatch,
+    Team,
+    User,
+)
 from app.services.simulation import career as career_service
 from app.services.world import sync_world
 from app.services.world.names import slugify
@@ -484,10 +495,11 @@ class TestReadEfficiency:
         finally:
             event.remove(engine, "before_cursor_execute", before)
         normalized = [" ".join(statement.split()) for statement in statements]
-        # The board, contract book and window share one horizon now; the other read is the fixture rotation.
-        # Match the WHERE predicate, not the column list (a full-row select also names competition_id).
+        # The board, contract book and window share one horizon now; the other reads are the fixture
+        # rotation and the pyramid edge `seasons_view` asks the world's own boundary about. Match the WHERE
+        # predicate, not the column list (a full-row select also names competition_id).
         club_reads = [s for s in normalized if "where teams.competition_id =" in s]
-        assert len(club_reads) <= 2, f"the competition's clubs were read {len(club_reads)} times (horizon + rotation is 2)"
+        assert len(club_reads) <= 3, f"the competition's clubs were read {len(club_reads)} times (horizon + rotation + pyramid edge is 3)"
 
 
 class TestSeasonHighlights:
@@ -554,3 +566,164 @@ class TestDeterminism:
             career_service.play_round(session, career)
         later = _count_selects(session, lambda: career_service.career_view(session, career))
         assert later == early, f"a detail read grew from {early} to {later} SELECTs as the season lengthened — an N+1 is back"
+
+
+def _pyramid_pair(session: Session) -> tuple[Competition, Competition]:
+    """A league the world's own boundary pairs with the league below it, read off the stored move."""
+    leagues = list(session.scalars(select(Competition).where(Competition.kind == "league").order_by(Competition.tier.desc(), Competition.slug)).all())
+    for lower in leagues:
+        above = career_service._pyramid_neighbours(session, lower)["above"]
+        if above is not None:
+            assert int(above.tier) == int(lower.tier) - 1, f"{above.slug} is tier {above.tier} against {lower.slug}'s tier {lower.tier}"
+            return above, lower
+    pytest.skip("the generated world has no tier boundary for a career to cross")
+
+
+def _club_in(session: Session, competition: Competition) -> Team:
+    return session.scalars(select(Team).where(Team.competition_id == competition.id).order_by(Team.slug).limit(1)).one()
+
+
+def _career_at(session: Session, world: dict[str, Any], club: Team) -> Career:
+    return career_service.create_career(
+        session,
+        owner_id=world["owner_id"],
+        club=career_service.resolve_club(session, club.id),
+        manager_name="Boundary Manager",
+        philosophy=CAREER_PHLOSOPHIES[0],
+        system_slug="",
+        budget=1_000_000,
+        objectives=OBJECTIVES,
+        season="2026",
+    )
+
+
+def _fabricate_season(session: Session, career: Career, results: str) -> list[CareerFixture]:
+    """Write one `career_fixtures` row per result character, in order, so a boundary has sums to judge.
+
+    The rows are not engine output — the boundary rule reads `career_fixtures` and never a match report —
+    so a fabricated season is exactly the population `close_season` sums. `match_id` stays None, which is
+    the same state as a career whose stored report was deleted.
+    """
+    scores = {"W": (2, 0), "D": (1, 1), "L": (0, 1)}
+    rows: list[CareerFixture] = []
+    for index, result in enumerate(results, start=1):
+        club_goals, opponent_goals = scores[result]
+        row = CareerFixture(
+            id=new_public_id("cf"),
+            career_id=career.id,
+            round_index=index,
+            side="home" if index % 2 else "away",
+            opponent_name=f"Fabricated Opponent {index}",
+            opponent_short=f"FO{index}",
+            venue_name="Fabricated Ground",
+            club_goals=club_goals,
+            opponent_goals=opponent_goals,
+            outcome=result,
+            points=career_service.POINTS_FOR[result],
+        )
+        session.add(row)
+        rows.append(row)
+    career.rounds_played = len(results)
+    session.commit()
+    session.refresh(career)
+    return rows
+
+
+class TestSeasons:
+    def test_a_numeric_season_label_advances_and_a_named_one_stays(self) -> None:
+        assert career_service.season_label("2026", 1) == "2026"
+        assert career_service.season_label("2026", 2) == "2027"
+        assert career_service.season_label("spring", 3) == "spring", "a scenario's named season is not guessed at"
+        assert career_service.season_label("", 2) == ""
+
+    def test_a_fresh_season_runs_from_the_first_round_to_the_horizons_last(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        bounds = career_service.season_bounds(session, career)
+        rounds = 2 * len(world["opponents"])
+        assert bounds["index"] == 1 and bounds["first_round"] == 1 and bounds["season"] == "2026"
+        assert bounds["rounds"] == rounds and bounds["last_round"] == rounds
+        assert "round-robin" in bounds["source"]
+
+    def test_a_challenge_season_is_its_window_and_moves_no_club(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career.challenge_window = 2
+        session.commit()
+        for _ in range(2):
+            career_service.play_round(session, career)
+        closed = career_service.seasons_of(session, career)
+        assert len(closed) == 1, "the round that completed the window wrote exactly one season row"
+        assert closed[0].verdict == "challenge" and closed[0].rule == "challenge"
+        assert (closed[0].first_round, closed[0].last_round, closed[0].rounds) == (1, 2, 2)
+        assert closed[0].line is None and closed[0].next_competition_id is None
+        assert career.competition_id == closed[0].competition_id, "a challenge is judged by its objectives, so the pyramid does not move it"
+        with pytest.raises(career_service.WindowClosed):
+            career_service.play_round(session, career)
+
+    def test_a_top_tier_season_at_exactly_the_relegation_line_stays(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper = _pyramid_pair(session)[0]
+        career = _career_at(session, world, _club_in(session, upper))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "D" * rounds)
+        closed = career_service.close_season(session, career)
+        assert closed is not None, "a season with every round drawn is complete and must close"
+        assert closed.verdict == "stayed" and closed.rule == "relegation"
+        assert closed.line == career_service.RELEGATION_PACE
+        assert career.competition_id == upper.id, "the line is a floor: a season at it survives"
+        view = career_service.seasons_view(session, career, career_service.fixtures_of(session, career))
+        assert view["closed"][0]["points_per_round"] == 1.0
+        assert view["closed"][0]["recheck"] == "this season's fixtures still say what the stored verdict said"
+
+    def test_a_losing_top_tier_season_is_relegated_into_the_paired_league(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, upper))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "L" * rounds)
+        closed = career_service.close_season(session, career)
+        assert closed is not None and closed.verdict == "relegated" and closed.rule == "relegation"
+        assert closed.line == career_service.RELEGATION_PACE and closed.next_competition_id == lower.id
+        assert career.competition_id == lower.id and career.competition_name == lower.name
+        plan = career_service.next_fixture_plan(session, career)
+        assert plan["season_index"] == 2 and plan["round_in_season"] == 1 and plan["round_index"] == rounds + 1
+        assert plan["opponent_team_id"] in {team.id for team in career_service.competition_clubs(session, lower.id, exclude_id=career.club_id or "")}
+
+    def test_a_winning_lower_tier_season_is_promoted_into_the_paired_league(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, lower))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        closed = career_service.close_season(session, career)
+        assert closed is not None and closed.verdict == "promoted" and closed.rule == "promotion"
+        assert closed.line == career_service.PROMOTION_PACE and closed.next_competition_id == upper.id
+        assert int(closed.tier) == int(lower.tier) and closed.season == "2026"
+        assert (closed.first_round, closed.last_round, closed.rounds) == (1, rounds, rounds)
+        assert career.competition_id == upper.id and career.competition_name == upper.name
+        assert session.scalars(select(Team.competition_id).where(Team.id == career.club_id)).one() == lower.id, "the career moved, the club's world membership did not"
+        plan = career_service.next_fixture_plan(session, career)
+        assert plan["season_index"] == 2 and plan["round_in_season"] == 1 and plan["round_index"] == rounds + 1
+        assert plan["opponent_team_id"] in {team.id for team in career_service.competition_clubs(session, upper.id, exclude_id=career.club_id or "")}
+        view = career_service.career_view(session, career)
+        block = view["seasons"]["closed"][0]
+        assert block["points_per_round"] == round(3 * rounds / rounds, 3) == 3.0
+        assert block["recheck"] == "this season's fixtures still say what the stored verdict said"
+        assert view["seasons"]["current"]["season_index"] == 2 and view["seasons"]["current"]["season"] == "2027"
+        assert view["record"]["played"] == 0 and view["career_record"]["played"] == rounds, "the season record starts empty; the lifetime one keeps the sums"
+
+    def test_the_boundary_round_closes_once_and_asking_twice_returns_the_row(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, lower))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        first = career_service.close_season(session, career)
+        second = career_service.close_season(session, career)
+        assert first is not None and second is not None and first.id == second.id
+        rows = career_service.seasons_of(session, career)
+        assert len(rows) == 1 and len(session.scalars(select(CareerSeason.id).where(CareerSeason.career_id == career.id)).all()) == 1
+
+    def test_a_career_with_no_competition_has_no_horizon_to_close(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career.competition_id = None
+        career.competition_name = ""
+        session.commit()
+        bounds = career_service.season_bounds(session, career)
+        assert bounds["rounds"] == 0 and bounds["last_round"] is None
+        assert career_service.close_season(session, career) is None, "no horizon means no last round and no boundary decision"

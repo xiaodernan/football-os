@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { Panel } from "@/components/ui";
 import { CareerAcademy } from "@/components/CareerAcademy";
 import { CareerBoard } from "@/components/CareerBoard";
+import { CareerSeasons } from "@/components/CareerSeasons";
 import { CareerContracts } from "@/components/CareerContracts";
 import { CareerFinance } from "@/components/CareerFinance";
 import { CareerHighlights } from "@/components/CareerHighlights";
@@ -156,6 +157,13 @@ export default async function CareerDetailPage({ params }: Props) {
       <CareerAcademy t={t} view={view.academy} limitation={view.limitations.projections} />
 
       <CareerBoard t={t} view={view.board} limitation={view.limitations.projections} />
+
+      <CareerSeasons
+        t={t}
+        view={view.seasons}
+        lifetime={view.career_record}
+        limitation={view.limitations.projections}
+      />
 
       <CareerNextOpponent
         t={t}

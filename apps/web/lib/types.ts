@@ -1575,6 +1575,57 @@ export type CareerBoard = {
   is_demo_data: boolean;
 };
 
+/** One closed season: the verdict the boundary wrote, beside the record its own fixture rows still sum to. */
+export type CareerSeasonClosed = {
+  season_index: number;
+  season: string;
+  competition: { id: string | null; name: string; tier: number };
+  next_competition: { id: string | null; name: string } | null;
+  first_round: number;
+  last_round: number;
+  rounds: number;
+  played: number;
+  record: CareerRecord;
+  points_per_round: number | null;
+  verdict: string;
+  rule: string;
+  line: number | null;
+  /** The API's own sentence on whether the fixtures still add up to the stored verdict; `null` with no rows. */
+  recheck: string | null;
+};
+
+/** The season being played, measured against the line that applies to its tier on every read. */
+export type CareerSeasonCurrent = {
+  season_index: number;
+  season: string;
+  competition: { id: string; name: string; tier: number } | null;
+  first_round: number;
+  rounds: number;
+  last_round: number | null;
+  played: number;
+  record: CareerRecord;
+  points_per_round: number | null;
+  rule: string;
+  line: number | null;
+  /** The verdict this pace would reach, or `null` when the season cannot be judged (a challenge window). */
+  at_this_pace: string | null;
+  note: string;
+  source: string;
+};
+
+/**
+ * The seasons behind the one being played (career.py `seasons_view`). The closed blocks print the stored
+ * verdict beside a recomputed record, and report a disagreement rather than correcting either figure.
+ */
+export type CareerSeasons = {
+  current: CareerSeasonCurrent;
+  closed: CareerSeasonClosed[];
+  lines: { promotion: number; relegation: number };
+  formula: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
 export type HeadToHeadMeeting = {
   round_index: number;
   side: "home" | "away";
@@ -1835,6 +1886,10 @@ export type CareerAcademy = {
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
+  /** The lifetime record over every season, kept beside the season-scoped `record` on this read. */
+  career_record: CareerRecord;
+  /** ROADMAP item 8: the closed seasons and the one being played, measured against the published lines. */
+  seasons: CareerSeasons;
   objectives: CareerObjective[];
   table: CareerTableRow[];
   fixtures?: CareerFixtureRow[];

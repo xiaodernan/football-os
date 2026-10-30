@@ -186,8 +186,31 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    careers — 3 rounds with all three row verdicts (projection 3 wins · 8 points · −5 GD, one target off
    pace), a never-played career (empty projection, unprojectable verdict), and a two-round career whose
    target is on pace — in `en` and `zh`. Recorded in
-   [M13_BOARD_PROJECTION_VERIFICATION.md](M13_BOARD_PROJECTION_VERIFICATION.md). **Pending:** the pyramid
-   move itself (promotion/relegation) needs a multi-tier league structure (see item 9).
+   [M13_BOARD_PROJECTION_VERIFICATION.md](M13_BOARD_PROJECTION_VERIFICATION.md). **Write half done
+   (2026-10-30):** the round that completes a career's season now closes it and writes the boundary
+   decision — `season_bounds` (index, label, span, length), `boundary_decision` judged by the two
+   published per-round lines (`PROMOTION_PACE = 1.8` / `RELEGATION_PACE = 1.0`, printed as
+   `SEASON_FORMULA`), only the lowest tier promotable and only the top tier relegatable, and
+   `_pyramid_neighbours` reading the world's own item-9 pairing instead of slug order. `close_season`
+   writes one `career_seasons` row (migration **0045**, `uq_career_season_index`, names copied so the
+   row outlives a deleted league) — a decision, not a cache — and moves `career.competition_id/name`
+   alone, never `Team.competition_id`; a challenge season, a club with no competition, an unplayed
+   season and a league with no pyramid edge each decide nothing and say why. `career_view` is now
+   season-scoped (`record`, `objectives`, `table`, `highlights`, `board` read the season being
+   played) with `career_record` lifetime, and `seasons_view` recomputes each closed season's record
+   and pace from `career_fixtures` on the read, printing a `recheck` sentence when the stored verdict
+   and the rows disagree. Pinned by eight `TestSeasons` tests (`test_career.py` 41 passed).
+   **Panel done (2026-10-30):** `components/CareerSeasons.tsx` renders the block on `/career/{slug}` —
+   eyebrow, seven standing rows (season, span, pace, line, pace against it, both lines, lifetime record),
+   the closed-seasons table with the API's recheck beneath the pace, the verdict badge, the next league or
+   "no move", the season note, the formula, the limitation and an explicit empty state; 34 keys in all
+   three locales (population **4,005**, **3,960** translated). Walked live on a `next build` over a
+   migrated QA database: four careers played to their boundary (three full seasons stayed at 1.857 /
+   1.5 / 1.429 points per round, one never played), **150/150** page checks across `en`, `zh` and
+   `zh-TW`, all 13 catalogue gates and `next build` green. Recorded in
+   [M13_SEASON_BOUNDARY_VERIFICATION.md](M13_SEASON_BOUNDARY_VERIFICATION.md). **Limitation:** no live
+   promotion or relegation was reachable — every walked season landed between the lines, so the two move
+   branches are covered by unit tests only.
 
 *Gate:* the season ledger still sums from `sim_events` rows; a new door gets a route-citation entry;
 isolation walk over any new tenant-scoped door.

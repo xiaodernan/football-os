@@ -29,7 +29,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
-from app.models import OBJECTIVE_FORMULA, Career, CareerAppearance, CareerFixture, Competition, RealPlayer, SimulationMatch, Team
+from app.models import OBJECTIVE_FORMULA, Career, CareerAppearance, CareerFixture, CareerSeason, Competition, RealMatch, RealPlayer, SimulationMatch, Team
 from app.services.simulation.academy import academy_view
 from app.services.simulation.carry_over import carry_over_view, record_appearances, training_loads
 from app.services.simulation.development import DEVELOPMENT_RATE, DEVELOPMENT_TAU, TRAINING_MINUTES_PER_UNIT, development_summary
@@ -151,7 +151,15 @@ def limitations() -> dict[str, str]:
             "The table is built from the fixtures this career played and no others. It is not the competition's "
             "league table, which lives in /world/competitions and comes from the generated world's own results."
         ),
-        "objectives": "Objectives are compared with the sums of this career's own rows. No promotion, relegation or prize follows.",
+        "objectives": (
+            "Objectives are compared with the sums of this career's own rows, and they are season targets: a "
+            "played season is judged over its own rounds and the next season starts them again. A completed season "
+            "is also closed by the round that completes it, and the club's points-per-round against the two published "
+            "pyramid lines decides whether the next season is played a tier up or down. What the boundary does not "
+            "have is a league table: a career plays only its own fixtures, so the other clubs' results are not known "
+            "here and the lines are authored constants printed beside the pace rather than a position in a table. No "
+            "prize money follows a season; the budget only moves when the market or a wage does."
+        ),
     }
 
 
@@ -174,19 +182,26 @@ def competition_clubs(session: Session, competition_id: str | None, *, exclude_i
     return list(session.scalars(select(Team).where(Team.competition_id == competition_id, Team.id != exclude_id).order_by(Team.slug)).all())
 
 
-def next_fixture_plan(session: Session, career: Career, *, round_index: int | None = None) -> dict[str, Any]:
+def next_fixture_plan(session: Session, career: Career, *, round_index: int | None = None, bounds: dict[str, Any] | None = None) -> dict[str, Any]:
     """Which club is next, on which side, and where it is played.
 
     `round_index` lets a caller ask about a round it has not reached yet — the rotation is a pure function of
     the round number, so §M7's transfer simulation can look at the next three fixtures without pretending a
     round has been played. Left out, it is the round after the last one this career actually played, which is
     what every caller here has always meant.
+
+    The rotation is counted *within the season* (`round_in_season`), so a promotion does not leave the club
+    halfway through a cycle in a league it joined: season two tees off against the new league's first club.
+    A round asked about beyond the current season's last one keeps rotating as if the season never ended,
+    which is all a projection of a future fixture can honestly mean before the boundary is played.
     """
+    bounds = bounds if bounds is not None else season_bounds(session, career)
     round_index = career.rounds_played + 1 if round_index is None else max(1, int(round_index))
     opponents = competition_clubs(session, career.competition_id, exclude_id=career.club_id or "")
     if not opponents:
         return {"available": False, "reason": "the career's club has no competition to rotate through", "round_index": round_index}
-    cycle, position = divmod(round_index - 1, len(opponents))
+    round_in_season = max(1, round_index - int(bounds["first_round"]) + 1)
+    cycle, position = divmod(round_in_season - 1, len(opponents))
     opponent = opponents[position]
     home = cycle % 2 == 0
     venue_club = career.club_name if home else opponent.name
@@ -194,6 +209,8 @@ def next_fixture_plan(session: Session, career: Career, *, round_index: int | No
     return {
         "available": True,
         "round_index": round_index,
+        "round_in_season": round_in_season,
+        "season_index": int(bounds["index"]),
         "side": "home" if home else "away",
         "opponent_team_id": opponent.id,
         "opponent_name": opponent.name,
@@ -202,7 +219,7 @@ def next_fixture_plan(session: Session, career: Career, *, round_index: int | No
         "venue_club": venue_club,
         "cycle": cycle + 1,
         "of": len(opponents),
-        "rotation": f"opponents ordered by slug, position {position + 1} of {len(opponents)} in cycle {cycle + 1}; a career plays every club at home in its first cycle and away in its second",
+        "rotation": f"opponents ordered by slug, position {position + 1} of {len(opponents)} in cycle {cycle + 1} of season {int(bounds['index'])}; a career plays every club at home in its first cycle and away in its second",
         "seed": _digest_seed(career.id, round_index),
     }
 
@@ -363,6 +380,9 @@ def play_round(session: Session, career: Career) -> tuple[CareerFixture, Simulat
     from app.services.simulation.market import pay_wages
 
     pay_wages(session, career, round_index=int(plan["round_index"]))
+    # The round that completes a season closes it (M13 item 8): the boundary decision is written while the
+    # career still belongs to the league the season was played in, and only then does the competition move.
+    close_season(session, career)
     return fixture, match
 
 
@@ -693,6 +713,344 @@ def season_horizon(session: Session, career: Career) -> dict[str, Any]:
     return {"rounds": 2 * len(opponents), "source": "a double round-robin over the competition's clubs (home and away)"}
 
 
+#: The two lines a completed season is judged against (M13 Phase 2 item 8). They are authored constants,
+#: not a table: a career plays only its own fixtures, so no other club's results exist to finish above or
+#: below. Both are printed on the page beside the career's own pace, the same discipline the engine's
+#: authored factors follow. A season is a double round-robin over seven opponents, so 1.80 is 25 points
+#: in 14 rounds and 1.00 is 14.
+PROMOTION_PACE: Final = 1.8
+RELEGATION_PACE: Final = 1.0
+
+SEASON_FORMULA: Final = (
+    "a season is the rounds from the last closed season's last round + 1 through `season_rounds` (the "
+    "challenge's window when it has one, else 2 × the competition's other clubs); the career's pace is "
+    "points ÷ rounds played in that span (win 3 / draw 1 / loss 0); a season in the lowest tier at or above "
+    f"the promotion line ({PROMOTION_PACE:g}) is promoted, a season in the top tier below the relegation line "
+    f"({RELEGATION_PACE:g}) is relegated, and every other completed season stays; the round that completes the "
+    "season closes it and writes `career_seasons`, while every figure in this block is recomputed from "
+    "`career_fixtures` on the read"
+)
+
+
+def seasons_of(session: Session, career: Career) -> list[CareerSeason]:
+    """Every season this career has closed, in order — the written boundary decisions and nothing else."""
+    return list(session.scalars(select(CareerSeason).where(CareerSeason.career_id == career.id).order_by(CareerSeason.season_index)).all())
+
+
+def season_label(base: str, index: int) -> str:
+    """The calendar label a career's Nth season is played under.
+
+    A numeric opening season (the generated world's `2026`) advances by one per completed season, so the
+    second season is `2027` — the label the world's own next fixture list already carries. A label that is
+    not numeric is kept as it stands rather than guessed at, because a scenario may name its seasons anything.
+    """
+    text = str(base or "").strip()
+    if index <= 1 or not text:
+        return text
+    return str(int(text) + index - 1) if text.isdigit() else text
+
+
+def season_bounds(session: Session, career: Career, *, horizon: dict[str, Any] | None = None, closed: list[CareerSeason] | None = None) -> dict[str, Any]:
+    """Where the season being played now starts, how long it is, and which one it is.
+
+    The first round is one after the last season's `last_round` rather than `(season_index − 1) × rounds`,
+    because a promotion can change the length of the season that follows; the stored boundary rows are what
+    make that readable. `rounds` of 0 means the career has no horizon (no competition and no challenge window),
+    and then there is no last round and nothing to close.
+    """
+    closed = closed if closed is not None else seasons_of(session, career)
+    horizon = horizon if horizon is not None else season_horizon(session, career)
+    index = len(closed) + 1
+    first_round = int(closed[-1].last_round) + 1 if closed else 1
+    rounds = int(horizon["rounds"])
+    return {
+        "index": index,
+        "season": season_label(career.season, index),
+        "first_round": first_round,
+        "rounds": rounds,
+        "last_round": first_round + rounds - 1 if rounds > 0 else None,
+        "source": horizon["source"],
+    }
+
+
+def season_rows(rows: list[CareerFixture], bounds: dict[str, Any]) -> list[CareerFixture]:
+    """The fixtures of the season `bounds` describes — a slice of the career's own rows, never a query."""
+    last = bounds["last_round"]
+    return [row for row in rows if int(row.round_index) >= int(bounds["first_round"]) and (last is None or int(row.round_index) <= int(last))]
+
+
+def _pyramid_neighbours(session: Session, competition: Competition) -> dict[str, Competition | None]:
+    """The leagues on the other side of this league's tier edges, read off the world's own boundary.
+
+    The generated world pairs a tier-n league with a tier-(n+1) one and moves one club between the pair at
+    the season boundary (`world/builder.py`). That pairing is not stored, so it is read back from the move
+    itself: the clubs this league's completed fixtures named that are registered elsewhere today name the
+    league on the other side, and so do the clubs registered today that its fixtures did not name (their
+    stored season names the league they came from). `None` on a side means the world drew no edge there —
+    a frozen pyramid, a cup, or a competition with no fixtures at all — and a career does not cross an edge
+    the world does not have.
+    """
+    if competition.kind != "league" or int(competition.tier) <= 0:
+        return {"above": None, "below": None}
+    season = competition.season or ""
+    fixtures = (RealMatch.competition_id == competition.id, RealMatch.season == season)
+    played = {str(team_id) for team_id in session.scalars(select(RealMatch.home_team_id).where(*fixtures)).all()}
+    played |= {str(team_id) for team_id in session.scalars(select(RealMatch.away_team_id).where(*fixtures)).all()}
+    registered = {str(team_id) for team_id in session.scalars(select(Team.id).where(Team.competition_id == competition.id)).all()}
+    candidates: set[str] = set()
+    for team_id in played - registered:
+        current = session.scalar(select(Team.competition_id).where(Team.id == team_id))
+        if current:
+            candidates.add(str(current))
+    joined = registered - played
+    if joined:
+        old = select(RealMatch.competition_id).where(
+            RealMatch.season == season,
+            or_(RealMatch.home_team_id.in_(sorted(joined)), RealMatch.away_team_id.in_(sorted(joined))),
+        )
+        candidates |= {str(row) for row in session.scalars(old).all() if row}
+    leagues = [row for row in session.scalars(select(Competition).where(Competition.id.in_(sorted(candidates)), Competition.kind == "league")).all()]
+    neighbours: dict[str, Competition | None] = {"above": None, "below": None}
+    for row in sorted(leagues, key=lambda league: (abs(int(league.tier) - int(competition.tier)), league.slug)):
+        if row.id == competition.id or abs(int(row.tier) - int(competition.tier)) != 1:
+            continue
+        side = "above" if int(row.tier) < int(competition.tier) else "below"
+        if neighbours[side] is None:
+            neighbours[side] = row
+    return neighbours
+
+
+def boundary_decision(session: Session, career: Career, record: dict[str, Any]) -> dict[str, Any]:
+    """What the published lines say about this season's record, and where it sends the next one.
+
+    It decides nothing until a season is actually closed; it is called both by `close_season` (to write the
+    verdict) and by the `seasons` read (to print the line the current season is being measured against). Every
+    input is either the career's own record or a stored world row, so a reader can reproduce the verdict from
+    the page: pace = points ÷ played, compared with the one line that applies to the club's tier.
+    """
+    competition = session.get(Competition, career.competition_id) if career.competition_id else None
+    if int(career.challenge_window or 0) > 0:
+        return {
+            "verdict": "challenge",
+            "rule": "challenge",
+            "line": None,
+            "next": None,
+            "competition": competition,
+            "note": "this career's season is its challenge's round window: its objectives judge it and no pyramid move follows",
+        }
+    if competition is None:
+        return {
+            "verdict": "stayed",
+            "rule": "none",
+            "line": None,
+            "next": None,
+            "competition": None,
+            "note": "the career's club has no competition, so there is no tier to move across",
+        }
+    played = int(record["played"])
+    pace = int(record["points"]) / played if played else None
+    if pace is None:
+        return {
+            "verdict": "stayed",
+            "rule": "none",
+            "line": None,
+            "next": None,
+            "competition": competition,
+            "note": "no round was played in this season, so there is no pace to judge",
+        }
+    neighbours = _pyramid_neighbours(session, competition)
+    above, below = neighbours["above"], neighbours["below"]
+    if above is not None and pace >= PROMOTION_PACE:
+        return {
+            "verdict": "promoted",
+            "rule": "promotion",
+            "line": PROMOTION_PACE,
+            "next": above,
+            "competition": competition,
+            "note": f"{pace:.3f} points per round at or above the promotion line ({PROMOTION_PACE:g})",
+        }
+    if below is not None and pace < RELEGATION_PACE:
+        return {
+            "verdict": "relegated",
+            "rule": "relegation",
+            "line": RELEGATION_PACE,
+            "next": below,
+            "competition": competition,
+            "note": f"{pace:.3f} points per round below the relegation line ({RELEGATION_PACE:g})",
+        }
+    if above is None and below is None:
+        return {
+            "verdict": "stayed",
+            "rule": "none",
+            "line": None,
+            "next": None,
+            "competition": competition,
+            "note": "the world's pyramid draws no boundary to this league, so the season does not move the club",
+        }
+    missed = above is not None
+    return {
+        "verdict": "stayed",
+        "rule": "promotion" if missed else "relegation",
+        "line": PROMOTION_PACE if missed else RELEGATION_PACE,
+        "next": None,
+        "competition": competition,
+        "note": (
+            f"{pace:.3f} points per round, below the promotion line ({PROMOTION_PACE:g})"
+            if missed
+            else f"{pace:.3f} points per round, at or above the relegation line ({RELEGATION_PACE:g})"
+        ),
+    }
+
+
+def _verdict_agrees(verdict: str, rule: str, pace: float | None, line: float | None) -> bool | None:
+    """Whether the season's fixtures still say what the stored verdict said — None when no line applied."""
+    if pace is None or line is None or rule not in ("promotion", "relegation"):
+        return None
+    if rule == "promotion":
+        return pace >= line if verdict == "promoted" else pace < line
+    return pace < line if verdict == "relegated" else pace >= line
+
+
+def close_season(
+    session: Session,
+    career: Career,
+    *,
+    horizon: dict[str, Any] | None = None,
+    rows: list[CareerFixture] | None = None,
+    closed: list[CareerSeason] | None = None,
+) -> CareerSeason | None:
+    """Close the season if the round that completes it has been played, and write the boundary decision.
+
+    Nothing is closed twice. The row for the season the career has just finished is returned as it stands —
+    a second call after the boundary round is the same request, not a second season — and a season index is
+    `len(closed) + 1`, backed by `uq_career_season_index`. A season with no horizon (`rounds = 0`) has no
+    last round and is never closed. The verdict is written from the season's own fixtures, and the career's
+    competition moves only when the rule sends it somewhere — the club's *world* membership is not touched,
+    because another manager's world is not this career's to rewrite.
+    """
+    closed = closed if closed is not None else seasons_of(session, career)
+    # The career stands at the boundary the last closed row already describes: the season is closed, and
+    # asking again returns the decision rather than deciding a second time.
+    if closed and int(career.rounds_played) == int(closed[-1].last_round):
+        return closed[-1]
+    bounds = season_bounds(session, career, horizon=horizon, closed=closed)
+    last = bounds["last_round"]
+    if last is None or int(career.rounds_played) < int(last):
+        return None
+    rows = rows if rows is not None else fixtures_of(session, career)
+    record = record_of(season_rows(rows, bounds))
+    decision = boundary_decision(session, career, record)
+    competition = decision["competition"]
+    following = decision["next"]
+    row = CareerSeason(
+        id=new_public_id("csea"),
+        career_id=career.id,
+        season_index=int(bounds["index"]),
+        season=str(bounds["season"]),
+        competition_id=competition.id if competition is not None else None,
+        competition_name=competition.name if competition is not None else "",
+        tier=int(competition.tier) if competition is not None else 0,
+        first_round=int(bounds["first_round"]),
+        last_round=int(last),
+        rounds=int(bounds["rounds"]),
+        verdict=str(decision["verdict"]),
+        rule=str(decision["rule"]),
+        line=float(decision["line"]) if decision["line"] is not None else None,
+        next_competition_id=following.id if following is not None else None,
+        next_competition_name=following.name if following is not None else "",
+        data_origin="simulation",
+        is_demo_data=True,
+    )
+    session.add(row)
+    if following is not None:
+        career.competition_id = following.id
+        career.competition_name = following.name
+    session.commit()
+    session.refresh(row)
+    session.refresh(career)
+    return row
+
+
+def seasons_view(
+    session: Session,
+    career: Career,
+    rows: list[CareerFixture],
+    *,
+    bounds: dict[str, Any] | None = None,
+    horizon: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """The career's seasons: the one being played, and every boundary decision behind it.
+
+    The closed blocks print the stored verdict beside the record its fixtures still sum to, and say so when
+    the two disagree — the row is a decision, not a cache, so a fixture list edited after the fact is a
+    disagreement to report rather than a figure to quietly overwrite.
+    """
+    closed = seasons_of(session, career)
+    bounds = bounds if bounds is not None else season_bounds(session, career, horizon=horizon, closed=closed)
+    blocks: list[dict[str, Any]] = []
+    for row in closed:
+        season_fixtures = [fixture for fixture in rows if int(row.first_round) <= int(fixture.round_index) <= int(row.last_round)]
+        record = record_of(season_fixtures)
+        pace = round(int(record["points"]) / int(record["played"]), 3) if int(record["played"]) else None
+        agrees = _verdict_agrees(str(row.verdict), str(row.rule), pace, float(row.line) if row.line is not None else None)
+        blocks.append(
+            {
+                "season_index": int(row.season_index),
+                "season": row.season,
+                "competition": {"id": row.competition_id, "name": row.competition_name, "tier": int(row.tier)},
+                "next_competition": (
+                    {"id": row.next_competition_id, "name": row.next_competition_name} if row.next_competition_name else None
+                ),
+                "first_round": int(row.first_round),
+                "last_round": int(row.last_round),
+                "rounds": int(row.rounds),
+                "played": int(record["played"]),
+                "record": record,
+                "points_per_round": pace,
+                "verdict": row.verdict,
+                "rule": row.rule,
+                "line": float(row.line) if row.line is not None else None,
+                "recheck": (
+                    None
+                    if agrees is None
+                    else "this season's fixtures still say what the stored verdict said"
+                    if agrees
+                    else "this season's fixtures no longer add up to the stored verdict, and neither figure is rewritten"
+                ),
+            }
+        )
+    current_record = record_of(season_rows(rows, bounds))
+    decision = boundary_decision(session, career, current_record)
+    current = {
+        "season_index": int(bounds["index"]),
+        "season": bounds["season"],
+        "competition": (
+            {"id": decision["competition"].id, "name": decision["competition"].name, "tier": int(decision["competition"].tier)}
+            if decision["competition"] is not None
+            else None
+        ),
+        "first_round": int(bounds["first_round"]),
+        "rounds": int(bounds["rounds"]),
+        "last_round": int(bounds["last_round"]) if bounds["last_round"] is not None else None,
+        "played": int(current_record["played"]),
+        "record": current_record,
+        "points_per_round": round(int(current_record["points"]) / int(current_record["played"]), 3) if int(current_record["played"]) else None,
+        "rule": decision["rule"],
+        "line": float(decision["line"]) if decision["line"] is not None else None,
+        "at_this_pace": None if decision["verdict"] == "challenge" else decision["verdict"],
+        "note": decision["note"],
+        "source": bounds["source"],
+    }
+    return {
+        "current": current,
+        "closed": blocks,
+        "lines": {"promotion": PROMOTION_PACE, "relegation": RELEGATION_PACE},
+        "formula": SEASON_FORMULA,
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
 def board_view(session: Session, career: Career, rows: list[CareerFixture], record: dict[str, Any], *, horizon: dict[str, Any] | None = None) -> dict[str, Any]:
     """Where the season is heading at the current pace, and whether the board's targets are on track.
 
@@ -898,16 +1256,25 @@ def career_summary(session: Session, career: Career) -> dict[str, Any]:
     out of it. That is a whole view per row over a list; this is the same three fields from the fixture rows.
     """
     rows = fixtures_of(session, career)
-    record = record_of(rows)
+    # The objectives are season targets (M13 item 8), so a list row reads the season being played rather
+    # than the career's lifetime: a career that finished a season 6-4-4 opens the next one at 0-0-0.
+    bounds = season_bounds(session, career, closed=seasons_of(session, career))
+    record = record_of(season_rows(rows, bounds))
     return {"career": _career_brief(session, career), "record": record, "objectives": objectives_of(career, record)}
 
 
 def career_view(session: Session, career: Career, *, include_fixtures: bool = True) -> dict[str, Any]:
     rows = fixtures_of(session, career)
-    record = record_of(rows)
     # The season length feeds the board, the contract book and the signing window; compute it once here
     # rather than let each block re-read the competition's clubs.
     horizon = season_horizon(session, career)
+    closed = seasons_of(session, career)
+    bounds = season_bounds(session, career, horizon=horizon, closed=closed)
+    # The record, the table, the highlights, the objectives and the board are all *season* reads: a
+    # promotion starts a new league with a new fixture list, so a career's second season is not its first
+    # one with the numbers carried over. The lifetime record travels beside the season one.
+    season_fixtures = season_rows(rows, bounds)
+    record = record_of(season_fixtures)
     # `carry_over` and `development` both need the career's appearances and the world's training load; read
     # each table once here and hand the same rows to both, rather than let each block re-query them.
     appearance_rows = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id).order_by(CareerAppearance.round_index)).all())
@@ -915,10 +1282,12 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
     view: dict[str, Any] = {
         "career": _career_brief(session, career),
         "record": record,
-        "highlights": season_highlights(rows, career),
+        "career_record": record_of(rows),
+        "seasons": seasons_view(session, career, rows, bounds=bounds),
+        "highlights": season_highlights(season_fixtures, career),
         "objectives": objectives_of(career, record),
-        "board": board_view(session, career, rows, record, horizon=horizon),
-        "table": mini_table(rows, career),
+        "board": board_view(session, career, season_fixtures, record, horizon=horizon),
+        "table": mini_table(season_fixtures, career),
         "consistency": _consistency(session, rows),
         "carry_over": carry_over_view(session, career, next_round=int(career.rounds_played) + 1, appearances=appearance_rows, training=training_all),
         "development": development_view(session, career, appearances=appearance_rows, training=training_all),
@@ -934,7 +1303,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "demo_data": True,
     }
     if include_fixtures:
-        plan = next_fixture_plan(session, career)
+        plan = next_fixture_plan(session, career, bounds=bounds)
         view["next_fixture"] = plan
         view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None, fixtures=rows)
         view["next_fixture_brief"] = next_fixture_brief(session, career, plan=plan, appearances=appearance_rows, training=training_all)
@@ -984,10 +1353,15 @@ __all__ = [
     "HEAD_TO_HEAD_FORMULA",
     "HIGHLIGHTS_FORMULA",
     "NEXT_FIXTURE_FORMULA",
+    "PROMOTION_PACE",
+    "RELEGATION_PACE",
+    "SEASON_FORMULA",
     "WindowClosed",
     "board_view",
+    "boundary_decision",
     "career_summary",
     "career_view",
+    "close_season",
     "competition_clubs",
     "development_view",
     "create_career",
@@ -1001,6 +1375,11 @@ __all__ = [
     "play_round",
     "record_of",
     "resolve_club",
+    "season_bounds",
     "season_highlights",
     "season_horizon",
+    "season_label",
+    "season_rows",
+    "seasons_of",
+    "seasons_view",
 ]
