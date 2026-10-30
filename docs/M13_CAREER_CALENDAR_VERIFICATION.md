@@ -267,14 +267,17 @@ record, objectives, board and highlights summed nothing.
 
 A challenge career has exactly one season — its round window — so the fix is in `season_bounds`: a career with a
 challenge window returns rounds 1…window whatever boundary rows exist, and `close_season` returns that one row
-instead of deciding a second season. The regression case is
+instead of deciding a second season. The same read refuses to offer a next fixture once the window is closed
+(`next_fixture.available: false`, "this run's window closed at round 6; no further round exists", and the brief
+beside it likewise), because `next_fixture_plan` projected round 7 from the rotation and the run page printed a
+"next up" fixture the disabled button could never play. The regression case is
 `tests/test_career.py::TestSeasons::test_a_closed_challenge_window_still_sums_its_own_rounds`; on the old code it
 reads the span as `(2, 3, 2, 4)` and fails, on the fixed one `(1, 1, 2, 2)` and passes. The live walk is
 `.scratch/walk-challenge-record.py` (API `:8757`, fresh `alembic upgrade head` file `.scratch/walk-challenge.db`):
 a six-round `win-with-academy-players` run, then `GET /challenges/runs/{ident}` read the way the page reads it —
-**Points 9 = the Pts column's 9, record 2-3-1, the wins objective at 2, season 1 spanning rounds 1–6**, the closed
-block at season 1 with verdict `challenge`, and the round past the window refused `409 window_closed`. Evidence:
-`.scratch/challenge-walk.json`. The command:
+**Points 11 = the Pts column's 11, record 3-2-1, the wins objective at 3, season 1 spanning rounds 1–6**, the
+closed block at season 1 with verdict `challenge`, no next fixture offered, and the round past the window refused
+`409 window_closed`. Evidence: `.scratch/challenge-walk.json`. The command:
 
 ```bash
 cd apps/api && DATABASE_URL="sqlite:///D:/足球项目/.scratch/walk-challenge.db" python -m alembic upgrade head

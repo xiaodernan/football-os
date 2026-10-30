@@ -1408,6 +1408,16 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
     }
     if include_fixtures:
         plan = next_fixture_plan(session, career, bounds=bounds)
+        window = int(career.challenge_window or 0)
+        if window and int(career.rounds_played) >= window:
+            # The window admits no round past its last — `play_round` refuses one — so the view must not
+            # offer one either: `next_fixture_plan` kept projecting round N+1 from the rotation, and the
+            # run page printed a "next up" fixture the disabled button could never play.
+            plan = {
+                "available": False,
+                "round_index": int(career.rounds_played) + 1,
+                "reason": f"this run's window closed at round {window}; no further round exists",
+            }
         view["next_fixture"] = plan
         view["head_to_head"] = head_to_head(session, career, plan.get("opponent_team_id") if plan.get("available") else None, fixtures=rows)
         view["next_fixture_brief"] = next_fixture_brief(session, career, plan=plan, appearances=appearance_rows, training=training_all)

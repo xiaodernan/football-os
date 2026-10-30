@@ -1042,8 +1042,11 @@ The defect filed above is fixed. `season_bounds` advanced a challenge career int
 that span, and every season read (record, table, objectives, board) summed zero rows while the fixture list still
 showed the played rounds. A challenge career now has exactly one season, its window: `season_bounds` returns rounds
 1…window whatever boundary rows exist, `close_season` returns the one row rather than deciding again, and the view
-reads `Points 9 = Pts column 9, record 2-3-1` after a six-round `win-with-academy-players` run on a fresh
-alembic-built SQLite (`.scratch/walk-challenge-record.py` → `.scratch/challenge-walk.json`). Pinned by
+reads `Points 11 = Pts column 11, record 3-2-1` after a six-round `win-with-academy-players` run on a fresh
+alembic-built SQLite (`.scratch/walk-challenge-record.py` → `.scratch/challenge-walk.json`). The same read also
+refuses to offer a next fixture once the window is closed (`available: false`, "this run's window closed at round
+6; no further round exists"), so the run page cannot print a "next up" round the disabled button could never play.
+Pinned by
 `tests/test_career.py::TestSeasons::test_a_closed_challenge_window_still_sums_its_own_rounds`, which reads
 `(2, 3, 2, 4)` for the span on the old code and `(1, 1, 2, 2)` on the fixed one.
 

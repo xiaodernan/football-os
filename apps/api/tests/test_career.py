@@ -778,6 +778,10 @@ class TestSeasons:
         )
         assert view["objectives"][0]["actual"] == view["record"]["won"]
         assert view["seasons"]["current"]["season_index"] == view["seasons"]["closed"][0]["season_index"] == 1
+        assert view["next_fixture"]["available"] is False and "window closed at round 2" in view["next_fixture"]["reason"], (
+            "the view offers no round the window refuses"
+        )
+        assert view["next_fixture_brief"]["available"] is False
         again = career_service.close_season(session, career)
         assert again is not None and again.id == closed.id, "the window closes once, whatever the round count says"
 
