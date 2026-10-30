@@ -272,7 +272,8 @@ def next_fixture_plan(session: Session, career: Career, *, round_index: int | No
     stadium = session.scalar(select(Team.stadium).where(Team.id == (career.club_id if home else opponent.id)))
     rotation = f"opponents ordered by slug, position {position + 1} of {len(opponents)} in cycle {cycle + 1} of season {int(bounds['index'])}; the first cycle is played at home and the second away"
     if calendar:
-        why = f"the generated {season} calendar holds {len(calendar)} fixtures for this club, so season round {round_in_season} begins the career's own rotation"
+        held = f"{len(calendar)} fixture{'s' if len(calendar) != 1 else ''}"
+        why = f"the generated {season} calendar holds {held} for this club, so season round {round_in_season} begins the career's own rotation"
     else:
         why = f"the generated world has no {season} calendar for this competition, so the career rotates its own opponents"
     return {
