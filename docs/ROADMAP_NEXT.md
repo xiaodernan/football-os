@@ -257,8 +257,33 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     depth-2 ceiling (`MAX_EDGES` 400 -> 800: the narrowest articles walk 656-774 edges) and moved
     the career ledger's away half to round 8, derived from the competition; the record is
     `docs/M13_WORLD_EXPANSION_VERIFICATION.md`.
-12. **Real-structure simulation tie-in.** Career clubs play the generated fixtures; results feed the
-    public world pages (M3) and the career ledger (M6) from the same rows.
+12. **Real-structure simulation tie-in.** **Done (2026-10-31):** a career's season is the club's own
+    generated fixture list. `calendar_fixtures` reads `real_matches` for the career's competition and the
+    season's label (the label advancing at the boundary, item 8) and orders the club's fixtures by kickoff;
+    `next_fixture_plan` plays them in that order (`source: "world_calendar"`, with `match_slug`,
+    `round_label` and `calendar {season, position, of}`), so opponent, side and venue are the world's, not
+    the career's. Once the calendar is exhausted — or in a season the world holds none for the career's
+    competition, the usual case after a promotion or relegation — the career continues on its own
+    published rotation (`source: "career_rotation"`, `cycle`/`of`, `basis` naming why), counted within the
+    season and starting at its own round 1; the 2027 opening fixtures the world leaves `scheduled` are
+    played as that season's first calendar fixtures when the club holds any. **The results do not flow back into
+    the public world pages.** `real_matches` is shared, deterministic and read by every account, while a
+    career's scores live in its own simulation and its own rows; feeding one manager's fiction into
+    another manager's world would break both the isolation and the seed-reproducible world. The calendar
+    supplies the order, never the score: the world fixture a career slot names keeps its own status and
+    result (the live walk re-read all fourteen and found none changed). Pinned by `tests/test_career.py`
+    (`TestCalendar`, seven cases), `tests/test_career_api.py` (the basis on the wire),
+    `tests/test_scout_transfer_sim.py` (a projection reads the same calendar) and
+    `tests/test_sim_ledger.py` (the away half derived from the calendar); the record is
+    `docs/M13_CAREER_CALENDAR_VERIFICATION.md`. **The tie half (same day):** the round also records which
+    generated fixture it filled (`career_fixtures.world_match_id`/`world_match_slug`, migration `0046`,
+    by value, nullable — null on a round that continued on the rotation), and `career_view` prints the
+    world's own status and score beside the career's (`world_match_path`, `world_match_still_stored`,
+    `world_status`, `world_goals`), keeping the stored slug and dropping the link when the world row is
+    gone. The career page's World fixture column prints that score with the link ("world fixture deleted"
+    when the row is gone, "—" on a rotation round) and prints the new `world_calendar` limitation saying
+    the tie is one-way, in all three locales. Pinned by `TestWorldTie` (six cases) and the live tie walk
+    (`.scratch/walk-tie.py`: three rounds, 0 world rows changed).
 
 *Gate:* `qa-population-floor` stays green; world seed fingerprint unchanged for equal seed; public
 `/world/*` walks stay 200.

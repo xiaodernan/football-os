@@ -5,11 +5,12 @@ Revises: 0045
 Create Date: 2026-10-31
 
 The calendar half made a career's season the fixture list the world drew; this half records *which*
-world row each round played, so the same fixture identity can be read from the career's ledger and from
-the public match page. Both columns are nullable because a round can be played on the career's own
-rotation after the generated calendar runs out, and because rows written before this migration have no
-tie to name. The reference is held by value rather than as a foreign key on purpose: a career outlives
-the generated world it was opened in, and `world_match_slug` is what a link and a re-read use.
+world row each round played, so the career's ledger can link to the world's own record for the same
+fixture while keeping the two results apart. Both columns are nullable because a round can be played on
+the career's own rotation after the generated calendar runs out, and because rows written before this
+migration have no tie to name. The reference is held by value rather than as a foreign key on purpose: a
+career outlives the generated world it was opened in, and `world_match_slug` is what a link and a re-read
+use.
 
 No backfill is possible — the fixture a pre-migration round played was never stored — so the column is
 left null rather than guessed at, and `career_view` says a round has no world row instead of inventing
