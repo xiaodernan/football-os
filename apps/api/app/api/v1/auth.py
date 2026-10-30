@@ -20,6 +20,7 @@ from app.core.security import (
     limit,
     new_public_id,
     password_refusal,
+    rate_limiter,
     verify_password,
 )
 from app.core.timeutil import as_utc, is_expired, now_utc
@@ -187,7 +188,13 @@ def delete_account(
     user: User = Depends(current_user),
 ) -> dict[str, object]:
     """Erase the account after a phrase and password check; blocked before any write when a tenant would be orphaned."""
-    limit(request, 3, 3600, scope="account_delete")
+    # The bucket is per-account, not per-address: the door already requires a valid session,
+    # so an address that rotates accounts gets its flood bounded by the register and login
+    # limiters upstream, while one hijacked session stays bounded at three erasures an hour.
+    # Keyed by address alone, the bucket made the Nth verification walk of the day answer
+    # 429 for an account that had never erased anything — the limiter was counting walks,
+    # not callers.
+    rate_limiter.check(f"account_delete:{user.id}:{request.url.path}", 3, 3600)
     if payload.confirm != account_deletion.ACCOUNT_DELETE_PHRASE:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,

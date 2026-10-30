@@ -170,3 +170,29 @@ def test_the_environment_bypass_is_what_keeps_route_tests_running() -> None:
     fresh.check("probe", 1, 60)
     with pytest.raises(HTTPException):
         fresh.check("probe", 1, 60)  # the limiter behind the bypass still refuses at 1
+
+
+def test_the_erase_bucket_is_per_account_so_two_accounts_do_not_share_a_budget() -> None:
+    """The case the walk exposed live: `account_delete` was keyed by client address alone, so the
+    Nth verification walk of the day — a fresh account every time — answered 429 for a caller
+    that had never erased anything. The door now keys its bucket on the account, because the
+    door already requires a valid session: one hijacked session stays bounded at three an hour,
+    and the address-rotating flood is the register and login limiters' problem, not this door's.
+    """
+    limiter = RateLimiter()
+    account_a = "usr_aaaaaaaa"
+    account_b = "usr_bbbbbbbb"
+    path = "/api/v1/auth/account"
+
+    for _ in range(3):
+        limiter.check(f"account_delete:{account_a}:{path}", 3, 3600)
+    with pytest.raises(HTTPException):
+        limiter.check(f"account_delete:{account_a}:{path}", 3, 3600)
+
+    # A different account behind the same address gets its own budget — the case the walk
+    # proved live, where a fresh account answered 429 for a limiter that was counting walks.
+    limiter.check(f"account_delete:{account_b}:{path}", 3, 3600)
+    limiter.check(f"account_delete:{account_b}:{path}", 3, 3600)
+    limiter.check(f"account_delete:{account_b}:{path}", 3, 3600)
+    with pytest.raises(HTTPException):
+        limiter.check(f"account_delete:{account_b}:{path}", 3, 3600)
