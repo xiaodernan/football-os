@@ -55,7 +55,9 @@ PRIVILEGED_TABLES: Final = frozenset({"users", "organizations"})
 
 #: §49: one constant publishes the ceiling, guards the walk and names the refusal it earns.
 MAX_DEPTH: Final = 2
-MAX_EDGES: Final = 400
+#: Measured over the 32-club world: its five narrowest articles walk 656-774 edges at depth 2,
+#: while a team walk reaches 2,737. 800 is the smallest round ceiling above the narrow roots.
+MAX_EDGES: Final = 800
 MAX_NODES: Final = 600
 
 #: What a reader may ask about, and where the row lives. `label_column` is the stored column a human

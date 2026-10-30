@@ -231,9 +231,15 @@ class TestOnlyTheClubsOwnSide:
         assert view["totals"]["events"] == len(_club_rows(session, career))
 
     def test_an_away_round_contributes_the_clubs_events_from_the_away_side(self, session, world) -> None:  # type: ignore[no-untyped-def]
-        career = _season(session, world, 6)
+        career = _career(session, world)
+        opponents = career_service.competition_clubs(session, career.competition_id, exclude_id=career.club_id or "")
+        assert opponents, "the career's club has no competition, so its season cannot travel"
+        # The rotation plays the whole first cycle at home; away starts with the second, whatever the
+        # size of the competition, so the rounds are derived from the world instead of a remembered 6.
+        for _ in range(len(opponents) + 1):
+            career_service.play_round(session, career)
         away = list(session.scalars(select(CareerFixture).where(CareerFixture.career_id == career.id, CareerFixture.side == "away")).all())
-        assert away, "a five-club competition travels away from round five"
+        assert away, f"a {len(opponents) + 1}-club competition plays its first cycle at home, so round {len(opponents) + 1} travels"
         for fixture in away:
             by_team = int(session.scalar(select(func.count()).select_from(SimulationEvent).where(SimulationEvent.match_id == str(fixture.match_id), SimulationEvent.team_id == career.club_id)) or 0)
             by_side = int(session.scalar(select(func.count()).select_from(SimulationEvent).where(SimulationEvent.match_id == str(fixture.match_id), SimulationEvent.side == "away")) or 0)
