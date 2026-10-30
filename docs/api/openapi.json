@@ -14822,6 +14822,13 @@
             "title": "Budget",
             "default": 1000000
           },
+          "wage_ceiling": {
+            "type": "integer",
+            "maximum": 10000000.0,
+            "minimum": 0.0,
+            "title": "Wage Ceiling",
+            "default": 0
+          },
           "objectives": {
             "items": {
               "$ref": "#/components/schemas/ObjectiveIn"
