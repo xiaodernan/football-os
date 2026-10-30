@@ -126,9 +126,15 @@ def run_simulation(
     inputs = MatchInputs(home=home, away=away, seed=seed if seed is not None else secrets.randbelow(2_147_483_647), minutes=minutes, block_minutes=BLOCK_MINUTES, substitutions=substitutions, tactical_shift_minute=tactical_shift_minute, home_momentum=home_momentum, away_momentum=away_momentum)
     report = simulate_match(inputs)
 
-    slug = slugify(f"{home.short_name}-v-{away.short_name}-{report['digest']}")[:70]
-    if session.scalar(select(SimulationMatch).where(SimulationMatch.slug == slug)):
-        slug = f"{slug}-{secrets.token_hex(2)}"[:80]
+    base = slugify(f"{home.short_name}-v-{away.short_name}-{report['digest']}")[:70]
+    slug = base
+    attempt = 1
+    # A replay hashes to the same base slug, so the disambiguator must be unique by construction: one
+    # random suffix can itself collide, and the insert then dies on `sim_matches.slug` after the report
+    # has been paid for. The counter is bounded by the rows already holding this base.
+    while session.scalar(select(SimulationMatch).where(SimulationMatch.slug == slug)) is not None:
+        attempt += 1
+        slug = f"{base}-{attempt}"[:80]
     match = SimulationMatch(
         id=new_public_id("sim"),
         slug=slug,

@@ -105,6 +105,15 @@ class TestPlaying:
         second = _play(auth_client, world, seed=424242).json()
         assert first["digest"] == second["digest"]
         assert first["report"]["events"] == second["report"]["events"]
+        # The same draw is still two rows, so the second one needs a slug of its own.
+        assert first["slug"] != second["slug"]
+
+    def test_a_replay_gets_its_own_slug_even_when_one_suffix_would_collide(self, auth_client, world, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+        first = _play(auth_client, world, seed=424242).json()
+        monkeypatch.setattr("app.services.simulation.service.secrets.token_hex", lambda n: "beef")
+        second = _play(auth_client, world, seed=424242).json()
+        third = _play(auth_client, world, seed=424242).json()
+        assert len({first["slug"], second["slug"], third["slug"]}) == 3
 
     def test_an_unpicked_seed_is_not_reused_blindly(self, auth_client, world) -> None:  # type: ignore[no-untyped-def]
         digests = {_play(auth_client, world).json()["digest"] for _ in range(3)}
