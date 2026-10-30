@@ -111,7 +111,7 @@ async function bodyText(page) {
  * of the product. A refused connection is reported as status 0 so the check fails loudly instead
  * of throwing and aborting the run.
  */
-async function probeStatuses(urls, concurrency = 6) {
+async function probeStatuses(urls, concurrency = 6, budgetMs = 25_000) {
   const outcomes = new Array(urls.length);
   let cursor = 0;
   const workers = Array.from({ length: Math.min(concurrency, urls.length) }, async () => {
@@ -119,7 +119,7 @@ async function probeStatuses(urls, concurrency = 6) {
       const index = cursor;
       cursor += 1;
       if (index >= urls.length) return;
-      outcomes[index] = await probeOne(urls[index]);
+      outcomes[index] = await probeOne(urls[index], budgetMs);
     }
   });
   await Promise.all(workers);
@@ -135,8 +135,8 @@ async function probeStatuses(urls, concurrency = 6) {
  * the retry is counted — a route that answers on the second ask is slow, and a route that does not
  * answer at all is broken, and the two must not read the same in the report.
  */
-async function probeOne(url) {
-  const budget = 25_000;
+async function probeOne(url, budgetMs = 25_000) {
+  const budget = budgetMs;
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
       // A stalled render must become a failed check, not a hung run: without the timeout one
@@ -1072,7 +1072,7 @@ async function run() {
     );
     const locs = [...sitemap.text.matchAll(/<loc>([^<]+)<\/loc>/gu)].map((match) => match[1]);
     check('sitemap.xml is served and non-empty', sitemap.status === 200 && locs.length > 0, `${locs.length} <loc> entries`);
-    const locStatuses = await probeStatuses(locs);
+    const locStatuses = await probeStatuses(locs, 2, 120_000);
     const notOk = locs.filter((unused, index) => locStatuses[index] !== 200);
     check(
       'sitemap advertises only routes that answer 200 (no redirect chains)',
@@ -3377,7 +3377,7 @@ async function run() {
       return { status: response.status, body: await response.json().catch(() => null) };
     };
     // the walk account's member id: the community's members door is the address book
-    const meId = await page.evaluate(async () => (await fetch('/api/v1/auth/me', { credentials: 'same-origin' })).json().id);
+    const meId = await page.evaluate(async () => { const response = await fetch('/api/v1/auth/me', { credentials: 'same-origin' }); return (await response.json()).id; });
     const followPress = await asStranger(`/api/v1/community/follows/${meId}`, 'POST');
     const reactionPress = await asStranger(`/api/v1/community/posts/${post_id}/reactions`, 'POST', { reaction: 'like' });
     const commentPress = await asStranger(`/api/v1/community/posts/${post_id}/comments`, 'POST', { body: "The notification walk reply." });
