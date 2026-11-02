@@ -523,6 +523,40 @@ def test_a_closed_run_is_missed_or_met_and_never_in_progress(auth_client, world:
     assert "no wallet" in read.json()["limitations"]["reward"]
 
 
+def test_a_run_plans_the_next_fixture_once_per_request(auth_client, world: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:  # type: ignore[no-untyped-def]
+    """Both views of a run already carry the plan through `career_view`; neither may compute it twice.
+
+    `start` and `read_run` used to call `next_fixture_plan(...)` and then spread `run_view(...)` over the
+    same dict, which overwrites the key: every request planned the fixture once, threw that plan away, and
+    planned it again inside `career_view`. The call count is the assertion — one plan per request — and the
+    detail route, with nothing played in between, prints the same fixture the run opened with.
+    """
+    from app.services.simulation import career as career_service
+
+    original = career_service.next_fixture_plan
+    calls: list[str] = []
+
+    def counting(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        calls.append("plan")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(career_service, "next_fixture_plan", counting)
+
+    started = _start(auth_client, SHORT, competition=world["competition"])
+    assert started.status_code == 201, started.text
+    assert len(calls) == 1, f"start planned the next fixture {len(calls)} times"
+    planned = started.json()["next_fixture"]
+    assert planned["available"] is True and planned["round_index"] == 1
+
+    slug = started.json()["run"]["slug"]
+    calls.clear()
+    read = auth_client.get(f"{API}/runs/{slug}")
+    assert read.status_code == 200, read.text
+    assert len(calls) == 1, f"the run detail planned the next fixture {len(calls)} times"
+    # Nothing has been played between the two reads, so the detail must print the same plan.
+    assert read.json()["next_fixture"] == planned
+
+
 def test_an_open_career_has_no_window_and_can_be_played_on(auth_client, world: dict[str, str]) -> None:  # type: ignore[no-untyped-def]
     """A career opened the §20 way must not acquire a §21 limit by accident."""
     opened = auth_client.post(

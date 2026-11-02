@@ -27,7 +27,6 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.security import current_user, limit, ownership_or_admin
 from app.models import OBJECTIVE_FORMULA, Career, User
-from app.services.simulation.career import next_fixture_plan
 from app.services.simulation.challenges import (
     CHALLENGE_DISCLAIMER,
     CHALLENGES,
@@ -145,7 +144,6 @@ def start(slug: str, payload: StartIn, request: Request, db: Session = Depends(g
     return {
         "started": True,
         "club_choice": choice,
-        "next_fixture": next_fixture_plan(db, career),
         **run_view(db, career),
     }
 
@@ -188,7 +186,7 @@ def read_run(ident: str, request: Request, db: Session = Depends(get_db), user: 
     """One run in full: the scenario, the club it gave you, the verdict, and the fixtures behind it."""
     limit(request, 60, 60, scope="challenge_run_detail")
     career = _run(db, user, ident)
-    return {"next_fixture": next_fixture_plan(db, career), **run_view(db, career)}
+    return run_view(db, career)
 
 
 __all__ = ["router"]
