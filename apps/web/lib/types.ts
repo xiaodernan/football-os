@@ -1756,8 +1756,20 @@ export type CareerContractRow = {
   /** Counts from the round about to be played; `null` alongside `expiry_round`. */
   rounds_remaining: number | null;
   expiring_soon: boolean;
-  /** In the API's own words: which stored terms the projection read. */
+  /** In the API's own words: which stored terms the expiry read. */
   basis: string;
+};
+
+/** One deal that already ended or was extended (market.py `contract_book` → `recent`). */
+export type CareerContractEnding = {
+  player_id: string;
+  player_name: string;
+  /** `expire` for a deal that ran out, `renew` for the one-season extension that kept a side fieldable. */
+  kind: string;
+  round_index: number;
+  expiry_round: number;
+  weekly_wage: number;
+  effect: string;
 };
 
 /** The squad's stored ages, banded (market.py `contract_book`). */
@@ -1778,9 +1790,9 @@ export type CareerAgeProfile = {
 };
 
 /**
- * The deal book (M13 Phase 2): when each held deal's stored terms project it to expire, flagged
- * inside a warning window, plus the squad's age profile. A projection, not an enforcement —
- * nothing in this build expires or renews a contract.
+ * The deal book (M13 Phase 2): when each held deal's stored terms expire, flagged inside a
+ * warning window, plus the squad's age profile and the deals that already ended or were extended.
+ * Expiry is enforced before the round after a deal's stored last round is played.
  */
 export type CareerContracts = {
   deals: number;
@@ -1791,6 +1803,7 @@ export type CareerContracts = {
   total_weekly_wage: number;
   expiring_weekly_wage: number;
   rows: CareerContractRow[];
+  recent: CareerContractEnding[];
   age_profile: CareerAgeProfile;
   /** The budget's own unit name, shared with `affordability`. */
   units: string;
@@ -1938,6 +1951,35 @@ export type CareerAcademy = {
   is_demo_data: boolean;
 };
 
+/**
+ * M13 Phase 2 item 5: where the career's next round falls against its season's signing windows.
+ *
+ * The round a deal would be made in is `career.rounds_played + 1`, grouped into seasons of
+ * `season_rounds`. `windows` are the season's ranges in rounds of the season; a range the next round
+ * falls inside marks `state: "open"` and fills `in_window`. `played_in_window` counts the rounds of
+ * that range the career has stored fixtures for, and `signing_rounds_left` the rounds it can still sign
+ * in, this one included. A closed window reports zero for both. When there is no horizon at all,
+ * `season_rounds` is 0, `windows` is empty and the API reads open rather than assuming.
+ */
+export type CareerWindow = {
+  state: "open" | "closed";
+  round: number;
+  round_in_season: number;
+  season_index: number;
+  season_rounds: number;
+  season_source: string;
+  windows: { from_round: number; to_round: number; label: string }[];
+  in_window: string;
+  window_from_round: number | null;
+  window_to_round: number | null;
+  played_in_window: number;
+  signing_rounds_left: number;
+  opens_at_round: number | null;
+  opens_at_season: number | null;
+  opens_in_rounds: number;
+  formula: string;
+};
+
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
@@ -1960,6 +2002,8 @@ export type CareerView = {
   head_to_head?: CareerHeadToHead;
   /** M13 Phase 2: the deal book — each held deal's projected expiry, and the squad's age profile. */
   contracts: CareerContracts;
+  /** M13 Phase 2 item 5: the season's signing windows against the round the next deal would use. */
+  window: CareerWindow;
   /** M13 Phase 2: the season's story — margins, runs, clean sheets and the venue split, read off the fixture rows. */
   highlights: CareerHighlights;
   /** M13 item 4: the minutes-based development curve, projected from the appearance rows on every read. */

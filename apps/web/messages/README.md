@@ -5,8 +5,8 @@ Three files, one per locale (`apps/api/app/api/v1/meta.py` publishes them as `lo
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 3983 of 4028 keys in Simplified Chinese, and all 4028 present (the other 45 are placeholders, machine tokens and acronyms that are identical in every locale) | **yes** |
-| `zh-TW.json` | 3983 of 4028 keys written in Traditional Chinese, not converted from the `zh` file, and all 4028 present (same 45 identical tokens) | **yes** |
+| `zh.json` | 3988 of 4033 keys in Simplified Chinese, and all 4033 present (the other 45 are placeholders, machine tokens and acronyms that are identical in every locale) | **yes** |
+| `zh-TW.json` | 3988 of 4033 keys written in Traditional Chinese, not converted from the `zh` file, and all 4033 present (same 45 identical tokens) | **yes** |
 
 ## What a reader gets today
 

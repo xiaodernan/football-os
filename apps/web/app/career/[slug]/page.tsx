@@ -11,6 +11,7 @@ import { CareerContracts } from "@/components/CareerContracts";
 import { CareerFinance } from "@/components/CareerFinance";
 import { CareerHighlights } from "@/components/CareerHighlights";
 import { CareerDevelopment } from "@/components/CareerDevelopment";
+import { CareerWindow } from "@/components/CareerWindow";
 import { CareerNextOpponent } from "@/components/CareerNextOpponent";
 import { CareerTools } from "@/components/CareerTools";
 import { LEDGER_COLUMNS, type SeasonLedger } from "@/lib/ledger";
@@ -175,6 +176,8 @@ export default async function CareerDetailPage({ params }: Props) {
       <CareerFinance t={t} view={view.affordability} limitation={view.limitations.projections} />
 
       <CareerContracts t={t} view={view.contracts} limitation={view.limitations.projections} />
+
+      <CareerWindow t={t} view={view.window} limitation={view.limitations.projections} />
 
       <Panel eyebrow={t("roundsCount", { count: fixtures.length })} title={t("fixtureListTitle")}>
         {fixtures.length === 0 ? (
