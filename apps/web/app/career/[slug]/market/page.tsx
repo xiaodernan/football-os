@@ -53,6 +53,7 @@ export default async function CareerMarketPage({ params }: Props) {
   const need = view.need;
   const account = view.squad.account;
   const fielding = view.squad.fielding;
+  const signing = view.window;
 
   return (
     <div className="container page stack">
@@ -79,6 +80,45 @@ export default async function CareerMarketPage({ params }: Props) {
         {t("wageDeals", { count: budget.wage_players })}{t("wageStands")}{money(budget.wages_paid)} {budget.units}{t("wagePaidPrefix")}
         {t("wageRounds", { count: budget.wage_rows })}{t("wageSuffix")}
       </p>
+
+      <Panel data-testid="market-window" eyebrow={t("windowEyebrow", { round: signing.round, count: signing.windows.length })} title={t("windowTitle")}>
+        <div className="stack-sm">
+          <p className={signing.state === "open" ? "notice" : "notice notice--warn"}>
+            {signing.state === "open"
+              ? t("windowOpen", { round: signing.round, range: signing.in_window })
+              : t("windowClosed", { round: signing.round, count: signing.opens_in_rounds })}
+          </p>
+          <KeyValueGrid
+            rows={[
+              [t("kvWindowState"), signing.state],
+              [t("kvWindowSeason"), t("windowSeason", { index: signing.season_index, roundInSeason: signing.round_in_season, of: signing.season_rounds })],
+              [t("kvWindowSource"), signing.season_source],
+              [t("kvWindowRanges"), signing.windows.map((range) => `${t("windowRange", { from: range.from_round, to: range.to_round })} ${range.label}`).join(" · ")],
+              [t("kvWindowHeld"), signing.in_window || t("windowHeldNone")],
+              [
+                t("kvWindowPlayed"),
+                signing.window_from_round === null || signing.window_to_round === null
+                  ? t("windowHeldNone")
+                  : t("windowPlayed", {
+                      played: signing.played_in_window,
+                      from: signing.window_from_round,
+                      to: signing.window_to_round,
+                    }),
+              ],
+              [t("kvWindowSigningLeft"), t("windowSigningLeft", { count: signing.signing_rounds_left })],
+              [
+                t("kvWindowNext"),
+                signing.opens_at_round === null
+                  ? t("windowNextOpen")
+                  : t("windowNextAt", { round: signing.opens_at_round, season: signing.opens_at_season ?? 0, count: signing.opens_in_rounds }),
+              ],
+            ]}
+          />
+          <p className="muted">
+            <span className="mono">{signing.formula}</span> {t("windowConstants", { early: view.constants.early_window_last_round, width: 2 * view.constants.mid_window_half_width + 1, half: view.constants.mid_window_half_width })}
+          </p>
+        </div>
+      </Panel>
 
       <Panel eyebrow={t("buyingEyebrow", { count: view.listings.length, band: need.needed_band })} title={t("buyingTitle")}>
         <MarketTools
@@ -225,7 +265,7 @@ export default async function CareerMarketPage({ params }: Props) {
         </p>
       </Panel>
 
-      <Panel eyebrow={t("rulesEyebrow", { count: Object.keys(view.rules).length })} title={t("rulesTitle")}>
+      <Panel data-testid="market-rules" eyebrow={t("rulesEyebrow", { count: Object.keys(view.rules).length })} title={t("rulesTitle")}>
         <div className="stack-sm">
           <KeyValueGrid rows={Object.entries(view.rules).map(([key, expression]) => [key, <span className="mono" key={key}>{expression}</span>])} />
           <div className="tag-list">

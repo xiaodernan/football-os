@@ -244,6 +244,8 @@ jobs:
         run: node scripts/qa-shared-keys.mjs
       - name: Shared-sentence behaviour gate (each verdict, on scratch catalogues)
         run: node scripts/qa-shared-keys-witness.mjs
+      - name: Wire-readers gate (every field the market wire publishes is typed and read by the page)
+        run: node scripts/qa-wire-readers.mjs
       - name: Types
         run: npm run typecheck
       - name: Build

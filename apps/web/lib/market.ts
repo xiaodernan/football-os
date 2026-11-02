@@ -32,6 +32,45 @@ export type Transferable = {
   enforced_by?: string;
 };
 
+/**
+ * One of a season's signing windows, as `season_windows()` clips it to the season and merges it with its
+ * neighbour when the two ranges touch. The round numbers are *rounds of the season being judged*, not of the
+ * career: `transfer_window` re-dates them through `season_index` when a career has played past its first season.
+ */
+export type MarketSigningWindow = { from_round: number; to_round: number; label: string };
+
+/**
+ * Where this career's next round falls against its season's signing windows — the block `GET /transfers/{career}`
+ * answers with as `window`, and the same arithmetic `POST` refusals are built from.
+ *
+ * A career whose season board publishes no length has no window to police: that branch answers `state: "open"`
+ * with an empty `windows` list, so the block always carries this whole shape — the four range-measured fields
+ * included, at zero and null rather than missing — and never a smaller one.
+ */
+export type MarketWindow = {
+  /** `open` or `closed`, for whether a deal could be struck in the round the next one would be made in. */
+  state: "open" | "closed";
+  round: number;
+  round_in_season: number;
+  season_index: number;
+  season_rounds: number;
+  /** Which table the season length came from, so a reader can tell a stored competition from a fallback. */
+  season_source: string;
+  windows: MarketSigningWindow[];
+  /** The label of the range holding this round, or empty when none does. */
+  in_window: string;
+  /** The bounds of the range holding this round; both null when the window is closed. */
+  window_from_round: number | null;
+  window_to_round: number | null;
+  /** Rounds of the holding range already stored, and the rounds it can still sign in, this one included. */
+  played_in_window: number;
+  signing_rounds_left: number;
+  opens_at_round: number | null;
+  opens_at_season: number | null;
+  opens_in_rounds: number;
+  formula: string;
+};
+
 export type MarketNeed = {
   needed_band: string;
   bands: Record<string, number>;
@@ -195,6 +234,7 @@ export type ListingReport = {
 export type MarketView = {
   career: MarketCareer;
   transfers_allowed: Transferable;
+  window: MarketWindow;
   market: { round_index: number; opened: boolean; size: number; note: string };
   need: MarketNeed;
   budget: MarketBudget;
@@ -206,6 +246,10 @@ export type MarketView = {
   rules: Record<string, string>;
   constants: {
     market_size: number;
+    /** The last round of a season the opening window reaches — the figure `season_windows()` clips the first range to. */
+    early_window_last_round: number;
+    /** How far either side of the season's halfway round the mid-season window reaches. */
+    mid_window_half_width: number;
     negotiation_rounds: number;
     negotiation_floor_share: number;
     release_clause_share: number;

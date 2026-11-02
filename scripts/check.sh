@@ -300,6 +300,13 @@ echo "── Web: namespace-ownership gate ────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-namespace-ownership.mjs)
 
+echo "── Web: wire-readers gate ────────────────────────────"
+# The §22 market wire publishes; the web tier types what it publishes and the market page reads what it types.
+# A field the API sends and nothing in the browser asks for is invisible to the dead-key gate, which judges
+# catalogue keys rather than response fields — so this census reads both ends off disk and reconciles them.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-wire-readers.mjs)
+
 echo "── Web: types ────────────────────────────────────────"
 (cd apps/web && npm run typecheck)
 

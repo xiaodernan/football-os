@@ -133,29 +133,57 @@ function clickIn(page, scope, selector) {
   );
 }
 
-/** The buying board, read out of the table the reader sees, in the page's own column order.
- * The badges and the need-marker are set in capitals by the stylesheet, so the words that label a row
- * are compared case-folded while every figure is compared exactly as printed. */
+/**
+ * The buying board, read the way a reader reads it: a figure lives under the header printed above it.
+ *
+ * This helper used to pick the asking, clause, wage and fit out by column number and to report a row's shape as
+ * a count of thirteen cells. The board has since grown a column, and the copied count went red while every
+ * figure it named stayed exactly right — a position is a fact about the day the component was written, not about
+ * the offer. The labels therefore come from the same catalogue the page renders its headers from, and each row is
+ * read against **its own table's** headers. A header the board stops printing now yields an empty cell and a zero
+ * figure, and the check above the first read says which header went missing by name.
+ *
+ * The badges the stylesheet sets in capitals (the rival marker, the answers-the-need marker) are compared
+ * case-folded; every figure is compared exactly as printed.
+ */
+const BOARD_COLUMNS = {
+  player: english.market.buyThPlayer,
+  from: english.market.buyThFrom,
+  asking: english.market.buyThAsking,
+  price: english.market.buyThNow,
+  clause: english.market.buyThClause,
+  wage: english.market.buyThWage,
+  fit: english.market.buyThFit,
+  offers: english.market.buyThOffers,
+};
+
 function board(page) {
-  return page.$$eval('tr[data-listing]', (list) =>
-    list.map((row) => {
-      const cells = [...row.querySelectorAll('td')].map((cell) => cell.innerText.replace(/\s+/g, ' ').trim());
-      const buttons = [...row.querySelectorAll('button[data-act]')].map((button) => ({ act: button.dataset.act, label: button.innerText.trim(), disabled: button.disabled }));
-      const upper = cells.map((cell) => cell.toUpperCase());
-      return {
-        id: row.dataset.listing,
-        cells,
-        buttons,
-        player: (cells[0] ?? '').replace(/\s*answers the need$/i, '').trim(),
-        asking: Number((cells[6] ?? '0').replace(/[^\d]/g, '')),
-        price: Number((cells[7] ?? '0').replace(/[^\d]/g, '')),
-        clause: Number((cells[8] ?? '0').replace(/[^\d]/g, '')),
-        wage: Number((cells[9] ?? '0').replace(/[^\d]/g, '')),
-        fit: Number(cells[10] ?? '0'),
-        rival: (upper[5] ?? '').includes('RIVAL'),
-        fillsNeed: (upper[0] ?? '').includes('ANSWERS THE NEED'),
-      };
-    }),
+  return page.$$eval(
+    'tr[data-listing]',
+    (list, columns) =>
+      list.map((row) => {
+        const cells = [...row.querySelectorAll('td')].map((cell) => cell.innerText.replace(/\s+/g, ' ').trim());
+        const headers = [...(row.closest('table')?.querySelectorAll('thead th') ?? [])].map((head) => head.innerText.replace(/\s+/g, ' ').trim());
+        const buttons = [...row.querySelectorAll('button[data-act]')].map((button) => ({ act: button.dataset.act, label: button.innerText.trim(), disabled: button.disabled }));
+        const cellOf = (name) => cells[headers.findIndex((header) => header.toLowerCase() === name.toLowerCase())] ?? '';
+        const figure = (name) => Number(cellOf(name).replace(/[^\d]/g, '')) || 0;
+        return {
+          id: row.dataset.listing,
+          cells,
+          headers,
+          buttons,
+          player: cellOf(columns.player).replace(/\s*answers the need$/i, '').trim(),
+          fillsNeed: cellOf(columns.player).toUpperCase().includes('ANSWERS THE NEED'),
+          rival: cellOf(columns.from).toUpperCase().includes('RIVAL'),
+          asking: figure(columns.asking),
+          price: figure(columns.price),
+          clause: figure(columns.clause),
+          wage: figure(columns.wage),
+          fit: Number(cellOf(columns.fit)) || 0,
+          offersCell: cellOf(columns.offers),
+        };
+      }),
+    BOARD_COLUMNS,
   );
 }
 
@@ -234,6 +262,12 @@ async function lineWith(page, needle) {
  * that quotes a sentence compares it case-folded. The figures are matched exactly, never folded. */
 const has = (body, needle) => String(body).toLowerCase().includes(String(needle).toLowerCase());
 
+/** Whitespace taken out, twice over: a long expression soft-wraps in a narrow column, and a row of the grid
+ * wraps too. `squeeze` compares a figure-bearing sentence, `flatten` compares prose a reader hears as one
+ * sentence however the column broke it. */
+const squeeze = (value) => String(value).replace(/\s+/g, '');
+const flatten = (value) => String(value).replace(/\s+/g, ' ').trim();
+
 /**
  * Wait for the *table*, not the notice.
  *
@@ -268,6 +302,119 @@ async function gridValue(page, label) {
   return (await gridValues(page))[label.toLowerCase()] ?? null;
 }
 
+/**
+ * The key/value rows of one panel, in the order that panel prints them.
+ *
+ * `gridValues` folds every grid on the page into a single object keyed by label, which is fine while each label
+ * appears once and silently wrong the moment two panels share one — the rules grid prints its keys in English
+ * (`budget`, `window`) and the window grid prints translated labels, so a collision would drop a row rather than
+ * report it. A panel hook is the only way to read a grid as the panel that holds it.
+ */
+function panelGrid(page, testId) {
+  return page.$$eval(
+    `[data-testid="${testId}"] .world-kv__row`,
+    (rows) =>
+      rows.map((row) => ({
+        key: (row.querySelector('dt')?.innerText ?? '').replace(/\s+/g, ' ').trim(),
+        value: (row.querySelector('dd')?.innerText ?? '').replace(/\s+/g, ' ').trim(),
+      })),
+  );
+}
+
+/**
+ * The catalogue's own sentence with its placeholders filled — the walk prints what the page prints.
+ *
+ * Named holes first, then the plural forms the catalogue carries (`{count, plural, one {# round} other {# rounds}}`),
+ * because a check that compared a translated sentence had otherwise to spell the English out here in the walk —
+ * which is the copy the §81 landing took off the page precisely so that a page cannot own its own wording.
+ */
+function interpolate(message, values) {
+  const pluralised = String(message).replace(/\{(\w+), plural, one \{([^}]*)\} other \{([^}]*)\}\}/g, (_all, name, one, other) => {
+    const count = Number(values[name]);
+    return (count === 1 ? one : other).split('#').join(String(count));
+  });
+  return Object.entries(values).reduce((text, [name, value]) => String(text).split(`{${name}}`).join(String(value)), pluralised);
+}
+
+/**
+ * A season's ranges, drawn from the two figures the view publishes with them.
+ *
+ * The same clipping and merging the service documents: the opening window reaches round `early`, the mid-season
+ * window is `half` rounds either side of the season's halfway round, a range clipped past itself is dropped, and
+ * a range that touches the one before it joins it — so the walk can refuse a board whose ranges the published
+ * constants do not produce.
+ */
+function seasonWindows(seasonRounds, early, half) {
+  const raw = [
+    [1, Math.min(early, seasonRounds)],
+    [Math.max(1, Math.floor(seasonRounds / 2) - half), Math.min(seasonRounds, Math.floor(seasonRounds / 2) + half)],
+  ];
+  const merged = [];
+  for (const [low, high] of raw) {
+    if (low > high) continue;
+    const last = merged[merged.length - 1];
+    if (last && low <= last.to_round + 1) last.to_round = Math.max(last.to_round, high);
+    else merged.push({ from_round: low, to_round: high });
+  }
+  return merged;
+}
+
+/** The whole window block a career's round should produce, arithmetic only — the labels ride from the wire. */
+function deriveWindow(signing, early, half) {
+  const round = Number(signing.round);
+  const seasonRounds = Number(signing.season_rounds);
+  if (!(seasonRounds > 0)) {
+    return {
+      round,
+      round_in_season: 0,
+      season_index: 0,
+      season_rounds: 0,
+      state: 'open',
+      windows: [],
+      window_from_round: null,
+      window_to_round: null,
+      played_in_window: 0,
+      signing_rounds_left: 0,
+      opens_at_round: null,
+      opens_at_season: null,
+      opens_in_rounds: 0,
+    };
+  }
+  const season_index = Math.floor((round - 1) / seasonRounds) + 1;
+  const round_in_season = ((round - 1) % seasonRounds) + 1;
+  const windows = seasonWindows(seasonRounds, early, half);
+  const holding = windows.find((range) => round_in_season >= range.from_round && round_in_season <= range.to_round);
+  const forward = windows.find((range) => range.from_round > round_in_season);
+  const opens_at_round = holding ? null : forward ? forward.from_round : windows.length ? windows[0].from_round : null;
+  const opens_at_season = holding ? null : forward ? season_index : windows.length ? season_index + 1 : null;
+  const opens_in_rounds =
+    opens_at_round === null || opens_at_season === null ? 0 : (opens_at_season - 1) * seasonRounds + opens_at_round - round;
+  // The service counts the window it is standing in against the career's own stored rounds: the range's first
+  // round is lifetime round `(season_index − 1) × season_rounds + from_round`, so the rounds already played
+  // inside it are the gap to `rounds_played` (= this round − 1), capped at the range's own length.
+  const window_from_round = holding ? holding.from_round : null;
+  const window_to_round = holding ? holding.to_round : null;
+  const played_in_window = holding
+    ? Math.min(Math.max(0, round - 1 - ((season_index - 1) * seasonRounds + holding.from_round) + 1), holding.to_round - holding.from_round + 1)
+    : 0;
+  const signing_rounds_left = holding ? holding.to_round - round_in_season + 1 : 0;
+  return {
+    round,
+    round_in_season,
+    season_index,
+    season_rounds: seasonRounds,
+    state: holding ? 'open' : 'closed',
+    windows,
+    window_from_round,
+    window_to_round,
+    played_in_window,
+    signing_rounds_left,
+    opens_at_round,
+    opens_at_season,
+    opens_in_rounds,
+  };
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -291,14 +438,20 @@ async function main() {
   const options = await call(page, 'GET', '/api/v1/careers/options');
   check('the clubs on offer come from the generated world', options.status === 200 && options.json?.clubs?.length > 0, `${options.json?.clubs?.length ?? 0} clubs`);
   const rules = await call(page, 'GET', '/api/v1/transfers/rules');
-  check('the market publishes its arithmetic to anyone, no session required', rules.status === 200 && Object.keys(rules.json?.rules ?? {}).length === 11, `${Object.keys(rules.json?.rules ?? {}).length} expressions`);
+  const publicRules = Object.keys(rules.json?.rules ?? {});
+  check('the market publishes its arithmetic to anyone, no session required', rules.status === 200 && publicRules.length > 0, `${publicRules.length} expressions`);
   check('the public rules are labelled fictional', rules.json?.data_origin === 'simulation' && rules.json?.is_demo_data === true, String(rules.json?.disclaimer).slice(0, 60));
 
   const weakest = [...(options.json?.clubs ?? [])].sort((a, b) => a.overall - b.overall || String(a.slug).localeCompare(String(b.slug)));
-  const size = rules.json?.constants?.market_size ?? 12;
-  const loanShare = rules.json?.constants?.loan_fee_share ?? 0.15;
   const opened = [];
   let target = null;
+  // The board's own constants come off the career door, not off the rules answer. `/transfers/rules` sends the
+  // rule book and the move effects and nothing else, so `rules.json?.constants?.market_size ?? 12` read a field
+  // that door does not publish and fell back to a number the walk invented — the board would have been checked
+  // against the walk's own arithmetic, and reported as the site's.
+  let wire = null;
+  let size = 0;
+  let loanShare = 0;
 
   // Work up from the weakest club until a board that was opened *by the page* holds both a rival and an
   // affordable offer, because those two are what let the clause rule and a signing both be demonstrated.
@@ -319,6 +472,21 @@ async function main() {
     const response = await open(page, path);
     check(`the market page answers its owner with 200 (${club.slug})`, response.status() === 200, `HTTP ${response.status()}`);
     await until(page, 'transfer market');
+    // This career's own door answer, read before the page is asked to show it. Everything below compares the
+    // painted page with what that door published beside it — the rule book, the constants the board is priced
+    // against, and the signing window — so a figure the walk measures with is a figure the site sent.
+    const fetched = await call(page, 'GET', `/api/v1/transfers/${encodeURIComponent(slug)}`);
+    const view = fetched.json;
+    check(
+      `the career door answers the career the page is showing (${club.slug})`,
+      fetched.status === 200 && Object.keys(view?.constants ?? {}).length >= 5 && Object.keys(view?.rules ?? {}).length > 0 && view?.window !== undefined,
+      `HTTP ${fetched.status}, ${Object.keys(view?.constants ?? {}).length} constants, ${Object.keys(view?.rules ?? {}).length} rules, window ${view?.window ? 'published' : 'absent'}`,
+    );
+    if (view?.constants) {
+      wire = wire ?? view;
+      size = Number(wire.constants.market_size);
+      loanShare = Number(wire.constants.loan_fee_share);
+    }
     if (!target) {
       // The first visit is the empty state: a career that has never opened a market sees no rows.
       const empty = await text(page);
@@ -340,18 +508,104 @@ async function main() {
       check('the wage rule says a round is charged, and an empty ledger has charged nothing', has(empty, 'charged every round') && has(empty, 'has left the balance over 0 rounds'), await lineWith(page, 'stands charged'));
       check('the weakest band is named with its four indices', /attack\s*[\d.]+/.test(empty) && /midfield\s*[\d.]+/.test(empty), await lineWith(page, 'attack'));
       check('the need says what it judged on and which squad it read', has(empty, 'Judged on') && has(empty, 'Squad the reading used'));
-      const expressions = Object.entries(rules.json?.rules ?? {});
-      // Compared with the whitespace taken out: a long expression soft-wraps in a narrow column, and the
-      // walk is asking whether the page carries *this* sentence, not whether it kept the line breaks.
-      const squeeze = (value) => String(value).replace(/\s+/g, '');
-      const found = expressions.filter(([, expression]) => squeeze(empty).includes(squeeze(expression))).map(([key]) => key);
-      const missing = expressions.map(([key]) => key).filter((key) => !found.includes(key));
+      // --- the rule book: the two doors first, then the panel that prints what they answered ------------------
+      const publicBook = Object.entries(rules.json?.rules ?? {});
+      const careerBook = Object.entries(view?.rules ?? {});
+      const sorted = (keys) => keys.map((key) => key.toLowerCase()).sort().join(',');
       check(
-        'the rules panel prints every published expression, none of them paraphrased',
-        expressions.length === 11 && missing.length === 0,
-        `${found.length}/${expressions.length} found${missing.length ? ` — missing ${missing.join(', ')}` : ''}`,
+        'the two doors answer the same rule book',
+        publicBook.length > 0 && sorted(publicBook.map(([key]) => key)) === sorted(careerBook.map(([key]) => key)),
+        `public ${publicBook.length}, career ${careerBook.length}${publicBook.length !== careerBook.length ? ` — ${publicBook.map(([key]) => key).join(', ')} | ${careerBook.map(([key]) => key).join(', ')}` : ''}`,
       );
-      check('the age curve is stated as bands rather than fitted', empty.includes('16-20→×0.6'), await lineWith(page, '32-99'));
+      const printedRules = await panelGrid(page, 'market-rules');
+      const printedNames = printedRules.map((row) => row.key.toLowerCase());
+      const book = new Map(careerBook.map(([key, expression]) => [key.toLowerCase(), expression]));
+      const rowNamed = (key) => printedRules.find((row) => row.key.toLowerCase() === key);
+      const unprinted = [...book.keys()].filter((key) => !printedNames.includes(key));
+      const unpublished = printedNames.filter((key) => !book.has(key));
+      const paraphrased = printedNames.filter((key) => book.has(key) && squeeze(rowNamed(key).value) !== squeeze(book.get(key)));
+      check(
+        'the rules panel prints the book the doors published, name by name and sentence by sentence',
+        printedRules.length > 0 && unprinted.length === 0 && unpublished.length === 0 && paraphrased.length === 0,
+        `${book.size} published, ${printedRules.length} printed${unprinted.length ? ` — no row for ${unprinted.join(', ')}` : ''}${unpublished.length ? ` — rows no door published: ${unpublished.join(', ')}` : ''}${paraphrased.length ? ` — sentence differs: ${paraphrased.join(', ')}` : ''}`,
+      );
+      // The count this walk used to pin at a copied `11` is not what makes the census worth running. The two names
+      // it reads by hand further down are `budget` — the balance quotes the rule — and `window`, the block below:
+      // if the book ever loses one of them, the walk would be measuring with a sentence it never got.
+      check('the book still holds the two rules this walk quotes by name', ['budget', 'window'].every((key) => printedNames.includes(key)), printedNames.join(', ') || '(the panel printed no rows)');
+      const curve = (view?.constants?.age_curve ?? []).map((band) => `${band.ages}→×${band.weight}`).join('  ');
+      check('the age curve is printed as the bands the constants publish', (view?.constants?.age_curve ?? []).length > 0 && squeeze(empty).includes(squeeze(curve)), await lineWith(page, '32-99'));
+
+      // --- the signing window: the block the page was handed, and the arithmetic that drew it -----------------
+      const signing = view?.window;
+      const early = Number(view?.constants?.early_window_last_round);
+      const half = Number(view?.constants?.mid_window_half_width);
+      const pairs = (list) => (list ?? []).map((range) => `${range.from_round}-${range.to_round}`).join(' ');
+      const expected = signing ? deriveWindow(signing, early, half) : null;
+      const off = expected ? Object.entries(expected).filter(([field, value]) => field !== 'windows' && String(signing[field]) !== String(value)).map(([field, value]) => `${field}=${signing[field]}, not ${value}`) : ['no window block on the wire'];
+      check(
+        `the window block is the arithmetic its own published constants produce (round ${signing?.round} of a ${signing?.season_rounds}-round season)`,
+        expected !== null && Number.isFinite(early) && Number.isFinite(half) && off.length === 0 && pairs(signing.windows) === pairs(expected.windows),
+        `${off.length ? off.join(', ') : 'every field agrees'}${expected && pairs(signing.windows) !== pairs(expected.windows) ? ` | ranges ${pairs(signing.windows) || '(none)'} not ${pairs(expected.windows) || '(none)'}` : ''} | early=${early} half=${half}`,
+      );
+      const holding = expected?.windows.find((range) => Number(signing.round_in_season) >= range.from_round && Number(signing.round_in_season) <= range.to_round);
+      check(
+        'the range the block says holds this round is one of its own ranges, and does hold it',
+        expected !== null && (holding ? (signing.windows ?? []).some((range) => range.label === signing.in_window && range.from_round === holding.from_round && range.to_round === holding.to_round) : signing.in_window === ''),
+        `in_window=${JSON.stringify(signing?.in_window)} · round ${signing?.round_in_season} of season ${signing?.season_index} (${signing?.season_rounds} rounds, source ${signing?.season_source}) · holding=${holding ? `${holding.from_round}-${holding.to_round}` : 'nothing'}`,
+      );
+      const copy = english.market;
+      const windowRows = await panelGrid(page, 'market-window');
+      const rowFor = (label) => (windowRows.find((row) => row.key.toLowerCase() === String(label).toLowerCase()) ?? {}).value ?? null;
+      const expectedRanges = (signing?.windows ?? []).map((range) => `${interpolate(copy.windowRange, { from: range.from_round, to: range.to_round })} ${range.label}`).join(' · ');
+      // Which rows this panel must print is not a number copied off the page — it is every `kvWindow*` label the
+      // market catalogue holds. Each is priced the way the page prices it, so a row whose arithmetic or shape moves
+      // goes red here, and a label the catalogue grows without the walk learning to price it is named rather than
+      // silently left out of the count.
+      const windowRowValue = {
+        kvWindowState: () => String(signing.state),
+        kvWindowSeason: () => interpolate(copy.windowSeason, { index: signing.season_index, roundInSeason: signing.round_in_season, of: signing.season_rounds }),
+        kvWindowSource: () => String(signing.season_source),
+        kvWindowRanges: () => expectedRanges,
+        kvWindowHeld: () => signing.in_window || copy.windowHeldNone,
+        kvWindowPlayed: () =>
+          signing.window_from_round === null || signing.window_to_round === null
+            ? copy.windowHeldNone
+            : interpolate(copy.windowPlayed, { played: signing.played_in_window, from: signing.window_from_round, to: signing.window_to_round }),
+        kvWindowSigningLeft: () => interpolate(copy.windowSigningLeft, { count: signing.signing_rounds_left }),
+        kvWindowNext: () =>
+          signing.opens_at_round === null
+            ? copy.windowNextOpen
+            : interpolate(copy.windowNextAt, { round: signing.opens_at_round, season: signing.opens_at_season ?? 0, count: signing.opens_in_rounds }),
+      };
+      const kvLabels = Object.keys(copy).filter((key) => key.startsWith('kvWindow')).sort();
+      const unpriced = kvLabels.filter((key) => !(key in windowRowValue));
+      const rowPresent = (key) => windowRows.some((row) => row.key.toLowerCase() === copy[key].toLowerCase());
+      const notPrinted = kvLabels.filter((key) => !rowPresent(key));
+      const mispriced = kvLabels.filter((key) => rowPresent(key) && rowFor(copy[key]) !== windowRowValue[key]());
+      const unlabelled = windowRows.filter((row) => !kvLabels.some((key) => copy[key].toLowerCase() === row.key.toLowerCase()));
+      check(
+        `the window panel prints the rows the catalogue labels, and only those (${kvLabels.length} labels, ${windowRows.length} rows)`,
+        kvLabels.length > 0 && windowRows.length === kvLabels.length && unpriced.length === 0 && notPrinted.length === 0 && unlabelled.length === 0,
+        windowRows.map((row) => `${row.key}=${row.value}`).join(' | ') +
+          (unpriced.length ? ` — the walk cannot price ${unpriced.join(', ')}` : '') +
+          (notPrinted.length ? ` — labelled but not printed: ${notPrinted.join(', ')}` : '') +
+          (unlabelled.length ? ` — rows no label holds: ${unlabelled.map((row) => row.key).join(', ')}` : ''),
+      );
+      check(
+        'every window row says what the window block says',
+        mispriced.length === 0,
+        mispriced.length
+          ? mispriced.map((key) => `${copy[key]}: ${JSON.stringify(rowFor(copy[key]))}, not ${JSON.stringify(windowRowValue[key]())}`).join(' | ')
+          : kvLabels.map((key) => `${key}=${JSON.stringify(windowRowValue[key]())}`).join(' | '),
+      );
+      check(
+        'the notice says what the round falls inside, and the constants sentence names the two figures that drew the ranges',
+        flatten(empty).includes(flatten(signing.state === 'open' ? interpolate(copy.windowOpen, { round: signing.round, range: signing.in_window }) : interpolate(copy.windowClosed, { round: signing.round, count: signing.opens_in_rounds }))) &&
+          squeeze(empty).includes(squeeze(interpolate(copy.windowConstants, { early, width: 2 * half + 1, half }))) &&
+          squeeze(empty).includes(squeeze(signing.formula)),
+        `${signing.state} · ${await lineWith(page, 'deal could be struck') || await lineWith(page, 'No deal can be struck')}`,
+      );
       await shot(page, 'market-before');
     }
     const button = await clickIn(page, '[data-testid="market-tools"]', 'button[data-testid="market-open"]');
@@ -378,16 +632,31 @@ async function main() {
   const marketPath = `/career/${encodeURIComponent(ident)}/market`;
   // The page's own figures are the server's, so the walk reads the same view over the API and compares the
   // two. A sentence on the page that the API does not print is a sentence the walk has to refuse.
-  const view = (await call(page, 'GET', `/api/v1/transfers/${ident}`)).json;
+  const careerView = (await call(page, 'GET', `/api/v1/transfers/${ident}`)).json;
+  const clauseShare = Number(careerView?.constants?.release_clause_share);
+  const floorShare = Number(careerView?.constants?.negotiation_floor_share);
   let body = await text(page);
   check('opening a board from the page prints what the round did', /priced: \d+ offers/.test(body), await lineWith(page, 'priced:'));
   let rows = await board(page);
-  check('every offer carries asking, current, clause, wage and fit', rows.every((row) => row.cells.length === 13), `${rows[0]?.cells.length ?? 0} columns`);
-  check('the clause is the published rounding of 1.5× the asking', rows.every((row) => Math.abs(row.clause - row.asking * 1.5) <= 2.5), rows.slice(0, 3).map((row) => `${row.asking}→${row.clause}`).join(' '));
+  const printedHeaders = rows[0]?.headers ?? [];
+  const missingHeaders = Object.entries(BOARD_COLUMNS).filter(([, label]) => !printedHeaders.some((header) => header.toLowerCase() === label.toLowerCase()));
+  check(
+    'the board prints a header for every column this walk reads a figure from',
+    printedHeaders.length > 0 && missingHeaders.length === 0,
+    missingHeaders.length
+      ? `nothing prints: ${missingHeaders.map(([name, label]) => `${name} (${label})`).join(", ")} — the row reads would be blank`
+      : `${printedHeaders.length} headers: ${printedHeaders.join(" | ")}`,
+  );
+  check(
+    'every offer carries one cell under every header the board prints',
+    rows.length > 0 && rows.every((row) => row.cells.length === row.headers.length),
+    `${rows[0]?.cells.length ?? 0} cells against ${rows[0]?.headers.length ?? 0} headers, across ${rows.length} row(s)`,
+  );
+  check('the clause is the published rounding of the share the constants publish', Number.isFinite(clauseShare) && rows.every((row) => Math.abs(row.clause - row.asking * clauseShare) <= 2.5), rows.slice(0, 3).map((row) => `${row.asking}→${row.clause}`).join(' ') + ` ×${clauseShare}`);
   check('the wage is the published rounding of the asking divided by 500', rows.every((row) => Math.abs(row.wage - row.asking / 500) <= 2.5), rows.slice(0, 3).map((row) => `${row.asking}/${row.wage}`).join(' '));
   check('the fit is a number the published formula can produce', rows.every((row) => row.fit >= 0 && row.fit <= 1), rows.slice(0, 4).map((row) => row.fit).join(' '));
   check('the board marks the players that fill the band the club is short in', rows.some((row) => row.fillsNeed), `${rows.filter((row) => row.fillsNeed).length} of ${rows.length} rows`);
-  check('the board says which band it was picked against', has(body, `need: ${view?.need?.needed_band}`), await lineWith(page, 'priced offers'));
+  check('the board says which band it was picked against', has(body, `need: ${careerView?.need?.needed_band}`), await lineWith(page, 'priced offers'));
   check('no offer is priced above the balance and left buyable', rows.every((row) => row.rival || row.price <= BUDGET || row.buttons.find((item) => item.act === 'sign')?.disabled !== false), 'affordability is the server’s');
 
   // --- the seller answers an offer -------------------------------------------------------------------
@@ -396,7 +665,7 @@ async function main() {
   if (negotiable) {
     const asking = negotiable.asking;
     const before = negotiable.price;
-    const floor = Math.round((asking * 0.8) / 5) * 5;
+    const floor = Math.round((asking * floorShare) / 5) * 5;
     await page.evaluate(
       (listing, value) => {
         const input = document.querySelector(`tr[data-listing="${listing}"]`)?.querySelector('input');
@@ -412,6 +681,10 @@ async function main() {
     const answered = await lineWith(page, 'came back at');
     check('the seller answers an offer above the floor', answered.includes('came back at'), answered);
     check('the answer prints the floor the rule will not go under', /floor [\d,]+/.test(answered), answered);
+    // The figure beside the word, not just the word: the floor is the asking times the published share, rounded
+    // the way the rule says, so a page that narrated a floor the constants do not produce is refused here.
+    const printedFloor = amount(answered.match(/floor ([\d,]+)/)?.[1] ?? '');
+    check('the printed floor is the published share of the asking', Number.isFinite(floorShare) && printedFloor === floor, `${gb(printedFloor)} against ${gb(floor)} = ${gb(asking)}×${floorShare}`);
     check('the answer counts the offers left to make', /offer(s)? left/.test(answered), answered);
     check('the answer carries the rule that produced it', answered.includes('round_5'), answered.slice(-120));
     // The counter on the row is the server's copy of the same fact, so waiting for it is waiting for the
@@ -422,7 +695,7 @@ async function main() {
     const afterRow = rows.find((row) => row.id === negotiable.id);
     check('a countered price is stored on the row, not just narrated', afterRow.price !== before && afterRow.price > floor, `${gb(before)} → ${gb(afterRow.price)} (floor ${gb(floor)})`);
     check('a negotiation leaves the asking price where the valuation put it', afterRow.asking === asking, `${gb(asking)}`);
-    check('the offer counter ticks down on the row', /2 left/.test(afterRow.cells[11]), afterRow.cells[11]);
+    check('the offer counter ticks down on the row', /2 left/.test(afterRow.offersCell), afterRow.offersCell);
   }
 
   // --- a rival is refused, with the clause beside the refusal ----------------------------------------
