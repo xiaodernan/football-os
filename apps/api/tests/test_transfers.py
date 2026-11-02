@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
 from app.core.security import hash_password, new_public_id
-from app.models import BUDGET_FORMULA, MOVE_EFFECT, WAGE_EFFECT, Career, CareerSquadMove, CareerWageCharge, RealPlayer, Team, TransferListing, User
+from app.models import BUDGET_FORMULA, MOVE_EFFECT, WAGE_EFFECT, Career, CareerSquadMove, CareerWageCharge, RealMatch, RealPlayer, Team, TransferListing, User
 from app.services.simulation import career as career_service
 from app.services.simulation import market
 from app.services.simulation import squad as squad_service
@@ -883,6 +883,50 @@ class TestTransferWindow:
         view = market.market_view(session, career)
         assert view["window"]["state"] == "closed" and view["window"]["opens_at_round"] == 1
         assert view["transfers_allowed"]["code"] == "transfer_window_closed", "one reading, two keys that agree"
+
+    def test_the_window_counts_the_rounds_it_covers_and_the_signing_rounds_left(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        window = market.transfer_window(session, career)
+        last_open = int(window["window_to_round"] or 0)
+        assert window["state"] == "open" and window["window_from_round"] == 1 and window["window_to_round"] == last_open
+        assert window["played_in_window"] == 0, "no round of this window has been stored yet"
+        assert window["signing_rounds_left"] == last_open, "the next round and every open round after it"
+        career.rounds_played = 3
+        session.commit()
+        moved = market.transfer_window(session, career)
+        assert moved["round_in_season"] == 4 and moved["played_in_window"] == 3
+        assert moved["signing_rounds_left"] == last_open - 3, "the rounds this window has left, counted from the next one"
+        career.rounds_played = last_open
+        session.commit()
+        closed = market.transfer_window(session, career)
+        assert closed["state"] == "closed"
+        assert closed["window_from_round"] is None and closed["window_to_round"] is None
+        assert closed["played_in_window"] == 0 and closed["signing_rounds_left"] == 0, "a range the deal cannot be made in buys no rounds"
+
+    def test_a_career_with_no_horizon_counts_no_signing_rounds(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career.competition_id = None
+        career.rounds_played = 30
+        session.commit()
+        window = market.transfer_window(session, career)
+        assert window["window_from_round"] is None and window["window_to_round"] is None
+        assert window["played_in_window"] == 0 and window["signing_rounds_left"] == 0
+
+    def test_a_signing_before_a_stored_world_fixture_leaves_that_fixture_untouched(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        plan = career_service.next_fixture_plan(session, career)
+        assert plan["source"] == "world_calendar", "the world drew this round, which is what the claim is about"
+        stored = session.get(RealMatch, plan["world_match_id"])
+        assert stored is not None
+        before = (stored.status, stored.home_goals, stored.away_goals, stored.home_team_id, stored.away_team_id)
+        outsider = _best_of(session, [world["outsider_id"]], band="midfield")
+        listing = _listed(session, career, outsider)
+        market.buy(session, career, ident=listing.id)
+        session.refresh(stored)
+        assert (stored.status, stored.home_goals, stored.away_goals, stored.home_team_id, stored.away_team_id) == before, "the signing records a move, not a world score"
+        move = session.scalar(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id, CareerSquadMove.player_id == outsider.id))
+        assert int(move.round_index) == int(career.rounds_played) + 1, "the move is made before the round it covers"
+        assert "never rewritten" in market.WINDOW_FORMULA and "without touching the stored world score" in market.WINDOW_FORMULA
 
 
 class TestContracts:

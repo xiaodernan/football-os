@@ -76,7 +76,9 @@ WINDOW_FORMULA: Final = (
     "touch are published merged; season_rounds = the challenge's own round window when it has one, else 2 × the competition's other "
     "clubs, the same horizon the season board projects against; rounds are grouped into seasons of that length, so the round a deal "
     "would be made in is round ((rounds_played) mod season_rounds) + 1 of season floor(rounds_played ÷ season_rounds) + 1; a career "
-    "with no horizon (0 rounds) has no window to police and reads open"
+    "with no horizon (0 rounds) has no window to police and reads open; a window judges only the career's own next round — the "
+    "generated fixture that round replays is read from the world and never rewritten, so a signing covers the round's eleven "
+    "without touching the stored world score"
 )
 
 # --- the valuation's constants, published rather than hidden ------------------------------------------------
@@ -437,6 +439,12 @@ def transfer_window(session: Session, career: Career, *, horizon: dict[str, Any]
     its first season is judged against the next season's windows rather than locked out for good. A
     career with no horizon has no window to police and reads open, which is stated rather than assumed.
     `horizon` lets the career view hand in the season length it already computed.
+
+    The block also counts the window it is inside: `played_in_window` is how many of that window's
+    rounds the career has already stored fixtures for, `signing_rounds_left` is how many rounds it can
+    still sign in (including the next one), and `window_from_round`/`window_to_round` publish the
+    range those counts are measured against. A closed window reports zero for both, because a range
+    the deal cannot be made in has no signing rounds left rather than an implied one.
     """
     from app.services.simulation.career import season_horizon
 
@@ -453,6 +461,10 @@ def transfer_window(session: Session, career: Career, *, horizon: dict[str, Any]
             "season_source": horizon["source"],
             "windows": [],
             "in_window": "",
+            "window_from_round": None,
+            "window_to_round": None,
+            "played_in_window": 0,
+            "signing_rounds_left": 0,
             "opens_at_round": None,
             "opens_at_season": None,
             "opens_in_rounds": 0,
@@ -462,6 +474,19 @@ def transfer_window(session: Session, career: Career, *, horizon: dict[str, Any]
     round_in_season = (next_round - 1) % season_rounds + 1
     windows = season_windows(season_rounds)
     containing = next((window for window in windows if int(window["from_round"]) <= round_in_season <= int(window["to_round"])), None)
+    window_from_round: int | None = None
+    window_to_round: int | None = None
+    played_in_window = 0
+    signing_rounds_left = 0
+    if containing is not None:
+        window_from_round = int(containing["from_round"])
+        window_to_round = int(containing["to_round"])
+        window_first_lifetime = (season_index - 1) * season_rounds + window_from_round
+        played_in_window = min(
+            max(0, int(career.rounds_played) - window_first_lifetime + 1),
+            window_to_round - window_from_round + 1,
+        )
+        signing_rounds_left = window_to_round - round_in_season + 1
     opens_at_round: int | None = None
     opens_at_season: int | None = None
     if containing is None:
@@ -483,6 +508,10 @@ def transfer_window(session: Session, career: Career, *, horizon: dict[str, Any]
         "season_source": horizon["source"],
         "windows": windows,
         "in_window": str(containing["label"]) if containing is not None else "",
+        "window_from_round": window_from_round,
+        "window_to_round": window_to_round,
+        "played_in_window": played_in_window,
+        "signing_rounds_left": signing_rounds_left,
         "opens_at_round": opens_at_round,
         "opens_at_season": opens_at_season,
         "opens_in_rounds": opens_in_rounds,
