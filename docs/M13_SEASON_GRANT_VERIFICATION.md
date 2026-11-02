@@ -221,3 +221,22 @@ because this machine's GBK code page prints the two as the same mojibake and no 
 available: `LCMapStringW` with `LCMAP_SIMPLIFIED_TRADITIONAL` returns its input unchanged for these
 characters. `git show c5d0979:apps/web/messages/zh-TW.json` reads U+64A5 in both values, and
 `qa-token-drift`, `qa-unused-keys`, `qa-locale-completeness` and `qa-key-drift` were re-run green on it.
+
+### Measured again on the commit that carries this record
+
+`25c6873` re-ran both cases. The migration census is green: the batch that adds `0048` landed and
+`AUDIT_FIGURES` reads 49 against 49 committed files. The catalogue table is still red, on a different figure
+again — that commit's row counts `3988 of 4033` while the same commit's `en.json` holds 4053 keys, 45 of them
+language-neutral, so the true pair is `4008 of 4053`, computed with the case's own `_catalogues()` and
+`_untranslated()`. It is not re-stated here because the lane that owns that line is editing it in the shared
+working tree as this is written, where it already reads `4074 of 4119` against a catalogue that has grown
+again. A number that moves under your hands is not a number to commit over theirs.
+
+**Why a red committed figure looks green locally.** The case takes both inputs from disk — `_prose()` reads
+`REPO / rel` and `_catalogues()` reads the files — while its sibling `test_spec_audit_currency.py` takes both
+from the commit, through `committed_text()` (`git show HEAD:…`) and `committed_paths()` (`git ls-tree HEAD`).
+That is the whole difference between the two reds above: the census drift named itself the day `0047` landed,
+and the coverage figure has moved 4028, then 4033, then 4119 across three carriers without one red local run.
+On a shared working tree the case grades whichever prose is in front of it, so CI is its only reader. Filed as
+`ROADMAP_NEXT.md` Phase 9 item 38 — in the section the same lane has not committed yet, which is why that
+paragraph lives in the file rather than in this commit.
