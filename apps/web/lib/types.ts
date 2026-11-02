@@ -1861,12 +1861,16 @@ export type CareerDevelopmentPlayer = {
   before: Record<string, number>;
   after: Record<string, number>;
   delta: Record<string, number>;
+  /** The round whose written row is the latest applied to this player, or null before any round. */
+  applied_round: number | null;
+  overall_before: number;
+  overall_after: number;
 };
 
 /**
- * M13 item 4: how the career's players have developed from fixture minutes — a read-only projection
- * recomputed from `career_appearances` on every read and never written back, so the stored squad the
- * rest of the page reads keeps its own attributes.
+ * M13 item 4: how the career's players have developed from fixture minutes. Each played round writes
+ * one `career_developments` row per selected player; the latest row before a round decides that round's
+ * eleven, while the world's `real_players` rows stay untouched.
  */
 export type CareerDevelopment = {
   players_developed: number;
@@ -1875,6 +1879,10 @@ export type CareerDevelopment = {
   tau: number;
   rate: number;
   development_formula: string;
+  applied_rows: number;
+  applied_players: number;
+  last_applied_round: number;
+  applies_from_round: number;
   note: string;
   data_origin: string;
   is_demo_data: boolean;

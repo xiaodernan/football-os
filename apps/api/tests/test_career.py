@@ -23,21 +23,28 @@ from sqlalchemy.orm import Session
 from app.core.db import SessionLocal
 from app.core.security import hash_password, new_public_id
 from app.models import (
+    ALL_ATTRIBUTES,
     CAREER_PHLOSOPHIES,
     OBJECTIVE_FORMULA,
     OBJECTIVE_KINDS,
     Career,
+    CareerAppearance,
     CareerBudgetAward,
+    CareerDevelopment,
     CareerFixture,
     CareerSeason,
     Competition,
     RealMatch,
+    RealPlayer,
     SimulationMatch,
     Team,
     User,
 )
 from app.services.simulation import career as career_service
 from app.services.simulation import market
+from app.services.simulation.profile import team_profile
+from app.services.simulation.service import replay_is_identical
+from app.services.simulation.squad import squad_as_of
 from app.services.world import sync_world
 from app.services.world.names import slugify
 
@@ -381,6 +388,82 @@ class TestDevelopment:
                 assert entry["after"][attr] <= max(entry["before"][attr], entry["potential"]), "development never crosses potential from below, and leaves an attribute already above it untouched"
         assert "stored" in dev["note"], "the projection is read-only and says so"
         assert dev["development_formula"].startswith("developed(value, potential, minutes)")
+
+    def test_a_fresh_career_has_applied_nothing_and_names_the_round_it_would(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        dev = career_service.career_view(session, career)["development"]
+        assert dev["applied_rows"] == 0 and dev["applied_players"] == 0
+        assert dev["last_applied_round"] == 0
+        assert dev["applies_from_round"] == 1, "a career that has played nothing would apply its first snapshot in round 1"
+
+    def test_every_played_round_writes_one_row_per_selected_player(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        _fixture, match = career_service.play_round(session, career)
+        appearances = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id)).all())
+        rows = list(session.scalars(select(CareerDevelopment).where(CareerDevelopment.career_id == career.id)).all())
+        assert len(appearances) == len(rows) == 11, "a played round traces and develops the same eleven"
+        assert {row.player_id for row in rows} == {row.player_id for row in appearances}
+        for row in rows:
+            assert row.round_index == 1
+            assert row.minutes_total == int(match.minutes), "a development row reads the fixture's full length"
+            assert row.effective_minutes >= row.minutes_total, "training load never subtracts from match minutes"
+            assert row.overall_after >= row.overall_before, "development never lowers the scalar curve"
+            assert set(row.attributes) == set(ALL_ATTRIBUTES), "a row stores the full after-state"
+            player = session.get(RealPlayer, row.player_id)
+            assert player is not None
+            for attribute in ALL_ATTRIBUTES:
+                ceiling = max(int((player.attributes or {}).get(attribute, career_service.ATTRIBUTE_FLOOR)), int(player.potential))
+                assert row.attributes[attribute] <= ceiling, "a stored attribute already above potential is left alone, a lower one never crosses it"
+
+    def test_the_next_round_plays_the_eleven_the_last_round_developed(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career_service.play_round(session, career)
+        overlay = squad_as_of(session, career, 2)
+        assert overlay is not None and overlay.carries_development
+        assert len(overlay.developed) == 11
+        profile = team_profile(session, career.club_id or "", system_slug=career.system_slug or None, squad=overlay)
+        developed_factor = next(factor for factor in profile.factors if factor.key == "developed_players")
+        carried = [player_id for player_id, _slug, _name, _position, _band in profile.selected if player_id in overlay.developed]
+        assert carried, "the eleven the next round selects reads its own development rows"
+        assert developed_factor.value == float(len(carried)), "the engine names how many of its own eleven carry a development row"
+
+    def test_a_round_never_reads_the_development_it_writes(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career_service.play_round(session, career)
+        assert squad_as_of(session, career, 1) is None, "round 1 played before its own row existed; replaying it must not see it"
+        written = squad_as_of(session, career, 2)
+        assert written is not None and written.carries_development, "round 2 is the first round that reads what round 1 wrote"
+
+    def test_replaying_a_stored_round_keeps_its_digest_after_later_rounds(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        first = career_service.play_round(session, career)[1]
+        second = career_service.play_round(session, career)[1]
+        replay_first = replay_is_identical(session, first)
+        assert replay_first["possible"] is True and replay_first["identical"] is True, "round 1's replay reads the rows that existed before it, none of them its own"
+        replay_second = replay_is_identical(session, second)
+        assert replay_second["possible"] is True and replay_second["identical"] is True, "round 2's replay reads round 1's row and nothing written after it"
+
+    def test_the_worlds_stored_rows_are_never_rewritten(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        before = {player.id: (dict(player.attributes or {}), int(player.overall)) for player in session.scalars(select(RealPlayer).where(RealPlayer.team_id == career.club_id)).all()}
+        for _ in range(2):
+            career_service.play_round(session, career)
+        session.expire_all()
+        after = {player.id: (dict(player.attributes or {}), int(player.overall)) for player in session.scalars(select(RealPlayer).where(RealPlayer.team_id == career.club_id)).all()}
+        assert after == before, "development is this career's own snapshot, not a rewrite of the generated world"
+
+    def test_the_view_reports_the_rows_it_applied_and_the_round_they_apply_from(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        for _ in range(2):
+            career_service.play_round(session, career)
+        dev = career_service.career_view(session, career)["development"]
+        assert dev["applied_rows"] == 22, "two played rounds write eleven rows each"
+        assert dev["applied_players"] == 11
+        assert dev["last_applied_round"] == 2
+        assert dev["applies_from_round"] == 3
+        for entry in dev["top_developed"]:
+            assert entry["applied_round"] in (1, 2)
+            assert entry["overall_after"] >= entry["overall_before"]
 
 
 class TestBoard:

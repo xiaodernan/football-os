@@ -14,9 +14,10 @@ stored load. Two honest constraints shape what landed:
   trainee under the age ceiling is `selected` in that eleven, `next_in_line` as the first reserve of
   his band, or `off_the_pace` at his band rank.
 
-Everything is recomputed from the rows on every read and nothing is written back — the same discipline
-the `development` block states, because a graduation verdict that edited the world would corrupt every
-other page that reads it.
+Everything is recomputed from the rows on every read, and the only write is the development row a
+played round already made for its selected players (`career_developments`); the world's own rows are
+never edited, because a graduation verdict that rewrote them would corrupt every other page that reads
+the same player.
 """
 
 from __future__ import annotations
@@ -45,7 +46,8 @@ YOUTH_AGE_MAX: Final = 21
 
 ACADEMY_FORMULA: Final = (
     "graduation is the engine's own selection read forward: the formation picks the eleven from the "
-    "career's current squad by band, best stored overall first (slug breaks ties); a trainee at or "
+    "career's current squad by band, best overall first (slug breaks ties) — the career's developed "
+    "overall where a development row applies, the stored overall otherwise; a trainee at or "
     "under the age ceiling is `selected` in that eleven, `next_in_line` as the first reserve of his "
     "band (band rank = seats + 1), otherwise `off_the_pace` at his band rank. `projected_overall` "
     "applies the development curve to the stored overall toward the stored potential over "
@@ -61,6 +63,7 @@ def academy_class(
     selected_ids: set[str],
     seats_per_band: Mapping[str, int],
     loads: Mapping[str, tuple[int, int]],
+    ratings: Mapping[str, float] | None = None,
     youth_age_max: int = YOUTH_AGE_MAX,
 ) -> list[dict[str, Any]]:
     """The youth class judged against the eleven, one row per trainee.
@@ -68,22 +71,29 @@ def academy_class(
     `squad` is the career's current squad (stored rows with the transfer overlay applied);
     `selected_ids` is the eleven the engine's own selection picks from those rows; `seats_per_band`
     counts how many of that eleven belong to each band by the players' own positions;
-    `loads` maps player id → (career minutes, training load units). Pure: every figure is derived from
-    the arguments, which makes the empty class and the verdict boundaries testable without a database.
+    `loads` maps player id → (career minutes, training load units). `ratings` is the career's own
+    overall per player (M13 item 4), read instead of the stored `overall` so the band order a
+    developed eleven actually uses is the order judged here. Pure: every figure is derived from the
+    arguments, which makes the empty class and the verdict boundaries testable without a database.
     """
+    current = ratings or {}
+
+    def rating(player: RealPlayer) -> float:
+        return float(current.get(player.id, player.overall))
+
     pools: dict[str, list[RealPlayer]] = {}
     for player in squad:
         pools.setdefault(band_of_position(player.position), []).append(player)
     for pool in pools.values():
-        pool.sort(key=lambda player: (-player.overall, player.slug))
+        pool.sort(key=lambda player: (-rating(player), player.slug))
     rank_of: dict[str, int] = {}
     for pool in pools.values():
         for index, player in enumerate(pool, start=1):
             rank_of[player.id] = index
-    seat_overall: dict[str, int | None] = {}
+    seat_overall: dict[str, float | None] = {}
     for band in set(seats_per_band) | set(pools):
         selected_in_band = [player for player in squad if player.id in selected_ids and band_of_position(player.position) == band]
-        seat_overall[band] = min((player.overall for player in selected_in_band), default=None)
+        seat_overall[band] = min((rating(player) for player in selected_in_band), default=None)
 
     rows: list[dict[str, Any]] = []
     for player in squad:
@@ -122,7 +132,7 @@ def academy_class(
                 "band_size": len(pools.get(band, [])),
                 "seats_in_band": seats,
                 "verdict": verdict,
-                "gap_to_last_seat": (None if selected or last_seat is None else round(float(last_seat) - float(player.overall), 1)),
+                "gap_to_last_seat": (None if selected or last_seat is None else round(float(last_seat) - rating(player), 1)),
             }
         )
     rows.sort(key=lambda row: (-int(row["stored_overall"]), str(row["player_slug"])))
@@ -169,7 +179,7 @@ def academy_view(
     else:
         formation = team.formation if team is not None else ""
     defenders, midfielders, attackers = split_formation(formation)
-    bands = select_starting_xi(squad, defenders, midfielders, attackers)
+    bands = select_starting_xi(squad, defenders, midfielders, attackers, overlay.developed_overall if overlay is not None else None)
     eleven = [player for group in bands.values() for player in group]
     selected_ids = {player.id for player in eleven}
     seats_per_band: dict[str, int] = {}
@@ -177,7 +187,7 @@ def academy_view(
         band = band_of_position(player.position)
         seats_per_band[band] = seats_per_band.get(band, 0) + 1
     loads = {player_id: (minutes, int(training.get(player_id, 0))) for player_id, minutes in minutes_by_player.items()}
-    trainees = academy_class(squad, selected_ids=selected_ids, seats_per_band=seats_per_band, loads=loads)
+    trainees = academy_class(squad, selected_ids=selected_ids, seats_per_band=seats_per_band, loads=loads, ratings=overlay.developed_overall if overlay is not None else None)
     if not trainees:
         return _empty(f"no squad player is at or under the age ceiling of {YOUTH_AGE_MAX}")
     return {
@@ -194,10 +204,10 @@ def academy_view(
         "rate": DEVELOPMENT_RATE,
         "academy_formula": ACADEMY_FORMULA,
         "formulas": {
-            "band_rank": "the trainee's place in his band's pool, ordered by stored overall descending then slug — the same order the engine's selection reads",
+            "band_rank": "the trainee's place in his band's pool, ordered by overall descending then slug — the career's developed overall where a development row applies, the stored overall otherwise, which is the order the engine's selection reads",
             "seats_in_band": "how many of the selected eleven belong to that band by their own positions, borrowed players counted where they came from",
             "next_in_line": "band_rank equals seats_in_band + 1 — the first name the shape would reach for in that band",
-            "gap_to_last_seat": "the weakest selected player of the trainee's band, stored overall minus the trainee's stored overall; positive means he sits behind the last seat today",
+            "gap_to_last_seat": "the weakest selected player of the trainee's band, on the same career rating, minus the trainee's rating; positive means he sits behind the last seat today",
             "projected_overall": "the development curve applied to the stored overall toward the stored potential over effective minutes; the same curve the `development` block applies to each attribute",
             "potential_headroom": "stored potential minus projected_overall, floored at zero — the curve never crosses potential, so this is the growth still owed",
         },
@@ -205,8 +215,8 @@ def academy_view(
             "graduation here is measured, not drawn: the selection and the curve are deterministic, so a "
             "career replays identically and no dice are thrown. The M8 academy tier (development plans, "
             "assessments) is a separate tenant-scoped surface with no link to careers; this block reads "
-            "the world's own training sessions and the career's own appearance rows, recomputed on every "
-            "read and never written back — the stored squad elsewhere on this page is unchanged"
+            "the world's own training sessions, the career's own appearance rows and the development rows a "
+            "played round wrote, and it never rewrites a `real_players` row"
         ),
         "data_origin": "simulation",
         "is_demo_data": True,

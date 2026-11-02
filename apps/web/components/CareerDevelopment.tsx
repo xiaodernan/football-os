@@ -1,10 +1,10 @@
 /**
- * The minutes-based development curve (M13 item 4): what the career's stored appearance minutes and the
- * world's training load imply each player's attributes would become, if the season's development were
- * applied.
+ * The minutes-based development curve (M13 item 4), now written back: every played round writes one
+ * `career_developments` row per player it selected, and `squad_as_of` reads the latest row before a
+ * round as that round's eleven. The block prints both the projection and the applied rows — the round a
+ * player's latest write came from, and the round the next snapshot starts deciding from — while the
+ * world's stored `real_players` rows stay what the generator wrote.
  *
- * `career_view["development"]` is a projection, not a write — the stored squad the rest of this page
- * reads keeps its own attributes, and the block is recomputed from the appearance rows on every read.
  * The page prints the wire figures, the attribute keys the wire keys its before/after dicts with, and
  * the API's own formula and note; it does no arithmetic of its own.
  */
@@ -33,16 +33,17 @@ export function CareerDevelopment({
 }) {
   return (
     <Panel
-      eyebrow={t("developmentEyebrow", { count: view.players_developed })}
+      eyebrow={t("developmentEyebrow", { count: view.applied_players })}
       title={t("developmentTitle")}
     >
       <div className="stack-sm">
         <KeyValueGrid
           rows={[
-            [t("developmentKvPlayers"), `${view.players_developed}`],
+            [t("developmentKvPlayers"), `${view.applied_players} / ${view.players_developed}`],
             [t("developmentKvMinutes"), `${view.total_minutes.toLocaleString("en-GB")}`],
             [t("developmentKvTau"), `${view.tau}`],
             [t("developmentKvRate"), `${view.rate}`],
+            [t("thRound"), `${view.last_applied_round || "—"}`],
           ]}
         />
 
@@ -58,6 +59,7 @@ export function CareerDevelopment({
                 <tr>
                   <th scope="col">{t("thPlayer")}</th>
                   <th scope="col">{t("thPosition")}</th>
+                  <th scope="col">{t("thRound")}</th>
                   <th scope="col">{t("developmentThMinutes")}</th>
                   <th scope="col">{t("thTrainingLoad")}</th>
                   <th scope="col">{t("developmentThEffective")}</th>
@@ -72,6 +74,7 @@ export function CareerDevelopment({
                     <tr key={row.player_id}>
                       <td>{row.player_name}</td>
                       <td className="num">{row.position}</td>
+                      <td className="num">{row.applied_round ?? "—"}</td>
                       <td className="num">{row.minutes.toLocaleString("en-GB")}</td>
                       <td className="num">{row.training_units}</td>
                       <td className="num">{row.effective_minutes.toLocaleString("en-GB")}</td>

@@ -19,6 +19,10 @@ Two rules shape this module:
    player's stored form before the eleven's mean is taken, and the engine's fatigue term already reads
    that mean. With no condition on file — every club nobody manages, and a career's first round — the
    scaling is exactly 1 and the numbers are the ones this module has always produced.
+5. **A career's played rounds develop the players who played them.** `SquadOverlay.developed` carries the
+   career-owned attribute set a player earned in earlier rounds, and `developed_overall` the scalar beside
+   it. They replace the stored values for this career's selection only: the `real_players` rows every
+   other page reads are never rewritten, and a read with no such rows is bit-for-bit the stored squad.
 """
 
 from __future__ import annotations
@@ -81,6 +85,11 @@ class SquadOverlay:
     removed: frozenset[str] = field(default_factory=frozenset)
     label: str = ""
     condition: Mapping[str, float] = field(default_factory=dict)
+    #: player id → the career-owned attribute set earned in earlier rounds (M13 item 4). Read in place of
+    #: `RealPlayer.attributes` for this career's selection, so the stored world rows stay untouched.
+    developed: Mapping[str, Mapping[str, int]] = field(default_factory=dict)
+    #: player id → the developed `overall` beside those attributes, on the same curve.
+    developed_overall: Mapping[str, float] = field(default_factory=dict)
 
     @property
     def empty(self) -> bool:
@@ -89,6 +98,10 @@ class SquadOverlay:
     @property
     def carries_load(self) -> bool:
         return bool(self.condition)
+
+    @property
+    def carries_development(self) -> bool:
+        return bool(self.developed)
 
     @property
     def summary(self) -> str:
@@ -100,6 +113,8 @@ class SquadOverlay:
         parts = [self.label] if self.label else []
         if self.condition:
             parts.append(f"{len(self.condition)} player(s) carry load from rounds this career already played")
+        if self.developed:
+            parts.append(f"{len(self.developed)} player(s) carry development written by earlier rounds")
         return "; ".join(parts)
 
 
@@ -167,22 +182,31 @@ def split_formation(formation: str) -> tuple[int, int, int]:
     return (parts[0], sum(parts[1:-1]), parts[-1])
 
 
-def _rank(players: Iterable[RealPlayer]) -> list[RealPlayer]:
-    return sorted(players, key=lambda player: (-player.overall, player.slug))
+def _rank(players: Iterable[RealPlayer], developed_overall: Mapping[str, float] | None = None) -> list[RealPlayer]:
+    """Best first, by the overall this career reads — developed where a row says so, stored otherwise."""
+    ratings = developed_overall or {}
+    return sorted(players, key=lambda player: (-ratings.get(player.id, player.overall), player.slug))
 
 
-def select_starting_xi(players: Sequence[RealPlayer], defenders: int, midfielders: int, attackers: int) -> dict[str, list[RealPlayer]]:
+def select_starting_xi(
+    players: Sequence[RealPlayer],
+    defenders: int,
+    midfielders: int,
+    attackers: int,
+    developed_overall: Mapping[str, float] | None = None,
+) -> dict[str, list[RealPlayer]]:
     """Best available per band, by overall then slug, filling shortfalls from the nearest band.
 
     A squad without enough named defenders borrows a midfielder rather than leaving a hole: the
     shortfall is reported as a factor, so a side that had to improvise does not look identical to one
-    that did not.
+    that did not. `developed_overall` is the career's own view of each player's rating (M13 item 4);
+    with none the stored rows decide, exactly as before.
     """
     by_band: dict[str, list[RealPlayer]] = {band: [] for band in BANDS}
-    keeper_pool = _rank([player for player in players if player.position in BANDS["keeper"]])
+    keeper_pool = _rank([player for player in players if player.position in BANDS["keeper"]], developed_overall)
     by_band["keeper"] = keeper_pool[:1]
     wanted = {"defence": defenders, "midfield": midfielders, "attack": attackers}
-    pools = {band: _rank([player for player in players if player.position in BANDS[band]]) for band in ("defence", "midfield", "attack")}
+    pools = {band: _rank([player for player in players if player.position in BANDS[band]], developed_overall) for band in ("defence", "midfield", "attack")}
     taken = {player.id for player in by_band["keeper"]}
     for band, count in wanted.items():
         pool = [player for player in pools[band] if player.id not in taken]
@@ -204,25 +228,35 @@ def select_starting_xi(players: Sequence[RealPlayer], defenders: int, midfielder
     return by_band
 
 
-def _band_index(players: Sequence[RealPlayer], keys: Sequence[str]) -> float:
+def _band_index(players: Sequence[RealPlayer], keys: Sequence[str], developed: Mapping[str, Mapping[str, int]] | None = None) -> float:
     """Mean of the chosen attributes over the band, on the world's own 28–96 scale, shifted to 0–1.
 
     `(mean − 28) / 68` puts a squad that carries only the floor of each attribute at 0 and one at the
     model's ceiling at 1; nothing is calibrated against real football, and the engine says so.
+    `developed` is the career-owned attribute set (M13 item 4): where a player has one it is read
+    instead of his stored row, which is how development reaches this measurement without a write to
+    `real_players`.
     """
-    values = [player.attributes.get(key, 0) for player in players for key in keys if player.attributes.get(key) is not None]
+    overrides = developed or {}
+    values = [
+        attributes[key]
+        for player in players
+        for attributes in ((overrides.get(player.id) or player.attributes),)
+        for key in keys
+        if attributes.get(key) is not None
+    ]
     if not values:
         return 0.0
     return max(0.0, min(1.0, (mean(values) - 28.0) / 68.0))
 
 
-def band_index(players: Sequence[RealPlayer], band: str) -> float:
+def band_index(players: Sequence[RealPlayer], band: str, developed: Mapping[str, Mapping[str, int]] | None = None) -> float:
     """The number `team_profile` would print beside that band, for any set of players.
 
     Public because §22's tactical fit has to be the *same measurement* the engine plays with, not a
     second scale a reader would have to trust twice.
     """
-    return _band_index(players, BAND_ATTRIBUTES[band])
+    return _band_index(players, BAND_ATTRIBUTES[band], developed)
 
 
 def band_of_position(position: str) -> str:
@@ -260,14 +294,18 @@ def team_profile(session: Session, team_id: str, *, system_slug: str | None = No
         raise LookupError(f"no tactical system {system_slug}")
     formation = system.formation if system else team.formation
     defenders, midfielders, attackers = split_formation(formation)
-    bands = select_starting_xi(rows, defenders, midfielders, attackers)
+    # The career's own attributes and rating come first: an overlay with development rows replaces the
+    # stored values for its eleven, and an overlay without one leaves every number as the rows read it.
+    developed = squad.developed if squad is not None else {}
+    developed_overall = squad.developed_overall if squad is not None else {}
+    bands = select_starting_xi(rows, defenders, midfielders, attackers, developed_overall)
     eleven = [*bands["keeper"], *bands["defence"], *bands["midfield"], *bands["attack"]]
 
-    attack = _band_index(bands["attack"], BAND_ATTRIBUTES["attack"])
-    midfield = _band_index(bands["midfield"], BAND_ATTRIBUTES["midfield"])
-    defence = _band_index(bands["defence"], BAND_ATTRIBUTES["defence"])
-    keeper = _band_index(bands["keeper"], BAND_ATTRIBUTES["keeper"])
-    press = _band_index(eleven, PRESS_ATTRIBUTES)
+    attack = _band_index(bands["attack"], BAND_ATTRIBUTES["attack"], developed)
+    midfield = _band_index(bands["midfield"], BAND_ATTRIBUTES["midfield"], developed)
+    defence = _band_index(bands["defence"], BAND_ATTRIBUTES["defence"], developed)
+    keeper = _band_index(bands["keeper"], BAND_ATTRIBUTES["keeper"], developed)
+    press = _band_index(eleven, PRESS_ATTRIBUTES, developed)
     # Stored form is what the world generator wrote; condition (§20) is what this career's played rounds
     # left on it. An empty map — every club nobody manages, and a career's first round — scales by 1, so
     # the mean below is the number this function has always returned.
@@ -280,7 +318,7 @@ def team_profile(session: Session, team_id: str, *, system_slug: str | None = No
         return max(0.0, min(1.0, stored * weight))
 
     form = mean(_conditioned_form(player) for player in eleven) if eleven else 0.5
-    overall = mean(player.overall for player in eleven) / 100.0 if eleven else 0.0
+    overall = mean(developed_overall.get(player.id, float(player.overall)) for player in eleven) / 100.0 if eleven else 0.0
 
     tactics = _metrics_of_system(system) if system else {}
     form_explanation = (
@@ -400,6 +438,20 @@ def team_profile(session: Session, team_id: str, *, system_slug: str | None = No
     )
 
     ordered = [(player, band) for band in ("keeper", "defence", "midfield", "attack") for player in bands[band]]
+    developed_selected = [player for player in eleven if player.id in developed]
+    development_factors = (
+        [
+            Metric(
+                "developed_players",
+                "Selected players carrying development",
+                float(len(developed_selected)),
+                "count",
+                f"{len(developed_selected)} of the {len(eleven)} players this shape selected carry a development set written by earlier rounds of this career, so their band indices and overall are read from `career_developments` rather than the world's stored rows.",
+            )
+        ]
+        if developed_selected
+        else []
+    )
     return SideProfile(
         team_id=team.id,
         name=team.name,
@@ -418,7 +470,7 @@ def team_profile(session: Session, team_id: str, *, system_slug: str | None = No
         tactics=tactics,
         lineup=tuple((player.name, player.position, band) for player, band in ordered),
         selected=tuple((player.id, player.slug, player.name, player.position, band) for player, band in ordered),
-        factors=tuple([*factors, *shortfalls, *squad_factors, *load_factors]),
+        factors=tuple([*factors, *shortfalls, *squad_factors, *load_factors, *development_factors]),
     )
 
 

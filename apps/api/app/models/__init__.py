@@ -1012,6 +1012,7 @@ class Career(Base, TimestampMixin):
     seasons: Mapped[list[CareerSeason]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSeason.season_index")
     awards: Mapped[list[CareerBudgetAward]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerBudgetAward.round_index")
     appearances: Mapped[list[CareerAppearance]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerAppearance.round_index")
+    developments: Mapped[list[CareerDevelopment]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerDevelopment.round_index")
 
 
 class CareerFixture(Base, TimestampMixin):
@@ -1324,6 +1325,58 @@ class CareerAppearance(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     career: Mapped[Career] = relationship(back_populates="appearances")
+
+
+DEVELOPMENT_NOTE: Final = (
+    "one row per selected player per career round: the developed attribute set as of that round, recomputed "
+    "from the career's own appearance minutes and the world's training load. The row applies to this "
+    "career's eleven from the next round; it never rewrites a real_players row."
+)
+
+
+class CareerDevelopment(Base, TimestampMixin):
+    """The development a played round earned, written back for the career that played it (M13 item 4).
+
+    `development_view` could only *project* growth: the curve was recomputed from `career_appearances` on
+    every read and never reached the engine, so a season of football left the eleven's attributes exactly
+    as the world generated them. This table is the write-back half. A played round writes one row per
+    player it selected, holding the developed attribute set as of that round, and `squad_as_of` reads the
+    latest row per player from the round *after* it — so round N's snapshot decides the eleven in round N+1,
+    never the match round N already stored.
+
+    `attributes` holds the full after-state so the engine can read the same 28 attributes it reads from
+    `real_players`; `overall_before`/`overall_after` carry the scalar curve beside them. The values are
+    recomputed from `career_appearances` and `real_training_sessions` at write time, with the formula in
+    `simulation.development`, and the unique key makes a round's rows idempotent.
+    """
+
+    __tablename__ = "career_developments"
+    __table_args__ = (
+        UniqueConstraint("career_id", "round_index", "player_id", name="uq_career_development_round_player"),
+        Index("ix_development_career_round", "career_id", "round_index"),
+        Index("ix_development_player", "player_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    round_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
+    player_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    player_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    position: Mapped[str] = mapped_column(String(8), default="", nullable=False)
+    #: Sum of this player's `career_appearances.minutes` through this round, inclusive.
+    minutes_total: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    training_units: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    effective_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    potential: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    overall_before: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    overall_after: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    attributes: Mapped[dict[str, int]] = mapped_column(JSON, default=dict)
+    note: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="developments")
 
 
 # --- The stored timeline (M6, ROADMAP item 4) -------------------------------------------------------

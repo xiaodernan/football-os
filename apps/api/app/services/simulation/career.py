@@ -31,10 +31,17 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
-from app.models import OBJECTIVE_FORMULA, Career, CareerAppearance, CareerFixture, CareerSeason, Competition, RealMatch, RealPlayer, SimulationMatch, Team
+from app.models import ALL_ATTRIBUTES, OBJECTIVE_FORMULA, Career, CareerAppearance, CareerDevelopment, CareerFixture, CareerSeason, Competition, RealMatch, RealPlayer, SimulationMatch, Team
 from app.services.simulation.academy import academy_view
 from app.services.simulation.carry_over import carry_over_view, record_appearances, training_loads
-from app.services.simulation.development import DEVELOPMENT_RATE, DEVELOPMENT_TAU, TRAINING_MINUTES_PER_UNIT, development_summary
+from app.services.simulation.development import (
+    ATTRIBUTE_FLOOR,
+    DEVELOPMENT_RATE,
+    DEVELOPMENT_TAU,
+    TRAINING_MINUTES_PER_UNIT,
+    developed_overall,
+    development_summary,
+)
 from app.services.simulation.ledger import ledger_view
 from app.services.simulation.profile import SquadOverlay, team_profile
 from app.services.simulation.service import run_simulation
@@ -58,7 +65,8 @@ DEVELOPMENT_FORMULA: Final = (
     f"τ = {DEVELOPMENT_TAU:g} minutes, rate = {DEVELOPMENT_RATE:g}; effective_minutes = match_minutes "
     f"+ {TRAINING_MINUTES_PER_UNIT:g}·training_load_units (the world's sessions for the player); each "
     "attribute climbs toward the player's stored potential from his stored (or floored) value and saturates "
-    "so it never crosses potential — recomputed from the rows on every read, never written back"
+    "so it never crosses potential — computed at the end of every played round and written to "
+    "career_developments, where the next round's eleven reads it, while real_players is never rewritten"
 )
 
 
@@ -111,25 +119,26 @@ def limitations() -> dict[str, str]:
             "stops the market spending from it."
         ),
         "carry_over": (
-            "A played round now carries into the next one. Every player the engine selected is traced in "
-            "career_appearances at the fixture's full length, and the round after it reads a condition figure off "
-            "those rows plus the world's training sessions for each player; that condition weights the eleven's "
-            "form index, which is the number the engine's fatigue term already reads. What does not change is a "
-            "player's *stored* attributes: those same fixture minutes are projected into a development curve in the "
-            "separate `development` block, but that block is read-only — recomputed from the rows on every read and "
-            "never written back — so the squad the rest of the page reads keeps the attributes the world gave it. "
-            "Nothing rests a tired player, and a club nobody manages has no trace, so its side is measured off its "
-            "rows exactly as it always was."
+            "A played round now carries into the next one, in two ways. Every player the engine selected is traced in "
+            "career_appearances at the fixture's full length, and the round after it reads a condition figure off those "
+            "rows plus the world's training sessions for each player; that condition weights the eleven's form index, "
+            "which is the number the engine's fatigue term already reads. The same minutes are also written back as one "
+            "career_developments row per selected player, holding the developed attribute set as of that round, and "
+            "`squad_as_of` reads the latest row from the rounds *before* the one being played — so the career's own eleven "
+            "develops while the world's `real_players` rows stay exactly what the generator wrote. What does not change "
+            "is a stored match: round N's development is written after N is recorded and applies from N+1, so replaying N "
+            "reads the rows that existed before N and keeps its digest. Nothing rests a tired player, and a club nobody "
+            "manages has no trace, so its side is measured off its rows exactly as it always was."
         ),
         "projections": (
-            "The `development`, `academy`, `affordability`, `contracts`, `board`, `head_to_head` and `next_fixture_brief` blocks "
-            "are read-only projections recomputed from this career's own rows on every read: fixture minutes and "
-            "training projected toward potential, the youth class judged against the eleven the engine would "
-            "select next, a wage runway and a signing preview, a deal book whose projected "
+            "The `development` block prints both the projection and the rows a played round wrote; the `academy`, "
+            "`affordability`, `contracts`, `board`, `head_to_head` and `next_fixture_brief` blocks are read-only "
+            "projections recomputed from this career's own rows on every read: the youth class judged against the eleven "
+            "the engine would select next, a wage runway and a signing preview, a deal book whose projected "
             "expiry nothing enforces, a season pace projection against the objectives, this career's record against "
-            "one opponent, and the engine's own band measurements of the next fixture's two sides. None of them "
-            "writes a stored attribute, expires or renews a contract, triggers a board decision or keeps a counter — "
-            "each is what the rows imply, printed beside the formula that produced it."
+            "one opponent, and the engine's own band measurements of the next fixture's two sides. None of them rewrites "
+            "the world's `real_players` attributes, expires or renews a contract, triggers a board decision or keeps a "
+            "counter — each is what the rows imply, printed beside the formula that produced it."
         ),
         "ledger": (
             "The season ledger sums this career's own `sim_events` rows: goals, attempts, cards and injuries per "
@@ -388,6 +397,82 @@ def _trace_round(
         minutes=int(match.minutes),
         opponent_name=opponent_name,
     )
+    _write_developments(session, career, round_index=round_index, lineup=list(profile.selected))
+
+
+def _write_developments(
+    session: Session,
+    career: Career,
+    *,
+    round_index: int,
+    lineup: list[tuple[str, str, str, str, str]],
+) -> list[CareerDevelopment]:
+    """Write the development this round earned, one row per player it selected (M13 item 4).
+
+    The inputs are the career's own rows: every `career_appearances.minutes` through this round plus the
+    world's training load for the player, run through `development_summary` toward his stored potential.
+    `attributes` is the *full after-state* recomputed from the stored baseline, not from last round's
+    row, so the curve stays a pure function of cumulative minutes and the projection `development_view`
+    prints is the same arithmetic. `overall_before` is the previous round's `overall_after` (or the
+    stored overall on a first row), which is what makes the round-by-round gain legible.
+
+    Idempotent per round: a round that somehow traces twice keeps its first rows, the way
+    `record_appearances` does.
+    """
+    existing = list(session.scalars(select(CareerDevelopment).where(CareerDevelopment.career_id == career.id, CareerDevelopment.round_index == round_index)).all())
+    if existing or not lineup:
+        return existing
+    appearances = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id, CareerAppearance.round_index <= round_index)).all())
+    minutes: dict[str, int] = {}
+    for appearance in appearances:
+        player_id = str(appearance.player_id)
+        minutes[player_id] = minutes.get(player_id, 0) + int(appearance.minutes)
+    training = training_loads(session, [player_id for player_id, _slug, _name, _position, _band in lineup])
+    previous: dict[str, CareerDevelopment] = {}
+    for prior_row in session.scalars(
+        select(CareerDevelopment)
+        .where(CareerDevelopment.career_id == career.id, CareerDevelopment.round_index < round_index)
+        .order_by(CareerDevelopment.round_index, CareerDevelopment.id)
+    ).all():
+        previous[str(prior_row.player_id)] = prior_row
+    rows: list[CareerDevelopment] = []
+    for player_id, slug, name, position, _band in lineup:
+        player = session.get(RealPlayer, player_id)
+        if player is None:
+            continue
+        units = int(training.get(player_id, 0))
+        effective = int(minutes.get(player_id, 0)) + int(round(TRAINING_MINUTES_PER_UNIT * units))
+        baseline = {attribute: int((player.attributes or {}).get(attribute, ATTRIBUTE_FLOOR)) for attribute in ALL_ATTRIBUTES}
+        summary = development_summary(minutes_played=effective, potential=player.potential, attributes=baseline)
+        prior = previous.get(player_id)
+        rows.append(
+            CareerDevelopment(
+                id=new_public_id("cdv"),
+                career_id=career.id,
+                round_index=round_index,
+                player_id=player_id,
+                player_slug=slug,
+                player_name=name,
+                position=position,
+                minutes_total=int(minutes.get(player_id, 0)),
+                training_units=units,
+                effective_minutes=effective,
+                potential=player.potential,
+                overall_before=float(prior.overall_after) if prior else float(player.overall),
+                overall_after=float(developed_overall(player.overall, potential=player.potential, minutes_played=effective)),
+                attributes=summary["after"],
+                note=(
+                    f"written after round {round_index}: {int(minutes.get(player_id, 0))} career minutes through this round "
+                    f"plus {units} training load units, developed toward potential {player.potential}. "
+                    "Applies to this career's eleven from the next round; the world's stored row is unchanged."
+                ),
+                data_origin="simulation",
+                is_demo_data=True,
+            )
+        )
+    session.add_all(rows)
+    session.commit()
+    return rows
 
 
 def play_round(session: Session, career: Career) -> tuple[CareerFixture, SimulationMatch]:
@@ -1306,19 +1391,32 @@ def development_view(
     appearances: list[CareerAppearance] | None = None,
     training: dict[str, int] | None = None,
 ) -> dict[str, Any]:
-    """A read-only projection of how the career's players have developed from fixture minutes (M13 item 4).
+    """How the career's players have developed from fixture minutes (M13 item 4).
 
     Sums each player's appearance minutes across the whole career, then projects the developed attribute
-    set toward that player's stored potential using the deterministic curve in `development`. The result
-    is recomputed from the rows on every read and never written back, so the squad the rest of the page
-    reads keeps its stored attributes and the projection moves only as the career is actually played.
-    `appearances`/`training` let the career view hand in the rows it already fetched for `carry_over_view`.
+    set toward that player's stored potential using the deterministic curve in `development`. Two views
+    of the same arithmetic are printed together: the projection (what the rows imply) and the *applied*
+    rows a played round wrote into `career_developments`, which `squad_as_of` reads for every round after
+    it. The world's `real_players` rows are never rewritten; `applies_from_round` says when the latest
+    snapshot starts deciding this career's eleven. `appearances`/`training` let the career view hand in
+    the rows it already fetched for `carry_over_view`.
     """
     appearances = appearances if appearances is not None else list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id)).all())
     by_player: dict[str, int] = {}
-    for row in appearances:
-        player_id = str(row.player_id)
-        by_player[player_id] = by_player.get(player_id, 0) + int(row.minutes)
+    for appearance in appearances:
+        player_id = str(appearance.player_id)
+        by_player[player_id] = by_player.get(player_id, 0) + int(appearance.minutes)
+    applied = list(session.scalars(select(CareerDevelopment).where(CareerDevelopment.career_id == career.id).order_by(CareerDevelopment.round_index, CareerDevelopment.id)).all())
+    latest_applied: dict[str, CareerDevelopment] = {}
+    for applied_row in applied:
+        latest_applied[str(applied_row.player_id)] = applied_row
+    last_applied_round = max((int(applied_row.round_index) for applied_row in applied), default=0)
+    applied_fields = {
+        "applied_rows": len(applied),
+        "applied_players": len(latest_applied),
+        "last_applied_round": last_applied_round,
+        "applies_from_round": last_applied_round + 1 if last_applied_round else int(career.rounds_played) + 1,
+    }
     if not by_player:
         return {
             "players_developed": 0,
@@ -1327,7 +1425,8 @@ def development_view(
             "tau": DEVELOPMENT_TAU,
             "rate": DEVELOPMENT_RATE,
             "development_formula": DEVELOPMENT_FORMULA,
-            "note": ("no career appearances on file yet, so no fixture-minutes development can be projected; " "the squad reads its stored attributes exactly as before"),
+            **applied_fields,
+            "note": ("no career appearances on file yet, so no fixture-minutes development can be projected or applied; " "the squad reads its stored attributes exactly as before"),
             "data_origin": "simulation",
             "is_demo_data": True,
         }
@@ -1341,6 +1440,7 @@ def development_view(
         training_units = training.get(player_id, 0)
         effective = int(minutes) + int(round(TRAINING_MINUTES_PER_UNIT * training_units))
         summary = development_summary(minutes_played=effective, potential=player.potential, attributes=player.attributes)
+        snapshot = latest_applied.get(player_id)
         developed.append(
             {
                 "player_id": player_id,
@@ -1354,6 +1454,9 @@ def development_view(
                 "before": summary["before"],
                 "after": summary["after"],
                 "delta": summary["delta"],
+                "applied_round": int(snapshot.round_index) if snapshot else None,
+                "overall_before": round(float(snapshot.overall_before), 3) if snapshot else float(player.overall),
+                "overall_after": round(float(snapshot.overall_after), 3) if snapshot else round(float(developed_overall(player.overall, potential=player.potential, minutes_played=effective)), 3),
             }
         )
     developed.sort(key=lambda item: (-item["minutes"], str(item["player_name"])))
@@ -1364,10 +1467,12 @@ def development_view(
         "tau": DEVELOPMENT_TAU,
         "rate": DEVELOPMENT_RATE,
         "development_formula": DEVELOPMENT_FORMULA,
+        **applied_fields,
         "note": (
-            "projected only: the stored squad attributes elsewhere on this page are unchanged; this is what the "
-            "match minutes and the world's training load imply if the season's development is applied, recomputed "
-            "from the rows on every read"
+            "applied, not just projected: every played round writes one `career_developments` row per player it selected, "
+            "and the latest row before a round decides that round's eleven — so the squad this career plays with is read "
+            "from its own developed attributes while the world's stored rows stay exactly as generated; the projection "
+            "beside each row is recomputed from the career's rows on every read"
         ),
         "data_origin": "simulation",
         "is_demo_data": True,

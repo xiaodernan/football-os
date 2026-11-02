@@ -33,7 +33,7 @@ from typing import Any, Final
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Career, CareerAppearance, CareerFixture, CareerSquadMove, RealPlayer, Team
+from app.models import Career, CareerAppearance, CareerDevelopment, CareerFixture, CareerSquadMove, RealPlayer, Team
 from app.services.simulation.carry_over import condition_map
 from app.services.simulation.profile import SquadOverlay
 
@@ -81,6 +81,25 @@ def squad_state(session: Session, career: Career, round_index: int) -> dict[str,
     return state
 
 
+def developments_as_of(session: Session, career_id: str, round_index: int) -> dict[str, CareerDevelopment]:
+    """The development row each player carries going into `round_index`: the latest written before it.
+
+    Strictly before, because a round's row is computed from the minutes that round *played* — applying
+    it to the round itself would let a stored match replay differently from the match that was played.
+    One row per player per round is held by `uq_career_development_round_player`; this returns the
+    newest of them, which is the state the next round's eleven is selected with.
+    """
+    latest: dict[str, CareerDevelopment] = {}
+    rows = session.scalars(
+        select(CareerDevelopment)
+        .where(CareerDevelopment.career_id == career_id, CareerDevelopment.round_index < int(round_index))
+        .order_by(CareerDevelopment.round_index, CareerDevelopment.id)
+    ).all()
+    for row in rows:
+        latest[str(row.player_id)] = row
+    return latest
+
+
 def squad_as_of(
     session: Session,
     career: Career,
@@ -91,13 +110,20 @@ def squad_as_of(
 ) -> SquadOverlay | None:
     """The overlay that turns the club's stored rows into the squad this career plays with.
 
-    `None` when the career has changed nothing by that round: no move applied, and no played round to
-    carry load from. Either half of that can hold on its own — a career that never used the market still
-    gets an overlay from round 2 onwards, because §20's carry-over is a change to the side too.
+    `None` when the career has changed nothing by that round: no move applied, no played round to carry
+    load from, and no development written by earlier rounds. Each half can hold on its own — a career
+    that never used the market still gets an overlay from round 2 onwards, because §20's carry-over and
+    M13 item 4's development are changes to the side too.
     """
     if not career.club_id:
         return None
     condition = condition_map(session, career.id, round_index=round_index, appearances=appearances, training=training)
+    # The career's own development, one latest row per player, strictly from rounds before this one. It
+    # is a map of attributes and a scalar beside it, so the engine reads the career's eleven and not a
+    # write to the world's `real_players` rows.
+    rows = developments_as_of(session, career.id, round_index)
+    developed = {player_id: dict(row.attributes or {}) for player_id, row in rows.items()}
+    developed_overall = {player_id: float(row.overall_after) for player_id, row in rows.items()}
     stored = {player.id: player for player in session.scalars(select(RealPlayer).where(RealPlayer.team_id == career.club_id))}
     added: list[RealPlayer] = []
     removed: set[str] = set()
@@ -113,7 +139,7 @@ def squad_as_of(
             added.append(player)
         elif player_id in stored:
             removed.add(player_id)
-    if not added and not removed and not missing and not condition:
+    if not added and not removed and not missing and not condition and not developed:
         return None
     label = ""
     if added or removed or missing:
@@ -123,6 +149,8 @@ def squad_as_of(
         removed=frozenset(removed),
         label=label,
         condition=condition,
+        developed=developed,
+        developed_overall=developed_overall,
     )
 
 
@@ -224,6 +252,7 @@ __all__ = [
     "SQUARD_RULE",
     "can_field_side",
     "current_squad",
+    "developments_as_of",
     "effective_kind",
     "moves_as_of",
     "replay_squads",

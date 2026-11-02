@@ -21,6 +21,11 @@ Date: 2026-10-28.
 | `development_formula`, `note` | the curve the engine applies and what the projection does not promise |
 | `data_origin`, `is_demo_data` | as every career block carries |
 
+> This record documents the projection-only panel as it shipped on 2026-10-28. The write-back half
+> (one `career_developments` row per selected player per played round, read by the next round's
+> eleven) is recorded in `docs/M13_DEVELOPMENT_WRITEBACK_VERIFICATION.md`; where this page says the
+> block "never writes it back", that was true of this walk and is no longer true of the build.
+
 The curve: `value + (potential − value)·(1 − e^(−minutes/τ))·rate`, with
 `effective_minutes = match_minutes + 0.5·training_load_units`, each attribute climbing toward the
 player's stored potential from his stored (or floored, 40) value and saturating so it never crosses
