@@ -1071,6 +1071,7 @@ signed from the grant alone afterwards, ending with `['season_grant', 'loan', 'w
 honest economic figure, measured on the same board: the cheapest listing costs 668,250 outright and 100,238 on
 loan, so a season's grant keeps a career in the market and does not buy it a first-class player. Evidence:
 [M13_SEASON_GRANT_VERIFICATION.md](docs/M13_SEASON_GRANT_VERIFICATION.md).
+Landing: those bytes reached master inside the concurrent batch's commit `c5d0979`, which committed the shared index while this item's sixteen paths were staged in it, so the subject names that lane's catalogue table; the record's section 9 carries the pre-move grading of the staged tree and the suite verdict on the commit after it.
 
 ## How to work an item
 

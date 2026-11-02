@@ -592,8 +592,9 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
    agreement, projection-not-payment, market-door publication; the targeted run is **34 passed, rc 0**;
    `qa-wire-readers` **12/12**, `qa-unused-keys` **3/3** at floor 0, `qa-token-drift` **2/2** (it reds on a
    `{amount} {units}` template that is byte-identical in all three locales: the remedy is the composition the
-   codebase already does, not a line in another lane's gate script), locale parity at 4,028 across three
-   locales; ruff, mypy, tsc, eslint green. The live walk (`.scratch/walk-grant.py`, career opened with
+   codebase already does, not a line in another lane's gate script), locale parity at 4,012 per locale on the
+   commit that holds the item — 4,028 was the working tree the gate ran, which also carried the signing-window
+   batch's 16 uncommitted keys; ruff, mypy, tsc, eslint green. The live walk (`.scratch/walk-grant.py`, career opened with
    `budget: 0`, tier-2 league's weakest club) ran twice against two generated worlds, both exit 0: 14 rounds /
    14 points paid **147,000**, 14 rounds / 16 points paid **152,000**, and in both the same **90,110** loan that
    was refused from 0 before the boundary is signed from the grant alone, ending season two round one at
@@ -601,6 +602,12 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
    rather than assumed: the cheapest listing on that board is 668,250 to buy and 100,238 to loan, so a season's
    grant keeps a career in the market and does not buy it a first-class player. Recorded with the browser read
    in [M13_SEASON_GRANT_VERIFICATION.md](M13_SEASON_GRANT_VERIFICATION.md).
+   **Landing:** these bytes reached `master` inside the concurrent batch's commit `c5d0979`, which committed the
+   shared index while this item's sixteen paths were staged in it, so the subject names that lane's catalogue
+   table and not this feature. The tree was graded before it moved (tsc, eslint, ruff, mypy and the 16 grant
+   tests green on the staged tree itself) and the full suite ran on it after: **2132 collected, 2130 passed,
+   2 failed** — the README population row and the migration census, both figures a concurrent batch committed
+   alongside this one and neither one the grant's. Recorded in that file's section 9.
    **What is still open:** a boundary that ran before `0047` has a verdict and no grant (the panel prints an
    em-dash rather than inventing a payment — a backfill would be writing money for a season nobody was asked
    to play); and the grant is the only income in the game, so a cup run, a sold academy graduate and a

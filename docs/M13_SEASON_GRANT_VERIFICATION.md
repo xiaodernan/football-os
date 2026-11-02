@@ -109,7 +109,7 @@ Every read that already answered "what does this career have" now answers it wit
 | `qa-wire-readers.mjs` | **12/12** |
 | `qa-unused-keys.mjs` | **3/3** — 0 keys asked for by nothing, floor 0; 3,962 judged, 66 delegated |
 | `qa-token-drift.mjs` | **2/2** — 45 named tokens stable, 0 unnamed identical values |
-| `qa-locale-completeness` / `qa-population-floor` | **2/2** and **3/3**, en=zh=zh-TW=4,028 |
+| `qa-locale-completeness` / `qa-population-floor` | **2/2** and **3/3**, en=zh=zh-TW=4,028 **on that working tree** — the commit that holds this item carries 4,012 each (§9) |
 | `qa-icu-messages` / `qa-icu-coverage` / `qa-key-drift` / `qa-namespace-ownership` / `qa-translation-freshness` / `qa-shared-keys` | all rc 0 |
 | `.scratch/check0047.py` | DRIFT: none |
 
@@ -172,7 +172,52 @@ holds the strings as read.
 - It does not pay a closed season retroactively: the award is written by `close_season`, so a boundary that
   ran before migration `0047` has a verdict and no grant, and the seasons panel prints that as an em-dash
   rather than inventing a payment.
-- It does not prove the whole suite. The targeted grant and season runs are green; the full suite is run on
-  the cured commit and its verdict recorded there, and `apps/api/tests/test_locale_claims.py` currently
-  fails on a working tree another lane is mid-batch in — that failure is theirs to settle, not a claim
-  about this item.
+- It does not prove the whole suite on its own bytes. The full suite ran on the commit that carries this
+  item and its verdict is §9: 2130 of 2132 green, with the two reds named there and neither of them the
+  grant's — both are the population and census figures a concurrent batch committed alongside this one.
+
+## 9. How these bytes reached master, and the verdict on them
+
+**Not by a commit of this item's.** All sixteen paths went into the shared index exactly as sections 5 to 7
+describe them, and a concurrent lane committed the index while it held them: they reached `master` as the
+file half of `c5d0979` ("docs: the catalogue table states the population it holds (4028 keys)"), whose
+subject describes that lane's own table and not this feature. The cure is this section, not a rewind: the
+branch was rewound and re-committed only when it is one's own history, and rewinding here would have
+discarded the other lane's commit along with it. PLAN.md's landing note on `df1675e` is the same precedent
+written by an earlier session that met the same sweep.
+
+**What was proven before the tree moved, and after.** The staged tree was written out as a dangling commit
+(`d33b0a2`, never a branch head) and checked out into `.scratch/wt-grant`, where it was graded on its own
+bytes rather than on a working tree carrying somebody else's keys: `tsc --noEmit` rc 0, `next lint` clean,
+`ruff check app tests` clean, `mypy app` clean over 161 source files, and
+`pytest tests/test_career.py::TestSeasonGrants tests/test_transfers.py::TestBoardGrants` **16 passed,
+rc 0**. That tree's content is `c5d0979`'s content for these sixteen paths, which is the tree the suite then
+ran.
+
+**The full suite on `c5d0979`: 2132 collected, 2130 passed, 2 failed, exit 1**
+(`.scratch/full-suite-c5d0979.log`, `-p no:randomly`, run in the throwaway worktree). Neither red is the
+grant's and both are the sweep's:
+
+- `test_locale_claims.py::test_the_readme_table_states_the_coverage_the_catalogues_actually_have` — the
+  `zh` and `zh-TW` rows count a population of 4028 while `en.json` at this commit holds 4012. The other 16
+  keys belong to the concurrent signing-window batch and are still uncommitted, so the committed table
+  states a figure only that lane's working tree can reproduce. Its own case is what catches it.
+- `test_spec_audit_currency.py::test_the_audit_s_declared_figures_answer_for_the_committed_tree` —
+  `AUDIT_FIGURES` says 47 migrations and the committed tree holds 48, because migration `0047` is the 48th
+  file and `0534b80` moved the census to 47 the day before. The cure sits in this tree's index right now,
+  as part of the batch that adds `0048` and rewrites the audit row; moving that line from under a cure
+  already in flight would only produce two versions of it.
+
+**The catalogue figure, restated on its own tree.** Section 5 read 4,028 keys per locale on a working tree
+that also carried the window batch's 16 uncommitted keys. On the commit that holds this item the three
+catalogues hold **4,012** each: `ed9b631` held 4,010 and this item adds 2 keys per locale. Parity across
+three locales is the claim that survives the sweep; the count does not, and `test_locale_claims` above is
+that sentence having a reader.
+
+**One code point, caught by an encoding it could not survive.** The `zh-TW` draft of both new values used
+U+64A8. The simplified 拨 (U+62E8) takes the traditional 撥, which is **U+64A5** — and U+64A8 is not in
+Big5 at all (`chr(0x64A8).encode("big5")` raises) while U+64A5 encodes as `bcb7`. Encodability named it,
+because this machine's GBK code page prints the two as the same mojibake and no local converter was
+available: `LCMapStringW` with `LCMAP_SIMPLIFIED_TRADITIONAL` returns its input unchanged for these
+characters. `git show c5d0979:apps/web/messages/zh-TW.json` reads U+64A5 in both values, and
+`qa-token-drift`, `qa-unused-keys`, `qa-locale-completeness` and `qa-key-drift` were re-run green on it.
