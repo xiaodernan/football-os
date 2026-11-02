@@ -341,6 +341,16 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     it already needed for the brief), so both endpoints read it from the view. The play endpoint keeps its
     pre-play plan — that is the availability check for the round about to be played, a different round from the
     post-play next fixture.
+    **Tenth fix (2026-11-02):** the two challenge routes planned the next fixture and then spread
+    `run_view(...)` over the same dict, which overwrites the key — every start and run-detail request
+    planned the same fixture twice and discarded one, pinned by a call counter in
+    `tests/test_challenges.py`. The career **play** route had the same shape with the verdict:
+    `_challenge_verdict` built a second whole career view to keep one key, over tables the response had
+    just read. `challenges.verdict_of` now judges the run's own `career_fixtures` rows with the same
+    `verdict_for` — one SELECT — and the play route's call of it is pinned separately. Recorded in
+    [M13_CHALLENGE_RUN_PLAN_DEDUPLICATION_VERIFICATION.md](M13_CHALLENGE_RUN_PLAN_DEDUPLICATION_VERIFICATION.md)
+    and [M13_PLAY_VERDICT_DEDUPLICATION_VERIFICATION.md](M13_PLAY_VERDICT_DEDUPLICATION_VERIFICATION.md).
+
 15. **Load envelope.** **Done (2026-10-28).** `docs/LOAD_ENVELOPE.md` records the measured envelope
     (concurrent career sims: `p95_ms_ceiling: 15000`, `subprocess_seconds_ceiling: 600`; measured gate
     p95 1,655.61 ms, measure shape p95 1,745.49 ms), the two refusal arms (wrong prefix, career cap), and

@@ -31,9 +31,9 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import func, select
+from sqlalchemy import event, func, select
 
-from app.core.db import SessionLocal
+from app.core.db import SessionLocal, engine
 from app.models import Career, Competition, Team
 from app.services.simulation.challenges import (
     CHALLENGES,
@@ -555,6 +555,65 @@ def test_a_run_plans_the_next_fixture_once_per_request(auth_client, world: dict[
     assert len(calls) == 1, f"the run detail planned the next fixture {len(calls)} times"
     # Nothing has been played between the two reads, so the detail must print the same plan.
     assert read.json()["next_fixture"] == planned
+
+
+def test_a_run_verdict_costs_one_fixture_read_and_one_helper_call(auth_client, world: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:  # type: ignore[no-untyped-def]
+    """The play response already builds the whole career view; its verdict must not build a second.
+
+    `_challenge_verdict` used to call `run_view(include_fixtures=False)` and keep one key, so every play
+    re-read the career's appearances, training, ledger and board that the response had just read. The
+    verdict is a pure judgment of the run's own `career_fixtures` rows, so `verdict_of` reads those and
+    nothing else. Both halves are asserted: the route calls the helper, and the helper issues exactly one
+    SELECT.
+    """
+    from app.api.v1 import careers as careers_api
+    from app.services.simulation import challenges as challenge_service
+
+    started = _start(auth_client, SHORT, competition=world["competition"])
+    assert started.status_code == 201, started.text
+    slug = started.json()["run"]["slug"]
+    first = auth_client.post(f"{CAREERS_API}/{slug}/play")
+    assert first.status_code == 200, first.text
+
+    original = careers_api.verdict_of
+    calls: list[str] = []
+
+    def counting(*args: Any, **kwargs: Any) -> dict[str, Any] | None:
+        calls.append("verdict")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(careers_api, "verdict_of", counting)
+    second = auth_client.post(f"{CAREERS_API}/{slug}/play")
+    assert second.status_code == 200, second.text
+    assert len(calls) == 1, f"the play route read the verdict {len(calls)} times"
+    assert second.json()["challenge_verdict"]["rounds_played"] == 2
+    read = auth_client.get(f"{API}/runs/{slug}")
+    assert read.status_code == 200, read.text
+    assert second.json()["challenge_verdict"] == read.json()["verdict"]
+
+    session = SessionLocal()
+    try:
+        career = session.scalar(select(Career).where(Career.slug == slug))
+        assert career is not None
+        statements: list[str] = []
+
+        def before(conn: object, cursor: object, statement: str, params: object, context: object, executemany: bool) -> None:  # type: ignore[no-untyped-def]
+            statements.append(statement.lower())
+
+        event.listen(engine, "before_cursor_execute", before)
+        try:
+            verdict = challenge_service.verdict_of(session, career)
+        finally:
+            event.remove(engine, "before_cursor_execute", before)
+        selects = [statement for statement in statements if statement.lstrip().startswith("select")]
+        assert len(selects) == 1, f"the verdict read {len(selects)} statements: {selects}"
+        assert "from career_fixtures" in selects[0]
+        assert verdict is not None and verdict["rounds_played"] == 2
+        # A career with no scenario, or one whose scenario left the catalogue, has no verdict.
+        assert challenge_service.verdict_of(session, _Career(challenge_window=0, challenge_slug="")) is None  # type: ignore[arg-type]
+        assert challenge_service.verdict_of(session, _Career(challenge_window=0, challenge_slug="gone")) is None  # type: ignore[arg-type]
+    finally:
+        session.close()
 
 
 def test_an_open_career_has_no_window_and_can_be_played_on(auth_client, world: dict[str, str]) -> None:  # type: ignore[no-untyped-def]

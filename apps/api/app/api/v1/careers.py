@@ -33,7 +33,7 @@ from app.services.simulation.career import (
     play_round,
     resolve_club,
 )
-from app.services.simulation.challenges import run_view as challenge_run_view
+from app.services.simulation.challenges import verdict_of
 from app.services.simulation.ledger import ledger_view
 from app.services.simulation.service import options, system_options
 from app.services.tactics.plan import system_by_slug
@@ -213,10 +213,12 @@ def play_next(ident: str, request: Request, db: Session = Depends(get_db), user:
 
 
 def _challenge_verdict(db: Session, career: Career) -> dict[str, Any] | None:
-    """The live verdict, but only for a career that is actually playing a scenario."""
-    if not career.challenge_slug:
-        return None
-    return challenge_run_view(db, career, include_fixtures=False)["verdict"]
+    """The live verdict, but only for a career that is actually playing a scenario.
+
+    Read from the run's own fixture rows: the play response already carries the whole career view, and
+    building a second one to return this dictionary made every play read the career tables twice.
+    """
+    return verdict_of(db, career)
 
 
 @router.post("/{ident}/retire")

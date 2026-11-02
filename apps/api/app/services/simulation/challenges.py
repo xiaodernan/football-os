@@ -508,6 +508,23 @@ def verdict_for(challenge: Challenge, career: Career, rows: list[CareerFixture])
     }
 
 
+def verdict_of(session: Session, career: Career) -> dict[str, Any] | None:
+    """The live verdict for a career that plays a scenario, read without building the run view.
+
+    `run_view` answers the whole run: the career, the scenario, the fixtures and the verdict. The play
+    endpoint needs this one block *beside* the full career view it already builds, and building a second
+    view for it re-read every table the response had just read. The verdict itself is a pure judgment of
+    the run's own `career_fixtures` rows, so that is all this reads. A career with no scenario, or one
+    whose scenario is no longer in the catalogue, has no verdict — the same `None` `run_view` publishes.
+    """
+    if not career.challenge_slug:
+        return None
+    challenge = challenge_by_slug(career.challenge_slug)
+    if challenge is None:
+        return None
+    return verdict_for(challenge, career, fixtures_of(session, career))
+
+
 def run_view(session: Session, career: Career, *, include_fixtures: bool = True) -> dict[str, Any]:
     """A run: the career it is played in, the scenario it is played under, and its live verdict."""
     challenge = challenge_by_slug(career.challenge_slug)
