@@ -208,9 +208,14 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    migrated QA database: four careers played to their boundary (three full seasons stayed at 1.857 /
    1.5 / 1.429 points per round, one never played), **150/150** page checks across `en`, `zh` and
    `zh-TW`, all 13 catalogue gates and `next build` green. Recorded in
-   [M13_SEASON_BOUNDARY_VERIFICATION.md](M13_SEASON_BOUNDARY_VERIFICATION.md). **Limitation:** no live
-   promotion or relegation was reachable — every walked season landed between the lines, so the two move
-   branches are covered by unit tests only.
+   [M13_SEASON_BOUNDARY_VERIFICATION.md](M13_SEASON_BOUNDARY_VERIFICATION.md). **Live moves done
+   (2026-11-02):** the limitation it left is now closed by two whole seasons walked through the HTTP API
+   on a tree extracted from this commit and an alembic-built database: Corgard Town took 31 points at
+   2.214 per round and was promoted, Elnwick Athletic 13 at 0.929 and was relegated. Each response was
+   read back against the league its verdict names (tier 1 / tier 2 from the world's own row), a next fixture
+   against a club of that league, the moved competition and the grant arithmetic (339,500 with the bonus,
+   144,500 without), 17/17 checks on both. Recorded in
+   [M13_PROMOTION_RELEGATION_LIVE_WALK.md](M13_PROMOTION_RELEGATION_LIVE_WALK.md).
 
 *Gate:* the season ledger still sums from `sim_events` rows; a new door gets a route-citation entry;
 isolation walk over any new tenant-scoped door.
