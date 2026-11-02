@@ -105,9 +105,11 @@ and the played note still carries "stored", and the curve identity (`after − b
 | `npm run build` | clean |
 | `qa-icu-messages`, `qa-unused-keys`, `qa-population-floor`, `qa-locale-completeness`, `qa-locale-content`, `qa-shared-keys` | all passed; 4028 keys in `en`/`zh`/`zh-TW`, 0 unused, shared-key ceiling held at 234 |
 
-The audit's migration census moved from 47 to **48** in `docs/SPEC_COVERAGE_AUDIT.md` and in
-`ROADMAP.md`'s quoted triple, which `apps/api/tests/test_spec_audit_currency.py` C1/C2 recompute
-from the committed tree after this commit.
+The audit's migration census moved from 47 to **49** in `docs/SPEC_COVERAGE_AUDIT.md` and in
+`ROADMAP.md`'s quoted triple: the committed tree already held 48 migration files when this unit
+started (0047 landed with `c5d0979` while the published figure still said 47), and 0048 makes it
+49. `apps/api/tests/test_spec_audit_currency.py` C1/C2 recompute the figure from the committed
+tree and pass on the follow-up documentation commit.
 
 ## 6. Disclosures
 
