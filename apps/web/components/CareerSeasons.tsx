@@ -5,12 +5,16 @@
  * The API recomputes the record and the pace from `career_fixtures` on the read and prints the stored
  * verdict separately, so a fixture list edited after the fact shows as the API's own re-check sentence
  * rather than as a quiet correction here. The panel does no arithmetic of its own: the two published
- * lines, the span and the pace are the API's numbers, and the verdict is the row's stored word.
+ * lines, the span, the pace and the board's grant are the API's numbers, and the verdict is the row's
+ * stored word. A closed season's grant sits beside the verdict it was paid for, and the season being
+ * played prints what the boundary's own arithmetic would pay if it closed on the rounds already stored.
  */
 
 import { Panel } from "@/components/ui";
 import { KeyValueGrid } from "@/components/world";
 import type { CareerRecord, CareerSeasons as CareerSeasonsView } from "@/lib/types";
+
+const money = (value: number) => value.toLocaleString("en-GB");
 
 type Translator = (key: string, values?: Record<string, string | number | Date>) => string;
 
@@ -82,6 +86,10 @@ export function CareerSeasons({
                   : verdictLabel(t, current.at_this_pace),
             ],
             [
+              t("seasonsGrantNowLabel"),
+              `${money(current.grant_if_closed_now.amount)} ${current.grant_if_closed_now.units}`,
+            ],
+            [
               t("seasonsLinesLabel"),
               t("seasonsLinesValue", { promotion: view.lines.promotion, relegation: view.lines.relegation }),
             ],
@@ -113,6 +121,7 @@ export function CareerSeasons({
                   <th scope="col">{t("seasonsThRounds")}</th>
                   <th scope="col">{t("seasonsThPace")}</th>
                   <th scope="col">{t("seasonsThVerdict")}</th>
+                  <th scope="col">{t("seasonsThGrant")}</th>
                   <th scope="col">{t("seasonsThNext")}</th>
                 </tr>
               </thead>
@@ -140,6 +149,16 @@ export function CareerSeasons({
                             : "badge badge--demo"
                         }
                       >{verdictLabel(t, block.verdict)}</span>
+                    </td>
+                    <td>
+                      {block.grant ? (
+                        <>
+                          {money(block.grant.amount)} {block.grant.units}
+                          <div className="muted">{block.grant.basis}</div>
+                        </>
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
                     </td>
                     <td>
                       {block.next_competition ? block.next_competition.name : <span className="muted">{t("seasonsNoMove")}</span>}

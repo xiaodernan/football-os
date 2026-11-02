@@ -47,6 +47,11 @@ export type MarketBudget = {
   budget: number;
   spent: number;
   received: number;
+  /** What the board has paid for the seasons this career closed — the sum of its `career_budget_awards` rows. */
+  granted: number;
+  grant_rows: number;
+  /** One clause per paid season, `season N: amount`, so the sum above can be read as its own rows. */
+  grant_detail: string;
   /** What the rounds already played have cost in wages — a sum of `career_wage_charges` rows. */
   wages_paid: number;
   remaining: number;
@@ -157,6 +162,9 @@ export type Move = {
   effect: string;
   /** A wage row names the players it was raised on; a squad move row has nothing to add. */
   detail: string;
+  /** Only a board grant carries these: the season it paid, and how much of it was the promotion bonus. */
+  season_index?: number;
+  promotion?: number;
   created_at: string | null;
 };
 
@@ -194,7 +202,7 @@ export type MarketView = {
   listings: Listing[];
   deals: Listing[];
   moves: Move[];
-  totals: { listed: number; signed: number; withdrawn: number; moves: number; wage_rows: number };
+  totals: { listed: number; signed: number; withdrawn: number; moves: number; wage_rows: number; grant_rows: number };
   rules: Record<string, string>;
   constants: {
     market_size: number;
@@ -204,6 +212,10 @@ export type MarketView = {
     loan_fee_share: number;
     sell_proceeds_share: number;
     default_loan_rounds: number;
+    /** The board's season grant, as the three authored numbers `rules.grant` spells out. */
+    season_grant_per_round: number;
+    season_grant_per_point: number;
+    promotion_grant: number;
     age_curve: { ages: string; weight: number }[];
   };
   data_origin: string;

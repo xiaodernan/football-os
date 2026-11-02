@@ -1010,6 +1010,7 @@ class Career(Base, TimestampMixin):
     moves: Mapped[list[CareerSquadMove]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSquadMove.round_index")
     wage_charges: Mapped[list[CareerWageCharge]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerWageCharge.round_index")
     seasons: Mapped[list[CareerSeason]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSeason.season_index")
+    awards: Mapped[list[CareerBudgetAward]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerBudgetAward.round_index")
     appearances: Mapped[list[CareerAppearance]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerAppearance.round_index")
 
 
@@ -1072,7 +1073,7 @@ MOVE_EFFECT: Final[dict[str, str]] = {
 # A wage row is the one ledger entry with no player attached to it, so its sentence names the round.
 WAGE_EFFECT: Final = "the wages this career agreed are paid: every deal it holds costs its weekly wage for the round it was held"
 # Stored so the number on a page and the rows behind it can be checked against each other by anyone.
-BUDGET_FORMULA: Final = "career.budget + sum(moves.fee where kind = sell) - sum(moves.fee where kind in (buy, loan)) - sum(wage_charges.fee)"
+BUDGET_FORMULA: Final = "career.budget + sum(moves.fee where kind = sell) + sum(budget_awards.amount) - sum(moves.fee where kind in (buy, loan)) - sum(wage_charges.fee)"
 
 
 class TransferListing(Base, TimestampMixin):
@@ -1230,6 +1231,50 @@ class CareerSeason(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     career: Mapped[Career] = relationship(back_populates="seasons")
+
+
+AWARD_KINDS: Final[tuple[str, ...]] = ("season_grant",)
+AWARD_EFFECT: Final = "the board pays this season's grant: the money arrives as a row of its own and raises the balance the market spends from"
+
+
+class CareerBudgetAward(Base, TimestampMixin):
+    """One sum the board paid a career when a season closed (M13 Phase 7 item 24).
+
+    The third ledger table, after `career_squad_moves` and `career_wage_charges`, and the first whose money
+    *arrives*. A career's budget was otherwise a depleting figure — fees out, wages out, sales in — so a
+    second season began with less of it than the first and a long career could only shrink. The board's
+    seasonal grant is what closes that loop, and like the other two tables it stores the running
+    `budget_after`, so the ledger a reader adds up is these three tables in round order.
+
+    Its own table rather than a column on `career_seasons` because the season row is a *decision* and is
+    deliberately not a cache of any figure: the record is summed from `career_fixtures` on every read, and
+    money that changed the balance belongs with the rows that changed it.
+    """
+
+    __tablename__ = "career_budget_awards"
+    __table_args__ = (
+        # One grant per season, the way `uq_career_season_index` allows one decision per season: a
+        # boundary that fired twice would pay twice, and the second payment is the bug, not the rule.
+        UniqueConstraint("career_id", "season_index", name="uq_career_award_season"),
+        Index("ix_budget_award_career_round", "career_id", "round_index"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    season_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    #: The round the season ended on — where the money arrives in the ledger's round order.
+    round_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    kind: Mapped[str] = mapped_column(String(20), default="season_grant", nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    #: The arithmetic in words, so the figure can be checked against the season without the code.
+    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    promotion: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="awards")
 
 
 APPEARANCE_NOTE: Final = (

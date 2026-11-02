@@ -1539,6 +1539,9 @@ export type BudgetTimeline = {
 /** The read-only finance standing on `career_view["affordability"]` (market.py `affordability_view`). */
 export type AffordabilityView = {
   remaining: number;
+  /** What the board has paid for closed seasons — the income side of the balance above. */
+  granted: number;
+  grant_rows: number;
   weekly_wage_bill: number;
   wage_players: number;
   /** `null` when the career pays no wages at all, so the balance sets no wage-driven limit. */
@@ -1589,6 +1592,32 @@ export type CareerBoard = {
   is_demo_data: boolean;
 };
 
+/** One paid season, as the `career_budget_awards` row the boundary wrote (market.py `pay_season_grant`). */
+export type SeasonGrant = {
+  amount: number;
+  units: string;
+  /** The same sum the row stores, in words: `N round(s) × 8,000 + M point(s) × 2,500 [+ promotion]`. */
+  basis: string;
+  promotion: number;
+  budget_after: number;
+  round_index: number;
+  formula: string;
+};
+
+/** What closing the season being played *now* would pay — the boundary's own arithmetic over its rows. */
+export type SeasonGrantProjection = {
+  rounds: number;
+  points: number;
+  verdict: string;
+  units: string;
+  per_round: number;
+  per_point: number;
+  promotion: number;
+  amount: number;
+  basis: string;
+  formula: string;
+};
+
 /** One closed season: the verdict the boundary wrote, beside the record its own fixture rows still sum to. */
 export type CareerSeasonClosed = {
   season_index: number;
@@ -1604,6 +1633,8 @@ export type CareerSeasonClosed = {
   verdict: string;
   rule: string;
   line: number | null;
+  /** The grant this boundary paid beside the verdict it paid for; `null` when the season paid nothing. */
+  grant: SeasonGrant | null;
   /** The API's own sentence on whether the fixtures still add up to the stored verdict; `null` with no rows. */
   recheck: string | null;
 };
@@ -1623,6 +1654,8 @@ export type CareerSeasonCurrent = {
   line: number | null;
   /** The verdict this pace would reach, or `null` when the season cannot be judged (a challenge window). */
   at_this_pace: string | null;
+  /** What closing this season now would pay — the boundary's own arithmetic over the rounds already played. */
+  grant_if_closed_now: SeasonGrantProjection;
   note: string;
   source: string;
 };

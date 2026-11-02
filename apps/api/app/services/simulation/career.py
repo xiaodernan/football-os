@@ -96,7 +96,9 @@ def limitations() -> dict[str, str]:
     return {
         "budget": (
             "The budget is spent, not stated: every fee a career paid or received is a row in "
-            "career_squad_moves, and the balance is that sum against the figure on the career row. Read "
+            "career_squad_moves, every round's wage bill a row in career_wage_charges, and every sum the board "
+            "paid for a closed season a row in career_budget_awards, so the balance is those sums against the "
+            "figure on the career row. Read "
             "/api/v1/transfers/{career} for the arithmetic and the formula it prints. What the budget does "
             "not do is constrain the fixtures by itself — only a deal that was actually made changes the squad."
         ),
@@ -159,8 +161,11 @@ def limitations() -> dict[str, str]:
             "is also closed by the round that completes it, and the club's points-per-round against the two published "
             "pyramid lines decides whether the next season is played a tier up or down. What the boundary does not "
             "have is a league table: a career plays only its own fixtures, so the other clubs' results are not known "
-            "here and the lines are authored constants printed beside the pace rather than a position in a table. No "
-            "prize money follows a season; the budget only moves when the market or a wage does."
+            "here and the lines are authored constants printed beside the pace rather than a position in a "
+            "table. A closed season of an open career is paid for: the board's grant is a row of its own, "
+            "sized by the rounds and points that season actually played and printed beside the verdict it "
+            "came with. What the grant does not do is read a league table either — it rewards a season's own "
+            "record, not a place in a competition this career cannot see."
         ),
         "world_calendar": (
             "A round whose plan says `source: \"world_calendar\"` is the club's own generated fixture, and the "
@@ -1066,6 +1071,20 @@ def close_season(
         is_demo_data=True,
     )
     session.add(row)
+    # The boundary pays for the season it just closed (item 24), in the same transaction as the decision:
+    # a career either has its boundary and its money or has neither. A local import for the same reason
+    # `play_round` has one — `market` reaches through `challenges`, which imports this module.
+    from app.services.simulation.market import pay_season_grant
+
+    pay_season_grant(
+        session,
+        career,
+        season_index=int(bounds["index"]),
+        round_index=int(last),
+        rounds_played=int(record["played"]),
+        points=int(record["points"]),
+        verdict=str(decision["verdict"]),
+    )
     if following is not None:
         career.competition_id = following.id
         career.competition_name = following.name
@@ -1089,14 +1108,22 @@ def seasons_view(
     the two disagree — the row is a decision, not a cache, so a fixture list edited after the fact is a
     disagreement to report rather than a figure to quietly overwrite.
     """
+    # A local import for the same reason `play_round` has one: `market` reaches through `challenges`,
+    # which imports this module.
+    from app.services.simulation.market import BUDGET_AWARD_FORMULA, awards_of, season_grant
+
     closed = seasons_of(session, career)
     bounds = bounds if bounds is not None else season_bounds(session, career, horizon=horizon, closed=closed)
+    # One grant per closed season, keyed by the season it paid. A season with no row paid nothing — a
+    # challenge's window is judged by its own reward — and the block says `None` rather than zero.
+    grants = {int(award.season_index): award for award in awards_of(session, career.id)}
     blocks: list[dict[str, Any]] = []
     for row in closed:
         season_fixtures = [fixture for fixture in rows if int(row.first_round) <= int(fixture.round_index) <= int(row.last_round)]
         record = record_of(season_fixtures)
         pace = round(int(record["points"]) / int(record["played"]), 3) if int(record["played"]) else None
         agrees = _verdict_agrees(str(row.verdict), str(row.rule), pace, float(row.line) if row.line is not None else None)
+        award = grants.get(int(row.season_index))
         blocks.append(
             {
                 "season_index": int(row.season_index),
@@ -1114,6 +1141,19 @@ def seasons_view(
                 "verdict": row.verdict,
                 "rule": row.rule,
                 "line": float(row.line) if row.line is not None else None,
+                "grant": (
+                    {
+                        "amount": int(award.amount),
+                        "units": award.amount_units,
+                        "basis": award.basis,
+                        "promotion": int(award.promotion),
+                        "budget_after": int(award.budget_after),
+                        "round_index": int(award.round_index),
+                        "formula": BUDGET_AWARD_FORMULA,
+                    }
+                    if award is not None
+                    else None
+                ),
                 "recheck": (
                     None
                     if agrees is None
@@ -1142,6 +1182,14 @@ def seasons_view(
         "rule": decision["rule"],
         "line": float(decision["line"]) if decision["line"] is not None else None,
         "at_this_pace": None if decision["verdict"] == "challenge" else decision["verdict"],
+        # What closing the season now would pay, from the same pure arithmetic the boundary row carries:
+        # a projection recomputed from this season's own played rounds and points, never a stored figure.
+        "grant_if_closed_now": season_grant(
+            rounds=int(current_record["played"]),
+            points=int(current_record["points"]),
+            verdict=str(decision["verdict"]),
+            units=career.budget_units,
+        ),
         "note": decision["note"],
         "source": bounds["source"],
     }

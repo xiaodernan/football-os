@@ -17,6 +17,7 @@ from typing import Any
 
 import pytest
 from sqlalchemy import event, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
@@ -26,6 +27,7 @@ from app.models import (
     OBJECTIVE_FORMULA,
     OBJECTIVE_KINDS,
     Career,
+    CareerBudgetAward,
     CareerFixture,
     CareerSeason,
     Competition,
@@ -35,6 +37,7 @@ from app.models import (
     User,
 )
 from app.services.simulation import career as career_service
+from app.services.simulation import market
 from app.services.world import sync_world
 from app.services.world.names import slugify
 
@@ -690,16 +693,18 @@ def _career_at(session: Session, world: dict[str, Any], club: Team) -> Career:
     )
 
 
-def _fabricate_season(session: Session, career: Career, results: str) -> list[CareerFixture]:
+def _fabricate_season(session: Session, career: Career, results: str, *, start: int = 1) -> list[CareerFixture]:
     """Write one `career_fixtures` row per result character, in order, so a boundary has sums to judge.
 
     The rows are not engine output — the boundary rule reads `career_fixtures` and never a match report —
     so a fabricated season is exactly the population `close_season` sums. `match_id` stays None, which is
-    the same state as a career whose stored report was deleted.
+    the same state as a career whose stored report was deleted. `start` is the round the season begins at,
+    so a second season after a boundary can be fabricated without rewriting the first one.
     """
     scores = {"W": (2, 0), "D": (1, 1), "L": (0, 1)}
     rows: list[CareerFixture] = []
-    for index, result in enumerate(results, start=1):
+    for offset, result in enumerate(results):
+        index = start + offset
         club_goals, opponent_goals = scores[result]
         row = CareerFixture(
             id=new_public_id("cf"),
@@ -716,7 +721,7 @@ def _fabricate_season(session: Session, career: Career, results: str) -> list[Ca
         )
         session.add(row)
         rows.append(row)
-    career.rounds_played = len(results)
+    career.rounds_played = start + len(results) - 1
     session.commit()
     session.refresh(career)
     return rows
@@ -853,3 +858,216 @@ class TestSeasons:
         bounds = career_service.season_bounds(session, career)
         assert bounds["rounds"] == 0 and bounds["last_round"] is None
         assert career_service.close_season(session, career) is None, "no horizon means no last round and no boundary decision"
+
+
+def _awards(session: Session, career: Career) -> list[CareerBudgetAward]:
+    return list(
+        session.scalars(
+            select(CareerBudgetAward).where(CareerBudgetAward.career_id == career.id).order_by(CareerBudgetAward.season_index, CareerBudgetAward.id)
+        ).all()
+    )
+
+
+class TestSeasonGrants:
+    """The board pays for a closed season (M13 Phase 7 item 24), and the ledger says how much.
+
+    A career's budget could only ever go down before this: fees left it, wages left it, and only a sale
+    put anything back. These tests hold the three claims that make the money real — the grant is the
+    season's own rounds and points, it arrives as a ledger row the balance arithmetic already counts, and
+    it is paid once per season by the boundary rather than by whoever remembers to call.
+    """
+
+    def test_a_promoted_season_pays_for_its_rounds_points_and_verdict(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, lower))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        before = market.budget_position(session, career)
+        assert before["granted"] == 0 and before["grant_rows"] == 0
+
+        closed = career_service.close_season(session, career)
+        assert closed is not None and closed.verdict == "promoted"
+
+        rows = _awards(session, career)
+        assert len(rows) == 1, "the boundary paid once for the season it closed"
+        award = rows[0]
+        assert (award.season_index, award.round_index, award.kind) == (1, rounds, "season_grant")
+        points = 3 * rounds
+        assert award.amount == rounds * market.SEASON_GRANT_PER_ROUND + points * market.SEASON_GRANT_PER_POINT + market.PROMOTION_GRANT
+        assert award.promotion == market.PROMOTION_GRANT
+        assert award.basis == (
+            f"{rounds} round(s) × {market.SEASON_GRANT_PER_ROUND:,} + {points} point(s) × {market.SEASON_GRANT_PER_POINT:,} + promotion {market.PROMOTION_GRANT:,}"
+        )
+        assert award.amount_units == career.budget_units
+
+        after = market.budget_position(session, career)
+        assert after["granted"] == award.amount == int(after["remaining"]) - int(before["remaining"])
+        assert award.budget_after == int(after["remaining"]), "the row stores the balance its own grant produced"
+
+    def test_a_season_that_stays_pays_its_rounds_and_points_and_no_promotion(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper, _lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, upper))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "D" * rounds)
+        closed = career_service.close_season(session, career)
+        assert closed is not None and closed.verdict == "stayed"
+        award = _awards(session, career)[0]
+        assert award.promotion == 0
+        assert award.amount == rounds * market.SEASON_GRANT_PER_ROUND + rounds * market.SEASON_GRANT_PER_POINT
+        assert "promotion" not in award.basis
+
+    def test_a_relegated_season_is_paid_for_as_well(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        """A demotion is still a season played, and the grant rewards the record, not the verdict alone."""
+        upper, _lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, upper))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "L" * rounds)
+        closed = career_service.close_season(session, career)
+        assert closed is not None and closed.verdict == "relegated"
+        award = _awards(session, career)[0]
+        assert (award.amount, award.promotion) == (rounds * market.SEASON_GRANT_PER_ROUND, 0)
+
+    def test_a_challenge_window_pays_no_grant(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        career.challenge_window = 2
+        session.commit()
+        _fabricate_season(session, career, "WW")
+        closed = career_service.close_season(session, career)
+        assert closed is not None and closed.verdict == "challenge"
+        assert _awards(session, career) == [], "the run is judged by the challenge's own reward"
+        assert market.budget_position(session, career)["granted"] == 0
+
+    def test_a_second_season_pays_again(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, lower))
+        first_rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * first_rounds)
+        assert career_service.close_season(session, career) is not None
+        assert career.competition_id == upper.id
+
+        bounds = career_service.season_bounds(session, career)
+        assert (bounds["index"], bounds["first_round"]) == (2, first_rounds + 1)
+        second_rounds = int(bounds["rounds"])
+        _fabricate_season(session, career, "D" * second_rounds, start=bounds["first_round"])
+        assert career_service.close_season(session, career) is not None
+
+        rows = _awards(session, career)
+        assert [int(row.season_index) for row in rows] == [1, 2]
+        assert rows[1].round_index == first_rounds + second_rounds
+        expected = rows[0].amount + rows[1].amount
+        position = market.budget_position(session, career)
+        assert position["granted"] == expected == int(position["remaining"]) - int(career.budget)
+
+    def test_the_grant_is_one_row_per_season_even_when_a_writer_forgets(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        """The unique key holds the promise, not the call site."""
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, lower))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        closed = career_service.close_season(session, career)
+        again = career_service.close_season(session, career)
+        assert closed is not None and again.id == closed.id
+        assert len(_awards(session, career)) == 1, "asking the boundary twice pays twice nothing"
+
+        duplicate = CareerBudgetAward(
+            id=new_public_id("awd"),
+            career_id=career.id,
+            season_index=1,
+            round_index=rounds,
+            kind="season_grant",
+            amount=1,
+            amount_units=career.budget_units,
+            basis="a hand-written second grant for the same season",
+            promotion=0,
+            budget_after=1,
+            data_origin="simulation",
+            is_demo_data=True,
+        )
+        session.add(duplicate)
+        with pytest.raises(IntegrityError):
+            session.flush()
+        session.rollback()
+
+    def test_the_ledger_adds_up_across_a_grant(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, lower))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+        award = _awards(session, career)[0]
+
+        timeline = market.budget_timeline(session, career, limit=0)
+        position = market.budget_position(session, career)
+        grants = [row for row in timeline["rows"] if row["kind"] == "season_grant"]
+        assert len(grants) == 1
+        assert grants[0]["delta"] == award.amount
+        assert grants[0]["label"] == f"board grant for season {award.season_index}"
+        assert timeline["disagreements"] == 0, "a row that arrives by a different rule than the others still stores its own running balance"
+        assert timeline["closing_balance"] == int(position["remaining"]) == int(career.budget) + award.amount
+
+    def test_the_market_door_prints_the_grant_in_the_ledger(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, lower))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+        award = _awards(session, career)[0]
+
+        view = market.market_view(session, career)
+        assert view["totals"]["grant_rows"] == 1
+        assert view["budget"]["granted"] == award.amount
+        assert view["rules"]["grant"] == market.BUDGET_AWARD_FORMULA
+        assert view["constants"]["season_grant_per_round"] == market.SEASON_GRANT_PER_ROUND
+        ledger = view["moves"]
+        assert [row for row in ledger if row["kind"] == "season_grant"][0]["cash"] == "in"
+        assert ledger[-1]["round_index"] == rounds, "the boundary's grant is the last row of the round that closed the season"
+        assert sum(int(row["fee"]) * (1 if row["cash"] == "in" else -1) for row in ledger) + int(career.budget) == int(view["budget"]["remaining"])
+
+        affordable = market.affordability_view(session, career)
+        assert affordable["granted"] == award.amount == affordable["remaining"] - int(career.budget)
+        assert affordable["timeline"]["rows"][-1]["kind"] == "season_grant"
+
+    def test_the_seasons_block_prints_the_grant_beside_the_verdict(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, lower))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+        award = _awards(session, career)[0]
+
+        view = career_service.career_view(session, career)
+        block = view["seasons"]["closed"][0]["grant"]
+        assert block["amount"] == award.amount == award.budget_after - int(career.budget)
+        assert block["units"] == award.amount_units == career.budget_units
+        assert block["basis"] == award.basis
+        assert block["formula"] == market.BUDGET_AWARD_FORMULA
+        assert block["round_index"] == rounds
+
+    def test_the_current_season_projects_what_closing_now_would_pay(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        """The projection is the boundary's own arithmetic over the season's played rounds."""
+        upper, lower = _pyramid_pair(session)
+        career = _career_at(session, world, _club_in(session, lower))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        current = career_service.seasons_view(session, career, career_service.fixtures_of(session, career))["current"]
+        grant = current["grant_if_closed_now"]
+        assert grant["units"] == career.budget_units, "a projected sum is stated in the career's own units, like the row it would become"
+        assert grant["rounds"] == current["played"] == rounds
+        assert grant["points"] == current["record"]["points"] == 3 * rounds
+        assert current["at_this_pace"] == "promoted"
+        assert grant["amount"] == rounds * market.SEASON_GRANT_PER_ROUND + (3 * rounds) * market.SEASON_GRANT_PER_POINT + market.PROMOTION_GRANT
+        assert _awards(session, career) == [], "a projection is not a payment"
+        assert market.budget_position(session, career)["granted"] == 0
+
+    def test_a_fresh_season_projects_a_grant_of_nothing(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        grant = career_service.seasons_view(session, career, career_service.fixtures_of(session, career))["current"]["grant_if_closed_now"]
+        assert (grant["rounds"], grant["points"], grant["amount"]) == (0, 0, 0)
+        assert grant["basis"] == "0 round(s) × 8,000 + 0 point(s) × 2,500"
+
+    def test_a_grant_that_pays_nothing_writes_no_row(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        """The two verdicts that produce no money leave no row behind for a page to explain."""
+        career = _career(session, world)
+        assert market.pay_season_grant(session, career, season_index=1, round_index=1, rounds_played=0, points=0, verdict="stayed") is None
+        assert market.pay_season_grant(session, career, season_index=1, round_index=1, rounds_played=3, points=6, verdict="challenge") is None
+        assert _awards(session, career) == []

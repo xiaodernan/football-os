@@ -204,7 +204,7 @@ export default async function CareerMarketPage({ params }: Props) {
                     <td className="num mono">{money(move.budget_after)}</td>
                     <td className="num">{move.weekly_wage ? t("wageCell", { amount: money(move.weekly_wage) }) : "—"}</td>
                     <td className="num">
-                      {move.kind === "wage"
+                      {move.kind === "wage" || move.kind === "season_grant"
                         ? "—"
                         : `${t("contractYears", { years: move.contract_years })}${move.loan_until_round ? t("contractUntil", { round: move.loan_until_round }) : ""}`}
                     </td>

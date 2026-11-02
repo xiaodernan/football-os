@@ -1050,6 +1050,28 @@ Pinned by
 `tests/test_career.py::TestSeasons::test_a_closed_challenge_window_still_sums_its_own_rounds`, which reads
 `(2, 3, 2, 4)` for the span on the old code and `(1, 1, 2, 2)` on the fixed one.
 
+## The board pays a season (M13 Phase 7 item 24, done 2026-11-02)
+
+A career's budget had one door in and two doors out. `career.budget` was written when the career opened, and
+after that only a sale brought money back: fees left on `buy`/`loan`, a wage charge left every round played.
+Items 8 and 9 made a career cross its season boundary and start another, so the shrink stopped being
+theoretical — season two began with less than season one and a long career walked toward a market it could no
+longer enter. `career_budget_awards` (migration `0047`) is the third ledger table and the first whose money
+arrives: `season_grant` is 8,000 per round played, 2,500 per point earned and 150,000 when that season's verdict
+is `promoted`, with the challenge exemption stated once inside that function so the boundary that pays and the
+page that projects cannot disagree about it. `close_season` pays in its own transaction, so a verdict and its
+money appear together or not at all, and `uq_career_award_season` is what makes "one grant per season" a schema
+fact rather than a hope. It is published wherever the balance is read — position, timeline (rank 2 in its round,
+after the move and the wage), the market ledger as a row of its own, affordability, and `seasons_view` with both
+the closed season's grant and a `grant_if_closed_now` projection that writes nothing — and rendered in
+`CareerSeasons` beside the verdict, in the finance timeline and in the market ledger. The live walk says what it
+did rather than what the rule says: two generated worlds, both exit 0, 14 rounds and 14 points paying 147,000 and
+14 rounds and 16 points paying 152,000, and in both the same 90,110 loan refused from 0 before the boundary is
+signed from the grant alone afterwards, ending with `['season_grant', 'loan', 'wage']` and 0 disagreements. The
+honest economic figure, measured on the same board: the cheapest listing costs 668,250 outright and 100,238 on
+loan, so a season's grant keeps a career in the market and does not buy it a first-class player. Evidence:
+[M13_SEASON_GRANT_VERIFICATION.md](docs/M13_SEASON_GRANT_VERIFICATION.md).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

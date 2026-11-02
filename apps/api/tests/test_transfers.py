@@ -34,7 +34,7 @@ from app.services.simulation.service import replay_is_identical, run_simulation
 from app.services.world import sync_world
 
 BUDGET = 4_000_000
-RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "wage_ceiling", "window", "budget", "squad"}
+RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "wage_ceiling", "window", "budget", "grant", "squad"}
 
 
 def _round5(value: float) -> int:
@@ -753,7 +753,7 @@ class TestMarketView:
         assert "generated clubs" in view["disclaimer"]
         assert view["career"]["slug"] == career.slug and view["career"]["market_round"] == 1
         assert view["transfers_allowed"]["ok"] is True
-        assert view["totals"] == {"listed": market.MARKET_SIZE, "signed": 0, "withdrawn": 0, "moves": 0, "wage_rows": 0}
+        assert view["totals"] == {"listed": market.MARKET_SIZE, "signed": 0, "withdrawn": 0, "moves": 0, "wage_rows": 0, "grant_rows": 0}
 
     def test_an_offer_says_what_it_costs_who_must_be_paid_and_whether_you_can(self, session, world) -> None:  # type: ignore[no-untyped-def]
         poor = _career(session, world, budget=5_000)
@@ -934,3 +934,79 @@ class TestContracts:
         assert all(item["age"] >= market.RETIREMENT_AGE for item in profile["retirement_risk"])
         assert profile["retirement_age"] == market.RETIREMENT_AGE
         assert "stored" in profile["note"], "the profile says the ages are the world's, not this build's"
+
+
+class TestBoardGrants:
+    """The season grant as money the market can spend (M13 Phase 7 item 24).
+
+    `test_career.py` proves the boundary writes the row; these cases hold the market's half of the same
+    promise — that a grant joins the one ledger, sits where the ledger's order says it must, and raises
+    the very figure a refusal was decided on rather than living in a page no deal reads.
+    """
+
+    def test_a_grant_buys_what_the_balance_could_not_cover(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world, budget=0)
+        market.open_market(session, career)
+        listing = min(session.scalars(select(TransferListing).where(TransferListing.career_id == career.id, TransferListing.release_clause > 0)), key=lambda row: int(row.release_clause))
+        fee = int(listing.release_clause)
+        with pytest.raises(market.MarketRefusal) as refused:
+            market.buy(session, career, ident=listing.id, use_clause=True)
+        assert refused.value.detail["remaining"] == 0
+
+        # Sized from the price the door actually charges, so the grant is what paid for the deal and not
+        # a budget large enough to have hidden the refusal.
+        rounds = (fee + market.SEASON_GRANT_PER_ROUND - 1) // market.SEASON_GRANT_PER_ROUND
+        award = market.pay_season_grant(session, career, season_index=1, round_index=1, rounds_played=rounds, points=0, verdict="stayed")
+        session.commit()
+        assert award is not None
+        position = market.budget_position(session, career)
+        assert int(position["remaining"]) == award.amount >= fee
+
+        move, _ = market.buy(session, career, ident=listing.id, use_clause=True)
+        assert move.fee == fee
+        after = market.budget_position(session, career)
+        assert int(after["remaining"]) == award.amount - fee
+        assert int(after["granted"]) == award.amount and after["grant_rows"] == 1
+
+    def test_the_grant_sits_after_the_move_and_the_wage_of_its_own_round(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        _sign(session, world, career, band="attack")
+        career_service.play_round(session, career)
+        market.pay_season_grant(session, career, season_index=1, round_index=1, rounds_played=1, points=3, verdict="stayed")
+        session.commit()
+
+        timeline = market.budget_timeline(session, career, limit=0)
+        assert [row["kind"] for row in timeline["rows"]] == ["buy", "wage", "season_grant"], "one round's rows keep the order the balance was added up in"
+        assert timeline["disagreements"] == 0, "the grant chains onto the wage it follows rather than starting a second running total"
+        assert timeline["closing_balance"] == int(market.budget_position(session, career)["remaining"])
+
+    def test_the_grant_is_a_ledger_row_in_the_same_shape_as_the_others(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        award = market.pay_season_grant(session, career, season_index=2, round_index=9, rounds_played=4, points=6, verdict="promoted")
+        session.commit()
+        assert award is not None
+        row = market.award_row(award)
+        assert row["cash"] == "in" and row["side"] == "in" and row["fee"] == award.amount
+        assert row["kind"] in market.AWARD_KINDS and row["effect"] == market.AWARD_EFFECT
+        assert row["player_id"] == "" and row["player_path"] is None, "a grant buys nobody, so it cannot name a person"
+        assert row["player_name"] == "board grant for season 2"
+        assert row["detail"] == award.basis and row["season_index"] == 2 and row["promotion"] == market.PROMOTION_GRANT
+
+    def test_the_finance_door_reads_the_award_table_once(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        _sign(session, world, career, band="attack")
+        career_service.play_round(session, career)
+        market.pay_season_grant(session, career, season_index=1, round_index=1, rounds_played=1, points=3, verdict="stayed")
+        session.commit()
+        statements: list[str] = []
+
+        def before(conn: Any, cursor: Any, statement: str, params: Any, context: Any, executemany: bool) -> None:  # type: ignore[no-untyped-def]
+            statements.append(statement.lower())
+
+        event.listen(session.get_bind(), "before_cursor_execute", before)
+        try:
+            market.affordability_view(session, career)
+        finally:
+            event.remove(session.get_bind(), "before_cursor_execute", before)
+        award_selects = [s for s in statements if "from career_budget_awards" in s and s.lstrip().startswith("select")]
+        assert len(award_selects) == 1, f"the grants were re-fetched: {len(award_selects)} reads of career_budget_awards"

@@ -544,6 +544,57 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 
 ---
 
+## Phase 7 — Career consequences
+
+24. **The board pays a season.** **Done (2026-11-02).** Opened by items 8 and 9: a career could cross a
+   boundary and keep playing, and every season it played spent the budget down. `career.budget` is written
+   once when the career opens and moved only by money leaving it — a fee on `buy`/`loan`, a wage charge each
+   round — with sales as the only income, so a second season always began with less than the first and a long
+   career could only shrink toward a market it could no longer enter. `career_budget_awards` (migration `0047`,
+   14 columns, `DRIFT: none`) is the ledger's third table and the first whose money arrives. `season_grant` is
+   three authored constants and nothing else — **8,000 per round played, 2,500 per point earned, 150,000 when
+   that season's verdict is `promoted`** — and it is the single place the one exemption lives: a `challenge`
+   verdict pays nothing whatever its record, because that run is judged by the challenge's own reward, so the
+   boundary that pays and the page that projects cannot drift apart on it. A grant of 0 writes no row.
+   `close_season` pays **inside its own transaction** (award added before the same commit as the boundary row),
+   so a career either has its verdict and its money or has neither, and `uq_career_award_season` makes one grant
+   per season a property of the schema rather than one coin flip — a hand-written duplicate answers
+   `IntegrityError`. Authored rather than derived for the same reason as the wage ceiling: a cap or a grant
+   computed from the budget would be paid out of the budget it came from and change nothing. Published on every
+   read that answers "what does this career have": `budget_position` (`granted`, `grant_rows`, `grant_detail`,
+   and `remaining` folding `sum(budget_awards.amount)` into the printed formula), `budget_timeline` (a grant is
+   rank 2 in its round, after the move and the wage charge, because that is the order they are written in),
+   `market_view` (the grant as a ledger row in the moves table's own shape, `totals.grant_rows`, the three
+   constants, and `RULES["grant"]` in the rule census), `affordability_view` (one query feeding both), and
+   `seasons_view` (each closed season's grant beside the verdict it was paid for, `null` when it paid none, plus
+   `grant_if_closed_now` — the same pure arithmetic over the rounds already stored, which writes nothing).
+   `components/CareerSeasons.tsx` prints the closed grant as a seventh column and the projection as a grid row;
+   the finance timeline and the market ledger print whatever rows the ledger holds, so the grant arrives there
+   with no new panel, and the ledger's contract cell now treats a grant as it treats a wage — an em-dash, where
+   it printed `0 years`. Money and units are composed at the call site, like every other figure in these panels.
+   2 new `careerDetail` keys per locale. *Gate:* 16 new tests (`TestSeasonGrants` 12, `TestBoardGrants` 4) —
+   amount and basis per verdict, the challenge case, a second season paying again, the unique key, ledger
+   agreement, projection-not-payment, market-door publication; the targeted run is **34 passed, rc 0**;
+   `qa-wire-readers` **12/12**, `qa-unused-keys` **3/3** at floor 0, `qa-token-drift` **2/2** (it reds on a
+   `{amount} {units}` template that is byte-identical in all three locales: the remedy is the composition the
+   codebase already does, not a line in another lane's gate script), locale parity at 4,028 across three
+   locales; ruff, mypy, tsc, eslint green. The live walk (`.scratch/walk-grant.py`, career opened with
+   `budget: 0`, tier-2 league's weakest club) ran twice against two generated worlds, both exit 0: 14 rounds /
+   14 points paid **147,000**, 14 rounds / 16 points paid **152,000**, and in both the same **90,110** loan that
+   was refused from 0 before the boundary is signed from the grant alone, ending season two round one at
+   55,690 / 60,690 with `['season_grant', 'loan', 'wage']` and **0 disagreements**. Measured economics, stated
+   rather than assumed: the cheapest listing on that board is 668,250 to buy and 100,238 to loan, so a season's
+   grant keeps a career in the market and does not buy it a first-class player. Recorded with the browser read
+   in [M13_SEASON_GRANT_VERIFICATION.md](M13_SEASON_GRANT_VERIFICATION.md).
+   **What is still open:** a boundary that ran before `0047` has a verdict and no grant (the panel prints an
+   em-dash rather than inventing a payment — a backfill would be writing money for a season nobody was asked
+   to play); and the grant is the only income in the game, so a cup run, a sold academy graduate and a
+   stadium gate are still unmodelled.
+
+*Gate:* a career's money has a row, a formula and a reader; no figure is paid that no row says was paid.
+
+---
+
 ## How this plan is executed
 
 - One phase at a time; a phase does not "open" until the previous one is running, tested and verified

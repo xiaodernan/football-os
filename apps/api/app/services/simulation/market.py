@@ -10,8 +10,8 @@ is answered below by a number that was *measured from stored rows* and a formula
 * **Need** — the weakest of the four band indices the engine would play with, so what the market
   offers follows from the club's actual squad rather than from a mood.
 * **Budget** — `budget_position` sums this career's own ledger and publishes the arithmetic: the four
-  squad-move kinds, and one wage charge per round it played. A fee that is not on the ledger cannot be
-  spent, and a balance that does not add up is a defect.
+  squad-move kinds, one wage charge per round it played, and one board grant per season it closed. A fee
+  that is not on the ledger cannot be spent, and a balance that does not add up is a defect.
 * **Tactical Fit, Role** — the player's band index (the same (mean−28)/68 measurement the engine
   reports for that band) blended with whether that band is the one the club is short in.
 * **Contract, Negotiation, Clauses** — a valuation that yields a wage, a length of deal and a release
@@ -34,10 +34,13 @@ from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
 from app.models import (
+    AWARD_EFFECT,
+    AWARD_KINDS,
     BUDGET_FORMULA,
     MOVE_EFFECT,
     WAGE_EFFECT,
     Career,
+    CareerBudgetAward,
     CareerSquadMove,
     CareerWageCharge,
     RealPlayer,
@@ -140,6 +143,19 @@ WAGE_CEILING_FORMULA: Final = (
     "would exceed it (a bill equal to the ceiling is within it)"
 )
 
+#: The three sums the board pays when a season closes. Authored constants, the same kind as the season's
+#: promotion and relegation lines: a reader reproduces the grant from the season's own rounds and points.
+#: Sized against the market a career spends in — a full season's grant is well short of one good signing,
+#: so the money arrives slowly enough to be a decision rather than a reset button.
+SEASON_GRANT_PER_ROUND: Final = 8_000
+SEASON_GRANT_PER_POINT: Final = 2_500
+PROMOTION_GRANT: Final = 150_000
+BUDGET_AWARD_FORMULA: Final = (
+    "grant = rounds × 8,000 + points × 2,500, plus 150,000 when the season's verdict is `promoted`; one row per "
+    "closed season of an open career, written in the same transaction as the boundary decision it pays for, and a "
+    "challenge's window is judged by its own reward rather than by a grant"
+)
+
 RULES: Final[dict[str, str]] = {
     "valuation": VALUATION_FORMULA,
     "need": NEED_FORMULA,
@@ -153,6 +169,7 @@ RULES: Final[dict[str, str]] = {
     "wage_ceiling": WAGE_CEILING_FORMULA,
     "window": WINDOW_FORMULA,
     "budget": BUDGET_FORMULA,
+    "grant": BUDGET_AWARD_FORMULA,
     "squad": "the eleven is then selected from the club's stored squad with these moves applied, so a signing changes the indices the engine plays with (app/services/simulation/squad.py)",
 }
 
@@ -605,6 +622,26 @@ def wages_as_of(session: Session, career_id: str, round_index: int) -> list[Care
     )
 
 
+def awards_of(session: Session, career_id: str) -> list[CareerBudgetAward]:
+    """Every grant the board has paid this career, season order — the money beside each boundary."""
+    return list(
+        session.scalars(
+            select(CareerBudgetAward).where(CareerBudgetAward.career_id == career_id).order_by(CareerBudgetAward.season_index, CareerBudgetAward.id)
+        ).all()
+    )
+
+
+def awards_as_of(session: Session, career_id: str, round_index: int) -> list[CareerBudgetAward]:
+    """Every sum the board had paid this career by the end of `round_index`, oldest round first."""
+    return list(
+        session.scalars(
+            select(CareerBudgetAward)
+            .where(CareerBudgetAward.career_id == career_id, CareerBudgetAward.round_index <= round_index)
+            .order_by(CareerBudgetAward.round_index, CareerBudgetAward.created_at, CareerBudgetAward.id)
+        ).all()
+    )
+
+
 def wage_bill(session: Session, career: Career, *, round_index: int, held: list[CareerSquadMove] | None = None) -> dict[str, Any]:
     """What the deals this career holds would cost for one round, named player by player.
 
@@ -624,11 +661,11 @@ def wage_bill(session: Session, career: Career, *, round_index: int, held: list[
     }
 
 
-def budget_position(session: Session, career: Career, *, moves: list[CareerSquadMove] | None = None, charges: list[CareerWageCharge] | None = None) -> dict[str, Any]:
+def budget_position(session: Session, career: Career, *, moves: list[CareerSquadMove] | None = None, charges: list[CareerWageCharge] | None = None, awards: list[CareerBudgetAward] | None = None) -> dict[str, Any]:
     """The budget as an arithmetic: what was stated, what left, what arrived, and what is standing.
 
-    `moves`/`charges` let a caller that already fetched the ledger hand the rows in rather than query
-    them again — the same figures, one fewer round trip each.
+    `moves`/`charges`/`awards` let a caller that already fetched the ledger hand the rows in rather than
+    query them again — the same figures, one fewer round trip each.
     """
     round_index = int(career.rounds_played) + 1
     moves = moves if moves is not None else moves_as_of(session, career.id, round_index)
@@ -636,13 +673,18 @@ def budget_position(session: Session, career: Career, *, moves: list[CareerSquad
     received = sum(move.fee for move in moves if move.kind == "sell")
     charges = charges if charges is not None else wages_as_of(session, career.id, round_index)
     wages_paid = sum(int(row.fee) for row in charges)
+    awards = awards if awards is not None else awards_as_of(session, career.id, round_index)
+    granted = sum(int(row.amount) for row in awards)
     standing = wage_bill(session, career, round_index=round_index, held=held_deals(session, career.id, round_index, moves=moves))
     return {
         "budget": int(career.budget),
         "spent": spent,
         "received": received,
+        "granted": granted,
+        "grant_rows": len(awards),
+        "grant_detail": " · ".join(f"season {int(row.season_index)}: {int(row.amount):,}" for row in awards),
         "wages_paid": wages_paid,
-        "remaining": int(career.budget) + received - spent - wages_paid,
+        "remaining": int(career.budget) + received + granted - spent - wages_paid,
         "units": career.budget_units,
         "moves": len(moves),
         "wage_rows": len(charges),
@@ -668,8 +710,8 @@ AFFORDABILITY_FORMULA: Final = (
 #: The budget timeline's arithmetic: opening balance plus each ledger row's delta, in round order.
 TIMELINE_FORMULA: Final = (
     "balance starts at career.budget and moves by each ledger row in round order (a round's moves before its "
-    "wage charge): sell +fee, buy/loan −fee, release 0, wage −fee; each row's stored budget_after is compared "
-    "with the running figure and any disagreement is counted"
+    "wage charge, a boundary's grant after both): sell +fee, buy/loan −fee, release 0, wage −fee, grant +amount; "
+    "each row's stored budget_after is compared with the running figure and any disagreement is counted"
 )
 
 #: The contract book's arithmetic, and how close to expiry a deal is called "soon".
@@ -683,6 +725,47 @@ EXPIRY_WARNING_ROUNDS: Final = 3
 #: The age at which the squad profile flags a player as a retirement risk. Nothing in this build ages or
 #: retires a player, so this is a flag on the world's stored age, not a projection.
 RETIREMENT_AGE: Final = 35
+
+
+def season_grant(*, rounds: int, points: int, verdict: str, units: str) -> dict[str, Any]:
+    """What the board pays for one closed season, in the words the row carries.
+
+    Three authored figures and nothing else, so the `basis` string can be checked against the season's own
+    rounds and points without running the code again. A season nobody played adds nothing and writes no row,
+    and a challenge's window is the one verdict that pays nothing whatever its record: that run is judged by
+    the challenge's own reward, and this is the single place the rule is stated.
+    """
+    played = max(0, int(rounds))
+    earned = max(0, int(points))
+    if verdict == "challenge":
+        return {
+            "rounds": played,
+            "points": earned,
+            "verdict": verdict,
+            "units": units,
+            "per_round": SEASON_GRANT_PER_ROUND,
+            "per_point": SEASON_GRANT_PER_POINT,
+            "promotion": 0,
+            "amount": 0,
+            "basis": "a challenge's window is judged by the challenge's own reward, so the boundary pays no grant",
+            "formula": BUDGET_AWARD_FORMULA,
+        }
+    promotion = PROMOTION_GRANT if verdict == "promoted" else 0
+    parts = [f"{played} round(s) × {SEASON_GRANT_PER_ROUND:,}", f"{earned} point(s) × {SEASON_GRANT_PER_POINT:,}"]
+    if promotion:
+        parts.append(f"promotion {promotion:,}")
+    return {
+        "rounds": played,
+        "points": earned,
+        "verdict": verdict,
+        "units": units,
+        "per_round": SEASON_GRANT_PER_ROUND,
+        "per_point": SEASON_GRANT_PER_POINT,
+        "promotion": promotion,
+        "amount": played * SEASON_GRANT_PER_ROUND + earned * SEASON_GRANT_PER_POINT + promotion,
+        "basis": " + ".join(parts),
+        "formula": BUDGET_AWARD_FORMULA,
+    }
 
 
 def wage_runway(remaining: int, weekly_wage: int) -> int | None:
@@ -749,11 +832,15 @@ def affordability_view(session: Session, career: Career, *, price: int = 0, week
     round_index = int(career.rounds_played) + 1
     moves = moves_as_of(session, career.id, round_index)
     charges = wages_as_of(session, career.id, round_index)
-    position = budget_position(session, career, moves=moves, charges=charges)
+    awards = awards_as_of(session, career.id, round_index)
+    position = budget_position(session, career, moves=moves, charges=charges, awards=awards)
     remaining = int(position["remaining"])
     weekly = int(position["wage_committed_per_week"])
     return {
         "remaining": remaining,
+        "granted": int(position["granted"]),
+        "grant_rows": int(position["grant_rows"]),
+        "grant_detail": str(position["grant_detail"]),
         "weekly_wage_bill": weekly,
         "wage_players": int(position["wage_players"]),
         "wage_runway_rounds": wage_runway(remaining, weekly),
@@ -768,19 +855,20 @@ def affordability_view(session: Session, career: Career, *, price: int = 0, week
             "already holds, the ceiling is the board's hard cap on one round's wage bill, and the signing block is "
             "the same arithmetic with one prospective deal added"
         ),
-        "timeline": budget_timeline(session, career, limit=8, moves=moves, charges=charges),
+        "timeline": budget_timeline(session, career, limit=8, moves=moves, charges=charges, awards=awards),
         "data_origin": "simulation",
         "is_demo_data": True,
     }
 
 
-def budget_timeline(session: Session, career: Career, *, limit: int = 12, moves: list[CareerSquadMove] | None = None, charges: list[CareerWageCharge] | None = None) -> dict[str, Any]:
+def budget_timeline(session: Session, career: Career, *, limit: int = 12, moves: list[CareerSquadMove] | None = None, charges: list[CareerWageCharge] | None = None, awards: list[CareerBudgetAward] | None = None) -> dict[str, Any]:
     """The balance over time, recomputed from the ledger rows and checked against each row's stored figure.
 
-    Moves and wage charges are the whole ledger, and each row stores the `budget_after` it produced. This
-    walks them in round order (a round's moves before its wage charge, then by creation), recomputes the
-    running balance from `career.budget`, and counts every row whose stored figure disagrees — so a page
-    can print the trajectory and a reader can add the column up to the same total.
+    Moves, wage charges and board grants are the whole ledger, and each row stores the `budget_after` it
+    produced. This walks them in round order (a round's moves before its wage charge and that boundary's
+    grant, then by creation), recomputes the running balance from `career.budget`, and counts every row
+    whose stored figure disagrees — so a page can print the trajectory and a reader can add the column up
+    to the same total.
     """
     round_index = int(career.rounds_played) + 1
     keyed: list[tuple[tuple[int, int, str, str], dict[str, Any]]] = []
@@ -809,6 +897,19 @@ def budget_timeline(session: Session, career: Career, *, limit: int = 12, moves:
                     "label": f"wages for {int(charge.players)} player(s)",
                     "delta": -int(charge.fee),
                     "stored_budget_after": int(charge.budget_after),
+                },
+            )
+        )
+    for award in (awards if awards is not None else awards_as_of(session, career.id, round_index)):
+        keyed.append(
+            (
+                (int(award.round_index), 2, str(award.created_at or ""), str(award.id)),
+                {
+                    "round_index": int(award.round_index),
+                    "kind": str(award.kind),
+                    "label": f"board grant for season {int(award.season_index)}",
+                    "delta": int(award.amount),
+                    "stored_budget_after": int(award.budget_after),
                 },
             )
         )
@@ -962,6 +1063,45 @@ def pay_wages(session: Session, career: Career, *, round_index: int) -> CareerWa
     session.commit()
     session.refresh(charge)
     return charge
+
+
+def pay_season_grant(
+    session: Session,
+    career: Career,
+    *,
+    season_index: int,
+    round_index: int,
+    rounds_played: int,
+    points: int,
+    verdict: str,
+) -> CareerBudgetAward | None:
+    """Pay one closed season and write the row that says so.
+
+    Called from `close_season` before that call's commit, so a career either has its boundary and its money
+    or has neither. A grant of nothing writes no row: a season nobody played has nothing to pay for, and a
+    challenge's window is judged by its own reward — both are `season_grant`'s arithmetic, not a second rule
+    here, so the page that projects a grant and the boundary that pays one cannot disagree.
+    """
+    grant = season_grant(rounds=rounds_played, points=points, verdict=verdict, units=career.budget_units)
+    if grant["amount"] <= 0:
+        return None
+    balance = budget_position(session, career)
+    award = CareerBudgetAward(
+        id=new_public_id("awd"),
+        career_id=career.id,
+        season_index=int(season_index),
+        round_index=int(round_index),
+        kind="season_grant",
+        amount=int(grant["amount"]),
+        amount_units=career.budget_units,
+        basis=str(grant["basis"]),
+        promotion=int(grant["promotion"]),
+        budget_after=int(balance["remaining"]) + int(grant["amount"]),
+        data_origin="simulation",
+        is_demo_data=True,
+    )
+    session.add(award)
+    return award
 
 
 def _require_wage_headroom(career: Career, balance: dict[str, Any], *, proposed_weekly_wage: int, player_name: str) -> None:
@@ -1310,20 +1450,56 @@ def wage_row(charge: CareerWageCharge) -> dict[str, Any]:
     }
 
 
-def ledger_of(moves: list[dict[str, Any]], charges: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """The two money tables as one ledger, in the order a reader has to add them up.
+def award_row(award: CareerBudgetAward) -> dict[str, Any]:
+    """A board grant in the ledger's own shape, so one table prints money in as well as out.
+
+    A grant buys nobody, so the row names the boundary that paid it rather than a player. `season_index`
+    and `promotion` travel with it because the `basis` string only reads as arithmetic once a reader can
+    see which season and which verdict produced it.
+    """
+    return {
+        "id": award.id,
+        "round_index": int(award.round_index),
+        "kind": award.kind,
+        "side": "in",
+        "cash": "in",
+        "player_id": "",
+        "player_slug": "",
+        "player_name": f"board grant for season {int(award.season_index)}",
+        "player_path": None,
+        "position": "",
+        "fee": int(award.amount),
+        "fee_units": award.amount_units,
+        "contract_years": 0,
+        "weekly_wage": 0,
+        "loan_until_round": 0,
+        "counterparty_name": "",
+        "budget_after": int(award.budget_after),
+        "effect": AWARD_EFFECT,
+        "detail": award.basis,
+        "season_index": int(award.season_index),
+        "promotion": int(award.promotion),
+        "created_at": award.created_at.isoformat() if award.created_at else None,
+        "data_origin": award.data_origin,
+        "is_demo_data": award.is_demo_data,
+    }
+
+
+def ledger_of(moves: list[dict[str, Any]], charges: list[dict[str, Any]], awards: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """The money tables as one ledger, in the order a reader has to add them up.
 
     Within a round a career's moves come before its wage charge: the moves were made before the fixture
     and the charge was written after it, so the running total only matches each row's stored
     `budget_after` in that order. Ordering by timestamp alone is not enough — two rows written in the
     same instant tie, and the tie-break by id is arbitrary, which made the ledger's total disagree with
-    a stored `budget_after` depending on how fast the rows were written.
+    a stored `budget_after` depending on how fast the rows were written. A boundary's grant comes after
+    both, because it is paid for the rounds already played and charged.
     """
     return sorted(
-        [*moves, *charges],
+        [*moves, *charges, *(awards or [])],
         key=lambda entry: (
             int(entry["round_index"]),
-            1 if str(entry.get("kind", "")) == "wage" else 0,
+            2 if str(entry.get("kind", "")) in AWARD_KINDS else 1 if str(entry.get("kind", "")) == "wage" else 0,
             str(entry["created_at"] or ""),
             str(entry["id"]),
         ),
@@ -1341,10 +1517,12 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
     )
     rows = list(session.scalars(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id).order_by(CareerSquadMove.round_index, CareerSquadMove.created_at)).all())
     charges = list(session.scalars(select(CareerWageCharge).where(CareerWageCharge.career_id == career.id).order_by(CareerWageCharge.round_index, CareerWageCharge.created_at)).all())
+    grants = awards_of(session, career.id)
     move_rows = [move_row(row) for row in rows]
     wage_rows = [wage_row(row) for row in charges]
+    grant_rows = [award_row(row) for row in grants]
     squad, account = current_squad(session, career)
-    balance = budget_position(session, career)
+    balance = budget_position(session, career, moves=rows, charges=charges, awards=grants)
     open_rows = [row for row in listings if row.status == "open"]
     window = transfer_window(session, career)
     verdict = transferable(session, career)
@@ -1373,13 +1551,14 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
         "squad": {"account": account, "players": squad_rows(squad), "fielding": can_field_side(squad)},
         "listings": [listing_row(session, career, row, balance) for row in open_rows],
         "deals": [listing_row(session, career, row, balance) for row in listings if row.status == "signed"],
-        "moves": ledger_of(move_rows, wage_rows),
+        "moves": ledger_of(move_rows, wage_rows, grant_rows),
         "totals": {
             "listed": len(open_rows),
             "signed": sum(1 for row in listings if row.status == "signed"),
             "withdrawn": sum(1 for row in listings if row.status == "withdrawn"),
             "moves": len(rows),
             "wage_rows": len(charges),
+            "grant_rows": len(grants),
         },
         "rules": RULES,
         "constants": {
@@ -1392,6 +1571,9 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
             "loan_fee_share": LOAN_FEE_SHARE,
             "sell_proceeds_share": SELL_PROCEEDS_SHARE,
             "default_loan_rounds": DEFAULT_LOAN_ROUNDS,
+            "season_grant_per_round": SEASON_GRANT_PER_ROUND,
+            "season_grant_per_point": SEASON_GRANT_PER_POINT,
+            "promotion_grant": PROMOTION_GRANT,
             "age_curve": [{"ages": f"{low}-{high}", "weight": weight} for low, high, weight in AGE_CURVE],
         },
         "data_origin": "simulation",
@@ -1403,6 +1585,9 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
 
 __all__ = [
     "AFFORDABILITY_FORMULA",
+    "AWARD_EFFECT",
+    "AWARD_KINDS",
+    "BUDGET_AWARD_FORMULA",
     "BUDGET_FORMULA",
     "CONTRACT_FORMULA",
     "EARLY_WINDOW_LAST_ROUND",
@@ -1417,8 +1602,11 @@ __all__ = [
     "MarketRefusal",
     "NEGOTIATION_FORMULA",
     "NOT_FOUND_CODES",
+    "PROMOTION_GRANT",
     "RETIREMENT_AGE",
     "RULES",
+    "SEASON_GRANT_PER_POINT",
+    "SEASON_GRANT_PER_ROUND",
     "SELL_FORMULA",
     "TIMELINE_FORMULA",
     "VALUATION_FORMULA",
@@ -1427,6 +1615,9 @@ __all__ = [
     "WINDOW_FORMULA",
     "affordability_view",
     "age_curve",
+    "award_row",
+    "awards_as_of",
+    "awards_of",
     "budget_position",
     "budget_timeline",
     "buy",
@@ -1442,8 +1633,10 @@ __all__ = [
     "move_row",
     "negotiate",
     "open_market",
+    "pay_season_grant",
     "pay_wages",
     "release",
+    "season_grant",
     "sell",
     "season_windows",
     "signing_impact",
