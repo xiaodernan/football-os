@@ -44,4 +44,8 @@ var/
 # local scratch logs from agents working in this tree (never committed)
 .scratch/
 .qoder/
+.workbuddy-ai/
 *.log
+
+# previous local builds kept beside the app (never committed)
+apps/.build-archive/

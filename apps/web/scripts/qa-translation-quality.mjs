@@ -55,8 +55,14 @@ const check = (name, ok, detail) => {
 const untranslatedIssues = [];
 const englishWordsPattern = /\b[A-Za-z]{3,}\b/g;
 
-// Placeholder pattern - these are legitimate English in translations
-const placeholderPattern = /\{[a-zA-Z_][a-zA-Z0-9_]*\}/g;
+// Placeholder pattern - these are legitimate English in translations.
+// A message is an ICU program, and its arguments come in two shapes: a bare `{count}`, and the
+// `{count, plural, one {# round} other {# rounds}}` form. The old pattern matched only the first, so the
+// argument name inside a plural (`opensIn`, `inRounds`) was read as an untranslated English word — the gate
+// went red on 22 correctly translated Chinese messages the moment the market's window copy gained plurals.
+// Matching the name up to its `}` or `,` covers both, and the branch keywords (`plural`, `one`, `other`) are
+// allowed below because they are syntax, not copy.
+const placeholderPattern = /\{\s*[A-Za-z_][A-Za-z0-9_]*\s*(?=[,}])/g;
 
 // Allowed English words/patterns in Chinese translations
 // All entries must be uppercase since the check uses w.toUpperCase()
@@ -88,7 +94,8 @@ const ALLOWED_ENGLISH = new Set([
   "P", "BR", "HR", "STRONG", "EM", "CODE", "PRE", "BLOCKQUOTE",
   // Technical terms in translations
   "TRUNCATED", "POST", "SCOUT", "PARSE", "NUM", "BAND", "VALUE",
-  "TOTAL", "RETURNED", "FILTERS", "PLURAL", "OTHER",
+  "TOTAL", "RETURNED", "FILTERS", "PLURAL", "OTHER", "SELECT", "SELECTORDINAL", "OFFSET",
+  "ZERO", "ONE", "TWO", "FEW", "MANY",
   "GET", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS",
   "HEADERS", "BODY", "QUERY", "PARAMS", "PARAM",
   "POSITION", "REPORT", "MATCHES", "RULES", "SORT", "ROWS", "FIELDS",
