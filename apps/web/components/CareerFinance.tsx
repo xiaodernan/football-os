@@ -48,6 +48,9 @@ export function CareerFinance({
   if (view.wage_headroom !== null) {
     rows.push([t("rowFinanceWageHeadroom"), `${money(view.wage_headroom)} ${view.units}`]);
   }
+  if (view.objective_rows > 0) {
+    rows.push([t("rowFinanceObjectiveReceived"), `${money(view.received_objectives)} ${view.units}`]);
+  }
   rows.push([
     t("financeRunwayFormula"),
     <span className="mono" key="runway-formula">
