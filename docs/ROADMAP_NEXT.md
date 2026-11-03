@@ -774,5 +774,6 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   live walk (`.scratch/walk-bonus.py` on the shared tree, two generated worlds, both exit 0) projected
   145,000 and 90,000 mid-season and paid 145,000 at both boundaries, each stored bonus balance the grant's
   balance plus the kinds before it. Recorded in
-  [M13_OBJECTIVE_BONUS_VERIFICATION.md](M13_OBJECTIVE_BONUS_VERIFICATION.md). **Landing:** to be written
-  when the commit lands.
+  [M13_OBJECTIVE_BONUS_VERIFICATION.md](M13_OBJECTIVE_BONUS_VERIFICATION.md). **Landing:** `0cf34c1`, 21
+  paths through a private index; `40762fa` re-cut to LF blobs (`git diff -w` empty between them). The full
+  suite's verdict, the committed-tree cases and the shared-index warning are in section 9 of the record.

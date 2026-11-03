@@ -1100,6 +1100,9 @@ season being played, a projection that writes nothing. The web tier prints the p
 in `CareerSeasons`, the received total in `CareerFinance`, and the ledger rows plus the two income terms the
 balance sentence had been missing (`+ in board grants + in objective bonuses`) on the market page; five new
 catalogue keys per locale. Evidence: [M13_OBJECTIVE_BONUS_VERIFICATION.md](docs/M13_OBJECTIVE_BONUS_VERIFICATION.md).
+**Landing:** `0cf34c1`, 21 paths through a private index (`40762fa` re-cut to LF blobs, `git diff -w` empty
+between them); section 9 of the record carries the suite verdict, the committed-tree cases and the
+migration-renumbering note.
 
 ## How to work an item
 
