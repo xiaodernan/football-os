@@ -19,7 +19,7 @@
 .world-ref { gap: 0.4rem; }
 .world-ref__type {
   font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--text-3); border-right: 1px solid var(--line); padding-right: 0.4rem;
+  color: var(--text-3); border-inline-end: 1px solid var(--line); padding-inline-end: 0.4rem;
 }
 
 /* Fixtures: date · matchup · score-or-nothing */
@@ -32,7 +32,7 @@
 .world-fixture__round { font-size: 0.72rem; color: var(--text-3); }
 .world-fixture__teams { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-weight: 600; }
 .world-fixture__teams > span { display: flex; gap: 0.5rem; align-items: center; }
-.world-fixture__score { min-width: 88px; text-align: right; font-weight: 700; }
+.world-fixture__score { min-width: 88px; text-align: end; font-weight: 700; }
 
 /* Compact key/value column used by the status, player and match centres. */
 .world-kv { display: flex; flex-direction: column; gap: 0; margin: 0; }
@@ -92,7 +92,7 @@
   background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-raised) 100%);
 }
 .world-scoreline__side { display: flex; flex-direction: column; gap: 0.1rem; font-size: 1.05rem; font-weight: 650; }
-.world-scoreline__side--away { text-align: right; }
+.world-scoreline__side--away { text-align: end; }
 .world-scoreline__score { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
 
 /* Generated report body: readable measure, no rich text to trust. */

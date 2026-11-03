@@ -7,6 +7,7 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, absolute, ogImages, siteOrig
 import { currentUser, serverFetch } from "@/lib/server";
 import type { CapabilitiesResponse } from "@/lib/types";
 import { locales, defaultLocale } from "@/i18n/request";
+import { textDirection } from "@/i18n/locales";
 import enMessages from "@/messages/en.json";
 import zhMessages from "@/messages/zh.json";
 import zhTWMessages from "@/messages/zh-TW.json";
@@ -55,7 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const demoMode = capabilities?.demo_mode ?? true;
 
   return (
-    <html lang={locale}>
+    <html lang={locale} dir={textDirection(locale)}>
       <body>
         <LocaleProvider locale={locale} messages={messages}>
           {/* The nav is 11–18 links deep, so a keyboard reader who lands on the page would tab through every one of

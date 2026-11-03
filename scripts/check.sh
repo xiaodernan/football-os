@@ -198,6 +198,15 @@ echo "── Web: accessibility behaviour gate ───────────
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-a11y-witness.mjs)
 
+echo "── Web: RTL-readiness gate ────────────────────────────"
+# The catalogue is direction-agnostic; the layout was not. Every horizontal declaration was physical
+# (`padding-left`, `text-align: right`, `left: 0`), which is invisible in three left-to-right locales and
+# wrong the moment a right-to-left one is offered. The gate reads every committed stylesheet, refuses the
+# six physical shapes, calls the shipped `textDirection` helper (shipped locales ltr, Arabic/Hebrew/Persian
+# bases rtl), holds `<html dir>` to that verdict, and requires both font stacks to end in a generic family.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-rtl-readiness.mjs)
+
 echo "── Web: shared-sentence gate ──────────────────────────"
 # A shared key NAME is not a contract; a shared VALUE is. This gate used to ask every key name used in
 # two namespaces to be named with a reason — 234 rows, 136 of which were independent keys whose
@@ -287,6 +296,15 @@ echo "── Web: locale-fallback gate ─────────────�
 # 3813 keys, 0 missing or empty in either Chinese locale.
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-locale-fallback.mjs)
+
+echo "── Web: RTL-readiness gate ────────────────────────────"
+# The catalogue is direction-agnostic; the layout was not. Every horizontal declaration was physical
+# (`padding-left`, `text-align: right`, `left: 0`), which is invisible in three left-to-right locales and
+# wrong the moment a right-to-left one is offered. The gate reads every committed stylesheet, refuses the
+# six physical shapes, calls the shipped `textDirection` helper (shipped locales ltr, Arabic/Hebrew/Persian
+# bases rtl), holds `<html dir>` to that verdict, and requires both font stacks to end in a generic family.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-rtl-readiness.mjs)
 
 echo "── Web: token-drift gate ──────────────────────────────"
 # Named technical tokens remain stable across commits; no unnamed identical values.
