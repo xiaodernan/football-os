@@ -34,12 +34,22 @@ the others must not state one at all. Dated run records (`PLAN.md`, `ROADMAP.md`
 outside that population by identity, not by pattern: a figure measured at a named run is evidence about that run,
 and rewriting it to today's number would destroy the record. `docs/SEO_VERIFICATION.md` is *inside* it: it
 specifies the layer, so its present tense is a claim about today.
+
+**The tree these claims are graded on is the commit, not the checkout.** Both inputs — the catalogues and the
+prose that describes them — are read through `git show HEAD:…` and `git ls-tree HEAD`, the same helpers the
+sibling `test_spec_audit_currency.py` uses for its ledgers; a checkout without `.git` falls back to disk. A figure
+pinned to equality against a working tree is red at the commit and green in the run: `25c6873`'s table said
+`3988 of 4033` while that commit's own `en.json` held 4053 keys, and the suite that landed it was green because
+the shared working tree had already moved both files on. `test_the_readme_table_states_…` therefore grades the
+tree where the figure actually lives.
 """
 
 from __future__ import annotations
 
 import json
 import re
+import subprocess
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -47,9 +57,9 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
-#: The catalogues live with the app that reads them. `parents[3]` is the repository root: this file is
-#: `apps/api/tests/test_locale_claims.py`.
-MESSAGES = Path(__file__).resolve().parents[3] / "apps" / "web" / "messages"
+#: The catalogues live with the app that reads them, as paths into the tree this file grades. The repository
+#: root is `parents[3]`: this file is `apps/api/tests/test_locale_claims.py`.
+MESSAGES = "apps/web/messages"
 #: The language every other catalogue falls back to, and the one the interface is written in.
 FALLBACK = "en"
 #: Keys allowed to read the same in every language. Kept explicit rather than guessed from the value, so that
@@ -59,7 +69,7 @@ LANGUAGE_NEUTRAL: frozenset[str] = frozenset({"common.ok"})
 #: A JSON leaf line: its indentation, its key, and whatever follows the colon.
 _LEAF = re.compile(r'^(\s*)"([^"]+)":\s*(\{|.*)')
 
-#: The repository root, for the carriers that *describe* these files rather than hold them.
+#: The repository root — the tree every `git` read below starts from, and the base of the disk fallback.
 REPO = Path(__file__).resolve().parents[3]
 
 #: The one place a coverage figure may live, because `test_the_readme_table_recomputes…` below recomputes it.
@@ -105,14 +115,37 @@ def _flatten(node: Any, prefix: str = "") -> dict[str, str]:
     return {prefix.rstrip("."): str(node)}
 
 
+def _git(args: list[str]) -> bytes:
+    done = subprocess.run(["git", "-C", str(REPO), *args], capture_output=True, timeout=120)
+    assert done.returncode == 0, f"`git {' '.join(args)}` failed rc={done.returncode}: {done.stderr.decode('utf-8', 'replace')[:300]}"
+    return done.stdout
+
+
+@cache
+def _committed_text(rel: str) -> str:
+    """The file as the commit holds it — the tree this module grades, not whatever the run has checked out."""
+    if (REPO / ".git").exists():
+        return _git(["show", f"HEAD:{rel}"]).decode("utf-8")
+    return (REPO / rel).read_text(encoding="utf-8")
+
+
+def _committed_paths(directory: str) -> list[str]:
+    """The files under `directory` in the same tree, or on disk when the checkout carries no history."""
+    if (REPO / ".git").exists():
+        listing = _git(["ls-tree", "-r", "--name-only", "HEAD", "--", directory]).decode("utf-8")
+        return [line for line in listing.splitlines() if line.strip()]
+    base = REPO / directory
+    return sorted(str(path.relative_to(REPO)).replace("\\", "/") for path in base.rglob("*") if path.is_file())
+
+
 def _raw(name: str) -> str:
-    return (MESSAGES / f"{name}.json").read_text(encoding="utf-8")
+    return _committed_text(f"{MESSAGES}/{name}.json")
 
 
 def _names() -> list[str]:
-    assert MESSAGES.is_dir(), f"the message catalogues are missing from {MESSAGES}"
-    names = sorted(path.stem for path in MESSAGES.glob("*.json"))
-    assert names, f"no catalogues under {MESSAGES}"
+    rels = _committed_paths(MESSAGES)
+    names = sorted(Path(rel).stem for rel in rels if rel.endswith(".json") and Path(rel).parent == Path(MESSAGES))
+    assert names, f"no catalogues under {MESSAGES} in the tree this file grades"
     return names
 
 
@@ -143,9 +176,9 @@ def _shipped(catalogues: dict[str, dict[str, str]]) -> list[str]:
 
 
 def _prose(rel: str) -> list[str]:
-    path = REPO / rel
-    assert path.is_file(), f"the locale carrier {rel} is missing, so the check that reads it is blind"
-    return path.read_text(encoding="utf-8").splitlines()
+    lines = _committed_text(rel).splitlines()
+    assert lines, f"the locale carrier {rel} is empty in the tree this file grades, so the check that reads it is blind"
+    return lines
 
 
 def _coverage_claims(rel: str) -> list[str]:
@@ -258,8 +291,8 @@ def test_no_other_carrier_states_a_locale_figure() -> None:
     assert not charged, f"a retired claim about i18n is back: {' · '.join(charged)}"
 
 
-#: The API's own source, for the refusal census below.
-APP_SOURCE = Path(__file__).resolve().parents[1] / "app"
+#: The API's own source, for the refusal census below, as a path into the tree this file grades.
+APP_SOURCE = "apps/api/app"
 
 #: A refusal's code and message, as a door writes them: `detail={"code": ..., "message": ...}`.
 #: The code is a literal or a module-level constant; the message is a literal, an f-string, or a
@@ -389,12 +422,12 @@ def _refusals() -> dict[str, dict[str, Any]]:
     fixes it and the helper's own body cannot see it.
     """
     constants: dict[str, str] = {}
-    sources: dict[Path, str] = {}
-    for path in sorted(APP_SOURCE.rglob("*.py")):
-        if "tests" in path.parts:
+    sources: dict[str, str] = {}
+    for rel in sorted(_committed_paths(APP_SOURCE)):
+        if not rel.endswith(".py") or "tests" in Path(rel).parts:
             continue
-        text = _strip_comments(path.read_text(encoding="utf-8", errors="replace"))
-        sources[path] = text
+        text = _strip_comments(_committed_text(rel))
+        sources[rel] = text
         constants.update(dict(_CONSTANT.findall(text)))
     whole = "\n".join(sources.values())
 
