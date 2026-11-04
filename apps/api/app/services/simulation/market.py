@@ -10,9 +10,8 @@ is answered below by a number that was *measured from stored rows* and a formula
 * **Need** — the weakest of the four band indices the engine would play with, so what the market
   offers follows from the club's actual squad rather than from a mood.
 * **Budget** — `budget_position` sums this career's own ledger and publishes the arithmetic: the four
-  squad-move kinds, one wage charge per round it played, one board grant per season it closed, and one
-  bonus per objective that season met. A fee that is not on the ledger cannot be spent, and a balance
-  that does not add up is a defect.
+  squad-move kinds, one wage charge per round it played, and one board grant per season it closed. A fee
+  that is not on the ledger cannot be spent, and a balance that does not add up is a defect.
 * **Tactical Fit, Role** — the player's band index (the same (mean−28)/68 measurement the engine
   reports for that band) blended with whether that band is the one the club is short in.
 * **Contract, Negotiation, Clauses** — a valuation that yields a wage, a length of deal and a release
@@ -39,7 +38,6 @@ from app.models import (
     AWARD_KINDS,
     BUDGET_FORMULA,
     MOVE_EFFECT,
-    OBJECTIVE_BONUS_EFFECT,
     WAGE_EFFECT,
     Career,
     CareerBudgetAward,
@@ -160,29 +158,6 @@ BUDGET_AWARD_FORMULA: Final = (
     "challenge's window is judged by its own reward rather than by a grant"
 )
 
-#: What the board pays a season for the targets it met (M13 Phase 9 item 36). A second authored table beside
-#: the grant, and the one income a manager decides before the season starts: the objectives they set at the
-#: opening are the rows this pays for. Sized against the other board money — the four objectives together pay
-#: 145,000, a little under one full season's grant (14 rounds × 8,000 + 25 points × 2,500 = 174,500) — so a
-#: season that meets everything the board asked is a good season's extra income, not a reset button.
-#: Points are what the verdict itself reads, so they are priced highest of the three sums; a win target is
-#: largely a points target by another name, a goal-difference target is the margin around them, and an
-#: unbeaten run is a streak rather than a sum — the one kind the board cannot project — so it is priced
-#: above all three.
-OBJECTIVE_BONUS_BY_KIND: Final[dict[str, int]] = {
-    "wins": 30_000,
-    "points": 40_000,
-    "goal_difference": 25_000,
-    "unbeaten": 50_000,
-}
-OBJECTIVE_BONUS_FORMULA: Final = (
-    "objective_bonus = 30,000 for a wins objective met + 40,000 for a points objective + 25,000 for a "
-    "goal_difference objective + 50,000 for an unbeaten objective; met means actual ≥ target, a target of zero "
-    "or less pays nothing because nothing had to be met, one row per met objective lands in "
-    "`career_budget_awards` with kind `objective_bonus` and the objective's kind as its stage, and a "
-    "challenge's window is judged by the challenge's own reward rather than by a bonus"
-)
-
 RULES: Final[dict[str, str]] = {
     "valuation": VALUATION_FORMULA,
     "need": NEED_FORMULA,
@@ -197,7 +172,6 @@ RULES: Final[dict[str, str]] = {
     "window": WINDOW_FORMULA,
     "budget": BUDGET_FORMULA,
     "grant": BUDGET_AWARD_FORMULA,
-    "objective_bonus": OBJECTIVE_BONUS_FORMULA,
     "squad": "the eleven is then selected from the club's stored squad with these moves applied, so a signing changes the indices the engine plays with (app/services/simulation/squad.py)",
 }
 
@@ -678,7 +652,7 @@ def wages_as_of(session: Session, career_id: str, round_index: int) -> list[Care
 
 
 def awards_of(session: Session, career_id: str) -> list[CareerBudgetAward]:
-    """Every sum the board has paid this career, season order — the grant and the bonuses it closed on."""
+    """Every grant the board has paid this career, season order — the money beside each boundary."""
     return list(
         session.scalars(
             select(CareerBudgetAward).where(CareerBudgetAward.career_id == career_id).order_by(CareerBudgetAward.season_index, CareerBudgetAward.id)
@@ -729,29 +703,17 @@ def budget_position(session: Session, career: Career, *, moves: list[CareerSquad
     charges = charges if charges is not None else wages_as_of(session, career.id, round_index)
     wages_paid = sum(int(row.fee) for row in charges)
     awards = awards if awards is not None else awards_as_of(session, career.id, round_index)
-    # Two kinds share the award table (item 36): the board's season grant and the bonus a met objective
-    # pays. They are split here rather than in the table because the balance is one arithmetic and a
-    # reader must be able to see which income moved it.
-    grants = [row for row in awards if str(row.kind) == "season_grant"]
-    bonus_rows = [row for row in awards if str(row.kind) == "objective_bonus"]
-    granted = sum(int(row.amount) for row in grants)
-    received_objectives = sum(int(row.amount) for row in bonus_rows)
+    granted = sum(int(row.amount) for row in awards)
     standing = wage_bill(session, career, round_index=round_index, held=held_deals(session, career.id, round_index, moves=moves))
     return {
         "budget": int(career.budget),
         "spent": spent,
         "received": received,
         "granted": granted,
-        "grant_rows": len(grants),
-        "grant_detail": " · ".join(f"season {int(row.season_index)}: {int(row.amount):,}" for row in grants),
-        "received_objectives": received_objectives,
-        "objective_rows": len(bonus_rows),
-        "objective_detail": " · ".join(
-            f"season {int(row.season_index)} {row.stage}: {int(row.amount):,}"
-            for row in sorted(bonus_rows, key=lambda row: (int(row.season_index), str(row.stage)))
-        ),
+        "grant_rows": len(awards),
+        "grant_detail": " · ".join(f"season {int(row.season_index)}: {int(row.amount):,}" for row in awards),
         "wages_paid": wages_paid,
-        "remaining": int(career.budget) + received + granted + received_objectives - spent - wages_paid,
+        "remaining": int(career.budget) + received + granted - spent - wages_paid,
         "units": career.budget_units,
         "moves": len(moves),
         "wage_rows": len(charges),
@@ -777,9 +739,8 @@ AFFORDABILITY_FORMULA: Final = (
 #: The budget timeline's arithmetic: opening balance plus each ledger row's delta, in round order.
 TIMELINE_FORMULA: Final = (
     "balance starts at career.budget and moves by each ledger row in round order (a round's moves before its "
-    "wage charge, a boundary's grant and the bonuses it paid after both): sell +fee, buy/loan −fee, release 0, "
-    "wage −fee, grant +amount, objective bonus +amount; each row's stored budget_after is compared with the "
-    "running figure and any disagreement is counted"
+    "wage charge, a boundary's grant after both): sell +fee, buy/loan −fee, release 0, wage −fee, grant +amount; "
+    "each row's stored budget_after is compared with the running figure and any disagreement is counted"
 )
 
 #: The contract book's arithmetic, and how close to expiry a deal is called "soon".
@@ -833,51 +794,6 @@ def season_grant(*, rounds: int, points: int, verdict: str, units: str) -> dict[
         "amount": played * SEASON_GRANT_PER_ROUND + earned * SEASON_GRANT_PER_POINT + promotion,
         "basis": " + ".join(parts),
         "formula": BUDGET_AWARD_FORMULA,
-    }
-
-
-def objective_bonus_report(*, objectives: list[dict[str, Any]], verdict: str, units: str) -> dict[str, Any]:
-    """What the board pays for the objectives a season met, one entry per met objective.
-
-    The verdicts it reads are `objectives_of`'s — the same report the board prints — so the money cannot
-    disagree with the prose a manager saw. A challenge's window is judged by the challenge's own reward,
-    and a target of zero or less asks for nothing, so neither pays. The single place both rules are stated:
-    the boundary pays through this function and the seasons page projects through it.
-    """
-    if verdict == "challenge":
-        return {
-            "amount": 0,
-            "units": units,
-            "rows": [],
-            "basis": "a challenge's window is judged by the challenge's own reward, so no objective pays a bonus",
-            "formula": OBJECTIVE_BONUS_FORMULA,
-        }
-    rows: list[dict[str, Any]] = []
-    for verdict_row in objectives:
-        kind = str(verdict_row.get("kind", ""))
-        target = int(verdict_row.get("target", 0))
-        amount = int(OBJECTIVE_BONUS_BY_KIND.get(kind, 0))
-        if not bool(verdict_row.get("met")) or target <= 0 or amount <= 0:
-            continue
-        actual = int(verdict_row.get("actual", 0))
-        label = str(verdict_row.get("label") or kind)
-        rows.append(
-            {
-                "kind": kind,
-                "label": label,
-                "target": target,
-                "actual": actual,
-                "amount": amount,
-                "basis": f"{label}: {actual} ≥ {target} pays {amount:,} {units}",
-            }
-        )
-    total = sum(int(row["amount"]) for row in rows)
-    return {
-        "amount": total,
-        "units": units,
-        "rows": rows,
-        "basis": " + ".join(f"{row['kind']} {int(row['amount']):,}" for row in rows) if rows else "no objective the season met pays a bonus",
-        "formula": OBJECTIVE_BONUS_FORMULA,
     }
 
 
@@ -954,9 +870,6 @@ def affordability_view(session: Session, career: Career, *, price: int = 0, week
         "granted": int(position["granted"]),
         "grant_rows": int(position["grant_rows"]),
         "grant_detail": str(position["grant_detail"]),
-        "received_objectives": int(position["received_objectives"]),
-        "objective_rows": int(position["objective_rows"]),
-        "objective_detail": str(position["objective_detail"]),
         "weekly_wage_bill": weekly,
         "wage_players": int(position["wage_players"]),
         "wage_runway_rounds": wage_runway(remaining, weekly),
@@ -980,20 +893,20 @@ def affordability_view(session: Session, career: Career, *, price: int = 0, week
 def budget_timeline(session: Session, career: Career, *, limit: int = 12, moves: list[CareerSquadMove] | None = None, charges: list[CareerWageCharge] | None = None, awards: list[CareerBudgetAward] | None = None) -> dict[str, Any]:
     """The balance over time, recomputed from the ledger rows and checked against each row's stored figure.
 
-    Moves, wage charges and every kind of award are the whole ledger, and each row stores the `budget_after` it
-    produced. This walks them in round order (a round's moves before its wage charge, then that boundary's
-    grant and the bonuses it paid), recomputes the running balance from `career.budget`, and counts every row
+    Moves, wage charges and board grants are the whole ledger, and each row stores the `budget_after` it
+    produced. This walks them in round order (a round's moves before its wage charge and that boundary's
+    grant, then by creation), recomputes the running balance from `career.budget`, and counts every row
     whose stored figure disagrees — so a page can print the trajectory and a reader can add the column up
     to the same total.
     """
     round_index = int(career.rounds_played) + 1
-    keyed: list[tuple[tuple[int, int, str, str, str], dict[str, Any]]] = []
+    keyed: list[tuple[tuple[int, int, str, str], dict[str, Any]]] = []
     for move in (moves if moves is not None else moves_as_of(session, career.id, round_index)):
         kind = str(move.kind)
         delta = int(move.fee) if kind == "sell" else -int(move.fee) if kind in IN_KINDS else 0
         keyed.append(
             (
-                (int(move.round_index), 0, "", str(move.created_at or ""), str(move.id)),
+                (int(move.round_index), 0, str(move.created_at or ""), str(move.id)),
                 {
                     "round_index": int(move.round_index),
                     "kind": kind,
@@ -1006,7 +919,7 @@ def budget_timeline(session: Session, career: Career, *, limit: int = 12, moves:
     for charge in (charges if charges is not None else wages_as_of(session, career.id, round_index)):
         keyed.append(
             (
-                (int(charge.round_index), 1, "", str(charge.created_at or ""), str(charge.id)),
+                (int(charge.round_index), 1, str(charge.created_at or ""), str(charge.id)),
                 {
                     "round_index": int(charge.round_index),
                     "kind": "wage",
@@ -1017,17 +930,13 @@ def budget_timeline(session: Session, career: Career, *, limit: int = 12, moves:
             )
         )
     for award in (awards if awards is not None else awards_as_of(session, career.id, round_index)):
-        kind = str(award.kind)
         keyed.append(
             (
-                # The grant precedes the bonuses it was paid with; among the bonuses the objective's kind
-                # orders them, which is the order `pay_objective_bonuses` writes them in. Ids are random
-                # tokens, so without this the running balance would depend on how fast the rows were written.
-                (int(award.round_index), 2, str(award.stage) if kind == "objective_bonus" else "", str(award.created_at or ""), str(award.id)),
+                (int(award.round_index), 2, str(award.created_at or ""), str(award.id)),
                 {
                     "round_index": int(award.round_index),
-                    "kind": kind,
-                    "label": f"board grant for season {int(award.season_index)}" if kind == "season_grant" else f"objective bonus, {award.stage}",
+                    "kind": str(award.kind),
+                    "label": f"board grant for season {int(award.season_index)}",
                     "delta": int(award.amount),
                     "stored_budget_after": int(award.budget_after),
                 },
@@ -1222,50 +1131,6 @@ def pay_season_grant(
     )
     session.add(award)
     return award
-
-
-def pay_objective_bonuses(
-    session: Session,
-    career: Career,
-    *,
-    season_index: int,
-    round_index: int,
-    objectives: list[dict[str, Any]],
-    verdict: str,
-) -> list[CareerBudgetAward]:
-    """Pay one row per objective a closed season met, in the boundary's own transaction (item 36).
-
-    Called from `close_season` after the grant, so the boundary's money arrives as one run of rows in the
-    round that ended the season. `stage` is the objective's kind, which is what `uq_career_award_stage`
-    holds one row of per season; the rows are written in kind order and `budget_timeline` replays them the
-    same way, so each stored `budget_after` is the running balance that order reproduces.
-    """
-    report = objective_bonus_report(objectives=objectives, verdict=verdict, units=career.budget_units)
-    awards: list[CareerBudgetAward] = []
-    for item in sorted(report["rows"], key=lambda row: str(row["kind"])):
-        # The session runs with autoflush off, so the grant this boundary paid (and the previous bonus)
-        # is still pending: flush before reading the balance, or the row would store a running figure
-        # that omits its own predecessors and the timeline would count the disagreement.
-        session.flush()
-        balance = budget_position(session, career)
-        award = CareerBudgetAward(
-            id=new_public_id("awd"),
-            career_id=career.id,
-            season_index=int(season_index),
-            round_index=int(round_index),
-            kind="objective_bonus",
-            stage=str(item["kind"])[:80],
-            amount=int(item["amount"]),
-            amount_units=career.budget_units,
-            basis=str(item["basis"]),
-            promotion=0,
-            budget_after=int(balance["remaining"]) + int(item["amount"]),
-            data_origin="simulation",
-            is_demo_data=True,
-        )
-        session.add(award)
-        awards.append(award)
-    return awards
 
 
 def _require_wage_headroom(career: Career, balance: dict[str, Any], *, proposed_weekly_wage: int, player_name: str) -> None:
@@ -1619,11 +1484,8 @@ def award_row(award: CareerBudgetAward) -> dict[str, Any]:
 
     A grant buys nobody, so the row names the boundary that paid it rather than a player. `season_index`
     and `promotion` travel with it because the `basis` string only reads as arithmetic once a reader can
-    see which season and which verdict produced it. An objective bonus names the objective it paid for,
-    and its effect says that the board paid a target rather than a season.
+    see which season and which verdict produced it.
     """
-    kind = str(award.kind)
-    name = f"objective bonus, {award.stage}" if kind == "objective_bonus" else f"board grant for season {int(award.season_index)}"
     return {
         "id": award.id,
         "round_index": int(award.round_index),
@@ -1632,7 +1494,7 @@ def award_row(award: CareerBudgetAward) -> dict[str, Any]:
         "cash": "in",
         "player_id": "",
         "player_slug": "",
-        "player_name": name,
+        "player_name": f"board grant for season {int(award.season_index)}",
         "player_path": None,
         "position": "",
         "fee": int(award.amount),
@@ -1642,10 +1504,9 @@ def award_row(award: CareerBudgetAward) -> dict[str, Any]:
         "loan_until_round": 0,
         "counterparty_name": "",
         "budget_after": int(award.budget_after),
-        "effect": OBJECTIVE_BONUS_EFFECT if kind == "objective_bonus" else AWARD_EFFECT,
+        "effect": AWARD_EFFECT,
         "detail": award.basis,
         "season_index": int(award.season_index),
-        "stage": award.stage,
         "promotion": int(award.promotion),
         "created_at": award.created_at.isoformat() if award.created_at else None,
         "data_origin": award.data_origin,
@@ -1661,28 +1522,17 @@ def ledger_of(moves: list[dict[str, Any]], charges: list[dict[str, Any]], awards
     `budget_after` in that order. Ordering by timestamp alone is not enough — two rows written in the
     same instant tie, and the tie-break by id is arbitrary, which made the ledger's total disagree with
     a stored `budget_after` depending on how fast the rows were written. A boundary's grant comes after
-    both, with the objective bonuses it paid after the grant.
+    both, because it is paid for the rounds already played and charged.
     """
     return sorted(
         [*moves, *charges, *(awards or [])],
         key=lambda entry: (
             int(entry["round_index"]),
             2 if str(entry.get("kind", "")) in AWARD_KINDS else 1 if str(entry.get("kind", "")) == "wage" else 0,
-            _ledger_order(str(entry.get("kind", "")), entry),
             str(entry["created_at"] or ""),
             str(entry["id"]),
         ),
     )
-
-
-def _ledger_order(kind: str, entry: dict[str, Any]) -> str:
-    """Where a row sits among the rows of its own tier, when the tier alone does not order them.
-
-    A boundary's grant and the objective bonuses it paid share tier 2; the grant is written first and the
-    bonuses in objective-kind order, which is what the stage stores. Ids are random tokens, so without this
-    the running total would depend on how fast the rows were written.
-    """
-    return str(entry.get("stage", "")) if kind == "objective_bonus" else ""
 
 
 def market_view(session: Session, career: Career) -> dict[str, Any]:
@@ -1696,14 +1546,12 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
     )
     rows = list(session.scalars(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id).order_by(CareerSquadMove.round_index, CareerSquadMove.created_at)).all())
     charges = list(session.scalars(select(CareerWageCharge).where(CareerWageCharge.career_id == career.id).order_by(CareerWageCharge.round_index, CareerWageCharge.created_at)).all())
-    awards = awards_of(session, career.id)
-    grants = [row for row in awards if str(row.kind) == "season_grant"]
-    bonuses = [row for row in awards if str(row.kind) == "objective_bonus"]
+    grants = awards_of(session, career.id)
     move_rows = [move_row(row) for row in rows]
     wage_rows = [wage_row(row) for row in charges]
-    grant_rows = [award_row(row) for row in awards]
+    grant_rows = [award_row(row) for row in grants]
     squad, account = current_squad(session, career)
-    balance = budget_position(session, career, moves=rows, charges=charges, awards=awards)
+    balance = budget_position(session, career, moves=rows, charges=charges, awards=grants)
     open_rows = [row for row in listings if row.status == "open"]
     window = transfer_window(session, career)
     verdict = transferable(session, career)
@@ -1740,7 +1588,6 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
             "moves": len(rows),
             "wage_rows": len(charges),
             "grant_rows": len(grants),
-            "bonus_rows": len(bonuses),
         },
         "rules": RULES,
         "constants": {
@@ -1756,7 +1603,6 @@ def market_view(session: Session, career: Career) -> dict[str, Any]:
             "season_grant_per_round": SEASON_GRANT_PER_ROUND,
             "season_grant_per_point": SEASON_GRANT_PER_POINT,
             "promotion_grant": PROMOTION_GRANT,
-            "objective_bonus_by_kind": {kind: amount for kind, amount in sorted(OBJECTIVE_BONUS_BY_KIND.items())},
             "age_curve": [{"ages": f"{low}-{high}", "weight": weight} for low, high, weight in AGE_CURVE],
         },
         "data_origin": "simulation",
@@ -1781,8 +1627,6 @@ __all__ = [
     "MAX_NEGOTIATION_ROUNDS",
     "MID_WINDOW_HALF_WIDTH",
     "MOVE_EFFECT",
-    "OBJECTIVE_BONUS_BY_KIND",
-    "OBJECTIVE_BONUS_FORMULA",
     "CONFLICT_CODES",
     "MarketRefusal",
     "NEGOTIATION_FORMULA",
@@ -1817,9 +1661,7 @@ __all__ = [
     "market_view",
     "move_row",
     "negotiate",
-    "objective_bonus_report",
     "open_market",
-    "pay_objective_bonuses",
     "pay_season_grant",
     "pay_wages",
     "release",

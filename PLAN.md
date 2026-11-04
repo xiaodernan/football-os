@@ -1073,37 +1073,6 @@ loan, so a season's grant keeps a career in the market and does not buy it a fir
 [M13_SEASON_GRANT_VERIFICATION.md](docs/M13_SEASON_GRANT_VERIFICATION.md).
 Landing: those bytes reached master inside the concurrent batch's commit `c5d0979`, which committed the shared index while this item's sixteen paths were staged in it, so the subject names that lane's catalogue table; the record's section 9 carries the pre-move grading of the staged tree and the suite verdict on the commit after it.
 
-## Objectives that pay (M13 Phase 9 item 36, done 2026-11-04)
-
-Item 24 gave a career a second door in, but it was the board's door: a season was paid for its rounds and its
-points. The objectives a manager picked at the opening were still only prose — `objectives_of` compared the
-season's sums against the targets and the board printed `met`, and the money never saw them. This item makes a
-met objective an award row of its own, so the targets a manager chooses are a reason the balance moves. The whole
-rule is one pure function, `objective_bonus_report`, and one authored table beside the grant's:
-**30,000 for wins, 40,000 for points, 25,000 for goal_difference, 50,000 for unbeaten** — 145,000 if all four
-are met, a little under one full season's grant (174,500), so meeting the board's targets is a good season's
-extra income rather than a reset button. It pays only what was met: `actual >= target` read from the same report
-the board prints; a target of zero or less pays nothing, because nothing had to be met; a miss writes no row; and
-a `challenge` window pays nothing because that run is judged by its own reward. `close_season` calls
-`pay_objective_bonuses` after the grant in the same transaction, one row per met objective with the objective's
-kind as the award's `stage`, flushed before each balance read because `SessionLocal` runs with `autoflush=False`;
-the grant and the bonuses share the ledger's boundary tier, the stage orders them, and the timeline's running
-balance replays that order and counts its own disagreements. At HEAD the award table had no `stage` and its
-unique key was one grant per season, so `0049_objective_bonuses` adds the column and swaps the key to
-`uq_career_award_stage (career_id, season_index, kind, stage)` — a fresh SQLite reports head 0049 and
-`DRIFT none`, and the audit's machine-checked migration figure moves 49 → 50 in both carriers
-`test_spec_audit_currency.py` reads. It is published wherever the balance is read: `budget_position.received_objectives`/`objective_rows`
-/`objective_detail` and the printed sum, the timeline, the market ledger (a row in the moves table's shape, with
-`OBJECTIVE_BONUS_EFFECT`), `market_view.totals.bonus_rows` and `constants.objective_bonus_by_kind`, the
-affordability block, and `seasons_view` — each closed season's `bonuses` block, and `bonus_if_closed_now` for the
-season being played, a projection that writes nothing. The web tier prints the projection and the paid bonuses
-in `CareerSeasons`, the received total in `CareerFinance`, and the ledger rows plus the two income terms the
-balance sentence had been missing (`+ in board grants + in objective bonuses`) on the market page; five new
-catalogue keys per locale. Evidence: [M13_OBJECTIVE_BONUS_VERIFICATION.md](docs/M13_OBJECTIVE_BONUS_VERIFICATION.md).
-**Landing:** `0cf34c1`, 21 paths through a private index (`40762fa` re-cut to LF blobs, `git diff -w` empty
-between them); section 9 of the record carries the suite verdict, the committed-tree cases and the
-migration-renumbering note.
-
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

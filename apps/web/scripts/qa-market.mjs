@@ -868,12 +868,12 @@ async function main() {
   check('every row of the ledger prints the standing its predecessors left', !brokeAt, brokeAt ? `${brokeAt.kind} at round ${brokeAt.round} says ${gb(brokeAt.after)}, adding up gives ${gb(running)}` : `${ledger.length} rows, one running total`);
   const sumLine = (await lineWith(page, 'stated')).replace(/\s+/g, ' ');
   // The sentence is the whole budget as a reader is told to check it, so the walk checks it that way: the
-  // figures it prints, added by hand, have to land on the balance it prints.
-  const sum = sumLine.match(/([\d,]+) stated(?: \+ ([\d,]+) received)?(?: \+ ([\d,]+) in board grants)?(?: \+ ([\d,]+) in objective bonuses)?(?: − ([\d,]+) spent)?(?: − ([\d,]+) in wages)? = ([\d,]+)/);
+  // four figures it prints, added by hand, have to land on the balance it prints.
+  const sum = sumLine.match(/([\d,]+) stated(?: \+ ([\d,]+) received)?(?: − ([\d,]+) spent)?(?: − ([\d,]+) in wages)? = ([\d,]+)/);
   const credits = (figure) => Number(String(figure ?? 0).replace(/,/g, ''));
   check(
     'the balance sentence names the wages it netted and adds up to its own answer',
-    Boolean(sum) && credits(sum?.[1]) + credits(sum?.[2]) + credits(sum?.[3]) + credits(sum?.[4]) - credits(sum?.[5]) - credits(sum?.[6]) === credits(sum?.[7]) && credits(sum?.[6]) === afterRound.paid,
+    Boolean(sum) && credits(sum?.[1]) + credits(sum?.[2]) - credits(sum?.[3]) - credits(sum?.[4]) === credits(sum?.[5]) && credits(sum?.[4]) === afterRound.paid,
     sumLine.slice(0, 170),
   );
   check('the rule that charged the round is on the page', has(body, 'wage charge for a round'), await lineWith(page, 'wage charge for a round'));

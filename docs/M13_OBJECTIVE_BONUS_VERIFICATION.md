@@ -188,13 +188,6 @@ Run 2 is the arm run 1 cannot be: after three draws only two objectives were met
 exactly those two; the five wins that followed paid the other two at the boundary. The projection is a read
 of the record the season actually holds, not a promise of the full table.
 
-On the landed commit's own bytes, the same walk was run against a production build of `40762fa` (re-cut
-as `0cf34c1` for line endings; the bytes on disk are identical — section 9): `next build` and `next start`
-on `:3212`, uvicorn on `:8744` over a fresh SQLite migrated through `0049`, and `qa-market.mjs` answered
-**146/146 checks, exit 0** (7 screenshots written to the git-ignored `docs/screenshots/`). The shared tree's run had reported 144/146; both reds were that tree's uncommitted
-gate-receipt feature — a round's gate money arrives as a ledger row the balance sentence does not print —
-and neither red exists in this commit, which is why the clean walk is full.
-
 The walk also asserts, on the wire: `market.budget.objective_detail` is the season/kind detail string;
 `totals.bonus_rows` = 4; `rules.objective_bonus` equals the closed block's formula; the four ledger rows
 carry `player_name` `objective bonus, <kind>`, `cash`/`side` `in`, zero contract years and zero wage, the
@@ -248,69 +241,7 @@ figures; the strings above are quoted from the DOM.
   the commit that carries this record, against a working tree that also holds concurrent items (gate
   receipts, cup ties) whose rows appear in the walk's timeline but whose arithmetic is not this item's.
 
-## 9. How these bytes reached master, and the verdict on them
+## 9. How these bytes reached master
 
-**By a commit of this item's own, through an index of its own.** The shared working tree was carrying
-several concurrent lanes (contract expiry, cup ties, gate receipts) and its index was not this item's to
-commit from: a commit taken there would have carried their staged bytes, and an index built from their HEAD
-would have reverted this item's later edits. The 21 paths were therefore committed through a private
-temporary index (`.scratch/idx-own-wt`, driven by `.scratch/own-commit-wt.py`): parent `cd82dcd` was read
-into it, the blobs were hashed from the graded worktree `.scratch/wt-bonus36` — not from the shared working
-tree — `update-index --cacheinfo` placed them, `write-tree` and `commit-tree` made the commit, and a
-compare-and-swap `update-ref refs/heads/master <new> cd82dcd` published it. The shared index and the shared
-working tree were never read for content and never written by that run.
-
-**The commit, re-cut once for its line endings.** The first tip, `40762fa`, was committed with the bytes as
-they sit on disk, and on this checkout that is CRLF: `hash-object -w --stdin` skips the clean filter that
-`git add` applies under `core.autocrlf=true`, so the 18 edited files landed as CRLF blobs against a
-repository whose blobs are LF, and `git show --stat` reported 27,566 insertions against 26,741 deletions
-for 886 lines of real change. The tip was unpublished (`origin/master` was still `cd82dcd`), it was this
-item's own, and nothing sat on top of it, so it was replaced rather than followed by a whitespace commit:
-the same 21 paths were re-hashed with `git hash-object -w --path=<path>` from the same worktree, the three
-paths already LF (the migration, `test_transfers.py`, and this record) kept their `40762fa` blobs, and
-`update-ref refs/heads/master 0cf34c1 40762fa` swapped the tip. `git diff -w 40762fa 0cf34c1` is empty,
-and the commit's diff against its parent is **21 files, 886 insertions, 61 deletions**. The tree the suite
-ran against did not move: a checkout writes CRLF to disk regardless of blob bytes, and the graded worktree
-was not touched by the re-cut.
-
-**The full suite on the commit: 2,153 tests, 2,149 passed, 4 skipped, 0 failed, exit 0.** It ran in the
-clean worktree with the CI's own branch environment (`GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`),
-because the earlier pre-commit run's only red was
-`test_ci_trigger.py::test_every_workflow_that_runs_on_push_covers_the_branch_the_run_is_about`, which
-refuses a detached checkout (`rev-parse --abbrev-ref HEAD` = `HEAD`) — an artefact of the worktree, not of
-the item; with the environment a push in CI carries, that case reads the branch it is told and passes. The
-four skips are the `integration`-marked cases, which skip themselves when no live service answers. The
-project's `addopts = "-q"` plus the command's `-q` makes `-qq`, which prints no tally line, so the figures
-are the progress marks: 2,149 `.` and 4 `s`.
-
-**The committed tree's own cases, read through `git show HEAD:`.** On the commit, in the clean worktree,
-`tests/test_spec_audit_currency.py`, `tests/test_locale_claims.py` and
-`tests/test_career.py::TestObjectiveBonuses` **25 passed**: the audit's migration figure reads 50 against
-50 committed migrations, the catalogue table reads `4013 of 4058` against the catalogues it names, and the
-nine bonus cases pass on the committed bytes.
-
-**The walk on the built commit.** `apps/web` was built from the committed tree and served beside an API on
-the same bytes; `qa-market.mjs` answered **146/146 checks, exit 0** (7 screenshots under the git-ignored
-`docs/screenshots/`), covering the four bonus rows and their bases, the balance sentence carrying both
-income terms, the finance panel's received total, and the seasons projection. The shared tree's own build
-answered 144/146 at the same moment; both reds were in the gate lane's new surfaces, not in this item's.
-
-**One index left behind, and what it means for the next commit.** Moving `master` under a shared index that
-still held the lanes' pre-item snapshot made `git status` in the shared tree report the two added paths
-(`0049_objective_bonuses.py` and this record) as staged deletions; a plain `git commit` taken from that
-index would have deleted them from `master`. Both were restored to HEAD's entries with
-`git reset HEAD -- <the two paths>` (index only, no working-tree bytes), and the migration was copied back
-to the shared disk. The nineteen modified paths are still staged at the lanes' older snapshot: a lane that
-re-adds its own files refreshes them, and a commit taken without re-adding would revert those paths to
-their pre-item bytes. The working tree keeps the new bytes, so the cure there is `git add`, not a rewind;
-this is written down because a shared index has no other reader.
-
-**Integration: the migration chain the shared tree is carrying.** That tree's uncommitted chain
-`0049_career_contract_expiry` → `0053_cup_tie_basis_width` was authored when `master`'s head was 48
-migrations. `master` now owns revision `0049`, so the chain must land as `0050`–`0054` (the first file's
-`down_revision` = `"0049"`), and `0051_career_cup_ties.py` must drop its own
-`career_budget_awards.stage` add, `uq_career_award_season` drop and `uq_career_award_stage` create: this
-item's `0049_objective_bonuses` applies all three, with `stage VARCHAR(80)`, and upgrading through the
-renumbered chain with them still present fails on the duplicate column before any cup work runs. Its
-`cup_prize` rows then share the widened key and the stage column this item introduced: one row per
-(career, season, kind, stage) is the rule for every award kind, the grant's stage staying empty.
+To be written when the item lands: the commit that carries it, the tree it was measured on, and the full
+suite's verdict with any reds named.

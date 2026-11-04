@@ -1542,10 +1542,6 @@ export type AffordabilityView = {
   /** What the board has paid for closed seasons — the income side of the balance above. */
   granted: number;
   grant_rows: number;
-  /** What the met objectives of closed seasons paid — the award table's other income (item 36). */
-  received_objectives: number;
-  objective_rows: number;
-  objective_detail: string;
   weekly_wage_bill: number;
   wage_players: number;
   /** `null` when the career pays no wages at all, so the balance sets no wage-driven limit. */
@@ -1622,34 +1618,6 @@ export type SeasonGrantProjection = {
   formula: string;
 };
 
-/** One met objective, as the `career_budget_awards` row the boundary wrote (market.py `pay_objective_bonuses`). */
-export type SeasonObjectiveBonusRow = {
-  /** The objective's kind, which is the row's `stage`: one row per kind per season. */
-  kind: string;
-  amount: number;
-  /** The same sum in words: `<label>: <actual> ≥ <target> pays <amount> <units>`. */
-  basis: string;
-  budget_after: number;
-  round_index: number;
-};
-
-/** What the objectives a closed season met paid (M13 Phase 9 item 36); `null` when none did. */
-export type SeasonObjectiveBonuses = {
-  amount: number;
-  units: string;
-  rows: SeasonObjectiveBonusRow[];
-  formula: string;
-};
-
-/** What the objectives met at the current record would pay if the season closed now (market.py `objective_bonus_report`). */
-export type SeasonObjectiveBonusProjection = {
-  amount: number;
-  units: string;
-  rows: { kind: string; label: string; target: number; actual: number; amount: number; basis: string }[];
-  basis: string;
-  formula: string;
-};
-
 /** One closed season: the verdict the boundary wrote, beside the record its own fixture rows still sum to. */
 export type CareerSeasonClosed = {
   season_index: number;
@@ -1667,8 +1635,6 @@ export type CareerSeasonClosed = {
   line: number | null;
   /** The grant this boundary paid beside the verdict it paid for; `null` when the season paid nothing. */
   grant: SeasonGrant | null;
-  /** The bonuses its met objectives paid; `null` when no objective was met (or the season was a challenge). */
-  bonuses: SeasonObjectiveBonuses | null;
   /** The API's own sentence on whether the fixtures still add up to the stored verdict; `null` with no rows. */
   recheck: string | null;
 };
@@ -1690,8 +1656,6 @@ export type CareerSeasonCurrent = {
   at_this_pace: string | null;
   /** What closing this season now would pay — the boundary's own arithmetic over the rounds already played. */
   grant_if_closed_now: SeasonGrantProjection;
-  /** What the objectives met at this record would pay if the season closed now (item 36). */
-  bonus_if_closed_now: SeasonObjectiveBonusProjection;
   note: string;
   source: string;
 };

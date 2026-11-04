@@ -173,11 +173,7 @@ def limitations() -> dict[str, str]:
             "here and the lines are authored constants printed beside the pace rather than a position in a "
             "table. A closed season of an open career is paid for: the board's grant is a row of its own, "
             "sized by the rounds and points that season actually played and printed beside the verdict it "
-            "came with. Each objective that season met is paid as well: every target the board set and the "
-            "season reached writes a row of its own beside the grant, at the rate published for its kind, so "
-            "the targets a manager sets move the balance and not only the prose that judges them — and a "
-            "challenge's window is judged by the challenge's own reward, so no objective pays a bonus there. "
-            "What the grant does not do is read a league table either — it rewards a season's own "
+            "came with. What the grant does not do is read a league table either — it rewards a season's own "
             "record, not a place in a competition this career cannot see."
         ),
         "world_calendar": (
@@ -1161,10 +1157,9 @@ def close_season(
     )
     session.add(row)
     # The boundary pays for the season it just closed (item 24), in the same transaction as the decision:
-    # a career either has its boundary and its money or has neither. The objectives it met are paid the
-    # same way (item 36), from the same verdicts the board prints. A local import for the same reason
+    # a career either has its boundary and its money or has neither. A local import for the same reason
     # `play_round` has one — `market` reaches through `challenges`, which imports this module.
-    from app.services.simulation.market import pay_objective_bonuses, pay_season_grant
+    from app.services.simulation.market import pay_season_grant
 
     pay_season_grant(
         session,
@@ -1173,14 +1168,6 @@ def close_season(
         round_index=int(last),
         rounds_played=int(record["played"]),
         points=int(record["points"]),
-        verdict=str(decision["verdict"]),
-    )
-    pay_objective_bonuses(
-        session,
-        career,
-        season_index=int(bounds["index"]),
-        round_index=int(last),
-        objectives=objectives_of(career, record),
         verdict=str(decision["verdict"]),
     )
     if following is not None:
@@ -1208,32 +1195,13 @@ def seasons_view(
     """
     # A local import for the same reason `play_round` has one: `market` reaches through `challenges`,
     # which imports this module.
-    from app.services.simulation.market import BUDGET_AWARD_FORMULA, OBJECTIVE_BONUS_FORMULA, awards_of, objective_bonus_report, season_grant
+    from app.services.simulation.market import BUDGET_AWARD_FORMULA, awards_of, season_grant
 
     closed = seasons_of(session, career)
     bounds = bounds if bounds is not None else season_bounds(session, career, horizon=horizon, closed=closed)
     # One grant per closed season, keyed by the season it paid. A season with no row paid nothing — a
     # challenge's window is judged by its own reward — and the block says `None` rather than zero.
-    # The award table also holds objective bonuses (item 36); a season's grant block must read its own
-    # kind or another income would be printed as the board's judgment of the season.
-    awards = awards_of(session, career.id)
-    grants = {int(award.season_index): award for award in awards if str(award.kind) == "season_grant"}
-    bonuses: dict[int, list[dict[str, Any]]] = {}
-    for paid_award in awards:
-        if str(paid_award.kind) == "objective_bonus":
-            bonuses.setdefault(int(paid_award.season_index), []).append(
-                {
-                    "kind": paid_award.stage,
-                    "amount": int(paid_award.amount),
-                    "basis": paid_award.basis,
-                    "budget_after": int(paid_award.budget_after),
-                    "round_index": int(paid_award.round_index),
-                }
-            )
-    # The stored rows are read back in id order, which is a random token; the kind is the order the
-    # boundary wrote them in and the ledger replays them in, so the block is read back in that order too.
-    for paid_bonuses in bonuses.values():
-        paid_bonuses.sort(key=lambda row: str(row["kind"]))
+    grants = {int(award.season_index): award for award in awards_of(session, career.id)}
     blocks: list[dict[str, Any]] = []
     for row in closed:
         season_fixtures = [fixture for fixture in rows if int(row.first_round) <= int(fixture.round_index) <= int(row.last_round)]
@@ -1271,16 +1239,6 @@ def seasons_view(
                     if award is not None
                     else None
                 ),
-                "bonuses": (
-                    {
-                        "amount": sum(int(bonus["amount"]) for bonus in bonuses[int(row.season_index)]),
-                        "units": career.budget_units,
-                        "rows": bonuses[int(row.season_index)],
-                        "formula": OBJECTIVE_BONUS_FORMULA,
-                    }
-                    if int(row.season_index) in bonuses
-                    else None
-                ),
                 "recheck": (
                     None
                     if agrees is None
@@ -1314,13 +1272,6 @@ def seasons_view(
         "grant_if_closed_now": season_grant(
             rounds=int(current_record["played"]),
             points=int(current_record["points"]),
-            verdict=str(decision["verdict"]),
-            units=career.budget_units,
-        ),
-        # The objectives met at the current record, projected through the boundary's own function (item 36):
-        # the board prints what its targets would pay before the season ends, not only after.
-        "bonus_if_closed_now": objective_bonus_report(
-            objectives=objectives_of(career, current_record),
             verdict=str(decision["verdict"]),
             units=career.budget_units,
         ),

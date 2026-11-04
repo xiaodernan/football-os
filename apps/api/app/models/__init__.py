@@ -1234,12 +1234,8 @@ class CareerSeason(Base, TimestampMixin):
     career: Mapped[Career] = relationship(back_populates="seasons")
 
 
-AWARD_KINDS: Final[tuple[str, ...]] = ("season_grant", "objective_bonus")
+AWARD_KINDS: Final[tuple[str, ...]] = ("season_grant",)
 AWARD_EFFECT: Final = "the board pays this season's grant: the money arrives as a row of its own and raises the balance the market spends from"
-
-#: The board pays the targets it set (M13 Phase 9 item 36): each objective a season met is a row of its own,
-#: so the objectives a manager chooses move the balance rather than only the prose that judges them.
-OBJECTIVE_BONUS_EFFECT: Final = "an objective the board set and the season met pays its bonus: the money arrives as a row of its own and raises the balance the market spends from"
 
 
 class CareerBudgetAward(Base, TimestampMixin):
@@ -1258,10 +1254,9 @@ class CareerBudgetAward(Base, TimestampMixin):
 
     __tablename__ = "career_budget_awards"
     __table_args__ = (
-        # One award per season, kind and stage. A season's grant is the only row of its kind in its season
-        # (`stage` is empty), and a bonus names the objective it paid for, so several can land in one season
-        # without colliding. A boundary that fired twice would pay twice, and the second payment is the bug.
-        UniqueConstraint("career_id", "season_index", "kind", "stage", name="uq_career_award_stage"),
+        # One grant per season, the way `uq_career_season_index` allows one decision per season: a
+        # boundary that fired twice would pay twice, and the second payment is the bug, not the rule.
+        UniqueConstraint("career_id", "season_index", name="uq_career_award_season"),
         Index("ix_budget_award_career_round", "career_id", "round_index"),
     )
 
@@ -1271,9 +1266,6 @@ class CareerBudgetAward(Base, TimestampMixin):
     #: The round the season ended on — where the money arrives in the ledger's round order.
     round_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     kind: Mapped[str] = mapped_column(String(20), default="season_grant", nullable=False)
-    #: Which stage of a season this award was paid for. Empty for the board's season grant; an objective
-    #: bonus carries its objective's kind, so the row says what was met without reading the basis string.
-    stage: Mapped[str] = mapped_column(String(80), default="", nullable=False)
     amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
     #: The arithmetic in words, so the figure can be checked against the season without the code.

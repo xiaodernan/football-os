@@ -1469,3 +1469,62 @@ script rather than typed out — ran against this tree: `REDS 0`. The neighbours
 ARCHITECTURE.md cure of the two claims that gate's old shape, and the `PLAN.md` row are the record after the
 bytes — which is why the arms above ran against the blob rather than a working draft.
 
+
+## 20. The layout was not direction-agnostic (2026-11-03)
+
+The catalogue layer has been direction-neutral since every key was read from it: next-intl resolves a
+sentence the same way in Arabic, in Chinese and in Latin. The page around those sentences was not.
+Every horizontal declaration in the web tier's stylesheets was physical -- `left`/`right` offsets,
+`margin-left`/`padding-left`/`border-left`, `text-align: left|right`, `float: left|right` -- which
+is invisible in three left-to-right locales and wrong the moment a right-to-left one is offered: the
+bullets, the quote bands, the table headers, the skip link and the nav's overflow row would all stay on
+the left while the text ran the other way.
+
+The defect is only reachable by adding a locale, which is exactly when it is cheapest to have refused.
+So this slice attaches a gate to the structure instead of waiting for the first RTL page:
+
+**(a) The physical declarations are gone and the population is every stylesheet.** The six files that
+carried them were rewritten to logical properties: `globals.css` (`text-align: end` on the kv value,
+`padding-inline-start` and `inset-inline-start` on the reasons list, `text-align: start` on the
+table header, `margin-inline-start: auto` on the nav actions, `inset-inline-start` on the skip link),
+`world.css` (`border-inline-end`/`padding-inline-end` on the band label, `text-align: end` on the
+two score columns), `tactics.css` (`border-inline-start` and the matching `border-start-end-radius`/
+`border-end-end-radius`), `knowledge.css` (`border-inline-start`/`padding-inline-start`,
+`text-align: start` on the filter chip), `coach.css` (`text-align: start`) and `training.css`
+(`border-inline-start`/`padding-inline-start`). Sixteen declarations in six files, all re-read by
+the gate on every run, not one of them parked behind an exemption.
+
+**(b) The verdict is called, not assumed.** `i18n/locales.ts` exports `textDirection(locale)` -- the
+base language decides, because a region subtag does not change direction (`ar-EG`, `he-IL`, `fa-IR`
+are still right-to-left). The gate transpiles that module with the repo's own TypeScript and asks the
+function, so a reversed condition is a red, not a reading the gate agrees with. The shipped locales
+answer `ltr`; eleven RTL base languages answer `rtl` (`ar`, `dv`, `fa`, `he`, `ku`, `ps`,
+`sd`, `ug`, `ur`, `yi`). The root layout passes `<html lang={locale} dir={textDirection(locale)}>`
+-- and the gate reads the `<html>` tag as a tag, so a `dir` smuggled onto an inner element does not
+satisfy it.
+
+**(c) The scanner answers red before it is trusted.** The gate holds a synthetic stylesheet with one of
+each shape the check claims to refuse (`left: 0`, `padding-left`, `margin-right`, `border-left`,
+`text-align: right`, `float: left`, `border-top-left-radius`) and goes red on each. Comments are
+blanked before classification so a commented-out declaration is not judged and a comparison in one is
+not a crash. On the real population the run reads
+`CHECKS passed=7 total=7 failed=0` -- population 11 file(s), scanner witness 7 finding(s) across 5/5
+shapes, zero physical declarations in the tree, classification agrees on 3 shipped + 11 RTL + 8 LTR
+locales, the layout tag carries both `lang` and `dir`, and both font stacks end in a generic family.
+
+**(d) A planted stylesheet proves the red end to end.** A scratch file with `padding-right: 1rem;
+text-align: left` made check 3 report both shapes and the run exit 1; the file was deleted afterwards
+and the tree re-read clean. The gate is registered in `scripts/check.sh` and CI, and the inventory
+answers `CHECKS passed=194 total=194 failed=0` with `qa-rtl-readiness.mjs` named by both.
+
+**What is not claimed.** This does not ship an RTL locale, and it does not prove the phone-sized
+layout under mirroring -- the copy gate, the walks and the CSSOM tests still cover those. It claims the
+substrate is ready: no physical horizontal declaration survives in the population, `dir` is the
+locale's own verdict, and adding `ar` to `locales` cannot silently render it left-to-right. The
+typography audit for Arabic/Hebrew (letter-spacing behaviour on Nastaliq, bilingual punctuation,
+\#\-width in the scoreline) and the list of which pages were eyeball-checked under `dir=rtl` remain
+the open work for the first RTL milestone; this section records the structural half that had a gate.
+
+**Landing note.** `cd82dcd` carried the gate, the six rewritten stylesheets, the `textDirection`
+helper, the `<html dir>` binding and the gate inventory's move to 194/194; this section is the record
+after the bytes.

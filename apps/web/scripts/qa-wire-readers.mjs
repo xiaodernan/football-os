@@ -16,19 +16,24 @@ round a deal would be made in. This gate judges the *market's* copy — `MarketV
 published block against each other, which is the gap that lets a second reader go stale while the first stays
 green.
 
-Three populations, each derived from the bytes on every run rather than copied here:
-  - the **wire**: the keys `market_view()`, `transfer_window()` and `season_windows()` publish, read out of
-    `apps/api/app/services/simulation/market.py` with a depth-tracking scan that respects Python's strings — the
-    bodies hold nested dicts, f-strings with braces in them and docstrings full of punctuation, and a regex that
-    stops at the first bracket it likes is a scan that narrows itself;
-  - the **type**: the properties `MarketView`, `MarketWindow`, `MarketView["constants"]` and
-    `MarketWindow["windows"]` declare, read out of `lib/market.ts` through the repo's own TypeScript, following an
-    inline object literal or a named alias as the field is written;
+Four populations, each derived from the bytes on every run rather than copied here:
+  - the **wire**: the keys `market_view()`, `transfer_window()` and `season_windows()` publish — the view's own,
+    and the blocks inside it (`constants`, `totals`) — read out of `apps/api/app/services/simulation/market.py`
+    with a depth-tracking scan that respects Python's strings; the bodies hold nested dicts, f-strings with
+    braces in them and docstrings full of punctuation, and a regex that stops at the first bracket it likes is a
+    scan that narrows itself;
+  - the **type**: the properties `MarketView`, `MarketWindow`, `MarketView["constants"]`, `MarketView["totals"]`
+    and `MarketWindow["windows"]` declare, read out of `lib/market.ts` through the repo's own TypeScript,
+    following an inline object literal or a named alias as the field is written;
   - the **reader**: the property accesses the market page makes on the object it was handed, read out of
     `app/career/[slug]/market/page.tsx`. A name counts as read *for this block* only when the access is rooted at
     the page's own binding of `view.window` — `.state` and `.label` are words other objects answer to, and a census
-    that confused them would certify a blind page as wired. One hop is followed: the row a `windows.map(...)` hands
-    its callback is read the same way as the block itself.
+    that confused them would certify a blind page as wired. One hop is followed: the row a `windows.map(...)`
+    hands its callback is read the same way as the block itself. The totals block is read on a second plane:
+    the page hands the whole block to `MarketTools`, and the component reads it under its own prop name — a
+    seam that is a clause, re-measured on every run, not a convention the census takes on faith.
+  - the **ledger**: a published key with no reader can be named, but only with a reason the bytes re-measure —
+    a reason that stops being true must stop excusing the key the same run.
 
 Checks, each able to refuse on its own:
   1  every file the census needs was readable                                    — an unread file is not an empty one
@@ -42,6 +47,9 @@ Checks, each able to refuse on its own:
   9  every constant the view publishes is typed, and the window's own constants are read
   10 every published view key has a reader on the page, or is named with the reason
   11 an exemption the bytes stopped earning is stale                             — a ledger row is a predicate, re-measured every run
+  12 the totals block's published keys are the keys `MarketView["totals"]` declares — the block inside the block, judged the same way
+  13 every field the totals block declares is read on the page or through the seam, or named with a reason the bytes re-measure
+  14 a totals exemption the bytes stopped earning is stale                       — the same discipline as 11, on the new ledger
 
 Files only: no server, no browser, no port. The arithmetic a live tier re-derives from these fields is
 `scripts/qa-market.mjs`'s; this gate's job is to refuse a *missing reader*, which no browser can tell apart from a
@@ -64,12 +72,14 @@ const API = resolve(process.env.QA_WIRE_API ? process.env.QA_WIRE_API : join(WEB
 const MARKET_PY = join(API, "app/services/simulation/market.py");
 const TYPES_TS = join(WEB, "lib/market.ts");
 const PAGE_TSX = join(WEB, "app/career/[slug]/market/page.tsx");
+const TOOLS_TSX = join(WEB, "components/MarketTools.tsx");
 
 // Vacuity floors, not ratchets: the claim is the set equality, and these only refuse a scan that found nothing.
 const FLOOR_VIEW_KEYS = 10;
 const FLOOR_WINDOW_KEYS = 8;
 const FLOOR_RANGE_KEYS = 3;
 const FLOOR_CONSTANT_KEYS = 5;
+const FLOOR_TOTALS_KEYS = 5;
 
 const checks = [];
 const check = (name, ok, detail = "") => {
