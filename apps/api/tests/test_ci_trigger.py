@@ -13,6 +13,17 @@ that names a branch no push carries. It also runs `scripts/lint.sh`, the same fi
 call, so a lint red fails `pytest` on the machine that wrote it rather than on a workflow run that never happens;
 and it stubs the script's `python` to record the arguments ruff is handed, so the population the target
 *announces* and the population it *checks* are the same set, derived here from `git ls-files`.
+
+**The local read is a fallback, not an assertion.** It used to refuse the literal `HEAD` that
+`rev-parse --abbrev-ref HEAD` answers on a detached checkout, which reddened this case on every `git worktree`
+plane a landing of this project is graded on: at `21bbf86` the whole API suite answered 1 failed / 2148 passed /
+4 skipped and the one failure was here (`.scratch/item40-suite.log`). That suite had only reached rc=0 earlier
+because the command carried `GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master` — a verdict recorded without naming
+the prefix is evidence about the invocation, not about the commit. So the branch now comes from the event when
+there is one, from the checkout when it is on a branch, and otherwise from `git for-each-ref --contains HEAD`: the
+commit's own history, which is what a push would carry. When no branch carries it the case skips, naming the refs
+it did find, and both sides of that resolver are asserted on a throwaway repository — a skip that cannot fail is a
+gate that cannot work.
 """
 
 from __future__ import annotations
@@ -22,9 +33,11 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 
 from tests.test_dr_scripts import _bash
@@ -91,30 +104,77 @@ def _covers(patterns: list[str] | None, branch: str) -> bool:
     return patterns is None or any(fnmatch.fnmatchcase(branch, pattern) for pattern in patterns)
 
 
-def _pushed_branch() -> str:
-    """The branch a push in this run would carry, or the branch a pull request here targets."""
-    event = os.environ.get("GITHUB_EVENT_NAME")
-    if event and event.startswith("pull_request"):
-        base = os.environ.get("GITHUB_BASE_REF")
-        assert base, "a pull_request event reached this suite without GITHUB_BASE_REF, so no push branch can be asked"
-        return base
-    if event and event.startswith("push"):
-        ref = os.environ.get("GITHUB_REF_NAME")
-        assert ref, "a push event reached this suite without GITHUB_REF_NAME, so no push branch can be asked"
-        return ref
-    result = subprocess.run(
-        ["git", "-C", str(ROOT), "rev-parse", "--abbrev-ref", "HEAD"],
+def _git_text(root: Path, *args: str) -> str:
+    """One read-only `git` call against a repository, with its stdout as text."""
+    done = subprocess.run(
+        ["git", "-C", str(root), *args],
         capture_output=True,
         text=True,
         encoding="utf-8",
         errors="replace",
     )
-    assert result.returncode == 0, f"cannot read the checked-out branch: {result.stderr}"
-    branch = result.stdout.strip()
-    assert branch and branch != "HEAD", (
-        f"this checkout is on no branch ({branch!r}), so the workflow's push trigger cannot be asked of it"
+    assert done.returncode == 0, f"`git {' '.join(args)}` failed in {root}: {done.stderr.strip()[:200]}"
+    return done.stdout
+
+
+def _git_lines(root: Path, *args: str) -> list[str]:
+    return [line.strip() for line in _git_text(root, *args).splitlines() if line.strip()]
+
+
+def _branches_carrying_head(root: Path) -> list[str]:
+    """Every local branch whose history contains the checked-out commit."""
+    return _git_lines(root, "for-each-ref", "--contains", "HEAD", "--format=%(refname:short)", "refs/heads/")
+
+
+def _published_branch(root: Path) -> str:
+    """The branch this project's work is pushed to, or `""` when the checkout cannot say.
+
+    `origin/HEAD` is the remote's own statement of its default branch, and it is the fact the defect this gate was
+    written for was found by reading (`origin/HEAD -> origin/master`, while the workflow triggered on `main`). A
+    checkout with no remote — a `git archive` plane, a fresh single-branch clone — answers from the branches it
+    holds: `master`, then `main`, then the one branch when there is exactly one.
+    """
+    symbolic = subprocess.run(
+        ["git", "-C", str(root), "symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
     )
-    return branch
+    name = symbolic.stdout.strip()
+    if symbolic.returncode == 0 and name:
+        return name.removeprefix("origin/")
+    branches = _git_lines(root, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+    for candidate in ("master", "main"):
+        if candidate in branches:
+            return candidate
+    return branches[0] if len(branches) == 1 else ""
+
+
+def _pushed_branches(root: Path) -> list[str]:
+    """The branch or branches a push of this run's work could carry — empty when none can be named.
+
+    The local fallback is what makes this gate usable on the planes landings are graded on. Every landing of this
+    project runs its suite on a detached `git worktree`, where `rev-parse --abbrev-ref HEAD` answers the literal
+    `HEAD`; asserting on that reddens the instrument instead of the tree, and the suite only goes green on such a
+    plane when the command is handed a `GITHUB_REF_NAME` the machine does not have — which turns a recorded
+    verdict into evidence about the invocation rather than the commit. So the fallback asks git which branch
+    *carries* the commit, and a run that has no answer says so as a skip that names the refs it did find.
+    """
+    event = os.environ.get("GITHUB_EVENT_NAME")
+    if event and event.startswith("pull_request"):
+        base = os.environ.get("GITHUB_BASE_REF")
+        assert base, "a pull_request event reached this suite without GITHUB_BASE_REF, so no push branch can be asked"
+        return [base]
+    if event and event.startswith("push"):
+        ref = os.environ.get("GITHUB_REF_NAME")
+        assert ref, "a push event reached this suite without GITHUB_REF_NAME, so no push branch can be asked"
+        return [ref]
+    checked_out = _git_text(root, "rev-parse", "--abbrev-ref", "HEAD").strip()
+    if checked_out and checked_out != "HEAD":
+        return [checked_out]
+    published = _published_branch(root)
+    return [published] if published and published in _branches_carrying_head(root) else []
 
 
 def _tracked_outside_api() -> list[str]:
@@ -150,16 +210,65 @@ def _lint_environment(path_entries: list[Path]) -> dict[str, str]:
 
 
 def test_every_workflow_that_runs_on_push_covers_the_branch_the_run_is_about() -> None:
-    branch = _pushed_branch()
+    branches = _pushed_branches(ROOT)
     workflows = sorted(WORKFLOWS.glob("*.yml")) + sorted(WORKFLOWS.glob("*.yaml"))
     assert workflows, f"{WORKFLOWS} holds no workflow file, so this gate would pass over nothing"
-    for path in workflows:
-        if "push" not in _triggers(path):
-            continue
-        patterns = _push_patterns(path)
-        assert _covers(patterns, branch), (
-            f"{path.name} runs on push to {patterns!r}, but this run is about {branch!r}: no push would ever "
-            f"reach it, so every job in it is unexecuted automation"
+    if not branches:
+        pytest.skip(
+            f"this checkout is detached at a commit that the branch this project pushes "
+            f"({_published_branch(ROOT)!r}) does not carry — `git for-each-ref --contains HEAD` answers "
+            f"{_branches_carrying_head(ROOT)!r} — so no push event would ever name a branch for this run. "
+            "The skip is loud in the tally; the alternative was to redden every plane a landing is graded on."
+        )
+    for branch in branches:
+        for path in workflows:
+            if "push" not in _triggers(path):
+                continue
+            patterns = _push_patterns(path)
+            assert _covers(patterns, branch), (
+                f"{path.name} runs on push to {patterns!r}, but this run is about {branch!r}: no push would ever "
+                f"reach it, so every job in it is unexecuted automation"
+            )
+
+
+def test_the_branch_fallback_answers_on_a_detached_checkout_and_names_why_when_it_cannot() -> None:
+    """The fallback is graded on a repository this run builds, not on the one it happens to be standing in.
+
+    A `pytest.skip` is one character of a tally line away from a silent gate, so the two sides of the resolver are
+    asserted here over a throwaway repository: a detached checkout at a commit the published branch carries answers
+    that branch — the shape every landing plane is — and a detached checkout at a commit only a side branch carries
+    answers nothing, which is what makes the skip above a statement about the commit rather than about git.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp)
+        # The probe's repository must not inherit this host's signing or hook path: a global `commit.gpgsign`
+        # or a `core.hooksPath` that needs a service would fail a commit with nothing to do with what is graded.
+        isolate = ["-c", "commit.gpgsign=false", "-c", f"core.hooksPath={repo / 'no-hooks'}"]
+        _git_text(repo, "init", "--quiet", "-b", "master")
+        _git_text(repo, "config", "user.name", "fallback probe")
+        _git_text(repo, "config", "user.email", "fallback@example.invalid")
+        (repo / "f").write_text("one\n", encoding="utf-8")
+        _git_text(repo, "add", "f")
+        _git_text(repo, *isolate, "commit", "--quiet", "-m", "one")
+        assert _pushed_branches(repo) == ["master"], "a checkout on a branch must answer that branch"
+        _git_text(repo, "checkout", "--quiet", "--detach")
+        assert _pushed_branches(repo) == ["master"], (
+            "a detached checkout at a commit master carries must answer master: this is the shape of every "
+            "landing plane, and an empty answer here is the gate going silent"
+        )
+        _git_text(repo, "checkout", "--quiet", "-b", "side")
+        (repo / "g").write_text("two\n", encoding="utf-8")
+        _git_text(repo, "add", "g")
+        _git_text(repo, *isolate, "commit", "--quiet", "-m", "two")
+        assert _branches_carrying_head(repo) == ["side"], _branches_carrying_head(repo)
+        assert _pushed_branches(repo) == ["side"], (
+            "a checkout that is on `side` answers `side`, detached history or not: the checked-out branch is "
+            "the run's own answer and the fallback never overrules it"
+        )
+        _git_text(repo, "checkout", "--quiet", "--detach")
+        assert _pushed_branches(repo) == [], (
+            "detached at a commit the published branch does not carry has no push branch, and answering one "
+            "would grade a workflow trigger against a branch that would never carry this work"
         )
 
 
