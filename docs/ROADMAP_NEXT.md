@@ -557,6 +557,27 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 
 *Gate:* each runbook cites the door it documents (§83 pattern); the cost ceiling is a tested boundary.
 
+* **42. The wire-readers gate promises a `totals` census it never computes.** `apps/web/scripts/qa-wire-readers.mjs`
+  gained checks 12–14 at `c0d376c`, documented as counting the `totals` block's keys over the population and
+  following the seam through `components/MarketTools.tsx`. The shipped script declares `TOOLS_TSX` and
+  `FLOOR_TOTALS_KEYS` and reads neither — **one declaration, zero uses, each** — and the run answers
+  `CHECKS passed=12 total=12`, the eleven checks and 3b that existed before. So the file's own prose is a claim
+  about a census that nothing computes, and the roadmap row that quotes it inherited the claim. *Gate:* the three
+  checks must run and print their populations (`totals` keys counted, `MarketTools` seam followed), and an arm that
+  deletes a `totals` key from the wire must red the clause the prose names — today the same deletion answers 12/12.
+  Filed in [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §7.
+* **43. A gate that is green only under a fabricated CI environment.** `test_ci_trigger.py` asks the workflow's
+  push trigger of "the branch the run is about", and locally reads that branch with `git rev-parse --abbrev-ref
+  HEAD`. On a detached checkout that answers `HEAD`, and the case asserts — so the full suite is red on the very
+  plane every landing of this project is graded on: measured at `21bbf86`, **1 failed / 2148 passed / 4 skipped**,
+  the one red being that case (`.scratch/item40-suite.log`). Item 38's post-landing suite answered rc=0 only
+  because the command carried `GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`, which its record did not say — a
+  run whose green depends on an environment the machine does not have is evidence about the invocation, not about
+  the commit. *Gate:* derive the branch from the commit (`git for-each-ref --contains HEAD --format=…
+  refs/heads/`), and when no branch contains it, skip naming why; then re-measure the suite on a detached plane
+  with no `GITHUB_*` in the environment and record the command verbatim. Filed in
+  [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §3 and §7.
+
 ---
 
 ## Phase 7 — Career consequences
@@ -804,3 +825,39 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   a contract dirty on disk alone (old 3 failed / 1 passed, new 4 passed); a planted route with its contract
   regenerated beside it (old 4 passed, new 3 failed / 1 passed, the schema case green for the right reason).
   Recorded in [OPENAPI_CONTRACT_VERIFICATION.md](OPENAPI_CONTRACT_VERIFICATION.md). **Landing:** `f10e232`.
+- **A landing reverted a landed unit; two gates saw it and no gate saw the schema (2026-11-04).** `c0d376c`
+  carried 22 paths: `qa-wire-readers.mjs` and the RTL record's `## 20` were its own, and the other twenty answered
+  HEAD's item-36 bytes with **pre-item-36 text** from a plane older than `0cf34c1` — `CareerBudgetAward.stage` and
+  `uq_career_award_stage`, `objective_bonus_report` and `pay_objective_bonuses`, `TestObjectiveBonuses` (9 cases,
+  −196 lines), the market page's ledger and balance sentence, 5 catalogue keys per locale, and the item's own
+  record, `PLAN.md` section and roadmap bullet. `0049_objective_bonuses.py` was *not* in the reverted set, so the
+  commit held a revision building a column no model declares. Master red on **2 failed / 148 passed** across the
+  five files that judge this surface — `test_spec_audit_currency` (`AUDIT_FIGURES says 49 migrations; … holds 50
+  committed .py files`) and `test_locale_claims` (a README population of 4,033 against an `en.json` holding 4,053)
+  — and both reds are figure-against-file; the schema itself was invisible, because `create_all` builds the model's
+  schema and nothing ran the chain against `Base.metadata`. `21bbf86` restores the twenty blobs as `e8fa569` held
+  them, keeps the lane's two paths, and measures the repair: **208 passed** on the six API files, ruff and mypy
+  (161 files) and `tsc` clean, `qa-wire-readers` 12/12 through `qa-gate-inventory` **194/194**. Item 38's record
+  was then rebased onto it rather than landed as written, because the same defect was one checkout away. Recorded
+  in [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §1–3. **Landing:** `21bbf86`,
+  20 paths through a private index. **The whole suite on the repair: 1 failed / 2148 passed / 4 skipped in 36:54**
+  — the population item 38 measured, so the restore lost and gained no test; the single red is `test_ci_trigger`
+  reading `HEAD` from a detached plane (§3), which is filed as item 43.
+- **The chain and the models are one schema, and a gate says so (2026-11-04).** The half of `c0d376c` no test
+  could see. `apps/api/tests/test_migration_model_drift.py` runs the committed chain to head on a temporary SQLite
+  file in a subprocess — its own `DATABASE_URL`, so the checkout's `.env`, the suite's database and the dev
+  database are all out of the picture — and asks alembic's own `compare_metadata` what would move the migrated
+  schema to `Base.metadata`, then fails on one clause per shape: a column the chain builds and no model declares
+  (**naming the revision that added it**, read from the committed sources), a column a model declares and no
+  revision builds, the tables in both directions, and everything else `compare_metadata` can name. **4 passed** in
+  10.9 s at master, and **2 failed / 2 passed** on the real reverted commit — clause 1 answers
+  `career_budget_awards.stage … ['0049_objective_bonuses.py'] — a landing that reverted the model without
+  reverting the migration`, clause 4 names the key swap — plus two synthetic arms (a planted model column, a
+  planted model table) each red on exactly one clause and green on the other three. Types and widths are
+  deliberately out: `scripts/schema_drift.py` owns those against a live database. Also found on the way, filed not
+  fixed: `qa-wire-readers.mjs` documents checks 12–14 over the `totals` block and declares `TOOLS_TSX` and
+  `FLOOR_TOTALS_KEYS` with **one declaration and zero uses each** — the census it promises is prose. Recorded in
+  [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §4–7. **Landing:** `f5d6abf`
+  carried the gate (one path, 8,354 bytes, 24 passed across the four commit-reading gates at that commit); this
+  bullet, §1–7 of the record and the `PLAN.md` section are the commit beside it. The two findings it filed are
+  items 42 (`qa-wire-readers`'s prose census) and 43 (a gate green only under a fabricated CI environment).

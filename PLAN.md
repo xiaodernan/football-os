@@ -1143,6 +1143,44 @@ contract regenerated beside it (old 4 passed, new 3 failed / 1 passed), and the 
 Evidence: [OPENAPI_CONTRACT_VERIFICATION.md](docs/OPENAPI_CONTRACT_VERIFICATION.md). **Landing:** `f10e232`, one
 path through a private index; the record, this section and the roadmap bullet land after it.
 
+## A landing can revert a landed unit (item 40, done 2026-11-04)
+
+`c0d376c` carried 22 paths. Two were its own unit — `qa-wire-readers.mjs` and section 20 of the i18n record — and
+the other twenty were the checkout's stale answer to item 36: `CareerBudgetAward.stage` and
+`uq_career_award_stage`, `objective_bonus_report`, `pay_objective_bonuses`, `TestObjectiveBonuses`, the market
+page's bonus ledger and its second income term, five catalogue keys per locale, the README rows back to
+`3988 of 4033`, `migrations=50` back to `49` in both audit carriers, and the item's record, plan section and
+roadmap bullet. `0049_objective_bonuses.py` was not in the set and stayed, so the commit held a revision that
+builds a column no model declares. Two gates red on that tree — `test_spec_audit_currency` (49 claimed, 50
+revision files) and `test_locale_claims` (README 4,033 against an `en.json` of 4,053) — and both are figure
+against file; the schema was invisible. `21bbf86` restores the twenty blobs exactly as `e8fa569` held them and
+keeps the lane's two paths, measured at **208 passed** across the six API files with ruff, mypy and `tsc` clean and
+the file-only web gates at **194/194**. The repair is also why item 38's record landed rebased rather than as
+written: a section appended to an older copy of that file would have deleted the RTL record the same way.
+The whole suite on the repair answers **1 failed / 2148 passed / 4 skipped** in 36:54 — the same population item 38
+measured, so the restore neither lost nor gained a test — and the single red is `test_ci_trigger` refusing a
+detached plane's `HEAD`, which is item 43, not the repair.
+Evidence: [MIGRATION_MODEL_DRIFT_VERIFICATION.md](docs/MIGRATION_MODEL_DRIFT_VERIFICATION.md) §1–3. **Landing:**
+`21bbf86`, 20 paths through a private index.
+
+## The chain and the models describe one schema (item 41, done 2026-11-04)
+
+The half of the revert that no test could see. `apps/api/tests/test_migration_model_drift.py` runs the committed
+chain to head on a temporary SQLite file in a subprocess with its own `DATABASE_URL` — so the checkout's `.env`,
+the suite's test database and the dev database are all out of the picture — and asks alembic's own
+`compare_metadata` what would move the migrated schema to `Base.metadata`, with the revisions and the models both
+read from the committed tree. Four clauses, each failing alone: a column the chain builds and no model declares —
+and its message names the revision that shipped it, found by reading the committed migration sources for the ones
+naming both table and column; a column a model declares and no revision builds; the tables in both directions; and
+everything else `compare_metadata` can name, constraints included. Types and widths are deliberately out
+(`compare_type` on SQLite is reflection noise, and widths are `scripts/schema_drift.py`'s claim against a live
+database). **4 passed** in 10.9 s at master; **2 failed / 2 passed** on the real `c0d376c`, clause 1 answering
+`career_budget_awards.stage … ['0049_objective_bonuses.py']`; a planted model column and a planted model table each
+red on exactly one clause. Evidence: [MIGRATION_MODEL_DRIFT_VERIFICATION.md](docs/MIGRATION_MODEL_DRIFT_VERIFICATION.md)
+§4–7. **Landing:** `f5d6abf`, one path through a private index; this record, section and bullet are the commit
+beside it. It filed two findings — `qa-wire-readers`'s prose census (item 42) and a CI gate that is green only
+under a fabricated environment (item 43).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
