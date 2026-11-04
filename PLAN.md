@@ -1104,6 +1104,26 @@ catalogue keys per locale. Evidence: [M13_OBJECTIVE_BONUS_VERIFICATION.md](docs/
 between them); section 9 of the record carries the suite verdict, the committed-tree cases and the
 migration-renumbering note.
 
+## The locale claims grade the commit (item 38, done 2026-11-04)
+
+`test_locale_claims.py` sourced both of its inputs from the working tree — `_prose()` read `REPO / rel`,
+`_catalogues()` globbed `apps/web/messages/*.json` — so a figure pinned to equality was graded in a place no
+commit owns. `25c6873` proves the split: on its own checkout the README row says `3988 of 4033` while that
+commit's `en.json` holds 4,053 keys (45 language-neutral), so the true pair is `4008 of 4053` and the test
+fails; in the shared tree the same row reads `4074 of 4119` against a catalogue that had grown again, and the
+run is green. The whole module now reads the commit through `git show HEAD:…` and `git ls-tree HEAD`, the two
+helpers `test_spec_audit_currency.py` already uses: `_raw()`/`_names()` for the catalogues, `_prose()` for the
+five carriers, and `_refusals()` for the API-source census that compares published codes against `errors.*`
+keys — a disk census against a committed catalogue is the same mixed-tree comparison one layer out. A
+checkout with no `.git` falls back to disk, as the sibling does. `_capabilities()` is the one live input: the
+app boots from the checkout by necessity, and its `locales` answer is compared to the committed catalogues.
+Three arms on a clean worktree, each making the checkout disagree with HEAD in a different input — a dirty
+`en.json` (4,059 keys vs 4,058), a README row rewritten to `1 of 1` plus a planted `287/288` sentence in
+`ARCHITECTURE.md`, and a working-tree-only `zz_item38_probe` refusal — left this file green in all three;
+HEAD's old reader failed each arm, the census arm naming `["zz_item38_probe -> 'Probe refusal'"]`. Evidence:
+[I18N_ARC_VERIFICATION.md](docs/I18N_ARC_VERIFICATION.md) §21. **Landing:** `e8fa569`, one path through a
+private index.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

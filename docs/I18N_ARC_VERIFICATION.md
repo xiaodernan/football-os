@@ -1528,3 +1528,74 @@ the open work for the first RTL milestone; this section records the structural h
 **Landing note.** `cd82dcd` carried the gate, the six rewritten stylesheets, the `textDirection`
 helper, the `<html dir>` binding and the gate inventory's move to 194/194; this section is the record
 after the bytes.
+
+## 21. The locale claims grade the commit, not the checkout (2026-11-04)
+
+Item 38 was filed with the receipts. `25c6873` fails
+`test_the_readme_table_states_the_coverage_the_catalogues_actually_have` on its own checked-out tree: its
+README row says `3988 of 4033` while that commit's `en.json` holds **4,053** keys, 45 of them language-neutral,
+so the row's true pair is **`4008 of 4053`**. The suite that landed it was green in the shared tree, where the
+same row read `4074 of 4119` against a catalogue that had grown again. The arithmetic was never wrong. The test
+took both inputs from the working tree — `_catalogues()` globbed `apps/web/messages/*.json`, `_prose()` read
+`REPO / rel` — so a figure pinned to equality was graded in a place no commit owns. The checkout always answers
+with whichever edits are saved; the commit is the tree a reader, and CI, actually sees.
+
+The module now reads the commit through the same helpers `test_spec_audit_currency.py` uses for its ledgers:
+
+* `_committed_text(rel)` is `git show HEAD:rel`, cached so each file is read once, and `_committed_paths(dir)`
+  is `git ls-tree -r --name-only HEAD -- dir`; both fall back to disk only when the checkout carries no
+  `.git`, the source-distribution case the sibling also accepts.
+* `_raw()`/`_names()` take the catalogues from that tree, so the duplicate-key, key-set, untranslated and
+  shipped-locale assertions are about the commit's catalogues. `_names()` reads the listing's direct `.json`
+  children, so `.gate-baseline` and `.population-baseline` stay out of the population.
+* `_prose()` takes all five carriers from it, so both the recomputed README row and the ban on a second figure
+  read what the commit says.
+* `_refusals()` takes the API's own source from it as well. This is not tidying: its `unheld` assertion
+  compares the catalogue's `errors.*` keys against the codes the API publishes, and a disk census over a
+  committed catalogue is the same mixed-tree comparison one layer out — a lane that adds a refusal and its
+  sentence in one commit would otherwise fail locally until both edits were saved.
+* `_capabilities()` is the one input that stays live, because the app is imported and booted from the checkout
+  by necessity. Its `locales` answer is compared to the committed catalogues: the commit is the claim, and a
+  checkout whose `meta.py` disagrees with its own catalogue is a disagreement only CI (which checks out the
+  commit whole) cannot see.
+
+**Three arms, each making the checkout disagree with HEAD in a different input.** The plane was a clean `git
+worktree` detached at the tree this section lands on. The targeted pair (`test_locale_claims.py` +
+`test_spec_audit_currency.py`) was **16 passed** before the arms. HEAD's own reader — `git show
+HEAD:apps/api/tests/test_locale_claims.py`, written to `tests/test_item38_old_reader.py` and deleted after —
+ran against the same dirty trees, so every red and green below is the same input read by two sources.
+
+| arm | the working tree says | the commit says | HEAD's old reader | this file |
+| --- | --- | --- | --- | --- |
+| A | `en.json` grew a `zz_item38_probe` key: **4,059** keys | **4,058** keys; README row `4013 of 4058` | `1 failed` (population 4,058 against 4,059) | `1 passed` (4.40 s) |
+| B | README `zh` row rewritten to `1 of 1`; `ARCHITECTURE.md` given a tail sentence ``… (`zh` 287/288 keys)`` | both carriers unchanged | `2 failed` | `2 passed` (4.26 s) |
+| C | `apps/api/app/_zz_item38_probe.py` publishes `zz_item38_probe -> 'Probe refusal'` | no such file; no `errors.zz_item38_probe` key | `1 failed`: `1 refusal code(s) … ["zz_item38_probe -> 'Probe refusal'"]` | `1 passed` (17.67 s) |
+
+Arm A's figures are the tree as it stood (`5beaba1`'s 4,058 keys), not the filed item's (`25c6873`'s 4,053): the
+population moves, and what the arm measures is which tree answers. Arm C is the differential rather than a third
+copy of A and B: the old reader reds on a code only the checkout has, and the new reader does not. All three
+probes were removed; the worktree was left with the one modified path the landing carries.
+
+**The suite, on both sides of the landing.** The full API suite ran before the commit, on the plane with the
+reader edited and every probe deleted: **2,149 passed, 4 skipped, 330 warnings, rc=0** in 27:22
+(`.scratch/item38-suite.log`). It ran again after, on a checkout detached at `e8fa569` itself: **the same 2,149
+passed, 4 skipped, 330 warnings, rc=0** in 33:05 (`.scratch/item38-suite-landed.log`). Identical counts on both
+sides is the point — sourcing the claims from the commit changes which tree answers, not how many cases pass,
+and a lane that was green on disk stays green unless the commit it sits on is itself inconsistent. The two
+elapsed times are the shared host, not the change: the second run overlapped another lane's pytest.
+
+**What is not claimed.** The `.git`-less fallback grades disk again, by design: a source distribution has no
+commit to read, and the sibling makes the same trade. `_capabilities()` still boots the checkout's app, as
+above. And this makes the published figure fail on the commit that changed one side and not the other; it does
+not make the README's number follow a catalogue edit on its own — a test can hold an equality, not perform the
+translation.
+
+**Numbering.** The shared tree already carries the RTL lane's uncommitted §20, so this section takes 21; reusing
+20 would have forced one of the two to renumber on landing.
+
+**Landing note.** `e8fa569` carried the reader; the roadmap's completed bullet and `PLAN.md`'s section were
+written after it, and this section is the record after the bytes. Those three doc paths were rebased onto
+`21bbf86` before landing, because the commit that followed the reader had reverted twenty of them: the graded
+`## 20` this section follows is the RTL lane's record, and a section appended to an older copy of this file
+would have deleted it. The rebase is the same hazard `21bbf86` repaired, and the unit the roadmap files next
+gates.

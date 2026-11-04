@@ -777,3 +777,17 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   [M13_OBJECTIVE_BONUS_VERIFICATION.md](M13_OBJECTIVE_BONUS_VERIFICATION.md). **Landing:** `0cf34c1`, 21
   paths through a private index; `40762fa` re-cut to LF blobs (`git diff -w` empty between them). The full
   suite's verdict, the committed-tree cases and the shared-index warning are in section 9 of the record.
+- **The locale claims grade the commit, not the checkout (2026-11-04).** `test_locale_claims.py` read the
+  catalogues and the prose that describes them from disk, so a figure pinned to equality was graded in a place
+  no commit owns: `25c6873` fails its own `test_the_readme_table_states_the_coverage…` — its README row says
+  `3988 of 4033` while that commit's `en.json` holds 4,053 keys (45 language-neutral), so the true pair is
+  `4008 of 4053` — and the suite that landed it was green in the shared tree, where the row had moved to
+  `4074 of 4119`. The catalogues (`_raw`/`_names`), the five prose carriers (`_prose`) and the API-source
+  refusal census (`_refusals`) now read the commit through `git show HEAD:…` / `git ls-tree HEAD`, the helpers
+  `test_spec_audit_currency.py` already uses, with disk only as the no-`.git` fallback. Three arms on a clean
+  worktree — a dirty `en.json` (4,059 keys against the commit's 4,058), a README row rewritten to `1 of 1`
+  plus a planted `287/288` line in `ARCHITECTURE.md`, and a working-tree-only `zz_item38_probe` refusal —
+  left this file green in all three while HEAD's old reader failed each arm, the census one naming
+  `["zz_item38_probe -> 'Probe refusal'"]`. Recorded in
+  [I18N_ARC_VERIFICATION.md](I18N_ARC_VERIFICATION.md) §21. **Landing:** `e8fa569` carried the reader and the
+  full suite ran the same **2,149 passed / 4 skipped, rc=0** before it and on it.
