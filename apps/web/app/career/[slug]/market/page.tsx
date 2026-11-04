@@ -244,7 +244,7 @@ export default async function CareerMarketPage({ params }: Props) {
                     <td className="num mono">{money(move.budget_after)}</td>
                     <td className="num">{move.weekly_wage ? t("wageCell", { amount: money(move.weekly_wage) }) : "—"}</td>
                     <td className="num">
-                      {move.kind === "wage" || move.kind === "season_grant"
+                      {move.kind === "wage" || move.kind === "season_grant" || move.kind === "objective_bonus"
                         ? "—"
                         : `${t("contractYears", { years: move.contract_years })}${move.loan_until_round ? t("contractUntil", { round: move.loan_until_round }) : ""}`}
                     </td>
@@ -258,6 +258,8 @@ export default async function CareerMarketPage({ params }: Props) {
         <p className="muted">
           {budget.budget.toLocaleString("en-GB")}{t("footerStated")}
           {budget.received ? t("footerReceived", { amount: money(budget.received) }) : ""}
+          {budget.granted ? t("footerGranted", { amount: money(budget.granted) }) : ""}
+          {budget.received_objectives ? t("footerBonuses", { amount: money(budget.received_objectives) }) : ""}
           {budget.spent ? t("footerSpent", { amount: money(budget.spent) }) : ""}
           {budget.wages_paid ? t("footerWages", { amount: money(budget.wages_paid) }) : ""}={" "}
           <strong className="mono">{money(budget.remaining)} {budget.units}</strong>

@@ -6,8 +6,9 @@
  * verdict separately, so a fixture list edited after the fact shows as the API's own re-check sentence
  * rather than as a quiet correction here. The panel does no arithmetic of its own: the two published
  * lines, the span, the pace and the board's grant are the API's numbers, and the verdict is the row's
- * stored word. A closed season's grant sits beside the verdict it was paid for, and the season being
- * played prints what the boundary's own arithmetic would pay if it closed on the rounds already stored.
+ * stored word. A closed season's grant sits beside the verdict it was paid for, the objectives it met
+ * print their bonus beneath it, and the season being played prints what the boundary's own arithmetic
+ * would pay if it closed on the rounds already stored.
  */
 
 import { Panel } from "@/components/ui";
@@ -90,6 +91,10 @@ export function CareerSeasons({
               `${money(current.grant_if_closed_now.amount)} ${current.grant_if_closed_now.units}`,
             ],
             [
+              t("seasonsBonusNowLabel"),
+              `${money(current.bonus_if_closed_now.amount)} ${current.bonus_if_closed_now.units}`,
+            ],
+            [
               t("seasonsLinesLabel"),
               t("seasonsLinesValue", { promotion: view.lines.promotion, relegation: view.lines.relegation }),
             ],
@@ -159,6 +164,11 @@ export function CareerSeasons({
                       ) : (
                         <span className="muted">—</span>
                       )}
+                      {block.bonuses ? (
+                        <div className="muted">
+                          {t("seasonsObjectiveBonus")}: {money(block.bonuses.amount)} {block.bonuses.units}
+                        </div>
+                      ) : null}
                     </td>
                     <td>
                       {block.next_competition ? block.next_competition.name : <span className="muted">{t("seasonsNoMove")}</span>}

@@ -747,3 +747,33 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   created its rows in the PG dev database and was cleaned by counted deletes (33 appearances, 53 events,
   3 matches, 3 fixtures, 1 career, 1 user, zero leftovers verified). Recorded in
   [M13_ACADEMY_OUTCOMES_VERIFICATION.md](M13_ACADEMY_OUTCOMES_VERIFICATION.md).
+- **Objectives that pay (2026-11-04).** The objectives a manager sets were prose: `objectives_of` judged
+  them and the board printed `met`, and the money never saw them. Every objective a closed season met is
+  now an award row of its own (`kind = "objective_bonus"`, `stage` = the objective's kind) beside item 24's
+  grant: **30,000 wins · 40,000 points · 25,000 goal_difference · 50,000 unbeaten** — 145,000 for all four,
+  sized a little under one full season's grant (174,500), so meeting the board's targets is a good season's
+  extra income rather than a reset button. One pure function, `objective_bonus_report`, states the whole
+  rule once — `actual >= target` read from the same report the board prints, a target of zero or less pays
+  nothing because nothing had to be met, a miss writes no row, and a `challenge` window pays nothing because
+  that run is judged by the challenge's own reward — and both the boundary (`pay_objective_bonuses`, inside
+  `close_season`'s transaction, flushed before each balance read because `SessionLocal` runs with
+  `autoflush=False`) and the seasons projection call it. Migration `0049` adds `stage` and swaps
+  `uq_career_award_season` for `uq_career_award_stage (career_id, season_index, kind, stage)`, so one row
+  per met objective is a schema property; a fresh SQLite reports head 0049 and **DRIFT none**, and the
+  audit's machine-checked migration figure moves 49 → 50 in both carriers `test_spec_audit_currency.py`
+  reads. The grant and the bonuses share the ledger's boundary tier, ordered by stage, and the timeline's
+  running balance replays that order with 0 disagreements. Published in `budget_position` (`received_objectives`, `objective_rows`,
+  `objective_detail`, and the printed sum), the timeline, the market ledger (a moves-shaped row carrying
+  `OBJECTIVE_BONUS_EFFECT`), `market_view` (`totals.bonus_rows`, `constants.objective_bonus_by_kind`,
+  `RULES["objective_bonus"]`), `affordability_view`, and `seasons_view` (each closed season's `bonuses`
+  block and `bonus_if_closed_now`, a projection that writes nothing); rendered in `CareerSeasons`,
+  `CareerFinance` and the market page's ledger and balance sentence, with 5 new keys per locale. *Gate:* 9
+  new tests in `TestObjectiveBonuses` (21 with `TestSeasonGrants`), the clean worktree's full suite, ruff,
+  mypy, tsc and eslint green, `qa-wire-readers` 12/12, `qa-key-drift` 4/4, `qa-token-drift` 2/2,
+  `qa-unused-keys` 3/3 at floor 0, `qa-locale-completeness` 2/2 at 4,058 and `qa-locale-tokens` 5/5. The
+  live walk (`.scratch/walk-bonus.py` on the shared tree, two generated worlds, both exit 0) projected
+  145,000 and 90,000 mid-season and paid 145,000 at both boundaries, each stored bonus balance the grant's
+  balance plus the kinds before it. Recorded in
+  [M13_OBJECTIVE_BONUS_VERIFICATION.md](M13_OBJECTIVE_BONUS_VERIFICATION.md). **Landing:** `0cf34c1`, 21
+  paths through a private index; `40762fa` re-cut to LF blobs (`git diff -w` empty between them). The full
+  suite's verdict, the committed-tree cases and the shared-index warning are in section 9 of the record.

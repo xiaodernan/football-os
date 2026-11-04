@@ -34,7 +34,7 @@ from app.services.simulation.service import replay_is_identical, run_simulation
 from app.services.world import sync_world
 
 BUDGET = 4_000_000
-RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "wage_ceiling", "window", "budget", "grant", "squad"}
+RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "wage_ceiling", "window", "budget", "grant", "objective_bonus", "squad"}
 
 
 def _round5(value: float) -> int:
@@ -753,7 +753,7 @@ class TestMarketView:
         assert "generated clubs" in view["disclaimer"]
         assert view["career"]["slug"] == career.slug and view["career"]["market_round"] == 1
         assert view["transfers_allowed"]["ok"] is True
-        assert view["totals"] == {"listed": market.MARKET_SIZE, "signed": 0, "withdrawn": 0, "moves": 0, "wage_rows": 0, "grant_rows": 0}
+        assert view["totals"] == {"listed": market.MARKET_SIZE, "signed": 0, "withdrawn": 0, "moves": 0, "wage_rows": 0, "grant_rows": 0, "bonus_rows": 0}
 
     def test_an_offer_says_what_it_costs_who_must_be_paid_and_whether_you_can(self, session, world) -> None:  # type: ignore[no-untyped-def]
         poor = _career(session, world, budget=5_000)

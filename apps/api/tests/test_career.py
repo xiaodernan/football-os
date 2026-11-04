@@ -25,6 +25,7 @@ from app.core.security import hash_password, new_public_id
 from app.models import (
     ALL_ATTRIBUTES,
     CAREER_PHLOSOPHIES,
+    OBJECTIVE_BONUS_EFFECT,
     OBJECTIVE_FORMULA,
     OBJECTIVE_KINDS,
     Career,
@@ -951,6 +952,11 @@ def _awards(session: Session, career: Career) -> list[CareerBudgetAward]:
     )
 
 
+def _grants(session: Session, career: Career) -> list[CareerBudgetAward]:
+    """The season grants alone: the award table also pays objective bonuses (item 36)."""
+    return [row for row in _awards(session, career) if str(row.kind) == "season_grant"]
+
+
 class TestSeasonGrants:
     """The board pays for a closed season (M13 Phase 7 item 24), and the ledger says how much.
 
@@ -971,7 +977,7 @@ class TestSeasonGrants:
         closed = career_service.close_season(session, career)
         assert closed is not None and closed.verdict == "promoted"
 
-        rows = _awards(session, career)
+        rows = _grants(session, career)
         assert len(rows) == 1, "the boundary paid once for the season it closed"
         award = rows[0]
         assert (award.season_index, award.round_index, award.kind) == (1, rounds, "season_grant")
@@ -984,8 +990,9 @@ class TestSeasonGrants:
         assert award.amount_units == career.budget_units
 
         after = market.budget_position(session, career)
-        assert after["granted"] == award.amount == int(after["remaining"]) - int(before["remaining"])
-        assert award.budget_after == int(after["remaining"]), "the row stores the balance its own grant produced"
+        assert after["granted"] == award.amount
+        assert award.budget_after == int(before["remaining"]) + award.amount
+        assert int(after["remaining"]) - int(before["remaining"]) == award.amount + int(after["received_objectives"]), "the grant and the objective bonus it was paid with are both new money"
 
     def test_a_season_that_stays_pays_its_rounds_and_points_and_no_promotion(self, session, world) -> None:  # type: ignore[no-untyped-def]
         upper, _lower = _pyramid_pair(session)
@@ -994,7 +1001,7 @@ class TestSeasonGrants:
         _fabricate_season(session, career, "D" * rounds)
         closed = career_service.close_season(session, career)
         assert closed is not None and closed.verdict == "stayed"
-        award = _awards(session, career)[0]
+        award = _grants(session, career)[0]
         assert award.promotion == 0
         assert award.amount == rounds * market.SEASON_GRANT_PER_ROUND + rounds * market.SEASON_GRANT_PER_POINT
         assert "promotion" not in award.basis
@@ -1007,7 +1014,7 @@ class TestSeasonGrants:
         _fabricate_season(session, career, "L" * rounds)
         closed = career_service.close_season(session, career)
         assert closed is not None and closed.verdict == "relegated"
-        award = _awards(session, career)[0]
+        award = _grants(session, career)[0]
         assert (award.amount, award.promotion) == (rounds * market.SEASON_GRANT_PER_ROUND, 0)
 
     def test_a_challenge_window_pays_no_grant(self, session, world) -> None:  # type: ignore[no-untyped-def]
@@ -1034,12 +1041,13 @@ class TestSeasonGrants:
         _fabricate_season(session, career, "D" * second_rounds, start=bounds["first_round"])
         assert career_service.close_season(session, career) is not None
 
-        rows = _awards(session, career)
+        rows = _grants(session, career)
         assert [int(row.season_index) for row in rows] == [1, 2]
         assert rows[1].round_index == first_rounds + second_rounds
         expected = rows[0].amount + rows[1].amount
         position = market.budget_position(session, career)
-        assert position["granted"] == expected == int(position["remaining"]) - int(career.budget)
+        assert position["granted"] == expected
+        assert position["granted"] + int(position["received_objectives"]) == int(position["remaining"]) - int(career.budget)
 
     def test_the_grant_is_one_row_per_season_even_when_a_writer_forgets(self, session, world) -> None:  # type: ignore[no-untyped-def]
         """The unique key holds the promise, not the call site."""
@@ -1050,7 +1058,7 @@ class TestSeasonGrants:
         closed = career_service.close_season(session, career)
         again = career_service.close_season(session, career)
         assert closed is not None and again.id == closed.id
-        assert len(_awards(session, career)) == 1, "asking the boundary twice pays twice nothing"
+        assert len(_grants(session, career)) == 1, "asking the boundary twice pays twice nothing"
 
         duplicate = CareerBudgetAward(
             id=new_public_id("awd"),
@@ -1077,7 +1085,7 @@ class TestSeasonGrants:
         rounds = int(career_service.season_horizon(session, career)["rounds"])
         _fabricate_season(session, career, "W" * rounds)
         assert career_service.close_season(session, career) is not None
-        award = _awards(session, career)[0]
+        award = _grants(session, career)[0]
 
         timeline = market.budget_timeline(session, career, limit=0)
         position = market.budget_position(session, career)
@@ -1086,7 +1094,7 @@ class TestSeasonGrants:
         assert grants[0]["delta"] == award.amount
         assert grants[0]["label"] == f"board grant for season {award.season_index}"
         assert timeline["disagreements"] == 0, "a row that arrives by a different rule than the others still stores its own running balance"
-        assert timeline["closing_balance"] == int(position["remaining"]) == int(career.budget) + award.amount
+        assert timeline["closing_balance"] == int(position["remaining"]) == int(career.budget) + award.amount + int(position["received_objectives"])
 
     def test_the_market_door_prints_the_grant_in_the_ledger(self, session, world) -> None:  # type: ignore[no-untyped-def]
         upper, lower = _pyramid_pair(session)
@@ -1094,7 +1102,7 @@ class TestSeasonGrants:
         rounds = int(career_service.season_horizon(session, career)["rounds"])
         _fabricate_season(session, career, "W" * rounds)
         assert career_service.close_season(session, career) is not None
-        award = _awards(session, career)[0]
+        award = _grants(session, career)[0]
 
         view = market.market_view(session, career)
         assert view["totals"]["grant_rows"] == 1
@@ -1107,8 +1115,9 @@ class TestSeasonGrants:
         assert sum(int(row["fee"]) * (1 if row["cash"] == "in" else -1) for row in ledger) + int(career.budget) == int(view["budget"]["remaining"])
 
         affordable = market.affordability_view(session, career)
-        assert affordable["granted"] == award.amount == affordable["remaining"] - int(career.budget)
-        assert affordable["timeline"]["rows"][-1]["kind"] == "season_grant"
+        assert affordable["granted"] == award.amount
+        assert affordable["granted"] + int(affordable["received_objectives"]) == affordable["remaining"] - int(career.budget)
+        assert affordable["timeline"]["rows"][-1]["kind"] == "objective_bonus", "the boundary's bonuses are the last rows of the season"
 
     def test_the_seasons_block_prints_the_grant_beside_the_verdict(self, session, world) -> None:  # type: ignore[no-untyped-def]
         upper, lower = _pyramid_pair(session)
@@ -1116,7 +1125,7 @@ class TestSeasonGrants:
         rounds = int(career_service.season_horizon(session, career)["rounds"])
         _fabricate_season(session, career, "W" * rounds)
         assert career_service.close_season(session, career) is not None
-        award = _awards(session, career)[0]
+        award = _grants(session, career)[0]
 
         view = career_service.career_view(session, career)
         block = view["seasons"]["closed"][0]["grant"]
@@ -1154,3 +1163,176 @@ class TestSeasonGrants:
         assert market.pay_season_grant(session, career, season_index=1, round_index=1, rounds_played=0, points=0, verdict="stayed") is None
         assert market.pay_season_grant(session, career, season_index=1, round_index=1, rounds_played=3, points=6, verdict="challenge") is None
         assert _awards(session, career) == []
+
+
+class TestObjectiveBonuses:
+    """The board pays the targets it set (M13 Phase 9 item 36).
+
+    Item 24 made a season pay for its rounds and points, and the objectives a manager chose were still
+    only prose. These tests hold that a met objective is money, that every rule the board prints about an
+    objective is the rule that pays it — a miss pays nothing, a target of zero asks for nothing, a
+    challenge's window is judged elsewhere — and that the money joins the one ledger the page sums.
+    """
+
+    def _career_with(self, session: Session, world: dict[str, Any], *objectives: tuple[str, int, str]) -> Career:
+        return _career(
+            session,
+            world,
+            objectives=[{"kind": kind, "target": target, "label": label} for kind, target, label in objectives],
+        )
+
+    def _bonuses(self, session: Session, career: Career) -> list[CareerBudgetAward]:
+        return [row for row in _awards(session, career) if str(row.kind) == "objective_bonus"]
+
+    def test_a_met_objective_pays_its_bonus_into_the_balance(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = self._career_with(session, world, ("wins", 1, "win once"))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        before = market.budget_position(session, career)
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+
+        bonuses = self._bonuses(session, career)
+        assert len(bonuses) == 1
+        bonus = bonuses[0]
+        assert (bonus.season_index, bonus.round_index, bonus.stage) == (1, rounds, "wins")
+        assert bonus.amount == market.OBJECTIVE_BONUS_BY_KIND["wins"]
+        assert bonus.basis == f"win once: {rounds} ≥ 1 pays {bonus.amount:,} {career.budget_units}"
+        assert bonus.amount_units == career.budget_units
+
+        after = market.budget_position(session, career)
+        assert after["received_objectives"] == bonus.amount and after["objective_rows"] == 1
+        assert after["objective_detail"] == f"season 1 wins: {bonus.amount:,}"
+        grant = _grants(session, career)[0]
+        assert int(after["remaining"]) - int(before["remaining"]) == grant.amount + bonus.amount
+        assert bonus.budget_after == grant.budget_after + bonus.amount, "the bonus chains onto the grant it was paid with"
+
+    def test_an_objective_the_season_missed_pays_nothing(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = self._career_with(session, world, ("wins", 99, "more wins than a season allows"))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+        assert self._bonuses(session, career) == []
+        position = market.budget_position(session, career)
+        assert (position["received_objectives"], position["objective_rows"]) == (0, 0)
+        assert len(_grants(session, career)) == 1, "the season is still paid for its rounds and points"
+
+    def test_a_target_of_zero_asks_for_nothing_and_pays_nothing(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        """The verdict still says met — nothing had to be met — and the money rule is where that is refused."""
+        career = self._career_with(session, world, ("wins", 0, "nothing asked"))
+        verdict = career_service.objectives_of(career, {"won": 5, "points": 15, "goal_difference": 5, "unbeaten_run": 3})[0]
+        assert verdict["met"] is True
+        report = market.objective_bonus_report(objectives=[verdict], verdict="stayed", units=career.budget_units)
+        assert report["amount"] == 0 and report["rows"] == []
+
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+        assert self._bonuses(session, career) == [], "a target nothing had to be met for is not a demand the board pays"
+
+    def test_each_met_objective_pays_its_own_rate(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = self._career_with(
+            session,
+            world,
+            ("wins", 1, "win once"),
+            ("points", 3, "three points"),
+            ("goal_difference", 1, "a positive margin"),
+            ("unbeaten", 1, "unbeaten once"),
+        )
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+        paid = {str(row.stage): int(row.amount) for row in self._bonuses(session, career)}
+        assert paid == market.OBJECTIVE_BONUS_BY_KIND
+        assert sum(paid.values()) == 145_000
+        assert market.budget_position(session, career)["received_objectives"] == 145_000
+
+    def test_a_challenge_window_pays_no_bonus(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = self._career_with(session, world, ("wins", 1, "win once"))
+        career.challenge_window = 2
+        session.commit()
+        _fabricate_season(session, career, "WW")
+        closed = career_service.close_season(session, career)
+        assert closed is not None and closed.verdict == "challenge"
+        assert _awards(session, career) == [], "the run is judged by the challenge's own reward"
+
+    def test_the_bonus_is_one_row_per_kind_per_season(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        """The unique key holds the promise, not the call site, exactly as it does for the grant."""
+        career = self._career_with(session, world, ("wins", 1, "win once"))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+        duplicate = CareerBudgetAward(
+            id=new_public_id("awd"),
+            career_id=career.id,
+            season_index=1,
+            round_index=rounds,
+            kind="objective_bonus",
+            stage="wins",
+            amount=1,
+            amount_units=career.budget_units,
+            basis="a hand-written second bonus for the same objective",
+            promotion=0,
+            budget_after=1,
+            data_origin="simulation",
+            is_demo_data=True,
+        )
+        session.add(duplicate)
+        with pytest.raises(IntegrityError):
+            session.flush()
+        session.rollback()
+
+    def test_the_ledger_adds_up_across_the_boundary(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = self._career_with(session, world, ("wins", 1, "win once"), ("points", 3, "three points"))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+
+        timeline = market.budget_timeline(session, career, limit=0)
+        position = market.budget_position(session, career)
+        bonuses = [row for row in timeline["rows"] if row["kind"] == "objective_bonus"]
+        assert [row["label"] for row in bonuses] == ["objective bonus, points", "objective bonus, wins"], "the boundary's grant, then the bonuses in kind order"
+        kinds = [row["kind"] for row in timeline["rows"]]
+        assert kinds.index("season_grant") < kinds.index("objective_bonus")
+        assert timeline["disagreements"] == 0
+        assert timeline["closing_balance"] == int(position["remaining"])
+
+    def test_the_market_door_publishes_the_bonus(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = self._career_with(session, world, ("wins", 1, "win once"), ("points", 3, "three points"))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * rounds)
+        assert career_service.close_season(session, career) is not None
+        total = market.OBJECTIVE_BONUS_BY_KIND["wins"] + market.OBJECTIVE_BONUS_BY_KIND["points"]
+
+        view = market.market_view(session, career)
+        assert view["totals"]["bonus_rows"] == 2
+        assert view["budget"]["received_objectives"] == total
+        assert view["rules"]["objective_bonus"] == market.OBJECTIVE_BONUS_FORMULA
+        assert view["constants"]["objective_bonus_by_kind"] == market.OBJECTIVE_BONUS_BY_KIND
+        rows = [row for row in view["moves"] if row["kind"] == "objective_bonus"]
+        assert [row["player_name"] for row in rows] == ["objective bonus, points", "objective bonus, wins"]
+        assert all(row["effect"] == OBJECTIVE_BONUS_EFFECT and row["cash"] == "in" for row in rows)
+
+        affordable = market.affordability_view(session, career)
+        assert affordable["received_objectives"] == total
+        assert affordable["objective_rows"] == 2
+
+    def test_the_seasons_block_projects_a_bonus_and_prints_the_paid_one(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = self._career_with(session, world, ("wins", 1, "win once"), ("points", 3, "three points"))
+        rounds = int(career_service.season_horizon(session, career)["rounds"])
+        _fabricate_season(session, career, "W" * (rounds - 1))
+        current = career_service.seasons_view(session, career, career_service.fixtures_of(session, career))["current"]
+        projected = current["bonus_if_closed_now"]
+        assert projected["amount"] == market.OBJECTIVE_BONUS_BY_KIND["wins"] + market.OBJECTIVE_BONUS_BY_KIND["points"]
+        assert [row["kind"] for row in projected["rows"]] == ["wins", "points"]
+        assert projected["formula"] == market.OBJECTIVE_BONUS_FORMULA
+        assert self._bonuses(session, career) == [], "a projection is not a payment"
+
+        _fabricate_season(session, career, "W", start=rounds)
+        assert career_service.close_season(session, career) is not None
+        block = career_service.career_view(session, career)["seasons"]["closed"][0]
+        assert block["grant"] is not None
+        assert block["bonuses"]["amount"] == projected["amount"]
+        assert [row["kind"] for row in block["bonuses"]["rows"]] == ["points", "wins"], "the stored rows carry the ledger's kind order, not the projection's objective order"
+        assert block["bonuses"]["formula"] == market.OBJECTIVE_BONUS_FORMULA
+        wins_row = next(row for row in block["bonuses"]["rows"] if row["kind"] == "wins")
+        assert wins_row["basis"].startswith("win once:") and "≥ 1 pays" in wins_row["basis"]

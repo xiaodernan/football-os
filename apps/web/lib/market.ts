@@ -91,6 +91,11 @@ export type MarketBudget = {
   grant_rows: number;
   /** One clause per paid season, `season N: amount`, so the sum above can be read as its own rows. */
   grant_detail: string;
+  /** What the met objectives of closed seasons paid — the award table's other income (item 36). */
+  received_objectives: number;
+  objective_rows: number;
+  /** One clause per paid bonus, `season N <kind>: amount`, in season and kind order. */
+  objective_detail: string;
   /** What the rounds already played have cost in wages — a sum of `career_wage_charges` rows. */
   wages_paid: number;
   remaining: number;
@@ -203,6 +208,8 @@ export type Move = {
   detail: string;
   /** Only a board grant carries these: the season it paid, and how much of it was the promotion bonus. */
   season_index?: number;
+  /** Only an objective bonus carries this: the objective's kind, read back as the award row's `stage`. */
+  stage?: string;
   promotion?: number;
   created_at: string | null;
 };
@@ -242,7 +249,7 @@ export type MarketView = {
   listings: Listing[];
   deals: Listing[];
   moves: Move[];
-  totals: { listed: number; signed: number; withdrawn: number; moves: number; wage_rows: number; grant_rows: number };
+  totals: { listed: number; signed: number; withdrawn: number; moves: number; wage_rows: number; grant_rows: number; bonus_rows: number };
   rules: Record<string, string>;
   constants: {
     market_size: number;
@@ -260,6 +267,8 @@ export type MarketView = {
     season_grant_per_round: number;
     season_grant_per_point: number;
     promotion_grant: number;
+    /** The four authored rates `rules.objective_bonus` spells out, keyed by objective kind. */
+    objective_bonus_by_kind: Record<string, number>;
     age_curve: { ages: string; weight: number }[];
   };
   data_origin: string;
