@@ -1124,6 +1124,25 @@ HEAD's old reader failed each arm, the census arm naming `["zz_item38_probe -> '
 [I18N_ARC_VERIFICATION.md](docs/I18N_ARC_VERIFICATION.md) §21. **Landing:** `e8fa569`, one path through a
 private index.
 
+## The contract is read from the commit too (item 39, done 2026-11-04)
+
+`test_openapi_contract_currency.py` graded a mixed tree: `committed()` parsed `docs/api/openapi.json` from disk
+while `answers()` booted the app from disk, so the artifact side — the very thing the commit publishes and every
+`docs/*_VERIFICATION.md` line quotes — was whatever the checkout held. The 2026-10-23 follow-up had settled which
+*newline* arrived and never asked which *tree*. The instance is live rather than invented: the shared working tree
+answers `/api/v1/careers/{ident}/cup` and `/api/v1/transfers/{ident}/renew` with its contract regenerated to 220
+paths / 282 operations, while the commit holds 218 / 280 — and HEAD's gate answers **4 passed** on that tree,
+because disk agrees with disk about a surface no commit has published. Sourcing the artifact through
+`git show HEAD:docs/api/openapi.json`, with the `_git` + `@cache` shape `test_spec_audit_currency.py` and
+`test_locale_claims.py` already use, turns the same four cases into **4 failed**, each on its own clause: 2 routes,
+2 `(path, verb)` pairs, `CupIn` and `RenewIn` missing from the committed schemas, and 497,932 bytes against the
+blob's 492,817. The app side stays live by necessity, which is what makes the gate a pre-commit alarm: it reds
+while the cure is one more `python scripts/export_openapi.py` in the same commit as the route. Three arms on a
+clean plane — a contract dirty on disk alone (old 3 failed / 1 passed, new 4 passed), a planted route with its
+contract regenerated beside it (old 4 passed, new 3 failed / 1 passed), and the baseline green on both sources.
+Evidence: [OPENAPI_CONTRACT_VERIFICATION.md](docs/OPENAPI_CONTRACT_VERIFICATION.md). **Landing:** `f10e232`, one
+path through a private index; the record, this section and the roadmap bullet land after it.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

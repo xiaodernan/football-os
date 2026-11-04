@@ -126,6 +126,60 @@ pinned. The message now says the line endings were normalised and prints both le
 what git writes. This file is the only committed text artifact in `apps/api/tests` compared byte-for-byte
 (`grep read_bytes` over the suite finds only video fixtures besides it), so no other gate was changed.
 
+## Follow-up (2026-11-04): the gate read the checkout, not the commit
+
+The 2026-10-23 follow-up decided *which newline* the artifact arrived with and left the larger question open:
+**which tree**. `committed()` parsed `docs/api/openapi.json` from disk and `answers()` booted the app from disk,
+so both inputs came from the working copy. For the app that is unavoidable; for the contract it is the wrong
+tree, because the contract is a committed artifact — every §80/§81 gate and every "contract: N paths / M
+operations" line in `docs/*_VERIFICATION.md` quotes the blob, and a checkout whose contract was regenerated while
+its routes stayed uncommitted is a mixed tree the gate was certifying as current.
+
+**The instance is live, not synthetic.** `apps/api/app/api/v1/careers.py` and `transfers.py` on the shared
+working tree answer two routes no commit holds — `/api/v1/careers/{ident}/cup` and
+`/api/v1/transfers/{ident}/renew` — and the disk contract had been regenerated to match: **220 paths / 282
+operations** against the commit's **218 / 280**, 497,932 bytes against the blob's 492,817. HEAD's gate answers
+**4 passed** on that tree: it reads the disk contract, boots the disk app, and the two agree with each other
+about a surface no commit has ever published. The same four cases, with the artifact side sourced from
+`git show HEAD:docs/api/openapi.json`, answer **4 failed**, each on its own clause — 2 routes the app answers and
+the contract does not list, the same 2 as `(path, verb)` pairs, `CupIn` and `RenewIn` missing from the committed
+`components.schemas`, and the exporter's 497,932 bytes against the blob's 492,817.
+
+**Fix.** `committed()` now parses `committed_bytes()`: the HEAD blob when the checkout carries a `.git`, a
+normalised disk read when it does not — the same `_git` + `@cache` sourcing `test_spec_audit_currency.py` and
+`test_locale_claims.py` use. The app side stays live by necessity, which is what makes the case a *pre-commit*
+alarm: it reds while the drift is still cheap to cure (run the exporter in the same commit as the route) instead
+of after the landing, which is when `3651587` found it.
+
+**Three arms on a clean worktree** (`.scratch/wt-contract`, detached at `e8fa569`), HEAD's bytes written beside
+the candidate as `tests/_zz_item39_old.py` so one tree runs both sources; every prediction written before the
+run, and the plane left with the one modified path the landing carries.
+
+| arm | the checkout says | the commit says | HEAD's gate | this file |
+| --- | --- | --- | --- | --- |
+| baseline | clean | self-consistent | `4 passed` | `4 passed` |
+| W (the shared tree, above) | cup + renew routes, contract regenerated to 220 / 282 | 218 / 280, no such routes | `4 passed` | `4 failed`: 2 routes, 2 pairs, `CupIn`/`RenewIn`, 492,817 vs 497,932 |
+| A1 | the contract alone is dirty — a `/api/v1/zz-item39-probe` path the app does not answer | unchanged | `3 failed / 1 passed`: 1 listed but not answered, the `('…probe', 'get')` pair, `492,979 bytes` against the tree's 492,817 | `4 passed` |
+| A2 | a route planted in `meta.py` **and** the contract regenerated beside it (493,608 bytes) | unchanged | `4 passed` | `3 failed / 1 passed`: 1 route the app answers, the probe pair, `492,817` against `493,608` |
+
+A1 and A2 are the two directions of the same mixed tree, and each is red for exactly one of them: A1 is an
+artifact edited without an app, which the old gate punished for the right reason in the wrong tree; A2 is an app
+edited and the artifact regenerated on disk, which the old gate passed outright — that is the `3651587` drift,
+shipped green. The one case that stays green in A2 is the schema census, and it stays green for the right
+reason: the probe takes no request body, so no component is added on either side.
+
+**Not claimed.** The app side cannot be sourced from the commit — `app.openapi()` needs this process's imported
+app — so a run on a lane-divergent checkout reds for the *checkout's* routes; that is the pre-commit alarm doing
+its job, not a statement that HEAD is inconsistent, and the record says so rather than hiding it. The `.git`-less
+fallback grades disk again, by design, as the newline follow-up left it. And nothing here makes the exporter
+independent of the app: it derives the contract from the tree it runs in, which is the point of the byte case and
+the reason it cannot be pinned to a blob of the app's own output.
+
+**Landing note.** `f10e232` carried the reader — one path, the test file — and this file's paragraph above is the
+record after it, written on the same plane the arms ran on. The shared tree's two uncommitted routes are still
+uncommitted; the gate reds for them on that tree and will green the moment the routes and the regenerated
+contract land together.
+
 ## Reproduce
 
     git archive <landing-ref> | tar -x -C /tmp/plane79

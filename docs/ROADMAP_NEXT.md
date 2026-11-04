@@ -791,3 +791,16 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   `["zz_item38_probe -> 'Probe refusal'"]`. Recorded in
   [I18N_ARC_VERIFICATION.md](I18N_ARC_VERIFICATION.md) §21. **Landing:** `e8fa569` carried the reader and the
   full suite ran the same **2,149 passed / 4 skipped, rc=0** before it and on it.
+- **The contract-currency gate reads the commit (2026-11-04).** `test_openapi_contract_currency.py` parsed
+  `docs/api/openapi.json` from the checkout and booted the app from the same checkout, so the artifact side — the
+  thing the commit publishes and every "contract: N paths / M operations" line quotes — graded a tree no commit
+  owns. The live instance: the shared working tree answers `/api/v1/careers/{ident}/cup` and
+  `/api/v1/transfers/{ident}/renew` with its contract regenerated to **220 paths / 282 operations** while the
+  commit holds **218 / 280** — and the old gate answers 4 passed there, because disk agrees with disk. Reading the
+  artifact through `git show HEAD:docs/api/openapi.json` (the `_git` + `@cache` shape the locale and audit gates
+  use; the app side stays live, which makes the case a pre-commit alarm) turns those four cases into 4 failed,
+  each naming its own clause: 2 routes, 2 `(path, verb)` pairs, `CupIn`/`RenewIn` absent from the committed
+  schemas, 497,932 bytes against the blob's 492,817. Three arms on a clean plane: baseline green on both sources;
+  a contract dirty on disk alone (old 3 failed / 1 passed, new 4 passed); a planted route with its contract
+  regenerated beside it (old 4 passed, new 3 failed / 1 passed, the schema case green for the right reason).
+  Recorded in [OPENAPI_CONTRACT_VERIFICATION.md](OPENAPI_CONTRACT_VERIFICATION.md). **Landing:** `f10e232`.
