@@ -9,6 +9,12 @@ the committed contract answered 149 paths / 193 operations while the same commit
 `video` x5, `careers/{ident}/ledger`), and 0 routes in the contract that the app does not answer.
 
 Each case below fails on its own clause, so the first red names the shape of the drift rather than just its presence.
+
+**The contract side is read from the commit, not the checkout.** `committed()` parses `git show
+HEAD:docs/api/openapi.json`, and the exporter case compares the exporter's bytes to `HEAD`'s, with a disk read only
+when the checkout carries no `.git`; the app side is necessarily live, because `app.openapi()` needs this process's
+imported app. A lane that edits a route and regenerates the contract on disk therefore reds here *before* it
+commits — which is when the forgotten-contract drift (`3651587`) used to become visible.
 """
 
 from __future__ import annotations
@@ -17,19 +23,34 @@ import json
 import subprocess
 import sys
 import tempfile
+from functools import cache
 from pathlib import Path
 
 from app.main import app
 
 ROOT = Path(__file__).resolve().parents[3]
-CONTRACT = ROOT / "docs" / "api" / "openapi.json"
+CONTRACT = "docs/api/openapi.json"
 EXPORTER = ROOT / "scripts" / "export_openapi.py"
 
 VERBS = {"get", "put", "post", "patch", "delete", "head", "options", "trace"}
 
 
+def _git(args: list[str]) -> bytes:
+    done = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, timeout=120)
+    assert done.returncode == 0, f"`git {' '.join(args)}` failed rc={done.returncode}: {done.stderr.decode('utf-8', 'replace')[:300]}"
+    return done.stdout
+
+
+@cache
+def committed_bytes() -> bytes:
+    """The contract as the commit holds it — the tree this file grades, not whatever the run has checked out."""
+    if (ROOT / ".git").exists():
+        return _git(["show", f"HEAD:{CONTRACT}"])
+    return (ROOT / CONTRACT).read_bytes().replace(b"\r\n", b"\n")
+
+
 def committed() -> dict:
-    return json.loads(CONTRACT.read_bytes().decode("utf-8"))
+    return json.loads(committed_bytes().decode("utf-8"))
 
 
 def answers() -> dict:
@@ -78,12 +99,12 @@ def test_the_exporter_derives_the_contract_from_the_tree_and_reproduces_the_comm
         written = out.read_bytes()
     assert b"\r\n" not in written, "the exporter wrote CRLF: the committed contract is LF, so a gate on its bytes " \
                                    "would fail for the host's newline policy rather than for the artifact"
-    # The checkout's newline policy is not the artifact's content: with `core.autocrlf=true` the committed LF blob
-    # arrives on disk as CRLF, so a raw comparison is red on every Windows clone while the tree still serialises
-    # exactly what was committed. Normalise the checkout side; a different byte still fails below.
-    committed = CONTRACT.read_bytes().replace(b"\r\n", b"\n")
-    assert written == committed, (
-        "`scripts/export_openapi.py` and `docs/api/openapi.json` disagree on the same tree (line endings normalised "
-        f"to LF): the committed contract is {len(committed)} bytes, the tree serialises to {len(written)}. "
+    # `committed_bytes()` is the HEAD blob (LF), or a normalised disk read on a checkout with no history. The
+    # exporter runs from the checkout, so this asks whether what the tree serialises now is what the commit
+    # publishes; a CRLF checkout of a matching commit compares equal without normalising the exporter's side.
+    published = committed_bytes()
+    assert written == published, (
+        "`scripts/export_openapi.py` and `docs/api/openapi.json` disagree on the same tree: the committed contract "
+        f"is {len(published)} bytes, the tree serialises to {len(written)}. "
         "Edit the app, never the file."
     )
