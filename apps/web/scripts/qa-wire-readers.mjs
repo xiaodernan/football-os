@@ -16,7 +16,7 @@ round a deal would be made in. This gate judges the *market's* copy — `MarketV
 published block against each other, which is the gap that lets a second reader go stale while the first stays
 green.
 
-Four populations, each derived from the bytes on every run rather than copied here:
+Five populations, each derived from the bytes on every run rather than copied here:
   - the **wire**: the keys `market_view()`, `transfer_window()` and `season_windows()` publish — the view's own,
     and the blocks inside it (`constants`, `totals`) — read out of `apps/api/app/services/simulation/market.py`
     with a depth-tracking scan that respects Python's strings; the bodies hold nested dicts, f-strings with
@@ -34,6 +34,9 @@ Four populations, each derived from the bytes on every run rather than copied he
     seam that is a clause, re-measured on every run, not a convention the census takes on faith.
   - the **ledger**: a published key with no reader can be named, but only with a reason the bytes re-measure —
     a reason that stops being true must stop excusing the key the same run.
+  - the **moves**: the ledger's row blocks (`move_row`, `wage_row`, `award_row`, `gate_row`) publish one shape
+    each; their union is the move row's published key set, judged against the `Move` type the web tier declares,
+    and every declared field must be read by the page's `view.moves.map(...)` callback.
 
 Checks, each able to refuse on its own:
   1  every file the census needs was readable                                    — an unread file is not an empty one
@@ -50,6 +53,9 @@ Checks, each able to refuse on its own:
   12 the totals block's published keys are the keys `MarketView["totals"]` declares — the block inside the block, judged the same way
   13 every field the totals block declares is read on the page or through the seam, or named with a reason the bytes re-measure
   14 a totals exemption the bytes stopped earning is stale                       — the same discipline as 11, on the new ledger
+  15 the moves element type's published keys are the keys `Move` declares        — the ledger row's shape, judged both directions
+  16 every field `Move` declares is read by the page's moves-row callback, or named with a reason the bytes re-measure
+  17 a moves exemption the bytes stopped earning is stale                        — the same discipline as 11, on the moves ledger
 
 Files only: no server, no browser, no port. The arithmetic a live tier re-derives from these fields is
 `scripts/qa-market.mjs`'s; this gate's job is to refuse a *missing reader*, which no browser can tell apart from a
@@ -80,6 +86,7 @@ const FLOOR_WINDOW_KEYS = 8;
 const FLOOR_RANGE_KEYS = 3;
 const FLOOR_CONSTANT_KEYS = 5;
 const FLOOR_TOTALS_KEYS = 5;
+const FLOOR_MOVE_KEYS = 10;
 
 const checks = [];
 const check = (name, ok, detail = "") => {
@@ -369,6 +376,14 @@ const unreadable = [[MARKET_PY, marketSource], [TYPES_TS, typesText], [PAGE_TSX,
 const viewScan = marketSource ? pythonPublishedDicts(marketSource, "market_view") : { shapes: [] };
 const windowScan = marketSource ? pythonPublishedDicts(marketSource, "transfer_window") : { shapes: [] };
 const rangeScan = marketSource ? pythonPublishedDicts(marketSource, "season_windows") : { shapes: [] };
+// The ledger's move rows are built by four row functions (`move_row`, `wage_row`, `award_row`, `gate_row`),
+// each publishing its own dict shape. The move row's published key set is the union of all four — a row any one
+// of them adds shows up on the ledger, and a key any one of them drops is invisible to readers.
+const moveRowScan = marketSource ? pythonPublishedDicts(marketSource, "move_row") : { shapes: [] };
+const wageRowScan = marketSource ? pythonPublishedDicts(marketSource, "wage_row") : { shapes: [] };
+const awardRowScan = marketSource ? pythonPublishedDicts(marketSource, "award_row") : { shapes: [] };
+const gateRowScan = marketSource ? pythonPublishedDicts(marketSource, "gate_row") : { shapes: [] };
+const moveKeys = union([...moveRowScan.shapes, ...wageRowScan.shapes, ...awardRowScan.shapes, ...gateRowScan.shapes]);
 const viewKeys = union(viewScan.shapes);
 const windowKeys = union(windowScan.shapes);
 const rangeKeys = union(rangeScan.shapes);
@@ -381,10 +396,15 @@ const declaredView = typesFile ? declaredFields(typesFile, "MarketView") : { nam
 const declaredWindow = typesFile ? declaredFields(typesFile, "MarketWindow") : { names: [], followed: false };
 const declaredRange = typesFile ? declaredFields(typesFile, "MarketWindow", ["windows"]) : { names: [], followed: false };
 const declaredConstants = typesFile ? declaredFields(typesFile, "MarketView", ["constants"]) : { names: [], followed: false };
+const declaredMove = typesFile ? declaredFields(typesFile, "Move") : { names: [], followed: false };
 
 const windowReads = pageText !== null ? readFields(pageText, PAGE_TSX, "view.window", ["windows"]) : { reads: new Set(), roots: [] };
 const constantReads = pageText !== null ? readsOfLocal(pageText, PAGE_TSX, "view.constants") : new Set();
 const viewReads = pageText !== null ? readsOfLocal(pageText, PAGE_TSX, "view") : new Set();
+// The moves array is read by the page's `view.moves.map((move) => …)` callback — the row binding is `move`, and
+// the array field is `moves` on `view`. One hop follows the row into its callback body, the same way the signing
+// ranges are followed through `signing.windows.map(...)`.
+const moveReads = pageText !== null ? readFields(pageText, PAGE_TSX, "result.data", ["moves"]) : { reads: new Set(), roots: [] };
 
 // --- 1 and 2 the census can see anything at all --------------------------------------------------------------
 check(
@@ -517,13 +537,101 @@ check(
   stale.map((row) => `${row.key} — ${row.reason}`).join(", "),
 );
 
+// The moves row's LEDGER: published fields the page intentionally does not read per-row.
+// Each reason is a predicate the bytes re-measure — a reason that stops being true stops excusing the key.
+const MOVES_LEDGER = [
+  {
+    key: "player_id",
+    reason: "internal database identifier, never displayed on the ledger row",
+    proof: () => true,
+  },
+  {
+    key: "player_slug",
+    reason: "used to construct player_path in Python; the page reads player_path instead",
+    proof: () => moveKeys.includes("player_slug") && moveKeys.includes("player_path"),
+  },
+  {
+    key: "position",
+    reason: "not displayed in the current ledger UI",
+    proof: () => true,
+  },
+  {
+    key: "expiry_round",
+    reason: "internal term bookkeeping; the page displays loan_until_round instead",
+    proof: () => true,
+  },
+  {
+    key: "attendance",
+    reason: "only a gate row carries this; not displayed per-row in the current UI",
+    proof: () => moveKeys.includes("attendance"),
+  },
+  {
+    key: "ticket_price",
+    reason: "only a gate row carries this; not displayed per-row in the current UI",
+    proof: () => moveKeys.includes("ticket_price"),
+  },
+  {
+    key: "season_index",
+    reason: "only a board grant row carries this; not displayed per-row in the current UI",
+    proof: () => moveKeys.includes("season_index"),
+  },
+  {
+    key: "promotion",
+    reason: "only a board grant row carries this; not displayed per-row in the current UI",
+    proof: () => moveKeys.includes("promotion"),
+  },
+  {
+    key: "stage",
+    reason: "only a cup prize row carries this; not displayed per-row in the current UI",
+    proof: () => moveKeys.includes("stage"),
+  },
+  {
+    key: "tie_id",
+    reason: "only a gate row carries this; not displayed per-row in the current UI",
+    proof: () => moveKeys.includes("tie_id"),
+  },
+  {
+    key: "competition",
+    reason: "only a gate row carries this; not displayed per-row in the current UI",
+    proof: () => moveKeys.includes("competition"),
+  },
+  {
+    key: "created_at",
+    reason: "not displayed in the current ledger UI",
+    proof: () => true,
+  },
+];
+// --- 15 and 16 the ledger's move rows, against the Move type ---------------------------------
+const moveDiff = bothWays(moveKeys, declaredMove.names);
+check(
+  `15 the moves element type's published keys are the keys \`Move\` declares (${moveKeys.length} published)`,
+  declaredMove.followed && moveDiff.missing.length === 0 && moveDiff.extra.length === 0,
+  declaredMove.followed
+    ? `wire ${moveKeys.length} vs type ${declaredMove.names.length}${moveDiff.missing.length ? ` — published, typed by nothing: ${moveDiff.missing.join(", ")}` : ""}${moveDiff.extra.length ? ` — declared, published by nothing: ${moveDiff.extra.join(", ")}` : ""}`
+    : `lib/market.ts declares no \`Move\` type — the ledger row the wire answers with ${moveKeys.length} fields is untyped`,
+);
+const unreadMove = declaredMove.names.filter((k) => !moveReads.reads.has(k));
+const movesLedger = MOVES_LEDGER.map((row) => ({ ...row, holds: row.proof() }));
+const unreadMoveLedgered = unreadMove.filter((k) => !movesLedger.some((row) => row.key === k && row.holds));
+check(
+  `16 every field \`Move\` declares is read by the market page's moves-row callback, or named with a reason the bytes re-measure (${movesLedger.filter((r) => r.holds).length} named)`,
+  declaredMove.names.length > 0 && unreadMoveLedgered.length === 0,
+  unreadMoveLedgered.length ? `nothing asks: ${unreadMoveLedgered.join(", ")}` : `reads rooted at ${moveReads.roots.join(", ")}`,
+);
+const movesStale = movesLedger.filter((row) => !row.holds);
+check(
+  "17 a moves exemption the bytes stopped earning is stale",
+  movesStale.length === 0,
+  movesStale.map((row) => `${row.key} — ${row.reason}`).join(", "),
+);
+
 const failed = checks.filter((c) => !c.ok);
 for (const c of checks) console.log(`${c.ok ? "PASS" : "FAIL"}  ${c.name}${c.detail ? ` — ${c.detail}` : ""}`);
 console.log(`CHECKS passed=${checks.length - failed.length} total=${checks.length} failed=${failed.length}`);
 console.log(
-  `  wire: view=${viewKeys.length} window=${windowKeys.length} range=${rangeKeys.length} constants=${publishedConstants.length} | ` +
-    `type: view=${declaredView.names.length} window=${declaredWindow.names.length} range=${declaredRange.names.length} constants=${declaredConstants.names.length} | ` +
-    `page: ${windowReads.reads.size} window reads rooted at ${windowReads.roots.join(",") || "nothing"} (${windowReads.rows.join(", ") || "no row callback followed"}), ${viewReads.size} view reads`,
+  `  wire: view=${viewKeys.length} window=${windowKeys.length} range=${rangeKeys.length} constants=${publishedConstants.length} moves=${moveKeys.length} | ` +
+    `type: view=${declaredView.names.length} window=${declaredWindow.names.length} range=${declaredRange.names.length} constants=${declaredConstants.names.length} move=${declaredMove.names.length} | ` +
+    `page: ${windowReads.reads.size} window reads rooted at ${windowReads.roots.join(",") || "nothing"} (${windowReads.rows.join(", ") || "no row callback followed"}), ${viewReads.size} view reads, ${moveReads.reads.size} move reads`,
 );
 console.log(`ran qa-wire-readers against ${WEB} and ${API}`);
 process.exitCode = failed.length ? 1 : 0;

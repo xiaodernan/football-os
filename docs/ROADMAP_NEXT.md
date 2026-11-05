@@ -566,8 +566,7 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   checks must run and print their populations (`totals` keys counted, `MarketTools` seam followed), and an arm that
   deletes a `totals` key from the wire must red the clause the prose names — today the same deletion answers 12/12.
   Filed in [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §7.
-* **43. A gate that is green only under a fabricated CI environment.** **Done (2026-11-05, `ef649ef`; record and
-  suite line below).** `test_ci_trigger.py` asks the workflow's
+* **43. A gate that is green only under a fabricated CI environment.** `test_ci_trigger.py` asks the workflow's
   push trigger of "the branch the run is about", and locally reads that branch with `git rev-parse --abbrev-ref
   HEAD`. On a detached checkout that answers `HEAD`, and the case asserts — so the full suite is red on the very
   plane every landing of this project is graded on: measured at `21bbf86`, **1 failed / 2148 passed / 4 skipped**,
@@ -862,27 +861,3 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   carried the gate (one path, 8,354 bytes, 24 passed across the four commit-reading gates at that commit); this
   bullet, §1–7 of the record and the `PLAN.md` section are the commit beside it. The two findings it filed are
   items 42 (`qa-wire-readers`'s prose census) and 43 (a gate green only under a fabricated CI environment).
-
-- **A gate that was green only under a fabricated CI environment (2026-11-05).** The suite on the repair plane
-  answered **1 failed / 2148 passed / 4 skipped** and the single failure was `test_ci_trigger.py`'s push-trigger
-  case: it read the branch with `git rev-parse --abbrev-ref HEAD` — which answers the literal `HEAD` on a detached
-  checkout — and asserted the answer was a branch name, so it reddened the instrument every landing of this
-  project is graded on. The same suite reaches rc=0 on such a plane only when the command carries
-  `GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`, which is how item 38's "on a checkout detached at `e8fa569`"
-  verdict was reached without its record naming the prefix. `_pushed_branches()` now takes the event's answer
-  first, the checked-out branch second, and otherwise `git for-each-ref --contains HEAD` against the branch the
-  project publishes to (`origin/HEAD`, else `master`, `main`, or the single local branch); a commit that branch
-  does not carry **skips**, naming the refs it did find. All four shapes — on a branch, detached-and-carried, on a
-  side branch, detached-and-carried-by-nothing — are asserted on a throwaway repository, because a skip that
-  cannot fail is a gate that cannot work. Arms on a detached plane with every `GITHUB_*` stripped from the child
-  environment: the cure **8 passed**; HEAD's own reader, written beside it on the same tree, **1 failed**
-  (`assert ('HEAD' and 'HEAD' != 'HEAD')`) against the cure's **1 passed**; `ci.yml`'s trigger rewritten
-  `[master]` → `[main]` still **reds**, naming `master`, so the fallback does not blunt the catch the gate was
-  written for; and a plane detached at an unreferenced commit answers **7 passed / 1 skipped** with the reason
-  printed. Reading the workspace to explain that red also found the §1 reversal armed again in the shared
-  *index* — 26 staged paths, 24 of them byte-for-byte `c0d376c`'s copies, and no entry at all for anything landed
-  since — recorded with what was done about it in the drift document's follow-up.
-  Evidence: [CI_TRIGGER_BRANCH_READ_VERIFICATION.md](CI_TRIGGER_BRANCH_READ_VERIFICATION.md) and
-  [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md). **Landing:** `ef649ef` carried
-  the cure (one path, 134/25 against its parent); the record, this bullet and the `PLAN.md` section are the commit
-  beside it.

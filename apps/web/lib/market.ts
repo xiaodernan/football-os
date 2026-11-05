@@ -85,16 +85,22 @@ export type MarketNeed = {
 export type MarketBudget = {
   budget: number;
   spent: number;
+  /** Every cent that arrived: sales plus home gates. `received_sales` and `received_gate` split it. */
   received: number;
+  received_sales: number;
+  received_gate: number;
+  gate_rows: number;
+  /** One clause per home round, `round N: amount`, so the gate sum can be read as its own rows. */
+  gate_detail: string;
   /** What the board has paid for the seasons this career closed — the sum of its `career_budget_awards` rows. */
   granted: number;
   grant_rows: number;
   /** One clause per paid season, `season N: amount`, so the sum above can be read as its own rows. */
   grant_detail: string;
-  /** What the met objectives of closed seasons paid — the award table's other income (item 36). */
+  /** What met objectives have paid (M13 Phase 9 item 36) — the board's other income, beside the grant. */
   received_objectives: number;
   objective_rows: number;
-  /** One clause per paid bonus, `season N <kind>: amount`, in season and kind order. */
+  /** One clause per paid objective, `season N <kind>: amount`, so the sum can be read as its own rows. */
   objective_detail: string;
   /** What the rounds already played have cost in wages — a sum of `career_wage_charges` rows. */
   wages_paid: number;
@@ -201,6 +207,11 @@ export type Move = {
   contract_years: number;
   weekly_wage: number;
   loan_until_round: number;
+  /** The last round a permanent deal's stored terms name; `0` for a loan or a move without a term. */
+  expiry_round: number;
+  /** Only a `gate` row carries these: the seats sold and the authored price per seat. */
+  attendance?: number;
+  ticket_price?: number;
   counterparty_name: string | null;
   budget_after: number;
   effect: string;
@@ -208,9 +219,17 @@ export type Move = {
   detail: string;
   /** Only a board grant carries these: the season it paid, and how much of it was the promotion bonus. */
   season_index?: number;
-  /** Only an objective bonus carries this: the objective's kind, read back as the award row's `stage`. */
-  stage?: string;
   promotion?: number;
+  /** Only a cup prize row carries this: the cup stage it was won at. */
+  stage?: string;
+  /** Only a gate row carries this: the cup tie it was paid on. */
+  tie_id?: string;
+  /** Only a gate row carries this: the competition it was paid in. */
+  competition?: string;
+  /** Where the row's data came from: the simulation's own provenance metadata. */
+  data_origin: string;
+  /** Whether the row is demo data, carried on every ledger row. */
+  is_demo_data: boolean;
   created_at: string | null;
 };
 
@@ -249,7 +268,7 @@ export type MarketView = {
   listings: Listing[];
   deals: Listing[];
   moves: Move[];
-  totals: { listed: number; signed: number; withdrawn: number; moves: number; wage_rows: number; grant_rows: number; bonus_rows: number };
+  totals: { listed: number; signed: number; withdrawn: number; moves: number; wage_rows: number; grant_rows: number; cup_prize_rows: number; bonus_rows: number; gate_rows: number };
   rules: Record<string, string>;
   constants: {
     market_size: number;
@@ -267,8 +286,16 @@ export type MarketView = {
     season_grant_per_round: number;
     season_grant_per_point: number;
     promotion_grant: number;
-    /** The four authored rates `rules.objective_bonus` spells out, keyed by objective kind. */
+    /** What each cup stage pays when it is won (M13 Phase 8 item 32), keyed by stage index. */
+    cup_prize_by_stage: Record<string, number>;
+    /** What a met objective pays (M13 Phase 9 item 36), keyed by objective kind. */
     objective_bonus_by_kind: Record<string, number>;
+    /** The authored price per seat: tier 1 pays more than tier 2 or a cup. */
+    gate_ticket_price_tier_1: number;
+    gate_ticket_price_tier_2: number;
+    /** The share range a round on the career's own rotation sells, chosen from the fixture seed. */
+    gate_rotation_attendance_floor: number;
+    gate_rotation_attendance_ceiling: number;
     age_curve: { ages: string; weight: number }[];
   };
   data_origin: string;

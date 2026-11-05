@@ -1181,39 +1181,6 @@ red on exactly one clause. Evidence: [MIGRATION_MODEL_DRIFT_VERIFICATION.md](doc
 beside it. It filed two findings — `qa-wire-readers`'s prose census (item 42) and a CI gate that is green only
 under a fabricated environment (item 43).
 
-## A gate that was green only under a fabricated environment (item 43, done 2026-11-05)
-
-Item 40's suite line — **1 failed / 2148 passed / 4 skipped** — is the first red this project's own instrument
-produced with nothing planted. `test_ci_trigger.py`'s push-coverage case asks "which branch is this run about?" and,
-outside GitHub, answered it with `git rev-parse --abbrev-ref HEAD`. On a branch that is `master`; on a detached
-checkout it is the literal `HEAD` — and every landing here is graded on a detached worktree, because the shared tree
-carries concurrent lanes' bytes. So the case could only be made green by prefixing the command with
-`GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`, which is exactly how item 38's "on a checkout detached at `e8fa569`
-… rc=0" verdict was reached, and that record did not name the prefix. Two logs, one population, one green, one red,
-and nothing in either to say why. A claim whose reproduction needs an undocumented environment variable is not a
-reproducible claim.
-
-`_pushed_branches(root)` answers in three ordered steps — the event when one arrived, the checked-out branch when
-`--abbrev-ref` names one, otherwise the branch this project publishes to, read as `git for-each-ref --contains HEAD`
-intersected with `origin/HEAD`'s target and, with no remote, `master`, then `main`, then the single local branch.
-When no published branch carries the commit it **skips and prints the refs it looked at** instead of asserting a
-shape the checkout was never asked to have. The file goes from 7 cases to 8: the new one builds a throwaway
-repository in a temporary directory, with `commit.gpgsign` and `core.hooksPath` pinned off so a host's signing
-cannot fail a commit that is not what is being graded, and asserts all four shapes — on a branch → that branch;
-detached at a commit `master` carries → `master` (the landing-plane shape); on a side branch → the side branch,
-because the fallback never overrules the run's own answer; detached at a commit no branch carries → nothing. Four
-arms in [CI_TRIGGER_BRANCH_READ_VERIFICATION.md](docs/CI_TRIGGER_BRANCH_READ_VERIFICATION.md) §3: the whole file at
-**8 passed** with the trigger case *answering* `master`, not skipping; the parent's reader written beside the cure on
-the same tree at **1 failed** (`assert ('HEAD' and 'HEAD' != 'HEAD')`) against the cure's **1 passed**; `ci.yml`'s
-push trigger rewritten `[master]` → `[main]`, which still reds *through* the new fallback — the catch the gate was
-written for is not blunted; and a plane detached at an unreferenced `commit-tree` child of master at **7 passed, 1
-skipped**, reason printed. The full suite then re-measured on the cure itself — `.scratch/wt-ci` at `ef649ef`, with
-**no `GITHUB_*` in the environment at all** (`env | grep -c '^GITHUB_'` → 0): **2154 passed, 4 skipped, 330
-warnings in 2990.83s**, exit 0. The red that item 40 met is gone without a prefix being added, which is the whole
-claim of this unit.
-**Landing:** `ef649ef`, one path, +134/−25 against `265e7a7`; this record, section and bullet are the commit beside
-it.
-
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
