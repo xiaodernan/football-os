@@ -608,7 +608,7 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   (11/16 vs 16/16) and `qa-a11y` by moving the byte offsets it compares (2293 < 2393 vs 2231 < 2328) while staying
   green, which is the one that could have been missed forever.
 
-* **50. Six horizontal CSS declarations are committed while their logical fixes are uncommitted.**
+* **50. Six horizontal CSS declarations are committed while their logical fixes are uncommitted.** **Done (2026-11-06; record in [RTL_LOGICAL_PROPERTIES_VERIFICATION.md](RTL_LOGICAL_PROPERTIES_VERIFICATION.md)).**
   `qa-rtl-readiness.mjs` answers **6/7 failed=1** at `f642c0a` and **7/7** in the shared tree, because the cure —
   `text-align: start`, `border-inline-start`, `padding-inline-start` — is sitting uncommitted. The named locations:
   `app/coach/coach.css:61` and `app/knowledge/knowledge.css:248` (physical text alignment),
@@ -616,6 +616,7 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   `border-left: 2px`, `:28` `padding-left: 0.6rem`. *Gate:* land those six lines and keep the check's claim, so the
   shared tree stops being the only place the gate is green. Measured in
   [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §5.
+  *Done:* the six lines are committed — three stylesheets, 6 insertions, 6 deletions, 4 hunks — and the gate answers **7/7** on a plane detached at the landing, so the shared tree stops being the only green place; the shared tree's uncommitted copies of the same three files proved byte-identical to the landed ones first, which is what makes this a convergence rather than a third variant. The claim a file-only gate cannot make was measured in the app itself: 24 `.drill-card__point`, 5 `.coach-chip`, 6 `.kn-filter-chip` and 4 `.kn-cite__quote` (after one real ask) each read as shipped and again as a clone carrying the old physical declaration, in `ltr` and `rtl` — **22/22**, identical in `ltr`, band `0px 2px 0px 0px` with the text 11.59 px inside it in `rtl`, and two mechanism findings only a live page gives: `.chip` is `inline-flex`, so `text-align` bites only once the label wraps, and `Range.getClientRects()` answers per bidi run, not per line box. What the gate still does not judge is row 53.
 * **51. Two lanes landed under each other, and the landing tool cannot see it.** `.scratch/own-commit-wt.py` takes the
   parent from `refs/heads/master` at call time and the *listed paths only* from the source plane, so a plane detached
   at an older sha publishes that older sha's bytes for anything it lists — a silent revert, the newer commit's work
@@ -638,6 +639,19 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   command's blast radius is every other lane's working file at once. Filed rather than fired: this changes what
   every checkout of every concurrent lane sees, and row 51 is what a careless landing across lanes looks like.
   Measured in [EOL_FILE_GATES_VERIFICATION.md](EOL_FILE_GATES_VERIFICATION.md) §1.
+* **53. `qa-rtl-readiness` refuses five shapes once per line, and the product carries horizontal geometry it
+  never looks at.** Arm H planted a stylesheet with **two** horizontal declarations on one line and **three**
+  shapes on the next and got **one finding per line**: the scanner keys on line × shape, so a finding is a line
+  and a count of findings is not a count of declarations — which matters the day the gate is quoted as a number.
+  And a second census over the same 11 stylesheets for the shapes the five rules do not judge found 2 physical
+  `background-position` (`app/progress/progress.css:136` `120% 0`, `:137` `-120% 0`), 1 X-axis `transform:
+  translate(-50%, -50%)` (`styles/video.css:20`), 6 `box-shadow` hits whose horizontal offsets are all zero
+  today, 0 `text-indent`, 0 inline `direction:`. *Gate:* decide, by measuring a page in `dir=rtl` rather than by
+  reading the CSS, whether the progress sweep is a bug or a shimmer that is meant to run the same way in both
+  directions; teach the check the shapes that are bugs and state in its own text the ones that are exempt; and
+  make the scanner report per declaration, or say plainly that a finding is a line. Filed rather than fired:
+  none of the three families is a claim about the six lines this unit landed. Measured in
+  [RTL_LOGICAL_PROPERTIES_VERIFICATION.md](RTL_LOGICAL_PROPERTIES_VERIFICATION.md) §2 and §5.
 
 ---
 

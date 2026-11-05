@@ -1411,8 +1411,11 @@ two home ties, one 40,000 prize.
    `qa-a11y-witness` was 11/16 on a plane and 16/16 in the tree for that reason alone. 60 of the 61 raw reads in the
    30 file-only gates now fold CRLF to LF at the read — the 61st is a PNG — and the population prints the same bytes
    on a CRLF checkout as on an LF one: 2 of 30 differing before, 0 of 30 after. The policy itself is row 52.
-8. **Six horizontal CSS declarations are committed, their fixes are not (filed 2026-11-06, roadmap row 50).**
-   `qa-rtl-readiness` 6/7 at `f642c0a`, 7/7 in the shared tree.
+8. **Six horizontal CSS declarations are committed, their fixes are not (done 2026-11-06, roadmap row 50).**
+   `qa-rtl-readiness` was 6/7 on a plane and 7/7 in the shared tree because the cure was uncommitted; the six lines are
+   landed now and the gate reads 7/7 on the plane. The witness is the served app — 22/22 over four element classes in
+   `ltr` and `rtl` — and it found that `.chip` is `inline-flex`, so `text-align` only shows once a label wraps. What the
+   gate does not judge is row 53.
 9. **Two lanes landed under each other and each reverted the other (filed 2026-11-06, roadmap row 51; repaired
    below under item 42).** The tool prints a sha and cannot see that the plane is behind master; the gate for it is
    a printed comparison of the plane's commit against `refs/heads/master`, and a merge instead of a copy for
@@ -1669,6 +1672,55 @@ merge commit this record lands in (the union census, the restored item-43 record
 Evidence: [WIRE_READERS_TOTALS_VERIFICATION.md](docs/WIRE_READERS_TOTALS_VERIFICATION.md) §1–8,
 `.scratch/item42-arms.txt`, `.scratch/repair-merged.log`, `.scratch/repair-merged-sharedapi.log`,
 `.scratch/repair-webgates-wt-repair.txt`, `.scratch/repair-api.log`.
+
+## Six horizontal declarations, and the gate that was green in only one tree (item 50, done 2026-11-06)
+
+`qa-rtl-readiness.mjs` answered **6/7 failed=1** on a plane detached at `c87dba8` and **7/7** in the shared tree, and
+line endings were no longer available as the explanation — item 49 had just removed them. The difference this time was
+`HEAD` against the working tree: the cure (`text-align: start`, `border-inline-start`, `padding-inline-start`) was sitting
+uncommitted in the shared tree while the committed CSS still carried six physical declarations (`coach.css:61`,
+`knowledge.css:168`, `:169`, `:248`, `training.css:27`, `:28`). Landing them is three files, 6 insertions, 6 deletions and
+4 hunks — and the shared tree's three uncommitted files were proved byte-identical to the three landed here first, so the
+two trees converge instead of growing a third variant of the same stylesheet.
+
+The unit's real work is that a file-only gate cannot say *what the six lines do*, so the witness is the app: built
+(`npm run build`, exit 0), served on a throwaway port, the API from the same commit on a scratch SQLite database at `0049`,
+one account, one career and **one player** — without the player `/coach` answers its own `no_player` 409 by redirecting to
+`/onboarding` and the chips never paint, the same door PLAN's item-2c row met two months ago and read it wrongly. In the
+live document each element was measured as shipped, and again as a clone carrying the pre-cure physical declaration in its
+place, in `dir=ltr` and `dir=rtl`: 24 `.drill-card__point`, 5 `.coach-chip`, 6 `.kn-filter-chip`, and 4 `.kn-cite__quote`
+after one real ask. In ltr every pair is **identical** — the cure changed nothing where the product ships. In rtl the shipped
+band moves to `0px 2px 0px 0px` with `padding-inline-start` behind it and the text sits 11.59 px inside both, while the old
+declaration keeps its 2 px accent on the left — at the end — and leaves the ragged chip lines glued to the left edge.
+`item50-app-report.py` asserts that whole table: **22/22**.
+
+Two findings came out of measuring in the real page rather than a fixture, and neither is readable off a stylesheet.
+`.chip` is `display: inline-flex`, so `text-align` does not move a chip's label unless the label *wraps*: a single-line chip
+paints identically under `start` and under `left`, which is how the first measurement looked like a null result, so the arms
+measure the chip whose label breaks (`match-analysis`, two lines) and the coach chips at four and five. And
+`Range.getClientRects()` answers one rect per **bidi run**, not per line box: the word “I” inside “What should I train
+today?” initially read as a line hugging the end edge in rtl, which was the probe lying rather than the page; grouping the
+rects by `top` and taking each line's union is what the figures above come from. A standalone fixture — the four shipped rule
+blocks copied verbatim, a `.phys-*` twin per block — agrees with all of it (4/4 classes agree in ltr, 4/4 diverge in rtl), so
+no claim here rests on one harness.
+
+Arms: base 7/7; A `coach.css:61` back to physical → 6/7 with that one finding; B only `knowledge.css:168`–`:169` → 6/7 with
+two; C a planted `margin-right` → refused at `training.css:32`; D a physical declaration inside a comment → 7/7, the scanner
+reads declarations not lines; E `padding-inline-end` kept → 7/7, the other logical side is not a finding; F a planted
+`border-top-left-radius` → refused; G all six restored at once → the six findings in full; post-restore 7/7. Arm H is about
+the gate: two horizontal declarations on one line and three shapes on the next yield **one finding per line**, because the
+scanner keys on line × shape. Row 53 files that, and the shapes the five rules never look at.
+
+The population re-run over the cured plane: **29 of the 30 file-only gates pass**, the one refusal is `qa-wire-readers`
+(row 51) and was never this unit's; `typecheck` PASS, `lint` PASS; the compiled stylesheet carries `text-align:start` and
+`border-inline-start`/`padding-inline-start` beside the `-webkit-` twins Next's toolchain adds.
+
+**Landing:** the commit this record lands in — **6 paths**: `app/coach/coach.css`, `app/knowledge/knowledge.css`,
+`app/training/training.css`, `PLAN.md`, `docs/ROADMAP_NEXT.md`, `docs/RTL_LOGICAL_PROPERTIES_VERIFICATION.md`. Evidence:
+[RTL_LOGICAL_PROPERTIES_VERIFICATION.md](docs/RTL_LOGICAL_PROPERTIES_VERIFICATION.md) §1–6, `.scratch/item50-gate.log`,
+`.scratch/item50-arms.txt`, `.scratch/item50-side.txt`, `.scratch/item50-browser.txt`,
+`.scratch/item50-app-{training,coach,knowledge-chips,knowledge-cites}.json`, `.scratch/item50-app-report.py`,
+`.scratch/item50-app-session.py`, `.scratch/item50-webgates-final.log`.
 
 ## Thirty file-only gates read the checkout's bytes, not the tree's (item 49, done 2026-11-06)
 

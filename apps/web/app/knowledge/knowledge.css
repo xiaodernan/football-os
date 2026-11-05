@@ -165,8 +165,8 @@
 .kn-cite__quote {
   font-size: 0.86rem;
   color: var(--text-2);
-  border-left: 2px solid var(--accent-dim);
-  padding-left: 0.6rem;
+  border-inline-start: 2px solid var(--accent-dim);
+  padding-inline-start: 0.6rem;
   overflow-wrap: anywhere;
 }
 
@@ -245,7 +245,7 @@
 .kn-filter-chip {
   min-height: 44px;
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
