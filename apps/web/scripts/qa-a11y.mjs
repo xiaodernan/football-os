@@ -43,7 +43,7 @@ const check = (name, ok, detail) => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-const read = (path) => readFileSync(path, "utf8");
+const read = (path) => (readFileSync(path, "utf8").replace(/\r\n/g, "\n"));
 const exists = (path) => {
   try {
     return statSync(path).isFile();

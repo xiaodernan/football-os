@@ -72,7 +72,7 @@ const DIVERGENCES = new Map([
 const VALUE_CEILING = 234;
 const NAMESPACE_FLOOR = 30;
 
-const read = (file) => JSON.parse(readFileSync(join(MESSAGES, file), "utf8"));
+const read = (file) => JSON.parse((readFileSync(join(MESSAGES, file), "utf8").replace(/\r\n/g, "\n")));
 const english = read("en.json");
 const catalogues = { zh: read(LOCALES.zh), "zh-TW": read(LOCALES["zh-TW"]) };
 

@@ -63,7 +63,7 @@ let unreadable = [];
 const bodies = new Map();
 for (const file of cssFiles) {
   try {
-    bodies.set(file, readFileSync(file, "utf8"));
+    bodies.set(file, (readFileSync(file, "utf8").replace(/\r\n/g, "\n")));
   } catch (err) {
     unreadable.push(`${rel(file)} (${err.code ?? err.message})`);
   }
@@ -133,7 +133,7 @@ check(
 const LOCALES = join(WEB, "i18n", "locales.ts");
 let textDirection;
 try {
-  const src = readFileSync(LOCALES, "utf8");
+  const src = (readFileSync(LOCALES, "utf8").replace(/\r\n/g, "\n"));
   const start = src.indexOf("const RTL_BASE_LANGUAGES");
   if (start < 0) throw new Error("the RTL base-language set was not found");
   const region = src.slice(start).replace(/export\s+function/g, "function");
@@ -163,7 +163,7 @@ if (textDirection) {
 
 /* 5 — the root layout hands the verdict to the document. The tag is read as a tag, not as the whole file, so
  * a `dir` set on some inner element cannot satisfy it. */
-const layout = readFileSync(join(WEB, "app", "layout.tsx"), "utf8");
+const layout = (readFileSync(join(WEB, "app", "layout.tsx"), "utf8").replace(/\r\n/g, "\n"));
 const htmlTag = /<html\b[^>]*>/.exec(layout)?.[0] ?? "";
 check(
   "the root layout sets dir from the locale's own direction",

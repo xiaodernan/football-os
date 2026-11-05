@@ -53,7 +53,7 @@ const placeholdersOf = (ast) => {
 
 const catalogues = new Map();
 for (const locale of LOCALES) {
-  const raw = readFileSync(join(MESSAGES, `${locale}.json`), "utf8");
+  const raw = (readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n"));
   catalogues.set(locale, JSON.parse(raw));
 }
 

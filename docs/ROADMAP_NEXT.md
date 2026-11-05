@@ -591,6 +591,7 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   declared field read or named with a reason the bytes re-measure, then the ledger refused when it stops holding.
   Measured in [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §7.
 * **49. A file-only gate whose anchors are multi-line strings is red on every landing plane this project uses.**
+  **Done (2026-11-06; record in [EOL_FILE_GATES_VERIFICATION.md](EOL_FILE_GATES_VERIFICATION.md)).**
   `qa-a11y-witness.mjs` answers **11/16 failed=5** on `.scratch/wt-repair` — five arms printing *arm anchor not
   found* over `styles/globals.css`, `app/layout.tsx`, `components/Nav.tsx` — and **16/16 failed=0** in the shared
   tree, where the same committed bytes sit in LF. Measured, not inferred: the plane's `globals.css` holds 275 CRLF
@@ -601,6 +602,12 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   once at the read in each file-only gate, keep the anchors as they are, then re-measure the whole file-only web suite
   on a plane and in the shared tree and land the two lists side by side, so no future record has to say which tree a
   figure came from. Measured in [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §5.
+  *Done:* 60 of the 61 `readFileSync` sites in the 30 file-only gates now fold CRLF to LF at the read (the 61st
+  reads a PNG's bytes and must not), and the four-arm measurement is that **2 of 30 gates printed different bytes on
+  a CRLF checkout than on an LF one before the cure and 0 of 30 after** — `qa-a11y-witness` by moving its exit code
+  (11/16 vs 16/16) and `qa-a11y` by moving the byte offsets it compares (2293 < 2393 vs 2231 < 2328) while staying
+  green, which is the one that could have been missed forever.
+
 * **50. Six horizontal CSS declarations are committed while their logical fixes are uncommitted.**
   `qa-rtl-readiness.mjs` answers **6/7 failed=1** at `f642c0a` and **7/7** in the shared tree, because the cure —
   `text-align: start`, `border-inline-start`, `padding-inline-start` — is sitting uncommitted. The named locations:
@@ -621,6 +628,16 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   and `PLAN.md` — merge over the common ancestor instead of copying, the way this unit's §6 did, and show the union's
   red set is the sum of the two. Measured in
   [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §6.
+* **52. The repository declares no line-ending policy, so a checkout and the working tree are different inputs.**
+  `core.autocrlf=true`, no `.gitattributes`, the blobs LF (`apps/web/styles/globals.css`: 275 LF lines, 0 CR pairs),
+  the shared working tree LF because tools wrote it that way rather than checking it out, and *every* `git worktree`
+  plane a landing is graded on CRLF — 275 CR pairs for the same file. Item 49 removed the dependency at each read;
+  the class still exists for anything that reads bytes without folding — a future gate, an editor, a diff, a
+  checksum. *Gate:* add `* text=auto eol=lf` plus the binary exclusions the PNG read already implies, then
+  `git add --renormalize`, and prove `git status` clean in the shared tree *before* committing, because that
+  command's blast radius is every other lane's working file at once. Filed rather than fired: this changes what
+  every checkout of every concurrent lane sees, and row 51 is what a careless landing across lanes looks like.
+  Measured in [EOL_FILE_GATES_VERIFICATION.md](EOL_FILE_GATES_VERIFICATION.md) §1.
 
 ---
 

@@ -67,7 +67,7 @@ for (const [what, file] of [["lib/site.ts", SITE_TS], ["the card generator", GEN
 
 /** Evaluate the shipped module, so every assertion below is about what the pages actually get, not about prose. */
 const site = (() => {
-  const compiled = ts.transpileModule(readFileSync(SITE_TS, "utf8"), {
+  const compiled = ts.transpileModule((readFileSync(SITE_TS, "utf8").replace(/\r\n/g, "\n")), {
     compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
   }).outputText;
   return new Function("exports", `${compiled}\nreturn exports;`)({});
@@ -105,7 +105,7 @@ const siteBinding = (sf, name) => sf.statements.some((st) => ts.isImportDeclarat
   && st.importClause.namedBindings.elements.some((e) => e.name.text === name));
 
 const rows = sharePages.map((file) => {
-  const src = readFileSync(file, "utf8");
+  const src = (readFileSync(file, "utf8").replace(/\r\n/g, "\n"));
   const sf = ts.createSourceFile(file, src, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
   let call = null;
   let declaresOwnOpenGraph = false;
@@ -188,7 +188,7 @@ check("5b twitter.images carries it too — a scraper reads one tag or the other
  * nothing cannot read as a rule that passed. */
 const handWritten = [];
 for (const file of pages) {
-  const src = readFileSync(file, "utf8");
+  const src = (readFileSync(file, "utf8").replace(/\r\n/g, "\n"));
   if (!src.includes("summary_large_image")) continue;
   const sf = ts.createSourceFile(file, src, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
   visit(sf, (node) => {
@@ -222,7 +222,7 @@ check(`7b its IHDR says ${OG_IMAGE_WIDTH}x${OG_IMAGE_HEIGHT}, the size lib/site.
 check(`7c and it is a real card, not a flat placeholder (>= ${FLOOR_ASSET_BYTES} bytes)`,
   (ihdr?.bytes ?? 0) >= FLOOR_ASSET_BYTES, ihdr ? `${ihdr.bytes} bytes` : "no file");
 
-const gen = readFileSync(GENERATOR, "utf8");
+const gen = (readFileSync(GENERATOR, "utf8").replace(/\r\n/g, "\n"));
 /** The card's own markup, sliced out of the generator. Grading the whole file would refuse a comment that merely
  * names the brand; the claim is about what the picture is built from. */
 const markupOf = (src) => {
@@ -257,7 +257,7 @@ for (const r of rows) {
     typeof r.shareHead === "string" && r.shareTail >= 1 && r.shareHead.startsWith(ownRoute(r.rel)),
     `sharePath head=${JSON.stringify(r.shareHead)} interpolated=${r.shareTail} page=${r.rel}`);
 }
-const sitemapSrc = readFileSync(join(APP, "sitemap.ts"), "utf8");
+const sitemapSrc = (readFileSync(join(APP, "sitemap.ts"), "utf8").replace(/\r\n/g, "\n"));
 /** A share route can be advertised three ways: the parent of the token, a token itself, or a trailing-slash prefix.
  * A byte check for `/shared/` alone misses `"/tactics/shared"`, which is the spelling a hand-edited entry takes —
  * so the prefixes come from the walked pages and a new share surface is refused in its own spelling. */

@@ -21,7 +21,7 @@ const LOCALES = ["en", "zh", "zh-TW"];
 
 const catalogues = {};
 for (const locale of LOCALES) {
-  catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
+  catalogues[locale] = JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
 }
 
 const checks = [];

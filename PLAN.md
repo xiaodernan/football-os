@@ -1407,9 +1407,10 @@ two home ties, one 40,000 prize.
 6. **The `budget` block is uncensused at four times the size of `totals` (filed 2026-11-06, roadmap row 48).**
    22 published / 24 declared / 14 read over `f642c0a`, `budget=44` over the shared tree's API, two published and
    untyped, four typed and unpublished, ten read by nothing.
-7. **File-only gates anchor on a newline byte and every landing plane is CRLF (filed 2026-11-06, roadmap row 49).**
-   `qa-a11y-witness` is 11/16 on a plane and 16/16 in the tree for that reason alone; a landing record must say
-   which tree its figure came from until the read folds line endings.
+7. **File-only gates anchor on a newline byte and every landing plane is CRLF (done 2026-11-06, roadmap row 49).**
+   `qa-a11y-witness` was 11/16 on a plane and 16/16 in the tree for that reason alone. 60 of the 61 raw reads in the
+   30 file-only gates now fold CRLF to LF at the read — the 61st is a PNG — and the population prints the same bytes
+   on a CRLF checkout as on an LF one: 2 of 30 differing before, 0 of 30 after. The policy itself is row 52.
 8. **Six horizontal CSS declarations are committed, their fixes are not (filed 2026-11-06, roadmap row 50).**
    `qa-rtl-readiness` 6/7 at `f642c0a`, 7/7 in the shared tree.
 9. **Two lanes landed under each other and each reverted the other (filed 2026-11-06, roadmap row 51; repaired
@@ -1668,6 +1669,46 @@ merge commit this record lands in (the union census, the restored item-43 record
 Evidence: [WIRE_READERS_TOTALS_VERIFICATION.md](docs/WIRE_READERS_TOTALS_VERIFICATION.md) §1–8,
 `.scratch/item42-arms.txt`, `.scratch/repair-merged.log`, `.scratch/repair-merged-sharedapi.log`,
 `.scratch/repair-webgates-wt-repair.txt`, `.scratch/repair-api.log`.
+
+## Thirty file-only gates read the checkout's bytes, not the tree's (item 49, done 2026-11-06)
+
+`qa-a11y-witness.mjs` answers **11/16 failed=5** on a landing plane and **16/16 failed=0** in the shared working
+tree, over the same commit's bytes, and the reason is one byte per line. The repository holds LF: `globals.css`
+at `master` is 275 lines with **0** carriage-return pairs, and `core.autocrlf=true` with no `.gitattributes` in the
+repository makes every `git worktree` checkout materialise those 275 pairs — while the shared tree, written by
+tools over months instead of by `git checkout`, stayed LF. So a plane and the tree are different *inputs* to the
+same gate, invisibly so: nothing in the repository says which one a quoted figure came from. This project has been
+quoting both for weeks. Thirty web gates are file-only — no server, no browser, no port — and all of them read
+their bytes raw: **61 `readFileSync` sites, 0 folding line endings**.
+
+The harm came in two shapes and only one was loud. Five of the witness's arms mutate a copy of the shell and
+*assert the anchor was found*, and five of those anchors span lines — the skip link's three-line element, the
+`:focus-visible` rule, the same rule again for source order, the `prefers-reduced-motion` block, `aria-current` in
+`Nav.tsx` — so on CRLF bytes none of the five found its anchor and five checks that should have reded for the right
+reason reded for the wrong one. The quiet shape is `qa-a11y.mjs`, which compares byte positions: it printed
+`PASS 5 … 2293 < 2393` on the plane and `PASS 5 … 2231 < 2328` on LF. The claim held in both, so no gate went red
+and no record noticed that the two runs were not runs of the same bytes. That pair is why the cure went to every
+read rather than to the two gates that showed.
+
+The clause is one line, in each gate, with no shared module and no new file: fold every CRLF pair to LF on the way
+out of `readFileSync(path, "utf8")`. Applied by script to **60 sites in the 30 gates**, each file re-parsed with
+`node --check`; the one read deliberately left raw is `qa-share-preview.mjs:219`, a PNG's bytes, where folding
+binary is a bug. The fold is the identity on LF, which is what makes it safe to land before anyone has decided what
+the repository's policy should be — it removes the dependency on the checkout instead of betting on one answer, and
+it does not pre-empt the `.gitattributes` decision. That decision is roadmap row 52, with §1's four measurements as
+its evidence: `text=auto eol=lf` would cure the class at the source, and it also changes the bytes `git status`
+reports for every CRLF working-tree file today, in a shared tree other lanes are standing in.
+
+Measured as four runs of the whole population — parent `3cd9b3f` and cured, each on a CRLF plane and an LF one,
+every gate's captured stdout+stderr compared after masking every printed path so a plane directory cannot count as
+a difference. Before the fold **2 of 30 gates printed different bytes between the two trees** (the witness, which
+also moved its exit code, and `qa-a11y`, which did not); after it, **0 of 30**. Refusals go **3 → 2**:
+the witness joins `qa-rtl-readiness` and `qa-wire-readers`, and those two are red in all four rows for row 50's
+committed-physical-CSS and row 51's typed-ahead-of-published reasons — line endings were never why either was red,
+and the fold changed neither. `tsc --noEmit` and `next lint` are clean over the cured plane.
+**Landing:** this section's commit, 32 paths — the 30 gates, [EOL_FILE_GATES_VERIFICATION.md](docs/EOL_FILE_GATES_VERIFICATION.md)
+§1–6, roadmap row 49 done and row 52 filed. From here a gate's figure no longer needs a footnote about which tree
+it came from; a record that quotes one made before this commit still does.
 
 ## A gate that was green only under a fabricated environment (item 43, done 2026-11-05)
 

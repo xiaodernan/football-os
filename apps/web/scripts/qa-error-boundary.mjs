@@ -32,11 +32,11 @@ const check = (name, ok, detail) => {
   checks.push({ name, ok, detail });
 };
 
-const catalogue = (locale) => JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
+const catalogue = (locale) => JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
 
 let source = "";
 try {
-  source = readFileSync(BOUNDARY, "utf8");
+  source = (readFileSync(BOUNDARY, "utf8").replace(/\r\n/g, "\n"));
 } catch {
   source = "";
 }

@@ -67,9 +67,9 @@ const NAMED_TOKENS = new Map([
   ["club.playerSlugPlaceholder", "an example slug"],
 ]);
 
-const english = JSON.parse(readFileSync(join(MESSAGES, "en.json"), "utf8"));
-const zh = JSON.parse(readFileSync(join(MESSAGES, "zh.json"), "utf8"));
-const zhTw = JSON.parse(readFileSync(join(MESSAGES, "zh-TW.json"), "utf8"));
+const english = JSON.parse((readFileSync(join(MESSAGES, "en.json"), "utf8").replace(/\r\n/g, "\n")));
+const zh = JSON.parse((readFileSync(join(MESSAGES, "zh.json"), "utf8").replace(/\r\n/g, "\n")));
+const zhTw = JSON.parse((readFileSync(join(MESSAGES, "zh-TW.json"), "utf8").replace(/\r\n/g, "\n")));
 
 const checks = [];
 const check = (name, ok, detail) => {

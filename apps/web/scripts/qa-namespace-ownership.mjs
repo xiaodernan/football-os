@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-const english = JSON.parse(readFileSync(join(MESSAGES, "en.json"), "utf8"));
+const english = JSON.parse((readFileSync(join(MESSAGES, "en.json"), "utf8").replace(/\r\n/g, "\n")));
 
 const checks = [];
 const check = (name, ok, detail) => {

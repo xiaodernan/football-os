@@ -25,7 +25,7 @@ const LOCALES = ["en", "zh", "zh-TW"];
 
 const catalogues = {};
 for (const locale of LOCALES) {
-  catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
+  catalogues[locale] = JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
 }
 
 const checks = [];
@@ -114,7 +114,7 @@ function findTranslationCalls(dir) {
           walkDir(fullPath);
         }
       } else if (entry.name.endsWith(".tsx") || entry.name.endsWith(".ts")) {
-        const content = readFileSync(fullPath, "utf8");
+        const content = (readFileSync(fullPath, "utf8").replace(/\r\n/g, "\n"));
         // Match t('namespace.key', { placeholder: value }) patterns
         const regex = /t\(['"`]([^'"`]+)['"`]\s*(?:,\s*\{([^}]+)\})?\)/g;
         let match;

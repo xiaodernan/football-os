@@ -60,7 +60,7 @@ const require = createRequire(import.meta.url);
 const ts = require("typescript");
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
-const CATALOGUE = JSON.parse(readFileSync(join(WEB, "messages", "en.json"), "utf8"));
+const CATALOGUE = JSON.parse((readFileSync(join(WEB, "messages", "en.json"), "utf8").replace(/\r\n/g, "\n")));
 
 /**
  * The ceiling on the keys no page asks for. It may only fall: a slice that wires a key to a page
@@ -522,7 +522,7 @@ let diagnostics = 0;
 
 /* --- the tree is parsed once, and the components it exports are indexed --- */
 const sources = files.map((file) => {
-  const source = ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const source = ts.createSourceFile(file, (readFileSync(file, "utf8").replace(/\r\n/g, "\n")), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   if (source.parseDiagnostics?.length) diagnostics += source.parseDiagnostics.length;
   parsed += 1;
   return { file, source, rel: relOf(file) };
@@ -854,7 +854,7 @@ for (const [namespace, block] of Object.entries(CATALOGUE)) {
 const judgedElsewhere = new Map();
 for (const [namespace, entry] of JUDGED_ELSEWHERE) {
   const path = resolve(WEB, entry.carrier);
-  const holds = existsSync(path) && readFileSync(path, "utf8").includes(entry.clause);
+  const holds = existsSync(path) && (readFileSync(path, "utf8").replace(/\r\n/g, "\n")).includes(entry.clause);
   if (holds) judgedElsewhere.set(namespace, path);
 }
 

@@ -54,7 +54,7 @@ const fixture = (name) => {
 const copyReal = (dir) => {
   for (const locale of LOCALES) cpSync(join(REAL, `${locale}.json`), join(dir, "messages", `${locale}.json`));
 };
-const read = (dir, locale) => JSON.parse(readFileSync(join(dir, "messages", `${locale}.json`), "utf8"));
+const read = (dir, locale) => JSON.parse((readFileSync(join(dir, "messages", `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
 const write = (dir, locale, data) => writeFileSync(join(dir, "messages", `${locale}.json`), `${JSON.stringify(data, null, 2)}\n`);
 const run = (dir, unset) => {
   const env = { ...process.env, QA_I18N_WEB: dir };

@@ -79,13 +79,13 @@ const fixture = () => {
 // would be right to pass it. Each edit below asserts the bytes changed.
 const replace = (root, file, from, to) => {
   const path = join(root, file);
-  const before = readFileSync(path, "utf8");
+  const before = (readFileSync(path, "utf8").replace(/\r\n/g, "\n"));
   const after = before.replace(from, to);
   if (after === before) throw new Error(`arm anchor not found in ${file}: ${from.slice(0, 60)}`);
   writeFileSync(path, after);
 };
 
-const append = (root, file, text) => writeFileSync(join(root, file), readFileSync(join(root, file), "utf8") + text);
+const append = (root, file, text) => writeFileSync(join(root, file), (readFileSync(join(root, file), "utf8").replace(/\r\n/g, "\n")) + text);
 
 const run = (root) => {
   const result = spawnSync(process.execPath, [GATE], { cwd: WEB, env: { ...process.env, QA_A11Y_WEB: root }, encoding: "utf8" });
@@ -120,7 +120,7 @@ const arms = [
   ["focus-first", "12 the focus ring is declared after", (dir) => {
     const path = join(dir, "styles/globals.css");
     const rule = `:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {\n  outline: 2px solid var(--accent);\n  outline-offset: 2px;\n}`;
-    const css = readFileSync(path, "utf8");
+    const css = (readFileSync(path, "utf8").replace(/\r\n/g, "\n"));
     const without = css.replace(rule, "");
     if (without === css) throw new Error("arm anchor not found: the focus rule");
     writeFileSync(path, without.replace("* { box-sizing: border-box; }", `* { box-sizing: border-box; }\n${rule}`));

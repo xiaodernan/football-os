@@ -92,7 +92,7 @@ const TOKENS = new Map([
   ["club.playerSlugPlaceholder", "an example slug"],
 ]);
 
-const catalogue = (locale) => JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
+const catalogue = (locale) => JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
 const english = catalogue("en");
 
 const checks = [];
@@ -192,7 +192,7 @@ const translatedCount = (locale) => {
 
 let readme = "";
 try {
-  readme = readFileSync(join(MESSAGES, "README.md"), "utf8");
+  readme = (readFileSync(join(MESSAGES, "README.md"), "utf8").replace(/\r\n/g, "\n"));
 } catch {
   readme = "";
 }

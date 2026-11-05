@@ -370,10 +370,10 @@ function readsOfLocal(text, fileName, localText) {
 
 // --- measure ---------------------------------------------------------------------------------------------
 
-const marketSource = existsSync(MARKET_PY) ? readFileSync(MARKET_PY, "utf8") : null;
-const typesText = existsSync(TYPES_TS) ? readFileSync(TYPES_TS, "utf8") : null;
-const pageText = existsSync(PAGE_TSX) ? readFileSync(PAGE_TSX, "utf8") : null;
-const toolsText = existsSync(TOOLS_TSX) ? readFileSync(TOOLS_TSX, "utf8") : null;
+const marketSource = existsSync(MARKET_PY) ? (readFileSync(MARKET_PY, "utf8").replace(/\r\n/g, "\n")) : null;
+const typesText = existsSync(TYPES_TS) ? (readFileSync(TYPES_TS, "utf8").replace(/\r\n/g, "\n")) : null;
+const pageText = existsSync(PAGE_TSX) ? (readFileSync(PAGE_TSX, "utf8").replace(/\r\n/g, "\n")) : null;
+const toolsText = existsSync(TOOLS_TSX) ? (readFileSync(TOOLS_TSX, "utf8").replace(/\r\n/g, "\n")) : null;
 const unreadable = [[MARKET_PY, marketSource], [TYPES_TS, typesText], [PAGE_TSX, pageText], [TOOLS_TSX, toolsText]].filter(([, text]) => text === null).map(([p]) => p);
 
 const viewScan = marketSource ? pythonPublishedDicts(marketSource, "market_view") : { shapes: [] };

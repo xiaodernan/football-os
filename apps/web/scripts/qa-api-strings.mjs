@@ -41,7 +41,7 @@ const check = (name, ok, detail) => {
   checks.push({ name, ok, detail });
 };
 
-const catalogue = (locale) => JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
+const catalogue = (locale) => JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
 
 const english = catalogue("en");
 const errors = english.errors ?? {};
@@ -156,7 +156,7 @@ const literalsIn = (source) => {
 
 const copies = [];
 for (const file of sourceFiles) {
-  const source = readFileSync(file, "utf8");
+  const source = (readFileSync(file, "utf8").replace(/\r\n/g, "\n"));
   for (const literal of literalsIn(source)) {
     // A literal this long is a parse artefact rather than a sentence, and a paragraph of code is not a
     // copy of a refusal.
@@ -245,7 +245,7 @@ const doors = [
 const unwired = [];
 let boundaryExports = false;
 try {
-  boundaryExports = /export\s+async\s+function\s+localiseRefusal/u.test(readFileSync(boundary, "utf8"));
+  boundaryExports = /export\s+async\s+function\s+localiseRefusal/u.test((readFileSync(boundary, "utf8").replace(/\r\n/g, "\n")));
 } catch {
   unwired.push("lib/refusals.ts does not exist");
 }
@@ -253,7 +253,7 @@ if (!boundaryExports) unwired.push("lib/refusals.ts does not export localiseRefu
 for (const door of doors) {
   let source = "";
   try {
-    source = readFileSync(door.file, "utf8");
+    source = (readFileSync(door.file, "utf8").replace(/\r\n/g, "\n"));
   } catch {
     unwired.push(`${door.label}: ${relative(WEB, door.file).replace(/\\/gu, "/")} does not exist`);
     continue;
