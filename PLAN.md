@@ -1404,6 +1404,18 @@ two home ties, one 40,000 prize.
    disk; the shared tree's contract is uncommitted, so the local run grades the disk pair. Same cure as item
    38 — parse `git show HEAD:docs/api/openapi.json`, compare the exporter's bytes to HEAD's, keep `answers()`
    live because the app is imported from the checkout.
+6. **The `budget` block is uncensused at four times the size of `totals` (filed 2026-11-06, roadmap row 48).**
+   22 published / 24 declared / 14 read over `f642c0a`, `budget=44` over the shared tree's API, two published and
+   untyped, four typed and unpublished, ten read by nothing.
+7. **File-only gates anchor on a newline byte and every landing plane is CRLF (filed 2026-11-06, roadmap row 49).**
+   `qa-a11y-witness` is 11/16 on a plane and 16/16 in the tree for that reason alone; a landing record must say
+   which tree its figure came from until the read folds line endings.
+8. **Six horizontal CSS declarations are committed, their fixes are not (filed 2026-11-06, roadmap row 50).**
+   `qa-rtl-readiness` 6/7 at `f642c0a`, 7/7 in the shared tree.
+9. **Two lanes landed under each other and each reverted the other (filed 2026-11-06, roadmap row 51; repaired
+   below under item 42).** The tool prints a sha and cannot see that the plane is behind master; the gate for it is
+   a printed comparison of the plane's commit against `refs/heads/master`, and a merge instead of a copy for
+   `qa-wire-readers.mjs` and `PLAN.md`.
 
 ## Objectives that pay (M13 Phase 9 item 36, done 2026-11-04)
 
@@ -1611,6 +1623,84 @@ ruff clean, mypy 164 files clean, tsc/ESLint clean; `qa-wire-readers` 18/18 (con
 `qa-locale-tokens` 5/5 at 4,209 keys / 4,164 translated, `qa-locale-completeness` 2/2. The Postgres
 walk sold 1,000 seats for 12,000, played a home round with 38,725 in the ground and 37,725 paid, a
 gate of 75,450, and a timeline closing at 1,075,404 with 0 disagreements.
+## The totals census computes, and two lanes' checks are one file again (item 42 + repair, done 2026-11-06)
+
+`qa-wire-readers.mjs` had documented a `totals` census since `c0d376c` and never ran one: `TOOLS_TSX` and
+`FLOOR_TOTALS_KEYS` declared and read by nothing, **one declaration, zero uses, each**, and the run answering
+`CHECKS passed=12 total=12`. Item 42 wrote the three clauses the prose promised — 12 the block's published keys
+against `MarketView["totals"]` both ways, 13 every declared field read on the page **or** in `MarketTools` with the
+handoff itself re-measured as a predicate (`totals={view.totals}` and `totals: MarketView["totals"]`), 14 an
+exemption that stopped holding — and the census then refused two keys no reader existed for: `grant_rows` and
+`bonus_rows`. The refusal is the unit's point, because the answer was not to exempt them. Those two counts are the
+row counts of the two sums the footer already prints, item 36's board grant and item 24's objective bonuses; a sum
+with an amount and no row count beside it is the unauditable shape, so the fix is one placeholder per term in all
+three catalogues — `+ {amount} in board grants {rows, plural, one {over # season} other {over # seasons}}` and its
+bonus twin — with `qa-plural-select`'s categories per locale, and `qa-market.mjs`'s regex taking the two new
+fragments in the same commit so the walk still re-adds the identity from the figures the DOM prints.
+
+Six arms, each editing one input and restoring: a `totals` key gone from the wire (**14/15**, clause 12 names it),
+gone from the type (**14/15**, the other direction), a footer that stops passing `rows` (**14/15**, clause 13), a
+seam replaced by a spread of the same values (**14/15**, clause 13's `seam=MISSING` — the reads all survive, which is
+exactly the case a comment would have certified), `budget_position` renaming its `moves` copy (**13/15**, clause 14
+*and* 13: the exemption died with the fact it stated), three keys deleted (**11/15**, clauses 2, 12, 13, 14). The
+parent's script over the two strongest inputs: **12/12 failed=0, nothing refused**. Live: the market walk
+**146/146**, and a browser witness of the footer on a career walked to its season boundary with a loan in the ledger
+**18/18**, `moves=1 wage_rows=4 grant_rows=1 bonus_rows=4` painted in `en`, `zh` and `zh-TW`, 0 `MISSING_MESSAGE`.
+
+Then the repair, which is the same lesson item 40 recorded and this project has now been taught twice. `f642c0a` was
+landed from a plane detached at `ef649ef` and, unknown to the lane that ran it, master had moved to `036089f`: the six
+paths carried `ef649ef`'s bytes for everything except the files this unit edited, so the moves census a concurrent
+lane had landed at `29fbe4c` — checks 15–17, a 12-row ledger, `FLOOR_MOVE_KEYS` — was silently deleted by my commit.
+`29fbe4c` had done the identical thing to this lane's item-43 record on the way in (129 lines of doc, 33 of PLAN, 58
+of the drift amendment, 27 of the roadmap row). Neither lane's own gate could see it; both saw a green plane.
+The cure is `git merge-file` over the common ancestor with **both** sides kept, and the claim is measurable: the two
+versions over the committed tree are **12/15 (reds 9, 12, 13)** and **11/15 (reds 9, 15, 16, 17)**, and the union runs
+**18 checks at 12/18 with reds 9, 12, 13, 15, 16, 17** — the sum, not the intersection, so the merge hides nothing.
+Six of those reds are not the census's and are named as item 51's second half: `29fbe4c` typed five `Move` fields,
+two `totals` keys and five constants the committed `market.py` does not publish, and the union over the shared tree's
+*uncommitted* API prints the same six check numbers in the opposite direction (`constants=33 moves=33 totals=10`
+against `19/30/9` typed). No committed state of `lib/market.ts` + `market.py` is green until the two halves land over
+each other. Check 2 gained `moveKeys.length >= FLOOR_MOVE_KEYS` and `declaredMove.followed` on the way, because a
+scan that finds no move row must not read as agreement either.
+
+**Landing:** `f642c0a` (6 web paths, +66/−113 against `036089f` — the −113 is the revert this commit repairs) and the
+merge commit this record lands in (the union census, the restored item-43 record, this section, roadmap rows 48–51).
+Evidence: [WIRE_READERS_TOTALS_VERIFICATION.md](docs/WIRE_READERS_TOTALS_VERIFICATION.md) §1–8,
+`.scratch/item42-arms.txt`, `.scratch/repair-merged.log`, `.scratch/repair-merged-sharedapi.log`,
+`.scratch/repair-webgates-wt-repair.txt`, `.scratch/repair-api.log`.
+
+## A gate that was green only under a fabricated environment (item 43, done 2026-11-05)
+
+Item 40's suite line — **1 failed / 2148 passed / 4 skipped** — is the first red this project's own instrument
+produced with nothing planted. `test_ci_trigger.py`'s push-coverage case asks "which branch is this run about?" and,
+outside GitHub, answered it with `git rev-parse --abbrev-ref HEAD`. On a branch that is `master`; on a detached
+checkout it is the literal `HEAD` — and every landing here is graded on a detached worktree, because the shared tree
+carries concurrent lanes' bytes. So the case could only be made green by prefixing the command with
+`GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`, which is exactly how item 38's "on a checkout detached at `e8fa569`
+… rc=0" verdict was reached, and that record did not name the prefix. Two logs, one population, one green, one red,
+and nothing in either to say why. A claim whose reproduction needs an undocumented environment variable is not a
+reproducible claim.
+
+`_pushed_branches(root)` answers in three ordered steps — the event when one arrived, the checked-out branch when
+`--abbrev-ref` names one, otherwise the branch this project publishes to, read as `git for-each-ref --contains HEAD`
+intersected with `origin/HEAD`'s target and, with no remote, `master`, then `main`, then the single local branch.
+When no published branch carries the commit it **skips and prints the refs it looked at** instead of asserting a
+shape the checkout was never asked to have. The file goes from 7 cases to 8: the new one builds a throwaway
+repository in a temporary directory, with `commit.gpgsign` and `core.hooksPath` pinned off so a host's signing
+cannot fail a commit that is not what is being graded, and asserts all four shapes — on a branch → that branch;
+detached at a commit `master` carries → `master` (the landing-plane shape); on a side branch → the side branch,
+because the fallback never overrules the run's own answer; detached at a commit no branch carries → nothing. Four
+arms in [CI_TRIGGER_BRANCH_READ_VERIFICATION.md](docs/CI_TRIGGER_BRANCH_READ_VERIFICATION.md) §3: the whole file at
+**8 passed** with the trigger case *answering* `master`, not skipping; the parent's reader written beside the cure on
+the same tree at **1 failed** (`assert ('HEAD' and 'HEAD' != 'HEAD')`) against the cure's **1 passed**; `ci.yml`'s
+push trigger rewritten `[master]` → `[main]`, which still reds *through* the new fallback — the catch the gate was
+written for is not blunted; and a plane detached at an unreferenced `commit-tree` child of master at **7 passed, 1
+skipped**, reason printed. The full suite then re-measured on the cure itself — `.scratch/wt-ci` at `ef649ef`, with
+**no `GITHUB_*` in the environment at all** (`env | grep -c '^GITHUB_'` → 0): **2154 passed, 4 skipped, 330
+warnings in 2990.83s**, exit 0. The red that item 40 met is gone without a prefix being added, which is the whole
+claim of this unit.
+**Landing:** `ef649ef`, one path, +134/−25 against `265e7a7`; this record, section and bullet are the commit beside
+it.
 
 ## How to work an item
 

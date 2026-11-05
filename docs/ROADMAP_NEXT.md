@@ -566,7 +566,8 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   checks must run and print their populations (`totals` keys counted, `MarketTools` seam followed), and an arm that
   deletes a `totals` key from the wire must red the clause the prose names — today the same deletion answers 12/12.
   Filed in [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §7.
-* **43. A gate that is green only under a fabricated CI environment.** `test_ci_trigger.py` asks the workflow's
+* **43. A gate that is green only under a fabricated CI environment.** **Done (2026-11-05, `ef649ef`; record and
+  suite line below).** `test_ci_trigger.py` asks the workflow's
   push trigger of "the branch the run is about", and locally reads that branch with `git rev-parse --abbrev-ref
   HEAD`. On a detached checkout that answers `HEAD`, and the case asserts — so the full suite is red on the very
   plane every landing of this project is graded on: measured at `21bbf86`, **1 failed / 2148 passed / 4 skipped**,
@@ -577,6 +578,49 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   refs/heads/`), and when no branch contains it, skip naming why; then re-measure the suite on a detached plane
   with no `GITHUB_*` in the environment and record the command verbatim. Filed in
   [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §3 and §7.
+
+* *Numbers 44–46 are taken by feature work (M13 Phase 10: the gate's price, the ground's running cost, season tickets), so the four findings filed below start at 48. The roadmap's finding list and the plan's feature list share one integer line, and this is the second time two lanes reached for the same number; a row that renames itself should say what it did not take.*
+* **48. The `budget` block is the item-42 finding at four times the size.** Item 42's own print is the evidence: over
+  `f642c0a` the merged census scans `budget_position` to prove two `totals` exemptions and answers **22 published /
+  24 declared / 14 read**, and the refusals split three ways — `wage_ceiling` and `wage_headroom` published by the
+  wire and typed by nothing; `gate_detail`, `gate_rows`, `received_gate`, `received_sales` declared by the type and
+  published by nothing; and ten declared keys read by nothing, those four plus `grant_detail`, `grant_rows`,
+  `objective_detail`, `objective_rows`, `wage_detail`, `wage_rounds`. Over the shared tree's uncommitted API the same
+  scan prints `budget=44`, so the population is moving under the census. Nothing judges this block in either
+  direction. *Gate:* checks 18–20 in the shape 4–6 and 12–14 already have — both directions by name, then every
+  declared field read or named with a reason the bytes re-measure, then the ledger refused when it stops holding.
+  Measured in [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §7.
+* **49. A file-only gate whose anchors are multi-line strings is red on every landing plane this project uses.**
+  `qa-a11y-witness.mjs` answers **11/16 failed=5** on `.scratch/wt-repair` — five arms printing *arm anchor not
+  found* over `styles/globals.css`, `app/layout.tsx`, `components/Nav.tsx` — and **16/16 failed=0** in the shared
+  tree, where the same committed bytes sit in LF. Measured, not inferred: the plane's `globals.css` holds 275 CRLF
+  pairs, `layout.tsx` 99, `Nav.tsx` 156; the shared tree's three hold 0. The repo sets no `.gitattributes` and this
+  host has `core.autocrlf=true`, so *every* `git worktree` plane this project grades landings on checks out CRLF, and
+  every file-only gate that anchors on a CRLF inside a multi-line string is therefore red on the plane and green in the tree —
+  which means the number a landing record quotes depends on where the reader ran it. *Gate:* fold every CRLF to LF
+  once at the read in each file-only gate, keep the anchors as they are, then re-measure the whole file-only web suite
+  on a plane and in the shared tree and land the two lists side by side, so no future record has to say which tree a
+  figure came from. Measured in [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §5.
+* **50. Six horizontal CSS declarations are committed while their logical fixes are uncommitted.**
+  `qa-rtl-readiness.mjs` answers **6/7 failed=1** at `f642c0a` and **7/7** in the shared tree, because the cure —
+  `text-align: start`, `border-inline-start`, `padding-inline-start` — is sitting uncommitted. The named locations:
+  `app/coach/coach.css:61` and `app/knowledge/knowledge.css:248` (physical text alignment),
+  `app/knowledge/knowledge.css:168` `border-left: 2px`, `:169` `padding-left: 0`, `app/training/training.css:27`
+  `border-left: 2px`, `:28` `padding-left: 0.6rem`. *Gate:* land those six lines and keep the check's claim, so the
+  shared tree stops being the only place the gate is green. Measured in
+  [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §5.
+* **51. Two lanes landed under each other, and the landing tool cannot see it.** `.scratch/own-commit-wt.py` takes the
+  parent from `refs/heads/master` at call time and the *listed paths only* from the source plane, so a plane detached
+  at an older sha publishes that older sha's bytes for anything it lists — a silent revert, the newer commit's work
+  gone with no word about it. It happened twice in ninety minutes, in both directions: `29fbe4c` was landed from a
+  plane behind `0895f9d` and deleted the item-43 record (129 lines), its PLAN section (33), its drift-doc amendment
+  (58) and its roadmap done-marker (27); `f642c0a` was landed from a plane behind `29fbe4c` and reverted the moves
+  census (checks 15–17) out of `qa-wire-readers.mjs`. Each lane's own gate passed on its own tree, and each landing
+  was green in the only sense the tool reports: it printed a sha. *Gate:* before publishing, print the plane's commit
+  beside `git rev-parse master` and stop when they differ; for the two files every lane edits — `qa-wire-readers.mjs`
+  and `PLAN.md` — merge over the common ancestor instead of copying, the way this unit's §6 did, and show the union's
+  red set is the sum of the two. Measured in
+  [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §6.
 
 ---
 
@@ -861,3 +905,27 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   carried the gate (one path, 8,354 bytes, 24 passed across the four commit-reading gates at that commit); this
   bullet, §1–7 of the record and the `PLAN.md` section are the commit beside it. The two findings it filed are
   items 42 (`qa-wire-readers`'s prose census) and 43 (a gate green only under a fabricated CI environment).
+
+- **A gate that was green only under a fabricated CI environment (2026-11-05).** The suite on the repair plane
+  answered **1 failed / 2148 passed / 4 skipped** and the single failure was `test_ci_trigger.py`'s push-trigger
+  case: it read the branch with `git rev-parse --abbrev-ref HEAD` — which answers the literal `HEAD` on a detached
+  checkout — and asserted the answer was a branch name, so it reddened the instrument every landing of this
+  project is graded on. The same suite reaches rc=0 on such a plane only when the command carries
+  `GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`, which is how item 38's "on a checkout detached at `e8fa569`"
+  verdict was reached without its record naming the prefix. `_pushed_branches()` now takes the event's answer
+  first, the checked-out branch second, and otherwise `git for-each-ref --contains HEAD` against the branch the
+  project publishes to (`origin/HEAD`, else `master`, `main`, or the single local branch); a commit that branch
+  does not carry **skips**, naming the refs it did find. All four shapes — on a branch, detached-and-carried, on a
+  side branch, detached-and-carried-by-nothing — are asserted on a throwaway repository, because a skip that
+  cannot fail is a gate that cannot work. Arms on a detached plane with every `GITHUB_*` stripped from the child
+  environment: the cure **8 passed**; HEAD's own reader, written beside it on the same tree, **1 failed**
+  (`assert ('HEAD' and 'HEAD' != 'HEAD')`) against the cure's **1 passed**; `ci.yml`'s trigger rewritten
+  `[master]` → `[main]` still **reds**, naming `master`, so the fallback does not blunt the catch the gate was
+  written for; and a plane detached at an unreferenced commit answers **7 passed / 1 skipped** with the reason
+  printed. Reading the workspace to explain that red also found the §1 reversal armed again in the shared
+  *index* — 26 staged paths, 24 of them byte-for-byte `c0d376c`'s copies, and no entry at all for anything landed
+  since — recorded with what was done about it in the drift document's follow-up.
+  Evidence: [CI_TRIGGER_BRANCH_READ_VERIFICATION.md](CI_TRIGGER_BRANCH_READ_VERIFICATION.md) and
+  [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md). **Landing:** `ef649ef` carried
+  the cure (one path, 134/25 against its parent); the record, this bullet and the `PLAN.md` section are the commit
+  beside it.
