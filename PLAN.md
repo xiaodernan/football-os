@@ -1706,9 +1706,12 @@ also moved its exit code, and `qa-a11y`, which did not); after it, **0 of 30**. 
 the witness joins `qa-rtl-readiness` and `qa-wire-readers`, and those two are red in all four rows for row 50's
 committed-physical-CSS and row 51's typed-ahead-of-published reasons — line endings were never why either was red,
 and the fold changed neither. `tsc --noEmit` and `next lint` are clean over the cured plane.
-**Landing:** this section's commit, 32 paths — the 30 gates, [EOL_FILE_GATES_VERIFICATION.md](docs/EOL_FILE_GATES_VERIFICATION.md)
-§1–6, roadmap row 49 done and row 52 filed. From here a gate's figure no longer needs a footnote about which tree
-it came from; a record that quotes one made before this commit still does.
+**Landing:** `322faed`, **33 paths** — the 30 gates, PLAN.md,
+[EOL_FILE_GATES_VERIFICATION.md](docs/EOL_FILE_GATES_VERIFICATION.md) §1–6, and ROADMAP_NEXT.md with row 49 done,
+row 52 filed and rows 51–52 back in numeric order. The census was then re-run over the published tree rather than
+trusted from the plane: `git show 322faed` answers 30 file-only gates / 61 sites / **60 folded** / 1 raw. From here
+a gate's figure no longer needs a footnote about which tree it came from; a record that quotes one made before this
+commit still does.
 
 ## A gate that was green only under a fabricated environment (item 43, done 2026-11-05)
 

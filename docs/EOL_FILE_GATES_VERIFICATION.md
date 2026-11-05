@@ -1,6 +1,6 @@
 # File-only gates read bytes, and a checkout is not the tree
 
-ROADMAP Phase 6 item 49. Date: 2026-11-06.
+ROADMAP Phase 6 item 49. Date: 2026-11-06. Landed as `322faed` (33 paths).
 
 Thirty of this project's web gates are *file-only*: no server, no browser, no port — they read source and catalogue
 bytes and assert predicates over them. Every one of them read those bytes raw. On this host a `git worktree` checkout
@@ -87,6 +87,13 @@ one (row 51). Line endings were never the reason either was red, and the fold di
 
 `tsc --noEmit` and `next lint` are clean over the cured plane; the 60 edits are inside `scripts/qa-*.mjs`, which is
 not in the tsconfig program, and ESLint reports nothing.
+
+The published tree was then re-read instead of trusted. Over `git show 322faed` — no worktree, no checkout, so no
+line endings in the way — §2's own rule (inventory's regex at line 111) splits **30 file-only gates from 15 live**,
+the file-only population holds **61 `readFileSync` calls of which 60 carry the fold**, and the single remaining raw
+read is `qa-share-preview.mjs`'s PNG. The five live gates that read files at all
+(`qa-gate-inventory`, `qa-market`, `qa-population-floor`, `qa-translation-freshness`, `visual-qa`) were not folded:
+they are not in this class, and the split is measured from their bytes rather than from their names.
 
 ## 5. What this does not claim
 
