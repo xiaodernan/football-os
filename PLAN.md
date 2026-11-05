@@ -7,7 +7,7 @@ every item names the files it touches, the gate it must pass, and the thing that
 Rule inherited from spec §96 and this project's own practice: **an item is done when its claim is measured, not
 when its code exists.** A number in a document that no command reproduces is not evidence.
 
-Last updated 2026-10-26.
+Last updated 2026-11-03.
 
 ---
 
@@ -89,6 +89,7 @@ Last updated 2026-10-26.
 | **— the API had no measured load story: the bench suite drove one endpoint in a loop and nothing asserted what a concurrent career walk must survive** | ✅ 2026-10-28 | `scripts/bench_api.py` gained the `sims` scenario — a task-count walk that registers accounts, opens careers, plays a fixed number of rounds per career with concurrency only *across* careers (the same-career play race is serialized by the database layer: probed 10/10 trials, exactly one 200 + one 409 `conflict` from the `IntegrityError` handler, zero duplicate round rows, `rounds_played` always equal to the row count; the refusal is coarse, but the invariant holds), then re-reads every career and checks its count — with refusal-coded error accounting, a `measured_over` denominator discipline, and a JSON summary whose `ok` folds setup, play and verify into one verdict. `docs/LOAD_ENVELOPE.md` publishes the envelope as the single JSON author of the ceilings (measured p95 1745 ms at 4 workers × 36 plays; the gate shape 2×2×2 measured p95 1656 ms; published ceiling 15000 ms ≈ 9× headroom because a threshold a correct tree cannot meet is not a gate; throughput reported, never gated). `apps/api/tests/test_load_envelope.py` boots a real `uvicorn.Server` in a thread against the test run's own seeded database — proven green on **both** legs (SQLite 3 passed, PostgreSQL 3 passed) — runs the script as a subprocess, and requires both directions: the gate shape must exit 0 with 0 non-2xx, exact rounds per career and p95 under the ceiling, and two refusal arms must exit 1 with the refusal named (wrong prefix → setup 404; `--careers 6` → 409 `career_limit` after exactly 5 careers). Exit codes were read from the subprocess's return code, never through a pipe. **Disclosed:** master's api CI job stays red from the foreign market batch (`bb712f0`, 13 mypy errors in `market.py`, whose file carries that lane's uncommitted edits) — not cured here. |
 | **— the copy gate could not see a translator it had not been told the name of** | ✅ 2026-10-28 | Item 22, closed at the gate rather than at the panel. `qa-i18n-literals.mjs` resolved a namespace inside the file that asks for the key, so a `components/` panel handed its translator as a prop resolved to nothing: **7 panels, 167 bare `t("…")` calls** contributed nothing to the check whose whole job is to stop a page throwing MISSING_MESSAGE. The reachability was proved both ways before the fix — the academy panel's real `KeyError: 'thAge'` planted in the *panel* answered 8/8 at an unmoved 3661 calls, in the *page* answered 7/8 at 3662. The seam resolves the hand-off where it happens: import → exported component → the prop's local name → the namespace of the expression the caller passes, iterated to a fixed point (≤6 rounds) so a panel handing `t` to its own sub-panel is followed too. **Two passes, not one, and that was the bug on the first run:** the population walks `app/` before `components/`, so reading the hand-offs while exports were still being collected resolved nothing and named the whole 167 as unfollowable — the figure that matched the independent census was the diagnosis. The merge is deliberately asymmetric: every namespace a panel was ever handed goes into the permissive set (a panel used by two pages is checked against both, never dropped), while the scope stack gets a binding only when exactly one namespace arrived and the file declares none, which is what lets the adjacency and translator-call checks reach panels without guessing an ambiguous case. The ninth check refuses the silence: a key-shaped read through a parameter that resolves to no namespace is named at file, line, key and parameter. **Five arms, all MATCHED, every mutation on a plane copy of the tier outside the repository and restored byte-identically with sha256 compared:** baseline 9/9 at 3824 calls / 7 props / 138 files; a planted key in `CareerAcademy` → 8/9 red at 3825; a key borrowed from another namespace → red at the *same* 3824, which is the crash shape the old gate passed; one `t={t}` deleted from the career page (panel untouched) → 3801, **−23 exactly the panel's census figure**, with the seam check naming `components/CareerAcademy.tsx`; a second hop → 3825 with props 7→8 and files 138→139; control restored → 9/9 at 3824, rc 0. **Disclosed:** the "props bound" figure prints only on the green path, so the two arms that redden that check were graded on the count and the named file instead. Re-read on today's tree, which has moved since: **9/9 — 143 `.tsx` files, 4012 key calls, 97 named keys, 7 props bound** — and that is why the shipped prose no longer copies the count: `ARCHITECTURE.md` states the claim and names the gate as its reader, the arc doc's §18 carries the dated landing figures, and this row carries the reaction. The mirror finding is measured and opened as item 23: `qa-unused-keys.mjs` exempts a **whole namespace** for one unresolvable read, and three dynamic reads spend two namespaces — `careerDetail` (288 keys) and `errors` (66) = **354 of 3971** never asked whether anything reads them; a two-arm plane probe shows a dead key in `careerDetail` leaves the gate green at 0 orphans while the same key in `common` reds it at 1. **Landing note:** the gate's bytes reached HEAD inside the concurrent i18n lane's commit `df1675e`, which swept this session's working copy along with its own; the doc cure and this ledger row are the commits after it. Recorded in [I18N_ARC_VERIFICATION.md](docs/I18N_ARC_VERIFICATION.md) §18. |
 | **— the youth class was published on every career read and no page could judge it** | ✅ 2026-10-28 | The web half of item 7: `career_view["academy"]` has answered every career read since `1cd4d93` with the under-21s measured against the engine's own eleven, but `lib/types.ts` had no type for it and the page printed nothing. The page now types the block (`CareerAcademy`, `CareerAcademyTrainee`) and renders it in `components/CareerAcademy.tsx` between the development and board panels: a six-figure key/value grid (class size, selected, next in line, squad size, formation, the age ceiling), an eight-column trainee table — player, position, age, minutes, stored→projected, **potential headroom**, standing against the band's seats with the gap to the last seat, and the verdict as a badge whose class is the verdict's own (`badge--live` for `selected`, `badge--demo` for `off_the_pace`) — then the API's `note`, its `academy_formula` and all six `formulas` sentences, and an explicit empty branch that prints the API's own reason. `potential_headroom` got a column rather than staying a printed-derivation-with-no-reader: its formula sentence was already on the panel, so the figure it names is now visible beside it. 20 new `careerDetail` keys per locale, every one of them an `academy*` name that no other namespace holds, so the `qa-shared-keys` ceiling holds at exactly 234 bindings / 98 rows. **Walked by surgery, not by luck:** the block is recomputed per read, so `.scratch/phase-driver.sh` sets the walked player's stored `overall`, **restarts the private API** (the response cache would replay the previous phase's answer), and the walk composes every expected string from that view plus the committed catalogues — 49 → `selected`, 48 → `next_in_line` (gap 1), 44 → `off_the_pace` (gap 5), 49 restored, so all three verdicts, all three badge classes and the gap interpolation are each reached on the shipped build: **686 checks over four runs (171/172/172/171), 0 red**, both branches × `en`/`zh`/`zh-TW`, with an anti-vacuity check per surgery phase that a trainee row really carries that verdict on the wire. Three iterations were red and all three were mine, not the wire's: the stale-build server (bash `kill` kills the `npx` wrapper, not the Node listener — found by `netstat -ano`, stopped by `taskkill //PID … //F`), three cells built from **adjacent JSX expressions** that React splits with `<!---->` comment nodes (now one template literal per cell), and 20 apostrophe reds from an escaper called with `quote=False` (React writes `&#x27;` in text). **The walk found a shipped-page defect before anything landed:** the component asked `careerDetail` for `thAge` and `thVerdict`, which live in `scout`/`world`/`club`/`academy` — the page prints only what its bound namespace holds — and **no gate could have caught it**: with the draft spelling restored, `qa-i18n-literals.mjs` answered 8/8 at an unmoved 3661 key calls, while the identical planted key in `app/career/[slug]/page.tsx`, which binds `careerDetail` itself, answered 7/8 at 3662. Measured blind-side population: **7 files under `apps/web/components/` make 167 bare `t("…")` calls outside the gate's recorded set**; opened as item 22 with the reaction (not the pass) named as its witness. **Disclosed:** the walk database's copy of Cordale Town has its under-21s aged past 21, so the empty branch is walked on a real career rather than a fixture; and HEAD's `apps/web/messages/README.md` blob ends every line `\r\r\n` (a `5d55d41` bulk-rewrite artifact), so the recount was re-encoded to the file's own spelling and lands as a 2/2 diff instead of churn over all 95 rows. Recorded in [M13_ACADEMY_PANEL_VERIFICATION.md](docs/M13_ACADEMY_PANEL_VERIFICATION.md). |
+| **— the signing window was published, typed by nothing, and the walk counted a board it had been told the shape of** | ✅ 2026-11-02 | ROADMAP §22 item 5's first half. `career_view["window"]` / `GET /transfers/{career}` have answered with the block since 2026-10-28 and `/career/[slug]/market` printed none of it: a manager met `transfer_window_closed` only *after* pressing a refused button. The page now binds `const signing = view.window` and renders a `market-window` panel — a notice that follows `state`, six grid rows (state, the season being judged, which table the length came from, every range with its label, the range holding this round, where the next opens) and the tier's own formula beside the two constants it is built from; `MarketSigningWindow`/`MarketWindow` and `MarketView.window` are typed, and 16 `market` keys were authored in all three catalogues. **The panel is not the evidence — the gate is.** `apps/web/scripts/qa-wire-readers.mjs` (12 checks, file-only, wired into `check.sh` + CI) derives three populations from bytes on every run — the service's own `return {…}` literals through a brace-depth body scan and a string-aware key scanner, the properties `lib/market.ts` declares (followed through `["windows"]`/`["constants"]`), and the fields `page.tsx` really asks for, including inside the `windows.map()` row callback — with four floors so a scan that finds nothing cannot read as agreement, and one exemption (`demo_data`) that only holds while both spellings and the page's own name are in the bytes. `CHECKS passed=12 total=12 failed=0` on the basis it lands on; **arms 10/10 MATCHED** at `wire basis: HEAD ed9b631e…` (control `[]`, A1 `[7,8,9]`, A2 `[7,8,9,10]` — panel *and* binding, so a census that merely looks for the name cannot pass on the binding alone — A3 `[5]`, A4 `[6]`, A5 `[3,5]`, A6 `[3]`, A7 `[10,11]`, A8 `[4,10]`, W `[9]`). **It caught a live drift the same day, from a lane not in this commit:** the working tree's `market.py` publishes 13 constants and `lib/market.ts` types 10, so check 9 reads `published, typed by nothing: season_grant_per_round, season_grant_per_point, promotion_grant`. Not fixed from under them — typing those keys here would red the same check in the other direction on CI's basis, and their service file is not mine to edit; the handoff is named in §6. **Three copied figures cured the same way:** the board read columns by index and its `cells.length === 13` pin was already stale at HEAD (`142/143`, the lone red `… — 14 columns`) — `board()` now maps every figure through `BOARD_COLUMNS`, header text taken from the catalogue the component renders, plus a header-presence check and a cells-against-headers check (`14 cells against 14 headers, across 12 row(s)`); the rule *count* became a three-way reconciliation of `GET /transfers/rules`, the career door's `view.rules` and the rows the panel printed (`public 14, career 14`, followed the other lane's growth without being edited); and the walk re-draws the window from `early=4 half=1` and compares the six printed rows through the catalogue's own interpolations. Live: `node scripts/run-walks.mjs market` → **144/144 checks passed**, `--- market: exit 0`, **1/1 walks green** on build `VNv19az9qYbeALp8GaIdh` · API :8772 · web :3249, fresh SQLite. The `count` rename was forced by a real gate, not taste: `{opensIn}`/`{inRounds}` are plural variables `qa-translation-quality` reads as untranslated English in `zh`/`zh-TW` (4 issues on my keys → 4/4), and the pass also corrected `zh-TW`'s doubled particle `賽季的的第`. File-only family green on this tree: `qa-gate-inventory` 188/188 (new script inventoried into both callers), `qa-icu-messages` 2/2 over 12078 messages / 4026 keys, `qa-population-floor` 3/3, `qa-icu-coverage` 2/2 over 3141 calls, `qa-unused-keys` 3/3 (3960 judged + 66 delegated, 0 dead at a floor of 0), `qa-translation-quality` 4/4, `qa-shared-keys`/`qa-key-drift` green. **Found and filed, not cured:** `qa-plural-select.mjs` prints `Plural/selectordinal: 0` on a catalogue the same parser reads as **86 plural nodes across 4026 English messages** — it compares `node.type` to the *string* `"plural"` while `@formatjs/icu-messageformat-parser` returns its numeric `TYPE`, and calls its `walk()` on the array `parse()` returns, so every check grades an empty population; a first recount of locale shape drift (106 messages whose node count differs from English) is *not* a defect count, because `other`-only Chinese collapses are legitimate and the re-armed gate needs a rule that says so. Disclosed residuals: the walk still quotes `asking / 500` by hand (±2.5 = the half-step of the `round_5` it reproduces) and needles `2 left` and `round_5`; the panel prints `2 × half_width + 1`, an arithmetic step the tier does not publish as data; and the clipping/merge rule now lives in Python *and* JavaScript, which is what makes the walk the thing that notices. Recorded in [M6_MARKET_WEB_VERIFICATION.md](docs/M6_MARKET_WEB_VERIFICATION.md) §6. |
 | **— the dead-key gate exempted a whole namespace on one dynamic read, so nine keys in a hundred were never asked whether anything reads them** | ✅ 2026-10-31 | Item 23, and the fix keeps the soundness rule while shrinking what it costs. `qa-unused-keys.mjs` will not call a key dead when a read of it is merely **unresolved** — right in principle, **namespace-wide** in practice: `t(column.hintKey)` and `t(column.labelKey)` in the career page and `t(refusal.code)` in `lib/refusals.ts` were spending `careerDetail` (**288** keys) and `errors` (**66**) while the gate printed 3/3 and 0 orphans, so the figure was true of the namespaces it judged and vacuous for the rest. Three mechanisms. (a) The reader now follows an identifier to the **file that declares** the value — `LEDGER_COLUMNS` lives in `lib/ledger.ts` and is imported — and resolves the collection a **chained iteration** started from, because `MILESTONES.filter(…).map(…)` iterates `MILESTONES`, not the filter's result. (b) The seam applies the translator a caller **handed** a function, so a read two links deep (page → `CareerAcademy` → `standingCell`) is visible, and the pass runs to a **fixed point** — 2 rounds on today's tree, the discipline the copy gate learned in item 22. (c) The third check is graded in **keys left unjudged** against a floor that may only fall, and an exemption counts only while the carrier file it names is found, at run time, holding the clause that judges: `errors` is that one delegation, because `KNOWN` in `lib/refusals.ts` is `Object.keys(enMessages.errors)` — self-derived, so it witnesses nothing — and `qa-api-strings.mjs` declines a second census of the API's source, so those keys are judged by `test_locale_claims.py`'s `unheld` assertion, which recomputes them from the codes the API publishes. Reading today, dated because the population moves: **3/3 — 149 files, 149 parsed, 0 parse diagnostics, 2 seam rounds · 0 keys asked for by nothing · 3905 judged here and 66 delegated, which is the whole catalogue at 3971 and 0 unjudged.** **Eight runs on a detached worktree — two baselines, five arms and one control — each prediction written before its run and every mutation restored byte-identically**, with the plane's gate `cmp`-verified against the shipped blob so the arms grade HEAD and not a draft: the differential **inverted** — the same key planted in `careerDetail` answers 1 orphan at rc 1 exactly as one in `common` does, while the pre-fix gate over that same plant stayed 3/3 green, which is the blind spot measured rather than argued; a key planted in the **delegated** `errors` leaves the JS gate green and reds the carrier (`1 catalogue sentence(s) name a code the API does not publish at all: ['qa_probe_dead_code']`), and neutralising the carrier's clause hands the gate back **66 unjudged** with the footer `NOT JUDGED BY ANY READER`; neutering pass 1's handed bindings returns exactly the six seam keys (`academyGap`, `academyStanding`, the three `academyVerdict*`, `highlightsMeeting`), which names the mechanism that does the work rather than the tally. **Disclosed:** the first resolution pass was *more* precise than the scan it replaced and briefly exempted `settings` — an over-narrow read widening the blind spot, caught by re-reading the exemption list and not the pass count — and S1 first ran as a deletion of the declaration it was ablating, so the gate crashed with no verdict, and a re-run lost `NODE_PATH` and exited 1 for the same reason: **a crash is not a red**, and both were re-cast before the figures above were read. The whole file-only family — **32** gates, population derived from `scripts/check.sh` — ran over this tree at `REDS 0`. Recorded in [I18N_ARC_VERIFICATION.md](docs/I18N_ARC_VERIFICATION.md) §19; the gate and roadmap item 23's own closure landed at `5a7d987`, and this row plus the two `ARCHITECTURE.md` claims that gate's old shape cured are the record after the bytes. |
 
 **The pattern worth naming.** Three of the four items above were *claims that had drifted from their evidence*,
@@ -1005,6 +1006,14 @@ in the reader's language and carries the sentence the payload supports ("{name} 
 …"), a Mark read button per unread row and Mark all read above, and the tier's own formula printed under the panel.
 The nav gains a Notifications link with the unread count as a badge, fetched once per mount, quiet at zero.
 
+**Walk runs against the fixed tree, each finding named**: run with the client-fetch buttons and the favicon
+exemption landed **296/301** — the notification section fully green for the first time in a full walk (tray, badge,
+mark-all, stranger verbs through the API), the erasure green on the re-keyed bucket, and the five reds: four in the
+career/season checks (the fixture table, the record arithmetic, the fresh-season zero — the same season-boundary
+commit their lane landed this week is the suspect; the fixture table and the record disagree on which rounds count)
+and one harness bug this lane fixed: the sign-out sweep had been written to call the walk's own navigator from
+inside page.evaluate ("page is not defined"), and the opens are hoisted to Node now.
+
 **The targeted verification that settled the section** (after four full-walk attempts died on host contention —
 the sitemap probe's 1715 SSR renders, up from 1039 before M13, saturate the web tier on this shared host): a
 puppeteer run against the production build registers an author through the proxy and a stranger against the API
@@ -1073,6 +1082,329 @@ loan, so a season's grant keeps a career in the market and does not buy it a fir
 [M13_SEASON_GRANT_VERIFICATION.md](docs/M13_SEASON_GRANT_VERIFICATION.md).
 Landing: those bytes reached master inside the concurrent batch's commit `c5d0979`, which committed the shared index while this item's sixteen paths were staged in it, so the subject names that lane's catalogue table; the record's section 9 carries the pre-move grading of the staged tree and the suite verdict on the commit after it.
 
+## The deal book starts to expire (M13 Phase 7 item 25, done 2026-11-02)
+
+Item 6 left the expiry a projection on purpose and said so: `contract_years` was stored, `contract_book`
+derived a date, and no round enforced it. A signed player stayed in the eleven forever and the wage bill
+never shrank, so the season grant item 24 had just added could only be spent on a squad that could never
+lose anyone.
+
+`0049_career_contract_expiry` adds `career_squad_moves.expiry_round`, fixed when the deal is signed as
+`signed_round + contract_years × the season length then in force − 1`. Storing it is the point: a later
+promotion changes future season lengths, and a contract already agreed must not stretch with it. A row
+written before the migration holds 0 and keeps the old projection until it is re-signed; the contract book
+names that basis rather than inventing a date.
+
+`expire_contracts()` runs at the top of `play_round`, after the next fixture is planned and before
+`squad_as_of` composes the eleven. A permanent deal past its stored last round gets an `expire` row at that
+round: the overlay drops the player and `held_deals` stops charging the wage. The row carries fee 0 and the
+standing `budget_after`, so a contract ending moves no money and the ledger still adds up. The one authored
+exception is fieldability: if the departure would leave fewer than eleven players or no keeper, a `renew`
+row extends the deal by one season at the same wage and the result publishes the counts that decided it.
+
+The reader sees it in `career_view["contracts"]["recent"]` and in `components/CareerContracts.tsx` on
+`/career/{slug}`: player, outcome, effective round, expiry and wage. The held-deal column now says "Expiry
+round" rather than "Projected expiry round". The market ledger prints both new kinds as ordinary zero-fee
+rows, with no new panel.
+
+**Measured.** 62 transfer-service tests and 88 career+wire tests passed on SQLite; `alembic check` clean
+after `0048 → 0049`; ruff, mypy over 161 files, tsc and the four i18n/wire gates green. The live walk
+`.scratch/walk-contract-expiry.py`, against a fresh alembic-built SQLite database, signed a player with a
+5-year deal, read stored expiry 70, played round 71, and measured the `expire` row at 71 with fee 0, the
+player gone, the balance unchanged at 7,675,000, `deals_after 0`, `recent_kind expire` and `wage_after 0`.
+
+**Open.** No production-build browser pass yet; no manager-chosen renewal at expiry; no fee or compensation
+when a player leaves; pre-`0049` rows keep the projection until re-signed. Evidence:
+[M13_CONTRACT_EXPIRY_VERIFICATION.md](docs/M13_CONTRACT_EXPIRY_VERIFICATION.md).
+
+## Manager-chosen renewals (M13 Phase 7 item 26, done 2026-11-02)
+
+Item 25 made a contract date real; this item gives the manager a way to move it. A renewal is not a
+transfer, so it does not wait for a signing window, and it is refused only by arithmetic: the fee
+against the balance, or the bill after replacing the old wage against the board's ceiling. The quoted
+fee is 5% of the player's current asking fee (rounded to 5); the new wage is the player's current
+valuation; the new stored expiry is `signing round + years × season_rounds − 1`.
+
+**What a reader sees.** `contracts.rows[].renewal` is the contract book's own quote — years, new
+wage, fee, the balance after the fee, the bill after the renewal, the ceiling, both affordability
+flags, `can_renew` and the formula. `components/ContractRenewal.tsx` prints that quote in the deal
+book's new Renewal column, states why a blocked quote is blocked, and posts
+`/transfers/{slug}/renew` with `{ player, years }`. The page is refreshed afterwards, so the expiry
+column, the recent-endings table and the ledger all show the stored result. `move_row` now carries
+`expiry_round`, so a renewal row and the deal book cannot disagree.
+
+**Refusals name their numbers.** `loan_cannot_be_renewed` (a loan's last round belongs to the other
+club), `no_contract_to_renew` (a squad player with no stored deal), `insufficient_budget` (`fee`,
+`remaining`) and `wage_ceiling_exceeded` (`wage_bill_before`, `proposed_weekly_wage`,
+`wage_bill_after`, `wage_ceiling`, `headroom`).
+
+**Measured.** 66 transfer-service tests and 89 transfer tests over both files passed; ruff, mypy
+(161 files), tsc, ESLint and the four i18n/wire gates green. The live walk
+`.scratch/walk-contract-renewal.py`, against a fresh alembic-built SQLite database, signed a player
+whose stored expiry was 14, renewed him for two seasons against the book's 30,040 quote, and read the
+stored expiry back as 28 — balance 9,098,875 → 9,068,835, `recent_kind renew`, and the round's wage
+charge at the renewed 1,200.
+
+**Open.** No production-build browser pass yet; the fee does not scale with term; the player cannot
+refuse; no signing bonus; pre-`0049` rows project until renewed. Evidence:
+[M13_CONTRACT_RENEWAL_VERIFICATION.md](docs/M13_CONTRACT_RENEWAL_VERIFICATION.md).
+
+## A home round pays its gate (M13 Phase 7 item 27, done 2026-11-02)
+
+The ledger had one recurring income, the board's season grant, while a career paid wages out of savings
+and a home fixture earned nothing. This item makes the ground pay: one `career_gate_receipts` row per
+home round, unique on `(career_id, round_index)`, carrying the attendance, the authored ticket price,
+the amount, the basis in words and the running `budget_after`.
+
+**The arithmetic.** `gate = attendance × ticket_price`; price is 3 for a tier-1 league and 2 for tier 2
+or a cup. Attendance is the world fixture's stored figure; a round on the career's own rotation sells
+`capacity × (62 + seed mod 38)%` — the same band the world builder uses. An away round writes no row,
+and a ground with no capacity writes no zero row. A challenge window pays no gate: its budget is an
+authored constraint, and a gate would silently raise the figure the scenario stated.
+
+**The order.** The receipt is written after the fixture is stored and before the wage charge, so the
+wage row's stored balance includes the gate. The timeline reads moves → gate → wage → boundary grant,
+and `budget_timeline` ranks the gate there. `BUDGET_FORMULA` names the fourth table; `received` is now
+every cent in, split into `received_sales` and `received_gate`.
+
+**What a reader sees.** The market ledger prints a `gate` row with its attendance, price, amount and
+basis; `totals.gate_rows` counts it; `CareerFinance.tsx` prints "Gate receipts so far" when it is
+non-zero; the contract column prints an em-dash for a gate, not "0 years". The four constants are
+published in the market view.
+
+**Measured.** 5 new service cases and 1 new wire case; 164 career+transfer tests and 9 affordability
+tests passed; `alembic check` clean after `0049 → 0050`; the OpenAPI contract regenerated for the new
+routes; ruff, mypy (161), tsc, ESLint, the four i18n/wire gates green. The live walk played a home round
+at a 48,184-seat ground — 38,725 seats × 2 = 77,450 — and the following away round wrote nothing; the
+balance moved 1,000,000 → 1,077,450 with one `gate` timeline entry and 0 disagreements.
+
+**Open.** No production-build browser pass yet; away clubs earn nothing; no cup prize or broadcast
+money; capacity never grows and attendance does not react to form. Evidence:
+[M13_GATE_RECEIPTS_VERIFICATION.md](docs/M13_GATE_RECEIPTS_VERIFICATION.md).
+
+## A career clock that ages and retires (M13 Phase 8 item 28, done 2026-11-03)
+
+The contract book's age profile said in words that nothing aged a player or retired one, so a long
+career carried the same squad forever. This item gives the career its own clock without touching the
+world's shared `real_players.age`: a player's effective age is the stored age plus the seasons this
+career has closed, and `close_season` retires a player at 40.
+
+**The boundary.** `close_season` writes its `CareerSeason` row, then calls
+`retire_at_boundary(..., round_index=last_round + 1, closed=season_index)`. The `retire` move binds
+from the next season's first round: the player played the season that just closed, and the squad
+overlay drops him when the next eleven is picked. The row stores `fee = 0` and the wage it was paying,
+so the ledger neither charges a fee nor a wage after it. Candidates are walked oldest first; one is
+retained when retiring him would leave fewer than eleven players or no keeper, and the boundary result
+names the retained player and the count that refused. A challenge career has no boundary after its
+window, so it retires nobody.
+
+**One age, everywhere.** `valuation`, `open_market`'s listing rows, `buy`, `loan`, `sell`, `release`,
+`renew`, `_record_move`'s stored terms and `contract_book`'s profile all read the same offset. The
+age profile now prints 40 as the retirement age (the age that ends a career) while keeping the 35+
+list as the warning flag.
+
+**Measured.** 4 new cases in `test_ageing.py`; 165 career+transfer tests passed; `alembic check` clean
+(no column — `retire` is a `career_squad_moves.kind` value); ruff, mypy (162), tsc, ESLint and the four
+i18n/wire gates green. The live walk closed a 14-round season: the forced 39-year-old became 40, the
+`retire` row landed at round **15**, the squad fell to **15**, the wage bill moved **3,100 → 0**, and
+`recent` read `retire / Corand Ruceek`. Evidence:
+[M13_AGEING_VERIFICATION.md](docs/M13_AGEING_VERIFICATION.md).
+
+**Open.** No production-build browser pass yet; 40 is the only rule (contract, role and wage are not
+weighed).
+
+## A boundary youth intake (M13 Phase 8 item 29, done 2026-11-03)
+
+The retirement half left the squad shrinking. This item promotes young world players at the same
+boundary, from the world's existing rows and by the academy's own judgment.
+
+**The rule.** Candidates are world players at or under 21 on the career clock, outside the current
+squad. `academy.judge_candidates` appends them to the squad and runs the same `academy_class` the
+academy page uses, against the same eleven and seats; only `selected` or `next_in_line` candidates are
+signed, preferring the band a retiree vacated. At most one per retiree, capped at four. The row is
+`kind = "youth"`, fee 0, with the valuation's wage and years and a stored expiry; `IN_KINDS`,
+`expire_contracts`, the contract book's renewal quote and `renew()` all treat it as a permanent deal.
+A wage that would cross the board's ceiling is skipped and named. A challenge career and a boundary
+with no retirement sign nobody.
+
+**Measured.** 2 new cases in `test_ageing.py` (6 total); **176** career+transfer+academy tests passed;
+`alembic check` unaffected; ruff, mypy (163), tsc, ESLint and the four i18n/wire gates green. The live
+walk retired a **3,100**-a-week player and promoted **Noa Veitmann**, age **20**, on a **5-year**,
+**1,730** deal with expiry **84**; the squad went 15 → 16 and the bill ended at exactly **1,730**.
+Evidence: [M13_YOUTH_INTAKE_VERIFICATION.md](docs/M13_YOUTH_INTAKE_VERIFICATION.md).
+
+**Open.** No production-build browser pass yet; the intake is sized by retirements, not a squad target;
+the pool is the world's young players, so two careers can promote the same player.
+
+## A window measured against stored fixtures (M13 Phase 8 item 30, done 2026-11-03)
+
+The signing window trusted `career.rounds_played`. A fixture stored ahead of that counter — an imported
+or repaired career — let a move book into a round that was already decided. The stored rows are now the
+fact the window reads.
+
+**The rule.** `transferable` refuses a move whose round (`rounds_played + 1`) already has a
+`career_fixtures` row: `round_already_played`, `constraint = "stored_fixture"`, with the round and the
+latest stored round. Every move and `open_market` answer through the same verdict.
+`transfer_window` counts stored rows in the current window's lifetime range; `played_in_window` is the
+larger of that and the counter's own count, and `signing_rounds_left` subtracts stored rounds at or after
+the next one. The career view passes the fixture list it already fetched, so the page still reads
+`career_fixtures` once.
+
+**Measured.** 2 new cases in `TestTransferWindow` (**11** in the class); **173** career+transfer tests
+passed; the read-efficiency and query-count tests unchanged; ruff, mypy (163), tsc, ESLint and the four
+i18n/wire gates green. The live walk played round 1, rewound the counter to 0, and read
+`round_already_played` with window **1/3**; restoring the counter made the career transferable again.
+Evidence: [M13_WINDOW_STORED_FIXTURE_VERIFICATION.md](docs/M13_WINDOW_STORED_FIXTURE_VERIFICATION.md).
+
+**Open.** `play_round` still does not refuse a fixture that already exists at its planned round; the
+check covers the next round only; no production-build browser pass.
+
+## Renewals that negotiate (M13 Phase 8 item 31, done 2026-11-03)
+
+Item 26's renewal was a price list: a flat 5% fee and the valuation wage, accepted every time. This
+item makes the term cost what it is worth and lets the player refuse a low offer.
+
+**The rule.** `fee_per_year = round_5(asking × 5%)` and `fee = fee_per_year × years`. The demand is
+`round_5(valuation wage × tier_factor × minutes_factor)`, with tier factors **1.15 / 1.00 / 0.90** for
+tier 1 / tier 2 / cup and `minutes_factor = 0.90 + 0.20 × (appearance minutes ÷ (rounds_played × 90),
+clamped 0–1)`. `POST /renew` takes an optional `wage`: at or above the demand it is accepted at the
+offer, below it answers `409 renewal_refused` with `demanded_wage` and `offered_wage`. Omitting `wage`
+pays the demand, so the one-click path survives. The quote publishes the demand, per-year fee, share
+and both factors; the UI adds a weekly wage input.
+
+**Measured.** 2 new service cases and 1 new wire case (10 renewal cases across both files); **176**
+career+transfer tests passed; OpenAPI regenerated for `wage` and 4/4 currency tests passed; ruff, mypy
+(163), tsc, ESLint and the four i18n/wire gates green. The live walk read **64,575** for one year and
+**193,725** for three, refused **2,320** against a **2,325** demand, then accepted two years for
+**129,150** with expiry **28**. Evidence:
+[M13_RENEWAL_NEGOTIATION_VERIFICATION.md](docs/M13_RENEWAL_NEGOTIATION_VERIFICATION.md).
+
+**Open.** The demand reads career appearances only; tier factors are authored bands; a refusal is not
+remembered and there is no multi-round bargaining; no production-build browser pass yet.
+
+## A ground that responds to tier and form (M13 Phase 8 item 33, done 2026-11-03)
+
+Item 27 made a home round pay, but it read two constants a career could never change. A promoted club
+sold the same seats, and a five-match winning run sold exactly what five losses sold. This item makes the
+gate a consequence of the career — without letting one manager's promotion rewrite a stadium two careers
+share.
+
+**The rule.** `gate_capacity(club, tier)` returns an *effective* capacity and the factor it applied:
+the stored row x **1.25** in tier 1, **x1.10** in tier 2, x1.00 otherwise. `teams.capacity` is never
+written. `gate_form` reads the career's own last five results before the round (W = 1, D = 0.5, L = 0,
+newest first; no history reads 0.5 rather than an empty ground), and the gate sells
+`min(effective_capacity, base x (0.90 + 0.20 x form))`, where `base` is the world fixture's stored
+attendance or, on the career's own rotation, the effective capacity x a seeded 62–99% share. The
+receipt's `basis` names both factors and the window, and `GATE_FORMULA` publishes every constant.
+
+**Measured.** 2 new cases in `TestGateReceipts` (**7** in the class); **187** career+transfer tests
+passed; ruff, mypy (163), tsc, ESLint and the four i18n/wire gates green; no migration. The live walk
+played the same fixture and the same seed twice: five wins sold **46,641** seats for **93,282** credits,
+five losses **38,161** for **76,322**, and each basis printed `form 1.00 / 0.00` and
+`tier 2 capacity x1.10`. Evidence: [M13_GROUND_RESPONSE_VERIFICATION.md](docs/M13_GROUND_RESPONSE_VERIFICATION.md).
+
+**Open.** Capacity grows with the tier factor, not with a stadium a manager buys; no ticket price the
+manager sets; no away support; cup ties do not count toward form yet; no production-build browser pass.
+
+## Cup runs and prize money (M13 Phase 8 item 32, done 2026-11-03)
+
+The world has always held a knockout cup per season and a career never touched it: its calendar was the
+league's double round-robin. This item makes the cup a run the career plays and a second income beside
+the gate and the grant — without a fifth ledger.
+
+**The rule.** A career is *entered* when the world's own `real_matches` for a `kind = "cup"` competition
+name its club in that season. It plays the quarter-final it was drawn into; a win puts it in the
+semi-final the world drew for that half, with the other club in that row as the opponent and the side the
+club it beat occupied; a win there puts it in the world's final, at a neutral venue. The career's own
+result *replaces* the slot the world's simulation filled, so a club the world knocked out still has a
+route. Each tie runs through `run_simulation` with the career's overlay and a seed from career + season +
+cup + stage; a draw is separated on penalties by the match digest. A tie is not a round: `rounds_played`
+does not move, and `career_cup_ties.round_index` is the league round it was played after. A round won
+pays **40,000 / 90,000 / 220,000** (quarter / semi / final) into `career_budget_awards` as
+`kind = "cup_prize"` with `stage = "<cup>:<round>"`, so the one balance arithmetic already sums it;
+`uq_career_award_stage` keeps one prize per round and one grant per season. A challenge career enters no
+cup, like its grant and its gate.
+
+**Measured.** `tests/test_cup.py` (13 cases) plus `TestCupWire` in `tests/test_career_api.py` (3);
+**196** career+transfer+cup tests passed; `alembic check` clean after `0051`; OpenAPI regenerated (4/4);
+ruff, mypy (164), tsc, ESLint and the four i18n/wire gates green. The live walk won its quarter-final on
+penalties and its semi-final 1-0, lost the final 0-1, and read **130,000** credits in prizes against
+**1,000,000 → 1,130,000** with `rounds_played` still **0** and a timeline that added up. Evidence:
+[M13_CUP_PRIZE_VERIFICATION.md](docs/M13_CUP_PRIZE_VERIFICATION.md).
+
+**Open.** The world draws no cup for a second season; several cups per club are separate runs; no
+production-build browser pass yet.
+
+## Cup tie gate and minutes (M13 Phase 9 item 34, done 2026-11-03)
+
+Item 32 stopped at the score: a tie's ground was a string, its gate was never paid, and the eleven that
+played it left no trace, so a cup minute neither tired nor developed a player. Both ledger and trace were
+keyed by the league round, and a tie played after round 7 shares round 7.
+
+**The rule.** `career_gate_receipts.tie_id` and `career_appearances.tie_id` are nullable and name the tie;
+the league uniques become partial indexes over `tie_id IS NULL`, and each tie has its own unique key. A
+home tie pays a gate with the arithmetic item 33 shipped - effective capacity, a seeded 62-99% crowd, the
+stored form factor capped at the capacity, times the ticket price - except that the crowd is always built
+from capacity (the bracket row a later tie replaces belonged to other clubs) and the form window includes
+the round the tie follows. A final, at a neutral venue, pays no gate: it is the competition's. The eleven
+is rebuilt and checked against the report exactly as a league round is, then written under the tie, so
+`carry_over` (condition) and `development_view` (the curve) sum cup minutes. Cup ledger rows sort at
+timeline tier 4, after the round's grant, because they are written after that round; the gate precedes the
+prize so the prize's `budget_after` includes it.
+
+**What changed.** `models` (two nullable `tie_id`s, partial uniques), migration `0052`,
+`carry_over` (`record_appearances(tie_id=...)`, `appearances_of_tie`, `appearances_of_round` league-only,
+`cup_appearances`), `market` (`_gate_terms`, `pay_cup_gate`, `received_gate_cup`, `gate_cup_rows`,
+`_ledger_tier`, cup `gate` rows in the ledger and timeline), `cup` (`_trace_tie`, `gate` on each tie,
+`gates` per run and in `totals`), the cup panel's gate column and total, and four keys in three locales.
+
+**Evidence.** `docs/M13_CUP_TIE_GATE_VERIFICATION.md`: 16 cup cases plus 163 across cup/career/transfers;
+walk on Postgres at `0052` - quarter-final at home lost 0-1, 64,624 seats x 2 = **129,248** (form 1.00 over
+1 round x 1.10, capped at the effective capacity), 11 league + 11 cup traces at 90 minutes,
+`rounds_traced` 1 with `cup_appearances` 11, balance 1,115,030 -> 1,244,278 by exactly the tie's money,
+timeline `["gate", "cup_gate"]` with 0 disagreements.
+
+## The world draws next season's cup (M13 Phase 9 item 35, done 2026-11-05)
+
+A career's second season had no cup: the world drew only next season's opening league round, so
+`cup_view` answered `no cup bracket`. The fix is not "draw a full bracket" - a knockout cannot be drawn
+past the round whose participants exist - but "draw what is knowable, resolve the rest when a route needs
+it".
+
+**The rule.** `world/builder.py` stores every cup's four next-season quarter-finals (eight entrants,
+dated, `scheduled`, no score). `cup.py::_slot` resolves a stage the world has not drawn: the semi-final's
+opponent is the engine's winner of the adjacent quarter-final, and the final's opponent the winner of the
+other half's route; each is played by `simulate_match` over the two clubs' stored profiles with a seed
+derived from the row or the cup and stage, so it is reproducible and writes no `sim_matches` row. The
+first quarter-final of a half hosts the semi-final and the higher half is nominal home in the final, at a
+neutral venue. `career_cup_ties.basis` widens to 512 (migration `0053`); `scheduled_matches` becomes
+`leagues x 2 + cups x 4`.
+
+**Evidence.** `docs/M13_NEXT_SEASON_CUP_VERIFICATION.md`: 19 cup cases, 59 world cases (one new, one
+scoped to league fixtures); walk on Postgres at `0053` - 2027 quarter-final from the drawn row won on
+penalties, semi-final opponent `Ostdera Naval` from `engine 2-1 (seed 1174159400)`, gates 135,057 over
+two home ties, one 40,000 prize.
+
+## Next up (Phase 9)
+
+1. **The world draws next season's cup (done 2026-11-05).** The section below "Next up" states the rule
+   and the resolution rule for undrawn rounds; `docs/M13_NEXT_SEASON_CUP_VERIFICATION.md` carries the
+   evidence (19 cup cases, 59 world cases, a 2027 walk).
+2. **Objectives that pay (done 2026-11-04; landed as `0cf34c1`).** The section before "How to work an
+   item" states the rule and the rates, and `docs/M13_OBJECTIVE_BONUS_VERIFICATION.md` carries the
+   evidence; the shared migration chain must renumber around `0049` before it lands (section 9 there).
+3. **A stadium a manager buys (done 2026-11-05).** `career_stadium_works` prices a 500–20,000 seat stand at
+   120 credits a seat, and `gate_capacity` reads the tier-factor capacity plus every bought seat. The
+   section "Buying seats" below states the wiring; `docs/M13_STADIUM_VERIFICATION.md` carries the evidence.
+4. **The locale claims grade the commit (done 2026-11-04; landed as `e8fa569`).** The section before
+   "How to work an item" states the sourcing and the arms, and `docs/I18N_ARC_VERIFICATION.md` §21
+   carries the evidence.
+5. **The contract-currency gate reads the checkout, not the commit (filed 2026-11-04).** Its docstring
+   claims the committed contract, but `committed()` and the exporter case read `docs/api/openapi.json` from
+   disk; the shared tree's contract is uncommitted, so the local run grades the disk pair. Same cure as item
+   38 — parse `git show HEAD:docs/api/openapi.json`, compare the exporter's bytes to HEAD's, keep `answers()`
+   live because the app is imported from the checkout.
+
 ## Objectives that pay (M13 Phase 9 item 36, done 2026-11-04)
 
 Item 24 gave a career a second door in, but it was the board's door: a season was paid for its rounds and its
@@ -1100,9 +1432,6 @@ season being played, a projection that writes nothing. The web tier prints the p
 in `CareerSeasons`, the received total in `CareerFinance`, and the ledger rows plus the two income terms the
 balance sentence had been missing (`+ in board grants + in objective bonuses`) on the market page; five new
 catalogue keys per locale. Evidence: [M13_OBJECTIVE_BONUS_VERIFICATION.md](docs/M13_OBJECTIVE_BONUS_VERIFICATION.md).
-**Landing:** `0cf34c1`, 21 paths through a private index (`40762fa` re-cut to LF blobs, `git diff -w` empty
-between them); section 9 of the record carries the suite verdict, the committed-tree cases and the
-migration-renumbering note.
 
 ## The locale claims grade the commit (item 38, done 2026-11-04)
 
@@ -1180,6 +1509,108 @@ red on exactly one clause. Evidence: [MIGRATION_MODEL_DRIFT_VERIFICATION.md](doc
 §4–7. **Landing:** `f5d6abf`, one path through a private index; this record, section and bullet are the commit
 beside it. It filed two findings — `qa-wire-readers`'s prose census (item 42) and a CI gate that is green only
 under a fabricated environment (item 43).
+
+## Buying seats (M13 Phase 9 item 37, done 2026-11-05)
+
+The gate responded to a career but the ground did not: `teams.capacity` is shared by every career at a
+club, so no manager could build. `career_stadium_works` is the career's own purchase history — one row
+per stand, with the seats, the 120-credit unit price, the ground either side and the `budget_after` it
+produced. The current ground is the world's stored capacity plus the sum of bought seats, and the gate
+reads `round(stored x tier factor) + bought seats`: a career that bought nothing still reads item 33's
+figure, while every bought seat is exactly one more seat the next home gate can sell. A stand is
+private to the career and does not grow when the club is promoted; the club's own stored share still
+does.
+
+`market.buy_seats` is the only spender, refuses `career_retired`, `challenge_budget`, `bad_seats`,
+`no_club` and `insufficient_budget` through the registered table, and writes nothing on a refusal. The
+purchase is a ledger row of kind `stadium`, so `budget_position` subtracts it, `budget_timeline` replays
+it in the round's first slot beside squad moves, and `market_view` merges it into the ledger.
+`POST /careers/{ident}/stadium` takes `{"seats": n}` and returns the work row plus the re-derived career
+view; `career_view["stadium"]` and `CareerStadium.tsx` print the ground, the price, a live cost preview
+and the history. Migration `0054` adds the table; the duplicate `0049_objective_bonuses.py` was removed
+so the chain has one head.
+
+**Evidence.** `docs/M13_STADIUM_VERIFICATION.md`: 4 service cases, 2 wire cases, 9 targeted finance
+cases and the answer/locale gates green; `alembic check` clean at `0054`, ruff clean, mypy 164 files
+clean, tsc/ESLint and the four i18n gates green; contract regenerated to 221 paths / 283 operations. The
+Postgres walk bought 1,500 seats (53,002 -> 54,502 gate capacity), spent 180,000, played a home round
+for 77,450 and read a timeline with 0 disagreements and a closing balance of 897,450.
+
+## The gate is priced (M13 Phase 10 item 44, done 2026-11-06)
+
+The price of a seat was the last authored figure in the gate. `careers.ticket_price_pct` is the
+manager's setting — 50–200% of the competition's price in steps of five — and migration `0055` copies
+the setting and the demand it drew onto every receipt, so changing the price tomorrow cannot rewrite
+the crowd that paid today. One curve, `market.demand_pct_for`, is read by the preview and the gate:
+`d = (pct − 100)/100`, `demand = max(20%, 1 − 0.50d − 0.50d²)`, and the gate is
+`round(attendance × base × pct / 100)`. The revenue peak sits at 120% (index 106); 120% sells 88% of
+the neutral crowd, so the panel states a trade rather than a dominant choice.
+
+`market.ticket_price_view` publishes both the manager's setting and the best one, its formula and the
+bounds; `market.set_ticket_price` refuses `career_retired`, `challenge_budget`, `no_club` and
+`bad_ticket_price` (422, with the step) through the registered table. `GET` and `PUT
+/careers/{ident}/tickets` expose the read and the decision; `career_view["tickets"]` and
+`market_view["tickets"]` carry it; `RULES["ticket_price"]` states the arithmetic; `CareerTickets.tsx`
+puts the stepped input on the career page; the market page prints the same figures and every gate
+ledger row now carries its own `price_pct` / `demand_pct`.
+
+**Evidence.** `docs/M13_TICKET_PRICING_VERIFICATION.md`: 7 service cases and 2 wire cases green in the
+directed regression over seven files; `alembic upgrade head` 0054 → 0055 and `alembic check` clean;
+ruff clean, mypy 164 files clean, tsc/ESLint clean; `qa-wire-readers` 18/18, `qa-i18n-literals` 9/9,
+`qa-unused-keys` 3/3, `qa-token-drift` 2/2, `qa-locale-tokens` 5/5 at 4,181 keys / 4,136 translated;
+contract at 222 paths / 285 operations. The Postgres walk played a neutral round at 38,725 seats /
+77,450, then a 120% round at 33,806 / 81,134: fewer seats, more money. The first receipt still read
+100% / 77,450 after the setting moved to 150%, and the timeline closed at 1,158,584 with 0
+disagreements.
+
+## The ground costs money to run (M13 Phase 10 item 45, done 2026-11-06)
+
+Buying seats had no running cost, so building was always right. Every home league round and every home
+cup tie now pays `round(capacity × 25%)` credits for the seats it opens; the capacity is the physical
+ground, not the tier-adjusted figure the gate sells. A 48,184-seat ground pays 12,046 a match, a
+tier-2 full house earns 96,368 at the neutral price, and 500 more seats add 125 a round. An away
+round, a neutral-venue final and a challenge career pay none.
+
+`career_upkeep_charges` (migration `0056`) stores one row per home round with the round and fixture or
+tie, capacity, `seat_rate_pct`, amount, basis and `budget_after`; partial uniques keep one league row
+per round and one row per tie. `BUDGET_FORMULA` subtracts the sum; `budget_position` publishes
+`upkeep_spent`, `upkeep_rows`, `upkeep_detail`; `budget_timeline` places the row immediately after its
+gate and before the wage charge; `market_view` merges it as kind `upkeep` / `cup_upkeep` with
+`capacity` and `seat_rate_pct`. `stadium_view` prints the rate at the current ground,
+`RULES["upkeep"]` states the formula, and `CareerFinance`, `CareerStadium` and the market page print
+the running total.
+
+**Evidence.** `docs/M13_UPKEEP_VERIFICATION.md`: 5 new service cases and the cup tie's own row green
+in the directed regression over nine files; `alembic upgrade head` 0055 → 0056 and `alembic check`
+clean; ruff clean, mypy 164 files clean, tsc/ESLint clean; `qa-wire-readers` 18/18 with moves 34 and
+14 named, `qa-i18n-literals` 9/9 over 4,234 calls, `qa-unused-keys` 3/3, `qa-token-drift` 2/2,
+`qa-locale-tokens` 5/5 at 4,185 keys / 4,140 translated. The Postgres walk read gate 77,450, upkeep
+12,046 and net 65,404; after 500 more seats the next home round cost 12,171, the first row did not
+move, the two rows summed to 24,217, and the timeline closed at 1,070,065 with 0 disagreements.
+
+## Season tickets (M13 Phase 10 item 46, done 2026-11-06)
+
+The gate sells one crowd; a season ticket sells the same seat for every home league round before the
+season starts. The offer is `round(home_rounds × base × 85%)` per seat — 7 home rounds at a walk-up
+price of 14 make a season seat 12 — capped at half the ground and sold in blocks of 100. The sale is
+written once per season before round one, and the seats it sells are in the ground every home round
+without being charged again: the gate charges `attendance − season_ticket_seats` while the receipt
+stores the whole crowd, so the two figures can be read apart.
+
+`career_season_tickets` (migration `0057`) and `career_gate_receipts.season_ticket_seats` carry the
+state; `BUDGET_FORMULA` adds the income, `budget_timeline` places the sale before round one, and the
+ledger carries kind `season_tickets`. `GET`/`POST /careers/{ident}/season-tickets`,
+`career_view["season_tickets"]`, `RULES["season_tickets"]` and `CareerSeasonTickets.tsx` make it a
+page decision. A second sale, a started season, an off-step block, a challenge career and a retired
+career each have their own refusal code.
+
+**Evidence.** `docs/M13_SEASON_TICKETS_VERIFICATION.md`: 7 service cases and 2 wire cases green in
+the directed regression over ten files; `alembic upgrade head` 0056 → 0057 and `alembic check` clean;
+ruff clean, mypy 164 files clean, tsc/ESLint clean; `qa-wire-readers` 18/18 (constants 30, moves 35),
+`qa-i18n-literals` 9/9, `qa-unused-keys` 3/3, `qa-key-drift` 4/4, `qa-token-drift` 2/2,
+`qa-locale-tokens` 5/5 at 4,209 keys / 4,164 translated, `qa-locale-completeness` 2/2. The Postgres
+walk sold 1,000 seats for 12,000, played a home round with 38,725 in the ground and 37,725 paid, a
+gate of 75,450, and a timeline closing at 1,075,404 with 0 disagreements.
 
 ## How to work an item
 
