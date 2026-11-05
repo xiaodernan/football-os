@@ -258,8 +258,8 @@ export default async function CareerMarketPage({ params }: Props) {
         <p className="muted">
           {budget.budget.toLocaleString("en-GB")}{t("footerStated")}
           {budget.received ? t("footerReceived", { amount: money(budget.received) }) : ""}
-          {budget.granted ? t("footerGranted", { amount: money(budget.granted) }) : ""}
-          {budget.received_objectives ? t("footerBonuses", { amount: money(budget.received_objectives) }) : ""}
+          {budget.granted ? t("footerGranted", { amount: money(budget.granted), rows: view.totals.grant_rows }) : ""}
+          {budget.received_objectives ? t("footerBonuses", { amount: money(budget.received_objectives), rows: view.totals.bonus_rows }) : ""}
           {budget.spent ? t("footerSpent", { amount: money(budget.spent) }) : ""}
           {budget.wages_paid ? t("footerWages", { amount: money(budget.wages_paid) }) : ""}={" "}
           <strong className="mono">{money(budget.remaining)} {budget.units}</strong>
