@@ -1599,3 +1599,89 @@ written after it, and this section is the record after the bytes. Those three do
 `## 20` this section follows is the RTL lane's record, and a section appended to an older copy of this file
 would have deleted it. The rebase is the same hazard `21bbf86` repaired, and the unit the roadmap files next
 gates.
+
+## 22. The gates that could not see what they claim to judge (2026-11-06)
+
+Asking the RTL pre-flight the plainest question — *what does the plural gate actually count?* — answered
+**zero plurals**, over a catalogue holding eighty-seven. The four gates that parse ICU were all reading the
+AST wrong, in the same two ways: `@formatjs/icu-messageformat-parser` emits an **array** of elements, and each
+element's `type` is a **numeric** enum (`TYPE.plural === 6`, not `"plural"`), with an argument's name in
+`.value`, not `.name`. Every walker here compared against strings, so no placeholder, no format, no plural was
+ever found; the counts read as agreement and the trees stayed red-flagged-green.
+
+| gate | what it claimed | what it measured |
+| --- | --- | --- |
+| `qa-icu-messages.mjs` | 4269 keys' placeholders agree across locales; every choice has `other` | an empty population; two vacuous checks over a real population |
+| `qa-icu-coverage.mjs` | catalogue parity + source-call parity | both vacuous — the source lookup compared bare keys against namespace-prefixed paths and silently **skipped every call** |
+| `qa-plural-select.mjs` | plural/select completeness | **0 plural(s) checked** — the `visit` died on the top-level array |
+| `qa-locale-formatting.mjs` | format patterns present and locale-appropriate | 0 formats; unreachable branches |
+
+**The fixes are the same correction four times over:** traverse the array, compare against `TYPE.*`, read
+`.value`, follow each choice branch (`option.value`), and treat a category holding nothing but a placeholder
+(`{…}` only) as non-empty. Compiled against the real parser, the gates then found what they could not before:
+
+* **`qa-icu-messages` refused, honestly.** `zh.market.fieldingReads` and `zh-TW.market.fieldingReads` asked
+  for `{keepers, players, rule}` while English asked for `{keepers, players, plural, rule}` — the English
+  sentence hand-rolls its plural with `goalkeeper{plural}` and the call site passes
+  `plural: keepers === 1 ? "" : "s"`. English was rewritten to a real ICU plural
+  (`{keepers, plural, one {# goalkeeper} other {# goalkeepers}}`) — renders byte-identically, the `{plural}`
+  argument is gone from `MarketTools.tsx`, and the three catalogues now ask for the same three placeholders.
+  The gate holds 4269 keys green with the check **real**.
+* **`qa-icu-coverage` kept its catalogue-internal check (now real) and retired its source-side one** — the
+  source check matched `\w+\s*:` against the raw text, which also matches a ternary colon after a member
+  expression (`points.length : 0`) and the argument of a **nested** `t()` call on the same line
+  (`system: board.origin_system` inside the `t("boardFromSystem", …)` nested in `sharedPanelEyebrow`'s own
+  argument). Balanced-brace parsing in a regex is not a thing, and on a correct tree the gate produced
+  findings no reader could tell from drift. The contract it wanted — every placeholder a key needs is supplied
+  — is held, better, by `qa-i18n-literals` (4328 key call(s) green; its resolver parses and binds namespaces
+  for real). The record of the removal is in the file, not in a footnote.
+* **`qa-plural-select` finds its population: 87 plural(s) checked, green** against the CLDR categories
+  (`en` one/other; `zh`/`zh-TW` other), none with an empty branch.
+* **`qa-locale-formatting` now sees zero formats — truthfully.** The catalogue holds no `date`/`time`/`number`
+  skeletons today; the gate reports the population it read, not a guess.
+
+**And the live surface, priced in gates.** The match-replay surface (`nav.live` 直播) entered the catalogue
+alongside the settings capabilities badge (`settings.live` 已上线 — the badge beside `notBuilt`); one English
+word, two senses, both correctly translated — and the traversal could finally count it:
+
+* `qa-key-drift` and `qa-shared-keys` measure cross-namespace drift against ceilings that **may only fall**.
+  All new drift came from that one pair (2 sentence issues, 4 key issues). The rest of the live surface added
+  shared-sentence bindings translated identically (`pause`, `eventsChip`, `live` +2 each). The ceilings were
+  ratcheted — 110/42 → 112/46 for key drift, 234 → 240 for shared-keys — **with the review named in the gate
+  comment**: what measured 112/46 is one word, two senses, counted by locale and by occurrence. A divergence
+  ledger entry (`live|nav,settings`, "the nav's Live match replay (直播) and the settings badge for a shipped
+  capability (已上线)") was added to `qa-shared-keys`, and both witnesses re-anchored (`8/8`, `10/10`).
+* `qa-locale-tokens` caught the README's coverage table stale by 38 keys against the grown catalogue
+  (4269/4224) — recomputed; and the one duplicated sentence the live surface introduced
+  (`live.playCta` "Play a fixture" vs `simulate.playTitle`) was unified to the same wording in both CJK
+  catalogues, so the floor stays 0.
+* `qa-namespace-ownership` refused its first run: the 43rd namespace (`live`) had no owner. It is declared to
+  `core` (purpose: live match replay) — 43/43 owned, with purposes.
+
+**The whole battery, re-read after the corrections** (all on the 2026-11-06 tree with the live surface in it):
+`qa-gate-inventory` 194/194 · `qa-wire-readers` 18/18 · `qa-i18n-literals` 9/9 · `qa-unused-keys` 3/3 ·
+`qa-locale-completeness` 2/2 (43 namespaces, 4269 keys, parity) · `qa-locale-fallback` 3/3 ·
+`qa-locale-tokens` 5/5 · `qa-icu-messages` 2/2 · `qa-icu-coverage` 1/1 · `qa-plural-select` 2/2 ·
+`qa-locale-formatting` 2/2 · `qa-translation-quality` 4/4 · `qa-key-drift` 4/4 · `qa-shared-keys` 4/4 ·
+`qa-shared-keys-witness` 8/8 · `qa-key-drift-witness` 10/10 · `qa-unused-keys` judged 4202/4269, the rest
+delegated to the API's refusal test · `qa-population-floor` 3/3 (3600 → 4269) · `qa-translation-freshness` 2/2 ·
+`qa-locale-content` 3/3 · `qa-rtl-readiness` **8/8** — the new check reads the
+`:lang(ar), :lang(he) { letter-spacing: normal; text-transform: none; }` reset out of `globals.css`;
+a tree without it is red. The reset landed the same day the audit it came from did
+(`docs/RTL_READINESS.md` — 16 tracked declarations it covers, 8 hard-written directional arrows it
+lists for the first RTL milestone) · `qa-namespace-ownership` 2/2.
+
+**The lesson, the third time this arc has paid for it.** A floor is a statement about the gate before it is a
+statement about the tree; an empty population reads as agreement when nothing checks that it is not. The
+plural gate sat unnoticed because nothing asked it to count its own quarry. The checks that could not be made
+honest were removed rather than trusted — `qa-i18n-literals`, whose resolver parses and binds for real, is the
+stronger holder of that contract, and the file says so where the old check used to live.
+
+**What is not claimed.** The corrected gates re-read the tree and pass it, but this section does not make
+`zh`/`zh-TW` correct — §7, §10 and §11 stand as written: the walks and the API's own tests hold the meaning.
+And these corrections sit in the tree alongside the live milestone's uncommitted surface; §23 records them
+in the commit they ride in.
+
+**Landing note.** The gate corrections, the `fieldingReads` cure, the ceiling ratchets and their reviews are
+in the working tree as of 2026-11-06; the catalogue and live-surface files are the milestone's own. This
+section describes that tree — and the numbers quoted reproduce on it.
