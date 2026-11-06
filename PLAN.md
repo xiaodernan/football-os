@@ -1404,22 +1404,6 @@ two home ties, one 40,000 prize.
    disk; the shared tree's contract is uncommitted, so the local run grades the disk pair. Same cure as item
    38 — parse `git show HEAD:docs/api/openapi.json`, compare the exporter's bytes to HEAD's, keep `answers()`
    live because the app is imported from the checkout.
-6. **The `budget` block is uncensused at four times the size of `totals` (filed 2026-11-06, roadmap row 48).**
-   22 published / 24 declared / 14 read over `f642c0a`, `budget=44` over the shared tree's API, two published and
-   untyped, four typed and unpublished, ten read by nothing.
-7. **File-only gates anchor on a newline byte and every landing plane is CRLF (done 2026-11-06, roadmap row 49).**
-   `qa-a11y-witness` was 11/16 on a plane and 16/16 in the tree for that reason alone. 60 of the 61 raw reads in the
-   30 file-only gates now fold CRLF to LF at the read — the 61st is a PNG — and the population prints the same bytes
-   on a CRLF checkout as on an LF one: 2 of 30 differing before, 0 of 30 after. The policy itself is row 52.
-8. **Six horizontal CSS declarations are committed, their fixes are not (done 2026-11-06, roadmap row 50).**
-   `qa-rtl-readiness` was 6/7 on a plane and 7/7 in the shared tree because the cure was uncommitted; the six lines are
-   landed now and the gate reads 7/7 on the plane. The witness is the served app — 22/22 over four element classes in
-   `ltr` and `rtl` — and it found that `.chip` is `inline-flex`, so `text-align` only shows once a label wraps. What the
-   gate does not judge is row 53.
-9. **Two lanes landed under each other and each reverted the other (filed 2026-11-06, roadmap row 51; repaired
-   below under item 42).** The tool prints a sha and cannot see that the plane is behind master; the gate for it is
-   a printed comparison of the plane's commit against `refs/heads/master`, and a merge instead of a copy for
-   `qa-wire-readers.mjs` and `PLAN.md`.
 
 ## Objectives that pay (M13 Phase 9 item 36, done 2026-11-04)
 
@@ -1627,176 +1611,30 @@ ruff clean, mypy 164 files clean, tsc/ESLint clean; `qa-wire-readers` 18/18 (con
 `qa-locale-tokens` 5/5 at 4,209 keys / 4,164 translated, `qa-locale-completeness` 2/2. The Postgres
 walk sold 1,000 seats for 12,000, played a home round with 38,725 in the ground and 37,725 paid, a
 gate of 75,450, and a timeline closing at 1,075,404 with 0 disagreements.
-## The totals census computes, and two lanes' checks are one file again (item 42 + repair, done 2026-11-06)
 
-`qa-wire-readers.mjs` had documented a `totals` census since `c0d376c` and never ran one: `TOOLS_TSX` and
-`FLOOR_TOTALS_KEYS` declared and read by nothing, **one declaration, zero uses, each**, and the run answering
-`CHECKS passed=12 total=12`. Item 42 wrote the three clauses the prose promised — 12 the block's published keys
-against `MarketView["totals"]` both ways, 13 every declared field read on the page **or** in `MarketTools` with the
-handoff itself re-measured as a predicate (`totals={view.totals}` and `totals: MarketView["totals"]`), 14 an
-exemption that stopped holding — and the census then refused two keys no reader existed for: `grant_rows` and
-`bonus_rows`. The refusal is the unit's point, because the answer was not to exempt them. Those two counts are the
-row counts of the two sums the footer already prints, item 36's board grant and item 24's objective bonuses; a sum
-with an amount and no row count beside it is the unauditable shape, so the fix is one placeholder per term in all
-three catalogues — `+ {amount} in board grants {rows, plural, one {over # season} other {over # seasons}}` and its
-bonus twin — with `qa-plural-select`'s categories per locale, and `qa-market.mjs`'s regex taking the two new
-fragments in the same commit so the walk still re-adds the identity from the figures the DOM prints.
+## Item 18 — spec module 02: Live, as the replay a deterministic engine makes honest
 
-Six arms, each editing one input and restoring: a `totals` key gone from the wire (**14/15**, clause 12 names it),
-gone from the type (**14/15**, the other direction), a footer that stops passing `rows` (**14/15**, clause 13), a
-seam replaced by a spread of the same values (**14/15**, clause 13's `seam=MISSING` — the reads all survive, which is
-exactly the case a comment would have certified), `budget_position` renaming its `moves` copy (**13/15**, clause 14
-*and* 13: the exemption died with the fact it stated), three keys deleted (**11/15**, clauses 2, 12, 13, 14). The
-parent's script over the two strongest inputs: **12/12 failed=0, nothing refused**. Live: the market walk
-**146/146**, and a browser witness of the footer on a career walked to its season boundary with a loan in the ledger
-**18/18**, `moves=1 wage_rows=4 grant_rows=1 bonus_rows=4` painted in `en`, `zh` and `zh-TW`, 0 `MISSING_MESSAGE`.
+**The gap.** The spec's 28 modules carried "02 Live" with no form in this build — and the honest form is not
+obvious: world matches hold aggregate stat lines with no minutes, so a ticker over them would invent the very
+minutes a broadcast is made of. The data that can be replayed honestly already existed: a career's sim matches
+carry minute-level `sim_events` rows the engine wrote when the match was played.
 
-Then the repair, which is the same lesson item 40 recorded and this project has now been taught twice. `f642c0a` was
-landed from a plane detached at `ef649ef` and, unknown to the lane that ran it, master had moved to `036089f`: the six
-paths carried `ef649ef`'s bytes for everything except the files this unit edited, so the moves census a concurrent
-lane had landed at `29fbe4c` — checks 15–17, a 12-row ledger, `FLOOR_MOVE_KEYS` — was silently deleted by my commit.
-`29fbe4c` had done the identical thing to this lane's item-43 record on the way in (129 lines of doc, 33 of PLAN, 58
-of the drift amendment, 27 of the roadmap row). Neither lane's own gate could see it; both saw a green plane.
-The cure is `git merge-file` over the common ancestor with **both** sides kept, and the claim is measurable: the two
-versions over the committed tree are **12/15 (reds 9, 12, 13)** and **11/15 (reds 9, 15, 16, 17)**, and the union runs
-**18 checks at 12/18 with reds 9, 12, 13, 15, 16, 17** — the sum, not the intersection, so the merge hides nothing.
-Six of those reds are not the census's and are named as item 51's second half: `29fbe4c` typed five `Move` fields,
-two `totals` keys and five constants the committed `market.py` does not publish, and the union over the shared tree's
-*uncommitted* API prints the same six check numbers in the opposite direction (`constants=33 moves=33 totals=10`
-against `19/30/9` typed). No committed state of `lib/market.ts` + `market.py` is green until the two halves land over
-each other. Check 2 gained `moveKeys.length >= FLOOR_MOVE_KEYS` and `declaredMove.followed` on the way, because a
-scan that finds no move row must not read as agreement either.
+**The shape.** Live is a replay layer, and the page wears that word: `/live` lists the account's replayable
+matches from the simulate list door; `/live/{slug}` reads the detail door's timeline (`row(full=True)` already
+carried it, re-read from `sim_events`) and hands it to `MatchTicker` — a client clock at one wall-second per
+match minute, events arriving as their minutes pass, the score tracking goal events only, with play/pause/
+restart and the whole-timeline type index. **Zero new API doors and zero new tables**: the replay reads the
+same rows the report serves, both pages print the source note that says where the minutes came from, and the
+badge says REPLAY rather than implying a broadcast.
 
-**Landing:** `f642c0a` (6 web paths, +66/−113 against `036089f` — the −113 is the revert this commit repairs) and the
-merge commit this record lands in (the union census, the restored item-43 record, this section, roadmap rows 48–51).
-Evidence: [WIRE_READERS_TOTALS_VERIFICATION.md](docs/WIRE_READERS_TOTALS_VERIFICATION.md) §1–8,
-`.scratch/item42-arms.txt`, `.scratch/repair-merged.log`, `.scratch/repair-merged-sharedapi.log`,
-`.scratch/repair-webgates-wt-repair.txt`, `.scratch/repair-api.log`.
+**Gates and privacy.** Session-gated (middleware prefix, robots disallowed, crawl gate reconciled), a 37-key
+`live` namespace in all three catalogues plus the nav link, tsc green, metadata gate 184/184, crawl gate 9/9.
 
-## Six horizontal declarations, and the gate that was green in only one tree (item 50, done 2026-11-06)
-
-`qa-rtl-readiness.mjs` answered **6/7 failed=1** on a plane detached at `c87dba8` and **7/7** in the shared tree, and
-line endings were no longer available as the explanation — item 49 had just removed them. The difference this time was
-`HEAD` against the working tree: the cure (`text-align: start`, `border-inline-start`, `padding-inline-start`) was sitting
-uncommitted in the shared tree while the committed CSS still carried six physical declarations (`coach.css:61`,
-`knowledge.css:168`, `:169`, `:248`, `training.css:27`, `:28`). Landing them is three files, 6 insertions, 6 deletions and
-4 hunks — and the shared tree's three uncommitted files were proved byte-identical to the three landed here first, so the
-two trees converge instead of growing a third variant of the same stylesheet.
-
-The unit's real work is that a file-only gate cannot say *what the six lines do*, so the witness is the app: built
-(`npm run build`, exit 0), served on a throwaway port, the API from the same commit on a scratch SQLite database at `0049`,
-one account, one career and **one player** — without the player `/coach` answers its own `no_player` 409 by redirecting to
-`/onboarding` and the chips never paint, the same door PLAN's item-2c row met two months ago and read it wrongly. In the
-live document each element was measured as shipped, and again as a clone carrying the pre-cure physical declaration in its
-place, in `dir=ltr` and `dir=rtl`: 24 `.drill-card__point`, 5 `.coach-chip`, 6 `.kn-filter-chip`, and 4 `.kn-cite__quote`
-after one real ask. In ltr every pair is **identical** — the cure changed nothing where the product ships. In rtl the shipped
-band moves to `0px 2px 0px 0px` with `padding-inline-start` behind it and the text sits 11.59 px inside both, while the old
-declaration keeps its 2 px accent on the left — at the end — and leaves the ragged chip lines glued to the left edge.
-`item50-app-report.py` asserts that whole table: **22/22**.
-
-Two findings came out of measuring in the real page rather than a fixture, and neither is readable off a stylesheet.
-`.chip` is `display: inline-flex`, so `text-align` does not move a chip's label unless the label *wraps*: a single-line chip
-paints identically under `start` and under `left`, which is how the first measurement looked like a null result, so the arms
-measure the chip whose label breaks (`match-analysis`, two lines) and the coach chips at four and five. And
-`Range.getClientRects()` answers one rect per **bidi run**, not per line box: the word “I” inside “What should I train
-today?” initially read as a line hugging the end edge in rtl, which was the probe lying rather than the page; grouping the
-rects by `top` and taking each line's union is what the figures above come from. A standalone fixture — the four shipped rule
-blocks copied verbatim, a `.phys-*` twin per block — agrees with all of it (4/4 classes agree in ltr, 4/4 diverge in rtl), so
-no claim here rests on one harness.
-
-Arms: base 7/7; A `coach.css:61` back to physical → 6/7 with that one finding; B only `knowledge.css:168`–`:169` → 6/7 with
-two; C a planted `margin-right` → refused at `training.css:32`; D a physical declaration inside a comment → 7/7, the scanner
-reads declarations not lines; E `padding-inline-end` kept → 7/7, the other logical side is not a finding; F a planted
-`border-top-left-radius` → refused; G all six restored at once → the six findings in full; post-restore 7/7. Arm H is about
-the gate: two horizontal declarations on one line and three shapes on the next yield **one finding per line**, because the
-scanner keys on line × shape. Row 53 files that, and the shapes the five rules never look at.
-
-The population re-run over the cured plane: **29 of the 30 file-only gates pass**, the one refusal is `qa-wire-readers`
-(row 51) and was never this unit's; `typecheck` PASS, `lint` PASS; the compiled stylesheet carries `text-align:start` and
-`border-inline-start`/`padding-inline-start` beside the `-webkit-` twins Next's toolchain adds.
-
-**Landing:** the commit this record lands in — **6 paths**: `app/coach/coach.css`, `app/knowledge/knowledge.css`,
-`app/training/training.css`, `PLAN.md`, `docs/ROADMAP_NEXT.md`, `docs/RTL_LOGICAL_PROPERTIES_VERIFICATION.md`. Evidence:
-[RTL_LOGICAL_PROPERTIES_VERIFICATION.md](docs/RTL_LOGICAL_PROPERTIES_VERIFICATION.md) §1–6, `.scratch/item50-gate.log`,
-`.scratch/item50-arms.txt`, `.scratch/item50-side.txt`, `.scratch/item50-browser.txt`,
-`.scratch/item50-app-{training,coach,knowledge-chips,knowledge-cites}.json`, `.scratch/item50-app-report.py`,
-`.scratch/item50-app-session.py`, `.scratch/item50-webgates-final.log`.
-
-## Thirty file-only gates read the checkout's bytes, not the tree's (item 49, done 2026-11-06)
-
-`qa-a11y-witness.mjs` answers **11/16 failed=5** on a landing plane and **16/16 failed=0** in the shared working
-tree, over the same commit's bytes, and the reason is one byte per line. The repository holds LF: `globals.css`
-at `master` is 275 lines with **0** carriage-return pairs, and `core.autocrlf=true` with no `.gitattributes` in the
-repository makes every `git worktree` checkout materialise those 275 pairs — while the shared tree, written by
-tools over months instead of by `git checkout`, stayed LF. So a plane and the tree are different *inputs* to the
-same gate, invisibly so: nothing in the repository says which one a quoted figure came from. This project has been
-quoting both for weeks. Thirty web gates are file-only — no server, no browser, no port — and all of them read
-their bytes raw: **61 `readFileSync` sites, 0 folding line endings**.
-
-The harm came in two shapes and only one was loud. Five of the witness's arms mutate a copy of the shell and
-*assert the anchor was found*, and five of those anchors span lines — the skip link's three-line element, the
-`:focus-visible` rule, the same rule again for source order, the `prefers-reduced-motion` block, `aria-current` in
-`Nav.tsx` — so on CRLF bytes none of the five found its anchor and five checks that should have reded for the right
-reason reded for the wrong one. The quiet shape is `qa-a11y.mjs`, which compares byte positions: it printed
-`PASS 5 … 2293 < 2393` on the plane and `PASS 5 … 2231 < 2328` on LF. The claim held in both, so no gate went red
-and no record noticed that the two runs were not runs of the same bytes. That pair is why the cure went to every
-read rather than to the two gates that showed.
-
-The clause is one line, in each gate, with no shared module and no new file: fold every CRLF pair to LF on the way
-out of `readFileSync(path, "utf8")`. Applied by script to **60 sites in the 30 gates**, each file re-parsed with
-`node --check`; the one read deliberately left raw is `qa-share-preview.mjs:219`, a PNG's bytes, where folding
-binary is a bug. The fold is the identity on LF, which is what makes it safe to land before anyone has decided what
-the repository's policy should be — it removes the dependency on the checkout instead of betting on one answer, and
-it does not pre-empt the `.gitattributes` decision. That decision is roadmap row 52, with §1's four measurements as
-its evidence: `text=auto eol=lf` would cure the class at the source, and it also changes the bytes `git status`
-reports for every CRLF working-tree file today, in a shared tree other lanes are standing in.
-
-Measured as four runs of the whole population — parent `3cd9b3f` and cured, each on a CRLF plane and an LF one,
-every gate's captured stdout+stderr compared after masking every printed path so a plane directory cannot count as
-a difference. Before the fold **2 of 30 gates printed different bytes between the two trees** (the witness, which
-also moved its exit code, and `qa-a11y`, which did not); after it, **0 of 30**. Refusals go **3 → 2**:
-the witness joins `qa-rtl-readiness` and `qa-wire-readers`, and those two are red in all four rows for row 50's
-committed-physical-CSS and row 51's typed-ahead-of-published reasons — line endings were never why either was red,
-and the fold changed neither. `tsc --noEmit` and `next lint` are clean over the cured plane.
-**Landing:** `322faed`, **33 paths** — the 30 gates, PLAN.md,
-[EOL_FILE_GATES_VERIFICATION.md](docs/EOL_FILE_GATES_VERIFICATION.md) §1–6, and ROADMAP_NEXT.md with row 49 done,
-row 52 filed and rows 51–52 back in numeric order. The census was then re-run over the published tree rather than
-trusted from the plane: `git show 322faed` answers 30 file-only gates / 61 sites / **60 folded** / 1 raw. From here
-a gate's figure no longer needs a footnote about which tree it came from; a record that quotes one made before this
-commit still does.
-
-## A gate that was green only under a fabricated environment (item 43, done 2026-11-05)
-
-Item 40's suite line — **1 failed / 2148 passed / 4 skipped** — is the first red this project's own instrument
-produced with nothing planted. `test_ci_trigger.py`'s push-coverage case asks "which branch is this run about?" and,
-outside GitHub, answered it with `git rev-parse --abbrev-ref HEAD`. On a branch that is `master`; on a detached
-checkout it is the literal `HEAD` — and every landing here is graded on a detached worktree, because the shared tree
-carries concurrent lanes' bytes. So the case could only be made green by prefixing the command with
-`GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`, which is exactly how item 38's "on a checkout detached at `e8fa569`
-… rc=0" verdict was reached, and that record did not name the prefix. Two logs, one population, one green, one red,
-and nothing in either to say why. A claim whose reproduction needs an undocumented environment variable is not a
-reproducible claim.
-
-`_pushed_branches(root)` answers in three ordered steps — the event when one arrived, the checked-out branch when
-`--abbrev-ref` names one, otherwise the branch this project publishes to, read as `git for-each-ref --contains HEAD`
-intersected with `origin/HEAD`'s target and, with no remote, `master`, then `main`, then the single local branch.
-When no published branch carries the commit it **skips and prints the refs it looked at** instead of asserting a
-shape the checkout was never asked to have. The file goes from 7 cases to 8: the new one builds a throwaway
-repository in a temporary directory, with `commit.gpgsign` and `core.hooksPath` pinned off so a host's signing
-cannot fail a commit that is not what is being graded, and asserts all four shapes — on a branch → that branch;
-detached at a commit `master` carries → `master` (the landing-plane shape); on a side branch → the side branch,
-because the fallback never overrules the run's own answer; detached at a commit no branch carries → nothing. Four
-arms in [CI_TRIGGER_BRANCH_READ_VERIFICATION.md](docs/CI_TRIGGER_BRANCH_READ_VERIFICATION.md) §3: the whole file at
-**8 passed** with the trigger case *answering* `master`, not skipping; the parent's reader written beside the cure on
-the same tree at **1 failed** (`assert ('HEAD' and 'HEAD' != 'HEAD')`) against the cure's **1 passed**; `ci.yml`'s
-push trigger rewritten `[master]` → `[main]`, which still reds *through* the new fallback — the catch the gate was
-written for is not blunted; and a plane detached at an unreferenced `commit-tree` child of master at **7 passed, 1
-skipped**, reason printed. The full suite then re-measured on the cure itself — `.scratch/wt-ci` at `ef649ef`, with
-**no `GITHUB_*` in the environment at all** (`env | grep -c '^GITHUB_'` → 0): **2154 passed, 4 skipped, 330
-warnings in 2990.83s**, exit 0. The red that item 40 met is gone without a prefix being added, which is the whole
-claim of this unit.
-**Landing:** `ef649ef`, one path, +134/−25 against `265e7a7`; this record, section and bullet are the commit beside
-it.
+**Evidence.** The browser verification against the production build: a match played through the API (36 events,
+source `sim_events rows`), then the replay ticked live — at wall-second 14 the feed held 7 events and the score
+had tracked 0–0 to 0–1 as the minute-13 goal arrived; the index listed the match with its score card and the
+replay chip. Walk section to follow with the next full walk (the tier's own section sits in the simulate area,
+after a match has been played).
 
 ## How to work an item
 
