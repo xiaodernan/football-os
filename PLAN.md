@@ -1636,6 +1636,19 @@ had tracked 0–0 to 0–1 as the minute-13 goal arrived; the index listed the m
 replay chip. Walk section to follow with the next full walk (the tier's own section sits in the simulate area,
 after a match has been played).
 
+---
+
+## Finding (another lane's gate, recorded 2026-11-07): the sweep runs signed out, so its coverage gate can never see a gated page
+
+The walk's English sweep (the section that re-reads every visited path hunting catalogue phrases that leaked back
+into literals) runs **after sign-out**, and its coverage gate compares the app tree's routes against the paths the
+sweep actually landed on. A gated page swept while signed out lands on `/login`, so its route reads as uncovered —
+which is why the gate reports exactly the gated population ("40 route(s) no page was read under", led by `/agents`,
+`/career`, `/coach`, routes the walk demonstrably reads earlier while signed in). The gate is another lane's fresh
+work; the fix it needs is an ordering one (sweep while signed in, or sign-out after the gate), and it is recorded
+here rather than fixed under a writer who is standing on the file. The Live replay section this lane added sits
+outside the sweep for the same reason.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
