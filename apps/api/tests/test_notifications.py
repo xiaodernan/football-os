@@ -173,3 +173,30 @@ class TestProducers:
         post_id = published.json()["post"]["id"]
         author.post(f"/api/v1/community/posts/{post_id}/reactions", json={"reaction": "like"})
         assert author.get(f"{API}/unread-total").json()["unread_total"] == 0, "an account never hears about its own act"
+
+
+class TestErasure:
+    """§61 crossed with spec 27: the tray is user data, so the preview names it and the
+    confirmed erasure takes it — by the metadata-driven inventory, not a hand-written list."""
+
+    def test_the_preview_names_the_tray_and_the_erasure_takes_it(self, client) -> None:  # type: ignore[no-untyped-def]
+        _account(client, "Erase Tray")
+        from app.core.db import SessionLocal
+
+        with SessionLocal() as session:
+            from app.models import User
+
+            account_id = session.query(User).filter(User.display_name == "Erase Tray").order_by(User.created_at.desc()).first().id
+            notify(session, account_id, kind="follower", payload={"follower_name": "N"})
+            notify(session, account_id, kind="comment", payload={"post_id": "post_x", "actor_name": "N", "excerpt": "hello"})
+        preview = client.get("/api/v1/auth/account").json()
+        assert preview["deletes"]["rows"].get("notifications.user_id") == 2, f"the preview must name the tray: {preview['deletes']['rows'].get('notifications.user_id')}"
+
+        deleted = client.request("DELETE", "/api/v1/auth/account", json={"confirm": "DELETE", "password": PASSWORD})
+        assert deleted.status_code == 200, deleted.text
+        with SessionLocal() as session:
+            from app.models import User
+
+            assert session.query(User).filter(User.id == account_id).first() is None
+            assert session.query(Notification).filter(Notification.user_id == account_id).count() == 0
+        assert client.get(API).status_code == 401, "the session dies with the account"
