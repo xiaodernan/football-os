@@ -28,6 +28,8 @@ const DISALLOWED = [
   "/tactics/gallery",
   // A tray is the account's own correspondence.
   "/notifications",
+  // A replay is the account's own matches, ticked back.
+  "/live",
   "/tactics/shared",
   // Uploaded clips and everything derived from them. A clip is the most identifying file a user can
   // hand the platform, so it is disallowed rather than noindexed alone: no frame URL, no report.

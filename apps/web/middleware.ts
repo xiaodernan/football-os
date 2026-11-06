@@ -38,6 +38,7 @@ const PROTECTED_PREFIXES = [
   "/onboarding",
   "/tactics/boards",
   "/notifications",
+  "/live",
   "/video",
   // The walk found this list drifting from the pages that gate themselves: a prefix missing here
   // means the middleware never refreshes that surface's expired access token, so a signed-in
