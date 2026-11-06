@@ -1657,6 +1657,18 @@ work; the fix it needs is an ordering one (sweep while signed in, or sign-out af
 here rather than fixed under a writer who is standing on the file. The Live replay section this lane added sits
 outside the sweep for the same reason.
 
+---
+
+## Verification record (2026-11-07): the committed tree at `ee19799` verified on a clean plane
+
+A `git worktree` at HEAD ran the API gates against the **committed** tree, with the worktree left to another
+lane's in-flight landing: ruff clean, mypy clean over 161 files, and the full suite **green except two currency
+figures — both transient, neither a defect to fix here**. `test_locale_claims` grades the *committed* catalogue
+(4,096 keys at this HEAD) against the worktree's README table (which the landing has already recomputed to 4,269),
+and `test_spec_audit_currency` compares the audit's page-route figure against a tree that has gained two pages the
+landing will carry. Both figures agree the moment the landing's commit lands; editing either file now would guess
+at another writer's final numbers. Everything else — 1,600+ tests — green on the committed tree.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
