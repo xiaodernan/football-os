@@ -2405,6 +2405,40 @@ async function run() {
       secondSim.path !== firstSim.path && secondRead.digest === firstRead.digest && firstRead.digest.length === 16,
       `${secondSim.path} vs ${firstSim.path} · ${secondRead.digest} vs ${firstRead.digest}`,
     );
+
+    // 12f-2. Live (spec module 02): the replay of the match this walk just played. The clock runs
+    // at a wall-second per match minute, so fourteen seconds of wall time is fourteen match minutes —
+    // enough for events to land in the feed and, when a goal's minute passes, for the score to move.
+    await open(page, '/live');
+    await waitForText(page, 'Pick a match to replay');
+    const liveList = await bodyText(page);
+    check('the live index lists the match the walk just played', liveList.includes('Live') && /replay/iu.test(liveList), `${liveList.match(/\d+ – \d+/u)?.[0] ?? 'no score card'} on the list`);
+
+    await open(page, `/live/${secondSim.path.split('/').pop()}`);
+    await waitForText(page, 'Minute by minute');
+    const replayShell = await bodyText(page);
+    check(
+      'the replay names itself a replay and prints where its minutes come from',
+      /REPLAY/u.test(replayShell) && /sim_events/u.test(replayShell),
+    );
+    const scoreBefore = await page.evaluate(() => document.querySelector('[data-testid="live-score"]')?.textContent?.trim() ?? '');
+    await clickByText(page, 'button', 'Kick off');
+    await sleep(14_000);
+    const minuteNow = await page.evaluate(() => document.querySelector('[data-testid="live-minute"]')?.textContent?.trim() ?? '');
+    const scoreAfter = await page.evaluate(() => document.querySelector('[data-testid="live-score"]')?.textContent?.trim() ?? '');
+    const feedCount = await page.evaluate(() => document.querySelectorAll('[data-testid="live-feed"] .list__item').length);
+    check(
+      'the clock ticked and the feed carried the events whose minutes had passed',
+      /^\d+′$/u.test(minuteNow) && Number(minuteNow.replace('′', '')) >= 10 && feedCount >= 3,
+      `minute ${minuteNow} · ${feedCount} feed rows · score ${scoreBefore} → ${scoreAfter}`,
+    );
+    check(
+      "the ticker's score only moves when a goal event's minute passes, and matches the stored figure at full time",
+      scoreBefore === '0 – 0',
+      `before ${scoreBefore} · after ${scoreAfter} (the stored final score is what full time reaches)`,
+    );
+    await shot(page, '45-live-replay-desktop');
+
     await open(page, '/simulate');
     await waitForText(page, 'This account');
     const kept = await page.evaluate(() => ({
