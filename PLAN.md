@@ -1006,6 +1006,14 @@ in the reader's language and carries the sentence the payload supports ("{name} 
 …"), a Mark read button per unread row and Mark all read above, and the tier's own formula printed under the panel.
 The nav gains a Notifications link with the unread count as a badge, fetched once per mount, quiet at zero.
 
+**Final record (2026-11-07): the walk reads 312/316** — the Live section's four checks green in a full walk
+(index lists the played match; the replay names itself and prints its source sentence; the clock ticked to minute
+14 with the feed holding exactly that match's events-so-far, 0 goals, score 0–0 — correct for a match whose goals
+arrive later; the score-sum check holds against the feed's own GOAL rows), the notification section green, the
+erasure green on the re-keyed bucket, and the 1,779-URL probe survived end to end. The four reds are unchanged
+across two runs and all belong to another lane: three career/season checks (the season-boundary commit is the
+suspect) and the sweep's coverage gate (the ordering finding recorded below).
+
 **Walk runs against the fixed tree, each finding named**: run with the client-fetch buttons and the favicon
 exemption landed **296/301** — the notification section fully green for the first time in a full walk (tray, badge,
 mark-all, stranger verbs through the API), the erasure green on the re-keyed bucket, and the five reds: four in the
