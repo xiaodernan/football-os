@@ -2429,16 +2429,15 @@ async function run() {
     const feedCount = await page.evaluate(() => document.querySelectorAll('[data-testid="live-feed"] .list__item').length);
     const minuteNow_n = Number(minuteNow.replace('′', ''));
     const feedGoals = await page.evaluate(() => [...document.querySelectorAll('[data-testid="live-feed"] .list__item')].filter((row) => /GOAL/u.test(row.textContent ?? '')).length);
-    const feedHome = await page.evaluate((home) => [...document.querySelectorAll('[data-testid="live-feed"] .list__item')].filter((row) => /GOAL/u.test(row.textContent ?? '') && (row.textContent ?? '').includes(home)).length, homeShort);
-    const expectedHome = Number(secondSim.title.split('–')[0]?.trim() ?? 0);
     check(
       'the clock ticked and the feed carries exactly the events whose minutes had passed',
       /^\d+′$/u.test(minuteNow) && minuteNow_n >= 10 && feedCount >= 1,
       `minute ${minuteNow} · ${feedCount} feed rows · ${feedGoals} of them goals`,
     );
+    const scoreParts = scoreAfter.split('–').map((part) => Number(part.trim()));
     check(
       "the ticker's score tracks the goals whose minutes have passed",
-      scoreAfter === `${feedHome} – ${Number(feedGoals) - feedHome}` || scoreAfter === scoreBefore,
+      scoreParts.length === 2 && scoreParts[0] + scoreParts[1] === feedGoals,
       `minute ${minuteNow} · feed goals ${feedGoals} · score ${scoreBefore} → ${scoreAfter}`,
     );
     await shot(page, '45-live-replay-desktop');
