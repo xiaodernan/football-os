@@ -1990,3 +1990,32 @@ verdict (the real catalogues are green to begin with); nothing about them delays
 pulled population, no walk, and no licence; they are precision instruments, run in the dark, and full credit
 for Arabic belongs to the milestone that walks the rendered Arabic bytes.
 
+## 27. The held notes — exactly what this arc owes, in order (2026-11-07)
+
+§26 recorded Arabic as dormant; §25/§24 recorded why CI is red. This section records the rest of the arc's
+ledger, so it can close without a re-read of every previous section. Each item names the exact fact that
+turns it, and the section that holds the evidence.
+
+**Held against the M13 milestone (not this arc's lane) — the first three.**
+1. **`Wire-readers gate` — web green when the milestone lands.** Six named reds, filed under §24 with
+   their owner; re-greenable one by one as the milestone's own commits close them.
+2. **`README.md` catalogue pin recomputes.** Checklist item 8 of `docs/NEW_SURFACE_COMPLIANCE.md`. The gate
+   reads the catalogue in front of it; this century it has already been recomputed twice (§24); the next
+   recompute happens on the milestone, and the commit that lands it puts the figures on the same page as
+   the commit that makes them true.
+3. **The seven logs in `docs/M13_*_VERIFICATION.md` publish as the milestone's witnesses** — they are
+   already in the working tree, one per obligation the milestone carries; each is a proof, not a promise.
+
+**Then the Arabic milestone takes over.**
+4. **Item 6 — the walk under `dir=rtl`.** All 8 or 9 JSX-arrow sites are already direction-aware
+   (`af06f60` + prior landings); everything item 6 measures — the market ledger, a career page, the nav, the
+   knowledge base — targets production-build bytes, not unit claims. Item 6 runs only after items 1–4 of P7.
+5. **Item 7 — CI registration of `ar`.** One new step before or after `Locale-completeness`, ideally a
+   matrix if the runner splits; it names the Arabic example once and never repeats it.
+6. **Item 8 — Arabic ships.** Only after items 1–7 are green. The `README.md` and `docs/RTL_READINESS.md`
+   records that land with the milestone carry the walk, the real catalogue, the population and the
+   resolver, and the token claims test live.
+
+**What this arc does *not* owe.** Arabic translations of the 4,269-key catalogue. Gate invention where the
+ast is hand-written (§26 forbids it). A fake "done" for any of these, inside this file or outside it.
+

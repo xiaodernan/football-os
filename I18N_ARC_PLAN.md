@@ -65,7 +65,8 @@ so; and the day a locale that does not exist today is added, the cost is one cat
    another lane).
 3. **RTL milestone, when it is owed.** `docs/RTL_READINESS.md` lists the acceptance items — fonts,
    plural categories, punctuation, bidi policy, catalogue parity, walks under `dir=rtl`, CI registration.
-   Item 1 closed 2026-11-07. Do not ship `ar` or `he` before 2–8 are green.
+   Item 1 closed 2026-11-07; items 2–5 pre-wired and recorded (§20, §25, §26); the milestone inventory
+   lives in §27. Do not ship `ar` or `he` before all the items are green.
 4. **The discipline.** Every new slice follows `NEW_SURFACE_COMPLIANCE.md`; gate verdict-shape changes
    ship with witnesses; the verification doc grows a section per slice, push every time.
 
