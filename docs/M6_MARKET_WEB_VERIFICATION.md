@@ -17,7 +17,10 @@ private dist directory are deliberate: `.next` and 3210/3211 belong to runs alre
 machine, and a walk that rebuilt them would be measuring someone else's page.
 
 **Total: 103 checks, exit 0, 5 screenshots, 3 browser console errors, and all three provoked on purpose.**
-(The walk ran first at 86 checks, on the page alone; §5 below is the wage increment that took it to 103.)
+(The walk ran first at 86 checks, on the page alone; §5 below is the wage increment that took it to 103, and
+§6 is the signing-window increment that took it to the 144 measured on 2026-11-02 — the figure §6 quotes with
+the command that reproduces it. This section's own 103 is the last measurement of the walk *before* the
+window panel existed, and it no longer describes the page.)
 
 ## 1. One page, and the wall it sits behind
 
@@ -245,22 +248,250 @@ career made and not the club's stored squad (those players came with the job), a
 carries no consequence beyond the market refusing to spend from it — no default, no board reaction, no
 embargo.
 
-## 6. What this increment does not claim
+## 6. The signing window reaches the page, and a gate reads the wire through the page (measured 2026-11-02, landed 2026-11-03 at `05f2a106`)
 
-- **`no_transfers` now binds but is still advertised as merely stated.** `transferable()` refuses every
-  move for a career whose scenario carries the rule and says `enforced: true` in the refusal;
-  `challenges.py:133`, `tests/test_challenges.py:155` and `visual-qa.mjs:2042` still say otherwise and
-  have to move together. ROADMAP item 7.
-- **The career form's budget caveat moved, and one gate has not caught up.** The form used to print
-  "Nothing spends this budget yet — there is no transfer market in this build". That sentence became
-  false when §22 landed and `components/CareerForm.tsx` now states what the budget does. `visual-qa.mjs`
-  asserts the old wording at line 1766; its owner has to re-point that needle, which this run did not do
-  from under them.
+`career_view["window"]` — the same block `GET /transfers/{career}` answers with — has been on the wire since
+2026-10-28, and the market page never answered with it: a manager learned the window was shut only *after*
+pressing a button the tier had already refused with 409 `transfer_window_closed`. This increment puts the
+block on the page, then puts a gate between the wire, the type and the page — because "published, typed,
+never read" is the defect this project has now found eight times in eight different namespaces, and a panel
+added by hand is not evidence that the panel stays.
+
+**The panel.** `app/career/[slug]/market/page.tsx` binds `const signing = view.window;` and renders
+`<Panel data-testid="market-window">`: a notice that follows `state`, and an eight-row `KeyValueGrid` — the
+state, the season being judged (`season_index`, `round_in_season`, `season_rounds`), which table the season
+length was read from (`season_source`), every range in `windows` as `from–to` plus its own label, the label
+of the range that holds this round (or an explicit "no range holds it"), how many of the holding range's
+rounds are already played (`played_in_window`, with its own no-range sentence), how many signing rounds are
+left (`signing_rounds_left`), and where the next window opens — `opens_at_round` and `opens_at_season` with
+`opens_in_rounds`, and a separate sentence when `opens_at_round` is null, because that is the no-horizon
+career and it deserves to be named. Eight rows, counted off the `rows={[…]}` array at the landing commit;
+this section said six when it was written, and the two it forgot are the `kvWindowPlayed` and
+`kvWindowSigningLeft` pair the same commit authored. The panel closes
+with `window.formula` printed verbatim beside the two constants it is built from
+(`early_window_last_round`, `mid_window_half_width`). The rules panel gained `data-testid="market-rules"` so
+the walk can read that book out of the DOM rather than trusting the door that served it.
+
+**The catalogue.** 20 keys in the `market` namespace, in all three catalogues — counted off the commit's own
+diff to `messages/en.json` today, and the reason this sentence used to say 16: it was written from the panel's
+row list rather than from the bytes, and the increment had already authored `windowPlayed`,
+`windowSigningLeft`, `kvWindowPlayed` and `kvWindowSigningLeft` on top of the sixteen it named. The eight row
+labels are `kvWindowState, kvWindowSeason, kvWindowSource, kvWindowRanges, kvWindowHeld, kvWindowNext,
+kvWindowPlayed, kvWindowSigningLeft`. **Three** of them are plurals, not two:
+`windowEyebrow`, `windowClosed` and `windowNextAt`, each on `{count}` — `qa-translation-quality` read a
+camelCase plural variable as untranslated English in `zh` and `zh-TW` (4 issues, all on these keys), which is
+why the variable was renamed to the repo's convention before landing. With it the gate read
+`CHECKS passed=4 total=4 failed=0`; today it runs 6 checks and reads `passed=6 total=6 failed=0`. The same
+pass corrected a doubled particle in `zh-TW` (`賽季的的第…` → `賽季的第…`).
+
+**The gate.** `apps/web/scripts/qa-wire-readers.mjs`, wired into `scripts/check.sh` and CI, 12 checks as it
+landed and 18 today (the `totals` and moves populations added six), files only — no server, no browser, no
+port. Three populations, each re-derived from bytes on every run:
+
+* the **wire**, from the service's own `return {…}` literals — `market_view()`, `transfer_window()` and
+  `season_windows()`, with the body found by brace depth and the keys read by a string-aware scanner so a
+  `":"` inside a sentence cannot be mistaken for a delimiter; the nested `constants` block comes out of the
+  same dict, so the two populations cannot disagree about where the block ends;
+* the **type**, from `lib/market.ts` — `MarketView`, `MarketWindow`, `MarketView["windows"]` and
+  `MarketView["constants"]`, each followed through the alias it names;
+* the **reader**, from `page.tsx` — every `view.window.*` and `view.constants.*` field name, plus the reads
+  made inside the row callback the panel passes to `windows.map()`, bound to their call site rather than to a
+  guess about which identifier the callback renames it to.
+
+Checks 3 and 3b compare the *shapes* a branch produces (the no-horizon branch and the normal branch must
+publish the same fields — twelve at the basis the arms graded, 16 at the commit this increment landed on and
+16 today, because the lane's `window_from_round`, `window_to_round`, `played_in_window` and
+`signing_rounds_left` went into the dict in between; a range must publish the same three from either season);
+4–6 reconcile each published key set with the type that declares it, in both directions; 7–8 require every
+typed window and range field to be read by the page; 9 requires the constants block to be exactly the
+constants the type declares **and** requires the two the window formula is built from to be read; 10 requires
+every published view key to have a reader or to name the reason it has none; 11 refuses an exemption whose
+bytes stopped earning it. Four floors keep a broken scan from reading as agreement — `FLOOR_VIEW_KEYS=10`,
+`FLOOR_WINDOW_KEYS=8`, `FLOOR_RANGE_KEYS=3`, `FLOOR_CONSTANT_KEYS=5` — and check 2 fails if any scan found
+nothing. The census the arms were graded against, at `ed9b631` — re-derived from that commit's bytes today,
+and every number below is what its own dict publishes:
+
+```
+wire: view=17 window=12 range=3 constants=10 | type: view=17 window=12 range=3 constants=10 |
+page: 15 window reads rooted at signing (range ← signing.windows), 16 view reads
+```
+
+The exemption is one row, keyed `demo_data` — the published name the page never reads, because it reads the
+boolean under its other name, `is_demo_data`. A literal read-only census would therefore call the published
+key unread; the gate accepts the row only while both spellings exist in the bytes *and* the page's own name is
+among the reads, which is what arm A7 kills. Check 10 still reports exactly one named key today, so the row is
+still the only exemption the view population needs.
+
+**Arms: 10/10 MATCHED.** Each arm is a plane holding only the three files the census reads, graded by the
+shipped gate through `QA_WIRE_WEB`/`QA_WIRE_API`, and the arm runner re-reads the gate's own
+`ran qa-wire-readers against …` line to prove it graded the copy. Every splice asserts its needle count, so
+an arm cannot silently grade an unmutated file. `wire basis: HEAD ed9b631e2f201ab6c534d1021fec15b7365fa717`
+— the wire is taken from `git show HEAD:`, because the shared working tree was already publishing another
+lane's keys and a plane copied off it would have graded *their* drift as one of mine:
+
+| arm | defect planted | red checks |
+| --- | --- | --- |
+| control | none | `[]` — `passed=12 total=12 failed=0` |
+| A1 | the page drops the window panel | `[7, 8, 9]` |
+| A2 | the panel *and* its `const signing = view.window` binding | `[7, 8, 9, 10]` |
+| A3 | the type drops a published window field | `[5]` |
+| A4 | the wire renames a signing-range key | `[6]` |
+| A5 | one branch renames a field the other branch keeps | `[3, 5]` |
+| A6 | the wire drops the no-horizon branch | `[3]` |
+| A7 | the page reads the other name for the demo flag | `[10, 11]` |
+| A8 | the wire publishes a view key the page never reads | `[4, 10]` |
+| W | the wire as the shared working tree published it on 2026-11-02 | `[9]` |
+
+A1 and A2 are the pair that matters: dropping the panel leaves the binding, and a census that only looks for
+the field name would then still see reads. A2 also proves check 10 is about the *block*, not the panel — the
+page no longer asks for `window` at all.
+
+**What the gate caught that is not mine.** On the night it was measured, check 9 was red on the shared working
+tree — `passed=11 total=12 failed=1`, `published, typed by nothing: season_grant_per_round,
+season_grant_per_point, promotion_grant` — because the season-grant lane's `market.py` published 13 constants
+while `lib/market.ts` typed the 10 that basis published. That is the drift the gate was written to find, one
+day old, and it was *not* fixed in this increment: typing those three keys here would have red the same check
+in the other direction (`declared, published by nothing`) on the basis CI graded, and editing the other lane's
+uncommitted service file was not mine to do. The handoff was theirs, and they had already taken it one commit
+earlier than this record knew: re-measured from the bytes today, `c5d0979` (2026-11-02, the grant lane's own
+commit) puts `season_grant_per_round`, `season_grant_per_point` and `promotion_grant` into
+`MarketView["constants"]`, and at this increment's landing commit `05f2a10` the service's constants dict
+publishes 13 depth-1 keys and the type declares those same 13 — so the two populations check 9 compares
+agree at the basis CI grades, and the red arm W measured was the shared tree's *uncommitted* intermediate. `objective_bonus_by_kind` has
+joined the dict since (14 depth-1 keys at HEAD's blob), and the working tree today reads
+`PASS 9 every constant the view publishes is typed by the web tier (33 published)`. That 33 is a
+working-tree figure, not a committed one: the same depth-1 scan over `HEAD:apps/api/…/market.py` publishes 14,
+so the extra keys are the lane's uncommitted work in that file — and `market.py`, `lib/market.ts` and
+`qa-wire-readers.mjs` are all on its in-flight list, so the committed-basis verdict is the lane's to
+establish, not mine to infer.
+Arm W remains the witness that the gate says so on their behalf — `MATCHED W-… predicted=[9] measured=[9]`.
+
+**The walk: 144/144, and the copied figures it stopped carrying.** Three of the walk's own checks were
+assertions about a shape rather than readings of it, and they were cured the same way as the gate:
+
+* the board read its columns by index (`cells[6]` = asking, `cells[7]` = now …). At the basis this unit lands
+  on, `components/MarketTools.tsx` prints 14 headers, and the walk's `row.cells.length === 13` pin was red on
+  it: `142/143 checks passed` with the single failure `every offer carries asking, current, clause, wage and
+  fit — 14 columns`. `board()` now maps each figure through `BOARD_COLUMNS`, a table of the *header text*
+  taken from the same `messages/en.json` the component renders, so a column added or re-ordered moves the read
+  instead of silently mislabelling it; two checks replaced the copied count — `the board prints a header for
+  every column this walk reads a figure from` and `every offer carries one cell under every header the board
+  prints`, measured on 2026-11-02 as `14 headers: PLAYER | POS | … ` against `14 cells … across 12 row(s)`.
+* the rules panel: the walk asserted a rule *count*. It now reconciles three books — `GET /transfers/rules`,
+  the career door's `view.rules`, and the rows the panel actually printed — name by name and sentence by
+  sentence, and separately asserts the two rules it quotes by hand (`budget`, `window`) are in the printed
+  book. That run followed the other lane's growth without a single number being copied: `public 14, career 14`.
+* the window: the walk re-draws the block from the published constants (`deriveWindow` reproduces the
+  clipping and the merge rule the service documents) and compares field by field, then reads the printed
+  grid rows back against the wire with the catalogue's own interpolations — eight of them, the number the
+  panel's `rows={[…]}` array holds at the landing commit. Measured on 2026-11-02 on a career's
+  round 1: `the window block is the arithmetic its own published constants produce (round 1 of a 14-round
+  season) — every field agrees | early=4 half=1`, `in_window="the opening window" · round 1 of season 1 (14 rounds,
+  source a double round-robin…)`, and the panel row-by-row `STATE=open | SEASON BEING JUDGED=season 1, round 1
+  of 14 | …`.
+
+The live re-run, on a fresh database through the shipped harness —
+`node scripts/run-walks.mjs market` → `=== market: build VNv19az9qYbeALp8GaIdh · API :8772 · web :3249`,
+`144/144 checks passed. Screenshots: 7 -> docs/screenshots/`, `--- market: exit 0`, `1/1 walks green`, with
+`every browser console error was one this walk provoked on purpose — 4 seen, all deliberate` (the fourth is
+Chrome's own `/favicon.ico` probe, named since the last run).
+
+**Catalogue gates re-run on the tree as it stood that night, all green:** `qa-gate-inventory` 188/188 (the new
+script is inventoried as `gates=[scripts/check.sh,.github/workflows/ci.yml]`), `qa-icu-messages` 2/2 over
+12078 messages and 4026 keys compared across three catalogues, `qa-population-floor` 3/3
+(en=4026 zh=4026 zh-TW=4026), `qa-icu-coverage` 2/2 over 3141 call sites, `qa-unused-keys` 3/3
+(3960 keys judged here + 66 delegated to `test_locale_claims.py`, 0 dead against a floor of 0),
+`qa-translation-quality` 4/4, `qa-shared-keys` and `qa-key-drift` green. Those were readings of that tree; the
+same commands were run again on 2026-11-08 and their figures are below.
+
+**Found while measuring, not cured here.** `qa-plural-select.mjs` reports `Plural/selectordinal: 0` and
+`Select: 0` on a catalogue that the parser itself reads as **86 plural nodes in 4026 English messages**
+(`@formatjs/icu-messageformat-parser`, walked with its numeric `TYPE` enum). The gate compares
+`node.type === "plural"` to a *number*, and calls its `walk()` on the array `parse()` returns, so no node
+ever matches and both checks pass on an empty population — the same class as the 2026-10-26 finding that
+two catalogue gates reported zero checks on a clean checkout. It also has a third `else if` that repeats the
+first two. A gate that would actually judge the 86 needs a rule about what a legitimate collapse looks like
+in a language with one plural category: a first measurement found 106 locale messages whose plural-node count
+differs from English, and most of those are intended (`other`-only Chinese), which is exactly why the number
+is not filed as a defect count. Next item: re-arm the gate against its own population, with a floor.
+
+**That next item landed, six days later, and it is not this record's bytes.** [I18N_ARC_VERIFICATION.md
+§37](I18N_ARC_VERIFICATION.md) closes it at `ee5464b`: `qa-plural-select.mjs` now runs **7** checks —
+discovery from the directory rather than from its own `LOCALES` list, a spelled-versus-parsed equality on
+every locale *and* every key, a parse ledger that names the refusal instead of swallowing it (the silent
+`catch { return [] }` was the reason an unparseable message read as an absence), a vacuity floor of 80 placed
+under both the committed 89 and the in-flight 87 so it cannot red another milestone's catalogue yet cannot be
+satisfied by a walker that reads nothing, cardinal completeness, **ordinal** completeness against a declared
+CLDR table with an explicit refusal where a locale's ordinal set is undeclared, and select completeness — and
+`apps/web/scripts/qa-plural-select-witness.mjs` holds each of those verdicts red alone over scratch
+catalogues, 16/16, against a reverse control in which the pre-fix gate read `passed=2 total=2 failed=0` on
+every charged fixture. The 86 this section counted is 87 on today's tree and was 89 at `55f7ea7`; the
+`106 locale messages whose plural-node count differs from English` the first measurement found are exactly
+the "flattened" column the cured gate now prints — `87 English plural(s); comparisons per locale: 87 en, 23
+zh (64 flattened), 23 zh-TW (64 flattened)` — so the number is no longer an unexplained discrepancy but the
+named, legitimate shape of a one-category language.
+
+**Residuals this increment leaves, named.** The walk still quotes the wage rule's divisor by hand
+(`asking / 500`, checked to ±2.5 — the half-step of the `round_5` it is reproducing) and still needles the
+negotiation counter with the literal `2 left` and the sentence with `round_5`; the constants sentence the
+page prints is `2 × half_width + 1`, an arithmetic step the tier does not publish as data (the walk mirrors it
+with the same expression, so it fails rather than drifts); and `qa-market.mjs` re-implements the clipping and
+merge rule in JavaScript, which means the rule now lives twice and the walk is the thing that notices.
+
+**Re-read 2026-11-08, so this section does not read as current.** Basis first: every figure below was read off
+the **shared working tree**, which at this moment carries another lane's in-flight `market.py`,
+`lib/market.ts`, `page.tsx`, the three catalogues and `qa-wire-readers.mjs` itself — nothing here was run over
+a committed plane, and a mixed-basis reading is not evidence about what CI grades. The walk's 144/144 above is
+*dated* evidence on purpose: it names its build (`VNv19az9qYbeALp8GaIdh`) and the command that reproduces it,
+and it has not been re-run since.
+
+* `node scripts/qa-wire-readers.mjs` → `CHECKS passed=18 total=18 failed=0`, with the census now
+  `wire: view=19 window=16 range=3 constants=33 totals=10 moves=37 | type: view=19 window=16 range=3
+  constants=33 totals=10 move=37 | page: 19 window reads rooted at signing (range ← signing.windows), 18 view
+  reads, 2 totals reads, 1 seam reads, 39 move reads`. The block this increment grew has since grown a
+  `totals` and a `moves` population, and checks 12–17 judge them in the same three directions.
+* `qa-translation-quality` **6/6** (the two added checks are the Arabic- and Hebrew-script rules),
+  `qa-gate-inventory` **204/204**, `qa-population-floor` **3/3** with `en=4269 zh=4269 zh-TW=4269`,
+  `qa-icu-messages` **2/2** over 12807 messages and 4269 keys, `qa-unused-keys` **3/3** with 4202 keys judged
+  here and 67 delegated, `qa-key-drift` **4/4**, `qa-shared-keys` **4/4**, `qa-plural-select` **7/7**,
+  `qa-icu-coverage` **1/1** — one check where §6 recorded two, and the gate's own header says why: its
+  source-side half was retired on 2026-11-06 into `qa-i18n-literals`, whose resolver binds each read to its
+  namespace.
+* The catalogue this increment's 20 keys live in has grown from 4026 to **4269** keys, and the walk's 144
+  checks are a count of that page's shape at that date, not of today's.
+
+**Found by the re-read, not cured by it.** `qa-translation-quality`'s two script checks print
+`every Arabic message carries Arabic script` and `every Hebrew message carries Hebrew script` on a tree where
+neither `ar.json` nor `he.json` exists — the gate's header calls that "dormant", and a dormant check and a
+clean one are the same sentence on the page, which is the class of thing this project has now cured in
+`qa-plural-select` (§37), in the dead-key census (§19) and in the two zero-check gates of 2026-10-26. The
+shape of the cure is known: name the population judged, and refuse or say-so when there is none.
+
+## 7. What this increment does not claim
+
+- **Two bullets that used to sit here are gone, and the reason is a measurement.** This section used to record
+  that `no_transfers` was still *advertised* as merely stated — naming `challenges.py:133`,
+  `tests/test_challenges.py:155` and `visual-qa.mjs:2042` — and that the career form's budget caveat was
+  asserted by a stale needle at `visual-qa.mjs:1766`. Re-measured on 2026-11-08: `no_transfers` appears in
+  `apps/api/app/api/v1/challenges.py` **zero** times, and in `test_challenges.py` only inside the docstring at
+  line 156 that says the old advertising "became false" and the assertion at line 167 that now demands
+  `constraint.enforced is True` — so the honesty test runs in both directions, exactly as §7 asked it to. On
+  the other half, the strings `"Nothing spends this budget"` and `"no transfer market in this build"` are in
+  no tracked source and no catalogue (they survive only in stale `.next` build caches), and the walk's needle
+  was re-pointed by its own owner: `visual-qa.mjs:2547` now tests `/what the transfer market gets to spend/iu`
+  and `:2548` tests `/a budget still changes no fixture by itself/iu`, with the comment at 2542 recording why
+  the old sentence became false. ROADMAP item 7's first half is closed; a non-claim that is no longer true is
+  not a boundary, so these bullets retired rather than got re-worded.
 - **The board is a fresh dozen per round, not a market with a memory.** There is no asking-price drift
   between rounds, no agents competing for the same player across careers, and no injury or suspension
   affecting value. §22's seven verbs are covered; its economy is one round deep.
-- **A wage charge is one week per round.** The engine's round is treated as a week for billing, which is
-  a stated convention rather than a fact about the calendar; there is no contract expiry, so a five-year
-  deal and a six-month one cost the same until the player is sold or released.
+- **A wage charge is one week per round** — and only that half of the old bullet survives. The engine's round
+  is treated as a week for billing, which is a stated convention rather than a fact about the calendar, and
+  `pay_wages()` still charges `wage_bill(…, round_index=…)` once per played round. What the bullet also
+  claimed — "there is no contract expiry, so a five-year deal and a six-month one cost the same" — is no
+  longer true: `CONTRACT_FORMULA` in `market.py` stores `expiry_round = signed_round + contract_years ×
+  season_rounds − 1`, writes an `expire` row for a deal whose expiry has passed before the next round is
+  played, and falls back to a one-season `renew` when the write-off would leave eleven players and a keeper
+  unfieldable. The five-year and the six-month deal now cost differently.
 - Nothing here is observed. Every figure is a fictional world's arithmetic, badged `DEMO DATA` with the
   disclaimer the walk reads back off the page.
