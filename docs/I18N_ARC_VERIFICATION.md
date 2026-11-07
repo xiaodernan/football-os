@@ -3040,3 +3040,29 @@ its owner named, none from this arc's gates, docs, web tree, or pins.
 **What this changes.** "The SQLite leg is unmeasured" stops being true. "Both legs green" remains false and
 unclaimed. The api merge gate goes green when the milestone's contract lands and its `transfers` pair is
 consistent — and not one of these seven reds belonged to the i18n lane.
+
+## 45. The committed tip measured again — the §41 plane, clean (2026-11-08)
+
+**Method.** Detached worktree at `24e4004` with the same battery this arc has read before — the tree the
+wedged queue will execute when it drains. Fresh junctions, read once, removed after.
+
+**Readings (committed plane):**
+
+| gate | reading |
+| --- | --- |
+| `qa-gate-inventory.mjs` | **214/214** — exactly the figure §41 claimed for the plane |
+| `qa-locale-tokens.mjs` | **7/7** — the new definer, README pin holds on committed bytes |
+| `qa-token-drift.mjs` | **4/4** — the copied table is gone, the census holds |
+| `qa-token-gates-witness.mjs` | **10/10** |
+| `qa-translation-quality.mjs` | **9/9**, its witness **11/11** |
+| `qa-plural-select.mjs` | **7/7**, its witness **16/16** |
+| `qa-baseline-gates.mjs` | **16/16** · `qa-translation-freshness.mjs` **2/2** |
+| `qa-wire-readers.mjs` | **12/18** — the six M13 reds (§24); every other line green |
+
+**Live tree, for contrast, read at the same hour:** `qa-gate-inventory` reds 2 naming `qa-locale-discovery.mjs`
+— the in-flight census gate, uncommitted and unwired by the parallel lane that will land it (§44). Not
+touched, not wired, not renumbered here.
+
+**Conclusion, stated exactly.** The committed tip is green on everything the i18n arc owns; the only red is
+the milestone's `qa-wire-readers` six. CI remains unread — the queue has not started a run since
+2026-11-07T16:23Z; these are local, detached readings of the exact bytes master holds.
