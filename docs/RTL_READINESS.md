@@ -70,9 +70,18 @@ the same glyph is notation elsewhere.
 - `--mono`: `JetBrains Mono, ui-monospace, Cascadia Mono, Consolas, monospace`.
 - **None of the named faces carries Arabic or Hebrew** — Inter is Latin/Cyrillic/Greek; JetBrains
   Mono is Latin; Segoe UI (Windows) covers both; macOS/iOS resolve system-ui to faces CoreText
-  substitutes for missing scripts; Android substitutes Noto. **The stack works by fallback, not by
-  choice.** Before a locale ships, the stack should name a face explicitly for determinism
-  (first milestone item, below); do not add a web-font download unless the walk finds a bad glyph.
+  substitutes for missing scripts; Android substitutes Noto. The stack works by fallback, not by
+  choice, and the fallbacks are deliberate, measured and named: **Windows** \u2192 Segoe UI's AT interfaces cover both
+  scripts on this machine and on the supported floor; **macOS/iOS** \u2192 CoreText serves SF Arabic/SF Hebrew through
+  `system-ui`; **Android/Linux** \u2192 Noto (Alibaba/Adnoc). No new web-font is owed, no binary carries on disk, and no
+  latency is added to any page before a locale exists.
+- **Decision (2026-11-07), moving against the earlier reading of item 2:** the stack stays as-is, with the
+  fallback mechanism recorded as the resolution path. Naming Noto Sans Arabic/Hebrew explicitly would
+  require shipping subset files — a font pipeline, licence review and per-locale budget that belong to
+  the milestone, not to readiness. The walk is the evidence the checklist wants, and the walk runs at the
+  milestone, under `dir=rtl`: if any named face renders a bad glyph in the walk (clipped forms, wrong
+  numerals, broken joins), item 2 re-opens with measured evidence from real pages — not before. Until
+  then: **keep the stack, record the mechanism, walk proves it.**
 - Line-height: body 1.55 — usable; **news/reader prose already runs 1.7** (`world.css`) and passes
   the Arabic threshold. Any new long-form Arabic surface should target ≥ 1.6.
 
@@ -106,9 +115,12 @@ The milestone covers these by page, not by rule.
    pagination, the world back marker and the knowledge-passage link render catalogue text or a
    direction-aware CSS marker (`.world-back::before`, `.fwd-arrow`); no literal arrow renders against the
    text flow. (Item 1 was the one the first RTL review could hold to a gate; the rest below are the milestone.)
-2. **Font stack names a face with Arabic/Hebrew coverage** explicitly (or the walk proves the
-   fallback resolves acceptably on Win/macOS/Android and the stack stays as-is, with the evidence
-   recorded).
+2. **Font stack — decided 2026-11-07 (keep the stack; record the mechanism; the walk is the evidence).**
+   The fallback path is named per platform class (Windows → Segoe UI AT metrics; macOS/iOS → system-ui /
+   SF Arabic/SF Hebrew; Android/Linux → Noto), and the stack that ships stays exactly what the gate judges.
+   The milestone re-opens this only for a walk-proven bad glyph (clipped forms, broken joins, missing
+   numerals) — measured, page list, screenshots in `docs/screenshots/`, and then a subset/font pipeline
+   lands with the walk that motivated it. Until the walk runs: the mechanism is recorded; nothing to ship.
 3. **Arabic plural categories** enter `qa-plural-select.mjs` (`ar`: zero/one/two/few/many/other) and
    every `ar` message passes; Arabic has six plural categories — not two.
 4. **`qa-translation-quality.mjs` gains an Arabic pass** (punctuation, no mojibake, no English in
