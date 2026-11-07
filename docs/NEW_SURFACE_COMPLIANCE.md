@@ -31,8 +31,8 @@ commit.** A green echo is not evidence; the gate named beside each item is the e
 | 5 | dead keys | `node apps/web/scripts/qa-unused-keys.mjs` | 0 asked-for-by-nothing; a new dead key lowers nothing, it raises the floor |
 | 6 | parity | `node apps/web/scripts/qa-locale-completeness.mjs` | 2/2 — parity in every catalogue the directory carries |
 | 7 | fallback | `node apps/web/scripts/qa-locale-fallback.mjs` | every English key non-empty in every non-English catalogue |
-| 8 | tokens | `node apps/web/scripts/qa-locale-tokens.mjs` | 5/5 — a value identical in every catalogue must be a **named** technical token; README table recomputed if the population moved |
-| 9 | same-sentence wording | `node apps/web/scripts/qa-locale-tokens.mjs` (check 5) | 0 / 0 — identical English held under two keys is one wording everywhere |
+| 8 | tokens | `node apps/web/scripts/qa-locale-tokens.mjs` + `node apps/web/scripts/qa-token-drift.mjs` | **7 checks + 4 checks** (§41). The definer discovers every catalogue in `messages/` rather than naming `zh` and `zh-TW` in its source, reads every string leaf at every depth, recomputes the README figures against the catalogues, refuses (red, plus a `NOT JUDGED` trailer) on a plane with nothing to compare, and charges any script that re-states 5+ of the named tokens as its own literals. The drift gate holds the same table by **reading** it out of the definer at run time — 45 paths, no copy. 7/7 and 4/4 on the committed tree; on the working tree the definer's one red is the README row the uncommitted M13 keys own |
+| 9 | same-sentence wording | `node apps/web/scripts/qa-locale-tokens.mjs` (check 6) | 0 / 0 — identical English held under two keys is one wording everywhere; a catalogue that ships with no floor on record is a finding, not an absence (§41) |
 | 10 | translation quality | `node apps/web/scripts/qa-translation-quality.mjs` | 9 checks: no untranslated English in Chinese copy, punctuation per locale, no mojibake, no literal-structure, every catalogue a locale the gate names, the exemption set read from `qa-locale-tokens.mjs`, every message byte-identical to English a **named** token, and the Arabic/Hebrew script rules — which say `dormant` while their catalogue is absent (§40) |
 | 11 | shared-key discipline | `node apps/web/scripts/qa-shared-keys.mjs` | 4/4 — divergences named in the ledger (with the reason the two contexts differ), ceilings only fall |
 | 12 | key drift | `node apps/web/scripts/qa-key-drift.mjs` | 4/4 — same-context groups all in the reviewed ledger; ceilings only fall |
@@ -41,7 +41,7 @@ commit.** A green echo is not evidence; the gate named beside each item is the e
 | 15 | copy gate floor | item 2 already covers; keep the floor at **0** | — |
 | 16 | the **walk** | the surface's live-tier walk, or `visual-qa.mjs` locale sweep | the page renders in Chinese with no English residue; no `MISSING_MESSAGE` in the tier logs |
 | 17 | the **record** | append the slice's section to `docs/I18N_ARC_VERIFICATION.md` | figures measured, not asserted |
-| 18 | the **gate** | any new `qa-*.mjs` is in both `scripts/check.sh` and `.github/workflows/ci.yml` | inventory green — **209/209** read on 2026-11-08; one script row plus its two carrier lines is five checks, so the number rises with every landed script and is a reading, not a contract |
+| 18 | the **gate** | any new `qa-*.mjs` is in both `scripts/check.sh` and `.github/workflows/ci.yml` | inventory green — **214/214** read on 2026-11-08 (§41: 209 on a `git archive HEAD` plane, 214 once that plane is given the witness and its two carrier lines); one script row plus its two carrier lines is five checks, so the number rises with every landed script and is a reading, not a contract |
 | 19 | the **witness** | a scratch input that reds the gate | ships in the same commit when a verdict shape changes |
 
 ## Cross-locale rules of thumb

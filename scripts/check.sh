@@ -333,6 +333,15 @@ echo "── Web: token-drift gate ───────────────
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-token-drift.mjs)
 
+echo "── Web: token-gates behaviour gate ────────────────────"
+# The two gates above, judged on scratch catalogues, because a green line that judged nothing is the defect.
+# Three holes were found in them on 2026-11-08: a hand-named `LOCALES` list meant an ar.json that was a byte
+# copy of en.json was judged by neither; a walk that descended two levels meant a Chinese sentence three
+# levels deep passed the check that exists to catch it; and the drift gate copied the exemption table as its
+# own literals, so the copy would survive right up to the edit only one of them got. Each arm plants one hole
+# and demands the exact red set. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-token-gates-witness.mjs)
+
 echo "── Web: namespace-ownership gate ──────────────────────"
 # Every namespace has a declared owner and purpose.
 # 40 namespaces, 6 owner teams, all purposes documented.

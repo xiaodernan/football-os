@@ -248,6 +248,12 @@ jobs:
         run: node scripts/qa-locale-fallback.mjs
       - name: Token-drift gate (named technical tokens remain stable)
         run: node scripts/qa-token-drift.mjs
+      - name: Token-gates behaviour gate (the two token gates' verdicts, on scratch catalogues)
+        # The definer and the drift gate both stayed green beside three holes on 2026-11-08: a hand-named
+        # `LOCALES` list judged nothing in an ar.json that was a byte copy of en.json; a two-level walk let a
+        # Chinese sentence three levels deep pass the check written to catch it; and the drift gate re-stated
+        # the exemption table as its own literals. Each arm plants one hole and demands the exact red set.
+        run: node scripts/qa-token-gates-witness.mjs
       - name: Namespace-ownership gate (every namespace has a declared owner and purpose)
         run: node scripts/qa-namespace-ownership.mjs
       - name: Translation-quality gate (each rule names the population it judged; RTL script rules say dormant)

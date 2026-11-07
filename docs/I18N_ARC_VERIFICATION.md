@@ -2779,6 +2779,151 @@ out loud (`the sentence-ending-punctuation rules fire for zh and zh-TW, and for 
 catalogues ship`) — which means `ar` will be judged by a rule whose punctuation table was written for CJK and
 has never been exercised on Arabic punctuation. The first real `ar.json` is where that gets measured.
 
+## 41. The two token gates judged a population they had written out by hand (2026-11-08)
+
+**Why this unit exists.** §40 closed with a sentence it deliberately did not act on: `qa-token-drift.mjs`
+still carried its own literal copy of the exemption table — "the same drift surface, in a gate whose verdict
+does not depend on it being right — worth a unit, not silently included in this one." Opening that unit found
+the same surface in the gate the table was copied *from*, and two more classes beside it. Four defects, every
+one of the class this arc keeps curing: **a green line spoken about a population the file named in its own
+source instead of reading from the tree.**
+
+At `1ac0901` the definer (`qa-locale-tokens.mjs`) was 5 checks and the drift gate (`qa-token-drift.mjs`) was 2.
+Both began from `const LOCALES = ["zh", "zh-TW"]` written into the code, and both walked the catalogues with
+two nested `Object.entries` loops. The drift gate additionally re-stated all 45 token paths — and all 45
+reasons — as its own literals.
+
+**The four holes.**
+
+1. *The hand-named locale list.* A locale that ships is joined by the build and judged by neither gate. An
+   `ar.json` written as a byte copy of `en.json` — every message of it still English, which is §40's likeliest
+   bad outcome — added nothing to any of the seven rules those two files then held (5 + 2). Measured: the same
+   fixture that now reddens three of the definer's seven checks read **5/5 green** under HEAD's definer and
+   **2/2 green** under HEAD's drift gate.
+2. *The two-level walk.* A value three levels down was never visited: the outer loop saw an object,
+   `typeof value !== "string"` moved past it, and the check reported a clean verdict about a leaf it had not
+   read. The census that looks for Chinese in the English file could not see past the second level — so the
+   *founding* defect of this gate (`en.json` carrying a Chinese sentence, at `probe.chinese.inner` in the
+   fixture the definer's own header records) was reachable again one level further down and passed:
+   **5/5 and 2/2 green**.
+3. *The copied table.* Two files holding the same 45 paths and 45 reasons is one edit away from an argument,
+   and until that edit they agree, which is precisely how a copy survives a green gate. Worse: with the copy
+   in place the drift gate ran correctly on a plane where its source of truth was gone. Measured: delete
+   `qa-locale-tokens.mjs` from a plane and HEAD's drift gate reads **2/2 green**, using only its own literals.
+4. *A plane with one catalogue, and a crash instead of a verdict.* Both gates opened `messages/zh.json`
+   unconditionally, so a `messages/` holding only `en.json` produced `ENOENT: no such file or directory, open
+   …zh.json` (definer at `catalogue(locale)`, drift at its own read) and no `CHECKS` line at all. A crash is
+   not a verdict either — and the same plane, once the walk goes deep enough to see a shared value at any
+   depth, is where the four comparison rules would have had nothing to compare and still printed agreement.
+
+**The definer now — 7 checks.** `SHIPPED` comes from `readdirSync(MESSAGES)`, so the directory decides which
+locales are judged; `leaves()` flattens every string at every depth and every rule walks that map; a plane
+with no catalogue beside the fallback is a **red** with its own wording (`messages/ ships en.json alone — the
+four comparison rules below have no second side, so 4096 English leaf(s) went unjudged`, counted on the arm-E
+plane) and a trailer after
+the tally — `NOT JUDGED  the shared-value rule, the named-token rule, the catalogue's own table and the drift
+floors compared nothing` — the §40 precedent that a PASS which judged nothing must say so; the
+`DRIFT_FLOORS` table is keyed per locale with a `noFloor` finding for a catalogue that ships without one
+(older code had `drift = { zh: [], "zh-TW": [] }` plus a discovered locale, which was the crash in hole 4);
+the README table check reads every *discovered* locale, so a language that ships without a row is a finding
+rather than an omission nobody was asked about; and a new census — `this table is defined in one file and
+read by every gate that needs it` — counts, for every `scripts/*.mjs` except itself, how many of the paths
+defined here appear as `["<path>",` literals in its own source, and charges any file holding
+`COPY_THRESHOLD = 5` or more. The 45-entry `TOKENS` literal is byte-unchanged: `qa-translation-quality.mjs`
+scrapes it at run time (§40's cure), so the definer stays the one place the table is written.
+
+**The drift gate now — 4 checks, and no table of its own.** It reads the definer's source at run time
+(`/const TOKENS = new Map\(\[([\s\S]*?)\]\);/`) into the same 45-path map, and refuses in three distinct
+sentences when it cannot: no file, no `TOKENS` block, no entry parsed. Its verdicts are gated on the table
+being readable and on the population being present, and where they are not it says `not judged — …` rather
+than printing the success sentence with a count of zero. The reverse rule (an identical value that nobody
+named) is deliberately the lenient one of the pair: it skips values of three characters or fewer or with no
+Latin letter, so it charges 3943 of the 4096 committed English leaves as *eligible* where the strict rule
+compares all 4096 — the two gates are floors on different sides of the same claim, and arm A below measures
+that gap instead of assuming it.
+
+**The witness — `qa-token-gates-witness.mjs`, 10 arms, shipped in both carriers.** Every arm builds a plane
+outside the repo root from `git show HEAD:` bytes for the three catalogues and `messages/README.md`, copies
+*this checkout's* two gate files into it, runs both gates through `QA_I18N_WEB`, and demands the **exact red
+set in both gates** — an arm that reddens a second check has found a defect in the gate or in the arm, not a
+proof. Arms A–H plant one hole each (byte copy, partial Arabic catalogue, shared value at depth 3, Chinese at
+depth 3 in English, fallback-only plane, definer absent, a second copy of the table, and a reverse control
+that puts the row and the floor on record so only the unnamed-value rule is left standing); arms 0 and I read
+the real tree before and after, so a leak is caught by the battery rather than by the next person. The
+population figures each arm cites are derived from the fixture — the count of identical `ar` values, the count
+of identical-to-English messages on a plane with no table, the eligible count in arm F — not copied from this
+paragraph. First run: **4/10**, six arms red, and four things wrong — only one of them the gates'. (1) A
+witness bug: both gates print each refusal twice, once in its own line and once in the trailer that lists the
+failures, so every predicted red set came out doubled; `redSetOf` deduplicates, because an arm that counted the
+trailer as a second finding was reading output, not verdicts. (2) **The gates, and in §40's exact shape**: on
+the arm-E plane the definer's population line printed `FAIL` beside the sentence it prints when it passes,
+because the detail was keyed on `SHIPPED.includes("en")` rather than on the check's own condition, and two
+refusal lines in the drift gate had the same shape — three `FAIL` lines quoting agreement. All three key on the
+whole condition now and say `not judged —`, which is what a reader needs when the cause is the plane rather
+than the copy. (3) Arm A's second expectation was mine, not the gate's: I predicted the drift gate would
+charge 4051 shared values, the strict rule's number; it charged 3943, because this gate has always skipped
+shared values of three characters or fewer and values holding no letters. The count is derived from the plane
+against that floor now, and the lenient rule is stated in the gate's own header — two gates printing different
+numbers for one tree is only acceptable when a reader can see why. (4) Arm D asked the gate to print the
+planted Chinese sentence; the check names paths, not values, so the assertion quotes the verdict phrase and
+the path it charges. Final: **10/10**.
+
+**The same eight fixtures, graded by HEAD's gates** — the control that says the cure was needed rather than
+merely wanted (definer out of 5, drift out of 2):
+
+| fixture | HEAD definer | HEAD drift | after the cure |
+| --- | --- | --- | --- |
+| A `ar.json` byte-copied from `en.json` | 5/5 green | 2/2 green | definer 4/7, drift 3/4 — 3 reds, 1 red |
+| B `ar.json` with two real Arabic messages | 5/5 green | 2/2 green | definer 4/7, drift 3/4 |
+| C a shared value three levels deep | 4/5, red on the *README row* — wrong reason | 2/2 green | both charge it at that depth |
+| D Chinese three levels deep in `en.json` | 5/5 green | 2/2 green | definer 6/7 red, drift 4/4 clean |
+| E only the fallback ships | crash, `ENOENT …zh.json` | crash, `ENOENT …zh.json` | definer 6/7 + `NOT JUDGED`, drift 1/4 |
+| F the definer is absent from the plane | — | 2/2 green | drift 1/4, table named unreadable |
+| G a second copy of the table beside them | 5/5 green | 2/2 green | definer 6/7 red, drift 4/4 |
+| H byte copy, with its row and floor on record | 5/5 green | 2/2 green | one red left, in both gates |
+
+**The red this unit did not cause, and will not hide.** On the shared worktree the definer reads 6/7, and the
+one red is `the catalogue's own table states the figures the catalogue holds` —
+`zh: the table counts a population of 4096; the catalogue holds 4269`. The 173-key difference is the M13
+lane's **uncommitted** catalogue work: `en.json`, `zh.json` and `zh-TW.json` each hold 4269 string leaves in
+the working tree and 4096 in the commit (`git show HEAD:` counted both), the translated count moves 4051 →
+4224 the same way, and `messages/README.md` still states `4051 of 4096` in both places. So the table is
+correct for the commit and stale for the tree, and the gate is right to say so on the tree. Recomputing the
+README now would publish figures for keys that are not committed, so this unit leaves the row alone; the same
+two gates over HEAD's own catalogues with *these* files read 7/7 and 4/4 — measured on an archive plane, not
+argued. Arm 0 pins the difference: on the real tree the definer's only tolerated red is that row, and it must
+say `counts a population of`.
+
+**The line-ending decision, taken by measurement.** The arc's earlier unit folded `\r\n` to `\n` at every
+read in these gates; the lane is now un-committing that strip in 11 files, and this unit keeps the fold where
+a fold earns its keep and drops it where it cannot matter. JSON catalogue reads need none: the three
+catalogues carry 0 `\r` bytes on disk and 0 in the git object the same commit holds, and a raw carriage return
+is not legal inside a JSON string, so a file that carried one would fail to parse rather than parse
+differently. Text reads need it: `messages/README.md` is 96 CRLF on this checkout and 0 at HEAD, and both
+gates reach their claims about the tree through a regex over text — the README row, and the definer's source
+the drift gate scrapes. So `readText()` exists in both files and wraps exactly those two kinds of read —
+1 site each — and no JSON read.
+
+**Wiring.** `scripts/check.sh` (after the token-drift line) and `.github/workflows/ci.yml` (a
+`Token-gates behaviour gate` step after `qa-token-drift.mjs`) both run the witness, so the arms fail a build
+rather than waiting for someone to remember them. `qa-gate-inventory.mjs` re-run over the enlarged directory:
+**214/214**, with the new file accounted for as a file-only gate named by both carriers. The other file-only
+gates were re-run over the whole directory to see whether a new script disturbed a census: the only red among
+them is the README row attributed above (the live-tier walks are red offline by design and were excluded).
+
+**Still open, stated rather than hidden.** The discovery cure is in two gates, not in the rest that read
+`messages/*.json`; counted in `apps/web/scripts` today, 11 files still build their locale list as a candidate
+list filtered by existence (`qa-api-strings`, `qa-icu-coverage`, `qa-icu-messages`, `qa-key-drift`,
+`qa-locale-completeness`, `qa-locale-content`, `qa-locale-fallback`, `qa-locale-formatting`,
+`qa-metadata-title`, `qa-plural-select`, `qa-translation-freshness` — a `fr.json` is invisible to all of
+them), 7 further sites name `["zh", "zh-TW"]` inside a loop body (`qa-key-drift` ×4, `qa-locale-content`,
+`qa-metadata-title`, `qa-population-floor`), and `qa-rtl-readiness.mjs:149` names the shipped LTR set as
+`["en", "zh", "zh-TW"]`. Unit 201 turns that census into a gate. The `COPY_THRESHOLD = 5` check charges a file
+that re-states *enough* of the table; a file that copies two entries and a `switch` is still invisible to it,
+and the reason no file does that today is that no file has needed to. And arm B's `ar.json` population is three
+messages, because a fixture that ships only the Latin holdout leaves the script rule on its whole-file branch
+— the real first `ar.json` will be judged at a scale no arm here reaches.
+
 ## 42. The CI web and api jobs, run locally step by step — the reading, not the feeling (2026-11-08)
 
 **Why this section exists.** §38 measured that no master CI run has started since 2026-11-07T16:23Z; those

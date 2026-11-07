@@ -151,6 +151,12 @@ The milestone covers these by page, not by rule.
    `dormant` in the line and again in a trailer after the tally, a shipped-but-unjudged catalogue is a finding,
    and a fourth catalogue outside `KNOWN_LOCALES` is charged by filename. See §40 of
    `I18N_ARC_VERIFICATION.md`. The exemption set is read from `qa-locale-tokens.mjs` rather than copied.
+   The two **token** gates were cured the same day (§41): both had `const LOCALES =
+   ["zh", "zh-TW"]` written into their source, so the `ar.json` this milestone will land was judged by neither
+   — a byte copy of `en.json` measured 5/5 and 2/2 green under those bytes — and both walked the catalogue two
+   levels deep. They now discover the directory, reach every leaf at every depth, refuse on a plane with
+   nothing to compare, and a shipped `ar.json`/`he.json` without a drift floor or a README row is a finding on
+   the day it lands, with `qa-token-gates-witness.mjs` (10 arms) holding that shape.
 5. **Catalogue parity — the gate half done 2026-11-07.**
    `qa-locale-completeness.mjs` no longer names three targets; it discovers the catalogue files in the
    directory and judges every one of them — `en`, `zh`, `zh-TW` today, four the day `ar.json` lands, with

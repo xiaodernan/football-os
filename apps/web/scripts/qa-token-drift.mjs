@@ -2,74 +2,102 @@
 /*
  * Token drift gate: detect when technical tokens diverge from the catalogue.
  *
- * The locale-token gate names the values that are supposed to be identical across
- * all languages. This gate holds that those named tokens remain stable — a token
- * that was identical across locales but diverges in a new commit is a finding.
- * Conversely, a value that diverges but is not named is also a finding.
+ * The locale-token gate names the values that are supposed to be identical across all languages. This gate
+ * holds that those named tokens remain stable — a token that was identical across locales but diverges in a
+ * new commit is a finding. Conversely, a value that diverges but is not named is also a finding.
+ *
+ * **Three holes found in it on 2026-11-08, all cured here.** (1) It re-stated the definer's 45 paths *and*
+ * their 45 reasons as its own literal. The two copies agreed the day this was written, which is how a copy
+ * survives: it agrees right up to the edit only one of them gets, and an empty exemption set would have made
+ * the check below green by naming nothing. The table is now read from `qa-locale-tokens.mjs`, and a file that
+ * cannot be read or a table that cannot be scraped is a finding. (2) Its `LOCALES` named `zh` and `zh-TW` in
+ * the source, so a locale that ships — `ar.json`, a byte copy of English — was compared by nothing. The
+ * directory now decides the population, and a plane holding no catalogue beside the fallback is refused rather
+ * than passed. (3) Both walks descended exactly two levels, so a value three levels deep was never visited by
+ * the check whose whole job is visiting values. Every leaf at every depth is read now.
+ *
+ * The reverse check keeps this gate's own **lenient** rule: a shared value of three characters or fewer, or
+ * one holding no letters, is not charged here. `qa-locale-tokens.mjs` holds the strict version of that
+ * direction and charges every shared value that carries no name, which is why the two gates can print
+ * different counts for one tree — this one witnesses stability, that one owns the rule.
  *
  * Files only: no server, no browser, no port.
  */
 
-import { readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
-const LOCALES = ["zh", "zh-TW"];
+const DEFINER = join(WEB, "scripts", "qa-locale-tokens.mjs");
 
-/** The named technical tokens from qa-locale-tokens.mjs */
-const NAMED_TOKENS = new Map([
-  ["settings.apiBadge", "the API's own name"],
-  ["world.thOvr", "the rating scale's own name"],
-  ["world.thPot", "the rating scale's own name"],
-  ["worldTeam.thOvr", "the rating scale's own name"],
-  ["worldTeam.thPot", "the rating scale's own name"],
-  ["worldPlayer.thRpe", "the scale's own name"],
-  ["worldTraining.thRpe", "the scale's own name"],
-  ["careerDetail.thLedgerXg", "the metric's own name"],
-  ["simulationAggregates.thXg", "the metric's own name"],
-  ["simulate.blockThXG", "the metric's own name"],
-  ["club.tableHeaderRPE", "the scale's own name"],
-  ["club.tableHeaderHTTP", "the protocol's own name"],
-  ["portfolio.pdfTitle", "the file format's own name"],
-  ["knowledge.bm25Chip", "the ranking function's own name"],
-  ["club.capNameMax", "an API field name"],
-  ["club.capTeamNameMax", "an API field name"],
-  ["club.capNoteMax", "an API field name"],
-  ["club.capCountry", "an API field name"],
-  ["club.capKinds", "an API field name"],
-  ["club.capRatingRange", "an API field name"],
-  ["club.capReviewWeeksRange", "an API field name"],
-  ["worldPlayer.recentFormEyebrow", "an API field name"],
-  ["academy.sharedWithGuardian", "an API field name"],
-  ["scout.comparisonNull", "an API field name and its null"],
-  ["knowledge.provenanceFooter", "the API's own field names"],
-  ["video.measuredEyebrow", "the API's own field name"],
-  ["tactics.tableA", "a template of a side's name"],
-  ["tactics.tableB", "a template of a side's name"],
-  ["tactics.tableDelta", "the two sides' own letters"],
-  ["challenges.clubOption", "a template of names and figures"],
-  ["challenges.cardObjective", "a template of a figure"],
-  ["challenges.vs", "the word every football page uses"],
-  ["community.busyEllipsis", "a punctuation mark"],
-  ["simulate.xgLine", "a template of the metric's own name and two figures"],
-  ["club.matrixDefault", "a template of the API's own values"],
-  ["club.consentEyebrow", "a template of two figures"],
-  ["careerDetail.eyebrow", "a template of names"],
-  ["worldPlayer.eyebrow", "a template of names"],
-  ["worldMatch.eyebrow", "a template of names"],
-  ["worldCompetition.metaTitleKind", "a template of the API's own kind"],
-  ["graph.listingTitle", "a template of the API's own kind"],
-  ["graph.backLabel", "a template of the API's own kind and slug"],
-  ["club.createNamePlaceholder", "an example proper name"],
-  ["club.teamNamePlaceholder", "an example proper name"],
-  ["club.playerSlugPlaceholder", "an example slug"],
-]);
+/** A *text* read, folded to `\n`: the scrape below runs regular expressions over source, and a source file's
+ *  line endings differ between a Windows checkout and the git object for the same commit. */
+const readText = (path) => readFileSync(path, "utf8").replace(/\r\n/g, "\n");
 
-const english = JSON.parse((readFileSync(join(MESSAGES, "en.json"), "utf8").replace(/\r\n/g, "\n")));
-const zh = JSON.parse((readFileSync(join(MESSAGES, "zh.json"), "utf8").replace(/\r\n/g, "\n")));
-const zhTw = JSON.parse((readFileSync(join(MESSAGES, "zh-TW.json"), "utf8").replace(/\r\n/g, "\n")));
+/**
+ * The named technical tokens, read from the gate that defines them and states why each is language-neutral.
+ *
+ * `[\s\S]` so the block is found whichever line endings the file carries; the per-entry pattern reads the path
+ * *and* the reason, because a finding that cannot quote the reason a value was named for is one no reader can
+ * act on.
+ */
+const table = (() => {
+  let source;
+  try {
+    source = readText(DEFINER);
+  } catch {
+    return { entries: [], error: `${basename(DEFINER)} is not where this gate looks for it (${DEFINER})` };
+  }
+  const body = /const TOKENS = new Map\(\[([\s\S]*?)\]\);/.exec(source);
+  if (!body) {
+    return { entries: [], error: `${basename(DEFINER)} holds no \`const TOKENS = new Map([...])\` table for this gate to read` };
+  }
+  const entries = [...body[1].matchAll(/\[\s*"([^"]+)"\s*,\s*"((?:[^"\\]|\\.)*)"\s*,?\s*\]/g)].map((match) => [match[1], match[2]]);
+  if (entries.length === 0) {
+    return { entries: [], error: `the table in ${basename(DEFINER)} scraped to zero entries, so its entries are no longer written as ["path", "reason"]` };
+  }
+  return { entries, error: null };
+})();
+const NAMED_TOKENS = new Map(table.entries);
+
+/** Discovery, not a candidate list: the directory decides which locales are compared. */
+const SHIPPED = (() => {
+  try {
+    return readdirSync(MESSAGES)
+      .filter((name) => name.endsWith(".json"))
+      .map((name) => basename(name, ".json"))
+      .sort();
+  } catch {
+    return [];
+  }
+})();
+const LOCALES = SHIPPED.filter((locale) => locale !== "en");
+
+/** Every string leaf as `dotted.path -> value`, at whatever depth it sits. Two nested loops reached nothing
+ *  below the second level, and a leaf the census never visits cannot be charged by it. */
+const leaves = (node, prefix = "", out = new Map()) => {
+  if (node && typeof node === "object") {
+    for (const [key, value] of Object.entries(node)) leaves(value, prefix ? `${prefix}.${key}` : key, out);
+    return out;
+  }
+  if (typeof node === "string") out.set(prefix, node);
+  return out;
+};
+
+/** A catalogue that will not parse reads as empty, which the population check below charges; a silent `{}`
+ *  would instead make every comparison pass by finding nothing. */
+const parse = (locale) => {
+  try {
+    return leaves(JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8")));
+  } catch {
+    return new Map();
+  }
+};
+const ENGLISH = parse("en");
+const LEAVES = new Map(LOCALES.map((locale) => [locale, parse(locale)]));
+const populationOk = SHIPPED.includes("en") && ENGLISH.size > 0 && LOCALES.length > 0;
 
 const checks = [];
 const check = (name, ok, detail) => {
@@ -77,67 +105,76 @@ const check = (name, ok, detail) => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/** Check that every named token is still identical across all three locales */
-const tokenDrift = [];
-const missingTokens = [];
-
-for (const [path, reason] of NAMED_TOKENS) {
-  const dot = path.indexOf(".");
-  const namespace = path.slice(0, dot);
-  const key = path.slice(dot + 1);
-
-  const enVal = english[namespace]?.[key];
-  const zhVal = zh[namespace]?.[key];
-  const zhTwVal = zhTw[namespace]?.[key];
-
-  if (enVal === undefined) {
-    missingTokens.push(`${path} is not in English catalogue`);
-    continue;
-  }
-
-  if (zhVal !== enVal) {
-    tokenDrift.push(`${path}: zh="${zhVal}" !== en="${enVal}" (reason: ${reason})`);
-  }
-  if (zhTwVal !== enVal) {
-    tokenDrift.push(`${path}: zh-TW="${zhTwVal}" !== en="${enVal}" (reason: ${reason})`);
-  }
-}
-
+/* 1. The exemption set is read from its definer, not copied into this file. */
 check(
-  "every named technical token is still identical across all locales",
-  tokenDrift.length === 0 && missingTokens.length === 0,
-  tokenDrift.length === 0 && missingTokens.length === 0
-    ? `${NAMED_TOKENS.size} token(s) stable`
-    : `drift: ${tokenDrift.slice(0, 4).join(" | ")}; missing: ${missingTokens.slice(0, 4).join(" | ")}`,
+  "the named-token table is read from the gate that defines it",
+  table.error === null,
+  table.error === null
+    ? `${NAMED_TOKENS.size} entries read from ${basename(DEFINER)}; no token path is a literal in this file`
+    : table.error,
 );
 
-/** Check for new identical values that should be named (the reverse direction) */
-const unnamedIdentical = [];
-for (const [namespace, block] of Object.entries(english)) {
-  for (const [key, enVal] of Object.entries(block)) {
-    if (typeof enVal !== "string") continue;
-    const path = `${namespace}.${key}`;
-    if (NAMED_TOKENS.has(path)) continue;
+/* 2. The population every comparison below is graded on. */
+check(
+  "the fallback and at least one other catalogue are on this plane",
+  populationOk,
+  populationOk
+    ? `${LOCALES.length} catalogue(s) beside the fallback (${LOCALES.join(", ")}), ${ENGLISH.size} English leaf(s) at every depth`
+    : `messages/ ships ${SHIPPED.join(", ") || "nothing"} — ${SHIPPED.includes("en") ? "no catalogue beside en.json, so every comparison below has no second side" : "no en.json, so there is no reference to compare against"}`,
+);
 
-    const zhVal = zh[namespace]?.[key];
-    const zhTwVal = zhTw[namespace]?.[key];
-
-    if (zhVal === enVal && zhTwVal === enVal) {
-      // This value is identical across all three locales but not named
-      // Allow short values (acronyms, numbers) to reduce noise
-      if (enVal.length > 3 && /[a-zA-Z]/.test(enVal)) {
-        unnamedIdentical.push(`${path}: "${enVal}"`);
-      }
+/* 3. Every named token still means the same thing in every language that ships. */
+const tokenDrift = [];
+const missingTokens = [];
+if (populationOk && table.error === null) {
+  for (const [path, reason] of NAMED_TOKENS) {
+    const enVal = ENGLISH.get(path);
+    if (enVal === undefined) {
+      missingTokens.push(`${path} is not in the English catalogue`);
+      continue;
+    }
+    for (const locale of LOCALES) {
+      const other = LEAVES.get(locale);
+      if (!other.has(path)) missingTokens.push(`${path} is not in ${locale}.json`);
+      else if (other.get(path) !== enVal) tokenDrift.push(`${path}: ${locale}="${other.get(path)}" !== en="${enVal}" (reason: ${reason})`);
     }
   }
 }
 
+const stableOk = populationOk && table.error === null && tokenDrift.length === 0 && missingTokens.length === 0;
+check(
+  "every named technical token is still identical across all locales",
+  stableOk,
+  stableOk
+    ? `${NAMED_TOKENS.size} token(s) x ${LOCALES.length} locale(s) = ${NAMED_TOKENS.size * LOCALES.length} comparison(s) stable`
+    : !populationOk || table.error
+      ? `not judged — ${table.error ?? `messages/ ships ${SHIPPED.join(", ") || "nothing"}, ${ENGLISH.size} English leaf(s) and ${LOCALES.length} locale(s) to compare them with`}`
+      : `drift: ${tokenDrift.slice(0, 4).join(" | ")}; missing: ${missingTokens.slice(0, 4).join(" | ")}`,
+);
+
+/* 4. The reverse direction: a value every language shares that carries no name. */
+const unnamedIdentical = [];
+let eligible = 0;
+if (populationOk) {
+  for (const [path, enVal] of ENGLISH) {
+    if (NAMED_TOKENS.has(path)) continue;
+    if (enVal.length <= 3 || !/[a-zA-Z]/.test(enVal)) continue;
+    eligible += 1;
+    for (const locale of LOCALES) {
+      if (LEAVES.get(locale).get(path) === enVal) unnamedIdentical.push(`${locale}: ${path}: "${enVal}"`);
+    }
+  }
+}
+
+const reverseOk = populationOk && unnamedIdentical.length === 0;
 check(
   "no unnamed identical values that should be named tokens",
-  unnamedIdentical.length === 0,
-  unnamedIdentical.length === 0
-    ? "no new unnamed identical values"
-    : `${unnamedIdentical.length} unnamed identical value(s): ${unnamedIdentical.slice(0, 6).join(" | ")}`,
+  reverseOk,
+  reverseOk
+    ? `${eligible} of the ${ENGLISH.size} English leaf(s) visited are eligible for this rule; none is shared by a catalogue without a name`
+    : !populationOk
+      ? `not judged — messages/ ships ${SHIPPED.join(", ") || "nothing"}, ${ENGLISH.size} English leaf(s) and ${LOCALES.length} locale(s) to compare them with`
+      : `${unnamedIdentical.length} unnamed identical value(s): ${unnamedIdentical.slice(0, 6).join(" | ")}`,
 );
 
 const failed = checks.filter((entry) => !entry.ok);
