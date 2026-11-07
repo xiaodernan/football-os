@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-
-import json
 
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
@@ -24,8 +25,6 @@ from app.services.simulation.challenges import CHALLENGE_DISCLAIMER, challenge_c
 from app.services.simulation.service import engine_description, sim_counts, sim_ready, sim_tables_present
 from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_ready, tactics_tables_present
 from app.services.video.status import video_readiness
-from pathlib import Path
-
 from app.services.world import world_counts, world_ready, world_tables_present
 
 router = APIRouter(tags=["meta"])
