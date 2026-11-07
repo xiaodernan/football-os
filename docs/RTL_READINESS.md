@@ -121,8 +121,12 @@ The milestone covers these by page, not by rule.
    The milestone re-opens this only for a walk-proven bad glyph (clipped forms, broken joins, missing
    numerals) — measured, page list, screenshots in `docs/screenshots/`, and then a subset/font pipeline
    lands with the walk that motivated it. Until the walk runs: the mechanism is recorded; nothing to ship.
-3. **Arabic plural categories** enter `qa-plural-select.mjs` (`ar`: zero/one/two/few/many/other) and
-   every `ar` message passes; Arabic has six plural categories — not two.
+3. **Arabic plural categories — the gate half done 2026-11-07; the catalogue half owed at the milestone.**
+   `qa-plural-select.mjs` now discovers which locales to judge from the catalogue directory, not from a
+   hardcoded triple, and `ar` carries the six CLDR categories (`zero/one/two/few/many/other`). Verified
+   on the real catalogues (87 plurals, 2/2, unchanged) and on a three-case fixture: a complete six-category
+   Arabic plural passes; a missing `two` reds naming the missing category; an empty branch reds too.
+   Owed at the milestone: `ar.json` itself, the full population passing all six categories, and parity (item 5).
 4. **`qa-translation-quality.mjs` gains an Arabic pass** (punctuation, no mojibake, no English in
    Arabic copy, script assertions for Arabic text).
 5. **Catalogues ship in all three files** (`en`/`zh`/`zh-TW` untouched; `ar.json` new), parity

@@ -9,7 +9,7 @@
  * Files only: no server, no browser, no port.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse, TYPE } from "@formatjs/icu-messageformat-parser";
@@ -17,13 +17,17 @@ import { parse, TYPE } from "@formatjs/icu-messageformat-parser";
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-const LOCALES = ["en", "zh", "zh-TW"];
+/** The locales the gate judges, discovered from the catalogue directory. A locale gets judged
+ *  the day its file exists — adding `ar.json` attaches the Arabic plural set with zero further
+ *  edits, and its absence keeps the population at three rather than splitting the gate in two. */
+const LOCALES = ["en", "zh", "zh-TW", "ar"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
 
 /** Required plural categories per locale (CLDR) */
 const PLURAL_CATEGORIES = {
   en: ["one", "other"],
   zh: ["other"],  // Chinese has no plural distinction
   "zh-TW": ["other"],  // Traditional Chinese also has no plural distinction
+  ar: ["zero", "one", "two", "few", "many", "other"],  // CLDR: Arabic has six plural categories
 };
 
 const catalogues = {};
@@ -94,7 +98,7 @@ for (const [namespace, block] of Object.entries(catalogues.en)) {
     for (const node of enPlurals) {
       if (node.type === "plural") {
         pluralCount++;
-        for (const locale of ["en", "zh", "zh-TW"]) {
+        for (const locale of LOCALES) {
           const required = PLURAL_CATEGORIES[locale];
           const localeValue = catalogues[locale][namespace]?.[key];
           if (typeof localeValue !== "string") continue;
@@ -118,7 +122,7 @@ for (const [namespace, block] of Object.entries(catalogues.en)) {
         }
       } else if (node.type === "select") {
         selectCount++;
-        for (const locale of ["en", "zh", "zh-TW"]) {
+        for (const locale of LOCALES) {
           const localeValue = catalogues[locale][namespace]?.[key];
           if (typeof localeValue !== "string") continue;
 
