@@ -2831,3 +2831,11 @@ readings under it are then the true ones *for those bytes*, and the live tree ha
 
 **What lands how.** This section and the matching plan pointers are one doc-only commit; nothing in the
 in-flight `qa-locale-tokens` rewrite or in the M13 batch is edited, moved, pinned or reverted by it.
+
+**Addendum, 2026-11-08, 02:5x — the committed tip, read clean.** A detached worktree at `4a2582f`, given
+the same battery this section recorded, reads **28 of 28 gates green** — `qa-locale-tokens` 5/5 on the
+committed pin, `qa-gate-inventory` 209/209, `qa-translation-quality` 9/9, its 11-arm witness 11/11,
+`qa-baseline-gates` 16/16, everything else identical to this section's readings. That is the exact battery
+the web CI job runs on the committed master tip, with one known red standing beside it: `qa-wire-readers`
+12/18 on the committed tree — the M13 milestone's red (§24), which stops the web job at its gate step until
+that milestone lands. Everything this arc owns, on the committed tip, is green.
