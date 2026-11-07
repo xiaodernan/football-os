@@ -1939,3 +1939,48 @@ formatting, icu-messages 2/2, plural-select 2/2 (89 plurals), quality 4/4, fresh
 CI, tab by tab, will go green in the following order when the milestone lands: `api` (has the fix already), then
 `web` at the wire gate only.
 
+## 26. The Arabic gates are in force, and they don't know that yet (2026-11-07; item 4 of the first RTL milestone)
+
+**What this section records.** Between the M13 commit still working in the tree, two RTL-milestone gates were
+landed dormant by design: `qa-plural-select.mjs` (item 3, `1e1984b`) and `qa-translation-quality.mjs` (item 4,
+`8281ef3`). Both now judge whatever locale files exist in the catalogue directory, discovering them instead of
+listing them; both have an Arabic arm that attaches the moment `messages/ar.json` appears. The discipline is the
+one §22 and §24 keep learning: **a gate that is vacuous because its population is empty is a floor, not a ceiling**
+— so these two gates are verified against a `.scratch` fixture that reds on purpose, not against an empty population.
+
+**The Arabic arms, item 3 (`1e1984b`).** `qa-plural-select.mjs` now (a) builds `LOCALES` from the existence of
+the catalogue files and (b) carries Arabic's full CLDR plural set — `zero/one/two/few/many/other`, not two —
+and refuses an empty branch or a missing category. Verified on three scratch arms: a complete six-category Arabic
+plural passes 2/2; a message whose `two` is missing reds with the named category; an empty `plural` branch reds
+too. The real catalogues are untouched and still pass 2/2 (87 plurals, unchanged — the Arabic arm is a
+no-op today, not a silent widening).
+
+**The Arabic arms, item 4 (`8281ef3`).** `qa-translation-quality.mjs` runs the same families of check on Arabic:
+untranslated English words (with the same allowlist and the same identical-to-en exemption as the Chinese arms),
+Arabic-appropriate punctuation (Arabic message ending in Latin `.`/`!`/`?` reds; Arabic full stop passes),
+mojibake — **with the byte class the old pattern could not see**: Arabic UTF-8 decoded as Latin-1 lives in
+`\xD8-\xDB` (Ø/Ù/Ú/Û) and the prior regex had nothing for it — and a new fifth check that every Arabic message
+not coincident with its English twin and not a named technical token **carries Arabic script**. Verified on five
+arms: complete Arabic passes 5/5; `Home page` (≠ en) reds check 1 (untranslated English words) and check 5 (no
+Arabic script); Arabic mojibake reds check 3 (the new clause); Latin-`.`-ending reds check 2; `in order to` in
+Arabic text reds check 1 and check 4. All five arms were proven in one fixture run, not reader-trusted.
+
+**What CI sees of it — honest reading.** These two commits each triggered a fresh CI run; the runner is one
+per account, so they are queued behind the Live-milestone runs and will spend most of their wall-clock alive
+but stuck on `npm ci`'s end of the pipeline, like the pushes before them. The Arabic arms change no existing
+verdict (the real catalogues are green to begin with); nothing about them delays the wire-readers re-green.
+
+**What the arc still owes, and who owes it.**
+- Item 3 — the Arabic catalogue itself (`ar.json`), the full population passing all six categories, and parity.
+- Item 4 — the Arabic milestone runs the pass against the real population once `ar.json` lands; today's arms
+  proved the pass detects defects, not that the real Arabic copy is good (§7).
+- Item 5 — catalogues parity across four locales once `ar.json` exists — a change to `qa-locale-completeness.mjs`
+  (currently typed as three targets) with a witness, exactly the shape item 5 names.
+- Item 6 — the walk under `dir=rtl` (bidi pinning, the 8 JSX-arrow rules, the audit §4 "what the walk will judge").
+- Item 7 — CI registration of the Arabic locale.
+- Item 8 — the Arabic locale ships only when items 1–7 are green.
+
+**What is not claimed.** The Arabic gates are for a language this repository has never shipped. They have no
+pulled population, no walk, and no licence; they are precision instruments, run in the dark, and full credit
+for Arabic belongs to the milestone that walks the rendered Arabic bytes.
+
