@@ -1,12 +1,12 @@
 # The message catalogues
 
-Three files, one per locale (`apps/api/app/api/v1/meta.py` publishes them as `locales` and `locales_planned`):
+The catalogues, one per locale (`apps/api/app/api/v1/meta.py` publishes whichever it discovers as `locales`; `locales_planned` is the spec's roadmap — three today):
 
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 4051 of 4096 keys in Simplified Chinese, and all 4096 present (the other 45 are placeholders, machine tokens and acronyms that are identical in every locale) | **yes** |
-| `zh-TW.json` | 4051 of 4096 keys written in Traditional Chinese, not converted from the `zh` file, and all 4096 present (same 45 identical tokens) | **yes** |
+| `zh.json` | 4224 of 4269 keys in Simplified Chinese, and all 4269 present (the other 45 are placeholders, machine tokens and acronyms that are identical in every locale) | **yes** |
+| `zh-TW.json` | 4224 of 4269 keys written in Traditional Chinese, not converted from the `zh` file, and all 4269 present (same 45 identical tokens) | **yes** |
 
 ## What a reader gets today
 
@@ -17,7 +17,7 @@ Chinese filenames, and nothing read a catalogue anyway — the interface was Eng
 so the locale the middleware had always resolved was invisible. `apps/api/tests/test_locale_claims.py` is what
 stopped that being invisible: it holds `locales` to these files in both directions.
 
-**Every page reads the catalogue.** The arc that wired the interface namespace by namespace is finished: the copy gate (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every `components/**/*.tsx`**, and it holds the count at 0 on two floors: the three shapes the arc knew about (JSX text, a label-ish attribute, a label-ish object property) and the **fifth** shape it found on 2026-10-21 — a string literal that reaches the reader from somewhere else, a sentence a helper returns, a wording a ternary chooses, or a template that assembles one. Both are 0 now, so a page that adds copy in English fails the build; the metadata gate agrees that every page's tab and heading is now locale-driven (**tabs keyed 51 / literal 0, headings keyed 43 / literal 0**). The gate's **fifth check** holds the other half of the contract: a key read without the values its message needs prints the placeholders themselves, so every key call is checked for its values as well as for its existence. The 45 keys that still fall back in `zh.json` (45 in `zh-TW.json`) are the ones that are *supposed* to: a value that is identical in both catalogues is a technical token - a product name, an enum, a unit - and the translated counts above are floors rather than pins, so a translation batch raises them without touching this file. That set is **named**, not assumed: `apps/web/scripts/qa-locale-tokens.mjs` lists all 44 with the reason each one is the same in every language (an acronym, an API field name printed as itself, a template of names, a proper name used as an example), and a value that is identical without a name is a finding. The same gate holds the other half — **the English catalogue holds no Chinese**, which it did not before 2026-10-22 (`en.json` carried `scout.placeholder` as a Chinese sentence, so an English reader saw Chinese and the Chinese copy of it made the coverage figures call it translated). The **population** is a pin, not a floor: `test_locale_claims.py` recomputes it from `en.json` and fails if this table's number is not the number of keys the catalogue holds, so a key added or removed here without this table being recomputed fails the suite.
+**Every page reads the catalogue.** The arc that wired the interface namespace by namespace is finished: the copy gate (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every `components/**/*.tsx`**, and it holds the count at 0 on two floors: the three shapes the arc knew about (JSX text, a label-ish attribute, a label-ish object property) and the **fifth** shape it found on 2026-10-21 — a string literal that reaches the reader from somewhere else, a sentence a helper returns, a wording a ternary chooses, or a template that assembles one. Both are 0 now, so a page that adds copy in English fails the build; the metadata gate agrees that every page's tab and heading is now locale-driven (**tabs keyed 51 / literal 0, headings keyed 43 / literal 0**). The gate's **fifth check** holds the other half of the contract: a key read without the values its message needs prints the placeholders themselves, so every key call is checked for its values as well as for its existence. The 45 keys that still fall back in `zh.json` (45 in `zh-TW.json`) are the ones that are *supposed* to: a value that is identical in both catalogues is a technical token - a product name, an enum, a unit - and the translated counts above are floors rather than pins, so a translation batch raises them without touching this file. That set is **named**, not assumed: `apps/web/scripts/qa-locale-tokens.mjs` lists all 45 with the reason each one is the same in every language (an acronym, an API field name printed as itself, a template of names, a proper name used as an example), and a value that is identical without a name is a finding. The same gate holds the other half — **the English catalogue holds no Chinese**, which it did not before 2026-10-22 (`en.json` carried `scout.placeholder` as a Chinese sentence, so an English reader saw Chinese and the Chinese copy of it made the coverage figures call it translated). The **population** is a pin, not a floor: `test_locale_claims.py` recomputes it from `en.json` and fails if this table's number is not the number of keys the catalogue holds, so a key added or removed here without this table being recomputed fails the suite.
 
 ### The 0 was wrong twice, and the gate that found it (2026-10-21)
 
@@ -49,11 +49,13 @@ is not withheld until it is complete; missing keys fall back, which is what ever
 
 1. translate any value in `zh.json` so it differs from `en.json`;
 2. run the suite — it now fails and names the locale, and prints how many keys still fall back;
-3. add that locale to `locales` in `app/api/v1/meta.py`;
+3. the test holds and the locale is already advertised: `apps/api/app/api/v1/meta.py` derives `locales` from
+   the catalogue directory, so a `zh.json` that differs *is* the trigger — no edit to `meta.py` required;
 4. the suite passes.
 
 The reverse also fails: advertising a locale whose catalogue is still a copy. That was the state all three files
-were in, and it is the check that would have caught somebody switching the field early.
+were in, and it is the check that would have caught somebody switching the field early. `meta.py` cannot make that
+mistake — it reads the catalogue, not a hand-written list.
 
 ## Two things to keep true
 

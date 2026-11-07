@@ -24,13 +24,13 @@ commit.** A green echo is not evidence; the gate named beside each item is the e
 
 | # | Gate / step | Command | The verdict it must give |
 | --- | --- | --- | --- |
-| 1 | parallel catalogues | edit `en.json`, `zh.json`, `zh-TW.json` together | same keys, same shape, in all three |
+| 1 | parallel catalogues | edit `en.json`, `zh.json`, `zh-TW.json` together (and `ar.json`, `he.json` when/where they ship) | same keys, same shape, in every catalogue the directory carries |
 | 2 | key existence & values | `node apps/web/scripts/qa-i18n-literals.mjs` | 0 literal sites; every key asked for is held; every placeholder supplied |
 | 3 | placeholder agreement | `node apps/web/scripts/qa-icu-messages.mjs` | 2/2 — no key asks for different placeholders in different catalogues |
 | 4 | plural completeness | `node apps/web/scripts/qa-plural-select.mjs` | 2/2 — CLDR categories present, no empty branch |
 | 5 | dead keys | `node apps/web/scripts/qa-unused-keys.mjs` | 0 asked-for-by-nothing; a new dead key lowers nothing, it raises the floor |
-| 6 | parity | `node apps/web/scripts/qa-locale-completeness.mjs` | 2/2 — namespaces equal in all three |
-| 7 | fallback | `node apps/web/scripts/qa-locale-fallback.mjs` | every English key non-empty in zh and zh-TW |
+| 6 | parity | `node apps/web/scripts/qa-locale-completeness.mjs` | 2/2 — parity in every catalogue the directory carries |
+| 7 | fallback | `node apps/web/scripts/qa-locale-fallback.mjs` | every English key non-empty in every non-English catalogue |
 | 8 | tokens | `node apps/web/scripts/qa-locale-tokens.mjs` | 5/5 — a value identical in every catalogue must be a **named** technical token; README table recomputed if the population moved |
 | 9 | same-sentence wording | `node apps/web/scripts/qa-locale-tokens.mjs` (check 5) | 0 / 0 — identical English held under two keys is one wording everywhere |
 | 10 | translation quality | `node apps/web/scripts/qa-translation-quality.mjs` | no untranslated English in Chinese copy, punctuation per locale, no mojibake, no literal-structure |
@@ -50,7 +50,7 @@ commit.** A green echo is not evidence; the gate named beside each item is the e
   branches; zh carries `other` with the whole noun phrase.
 - **Placeholders keep their names in every catalogue.** `{count}` stays `{count}`; translators translate
   around it, not it.
-- **An identical-in-all-three value must be a named token** (acronyms, units, API field names printed
+- **An identical-in-all-shipped-catalogues value must be a named token** (acronyms, units, API field names printed
   as themselves). If a new one appears, add it to `qa-locale-tokens.mjs`'s list with its reason — never
   leave an identical sentence unnamed.
 - **A sentence held by two keys is one sentence.** The em-dash belongs to the sentence, not to the key;
@@ -64,7 +64,9 @@ commit.** A green echo is not evidence; the gate named beside each item is the e
 1. First ask whether the gate can see the defect. (2026-11-06 found four that could not — §22 — and
    two of them passed because they measured nothing.)
 2. If the gate is blind, fix the gate (with a witness), not the tree.
-3. If the gate is right, fix the tree in all three catalogues **in the same slice**, and re-run every
-   gate — parity is not a local fix.
+3. If the gate is right, fix the tree in **every shipped catalogue** **in the same slice**, and re-run every
+   gate — parity is not a local fix. (As of 2026-11-07 the battery discovers the locale set by the existence of the
+   catalogue in `apps/web/messages/` — adding `ar.json` or `he.json` attaches that locale to every gate verdict below
+   with zero edits. Tell one team the gate still measures three and they will ship an incomplete Arabic slice.)
 4. If the fix is a legitimate divergence, name it in the ledger with the reason, in the same commit.
 5. Record what changed in `I18N_ARC_VERIFICATION.md` and, if figures moved, in the README pin.
