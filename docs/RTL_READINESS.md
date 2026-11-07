@@ -164,7 +164,5 @@ The milestone covers these by page, not by rule.
 ## What is deliberately not claimed
 
 - No RTL locale exists today; nothing in this document renders Arabic or Hebrew.
-- The 8 JSX arrow sites are not fixed yet — they are listed, not silently absorbed.
-- Arabic is the harder script (joining + six plurals); Hebrew is the simpler pass (no case, two
-  plurals: one/other-ish, no joining). If they are sequenced, Hebrew first is safer — but both
-  stay behind the same checklist.
+- The 9 JSX arrow sites listed in §3 were all retired 2026-11-07 — the raw glyphs are gone, the catalogue carries the directional copy, and the gates keep new JSX-text arrows out. See §3 of this document.
+- Arabic is the harder script (joining + six plurals); Hebrew is the simpler pass (no case, two plurals: one/two/other — `qa-plural-select` winds both, dormant-by-absence). Both stay behind the same checklist.
