@@ -425,11 +425,15 @@ satisfied by a walker that reads nothing, cardinal completeness, **ordinal** com
 CLDR table with an explicit refusal where a locale's ordinal set is undeclared, and select completeness — and
 `apps/web/scripts/qa-plural-select-witness.mjs` holds each of those verdicts red alone over scratch
 catalogues, 16/16, against a reverse control in which the pre-fix gate read `passed=2 total=2 failed=0` on
-every charged fixture. The 86 this section counted is 87 on today's tree and was 89 at `55f7ea7`; the
-`106 locale messages whose plural-node count differs from English` the first measurement found are exactly
-the "flattened" column the cured gate now prints — `87 English plural(s); comparisons per locale: 87 en, 23
-zh (64 flattened), 23 zh-TW (64 flattened)` — so the number is no longer an unexplained discrepancy but the
-named, legitimate shape of a one-category language.
+every charged fixture. The 86 this section counted is **87 on the shared working tree's** catalogues and
+**89 on `HEAD`'s and on `55f7ea7`'s** — the shipped gate run over each plane's own `messages/`, which is how
+the floor of 80 can sit under both without judging either lane's bytes. The `106 locale messages whose
+plural-node count differs from English` the first measurement found are exactly the "flattened" column the
+cured gate prints on this tree — `87 English plural(s); comparisons per locale: 87 en, 23 zh (64 flattened),
+23 zh-TW (64 flattened)`, and `89 … 25 zh (64 flattened), 25 zh-TW (64 flattened)` over HEAD's catalogues —
+so the number is no longer an unexplained discrepancy but the named, legitimate shape of a one-category
+language, and the 25-versus-23 on the `zh` side only tracks English's own 89-versus-87, so it is a count of
+the lane's uncommitted keys rather than a verdict about them.
 
 **Residuals this increment leaves, named.** The walk still quotes the wage rule's divisor by hand
 (`asking / 500`, checked to ±2.5 — the half-step of the `round_5` it is reproducing) and still needles the
