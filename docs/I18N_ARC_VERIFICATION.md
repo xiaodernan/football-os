@@ -1858,7 +1858,7 @@ chronological order:
 | `42350677139` | 11-07 (161fc75) | Wire-readers | **success** |
 | `42350741750` | 11-07 (4181d3e) | Wire-readers | **success** |
 | `42350947068` | 11-07 (46c637a) | **`Run npm ci`** — `EUSAGE`, de-synchronized lock | **success** |
-| `42361729855` | 11-07 (db6e9a3) | Wire-readers expected | **success** expected |
+| `42361729855` | 11-07 (db6e9a3) | **Wire-readers only — `npm ci` green in CI** | in progress at this record — lint, types, 9 suite legs green at `161fc75`/`4181d3e` and running here as well |
 
 **Cause 1 — the api job: one test graded on the runner, not the tree (ours, fixed).**
 `tests/test_ci_trigger.py::test_the_branch_fallback_answers_on_a_detached_checkout_and_names_why_when_it_cannot`
