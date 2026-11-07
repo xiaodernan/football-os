@@ -1,7 +1,7 @@
 # I18N Arc — living plan
 
 Measured on the working tree **2026-11-07** (`3db6075`, with the in-flight M13 batch uncommitted —
-the arc's own record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§38, which is the honest ledger of
+the arc's own record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§39, which is the honest ledger of
 this arc; this file is a plan, never the evidence). Every figure below is re-derived by the gate named
 beside it.
 
@@ -23,13 +23,13 @@ beside it.
 | `qa-locale-content.mjs` | 3/3 |
 | `qa-locale-formatting.mjs` | 2/2 — format population read for real |
 | `qa-translation-quality.mjs` | 6/6 on the current tree — Arabic arms 5/5 dormant-by-absence, Hebrew arm same shape once `he.json` ships (§31); every arm verified arm-by-arm on a fixture |
-| `qa-translation-freshness.mjs` | 2/2 — `.gate-baseline 3bbf857→d7784b2`; CI uses the event diff (recorded in §25) |
+| `qa-translation-freshness.mjs` | 2/2 — `.gate-baseline 3bbf857→d7784b2`; CI uses the event diff (recorded in §25). Freshness's witness, `qa-baseline-gates.mjs`, was caught at 13/16 (§39) — verdict names from before the §35 migration — and now reads 16/16 |
 | `qa-population-floor.mjs` | 3/3 — may only grow |
 | `qa-rtl-readiness.mjs` | 8/8 |
 | `qa-namespace-ownership.mjs` | 2/2 |
 | `qa-gate-inventory.mjs` | 204/204 on the current tree — §37's witness grew the ledger by five named gates |
 | `qa-wire-readers.mjs` | 18/18 on the full working tree; **12/18 on the committed tree — six named reds, one owner (the uncommitted M13 milestone). See §24/§25.** |
-| `I18N_ARC_VERIFICATION.md` | §22 (blind gates), §23 (live walk), §24 (corrections), §25 (CI forensics), §26 (dormant Arabic arms), §27 (held notes), §28 (battery discovery), §29 (`/capabilities` discovery), §30 (state summary, both trees), §31 (Hebrew arms), §32 (residual sweep), §33 (API-strings witness), §34 (state summary, both trees), §35 (translation-freshness discovered), §36 (CI refuses §35 → both jobs red → §36 records and repairs), §37 (qa-plural-select could not be wrong; seven checks + witness), §38 (README floors rise to the tree; the queue, measured) |
+| `I18N_ARC_VERIFICATION.md` | §22 (blind gates), §23 (live walk), §24 (corrections), §25 (CI forensics), §26 (dormant Arabic arms), §27 (held notes), §28 (battery discovery), §29 (`/capabilities` discovery), §30 (state summary, both trees), §31 (Hebrew arms), §32 (residual sweep), §33 (API-strings witness), §34 (state summary, both trees), §35 (translation-freshness discovered), §36 (CI refuses §35 → both jobs red → §36 records and repairs), §37 (qa-plural-select could not be wrong; seven checks + witness), §38 (README floors rise to the tree; the queue, measured), §39 (baseline-gates witness drift, caught locally, cured) |
 | `ab82384` CI | api green (two single-test causes cured: `ff521d9` runner-graded fallback; `161fc75` stale audit figures — the `/live` pages outgrew `AUDIT_FIGURES`); web all green through `Wire-readers`; `npm ci` EUSAGE (rendered by a local-side `--legacy-peer-deps` de-sync) cured at `db6e9a3`; the sole remaining red anywhere is `Wire-readers`, owned by the milestone |
 
 ## The goal

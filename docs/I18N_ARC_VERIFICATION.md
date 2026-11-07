@@ -2612,3 +2612,31 @@ call CI green from here.
 **Also observed:** the §36 verification-refresh edit was absorbed by the parallel §37 commit `ee5464b` —
 the doc ink is honest there (the detached `55f7ea7` verification did run and passed), only the authorship
 is shared. Nothing in that commit was rewritten.
+
+## 39. The local battery caught what the wedged queue hid — `qa-baseline-gates` witness drift (2026-11-08)
+
+**The red.** Walking the full battery on `3c63a26` surfaced `qa-baseline-gates.mjs` at **13/16**. Checks
+4, 5 and 7 — the three that hold the `qa-translation-freshness` verdict names — searched for
+`no stale Simplified` / `no stale Traditional`. Those were the hardcoded names the gate printed before
+§35's migration to catalogue-directory discovery; since §35 it prints `no stale <stem> translations`
+(`no stale zh translations`, `no stale zh-TW translations`), one per shipped non-English catalogue. The
+witness compared against names that have not existed since that commit — verdict-shape change §35 shipped
+without sweeping the witness, exactly the class this arc cured twice already (§33, §37).
+
+**Why CI never saw it.** The web job in run `42380950105` died at the Locale-token step, which sits
+upstream of the baseline-gates step — so the witness never ran there. Every web run after `504c805`
+cured both reds has been queued-and-unstartable (measured in §38), so the drift had nowhere to surface
+but here, on this machine, in the full-battery walk.
+
+**The cure** (`qa-baseline-gates.mjs` only, three lines): the three needles are now the discovered
+names — `no stale zh translations` (Simplified path), `no stale zh-TW translations` (Traditional path),
+and the `--init-baseline` path searches `no stale zh translations` as before. `qa-baseline-gates` reads
+**16/16** afterwards, arm by arm.
+
+**Standing rule restated, with the evidence earned this walk.** A verdict the battery can emit must be a
+name a witness can find, in the same commit. §35 broke it, §39 repays it; the next persona to retire a
+verdict name owes this walk.
+
+**Predictions re-verified.** The file's header comment still predicts 16 checks — all 16 now pass,
+unchanged population, and the check names in the predict list stay descriptive prose (Simplified/Traditional
+describe the fixture's semantics, which the bytes still exercise).

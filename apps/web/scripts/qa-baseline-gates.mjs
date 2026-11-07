@@ -181,8 +181,8 @@ out = run(FRESHNESS, A);
 count = tally(out);
 check(
   "4 freshness charges Simplified when only it lagged (rc 1, failed=1, Traditional green)",
-  out.status === 1 && count?.failed === 1 && verdictLine(out, "no stale Simplified").startsWith("FAIL") && verdictLine(out, "no stale Traditional").startsWith("PASS"),
-  `rc=${out.status} tally=${JSON.stringify(count)} | ${verdictLine(out, "no stale Simplified")}`,
+  out.status === 1 && count?.failed === 1 && verdictLine(out, "no stale zh translations").startsWith("FAIL") && verdictLine(out, "no stale zh-TW translations").startsWith("PASS"),
+  `rc=${out.status} tally=${JSON.stringify(count)} | ${verdictLine(out, "no stale zh translations")}`,
 );
 
 at(ZHTW_STALE);
@@ -190,8 +190,8 @@ out = run(FRESHNESS, A);
 count = tally(out);
 check(
   "5 freshness charges Traditional when only it lagged (rc 1, failed=1, Simplified green)",
-  out.status === 1 && count?.failed === 1 && verdictLine(out, "no stale Traditional").startsWith("FAIL") && verdictLine(out, "no stale Simplified").startsWith("PASS"),
-  `rc=${out.status} tally=${JSON.stringify(count)} | ${verdictLine(out, "no stale Traditional")}`,
+  out.status === 1 && count?.failed === 1 && verdictLine(out, "no stale zh-TW translations").startsWith("FAIL") && verdictLine(out, "no stale zh translations").startsWith("PASS"),
+  `rc=${out.status} tally=${JSON.stringify(count)} | ${verdictLine(out, "no stale zh-TW translations")}`,
 );
 
 at(BOTH_STALE);
@@ -209,7 +209,7 @@ out = run(FRESHNESS);
 count = tally(out);
 check(
   "7 freshness still reads the baseline file --init-baseline writes (same red, no env)",
-  out.status === 1 && count?.failed === 1 && verdictLine(out, "no stale Simplified").startsWith("FAIL"),
+  out.status === 1 && count?.failed === 1 && verdictLine(out, "no stale zh translations").startsWith("FAIL"),
   `rc=${out.status} tally=${JSON.stringify(count)}`,
 );
 
