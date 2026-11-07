@@ -2778,3 +2778,56 @@ literal-structure rules are named for Chinese and already read every shipped loc
 out loud (`the sentence-ending-punctuation rules fire for zh and zh-TW, and for ar and he the day their
 catalogues ship`) — which means `ar` will be judged by a rule whose punctuation table was written for CJK and
 has never been exercised on Arabic punctuation. The first real `ar.json` is where that gets measured.
+
+## 42. The CI web and api jobs, run locally step by step — the reading, not the feeling (2026-11-08)
+
+**Why this section exists.** §38 measured that no master CI run has started since 2026-11-07T16:23Z; those
+runs remain queued when this is written. What master would run when the queue drains cannot be read from the
+queue, so it was read from the tree instead, step by step, on 2026-11-08 between roughly 01:30 and 02:05 —
+readings under it are then the true ones *for those bytes*, and the live tree has since moved (the in-flight
+`qa-locale-tokens` rewrite landed in the working tree at 02:42 — §41's own slice, reserved for its writer).
+
+**Web (working tree, at `8fd2163`, with the M13 milestone's in-flight files):**
+
+- `npm run typecheck` (`tsc --noEmit`) — exit 0, no diagnostics.
+- `npm run build` — production build **completes**; every route compiles and the middleware bundles (roughly
+  275 kB middleware; route table ends, first-load JS quoted at 103 kB shared). This is the strongest web-side
+  signal in this section, because the gates below only read files and this reads the product.
+- The gate battery at this state: 27 of 28 green, `qa-locale-tokens` 4/5 (the 4096-pinned README against the
+  in-flight 4269 keys — the milestone's red, §36). `qa-baseline-gates` read 16/16 **after** §39 cured its
+  needles; verified again at `8fd2163`.
+- `npm ci` not re-run (installed `node_modules` consistent with the untouched lockfile).
+
+**API (working tree):**
+
+- `ruff check apps/api/app/api/v1/meta.py` — clean (§36).
+- `mypy app` — **Success: no issues found in 164 source files**, exit 0.
+- `alembic upgrade head` on a **virgin scratch container** (`pgvector/pgvector:pg16`, port 54322, removed
+  afterwards — never the dev database): migrations `0001`…`0058` apply cleanly, including the in-flight
+  M13 Phase 9–11 set (`0053 → 0058`: stadium → gate prices → ground run costs → season tickets → training
+  ground). `alembic check` answers **No new upgrade operations detected**.
+- `python -m seed --with-demo-user` — exit 0; 92 public tables; knowledge base indexes 19 documents / 155
+  chunks (`hash-local`, dim 256); demo account ready.
+- `pytest` (PostgreSQL leg, `FOOTBALL_OS_TEST_DATABASE_URL` pointed at the same scratch server): **this
+  suite did not complete.** It was cut at 60 minutes at 60% through the run. The tail at the cut shows four
+  failures, all in `tests/test_openapi_contract_currency.py` — the committed `docs/api/openapi.json` is
+  492,817 bytes; the tree serialises to 510,330; the milestone's own re-export on disk is exactly 510,330 and
+  uncommitted (the M13 lane, another window). The test compares the tree against the *committed* contract, so
+  it measures staleness of the committed bytes, not a defect in the app's answers — every piece of the
+  failure is the in-flight milestone's re-export not having landed yet. Zero reds in anything else that
+  executed; nothing the i18n lane owns was red.
+
+**Honest limits.**
+
+1. The postgres leg of the suite was measured only to 60%; "everything else green" holds for that portion,
+   not for the remaining 40%, which this machine could not afford.
+2. `qa-locale-tokens`'s current readings are a moving target while the in-flight rewrite is live; this section
+   quotes only the pre-rewrite state (`8fd2163`).
+3. **CI is not claimed green.** The queue decides when master learns these readings; this section only says
+   they were taken where they would be taken. The four named reds all trace to one thing — the M13 milestone
+   not having landed: wire-readers' six (§24), the README pin drift (§36), the four `test_openapi_contract_currency`
+   failures (committed contract vs tree), and the `qa-locale-tokens` pin clause (in-flight 4269 keys). None
+   belongs to this arc to cure; all four close when the milestone lands and its re-pin does.
+
+**What lands how.** This section and the matching plan pointers are one doc-only commit; nothing in the
+in-flight `qa-locale-tokens` rewrite or in the M13 batch is edited, moved, pinned or reverted by it.
