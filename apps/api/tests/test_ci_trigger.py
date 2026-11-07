@@ -34,6 +34,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -119,6 +120,24 @@ def _git_text(root: Path, *args: str) -> str:
 
 def _git_lines(root: Path, *args: str) -> list[str]:
     return [line.strip() for line in _git_text(root, *args).splitlines() if line.strip()]
+
+
+@contextmanager
+def _without_github_env():
+    """Suspend the runner's `GITHUB_*` plumbing for the graded calls.
+
+    The fallback under test answers from the *local checkout* when no push event names a branch; in CI a
+    `push` event is exactly what names one (`GITHUB_REF_NAME=master`), and leaving it in place grades the
+    runner's environment instead of the throwaway repository — the honest form of the gate is one that
+    measures the fallback wherever the suite runs.
+    """
+    saved = {key: value for key, value in os.environ.items() if key.startswith("GITHUB_")}
+    for key in saved:
+        del os.environ[key]
+    try:
+        yield
+    finally:
+        os.environ.update(saved)
 
 
 def _branches_carrying_head(root: Path) -> list[str]:
@@ -239,7 +258,7 @@ def test_the_branch_fallback_answers_on_a_detached_checkout_and_names_why_when_i
     that branch — the shape every landing plane is — and a detached checkout at a commit only a side branch carries
     answers nothing, which is what makes the skip above a statement about the commit rather than about git.
     """
-    with tempfile.TemporaryDirectory() as tmp:
+    with _without_github_env(), tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp)
         # The probe's repository must not inherit this host's signing or hook path: a global `commit.gpgsign`
         # or a `core.hooksPath` that needs a service would fail a commit with nothing to do with what is graded.
