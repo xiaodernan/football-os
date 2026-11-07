@@ -1,6 +1,6 @@
 # I18N Arc — living plan
 
-Measured on the working tree **2026-11-07** (`9e89acb`, with the in-flight M13 batch uncommitted —
+Measured on the working tree **2026-11-07** (`3db6075`, with the in-flight M13 batch uncommitted —
 the arc's own record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§30, which is the honest ledger of
 this arc; this file is a plan, never the evidence). Every figure below is re-derived by the gate named
 beside it.
@@ -65,8 +65,11 @@ so; and the day a locale that does not exist today is added, the cost is one cat
    another lane).
 3. **RTL milestone, when it is owed.** `docs/RTL_READINESS.md` lists the acceptance items — fonts,
    plural categories, punctuation, bidi policy, catalogue parity, walks under `dir=rtl`, CI registration.
-   Item 1 closed 2026-11-07; items 2–5 pre-wired and recorded (§20, §25, §26); the milestone inventory
-   lives in §27. Do not ship `ar` or `he` before all the items are green.
+   Item 1 closed 2026-11-07; items 2–5 landed 2026-11-07 (font decision item 2; plural arms 3; quality
+   arms 4; parity discovery 5; Arabic gates §26, `af06f60`/`9e89acb`/`f7e2563`/`c852a42`); the whole battery
+   discovers catalogues by existence (§28); the API's `/capabilities` discovers them too (§29); the arc's standing
+   at f7e2563 is recorded. The milestone inventory lives in §27; state-of-the-arc in §30. Do not ship `ar` or
+   `he` before all the items are green.
 4. **The discipline.** Every new slice follows `NEW_SURFACE_COMPLIANCE.md`; gate verdict-shape changes
    ship with witnesses; the verification doc grows a section per slice, push every time.
 
