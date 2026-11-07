@@ -168,9 +168,14 @@ jobs:
         # so the API's wording could change and the page would not follow it. The API's refusal
         # sentences reach the web tier through the catalogue, so the catalogue is the source of truth
         # and the gate reads them from there. It also holds that the refusal boundary is wired on both
-        # paths a refusal arrives through, and that every refusal code's sentence is translated in both
-        # Chinese catalogues. Files only.
+        # paths a refusal arrives through, and that every refusal code's sentence is translated in every
+        # shipped non-English catalogue, discovered from the directory rather than named. Files only.
         run: node scripts/qa-api-strings.mjs
+      - name: API-strings witness (the gate's three verdicts, on scratch catalogues)
+        # Same command as `scripts/check.sh`. Runs the shipped gate against a fixture per verdict —
+        # an exact copy in source, a missing localiser door, a refusal left in English — and confirms
+        # each reds the right check and nothing else. Catches a gate that drifted into a green lie.
+        run: node scripts/qa-api-strings-witness.mjs
       - name: Error-boundary gate (the tree holds a failure boundary, in the reader's language)
         # Same command as `scripts/check.sh`. A page that throws is caught by the framework's own error
         # screen unless the tree holds a boundary, and that screen is English in every language. The

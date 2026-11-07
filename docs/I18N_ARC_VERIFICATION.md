@@ -2244,3 +2244,50 @@ the directory" or "everywhere we remembered to ask the directory". The honest ar
 the leftover heads are what the sweep measures. §32 exists because the previous sections were claiming
 "every gate" while two still said `zh` explicitly.
 
+## 33. The API-strings verdict-shape change gets its own witness (2026-11-07)
+
+§32 changed `qa-api-strings.mjs`'s population from "the two initial Chinese catalogues" to
+"whichever catalogues the directory carries" — a verdict-shape change. Per the plan's standing discipline
+("gate changes ship with witnesses whenever the verdict shape changes"), the change ships with
+`qa-api-strings-witness.mjs`, registered in **both** runners in the same commit:
+`scripts/check.sh` (after the parent under `API-strings gate`) and `.github/workflows/ci.yml` (paired with
+the parent's step).
+
+`qa-api-strings-witness.mjs` asserts each of the three checks against a scratch catalogue/skip:
+
+| arm | fixture | expected |
+| --- | --- | --- |
+| 0 | the real tree read by the shipped gate | 3/3 green |
+| A | a source file carrying a copy of a catalogue-owned sentence | check 1 FAIL naming `errors.account_delete_confirmation` (fetched from the real `en.json`, not typed) |
+| B | the localiser door removed (`lib/refusals.ts` deleted) | check 2 FAIL — `doctrine=true` ("does not export localiseRefusal" | ".refusals.ts does not exist") |
+| C | `zh.json` one refusal sentence rewritten to the English twin | check 3 FAIL — `zh: errors.<code> is the English sentence` names the code |
+| D | the real tree after the arms | 3/3 green, no leak |
+
+Result: **5/5 PASS**. The witness's own discovery is the same `LOCALES = ["en", "zh", "zh-TW", "ar", "he"]
+.filter(existsSync)` shape as the gate's — the fixture arms themselves discover the real three-locale
+set, so a future `ar.json` landing extends the witness population automatically:
+
+```javascript
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+  existsSync(join(REAL, `${locale}.json`)),
+);
+```
+
+**Inventory** now reads **199/199** (194 + this new witness).
+
+Each runner file invokes it:
+
+```sh
+# scripts/check.sh
+(cd apps/web && node scripts/qa-api-strings-witness.mjs)
+
+# .github/workflows/ci.yml
+run: node scripts/qa-api-strings-witness.mjs
+```
+
+Watching this landed as a witness matters because each of the three checks it breaks in fixture
+isolates a real defect class this arc has fixed before — a literal that the catalogue owns printed
+on-screen (the "saves a copied refusal" hole), a missing localiser (the "localiser nobody calls" hole),
+a refusal left untranslated for one reader. The witness is the document that the gate is still the
+one that catches them.
+

@@ -170,8 +170,10 @@ echo "── Web: API-string gate ───────────────�
 # the API's own message, held by apps/api/tests/test_locale_claims.py), so the catalogue is the source of
 # truth and this gate reads them from there rather than teaching a second census of the API's source. It
 # also holds that the refusal boundary is wired on both paths a refusal arrives through, and that every
-# refusal code's sentence is translated in both Chinese catalogues. Files only: no server, no browser.
+# refusal code's sentence is translated in every shipped non-English catalogue, discovered from the
+# directory. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-api-strings.mjs)
+(cd apps/web && node scripts/qa-api-strings-witness.mjs)
 
 echo "── Web: error-boundary gate ───────────────────────────"
 # A page that throws is caught by the framework's own error screen unless the tree holds a boundary --
