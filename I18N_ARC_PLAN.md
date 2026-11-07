@@ -1,7 +1,7 @@
 # I18N Arc — living plan
 
-Measured on the working tree **2026-11-07** (`ab82384`, with the in-flight M13 batch uncommitted —
-the arc's own record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§25, which is the honest ledger of
+Measured on the working tree **2026-11-07** (`af06f60`, with the in-flight M13 batch uncommitted —
+the arc's own record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§26, which is the honest ledger of
 this arc; this file is a plan, never the evidence). Every figure below is re-derived by the gate named
 beside it.
 
@@ -11,18 +11,18 @@ beside it.
 | --- | --- |
 | `qa-i18n-literals.mjs` | 9/9 — 0 English literal sites; 4328 key calls |
 | `qa-unused-keys.mjs` | 3/3 — floor 0 holds both on the working tree and the committed tree (it found the `nav.live` door: `d7784b2`) |
-| `qa-locale-completeness.mjs` | 2/2 — 4269 keys in the working tree; 4096 committed; parity en/zh/zh-TW |
+| `qa-locale-completeness.mjs` | 2/2 — discovers shipped catalogues by existence; 43 namespaces, 4269 keys (4096 committed), full parity across every locale the directory carries |
 | `qa-locale-fallback.mjs` | 3/3 |
 | `qa-key-drift.mjs` | 4/4 — 17 named sites in the working tree (M13 batch uncommitted); 12 in the committed tree; ceilings 112/46, may only fall |
 | `qa-shared-keys.mjs` | 4/4 — 240 bindings, may only fall |
 | `qa-shared-keys-witness.mjs` / `qa-key-drift-witness.mjs` | 8/8 / 10/10 — verified on both trees |
-| `qa-icu-messages.mjs` | 2/2 — 12807 messages parse; placeholders agree |
+| `qa-icu-messages.mjs` | 2/2 — 12807 messages parse; placeholders agree, now real (§22) |
 | `qa-icu-coverage.mjs` | 1/1 |
-| `qa-plural-select.mjs` | 2/2 — CLDR-enforced (en `one`/`other`; zh/zh-TW `other`); 87 plurals on the working tree, 89 on the committed tree |
-| `qa-locale-tokens.mjs` | 5/5 — both the working-tree pin (4269/4224) and the committed-tree pin (4051/4096) recomputed; the gate reads the catalogue it sits on |
+| `qa-plural-select.mjs` | 2/2 — CLDR-enforced (en `one`/`other`; zh/zh-TW `other`; Arabic six wired and dormant); 87 plurals on the working tree |
+| `qa-locale-tokens.mjs` | 5/5 — both the working-tree pin (4269/4224) and the committed-tree pin (4051/4096) recomputed |
 | `qa-locale-content.mjs` | 3/3 |
 | `qa-locale-formatting.mjs` | 2/2 — format population read for real |
-| `qa-translation-quality.mjs` | 4/4 |
+| `qa-translation-quality.mjs` | 4/4 on the shipped tree; dormant Arabic arms verified arm-by-arm (§26) |
 | `qa-translation-freshness.mjs` | 2/2 — `.gate-baseline 3bbf857→d7784b2`; CI uses the event diff (recorded in §25) |
 | `qa-population-floor.mjs` | 3/3 — may only grow |
 | `qa-rtl-readiness.mjs` | 8/8 |
@@ -46,7 +46,7 @@ so; and the day a locale that does not exist today is added, the cost is one cat
 | P2 Live surface compliance | `nav.live`/`live.*` keys: ownership row declared (`core`), token alignment (`Play a fixture` unified), emission rules, ceilings reviewed and ratcheted (112/46, 240), witnesses re-anchored, witnesses green on both trees, README pin recomputed twice (working-tree pin and committed-tree pin) | **done** — the milestone's own walk recorded its green sections 2026-11-07; the nav door landed (`d7784b2`) |
 | P3 Live milestone walks | the match-replay pages in a production build: 312/316 on 2026-11-07 — Live section green, notifications tray green, erasure green, 1,779-URL probe green; the four reds belong to another lane (career/season checks; sweep coverage-gate ordering) | **done by the milestone's lane (2026-11-07)** — §23 records |
 | P4 ICU census hardened | the four ICU gates were vacuous — fixed 2026-11-06 (§22): real placeholder agreement, real plural completeness, a real catalogue parity check, one check retired with its reason written | **done** |
-| P5 RTL readiness | logical CSS, `dir` from `textDirection(locale)`, font stacks end generic, `:lang(ar)/:lang(he)` reset gated (§20, gate 8/8); item 1 of the first-RTL-milestone checklist done 2026-11-07 (all nine JSX arrows moved out of the render path or made direction-aware CSS markers) | **audit complete for structural gate; milestone checklist items 2–8 not started; no RTL locale ships yet** |
+| P5 RTL readiness | logical CSS, `dir` from `textDirection(locale)`, font stacks end generic, `:lang(ar)/:lang(he)` reset gated (§20, gate 8/8); item 1 done 2026-11-07 (nine JSX arrows moved out of the render path); item 2 decided (keep stack, Noto covers Arabic/Hebrew via platform substitution); item 3 landed (qa-plural-select discovers ar, Arabic six CLDR enforced, dormant); item 4 landed (qa-translation-quality Arabic pass: punctuation, mojibake, script assertions — verified arm-by-arm, dormant); item 5 gate-half landed (qa-locale-completeness discovers catalogues) | **structural gate + Arabic pre-work landed; items 6+ (Arabic walk, ar.json) blocked on P7** |
 | P6 New-surface compliance | every slice ships with the full checklist — parity, fallback, quality, ICU, tokens, 0 literal sites, namespace ownership, live-tier walk, gates green — `NEW_SURFACE_COMPLIANCE.md` | **protocol in force** (applies to every slice since 2026-11-06) |
 | P7 Locale expansion (ar, he) | each locale: full catalogue, CLDR plural rules (AR: zero/one/two/few/many/other), numerals policy, bidi handling, manifests, walks under `dir=rtl`, CI registration; **not a catalogue drop — a milestone** | **researched; not started; waits on P6 + the M13 milestone landing (it is the slice that closes `Wire-readers`)** |
 | P8 Cross-arc maintenance | the API's refusal catalogue stays in step (`test_locale_claims.py`), OpenAPI claims stay current, catalogue parity holds as surfaces appear | **ongoing** |
