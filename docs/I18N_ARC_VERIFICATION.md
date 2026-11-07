@@ -1852,8 +1852,13 @@ chronological order:
 | `42013949317` | 11-05 | **Wire-readers gate** | Tests (SQLite dev fallback) |
 | `42187469545` | 11-06 | Wire-readers | Tests (SQLite dev fallback) |
 | `42348704324` | 11-07 (3a49d56) | **Translation-freshness gate** (one key) | Tests (SQLite dev fallback) |
-| `42348955119` | 11-07 (ff521d9) | Wire-readers | — (in progress at this record) |
-| `42349049143` | 11-07 (5e491ba) | Wire-readers | — (in progress at this record) |
+| `42348955119` | 11-07 (ff521d9) | Wire-readers | Tests (SQLite dev fallback) |
+| `42349049143` | 11-07 (5e491ba) | Wire-readers | Tests (SQLite dev fallback) |
+| `42350311047` | 11-07 (55b8217) | Wire-readers | Tests (SQLite dev fallback) — the stale audit figures; fixed next |
+| `42350677139` | 11-07 (161fc75) | Wire-readers | **success** |
+| `42350741750` | 11-07 (4181d3e) | Wire-readers | **success** |
+| `42350947068` | 11-07 (46c637a) | **`Run npm ci`** — `EUSAGE`, de-synchronized lock | **success** |
+| `42361729855` | 11-07 (db6e9a3) | Wire-readers expected | **success** expected |
 
 **Cause 1 — the api job: one test graded on the runner, not the tree (ours, fixed).**
 `tests/test_ci_trigger.py::test_the_branch_fallback_answers_on_a_detached_checkout_and_names_why_when_it_cannot`
@@ -1897,6 +1902,23 @@ the quoted triple in `ROADMAP.md` moved with it, the header's re-read trail re-d
 "Tests (SQLite dev fallback)" row holds — the *step* name never changed — but the named cause changed:
 `ci_trigger` (the runner-graded fallback, `ff521d9`) then `spec_audit_currency` (the stale figures,
 `161fc75`). Local: `pytest apps/api/tests/test_spec_audit_currency.py` — 9 passed.
+
+**The second correction this section owes (2026-11-07, last).** `42350947068` (`46c637a`) failed at **`Run npm ci`** before any gate ran: `npm error code EUSAGE — Missing:
+@swc/helpers@0.5.24 from lock file`. The pin had been added by `npm install --legacy-peer-deps`, which
+re-resolved transitive pins and de-synchronized `package.json` from `package-lock.json`; `npm ci` refused
+to start, so the whole web job never reached a single gate. The declaration itself was correct and stays
+— but it is done the only way that holds: `46c637a` was superseded by `db6e9a3`, which reverts both files
+to the state at `4181d3e` and re-applies the pin as exactly two one-line additions (`package.json`
+devDependencies; the `packages.""` devDependencies in the lockfileVersion-3 manifest), with the hoisted
+`node_modules/@formatjs/icu-messageformat-parser@3.5.20` and its sole dependency
+`icu-skeleton-parser@2.1.12` untouched. `npm ci --dry-run` answers `up to date in 11s`. One row per run
+since the fixes chain started: `3a49d56` api red (`test_ci_trigger` runner-graded fallback) →
+`ff521d9` fixes it → `5e491ba` api **red** (`test_spec_audit_currency`, stale figures — the gate moving as
+designed) → `55b8217` api **red** (same single case, still unfixed) → `161fc75` fixes it, api
+**green** → `4181d3e` api green → `46c637a` red at the installer (this addendum) → `db6e9a3` pending.
+The web job remains red on exactly one step, `Wire-readers`, owned by the uncommitted M13 milestone
+since 11-05. The freshness flag on `42348704324` was one key on one push, never recurring — `ff521d9`
+through `db6e9a3` compare green on it.
 
 **Cause 4 — the web job: `Wire-readers`, since 11-05 (not ours — the milestone's).** The web job has
 failed at the wire gate since the locale-token cause was cured. The committed tree carries the API's M13
