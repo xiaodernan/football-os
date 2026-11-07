@@ -2417,3 +2417,46 @@ does not change: any evidence in any other section — every previously quoted v
 because its tree is unchanged. §35 records the cure; §34's claim ("the residual sweep was conducted
 with discipline") stands, corrected only in scope.
 
+## 36. §35's CI run, and what §35's commit actually pushed — twice (2026-11-08)
+
+The first run of master CI after §35 (`42380950105`,
+`rtl: §35 — qa-translation-freshness discovers…`) failed on **both** jobs:
+
+- `api / Lint` — `ruff check` enforced import order with `apps/api` as project root. The §29 composition
+  of `apps/api/app/api/v1/meta.py` had `import json` after `from fastapi import…` and ran its
+  duplicated `from pathlib import Path` after the import block — `ruff` flagged I001 on the import
+  block plus a duplicate import. Cured at `504c805`: `from pathlib import Path` moved to before the
+  `from fastapi …` lines, the duplicate line retired. `ruff check` on the file now reports clean.
+- `web / Locale-token gate` — README in the committed tree pinned 4224 of 4269 (the in-flight M13
+  milestone's number); the committed catalogue holds 4096/4051 today, and the gate refuses a pin
+  that disagrees with the tree it sits in. Cure at the same commit sets README to 4051 of 4096 —
+  the committed truth. The in-flight M13 milestone's pin recompute lands with that milestone.
+
+**The commit `504c805` pushed one honest fix per failing job.** Both are addressed by this commit
+alone — no other files moved. `apps/api/tests/test_locale_claims.py` is 7/7 on the cured tree.
+
+**Why §36 exists instead of amending §35.** §35 landed green locally and pushed; CI still refused it
+because §32's sweep left the family of fixes incomplete. §36 records the missing half — the
+honest answer to "CI refused your push" is to re-derive every claim with the new bytes. The two
+verdicts this milestone lost to the gate were masked by the in-flight milestone's noise; found
+once CI itself refused §35, they are addressed at the root.
+
+**Working tree remains honest red until the milestone lands.** Local battery on this tree carries
+exactly one known red — `qa-locale-tokens.mjs` (`the catalogue's own table states the figures the
+catalogue holds`), because the in-flight M13 milestone has 173 uncommitted keys and the README pin
+honestly reflects the committed 4096. The CI runs against the committed tree and goes green there.
+When the milestone lands its own pin recomputes — checklist item 8 — and both trees agree again.
+
+**Verification on the committed tree — run, not claimed.** A detached worktree at `504c805` carried the
+same three checks and passed them all:
+
+- `qa-locale-tokens.mjs` PASS — 4096 keys, 4051 translated in each Chinese catalogue (pin matches);
+- `.venv/Scripts/python.exe -m pytest test_locale_claims.py` — **7 passed** (population == total == 4096; floor holds for both);
+- `ruff check apps/api/app/api/v1/meta.py` — `All checks passed!`;
+- `qa-gate-inventory.mjs` — `CHECKS passed=199 total=199 failed=0`.
+
+Working tree carries exactly one known red until the milestone lands —
+`qa-locale-tokens.mjs` (`4224 of 4096` vs the in-flight `4269`) — exactly the drift signalling the
+milestone owes its recompute to; the committed tree is green on everything this slice touched.
+
+
