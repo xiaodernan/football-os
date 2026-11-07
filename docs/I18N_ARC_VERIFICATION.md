@@ -2580,3 +2580,35 @@ rule has **0** live nodes in both trees, and the gate's own detail line says so
 (`0 ordinal node(s) in the catalogue — this rule is run by qa-plural-select-witness.mjs, not by these
 bytes`) instead of letting a green read as coverage. The next time a locale catalogue lands, DISCOVER
 is the check that decides whether it is judged or merely present.
+
+## 38. The README floors catch up to the tree, and the queue is measured, not narrated (2026-11-08)
+
+**The floors.** `apps/api/tests/test_locale_claims.py` stated `README_FLOORS` as `zh` 2816, `zh-TW` 2817 —
+left from October, when the catalogue really did sit there. The committed tree (`ee5464b`) holds **4051**
+translated keys in each Chinese catalogue, `en.json` holds **4096**, and the README pins **4051 of 4096** —
+so the floor guard had 1235 keys of silent headroom: prose could understate progress drift downward and
+this case would still have called it fine. The floors now state 4051/4051. Floors may only rise; the reason
+this one did not back then is that nobody measured the catalogue after it grew past them.
+
+`test_the_readme_table_states_the_coverage_the_catalogues_actually_have` therefore pins the numerator
+below 4051 at exactly the value the committed tree holds — a floor the in-flight M13 milestone clears
+before it breaks it: when its own pin recompute lands (compliance checklist item 8) the README moves to
+4269/4224 and both numbers sit above the floor.
+
+**Verified, not claimed.** Detached worktree at `ee5464b` plus this patch:
+
+- `pytest apps/api/tests/test_locale_claims.py` — exit 0, **7/7** tests green;
+- the population clause (`README 4096 == en.json 4096`) and the stated-versus-translated clause both still
+  hold on the committed tree.
+
+**The queue, measured.** As of this slice the repository's Actions backend has not started a single run
+since 2026-11-07T16:23Z. Four master runs sit queued and untouched — `42391068088` (the api+web fix,
+`504c805`), `42391804561` (`5e79ab8`, §36), `42392086687` (`55f7ea7`), `42394979481` (`ee5464b`, §37) —
+and the last run that actually completed was `42380950105` at 2026-11-07T14:18Z, red on exactly the two
+clauses §36 cured. Every fix this arc landed since is verified by detached worktrees and recorded in
+§36–§38; the remote green is owed by the queue draining, not by anything in this tree. This arc will not
+call CI green from here.
+
+**Also observed:** the §36 verification-refresh edit was absorbed by the parallel §37 commit `ee5464b` —
+the doc ink is honest there (the detached `55f7ea7` verification did run and passed), only the authorship
+is shared. Nothing in that commit was rewritten.
