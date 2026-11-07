@@ -1,7 +1,7 @@
 # I18N Arc — living plan
 
-Measured on the working tree **2026-11-07** (`af06f60`, with the in-flight M13 batch uncommitted —
-the arc's own record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§28, which is the honest ledger of
+Measured on the working tree **2026-11-07** (`9e89acb`, with the in-flight M13 batch uncommitted —
+the arc's own record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§29, which is the honest ledger of
 this arc; this file is a plan, never the evidence). Every figure below is re-derived by the gate named
 beside it.
 
@@ -29,7 +29,7 @@ beside it.
 | `qa-namespace-ownership.mjs` | 2/2 |
 | `qa-gate-inventory.mjs` | 194/194 on both trees |
 | `qa-wire-readers.mjs` | 18/18 on the full working tree; **12/18 on the committed tree — six named reds, one owner (the uncommitted M13 milestone). See §24/§25.** |
-| `I18N_ARC_VERIFICATION.md` | §22 (blind vacuous ICU gates, fixed and witnessed), §23 (Live milestone walk, recorded), §24 (corrections land), §25 (CI forensics), §26 (the dormant Arabic, verified arm-by-arm), §27 (the held notes, in order), §28 (the battery discovers the catalogues by existence) |
+| `I18N_ARC_VERIFICATION.md` | §22 (blind ICU gates), §23 (live walk), §24 (corrections), §25 (CI forensics), §26 (dormant Arabic), §27 (held notes), §28 (battery discovers), §29 (`/capabilities` discovers too) |
 | `ab82384` CI | api green (two single-test causes cured: `ff521d9` runner-graded fallback; `161fc75` stale audit figures — the `/live` pages outgrew `AUDIT_FIGURES`); web all green through `Wire-readers`; `npm ci` EUSAGE (rendered by a local-side `--legacy-peer-deps` de-sync) cured at `db6e9a3`; the sole remaining red anywhere is `Wire-readers`, owned by the milestone |
 
 ## The goal

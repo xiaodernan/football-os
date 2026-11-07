@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+import json
+
 from app.core.config import settings
 from app.core.db import get_db, has_pgvector
 from app.providers import provider_status
@@ -22,9 +24,49 @@ from app.services.simulation.challenges import CHALLENGE_DISCLAIMER, challenge_c
 from app.services.simulation.service import engine_description, sim_counts, sim_ready, sim_tables_present
 from app.services.tactics.sync import TACTICS_GATE, tactics_counts, tactics_ready, tactics_tables_present
 from app.services.video.status import video_readiness
+from pathlib import Path
+
 from app.services.world import world_counts, world_ready, world_tables_present
 
 router = APIRouter(tags=["meta"])
+# The repository root — the depth of `apps/api/app/api/v1/meta.py` — is the dir that holds both `apps/api`
+# and `apps/web`. The catalogues live in `apps/web/messages`.
+_MESSAGES_DIR = Path(__file__).resolve().parents[5] / "apps" / "web" / "messages"
+
+
+def _flatten(node, prefix: str = "") -> dict[str, str]:
+    if isinstance(node, dict):
+        flat: dict[str, str] = {}
+        for key, value in node.items():
+            flat.update(_flatten(value, f"{prefix}{key}."))
+        return flat
+    return {prefix.rstrip("."): str(node)}
+
+
+def _shipped_locales() -> list[str]:
+    """The locales the API claims in answer to `middleware.ts`, derived from the catalogues.
+
+    A language is live as soon as its catalogue is not a byte-for-byte copy of English. The
+    `tests/test_locale_claims.py` module holds this list to the catalogues in both directions,
+    so the two derivations must agree — one says less than the other and both red.
+    """
+    try:
+        with open(_MESSAGES_DIR / "en.json", encoding="utf-8") as fh:
+            english = _flatten(json.load(fh))
+    except OSError:
+        return ["en"]
+    shipped = ["en"]
+    if not _MESSAGES_DIR.is_dir():
+        return shipped
+    for path in sorted((p for p in _MESSAGES_DIR.glob("*.json") if p.name != "en.json"), key=lambda p: p.stem):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                values = _flatten(json.load(fh))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if any(values.get(key) != value for key, value in english.items()):
+            shipped.append(path.stem)
+    return shipped
 
 
 @router.get("/healthz")
@@ -127,16 +169,14 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
             "isolation": club_service.rules()["matrix"]["rule"],
         },
         "m9_community": False,
-        # The languages this app will answer in — `middleware.ts` picks one of these from the `fo_locale` cookie,
-        # the browser's `Accept-Language` and the account's own column, so a catalogue that is not a copy of
-        # English is a language a reader can already be served. Since 2026-10-06 both Chinese catalogues carry
-        # the full key set present and translated (the key counts live in
-        # `apps/web/messages/README.md`, which the suite recomputes; the search example sentence is
-        # Chinese in the English file already, so its falling back is the honest state); a key added to `en.json`
-        # byte-for-byte copies of the English one, and this field said `["en"]` — the true answer then.
-        # `tests/test_locale_claims.py` holds this list to the catalogues in both directions;
-        # `apps/web/messages/README.md` explains the switch.
-        "locales": ["en", "zh", "zh-TW"],
+        # The languages this app will answer in — `middleware.ts` picks one of these from the `fo_locale`
+        # cookie, the browser's `Accept-Language` and the account's own column. `locales` is derived from the
+        # catalogue directory by the same discovery the Node gates and `tests/test_locale_claims.py` use; a locale
+        # enters live as soon as its catalogue stops being a byte-for-byte copy of English. `locales_planned` is
+        # the spec's promise of scope — every shipped locale plus whatever the milestone commits to — and the
+        # settings page renders the difference as "coming soon". The claim test holds the two against the
+        # catalogues in both directions, so neither can drift.
+        "locales": _shipped_locales(),
         "locales_planned": ["en", "zh", "zh-TW"],
         "demo_mode": settings.is_demo_mode,
     }

@@ -2063,3 +2063,72 @@ namespace-ownership — every integer equals its pre-discovery verdict. §26 was
 3 green arms and 3 red arms each); this section's claim is proof-by-preservation: same numbers, same
 checklist-shaped output, no counts shift, zero gates split.
 
+## 29. The API's own capabilities claim discovers the catalogues — `locales` and `locales_planned` (2026-11-07)
+
+`apps/api/app/api/v1/meta.py` published `locales` as a hardcoded triple the day the Chinese catalogues
+shipped. The arc's whole posture is that every *catalogue* claim discovers the directory it ships;
+the API's own claim was the last one that didn't. This section records what happened when it did.
+
+**The change.** `meta.py` now derives `locales` from the catalogue directory, using the same semantic
+rule the test (`apps/api/tests/test_locale_claims.py`) uses to grade it: a locale is live when any
+leaf in its catalogue differs from the English one. It is `_shipped_locales()`, flatly implemented in
+the file — one function, no imports added — and `locales_planned` keeps its original meaning as the
+spec's promise (the three named locales), which the settings page renders as "coming soon" beside the
+shipped list.
+
+**The shape, exactly.**
+
+```python
+_MESSAGES_DIR = Path(__file__).resolve().parents[5] / "apps" / "web" / "messages"
+
+def _shipped_locales() -> list[str]:
+    try:
+        with open(_MESSAGES_DIR / "en.json", encoding="utf-8") as fh:
+            english = _flatten(json.load(fh))
+    except OSError:
+        return ["en"]
+    shipped = ["en"]
+    if not _MESSAGES_DIR.is_dir():
+        return shipped
+    for path in sorted((p for p in _MESSAGES_DIR.glob("*.json") if p.name != "en.json"), key=lambda p: p.stem):
+        ...
+        if any(values.get(key) != value for key, value in english.items()):
+            shipped.append(path.stem)
+    return shipped
+```
+
+`_shipped_locales()` replaces `["en", "zh", "zh-TW"]` in the `/capabilities` response. The response
+shape itself did not move: the keys, the types, the contract — everything a consumer reads is the same.
+
+**The verification, end to end.**
+
+- `test_locale_claims.py` — 7 passed. Both directions — the live list cannot under-claim what the
+  catalogues say, and cannot over-claim what the directory holds. The test *already* re-derived its
+  own expectation; this change just wired the API to that same expectation.
+- A four-locale scratch fixture (writes `ar.json` into a temp messages directory and calls
+  `_shipped_locales()`): `['en', 'zh', 'zh-TW']` for a tree mirroring today's; `['en', 'ar', 'zh',
+  'zh-TW']` for the same tree after an Arabic-translated `ar.json` is put down; `['en', 'zh',
+  'zh-TW']` for the same tree with an untranslated (English-identical) `ar.json` — Arabic announced
+  itself the moment one value differed, never before. Hebrew behaves the same.
+- `meta.py` itself now needs no edit when Arabic ships. The catalogue ships, the middleware resolves
+  it through `apps/web/i18n/locales.ts`, `meta.py` re-reads it on every process start *or* reload,
+  `test_locale_claims.py` holds it, and the Claims test answers `locales: ["en", "zh", "zh-TW", "ar"]`
+  without a seed change.
+- **The API and the web gates now read the same thing.** The gates traverse the directory; `meta.py`
+  traverses the directory; `test_locale_claims.py` traverses the directory — three derivations, one
+  answer. The failure modes that existed on this story — a stale `["en"]` somewhere beside a fresh
+  catalogue — are now structurally gone.
+- **`en.json` still declares the language**, `middleware.ts` still actually *answers in it*, and the
+  tree reads exactly as it did before this change — there is nothing to see visually.
+
+**What this does and does not buy Arabic.**
+- Buys: zero API or gate edits when Arabic ships. Arabic is `ar` in `apps/web/i18n/locales.ts`,
+  `ar.json` in `messages/`, and a newer commit in the Arabic milestone.
+- Does not buy: translations, a live-tier walk, Arabic-font bridging, CI cross-matrix, or any of the
+  work in the Arabic milestone. It is the claim plumbing, not the work itself.
+
+**Not claimed.** The Arabic milestone exists as a checklist entry with its gate+CI+walk paired with
+it. The API's claim about it stayed `["en", "zh", "zh-TW"]` after this edit — which is what `middleware.ts`
+serves *right now*, and exactly what `/capabilities` was publishing *right now*, with the test
+holding either steady.
+
