@@ -21,6 +21,12 @@
  *
  * Files only: no server, no browser, no port, which is why it runs in `scripts/check.sh` and not in the
  * live-tier walks.
+ *
+ * Correction recorded 2026-11-06: checks 2 and 3 were **vacuous** from the gate's birth — the walker
+ * compared `node.type` against strings (`"argument"`, `"plural"`) while this parser emits numeric
+ * `TYPE` enums and parses a message into an **array** of elements, so both checks measured an empty
+ * population and passed. The walkers now traverse the array and the choice branches, and the figures
+ * below are real. A green that cannot see its population is not agreement.
  */
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -28,32 +34,50 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const { parse } = require("@formatjs/icu-messageformat-parser");
+const { parse, TYPE } = require("@formatjs/icu-messageformat-parser");
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 const LOCALES = ["en", "zh", "zh-TW"];
 
-/** The placeholders a message holds, as the set of names an argument or a `#` would print. */
+/** The placeholders a message holds, as the set of names an argument or a choice would print.
+ *  @formatjs parses ICU into **numeric-typed** elements (`TYPE.argument === 1`, not `"argument"`),
+ *  and parses a message into an **array** of elements; the old walker compared against strings, so
+ *  it collected nothing and the gate reported 4269 keys in agreement over a population it had read
+ *  as empty. This version walks the array, reads every argument-bearing type — number, date and
+ *  time are arguments too, and a `#` inside a choice is not a name — and follows each choice
+ *  branch into its value. */
 const placeholdersOf = (ast) => {
   const names = new Set();
   const walk = (node) => {
-    if (!node || typeof node !== "object") return;
-    if (node.type === "argument") names.add(node.value);
-    if (node.type === "function" || node.type === "select" || node.type === "plural" || node.type === "selectordinal") {
-      names.add("#");
-      for (const option of Object.values(node.options ?? {})) walk(option.value);
+    if (!node) return;
+    if (Array.isArray(node)) { for (const child of node) walk(child); return; }
+    if (typeof node !== "object") return;
+    if (
+      node.type === TYPE.argument
+      || node.type === TYPE.number
+      || node.type === TYPE.date
+      || node.type === TYPE.time
+      || node.type === TYPE.select
+      || node.type === TYPE.plural
+    ) {
+      if (typeof node.value === "string") names.add(node.value);
     }
-    if (node.type === "octothorpe") names.add("#");
+    if (node.options) for (const option of Object.values(node.options)) walk(option?.value);
+    if (Array.isArray(node.children)) walk(node.children);
+    for (const key of Object.keys(node)) {
+      if (key === "options" || key === "children") continue;
+      const value = node[key];
+      if (Array.isArray(value)) walk(value);
+    }
   };
-  for (const element of ast) walk(element);
-  names.delete("#");
+  walk(ast);
   return [...names].sort();
 };
 
 const catalogues = new Map();
 for (const locale of LOCALES) {
-  const raw = (readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n"));
+  const raw = readFileSync(join(MESSAGES, `${locale}.json`), "utf8");
   catalogues.set(locale, JSON.parse(raw));
 }
 
@@ -91,12 +115,24 @@ for (const locale of LOCALES) {
       continue;
     }
     placeholders.set(`${locale}.${path}`, placeholdersOf(ast));
-    for (const element of ast) {
-      if (element.type !== "plural" && element.type !== "select" && element.type !== "selectordinal") continue;
-      if (!element.options || !element.options.other) {
-        failures.push(`${locale}.${path} has a ${element.type} with no "other" branch`);
+    const checkChoice = (node) => {
+      if (!node) return;
+      if (Array.isArray(node)) { for (const child of node) checkChoice(child); return; }
+      if (typeof node !== "object") return;
+      if (node.type === TYPE.plural || node.type === TYPE.select) {
+        if (!node.options || !node.options.other) {
+          failures.push(`${locale}.${path} has a choice with no "other" branch`);
+        }
+        for (const option of Object.values(node.options ?? {})) checkChoice(option?.value);
+        return;
       }
-    }
+      for (const key of Object.keys(node)) {
+        if (key === "options") continue;
+        const value = node[key];
+        if (Array.isArray(value)) checkChoice(value);
+      }
+    };
+    checkChoice(ast);
   }
 }
 

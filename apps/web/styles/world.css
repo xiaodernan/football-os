@@ -2,6 +2,11 @@
    These pages are public and crawlable, so layout must hold at 375px without client JS. */
 
 .world-back { display: inline-block; font-size: 0.85rem; }
+/* The back arrow is directional: it points at the page behind, which in a right-to-left locale is
+   the opposite way. The glyph is chosen per direction rather than flipped, so a screen reader and
+   a bidi algorithm both read one unambiguous marker. */
+.world-back::before { content: "← "; }
+[dir="rtl"] .world-back::before { content: "→ "; }
 .world-head { margin-top: 0.5rem; align-items: flex-start; }
 
 /* Provenance strip: the row's own data_origin / is_demo_data / disclaimer. */

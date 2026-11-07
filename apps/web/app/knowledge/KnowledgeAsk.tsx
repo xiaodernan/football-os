@@ -43,7 +43,7 @@ function CitationCard({ citation, index }: { citation: KnowledgeCitation; index:
       <p className="kn-cite__quote">&ldquo;{citation.quote}&rdquo;</p>
       <div className="row wrap" style={{ gap: "0.6rem" }}>
         <Link className="kn-ref" href={`/knowledge/${encodeURIComponent(citation.slug)}#${citation.ordinal}`}>
-          {t("open")} {tk("openPassage")} →
+          {t("open")} {tk("openPassage")}
         </Link>
         <span className="kn-prov__text grow">{citation.source}</span>
       </div>

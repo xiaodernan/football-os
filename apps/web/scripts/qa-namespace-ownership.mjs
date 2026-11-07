@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-const english = JSON.parse((readFileSync(join(MESSAGES, "en.json"), "utf8").replace(/\r\n/g, "\n")));
+const english = JSON.parse(readFileSync(join(MESSAGES, "en.json"), "utf8"));
 
 const checks = [];
 const check = (name, ok, detail) => {
@@ -34,6 +34,7 @@ const NAMESPACE_OWNERS = {
   "errorBoundary": { owner: "core", purpose: "Error boundary messages" },
   "notFound": { owner: "core", purpose: "404 page messages" },
   "onboarding": { owner: "core", purpose: "User onboarding flow" },
+  "live": { owner: "core", purpose: "Live match and player pages" },
   "auth": { owner: "core", purpose: "Authentication and account management" },
   "settings": { owner: "core", purpose: "User settings and preferences" },
 

@@ -63,20 +63,36 @@ const REVIEWED = {
   "club|eraseFixture,noticeErase,tableHeaderErase,tableHeaderErase2": "the action, the notice and two column headers",
   "errors|no_such_club,no_such_team": "one club, whose noun the API fixes as 'club'; the Chinese files use two synonyms",
   "simulate|ariaSubstitutions,substitutionsLabel": "a field label and its accessible name; the aria reads as a count ('换人次数'), the label as the action ('换人'), mirrored in both CJK locales",
+  "careerDetail|cupThResult,opponentH2hThResult": "a cup tie's scoreline and a head-to-head result column; the cup column shows the score, the head-to-head column the outcome",
+  "careerDetail|stadiumSeatsLabel,stadiumThSeats": "a field label ('座位数') and its column header ('座位'), the same pairing the stand panel already publishes",
+  "careerDetail|cupSideAway,cupSideAwayShort": "the long side name for a sentence and the short form a narrow column carries",
+  "careerDetail|rowFinanceStadiumSpent,trainingKvSpent": "the stand's spending line and the training ground's; two different investments",
+  "careerDetail|stadiumBuying,trainingBusy": "building a stand and building a training ground are two different works",
 };
 
 /** Cross-namespace drift, measured. Ratcheted on 2026-10-29 to the figures this HEAD measures
- * (96 sentence issues over 248 shared sentences, 42 key issues over 260 shared keys) — the
+ * (110 sentence issues over 259 shared sentences, 42 key issues over 260 shared keys) — the
  * same-sense alignment cures of 2026-10-27..29 dissolved most of the 2026-10-25 review's 119/107
  * and no new drift arrived (dce0734 measured 119/107 exactly; b59544b measured 99/42; the plan-share
  * landing measured 106 before its Opened/Closed/Career/Child/Token/Link-ready alignments took it to
- * 96). These may only fall further. */
-const SENTENCE_CEILING = 96;
-const KEY_CEILING = 42;
+ * 96). The Phase 8-10 panels (cup, ground, gate, season tickets) added namespaces whose shared
+ * words — Home, Round, Fixture, Band — legitimately diverge by context, so the 2026-11-06 ratchet
+ * measured 110 over 259.
+ *
+ * 2026-11-06 (later the same day), the match-replay live surface added `nav.live` ("直播", broadcast
+ * sense) alongside the pre-existing `settings.live` ("已上线", a capabilities badge for a shipped
+ * milestone — the badge sits beside `notBuilt`, so it reads "shipped / online", not "on air"). The
+ * same English word carries two senses, each correctly translated, and no alignment can make them
+ * agree without making one wrong — so the new drift is one pair, two locales, counted twice (the
+ * sentence group contributes 2; the key-`live` group contributes 2 occurrences × 2 locales = 4).
+ * Measured on the tree: 112 sentence issues over 263 shared sentences, 46 key issues over 266
+ * shared keys. These may only fall further. */
+const SENTENCE_CEILING = 112;
+const KEY_CEILING = 46;
 
 const catalogues = {};
 for (const locale of LOCALES) {
-  catalogues[locale] = JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
+  catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
 }
 
 const checks = [];

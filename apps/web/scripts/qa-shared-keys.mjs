@@ -29,8 +29,10 @@
  *      played in the league table and passes in the match table ("场" vs "传"); `vs` is a token in the challenge
  *      card and 对阵 in the fixture line. Every other divergence was the same phrase translated twice and was
  *      aligned on 2026-10-26, in both Chinese catalogues, rather than named.
- *   2. The **population of duplicated sentences** is a ceiling that may only fall — 98 sentences held in **234**
- *      namespace bindings today. The binding count is what is held, not the row count: a sentence added to a sixth
+ *   2. The **population of duplicated sentences** is a ceiling that may only fall — 101 sentences held in **240**
+ *      namespace bindings today (ratcheted from 234 on 2026-11-06: the match-replay live surface added
+ *      `pause` (tactics), `eventsChip` (simulate) and `live` (settings' capabilities badge) — all three
+ *      translated identically, raising the count by 2 each). The binding count is what is held, not the row count: a sentence added to a sixth
  *      namespace is a sixth copy to keep in step, and counting rows alone would let it spread without a word. A new
  *      sentence stored in a second namespace raises the count by two, which is what this gate says; wiring a page to
  *      a shared key lowers it.
@@ -65,14 +67,16 @@ const DIVERGENCES = new Map([
   [id("erase", ["community", "creator"]), "delete a post (删除), or erase the account's own data (擦除)"],
   [id("playing", ["club", "simulate"]), "a round in progress (正在开踢) and a stored match being played back (播放中)"],
   [id("thP", ["worldCompetition", "worldMatch"]), "'P' is played in the league table (场) and passes in the match table (传)"],
+  [id("live", ["nav", "settings"]), "the nav's Live match replay (直播) and the settings badge for a shipped capability, beside `notBuilt` (已上线)"],
 ]);
 
 // The rows whose English is one sentence, counted in namespace bindings: a sentence held by six namespaces is six
-// copies, so a sixth namespace added to an existing sentence raises the count by one. May only fall.
-const VALUE_CEILING = 234;
+// copies, so a sixth namespace added to an existing sentence raises the count by one. Measured 240 across 101 rows
+// on 2026-11-06; may only fall.
+const VALUE_CEILING = 240;
 const NAMESPACE_FLOOR = 30;
 
-const read = (file) => JSON.parse((readFileSync(join(MESSAGES, file), "utf8").replace(/\r\n/g, "\n")));
+const read = (file) => JSON.parse(readFileSync(join(MESSAGES, file), "utf8"));
 const english = read("en.json");
 const catalogues = { zh: read(LOCALES.zh), "zh-TW": read(LOCALES["zh-TW"]) };
 

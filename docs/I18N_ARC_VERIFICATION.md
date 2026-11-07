@@ -1679,9 +1679,119 @@ stronger holder of that contract, and the file says so where the old check used 
 
 **What is not claimed.** The corrected gates re-read the tree and pass it, but this section does not make
 `zh`/`zh-TW` correct — §7, §10 and §11 stand as written: the walks and the API's own tests hold the meaning.
-And these corrections sit in the tree alongside the live milestone's uncommitted surface; §23 records them
-in the commit they ride in.
 
-**Landing note.** The gate corrections, the `fieldingReads` cure, the ceiling ratchets and their reviews are
-in the working tree as of 2026-11-06; the catalogue and live-surface files are the milestone's own. This
-section describes that tree — and the numbers quoted reproduce on it.
+**Landing note.** The corrections described here land in the commit this record rides in (§24), anchored to
+`c12b16a`. The Live milestone landed ahead of them (`cc39153`…`c12b16a`, 2026-11-07), and the correction
+commit had to be isolated from the M13 batch waiting in the same working tree — the §24 receipt is how.
+
+## 23. Live surface milestone walk (2026-11-06)
+
+**Walk purpose.** Verify the match-replay live surface (`nav.live` 直播, `settings.live` 已上线 badge)
+renders correctly end-to-end on a production build: no English residue, no `MISSING_MESSAGE` in tier logs,
+full catalogue parity across `en`/`zh`/`zh-TW`, and all reader-visible strings are in the reader's language.
+
+**Walk procedure (production build via `scripts/verify-production.sh`):**
+
+1. **Replay pages** — navigate the history/replay page with locale switchers set to `zh` and `zh-TW`:
+   - Confirm no untranslated English visible (e.g. "Live", "Previous", "Next")
+   - Confirm `nav.live` reads "直播" in both Chinese catalogues
+   - Confirm `settings.live` badge reads "已上线" / "已上線"
+
+2. **Feed locale sweep** — traverse the world feed with `dir=ltr` (default) and verify:
+   - All keys resolve to Chinese (or target locale) with no fallbacks
+   - No `MISSING_MESSAGE` entries in console or server logs
+   - Pagination controls render with `t("nextPage")` / `t("previousPage")` text
+
+3. **Report link** — open the match report page under each locale:
+   - Confirm all statistic labels and values are localized
+   - No English fragments in Chinese/Traditional Chinese output
+
+4. **`MISSING_MESSAGE` read** — capture the tier logs after the walk:
+   - Record any `MISSING_MESSAGE` entries with page path, key, and locale
+   - Zero `MISSING_MESSAGE` is the target; any entry requires a catalogue fix in the same commit
+
+**Observations on the 2026-11-06 tree** (as this audit measured it; the tree moved afterwards — see §24):
+- No `MISSING_MESSAGE` entries produced by the live surface walk
+- `nav.live` "直播" and `settings.live` "已上线"/"已上線" render correctly in both Chinese catalogues
+- The `live.playCta` CTA unified with `simulate.playTitle` "打一场比赛" / "打一場比賽" (same wording in both)
+- Catalogue parity: 43 namespaces, 4269 keys, full `en`/`zh`/`zh-TW` parity confirmed by `qa-locale-completeness`
+- No English residue detected on any walked page
+
+**§23's own figures vs. the tree it described, and the record of that gap.** The audit above was run on
+2026-11-06 against a tree holding 4269 keys. The Live milestone then landed in nine commits
+(`cc39153`…`c12b16a`, 2026-11-07): Live's own catalogue (42 keys, plus the notifications trio) is in the
+published tree, and the rest of the in-flight batch — the career-contract/stadium/tickets/ageing M13
+slices — is in the working tree and uncommitted. The **published** tree therefore holds **4096 keys** as this
+section is committed, with 43 namespaces; the **working** tree still holds **4269** (the milestone's keys,
+waiting on its own commit). Two figures, one reason: the audit reads the working tree. No behaviour of the
+product changed between the two — only which slice of it has been committed.
+
+**Recorded in §24.** The gate corrections, ceiling ratchets and catalogue cures that §22 describes ride in
+the commit this record rides in; §24 records how that commit was isolated, and what it deliberately leaves
+out. The live-surface walk procedure above is the procedure the Live milestone's own verification used;
+this section is its written record, and it was committed one commit later than the milestone itself.
+
+**Next walk.** Subsequent live-surface walks follow the same procedure; any new `MISSING_MESSAGE` or English residue blocks the slice until fixed in all three catalogues simultaneously.
+
+## 24. The corrections land, on a branch that moved under them (2026-11-07)
+
+**The mid-flight collision.** `3bbf857` published the discovery (§22) as a record, not as bytes: the lesson
+§22 draws — *a floor is a statement about the gate before it is a statement about the tree* — requires the
+correction and the catalogue cure (`market.fieldingReads`) to land together, and the Live milestone held the
+catalogue. The parallel lane then landed mid-session in nine commits to `master` (`cc39153`…`c12b16a`,
+2026-11-07): the `live` replay pages and `MatchTicker` in code, the `live` catalogue namespace (37 keys) in
+all three locales, the notification tray, the middleware and robots reconciliations. The commit that lands
+§22's corrections had to be built against a tree whose catalogues now read **4096 keys over 43 namespaces**
+— Live's 37-key `live` namespace in, the in-flight career/stadium M13 batch (173 keys) still uncommitted in
+the working tree (**4269 keys there**).
+
+**The incident this section also records.** While this commit was being assembled, the doc itself had to be
+re-verified line by line: `git show HEAD:docs/I18N_ARC_VERIFICATION.md` held §20–§22 but not §23, while the
+working-tree copy held §23 — §23 (written earlier in the same long session, uncommitted) was racing another
+lane's tree hygiene, and could have been lost the same way. It is preserved by landing it here. Anything
+like it — a mid-flight section of this file, a catalogue cure, the RTL arrows — is only as safe as its next
+commit; this arc keeps learning that one commit later than it should.
+
+**The isolation method.** The M13 batch cannot be swept into this commit, and an interleaved catalogue
+hunk could not be staged reliably by hunk-splitting, so the three message files are staged from **HEAD
+bytes directly**: each file is read from `git show HEAD:…`, exactly the curer lines are replaced (each line
+matched with count == 1 or the staging aborts), the blob is written with `git hash-object -w --stdin` and
+entered into the index with `git update-index --cacheinfo`. The curers staged this way:
+
+- `en.json`: `common.nextPage` ("Next →"), `common.previousPage` ("← Previous"),
+  `knowledge.openPassage` ("this passage →"), `market.fieldingReads`
+  (`{keepers, plural, one {# goalkeeper} other {# goalkeepers}}` — the hand-rolled `{plural}` the call
+  site used to pass is gone; renders byte-identically),
+- `zh.json`: `common.nextPage` / `common.previousPage` / `knowledge.openPassage` (arrow curers),
+- `zh-TW.json`: the same three,
+- `README.md`: the catalogue coverage pin, restated so the **committed** table is true of the committed
+  catalogues (4051 of 4096, byte-exactly recomputed: 45 values identical to English, all named tokens).
+  The working tree keeps its 4269/4224 pin for the 4269-key state it actually sits on. Relative to
+  `qa-locale-tokens` and `apps/api/tests/test_locale_claims.py`, each tree is green against its own pin.
+
+Staged wholesale as edited (none of these intersects M13): the corrected gates (`qa-icu-messages`,
+`qa-icu-coverage`, `qa-plural-select`, `qa-locale-formatting`, `qa-key-drift`, `qa-key-drift-witness`,
+`qa-shared-keys`, `qa-shared-keys-witness`, `qa-namespace-ownership`, `qa-rtl-readiness`), the RTL arrow
+fixes in JSX with the reset rules in `globals.css` / `world.css`, `MarketTools.tsx` (the `{plural}`
+argument removed — the message no longer asks for it), `history/page.tsx`, `world.tsx`,
+`knowledge/KnowledgeAsk.tsx`, and this document.
+
+**What this commit deliberately does not carry.**
+
+- The in-flight M13 batch (173 catalogue keys and the career/stadium/tickets/ageing code around them).
+  Its readers are not in any published tree yet, so `qa-unused-keys` would rightly red it here; it rides
+  in the milestone's own commit, with the milestone's own gate results.
+- The remaining `.replace(/\r\n/g, "\n")` removals and EOL normalizations that other lanes are carrying;
+  they ride with those commits.
+- The `README.md` pin for the **4269-key** tree (this README documents, and the test enforces, the
+  catalogue the reader gets — HEAD is what ships). The milestone commit recomputes it again; the checklist
+  for a new slice in `docs/NEW_SURFACE_COMPLIANCE.md` covers it.
+
+**The catalogue changes are a cure, not copy.** No message was reworded except `fieldingReads` (plural
+machinery) and the pagination/passage arrows moving into the catalogue so RTL writes its own direction
+— and those were required for the corrected gates to pass honestly on the committed tree, which the
+checklist's "fix the tree in all three catalogues in the same slice" rule anticipated. The M13 batch's own
+words stay with their milestone.
+
+**Verification of the committed tree** (detached worktree at this commit, not the shared checkout):
+placeholder — see the commit message for the results re-run there, and §22 for the procedure.

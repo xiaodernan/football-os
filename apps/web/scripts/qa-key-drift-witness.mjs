@@ -16,8 +16,8 @@
  *   C  a key deleted from zh: failed=1 — check 1, because the three catalogues no longer carry the same
  *      keys and every drift count below it would be under-read.
  *   D  a synthetic catalogue with 60 sentences and 60 keys shared across two namespaces, each translated
- *      differently: failed=2 — checks 3 and 4 (120 sentence issues over a ceiling of 119; 240 key issues
- *      over 107), while check 1 passes because the scan found its (same-key) population.
+ *      differently: failed=2 — checks 3 and 4 (past both reviewed ceilings), while check 1 passes because
+ *      the scan found its (same-key) population.
  *   E  three empty catalogues: failed=1 — check 1. Every drift count is zero and the ceilings are met,
  *      so without the population guard an unreadable catalogue would read as a clean one.
  *   F  one reviewed site made to agree: passed=4, and the gate prints that one ledger entry no longer
@@ -54,7 +54,7 @@ const fixture = (name) => {
 const copyReal = (dir) => {
   for (const locale of LOCALES) cpSync(join(REAL, `${locale}.json`), join(dir, "messages", `${locale}.json`));
 };
-const read = (dir, locale) => JSON.parse((readFileSync(join(dir, "messages", `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
+const read = (dir, locale) => JSON.parse(readFileSync(join(dir, "messages", `${locale}.json`), "utf8"));
 const write = (dir, locale, data) => writeFileSync(join(dir, "messages", `${locale}.json`), `${JSON.stringify(data, null, 2)}\n`);
 const run = (dir) => {
   const result = spawnSync(process.execPath, [GATE], {

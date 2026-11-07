@@ -12,7 +12,7 @@
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parse } from "@formatjs/icu-messageformat-parser";
+import { parse, TYPE } from "@formatjs/icu-messageformat-parser";
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
@@ -28,7 +28,7 @@ const PLURAL_CATEGORIES = {
 
 const catalogues = {};
 for (const locale of LOCALES) {
-  catalogues[locale] = JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
+  catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
 }
 
 const checks = [];
@@ -37,34 +37,40 @@ const check = (name, ok, detail) => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/** Extract all plural/select nodes from a message */
+/** Extract all plural/select nodes from a message.
+ *  @formatjs parses an ICU message into an **array** of elements whose `type` is a **numeric**
+ *  enum (`TYPE.plural === 6`, not `"plural"`), and an argument's name is `.value`, not `.name`;
+ *  the first version of this gate compared against strings and counted nothing, so "0 plurals
+ *  checked" was agreement-by-blindness. Arrays are traversed, choice branches are followed,
+ *  and a selectordinal is a plural with `pluralType === "ordinal"`. */
 function extractPluralSelect(message) {
   try {
     const ast = parse(message);
     const nodes = [];
-    function walk(node) {
-      if (node.type === "plural" || node.type === "selectordinal") {
+    const isChoice = (node) => node.type === TYPE.plural || node.type === TYPE.select;
+    const visit = (node) => {
+      if (!node) return;
+      if (Array.isArray(node)) { for (const child of node) visit(child); return; }
+      if (typeof node !== "object") return;
+      if (isChoice(node)) {
         nodes.push({
-          type: node.type,
-          name: node.name,
-          options: Object.keys(node.options),
+          type: node.type === TYPE.plural ? "plural" : "select",
+          ordinal: node.pluralType === "ordinal",
+          name: node.value,
+          options: Object.keys(node.options ?? {}),
           offset: node.offset || 0,
         });
-      } else if (node.type === "select") {
-        nodes.push({
-          type: "select",
-          name: node.name,
-          options: Object.keys(node.options),
-        });
-      } else if (node.type === "plural" || node.type === "select") {
-        for (const option of Object.values(node.options)) {
-          if (option.value && Array.isArray(option.value)) {
-            for (const child of option.value) walk(child);
-          }
-        }
+        for (const option of Object.values(node.options ?? {})) visit(option?.value);
+        return;
       }
-    }
-    walk(ast);
+      if (node.options) for (const option of Object.values(node.options)) visit(option?.value);
+      if (Array.isArray(node.children)) visit(node.children);
+      for (const key of Object.keys(node)) {
+        if (key === "options" || key === "children") continue;
+        if (Array.isArray(node[key])) visit(node[key]);
+      }
+    };
+    visit(ast);
     return nodes;
   } catch {
     return [];
@@ -86,7 +92,7 @@ for (const [namespace, block] of Object.entries(catalogues.en)) {
     if (enPlurals.length === 0) continue;
 
     for (const node of enPlurals) {
-      if (node.type === "plural" || node.type === "selectordinal") {
+      if (node.type === "plural") {
         pluralCount++;
         for (const locale of ["en", "zh", "zh-TW"]) {
           const required = PLURAL_CATEGORIES[locale];
@@ -133,29 +139,34 @@ for (const [namespace, block] of Object.entries(catalogues.en)) {
   }
 }
 
-/** Helper to extract option value from ICU message */
+/** Helper to extract option value from ICU message — same numeric-TYPE traversal as the
+ *  gate's own walker; a branch holding nothing but a placeholder is treated as non-empty. */
 function getOptionValue(message, argName, category) {
   try {
     const ast = parse(message);
     let found = null;
-    function walk(node) {
-      if (found) return;
-      if ((node.type === "plural" || node.type === "select" || node.type === "selectordinal") && node.name === argName) {
-        const option = node.options[category];
-        if (option && option.value && Array.isArray(option.value)) {
-          // Reconstruct the message from the AST nodes
-          found = option.value.map(n => n.type === "literal" ? n.value : "").join("");
+    const visit = (node) => {
+      if (found !== null) return;
+      if (!node) return;
+      if (Array.isArray(node)) { for (const child of node) visit(child); return; }
+      if (typeof node !== "object") return;
+      const isChoice = node.type === TYPE.plural || node.type === TYPE.select;
+      if (isChoice && node.value === argName) {
+        const option = node.options?.[category];
+        if (option?.value && Array.isArray(option.value)) {
+          const text = option.value.map((n) => (n.type === TYPE.literal ? n.value : "")).join("");
+          found = text.trim() === "" && option.value.length > 0 ? " placeholder" : text;
         }
-      } else if (node.type === "plural" || node.type === "select" || node.type === "selectordinal") {
-        for (const opt of Object.values(node.options)) {
-          if (opt.value && Array.isArray(opt.value)) {
-            for (const child of opt.value) walk(child);
-          }
-        }
+        return;
       }
-    }
-    walk(ast);
-    return found;
+      if (isChoice) { for (const option of Object.values(node.options ?? {})) visit(option?.value); return; }
+      for (const key of Object.keys(node)) {
+        if (key === "options" || key === "children") continue;
+        if (Array.isArray(node[key])) visit(node[key]);
+      }
+    };
+    visit(ast);
+    return found ?? undefined;
   } catch {
     return undefined;
   }

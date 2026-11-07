@@ -357,7 +357,7 @@ export function MarketTools({
 
       <p className={fielding.ok ? "muted" : "notice notice--warn"} data-testid="fielding-rule">
         {fielding.rule}
-        {t("fieldingReads", { players: fielding.players, keepers: fielding.keepers, plural: fielding.keepers === 1 ? "" : "s", rule: account.rule })}
+        {t("fieldingReads", { players: fielding.players, keepers: fielding.keepers, rule: account.rule })}
       </p>
     </div>
   );

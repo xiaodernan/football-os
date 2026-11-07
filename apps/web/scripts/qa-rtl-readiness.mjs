@@ -21,7 +21,9 @@
  *   4  `textDirection` classifies the shipped locales as `ltr` and the RTL base languages as `rtl`, so the
  *      helper is called rather than assumed;
  *   5  the root layout passes that verdict to `<html dir>`, and a change to the attribute moves this check;
- *   6  both font stacks end in a generic family, so a script the stack does not name still gets a font.
+ *   6  both font stacks end in a generic family, so a script the stack does not name still gets a font;
+ *   7  one `:lang(ar), :lang(he)` reset in globals.css zeroes `letter-spacing` and `text-transform` —
+ *      cursive joining is not breakable tracking, and the gate refuses a tree without it.
  *
  * Files only: no server, no browser, no port. Register it in `scripts/check.sh` and CI beside the other
  * static gates, or `qa-gate-inventory.mjs` correctly reports it as a script nothing invokes.
@@ -63,7 +65,7 @@ let unreadable = [];
 const bodies = new Map();
 for (const file of cssFiles) {
   try {
-    bodies.set(file, (readFileSync(file, "utf8").replace(/\r\n/g, "\n")));
+    bodies.set(file, readFileSync(file, "utf8"));
   } catch (err) {
     unreadable.push(`${rel(file)} (${err.code ?? err.message})`);
   }
@@ -133,7 +135,7 @@ check(
 const LOCALES = join(WEB, "i18n", "locales.ts");
 let textDirection;
 try {
-  const src = (readFileSync(LOCALES, "utf8").replace(/\r\n/g, "\n"));
+  const src = readFileSync(LOCALES, "utf8");
   const start = src.indexOf("const RTL_BASE_LANGUAGES");
   if (start < 0) throw new Error("the RTL base-language set was not found");
   const region = src.slice(start).replace(/export\s+function/g, "function");
@@ -163,7 +165,7 @@ if (textDirection) {
 
 /* 5 — the root layout hands the verdict to the document. The tag is read as a tag, not as the whole file, so
  * a `dir` set on some inner element cannot satisfy it. */
-const layout = (readFileSync(join(WEB, "app", "layout.tsx"), "utf8").replace(/\r\n/g, "\n"));
+const layout = readFileSync(join(WEB, "app", "layout.tsx"), "utf8");
 const htmlTag = /<html\b[^>]*>/.exec(layout)?.[0] ?? "";
 check(
   "the root layout sets dir from the locale's own direction",
@@ -185,6 +187,18 @@ check(
   "both font stacks end in a generic family a script the stack does not name can still use",
   /\bsans-serif$/.test(font) && /\bmonospace$/.test(mono),
   `--font ends "${font.split(",").pop()?.trim()}", --mono ends "${mono.split(",").pop()?.trim()}"`,
+);
+
+/* 7 — Arabic letters join; tracking breaks the joining. The stylesheets carry sixteen
+ * letter-spacing declarations, and they exist for Latin's eyebrows and table headers; the
+ * two scripts tracking cannot serve get one reset rule in globals.css. The gate refuses a
+ * tree where that rule is missing, so a future refactor cannot silently drop it. */
+const arabicReset = /:lang\(ar\)/.test(globalsCss) && /:lang\(he\)/.test(globalsCss);
+const resetBlock = /(?::lang\(ar\)[^{]*,?\s*(?::lang\(he\))?[^{]*\{[^}]*\})/.exec(globalsCss)?.[0] ?? "";
+check(
+  "Arabic and Hebrew reset letter-spacing and case transform — cursive joining is not breakable tracking",
+  arabicReset && /letter-spacing:\s*normal/.test(resetBlock),
+  arabicReset ? (resetBlock.trim().replace(/\s+/g, " ") || "the reset rule is unreadable") : "no :lang(ar)/:lang(he) reset rule found in globals.css",
 );
 
 const failed = checks.filter((row) => !row.ok);

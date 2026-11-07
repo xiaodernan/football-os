@@ -89,7 +89,7 @@ export function WorldHead({
     <div>
       {back && (
         <Link className="muted world-back" href={back.href}>
-          ← {back.label}
+          {back.label}
         </Link>
       )}
       <div className="between wrap world-head">
@@ -202,12 +202,12 @@ export function WorldPager({
       <div className="row" style={{ gap: "0.4rem" }}>
         {page > 1 && (
           <Link className="btn btn--sm" href={build(page - 1)}>
-            ← {t("previousPage")}
+            {t("previousPage")}
           </Link>
         )}
         {page < pages && (
           <Link className="btn btn--sm" href={build(page + 1)}>
-            {t("nextPage")} →
+            {t("nextPage")}
           </Link>
         )}
       </div>

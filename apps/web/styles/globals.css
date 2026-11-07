@@ -61,6 +61,12 @@ h1, h2, h3, h4, p { margin: 0; }
 
 ::selection { background: var(--accent); color: #04120b; }
 
+/* Arabic and Hebrew are cursive scripts (or heavily pointed) in ways Latin is not: tracking
+   breaks the joining of Arabic letters and `text-transform` has no counterpart in either
+   script. Sixteen declarations in the stylesheets carry letter-spacing; rather than split
+   them from their Latin use, the rule resets tracking for the two scripts it cannot serve. */
+:lang(ar), :lang(he) { letter-spacing: normal; text-transform: none; }
+
 .container { width: min(1200px, 100% - 2.5rem); margin-inline: auto; }
 .page { padding: 2rem 0 4rem; }
 

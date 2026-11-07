@@ -159,20 +159,20 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
             <div className="row" style={{ gap: "0.4rem" }}>
               {hasPrev ? (
                 <Link className="btn btn--ghost btn--sm" href={query(sessions.page - 1)}>
-                  ← {tc("previousPage")}
+                  {tc("previousPage")}
                 </Link>
               ) : (
                 <span className="btn btn--sm btn--ghost" aria-disabled="true" style={{ opacity: 0.45 }}>
-                  ← {tc("previousPage")}
+                  {tc("previousPage")}
                 </span>
               )}
               {hasNext ? (
                 <Link className="btn btn--sm" href={query(sessions.page + 1)}>
-                  {tc("nextPage")} →
+                  {tc("nextPage")}
                 </Link>
               ) : (
                 <span className="btn btn--sm btn--ghost" aria-disabled="true" style={{ opacity: 0.45 }}>
-                  {tc("nextPage")} →
+                  {tc("nextPage")}
                 </span>
               )}
             </div>

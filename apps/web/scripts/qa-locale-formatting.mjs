@@ -12,7 +12,7 @@
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parse } from "@formatjs/icu-messageformat-parser";
+import { parse, TYPE } from "@formatjs/icu-messageformat-parser";
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
@@ -21,7 +21,7 @@ const LOCALES = ["en", "zh", "zh-TW"];
 
 const catalogues = {};
 for (const locale of LOCALES) {
-  catalogues[locale] = JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
+  catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
 }
 
 const checks = [];
@@ -58,28 +58,44 @@ const LOCALE_FORMATS = {
   },
 };
 
-/** Check that a message contains date/number/currency format patterns */
+/** Check that a message contains date/number/currency format patterns.
+ *  @formatjs parses into **numeric-typed** elements and an **array**; the old walker compared
+ *  against strings and never saw a format, so the gate reported 0 formats over any tree.
+ *  Number/date/time elements carry their skeleton in `.style` — a bare string for a
+ *  predefined style ("percent"), or an object whose `parsedOptions` hold the real
+ *  style/currency ("currency/USD"). */
+const TYPE_NAME = { [TYPE.number]: "number", [TYPE.date]: "date", [TYPE.time]: "time" };
+
 function extractFormatPatterns(message) {
   try {
     const ast = parse(message);
     const formats = [];
-    function walk(node) {
-      if (node.type === "argument" && node.format) {
-        formats.push({
-          name: node.name,
-          type: node.format.type,
-          style: node.format.style,
-          options: node.format.options || {},
-        });
-      } else if (node.type === "select" || node.type === "plural") {
-        for (const option of Object.values(node.options)) {
-          if (option.value && Array.isArray(option.value)) {
-            for (const child of option.value) walk(child);
-          }
+    const visit = (node) => {
+      if (!node) return;
+      if (Array.isArray(node)) { for (const child of node) visit(child); return; }
+      if (typeof node !== "object") return;
+      const typeName = TYPE_NAME[node.type];
+      if (typeName) {
+        let style;
+        const options = {};
+        const s = node.style;
+        if (typeof s === "string") {
+          style = s;
+        } else if (s && typeof s === "object") {
+          style = s.parsedOptions?.style;
+          if (s.parsedOptions?.currency) options.currency = s.parsedOptions.currency;
         }
+        formats.push({ name: node.value, type: typeName, style, options });
+        return;
       }
-    }
-    walk(ast);
+      if (node.options) for (const option of Object.values(node.options)) visit(option?.value);
+      if (Array.isArray(node.children)) visit(node.children);
+      for (const key of Object.keys(node)) {
+        if (key === "options" || key === "children") continue;
+        if (Array.isArray(node[key])) visit(node[key]);
+      }
+    };
+    visit(ast);
     return formats;
   } catch {
     return [];

@@ -9,16 +9,20 @@
  * measured rather than its code being read.
  *
  * Predictions, written before the first run (2026-10-26; baseline: 40 namespaces, 98 value-shared rows,
- * 136 name-only rows, 9 named divergences, passed=4 total=4):
+ * 136 name-only rows, 9 named divergences, passed=4 total=4).
+ * Revised 2026-11-06 for the live surface: 43 namespaces, 101 value-shared rows, 151 name-only rows,
+ * 10 named divergences (`live|nav,settings` added), the ceiling ratcheted 234 → 240 on the same review;
+ * the fixture arms below were re-measured against that baseline:
+ *   0  the shipped gate reads the real catalogues 4/4 green.
  *   0  the shipped gate reads the real catalogues 4/4 green.
  *   A  one namespace's Chinese value for a value-shared key given a unique string: failed=1 — check 2 names
  *      `adding|scout,training`. The row keeps its English, so neither the ledger nor the ceiling can move.
  *   B  a sixth namespace added to "Age" (`career.thAge`), translated like the five that hold it: failed=1 — check 4
  *      ("the duplicated-sentence population does not exceed its reviewed ceiling"), because the sentence is now held
- *      in 235 bindings and no translation diverges, so check 2 must stay green. Row counts alone would read 98.
+ *      in 241 bindings and no translation diverges, so check 2 must stay green. Row counts alone would read 101.
  *   C  a named divergence aligned away (`simulate.home` → the nav's 首页): failed=1 — check 3, which refuses a
  *      ledger that no longer holds; the row itself leaves the divergence list, so check 2 stays green.
- *   D  three empty catalogues: failed=2 — check 1 (the population guard) and check 3 (all nine entries stale).
+ *   D  three empty catalogues: failed=2 — check 1 (the population guard) and check 3 (all ten entries stale).
  *      Check 2 is green at zero rows, which is precisely why the guard exists rather than why the arm is vacuous.
  *   E  a shared key NAME with a different English value (`career.asking`): green 4/4 — name-only sharing is not a
  *      finding, which is the control that keeps the gate from drifting back to counting names.
@@ -54,7 +58,7 @@ const fixture = (name) => {
 const copyReal = (dir) => {
   for (const locale of LOCALES) cpSync(join(REAL, `${locale}.json`), join(dir, "messages", `${locale}.json`));
 };
-const read = (dir, locale) => JSON.parse((readFileSync(join(dir, "messages", `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
+const read = (dir, locale) => JSON.parse(readFileSync(join(dir, "messages", `${locale}.json`), "utf8"));
 const write = (dir, locale, data) => writeFileSync(join(dir, "messages", `${locale}.json`), `${JSON.stringify(data, null, 2)}\n`);
 const run = (dir, unset) => {
   const env = { ...process.env, QA_I18N_WEB: dir };
@@ -88,7 +92,7 @@ const zero = run(baseline);
 check(
   "0 the shipped gate reads the real catalogues 4/4 green",
   zero.status === 0 && zero.passed === 4 && zero.total === 4 && zero.failed === 0
-    && zero.out.includes("9 of the value-shared rows are translated differently"),
+    && zero.out.includes("10 of the value-shared rows are translated differently"),
   tally(zero),
 );
 
@@ -126,7 +130,7 @@ const b = run(duplicate);
 check(
   "B a new duplicated sentence reds the ceiling and not the drift check",
   b.status === 1 && b.failed === 1 && verdict(b.out, CEILING) === "FAIL"
-    && verdict(b.out, DRIFT) === "PASS" && b.out.includes("235 binding(s) across 98 row(s)"),
+    && verdict(b.out, DRIFT) === "PASS" && b.out.includes("241 binding(s) across 101 row(s)"),
   `${tally(b)}; ${CEILING}=${verdict(b.out, CEILING)}`,
 );
 
