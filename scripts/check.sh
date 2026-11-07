@@ -261,10 +261,19 @@ echo "── Web: locale-formatting gate ─────────────
 (cd apps/web && node scripts/qa-locale-formatting.mjs)
 
 echo "── Web: plural-select gate ────────────────────────────"
-# ICU plural/select branches are complete per locale (en: one/other; zh: other).
-# Currently 0 plurals/selects in catalogue.
-# Files only: no server, no browser.
+# ICU plural/select/ordinal branches complete per locale against CLDR (en one/other; zh and zh-TW
+# other; ar zero/one/two/few/many/other; he one/two/other). The walk that reads them is checked
+# against the choice spellings in the bytes, so a walker that finds nothing cannot report agreement;
+# a message the parser refuses is a finding, a catalogue on disk that this gate does not name is a
+# finding, and the English plural population carries a vacuity floor. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-plural-select.mjs)
+
+echo "── Web: plural-select behaviour gate ──────────────────"
+# Holds those seven verdicts on scratch catalogues, for the shapes the shipped catalogue cannot
+# exercise: the select and ordinal rules, an emptied branch, a missing CLDR category, an unjudged
+# fourth locale, a parse refusal, and the plural population falling through its floor.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-plural-select-witness.mjs)
 
 echo "── Web: key-drift gate ────────────────────────────────"
 # Two populations. Same-context drift (two keys in ONE namespace sharing an English sentence but not

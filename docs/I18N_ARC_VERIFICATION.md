@@ -2460,3 +2460,123 @@ Working tree carries exactly one known red until the milestone lands —
 milestone owes its recompute to; the committed tree is green on everything this slice touched.
 
 
+## 37. `qa-plural-select` had two checks and no way to be wrong — cured, and given a witness (2026-11-08)
+
+**The state at `55f7ea7`.** 208 lines, **2** checks. Both extractors ended in `catch { return [] }`,
+so a message the app's own parser refuses was not a finding but an absence. The walker set
+`ordinal: node.pluralType === "ordinal"` at line 65 and never read it, so every `selectordinal` in
+the tree was judged by the *cardinal* table — English `{place, selectordinal, one {…} two {…} other
+{…}}` is "complete" against `one/other` while omitting CLDR's `few` and `many`. And `scripts/check.sh`
+above the invocation asserted **"Currently 0 plurals/selects in catalogue."** The committed tree holds
+**89** English plural nodes; the in-flight M13 tree holds **87**. The comment was not merely stale, it
+described the gate's own oldest failure mode — a walker that finds nothing and reports agreement.
+
+**What "89 plural(s) checked" was actually worth.** For each English plural node the check looked for
+a same-named node in the other catalogue and `continue`d when there was none. Measured on `55f7ea7`:
+of 89 English nodes, **25** have a plural in `zh` and **25** in `zh-TW`; **64** of the 89 are flattened
+into a single phrase in Chinese (correct for a language with no plural inflection, but not a
+comparison). So 72 % of the comparisons the check's name advertises never happened, and the detail
+line said "checked". The cured gate prints both halves — `comparisons per locale: 89 en, 25 zh
+(64 flattened), 25 zh-TW (64 flattened)` — because "checked" had stopped meaning anything the reader
+could audit.
+
+**The seven checks now.** Discovery, scan, parse, floor, plural, ordinal, select:
+
+- `every catalogue in the directory is a locale this gate names` — `LOCALES` used to be a list that
+  *filtered itself down* to the files present, which means adding `fr.json` adds an unread locale
+  rather than a red gate. `readdirSync` now enumerates the directory and anything outside the named
+  set is charged by filename.
+- `the walker finds every choice argument the catalogues spell` — the anti-blindness invariant: every
+  message is counted twice, once by the regex spellings (`, plural,` / `, selectordinal,` / `, select,`)
+  and once by the parsed AST, per locale *and* per key. On both bases this is an exact equality
+  (en 87/87, zh 23/23, zh-TW 23/23 in the working tree; 89/89, 25/25, 25/25 at `55f7ea7`). It is not a
+  floor or a ceiling — a walker that silently returns `[]` and a tree that genuinely has no choices
+  are different events, and this check is the one that tells them apart.
+- `every message this gate judges parses as ICU` — the two silent catches replaced by a ledger. An
+  unparseable message leaves the population, so it must be named, not skipped: `1 message(s) the
+  parser refused, so they left the population: en: witness.broken — EXPECT_ARGUMENT_CLOSING_BRACE`.
+- `the English plural population clears its vacuity floor (80)` — set below both the committed 89 and
+  the in-flight 87 so this unit cannot red another milestone's catalogue edit, and above zero so it
+  cannot be satisfied by a walker that reads nothing.
+- `every plural has required categories for each locale` — unchanged CLDR cardinals (en `one/other`,
+  zh and zh-TW `other`, ar six, he `one/two/other`), plus the empty-branch charge that already existed.
+- `every ordinal has required ordinal categories for each locale` — the flag at line 65 made live:
+  `ORDINAL_CATEGORIES` (en `one/two/few/many/other`, zh and zh-TW `other`, ar `other`). Where a
+  locale's ordinal table is *undeclared* the gate refuses to judge it rather than comparing against
+  `undefined`: `he: … arg "place" needs ordinal categories and this gate declares none for "he" —
+  state its CLDR categories instead of judging it against nothing`. `he` is undeclared on purpose; the
+  sentence says so out loud instead of being quietly green.
+- `every select keeps English's cases and has no empty case` — a select's contract is the set of cases
+  English itself declares (plus `other`), so `zh: … select "gender" missing cases: female` is now a
+  finding. It was not: the old select check only looked for empty branches.
+
+**One ICU fact that retired an arm.** No completeness rule can ever name a missing `other`, because
+`{count, plural, one {# deal}}` does not parse at all — `MISSING_OTHER_CLAUSE`. That was written into
+the gate header, and the arm that intended to test it became two arms instead: a plural missing its
+`one` branch (chargeable) and a plural missing its `other` (a parse refusal).
+
+**The witness, and its first run.** `apps/web/scripts/qa-plural-select-witness.mjs`, 337 lines,
+**16** checks (arms 0, A–O), each running the *shipped* gate over scratch catalogues in `%TEMP%`
+through `QA_I18N_WEB` — the witness grades behaviour, not code. First run: **5/16**. Every red was
+attributed before anything was re-pinned, and none of them was the gate lying: two were witness bugs
+(`detailOf`'s regex could not find a check whose own name contains ` — `; three expectations were keyed
+on the fixture's *key* where the gate prints the ICU *argument* name — `deals` vs `count`), one was a
+bad fixture (the English ordinal omitted CLDR `many`, so a fixture that should have been green was
+charged for a real defect), and one was impossible (the `MISSING_OTHER_CLAUSE` paragraph above). Two
+gate-wording defects were found only by arms reading the printed sentences: `fr .json` (a space that
+made the filename unfindable) and `is a ordinal … declares no ordinal category table`. Second run:
+**16/16**.
+
+**The reverse control — the part that decides whether this section is worth writing.** The pre-fix
+bytes were copied out of `55f7ea7`, run over the *same* fixture catalogues, and compared with the
+cured gate on each:
+
+| fixture | pre-fix (`55f7ea7` bytes) | cured gate |
+| --- | --- | --- |
+| `control` — unmutated catalogues | `passed=2 total=2 failed=0` | `passed=7 total=7 failed=0` |
+| `ordinal-missing-few` | `passed=2 total=2 failed=0` | `failed=1` — ORDINAL |
+| `no-plurals` — every English plural flattened | `passed=2 total=2 failed=0` | `failed=1` — FLOOR |
+| `parse-refusal` — unterminated `one {# deal` | `passed=2 total=2 failed=0` | `failed=2` — SCAN + PARSE |
+| `fourth-locale` — `fr.json` added | `passed=2 total=2 failed=0` | `failed=1` — DISCOVER |
+
+The control row agrees in both judges, so the fixtures are the only difference; the other four were
+invisible to the shipped gate at HEAD. That is the difference between a gate that has never been wrong
+and a gate that cannot be.
+
+**Wiring.** `scripts/check.sh` (the false comment replaced by what the gate does) and
+`.github/workflows/ci.yml` carry both invocations. `qa-gate-inventory.mjs` counts a script as gated
+only when a carrier literally contains `node …scripts/<name>.mjs`, so the witness row had to be wired
+before it could be listed: `gates=[scripts/check.sh,.github/workflows/ci.yml]` for both files.
+
+**Verification, run on this tree, read from the output.**
+
+- `node scripts/qa-plural-select.mjs` — `CHECKS passed=7 total=7 failed=0`, 1.06 s.
+- `QA_I18N_WEB=D:/headapi/apps/web node scripts/qa-plural-select.mjs` (detached worktree at
+  `55f7ea7`) — `passed=7 total=7 failed=0`; the floor was chosen so the committed 89 and the
+  in-flight 87 both clear it.
+- `node scripts/qa-plural-select-witness.mjs` — `CHECKS passed=16 total=16 failed=0` in 17.5 s,
+  including arm O (`the real catalogues still read 7/7 after the fixture arms`) so a leaked fixture
+  cannot be mistaken for a green unit.
+- `node scripts/qa-gate-inventory.mjs` — `CHECKS passed=204 total=204 failed=0` over the in-flight tree.
+- `bash -n scripts/check.sh` — clean; the reverse control's temporary carrier directory was removed by
+  the script that created it (`temp carrier removed: true`), and no file outside the four below moved.
+
+**What this changes and what it does not.** It changes: `qa-plural-select.mjs` from a self-certifying
+count into a gate with an invariant, a parse ledger, a floor, a live ordinal rule and a witness, plus
+the two carriers that invoke them. `docs/ROADMAP_NEXT.md`'s 2026-10-24 status line had already listed
+`plural-select` among the complete gates; this unit is what makes that listing honest, so no roadmap
+row was owed — and that file is another milestone's in-flight rewrite today, which is a second reason
+not to touch it for a claim it no longer contradicts. It retires `scripts/check.sh`'s "Currently 0 plurals/selects"
+sentence. It does not change: any catalogue (no key was added, removed or retranslated), any other
+gate's verdict, or the 89 → 87 delta that belongs to the in-flight M13 milestone. It also clears a
+suspicion this session raised and then disproved: `55f7ea7`'s message claims the gate "has Hebrew CLDR
+set now wired alongside Arabic's six" — `git show 55f7ea7:apps/web/scripts/qa-plural-select.mjs` names
+`he` at line 25 and declares `he: ["one", "two", "other"]` at line 33, so that claim is **true** and no
+cure was owed there.
+
+**Still open, stated rather than hidden.** `ar` and `he` remain dormant-by-absence — no `ar.json`, no
+`he.json` on either base — so arms I and J are the only evidence that those tables fire; the ordinal
+rule has **0** live nodes in both trees, and the gate's own detail line says so
+(`0 ordinal node(s) in the catalogue — this rule is run by qa-plural-select-witness.mjs, not by these
+bytes`) instead of letting a green read as coverage. The next time a locale catalogue lands, DISCOVER
+is the check that decides whether it is judged or merely present.

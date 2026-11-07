@@ -223,8 +223,15 @@ jobs:
         run: node scripts/qa-baseline-gates.mjs
       - name: Locale-formatting gate (date/number/currency format patterns are locale-appropriate)
         run: node scripts/qa-locale-formatting.mjs
-      - name: Plural-select gate (ICU plural/select branches complete per locale)
+      - name: Plural-select gate (ICU plural/ordinal/select branches complete per locale, and the walk proves it read them)
         run: node scripts/qa-plural-select.mjs
+      - name: Plural-select behaviour gate (each verdict, on scratch catalogues)
+        # Same command as `scripts/check.sh`. The step above is green on a real tree, where the catalogue
+        # carries no select and no ordinal node at all — so those two rules, a parse refusal, an unjudged
+        # fourth locale and the vacuity floor have never been seen refusing. This builds scratch catalogues
+        # and holds each verdict red, alone, for the one shape that should charge it.
+        # Files only: no server, no browser.
+        run: node scripts/qa-plural-select-witness.mjs
       - name: Key-drift gate (same-context drift named, cross-namespace drift under its ceiling)
         run: node scripts/qa-key-drift.mjs
       - name: Key-drift behaviour gate (each verdict, on scratch catalogues)
