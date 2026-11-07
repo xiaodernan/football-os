@@ -2861,3 +2861,14 @@ all under `scripts/` — so the same invocation is reproducible here, and its fi
 **Honest limits.** `ruff` runs here with `apps/api` as project root (the §36 root-cause); the extra five
 targets (`scripts/*.py`) are linted in the same invocation. SQLite-vs-PostgreSQL behavioural findings cannot
 be produced by lint and are not claimed here — that leg is §42's, with its 60% horizon.
+
+**Addendum — the last unmeasured api step, and the scratch container, gone.** The RAG evaluation gate
+(`python -m evals.run_rag_eval`, the pgvector leg) had never been measured by this arc. It was run against
+the same temporary scratch container (virgin `pgvector/pgvector:pg16`, freshly seeded by `seed
+--with-demo-user` an hour earlier): **exit 0, all gates passed** — 72 citations checked, every named case
+`ok` (most at rank 1; two honest misses measured at rank 3 and rank 4, with confidence 0.825/0.714, not
+silently blended into the wins). The scratch container has been removed; no instance was left for any later
+run to inherit by accident. The api job is now measured end to end: Lint (tip green, one milestone red
+predicted, §43 above) · mypy (164 files, clean) · migrations (virgin PG, 0001→0058 clean) · seed (92 tables,
+155 chunks) · pytest (SQLite leg unmeasured to completion; PG leg read to 60%, four named reds — the
+milestone's committed-contract staleness, §42) · RAG (all gates passed). The web job was measured in §42.
