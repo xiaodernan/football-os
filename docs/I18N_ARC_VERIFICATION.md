@@ -1793,5 +1793,46 @@ machinery) and the pagination/passage arrows moving into the catalogue so RTL wr
 checklist's "fix the tree in all three catalogues in the same slice" rule anticipated. The M13 batch's own
 words stay with their milestone.
 
-**Verification of the committed tree** (detached worktree at this commit, not the shared checkout):
-placeholder — see the commit message for the results re-run there, and §22 for the procedure.
+**Verification of the committed tree** (detached worktree at the commit, not the shared checkout;
+`git worktree add --detach` + a directory junction for `node_modules`; results at `d7784b2` — the
+correction commit `d9d7776` plus the nav-link commit below):
+
+| gate | at `d7784b2` | note |
+| --- | --- | --- |
+| `qa-gate-inventory` | **194/194** | every registered script green |
+| `qa-wire-readers` | **12/18 — six named reds, all one owner** | the committed tree carries only the API's M13 wire fields (`cup_prize_by_stage`, `gate_*`, `cup_prize_*`, `ticket_price`, `tie_id`, `competition`, totals `cup_prize_rows`/`gate_rows`, moves `expiry_round`) but not their web readers — the web `MarketView`/`Move` types ship with the in-flight M13 batch, uncommitted. On the full working tree, wire is green 18/18. This gate is the milestone's to green (see `NEW_SURFACE_COMPLIANCE.md`); it is documented here, not hidden. |
+| `qa-i18n-literals` | 9/9 | 149 `.tsx` files, 4328-key corpus checks |
+| `qa-unused-keys` | **3/3 after `d7784b2`** | found `nav.live` — the Live milestone described "a nav link" and its bytes did not hold one; the floor-0 check refused and named it. The 3-line link landed as `d7784b2`, not folded in silently. |
+| `qa-locale-completeness` | 2/2 | en/zh/zh-TW parity at **4096 keys** |
+| `qa-locale-fallback` | 3/3 | every English key non-empty in both Chinese catalogues |
+| `qa-locale-tokens` | 5/5 | README pin restated to the committed 4096-key tree (4051 of it translated; 45 named identical tokens, byte-exactly recomputed) |
+| `qa-locale-content` | 3/3 | tracked locale differences unchanged |
+| `qa-locale-formatting` | 2/2 | the population now reads zero truthfully |
+| `qa-icu-messages` | 2/2 | 12807 messages parse; 4096 keys compared |
+| `qa-icu-coverage` | 1/1 | catalogue-internal parity; source-side retired with its reason |
+| `qa-plural-select` | 2/2 | **89** plurals (the notification/live plurals committed with the milestone) |
+| `qa-translation-quality` | 4/4 | |
+| `qa-translation-freshness` | 2/2 after re-baseline | the gate flagged `market.fieldingReads` only: English changed (`goalkeeper{plural}` → ICU plural), zh did not. The flag was re-verified by hand — the sentence renders identically and Chinese carries no plural inflection — then `--init-baseline` re-anchored `.gate-baseline` at `d7784b2`. |
+| `qa-population-floor` | 3/3 | 3600 → 4269 non-negotiable floor on the working tree; the committed tree holds 4096, which is ≥ baseline |
+| `qa-locale-tokens` (table) | 5/5 | table states the committed tree |
+| `qa-key-drift` | 4/4 | 12 sites (the M13 drift sites are uncommitted); ceilings 112/46 hold |
+| `qa-key-drift-witness` | **10/10 after one anchor fix** | F2 assumed a stale-ledger count of 0 (true on the full tree); on the committed tree it is 5 (M13 keys). The fixture now parses the baseline stale count from the gate's own detail line and expects +1, exactly like the drift count. The same assertion passes on both trees. |
+| `qa-shared-keys` | 4/4 | 240 bindings; the named-divergence set is current |
+| `qa-shared-keys-witness` | 8/8 | |
+| `qa-rtl-readiness` | 8/8 | the `:lang(ar), :lang(he)` reset gate holds |
+| `qa-namespace-ownership` | 2/2 | 43/43 owned |
+| `qa-metadata`, `qa-middleware-gating`, others | per inventory | inventory is 194/194 — every check green or named |
+
+**The one committed-tree red to carry forward, and its owner.** `qa-wire-readers` fails six of its
+checks on the committed tree, and that is a fact of slicing a cross-tier milestone, not a defect to
+paper over: the API's M13 wire fields are published but their web-tier readers and types ride with
+the in-flight milestone. The reader-facing translation arc is unaffected — the wire gate judges no
+billed string. `docs/NEW_SURFACE_COMPLIANCE.md` already requires the milestone commit to re-green it;
+this section names the six reds so the milestone's own record can match them one by one. Making the
+committed tree green by widening scope mid-flight would have swept 130 files of someone's milestone
+into this commit — §24 exists to avoid exactly that.
+
+**The working tree remains the 4269-key measurement** for the milestone's own record. The README
+pin in-tree states the working tree; the README committed with this commit states the committed
+tree; the token gate reads whichever tree it sits on and is green on both. The milestone will
+recompute the pin when it lands — checklist item 8 of the new-surface contract.

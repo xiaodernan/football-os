@@ -206,12 +206,17 @@ check(
   tally(f),
 );
 // The baseline's drifting count, read from the gate's own detail line, is what F must fall below by one.
+// So is the baseline's stale-ledger count: the reviewed ledger may reference keys that exist only in
+// a pending milestone tree, and there they are already stale; the fixture must surface baselineStale+1.
 const baselineDrift = Number(/(\d+) drifting site\(s\) of \d+ group\(s\)/.exec(a.out)?.[1]);
+const baselineStale = Number(/\((\d+) ledger entr/.exec(a.out)?.[1]);
+const afterStale = Number(/\((\d+) ledger entr/.exec(f.out)?.[1]);
 check(
   "F2 the gate reports one site fewer and one ledger entry it no longer needs",
-  Number.isFinite(baselineDrift) && baselineDrift > 0
-    && f.out.includes(`${baselineDrift - 1} drifting site(s)`) && f.out.includes("1 ledger entry no longer drift"),
-  `baseline=${baselineDrift} after=${/(\d+) drifting site\(s\)/.exec(f.out)?.[1]} note=${f.out.includes("1 ledger entry no longer drift")}`,
+  Number.isFinite(baselineDrift) && baselineDrift > 0 && Number.isFinite(baselineStale) && Number.isFinite(afterStale)
+    && f.out.includes(`${baselineDrift - 1} drifting site(s)`) && afterStale === baselineStale + 1
+    && f.out.includes("no longer drift"),
+  `baseline=${baselineDrift} drift / ${baselineStale} stale — after=${/(\d+) drifting site\(s\)/.exec(f.out)?.[1]} drift / ${afterStale ?? "?"} stale`,
 );
 
 // G — the fixture did not leak into the real catalogues.
