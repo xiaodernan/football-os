@@ -1836,3 +1836,72 @@ into this commit — §24 exists to avoid exactly that.
 pin in-tree states the working tree; the README committed with this commit states the committed
 tree; the token gate reads whichever tree it sits on and is green on both. The milestone will
 recompute the pin when it lands — checklist item 8 of the new-surface contract.
+
+## 25. The CI run history, named — four independent causes over a month, one fixed, two deliberately paid forward, one structural (2026-11-07)
+
+**The question that opens this section.** Why has every CI run of the last month-plus failed — and which
+part of that is a gate refusing the tree, and which part is the gate refusing the runner? Every recent
+master run's failing step was pulled from `gh api .../jobs`, not from memory, and here they are in
+chronological order:
+
+| run | commit (date) | web fails | api fails |
+| --- | --- | --- | --- |
+| `41492954386` | 11-02 | **Locale-token gate** | Tests (SQLite dev fallback) |
+| `41614512986` | 11-03 | **Locale-token gate** | Tests (SQLite dev fallback) |
+| `41817599563` | 11-04 | **Locale-token gate** | Tests (SQLite dev fallback) |
+| `42013949317` | 11-05 | **Wire-readers gate** | Tests (SQLite dev fallback) |
+| `42187469545` | 11-06 | Wire-readers | Tests (SQLite dev fallback) |
+| `42348704324` | 11-07 (3a49d56) | **Translation-freshness gate** (one key) | Tests (SQLite dev fallback) |
+| `42348955119` | 11-07 (ff521d9) | Wire-readers | — (in progress at this record) |
+| `42349049143` | 11-07 (5e491ba) | Wire-readers | — (in progress at this record) |
+
+**Cause 1 — the api job: one test graded on the runner, not the tree (ours, fixed).**
+`tests/test_ci_trigger.py::test_the_branch_fallback_answers_on_a_detached_checkout_and_names_why_when_it_cannot`
+failed in **every** `Tests (SQLite dev fallback)` leg above, with `tests/test_ci_trigger.py:264` and the
+message "a checkout that is on `side` answers `side`, detached history or not". The test builds a throwaway
+repository and expects the fallback's answer from *it* for every arm, but the calls ran under the process
+environment, where CI's `GITHUB_EVENT_NAME=push` and `GITHUB_REF_NAME=master` short-circuit the resolver to
+`["master"]` for every arm. The `side` arm and the detached-side arms refused; the local arms passed only
+because no `GITHUB_*` is set locally — the same defect class as §22 and §7: a gate that reads the runner, not
+the tree. The fix is one helper, `_without_github_env()`, which suspends every `GITHUB_*` key for the graded
+calls — the same isolation the throwaway repo already applied to `commit.gpgsign` and `core.hooksPath`.
+In `ff521d9`. Local arms re-measured green under a simulated CI environment.
+
+**Cause 2 — the web job: the README pin, honestly red (fixed by `d9d7776`).** `Locale-token gate` red from
+11-02 through 11-04 because the catalogues had grown past the pin in `apps/web/messages/README.md` — the gate
+was doing its job: a figure in prose that no command recomputes is not evidence. The recompute of the
+11-05-era commit greened it; this arc's own catalogue landing (`d9d7776`) re-pinned to the committed tree
+(4051 of 4096, 45 named identical tokens, byte-exactly recomputed), and the token gate is green on both trees
+it documents now.
+
+**Cause 3 — the web job: `Translation-freshness`, exactly once, on a commit that changed English without
+Chinese (transitional, worked as designed).** QA_BASELINE_COMMIT in CI is set from the push event (`before`):
+the gate asks whether English keys changed in this push without their Chinese answers moving. `3a49d56` was
+that push — it carried one such key, `market.fieldingReads` (the ICU-plural rewrite, which changed no rendered
+sentence and needs no zh bytes, because Chinese carries no plural inflection). The `.gate-baseline` file the
+script writes with `--init-baseline` **is not read in CI** — the event baseline is deliberate, the comment in
+`.github/workflows/ci.yml` says so. The flag is the contract working, not a defect: an en revision is a
+translation-blocking event by design. The subsequent pushes
+(`ff521d9`, `5e491ba` — no catalogue movement) pass the gate; the milestone's own push carries matching
+bytes in all three catalogues, so it will not flag. The flagged key remains recorded as re-verified by hand:
+one sentence, one plural; renders identically; zh unchanged on purpose — not out of sloth.
+
+**Cause 4 — the web job: `Wire-readers`, since 11-05 (not ours — the milestone's).** The web job has
+failed at the wire gate since the locale-token cause was cured. The committed tree carries the API's M13
+wire fields, but their web-tier readers (`MarketView`, `Move`, the moves-row callback) ride with the
+in-flight M13 milestone; the gate refuses to bless half of the contract. The six named reds are recorded in
+§24 with their owner, and every CI step after the wire gate (`RTL-readiness`, `Types`, `Build`) has been
+stranded behind it ever since.
+
+**What this arc changed in this section.** The api fix landed as `ff521d9`. The locale-token pin landed with
+`d9d7776`. The freshness flag is recorded, not silenced — it will not recur on a push that changes no English
+message, and the milestone carries matching bytes. The wire red stays red until the milestone lands — a
+deliberately un-patched red, named, owned, with its closing record addressable from §24.
+
+**Verification carried forward.** The local gate battery on master as of `5e491ba`: inventory 194/194, i18n-literals
+9/9, unused-keys 3/3 (the floor-0 door), locale-completeness 2/2, fallback 3/3, tokens 5/5, substitution 2/2
+formatting, icu-messages 2/2, plural-select 2/2 (89 plurals), quality 4/4, freshness 2/2 (re-baselined), wire
+18/18 on the full working tree and 12/18 on the committed tree (six named reds, documented), rtl-readiness 8/8.
+CI, tab by tab, will go green in the following order when the milestone lands: `api` (has the fix already), then
+`web` at the wire gate only.
+
