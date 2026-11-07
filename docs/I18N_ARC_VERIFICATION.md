@@ -2207,3 +2207,40 @@ worktree pinned at `f7e2563`, the API tests, the milestone status, and the CI ve
 
 **Now I write it honest:** six of the six arms reds where it should; six of six passes green when the arms are kept off. The gate counts 6/6 with Hebrew dormant — Arabic's arm is intact, Hebrew's is dormant-by-absence in the shipped tree.
 
+## 32. The residual hardcode swept — `qa-api-strings` and the three-holder checks (2026-11-07)
+
+§28 and §31 said the battery discovers its population. Two residuals that still fixed on `zh`/`zh-TW`/
+`three catalogues` were left for the next sweep; they were caught this session.
+
+**`qa-api-strings.mjs`.** The gate that holds the refusal-catalogue translation contract across each
+non-English catalogue — the check that the API speaks its own language to the reader even when it's
+a refusal. Its `LOCALES` was `["zh", "zh-TW"]` — the initial slate when the gate was written. Wired to
+discover: `LOCALES = ["zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(...))`. Refusal sentences
+are a promise to the reader; a gate that held only the two initial Chinese catalogues would have been
+invisible to Arabic the moment Arabic shipped. The gate's name/detail now say "every shipped non-English catalogue",
+the detail reads `${codes.length} code(s) translated in ${LOCALES.length} catalogue(s)` — the count is measured, not named.
+Verified green on the real tree (3/3) — unchanged.
+
+**`qa-icu-coverage.mjs` — the placeholder-mismatch loop.** The mismatch check read `en`, `zh`, and
+`zh-TW` explicitly with `cataloguePlaceholders["zh-TW"]` — an Arabic catalogue passing the check would
+have been invisible, or a failing Arabic catalogue would have been reported as `en vs zh-TW` with
+the wrong locale named. The mismatch check now iterates `LOCALES.filter((locale) => locale !== "en")`
+and names the actual mismatch each way — `${path}: placeholder "${ph}" mismatch (en=true, ar=false,
+he=true)`. The check message reorders to "every shipped catalogue" — the gate's population is now
+whichever catalogues exist; the mismatch is caught whichever they are.
+
+**`scripts/check.sh` comments.** Three comments still said "all three catalogues". They now say
+"every shipped catalogue" — a comment is prose, not a claim, and a claim that reads true today must
+read honest when the population is whatever the directory is.
+
+**Verified.** After the sweep — same battery on the working tree: icu-messages 2/2, icu-coverage 1/1
+(every key declares identical placeholders in every shipped catalogue), api-strings 3/3,
+keys/literals 9/9, unused-keys 3/3, all 194/194 inventory gates on the committed tree; no integer
+moves, no gate splits, no new discovery — only the code that had been pretending to be finished
+is finished.
+
+**Why this order, after §28/§31.** The line "we discovered the catalogues" can mean "every gate asks
+the directory" or "everywhere we remembered to ask the directory". The honest article is the second:
+the leftover heads are what the sweep measures. §32 exists because the previous sections were claiming
+"every gate" while two still said `zh` explicitly.
+

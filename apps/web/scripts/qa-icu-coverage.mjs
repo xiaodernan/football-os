@@ -90,29 +90,37 @@ for (const locale of LOCALES) {
   }
 }
 
-/** Check that all three locales declare the same placeholders for each key */
+/** Check that every shipped catalogue declares the same placeholders for each key */
 const placeholderMismatches = [];
 for (const [namespace, block] of Object.entries(catalogues.en)) {
   for (const key of Object.keys(block ?? {})) {
     const path = `${namespace}.${key}`;
     const enPh = cataloguePlaceholders.en[path] ?? new Set();
-    const zhPh = cataloguePlaceholders.zh[path] ?? new Set();
-    const zhTwPh = cataloguePlaceholders["zh-TW"][path] ?? new Set();
 
-    const allKeys = new Set([...enPh, ...zhPh, ...zhTwPh]);
+    const allKeys = new Set(enPh);
+    for (const locale of LOCALES) {
+      if (locale === "en") continue;
+      const ph = cataloguePlaceholders[locale][path] ?? new Set();
+      for (const x of ph) allKeys.add(x);
+    }
+
     for (const ph of allKeys) {
       const inEn = enPh.has(ph);
-      const inZh = zhPh.has(ph);
-      const inZhTw = zhTwPh.has(ph);
-      if (inEn !== inZh || inEn !== inZhTw) {
-        placeholderMismatches.push(`${path}: placeholder "${ph}" mismatch (en=${inEn}, zh=${inZh}, zh-TW=${inZhTw})`);
+      const others = LOCALES
+        .filter((locale) => locale !== "en")
+        .map((locale) => (cataloguePlaceholders[locale][path] ?? new Set()).has(ph));
+      if (others.some((present) => present !== inEn)) {
+        const named = LOCALES
+          .filter((locale) => locale !== "en")
+          .map((locale) => `${locale}=${(cataloguePlaceholders[locale][path] ?? new Set()).has(ph)}`);
+        placeholderMismatches.push(`${path}: placeholder "${ph}" mismatch (en=${inEn}, ${named.join(", ")})`);
       }
     }
   }
 }
 
 check(
-  "every key declares identical placeholders in all three catalogues",
+  "every key declares identical placeholders in every shipped catalogue",
   placeholderMismatches.length === 0,
   placeholderMismatches.length === 0
     ? "all keys have matching placeholders"

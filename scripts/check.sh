@@ -110,8 +110,8 @@ echo "── Web: catalogue-ICU gate ──────────────�
 # A catalogue message is a program, not a string: next-intl parses it when the page renders it, and a message
 # that does not parse throws instead of printing. Nothing in the build reads a catalogue — next-intl resolves a
 # key in the browser — so a malformed message compiles, typechecks, lints and then 500s the page that reads it.
-# This gate parses every message in all three catalogues with the app's own ICU parser, refuses a plural or a
-# select with no "other" branch, and holds the same key to the same placeholders in all three files. It found
+# This gate parses every message in every catalogue the directory carries, with the app's own ICU parser, refuses a plural or
+# select with no "other" branch, and holds the same key to the same placeholders in every shipped catalogue. It found
 # five messages written with mustache placeholders ({{count}}), which ICU reads as an argument that never began.
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-icu-messages.mjs)
@@ -178,7 +178,7 @@ echo "── Web: error-boundary gate ──────────────
 # and that screen is English in every language, on a page whose every other sentence comes from the
 # catalogue. The tree had a not-found page in the reader's language and no boundary at all. This gate
 # holds that the boundary is there, that it is a client component, and that its sentences are in the
-# catalogue in all three languages. Files only: no server, no browser.
+# catalogue in every shipped locale. Files only: no server, no browser.
 (cd apps/web && node scripts/qa-error-boundary.mjs)
 
 echo "── Web: accessibility gate ────────────────────────────"
@@ -225,7 +225,7 @@ echo "── Web: shared-sentence behaviour gate ──────────�
 (cd apps/web && node scripts/qa-shared-keys-witness.mjs)
 
 echo "── Web: ICU-coverage gate ─────────────────────────────"
-# Every placeholder used in source is declared in catalogue across all three locales.
+# Every placeholder used in source is declared in catalogue across every shipped catalogue.
 # 2737 calls checked, all placeholders match.
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-icu-coverage.mjs)
@@ -240,7 +240,7 @@ echo "── Web: translation-freshness gate ───────────�
 
 echo "── Web: population-floor gate ─────────────────────────"
 # The catalogue's total and per-namespace counts never fall below the baseline commit's (or the
-# `.population-baseline` file's), and all three locales always hold the same number of keys — that
+# `.population-baseline` file's), and every shipped catalogue always holds the same number of keys — that
 # last check needs no baseline, so it runs even when the gate has to refuse for want of one.
 (cd apps/web && node scripts/qa-population-floor.mjs)
 
@@ -285,7 +285,7 @@ echo "── Web: locale-content gate ──────────────
 (cd apps/web && node scripts/qa-locale-content.mjs)
 
 echo "── Web: locale-completeness gate ──────────────────────"
-# Every namespace has identical keys in all three locales (en, zh, zh-TW).
+# Every namespace has identical keys in every shipped locale.
 # 40 namespaces, 3600 keys each, full parity verified.
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-locale-completeness.mjs)

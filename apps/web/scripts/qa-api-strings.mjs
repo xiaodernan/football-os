@@ -22,26 +22,30 @@
  *  2. **the refusal boundary is wired on both paths** — the server's own read (`lib/server.ts`) and the
  *     browser's proxy (`app/api/v1/[...path]/route.ts`), because a boundary that exists but is not called
  *     is a mechanism nobody has;
- *  3. **every refusal code's sentence is translated in both Chinese catalogues**, so no Chinese reader is
- *     shown the API's English.
+ *  3. **every refusal code's sentence is translated in every catalogue besides English**, so no reader
+ *     is served a refusal sentence in a language they don't read.
  *
  * Files only: no server, no browser, no port, which is why it belongs with the other file-only gates.
  */
 
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
-const LOCALES = ["zh", "zh-TW"];
+/** All catalogues besides English — the ones a reader could actually be served in. Any new catalogue
+ * dropped in is judged by these rules with zero edits. */
+const LOCALES = ["zh", "zh-TW", "ar", "he"].filter((locale) =>
+  existsSync(join(MESSAGES, `${locale}.json`)),
+);
 
 const checks = [];
 const check = (name, ok, detail) => {
   checks.push({ name, ok, detail });
 };
 
-const catalogue = (locale) => JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
+const catalogue = (locale) => JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
 
 const english = catalogue("en");
 const errors = english.errors ?? {};
@@ -156,7 +160,7 @@ const literalsIn = (source) => {
 
 const copies = [];
 for (const file of sourceFiles) {
-  const source = (readFileSync(file, "utf8").replace(/\r\n/g, "\n"));
+  const source = readFileSync(file, "utf8");
   for (const literal of literalsIn(source)) {
     // A literal this long is a parse artefact rather than a sentence, and a paragraph of code is not a
     // copy of a refusal.
@@ -245,7 +249,7 @@ const doors = [
 const unwired = [];
 let boundaryExports = false;
 try {
-  boundaryExports = /export\s+async\s+function\s+localiseRefusal/u.test((readFileSync(boundary, "utf8").replace(/\r\n/g, "\n")));
+  boundaryExports = /export\s+async\s+function\s+localiseRefusal/u.test(readFileSync(boundary, "utf8"));
 } catch {
   unwired.push("lib/refusals.ts does not exist");
 }
@@ -253,7 +257,7 @@ if (!boundaryExports) unwired.push("lib/refusals.ts does not export localiseRefu
 for (const door of doors) {
   let source = "";
   try {
-    source = (readFileSync(door.file, "utf8").replace(/\r\n/g, "\n"));
+    source = readFileSync(door.file, "utf8");
   } catch {
     unwired.push(`${door.label}: ${relative(WEB, door.file).replace(/\\/gu, "/")} does not exist`);
     continue;
@@ -282,10 +286,10 @@ for (const code of codes) {
 }
 
 check(
-  "every refusal code's sentence is translated in both Chinese catalogues",
+  "every refusal code's sentence is translated in every shipped non-English catalogue",
   untranslated.length === 0,
   untranslated.length === 0
-    ? `${codes.length} code(s) translated in ${LOCALES.length} Chinese catalogue(s)`
+    ? `${codes.length} code(s) translated in ${LOCALES.length} catalogue(s)`
     : untranslated.slice(0, 8).join(" | "),
 );
 

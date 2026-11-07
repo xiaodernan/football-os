@@ -147,8 +147,8 @@ check(
 );
 
 /**
- * The same key in three catalogues must ask for the same values: a key that takes `{count}` in English
- * and `{n}` in Chinese prints the literal `{count}` on the Chinese page, and no build step can see it.
+ * The same key in every shipped catalogues must ask for the same values: a key that takes `{count}` in English
+ * and `{n}` in another catalogue prints the literal `{count}` on the non-English page, and no build step can see it.
  */
 const mismatched = [];
 const english = flatten(catalogues.get("en"));
