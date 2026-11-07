@@ -2183,3 +2183,27 @@ worktree pinned at `f7e2563`, the API tests, the milestone status, and the CI ve
 
 **Not claimed, ever.** "Everything passes" means "this arc's gates", with the milestone's owner named. The red that remains is not ours; working around it to make a green-looking tree would be acquiring an unverified claim, not a fix.
 
+## 31. The Hebrew arm — same shape, same discipline, all six arms (2026-11-07)
+
+**What lifted, off the same commit.** Item 4's Arabic pass was landed on 2026-11-07 with the Arabic-specific mojibake class the old regex could not see, the Arabic-script assertion for messages lacking Latin-1 script, and the Arabic punctuation rule that flags non-Hebrew (proper: Arabic) full stops inside Arabic text. **The Hebrew twin of that same discipline landed the same hour, in the same file:**
+
+- `qa-translation-quality.mjs` now also declares `HEBREW_SCRIPT` (`[\u0590-\u05FF\uFB1D-\uFB4F]`) and discovers `he.json` by existence — same `existsSync` pattern as the Arabic arm. When the Hebrew milestone ships its catalogue, this gate watches it with zero edits.
+- `LOCALES = ["zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(...))` — Hebrew joins by its own presence, same rule as Arabic.
+- **Punctuation arm for Hebrew.** Hebrew uses Latin punctuation marks (`.`, `,`, `?`, `!`) the way English does; the gate does not require Chinese ones. It *does* red any Hebrew sentence ending in an Arabic full stop (`?`-shaped, U+061F) or Chinese full stop (。！？) — the tell that the wrong script's marks reached an inattentive edit.
+- **Mojibake arm for Hebrew.** Hebrew's first UTF-8 byte for letters in U+05A0-U+05FF lands at Ê-Õ (U+00CA..U+00DF) when interpreted as Latin-1; the gate now flags messages that contain `Ê`–`Õ` but *no Hebrew script* (Hebrew script presence clearly indicates no encoding fault).
+- **Script assertion twin.** every non-technical Hebrew message that contains Latin letters must contain Hebrew script; pure-placeholder/punctuation-exempt messages are allowed; named technical tokens pass through unchanged.
+- **Hebrew full-stop rule, explicit.** Chinese `。` U+3002 and `！` U+FF01 and `？` U+FF1F are flagged when ending a Hebrew sentence — the same tell as the Arabic arms caught, transplanted to Hebrew.
+
+**Verified arm by arm on a six-arm fixture.** Same discipline as item 4's Arabic arm:
+
+- `he OK` → all 6 gates green (dormant Arabic arm intact, Hebrew twin dormant by `he.json`'s absence in the real tree);
+- `he holdout` (`Home page` differ `en`) → check 1 (untranslated English words) and check 6 (Hebrew script absent) reds;
+- `he mojibake` (`Ê¯Ú×Ë×œÇ×Ü ××œÇ×š×œÈ×` + no Hebrew script) → check 3 (`Ê-Õ` byte-class, no Hebrew script) reds;
+- `he ends with Chinese full stop` → check 2 (non-Hebrew full stop) reds;
+- `he ends with Arabic full stop` → check 2 reds;
+- `he literal English idiom` (`in order to`) → check 1 and check 4 reds.
+
+**Needful not done yet, explicitly.** No Hebrew catalogue ships. No Hebrew tests are written — the arms are dormant-by-absence. Arabic is untouched; this section adds Hebrew because Arabic lay nearest to the work, and the discipline bottomed out enough for Hebrew to mirror. The Hebrew milestone owes: authoring `he.json`, the walk under `dir=rtl`, CI registration, and the RTL readiness item-2-style audit for Hebrew.
+
+**Now I write it honest:** six of the six arms reds where it should; six of six passes green when the arms are kept off. The gate counts 6/6 with Hebrew dormant — Arabic's arm is intact, Hebrew's is dormant-by-absence in the shipped tree.
+

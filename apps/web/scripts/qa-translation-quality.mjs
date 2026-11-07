@@ -7,11 +7,10 @@
  * - Proper punctuation for each locale
  * - No encoding issues (mojibake) in translations
  * - No overly literal English structures in translations
- * - Arabic messages carry Arabic script (when ar.json ships)
+ * - Arabic messages carry Arabic script (when ar.json ships); Hebrew likewise (when he.json ships) — same shape, same rule
  *
- * The Arabic checks live in the gate dormant: they attach the day `ar.json`
- * exists in the catalogue directory, like `qa-plural-select`'s Arabic CLDR
- * set — zero edits required to light them up.
+ * The Arabic and Hebrew checks live in the gate dormant: they attach the day `ar.json` / `he.json`
+ * exists in the catalogue directory, like the locale discovery in `qa-plural-select` — zero edits required.
  *
  * Files only: no server, no browser, no port.
  */
@@ -23,8 +22,8 @@ import { fileURLToPath } from "node:url";
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-/** Judge the locales that ship in the catalogue directory; `ar` joins the pass the day it ships. */
-const LOCALES = ["zh", "zh-TW", "ar"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
+/** Judge the locales that ship in the catalogue directory; `ar` and `he` join the pass the day they ship. */
+const LOCALES = ["zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
 
 const catalogues = {};
 for (const locale of ["en", ...LOCALES]) {
@@ -163,6 +162,7 @@ check(
 const punctuationIssues = [];
 
 const ARABIC_SCRIPT = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+const HEBREW_SCRIPT = /[\u0590-\u05FF\uFB1D-\uFB4F]/;
 
 for (const locale of LOCALES) {
   for (const [namespace, block] of Object.entries(catalogues[locale])) {
@@ -186,6 +186,13 @@ for (const locale of LOCALES) {
       if (locale === "ar" && ARABIC_SCRIPT.test(value)) {
         if (/[.!?]$/.test(value.trim())) {
           punctuationIssues.push(`ar: ${namespace}.${key} — ends with Latin punctuation inside Arabic text: "${value.slice(-20)}"`);
+        }
+      }
+      // A Hebrew message that ends in an Arabic full stop (؟) or in Chinese sentence-ending punctuation
+      // is the same tell as the Arabic arm — the editor reached for the wrong script's full stop.
+      if (locale === "he" && HEBREW_SCRIPT.test(value)) {
+        if (/[؟。！？]$/.test(value.trim())) {
+          punctuationIssues.push(`he: ${namespace}.${key} — ends with a non-Hebrew full stop: "${value.slice(-20)}"`);
         }
       }
     }
@@ -217,6 +224,11 @@ for (const locale of LOCALES) {
         // Arabic UTF-8 first byte (D8-DB) read as Latin-1 is exactly this pair; no Arabic text
         // and no named token uses the capital Latin-1 letters, so this reds only mojibake.
         encodingIssues.push(`${locale}: ${namespace}.${key} — Arabic script bytes decoded as Latin-1: "${value.slice(0, 40)}"`);
+      } else if (locale === "he" && /[ÊËÌÍÎÏÐÑÒÓÔÕ]/.test(value) && !HEBREW_SCRIPT.test(value)) {
+        // Hebrew letters encode to U+05A0-U+05FF, whose two-byte UTF-8 leading byte lands at Ê-Õ if read
+        // as Latin-1. No Hebrew token uses these bytes legitimately, so flagging them with no Hebrew
+        // script in the message reds only mojibake.
+        encodingIssues.push(`${locale}: ${namespace}.${key} — Hebrew script bytes decoded as Latin-1: "${value.slice(0, 40)}"`);
       } else if (/â€|âœ|âœ|â–|â€|â™|âœ|âœ|ï¿½|ï»¿|å|å°|å¸|å±|å²|å³|å´|åµ|å¶|å·|å¸|å¹|åº|å»|å¼|å½|å¾|å¿|æ|ç|è|é|ê|ë|ì|í|î|ï|ð|ñ|ò|ó|ô|õ|ö|÷|ø|ù|ú|û|ü|ý|þ|ÿ/) {
         // Check if the match is actually a legitimate Unicode symbol
         const suspicious = value.match(/â€|âœ|âœ|â–|â€|â™|âœ|âœ|ï¿½|ï»¿|å|å°|å¸|å±|å²|å³|å´|åµ|å¶|å·|å¸|å¹|åº|å»|å¼|å½|å¾|å¿|æ|ç|è|é|ê|ë|ì|í|î|ï|ð|ñ|ò|ó|ô|õ|ö|÷|ø|ù|ú|û|ü|ý|þ|ÿ/g);
@@ -277,12 +289,11 @@ check(
     : `${literalMatches.length} literal translation issue(s): ${literalMatches.slice(0, 4).join(" | ")}`,
 );
 
-/** Arabic script assertion (item 4, Arabic half): every non-technical Arabic message carries Arabic
- *  script. A message that is pure placeholder/punctuation carries no signal and is exempt; a message
- *  with Latin letters but no Arabic script is an untranslated holdout, suspect the moment ar.json ships. */
-const scriptIssues = [];
-
-const ARABIC_CHARACTERS = ARABIC_SCRIPT;
+/** Script assertions (item 4, language arms): every non-technical message in the RTL catalogues carries
+ *  the script of its locale. A message that is pure placeholder/punctuation carries no signal and is exempt;
+ *  a message with Latin letters but no RTL script is an untranslated holdout, suspect the moment the file ships. */
+const arabicScriptIssues = [];
+const hebrewScriptIssues = [];
 
 for (const locale of LOCALES.filter((l) => l === "ar")) {
   for (const [namespace, block] of Object.entries(catalogues[locale])) {
@@ -294,8 +305,25 @@ for (const locale of LOCALES.filter((l) => l === "ar")) {
       if (enValue === value) continue;
       const stripped = value.replace(placeholderPattern, "");
       if (!/[A-Za-z]/.test(stripped)) continue; // placeholder/punctuation-only messages carry nothing
-      if (!ARABIC_CHARACTERS.test(value)) {
-        scriptIssues.push(`${locale}: ${namespace}.${key} — carries no Arabic script and is not a named technical token: "${value.slice(0, 60)}"`);
+      if (!ARABIC_SCRIPT.test(value)) {
+        arabicScriptIssues.push(`${locale}: ${namespace}.${key} — carries no Arabic script and is not a named technical token: "${value.slice(0, 60)}"`);
+      }
+    }
+  }
+}
+
+for (const locale of LOCALES.filter((l) => l === "he")) {
+  for (const [namespace, block] of Object.entries(catalogues[locale])) {
+    for (const [key, value] of Object.entries(block ?? {})) {
+      if (typeof value !== "string") continue;
+      const path = `${namespace}.${key}`;
+      if (TOKENS.has(path)) continue;
+      const enValue = english[namespace]?.[key];
+      if (enValue === value) continue;
+      const stripped = value.replace(placeholderPattern, "");
+      if (!/[A-Za-z]/.test(stripped)) continue; // placeholder/punctuation-only messages carry nothing
+      if (!HEBREW_SCRIPT.test(value)) {
+        hebrewScriptIssues.push(`${locale}: ${namespace}.${key} — carries no Hebrew script and is not a named technical token: "${value.slice(0, 60)}"`);
       }
     }
   }
@@ -303,10 +331,18 @@ for (const locale of LOCALES.filter((l) => l === "ar")) {
 
 check(
   "every Arabic message in ar.json shows Arabic script",
-  scriptIssues.length === 0,
-  scriptIssues.length === 0
+  arabicScriptIssues.length === 0,
+  arabicScriptIssues.length === 0
     ? "every Arabic message carries Arabic script"
-    : `${scriptIssues.length} message(s) lack Arabic script: ${scriptIssues.slice(0, 4).join(" | ")}`,
+    : `${arabicScriptIssues.length} message(s) lack Arabic script: ${arabicScriptIssues.slice(0, 4).join(" | ")}`,
+);
+
+check(
+  "every Hebrew message in he.json shows Hebrew script",
+  hebrewScriptIssues.length === 0,
+  hebrewScriptIssues.length === 0
+    ? "every Hebrew message carries Hebrew script"
+    : `${hebrewScriptIssues.length} message(s) lack Hebrew script: ${hebrewScriptIssues.slice(0, 4).join(" | ")}`,
 );
 
 const failed = checks.filter((entry) => !entry.ok);

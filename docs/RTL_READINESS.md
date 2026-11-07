@@ -1,7 +1,7 @@
 # RTL readiness — the audit that stands before any Arabic or Hebrew locale
 
-Measures the tree on 2026-11-06. Every number is taken, not asserted; reproduce with the commands
-named. **No right-to-left locale ships until the checklist below is closed.** This document is the
+Measures the tree on 2026-11-06 (re-verified 2026-11-07). Every number is taken, not asserted; reproduce
+with the commands named. **No right-to-left locale ships until the checklist below is closed.** This document is the
 audit; `qa-rtl-readiness.mjs` is the gate; `docs/I18N_ARC_VERIFICATION.md` §20 records the structural
 half.
 
@@ -127,7 +127,7 @@ The milestone covers these by page, not by rule.
    on the real catalogues (87 plurals, 2/2, unchanged) and on a three-case fixture: a complete six-category
    Arabic plural passes; a missing `two` reds naming the missing category; an empty branch reds too.
    Owed at the milestone: `ar.json` itself, the full population passing all six categories, and parity (item 5).
-4. **`qa-translation-quality.mjs` gains an Arabic pass — done 2026-11-07, dormant until `ar.json` ships.**
+4. **`qa-translation-quality.mjs` gains the Arabic and Hebrew passes — done 2026-11-07.**
    The gate now discovers which locales to judge from the catalogue directory; `ar` joins the same four
    families of checks (untranslated English words, locale punctuation, mojibake, no-literal-English-structures)
    with Arabic-specific handling: an Arabic message ending in Latin `.`/`!`/`?` reds, and a new fifth check requires
@@ -136,8 +136,13 @@ The milestone covers these by page, not by rule.
    Latin-1, and no seven-case arm could retire it until it did. Verified arm by arm: complete Arabic passes 5/5;
    a holdout like `Home page` reds both untranslated-English and no-script; mojibakeed Arabic reds mojibake;
    Latin `.`-ending reds punctuation; an English idiom reds untranslated-English and literal-structure.
+   **Hebrew's twin (same day, same session):** Hebrew locale + Hebrew-script checking shipped 2026-11-07;
+   punctuation check honours Hebrew's `?`/`!`/`.` as natural sentence endings and reds non-Hebrew full stops
+   (`。`, `؟`, `！`, `？`); mojibake detects Latin-1-decoded Hebrew bytes at `Ê`–`Õ` with script absent; a
+   Hebrew-script assertion mirrors the Arabic one; punctuation honours Hebrew sentence-ending marks other
+   than Chinese/Arabic ones. Verified with a six-arm fixture — see §31.
    The Arabic milestone still owes: authoring `ar.json`, running the pass on its full population, and every
-   `ar` message passing all six plural categories and all five quality checks.
+   `ar` message passing all six plural categories and all five quality checks. The Hebrew milestone owes the same.
 5. **Catalogue parity — the gate half done 2026-11-07.**
    `qa-locale-completeness.mjs` no longer names three targets; it discovers the catalogue files in the
    directory and judges every one of them — `en`, `zh`, `zh-TW` today, four the day `ar.json` lands, with
