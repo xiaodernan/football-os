@@ -2839,3 +2839,25 @@ committed pin, `qa-gate-inventory` 209/209, `qa-translation-quality` 9/9, its 11
 the web CI job runs on the committed master tip, with one known red standing beside it: `qa-wire-readers`
 12/18 on the committed tree — the M13 milestone's red (§24), which stops the web job at its gate step until
 that milestone lands. Everything this arc owns, on the committed tip, is green.
+
+## 43. The whole Lint target, read locally — green on the tip, one prediction for the milestone's push (2026-11-08)
+
+**Why.** §36 fixed Lint's one known failure from CI run `42380950105` (the `meta.py` import order) by
+reading the failed step after the fact. This section reads the same target *before* any run can: `scripts/lint.sh`
+is derived from `git ls-files` — `apps/api` in whole plus every committed `.py` outside it, exactly five,
+all under `scripts/` — so the same invocation is reproducible here, and its findings are attributable.
+
+**Readings.**
+
+- **Committed tip (`2ae56aa`, detached worktree):** `ruff check <apps/api> <scripts>` — **All checks passed.**
+  The Lint step master would run today goes green, and now not just on `meta.py`.
+- **Working tree (with the M13 milestone's in-flight files):** one finding, `tests/test_world.py:193` —
+  F821, `Any` used in a type annotation and never imported. `git show HEAD:apps/api/tests/test_world.py |
+  grep by_cup` finds nothing — the failing construct was added by the in-flight milestone and lives nowhere
+  in the committed tree. **It is the milestone's red, one missing `from typing import Any`, and this arc does
+  not edit that file.** When the milestone lands, the tip this predicts is: committed lint green again, or
+  exactly this one line red — a fact, stated ahead of the run rather than discovered by it.
+
+**Honest limits.** `ruff` runs here with `apps/api` as project root (the §36 root-cause); the extra five
+targets (`scripts/*.py`) are linted in the same invocation. SQLite-vs-PostgreSQL behavioural findings cannot
+be produced by lint and are not claimed here — that leg is §42's, with its 60% horizon.
