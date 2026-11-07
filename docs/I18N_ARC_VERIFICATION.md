@@ -1886,6 +1886,18 @@ translation-blocking event by design. The subsequent pushes
 bytes in all three catalogues, so it will not flag. The flagged key remains recorded as re-verified by hand:
 one sentence, one plural; renders identically; zh unchanged on purpose — not out of sloth.
 
+**The correction this section owes (2026-11-07, later).** §25 was written at `ff521d9` and published
+with Cause 1 as "one test". `42348955119` proved the api job then failed on a **different** single case:
+`tests/test_spec_audit_currency.py::test_the_audit_s_declared_figures_answer_for_the_committed_tree`,
+because the Live milestone's two new pages moved the count the audit declares —
+`AUDIT_FIGURES says 65 page routes; apps/web/app has 67 committed page.tsx`. The audit gate did in CI
+exactly what it exists to do: a declarative figure outlived by an adjacent landing (#116's shape, one item
+to the right). Fixed at `161fc75`: `67 page routes`, contract 218 and migrations 50 re-verified at HEAD,
+the quoted triple in `ROADMAP.md` moved with it, the header's re-read trail re-dated. The table's
+"Tests (SQLite dev fallback)" row holds — the *step* name never changed — but the named cause changed:
+`ci_trigger` (the runner-graded fallback, `ff521d9`) then `spec_audit_currency` (the stale figures,
+`161fc75`). Local: `pytest apps/api/tests/test_spec_audit_currency.py` — 9 passed.
+
 **Cause 4 — the web job: `Wire-readers`, since 11-05 (not ours — the milestone's).** The web job has
 failed at the wire gate since the locale-token cause was cured. The committed tree carries the API's M13
 wire fields, but their web-tier readers (`MarketView`, `Move`, the moves-row callback) ride with the
