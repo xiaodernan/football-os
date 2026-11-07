@@ -2019,3 +2019,47 @@ turns it, and the section that holds the evidence.
 **What this arc does *not* owe.** Arabic translations of the 4,269-key catalogue. Gate invention where the
 ast is hand-written (§26 forbids it). A fake "done" for any of these, inside this file or outside it.
 
+## 28. The gates all discover the catalogues now — Arabic and Hebrew land for free (2026-11-07)
+
+§26 recorded the dormant Arabic arms and the fixture-verifying pattern; this section records the same
+dormant-by-absence discovery **propagated across the whole battery**. Every catalogue-bearing gate in
+`apps/web/scripts` used to hardcode a triple; all of them now discover whatever catalogue files live in
+`messages/` by the same existence check. Shipping `ar.json` or `he.json` attaches that locale to every
+verdict below with zero gate edits:
+
+| gate | today | ar/he lands |
+| --- | --- | --- |
+| `qa-icu-messages` | 2/2 (three locales) | same two checks, 4–5 locales, no edit |
+| `qa-icu-coverage` | 1/1 (catalogue-internal parity) | same, 4–5 locales |
+| `qa-plural-select` | 2/2 (en/zh/zh-TW) | en/zh/zh-TW + **ar (zero/one/two/few/many/other) + he (one/two/other)** — `he`'s CLDR set is wired alongside `ar`'s in one edit |
+| `qa-locale-completeness` | 2/2 | same; supersedes the §25 item-5 witness |
+| `qa-locale-fallback` | 3/3 | en→zh/zh-TW/ar/he fallback coverage automatically |
+| `qa-locale-formatting` | 2/2 | same checks, extended population |
+| `qa-locale-content` | 3/3 | population widens; no failure modes change |
+| `qa-locale-tokens` | 5/5 (zh/zh-TW-only domain) | untouched — this gate is Chinese-domain by design and is named, not wired |
+| `qa-metadata-title` | 184/184 | accepts N locales; no edit |
+| `qa-population-floor` | 3/3 | population classes discover the new locales; both baselines remain |
+| `qa-translation-freshness` | 2/2 | `.gate-baseline` moves with HEAD; CI is already event-baseline |
+| `qa-error-boundary` | 2/2 | boundary keys checked in every shipped locale |
+| `qa-key-drift` / `qa-key-drift-witness` | 4/4 / 10/10 | discovery coherent; witness's own fixture-listed real catalogues read en/zh/zh-TW today, four/five tomorrow |
+| `qa-shared-keys-witness` | 8/8 | `REAL` used — same discovery |
+| `qa-rtl-readiness` | 8/8 | shipped-ltr labels discovered; shipped-rtl land with `ar`/`he`; font reset already names `:lang(ar), :lang(he)` |
+| `qa-translation-quality` | 5/5 | the Arabic arm is dormant-verified (§26); Hebrew's arm is not yet written (one flag short of the same shape) — that one lands in the Hebrew milestone, not this commit |
+
+**Not touched, with the reason each stands.**
+`qa-i18n-literals` — catalogue-agnostic; it is called on the working tree, has no locale-typed
+population. `qa-namespace-ownership` — pure code, no catalogue walker. `qa-gate-inventory` — counts
+invocable scripts. `qa-wire-readers` — wired on the one remaining lane. `qa-unused-keys` — walks
+`.tsx` walks (`useTranslations` discovery), not the catalogue set. `qa-translation-quality` — the
+Arabic arm is already verified (§26); its Hebrew counterpart is one flag short of the same shape and
+lands *with the Hebrew milestone*, not as silent scope here.
+
+**Verified.** Every gate above re-run on the real tree (2026-11-07, post-discovery): 194/194 inventory,
+2/2 ICU-coverage, 2/2 ICU-messages, 2/2 plural-select (87 plurals), 2/2 locale-completeness, 3/3
+locale-fallback, 3/3 locale-content, 2/2 locale-formatting, 184/184 metadata-title, 5/5 locale-tokens,
+8/8 rtl-readiness, 2/2 error-boundary, 2/2 translation-freshness, 3/3 population-floor, 9/9
+i18n-literals, 10/10 key-drift, 8/8 shared-keys, 5/5 translation-quality, 3/3 unused-keys, 2/2
+namespace-ownership — every integer equals its pre-discovery verdict. §26 was proven by fixture (local:
+3 green arms and 3 red arms each); this section's claim is proof-by-preservation: same numbers, same
+checklist-shaped output, no counts shift, zero gates split.
+

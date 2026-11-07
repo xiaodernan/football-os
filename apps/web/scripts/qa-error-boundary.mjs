@@ -19,7 +19,7 @@
  * Files only: no server, no browser.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,11 +32,11 @@ const check = (name, ok, detail) => {
   checks.push({ name, ok, detail });
 };
 
-const catalogue = (locale) => JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
+const catalogue = (locale) => JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
 
 let source = "";
 try {
-  source = (readFileSync(BOUNDARY, "utf8").replace(/\r\n/g, "\n"));
+  source = readFileSync(BOUNDARY, "utf8");
 } catch {
   source = "";
 }
@@ -54,7 +54,9 @@ check(
       : "app/error.tsx is not a client component",
 );
 
-const keySets = ["en", "zh", "zh-TW"].map((locale) => Object.keys(catalogue(locale)[namespace] ?? {}).sort().join("|"));
+const keySets = ["en", "zh", "zh-TW", "ar", "he"]
+  .filter((locale) => existsSync(join(WEB, "messages", `${locale}.json`)))
+  .map((locale) => Object.keys(catalogue(locale)[namespace] ?? {}).sort().join("|"));
 const same = namespace !== "" && keySets[0] !== "" && keySets.every((set) => set === keySets[0]);
 
 check(
@@ -63,8 +65,8 @@ check(
   namespace === ""
     ? "app/error.tsx reads no catalogue namespace"
     : same
-      ? `${namespace} holds ${keySets[0] === "" ? 0 : keySets[0].split("|").length} key(s) in each of three catalogues`
-      : `${namespace} does not hold the same keys in all three catalogues`,
+      ? `${namespace} holds ${keySets[0] === "" ? 0 : keySets[0].split("|").length} key(s) in each of the shipped catalogues`
+      : `${namespace} does not hold the same keys in each shipped catalogue`,
 );
 
 const failed = checks.filter((entry) => !entry.ok);

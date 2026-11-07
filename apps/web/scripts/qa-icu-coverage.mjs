@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /*
- * ICU message coverage gate: the three catalogues agree, and they agree for real.
+ * ICU message coverage gate: the shipped catalogues agree, and they agree for real.
  *
  * A key that takes `{count}` in English and spells it `{n}` in Chinese prints the literal
- * `{count}` on the Chinese page; a key missing `other` in a locale renders nothing for it.
- * This gate holds the catalogue-internal half of that contract for every key in all three
- * catalogues: the same key asks for the same placeholders in en, zh and zh-TW.
+ * {count} on the page; a key missing other in a locale renders nothing for it.
+ * This gate holds the catalogue-internal half of that contract for every key in every shipped
+ * catalogue: the same key asks for the same placeholders in en and in every locale the directory carries.
  *
  * The source-side half (calls → placeholders) lives in `qa-i18n-literals`, whose resolver
  * binds each read to its namespace and verifies every placeholder a call needs is supplied.
@@ -14,7 +14,7 @@
  * Files only: no server, no browser, no port.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse, TYPE } from "@formatjs/icu-messageformat-parser";
@@ -22,7 +22,11 @@ import { parse, TYPE } from "@formatjs/icu-messageformat-parser";
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-const LOCALES = ["en", "zh", "zh-TW"];
+/** Discover the catalogues this gate judges, from the directory. Shipped today: en, zh, zh-TW.
+ *  Anything additional — `ar.json`, `he.json` — joins with zero further edits. */
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+  existsSync(join(MESSAGES, `${locale}.json`)),
+);
 
 const catalogues = {};
 for (const locale of LOCALES) {

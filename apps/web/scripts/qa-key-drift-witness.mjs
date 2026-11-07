@@ -28,7 +28,7 @@
  * Files only: no server, no browser, no port.
  */
 
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, cpSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, cpSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -37,7 +37,9 @@ import { spawnSync } from "node:child_process";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GATE = resolve(HERE, "qa-key-drift.mjs");
 const REAL = resolve(HERE, "..", "messages");
-const LOCALES = ["en", "zh", "zh-TW"];
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+  existsSync(join(REAL, `${locale}.json`)),
+);
 
 const checks = [];
 const check = (name, ok, detail) => {

@@ -17,7 +17,7 @@
  * Files only: no server, no browser, no port.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -39,7 +39,7 @@ const git = (...args) => spawnSync("git", args, { cwd: REPO, encoding: "utf8" })
 /** Get current catalogues */
 function getCurrentCatalogues() {
   const catalogues = {};
-  for (const locale of ["en", "zh", "zh-TW"]) {
+  for (const locale of ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)))) {
     catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
   }
   return catalogues;
@@ -48,7 +48,7 @@ function getCurrentCatalogues() {
 /** Compute population stats */
 function computePopulation(catalogues) {
   const stats = {};
-  for (const locale of ["en", "zh", "zh-TW"]) {
+  for (const locale of ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)))) {
     const cat = catalogues[locale];
     let total = 0;
     const byNamespace = {};

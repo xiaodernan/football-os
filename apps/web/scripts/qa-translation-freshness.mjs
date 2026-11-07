@@ -19,7 +19,7 @@
  * Files only: no server, no browser, no port.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -103,7 +103,7 @@ function getCatalogueAtCommit(locale, commit) {
 /** Get current catalogues */
 function getCurrentCatalogues() {
   const catalogues = {};
-  for (const locale of ["en", "zh", "zh-TW"]) {
+  for (const locale of ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)))) {
     catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
   }
   return catalogues;
@@ -132,7 +132,7 @@ if (baseline.error) {
     zh: getCatalogueAtCommit("zh", baseline.commit),
     "zh-TW": getCatalogueAtCommit("zh-TW", baseline.commit),
   };
-  const missing = ["en", "zh", "zh-TW"].filter((locale) => !base[locale]);
+  const missing = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)) && !base[locale]);
 
   if (missing.length) {
     check(

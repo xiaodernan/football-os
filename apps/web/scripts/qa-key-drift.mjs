@@ -34,14 +34,16 @@
  * Files only: no server, no browser, no port.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-const LOCALES = ["en", "zh", "zh-TW"];
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+  existsSync(join(MESSAGES, `${locale}.json`)),
+  );
 
 /**
  * Same-context drift sites reviewed on 2026-10-25, keyed by `namespace|sorted keys`.

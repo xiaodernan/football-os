@@ -18,9 +18,11 @@ const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLT
 const MESSAGES = join(WEB, "messages");
 
 /** The locales the gate judges, discovered from the catalogue directory. A locale gets judged
- *  the day its file exists — adding `ar.json` attaches the Arabic plural set with zero further
- *  edits, and its absence keeps the population at three rather than splitting the gate in two. */
-const LOCALES = ["en", "zh", "zh-TW", "ar"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
+ *  the day its file exists — adding `ar.json` or `he.json` attaches the Arabic/Hebrew plural set
+ *  (CLDR: `zero/one/two/few/many/other` for Arabic, `one/two/other` for Hebrew) with zero
+ *  further edits, and their absence keeps the population at three rather than splitting the gate
+ *  in two. */
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
 
 /** Required plural categories per locale (CLDR) */
 const PLURAL_CATEGORIES = {
@@ -28,6 +30,7 @@ const PLURAL_CATEGORIES = {
   zh: ["other"],  // Chinese has no plural distinction
   "zh-TW": ["other"],  // Traditional Chinese also has no plural distinction
   ar: ["zero", "one", "two", "few", "many", "other"],  // CLDR: Arabic has six plural categories
+  he: ["one", "two", "other"],  // CLDR: singular (1), exactly two, and everything else
 };
 
 const catalogues = {};

@@ -8,15 +8,15 @@
  * then 500s the page that reads it, and a key nobody reads today is a trap waiting for the reader who
  * wires it tomorrow.
  *
- * This gate parses **every message in all three catalogues** with the app's own parser
+ * This gate parses **every message in every catalogue the directory carries** with the app's own parser
  * (`@formatjs/icu-messageformat-parser`, the one next-intl depends on) and refuses three things:
  *
  *  1. a message that does not parse — `{{count}}` is a mustache placeholder, and ICU reads the second
  *     brace as the end of an argument that never began;
  *  2. a plural or a select with no `other` branch — the branch every locale needs and the one ICU
  *     requires, because `other` is what a value outside the named cases falls back to;
- *  3. a message whose placeholders differ from the placeholders the **same key** holds in the other two
- *     catalogues — a key that takes `{count}` in English and `{n}` in Chinese prints the literal
+ *  3. a message whose placeholders differ from the placeholders the **same key** holds in the other
+ *     shipped catalogues — a key that takes `{count}` in English and `{n}` in Chinese prints the literal
  *     `{count}` on the Chinese page.
  *
  * Files only: no server, no browser, no port, which is why it runs in `scripts/check.sh` and not in the
@@ -28,7 +28,7 @@
  * population and passed. The walkers now traverse the array and the choice branches, and the figures
  * below are real. A green that cannot see its population is not agreement.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,7 +38,11 @@ const { parse, TYPE } = require("@formatjs/icu-messageformat-parser");
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
-const LOCALES = ["en", "zh", "zh-TW"];
+/** Discover the catalogues the gate judges, from the directory. Shipped today: en, zh, zh-TW.
+ *  Anything additional — `ar.json`, `he.json` — is judged by the same rules with zero further edits. */
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+  existsSync(join(MESSAGES, `${locale}.json`)),
+);
 
 /** The placeholders a message holds, as the set of names an argument or a choice would print.
  *  @formatjs parses ICU into **numeric-typed** elements (`TYPE.argument === 1`, not `"argument"`),

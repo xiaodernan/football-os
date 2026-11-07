@@ -51,7 +51,9 @@ const ts = require("typescript");
 const WEB = resolve(process.env.QA_METADATA_WEB ? process.env.QA_METADATA_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const APP = join(WEB, "app");
 const MESSAGES = join(WEB, "messages");
-const LOCALES = ["en", "zh", "zh-TW"];
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+  existsSync(join(MESSAGES, `${locale}.json`)),
+);
 const die = (m) => {
   console.error(`FATAL: ${m}`);
   process.exit(2);
@@ -61,7 +63,7 @@ const FLOOR_CARRIERS = 45; // pages on which the walk finds at least one heading
 const dict = {};
 for (const tag of LOCALES) {
   const file = join(MESSAGES, `${tag}.json`);
-  dict[tag] = existsSync(file) ? JSON.parse((readFileSync(file, "utf8").replace(/\r\n/g, "\n"))) : null;
+  dict[tag] = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : null;
 }
 
 const pages = [];
@@ -172,7 +174,7 @@ const metadataHelpers = (src) => {
   }
   return out;
 };
-const METADATA_HELPERS = metadataHelpers((readFileSync(join(WEB, "lib", "site.ts"), "utf8").replace(/\r\n/g, "\n")));
+const METADATA_HELPERS = metadataHelpers(readFileSync(join(WEB, "lib", "site.ts"), "utf8"));
 if (METADATA_HELPERS.size < 2) {
   die(`lib/site.ts exports ${METADATA_HELPERS.size} Metadata helper(s); the walk needs at least the two it was written against — a scan that finds none silently drops every page built through one`);
 }
@@ -181,7 +183,7 @@ const unwrapHelper = (node) => (node && ts.isCallExpression(node) && METADATA_HE
 
 const rows = [];
 for (const file of pages) {
-  const src = (readFileSync(file, "utf8").replace(/\r\n/g, "\n"));
+  const src = readFileSync(file, "utf8");
   const sf = ts.createSourceFile(file, src, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
   const { map: ns, clashes } = binders(sf);
   const inits = new Map();

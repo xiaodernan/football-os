@@ -29,7 +29,7 @@
  * static gates, or `qa-gate-inventory.mjs` correctly reports it as a script nothing invokes.
  */
 
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -146,11 +146,14 @@ try {
   check("the shipped textDirection helper compiled to a callable", false, err.message);
 }
 if (textDirection) {
-  const shipped = ["en", "zh", "zh-TW"];
+  const shippedLtr = ["en", "zh", "zh-TW"];
+  const shippedRtl = ["ar", "he"].filter((locale) =>
+    existsSync(join(WEB, "messages", `${locale}.json`)));
   const rtl = ["ar", "ar-EG", "he", "he-IL", "fa", "ur", "ps", "sd", "ug", "yi", "dv"];
   const ltr = ["en", "en-GB", "zh", "zh-Hant", "zh-TW", "fr", "de-CH", "ja"];
   const wrong = [
-    ...shipped.map((locale) => [locale, "ltr"]),
+    ...shippedLtr.map((locale) => [locale, "ltr"]),
+    ...shippedRtl.map((locale) => [locale, "rtl"]),
     ...rtl.map((locale) => [locale, "rtl"]),
     ...ltr.map((locale) => [locale, "ltr"]),
   ].filter(([locale, expected]) => textDirection(locale) !== expected);
@@ -158,7 +161,7 @@ if (textDirection) {
     "textDirection moves with the script: shipped locales read ltr, RTL base languages read rtl",
     wrong.length === 0 && typeof textDirection("ar") === "string",
     wrong.length === 0
-      ? `${shipped.length} shipped + ${rtl.length} rtl + ${ltr.length} ltr classification(s) agree`
+      ? `${shippedLtr.length + shippedRtl.length} shipped + ${rtl.length} rtl + ${ltr.length} ltr classification(s) agree`
       : wrong.map(([locale, expected]) => `${locale} answered ${textDirection(locale)}, expected ${expected}`).join("; "),
   );
 }
