@@ -3,28 +3,32 @@
  * Translation quality gate: check for common translation quality issues.
  *
  * This gate verifies translation quality beyond just completeness:
- * - No untranslated English words in Chinese translations (except technical tokens)
- * - Consistent terminology across the catalogue
+ * - No untranslated English words in translations (except technical tokens)
  * - Proper punctuation for each locale
- * - No encoding issues
- * - No overly literal translations
- * - Proper handling of placeholders
+ * - No encoding issues (mojibake) in translations
+ * - No overly literal English structures in translations
+ * - Arabic messages carry Arabic script (when ar.json ships)
+ *
+ * The Arabic checks live in the gate dormant: they attach the day `ar.json`
+ * exists in the catalogue directory, like `qa-plural-select`'s Arabic CLDR
+ * set — zero edits required to light them up.
  *
  * Files only: no server, no browser, no port.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-const LOCALES = ["zh", "zh-TW"];
+/** Judge the locales that ship in the catalogue directory; `ar` joins the pass the day it ships. */
+const LOCALES = ["zh", "zh-TW", "ar"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
 
 const catalogues = {};
 for (const locale of ["en", ...LOCALES]) {
-  catalogues[locale] = JSON.parse((readFileSync(join(MESSAGES, `${locale}.json`), "utf8").replace(/\r\n/g, "\n")));
+  catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
 }
 
 /** Load the technical tokens from qa-locale-tokens */
@@ -51,7 +55,7 @@ const check = (name, ok, detail) => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/** Check for untranslated English words in Chinese translations */
+/** Check for untranslated English words in translations (zh, zh-TW and, once it ships, ar) */
 const untranslatedIssues = [];
 const englishWordsPattern = /\b[A-Za-z]{3,}\b/g;
 
@@ -148,7 +152,7 @@ for (const locale of LOCALES) {
 }
 
 check(
-  "no untranslated English words in Chinese translations",
+  "no untranslated English words in translations",
   untranslatedIssues.length === 0,
   untranslatedIssues.length === 0
     ? "no untranslated English words"
@@ -158,6 +162,8 @@ check(
 /** Check for proper punctuation per locale */
 const punctuationIssues = [];
 
+const ARABIC_SCRIPT = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
 for (const locale of LOCALES) {
   for (const [namespace, block] of Object.entries(catalogues[locale])) {
     for (const [key, value] of Object.entries(block ?? {})) {
@@ -165,18 +171,21 @@ for (const locale of LOCALES) {
 
       // Check for Chinese punctuation in Chinese locales
       if (locale === "zh") {
-        // Should use Chinese punctuation
         if (/[.!?]$/.test(value.trim()) && !/[。！？]$/.test(value.trim())) {
           punctuationIssues.push(`zh: ${namespace}.${key} — ends with English punctuation: "${value.slice(-20)}"`);
-        }
-        // Check for mixed punctuation
-        if (/[,.?;:]/.test(value) && /[，。！？、；：]/.test(value)) {
-          // Mixed punctuation is suspicious
         }
       }
       if (locale === "zh-TW") {
         if (/[.!?]$/.test(value.trim()) && !/[。！？]$/.test(value.trim())) {
           punctuationIssues.push(`zh-TW: ${namespace}.${key} — ends with English punctuation: "${value.slice(-20)}"`);
+        }
+      }
+      // An Arabic message that ends in Latin sentence-ending punctuation is the tell that the edit
+      // didn't reach the reader's script; the Arabic full stop is the same byte-class the Chinese
+      // pass accepts below (\.).
+      if (locale === "ar" && ARABIC_SCRIPT.test(value)) {
+        if (/[.!?]$/.test(value.trim())) {
+          punctuationIssues.push(`ar: ${namespace}.${key} — ends with Latin punctuation inside Arabic text: "${value.slice(-20)}"`);
         }
       }
     }
@@ -204,7 +213,11 @@ for (const locale of LOCALES) {
 
       // Check for common mojibake patterns (UTF-8 interpreted as Latin-1)
       // But exclude legitimate Unicode math symbols
-      if (/â€|âœ|âœ|â–|â€|â™|âœ|âœ|ï¿½|ï»¿|å|å°|å¸|å±|å²|å³|å´|åµ|å¶|å·|å¸|å¹|åº|å»|å¼|å½|å¾|å¿|æ|ç|è|é|ê|ë|ì|í|î|ï|ð|ñ|ò|ó|ô|õ|ö|÷|ø|ù|ú|û|ü|ý|þ|ÿ/.test(value)) {
+      if (locale === "ar" && /[ØÙÚÛ]/.test(value)) {
+        // Arabic UTF-8 first byte (D8-DB) read as Latin-1 is exactly this pair; no Arabic text
+        // and no named token uses the capital Latin-1 letters, so this reds only mojibake.
+        encodingIssues.push(`${locale}: ${namespace}.${key} — Arabic script bytes decoded as Latin-1: "${value.slice(0, 40)}"`);
+      } else if (/â€|âœ|âœ|â–|â€|â™|âœ|âœ|ï¿½|ï»¿|å|å°|å¸|å±|å²|å³|å´|åµ|å¶|å·|å¸|å¹|åº|å»|å¼|å½|å¾|å¿|æ|ç|è|é|ê|ë|ì|í|î|ï|ð|ñ|ò|ó|ô|õ|ö|÷|ø|ù|ú|û|ü|ý|þ|ÿ/) {
         // Check if the match is actually a legitimate Unicode symbol
         const suspicious = value.match(/â€|âœ|âœ|â–|â€|â™|âœ|âœ|ï¿½|ï»¿|å|å°|å¸|å±|å²|å³|å´|åµ|å¶|å·|å¸|å¹|åº|å»|å¼|å½|å¾|å¿|æ|ç|è|é|ê|ë|ì|í|î|ï|ð|ñ|ò|ó|ô|õ|ö|÷|ø|ù|ú|û|ü|ý|þ|ÿ/g);
         if (suspicious && !suspicious.some(s => LEGITIMATE_UNICODE.test(s))) {
@@ -262,6 +275,38 @@ check(
   literalMatches.length === 0
     ? "no overly literal translations"
     : `${literalMatches.length} literal translation issue(s): ${literalMatches.slice(0, 4).join(" | ")}`,
+);
+
+/** Arabic script assertion (item 4, Arabic half): every non-technical Arabic message carries Arabic
+ *  script. A message that is pure placeholder/punctuation carries no signal and is exempt; a message
+ *  with Latin letters but no Arabic script is an untranslated holdout, suspect the moment ar.json ships. */
+const scriptIssues = [];
+
+const ARABIC_CHARACTERS = ARABIC_SCRIPT;
+
+for (const locale of LOCALES.filter((l) => l === "ar")) {
+  for (const [namespace, block] of Object.entries(catalogues[locale])) {
+    for (const [key, value] of Object.entries(block ?? {})) {
+      if (typeof value !== "string") continue;
+      const path = `${namespace}.${key}`;
+      if (TOKENS.has(path)) continue;
+      const enValue = english[namespace]?.[key];
+      if (enValue === value) continue;
+      const stripped = value.replace(placeholderPattern, "");
+      if (!/[A-Za-z]/.test(stripped)) continue; // placeholder/punctuation-only messages carry nothing
+      if (!ARABIC_CHARACTERS.test(value)) {
+        scriptIssues.push(`${locale}: ${namespace}.${key} — carries no Arabic script and is not a named technical token: "${value.slice(0, 60)}"`);
+      }
+    }
+  }
+}
+
+check(
+  "every Arabic message in ar.json shows Arabic script",
+  scriptIssues.length === 0,
+  scriptIssues.length === 0
+    ? "every Arabic message carries Arabic script"
+    : `${scriptIssues.length} message(s) lack Arabic script: ${scriptIssues.slice(0, 4).join(" | ")}`,
 );
 
 const failed = checks.filter((entry) => !entry.ok);

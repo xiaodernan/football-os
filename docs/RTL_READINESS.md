@@ -127,8 +127,17 @@ The milestone covers these by page, not by rule.
    on the real catalogues (87 plurals, 2/2, unchanged) and on a three-case fixture: a complete six-category
    Arabic plural passes; a missing `two` reds naming the missing category; an empty branch reds too.
    Owed at the milestone: `ar.json` itself, the full population passing all six categories, and parity (item 5).
-4. **`qa-translation-quality.mjs` gains an Arabic pass** (punctuation, no mojibake, no English in
-   Arabic copy, script assertions for Arabic text).
+4. **`qa-translation-quality.mjs` gains an Arabic pass — done 2026-11-07, dormant until `ar.json` ships.**
+   The gate now discovers which locales to judge from the catalogue directory; `ar` joins the same four
+   families of checks (untranslated English words, locale punctuation, mojibake, no-literal-English-structures)
+   with Arabic-specific handling: an Arabic message ending in Latin `.`/`!`/`?` reds, and a new fifth check requires
+   Arabic script in every non-technical-token message. The mojibake clause gained the byte class the Arabic
+   failure needs (Latin-1 first bytes read as `Ù`/`Ú`/`Ø`) — the old pattern could not see Arabic decoded as
+   Latin-1, and no seven-case arm could retire it until it did. Verified arm by arm: complete Arabic passes 5/5;
+   a holdout like `Home page` reds both untranslated-English and no-script; mojibakeed Arabic reds mojibake;
+   Latin `.`-ending reds punctuation; an English idiom reds untranslated-English and literal-structure.
+   The Arabic milestone still owes: authoring `ar.json`, running the pass on its full population, and every
+   `ar` message passing all six plural categories and all five quality checks.
 5. **Catalogues ship in all three files** (`en`/`zh`/`zh-TW` untouched; `ar.json` new), parity
    re-verified: `qa-locale-completeness` reads four targets or branches explicitly (its
    population is today typed as three — the gate itself must change, with a witness).
