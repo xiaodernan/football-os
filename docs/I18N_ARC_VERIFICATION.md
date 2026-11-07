@@ -3017,3 +3017,26 @@ run to inherit by accident. The api job is now measured end to end: Lint (tip gr
 predicted, §43 above) · mypy (164 files, clean) · migrations (virgin PG, 0001→0058 clean) · seed (92 tables,
 155 chunks) · pytest (SQLite leg unmeasured to completion; PG leg read to 60%, four named reds — the
 milestone's committed-contract staleness, §42) · RAG (all gates passed). The web job was measured in §42.
+
+## 44. The SQLite leg completed — and every red it named has an owner (2026-11-08)
+
+**The measurement.** `pytest` with no `DATABASE_URL` (conftest falls back to a throwaway `football_os_tests_<uuid>.db`
+SQLite file; API keys popped; `STORAGE_DIR` into temp) ran to completion on the in-flight tree at roughly
+03:14→04:12 — about an hour. The PG leg could not finish in its hour (§42); this one did.
+
+**Seven failures, zero in anything this arc owns or committed:**
+
+| test | owner | why it reds |
+| --- | --- | --- |
+| `test_ci_trigger::test_the_shared_lint_target_is_green_on_the_population_it_derives` | environment (Windows) | `bash` here lacks `dirname`; `lint.sh:20` cannot start, so the harness reports rc 2 before ruff exists. On Linux it would answer the F821 red instead (§43). |
+| `test_ci_trigger::test_the_shared_lint_target_hands_ruff_exactly_the_population_it_announces` | environment (Windows) | identical shape, same root line — rc 2, same bytes. |
+| `test_openapi_contract_currency` × 4 | M13 milestone | committed `docs/api/openapi.json` 492,817 bytes; the tree serialises 510,330; the milestone's own re-export on disk is 510,330 and uncommitted (§42/§43). |
+| `test_transfers::TestMarketView::test_the_view_prints_the_rules_it_was_built_on` | M13 milestone | the in-flight `transfers.py` publishes `training` in `view["rules"]`; the in-flight `test_transfers.py`'s `RULE_KEYS` does not yet name it — the two sides of the milestone's own change edited in the same window. Consistency is theirs to land. |
+
+**Not claimed.** The aggregate count line did not flush into the redirect ("7 failed, … passed" missing),
+so no pass count is asserted; per-test timings unclaimed. What is claimed: seven named failures, each with
+its owner named, none from this arc's gates, docs, web tree, or pins.
+
+**What this changes.** "The SQLite leg is unmeasured" stops being true. "Both legs green" remains false and
+unclaimed. The api merge gate goes green when the milestone's contract lands and its `transfers` pair is
+consistent — and not one of these seven reds belonged to the i18n lane.
