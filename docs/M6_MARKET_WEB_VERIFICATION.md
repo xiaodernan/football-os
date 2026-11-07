@@ -454,8 +454,9 @@ and it has not been re-run since.
   constants=33 totals=10 move=37 | page: 19 window reads rooted at signing (range ← signing.windows), 18 view
   reads, 2 totals reads, 1 seam reads, 39 move reads`. The block this increment grew has since grown a
   `totals` and a `moves` population, and checks 12–17 judge them in the same three directions.
-* `qa-translation-quality` **6/6** (the two added checks are the Arabic- and Hebrew-script rules),
-  `qa-gate-inventory` **204/204**, `qa-population-floor` **3/3** with `en=4269 zh=4269 zh-TW=4269`,
+* `qa-translation-quality` **6/6** as read that morning (the two added checks being the Arabic- and
+  Hebrew-script rules — cured later the same day into **9/9** with an **11/11** witness, §40),
+  `qa-gate-inventory` **204/204** (→ **209/209** with §40's witness wired), `qa-population-floor` **3/3** with `en=4269 zh=4269 zh-TW=4269`,
   `qa-icu-messages` **2/2** over 12807 messages and 4269 keys, `qa-unused-keys` **3/3** with 4202 keys judged
   here and 67 delegated, `qa-key-drift` **4/4**, `qa-shared-keys` **4/4**, `qa-plural-select` **7/7**,
   `qa-icu-coverage` **1/1** — one check where §6 recorded two, and the gate's own header says why: its
@@ -464,12 +465,16 @@ and it has not been re-run since.
 * The catalogue this increment's 20 keys live in has grown from 4026 to **4269** keys, and the walk's 144
   checks are a count of that page's shape at that date, not of today's.
 
-**Found by the re-read, not cured by it.** `qa-translation-quality`'s two script checks print
+**Found by the re-read, cured the same day (§40).** `qa-translation-quality`'s two script checks printed
 `every Arabic message carries Arabic script` and `every Hebrew message carries Hebrew script` on a tree where
 neither `ar.json` nor `he.json` exists — the gate's header calls that "dormant", and a dormant check and a
 clean one are the same sentence on the page, which is the class of thing this project has now cured in
 `qa-plural-select` (§37), in the dead-key census (§19) and in the two zero-check gates of 2026-10-26. The
-shape of the cure is known: name the population judged, and refuse or say-so when there is none.
+shape of the cure was written here as "name the population judged, and refuse or say-so when there is none";
+§40 did exactly that, and went one step further than this page dared to ask: the same two lines also read
+clean over an `ar.json` written as a byte copy of `en.json` (measured on the pre-fix bytes: 6/6 green across
+4224 identical messages). Dormancy is now a PASS that says `dormant`, twice; a shipped catalogue that judged
+nothing is a finding; and a byte copy is red in two checks at once.
 
 ## 7. What this increment does not claim
 

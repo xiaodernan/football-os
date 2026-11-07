@@ -2640,3 +2640,141 @@ verdict name owes this walk.
 **Predictions re-verified.** The file's header comment still predicts 16 checks — all 16 now pass,
 unchanged population, and the check names in the predict list stay descriptive prose (Simplified/Traditional
 describe the fixture's semantics, which the bytes still exercise).
+
+## 40. `qa-translation-quality` printed the same sentence for an Arabic catalogue and for none at all (2026-11-08)
+
+**The finding.** §39's closeout re-read [M6_MARKET_WEB_VERIFICATION.md](M6_MARKET_WEB_VERIFICATION.md) §6 and
+found a row citing `qa-translation-quality` **6/6** as evidence about RTL readiness. Re-reading the gate to
+check whether the number meant that turned up three holes of the class this arc keeps curing — a green line
+that judged nothing — and two more on the way. At `0a7a9da` the shipped file was 6 checks over
+`LOCALES = ["zh","zh-TW","ar","he"].filter(exists)`; the two RTL script rules each ended in a single
+`check(...)` whose detail was a fixed sentence.
+
+Measured with those bytes, over the real `apps/web` (three catalogues: en, zh, zh-TW):
+
+```
+PASS  every Arabic message in ar.json shows Arabic script — every Arabic message carries Arabic script
+PASS  every Hebrew message in he.json shows Hebrew script — every Hebrew message carries Hebrew script
+CHECKS passed=6 total=6 failed=0
+```
+
+There is no `ar.json` and no `he.json` in the directory. The shape explains the sentence: line 298 was
+`for (const locale of LOCALES.filter((l) => l === "ar"))`, and `LOCALES` had already filtered itself down to
+the files present — zero iterations, then a `check()` whose detail was a string constant. The rule cannot be
+green; it can only be absent, and the output did not say which.
+
+**Why this rule is worth having, and why that sentence was worthless.** The RTL plan (P5 in
+[I18N_ARC_PLAN.md](../I18N_ARC_PLAN.md)) ships `ar.json` by translating `en.json`. The likeliest bad outcome
+is not a missing file — it is a file that exists and is English inside an Arabic envelope, whether from a
+copy, a partial pass or a machine run that fell back. A script rule is the gate that would catch exactly
+that, and it caught none of it: the same six bytes read **6/6 green** over an `ar.json` written as a literal
+byte copy of `en.json`, because every message in it is identical to English and the loop's exemption
+`continue`s on every message. So the gate's own oldest failure mode — skipping the population and printing
+agreement — was reachable by the very file the gate exists to judge.
+
+**The nine checks now.** Discovery, exemption table, identical-to-English, untranslated, punctuation,
+encoding, literal structures, Arabic script, Hebrew script:
+
+- `every catalogue in messages/ is a locale this gate has rules for` — the candidate list filtered by
+  existence is gone. `readdirSync` enumerates `messages/`, everything that ships is loaded, and a locale
+  outside `KNOWN_LOCALES` (`zh, zh-TW, ar, he`) is charged by filename: `fr.json ship(s) in messages/ with
+  no rule here — add it to KNOWN_LOCALES (and a punctuation/encoding arm) or remove the file`. Adding a
+  locale is now a decision, not an accident.
+- `the technical-token exemption set is read from the gate that names each one` — `TOKENS` came from a
+  hand-copied list. On 2026-11-08 the same 45 paths were written out in three files
+  (`qa-locale-tokens.mjs`, `qa-token-drift.mjs`, this gate); the gate now extracts the table from
+  `qa-locale-tokens.mjs` at run time and reports `45 exempt path(s) read at run time from
+  qa-locale-tokens.mjs`. An unreadable table is a finding rather than a silent empty set: with `TOKENS`
+  empty, 90 messages would have gone red under "untranslated English words", which is not the reason.
+- `every message byte-identical to English is a named technical token` — new. This is the copy detector the
+  script rule could never be on its own, and it is population-naming: `90 message(s) across zh, zh-TW are
+  byte-identical to English, each named in qa-locale-tokens.mjs`.
+- the two script rules are one table (`SCRIPT_RULES`) with five detail branches, so the verdict says *how* it
+  was reached: `dormant — no ar.json on this plane, 0 message(s) judged; the rule arms the day the file
+  ships` / `ar.json ships but 0 message(s) carry copy — every entry was a named token (1), a placeholder or
+  punctuation — so this rule judged nothing` / `0 of N message(s) in ar.json show Arabic script, and N of them
+  are Latin text — a file an Arabic reader cannot read passes as a translation` / `K of N … are Latin text
+  with no Arabic script: <paths>` / `S of N message(s) judged in ar.json show Arabic script and none is left
+  in Latin`. Dormancy is a **PASS that says dormant**, and the run adds a trailer after the tally —
+  `DORMANT  Arabic script (ar.json absent), Hebrew script (he.json absent) — a PASS with this note judged
+  nothing on this plane` — so a reader cannot mistake the shape for coverage. §37 set the precedent for
+  naming dormancy instead of refusing on it; a red CI lane for a locale the plan has not shipped yet would
+  just teach everyone to ignore the gate.
+- `pattern.lastIndex = 0;` in the literal-structure loop. A `/g` regex carried through a message loop keeps
+  its cursor, so hits are skipped in a way that depends on order: measured before the reset, four planted
+  English-structure messages in `zh` scored **2** issues; with the reset, **4**. Half a population read as
+  clean by luck of arrangement, and nothing in the output said the scan had a cursor at all.
+
+**A floor that had to be designed twice.** My first version counted *messages carrying Latin letters* as the
+population and refused the check when the count was zero. That makes a correctly translated Arabic catalogue
+red — a real translation has no Latin letters, so its population is empty by definition. The floor is now on
+two separate counts: `copyMessages > 0` (something with copy existed to judge) and `scriptMessages > 0`
+(something showed the script), and the Latin-holdout branch reports both. Arm D is the witness that a real
+translation passes on its own numbers, not by accident of the floor.
+
+**The witness, and its first run.** `apps/web/scripts/qa-translation-quality-witness.mjs`, 315 lines,
+**11** arms (0, A–J), each running the *shipped* gate over scratch catalogues in `%TEMP%` through
+`QA_I18N_WEB` — plus the `scripts/qa-locale-tokens.mjs` copy that plane needs, so the table check judges a
+real dependency rather than a path that only exists on the developer's machine. First run: **8/11**. Three
+reds, attributed before anything was pinned. Two were witness bugs, and both were the same misunderstanding:
+a fixture holding *only* the Latin holdout leaves `scriptMessages` at 0, so the gate took its whole-file
+branch — the one that says `0 of 1 show the script` and quotes no path — while my expectations demanded the
+per-message branch. Arms A and E now ship two correct messages beside the holdout, which is the shape the
+rule exists for. The third was a gate defect found by the arm reading the printed sentence: the discovery
+line named the locale (`fr`) where a reader needs the filename (`fr.json`) to act on it. Second run:
+**11/11**.
+
+**The reverse control.** `git show HEAD:apps/web/scripts/qa-translation-quality.mjs` (6 checks, 17 949 bytes,
+honours `QA_I18N_WEB` at line 22) and the cured gate (9 checks) were run over the *same* planes:
+
+| plane | pre-fix (`0a7a9da` bytes) | cured gate |
+| --- | --- | --- |
+| real tree — no `ar.json`, no `he.json` | `6/6` + both script sentences | `9/9` + both lines reading `dormant` + the `DORMANT` trailer |
+| A: `ar` = 2 Arabic messages + 1 Latin holdout | `failed=1` (caught, and it named the path) | `failed=1` — SCRIPT_AR, `1 of 3 message(s) judged in ar.json are Latin text` |
+| B: `ar` = byte copy of `en` | **`6/6` green**, `every Arabic message carries Arabic script` | `failed=2` — SCRIPT_AR `0 of 4218 … 4218 of them are Latin text`, IDENTICAL `4224 of 4359 … carry no named reason: ar: nav.home — "Home" …` |
+| C: `ar` = 1 named token + 1 bare `{count}` | **`6/6` green**, same sentence | `failed=1` — SCRIPT_AR `0 message(s) carry copy … so this rule judged nothing` |
+| D: `ar` written in Arabic | `6/6` green — **the same sentence as row B** | `9/9` — `2 of 2 message(s) judged in ar.json show Arabic script` |
+| F: `fr.json` planted | **`6/6` green** | `failed=1` — DISCOVER, naming `fr.json` |
+| I: four literal-structure messages | `failed=2`, prints `2 literal translation issue(s)` | `failed=2`, prints `4 literal translation issue(s)` |
+
+Row B versus row D is the section: an unreadable file and a real translation produced one and the same
+verdict. Row A is the honest counterweight — the pre-fix rule *could* catch a lone holdout, so the hole was
+dormancy and emptiness, not detection. Row I is the quieter one: both judges went red on the same fixture,
+but the pre-fix count was half the population, so a reader trimming that ledger would have believed two
+defects were the whole of it.
+
+**Wiring.** `scripts/check.sh` (the stale "Four checks" comment replaced by what the gate actually does, plus
+a second block running the witness) and `.github/workflows/ci.yml` (the gate step's name now says each rule
+names the population it judged and the RTL script rules say dormant; a new step runs the behaviour gate).
+`qa-gate-inventory.mjs` counts a script as gated only where a carrier literally contains `node
+…scripts/<name>.mjs`, so both rows read `gates=[scripts/check.sh,.github/workflows/ci.yml]`.
+
+**Verification, run on this tree, read from the output.**
+
+- `node scripts/qa-translation-quality.mjs` — `CHECKS passed=9 total=9 failed=0`, rc 0, 429 ms;
+  `messages/ ships 3 catalogue(s): reference en, judged zh, zh-TW`, `45 exempt path(s)`, `90 message(s) …
+  byte-identical to English, each named`, `8538 message(s) visited`.
+- `node scripts/qa-translation-quality-witness.mjs` — `CHECKS passed=11 total=11 failed=0`, rc 0, 4.37 s,
+  including arm J (`the real catalogues still read 9/9 after the fixture arms`).
+- `node scripts/qa-gate-inventory.mjs` — `CHECKS passed=209 total=209 failed=0`, rc 0.
+- `bash -n scripts/check.sh` — clean. The reverse-control script and every plane it built live **outside** the
+  repository (`D:\probe199`, `%TEMP%\rc40-*`), so no census in the tree can read them as a script or a
+  catalogue; they were deleted after the table above was written. No catalogue, no other gate and no other
+  lane's file was touched.
+
+**What this changes and what it does not.** It changes one gate, its new witness, and the two carriers. It
+retires the fixed sentence from both script rules and one hand-copied exemption table. It does not change
+any catalogue — no locale was added, no key retranslated, and `ar.json`/`he.json` still do not exist — and
+it does not promote RTL readiness from *structurally gated* to *shipped*: what it buys is that the day
+`ar.json` lands, a copy of English is red rather than green. It also does not claim the old gate was blind to
+every Latin message (row A), nor that the arc's other two token copies are cured: `qa-token-drift.mjs` still
+carries its own literal key list, 47 `namespace.key` strings of which all 45 table keys are present. That is
+the same drift surface, in a gate whose verdict does not depend on it being right — worth a unit, not
+silently included in this one.
+
+**Still open, stated rather than hidden.** The 9/9 on the real tree contains two dormant rules by design, so
+the only evidence that the Arabic and Hebrew script rules fire is fixtures A–E. The punctuation, encoding and
+literal-structure rules are named for Chinese and already read every shipped locale — their details say so
+out loud (`the sentence-ending-punctuation rules fire for zh and zh-TW, and for ar and he the day their
+catalogues ship`) — which means `ar` will be judged by a rule whose punctuation table was written for CJK and
+has never been exercised on Arabic punctuation. The first real `ar.json` is where that gets measured.

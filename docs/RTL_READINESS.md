@@ -143,6 +143,14 @@ The milestone covers these by page, not by rule.
    than Chinese/Arabic ones. Verified with a six-arm fixture — see §31.
    The Arabic milestone still owes: authoring `ar.json`, running the pass on its full population, and every
    `ar` message passing all six plural categories and all five quality checks. The Hebrew milestone owes the same.
+   **Cured 2026-11-08, and the counts above are the pre-cure ones:** the gate is now **nine** checks, and its
+   scratch fixture is a shipped witness, `qa-translation-quality-witness.mjs` (**11/11**). Both script rules
+   were still the weak point — they printed the same clean sentence for a tree with no `ar.json` and for an
+   `ar.json` that is a byte copy of `en.json` (measured on the pre-fix bytes at `0a7a9da`: 6/6 green, 4224
+   messages that never became Arabic). Each rule now names the population it judged, dormancy says
+   `dormant` in the line and again in a trailer after the tally, a shipped-but-unjudged catalogue is a finding,
+   and a fourth catalogue outside `KNOWN_LOCALES` is charged by filename. See §40 of
+   `I18N_ARC_VERIFICATION.md`. The exemption set is read from `qa-locale-tokens.mjs` rather than copied.
 5. **Catalogue parity — the gate half done 2026-11-07.**
    `qa-locale-completeness.mjs` no longer names three targets; it discovers the catalogue files in the
    directory and judges every one of them — `en`, `zh`, `zh-TW` today, four the day `ar.json` lands, with

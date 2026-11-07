@@ -8,45 +8,62 @@
  * - No encoding issues (mojibake) in translations
  * - No overly literal English structures in translations
  * - Arabic messages carry Arabic script (when ar.json ships); Hebrew likewise (when he.json ships) — same shape, same rule
+ * - a message byte-identical to English is a *named* technical token, in every locale that ships
  *
- * The Arabic and Hebrew checks live in the gate dormant: they attach the day `ar.json` / `he.json`
- * exists in the catalogue directory, like the locale discovery in `qa-plural-select` — zero edits required.
+ * Cured 2026-11-08 over three holes of the same class — a green line that judged nothing — found by the
+ * M6 §6 re-read and measured first (docs/I18N_ARC_VERIFICATION.md §40):
+ *   1. the two script checks printed `every Arabic message carries Arabic script` on a tree where no
+ *      `ar.json` exists, so a dormant rule and a clean one were the same sentence;
+ *   2. they printed it too when `ar.json` **is** a byte copy of `en.json`: every message is identical to
+ *      English, every message is skipped, and a catalogue that shows an Arabic reader English passes as
+ *      translated (measured pre-fix: 6/6 green, 4224 messages that never became Arabic);
+ *   3. `LOCALES` was a candidate list filtered by existence, so a fourth catalogue — `fr.json` — joined the
+ *      build and was judged by nobody (measured pre-fix: 6/6 green with one planted).
+ * The exemption set is now read from `qa-locale-tokens.mjs`, the gate that records *why* each key is
+ * language-neutral, instead of being copied: on 2026-11-08 the same 45 paths were written out by hand in
+ * three files (`qa-locale-tokens.mjs`, `qa-token-drift.mjs` and this gate), and a copy is where an exemption
+ * goes to drift. This gate is no longer one of the copies.
  *
  * Files only: no server, no browser, no port.
  */
 
-import { readFileSync, existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-/** Judge the locales that ship in the catalogue directory; `ar` and `he` join the pass the day they ship. */
-const LOCALES = ["zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
+/** The locales this gate owns a rule for. `ar` and `he` carry a script rule the day their catalogue ships;
+ *  a catalogue outside this set is charged by filename rather than passing unseen. */
+const KNOWN_LOCALES = new Set(["zh", "zh-TW", "ar", "he"]);
+
+/** Discovery, not a candidate list: every JSON file in the directory is loaded, and `en` is the reference
+ *  every other locale is compared against. */
+const SHIPPED = readdirSync(MESSAGES)
+  .filter((name) => name.endsWith(".json"))
+  .map((name) => basename(name, ".json"))
+  .sort();
+const LOCALES = SHIPPED.filter((locale) => locale !== "en");
 
 const catalogues = {};
-for (const locale of ["en", ...LOCALES]) {
+for (const locale of SHIPPED) {
   catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
 }
 
-/** Load the technical tokens from qa-locale-tokens */
-const TOKENS = new Set([
-  "settings.apiBadge", "world.thOvr", "world.thPot", "worldTeam.thOvr", "worldTeam.thPot",
-  "worldPlayer.thRpe", "worldTraining.thRpe", "careerDetail.thLedgerXg", "simulationAggregates.thXg",
-  "simulate.blockThXG", "club.tableHeaderRPE", "club.tableHeaderHTTP", "portfolio.pdfTitle",
-  "knowledge.bm25Chip", "club.capNameMax", "club.capTeamNameMax", "club.capNoteMax",
-  "club.capCountry", "club.capKinds", "club.capRatingRange", "club.capReviewWeeksRange",
-  "worldPlayer.recentFormEyebrow", "academy.sharedWithGuardian", "scout.comparisonNull",
-  "knowledge.provenanceFooter", "video.measuredEyebrow", "tactics.tableA", "tactics.tableB",
-  "tactics.tableDelta", "challenges.clubOption", "challenges.cardObjective", "challenges.vs",
-  "community.busyEllipsis", "simulate.xgLine", "club.matrixDefault", "club.consentEyebrow",
-  "careerDetail.eyebrow", "worldPlayer.eyebrow", "worldMatch.eyebrow", "worldCompetition.metaTitleKind",
-  "graph.listingTitle", "graph.backLabel", "club.createNamePlaceholder", "club.teamNamePlaceholder",
-  "club.playerSlugPlaceholder",
-]);
+/** The values that are the same in every language, read from the gate that names the reason for each one.
+ *  An unreadable table is a finding, not a silent empty exemption set: zero keys would make every technical
+ *  token a defect, and the gate would be red for a reason its own output does not state. */
+const TOKENS_FILE = join(WEB, "scripts", "qa-locale-tokens.mjs");
+const tokenTable = (() => {
+  if (!existsSync(TOKENS_FILE)) return { keys: new Set(), error: `no ${basename(TOKENS_FILE)} beside this gate` };
+  const body = /const TOKENS = new Map\(\[([\s\S]*?)\]\);/.exec(readFileSync(TOKENS_FILE, "utf8"));
+  if (!body) return { keys: new Set(), error: `${basename(TOKENS_FILE)} holds no \`const TOKENS = new Map([...])\` table` };
+  return { keys: new Set([...body[1].matchAll(/\[\s*"([^"]+)"\s*,/g)].map((match) => match[1])), error: null };
+})();
+const TOKENS = tokenTable.keys;
 
-const english = catalogues.en;
+const english = catalogues.en ?? {};
 
 const checks = [];
 const check = (name, ok, detail) => {
@@ -54,8 +71,69 @@ const check = (name, ok, detail) => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
+/* Discovery. The old `LOCALES` was a candidate list filtered by `existsSync`, so a catalogue that joined
+ * the build outside those four names was loaded by nobody and judged by nothing — a planted `fr.json` held
+ * any copy at all and this gate stayed green. Now the directory decides the population and a name without a
+ * rule is a finding rather than an absence. */
+const unknownLocales = SHIPPED.filter((locale) => locale !== "en" && !KNOWN_LOCALES.has(locale));
+check(
+  "every catalogue in messages/ is a locale this gate has rules for",
+  unknownLocales.length === 0 && SHIPPED.includes("en"),
+  unknownLocales.length === 0
+    ? `messages/ ships ${SHIPPED.length} catalogue(s): reference en, judged ${LOCALES.join(", ") || "(none besides en)"}; KNOWN_LOCALES covers ${[...KNOWN_LOCALES].join(", ")}`
+    : `${unknownLocales.map((locale) => `${locale}.json`).join(", ")} ship(s) in messages/ with no rule here — add it to KNOWN_LOCALES (and a punctuation/encoding arm) or remove the file`,
+);
+
+/* The exemption set. Three hand copies of the same 45 keys existed on 2026-11-08 (this file,
+ * `qa-locale-tokens.mjs`, `qa-token-drift.mjs`); the copy is where an exemption goes stale, so the set is
+ * read from the gate that records *why* each key is language-neutral. An unreadable table is charged as a
+ * finding: zero exemptions would make every technical token a defect, and the red would name a symptom
+ * instead of the cause. */
+check(
+  "the technical-token exemption set is read from the gate that names each one",
+  tokenTable.error === null && TOKENS.size > 0,
+  tokenTable.error === null
+    ? `${TOKENS.size} exempt path(s) read at run time from ${basename(TOKENS_FILE)}`
+    : `exemption set unreadable — ${tokenTable.error}`,
+);
+
+/* Identical-to-English messages. The old gate treated "this value equals the English one" as proof the key
+ * is language-neutral, and skipped it in silence — which is the hole that lets a byte copy of `en.json`
+ * shipped as `ar.json` pass for a translation (measured pre-fix: 6/6 green over 4224 such messages). The
+ * tree's own rule is stronger and already true: every one of the 45 per locale is listed with a reason in
+ * `qa-locale-tokens.mjs`. So identical is allowed only when named. */
+let identicalCount = 0;
+const identicalUnnamed = [];
+
+for (const locale of LOCALES) {
+  for (const [namespace, block] of Object.entries(catalogues[locale])) {
+    for (const [key, value] of Object.entries(block ?? {})) {
+      if (typeof value !== "string") continue;
+      if (english[namespace]?.[key] !== value) continue;
+      identicalCount += 1;
+      const path = `${namespace}.${key}`;
+      if (TOKENS.has(path)) continue;
+      identicalUnnamed.push(`${locale}: ${path} — "${value.slice(0, 40)}"`);
+    }
+  }
+}
+
+check(
+  "every message byte-identical to English is a named technical token",
+  identicalUnnamed.length === 0,
+  identicalUnnamed.length === 0
+    ? identicalCount === 0
+      ? `no message in ${LOCALES.join(", ")} is byte-identical to English on this plane`
+      : `${identicalCount} message(s) across ${LOCALES.join(", ")} are byte-identical to English, each named in ${basename(TOKENS_FILE)}`
+    : `${identicalUnnamed.length} of ${identicalCount} identical-to-English message(s) carry no named reason: ${identicalUnnamed.slice(0, 4).join(" | ")}`,
+);
+
 /** Check for untranslated English words in translations (zh, zh-TW and, once it ships, ar) */
 const untranslatedIssues = [];
+let messagesScanned = 0;
+let wordScanned = 0;
+let namedTokenSkips = 0;
+let identicalSkips = 0;
 const englishWordsPattern = /\b[A-Za-z]{3,}\b/g;
 
 // Placeholder pattern - these are legitimate English in translations.
@@ -122,16 +200,23 @@ for (const locale of LOCALES) {
   for (const [namespace, block] of Object.entries(catalogues[locale])) {
     for (const [key, value] of Object.entries(block ?? {})) {
       if (typeof value !== "string") continue;
+      messagesScanned += 1;
 
-      // Skip technical tokens
       const path = `${namespace}.${key}`;
-      if (TOKENS.has(path)) continue;
+      if (TOKENS.has(path)) {
+        namedTokenSkips += 1;
+        continue;
+      }
 
-      // Skip keys where English value equals translation (technical tokens)
-      const enValue = english[namespace]?.[key];
-      if (enValue === value) continue;
+      // An identical value has already been charged — named or not — by the check above; skipping it here
+      // avoids reporting the same message twice under two different verdicts.
+      if (english[namespace]?.[key] === value) {
+        identicalSkips += 1;
+        continue;
+      }
 
       // Remove placeholders from value before checking
+      wordScanned += 1;
       const valueWithoutPlaceholders = value.replace(placeholderPattern, '');
 
       // Check for English words longer than 2 chars
@@ -154,8 +239,8 @@ check(
   "no untranslated English words in translations",
   untranslatedIssues.length === 0,
   untranslatedIssues.length === 0
-    ? "no untranslated English words"
-    : `${untranslatedIssues.length} issue(s): ${untranslatedIssues.slice(0, 4).join(" | ")}`,
+    ? `${wordScanned} message(s) word-scanned across ${LOCALES.join(", ")}; ${namedTokenSkips} exempted as named tokens and ${identicalSkips} as identical to English, the identical ones charged by the check above`
+    : `${wordScanned} scanned, ${untranslatedIssues.length} issue(s): ${untranslatedIssues.slice(0, 4).join(" | ")}`,
 );
 
 /** Check for proper punctuation per locale */
@@ -203,7 +288,7 @@ check(
   "proper punctuation per locale",
   punctuationIssues.length === 0,
   punctuationIssues.length === 0
-    ? "proper punctuation in all locales"
+    ? `${messagesScanned} message(s) visited across ${LOCALES.join(", ")}; the sentence-ending-punctuation rules fire for zh and zh-TW, and for ar and he the day their catalogues ship`
     : `${punctuationIssues.length} punctuation issue(s): ${punctuationIssues.slice(0, 4).join(" | ")}`,
 );
 
@@ -244,12 +329,11 @@ check(
   "no encoding issues (mojibake) in translations",
   encodingIssues.length === 0,
   encodingIssues.length === 0
-    ? "no encoding issues"
+    ? `${messagesScanned} message(s) scanned across ${LOCALES.join(", ")} for the Latin-1-misread byte classes`
     : `${encodingIssues.length} encoding issue(s): ${encodingIssues.slice(0, 4).join(" | ")}`,
 );
 
 /** Check for overly literal translations (English structure preserved) */
-const literalIssues = [];
 
 // Common English patterns that shouldn't be translated literally
 const literalPatterns = [
@@ -273,6 +357,10 @@ for (const locale of LOCALES) {
       if (typeof value !== "string") continue;
 
       for (const { pattern, zhEquivalent, reason } of literalPatterns) {
+        // These patterns carry /g, and `RegExp.test` resumes from `lastIndex` when it does. Without the
+        // reset, a message whose match sits before the previous message's match-end is read as clean — four
+        // planted literal-structure messages over two patterns scored 2 hits pre-fix and 4 with the reset.
+        pattern.lastIndex = 0;
         if (pattern.test(value)) {
           literalMatches.push(`${locale}: ${namespace}.${key} — ${reason}: "${value.slice(0, 60)}"`);
         }
@@ -285,68 +373,86 @@ check(
   "no overly literal English structures in Chinese translations",
   literalMatches.length === 0,
   literalMatches.length === 0
-    ? "no overly literal translations"
+    ? `${messagesScanned} message(s) scanned across ${LOCALES.join(", ")} against ${literalPatterns.length} English-structure patterns; the loop reads every shipped locale, so an ar or he catalogue is judged by this Chinese-named rule the day it ships`
     : `${literalMatches.length} literal translation issue(s): ${literalMatches.slice(0, 4).join(" | ")}`,
 );
 
-/** Script assertions (item 4, language arms): every non-technical message in the RTL catalogues carries
- *  the script of its locale. A message that is pure placeholder/punctuation carries no signal and is exempt;
- *  a message with Latin letters but no RTL script is an untranslated holdout, suspect the moment the file ships. */
-const arabicScriptIssues = [];
-const hebrewScriptIssues = [];
+/* Script assertions (item 4, language arms): every non-technical message in an RTL catalogue carries the
+ * script of its locale. A message that is pure placeholder/punctuation carries no signal and is exempt; a
+ * message with Latin letters but no RTL script is an untranslated holdout, suspect the moment the file ships.
+ *
+ * Table-driven now, and the verdict says which way it was reached. Pre-fix both lines printed
+ * `every Arabic message carries Arabic script` whether `ar.json` existed at all (measured: 6/6 on a tree with
+ * no such file) and also when it was a byte copy of `en.json` (measured: 6/6 over 4224 messages that never
+ * became Arabic) — a dormant rule, an emptied rule and a clean rule were one and the same sentence. So:
+ * an absent catalogue says dormant, a shipped one says how many messages it judged and how many of those
+ * showed the script, and a shipped catalogue that judged nothing — or judged everything and found no script
+ * anywhere — is a finding rather than a pass. The floor is on messages *showing* the script, not on messages
+ * carrying Latin letters: a correctly translated `ar.json` holds almost no Latin text, so a Latin-signal
+ * floor would have refused the very work the rule exists to protect. */
+const SCRIPT_RULES = [
+  { locale: "ar", name: "Arabic", test: ARABIC_SCRIPT },
+  { locale: "he", name: "Hebrew", test: HEBREW_SCRIPT },
+];
 
-for (const locale of LOCALES.filter((l) => l === "ar")) {
-  for (const [namespace, block] of Object.entries(catalogues[locale])) {
-    for (const [key, value] of Object.entries(block ?? {})) {
-      if (typeof value !== "string") continue;
-      const path = `${namespace}.${key}`;
-      if (TOKENS.has(path)) continue;
-      const enValue = english[namespace]?.[key];
-      if (enValue === value) continue;
-      const stripped = value.replace(placeholderPattern, "");
-      if (!/[A-Za-z]/.test(stripped)) continue; // placeholder/punctuation-only messages carry nothing
-      if (!ARABIC_SCRIPT.test(value)) {
-        arabicScriptIssues.push(`${locale}: ${namespace}.${key} — carries no Arabic script and is not a named technical token: "${value.slice(0, 60)}"`);
+for (const rule of SCRIPT_RULES) {
+  const issues = [];
+  const ships = SHIPPED.includes(rule.locale);
+  let copyMessages = 0;
+  let scriptMessages = 0;
+  let namedExempts = 0;
+
+  if (ships) {
+    for (const [namespace, block] of Object.entries(catalogues[rule.locale])) {
+      for (const [key, value] of Object.entries(block ?? {})) {
+        if (typeof value !== "string") continue;
+        const path = `${namespace}.${key}`;
+        if (TOKENS.has(path)) {
+          namedExempts += 1;
+          continue;
+        }
+        // What is left once the placeholders and the punctuation are gone is the copy a reader sees. An empty
+        // remainder says the message carries no language at all, so no script can be asked of it.
+        const copy = value.replace(placeholderPattern, "").replace(/[\s\p{P}\p{S}\p{N}]/gu, "");
+        if (copy.length === 0) continue;
+        copyMessages += 1;
+        if (rule.test.test(value)) {
+          scriptMessages += 1;
+          continue;
+        }
+        if (/[A-Za-z]/.test(copy)) {
+          issues.push(`${rule.locale}: ${path} — Latin text with no ${rule.name} script and no named reason: "${value.slice(0, 60)}"`);
+        }
       }
     }
   }
-}
 
-for (const locale of LOCALES.filter((l) => l === "he")) {
-  for (const [namespace, block] of Object.entries(catalogues[locale])) {
-    for (const [key, value] of Object.entries(block ?? {})) {
-      if (typeof value !== "string") continue;
-      const path = `${namespace}.${key}`;
-      if (TOKENS.has(path)) continue;
-      const enValue = english[namespace]?.[key];
-      if (enValue === value) continue;
-      const stripped = value.replace(placeholderPattern, "");
-      if (!/[A-Za-z]/.test(stripped)) continue; // placeholder/punctuation-only messages carry nothing
-      if (!HEBREW_SCRIPT.test(value)) {
-        hebrewScriptIssues.push(`${locale}: ${namespace}.${key} — carries no Hebrew script and is not a named technical token: "${value.slice(0, 60)}"`);
-      }
-    }
+  let scriptDetail;
+  if (!ships) {
+    scriptDetail = `dormant — no ${rule.locale}.json on this plane, 0 message(s) judged; the rule arms the day the file ships`;
+  } else if (copyMessages === 0) {
+    scriptDetail = `${rule.locale}.json ships but 0 message(s) carry copy — every entry was a named token (${namedExempts}), a placeholder or punctuation — so this rule judged nothing`;
+  } else if (scriptMessages === 0) {
+    scriptDetail = `0 of ${copyMessages} message(s) in ${rule.locale}.json show ${rule.name} script, and ${issues.length} of them are Latin text — a file an ${rule.name} reader cannot read passes as a translation`;
+  } else if (issues.length > 0) {
+    scriptDetail = `${issues.length} of ${copyMessages} message(s) judged in ${rule.locale}.json are Latin text with no ${rule.name} script: ${issues.slice(0, 4).join(" | ")}`;
+  } else {
+    scriptDetail = `${scriptMessages} of ${copyMessages} message(s) judged in ${rule.locale}.json show ${rule.name} script and none is left in Latin; ${namedExempts} exempt as named tokens`;
   }
+
+  check(
+    `every ${rule.name} message in ${rule.locale}.json shows ${rule.name} script`,
+    issues.length === 0 && (!ships || (copyMessages > 0 && scriptMessages > 0)),
+    scriptDetail,
+  );
 }
-
-check(
-  "every Arabic message in ar.json shows Arabic script",
-  arabicScriptIssues.length === 0,
-  arabicScriptIssues.length === 0
-    ? "every Arabic message carries Arabic script"
-    : `${arabicScriptIssues.length} message(s) lack Arabic script: ${arabicScriptIssues.slice(0, 4).join(" | ")}`,
-);
-
-check(
-  "every Hebrew message in he.json shows Hebrew script",
-  hebrewScriptIssues.length === 0,
-  hebrewScriptIssues.length === 0
-    ? "every Hebrew message carries Hebrew script"
-    : `${hebrewScriptIssues.length} message(s) lack Hebrew script: ${hebrewScriptIssues.slice(0, 4).join(" | ")}`,
-);
 
 const failed = checks.filter((entry) => !entry.ok);
 console.log(`\nCHECKS passed=${checks.length - failed.length} total=${checks.length} failed=${failed.length}`);
+const dormantRules = SCRIPT_RULES.filter((rule) => !SHIPPED.includes(rule.locale));
+if (dormantRules.length) {
+  console.log(`DORMANT  ${dormantRules.map((rule) => `${rule.name} script (${rule.locale}.json absent)`).join(", ")} — a PASS with this note judged nothing on this plane`);
+}
 if (failed.length) {
   console.log("");
   for (const entry of failed) console.log(`FAIL  ${entry.name} — ${entry.detail}`);

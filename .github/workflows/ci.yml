@@ -250,8 +250,10 @@ jobs:
         run: node scripts/qa-token-drift.mjs
       - name: Namespace-ownership gate (every namespace has a declared owner and purpose)
         run: node scripts/qa-namespace-ownership.mjs
-      - name: Translation-quality gate (no untranslated English words, proper punctuation, no encoding issues, no literal structures)
+      - name: Translation-quality gate (each rule names the population it judged; RTL script rules say dormant)
         run: node scripts/qa-translation-quality.mjs
+      - name: Translation-quality behaviour gate (each verdict, on scratch catalogues)
+        run: node scripts/qa-translation-quality-witness.mjs
       - name: Shared-sentence gate (cross-namespace translations agree or are named; binding ceiling)
         run: node scripts/qa-shared-keys.mjs
       - name: Shared-sentence behaviour gate (each verdict, on scratch catalogues)

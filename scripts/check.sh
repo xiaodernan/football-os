@@ -145,11 +145,21 @@ echo "── Web: field-name i18n gate ─────────────�
 (cd apps/web && node scripts/qa-field-labels.mjs)
 
 echo "── Web: translation-quality gate ─────────────────────"
-# Translation quality beyond completeness: no untranslated English words in Chinese translations, proper
-# punctuation per locale, no encoding issues (mojibake), no overly literal English structures. Four checks
-# that hold translation quality above the floor that completeness gates measure. Files only: no server,
-# no browser.
+# Translation quality beyond completeness: no untranslated English words, proper punctuation per locale, no
+# encoding issues (mojibake), no literal English structures, the RTL catalogues' script rules, and a message
+# copied from English only where a reason is on record for it. Every line names the population it judged, and
+# the two script rules say `dormant` while their catalogue is absent — a clean sentence about nothing was the
+# defect this cured. The exemption set is read from qa-locale-tokens.mjs rather than copied.
+# Files only: no server, no browser.
 (cd apps/web && node scripts/qa-translation-quality.mjs)
+
+echo "── Web: translation-quality behaviour gate ───────────"
+# Holds those verdicts on scratch catalogues, for the shapes the shipped tree cannot exercise: an ar.json and
+# a he.json that ship nowhere, a Latin holdout inside a correctly written RTL catalogue, an ar.json that is a
+# byte copy of en.json, one that carries no copy at all, one correctly written in Arabic, a fourth locale the
+# gate never named, an unnamed identical message, a plane with no exemption table, and the /g lastIndex skip
+# that read four literal-structure messages as two. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-translation-quality-witness.mjs)
 
 echo "── Web: cookie-proxy gate ─────────────────────────────"
 # The web tier's session design is one sentence: the access token is httpOnly, so no script can read it, and every
