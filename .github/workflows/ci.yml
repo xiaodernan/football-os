@@ -230,7 +230,7 @@ jobs:
         run: node scripts/qa-key-drift-witness.mjs
       - name: Locale-content gate (locale-specific content differences tracked)
         run: node scripts/qa-locale-content.mjs
-      - name: Locale-completeness gate (every namespace has identical keys in all three locales)
+      - name: Locale-completeness gate (every namespace has identical keys in every locale the directory carries)
         run: node scripts/qa-locale-completeness.mjs
       - name: Locale-fallback gate (no key falls back to English in a Chinese locale)
         run: node scripts/qa-locale-fallback.mjs

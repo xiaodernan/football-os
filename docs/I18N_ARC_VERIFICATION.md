@@ -1971,11 +1971,17 @@ but stuck on `npm ci`'s end of the pipeline, like the pushes before them. The Ar
 verdict (the real catalogues are green to begin with); nothing about them delays the wire-readers re-green.
 
 **What the arc still owes, and who owes it.**
-- Item 3 — the Arabic catalogue itself (`ar.json`), the full population passing all six categories, and parity.
+- Item 3 — the Arabic catalogue itself (`ar.json`), the full population passing all six categories. Parity follows
+  (item 5).
 - Item 4 — the Arabic milestone runs the pass against the real population once `ar.json` lands; today's arms
   proved the pass detects defects, not that the real Arabic copy is good (§7).
-- Item 5 — catalogues parity across four locales once `ar.json` exists — a change to `qa-locale-completeness.mjs`
-  (currently typed as three targets) with a witness, exactly the shape item 5 names.
+- Item 5 — catalogue parity **as a gate landed 2026-11-07**: `qa-locale-completeness.mjs` now discovers the
+  catalogues by directory presence (no named triple), the same four-locale discovery the Arabic arms of items 3–4 use;
+  the CI step name and the gate's check name now say "every locale the directory carries", so the runner cannot
+  silently stay on the wording of a past tree. Verified: the real three-locale tree passes 2/2 (43 namespaces,
+  4269 keys); a four-locale fixture arm suite reds with the key named (`tsex.c: missing in ar`, `tsex.d: extra in ar`)
+  on both checks and passes when the Arabic catalogue is complete. The milestone still owes: `ar.json` itself and a full
+  re-verification on the four-locale population.
 - Item 6 — the walk under `dir=rtl` (bidi pinning, the 8 JSX-arrow rules, the audit §4 "what the walk will judge").
 - Item 7 — CI registration of the Arabic locale.
 - Item 8 — the Arabic locale ships only when items 1–7 are green.

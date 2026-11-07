@@ -138,9 +138,16 @@ The milestone covers these by page, not by rule.
    Latin `.`-ending reds punctuation; an English idiom reds untranslated-English and literal-structure.
    The Arabic milestone still owes: authoring `ar.json`, running the pass on its full population, and every
    `ar` message passing all six plural categories and all five quality checks.
-5. **Catalogues ship in all three files** (`en`/`zh`/`zh-TW` untouched; `ar.json` new), parity
-   re-verified: `qa-locale-completeness` reads four targets or branches explicitly (its
-   population is today typed as three — the gate itself must change, with a witness).
+5. **Catalogue parity — the gate half done 2026-11-07.**
+   `qa-locale-completeness.mjs` no longer names three targets; it discovers the catalogue files in the
+   directory and judges every one of them — `en`, `zh`, `zh-TW` today, four the day `ar.json` lands, with
+   zero further edits. Grey-area check names were pulled into sync with the CI step name so the gate and
+   the runner can't drift apart in prose; the CI step is now "every locale the directory carries".
+   Verified on the real tree (43 namespaces, 4269 keys, 2/2) and on an arms fixture: a complete Arabic
+   catalogue passes; a missing key reds with the key named (`tsex.c: missing in ar`); an extra key reds
+   the same way (`tsex.d: extra in ar`). The milestone still owes: `ar.json` itself, a regenerated
+   population count, and a re-verified full battery — parity is a floor, not a ceiling, and the gates
+   that read it follow.
 6. **Walk the representative pages with `dir=rtl`** — the market ledger, a career page, the nav,
    the knowledge base — on a production build; no clipped text, no broken joins, pagination and
    back arrows on the correct side. Record in `I18N_ARC_VERIFICATION.md` §23+.
