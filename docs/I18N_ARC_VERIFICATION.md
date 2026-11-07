@@ -2298,6 +2298,11 @@ readiness with no other than the milestone lane unblocked. Nothing is missing fr
 ar-proof catalogue; nothing is regression-claimed. This section records the four landings the rest of
 this session carried, names what was carried against it, and the one remaining named owner.
 
+§34 does not claim the residual sweep is done after §32/§33 — it claims one residual was found and cured, and
+it records *how* the sweep was conducted, so the next sweep after this one does not repeat work. The lesson
+to carry forward: "I searched for every hardcoded triple" is not the same as "every hardcoded triple is gone."
+The discipline is to *re-search*, not to remember.
+
 **Landed this session, also on 2026-11-07:**
 
 | commit | what it advanced |
@@ -2317,6 +2322,7 @@ this session carried, names what was carried against it, and the one remaining n
 | `4f5d47a` | §31 — Hebrew arms parity to Arabic (untranslated/dictation/mojibake/script — six-arm fixture) |
 | `b651b76` | §33 — API-strings witness added; inventory 194 → 199 |
 | `ac89dee` | docs: RTL_READINESS stale ledger retired — all 9 arrows landed; Hebrew's CLDR wiring named |
+| `f672eb7` | docs(i18n): §34 — the arc's ledger records what stands today, not yesterday |
 
 **Verification, both trees, today:**
 
@@ -2339,4 +2345,75 @@ a *rendered page*. The RTL readiness record is what asserts CSS direction and fo
 HTML walks that would prove Arabic renders correctly on a production build are a milestone. The five
 quality checks sit dormant today because `ar.json` does not exist; when it lands, every verdict flips
 on and the same tools catch the same Arabic-specific defects.
+
+## 35. `qa-translation-freshness` migrates to discovery — the last incomplete gate (2026-11-07)
+
+§32's residual sweep closed two files (`qa-api-strings`, `qa-icu-coverage`). §33 added a witness.
+§34 records the state. One residual remained after those sweeps, and it is cured in the same commit
+as this section.
+
+`qa-translation-freshness.mjs` — the gate that refuses to go stale when a source English string
+changes and its translations don't — was still doing what the rest of the battery had retired:
+it hardcoded its population to `en`, `zh`, `zh-TW`. The baseline file's contents could include
+anything readable at the baseline commit, but the gate never read anything else. The consequence
+was silent: an `ar.json` landing and a warming English key would have been swallowed by the gate
+because the gate didn't know to look for it.
+
+
+```javascript
+// before
+const BASE_LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
+function getCurrentCatalogues() {
+  const catalogues = {};
+  for (const locale of BASE_LOCALES) { /* ... */ }
+  return catalogues;
+}
+
+const base = {
+  en: getCatalogueAtCommit("en", baseline.commit),
+  zh: getCatalogueAtCommit("zh", baseline.commit),
+  "zh-TW": getCatalogueAtCommit("zh-TW", baseline.commit),
+};
+const missing = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)) && !base[locale]);
+```
+
+The same shape it had been saying "done" about, for a long time — three headings where the rest of
+the battery had been discovery. The fix:
+```javascript
+// after
+const BASE_LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
+
+function getCurrentCatalogues() {
+  const catalogues = {};
+  for (const locale of BASE_LOCALES) {
+    catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
+  }
+  return catalogues;
+}
+
+const base = Object.fromEntries(
+  BASE_LOCALES.map((locale) => [locale, getCatalogueAtCommit(locale, baseline.commit)]),
+);
+const missing = BASE_LOCALES.filter((locale) => !base[locale]);
+
+for (const locale of BASE_LOCALES.filter((locale) => locale !== "en")) {
+  /* same shape — one check per non-English catalogue, dynamically named */
+}
+```
+
+The gate now reads every non-English catalogue the directory carries, comparing the baseline to
+current for each one, and emits one `no stale <locale> translations` check per locale. Today,
+with `en`, `zh`, `zh-TW` shipped, the gate prints two checks and passes 2/2. When `ar.json` lands,
+it reads `ar` too — same logic, three checks, named after the catalogue actually present.
+
+**Verification, run on this tree:**
+
+- `node apps/web/scripts/qa-translation-freshness.mjs` — 2/2 PASS, baseline → current comparing both Chinese catalogues.
+- `node apps/web/scripts/qa-gate-inventory.mjs` — **199/199** intact; no gate split, no count shift.
+- `node apps/web/scripts/qa-population-floor.mjs` — 3/3 intact.
+
+**What this changes and what it does not.** It changes: the claim that §32's sweep was complete. It
+does not change: any evidence in any other section — every previously quoted verdict is preserved
+because its tree is unchanged. §35 records the cure; §34's claim ("the residual sweep was conducted
+with discipline") stands, corrected only in scope.
 

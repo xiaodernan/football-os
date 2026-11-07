@@ -100,10 +100,13 @@ function getCatalogueAtCommit(locale, commit) {
   }
 }
 
+/** Catalogues the gate judges, discovered from the catalogue directory. en always ships. */
+const BASE_LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
+
 /** Get current catalogues */
 function getCurrentCatalogues() {
   const catalogues = {};
-  for (const locale of ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)))) {
+  for (const locale of BASE_LOCALES) {
     catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
   }
   return catalogues;
@@ -127,60 +130,51 @@ if (baseline.error) {
   console.log(`Comparing baseline ${baseline.commit.slice(0, 8)} (${baseline.source}) -> current ${currentCommit.slice(0, 8)}`);
 
   const current = getCurrentCatalogues();
-  const base = {
-    en: getCatalogueAtCommit("en", baseline.commit),
-    zh: getCatalogueAtCommit("zh", baseline.commit),
-    "zh-TW": getCatalogueAtCommit("zh-TW", baseline.commit),
-  };
-  const missing = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)) && !base[locale]);
+  const base = Object.fromEntries(
+    BASE_LOCALES.map((locale) => [locale, getCatalogueAtCommit(locale, baseline.commit)]),
+  );
+  const missing = BASE_LOCALES.filter((locale) => !base[locale]);
 
   if (missing.length) {
     check(
-      "the baseline commit supplies all three catalogues",
+      `the baseline commit supplies every shipped catalogue`,
       false,
       `${missing.join(", ")} could not be read at ${baseline.commit.slice(0, 8)}; nothing was compared and the baseline was left as it was`,
     );
   } else {
-    const staleZh = [];
-    const staleZhTw = [];
+    const others = BASE_LOCALES.filter((locale) => locale !== "en");
+    const stale = Object.fromEntries(others.map((locale) => [locale, []]));
 
     for (const [namespace, block] of Object.entries(current.en)) {
       for (const [key, enValue] of Object.entries(block)) {
         if (typeof enValue !== "string") continue;
 
-        const baselineEn = base.en[namespace]?.[key];
-        const baselineZh = base.zh[namespace]?.[key];
-        const baselineZhTw = base["zh-TW"][namespace]?.[key];
-        const currentZh = current.zh[namespace]?.[key];
-        const currentZhTw = current["zh-TW"][namespace]?.[key];
-
-        // English changed but Chinese didn't
+        const baselineEn = base.en?.[namespace]?.[key];
+        // English changed but a shipped catalogue didn't
         if (baselineEn !== undefined && enValue !== baselineEn) {
-          if (currentZh === baselineZh) {
-            staleZh.push(`${namespace}.${key}: en="${enValue.slice(0, 40)}" vs baseline="${baselineEn.slice(0, 40)}" (zh unchanged)`);
-          }
-          if (currentZhTw === baselineZhTw) {
-            staleZhTw.push(`${namespace}.${key}: en="${enValue.slice(0, 40)}" vs baseline="${baselineEn.slice(0, 40)}" (zh-TW unchanged)`);
+          for (const locale of others) {
+            const baselineValue = base[locale]?.[namespace]?.[key];
+            const currentValue = current[locale]?.[namespace]?.[key];
+            if (currentValue === baselineValue) {
+              stale[locale].push(
+                `${namespace}.${key}: en="${enValue.slice(0, 40)}" vs baseline="${baselineEn.slice(0, 40)}" (${locale} unchanged)`,
+              );
+            }
           }
         }
       }
     }
 
-    check(
-      "no stale Simplified Chinese translations (en changed, zh unchanged)",
-      staleZh.length === 0,
-      staleZh.length === 0
-        ? "no stale zh translations"
-        : `${staleZh.length} stale zh translation(s): ${staleZh.slice(0, 4).join(" | ")}`,
-    );
-
-    check(
-      "no stale Traditional Chinese translations (en changed, zh-TW unchanged)",
-      staleZhTw.length === 0,
-      staleZhTw.length === 0
-        ? "no stale zh-TW translations"
-        : `${staleZhTw.length} stale zh-TW translation(s): ${staleZhTw.slice(0, 4).join(" | ")}`,
-    );
+    for (const locale of others) {
+      const list = stale[locale];
+      check(
+        `no stale ${locale} translations (en changed, ${locale} unchanged)`,
+        list.length === 0,
+        list.length === 0
+          ? `no stale ${locale} translations`
+          : `${list.length} stale ${locale} translation(s): ${list.slice(0, 4).join(" | ")}`,
+      );
+    }
   }
 }
 
