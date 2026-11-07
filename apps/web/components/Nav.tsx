@@ -96,6 +96,9 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
                 {t("notifications")}
                 {unread !== null && unread > 0 && <span className="chip chip--accent" style={{ marginLeft: "0.3rem", fontSize: "0.72rem" }}>{unread}</span>}
               </Link>
+              <Link className={`nav__link ${pathname.startsWith("/live") ? "nav__link--active" : ""}`} href="/live">
+                {t("live")}
+              </Link>
               <Link className={`nav__link ${pathname.startsWith("/tactics/boards") ? "nav__link--active" : ""}`} href="/tactics/boards">
                 {t("myBoards")}
               </Link>
