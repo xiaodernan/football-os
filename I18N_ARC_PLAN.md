@@ -1,7 +1,7 @@
 # I18N Arc — living plan
 
 Measured on the working tree **2026-11-07** (`3db6075`, with the in-flight M13 batch uncommitted —
-the arc's own record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§33, which is the honest ledger of
+the arc's own record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§34, which is the honest ledger of
 this arc; this file is a plan, never the evidence). Every figure below is re-derived by the gate named
 beside it.
 
@@ -29,7 +29,7 @@ beside it.
 | `qa-namespace-ownership.mjs` | 2/2 |
 | `qa-gate-inventory.mjs` | 194/194 on both trees |
 | `qa-wire-readers.mjs` | 18/18 on the full working tree; **12/18 on the committed tree — six named reds, one owner (the uncommitted M13 milestone). See §24/§25.** |
-| `I18N_ARC_VERIFICATION.md` | §22 (blind gates), §23 (live walk), §24 (corrections), §25 (CI forensics), §26 (dormant Arabic), §27 (held notes), §28 (battery discovers), §29 (/capabilities discovers), §30 (state at f7e2563), §31 (Hebrew arm landed), §32 (residual hardcode swept), §33 (API-strings witness added) |
+| `I18N_ARC_VERIFICATION.md` | §22 (blind gates), §23 (live walk), §24 (corrections), §25 (CI forensics), §26 (dormant Arabic), §27 (held notes), §28 (battery discovers), §29 (/capabilities discovers), §30 (state at f7e2563), §31 (Hebrew arm landed), §32 (residual hardcode swept), §33 (API-strings witness), §34 (state summary, both trees) |
 | `ab82384` CI | api green (two single-test causes cured: `ff521d9` runner-graded fallback; `161fc75` stale audit figures — the `/live` pages outgrew `AUDIT_FIGURES`); web all green through `Wire-readers`; `npm ci` EUSAGE (rendered by a local-side `--legacy-peer-deps` de-sync) cured at `db6e9a3`; the sole remaining red anywhere is `Wire-readers`, owned by the milestone |
 
 ## The goal
@@ -65,10 +65,12 @@ so; and the day a locale that does not exist today is added, the cost is one cat
    another lane).
 3. **RTL milestone, when it is owed.** `docs/RTL_READINESS.md` lists the acceptance items — fonts,
    plural categories, punctuation, bidi policy, catalogue parity, walks under `dir=rtl`, CI registration.
-   Item 1 closed 2026-11-07; items 2–5 landed 2026-11-07 (font decision item 2; plural arms 3; quality
-   arms 4; parity discovery 5; Arabic gates §26, `af06f60`/`9e89acb`/`f7e2563`/`c852a42`); the whole battery
-   discovers catalogues by existence (§28); the API's `/capabilities` discovers them too (§29); the arc's standing
-   at f7e2563 is recorded. The milestone inventory lives in §27; state-of-the-arc in §30. Do not ship `ar` or
+   Items 1–5 landed 2026-11-07: `af06f60` item 5's parity discovery, `9e89acb` the whole battery
+   discovered, `f7e2563` the API claim discovered, `ac89dee` the doc stale-ledger retired; `4f5d47a` the
+   Hebrew arm in `qa-translation-quality` (Arabic's mojibake cousin, with arms green on a six-arm fixture),
+   `b651b76` the API-strings witness. Items 6–8 still owed and blocked by the milestone: the walk, the
+   CI registration, the file. §30 carries the committed-tree read; §33 the API-strings witness; §27 the
+   remaining inventory; §31 records the Hebrew arm; §34 closes this session's hand. Do not ship `ar` or
    `he` before all the items are green.
 4. **The discipline.** Every new slice follows `NEW_SURFACE_COMPLIANCE.md`; gate verdict-shape changes
    ship with witnesses; the verification doc grows a section per slice, push every time.

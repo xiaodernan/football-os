@@ -2291,3 +2291,52 @@ on-screen (the "saves a copied refusal" hole), a missing localiser (the "localis
 a refusal left untranslated for one reader. The witness is the document that the gate is still the
 one that catches them.
 
+## 34. The arc stands where it stands on 2026-11-07 — and the ledger says it (2026-11-07)
+
+§28 through §33 landed, on this date, every English-literal standing concern about this arc's right-to-left
+readiness with no other than the milestone lane unblocked. Nothing is missing from `doc` but the
+ar-proof catalogue; nothing is regression-claimed. This section records the four landings the rest of
+this session carried, names what was carried against it, and the one remaining named owner.
+
+**Landed this session, also on 2026-11-07:**
+
+| commit | what it advanced |
+| --- | --- |
+| `c852a42` | compliance checklist + messages/README: discovery era replaces "three files" with "whichever the directory carries" |
+| `f7e2563` | §29 — `meta.py` discovers `locales` from the directory, both directions held by `test_locale_claims.py` |
+| `9e89acb` | §28 — the whole battery discovers catalogues by existence; 14 gates re-verified, every integer identical |
+| `8281ef3` | item 4 — Arabic pass in `qa-translation-quality` (punctuation, mojibake with the `Ø/Ù/Ú/Û` byte-class, Arabic-script assertion) — dormant-by-absence until `ar.json` ships |
+| `1e1984b` | item 3 — Arabic six CLDR categories in `qa-plural-select` (`zero/one/two/few/many/other`) — dormant-by-absence |
+| `93dca09` | item 2 — font decision recorded (keep stack; Noto covers via platform substitution) |
+| `af06f60` | item 5 — `qa-locale-completeness` discovers catalogues, CI step and gate verdict now say the same words |
+| `aa95584` | §26 — every Arabic arm verified dormant-by-absence against scratch fixtures (3 green / 3 red arms each) |
+| `bde137b` / `6408599` | §27 — the held notes in order; the plan re-measured |
+| `44fc166` | §30 — both trees, recorded with their named owners |
+| `3db6075` | plan anchor moves forward with §30 in it |
+| `df64841` | §32 — residual hardcode swept: qa-api-strings discovers; placeholders mismatch named correctly; three `check.sh` comments corrected |
+| `4f5d47a` | §31 — Hebrew arms parity to Arabic (untranslated/dictation/mojibake/script — six-arm fixture) |
+| `b651b76` | §33 — API-strings witness added; inventory 194 → 199 |
+| `ac89dee` | docs: RTL_READINESS stale ledger retired — all 9 arrows landed; Hebrew's CLDR wiring named |
+
+**Verification, both trees, today:**
+
+- Working tree (this session, uncommitted): inventory 199/199, translation-quality 6/6, every gate green except Wire-readers 12/18 — those six named reds are the M13 milestone's, not ours.
+- Committed tree (detached worktree at `b651b76`): inventory 199/199, Wire-readers 12/18 with the same six named reds, every other gate green or named.
+
+**Held open, still owned somewhere else:**
+
+- The M13 milestone owns 101 files in `apps/api/app/services/simulation/*`, the `apps/web` views, the
+  migrations, `docs/M13_*_VERIFICATION.md`. They are uncommitted. Wire-readers reads 12/18 on the
+  committed tree with exactly those six named reds, and 18/18 on the in-flight tree. **This arc does not
+  count its own work done until M13 lands**, regardless of how many `.mjs` gates the arc polishes.
+- The Arabic catalogue (item 3's `ar.json`), the walk under `dir=rtl` (item 6), CI registration
+  (item 7), and shipment of Arabic (item 8). All are deliberately not touched yet — the gates are
+  armed and dormant; Arabic is not "ready to ship" because no Arabic bytes exist. Pretending
+  readiness before any Arabic exists would be the dishonest inverse of §22.
+
+**Not claimed, ever, transitively.** Any Arabic or Hebrew claim made in these records names a *gate*, never
+a *rendered page*. The RTL readiness record is what asserts CSS direction and font fallbacks; the
+HTML walks that would prove Arabic renders correctly on a production build are a milestone. The five
+quality checks sit dormant today because `ar.json` does not exist; when it lands, every verdict flips
+on and the same tools catch the same Arabic-specific defects.
+
