@@ -2132,3 +2132,54 @@ it. The API's claim about it stayed `["en", "zh", "zh-TW"]` after this edit — 
 serves *right now*, and exactly what `/capabilities` was publishing *right now*, with the test
 holding either steady.
 
+## 30. Where the arc stands on 2026-11-07 — and what it cannot do for the M13 milestone (2026-11-07)
+
+A full measurement of the working tree — gates on the live tree, gates on the detached committed
+worktree pinned at `f7e2563`, the API tests, the milestone status, and the CI verdict:
+
+**On the working tree (with the M13 milestone uncommitted, as it is):**
+| gate | verdict |
+| --- | --- |
+| inventory | 194/194 |
+| i18n-literals | 9/9 (4328 key calls) |
+| unused-keys | 3/3 |
+| icu-messages | 2/2 |
+| icu-coverage | 1/1 |
+| plural-select | 2/2 (87 plurals) |
+| locale-completeness | 2/2 |
+| locale-fallback | 3/3 |
+| locale-content | 3/3 |
+| locale-formatting | 2/2 |
+| metadata-title | 184/184 |
+| translation-quality | 5/5 |
+| locale-tokens | 5/5 |
+| key-drift | 4/4 |
+| key-drift-witness | 10/10 |
+| shared-keys / shared-keys-witness | 4/4 / 8/8 |
+| rtl-readiness | 8/8 |
+| error-boundary | 2/2 |
+| population-floor | 3/3 |
+| translation-freshness | 2/2 |
+| wire-readers | **18/18 (in-flight tree)** — the gate is green because the whole milestone carries its readers |
+
+**On the committed tree (detached worktree at `f7e2563`, junctioned `node_modules`):**
+| gate | verdict |
+| --- | --- |
+| inventory | 194/194 |
+| wire-readers | 12/18 — the six named reds exactly as §24 recorded; untouched by the RTL commits, because the readers land only with the milestone's commit |
+| every other gate | identical to the working tree |
+
+**API tests:** `test_locale_claims.py` 7/7 — both directions agree on `["en", "zh", "zh-TW"]`; Arabic announces when it ships, not before.
+
+**CI:** every recent run is green through the wire gate's door except the milestone-unblocked wire gate, red on exactly the six named reds (`cup_prize_by_stage`, `gate_ticket_price_tier_1/2`, `gate_rotation_attendance_floor/ceiling`, `cup_prize_rows`, `gate_rows`, `expiry_round`, `attendance`, `ticket_price`, `tie_id`, `competition`). Not a single remaining red exists in any push this arc owns. The gate inventory holds 194/194 on master, and every step in `scripts/check.sh` (34) and `.github/workflows/ci.yml` (32) agrees with the committed tree as of `f7e2563`.
+
+**What this arc can do for the milestone: nothing — and nothing it needs to do.** The ceiling ratchets stay; the RTL arms stay wired; the catalogue discovery stays in place; `test_locale_claims.py` stays green; the commit that closes the milestone does not need an i18n amendment to go green.
+
+**What the arc still owes (held notes §27) — unchanged, in order:**
+1. M13 lands → wire-readers green → README pin recomputed → web tab green
+2. Item 6 — walk under `dir=rtl` (P7/Arabic milestone)
+3. Item 7 — `ar` registered in CI
+4. Item 8 — Arabic ships (the milestone named `NEW_SURFACE_COMPLIANCE.md`)
+
+**Not claimed, ever.** "Everything passes" means "this arc's gates", with the milestone's owner named. The red that remains is not ours; working around it to make a green-looking tree would be acquiring an unverified claim, not a fix.
+
