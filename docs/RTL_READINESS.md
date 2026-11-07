@@ -42,16 +42,15 @@ without it.
 
 Two distinct populations, and they are handled differently by rule:
 
-**a. Arrows written in JSX (not in the catalogue) — 8 sites.** These are the RTL blockers; they
-  render the same glyph regardless of direction and lie about which way is `back`:
+**a. Arrows written in JSX (not in the catalogue) — all fixed by 2026-11-07** (the list grew to nine on re-inventory; the ninth, `graph/page.tsx`'s kind-button arrow, was missed by the original census and is a direction-aware CSS marker now):
 
-| file | site | glyph |
+| file | site | action |
 | --- | --- | --- |
-| `app/history/page.tsx` | 162, 166, 171, 175 | `← {tc("previousPage")}` / `{tc("nextPage")} →` |
-| `components/world.tsx` | 92 | `← {back.label}` |
-| `components/world.tsx` | 205 | `← {t("previousPage")}` |
-| `components/world.tsx` | 210 | `{t("nextPage")} →` |
-| `app/knowledge/KnowledgeAsk.tsx` | 46 | `{t("open")} {tk("openPassage")} →` |
+| `app/history/page.tsx` | 162, 166, 171, 175 | the raw glyphs are gone; the text comes from `tc("previousPage")` / `tc("nextPage")`, whose arrows the catalogue carries per locale |
+| `components/world.tsx` | 92 | `← {back.label}` is gone; a direction-aware `world-back::before` marker (`←` in ltr, `→` in rtl) |
+| `components/world.tsx` | 205, 210 | `← {t("previousPage")}` / `{t("nextPage")} →` are gone; the catalogue text carries the arrow |
+| `app/knowledge/KnowledgeAsk.tsx` | 46 | the raw trailing `→` removed; the catalogue line holds its own direction |
+| `app/graph/page.tsx` | 155 | `fwd-arrow` CSS marker: `→` in ltr, `←` in rtl (`tactics.css`) |
 
 **b. Arrows in the catalogue — each language writes its own direction, and that is fine.**
   `backToAcademy` / `backToLibrary` (`← Back to…`), `movementPath` (`{from} → {to}`), and the
@@ -59,9 +58,11 @@ Two distinct populations, and they are handled differently by rule:
   `squadRow`, `ChangesFirstLast`, `academyThStored`) — notation, not layout; bidi-neutral in
   practice, and each script decides its own glyph. No change required for those.
 
-**Rule for the first RTL milestone:** (a) sites move their glyphs into the catalogue (the sentence
-carries its own direction — Arabic writes `→` for back) or render a direction-aware marker; do not
-`transform: scaleX(-1)` a raw glyph — the same glyph is notation elsewhere.
+**Rule for the first RTL milestone:** (a) sites are migrated into the catalogue (the sentence
+carries its own direction — Arabic writes `→` for back) or are direction-aware CSS markers; none remain as raw glyphs in JSX text.
+The `openPassage` and pagination catalogue keys carry their own arrows (each script writes its own direction);
+the bidi algorithm renders the neutral runs correctly in practice. Do not `transform: scaleX(-1)` a raw glyph —
+the same glyph is notation elsewhere.
 
 ### 4. Fonts
 
@@ -101,8 +102,10 @@ The milestone covers these by page, not by rule.
 
 ## The first RTL milestone — exit criteria (all required)
 
-1. **Directional JSX arrows (8)** migrated into the catalogue or made direction-aware; the walk
-   finds no literal arrow rendered against the text flow.
+1. **Directional JSX arrows (9 sites) — done 2026-11-07.** The raw arrows are gone from JSX: the history
+   pagination, the world back marker and the knowledge-passage link render catalogue text or a
+   direction-aware CSS marker (`.world-back::before`, `.fwd-arrow`); no literal arrow renders against the
+   text flow. (Item 1 was the one the first RTL review could hold to a gate; the rest below are the milestone.)
 2. **Font stack names a face with Arabic/Hebrew coverage** explicitly (or the walk proves the
    fallback resolves acceptably on Win/macOS/Android and the stack stays as-is, with the evidence
    recorded).

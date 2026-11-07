@@ -74,3 +74,10 @@
   .pitch svg { max-width: 100%; }
   .pitch-label { font-size: 3px; }
 }
+
+/* A directional affordance is not universal notation: a glyph that means 'deeper into the graph'
+   follows the reader's writing direction, so it is selected by dir rather than written inline.
+   The glyph carries no copy; aria-hidden is set at the call site. */
+.fwd-arrow { font-family: var(--mono); }
+.fwd-arrow::after { content: " ¡ú"; }
+[dir="rtl"] .fwd-arrow::after { content: " ¡û"; }

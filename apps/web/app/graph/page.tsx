@@ -152,7 +152,7 @@ async function GraphPage() {
         <div className="row wrap" style={{ gap: "0.5rem" }}>
           {rules.node_kinds.map((kind) => (
             <Link key={kind} className="btn" href={`/graph/nodes/${kind}`}>
-              {kind} <span className="mono">→</span>
+              {kind}<span className="fwd-arrow" aria-hidden="true" />
             </Link>
           ))}
         </div>
