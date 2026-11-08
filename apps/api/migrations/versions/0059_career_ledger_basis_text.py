@@ -5,8 +5,11 @@ season without the code. The first PostgreSQL leg of the consolidated run read a
 sentence and refused it (`StringDataRightTruncation` on `career_gate_receipts.basis`), which
 SQLite accepts silently — so the length ceiling is only visible on the engine production uses.
 Widen every generated-prose `basis` column to TEXT and keep the shipped models in step; the
- cup-tie column moves the same way, because its comment claimed 512 would bound the whole
- sentence — appended bracket notes are not a bounded grammar.
+cup-tie column moves the same way, because its comment claimed 512 would bound the whole
+sentence — appended bracket notes are not a bounded grammar.
+
+SQLite cannot ALTER COLUMN TYPE without a rewrite, so every column moves through batch mode;
+on PostgreSQL batch mode degenerates to the same coerces the native path would apply.
 """
 
 from __future__ import annotations
@@ -29,12 +32,24 @@ _TABLES = (
     "career_cup_ties",
 )
 
+_TYPE = {"career_cup_ties": 512}
+
 
 def upgrade() -> None:
     for table in _TABLES:
-        op.alter_column(table, "basis", existing_type=sa.String(length=512) if table == "career_cup_ties" else sa.String(length=255), type_=sa.Text())
+        with op.batch_alter_table(table) as batch_op:
+            batch_op.alter_column(
+                "basis",
+                existing_type=sa.String(length=_TYPE.get(table, 255)),
+                type_=sa.Text(),
+            )
 
 
 def downgrade() -> None:
     for table in _TABLES:
-        op.alter_column(table, "basis", existing_type=sa.Text(), type_=sa.String(length=512) if table == "career_cup_ties" else sa.String(length=255))
+        with op.batch_alter_table(table) as batch_op:
+            batch_op.alter_column(
+                "basis",
+                existing_type=sa.Text(),
+                type_=sa.String(length=_TYPE.get(table, 255)),
+            )
