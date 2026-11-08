@@ -3593,3 +3593,16 @@ The `/world` page (which builds its openGraph through `pageMetadata()`) serves t
 **What this closes.** The five-locale world names its language in HTML (`<html lang>` + `dir`), in the served catalogue, in `GET /capabilities`, in the README pin table, in the gates — and now in Open Graph, where a scraper that never renders the page can still learn which language the share card is written in. Nothing was added to the visual or written surface of the product; one honest dimension of the five-locale claim that had been implicit is now measured and served.
 
 **Instrumentation.** No new gate; the claim is verified by the build and the served bytes above. The two files that changed (`app/layout.tsx` and `lib/site.ts`) keep every existing gate green locally (tsc `--noEmit`, qa-rtl-readiness 8/8, qa-locale-wiring 8/8, qa-gate-inventory 233/233). `.next-ci` removed, probe DB dropped, ports 3212/8760 released by PID, `next-env.d.ts` restored to HEAD.
+
+
+-----------------------------------------------------------------------------------------
+
+## 63. The Hebrew catalogue, one typography pass deeper (2026-11-09)
+
+**What §60 found and §62 did not.** §60 repaired two truncated Hebrew sentences; this pass repaired the *letterforms* those two fixes were written with, which the rest of the catalogue had not matched. The Hebrew abbreviation pair and the acronym pair must each be written with gershayim (`״`, U+05F4), not ASCII quotes: `דוא"ל` → `דוא״ל` (5 occurrences in `auth.*` × email/sign-in), `סה"כ` → `סה״כ`, `ס"מ` → `ס״מ`, `מכ"ם` → `מכ״ם`. Two quoted-speech spans inside Hebrew sentences (`מסומן "לא נבנה"` → `מסומן «לא נבנה»`, `על "שחק את הסיבוב הבא"` → `על «שחק את הסיבוב הבא»`) now use the double-angle quotations the catalogue standard uses elsewhere. The Arabic catalogue was already clean — zero straight ASCII quotes inside Arabic-script prose, verified by the same scan.
+
+**What this change does and does not claim.** It normalizes the *shape* of the words — spelling, not meaning. The two truncated fixes from §60 now read consistently with every other abbreviation in the catalogue; a native Hebrew reader checking the file will no longer see three different spellings of the same convention on adjacent keys. It is not a Hebrew editorial pass — that debt stands, unchanged; the machine-authored Hebrew remains first-draft, human-reviewed-and-polished when the native review happens.
+
+**Instrumentation.** A scan across all five catalogues: straight ASCII quotes with Hebrew context on either side, unbalanced gershayim per message, script mixing (Arabic inside he, Hebrew inside ar). Results: Hebrew had 14 such occurrences, all fixed; Arabic 0; script mixing 0; unbalanced gershayim 0 (the two §60 fixes use one each, correctly, inside a paired form). Gates re-run green: ICU 2/2, translation-quality 9/9, token-drift 4/4, key-drift 4/4, locale-tokens 7/7, locale-completeness 2/2, unused-keys 3/3, shared-keys 4/4, i18n-literals exit 0, field-labels exit 0, tsc --noEmit clean. The regenerated he.json is 43 namespaces / 4269 keys with exact key parity re-verified before each write.
+
+**Teardown.** Nothing to tear down for this slice (no probe stack touched); the two commits land in the same order as everything else on this master.
