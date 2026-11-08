@@ -3145,3 +3145,24 @@ step before Wire-readers passed in the log.
 **Timeline.** `d6ce238` (this section) triggered run `42459424587`, started `2026-11-08T07:35:27` — in
 progress when this section was written; the expected verdict is §46's — api success, web red at Wire-readers
 step — and no other claim is made.
+
+## 48. The in-flight tree builds again — the second reading, not a lucky one (2026-11-08)
+
+**Method.** `npm run typecheck` on the live working tree, then `npm run build`; the product's routes compiled
+completely. This is the **second** build reading taken on this milestone's in-flight bytes — the first was
+§42's (2026-11-08 ~01:38) — against a tree that has changed substantially since: migrations renumbered
+(`0049_objective_bonuses` deleted, `0049_career_contract_expiry` added), the simulation/gate services
+rewritten, `qa-locale-tokens.mjs` re-deriving discovery, the catalogue grown.
+
+**Readings (2026-11-08 ~15:38, the live in-flight tree, M13's bytes included):**
+
+- `tsc --noEmit` — exit 0, no diagnostics;
+- `npm run build` — **completes**; every route compiles and the middleware bundles (middleware ≈ 275 kB;
+  first-load shared JavaScript ≈ 103 kB; the route table ends, world/* and clubs' pages render at their
+  usual sizes). No `.next` artefacts are tracked (`.gitignore` holds);
+
+**Claims, exactly.** The in-flight milestone's tree — gates, migrations, services, tokens, catalogue —
+builds into a compiling product *today*, at the bytes the web CI would run if the milestone lands. This
+section measures nothing about the web CI outcome itself (the web job stops at Wire-readers until the
+milestone lands, §46/§47), nor about the committed tip's equivalence on any single file, nor about the
+milestone's own test leg consistency (`test_world.py:193`'s `Any`, §43/§44, remains the milestone's to fix).
