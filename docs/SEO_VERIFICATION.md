@@ -18,7 +18,7 @@ because a clip a user uploaded is the most identifying file the platform holds. 
 the tag and the disallow — so "private" here is a checked property, not an intention.
 
 Spec §80 requires public pages to carry Metadata, OpenGraph, Structured Data, Sitemap and Canonical, with
-`/{entity}/{slug}` routes. §81 asks for en / zh / zh-TW. This record states what is true now and names what is not.
+`/{entity}/{slug}` routes. §81 asks for en / zh / zh-TW (the milestone-era ask; the shipped set is five since 2026-11-08/09 — `ar` and `he` — see the i18n arc ledger). This record states what is true now and names what is not.
 
 ## 1. What was missing before this increment
 

@@ -125,7 +125,7 @@ Every stored attribute delta keeps its `reason` and `evidence_ids` so the UI can
 - Football World pages never construct a URL. The API hands out `path` for every row (`SEO_ROUTES`/`web_path()` in
   `app/services/world/plan.py`), so a §80 route exists in exactly one place across both tiers, and `sitemap.ts` builds its
   983 entries from the same fields the pages link with.
-- i18n (spec §81): **built and finished** (2026-10-21) — `middleware.ts` resolves `fo_locale`/`Accept-Language`/the
+- i18n (spec §81): **built and finished** (2026-10-21); **expanded to five shipped locales 2026-11-08/09** — `en`, `zh`, `zh-TW`, `ar` (4269 keys, Arabic, §54–§55 of the i18n verification ledger), `he` (4269 keys, Hebrew, §57). Both RTL locales ship behind the same gates and each production `dir=rtl` walk; `locales` discovers the shipped set from `messages/` and `locales_planned` reports all five. Further in this file, dates follow the same rule: a line dated 2026-10 describes the tree at that moment (three catalogues, 3593–3736 keys) — the ledger holds the current counts, not this section. — `middleware.ts` resolves `fo_locale`/`Accept-Language`/the
   account column, `i18n/request.ts` loads the matching catalogue, the nav switcher writes the cookie, both Chinese
   catalogues carry every key the English file holds, and **every page body now reads its catalogue**: the copy gate
   (`apps/web/scripts/qa-i18n-literals.mjs`) reads **0 English literal sites** over every `app/**/*.tsx` **and every

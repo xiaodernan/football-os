@@ -3409,7 +3409,7 @@ The walk made three findings, none of them a bug. **First**, session-gated pages
 
 **Honest instrumentation.** The walk script is committed as `apps/web/scripts/qa-arabic-rtl-walk.mjs`, wired into `qa-gate-inventory` as a `live-tier` walk (it needs a browser and both tiers, cannot be a static gate) — inventory now reads **221/221**. Scratch DB dropped, ports released (both servers stopped by PID), nothing leaked outside this repo.
 
-**What remains owed narrows again:** the production walk was item 6; what the milestone still owes is item 8's AR editorial pass (the human translator) and the Hebrew sibling, `he.json`, with the same ready-armed runway.
+**What remains owed narrows again:** the production walk was item 6; what the milestone still owes is item 8's AR editorial pass (the human translator) and the Hebrew sibling, `he.json`, with the same ready-armed runway. **Paid 2026-11-09 — see §57** (the Hebrew catalogue shipped complete, wired, gated and walked under `dir=rtl`, 5/5 pages).
 
 
 -----------------------------------------------------------------------------------------

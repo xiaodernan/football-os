@@ -518,6 +518,9 @@ Milestones do not own these; every public route must satisfy them as it lands.
   own column, passing it as the `x-next-intl-locale` header the layout reads, so `<html lang>` follows the reader and
   every existing URL stands. `test_locale_claims.py` gates the API's claim against the actual catalogues in both
   directions (over-claiming and under-claiming), plus duplicate-key detection and catalogue-length checks.
+  **Expanded since:** the set now ships five — `ar` and `he` landed in the RTL milestones of 2026-11-08/09
+  (catalogues of 4269 keys each, `dir=rtl` production walks, `locales: ["en","ar","he","zh","zh-TW"]`); the gates
+  were found, widened, and witnessed against the two new catalogues rather than assumed to follow.
 
 - [x] §74's other half (`2d3673e`): the four error handlers answer at `detail.code` like every door, so the
   product's one reader (`normalizeError`) gets a code, a message and the field list instead of its fallback
