@@ -176,6 +176,9 @@ PROMOTION_GRANT: Final = 150_000
 #: season's grant roughly 140,000, so a run to the final (40 + 90 + 220 = 350,000) is a good season's
 #: extra income rather than a reset button, and losing the first tie pays nothing.
 CUP_PRIZE_BY_STAGE: Final[dict[int, int]] = {1: 40_000, 2: 90_000, 3: 220_000}
+#: The stage whose tie ends the cup — the largest band is the final, and a `cup_prize` award written for it
+#: is the trophy an honours cabinet counts. The award's `stage` column stores `{cup_slug}:{stage}`.
+CUP_FINAL_STAGE: Final = max(CUP_PRIZE_BY_STAGE)
 CUP_PRIZE_FORMULA: Final = (
     "cup_prize = 40,000 for a quarter-final won + 90,000 for a semi-final won + 220,000 for the final won; a "
     "tie is paid only when it is won, the row lands in `career_budget_awards` with kind `cup_prize` and the "

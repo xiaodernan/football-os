@@ -1339,3 +1339,68 @@ class TestObjectiveBonuses:
         assert block["bonuses"]["formula"] == market.OBJECTIVE_BONUS_FORMULA
         wins_row = next(row for row in block["bonuses"]["rows"] if row["kind"] == "wins")
         assert wins_row["basis"].startswith("win once:") and "≥ 1 pays" in wins_row["basis"]
+
+
+class TestHonours:
+    """The cabinet reads stored facts and refuses to invent the one honour it cannot see."""
+
+    def test_a_career_with_no_closed_season_has_an_empty_cabinet(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        view = career_service.honours_view(session, career)
+        assert view["seasons_played"] == 0 and view["promotions"] == 0
+        assert view["relegations"] == 0 and view["cups"] == 0
+        assert view["seasons"] == [] and view["cup_wins"] == []
+        assert "not claimed" in view["note"], "the missing title is stated, not silent"
+
+    def test_the_cabinet_reads_the_stored_verdicts(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        session.add(
+            CareerSeason(
+                id=new_public_id("csn"), career_id=career.id, season_index=1, season="2026",
+                competition_name="Upper League", tier=2, first_round=1, last_round=14, rounds=14,
+                verdict="promoted", rule="promotion", next_competition_name="Top League",
+                data_origin="simulation", is_demo_data=True,
+            )
+        )
+        session.add(
+            CareerSeason(
+                id=new_public_id("csn"), career_id=career.id, season_index=2, season="2027",
+                competition_name="Top League", tier=1, first_round=15, last_round=28, rounds=14,
+                verdict="relegated", rule="relegation", next_competition_name="Upper League",
+                data_origin="simulation", is_demo_data=True,
+            )
+        )
+        session.commit()
+        view = career_service.honours_view(session, career)
+        assert view["seasons_played"] == 2 and view["promotions"] == 1 and view["relegations"] == 1
+        assert view["seasons"][0]["verdict"] == "promoted" and view["seasons"][0]["next_competition"] == "Top League"
+        assert view["seasons"][1]["verdict"] == "relegated"
+
+    def test_a_cup_is_won_when_the_final_was_won_not_a_semi(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        session.add(
+            CareerBudgetAward(
+                id=new_public_id("awd"), career_id=career.id, season_index=1, round_index=5,
+                kind="cup_prize", stage="grand-cup:2", amount=90_000, amount_units=career.budget_units,
+                basis="a semi-final won", promotion=0, budget_after=career.budget,
+                data_origin="simulation", is_demo_data=True,
+            )
+        )
+        session.add(
+            CareerBudgetAward(
+                id=new_public_id("awd"), career_id=career.id, season_index=1, round_index=9,
+                kind="cup_prize", stage="grand-cup:3", amount=220_000, amount_units=career.budget_units,
+                basis="the final won", promotion=0, budget_after=career.budget + 220_000,
+                data_origin="simulation", is_demo_data=True,
+            )
+        )
+        session.commit()
+        view = career_service.honours_view(session, career)
+        assert view["cups"] == 1, "a semi-final is a prize, not a trophy"
+        assert view["cup_wins"][0]["cup"] == "grand-cup" and view["cup_wins"][0]["amount"] == 220_000
+
+    def test_the_career_view_carries_the_cabinet(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        view = career_service.career_view(session, career)
+        assert view["honours"]["seasons_played"] == 0 and "cup_wins" in view["honours"]
+        assert view["honours"]["formula"].startswith("promotions/relegations/seasons played")

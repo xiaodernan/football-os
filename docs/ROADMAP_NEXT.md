@@ -691,6 +691,20 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
    round wrote nothing, the balance moved **1,000,000 → 1,077,450**, the timeline held one `gate` entry
    and **0** disagreements. Recorded in [M13_GATE_RECEIPTS_VERIFICATION.md](M13_GATE_RECEIPTS_VERIFICATION.md).
 
+47. **The honours cabinet.** **Done (2026-11-09).** A career that wins things had nothing that said so:
+    the boundary wrote the verdict, the cup paid the prize, and neither surface counted what a manager
+    would call a trophy. `honours_view` reads the stored facts and only the stored facts — `career_seasons`
+    holds each closed season's verdict (`promoted` / `relegated` / `stayed`), so promotions, relegations and
+    seasons played are counts of decisions, and a cup is won when a `career_budget_award` of kind `cup_prize`
+    names the stage that ends the cup (`CUP_FINAL_STAGE`, the tie that pays 220,000 — a semi-final is a
+    prize, not a trophy). The one honour a manager would most want, a league title, is deliberately absent:
+    the career's own fixtures cannot see every other club's results, so a finish position invented from
+    `mini_table` would be a lie with a trophy beside it, and the block's note says so rather than leaving
+    the gap silent. `career_view["honours"]` carries the cabinet beside `seasons`. *Gate:* 4 new service
+    cases (`TestHonours` — empty cabinet, stored verdicts, a final vs a semi, the view wiring);
+    career/career-api/transfers green (185); ruff clean. A live walk and a page panel are left to the
+    web tier, which owns `CareerHonours.tsx`.
+
 ## Phase 8 — a living economy and a living squad
 
 The seventh phase made a career's decisions consequential: a season pays, a contract ends, a manager can

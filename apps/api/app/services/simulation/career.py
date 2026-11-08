@@ -1377,6 +1377,73 @@ def seasons_view(
     }
 
 
+#: What the honours cabinet counts, and what it refuses to invent. A promotion, a relegation and a cup are
+#: facts the boundary already wrote; a league finish position is not derivable from one club's fixtures,
+#: so no title is invented from a table the career cannot see.
+HONOURS_FORMULA: Final = (
+    "promotions/relegations/seasons played are read from career_seasons' stored verdict; a cup is won when a "
+    "career_budget_award of kind cup_prize names the stage that ends the cup (the tie that pays 220,000); "
+    "no league title is claimed, because a full league table is not derivable from one club's fixtures"
+)
+
+
+def honours_view(session: Session, career: Career) -> dict[str, Any]:
+    """The cabinet: what this career won and where its seasons went, read from stored rows only.
+
+    A promotion, a relegation and a cup are decisions and payments already on the record — `career_seasons`
+    holds the verdict, `career_budget_awards` holds the cup prize with the stage it was won in. The one honour
+    a manager would most want — a league title — is deliberately absent: the career's own fixtures do not see
+    every other club's results, so a finish position invented from a mini-table would be a lie with a trophy
+    beside it. The note says so rather than leaving the gap silent.
+    """
+    from app.services.simulation.market import CUP_FINAL_STAGE, awards_of
+
+    seasons = [
+        {
+            "season": str(row.season),
+            "competition": str(row.competition_name),
+            "tier": int(row.tier),
+            "rounds": int(row.rounds),
+            "verdict": str(row.verdict),
+            "rule": str(row.rule),
+            "next_competition": str(row.next_competition_name) if str(row.next_competition_name or "") else None,
+        }
+        for row in seasons_of(session, career)
+    ]
+    cup_wins = []
+    for award in awards_of(session, career.id):
+        if str(award.kind) != "cup_prize":
+            continue
+        cup_slug, _, stage_text = str(award.stage).rpartition(":")
+        if stage_text == str(CUP_FINAL_STAGE):
+            cup_wins.append(
+                {
+                    "cup": cup_slug or str(award.stage),
+                    "season_index": int(award.season_index),
+                    "round_index": int(award.round_index),
+                    "amount": int(award.amount),
+                    "basis": str(award.basis),
+                }
+            )
+    promotions = sum(1 for row in seasons if row["verdict"] == "promoted")
+    relegations = sum(1 for row in seasons if row["verdict"] == "relegated")
+    return {
+        "seasons_played": len(seasons),
+        "promotions": promotions,
+        "relegations": relegations,
+        "cups": len(cup_wins),
+        "cup_wins": cup_wins,
+        "seasons": seasons,
+        "formula": HONOURS_FORMULA,
+        "note": (
+            "a cup is a stored prize and a promotion is a stored decision; a league title is not claimed, because "
+            "the career's own fixtures cannot see every other club's results"
+        ),
+        "data_origin": "simulation",
+        "is_demo_data": True,
+    }
+
+
 def board_view(session: Session, career: Career, rows: list[CareerFixture], record: dict[str, Any], *, horizon: dict[str, Any] | None = None) -> dict[str, Any]:
     """Where the season is heading at the current pace, and whether the board's targets are on track.
 
@@ -1685,6 +1752,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "record": record,
         "career_record": record_of(rows),
         "seasons": seasons_view(session, career, rows, bounds=bounds),
+        "honours": honours_view(session, career),
         "highlights": season_highlights(season_fixtures, career),
         "objectives": objectives_of(career, record),
         "board": board_view(session, career, season_fixtures, record, horizon=horizon),
@@ -1820,4 +1888,5 @@ __all__ = [
     "season_rows",
     "seasons_of",
     "seasons_view",
+    "honours_view",
 ]
