@@ -24,7 +24,23 @@ from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
 from app.core.security import hash_password, new_public_id
-from app.models import BUDGET_FORMULA, MOVE_EFFECT, WAGE_EFFECT, Career, CareerSquadMove, CareerWageCharge, RealMatch, RealPlayer, Team, TransferListing, User
+from app.models import (
+    BUDGET_FORMULA,
+    MOVE_EFFECT,
+    WAGE_EFFECT,
+    Career,
+    CareerAppearance,
+    CareerFixture,
+    CareerGateReceipt,
+    CareerSquadMove,
+    CareerWageCharge,
+    Competition,
+    RealMatch,
+    RealPlayer,
+    Team,
+    TransferListing,
+    User,
+)
 from app.services.simulation import career as career_service
 from app.services.simulation import market
 from app.services.simulation import squad as squad_service
@@ -34,7 +50,7 @@ from app.services.simulation.service import replay_is_identical, run_simulation
 from app.services.world import sync_world
 
 BUDGET = 4_000_000
-RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "wage_ceiling", "window", "budget", "grant", "objective_bonus", "squad"}
+RULE_KEYS = {"valuation", "need", "tactical_fit", "negotiation", "release_clause", "loan", "sell", "release", "wages", "wage_ceiling", "window", "budget", "grant", "gate", "ticket_price", "cup_prize", "objective_bonus", "renewal", "stadium", "upkeep", "season_tickets", "squad", "training"}
 
 
 def _round5(value: float) -> int:
@@ -149,6 +165,26 @@ def _listed(session: Session, career: Career, player: RealPlayer) -> TransferLis
         listed_round=1,
         negotiations=0,
         last_offer=0,
+    )
+    session.add(row)
+    session.commit()
+    return row
+
+
+def _stored_fixture(session: Session, career: Career, round_index: int) -> CareerFixture:
+    """A fixture row at a round, written without moving the career's round counter."""
+    row = CareerFixture(
+        id=new_public_id("cf"),
+        career_id=career.id,
+        round_index=int(round_index),
+        side="home",
+        opponent_name=f"Stored Opponent {round_index}",
+        opponent_short="ST",
+        venue_name="Stored Ground",
+        club_goals=1,
+        opponent_goals=0,
+        outcome="W",
+        points=career_service.POINTS_FOR["W"],
     )
     session.add(row)
     session.commit()
@@ -343,7 +379,14 @@ class TestLedger:
         assert [row.round_index for row in charges] == [1, 2], "one charge per round played, in the round it was for"
         # The reader's arithmetic: one column, one sign per row, and each row's stored standing has to be
         # what the running total says at that point. This is the whole reason `budget_after` is stored.
-        ledger = market.ledger_of([market.move_row(row) for row in rows], [market.wage_row(row) for row in charges])
+        receipts = market.receipts_as_of(session, career.id, int(career.rounds_played) + 1)
+        upkeep = market.upkeep_as_of(session, career.id, int(career.rounds_played) + 1)
+        ledger = market.ledger_of(
+            [market.move_row(row) for row in rows],
+            [market.wage_row(row) for row in charges],
+            receipts=[market.gate_row(row) for row in receipts],
+            upkeep=[market.upkeep_ledger_row(row) for row in upkeep],
+        )
         standing = BUDGET
         for entry in ledger:
             standing = standing - entry["fee"] if entry["cash"] == "out" else standing + entry["fee"]
@@ -351,9 +394,18 @@ class TestLedger:
         position = market.budget_position(session, career)
         assert position["remaining"] == standing
         assert position["spent"] == sum(row.fee for row in rows if row.kind in ("buy", "loan")) > 0
-        assert position["received"] == sum(row.fee for row in rows if row.kind == "sell") > 0
+        assert position["received_sales"] == sum(row.fee for row in rows if row.kind == "sell") > 0
+        assert position["received_gate"] == sum(row.amount for row in receipts)
+        assert position["received"] == position["received_sales"] + position["received_gate"] + position["received_cup"]
         assert position["wages_paid"] == sum(row.fee for row in charges) > 0
-        assert position["budget"] + position["received"] - position["spent"] - position["wages_paid"] == position["remaining"]
+        assert (
+            position["budget"]
+            + position["received"]
+            - position["spent"]
+            - position["wages_paid"]
+            - position["upkeep_spent"]
+            == position["remaining"]
+        )
         assert position["formula"] == BUDGET_FORMULA and "wage_charges" in BUDGET_FORMULA
         assert position["units"] == career.budget_units
 
@@ -439,7 +491,11 @@ class TestWageBill:
             "the club's own stored squad came with the job; only deals this career made are charged"
         )
         position = market.budget_position(session, career)
-        assert position["remaining"] == BUDGET and position["wages_paid"] == 0 and position["wage_committed_per_week"] == 0
+        # A round played still earns its gate: the club's stored squad costs this career no wage, but the
+        # home fixture it played is money on the ledger (item 27), and only the gate can have moved it.
+        assert position["wages_paid"] == 0 and position["wage_committed_per_week"] == 0
+        assert position["remaining"] == BUDGET + position["received_gate"] - position["upkeep_spent"]
+        assert position["received_sales"] == 0
         assert position["wage_rounds"] == [] and position["wage_rows"] == 0
 
     def test_the_round_a_deal_is_struck_for_is_the_round_it_starts_costing(self, session, world) -> None:  # type: ignore[no-untyped-def]
@@ -457,7 +513,8 @@ class TestWageBill:
         assert charge is not None and charge.round_index == 1 and charge.fee == wage and charge.players == 1
         assert charge.fee == standing["wage_committed_per_week"], "the row charged exactly the rate the page had printed"
         after = market.budget_position(session, career)
-        assert after["remaining"] == BUDGET - move.fee - wage and after["wages_paid"] == wage and after["wage_rounds"] == [1]
+        assert after["remaining"] == BUDGET - move.fee - wage + after["received_gate"] - after["upkeep_spent"]
+        assert after["wages_paid"] == wage and after["wage_rounds"] == [1]
         assert charge.budget_after == after["remaining"]
         # A wage row has no player to name, so the sentence is what tells a reader what was charged.
         assert market.wage_row(charge)["effect"] == WAGE_EFFECT
@@ -506,6 +563,13 @@ class TestWageBill:
         before = market.market_view(session, career)
         assert next(row for row in before["listings"] if row["id"] == second["id"])["affordable"] is True
         career_service.play_round(session, career)
+        # Remove the gate the round earned from the opening budget, so the only thing left to tip the
+        # second offer is the wage the first round cost. Gate income has its own cases below.
+        played = market.market_view(session, career)
+        career.budget = (
+            int(career.budget) - int(played["budget"]["received_gate"]) + int(played["budget"]["upkeep_spent"])
+        )
+        session.commit()
         after = market.market_view(session, career)
         target = next(row for row in after["listings"] if row["id"] == second["id"])
         assert after["budget"]["wages_paid"] == first["weekly_wage"]
@@ -753,7 +817,7 @@ class TestMarketView:
         assert "generated clubs" in view["disclaimer"]
         assert view["career"]["slug"] == career.slug and view["career"]["market_round"] == 1
         assert view["transfers_allowed"]["ok"] is True
-        assert view["totals"] == {"listed": market.MARKET_SIZE, "signed": 0, "withdrawn": 0, "moves": 0, "wage_rows": 0, "grant_rows": 0, "bonus_rows": 0}
+        assert view["totals"] == {"listed": market.MARKET_SIZE, "signed": 0, "withdrawn": 0, "moves": 0, "wage_rows": 0, "grant_rows": 0, "gate_rows": 0, "cup_prize_rows": 0, "bonus_rows": 0, "stadium_rows": 0}
 
     def test_an_offer_says_what_it_costs_who_must_be_paid_and_whether_you_can(self, session, world) -> None:  # type: ignore[no-untyped-def]
         poor = _career(session, world, budget=5_000)
@@ -928,6 +992,31 @@ class TestTransferWindow:
         assert int(move.round_index) == int(career.rounds_played) + 1, "the move is made before the round it covers"
         assert "never rewritten" in market.WINDOW_FORMULA and "without touching the stored world score" in market.WINDOW_FORMULA
 
+    def test_a_move_is_refused_into_a_round_with_a_stored_fixture(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        stored = _stored_fixture(session, career, 1)
+        verdict = market.transferable(session, career)
+        assert verdict["ok"] is False and verdict["code"] == "round_already_played"
+        assert verdict["constraint"] == "stored_fixture" and verdict["round"] == 1
+        assert verdict["latest_stored_round"] == 1 and verdict["stored_rounds"] == 1
+        outsider = _best_of(session, [world["outsider_id"]], band="midfield")
+        listing = _listed(session, career, outsider)
+        with pytest.raises(market.MarketRefusal) as refused:
+            market.buy(session, career, ident=listing.id)
+        assert refused.value.code == "round_already_played" and refused.value.detail["round"] == 1
+        session.delete(stored)
+        session.commit()
+        assert market.transferable(session, career)["ok"] is True, "the same career can sign once the round has no stored fixture"
+
+    def test_the_window_counts_stored_fixtures_rather_than_the_round_counter(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        _stored_fixture(session, career, 1)
+        _stored_fixture(session, career, 2)
+        assert int(career.rounds_played) == 0, "the counter lags the stored rows on purpose"
+        window = market.transfer_window(session, career)
+        assert window["played_in_window"] == 2, "the window counts fixture rows, not the counter alone"
+        assert window["signing_rounds_left"] == 2, "rounds 1 and 2 are stored, so only 3 and 4 remain in the first window"
+
 
 class TestContracts:
     def test_a_career_with_no_deals_has_an_empty_book(self, session, world) -> None:  # type: ignore[no-untyped-def]
@@ -940,14 +1029,102 @@ class TestContracts:
         career = _career(session, world)
         player = _sign(session, world, career, band="attack")
         move = session.scalar(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id, CareerSquadMove.player_id == player.id))
-        book = market.contract_book(session, career, season_rounds=6)
+        season_rounds = int(career_service.season_horizon(session, career)["rounds"])
+        book = market.contract_book(session, career, season_rounds=season_rounds)
         assert book["deals"] == 1
         row = book["rows"][0]
         assert row["player_id"] == player.id and row["kind"] == "buy"
-        assert row["expiry_round"] == int(move.round_index) + int(move.contract_years) * 6 - 1
+        assert row["expiry_round"] == int(move.round_index) + int(move.contract_years) * season_rounds - 1
         assert row["rounds_remaining"] == row["expiry_round"] - book["current_round"] + 1
         assert row["weekly_wage"] == int(move.weekly_wage) == book["total_weekly_wage"]
-        assert "year(s)" in row["basis"]
+        assert int(move.expiry_round) == row["expiry_round"], "the term is stored at signing, not re-derived"
+        assert "stored" in row["basis"]
+
+    def test_a_deal_whose_stored_last_round_has_passed_leaves_the_squad(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _sign(session, world, career, band="attack")
+        move = session.scalar(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id, CareerSquadMove.player_id == player.id))
+        expiry = int(move.expiry_round)
+        assert expiry > 0
+        balance = int(market.budget_position(session, career)["remaining"])
+        career.rounds_played = expiry
+        session.commit()
+
+        result = market.expire_contracts(session, career, round_index=expiry + 1)
+        session.commit()
+
+        assert [row["player_id"] for row in result["expired"]] == [player.id]
+        assert result["renewed"] == []
+        ending = session.scalars(
+            select(CareerSquadMove).where(
+                CareerSquadMove.career_id == career.id,
+                CareerSquadMove.player_id == player.id,
+                CareerSquadMove.kind == market.EXPIRY_KIND,
+            )
+        ).one()
+        assert int(ending.round_index) == expiry + 1, "the write-off happens before the round after the last covered one"
+        assert int(ending.fee) == 0 and int(ending.budget_after) == balance, "a contract ending is not a fee"
+        squad, _account = squad_service.current_squad(session, career)
+        assert player.id not in {row.id for row in squad}
+        assert market.wage_bill(session, career, round_index=expiry + 1)["fee"] == 0
+        book = market.contract_book(session, career, season_rounds=int(career_service.season_horizon(session, career)["rounds"]))
+        assert book["deals"] == 0 and book["recent"][0]["kind"] == market.EXPIRY_KIND
+        assert book["recent"][0]["player_id"] == player.id
+
+    def test_a_deal_that_would_leave_no_side_is_extended(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _sign(session, world, career, band="attack")
+        move = session.scalar(select(CareerSquadMove).where(CareerSquadMove.career_id == career.id, CareerSquadMove.player_id == player.id))
+        base = _players_of(session, career.club_id or "")
+        keeper = next(row for row in base if row.position == "GK")
+        kept = [keeper] + [row for row in base if row.id != keeper.id and row.id != player.id][:9]
+        kept_ids = {row.id for row in kept} | {player.id}
+        for row in base:
+            if row.id in kept_ids:
+                continue
+            session.add(
+                CareerSquadMove(
+                    id=new_public_id("mov"),
+                    career_id=career.id,
+                    round_index=1,
+                    kind="release",
+                    player_id=row.id,
+                    player_slug=row.slug,
+                    player_name=row.name,
+                    position=row.position,
+                    fee=0,
+                    contract_years=0,
+                    weekly_wage=0,
+                    loan_until_round=0,
+                    expiry_round=0,
+                    budget_after=0,
+                    data_origin="simulation",
+                    is_demo_data=True,
+                )
+            )
+        career.rounds_played = int(move.expiry_round)
+        session.commit()
+        squad, account = squad_service.current_squad(session, career)
+        assert account["squad_now"] == 11, "the fixture leaves exactly the eleven a departure would break"
+
+        result = market.expire_contracts(session, career, round_index=int(move.expiry_round) + 1)
+        session.commit()
+
+        assert result["expired"] == [] and [row["player_id"] for row in result["renewed"]] == [player.id]
+        renewal = session.scalars(
+            select(CareerSquadMove).where(
+                CareerSquadMove.career_id == career.id,
+                CareerSquadMove.player_id == player.id,
+                CareerSquadMove.kind == market.RENEWAL_KIND,
+            )
+        ).one()
+        assert int(renewal.contract_years) == market.RENEWAL_SEASONS
+        season_rounds = int(career_service.season_horizon(session, career)["rounds"])
+        assert int(renewal.expiry_round) == int(move.expiry_round) + 1 + market.RENEWAL_SEASONS * season_rounds - 1
+        squad, account = squad_service.current_squad(session, career)
+        assert account["squad_now"] == 11 and player.id in {row.id for row in squad}
+        book = market.contract_book(session, career, season_rounds=season_rounds)
+        assert book["deals"] == 1 and book["recent"][0]["kind"] == market.RENEWAL_KIND
 
     def test_a_loan_expires_on_its_agreed_round(self, session, world) -> None:  # type: ignore[no-untyped-def]
         career = _career(session, world)
@@ -976,8 +1153,98 @@ class TestContracts:
         assert profile["median"] == ages[len(ages) // 2]
         assert sum(profile["bands"].values()) == len(ages), "every player falls in exactly one band"
         assert all(item["age"] >= market.RETIREMENT_AGE for item in profile["retirement_risk"])
-        assert profile["retirement_age"] == market.RETIREMENT_AGE
+        assert profile["retirement_age"] == market.RETIREMENT_THRESHOLD
         assert "stored" in profile["note"], "the profile says the ages are the world's, not this build's"
+
+    def test_a_held_deal_carries_the_renewal_quote_the_manager_would_pay(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _sign(session, world, career, band="attack")
+        book = market.contract_book(session, career, season_rounds=int(career_service.season_horizon(session, career)["rounds"]))
+        quote = book["rows"][0]["renewal"]
+        price = market.valuation(player)
+        assert quote is not None
+        assert quote["fee"] == _round5(price["asking_fee"] * market.RENEWAL_FEE_SHARE) * price["contract_years"]
+        assert quote["minutes_share"] == 0 and quote["tier_factor"] in (0.90, 1.00, 1.15)
+        assert quote["weekly_wage"] == max(5, _round5(price["weekly_wage"] * quote["tier_factor"] * quote["minutes_factor"]))
+        assert quote["weekly_wage"] == quote["demand_wage"]
+        assert quote["years"] == price["contract_years"]
+        assert quote["fee_affordable"] is True and quote["wage_affordable"] is True and quote["can_renew"] is True
+        assert quote["formula"] == market.RENEWAL_FORMULA
+
+    def test_a_renewal_extends_the_expiry_and_charges_the_quote(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _sign(session, world, career, band="attack")
+        season_rounds = int(career_service.season_horizon(session, career)["rounds"])
+        quote = market.contract_book(session, career, season_rounds=season_rounds)["rows"][0]["renewal"]
+        assert quote is not None
+        before = int(market.budget_position(session, career)["remaining"])
+        next_round = int(career.rounds_played) + 1
+
+        move, detail = market.renew(session, career, ident=player.id, years=3)
+
+        assert move.kind == market.RENEWAL_KIND and int(move.round_index) == next_round
+        expected_fee = int(detail["fee_per_year"]) * 3
+        assert int(move.contract_years) == 3 and int(move.weekly_wage) == quote["weekly_wage"]
+        assert int(move.fee) == expected_fee and int(move.budget_after) == before - expected_fee
+        assert int(move.expiry_round) == next_round + 3 * season_rounds - 1
+        assert detail["expiry_round"] == int(move.expiry_round)
+        assert int(detail["previous"]["contract_years"]) > 0
+        book = market.contract_book(session, career, season_rounds=season_rounds)
+        assert book["deals"] == 1 and book["rows"][0]["expiry_round"] == int(move.expiry_round)
+        assert int(market.budget_position(session, career)["remaining"]) == before - expected_fee
+
+    def test_a_longer_renewal_costs_more_and_a_low_offer_is_refused(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _sign(session, world, career, band="attack")
+        one = market.renewal_terms(session, career, player, years=1)
+        three = market.renewal_terms(session, career, player, years=3)
+        assert three["fee"] == one["fee"] * 3 and three["fee"] > one["fee"]
+        with pytest.raises(market.MarketRefusal) as refused:
+            market.renew(session, career, ident=player.id, years=2, wage=int(one["demand_wage"]) - 5)
+        assert refused.value.code == "renewal_refused"
+        assert refused.value.detail["demanded_wage"] == one["demand_wage"]
+        assert refused.value.detail["offered_wage"] == one["demand_wage"] - 5
+        move, detail = market.renew(session, career, ident=player.id, years=2, wage=int(one["demand_wage"]))
+        assert int(move.weekly_wage) == one["demand_wage"] and int(move.contract_years) == 2
+        assert detail["offered_wage"] == one["demand_wage"]
+
+    def test_the_wage_demand_rises_with_the_minutes_the_career_gave_the_player(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _sign(session, world, career, band="attack")
+        career.rounds_played = 1
+        session.add(
+            CareerAppearance(
+                id=new_public_id("cap"),
+                career_id=career.id,
+                round_index=1,
+                player_id=player.id,
+                player_slug=player.slug,
+                player_name=player.name,
+                position=player.position,
+                minutes=90,
+            )
+        )
+        session.commit()
+        terms = market.renewal_terms(session, career, player, years=2)
+        assert terms["minutes_share"] == 1.0 and terms["minutes_factor"] == 1.1
+        base = market.valuation(player)["weekly_wage"]
+        assert terms["demand_wage"] > max(5, _round5(base * terms["tier_factor"] * 0.9))
+
+    def test_a_loan_has_no_renewal_quote_and_cannot_be_renewed(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _sign(session, world, career, band="midfield", rounds=2)
+        book = market.contract_book(session, career, season_rounds=int(career_service.season_horizon(session, career)["rounds"]))
+        assert book["rows"][0]["renewal"] is None
+        with pytest.raises(market.MarketRefusal) as refused:
+            market.renew(session, career, ident=player.id)
+        assert refused.value.code == "loan_cannot_be_renewed"
+
+    def test_a_player_with_no_deal_of_its_own_has_nothing_to_renew(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        player = _players_of(session, career.club_id or "")[0]
+        with pytest.raises(market.MarketRefusal) as refused:
+            market.renew(session, career, ident=player.id)
+        assert refused.value.code == "no_contract_to_renew"
 
 
 class TestBoardGrants:
@@ -1020,7 +1287,9 @@ class TestBoardGrants:
         session.commit()
 
         timeline = market.budget_timeline(session, career, limit=0)
-        assert [row["kind"] for row in timeline["rows"]] == ["buy", "wage", "season_grant"], "one round's rows keep the order the balance was added up in"
+        receipts = market.receipts_as_of(session, career.id, 2)
+        expected = ["buy", *(["gate", "upkeep"] if receipts else []), "wage", "season_grant"]
+        assert [row["kind"] for row in timeline["rows"]] == expected, "one round's rows keep the order the balance was added up in"
         assert timeline["disagreements"] == 0, "the grant chains onto the wage it follows rather than starting a second running total"
         assert timeline["closing_balance"] == int(market.budget_position(session, career)["remaining"])
 
@@ -1054,3 +1323,220 @@ class TestBoardGrants:
             event.remove(session.get_bind(), "before_cursor_execute", before)
         award_selects = [s for s in statements if "from career_budget_awards" in s and s.lstrip().startswith("select")]
         assert len(award_selects) == 1, f"the grants were re-fetched: {len(award_selects)} reads of career_budget_awards"
+
+
+class TestGateReceipts:
+    """The fourth ledger table: a home round earns its gate, and only money that a row says arrived counts.
+
+    Item 24 gave a career one income a season; item 27 gives it the income of the rounds it actually
+    plays. Every case here reads a stored row back: the attendance, the price, the amount and the
+    `budget_after` are the receipt's own columns, not a figure the test recomputes from the model.
+    """
+
+    def test_only_home_rounds_earn_a_gate_and_each_one_is_its_own_row(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        fixtures = [career_service.play_round(session, career)[0] for _ in range(2)]
+        receipts = list(session.scalars(select(CareerGateReceipt).where(CareerGateReceipt.career_id == career.id).order_by(CareerGateReceipt.round_index)).all())
+        home_rounds = [int(fixture.round_index) for fixture in fixtures if fixture.side == "home"]
+        assert [int(row.round_index) for row in receipts] == home_rounds
+        for row in receipts:
+            assert row.attendance > 0 and row.ticket_price == market.GATE_TICKET_PRICE_TIER_2
+            assert row.amount == row.attendance * row.ticket_price
+            assert "seats ×" in row.basis
+        position = market.budget_position(session, career)
+        assert position["gate_rows"] == len(receipts)
+        assert position["received_gate"] == sum(int(row.amount) for row in receipts)
+        view = market.market_view(session, career)
+        gates = [row for row in view["moves"] if row["kind"] == "gate"]
+        assert gates and all(row["cash"] == "in" and row["side"] == "in" and row["fee"] > 0 for row in gates)
+        assert view["totals"]["gate_rows"] == len(receipts)
+        timeline = market.budget_timeline(session, career, limit=0)
+        assert timeline["disagreements"] == 0
+        assert {row["kind"] for row in timeline["rows"]} >= {"gate"}
+
+    def test_the_rotation_attendance_is_capacity_times_the_seeded_share(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        club = session.get(Team, career.club_id)
+        assert club is not None and club.capacity > 0
+        seed = 1234
+        fixture = CareerFixture(
+            id=new_public_id("cf"),
+            career_id=career.id,
+            round_index=5,
+            match_slug="",
+            digest="",
+            model_version="",
+            seed=seed,
+            side="home",
+            opponent_name="Rotation Rovers",
+            venue_name=club.stadium,
+            club_goals=0,
+            opponent_goals=0,
+            outcome="D",
+            points=1,
+        )
+        session.add(fixture)
+        session.commit()
+        receipt = market.pay_gate_receipt(session, career, fixture=fixture)
+        assert receipt is not None
+        share = market.GATE_ROTATION_ATTENDANCE_FLOOR + seed % (
+            market.GATE_ROTATION_ATTENDANCE_CEILING - market.GATE_ROTATION_ATTENDANCE_FLOOR + 1
+        )
+        competition = session.get(Competition, career.competition_id)
+        capacity, _factor = market.gate_capacity(club, int(competition.tier) if competition else 0)
+        form = market.gate_form(session, career, before_round=5)
+        assert receipt.attendance == min(capacity, int(round(capacity * share // 100 * form["factor"])))
+        assert receipt.amount == receipt.attendance * receipt.ticket_price
+        assert f"{share}%" in receipt.basis and club.stadium in receipt.basis
+        assert "form" in receipt.basis
+
+    def test_a_winning_run_fills_more_of_the_ground_than_a_losing_one(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        def gate_for(outcome: str) -> Any:
+            career = _career(session, world)
+            for index in range(1, 6):
+                session.add(
+                    CareerFixture(
+                        id=new_public_id("cf"),
+                        career_id=career.id,
+                        round_index=index,
+                        side="home",
+                        opponent_name=f"Form Opponent {index}",
+                        venue_name="Form Ground",
+                        club_goals=1 if outcome == "W" else 0,
+                        opponent_goals=0 if outcome == "W" else 1,
+                        outcome=outcome,
+                        points=career_service.POINTS_FOR[outcome],
+                    )
+                )
+            session.commit()
+            fixture = CareerFixture(
+                id=new_public_id("cf"),
+                career_id=career.id,
+                round_index=6,
+                seed=1234,
+                side="home",
+                opponent_name="Form Gate",
+                venue_name="Form Ground",
+                club_goals=0,
+                opponent_goals=0,
+                outcome="D",
+                points=1,
+            )
+            session.add(fixture)
+            session.commit()
+            return market.pay_gate_receipt(session, career, fixture=fixture)
+
+        winning = gate_for("W")
+        losing = gate_for("L")
+        assert winning is not None and losing is not None
+        assert winning.attendance > losing.attendance, "five wins sell more seats than five losses"
+        assert "form 1.00" in winning.basis and "form 0.00" in losing.basis
+
+    def test_a_top_flight_ground_sells_more_seats_than_its_stored_capacity(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        top = session.scalars(select(Competition).where(Competition.tier == 1).order_by(Competition.slug)).first()
+        assert top is not None
+        career.competition_id = top.id
+        club = session.get(Team, career.club_id)
+        assert club is not None
+        fixture = CareerFixture(
+            id=new_public_id("cf"),
+            career_id=career.id,
+            round_index=1,
+            seed=1234,
+            side="home",
+            opponent_name="Top Gate",
+            venue_name=club.stadium,
+            club_goals=0,
+            opponent_goals=0,
+            outcome="D",
+            points=1,
+        )
+        session.add(fixture)
+        session.commit()
+        receipt = market.pay_gate_receipt(session, career, fixture=fixture)
+        assert receipt is not None
+        capacity, factor = market.gate_capacity(club, 1)
+        share = market.GATE_ROTATION_ATTENDANCE_FLOOR + 1234 % (
+            market.GATE_ROTATION_ATTENDANCE_CEILING - market.GATE_ROTATION_ATTENDANCE_FLOOR + 1
+        )
+        assert factor == 1.25 and capacity > club.capacity
+        assert receipt.attendance > club.capacity * share // 100, "the tier-1 ground is larger than the stored row"
+        assert f"×{factor:.2f}" in receipt.basis
+
+    def test_an_away_round_earns_nothing_and_writes_no_row(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        fixture = CareerFixture(
+            id=new_public_id("cf"),
+            career_id=career.id,
+            round_index=3,
+            match_slug="",
+            digest="",
+            model_version="",
+            seed=99,
+            side="away",
+            opponent_name="Away Albion",
+            venue_name="Their Ground",
+            club_goals=0,
+            opponent_goals=0,
+            outcome="D",
+            points=1,
+        )
+        session.add(fixture)
+        session.commit()
+        assert market.pay_gate_receipt(session, career, fixture=fixture) is None
+        assert session.scalar(select(CareerGateReceipt.id).where(CareerGateReceipt.career_id == career.id)) is None
+
+    def test_a_top_flight_home_round_charges_the_tier_one_price(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world)
+        top = session.scalars(select(Competition).where(Competition.tier == 1).order_by(Competition.slug)).first()
+        assert top is not None
+        career.competition_id = top.id
+        session.commit()
+        fixture = CareerFixture(
+            id=new_public_id("cf"),
+            career_id=career.id,
+            round_index=1,
+            match_slug="",
+            digest="",
+            model_version="",
+            seed=7,
+            side="home",
+            opponent_name="Top Flight",
+            venue_name="Home",
+            club_goals=0,
+            opponent_goals=0,
+            outcome="D",
+            points=1,
+        )
+        session.add(fixture)
+        session.commit()
+        receipt = market.pay_gate_receipt(session, career, fixture=fixture)
+        assert receipt is not None and receipt.ticket_price == market.GATE_TICKET_PRICE_TIER_1
+        assert receipt.amount == receipt.attendance * market.GATE_TICKET_PRICE_TIER_1
+
+    def test_a_challenge_window_pays_no_gate_and_leaves_its_stated_budget_alone(self, session, world) -> None:  # type: ignore[no-untyped-def]
+        career = _career(session, world, budget=0)
+        career.challenge_slug = "a-challenge"
+        career.challenge_window = 3
+        session.commit()
+        fixture = CareerFixture(
+            id=new_public_id("cf"),
+            career_id=career.id,
+            round_index=1,
+            match_slug="",
+            digest="",
+            model_version="",
+            seed=11,
+            side="home",
+            opponent_name="Cup Tie",
+            venue_name="Home",
+            club_goals=0,
+            opponent_goals=0,
+            outcome="D",
+            points=1,
+        )
+        session.add(fixture)
+        session.commit()
+        assert market.pay_gate_receipt(session, career, fixture=fixture) is None
+        assert market.budget_position(session, career)["remaining"] == 0

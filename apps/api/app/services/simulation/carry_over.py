@@ -101,7 +101,29 @@ def appearances_as_of(session: Session, career_id: str, round_index: int) -> lis
 
 
 def appearances_of_round(session: Session, career_id: str, round_index: int) -> list[CareerAppearance]:
-    return list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career_id, CareerAppearance.round_index == round_index).order_by(CareerAppearance.player_name)).all())
+    """The *league* round's trace. A cup tie played after that round shares its index but is asked for by tie."""
+    return list(
+        session.scalars(
+            select(CareerAppearance)
+            .where(
+                CareerAppearance.career_id == career_id,
+                CareerAppearance.round_index == round_index,
+                CareerAppearance.tie_id.is_(None),
+            )
+            .order_by(CareerAppearance.player_name)
+        ).all()
+    )
+
+
+def appearances_of_tie(session: Session, career_id: str, tie_id: str) -> list[CareerAppearance]:
+    """One cup tie's trace: the minutes its eleven played, keyed by the tie rather than the round."""
+    return list(
+        session.scalars(
+            select(CareerAppearance)
+            .where(CareerAppearance.career_id == career_id, CareerAppearance.tie_id == tie_id)
+            .order_by(CareerAppearance.player_name)
+        ).all()
+    )
 
 
 def load_windows(rows: list[CareerAppearance], *, round_index: int) -> dict[str, dict[str, float]]:
@@ -183,6 +205,8 @@ def record_appearances(
     side: str,
     minutes: int,
     opponent_name: str,
+    tie_id: str | None = None,
+    context: str | None = None,
 ) -> list[CareerAppearance]:
     """Write one trace per selected player. Idempotent per round, so a re-played round cannot double up.
 
@@ -190,10 +214,19 @@ def record_appearances(
     rebuilds it from the same rows the engine played and checks it against the match report before
     calling — a trace written from a reconstructed eleven that does not match the eleven that played would
     be a claim about a match this platform cannot support.
+
+    `tie_id` names a cup tie: the row then belongs to that tie rather than to the league round whose
+    index it shares, and idempotency is asked for by tie. `context` is the phrase the note prints, so a
+    cup minute says which round of which cup it was.
     """
-    already = appearances_of_round(session, career.id, round_index)
+    already = (
+        appearances_of_tie(session, career.id, tie_id)
+        if tie_id
+        else appearances_of_round(session, career.id, round_index)
+    )
     if already:
         return already
+    where = context or f"round {round_index}"
     rows: list[CareerAppearance] = []
     for player_id, slug, name, position, band in lineup:
         rows.append(
@@ -201,6 +234,7 @@ def record_appearances(
                 id=new_public_id("cap"),
                 career_id=career.id,
                 round_index=round_index,
+                tie_id=tie_id,
                 player_id=player_id,
                 player_slug=slug,
                 player_name=name,
@@ -209,7 +243,7 @@ def record_appearances(
                 side=side,
                 minutes=minutes,
                 opponent_name=opponent_name,
-                note=f"selected by the engine for round {round_index} and played the fixture's full {minutes} minutes as modelled",
+                note=f"selected by the engine for {where} and played the fixture's full {minutes} minutes as modelled",
                 data_origin="simulation",
                 is_demo_data=True,
             )
@@ -222,6 +256,8 @@ def record_appearances(
 def _row(appearance: CareerAppearance) -> dict[str, Any]:
     return {
         "round_index": appearance.round_index,
+        "tie_id": appearance.tie_id,
+        "competition": "cup" if appearance.tie_id else "league",
         "player_name": appearance.player_name,
         "player_path": f"/player/{appearance.player_slug}" if appearance.player_slug else None,
         "position": appearance.position,
@@ -255,18 +291,22 @@ def carry_over_view(
     windows = load_windows(history, round_index=next_round)
     training = training if training is not None else training_loads(session, list(windows))
     conditions = {player_id: condition_of(entry["load"], training.get(player_id, 0)) for player_id, entry in windows.items()}
-    last_round = max((row.round_index for row in all_rows), default=0)
-    traced = {row.round_index for row in all_rows}
+    # Rounds are the league's: a cup tie shares the index of the round it was played after, so counting it
+    # as a round would report a round the career has not played. Its minutes still reach `load_windows`.
+    league_rows = [row for row in all_rows if row.tie_id is None]
+    last_round = max((row.round_index for row in league_rows), default=0)
+    traced = {row.round_index for row in league_rows}
     # A round the career played but left no rows for is a hole in the ledger, not a rest: the engine could
     # not attribute its eleven. Saying so beats printing a condition figure built on the rounds that were.
     untraced = [round_number for round_number in range(1, int(career.rounds_played) + 1) if round_number not in traced]
-    played_last = [row for row in all_rows if row.round_index == last_round]
+    played_last = [row for row in league_rows if row.round_index == last_round]
     mean_last = round(sum(conditions.get(row.player_id, CONDITION_CEILING) for row in played_last) / len(played_last), 4) if played_last else CONDITION_CEILING
     ranked = sorted(windows.items(), key=lambda item: (-item[1]["load"], item[0]))
     by_id = {row.player_id: row for row in history}
     return {
         "rounds_played": int(career.rounds_played),
         "rounds_traced": len(traced),
+        "cup_appearances": len(all_rows) - len(league_rows),
         "untraced_rounds": untraced,
         "appearances": len(all_rows),
         "players_traced": len({row.player_id for row in all_rows}),

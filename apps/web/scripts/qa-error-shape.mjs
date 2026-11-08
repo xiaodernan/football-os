@@ -43,7 +43,7 @@ async function loadReader() {
   const require_ = createRequire(import.meta.url);
   const tsPath = process.env.TS_ENTRY ?? require_.resolve('typescript');
   const ts = (await import(pathToFileURL(tsPath).href)).default;
-  const source = (readFileSync(API_TS_PATH, 'utf8').replace(/\r\n/g, "\n"));
+  const source = readFileSync(API_TS_PATH, 'utf8');
   // The claim §74 is about, pinned in the text before anything is imported: the reader unwraps a `detail` key.
   // (It spells that as `"detail" in payload ? payload.detail : payload` — an earlier version of this line
   // searched for `payload.detail` and went red on correct production code, which is a broken witness, not a bug.)
@@ -81,7 +81,7 @@ async function main() {
     check('browserFetch is callable', false, 'the reader did not export browserFetch — every case below would be vacuous');
     return finish();
   }
-  const fixtures = JSON.parse((readFileSync(FIXTURE_PATH, 'utf8').replace(/\r\n/g, "\n")));
+  const fixtures = JSON.parse(readFileSync(FIXTURE_PATH, 'utf8'));
   const entries = fixtures.entries ?? [];
   const produced = entries.filter((entry) => entry.producer.kind === 'handler' || entry.producer.kind === 'door');
   const tolerant = entries.filter((entry) => entry.producer.kind === 'reader-tolerance');

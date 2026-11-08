@@ -264,6 +264,16 @@ echo "── Web: baseline-gate behaviour gate ───────────
 # Files only: git and the two gates, no server, no browser.
 (cd apps/web && node scripts/qa-baseline-gates.mjs)
 
+echo "── Web: locale-discovery census ───────────────────────"
+# Every script that loads catalogues reads one of three shapes — the directory itself, a bracketed
+# list of locales in its own source, or one locale named directly — and this census charges the
+# difference: every shipped catalogue must lie inside every loading script's population, no site may
+# iterate a narrower list than its own file loads without a ledger row stating why, the derived set
+# may only grow, and every ledger row must still name the file that carries it. 26 narrower sites
+# held on the ledger today, 0 unexcused; 6 file rows + 14 site rows, ceilings may only fall.
+# Files only: no server, no browser.
+(cd apps/web && node scripts/qa-locale-discovery.mjs)
+
 echo "── Web: locale-formatting gate ────────────────────────"
 # Date/number/currency format patterns are locale-appropriate.
 # Currently 0 messages with ICU format patterns.

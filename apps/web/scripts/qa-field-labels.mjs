@@ -79,7 +79,7 @@ let parsed = 0;
 let diagnostics = 0;
 
 for (const file of files) {
-  const text = (readFileSync(file, "utf8").replace(/\r\n/g, "\n"));
+  const text = readFileSync(file, "utf8");
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   if (source.parseDiagnostics?.length) diagnostics += source.parseDiagnostics.length;
   parsed += 1;

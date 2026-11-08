@@ -39,8 +39,8 @@ from app.services.simulation.profile import SquadOverlay
 
 # Which kinds bring a player in and which take them out. Kept as data so the overlay and the refusal
 # messages agree with each other without either restating the other.
-IN_KINDS: Final = ("buy", "loan")
-OUT_KINDS: Final = ("sell", "release")
+IN_KINDS: Final = ("buy", "loan", "youth", "renew")
+OUT_KINDS: Final = ("sell", "release", "expire", "retire")
 MIN_PLAYERS_FOR_XI: Final = 11
 MIN_KEEPERS: Final = 1
 SQUARD_RULE: Final = (

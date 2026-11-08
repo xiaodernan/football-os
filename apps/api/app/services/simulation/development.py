@@ -40,6 +40,24 @@ ATTRIBUTE_FLOOR: int = 40
 #: not equal it, so match play stays the dominant driver of a career's development curve.
 TRAINING_MINUTES_PER_UNIT: float = 0.5
 
+#: Each level of the training ground makes a session count this much more (M13 Phase 11 item 47).
+#: Authored: five levels at +10% each reach +50%, so a fully built ground nearly doubles the off-pitch
+#: half of the curve without letting it replace match minutes.
+TRAINING_LEVEL_BONUS_PCT: int = 10
+
+#: The most levels a ground can hold: level 0 is the club's inherited facility.
+TRAINING_MAX_LEVEL: int = 5
+
+
+def training_minutes(units: int, *, level: int = 0) -> int:
+    """A training record's match-minute equivalent at a facility level.
+
+    Level 0 is exactly the authored `TRAINING_MINUTES_PER_UNIT`, so a career that never upgrades reads
+    the same curve it read before item 47; each level adds `TRAINING_LEVEL_BONUS_PCT` percent.
+    """
+    bonus = 100 + TRAINING_LEVEL_BONUS_PCT * max(0, int(level))
+    return int(round(TRAINING_MINUTES_PER_UNIT * max(0, int(units)) * bonus / 100))
+
 
 def _develop_one(value: float, potential: float, minutes_played: int, *, tau: float, rate: float) -> float:
     """One attribute's developed value: a saturating climb toward `potential`.
@@ -126,8 +144,11 @@ __all__ = [
     "ATTRIBUTE_FLOOR",
     "DEVELOPMENT_RATE",
     "DEVELOPMENT_TAU",
+    "TRAINING_LEVEL_BONUS_PCT",
+    "TRAINING_MAX_LEVEL",
     "TRAINING_MINUTES_PER_UNIT",
     "developed_attributes",
     "developed_overall",
     "development_summary",
+    "training_minutes",
 ]

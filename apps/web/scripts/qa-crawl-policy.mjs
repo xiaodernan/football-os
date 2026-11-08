@@ -54,7 +54,7 @@ const fail = (m) => {
 
 /** Compile a region of a shipped file and hand back the value of one of its declarations. */
 const regionOf = (file, startNeedle, stopNeedle) => {
-  const src = (readFileSync(file, "utf8").replace(/\r\n/g, "\n"));
+  const src = readFileSync(file, "utf8");
   const start = src.indexOf(startNeedle);
   const stop = src.indexOf(stopNeedle, start + startNeedle.length);
   if (start < 0 || stop < 0) fail(`${file}: could not slice between ${JSON.stringify(startNeedle)} and ${JSON.stringify(stopNeedle)} (start=${start}, stop=${stop}) — the gate read nothing`);
@@ -91,7 +91,7 @@ const PUBLIC = take(smRegion, "[...PUBLIC]");
  */
 const SITE_TS = join(WEB, "lib", "site.ts");
 const sharedRobots = (() => {
-  const compiled = ts.transpileModule((readFileSync(SITE_TS, "utf8").replace(/\r\n/g, "\n")), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText;
+  const compiled = ts.transpileModule(readFileSync(SITE_TS, "utf8"), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText;
   let site;
   try {
     site = new Function("exports", `${compiled}\nreturn exports;`)({});
@@ -171,7 +171,7 @@ const robotsOf = (file, src) => {
 };
 
 const pages = pageFiles.map((f) => {
-  const src = (readFileSync(f, "utf8").replace(/\r\n/g, "\n"));
+  const src = readFileSync(f, "utf8");
   const route = routeOf(f);
   const rb = robotsOf(f, src);
   const inherited = rb === null && inheritsSharedRobots(f, src);

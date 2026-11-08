@@ -12,6 +12,11 @@ import { CareerFinance } from "@/components/CareerFinance";
 import { CareerHighlights } from "@/components/CareerHighlights";
 import { CareerDevelopment } from "@/components/CareerDevelopment";
 import { CareerWindow } from "@/components/CareerWindow";
+import { CareerCup } from "@/components/CareerCup";
+import { CareerStadiumPanel } from "@/components/CareerStadium";
+import { CareerTicketsPanel } from "@/components/CareerTickets";
+import { CareerSeasonTicketsPanel } from "@/components/CareerSeasonTickets";
+import { CareerTrainingPanel } from "@/components/CareerTraining";
 import { CareerNextOpponent } from "@/components/CareerNextOpponent";
 import { CareerTools } from "@/components/CareerTools";
 import { LEDGER_COLUMNS, type SeasonLedger } from "@/lib/ledger";
@@ -175,9 +180,43 @@ export default async function CareerDetailPage({ params }: Props) {
 
       <CareerFinance t={t} view={view.affordability} limitation={view.limitations.projections} />
 
-      <CareerContracts t={t} view={view.contracts} limitation={view.limitations.projections} />
+      <CareerStadiumPanel
+        ident={view.career.slug}
+        view={view.stadium}
+        remaining={view.affordability.remaining}
+        units={view.affordability.units}
+        limitation={view.limitations.projections}
+      />
+
+      <CareerTicketsPanel
+        ident={view.career.slug}
+        view={view.tickets}
+        limitation={view.limitations.projections}
+      />
+
+      <CareerSeasonTicketsPanel
+        ident={view.career.slug}
+        view={view.season_tickets}
+        limitation={view.limitations.projections}
+      />
+
+      <CareerTrainingPanel
+        ident={view.career.slug}
+        view={view.training}
+        remaining={view.affordability.remaining}
+        limitation={view.limitations.projections}
+      />
+
+      <CareerContracts
+        t={t}
+        ident={view.career.slug}
+        view={view.contracts}
+        limitation={view.limitations.projections}
+      />
 
       <CareerWindow t={t} view={view.window} limitation={view.limitations.projections} />
+
+      <CareerCup ident={view.career.slug} view={view.cup} limitation={view.limitations.projections} />
 
       <Panel eyebrow={t("roundsCount", { count: fixtures.length })} title={t("fixtureListTitle")}>
         {fixtures.length === 0 ? (

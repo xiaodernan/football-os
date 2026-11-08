@@ -48,8 +48,26 @@ export function CareerFinance({
   if (view.wage_headroom !== null) {
     rows.push([t("rowFinanceWageHeadroom"), `${money(view.wage_headroom)} ${view.units}`]);
   }
+  if (view.gate_rows > 0) {
+    rows.push([t("rowFinanceGateReceived"), `${money(view.received_gate)} ${view.units}`]);
+  }
+  if (view.season_ticket_rows > 0) {
+    rows.push([t("rowFinanceSeasonTickets"), `${money(view.season_ticket_income)} ${view.units}`]);
+  }
+  if (view.cup_rows > 0) {
+    rows.push([t("rowFinanceCupReceived"), `${money(view.received_cup)} ${view.units}`]);
+  }
   if (view.objective_rows > 0) {
     rows.push([t("rowFinanceObjectiveReceived"), `${money(view.received_objectives)} ${view.units}`]);
+  }
+  if (view.stadium_rows > 0) {
+    rows.push([t("rowFinanceStadiumSpent"), `${money(view.stadium_spent)} ${view.units}`]);
+  }
+  if (view.upkeep_rows > 0) {
+    rows.push([t("rowFinanceUpkeepSpent"), `${money(view.upkeep_spent)} ${view.units}`]);
+  }
+  if (view.training_rows > 0) {
+    rows.push([t("rowFinanceTrainingSpent"), `${money(view.training_spent)} ${view.units}`]);
   }
   rows.push([
     t("financeRunwayFormula"),

@@ -151,7 +151,7 @@ const TECHNICAL = new Set([
  * The catalogue the keys are checked against. The English file is the one that must hold every key:
  * a locale may lag, but the fallback must not, or a page renders an error instead of a sentence.
  */
-const CATALOGUE = JSON.parse((readFileSync(join(WEB, "messages", "en.json"), "utf8").replace(/\r\n/g, "\n")));
+const CATALOGUE = JSON.parse(readFileSync(join(WEB, "messages", "en.json"), "utf8"));
 
 /**
  * The files the gate does not read, and why.
@@ -744,7 +744,7 @@ const population = new Map(files.map((file) => [relOf(file), file]));
 const sourceCache = new Map();
 const parseOnce = (file) => {
   if (!sourceCache.has(file)) {
-    sourceCache.set(file, ts.createSourceFile(file, (readFileSync(file, "utf8").replace(/\r\n/g, "\n")), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX));
+    sourceCache.set(file, ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX));
   }
   return sourceCache.get(file);
 };

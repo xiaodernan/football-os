@@ -2,14 +2,16 @@
  * The deal book (M13 Phase 2): when each held deal's stored terms project it to expire, and the
  * squad's stored age profile beside it.
  *
- * `career_view["contracts"]` is a projection, not an enforcement — nothing in this build expires or
- * renews a contract, so the expiry column reads "projected" and every row carries the basis the
- * projection read. The page prints the wire figures, the API's own basis strings and its formula; it
- * does no arithmetic of its own, so the book cannot drift from the terms the market stored.
+ * `career_view["contracts"]` now enforces the date it prints: the round after a deal's stored last
+ * round writes an `expire` row, or a `renew` row when letting it lapse would leave the club unable
+ * to field a side. Each held row carries the basis its expiry read, and `recent` names the deals
+ * that already ended. The page prints the wire figures, the API's own basis strings and its formula;
+ * it does no arithmetic of its own, so the book cannot drift from the terms the market stored.
  */
 
 import { Panel } from "@/components/ui";
 import { KeyValueGrid } from "@/components/world";
+import { ContractRenewal } from "@/components/ContractRenewal";
 import type { CareerContracts } from "@/lib/types";
 
 type Translator = (key: string, values?: Record<string, string | number | Date>) => string;
@@ -18,6 +20,10 @@ const KIND_LABELS: Record<string, string> = {
   buy: "contractsKindBuy",
   loan: "contractsKindLoan",
   loan_out: "contractsKindLoanOut",
+  youth: "contractsKindYouth",
+  expire: "contractsKindExpired",
+  renew: "contractsKindRenewed",
+  retire: "contractsKindRetired",
 };
 
 const BANDS = [
@@ -30,10 +36,12 @@ const BANDS = [
 
 export function CareerContracts({
   t,
+  ident,
   view,
   limitation,
 }: {
   t: Translator;
+  ident: string;
   view: CareerContracts;
   limitation: string;
 }) {
@@ -72,6 +80,7 @@ export function CareerContracts({
                   <th scope="col">{t("contractsThSigned")}</th>
                   <th scope="col">{t("contractsThExpires")}</th>
                   <th scope="col">{t("contractsThRemaining")}</th>
+                  <th scope="col">{t("contractsThRenewal")}</th>
                   <th scope="col">{t("contractsThBasis")}</th>
                 </tr>
               </thead>
@@ -91,6 +100,9 @@ export function CareerContracts({
                       {row.rounds_remaining ?? "—"}{" "}
                       {row.expiring_soon ? <span className="badge badge--demo">{t("contractsExpiringSoon")}</span> : null}
                     </td>
+                    <td>
+                      <ContractRenewal ident={ident} player={row.player_id} playerName={row.player_name} quote={row.renewal} />
+                    </td>
                     <td className="muted">{row.basis}</td>
                   </tr>
                 ))}
@@ -102,6 +114,41 @@ export function CareerContracts({
             </p>
           </div>
         )}
+
+        {view.recent.length > 0 ? (
+          <>
+            <h3 className="h3">{t("contractsRecentTitle", { count: view.recent.length })}</h3>
+            <p className="muted">{t("contractsRecentHint")}</p>
+            <div className="world-tablewrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">{t("contractsThEndingPlayer")}</th>
+                    <th scope="col">{t("contractsThEndingKind")}</th>
+                    <th scope="col">{t("contractsThEndingRound")}</th>
+                    <th scope="col">{t("contractsThEndingExpiry")}</th>
+                    <th scope="col">{t("contractsThEndingWage")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {view.recent.map((row) => (
+                    <tr key={`${row.player_id}-${row.round_index}-${row.kind}`}>
+                      <td>{row.player_name}</td>
+                      <td>
+                        <span className={row.kind === "renew" ? "badge badge--live" : "badge badge--demo"}>
+                          {t(KIND_LABELS[row.kind] ?? "contractsNoExpiry")}
+                        </span>
+                      </td>
+                      <td className="num">{row.round_index}</td>
+                      <td className="num">{row.expiry_round}</td>
+                      <td className="num">{row.weekly_wage.toLocaleString("en-GB")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : null}
 
         <h3 className="h3">{t("contractsAgeTitle")}</h3>
         <KeyValueGrid

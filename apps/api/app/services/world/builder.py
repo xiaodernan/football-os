@@ -148,7 +148,8 @@ class WorldSizes:
 
     @property
     def scheduled_matches(self) -> int:
-        return self.leagues * 2
+        """Next season's opening league round (two games per league) plus every cup's drawn quarter-finals."""
+        return self.leagues * 2 + self.cups * 4
 
 
 @dataclass
@@ -731,6 +732,49 @@ def _upcoming_fixtures(rng: WorldRng, sizes: WorldSizes, clubs: Sequence[_Club],
     return fixtures
 
 
+def _upcoming_cup_fixtures(
+    rng: WorldRng, sizes: WorldSizes, clubs: Sequence[_Club], cups: Sequence[_Competition]
+) -> list[_Fixture]:
+    """Next season's cup, drawn as far as a draw can go: its four quarter-finals.
+
+    A knockout bracket cannot be drawn past its first round, because the semi-finalists are winners
+    nobody has produced yet. So the world stores the four quarter-final pairings for the new season and
+    nothing later: `services/simulation/cup.py` resolves the adjacent tie with the engine when a career's
+    route first needs it, from the row stored here. Keeping the rows to the round that is knowable is what
+    keeps a scheduled fixture a fixture rather than a guess.
+    """
+    fixtures: list[_Fixture] = []
+    season_start = SEASON_START.replace(year=int(sizes.next_season))
+    for cup_index, cup in enumerate(cups):
+        local = rng.fork(f"upcoming-cup-{cup_index}-{cup.slug}")
+        bracket = local.sample(list(clubs), 8)
+        for pair in range(len(bracket) // 2):
+            home, away = bracket[2 * pair], bracket[2 * pair + 1]
+            round_label = f"Quarter-final {pair + 1}"
+            day = season_start + dt.timedelta(days=34 + local.randint(0, 3))
+            fixtures.append(
+                _Fixture(
+                    slug=_fixture_slug(sizes.next_season, cup, home, away, round_label),
+                    season=sizes.next_season,
+                    competition=cup,
+                    home=home,
+                    away=away,
+                    round_label=round_label,
+                    kickoff=_kickoff(local, day),
+                    status="scheduled",
+                    venue=home.stadium,
+                    venue_city=home.city,
+                    stats={},
+                    summary=(
+                        f"{home.name} host {away.name} in the {cup.name} {round_label} on {day.isoformat()} "
+                        "in this generated world. The tie has not been played, so there is no score, line-up "
+                        "or statistic to show; the later rounds are filled in when their participants are."
+                    ),
+                )
+            )
+    return fixtures
+
+
 # --- match content -------------------------------------------------------------------------
 
 
@@ -1094,6 +1138,7 @@ def plan_world(seed: int, sizes: WorldSizes | None = None) -> WorldPlan:
     # 2027 fixtures and the team rows carry the membership the boundary created.
     _apply_promotion_relegation(dims, leagues, fixtures)
     fixtures.extend(_upcoming_fixtures(rng, dims, clubs, leagues))
+    fixtures.extend(_upcoming_cup_fixtures(rng, dims, clubs, cups))
     fixtures.sort(key=lambda fixture: (fixture.kickoff, fixture.slug))
     for fixture in fixtures:
         if fixture.completed:

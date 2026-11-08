@@ -42,7 +42,7 @@ const failures = [];
 const note = (row) => failures.push(row);
 
 /* 1 — load the shipped decision, not a paraphrase of it. */
-const src = (readFileSync(MIDDLEWARE, "utf8").replace(/\r\n/g, "\n"));
+const src = readFileSync(MIDDLEWARE, "utf8");
 const start = src.indexOf("const PROTECTED_PREFIXES");
 const stop = src.indexOf("\nfunction preferredLocale");
 if (start < 0 || stop < 0 || stop < start) {
@@ -88,7 +88,7 @@ if (routes.length < 40) note(`POPULATION ${routes.length} pages scanned — belo
 for (const r of missing) note(`POPULATION ${r} is not in the walked pages — the gate cannot judge a surface it never found`);
 
 /* 3 — the two spellings of "this page needs a session", each of which must actually fire. */
-const bodies = pageFiles.map((file) => ({ file: file.slice(WEB.length + 1), route: routeOf(file), src: (readFileSync(file, "utf8").replace(/\r\n/g, "\n")) }));
+const bodies = pageFiles.map((file) => ({ file: file.slice(WEB.length + 1), route: routeOf(file), src: readFileSync(file, "utf8") }));
 const readsSession = (b) => /\bcurrentUser\(/.test(b.src);
 const bounces = (b) => /redirect\(\s*["'`]\/login/.test(b.src);
 const sessionReaders = bodies.filter(readsSession);

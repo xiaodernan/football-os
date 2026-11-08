@@ -108,9 +108,21 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    tests/test_challenges.py tests/test_scout_transfer_sim.py tests/test_career.py tests/test_carry_over.py`
    all green. **Career payload (2026-10-28):** `career_view["window"]` now carries the same block (read through
    the same local import as `_affordability`), so the career page is self-contained and need not fetch `/market`
-   for the window state. Not yet surfaced as its own panel on `/career/[slug]/market`; the blocked-tools notice
-   already prints the refusal sentence. Next: the window block on the page, and a window that spans several
-   rounds of real fixtures.
+   for the window state. **Window panel done (2026-11-02):** `/career/[slug]/market` renders it as its own
+   `data-testid="market-window"` panel — a notice that follows `state`, six grid rows (state, the season being
+   judged, which table the length came from, every range with its label, the range holding this round, and where
+   the next one opens) and the tier's own formula beside the two constants it is built from. 16 keys per locale.
+   The live walk re-draws the block from the published constants and reconciles all six printed rows against the
+   wire: `node scripts/run-walks.mjs market` → **144/144 checks, exit 0, 1/1 walks green** on build
+   `VNv19az9qYbeALp8GaIdh` (API :8772, web :3249, fresh SQLite). The panel is held by a new file-only gate,
+   `apps/web/scripts/qa-wire-readers.mjs` (12 checks, **12/12** on the basis it lands on, 10/10 killing arms
+   MATCHED), which reads three populations off bytes every run — the service's own `return {…}` literals, the
+   properties `lib/market.ts` declares, and the fields `page.tsx` actually asks for — and refused to pass the
+   day another lane published three constants nothing typed. Recorded in
+   [M6_MARKET_WEB_VERIFICATION.md](M6_MARKET_WEB_VERIFICATION.md) §6. **A window that spans several rounds of
+   real fixtures** is the half still open: `season_rounds` is read from the competition's double round-robin, so
+   the ranges land in rounds the career plays, but nothing yet asks whether a window *straddles* a fixture that
+   is already stored and completed, and a career may sign in a round whose match the world has already drawn.
 6. **Contracts & wages.** **Read-only half done (2026-10-25):** the wage bill and budget were already
    recomputed from `career_squad_moves`/`career_wage_charges` (`wage_bill`, `budget_position`). Added
    `affordability_view` (market.py) composing them into a **wage runway** (`max(0, remaining ÷
@@ -145,6 +157,11 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    **Squad depth (2026-10-28):** `contract_book` also publishes `positions` — the player count at each position in
    the current squad, from the same squad the age profile walked (no extra query), so a manager can see a thin
    position before signing. **Budget ceiling done (2026-10-30):** `careers.wage_ceiling` (migration `0044`) is the board's hard cap on one round's wage bill, an object the balance cannot stand in for -- sales income walks the balance back up without widening what may be committed. It is stated when the career is opened (`CareerIn.wage_ceiling`, same units as the budget; `0` means the board sets none, which is also what rows that predate the column hold after the migration's `0` backfill). It is authored rather than derived because a budget-derived cap is structurally inert: wages are 500× cheaper than fees in the engine's own arithmetic, so the balance always binds first and a derived ceiling could never refuse a signing a solvent career intended to make. `buy` and `loan` share one check, so both answer `409 wage_ceiling_exceeded` with the standing bill, the proposed wage, the bill after the deal, the ceiling and the headroom; a bill exactly at the ceiling is within it. `budget_position`, `affordability_view` and every listing's `signing` block publish the cap (`wage_ceiling`, `wage_headroom`, `wage_affordable`), `RULES["wage_ceiling"]` prints the formula, the finance panel prints the ceiling beside the runway, and each listing's After-signing cell prints the cap verdict. Pinned by `tests/test_wage_ceiling.py` and two wire cases in `tests/test_transfers_api.py`; the evidence record is [M13_WAGE_CEILING_VERIFICATION.md](M13_WAGE_CEILING_VERIFICATION.md) (58/58 live checks, three locales, and a browser pass).
+   **Contract expiry enforced (2026-11-02):** the read-only half is closed by item 25. A permanent deal
+   now stores the last round it covers, and the round after that date writes an `expire` row that takes
+   the player out of the eleven and stops the wage; a departure that would leave the club unable to field
+   eleven with a keeper becomes a one-season `renew` at the same wage. Recorded in
+   [M13_CONTRACT_EXPIRY_VERIFICATION.md](M13_CONTRACT_EXPIRY_VERIFICATION.md).
 7. **Youth academy outcomes.** **Career-domain block done (2026-10-28):** `career_view["academy"]`
    (`academy_view` in `simulation/academy.py`) reads the career's under-21 squad players and judges
    each against the eleven the engine's own selection picks from the career's current squad (the
@@ -208,14 +225,9 @@ M6 shipped Career Mode, the market and the season ledger. What is intentionally 
    migrated QA database: four careers played to their boundary (three full seasons stayed at 1.857 /
    1.5 / 1.429 points per round, one never played), **150/150** page checks across `en`, `zh` and
    `zh-TW`, all 13 catalogue gates and `next build` green. Recorded in
-   [M13_SEASON_BOUNDARY_VERIFICATION.md](M13_SEASON_BOUNDARY_VERIFICATION.md). **Live moves done
-   (2026-11-02):** the limitation it left is now closed by two whole seasons walked through the HTTP API
-   on a tree extracted from this commit and an alembic-built database: Corgard Town took 31 points at
-   2.214 per round and was promoted, Elnwick Athletic 13 at 0.929 and was relegated. Each response was
-   read back against the league its verdict names (tier 1 / tier 2 from the world's own row), a next fixture
-   against a club of that league, the moved competition and the grant arithmetic (339,500 with the bonus,
-   144,500 without), 17/17 checks on both. Recorded in
-   [M13_PROMOTION_RELEGATION_LIVE_WALK.md](M13_PROMOTION_RELEGATION_LIVE_WALK.md).
+   [M13_SEASON_BOUNDARY_VERIFICATION.md](M13_SEASON_BOUNDARY_VERIFICATION.md). **Limitation:** no live
+   promotion or relegation was reachable — every walked season landed between the lines, so the two move
+   branches are covered by unit tests only.
 
 *Gate:* the season ledger still sums from `sim_events` rows; a new door gets a route-citation entry;
 isolation walk over any new tenant-scoped door.
@@ -346,16 +358,6 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
     it already needed for the brief), so both endpoints read it from the view. The play endpoint keeps its
     pre-play plan — that is the availability check for the round about to be played, a different round from the
     post-play next fixture.
-    **Tenth fix (2026-11-02):** the two challenge routes planned the next fixture and then spread
-    `run_view(...)` over the same dict, which overwrites the key — every start and run-detail request
-    planned the same fixture twice and discarded one, pinned by a call counter in
-    `tests/test_challenges.py`. The career **play** route had the same shape with the verdict:
-    `_challenge_verdict` built a second whole career view to keep one key, over tables the response had
-    just read. `challenges.verdict_of` now judges the run's own `career_fixtures` rows with the same
-    `verdict_for` — one SELECT — and the play route's call of it is pinned separately. Recorded in
-    [M13_CHALLENGE_RUN_PLAN_DEDUPLICATION_VERIFICATION.md](M13_CHALLENGE_RUN_PLAN_DEDUPLICATION_VERIFICATION.md)
-    and [M13_PLAY_VERDICT_DEDUPLICATION_VERIFICATION.md](M13_PLAY_VERDICT_DEDUPLICATION_VERIFICATION.md).
-
 15. **Load envelope.** **Done (2026-10-28).** `docs/LOAD_ENVELOPE.md` records the measured envelope
     (concurrent career sims: `p95_ms_ceiling: 15000`, `subprocess_seconds_ceiling: 600`; measured gate
     p95 1,655.61 ms, measure shape p95 1,745.49 ms), the two refusal arms (wrong prefix, career cap), and
@@ -557,102 +559,6 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 
 *Gate:* each runbook cites the door it documents (§83 pattern); the cost ceiling is a tested boundary.
 
-* **42. The wire-readers gate promises a `totals` census it never computes.** `apps/web/scripts/qa-wire-readers.mjs`
-  gained checks 12–14 at `c0d376c`, documented as counting the `totals` block's keys over the population and
-  following the seam through `components/MarketTools.tsx`. The shipped script declares `TOOLS_TSX` and
-  `FLOOR_TOTALS_KEYS` and reads neither — **one declaration, zero uses, each** — and the run answers
-  `CHECKS passed=12 total=12`, the eleven checks and 3b that existed before. So the file's own prose is a claim
-  about a census that nothing computes, and the roadmap row that quotes it inherited the claim. *Gate:* the three
-  checks must run and print their populations (`totals` keys counted, `MarketTools` seam followed), and an arm that
-  deletes a `totals` key from the wire must red the clause the prose names — today the same deletion answers 12/12.
-  Filed in [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §7.
-* **43. A gate that is green only under a fabricated CI environment.** **Done (2026-11-05, `ef649ef`; record and
-  suite line below).** `test_ci_trigger.py` asks the workflow's
-  push trigger of "the branch the run is about", and locally reads that branch with `git rev-parse --abbrev-ref
-  HEAD`. On a detached checkout that answers `HEAD`, and the case asserts — so the full suite is red on the very
-  plane every landing of this project is graded on: measured at `21bbf86`, **1 failed / 2148 passed / 4 skipped**,
-  the one red being that case (`.scratch/item40-suite.log`). Item 38's post-landing suite answered rc=0 only
-  because the command carried `GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`, which its record did not say — a
-  run whose green depends on an environment the machine does not have is evidence about the invocation, not about
-  the commit. *Gate:* derive the branch from the commit (`git for-each-ref --contains HEAD --format=…
-  refs/heads/`), and when no branch contains it, skip naming why; then re-measure the suite on a detached plane
-  with no `GITHUB_*` in the environment and record the command verbatim. Filed in
-  [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §3 and §7.
-
-* *Numbers 44–46 are taken by feature work (M13 Phase 10: the gate's price, the ground's running cost, season tickets), so the four findings filed below start at 48. The roadmap's finding list and the plan's feature list share one integer line, and this is the second time two lanes reached for the same number; a row that renames itself should say what it did not take.*
-* **48. The `budget` block is the item-42 finding at four times the size.** Item 42's own print is the evidence: over
-  `f642c0a` the merged census scans `budget_position` to prove two `totals` exemptions and answers **22 published /
-  24 declared / 14 read**, and the refusals split three ways — `wage_ceiling` and `wage_headroom` published by the
-  wire and typed by nothing; `gate_detail`, `gate_rows`, `received_gate`, `received_sales` declared by the type and
-  published by nothing; and ten declared keys read by nothing, those four plus `grant_detail`, `grant_rows`,
-  `objective_detail`, `objective_rows`, `wage_detail`, `wage_rounds`. Over the shared tree's uncommitted API the same
-  scan prints `budget=44`, so the population is moving under the census. Nothing judges this block in either
-  direction. *Gate:* checks 18–20 in the shape 4–6 and 12–14 already have — both directions by name, then every
-  declared field read or named with a reason the bytes re-measure, then the ledger refused when it stops holding.
-  Measured in [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §7.
-* **49. A file-only gate whose anchors are multi-line strings is red on every landing plane this project uses.**
-  **Done (2026-11-06; record in [EOL_FILE_GATES_VERIFICATION.md](EOL_FILE_GATES_VERIFICATION.md)).**
-  `qa-a11y-witness.mjs` answers **11/16 failed=5** on `.scratch/wt-repair` — five arms printing *arm anchor not
-  found* over `styles/globals.css`, `app/layout.tsx`, `components/Nav.tsx` — and **16/16 failed=0** in the shared
-  tree, where the same committed bytes sit in LF. Measured, not inferred: the plane's `globals.css` holds 275 CRLF
-  pairs, `layout.tsx` 99, `Nav.tsx` 156; the shared tree's three hold 0. The repo sets no `.gitattributes` and this
-  host has `core.autocrlf=true`, so *every* `git worktree` plane this project grades landings on checks out CRLF, and
-  every file-only gate that anchors on a CRLF inside a multi-line string is therefore red on the plane and green in the tree —
-  which means the number a landing record quotes depends on where the reader ran it. *Gate:* fold every CRLF to LF
-  once at the read in each file-only gate, keep the anchors as they are, then re-measure the whole file-only web suite
-  on a plane and in the shared tree and land the two lists side by side, so no future record has to say which tree a
-  figure came from. Measured in [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §5.
-  *Done:* 60 of the 61 `readFileSync` sites in the 30 file-only gates now fold CRLF to LF at the read (the 61st
-  reads a PNG's bytes and must not), and the four-arm measurement is that **2 of 30 gates printed different bytes on
-  a CRLF checkout than on an LF one before the cure and 0 of 30 after** — `qa-a11y-witness` by moving its exit code
-  (11/16 vs 16/16) and `qa-a11y` by moving the byte offsets it compares (2293 < 2393 vs 2231 < 2328) while staying
-  green, which is the one that could have been missed forever.
-
-* **50. Six horizontal CSS declarations are committed while their logical fixes are uncommitted.** **Done (2026-11-06; record in [RTL_LOGICAL_PROPERTIES_VERIFICATION.md](RTL_LOGICAL_PROPERTIES_VERIFICATION.md)).**
-  `qa-rtl-readiness.mjs` answers **6/7 failed=1** at `f642c0a` and **7/7** in the shared tree, because the cure —
-  `text-align: start`, `border-inline-start`, `padding-inline-start` — is sitting uncommitted. The named locations:
-  `app/coach/coach.css:61` and `app/knowledge/knowledge.css:248` (physical text alignment),
-  `app/knowledge/knowledge.css:168` `border-left: 2px`, `:169` `padding-left: 0`, `app/training/training.css:27`
-  `border-left: 2px`, `:28` `padding-left: 0.6rem`. *Gate:* land those six lines and keep the check's claim, so the
-  shared tree stops being the only place the gate is green. Measured in
-  [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §5.
-  *Done:* the six lines are committed — three stylesheets, 6 insertions, 6 deletions, 4 hunks — and the gate answers **7/7** on a plane detached at the landing, so the shared tree stops being the only green place; the shared tree's uncommitted copies of the same three files proved byte-identical to the landed ones first, which is what makes this a convergence rather than a third variant. The claim a file-only gate cannot make was measured in the app itself: 24 `.drill-card__point`, 5 `.coach-chip`, 6 `.kn-filter-chip` and 4 `.kn-cite__quote` (after one real ask) each read as shipped and again as a clone carrying the old physical declaration, in `ltr` and `rtl` — **22/22**, identical in `ltr`, band `0px 2px 0px 0px` with the text 11.59 px inside it in `rtl`, and two mechanism findings only a live page gives: `.chip` is `inline-flex`, so `text-align` bites only once the label wraps, and `Range.getClientRects()` answers per bidi run, not per line box. What the gate still does not judge is row 53.
-* **51. Two lanes landed under each other, and the landing tool cannot see it.** `.scratch/own-commit-wt.py` takes the
-  parent from `refs/heads/master` at call time and the *listed paths only* from the source plane, so a plane detached
-  at an older sha publishes that older sha's bytes for anything it lists — a silent revert, the newer commit's work
-  gone with no word about it. It happened twice in ninety minutes, in both directions: `29fbe4c` was landed from a
-  plane behind `0895f9d` and deleted the item-43 record (129 lines), its PLAN section (33), its drift-doc amendment
-  (58) and its roadmap done-marker (27); `f642c0a` was landed from a plane behind `29fbe4c` and reverted the moves
-  census (checks 15–17) out of `qa-wire-readers.mjs`. Each lane's own gate passed on its own tree, and each landing
-  was green in the only sense the tool reports: it printed a sha. *Gate:* before publishing, print the plane's commit
-  beside `git rev-parse master` and stop when they differ; for the two files every lane edits — `qa-wire-readers.mjs`
-  and `PLAN.md` — merge over the common ancestor instead of copying, the way this unit's §6 did, and show the union's
-  red set is the sum of the two. Measured in
-  [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §6.
-* **52. The repository declares no line-ending policy, so a checkout and the working tree are different inputs.**
-  `core.autocrlf=true`, no `.gitattributes`, the blobs LF (`apps/web/styles/globals.css`: 275 LF lines, 0 CR pairs),
-  the shared working tree LF because tools wrote it that way rather than checking it out, and *every* `git worktree`
-  plane a landing is graded on CRLF — 275 CR pairs for the same file. Item 49 removed the dependency at each read;
-  the class still exists for anything that reads bytes without folding — a future gate, an editor, a diff, a
-  checksum. *Gate:* add `* text=auto eol=lf` plus the binary exclusions the PNG read already implies, then
-  `git add --renormalize`, and prove `git status` clean in the shared tree *before* committing, because that
-  command's blast radius is every other lane's working file at once. Filed rather than fired: this changes what
-  every checkout of every concurrent lane sees, and row 51 is what a careless landing across lanes looks like.
-  Measured in [EOL_FILE_GATES_VERIFICATION.md](EOL_FILE_GATES_VERIFICATION.md) §1.
-* **53. `qa-rtl-readiness` refuses five shapes once per line, and the product carries horizontal geometry it
-  never looks at.** Arm H planted a stylesheet with **two** horizontal declarations on one line and **three**
-  shapes on the next and got **one finding per line**: the scanner keys on line × shape, so a finding is a line
-  and a count of findings is not a count of declarations — which matters the day the gate is quoted as a number.
-  And a second census over the same 11 stylesheets for the shapes the five rules do not judge found 2 physical
-  `background-position` (`app/progress/progress.css:136` `120% 0`, `:137` `-120% 0`), 1 X-axis `transform:
-  translate(-50%, -50%)` (`styles/video.css:20`), 6 `box-shadow` hits whose horizontal offsets are all zero
-  today, 0 `text-indent`, 0 inline `direction:`. *Gate:* decide, by measuring a page in `dir=rtl` rather than by
-  reading the CSS, whether the progress sweep is a bug or a shimmer that is meant to run the same way in both
-  directions; teach the check the shapes that are bugs and state in its own text the ones that are exempt; and
-  make the scanner report per declaration, or say plainly that a finding is a line. Filed rather than fired:
-  none of the three families is a claim about the six lines this unit landed. Measured in
-  [RTL_LOGICAL_PROPERTIES_VERIFICATION.md](RTL_LOGICAL_PROPERTIES_VERIFICATION.md) §2 and §5.
-
 ---
 
 ## Phase 7 — Career consequences
@@ -690,7 +596,7 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
    `{amount} {units}` template that is byte-identical in all three locales: the remedy is the composition the
    codebase already does, not a line in another lane's gate script), locale parity at 4,012 per locale on the
    commit that holds the item — 4,028 was the working tree the gate ran, which also carried the signing-window
-   batch's 16 uncommitted keys; ruff, mypy, tsc, eslint green. The live walk (`.scratch/walk-grant.py`, career opened with
+   batch's 16 uncommitted keys; ruff, mypy, tsc, eslint green.
    `budget: 0`, tier-2 league's weakest club) ran twice against two generated worlds, both exit 0: 14 rounds /
    14 points paid **147,000**, 14 rounds / 16 points paid **152,000**, and in both the same **90,110** loan that
    was refused from 0 before the boundary is signed from the grant alone, ending season two round one at
@@ -712,6 +618,322 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
 *Gate:* a career's money has a row, a formula and a reader; no figure is paid that no row says was paid.
 
 ---
+
+25. **The deal book starts to expire.** **Done (2026-11-02).** Item 6 had left the expiry a projection:
+   `contract_years` was stored, `contract_book` derived a date, and no round ever enforced it. A signed
+   player stayed forever and the wage bill never shrank — the one economic loop the season grant had just
+   started to fund could not lose a player. Migration `0049_career_contract_expiry` adds
+   `career_squad_moves.expiry_round`, fixed at signing from `signed_round + contract_years × the season
+   length then in force − 1`; storing it is what keeps a later promotion from stretching a contract that
+   was already agreed. `expire_contracts()` runs at the start of the only path that advances a career,
+   before `squad_as_of` reads the eleven: a permanent deal past its stored last round writes an `expire`
+   move at that round, the player leaves the overlay and `held_deals` stops charging the wage. The row
+   carries `fee = 0` and the standing `budget_after`, so a contract ending is not a fee and the ledger
+   still adds up. The authored exception is fieldability: if lapsing would leave fewer than eleven players
+   or no keeper, a `renew` row extends the deal by one season at the same wage, and the result names the
+   counts that decided it. `contract_book` publishes `recent` (the last five endings with player, kind,
+   effective round, expiry and wage) and `components/CareerContracts.tsx` prints it on `/career/{slug}`;
+   the ledger prints `expire`/`renew` as ordinary zero-fee rows. *Gate:* **62** transfer-service tests and
+   **88** career+wire tests passed on SQLite; `alembic check` clean after `0048 → 0049`; ruff, mypy (161
+   files), tsc, `qa-i18n-literals` (9/9 over 4,098 calls), `qa-unused-keys` (3/3), `qa-token-drift` (2/2)
+   and `qa-wire-readers` (12/12) green. The live walk `.scratch/walk-contract-expiry.py` signed a player,
+   read the stored expiry **70**, played round **71**, and measured `expire_row_round 71`, fee **0**, the
+   player gone, the balance unchanged at **7,675,000**, `deals_after 0`, `recent_kind expire` and
+   `wage_after 0`. **What was still open then:** no manager-chosen renewal at expiry (closed by item 26),
+   no fee or compensation when a player leaves, and rows written before `0049` keep the old projection
+   until re-signed. Recorded in
+   [M13_CONTRACT_EXPIRY_VERIFICATION.md](M13_CONTRACT_EXPIRY_VERIFICATION.md).
+
+26. **Manager-chosen renewals.** **Done (2026-11-02).** Item 25 could only extend a deal as a rescue:
+   a departure that would leave fewer than eleven players or no keeper wrote a one-season `renew` at the
+   same wage. A manager had no way to keep a player on purpose, so a long career could only leak squad
+   depth. `POST /transfers/{ident}/renew` (`{ player, years? }`, 1–5) renews a **held permanent** deal
+   without requiring an open signing window — the player is already this career's. The price is authored
+   and published: `renewal_fee = 5% of the current asking fee, rounded to 5`; the new weekly wage is the
+   player's **current valuation**, so a renewal re-prices rather than extends stale terms; and
+   `expiry_round = the signing round + years × season_rounds − 1` is stored on the new row, not
+   projected. A loan answers `409 loan_cannot_be_renewed`; a squad player with no stored deal answers
+   `409 no_contract_to_renew`; the fee and the post-renewal bill are refused with their figures against
+   the balance and the board's ceiling. `contract_book` publishes a `renewal` quote (fee, wage, bill,
+   ceiling, both affordability flags, formula) on every held permanent row; `components/ContractRenewal.tsx`
+   prints it in a new **Renewal** column and refreshes the page after the POST; `move_row` now publishes
+   `expiry_round`, so the ledger and the deal book agree. *Gate:* **66** transfer-service tests and **89**
+   transfer tests over both files passed; ruff, mypy (161 files), tsc, ESLint, `qa-i18n-literals` (9/9 over
+   4,109 calls), `qa-unused-keys` (3/3), `qa-token-drift` (2/2) and `qa-wire-readers` (12/12) green. The live
+   walk signed a player whose stored expiry was **14**, renewed for two seasons against the book's
+   **30,040** quote, and read the stored expiry back as **28**, the balance moving from **9,098,875** to
+   **9,068,835**, `recent_kind renew`, and the round's wage charge at the renewed **1,200**. **What is still
+   open:** no production-build browser pass yet; the fee does not scale with the chosen term; the player
+   cannot refuse; no signing bonus; and a pre-`0049` row keeps its projection until it is renewed. Recorded
+   in [M13_CONTRACT_RENEWAL_VERIFICATION.md](M13_CONTRACT_RENEWAL_VERIFICATION.md). **Updated
+   2026-11-03:** item 31 replaces the flat fee and valuation wage with a term-scaled fee, a
+   minutes/tier demand and a refusal — see
+   [M13_RENEWAL_NEGOTIATION_VERIFICATION.md](M13_RENEWAL_NEGOTIATION_VERIFICATION.md).
+
+27. **A home round pays its gate.** **Done (2026-11-02).** The ledger had one recurring income — the
+   board's season grant — while a career paid its wages out of savings and a home fixture earned nothing,
+   even though the world already stored the attendance. Migration `0050` adds `career_gate_receipts`
+   (unique on `career_id + round_index`): one row per home round, carrying the world fixture's stored
+   attendance (or, for a round on the career's own rotation, `capacity × (62 + seed mod 38)%`), the
+   authored ticket price — **3** for a tier-1 league, **2** for tier 2 or a cup — the amount, the basis
+   in words and the running `budget_after`. `pay_gate_receipt` runs after the fixture is stored and
+   before the wage charge, so the wage row's stored balance includes the gate; the timeline reads
+   moves → gate → wage → boundary grant. `budget_position` now publishes `received_sales`,
+   `received_gate`, `gate_rows` and `gate_detail` (and `received` is every cent in), `BUDGET_FORMULA`
+   names the fourth table, `market_view` prints a `gate` row on the one ledger with its attendance and
+   price, `affordability_view` publishes the gate total, and `CareerFinance.tsx` prints it when it is
+   non-zero. A challenge's window pays no gate: its budget is an authored constraint and a gate would
+   silently raise the figure the scenario stated. *Gate:* 5 new service cases (`TestGateReceipts`), 1 new wire case
+   (`TestGateReceiptsWire`), **164** career+transfer tests and **9** affordability tests passed;
+   `alembic check` clean after `0049 → 0050`; OpenAPI regenerated for the new routes; ruff, mypy (161),
+   tsc, ESLint, the four i18n/wire gates and `qa-wire-readers` (12/12 over 17 constants) green. The live
+   walk played a home round at a 48,184-seat ground: **38,725** seats × **2** = **77,450**, the away
+   round wrote nothing, the balance moved **1,000,000 → 1,077,450**, the timeline held one `gate` entry
+   and **0** disagreements. Recorded in [M13_GATE_RECEIPTS_VERIFICATION.md](M13_GATE_RECEIPTS_VERIFICATION.md).
+
+## Phase 8 — a living economy and a living squad
+
+The seventh phase made a career's decisions consequential: a season pays, a contract ends, a manager can
+renew, and a home round earns. The next phase makes the **people and the club** change over a long
+career, rather than the ledger alone. Items 28–33 are all done.
+
+28. **Players age and retire at the season boundary (done 2026-11-03).** `ageing.effective_age` reads a
+   player as `stored age + seasons this career has closed`; nothing writes the shared world row.
+   `close_season` calls `retire_at_boundary` after writing its season row, and a player who reaches
+   `RETIREMENT_AGE = 40` on the career clock gets a `retire` move at the next season's first round:
+   zero fee, the wage it was paying, and a departure the squad overlay and wage bill both honour. A
+   candidate is retained when retiring him would leave fewer than eleven players or no keeper, and a
+   challenge window (one season, no later boundary) retires nobody. `valuation`, `open_market`, `buy`,
+   `loan`, `sell`, `release`, `renew` and `contract_book` all read the same clock, so the page cannot
+   print two ages for one player. *Gate:* 4 new service cases (`test_ageing.py`), **165**
+   career+transfer tests passed; `alembic check` clean (no column: `retire` is a `kind` value); ruff,
+   mypy (162), tsc, ESLint and the four i18n/wire gates green. The live walk closed a 14-round season:
+   the forced 39-year-old became 40, the `retire` row landed at round **15**, the wage bill moved
+   **3,100 → 0**, and `recent` named `retire / Corand Ruceek`. Recorded in
+   [M13_AGEING_VERIFICATION.md](M13_AGEING_VERIFICATION.md).
+
+29. **Youth intake replaces the retirees (done 2026-11-03).** At the same boundary as a retirement,
+   `intake.youth_intake` promotes young world players (no invented rows) into the squad. Candidates
+   are the world's players at or under 21 on the career clock; `academy.judge_candidates` ranks them
+   against the club's own eleven with the same `academy_class` the page uses, and only `selected` or
+   `next_in_line` candidates are signed. The intake writes a `kind = "youth"` move with fee 0, the
+   valuation's wage and contract years, and a stored expiry, so `expire_contracts`, the renewal quote
+   and `renew()` treat it as a permanent deal. At most one per retiree, capped at four; a wage that
+   would cross the board's ceiling is skipped and named. *Gate:* 6 cases in `test_ageing.py` (2 new),
+   **176** career+transfer+academy tests passed; `alembic check` unaffected; ruff, mypy (163), tsc,
+   ESLint and the four i18n/wire gates green. The live walk retired a 3,100-a-week player and
+   promoted a **20-year-old** on a **5-year**, **1,730** deal with expiry **84**; the bill ended at
+   exactly **1,730**. Recorded in [M13_YOUTH_INTAKE_VERIFICATION.md](M13_YOUTH_INTAKE_VERIFICATION.md).
+
+30. **A window that straddles a played fixture (done 2026-11-03).** `transferable` now refuses a move
+   into a round that already has a `career_fixtures` row (`round_already_played`, constraint
+   `stored_fixture`), and `transfer_window` counts stored rows in the current window instead of trusting
+   the counter alone: `played_in_window` is the larger of the counter's count and the stored-row count,
+   and `signing_rounds_left` subtracts rounds already stored. The career view hands its own fixture list
+   to the window, so the page still reads `career_fixtures` once. *Gate:* 2 new cases in
+   `TestTransferWindow` (11 in the class), **173** career+transfer tests passed; the read-efficiency and
+   query-count tests unchanged; ruff, mypy (163), tsc, ESLint and the four i18n/wire gates green. The
+   live walk rewound the counter to 0 against a stored round 1: `round_already_played`, window
+   **1/3**, and the same career transferable once the counter was restored. Recorded in
+   [M13_WINDOW_STORED_FIXTURE_VERIFICATION.md](M13_WINDOW_STORED_FIXTURE_VERIFICATION.md).
+
+31. **Renewals that negotiate (done 2026-11-03).** The signing-on fee is now
+   `fee_per_year × years` (`fee_per_year = round_5(asking × 5%)`), and the player's demand is
+   `round_5(valuation wage × tier_factor × minutes_factor)`, with tier factors 1.15 / 1.00 / 0.90 for
+   tier 1 / tier 2 / cup and `minutes_factor = 0.90 + 0.20 × (appearance minutes ÷ (rounds_played ×
+   90), clamped)`. `POST /renew` accepts an optional `wage`: at or above the demand it is accepted at
+   the offer, below it the player answers `409 renewal_refused` with `demanded_wage` and
+   `offered_wage`. Omitting `wage` pays the demand, so item 26's one-click path still works.
+   `ContractRenewal.tsx` gained a weekly wage offer input. *Gate:* 2 new service cases and 1 new wire
+   case (10 renewal cases across both files), **176** career+transfer tests passed; OpenAPI
+   regenerated for the new field and 4/4 currency tests passed; ruff, mypy (163), tsc, ESLint and the
+   four i18n/wire gates green. The live walk read **64,575** for one year and **193,725** for three,
+   refused **2,320** against a **2,325** demand, then accepted two years for **129,150** with expiry
+   **28**. Recorded in [M13_RENEWAL_NEGOTIATION_VERIFICATION.md](M13_RENEWAL_NEGOTIATION_VERIFICATION.md).
+
+32. **Cup runs and prize money (done 2026-11-03).** The world already holds a knockout cup per season
+   (eight entrants, 4 + 2 + 1 ties). A career is entered in it when the world's own rows put its club in
+   one, and plays its route through that bracket: the quarter-final the draw gave it, then the semi the
+   draw made for that half with the other club in it, then the final at a neutral venue — the career's
+   own result *replacing* the slot the world's simulation filled, so a club the world knocked out still
+   has a route. Each tie is played by the same engine a league round uses, with the career's overlay; a
+   draw is separated on penalties by the match digest. A tie is not a round: `rounds_played` does not
+   move, and `career_cup_ties.round_index` is the league round it was played after. A round won pays
+   **40,000 / 90,000 / 220,000** into `career_budget_awards` (`kind = "cup_prize"`, `stage =
+   "<cup>:<round>"`) — the one ledger, not a fifth table; `uq_career_award_stage` keeps one prize per
+   round and one grant per season. A challenge career enters no cup, like its grant and its gate.
+   `career_view["cup"]` publishes the run, the next tie and every played tie; `CareerCup.tsx` prints it
+   with a **Play the cup tie** button. *Gate:* 13 service cases and 3 wire cases, **196**
+   career+transfer+cup tests passed; `alembic check` clean after `0051`; OpenAPI regenerated (4/4);
+   ruff, mypy (164), tsc, ESLint and the four i18n/wire gates green. The live walk won a quarter-final on
+   penalties and a semi-final 1-0, lost the final 0-1, and read **130,000** in prizes against a balance
+   of **1,000,000 → 1,130,000** with `rounds_played` still **0**. Recorded in
+   [M13_CUP_PRIZE_VERIFICATION.md](M13_CUP_PRIZE_VERIFICATION.md).
+
+33. **A ground that responds (done 2026-11-03).** `gate_capacity` now reads an *effective* capacity —
+   the stored row × **1.25** in tier 1, **×1.10** in tier 2, ×1.00 otherwise — and never writes the
+   shared `teams.capacity`, so two careers can share one world. `gate_form` reads the career's own last
+   five results (W 1, D 0.5, L 0; no history 0.5) and the gate sells `min(effective_capacity, base ×
+   (0.90 + 0.20 × form))`. The receipt's basis names both factors, and `GATE_FORMULA` publishes them.
+   *Gate:* 2 new cases in `TestGateReceipts` (7 in the class), **187** career+transfer tests passed;
+   ruff, mypy (163), tsc, ESLint and the four i18n/wire gates green; no migration. The live walk read
+   **46,641** seats after five wins against **38,161** after five losses on the same fixture and seed —
+   **93,282** against **76,322** credits. Recorded in
+   [M13_GROUND_RESPONSE_VERIFICATION.md](M13_GROUND_RESPONSE_VERIFICATION.md).
+
+## Phase 9 — the cup becomes part of the season
+
+Phase 8 made a tie real and paid it. Phase 9 closes the gaps it had to leave open, so a cup is a full
+part of a career's year rather than a parallel exhibition.
+
+34. **A cup tie that pays its gate and its minutes (done).** `career_gate_receipts` and
+   `career_appearances` carry a nullable `tie_id`; the league uniques are partial indexes over
+   `tie_id IS NULL`, and each tie has its own unique key. A home tie pays a gate from the same
+   `gate_capacity`/`gate_form` arithmetic item 33 shipped (capacity-built crowd, form including the
+   round the tie follows), a final pays none, and the eleven's 90 minutes land in `career_appearances`
+   under the tie, so `carry_over` and `development_view` read them. Cup ledger rows sort at timeline tier
+   4 so they cannot precede the round they follow. Evidence: `docs/M13_CUP_TIE_GATE_VERIFICATION.md`
+   (16 cup tests; walk: 64,624 seats x 2 = 129,248, 11 + 11 traces, timeline clean).
+35. **The world draws next season's cup (done).** `world/builder.py` draws next season's four
+   quarter-finals per cup with real entrants, dated and `scheduled`; a knockout cannot be drawn past the
+   round whose participants exist. `cup.py` resolves the later rounds when a career's route needs them:
+   the adjacent quarter-final is played by the engine's pure entry point on a seed from the row, and the
+   final resolves the other half. Side is a stated bracket rule. Evidence:
+   `docs/M13_NEXT_SEASON_CUP_VERIFICATION.md` (19 cup cases, 59 world cases; walk: QF from the drawn row,
+   semi opponent `Ostdera Naval` from `engine 2-1`, gates 135,057, one 40,000 prize).
+36. **Objectives that pay (done 2026-11-04).** Every objective a closed season met writes an award
+   row of its own beside item 24's grant — kind `objective_bonus`, stage the objective's kind — at
+   30,000 wins / 40,000 points / 25,000 goal_difference / 50,000 unbeaten (145,000 for all four, under
+   one season's 174,500 grant). `objective_bonus_report` states the rule once; `close_season` pays it
+   in the same transaction and `seasons_view` projects `bonus_if_closed_now` without writing. Migration
+   `0049` adds `stage` and widens the key to `uq_career_award_stage (career_id, season_index, kind,
+   stage)`. Evidence: `docs/M13_OBJECTIVE_BONUS_VERIFICATION.md`. **Landing:** `0cf34c1` (21 paths
+   through a private index; `40762fa` re-cut to LF blobs, `git diff -w` empty between them).
+    **Integration (done 2026-11-05):** the duplicate `0049_objective_bonuses.py` was removed, so the chain
+    is `0049_career_contract_expiry` through `0054_career_stadium_works` with one head at `0054`; the
+    contract-expiry revision owns the award-table `stage` and key changes and `0051` no longer repeats them.
+37. **A stadium a manager buys (done 2026-11-05).** `career_stadium_works` stores each purchase (500–20,000
+    seats at 120 credits each) with the ground either side and its `budget_after`; the gate reads
+    `round(stored x tier factor) + bought seats`, so every bought seat is one more seat sold while a
+    career that bought nothing still reads item 33's figure. A challenge career owns no ground, a
+    purchase is a ledger row of its own, and `CareerStadium.tsx` plus `POST /careers/{ident}/stadium`
+    make it a page decision. Evidence: `docs/M13_STADIUM_VERIFICATION.md` (4 service cases, 2 wire cases;
+    walk: 53,002 -> 54,502 seats, 180,000 spent, 77,450 gate, timeline 0 disagreements).
+38. **A prose figure pinned to a working tree is red at the commit and green in the run (done 2026-11-04).**
+   `test_locale_claims.py` took both inputs from disk while `test_spec_audit_currency.py` took its ledgers
+   from the commit: `25c6873` fails its own `test_the_readme_table_states_the_coverage…` (`3988 of 4033`
+   against a catalogue of 4,053 keys, so the true pair is `4008 of 4053`) and was green in the shared tree,
+   whose row had moved to `4074 of 4119`. The catalogues, the five prose carriers and the API-source refusal
+   census now read the commit through `git show HEAD:…` / `git ls-tree HEAD`, with disk only as the no-`.git`
+   fallback. *Gate:* three arms on a clean worktree — a dirty `en.json` (4,059 keys vs 4,058), a README row
+   rewritten to `1 of 1` plus a planted `287/288` line in `ARCHITECTURE.md`, and a working-tree-only
+   `zz_item38_probe` refusal — left this file green in all three while HEAD's old reader failed each arm (the
+   census one naming `["zz_item38_probe -> 'Probe refusal'"]`). Evidence:
+   `docs/I18N_ARC_VERIFICATION.md` §21. **Landing:** `e8fa569`, one path through a private index.
+39. **The contract-currency gate reads the checkout, not the commit (done 2026-11-04).**
+   `test_openapi_contract_currency.py` opens by saying it holds "the committed OpenAPI contract" to the app
+   "committed next to it", then reads both sides from the working tree: `committed()` is
+   `CONTRACT.read_bytes()` and `answers()` is `app.openapi()` from the imported checkout, and the exporter
+   case compares the disk exporter's bytes to the disk contract. The shared tree currently carries an
+   uncommitted `docs/api/openapi.json`, so a local green says the disk pair agrees, not that the commit does —
+   the same mixed-tree sourcing item 38 cured, with a higher price: this contract is what the §80/§81 gates
+   and every "contract: N paths / M operations" line quote. *Gate:* a contract dirty on disk alone must leave
+   the gate green while HEAD is self-consistent, and a route the checkout's app answers but HEAD's contract
+   lacks must red before the commit rather than after it.
+   **Landing:** `f10e232`, one path through a private index; the record and this row are the commit after it
+   (`1877db5`). Three arms on a clean plane: the baseline green on both sources, a contract dirty on disk alone
+   (HEAD's reader 3 failed / 1 passed against the cure's 4 passed), a planted route with its contract
+   regenerated beside it (HEAD's reader 4 passed against the cure's 3 failed) -- and the live shared tree, old
+   4 passed against new 4 failed.
+40. **A landing reverted a landed unit; two gates saw it and no gate saw the schema (done 2026-11-04).**
+   `c0d376c` carried 22 paths: `qa-wire-readers.mjs` and section 20 of the i18n record were its own, the other
+   twenty answered HEAD's item-36 bytes with pre-item-36 text from a plane older than `0cf34c1` -- the stage
+   column and its key, `pay_objective_bonuses`, `TestObjectiveBonuses`, the market ledger, 5 catalogue keys per
+   locale, the README rows and `migrations=50` back to `49` -- while `0049_objective_bonuses.py` stayed.
+   `test_spec_audit_currency` (49 claimed, 50 revision files) and `test_locale_claims` (README 4,033 against an
+   `en.json` of 4,053) red on that tree; the schema itself was invisible, because `create_all` builds the model's
+   schema and nothing ran the chain against `Base.metadata`. `21bbf86` restores the twenty blobs as `e8fa569` held
+   them and keeps the lane's two paths: 208 passed across the six API files, the file-only web gates at 194/194,
+   and the whole suite at 1 failed / 2148 passed / 4 skipped -- the population item 38 measured, the one red being
+   row 43. Evidence: `docs/MIGRATION_MODEL_DRIFT_VERIFICATION.md` sections 1-3. **Landing:** `21bbf86`, 20 paths through
+   a private index.
+41. **The chain and the models describe one schema (done 2026-11-04).** The half of `c0d376c` no test could see.
+   `apps/api/tests/test_migration_model_drift.py` upgrades a fresh temporary SQLite file through the committed
+   chain in a subprocess with its own `DATABASE_URL` -- so the checkout's `.env`, the suite's database and the dev
+   database are all out of the picture -- and asks alembic's `compare_metadata` what would move that schema to the
+   committed models, with revisions and models both read from the commit. Four clauses, each failing alone: a
+   column the chain builds and no model declares (its message names the revision that shipped it), a column a
+   model declares and no revision builds, the tables in both directions, and everything else `compare_metadata`
+   can name. 4 passed at master; 2 failed / 2 passed on the real `c0d376c`, clause 1 answering
+   `career_budget_awards.stage ... ['0049_objective_bonuses.py']`; a planted model column and a planted model table
+   each red on exactly one clause. Types and widths stay `scripts/schema_drift.py`'s claim against a live
+   database. Evidence: `docs/MIGRATION_MODEL_DRIFT_VERIFICATION.md` sections 4-7. **Landing:** `f5d6abf` (gate) and
+   `265e7a7` (record).
+42. **The wire-readers gate promises a `totals` census it never computes (done 2026-11-05).**
+    `qa-wire-readers.mjs` now scans `viewScan.children.totals` from the same dict scan that reads the view,
+    follows `MarketView["totals"]` in `lib/market.ts`, and reads the block on both planes: the page's own
+    `view.totals.x` and the `totals.x` a `passesProp` AST clause proves the page hands to
+    `components/MarketTools.tsx`. Three checks are real: 12 equality both ways, 13 every declared field read
+    or named with a proof the bytes re-measure, 14 a stale exemption. The gate now prints **18/18** (was
+    12/12) and the table's wires are view 18 / window 16 / range 3 / constants 22 / totals 10 / moves 30.
+    Four arms each red on its own clause -- a deleted wire key (12/13/14), a deleted type key (12), a removed
+    `totals={view.totals}` prop (13 naming the seam), and a removed `signed` reader (13 naming the field) --
+    while the untouched copy stays green. Evidence: `docs/M13_WIRE_READERS_TOTALS_VERIFICATION.md`.
+43. **A gate that is green only under a fabricated CI environment (done 2026-11-05).**
+   `test_ci_trigger.py` asked the workflow's push trigger of "the branch the run is about" and read that branch
+   with `git rev-parse --abbrev-ref HEAD`, which answers the literal `HEAD` on a detached checkout -- and every
+   landing here is graded on a detached `git worktree`. So the full suite was red on the instrument: at `21bbf86`
+   1 failed / 2148 passed / 4 skipped, the one failure that case (`.scratch/item40-suite.log`), and the identical
+   run only reached rc=0 when handed `GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`, which is how item 38's
+   post-landing verdict was reached without its record naming the prefix. `_pushed_branches()` now takes the event
+   first, the checked-out branch second, and otherwise `git for-each-ref --contains HEAD` against the branch the
+   project publishes to; a commit no branch carries skips, naming the refs it looked for, and all four shapes are
+   asserted on a throwaway repository. HEAD's own reader on the same detached plane answers 1 failed against the
+   cure's 1 passed; `ci.yml`'s trigger rewritten `[master]` to `[main]` still reds, naming `master`. Evidence:
+   `docs/CI_TRIGGER_BRANCH_READ_VERIFICATION.md` (this unit's record). **Landing:** `ef649ef` carries
+   the cure; the record, this row and the `PLAN.md` section land beside it.
+
+
+## Phase 10 — the ground has a business
+
+Phase 9 made a ground something a manager buys. Phase 10 makes it something a manager runs: the price
+of a seat, the crowd that price draws, and later the upkeep and the season ticket. The rule stays the
+same — a decision changes a stored row, every figure is recomputed from that row on the read, and a
+receipt keeps the numbers it was actually paid on.
+
+44. **A manager prices the gate (done 2026-11-06).** `careers.ticket_price_pct` stores the setting
+    (50–200% in steps of five, 100 = the competition's price) and migration `0055` copies the setting
+    and the demand it drew onto every gate receipt, so a later change cannot rewrite a paid crowd. One
+    curve, `demand_pct_for`, is read by both the preview and the gate: `d = (pct − 100)/100`,
+    `demand = max(20%, 1 − 0.50d − 0.50d²)`, `gate = round(attendance × base × pct/100)`. The revenue
+    peak is **120% / index 106**, while 120% sells 88% of the neutral crowd — the panel states the
+    trade instead of hiding it. `GET`/`PUT /careers/{ident}/tickets`, `career_view["tickets"]`,
+    `market_view["tickets"]`, `RULES["ticket_price"]`, `CareerTickets.tsx`, the market page's price
+    panel and the ledger row's own `price_pct`/`demand_pct` make it a page decision. Evidence:
+    `docs/M13_TICKET_PRICING_VERIFICATION.md` (7 service cases, 2 wire cases; walk: 38,725 @ 100% →
+    33,806 @ 120%, 77,450 → 81,134, old receipt unchanged, timeline 0 disagreements).
+45. **The ground costs money to run (done 2026-11-06).** A home round now pays
+    `round(capacity × 25%)` credits for the seats it opens — 12,046 on a 48,184-seat ground, and 125
+    more for each 500 seats bought. `career_upkeep_charges` (migration `0056`) stores one row per home
+    league round or home cup tie with the capacity, rate, amount, basis and `budget_after`; `BUDGET_FORMULA`
+    subtracts it, `budget_timeline` puts it after the gate and before the wage charge, and the ledger
+    carries kind `upkeep` / `cup_upkeep`. An away round, a neutral final and a challenge career pay
+    none. `stadium_view`, `CareerFinance`, `CareerStadium` and the market page print the rate and the
+    running total. Evidence: `docs/M13_UPKEEP_VERIFICATION.md` (5 service cases, the cup tie's own row;
+    walk: gate 77,450 − upkeep 12,046 = 65,404, +500 seats → +125 a round, timeline 0 disagreements).
+46. **Season tickets (done 2026-11-06).** Before the first round a manager sells one block of seats
+    for every home league round at 85% of the walk-up price — `round(home_rounds × base × 85%)` —
+    capped at half the ground and sold in blocks of 100. `career_season_tickets` (migration `0057`)
+    stores the sale once per season, `career_gate_receipts.season_ticket_seats` stores the seats a
+    receipt did not charge, and the league gate charges `attendance − season_ticket_seats` while the
+    stored crowd stays whole. `BUDGET_FORMULA` adds the income, the timeline places it before round
+    one, the ledger carries kind `season_tickets`, and `GET`/`POST /careers/{ident}/season-tickets`
+    plus `career_view["season_tickets"]` and
+    `CareerSeasonTickets.tsx` make it a page decision. A second sale, a started season, an off-step
+    block, a challenge career and a retired career are each refused with their own code. Evidence:
+    `docs/M13_SEASON_TICKETS_VERIFICATION.md` (7 service cases, 2 wire cases; walk: 1,000 seats for
+    12,000, 38,725 in the ground with 37,725 paid, gate 75,450, timeline 0 disagreements).
+
 
 ## How this plan is executed
 
@@ -870,93 +1092,7 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
   live walk (`.scratch/walk-bonus.py` on the shared tree, two generated worlds, both exit 0) projected
   145,000 and 90,000 mid-season and paid 145,000 at both boundaries, each stored bonus balance the grant's
   balance plus the kinds before it. Recorded in
-  [M13_OBJECTIVE_BONUS_VERIFICATION.md](M13_OBJECTIVE_BONUS_VERIFICATION.md). **Landing:** `0cf34c1`, 21
-  paths through a private index; `40762fa` re-cut to LF blobs (`git diff -w` empty between them). The full
-  suite's verdict, the committed-tree cases and the shared-index warning are in section 9 of the record.
-- **The locale claims grade the commit, not the checkout (2026-11-04).** `test_locale_claims.py` read the
-  catalogues and the prose that describes them from disk, so a figure pinned to equality was graded in a place
-  no commit owns: `25c6873` fails its own `test_the_readme_table_states_the_coverage…` — its README row says
-  `3988 of 4033` while that commit's `en.json` holds 4,053 keys (45 language-neutral), so the true pair is
-  `4008 of 4053` — and the suite that landed it was green in the shared tree, where the row had moved to
-  `4074 of 4119`. The catalogues (`_raw`/`_names`), the five prose carriers (`_prose`) and the API-source
-  refusal census (`_refusals`) now read the commit through `git show HEAD:…` / `git ls-tree HEAD`, the helpers
-  `test_spec_audit_currency.py` already uses, with disk only as the no-`.git` fallback. Three arms on a clean
-  worktree — a dirty `en.json` (4,059 keys against the commit's 4,058), a README row rewritten to `1 of 1`
-  plus a planted `287/288` line in `ARCHITECTURE.md`, and a working-tree-only `zz_item38_probe` refusal —
-  left this file green in all three while HEAD's old reader failed each arm, the census one naming
-  `["zz_item38_probe -> 'Probe refusal'"]`. Recorded in
-  [I18N_ARC_VERIFICATION.md](I18N_ARC_VERIFICATION.md) §21. **Landing:** `e8fa569` carried the reader and the
-  full suite ran the same **2,149 passed / 4 skipped, rc=0** before it and on it.
-- **The contract-currency gate reads the commit (2026-11-04).** `test_openapi_contract_currency.py` parsed
-  `docs/api/openapi.json` from the checkout and booted the app from the same checkout, so the artifact side — the
-  thing the commit publishes and every "contract: N paths / M operations" line quotes — graded a tree no commit
-  owns. The live instance: the shared working tree answers `/api/v1/careers/{ident}/cup` and
-  `/api/v1/transfers/{ident}/renew` with its contract regenerated to **220 paths / 282 operations** while the
-  commit holds **218 / 280** — and the old gate answers 4 passed there, because disk agrees with disk. Reading the
-  artifact through `git show HEAD:docs/api/openapi.json` (the `_git` + `@cache` shape the locale and audit gates
-  use; the app side stays live, which makes the case a pre-commit alarm) turns those four cases into 4 failed,
-  each naming its own clause: 2 routes, 2 `(path, verb)` pairs, `CupIn`/`RenewIn` absent from the committed
-  schemas, 497,932 bytes against the blob's 492,817. Three arms on a clean plane: baseline green on both sources;
-  a contract dirty on disk alone (old 3 failed / 1 passed, new 4 passed); a planted route with its contract
-  regenerated beside it (old 4 passed, new 3 failed / 1 passed, the schema case green for the right reason).
-  Recorded in [OPENAPI_CONTRACT_VERIFICATION.md](OPENAPI_CONTRACT_VERIFICATION.md). **Landing:** `f10e232`.
-- **A landing reverted a landed unit; two gates saw it and no gate saw the schema (2026-11-04).** `c0d376c`
-  carried 22 paths: `qa-wire-readers.mjs` and the RTL record's `## 20` were its own, and the other twenty answered
-  HEAD's item-36 bytes with **pre-item-36 text** from a plane older than `0cf34c1` — `CareerBudgetAward.stage` and
-  `uq_career_award_stage`, `objective_bonus_report` and `pay_objective_bonuses`, `TestObjectiveBonuses` (9 cases,
-  −196 lines), the market page's ledger and balance sentence, 5 catalogue keys per locale, and the item's own
-  record, `PLAN.md` section and roadmap bullet. `0049_objective_bonuses.py` was *not* in the reverted set, so the
-  commit held a revision building a column no model declares. Master red on **2 failed / 148 passed** across the
-  five files that judge this surface — `test_spec_audit_currency` (`AUDIT_FIGURES says 49 migrations; … holds 50
-  committed .py files`) and `test_locale_claims` (a README population of 4,033 against an `en.json` holding 4,053)
-  — and both reds are figure-against-file; the schema itself was invisible, because `create_all` builds the model's
-  schema and nothing ran the chain against `Base.metadata`. `21bbf86` restores the twenty blobs as `e8fa569` held
-  them, keeps the lane's two paths, and measures the repair: **208 passed** on the six API files, ruff and mypy
-  (161 files) and `tsc` clean, `qa-wire-readers` 12/12 through `qa-gate-inventory` **194/194**. Item 38's record
-  was then rebased onto it rather than landed as written, because the same defect was one checkout away. Recorded
-  in [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §1–3. **Landing:** `21bbf86`,
-  20 paths through a private index. **The whole suite on the repair: 1 failed / 2148 passed / 4 skipped in 36:54**
-  — the population item 38 measured, so the restore lost and gained no test; the single red is `test_ci_trigger`
-  reading `HEAD` from a detached plane (§3), which is filed as item 43.
-- **The chain and the models are one schema, and a gate says so (2026-11-04).** The half of `c0d376c` no test
-  could see. `apps/api/tests/test_migration_model_drift.py` runs the committed chain to head on a temporary SQLite
-  file in a subprocess — its own `DATABASE_URL`, so the checkout's `.env`, the suite's database and the dev
-  database are all out of the picture — and asks alembic's own `compare_metadata` what would move the migrated
-  schema to `Base.metadata`, then fails on one clause per shape: a column the chain builds and no model declares
-  (**naming the revision that added it**, read from the committed sources), a column a model declares and no
-  revision builds, the tables in both directions, and everything else `compare_metadata` can name. **4 passed** in
-  10.9 s at master, and **2 failed / 2 passed** on the real reverted commit — clause 1 answers
-  `career_budget_awards.stage … ['0049_objective_bonuses.py'] — a landing that reverted the model without
-  reverting the migration`, clause 4 names the key swap — plus two synthetic arms (a planted model column, a
-  planted model table) each red on exactly one clause and green on the other three. Types and widths are
-  deliberately out: `scripts/schema_drift.py` owns those against a live database. Also found on the way, filed not
-  fixed: `qa-wire-readers.mjs` documents checks 12–14 over the `totals` block and declares `TOOLS_TSX` and
-  `FLOOR_TOTALS_KEYS` with **one declaration and zero uses each** — the census it promises is prose. Recorded in
-  [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md) §4–7. **Landing:** `f5d6abf`
-  carried the gate (one path, 8,354 bytes, 24 passed across the four commit-reading gates at that commit); this
-  bullet, §1–7 of the record and the `PLAN.md` section are the commit beside it. The two findings it filed are
-  items 42 (`qa-wire-readers`'s prose census) and 43 (a gate green only under a fabricated CI environment).
-
-- **A gate that was green only under a fabricated CI environment (2026-11-05).** The suite on the repair plane
-  answered **1 failed / 2148 passed / 4 skipped** and the single failure was `test_ci_trigger.py`'s push-trigger
-  case: it read the branch with `git rev-parse --abbrev-ref HEAD` — which answers the literal `HEAD` on a detached
-  checkout — and asserted the answer was a branch name, so it reddened the instrument every landing of this
-  project is graded on. The same suite reaches rc=0 on such a plane only when the command carries
-  `GITHUB_EVENT_NAME=push GITHUB_REF_NAME=master`, which is how item 38's "on a checkout detached at `e8fa569`"
-  verdict was reached without its record naming the prefix. `_pushed_branches()` now takes the event's answer
-  first, the checked-out branch second, and otherwise `git for-each-ref --contains HEAD` against the branch the
-  project publishes to (`origin/HEAD`, else `master`, `main`, or the single local branch); a commit that branch
-  does not carry **skips**, naming the refs it did find. All four shapes — on a branch, detached-and-carried, on a
-  side branch, detached-and-carried-by-nothing — are asserted on a throwaway repository, because a skip that
-  cannot fail is a gate that cannot work. Arms on a detached plane with every `GITHUB_*` stripped from the child
-  environment: the cure **8 passed**; HEAD's own reader, written beside it on the same tree, **1 failed**
-  (`assert ('HEAD' and 'HEAD' != 'HEAD')`) against the cure's **1 passed**; `ci.yml`'s trigger rewritten
-  `[master]` → `[main]` still **reds**, naming `master`, so the fallback does not blunt the catch the gate was
-  written for; and a plane detached at an unreferenced commit answers **7 passed / 1 skipped** with the reason
-  printed. Reading the workspace to explain that red also found the §1 reversal armed again in the shared
-  *index* — 26 staged paths, 24 of them byte-for-byte `c0d376c`'s copies, and no entry at all for anything landed
-  since — recorded with what was done about it in the drift document's follow-up.
-  Evidence: [CI_TRIGGER_BRANCH_READ_VERIFICATION.md](CI_TRIGGER_BRANCH_READ_VERIFICATION.md) and
-  [MIGRATION_MODEL_DRIFT_VERIFICATION.md](MIGRATION_MODEL_DRIFT_VERIFICATION.md). **Landing:** `ef649ef` carried
-  the cure (one path, 134/25 against its parent); the record, this bullet and the `PLAN.md` section are the commit
-  beside it.
+  [M13_OBJECTIVE_BONUS_VERIFICATION.md](M13_OBJECTIVE_BONUS_VERIFICATION.md). **Landing:** `0cf34c1`,
+  21 paths through a private index; the first tip `40762fa` was re-cut to LF blobs (`git diff -w` empty
+  between them). Section 9 of the record carries the method, the shared-index warning and the migration
+  renumbering note.

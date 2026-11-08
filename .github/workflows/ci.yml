@@ -221,6 +221,14 @@ jobs:
         # and holds each gate red where it must be and red — as a refusal — when the baseline cannot be read.
         # Files only: git and the two gates, no server, no browser.
         run: node scripts/qa-baseline-gates.mjs
+      - name: Locale-discovery census (every gate loads catalogues through the directory or a named list, and says so)
+        # Same command as `scripts/check.sh`. Charges the population of every script that reaches into
+        # messages/: every shipped catalogue must lie inside every loading script's population, no site may
+        # iterate a narrower list than its file loads without a ledger row stating why, the derived set may
+        # only grow, and every ledger row must still name the file that carries it (6 file rows + 14 site
+        # rows; ceilings may only fall).
+        # Files only: no server, no browser.
+        run: node scripts/qa-locale-discovery.mjs
       - name: Locale-formatting gate (date/number/currency format patterns are locale-appropriate)
         run: node scripts/qa-locale-formatting.mjs
       - name: Plural-select gate (ICU plural/ordinal/select branches complete per locale, and the walk proves it read them)

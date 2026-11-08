@@ -137,8 +137,7 @@ and this unit files it rather than pretending to be it.
 the `totals` block, naming `components/MarketTools.tsx` as the seam a census follows. The shipped script declares
 `TOOLS_TSX` and `FLOOR_TOTALS_KEYS` and never reads either: **1 declaration each, 0 uses**, and the run answers
 `CHECKS passed=12 total=12` — the eleven checks and 3b it had before. The file exists (19,969 bytes) and its
-`totals` block is real; the census of it is prose. **Done (2026-11-06, `f642c0a` and the merge commit that
-repaired it)** — [WIRE_READERS_TOTALS_VERIFICATION.md](WIRE_READERS_TOTALS_VERIFICATION.md) §1–8. Its own landing is the second half of this file's closing sentence: what makes a reverted unit loud is a different gate, and that gate arrived twice in ninety minutes, in both directions — filed as item 51.
+`totals` block is real; the census of it is prose.
 
 *Item 43.* A gate that can only be made green by a fabricated environment is a claim about the run, not about the
 tree. `test_ci_trigger.py`'s local branch read answers `HEAD` on a detached checkout and then refuses it (§3), so
@@ -152,60 +151,4 @@ lie about the machine.
 **Landing.** `f5d6abf` carried the gate — one path, 8,354 bytes, parent `1877db5` — and is green on the four
 commit-reading gates beside it (`test_migration_model_drift`, `test_spec_audit_currency`, `test_locale_claims`,
 `test_openapi_contract_currency`: **24 passed in 63.45 s** on a clean worktree detached at the commit). This
-record, its roadmap bullet and the `PLAN.md` section landed as `265e7a7`, and the same five gates answer
-**30 passed in 153.69 s** there (`test_assert_message_forms.py` joins them, because a new test file is a new
-population of assertion messages).
-
-## Follow-up (2026-11-05): the same reversal was armed in the shared index
-
-Writing §3's suite line meant reading the shared tree again, and the census
-(`.scratch/shared-index-census.py`, output in `.scratch/shared-index-census.txt`) found the §1 defect one command
-away from repeating itself — not in a landing, but in the workspace every landing is cut from.
-
-`git diff --cached --numstat` in `D:\足球项目` answered **26 paths**, and 24 of the 26 staged blobs are byte-for-byte
-`c0d376c`'s copies: the index was still the tree as of `c0d376c`, while `refs/heads/master` — the branch that
-checkout is on — had moved through six landings. For the paths landed since, the index holds no entry at all, so
-`git status` prints them the way it prints a deletion: `0 187 apps/api/tests/test_migration_model_drift.py`,
-`0 154 docs/MIGRATION_MODEL_DRIFT_VERIFICATION.md`, `0 71 docs/I18N_ARC_VERIFICATION.md`. A bare `git commit` in
-that tree would therefore have committed a revert of items 36, 38's §21, 39, 40, 41 and 43 **without touching a
-single byte of anyone's work** — which is how `c0d376c` read when it landed: not hostile, just old.
-
-Nothing in `git status` shows this, because the shared *disk* carries the concurrent lanes' newer content
-(`market.py` +1014 lines against master, `test_transfers.py` +487, `models/__init__.py` +176, the three
-catalogues +72/76/77) and is reported as modified either way. It is visible only as index-against-HEAD, which is
-precisely what a commit consumes.
-
-**What was done** (`.scratch/shared-sweep-disarm.py` prints its plan, then applies it on `--apply`):
-
-* all 26 index entries set to the blob `refs/heads/master` publishes, with `update-index --cacheinfo` — staging
-  **nothing** from the working tree, so no lane's uncommitted edit entered the index and no lane's staged intent
-  was discarded (the census had already shown the index held no original work: every blob in it is a published
-  copy, and the two entries at "no published copy" are exactly the paths a stale snapshot cannot have);
-* 8 files restored on disk to master's bytes, and only those whose own blob matched a published commit's copy or
-  which were absent from the tree: the drift gate, this record, `docs/OPENAPI_CONTRACT_VERIFICATION.md`, §21 of
-  the i18n record, `docs/SPEC_COVERAGE_AUDIT.md`, `test_openapi_contract_currency.py`, `test_ci_trigger.py` and
-  `ROADMAP.md`. `git commit -a` stages the working tree first, so a disk that lags HEAD is how a sweep commit
-  reverts something *while* looking like it adds;
-* 17 files left exactly as found, because their bytes match no published commit — that is somebody's live edit,
-  including `PLAN.md` and `docs/ROADMAP_NEXT.md`, into which the landed rows for items 39 (marked done, with its
-  arms and its landing pair) through 43 were then **inserted** rather than written over
-  (`.scratch/shared-ledger-sync.py`, which refuses to write if its own diff deletes more than the one row heading
-  it meant to re-date: `docs/ROADMAP_NEXT.md -1 +52`, `PLAN.md -0 +57`).
-
-After: `git diff --cached` answers **0 paths**, `git diff --numstat master` answers 36 (the lanes' work), and
-`refs/heads/master` still reads `ef649ef`.
-
-**What would catch a repeat, now.** §4's gate reddens clause 1 by name if a model is reverted while its migration
-stays — the exact half of `c0d376c` nothing could see. `test_spec_audit_currency` holds the migration count
-against the committed `versions/` directory, and `test_locale_claims` holds the README population against the
-committed catalogues, so a reverted claim reds at the commit rather than in a browser. **What stays silent** is a
-reverted *prose* row — a `PLAN.md` section or a roadmap bullet that disappears and takes a feature's record with
-it. Nothing grades a ledger's completeness, and that is filed here rather than cured: the two carriers this
-session restored by hand (`d188aef`'s rebase, `21bbf86`'s twenty blobs) both began as prose nobody could see
-moving.
-
-**Not claimed.** The census is a reading of one workspace on one host at one moment, not a committed artifact, and
-no gate re-runs it — the numbers above are `.scratch/shared-index-census.txt` at `ef649ef`. The disarm changed no
-commit and no lane's bytes; it re-pointed a cache. And a lane that later runs `git add -A` in the shared tree will
-stage its disk content over these index entries, which is that lane's decision to make — the point was never to
-freeze the index, only to stop it committing a revert nobody staged on purpose.
+record, its roadmap bullet and the `PLAN.md` section are the commit that follows.

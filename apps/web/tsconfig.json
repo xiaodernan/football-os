@@ -60,6 +60,7 @@
     ".next-i18n8/types/**/*.ts",
     ".next-i18n9/types/**/*.ts",
     ".next-ledger/types/**/*.ts",
+    ".next-m12trace/types/**/*.ts",
     ".next-market/types/**/*.ts",
     ".next-tac/types/**/*.ts",
     ".next-timeline/types/**/*.ts",
@@ -69,7 +70,7 @@
     ".next-walks3/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-m12trace/types/**/*.ts"
+    ".next-v/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

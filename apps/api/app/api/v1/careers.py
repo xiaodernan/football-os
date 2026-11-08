@@ -34,7 +34,22 @@ from app.services.simulation.career import (
     resolve_club,
 )
 from app.services.simulation.challenges import verdict_of
+from app.services.simulation.cup import CupRefusal, cup_tie_row, cup_view, play_cup_tie
 from app.services.simulation.ledger import ledger_view
+from app.services.simulation.market import (
+    STADIUM_MAX_SEATS,
+    MarketRefusal,
+    buy_season_tickets,
+    buy_seats,
+    buy_training_level,
+    season_ticket_row,
+    season_ticket_view,
+    set_ticket_price,
+    stadium_row,
+    ticket_price_view,
+    training_row,
+    training_view,
+)
 from app.services.simulation.service import options, system_options
 from app.services.tactics.plan import system_by_slug
 
@@ -62,6 +77,36 @@ class CareerIn(BaseModel):
     wage_ceiling: int = Field(default=0, ge=0, le=BUDGET_CEILING)
     objectives: list[ObjectiveIn] = Field(default_factory=list, max_length=4)
     season: str = Field(default="2026", max_length=12)
+
+
+class CupIn(BaseModel):
+    """Which cup to play when a career is entered in more than one. Omitted, the first live run plays."""
+
+    cup: str | None = Field(default=None, max_length=160)
+
+
+class StadiumIn(BaseModel):
+    """How many seats to add to this career's ground in one purchase."""
+
+    seats: int = Field(ge=1, le=STADIUM_MAX_SEATS)
+
+
+class TicketPriceIn(BaseModel):
+    """The manager's gate price as a percentage of the competition's own (100 leaves it unchanged)."""
+
+    price_pct: int = Field(ge=0, le=1_000)
+
+
+class SeasonTicketsIn(BaseModel):
+    """How many seats to sell for this season before its first round."""
+
+    seats: int = Field(ge=0, le=100_000)
+
+
+class TrainingIn(BaseModel):
+    """How many levels to buy for the training ground (bounded by the current level)."""
+
+    levels: int = Field(ge=0, le=10)
 
 
 def _career(db: Session, user: User, ident: str) -> Career:
@@ -219,6 +264,112 @@ def _challenge_verdict(db: Session, career: Career) -> dict[str, Any] | None:
     building a second one to return this dictionary made every play read the career tables twice.
     """
     return verdict_of(db, career)
+
+
+@router.post("/{ident}/cup")
+def play_cup(ident: str, request: Request, payload: CupIn | None = None, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Play the career's next cup tie with the engine, then re-derive everything the page shows.
+
+    A tie is not a league round: it does not advance `rounds_played`, score points or close a season. It is
+    the world's own knockout bracket (item 32), and the career's result replaces the slot the world's
+    simulation filled. A run that is over, a cup the career is not entered in and a challenge career each
+    answer 409 with the sentence that says why rather than inventing a fixture.
+    """
+    limit(request, 20, 60, scope="career_cup")
+    career = _career(db, user, ident)
+    try:
+        tie, match = play_cup_tie(db, career, cup=payload.cup if payload is not None else None)
+    except CupRefusal as error:
+        raise HTTPException(answers.ANSWERS.get(error.code, status.HTTP_409_CONFLICT), detail={**error.to_dict(), "cup": cup_view(db, career)}) from None
+    except ValueError as error:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail={"code": "cannot_play_cup", "message": str(error)}) from None
+    return {
+        "played": True,
+        "tie": cup_tie_row(tie),
+        "match": {"slug": match.slug, "path": f"/simulate/{match.slug}", "digest": match.digest, "seed": match.seed, "model_version": match.model_version},
+        **career_view(db, career),
+    }
+
+
+@router.post("/{ident}/stadium")
+def build_stand(ident: str, payload: StadiumIn, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Buy seats for this career's ground (M13 Phase 9 item 37).
+
+    One purchase at a time, priced and capped by the market's own rules, and written as a ledger row
+    whose `budget_after` the finance page can check. The whole career view comes back, because a stand
+    changes the balance, the timeline and the gate the next home round will read.
+    """
+    limit(request, 20, 60, scope="career_stadium")
+    career = _career(db, user, ident)
+    try:
+        work, _stadium = buy_seats(db, career, seats=payload.seats)
+    except MarketRefusal as error:
+        raise HTTPException(answers.ANSWERS.get(error.code, status.HTTP_409_CONFLICT), detail=error.to_dict()) from None
+    return {"built": True, "work": stadium_row(work), **career_view(db, career)}
+
+
+@router.get("/{ident}/tickets")
+def tickets(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """The gate price this career has set and the demand and revenue it indexes (M13 Phase 10 item 44)."""
+    limit(request, 60, 60, scope="career_tickets")
+    career = _career(db, user, ident)
+    return ticket_price_view(db, career)
+
+
+@router.put("/{ident}/tickets")
+def price_tickets(ident: str, payload: TicketPriceIn, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Set the gate price and answer with the whole career view the finance page reads.
+
+    The service owns the bounds and the step so the refusal names `bad_ticket_price` with the figures
+    that decided it, rather than a body-validation message the page cannot translate.
+    """
+    limit(request, 20, 60, scope="career_tickets")
+    career = _career(db, user, ident)
+    try:
+        view = set_ticket_price(db, career, price_pct=payload.price_pct)
+    except MarketRefusal as error:
+        raise HTTPException(answers.ANSWERS.get(error.code, status.HTTP_409_CONFLICT), detail=error.to_dict()) from None
+    return {"priced": True, "tickets": view, **career_view(db, career)}
+
+
+@router.get("/{ident}/season-tickets")
+def season_tickets(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """This season's season-ticket offer, its price and every sale already made (item 46)."""
+    limit(request, 60, 60, scope="career_season_tickets")
+    career = _career(db, user, ident)
+    return season_ticket_view(db, career)
+
+
+@router.post("/{ident}/season-tickets")
+def sell_season_tickets(ident: str, payload: SeasonTicketsIn, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Sell one season's allocation before its first round and answer with the sale and career view."""
+    limit(request, 20, 60, scope="career_season_tickets")
+    career = _career(db, user, ident)
+    try:
+        sale, _view = buy_season_tickets(db, career, seats=payload.seats)
+    except MarketRefusal as error:
+        raise HTTPException(answers.ANSWERS.get(error.code, status.HTTP_409_CONFLICT), detail=error.to_dict()) from None
+    return {"sold": True, "sale": season_ticket_row(sale), **career_view(db, career)}
+
+
+@router.get("/{ident}/training")
+def training(ident: str, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """The training ground's level, its bonus and every upgrade already bought (item 47)."""
+    limit(request, 60, 60, scope="career_training")
+    career = _career(db, user, ident)
+    return training_view(db, career)
+
+
+@router.post("/{ident}/training")
+def build_training(ident: str, payload: TrainingIn, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Buy levels for the training ground and answer with the rows, the new level and the career view."""
+    limit(request, 20, 60, scope="career_training")
+    career = _career(db, user, ident)
+    try:
+        rows, _view = buy_training_level(db, career, levels=payload.levels)
+    except MarketRefusal as error:
+        raise HTTPException(answers.ANSWERS.get(error.code, status.HTTP_409_CONFLICT), detail=error.to_dict()) from None
+    return {"built": True, "levels": [training_row(row) for row in rows], **career_view(db, career)}
 
 
 @router.post("/{ident}/retire")

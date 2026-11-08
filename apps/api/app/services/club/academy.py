@@ -30,6 +30,7 @@ academy door exactly as it does at a team door — which is what the isolation w
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from datetime import date
 from typing import Any, Final
 
@@ -428,9 +429,14 @@ def _evidence(session: Session, plan: DevelopmentPlan) -> list[PlanVideoEvidence
     return list(session.scalars(select(PlanVideoEvidence).where(PlanVideoEvidence.plan_id == plan.id).order_by(PlanVideoEvidence.created_at, PlanVideoEvidence.id)))
 
 
-def progress_of(session: Session, plan: DevelopmentPlan) -> dict[str, Any]:
-    """§40's Progress: the arithmetic over this plan's own assessments, with the formula beside each figure."""
-    rows = _assessments(session, plan)
+def progress_of(session: Session, plan: DevelopmentPlan, *, rows: Sequence[PlanAssessment] | None = None) -> dict[str, Any]:
+    """§40's Progress: the arithmetic over this plan's own assessments, with the formula beside each figure.
+
+    `rows` lets the listing hand in the one query it already made for every plan on the page; without it this
+    reads the plan's assessments itself. The arithmetic is identical either way — the rows are the plan's own.
+    """
+    if rows is None:
+        rows = _assessments(session, plan)
     observed = [int(row.overall_observed) for row in rows]
     first, last = (rows[0], rows[-1]) if rows else (None, None)
     span_days = (date.fromisoformat(last.assessed_on) - date.fromisoformat(first.assessed_on)).days if (first is not None and last is not None) else 0
@@ -850,9 +856,26 @@ def list_plans(session: Session, user: User, ident: str) -> dict[str, Any]:
     rows = list(session.scalars(select(DevelopmentPlan).where(DevelopmentPlan.organization_id == organization.id).order_by(DevelopmentPlan.created_at, DevelopmentPlan.id)))
     if not staff:
         rows = [row for row in rows if row.player_id in claims]
+    # The listing read every plan's player and every plan's reviews once, and hands both to the row builder:
+    # six plans used to cost six player reads and twelve assessment reads (a count and a progress pass each),
+    # which the read measured at 22 statements. The rows are the same rows, read once.
+    players = (
+        {player.id: player for player in session.scalars(select(RealPlayer).where(RealPlayer.id.in_({plan.player_id for plan in rows})))}
+        if rows
+        else {}
+    )
+    reviews: dict[str, list[PlanAssessment]] = {plan.id: [] for plan in rows}
+    for assessment in (
+        session.scalars(
+            select(PlanAssessment).where(PlanAssessment.plan_id.in_({plan.id for plan in rows})).order_by(PlanAssessment.assessed_on, PlanAssessment.id)
+        )
+        if rows
+        else []
+    ):
+        reviews.setdefault(assessment.plan_id, []).append(assessment)
     items = []
     for plan in rows:
-        player = session.get(RealPlayer, plan.player_id)
+        player = players.get(plan.player_id)
         items.append(
             {
                 "id": plan.id,
@@ -861,8 +884,8 @@ def list_plans(session: Session, user: User, ident: str) -> dict[str, Any]:
                 "focus": list(plan.focus or []),
                 "goals": len(plan.goals or []),
                 "review_weeks": int(plan.review_weeks),
-                "assessments": int(session.scalar(select(func.count()).select_from(PlanAssessment).where(PlanAssessment.plan_id == plan.id)) or 0),
-                "progress": progress_of(session, plan)["overall_change"],
+                "assessments": len(reviews.get(plan.id, [])),
+                "progress": progress_of(session, plan, rows=reviews.get(plan.id, []))["overall_change"],
                 "path": f"/club/{organization.slug}/plans/{plan.id}",
             }
         )
@@ -1261,17 +1284,38 @@ def grant_consent(session: Session, user: User, ident: str, *, player: str, scop
     }
 
 
-def consent_view(session: Session, row: GuardianConsent) -> dict[str, Any]:
-    player = session.get(RealPlayer, row.player_id)
-    guardian = session.get(User, row.guardian_user_id)
-    plans = int(session.scalar(select(func.count()).select_from(DevelopmentPlan).where(DevelopmentPlan.organization_id == row.organization_id, DevelopmentPlan.player_id == row.player_id)) or 0)
+def consent_view(
+    session: Session,
+    row: GuardianConsent,
+    *,
+    player: Any = None,
+    guardian: Any = None,
+    plans_for_this_child: int | None = None,
+) -> dict[str, Any]:
+    """One consent row as both sides read it.
+
+    The three pre-fetched arguments are for the listing, which resolves every row's child, guardian and plan
+    count in three grouped reads; a single-row door passes nothing and this reads them itself. A `None` here
+    means "not handed in", which for a genuinely missing row costs one read and answers the same.
+    """
+    if player is None:
+        player = session.get(RealPlayer, row.player_id)
+    if guardian is None:
+        guardian = session.get(User, row.guardian_user_id)
+    if plans_for_this_child is None:
+        plans_for_this_child = int(
+            session.scalar(
+                select(func.count()).select_from(DevelopmentPlan).where(DevelopmentPlan.organization_id == row.organization_id, DevelopmentPlan.player_id == row.player_id)
+            )
+            or 0
+        )
     return {
         "id": row.id,
         "player": ({"slug": player.slug, "name": player.name, "age": int(player.age), "is_minor": _is_minor(player.age)} if player else None),
         "guardian": ({"email": guardian.email, "display_name": guardian.display_name} if guardian else None),
         "state": row.state,
         "scopes": _scope_names(row.scopes),
-        "plans_for_this_child": plans,
+        "plans_for_this_child": plans_for_this_child,
         "granted_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
@@ -1294,14 +1338,37 @@ def list_consents(session: Session, user: User, ident: str) -> dict[str, Any]:
         if staff
         else consents_of_guardian(session, organization, user, granted_only=False)
     )
-    minors = 0
-    for row in rows:
-        player = session.get(RealPlayer, row.player_id)
-        if player is not None and _is_minor(player.age):
-            minors += 1
+    # Children, guardians and each child's plan count are each read once for the whole listing rather than
+    # once per consent row; `under_18` comes off the same player map the rows do.
+    player_ids = {row.player_id for row in rows}
+    guardian_ids = {row.guardian_user_id for row in rows}
+    players = {player.id: player for player in session.scalars(select(RealPlayer).where(RealPlayer.id.in_(player_ids)))} if player_ids else {}
+    guardians = {person.id: person for person in session.scalars(select(User).where(User.id.in_(guardian_ids)))} if guardian_ids else {}
+    plan_counts: dict[str, int] = (
+        {
+            str(player_id): int(count)
+            for player_id, count in session.execute(
+                select(DevelopmentPlan.player_id, func.count())
+                .where(DevelopmentPlan.organization_id == organization.id, DevelopmentPlan.player_id.in_(player_ids))
+                .group_by(DevelopmentPlan.player_id)
+            ).all()
+        }
+        if (player_ids and rows)
+        else {}
+    )
+    minors = sum(1 for row in rows if (player := players.get(row.player_id)) is not None and _is_minor(player.age))
     return {
         "organization": organization.slug,
-        "items": [consent_view(session, row) for row in rows],
+        "items": [
+            consent_view(
+                session,
+                row,
+                player=players.get(row.player_id),
+                guardian=guardians.get(row.guardian_user_id),
+                plans_for_this_child=int(plan_counts.get(row.player_id, 0)),
+            )
+            for row in rows
+        ],
         "total": len(rows),
         "under_18": minors,
         "seen_as": ("tenant" if staff else "own_child"),

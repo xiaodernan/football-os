@@ -38,6 +38,7 @@ export default async function CareerMarketPage({ params }: Props) {
   const user = await currentUser();
   if (!user) redirect("/login?next=%2Fcareer");
   const t = await getTranslations("market");
+  const tCareer = await getTranslations("careerDetail");
   const { slug } = await params;
   if (!slug || slug.length > 80) notFound();
 
@@ -54,6 +55,8 @@ export default async function CareerMarketPage({ params }: Props) {
   const account = view.squad.account;
   const fielding = view.squad.fielding;
   const signing = view.window;
+  const stadium = view.stadium;
+  const tickets = view.tickets;
 
   return (
     <div className="container page stack">
@@ -80,6 +83,35 @@ export default async function CareerMarketPage({ params }: Props) {
         {t("wageDeals", { count: budget.wage_players })}{t("wageStands")}{money(budget.wages_paid)} {budget.units}{t("wagePaidPrefix")}
         {t("wageRounds", { count: budget.wage_rows })}{t("wageSuffix")}
       </p>
+
+      <Panel eyebrow={tCareer("stadiumTitle")} title={stadium.ground || career.club_name}>
+        <div className="stack-sm">
+          <KeyValueGrid
+            rows={[
+              [tCareer("stadiumKvBought"), `${money(stadium.bought_seats)}`],
+              [tCareer("stadiumKvCapacity"), `${money(stadium.capacity)}`],
+              [tCareer("stadiumKvGate"), `${money(stadium.gate_capacity)}`],
+              [tCareer("stadiumKvCost"), `${money(stadium.seat_cost)} ${budget.units}${tCareer("stadiumPerSeat")}`],
+              [tCareer("stadiumKvUpkeep"), `${money(stadium.upkeep_per_home_round)} ${budget.units}${tCareer("stadiumPerRound")}`],
+            ]}
+          />
+          <p className="muted">
+            <Link href={`/career/${encodeURIComponent(career.slug)}`}>{t("backLabel")}</Link>
+          </p>
+        </div>
+      </Panel>
+
+      <Panel eyebrow={tCareer("ticketTitle")} title={`${tickets.price_pct}%`}>
+        <div className="stack-sm">
+          <KeyValueGrid
+            rows={[
+              [tCareer("ticketKvDemand"), `${tickets.demand_pct}%`],
+              [tCareer("ticketKvRevenue"), `${tickets.revenue_index}`],
+              [tCareer("ticketKvBest"), `${tickets.best_price_pct}% → ${tickets.best_revenue_index}`],
+            ]}
+          />
+        </div>
+      </Panel>
 
       <Panel data-testid="market-window" eyebrow={t("windowEyebrow", { round: signing.round, count: signing.windows.length })} title={t("windowTitle")}>
         <div className="stack-sm">
@@ -235,16 +267,33 @@ export default async function CareerMarketPage({ params }: Props) {
                           {move.detail}
                         </p>
                       ) : null}
+                      {move.kind === "gate" && move.price_pct !== undefined && move.demand_pct !== undefined ? (
+                        <p className="muted">{tCareer("ticketRow", { price: move.price_pct, demand: move.demand_pct })}</p>
+                      ) : null}
+                      {move.kind === "gate" && move.season_ticket_seats ? (
+                        <p className="muted">{tCareer("ticketSeasonSeats", { seats: move.season_ticket_seats })}</p>
+                      ) : null}
+                      {move.kind === "training" && move.level_before !== undefined && move.level_after !== undefined ? (
+                        <p className="muted">
+                          {tCareer("trainingRow", {
+                            before: move.level_before,
+                            after: move.level_after,
+                            bonus: move.level_after * view.constants.training_level_bonus_pct,
+                            amount: money(move.fee),
+                            units: move.fee_units,
+                          })}
+                        </p>
+                      ) : null}
                     </td>
                     <td>{move.counterparty_name || "—"}</td>
                     <td className="num">
-                      {move.cash === "out" ? "−" : "+"}
+                      {move.fee === 0 ? "" : move.cash === "out" ? "−" : "+"}
                       {money(move.fee)} {move.fee_units}
                     </td>
                     <td className="num mono">{money(move.budget_after)}</td>
                     <td className="num">{move.weekly_wage ? t("wageCell", { amount: money(move.weekly_wage) }) : "—"}</td>
                     <td className="num">
-                      {move.kind === "wage" || move.kind === "season_grant" || move.kind === "objective_bonus"
+                      {move.kind === "wage" || move.kind === "season_grant" || move.kind === "gate" || move.kind === "objective_bonus" || move.kind === "upkeep" || move.kind === "cup_upkeep" || move.kind === "cup_gate" || move.kind === "cup_prize" || move.kind === "stadium" || move.kind === "season_tickets" || move.kind === "training"
                         ? "—"
                         : `${t("contractYears", { years: move.contract_years })}${move.loan_until_round ? t("contractUntil", { round: move.loan_until_round }) : ""}`}
                     </td>
@@ -258,8 +307,8 @@ export default async function CareerMarketPage({ params }: Props) {
         <p className="muted">
           {budget.budget.toLocaleString("en-GB")}{t("footerStated")}
           {budget.received ? t("footerReceived", { amount: money(budget.received) }) : ""}
-          {budget.granted ? t("footerGranted", { amount: money(budget.granted), rows: view.totals.grant_rows }) : ""}
-          {budget.received_objectives ? t("footerBonuses", { amount: money(budget.received_objectives), rows: view.totals.bonus_rows }) : ""}
+          {budget.granted ? t("footerGranted", { amount: money(budget.granted) }) : ""}
+          {budget.received_objectives ? t("footerBonuses", { amount: money(budget.received_objectives) }) : ""}
           {budget.spent ? t("footerSpent", { amount: money(budget.spent) }) : ""}
           {budget.wages_paid ? t("footerWages", { amount: money(budget.wages_paid) }) : ""}={" "}
           <strong className="mono">{money(budget.remaining)} {budget.units}</strong>

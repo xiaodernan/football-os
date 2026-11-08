@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterator
+from typing import Any
 from urllib.parse import quote, unquote
 
 import pytest
@@ -163,13 +164,42 @@ class TestPlan:
 
     def test_next_seasons_fixtures_are_drawn_from_the_new_membership(self, plan: WorldPlan) -> None:
         registered = {world_id("team", row.natural_key): str(row.payload["competition_id"]) for row in plan.collections["teams"]}
+        leagues = {
+            world_id("competition", row.natural_key)
+            for row in plan.collections["competitions"]
+            if row.payload["kind"] == "league"
+        }
         fixtures = [row.payload for row in plan.collections["matches"] if row.payload["season"] == "2027"]
         assert fixtures, "the next season has an opening round on the calendar"
         for fixture in fixtures:
             for team_id in (fixture["home_team_id"], fixture["away_team_id"]):
-                assert registered[team_id] == fixture["competition_id"], (
-                    f"{fixture['slug']} names {team_id}, which is registered in {registered[team_id]} rather than in {fixture['competition_id']}"
-                )
+                assert team_id in registered, f"{fixture['slug']} names {team_id}, which the world does not hold"
+                if fixture["competition_id"] in leagues:
+                    assert registered[team_id] == fixture["competition_id"], (
+                        f"{fixture['slug']} names {team_id}, which is registered in {registered[team_id]} rather than in {fixture['competition_id']}"
+                    )
+
+    def test_next_seasons_cup_is_drawn_to_its_quarter_finals(self, plan: WorldPlan) -> None:
+        """A knockout cannot be drawn past the round whose participants exist (M13 Phase 9 item 35)."""
+        cups = {
+            world_id("competition", row.natural_key)
+            for row in plan.collections["competitions"]
+            if row.payload["kind"] == "cup"
+        }
+        fixtures = [
+            row.payload
+            for row in plan.collections["matches"]
+            if row.payload["season"] == "2027" and row.payload["competition_id"] in cups
+        ]
+        by_cup: dict[str, list[dict[str, Any]]] = {}
+        for fixture in fixtures:
+            by_cup.setdefault(str(fixture["competition_id"]), []).append(fixture)
+        assert set(by_cup) == cups, "every cup of the world has next season's draw"
+        for rows in by_cup.values():
+            assert len(rows) == 4, "four quarter-finals"
+            assert len({row["home_team_id"] for row in rows} | {row["away_team_id"] for row in rows}) == 8
+            assert {row["round_label"] for row in rows} == {f"Quarter-final {number}" for number in (1, 2, 3, 4)}
+            assert all(row["status"] == "scheduled" for row in rows), "a drawn tie has not been played"
 
     @pytest.mark.parametrize("collection", ["competitions", "teams", "players", "matches", "articles"])
     def test_public_slugs_are_url_safe(self, plan: WorldPlan, collection: str) -> None:

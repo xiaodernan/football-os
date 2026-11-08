@@ -6,7 +6,7 @@
  * invent and nothing to re-derive in the browser.
  */
 
-import type { SigningImpact } from "./types";
+import type { CareerStadium, CareerTickets, SigningImpact } from "./types";
 
 export type MarketCareer = {
   slug: string;
@@ -104,6 +104,14 @@ export type MarketBudget = {
   objective_detail: string;
   /** What the rounds already played have cost in wages — a sum of `career_wage_charges` rows. */
   wages_paid: number;
+  /** What stands have cost (M13 Phase 9 item 37), the ledger's other spending row. */
+  stadium_spent: number;
+  stadium_rows: number;
+  stadium_detail: string;
+  /** What running the ground has cost so far (M13 Phase 10 item 45). */
+  upkeep_spent: number;
+  upkeep_rows: number;
+  upkeep_detail: string;
   remaining: number;
   units: string;
   moves: number;
@@ -212,6 +220,17 @@ export type Move = {
   /** Only a `gate` row carries these: the seats sold and the authored price per seat. */
   attendance?: number;
   ticket_price?: number;
+  /** Only a `gate` row carries these: the manager's price setting and the demand it drew. */
+  price_pct?: number;
+  demand_pct?: number;
+  /** Only a `gate` row carries this: the seats already sold for the season, which are not charged again. */
+  season_ticket_seats?: number;
+  /** Only an `upkeep` row carries these: the seats it opened and the per-seat running rate. */
+  capacity?: number;
+  seat_rate_pct?: number;
+  /** Only a `training` row carries these: the training-ground level it moved between. */
+  level_before?: number;
+  level_after?: number;
   counterparty_name: string | null;
   budget_after: number;
   effect: string;
@@ -264,11 +283,15 @@ export type MarketView = {
   market: { round_index: number; opened: boolean; size: number; note: string };
   need: MarketNeed;
   budget: MarketBudget;
+  /** The ground, what another seat costs and what has already been bought. */
+  stadium: CareerStadium;
+  /** The gate price the manager set and the demand it draws (M13 Phase 10 item 44). */
+  tickets: CareerTickets;
   squad: { account: SquadAccount; players: SquadPlayer[]; fielding: Fielding };
   listings: Listing[];
   deals: Listing[];
   moves: Move[];
-  totals: { listed: number; signed: number; withdrawn: number; moves: number; wage_rows: number; grant_rows: number; cup_prize_rows: number; bonus_rows: number; gate_rows: number };
+  totals: { listed: number; signed: number; withdrawn: number; moves: number; wage_rows: number; grant_rows: number; cup_prize_rows: number; bonus_rows: number; gate_rows: number; stadium_rows: number };
   rules: Record<string, string>;
   constants: {
     market_size: number;
@@ -286,6 +309,25 @@ export type MarketView = {
     season_grant_per_round: number;
     season_grant_per_point: number;
     promotion_grant: number;
+    /** What one bought seat costs, and the size of one purchase (M13 Phase 9 item 37). */
+    stadium_seat_cost: number;
+    stadium_min_seats: number;
+    stadium_max_seats: number;
+    /** The ground's running rate as a percentage of one credit per seat (M13 Phase 10 item 45). */
+    stadium_upkeep_per_seat_pct: number;
+    /** The gate price's published bounds and step (M13 Phase 10 item 44). */
+    ticket_price_min_pct: number;
+    ticket_price_max_pct: number;
+    ticket_price_step_pct: number;
+    ticket_price_neutral_pct: number;
+    /** Season-ticket terms (M13 Phase 10 item 46): the discount, the block size and the ground's cap. */
+    season_ticket_discount_pct: number;
+    season_ticket_min_seats: number;
+    season_ticket_max_share_pct: number;
+    /** Training-ground terms (M13 Phase 11 item 47). */
+    training_max_level: number;
+    training_level_bonus_pct: number;
+    training_upgrade_base_cost: number;
     /** What each cup stage pays when it is won (M13 Phase 8 item 32), keyed by stage index. */
     cup_prize_by_stage: Record<string, number>;
     /** What a met objective pays (M13 Phase 9 item 36), keyed by objective kind. */

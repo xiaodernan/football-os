@@ -55,6 +55,7 @@ from app.services.scouting import search as scout_search
 from app.services.scouting import sharing as scout_share
 from app.services.scouting import shortlist as scout_shortlist
 from app.services.scouting import transfer_sim as scout_transfer_sim
+from app.services.simulation import cup as sim_cup
 from app.services.simulation import market as market
 
 #: The four questions a tier answers, in the order a reader checks them: is it absent, is the request
@@ -134,6 +135,7 @@ TIERS: Final = (
     scout_shortlist,
     scout_transfer_sim,
     plan_share,
+    sim_cup,
 )
 
 

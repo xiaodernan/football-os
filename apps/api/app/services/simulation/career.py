@@ -41,6 +41,7 @@ from app.services.simulation.development import (
     TRAINING_MINUTES_PER_UNIT,
     developed_overall,
     development_summary,
+    training_minutes,
 )
 from app.services.simulation.ledger import ledger_view
 from app.services.simulation.profile import SquadOverlay, team_profile
@@ -63,7 +64,8 @@ CAREER_DISCLAIMER: Final = (
 DEVELOPMENT_FORMULA: Final = (
     "developed(value, potential, minutes) = value + (potential − value)·(1 − e^(−minutes/τ))·rate, "
     f"τ = {DEVELOPMENT_TAU:g} minutes, rate = {DEVELOPMENT_RATE:g}; effective_minutes = match_minutes "
-    f"+ {TRAINING_MINUTES_PER_UNIT:g}·training_load_units (the world's sessions for the player); each "
+    f"+ {TRAINING_MINUTES_PER_UNIT:g}·training_load_units·(100 + 10·training_level)/100 "
+    "(the world's sessions for the player, at the career's training-ground level); each "
     "attribute climbs toward the player's stored potential from his stored (or floored) value and saturates "
     "so it never crosses potential — computed at the end of every played round and written to "
     "career_developments, where the next round's eleven reads it, while real_players is never rewritten"
@@ -132,11 +134,14 @@ def limitations() -> dict[str, str]:
         ),
         "projections": (
             "The `development` block prints both the projection and the rows a played round wrote; the `academy`, "
-            "`affordability`, `contracts`, `board`, `head_to_head` and `next_fixture_brief` blocks are read-only "
+            "`affordability`, `board`, `head_to_head` and `next_fixture_brief` blocks are read-only "
             "projections recomputed from this career's own rows on every read: the youth class judged against the eleven "
-            "the engine would select next, a wage runway and a signing preview, a deal book whose projected "
-            "expiry nothing enforces, a season pace projection against the objectives, this career's record against "
-            "one opponent, and the engine's own band measurements of the next fixture's two sides. None of them rewrites "
+            "the engine would select next, a wage runway and a signing preview, a season pace projection against the "
+            "objectives, this career's record against one opponent, and the engine's own band measurements of the "
+            "next fixture's two sides. The `contracts` block is different: a permanent deal stores the last round it "
+            "covers, and the round after that date writes an `expire` row that takes the player out of the eleven and "
+            "stops the wage; when the departure would leave the club unable to field eleven with a keeper, a `renew` "
+            "row extends it by one season instead. None of the read-only blocks rewrites "
             "the world's `real_players` attributes, expires or renews a contract, triggers a board decision or keeps a "
             "counter — each is what the rows imply, printed beside the formula that produced it."
         ),
@@ -445,7 +450,7 @@ def _write_developments(
         if player is None:
             continue
         units = int(training.get(player_id, 0))
-        effective = int(minutes.get(player_id, 0)) + int(round(TRAINING_MINUTES_PER_UNIT * units))
+        effective = int(minutes.get(player_id, 0)) + training_minutes(units, level=int(career.training_level or 0))
         baseline = {attribute: int((player.attributes or {}).get(attribute, ATTRIBUTE_FLOOR)) for attribute in ALL_ATTRIBUTES}
         summary = development_summary(minutes_played=effective, potential=player.potential, attributes=baseline)
         prior = previous.get(player_id)
@@ -494,6 +499,14 @@ def play_round(session: Session, career: Career) -> tuple[CareerFixture, Simulat
     plan = next_fixture_plan(session, career)
     if not plan["available"]:
         raise ValueError(str(plan["reason"]))
+    # A deal's own date can change the squad before this round is played (M13 Phase 7 item 25). The
+    # expiry runs here, before the eleven is read, so the round is played by the squad the contract
+    # book says the career holds — and a career that would fall below eleven with a keeper has the
+    # deal extended rather than the fixture refused. A local import for the same cycle `pay_wages`
+    # explains below.
+    from app.services.simulation.market import expire_contracts
+
+    expire_contracts(session, career, round_index=int(plan["round_index"]))
     home_id, away_id = (career.club_id or "", plan["opponent_team_id"]) if plan["side"] == "home" else (plan["opponent_team_id"], career.club_id or "")
     # The squad this career has at the start of this round — the club's stored rows with every transfer
     # made before it applied (spec §22). `None` until the market is used, which keeps a career that has
@@ -543,6 +556,15 @@ def play_round(session: Session, career: Career) -> tuple[CareerFixture, Simulat
     session.commit()
     session.refresh(fixture)
     session.refresh(career)
+    # The home round's gate is money the round earned (M13 Phase 7 item 27). It is written before the
+    # wage charge so that charge's stored `budget_after` includes it, which is the order the timeline
+    # reads; a local import for the same cycle `pay_wages` explains below.
+    from app.services.simulation.market import pay_gate_receipt, pay_upkeep
+
+    pay_gate_receipt(session, career, fixture=fixture)
+    # The round opened the ground, so it pays the ground's running cost before the wage charge is
+    # written; that charge's `budget_after` then includes both the gate and this cost (item 45).
+    pay_upkeep(session, career, fixture=fixture)
     # The round is played, so it leaves a trace: who was selected, at how many minutes (spec §20). This
     # is what the next round's condition is read from, and what makes a career's ninth fixture differ
     # from its first when nothing else about the squad changed.
@@ -1160,12 +1182,19 @@ def close_season(
         is_demo_data=True,
     )
     session.add(row)
-    # The boundary pays for the season it just closed (item 24), in the same transaction as the decision:
-    # a career either has its boundary and its money or has neither. The objectives it met are paid the
-    # same way (item 36), from the same verdicts the board prints. A local import for the same reason
-    # `play_round` has one — `market` reaches through `challenges`, which imports this module.
+    # The boundary is also where the career's clock retires players (item 28) and signs the youth intake:
+    # the row just added makes `closed` the number of seasons behind the career, which is the age offset
+    # the next season reads. Both write ledger rows for the coming season, so they are written *after* the
+    # boundary's money below and read a balance that already carries it — a retire row written first would
+    # store a running figure the timeline's own order then disagrees with. Local imports for the same
+    # reason `play_round` has one — `market` reaches through `challenges`, which imports this module.
+    from app.services.simulation.ageing import retire_at_boundary
+    from app.services.simulation.intake import youth_intake
     from app.services.simulation.market import pay_objective_bonuses, pay_season_grant
 
+    # The boundary pays for the season it just closed (item 24), in the same transaction as the decision:
+    # a career either has its boundary and its money or has neither. The objectives it met are paid the
+    # same way (item 36), from the same verdicts the board prints.
     pay_season_grant(
         session,
         career,
@@ -1182,6 +1211,17 @@ def close_season(
         round_index=int(last),
         objectives=objectives_of(career, record),
         verdict=str(decision["verdict"]),
+    )
+    # The award rows are pending until the flush; the retirement's own balance read must see them, or it
+    # stores the figure from before the board paid.
+    session.flush()
+    retirement = retire_at_boundary(session, career, round_index=int(last) + 1, closed=int(bounds["index"]))
+    youth_intake(
+        session,
+        career,
+        round_index=int(last) + 1,
+        season_rounds=int(bounds["rounds"]),
+        retired=list(retirement["retired"]),
     )
     if following is not None:
         career.competition_id = following.id
@@ -1214,8 +1254,8 @@ def seasons_view(
     bounds = bounds if bounds is not None else season_bounds(session, career, horizon=horizon, closed=closed)
     # One grant per closed season, keyed by the season it paid. A season with no row paid nothing — a
     # challenge's window is judged by its own reward — and the block says `None` rather than zero.
-    # The award table also holds objective bonuses (item 36); a season's grant block must read its own
-    # kind or another income would be printed as the board's judgment of the season.
+    # The award table also holds cup prizes (item 32) and objective bonuses (item 36); a season's grant
+    # block must read its own kind or another income would be printed as the board's judgment of the season.
     awards = awards_of(session, career.id)
     grants = {int(award.season_index): award for award in awards if str(award.kind) == "season_grant"}
     bonuses: dict[int, list[dict[str, Any]]] = {}
@@ -1414,15 +1454,68 @@ def _affordability(session: Session, career: Career) -> dict[str, Any]:
     return affordability_view(session, career)
 
 
+def _stadium(session: Session, career: Career) -> dict[str, Any]:
+    """The ground and its purchase history, read through the same cycle-safe local import."""
+    from app.services.simulation.market import stadium_view
+
+    return stadium_view(session, career)
+
+
+def _tickets(session: Session, career: Career) -> dict[str, Any]:
+    """The gate price and the demand it draws, read through the same cycle-safe local import."""
+    from app.services.simulation.market import ticket_price_view
+
+    return ticket_price_view(session, career)
+
+
+def _season_tickets(
+    session: Session,
+    career: Career,
+    *,
+    bounds: dict[str, Any] | None = None,
+    capacity: int | None = None,
+) -> dict[str, Any]:
+    """The season-ticket offer and its history, read through the same cycle-safe local import."""
+    from app.services.simulation.market import season_ticket_view
+
+    return season_ticket_view(session, career, bounds=bounds, capacity=capacity)
+
+
+def _training(session: Session, career: Career) -> dict[str, Any]:
+    """The training ground and its upgrade history, read through the same cycle-safe local import."""
+    from app.services.simulation.market import training_view
+
+    return training_view(session, career)
+
+
 def _contracts(session: Session, career: Career, *, horizon: dict[str, Any] | None = None) -> dict[str, Any]:
     """The deal book, read through the same local import for the same cycle reason as `_affordability`."""
     from app.services.simulation.market import contract_book
 
     horizon = horizon if horizon is not None else season_horizon(session, career)
-    return contract_book(session, career, season_rounds=int(horizon["rounds"]))
+    from app.services.simulation.ageing import closed_seasons
+
+    return contract_book(session, career, season_rounds=int(horizon["rounds"]), age_offset=closed_seasons(session, career))
 
 
-def _window(session: Session, career: Career, *, horizon: dict[str, Any] | None = None) -> dict[str, Any]:
+def _cup(session: Session, career: Career, *, bounds: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The career's cup run, read through a local import for the same cycle reason as `_contracts`.
+
+    The cup module reads this module's season arithmetic, so it cannot be imported at the top of the file
+    without a cycle; the block itself is a read, and the page needs it beside the league payload.
+    """
+    from app.services.simulation.cup import cup_view
+
+    return cup_view(session, career, bounds=bounds)
+
+
+def _window(
+    session: Session,
+    career: Career,
+    *,
+    horizon: dict[str, Any] | None = None,
+    rows: list[CareerFixture] | None = None,
+) -> dict[str, Any]:
     """The signing window state, read through the same local import for the same cycle reason as `_contracts`.
 
     The career payload is otherwise self-contained (board, affordability, contracts, next fixture); the window is
@@ -1430,7 +1523,8 @@ def _window(session: Session, career: Career, *, horizon: dict[str, Any] | None 
     """
     from app.services.simulation.market import transfer_window
 
-    return transfer_window(session, career, horizon=horizon)
+    stored_rounds = sorted({int(row.round_index) for row in rows}) if rows is not None else None
+    return transfer_window(session, career, horizon=horizon, stored_rounds=stored_rounds)
 
 
 def development_view(
@@ -1487,7 +1581,7 @@ def development_view(
         if player is None:
             continue
         training_units = training.get(player_id, 0)
-        effective = int(minutes) + int(round(TRAINING_MINUTES_PER_UNIT * training_units))
+        effective = int(minutes) + training_minutes(training_units, level=int(career.training_level or 0))
         summary = development_summary(minutes_played=effective, potential=player.potential, attributes=player.attributes)
         snapshot = latest_applied.get(player_id)
         developed.append(
@@ -1585,6 +1679,7 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
     # each table once here and hand the same rows to both, rather than let each block re-query them.
     appearance_rows = list(session.scalars(select(CareerAppearance).where(CareerAppearance.career_id == career.id).order_by(CareerAppearance.round_index)).all())
     training_all = training_loads(session, sorted({str(row.player_id) for row in appearance_rows}))
+    stadium = _stadium(session, career)
     view: dict[str, Any] = {
         "career": _career_brief(session, career),
         "record": record,
@@ -1599,8 +1694,13 @@ def career_view(session: Session, career: Career, *, include_fixtures: bool = Tr
         "development": development_view(session, career, appearances=appearance_rows, training=training_all),
         "academy": academy_view(session, career, appearances=appearance_rows, training=training_all),
         "affordability": _affordability(session, career),
+        "stadium": stadium,
+        "tickets": _tickets(session, career),
+        "season_tickets": _season_tickets(session, career, bounds=bounds, capacity=int(stadium["capacity"])),
+        "training": _training(session, career),
         "contracts": _contracts(session, career, horizon=horizon),
-        "window": _window(session, career, horizon=horizon),
+        "window": _window(session, career, horizon=horizon, rows=rows),
+        "cup": _cup(session, career, bounds=bounds),
         "model_versions": sorted({row.model_version for row in rows if row.model_version}),
         "limitations": limitations(),
         "disclaimer": CAREER_DISCLAIMER,

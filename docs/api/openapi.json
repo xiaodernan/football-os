@@ -4621,6 +4621,449 @@
         }
       }
     },
+    "/api/v1/careers/{ident}/cup": {
+      "post": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Play Cup",
+        "description": "Play the career's next cup tie with the engine, then re-derive everything the page shows.\n\nA tie is not a league round: it does not advance `rounds_played`, score points or close a season. It is\nthe world's own knockout bracket (item 32), and the career's result replaces the slot the world's\nsimulation filled. A run that is over, a cup the career is not entered in and a challenge career each\nanswer 409 with the sentence that says why rather than inventing a fixture.",
+        "operationId": "play_cup_api_v1_careers__ident__cup_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CupIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Play Cup Api V1 Careers  Ident  Cup Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/careers/{ident}/stadium": {
+      "post": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Build Stand",
+        "description": "Buy seats for this career's ground (M13 Phase 9 item 37).\n\nOne purchase at a time, priced and capped by the market's own rules, and written as a ledger row\nwhose `budget_after` the finance page can check. The whole career view comes back, because a stand\nchanges the balance, the timeline and the gate the next home round will read.",
+        "operationId": "build_stand_api_v1_careers__ident__stadium_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StadiumIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Build Stand Api V1 Careers  Ident  Stadium Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/careers/{ident}/tickets": {
+      "get": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Tickets",
+        "description": "The gate price this career has set and the demand and revenue it indexes (M13 Phase 10 item 44).",
+        "operationId": "tickets_api_v1_careers__ident__tickets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Tickets Api V1 Careers  Ident  Tickets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Price Tickets",
+        "description": "Set the gate price and answer with the whole career view the finance page reads.\n\nThe service owns the bounds and the step so the refusal names `bad_ticket_price` with the figures\nthat decided it, rather than a body-validation message the page cannot translate.",
+        "operationId": "price_tickets_api_v1_careers__ident__tickets_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketPriceIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Price Tickets Api V1 Careers  Ident  Tickets Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/careers/{ident}/season-tickets": {
+      "get": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Season Tickets",
+        "description": "This season's season-ticket offer, its price and every sale already made (item 46).",
+        "operationId": "season_tickets_api_v1_careers__ident__season_tickets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Season Tickets Api V1 Careers  Ident  Season Tickets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Sell Season Tickets",
+        "description": "Sell one season's allocation before its first round and answer with the sale and career view.",
+        "operationId": "sell_season_tickets_api_v1_careers__ident__season_tickets_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeasonTicketsIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Sell Season Tickets Api V1 Careers  Ident  Season Tickets Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/careers/{ident}/training": {
+      "get": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Training",
+        "description": "The training ground's level, its bonus and every upgrade already bought (item 47).",
+        "operationId": "training_api_v1_careers__ident__training_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Training Api V1 Careers  Ident  Training Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "career"
+        ],
+        "summary": "Build Training",
+        "description": "Buy levels for the training ground and answer with the rows, the new level and the career view.",
+        "operationId": "build_training_api_v1_careers__ident__training_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainingIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Build Training Api V1 Careers  Ident  Training Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/careers/{ident}/retire": {
       "post": {
         "tags": [
@@ -5619,6 +6062,65 @@
                 "schema": {
                   "type": "object",
                   "title": "Response Release Player Api V1 Transfers  Ident  Release Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transfers/{ident}/renew": {
+      "post": {
+        "tags": [
+          "transfers"
+        ],
+        "summary": "Renew Contract",
+        "description": "Extend one of this career's own deals at the quoted fee and wage, outside the signing windows.",
+        "operationId": "renew_contract_api_v1_transfers__ident__renew_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenewIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Renew Contract Api V1 Transfers  Ident  Renew Post"
                 }
               }
             }
@@ -15109,6 +15611,25 @@
         "title": "ConsentIn",
         "description": "A guardian's claim about one child, and the purposes it covers. There is no free-text field, on purpose.\n\n`scopes` is optional rather than defaulted to a list, because the two empty-looking cases mean different\nthings: leaving the field out takes the published default set, and sending `[]` is refused rather than\nread as a yes for three purposes nobody ticked."
       },
+      "CupIn": {
+        "properties": {
+          "cup": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cup"
+          }
+        },
+        "type": "object",
+        "title": "CupIn",
+        "description": "Which cup to play when a career is entered in more than one. Omitted, the first live run plays."
+      },
       "CurriculumIn": {
         "properties": {
           "name": {
@@ -16930,6 +17451,47 @@
         ],
         "title": "RegisterIn"
       },
+      "RenewIn": {
+        "properties": {
+          "player": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Player"
+          },
+          "years": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years"
+          },
+          "wage": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "player"
+        ],
+        "title": "RenewIn"
+      },
       "RoleIn": {
         "properties": {
           "email": {
@@ -17136,6 +17698,22 @@
         "type": "object",
         "title": "SearchIn",
         "description": "A sentence, stated fields, or both. Where both speak, both cuts apply and the response says so."
+      },
+      "SeasonTicketsIn": {
+        "properties": {
+          "seats": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Seats"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seats"
+        ],
+        "title": "SeasonTicketsIn",
+        "description": "How many seats to sell for this season before its first round."
       },
       "SessionIn": {
         "properties": {
@@ -17455,6 +18033,22 @@
         ],
         "title": "SquadIn"
       },
+      "StadiumIn": {
+        "properties": {
+          "seats": {
+            "type": "integer",
+            "maximum": 20000.0,
+            "minimum": 1.0,
+            "title": "Seats"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seats"
+        ],
+        "title": "StadiumIn",
+        "description": "How many seats to add to this career's ground in one purchase."
+      },
       "StartIn": {
         "properties": {
           "manager_name": {
@@ -17672,6 +18266,22 @@
         "type": "object",
         "title": "TeamPatchIn"
       },
+      "TicketPriceIn": {
+        "properties": {
+          "price_pct": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Price Pct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "price_pct"
+        ],
+        "title": "TicketPriceIn",
+        "description": "The manager's gate price as a percentage of the competition's own (100 leaves it unchanged)."
+      },
       "TokenPair": {
         "properties": {
           "access_token": {
@@ -17716,6 +18326,22 @@
         ],
         "title": "TraceListResponse",
         "description": "This account's stored orchestration runs, newest first."
+      },
+      "TrainingIn": {
+        "properties": {
+          "levels": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Levels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "levels"
+        ],
+        "title": "TrainingIn",
+        "description": "How many levels to buy for the training ground (bounded by the current level)."
       },
       "TransferSimIn": {
         "properties": {

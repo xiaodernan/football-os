@@ -216,3 +216,199 @@ class TestCeiling:
         sixth = auth_client.post(API, json=_body(club_id, manager_name="Manager 6"))
         assert sixth.status_code == 409
         assert sixth.json()["detail"]["message"].startswith("this account already has 5 of 5")
+
+
+class TestCupWire:
+    """A cup tie over HTTP (M13 Phase 8 item 32): the engine's result, the bracket, and the prize."""
+
+    def test_a_tie_is_played_over_the_wire_and_lands_in_the_cup_block(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        view = auth_client.post(API, json=_body(club_id)).json()
+        slug = view["career"]["slug"]
+        assert view["cup"]["available"] is True
+        run = view["cup"]["runs"][0]
+        assert run["status"] == "live" and run["next"]["stage"] == "Quarter-final"
+
+        response = auth_client.post(f"{API}/{slug}/cup", json={})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["played"] is True
+        assert body["tie"]["stage"] == "Quarter-final" and body["tie"]["side"] in ("home", "away")
+        assert body["match"]["digest"] == body["tie"]["digest"]
+        assert body["cup"]["totals"]["ties"] == 1
+        played = body["cup"]["runs"][0]["ties"][0]
+        assert played["digest"] == body["tie"]["digest"] and played["score"] == body["tie"]["score"]
+        assert body["career"]["rounds_played"] == 0, "a cup tie is not a league round"
+        assert body["affordability"]["received_cup"] == (played["prize"]["amount"] if played["prize"] else 0)
+        assert body["affordability"]["cup_rows"] == (1 if played["prize"] else 0)
+
+    def test_a_run_that_is_over_refuses_the_next_tie_and_says_why(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = auth_client.post(API, json=_body(club_id)).json()["career"]["slug"]
+        last = None
+        for _ in range(4):
+            last = auth_client.post(f"{API}/{slug}/cup", json={})
+            if last.status_code == 409:
+                break
+            assert last.status_code == 200, last.text
+        assert last is not None and last.status_code == 409
+        detail = last.json()["detail"]
+        assert detail["code"] == "cup_run_over"
+        assert detail["cup"]["totals"]["ties"] <= 3
+
+    def test_another_account_cannot_play_this_careers_cup(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = auth_client.post(API, json=_body(club_id)).json()["career"]["slug"]
+        with _signed_in() as other:
+            response = other.post(f"{API}/{slug}/cup", json={})
+        assert response.status_code == 404
+
+
+class TestStadiumWire:
+    """M13 Phase 9 item 37: a stand bought over HTTP lands in the ledger and the ground."""
+
+    def test_a_stand_is_priced_stored_and_read_back(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        view = auth_client.post(API, json=_body(club_id, budget=300_000)).json()
+        slug = view["career"]["slug"]
+        before = view["stadium"]
+        assert before["available"] is True and before["rows"] == 0
+
+        response = auth_client.post(f"{API}/{slug}/stadium", json={"seats": 500})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["built"] is True and body["work"]["seats"] == 500
+        assert body["work"]["amount"] == 500 * before["seat_cost"]
+        assert body["stadium"]["bought_seats"] == 500
+        assert body["stadium"]["spent"] == body["work"]["amount"]
+        assert body["affordability"]["remaining"] == 300_000 - body["work"]["amount"]
+        assert body["affordability"]["stadium_spent"] == body["work"]["amount"]
+        assert body["affordability"]["timeline"]["disagreements"] == 0
+        assert any(row["kind"] == "stadium" for row in body["affordability"]["timeline"]["rows"])
+
+        read = auth_client.get(f"{API}/{slug}").json()
+        assert read["stadium"]["gate_capacity"] == before["gate_capacity"] + 500
+        assert read["stadium"]["works"][0]["id"] == body["work"]["id"]
+
+    def test_a_stand_below_the_minimum_is_a_422_and_an_outsider_gets_a_404(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = auth_client.post(API, json=_body(club_id)).json()["career"]["slug"]
+        refused = auth_client.post(f"{API}/{slug}/stadium", json={"seats": 100})
+        assert refused.status_code == 422
+        assert refused.json()["detail"]["code"] == "bad_seats"
+        assert refused.json()["detail"]["min_seats"] == 500
+
+        with _signed_in() as other:
+            response = other.post(f"{API}/{slug}/stadium", json={"seats": 500})
+        assert response.status_code == 404
+
+
+class TestTicketsWire:
+    """M13 Phase 10 item 44: the gate price is set, stored and read back over HTTP."""
+
+    def test_a_price_is_set_priced_and_read_back(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        view = auth_client.post(API, json=_body(club_id, budget=300_000)).json()
+        slug = view["career"]["slug"]
+        assert view["tickets"]["price_pct"] == 100 and view["tickets"]["demand_pct"] == 100
+
+        response = auth_client.put(f"{API}/{slug}/tickets", json={"price_pct": 120})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["priced"] is True
+        assert body["tickets"]["price_pct"] == 120
+        assert body["tickets"]["demand_pct"] == 88
+        assert body["tickets"]["revenue_index"] == 106
+
+        read = auth_client.get(f"{API}/{slug}").json()
+        assert read["tickets"]["price_pct"] == 120
+        assert auth_client.get(f"{API}/{slug}/tickets").json() == body["tickets"]
+
+    def test_an_off_step_price_is_a_422_and_an_outsider_gets_a_404(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = auth_client.post(API, json=_body(club_id)).json()["career"]["slug"]
+        refused = auth_client.put(f"{API}/{slug}/tickets", json={"price_pct": 117})
+        assert refused.status_code == 422
+        assert refused.json()["detail"]["code"] == "bad_ticket_price"
+        assert refused.json()["detail"]["step_pct"] == 5
+
+        with _signed_in() as other:
+            response = other.put(f"{API}/{slug}/tickets", json={"price_pct": 120})
+        assert response.status_code == 404
+
+
+class TestSeasonTicketsWire:
+    """M13 Phase 10 item 46: a season's allocation is sold once, before the first round."""
+
+    def test_a_block_is_sold_and_read_back(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        view = auth_client.post(API, json=_body(club_id, budget=300_000)).json()
+        slug = view["career"]["slug"]
+        offer = auth_client.get(f"{API}/{slug}/season-tickets").json()
+        assert offer["available"] is True and offer["sold"] is None
+        seats = 1_000
+
+        response = auth_client.post(f"{API}/{slug}/season-tickets", json={"seats": seats})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["sold"] is True
+        assert body["sale"]["seats"] == seats
+        assert body["sale"]["unit_price"] == offer["unit_price"]
+        assert body["sale"]["amount"] == seats * offer["unit_price"]
+        assert body["season_tickets"]["sold"]["id"] == body["sale"]["id"]
+        assert body["season_tickets"]["income"] == body["sale"]["amount"]
+
+        read = auth_client.get(f"{API}/{slug}/season-tickets").json()
+        assert read["sold"]["id"] == body["sale"]["id"]
+        assert read["rows"][0]["amount"] == body["sale"]["amount"]
+        assert auth_client.get(f"{API}/{slug}").json()["season_tickets"]["sold"]["seats"] == seats
+
+    def test_an_off_step_block_is_a_422_and_a_second_sale_a_409(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = auth_client.post(API, json=_body(club_id)).json()["career"]["slug"]
+
+        refused = auth_client.post(f"{API}/{slug}/season-tickets", json={"seats": 150})
+        assert refused.status_code == 422
+        assert refused.json()["detail"]["code"] == "bad_season_ticket_seats"
+        assert refused.json()["detail"]["step_seats"] == 100
+
+        assert auth_client.post(f"{API}/{slug}/season-tickets", json={"seats": 500}).status_code == 200
+        again = auth_client.post(f"{API}/{slug}/season-tickets", json={"seats": 500})
+        assert again.status_code == 409
+        assert again.json()["detail"]["code"] == "season_tickets_already_sold"
+
+        with _signed_in() as other:
+            response = other.get(f"{API}/{slug}/season-tickets")
+        assert response.status_code == 404
+
+
+class TestTrainingWire:
+    """M13 Phase 11 item 47: a training-ground level is bought and read back over HTTP."""
+
+    def test_a_level_is_bought_and_read_back(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = auth_client.post(API, json=_body(club_id, budget=1_000_000)).json()["career"]["slug"]
+        offer = auth_client.get(f"{API}/{slug}/training").json()
+        assert offer["level"] == 0 and offer["next_level"] == 1
+        assert offer["next_cost"] == 150_000
+
+        response = auth_client.post(f"{API}/{slug}/training", json={"levels": 2})
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["built"] is True
+        assert [row["level_after"] for row in body["levels"]] == [1, 2]
+        assert [row["amount"] for row in body["levels"]] == [150_000, 300_000]
+        assert body["training"]["level"] == 2 and body["training"]["bonus_pct"] == 20
+        assert body["training"]["spent"] == 450_000
+        assert body["training"]["next_cost"] == 450_000
+
+        read = auth_client.get(f"{API}/{slug}/training").json()
+        assert read["level"] == 2 and len(read["rows"]) == 2
+        assert auth_client.get(f"{API}/{slug}").json()["training"]["level"] == 2
+
+    def test_a_zero_level_is_a_422_and_a_maxed_ground_a_409(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = auth_client.post(API, json=_body(club_id, budget=3_000_000)).json()["career"]["slug"]
+
+        refused = auth_client.post(f"{API}/{slug}/training", json={"levels": 0})
+        assert refused.status_code == 422
+        assert refused.json()["detail"]["code"] == "bad_training_levels"
+        assert refused.json()["detail"]["max_levels"] == 5
+
+        assert auth_client.post(f"{API}/{slug}/training", json={"levels": 5}).status_code == 200
+        again = auth_client.post(f"{API}/{slug}/training", json={"levels": 1})
+        assert again.status_code == 409
+        assert again.json()["detail"]["code"] == "training_maxed"
+
+        with _signed_in() as other:
+            response = other.get(f"{API}/{slug}/training")
+        assert response.status_code == 404

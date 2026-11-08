@@ -38,6 +38,7 @@ from app.services.simulation.market import (
     negotiate,
     open_market,
     release,
+    renew,
     sell,
     transferable,
 )
@@ -64,6 +65,12 @@ class LoanIn(BaseModel):
 
 class OutIn(BaseModel):
     player: str = Field(min_length=1, max_length=160)
+
+
+class RenewIn(BaseModel):
+    player: str = Field(min_length=1, max_length=160)
+    years: int | None = Field(default=None, ge=1, le=5)
+    wage: int | None = Field(default=None, ge=0, le=10_000_000)
 
 
 def _career(db: Session, user: User, ident: str) -> Career:
@@ -170,3 +177,15 @@ def release_player(ident: str, payload: OutIn, request: Request, db: Session = D
     except MarketRefusal as error:
         raise _refusal(error) from None
     return {"released": True, "move": move_row(move), "detail": detail, **market_view(db, career)}
+
+
+@router.post("/{ident}/renew")
+def renew_contract(ident: str, payload: RenewIn, request: Request, db: Session = Depends(get_db), user: User = Depends(current_user)) -> dict[str, Any]:
+    """Extend one of this career's own deals at the quoted fee and wage, outside the signing windows."""
+    limit(request, 20, 60, scope="transfer_renew")
+    career = _career(db, user, ident)
+    try:
+        move, detail = renew(db, career, ident=payload.player, years=payload.years, wage=payload.wage)
+    except MarketRefusal as error:
+        raise _refusal(error) from None
+    return {"renewed": True, "move": move_row(move), "detail": detail, **market_view(db, career)}

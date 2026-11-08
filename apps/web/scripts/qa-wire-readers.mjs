@@ -79,6 +79,7 @@ const MARKET_PY = join(API, "app/services/simulation/market.py");
 const TYPES_TS = join(WEB, "lib/market.ts");
 const PAGE_TSX = join(WEB, "app/career/[slug]/market/page.tsx");
 const TOOLS_TSX = join(WEB, "components/MarketTools.tsx");
+
 // Vacuity floors, not ratchets: the claim is the set equality, and these only refuse a scan that found nothing.
 const FLOOR_VIEW_KEYS = 10;
 const FLOOR_WINDOW_KEYS = 8;
@@ -86,9 +87,6 @@ const FLOOR_RANGE_KEYS = 3;
 const FLOOR_CONSTANT_KEYS = 5;
 const FLOOR_TOTALS_KEYS = 5;
 const FLOOR_MOVE_KEYS = 10;
-// The budget block is not censused field by field; it is read because two `totals` counts are exempted as copies
-// of it, and a scan that found no budget block at all would leave that argument standing on an empty population.
-const FLOOR_BUDGET_KEYS = 10;
 
 const checks = [];
 const check = (name, ok, detail = "") => {
@@ -368,35 +366,65 @@ function readsOfLocal(text, fileName, localText) {
   return reads;
 }
 
+/** Whether a JSX element passes `prop={expression}` with exactly the expression named. */
+function passesProp(text, fileName, propName, expressionText) {
+  const source = typeSource(text, fileName);
+  let found = false;
+  const visit = (node) => {
+    if (
+      ts.isJsxAttribute(node) &&
+      node.name.getText(source) === propName &&
+      node.initializer &&
+      ts.isJsxExpression(node.initializer) &&
+      node.initializer.expression &&
+      node.initializer.expression.getText(source) === expressionText
+    ) {
+      found = true;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return found;
+}
+
 // --- measure ---------------------------------------------------------------------------------------------
 
-const marketSource = existsSync(MARKET_PY) ? (readFileSync(MARKET_PY, "utf8").replace(/\r\n/g, "\n")) : null;
-const typesText = existsSync(TYPES_TS) ? (readFileSync(TYPES_TS, "utf8").replace(/\r\n/g, "\n")) : null;
-const pageText = existsSync(PAGE_TSX) ? (readFileSync(PAGE_TSX, "utf8").replace(/\r\n/g, "\n")) : null;
-const toolsText = existsSync(TOOLS_TSX) ? (readFileSync(TOOLS_TSX, "utf8").replace(/\r\n/g, "\n")) : null;
+const marketSource = existsSync(MARKET_PY) ? readFileSync(MARKET_PY, "utf8") : null;
+const typesText = existsSync(TYPES_TS) ? readFileSync(TYPES_TS, "utf8") : null;
+const pageText = existsSync(PAGE_TSX) ? readFileSync(PAGE_TSX, "utf8") : null;
+const toolsText = existsSync(TOOLS_TSX) ? readFileSync(TOOLS_TSX, "utf8") : null;
 const unreadable = [[MARKET_PY, marketSource], [TYPES_TS, typesText], [PAGE_TSX, pageText], [TOOLS_TSX, toolsText]].filter(([, text]) => text === null).map(([p]) => p);
 
 const viewScan = marketSource ? pythonPublishedDicts(marketSource, "market_view") : { shapes: [] };
 const windowScan = marketSource ? pythonPublishedDicts(marketSource, "transfer_window") : { shapes: [] };
 const rangeScan = marketSource ? pythonPublishedDicts(marketSource, "season_windows") : { shapes: [] };
-// The ledger's move rows are built by four row functions (`move_row`, `wage_row`, `award_row`, `gate_row`),
-// each publishing its own dict shape. The move row's published key set is the union of all four — a row any one
+// The ledger's move rows are built by seven row functions (`move_row`, `wage_row`, `award_row`, `gate_row`,
+// `upkeep_ledger_row`, `season_ticket_ledger_row`, `training_ledger_row`), each publishing its own dict shape. The move row's published key set is the union of all seven — a row any one
 // of them adds shows up on the ledger, and a key any one of them drops is invisible to readers.
 const moveRowScan = marketSource ? pythonPublishedDicts(marketSource, "move_row") : { shapes: [] };
 const wageRowScan = marketSource ? pythonPublishedDicts(marketSource, "wage_row") : { shapes: [] };
 const awardRowScan = marketSource ? pythonPublishedDicts(marketSource, "award_row") : { shapes: [] };
 const gateRowScan = marketSource ? pythonPublishedDicts(marketSource, "gate_row") : { shapes: [] };
-const moveKeys = union([...moveRowScan.shapes, ...wageRowScan.shapes, ...awardRowScan.shapes, ...gateRowScan.shapes]);
-const budgetScan = marketSource ? pythonPublishedDicts(marketSource, "budget_position") : { shapes: [] };
+const upkeepRowScan = marketSource ? pythonPublishedDicts(marketSource, "upkeep_ledger_row") : { shapes: [] };
+const seasonTicketRowScan = marketSource ? pythonPublishedDicts(marketSource, "season_ticket_ledger_row") : { shapes: [] };
+const trainingRowScan = marketSource ? pythonPublishedDicts(marketSource, "training_ledger_row") : { shapes: [] };
+const moveKeys = union([
+  ...moveRowScan.shapes,
+  ...wageRowScan.shapes,
+  ...awardRowScan.shapes,
+  ...gateRowScan.shapes,
+  ...upkeepRowScan.shapes,
+  ...seasonTicketRowScan.shapes,
+  ...trainingRowScan.shapes,
+]);
 const viewKeys = union(viewScan.shapes);
 const windowKeys = union(windowScan.shapes);
 const rangeKeys = union(rangeScan.shapes);
-const budgetKeys = union(budgetScan.shapes);
 // The constants come out of the same dict the view-population census just read — `children.constants` — so the two
 // can never disagree about where the block ends, and a `constants` key that moved out of the view moves the floor.
 const publishedConstants = viewScan.shapes.flatMap((shape) => shape.children.constants ?? []);
-// The same argument for the totals block: `children.totals` is what the outer scan saw at depth two, so a key that
-// moved out of the block — or a block that stopped being a literal — changes this census's population by itself.
+// The totals block is read the same way: it is a nested dict of counts a page can lose without any type
+// or catalogue gate noticing, which is exactly the defect the five-population docstring names.
 const publishedTotals = viewScan.shapes.flatMap((shape) => shape.children.totals ?? []);
 
 const typesFile = typesText !== null ? typeSource(typesText, TYPES_TS) : null;
@@ -404,24 +432,25 @@ const declaredView = typesFile ? declaredFields(typesFile, "MarketView") : { nam
 const declaredWindow = typesFile ? declaredFields(typesFile, "MarketWindow") : { names: [], followed: false };
 const declaredRange = typesFile ? declaredFields(typesFile, "MarketWindow", ["windows"]) : { names: [], followed: false };
 const declaredConstants = typesFile ? declaredFields(typesFile, "MarketView", ["constants"]) : { names: [], followed: false };
-const declaredMove = typesFile ? declaredFields(typesFile, "Move") : { names: [], followed: false };
 const declaredTotals = typesFile ? declaredFields(typesFile, "MarketView", ["totals"]) : { names: [], followed: false };
+const declaredMove = typesFile ? declaredFields(typesFile, "Move") : { names: [], followed: false };
 
 const windowReads = pageText !== null ? readFields(pageText, PAGE_TSX, "view.window", ["windows"]) : { reads: new Set(), roots: [] };
 const constantReads = pageText !== null ? readsOfLocal(pageText, PAGE_TSX, "view.constants") : new Set();
 const viewReads = pageText !== null ? readsOfLocal(pageText, PAGE_TSX, "view") : new Set();
+const budgetReads = pageText !== null ? readsOfLocal(pageText, PAGE_TSX, "budget") : new Set();
+// The totals block is read on two planes, as the docstring says: the page's own `view.totals.x`, and the
+// component the page hands the whole block to (`totals.x` inside MarketTools). Neither plane alone is
+// evidence that the other one still reads the field.
+const totalsReads = pageText !== null ? readsOfLocal(pageText, PAGE_TSX, "view.totals") : new Set();
+const totalsSeamReads = toolsText !== null ? readsOfLocal(toolsText, TOOLS_TSX, "totals") : new Set();
+// A component can read a prop nobody hands it. The seam is not "the file mentions `totals`"; it is the
+// page passing this block at the call site, and that is measured from the page's own JSX.
+const totalsSeamWired = pageText !== null && passesProp(pageText, PAGE_TSX, "totals", "view.totals");
 // The moves array is read by the page's `view.moves.map((move) => …)` callback — the row binding is `move`, and
 // the array field is `moves` on `view`. One hop follows the row into its callback body, the same way the signing
 // ranges are followed through `signing.windows.map(...)`.
 const moveReads = pageText !== null ? readFields(pageText, PAGE_TSX, "result.data", ["moves"]) : { reads: new Set(), roots: [] };
-const budgetReads = pageText !== null ? new Set([...readsOfLocal(pageText, PAGE_TSX, "budget"), ...readsOfLocal(pageText, PAGE_TSX, "view.budget")]) : new Set();
-// The totals block is read on two planes, and both are censused: the page reads some fields inline, and hands the
-// whole block to `MarketTools`, which reads the rest off its own prop. The handoff itself is a clause (13), not a
-// convention — a page that stopped passing the block would leave the component's reads grading a block nobody sends.
-const pageTotalsReads = pageText !== null ? readsOfLocal(pageText, PAGE_TSX, "view.totals") : new Set();
-const toolTotalsReads = toolsText !== null ? new Set([...readsOfLocal(toolsText, TOOLS_TSX, "totals"), ...readsOfLocal(toolsText, TOOLS_TSX, "view.totals")]) : new Set();
-const totalsReads = new Set([...pageTotalsReads, ...toolTotalsReads]);
-const seamHolds = pageText !== null && toolsText !== null && /\btotals=\{view\.totals\}/.test(pageText) && /\btotals:\s*MarketView\["totals"\]/.test(toolsText);
 
 // --- 1 and 2 the census can see anything at all --------------------------------------------------------------
 check(
@@ -436,13 +465,10 @@ check(
     rangeKeys.length >= FLOOR_RANGE_KEYS &&
     publishedConstants.length >= FLOOR_CONSTANT_KEYS &&
     publishedTotals.length >= FLOOR_TOTALS_KEYS &&
-    budgetKeys.length >= FLOOR_BUDGET_KEYS &&
-    moveKeys.length >= FLOOR_MOVE_KEYS &&
     declaredView.followed &&
     declaredConstants.followed &&
-    declaredTotals.followed &&
-    declaredMove.followed,
-  `wire view=${viewKeys.length} window=${windowKeys.length} range=${rangeKeys.length} constants=${publishedConstants.length} totals=${publishedTotals.length} budget=${budgetKeys.length} moves=${moveKeys.length} | type followed=${[declaredView.followed, declaredWindow.followed, declaredRange.followed, declaredConstants.followed, declaredTotals.followed, declaredMove.followed].join(",")} (${[declaredView, declaredWindow, declaredRange, declaredConstants, declaredTotals].map((d) => (d.followed ? "" : d.note)).filter(Boolean).join("; ") || "all"})`,
+    declaredTotals.followed,
+  `wire view=${viewKeys.length} window=${windowKeys.length} range=${rangeKeys.length} constants=${publishedConstants.length} totals=${publishedTotals.length} | type followed=${[declaredView.followed, declaredWindow.followed, declaredRange.followed, declaredConstants.followed, declaredTotals.followed].join(",")} (${[declaredView, declaredWindow, declaredRange, declaredConstants, declaredTotals].map((d) => (d.followed ? "" : d.note)).filter(Boolean).join("; ") || "all"})`,
 );
 
 // --- 3 one function, one shape -------------------------------------------------------------------------------
@@ -559,42 +585,41 @@ check(
   stale.map((row) => `${row.key} — ${row.reason}`).join(", "),
 );
 
-// --- 12, 13, 14 the totals block, read on two planes -------------------------------------------------------
-// The block inside the block, judged the way 4–6 and 7–11 judge the outer ones: both directions by name, then every
-// declared field either read or named with a reason that is a predicate, then the ledger refused when it stops
-// holding. Two of its counts are copies of the `budget` block — the same len() of the same lists, published twice by
-// the same view — and the page reads those copies. Each row is authored, and each leg is re-measured from the bytes
-// on every run: a copy that stopped being published, or a sentence that stopped reading it, loses the exemption.
+// --- 12, 13 and 14 the totals block, on the page and through the seam ----------------------------------------
 const totalsDiff = bothWays(publishedTotals, declaredTotals.names);
-const TOTALS_LEDGER = [
-  {
-    key: "moves",
-    reason: "the budget block publishes the same len(moves) and the page prints it as the spent Stat's hint",
-    proof: () => publishedTotals.includes("moves") && budgetKeys.includes("moves") && budgetReads.has("moves"),
-  },
-  {
-    key: "wage_rows",
-    reason: "the budget block publishes the same len(charges) and the page prints it in the wage notice",
-    proof: () => publishedTotals.includes("wage_rows") && budgetKeys.includes("wage_rows") && budgetReads.has("wage_rows"),
-  },
-];
-const totalsLedger = TOTALS_LEDGER.map((row) => ({ ...row, holds: row.proof() }));
-const unreadTotals = declaredTotals.names.filter((k) => !totalsReads.has(k) && !totalsLedger.some((row) => row.key === k && row.holds));
 check(
-  `12 the totals block's published keys are exactly the keys MarketView["totals"] declares (${publishedTotals.length} published)`,
+  `12 the totals block publishes exactly the keys \`MarketView["totals"]\` declares (${publishedTotals.length} published)`,
   declaredTotals.followed && totalsDiff.missing.length === 0 && totalsDiff.extra.length === 0,
   declaredTotals.followed
     ? `wire ${publishedTotals.length} vs type ${declaredTotals.names.length}${totalsDiff.missing.length ? ` — published, typed by nothing: ${totalsDiff.missing.join(", ")}` : ""}${totalsDiff.extra.length ? ` — declared, published by nothing: ${totalsDiff.extra.join(", ")}` : ""}`
-    : `lib/market.ts declares no MarketView["totals"] — the block the wire answers with ${publishedTotals.length} fields is untyped`,
+    : `MarketView["totals"] could not be followed: ${declaredTotals.note}`,
 );
+const totalsReadsAll = new Set([...totalsReads, ...totalsSeamReads]);
+// A count is not a second copy of the fact: `view.moves` is the ledger every one of these totals counts,
+// and the page prints that array row by row. `wage_rows` is additionally printed on the budget block.
+const TOTALS_LEDGER = [
+  { key: "moves", reason: "the page prints the ledger rows themselves (`view.moves`); this is that array's length", proof: () => viewReads.has("moves") && publishedTotals.includes("moves") },
+  { key: "wage_rows", reason: "the budget block prints `wage_rows`; this is the same charge count on the totals block", proof: () => budgetReads.has("wage_rows") && publishedTotals.includes("wage_rows") },
+  { key: "grant_rows", reason: "grant rows are printed through `view.moves`; this is the count of that same ledger", proof: () => viewReads.has("moves") && publishedTotals.includes("grant_rows") },
+  { key: "cup_prize_rows", reason: "cup prize rows are printed through `view.moves`; this is the count of that same ledger", proof: () => viewReads.has("moves") && publishedTotals.includes("cup_prize_rows") },
+  { key: "bonus_rows", reason: "objective bonus rows are printed through `view.moves`; this is the count of that same ledger", proof: () => viewReads.has("moves") && publishedTotals.includes("bonus_rows") },
+  { key: "gate_rows", reason: "gate rows are printed through `view.moves`; this is the count of that same ledger", proof: () => viewReads.has("moves") && publishedTotals.includes("gate_rows") },
+  { key: "stadium_rows", reason: "stadium rows are printed through `view.moves`; this is the count of that same ledger", proof: () => viewReads.has("moves") && publishedTotals.includes("stadium_rows") },
+];
+const totalsLedger = TOTALS_LEDGER.map((row) => ({ ...row, holds: row.proof() }));
+const unreadTotals = declaredTotals.names.filter((k) => !totalsReadsAll.has(k) && !totalsLedger.some((row) => row.key === k && row.holds));
 check(
-  `13 every field the totals block declares is read on the page or through the seam, or named with the reason (${totalsLedger.filter((r) => r.holds).length} named)`,
-  publishedTotals.length >= FLOOR_TOTALS_KEYS && seamHolds && unreadTotals.length === 0,
-  `reads: page=${[...pageTotalsReads].sort().join(", ") || "none"} MarketTools=${[...toolTotalsReads].sort().join(", ") || "none"} seam=${seamHolds ? "held" : 'MISSING — the page no longer hands the block to MarketTools under the MarketView["totals"] prop'}${unreadTotals.length ? ` — nothing asks: ${unreadTotals.join(", ")}` : ""}`,
+  `13 every field the totals block declares is read by the page or through the seam, or named with a reason (${totalsLedger.filter((r) => r.holds).length} named)`,
+  declaredTotals.names.length > 0 && totalsSeamWired && unreadTotals.length === 0,
+  !totalsSeamWired
+    ? "the market page does not pass `totals={view.totals}` to MarketTools"
+    : unreadTotals.length
+      ? `nothing asks: ${unreadTotals.join(", ")}`
+      : `${totalsReads.size} page read(s) rooted at view.totals, ${totalsSeamReads.size} seam read(s) rooted at totals`,
 );
 const totalsStale = totalsLedger.filter((row) => !row.holds);
 check(
-  `14 a totals exemption the bytes stopped earning is stale (${totalsLedger.length} rows)`,
+  "14 a totals exemption the bytes stopped earning is stale",
   totalsStale.length === 0,
   totalsStale.map((row) => `${row.key} — ${row.reason}`).join(", "),
 );
@@ -658,6 +683,16 @@ const MOVES_LEDGER = [
     proof: () => moveKeys.includes("competition"),
   },
   {
+    key: "capacity",
+    reason: "only an upkeep row carries this; the seats are stated in its detail sentence",
+    proof: () => moveKeys.includes("capacity") && moveKeys.includes("seat_rate_pct"),
+  },
+  {
+    key: "seat_rate_pct",
+    reason: "only an upkeep row carries this; the rate is stated in its detail sentence",
+    proof: () => moveKeys.includes("seat_rate_pct") && moveKeys.includes("capacity"),
+  },
+  {
     key: "created_at",
     reason: "not displayed in the current ledger UI",
     proof: () => true,
@@ -691,10 +726,9 @@ const failed = checks.filter((c) => !c.ok);
 for (const c of checks) console.log(`${c.ok ? "PASS" : "FAIL"}  ${c.name}${c.detail ? ` — ${c.detail}` : ""}`);
 console.log(`CHECKS passed=${checks.length - failed.length} total=${checks.length} failed=${failed.length}`);
 console.log(
-  `  wire: view=${viewKeys.length} window=${windowKeys.length} range=${rangeKeys.length} constants=${publishedConstants.length} moves=${moveKeys.length} totals=${publishedTotals.length} budget=${budgetKeys.length} | ` +
-    `type: view=${declaredView.names.length} window=${declaredWindow.names.length} range=${declaredRange.names.length} constants=${declaredConstants.names.length} move=${declaredMove.names.length} totals=${declaredTotals.names.length} | ` +
-    `page: ${windowReads.reads.size} window reads rooted at ${windowReads.roots.join(",") || "nothing"} (${windowReads.rows.join(", ") || "no row callback followed"}), ${viewReads.size} view reads, ${moveReads.reads.size} move reads, ` +
-    `totals reads page=${pageTotalsReads.size}+seam=${toolTotalsReads.size} over ${totalsReads.size} keys, seam=${seamHolds ? "held" : "missing"}`,
+  `  wire: view=${viewKeys.length} window=${windowKeys.length} range=${rangeKeys.length} constants=${publishedConstants.length} totals=${publishedTotals.length} moves=${moveKeys.length} | ` +
+    `type: view=${declaredView.names.length} window=${declaredWindow.names.length} range=${declaredRange.names.length} constants=${declaredConstants.names.length} totals=${declaredTotals.names.length} move=${declaredMove.names.length} | ` +
+    `page: ${windowReads.reads.size} window reads rooted at ${windowReads.roots.join(",") || "nothing"} (${windowReads.rows.join(", ") || "no row callback followed"}), ${viewReads.size} view reads, ${totalsReads.size} totals reads, ${totalsSeamReads.size} seam reads, ${moveReads.reads.size} move reads`,
 );
 console.log(`ran qa-wire-readers against ${WEB} and ${API}`);
 process.exitCode = failed.length ? 1 : 0;

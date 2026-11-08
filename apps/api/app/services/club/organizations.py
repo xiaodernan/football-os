@@ -18,6 +18,7 @@ the truth, and `access_problems()` reports any divergence instead of quietly tru
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any, Final
 
 from sqlalchemy import func, inspect, select, update
@@ -37,6 +38,10 @@ MAX_SQUAD_PER_TEAM: Final = 40
 NAME_MAX: Final = 160
 TEAM_NAME_MAX: Final = 120
 NOTE_MAX: Final = 240
+
+#: "the caller did not pass this pre-fetched" — distinct from "passed it and it is None", which a batched read
+#: legitimately produces for a team with no world club behind it.
+_UNSET: Final = object()
 
 KINDS: Final = ("academy", "club", "school", "scout_desk")
 VISIBILITY_DEFAULTS: Final = ("members", "staff", "private")
@@ -171,8 +176,9 @@ def resolve_team(session: Session, organization: Organization, ident: str) -> Cl
     return _team(session, organization, ident)
 
 
-def _member_row(session: Session, member: OrganizationMember) -> dict[str, Any]:
-    person = session.get(User, member.user_id)
+def _member_row(session: Session, member: OrganizationMember, *, person: Any = _UNSET) -> dict[str, Any]:
+    if person is _UNSET:
+        person = session.get(User, member.user_id)
     return {
         "id": member.id,
         "role": member.role,
@@ -208,11 +214,26 @@ def _teams_of(session: Session, organization_id: str) -> list[ClubTeam]:
     return list(session.scalars(select(ClubTeam).where(ClubTeam.organization_id == organization_id).order_by(ClubTeam.name)))
 
 
-def team_view(session: Session, team: ClubTeam) -> dict[str, Any]:
-    squad = list(session.scalars(select(ClubTeamMember).where(ClubTeamMember.team_id == team.id).order_by(ClubTeamMember.created_at, ClubTeamMember.id)))
+def team_view(
+    session: Session,
+    team: ClubTeam,
+    *,
+    squad: Sequence[ClubTeamMember] | None = None,
+    players: dict[str, RealPlayer] | None = None,
+    world: Any = _UNSET,
+) -> dict[str, Any]:
+    """The sheet as one team reads it.
+
+    The three pre-fetched arguments exist for the tenant read, which composes every sheet at once: without
+    them a two-team tenant with twenty players on the sheets asked the database once per row (and once per
+    team for its world club), which the read measured at 32 statements. Passing them changes nothing the
+    response says — the same rows, read once.
+    """
+    if squad is None:
+        squad = list(session.scalars(select(ClubTeamMember).where(ClubTeamMember.team_id == team.id).order_by(ClubTeamMember.created_at, ClubTeamMember.id)))
     rows = []
     for item in squad:
-        player = session.get(RealPlayer, item.player_id)
+        player = players.get(item.player_id) if players is not None else session.get(RealPlayer, item.player_id)
         if player is None:  # pragma: no cover - the foreign key cascades, so this is a guard, not a path
             continue
         rows.append(
@@ -230,7 +251,8 @@ def team_view(session: Session, team: ClubTeam) -> dict[str, Any]:
                 "added_at": item.created_at.isoformat() if item.created_at else None,
             }
         )
-    world = session.get(WorldTeam, team.world_team_id) if team.world_team_id else None
+    if world is _UNSET:
+        world = session.get(WorldTeam, team.world_team_id) if team.world_team_id else None
     return {
         "id": team.id,
         "name": team.name,
@@ -264,6 +286,33 @@ def organization_view(session: Session, organization: Organization, user: User, 
         raise ClubRefusal("no_such_organization", f"no organisation of yours answers to {str(ident)!r}", ident=str(ident))
     teams = _teams_of(session, organization.id)
     members = list(session.scalars(select(OrganizationMember).where(OrganizationMember.organization_id == organization.id).order_by(OrganizationMember.role, OrganizationMember.created_at)))
+    # The tenant read composes staff, sheets and ratings in fixed queries: members' accounts, every sheet row,
+    # every player on a sheet and every world club named by a team are each read once and handed to the row
+    # builders, so a tenant's query count follows its tables, not its people.
+    people = (
+        {person.id: person for person in session.scalars(select(User).where(User.id.in_({member.user_id for member in members})))}
+        if members
+        else {}
+    )
+    squad_rows = (
+        list(
+            session.scalars(
+                select(ClubTeamMember).where(ClubTeamMember.team_id.in_({team.id for team in teams})).order_by(ClubTeamMember.created_at, ClubTeamMember.id)
+            )
+        )
+        if teams
+        else []
+    )
+    squads: dict[str, list[ClubTeamMember]] = {team.id: [] for team in teams}
+    for item in squad_rows:
+        squads.setdefault(item.team_id, []).append(item)
+    players = (
+        {player.id: player for player in session.scalars(select(RealPlayer).where(RealPlayer.id.in_({item.player_id for item in squad_rows})))}
+        if squad_rows
+        else {}
+    )
+    world_ids = {team.world_team_id for team in teams if team.world_team_id}
+    worlds = {world.id: world for world in session.scalars(select(WorldTeam).where(WorldTeam.id.in_(world_ids)))} if world_ids else {}
     return {
         "organization": {
             "id": organization.id,
@@ -277,17 +326,26 @@ def organization_view(session: Session, organization: Organization, user: User, 
             "created_at": organization.created_at.isoformat() if organization.created_at else None,
         },
         "my_grant": access.grant(membership.role, membership.status),
-        "members": [_member_row(session, member) for member in members],
+        "members": [_member_row(session, member, person=people.get(member.user_id)) for member in members],
         "counts": {
-            "active_members": _count_members(session, organization.id, "active"),
-            "invited_members": _count_members(session, organization.id, "invited"),
-            "owners": len(_owners(session, organization.id)),
+            "active_members": sum(1 for member in members if member.status == "active"),
+            "invited_members": sum(1 for member in members if member.status == "invited"),
+            "owners": sum(1 for member in members if member.role == "owner" and member.status == "active"),
             "teams": len(teams),
-            "players_on_sheets": sum(int(session.scalar(select(func.count()).select_from(ClubTeamMember).where(ClubTeamMember.team_id == team.id)) or 0) for team in teams),
+            "players_on_sheets": len(squad_rows),
             "member_limit": MAX_MEMBERS_PER_ORGANIZATION,
             "team_limit": MAX_TEAMS_PER_ORGANIZATION,
         },
-        "teams": [team_view(session, team) for team in teams],
+        "teams": [
+            team_view(
+                session,
+                team,
+                squad=squads.get(team.id, []),
+                players=players,
+                world=worlds.get(team.world_team_id) if team.world_team_id else None,
+            )
+            for team in teams
+        ],
         "rules": rules(),
         "limitations": limitations(),
         "isolation_rule": access.matrix()["rule"],
@@ -346,27 +404,49 @@ def my_organizations(session: Session, user: User) -> dict[str, Any]:
     clicked, because `organization_view()` refuses exactly the same row. A listing and a read must agree.
     """
     rows = list(
-        session.scalars(
-            select(Organization)
+        session.execute(
+            select(Organization, OrganizationMember)
             .join(OrganizationMember, OrganizationMember.organization_id == Organization.id)
             .where(OrganizationMember.user_id == user.id, OrganizationMember.status == "active")
             .order_by(Organization.name)
-        )
+        ).all()
+    )
+    organization_ids = [organization.id for organization, _ in rows]
+    # Two grouped reads over every listed tenant, rather than two reads per tenant: a listing whose query
+    # count follows the number of cards is the same defect the tenant read had, one level up.
+    active_counts: dict[str, int] = (
+        {
+            str(organization_id): int(count)
+            for organization_id, count in session.execute(
+                select(OrganizationMember.organization_id, func.count())
+                .where(OrganizationMember.organization_id.in_(organization_ids), OrganizationMember.status == "active")
+                .group_by(OrganizationMember.organization_id)
+            ).all()
+        }
+        if organization_ids
+        else {}
+    )
+    team_counts: dict[str, int] = (
+        {
+            str(organization_id): int(count)
+            for organization_id, count in session.execute(
+                select(ClubTeam.organization_id, func.count()).where(ClubTeam.organization_id.in_(organization_ids)).group_by(ClubTeam.organization_id)
+            ).all()
+        }
+        if organization_ids
+        else {}
     )
     items: list[dict[str, Any]] = []
-    for organization in rows:
-        # One lookup per tenant, not two: the membership is what the listing's role and status come from,
-        # and the row is guaranteed by the join above even though its type does not say so.
-        membership = membership_of(session, organization, user)
+    for organization, membership in rows:
         items.append(
             {
                 "slug": organization.slug,
                 "name": organization.name,
                 "kind": organization.kind,
-                "role": membership.role if membership else "",
-                "status": membership.status if membership else "",
-                "active_members": _count_members(session, organization.id),
-                "teams": len(_teams_of(session, organization.id)),
+                "role": membership.role,
+                "status": membership.status,
+                "active_members": int(active_counts.get(organization.id, 0)),
+                "teams": int(team_counts.get(organization.id, 0)),
                 "path": f"/club/{organization.slug}",
             }
         )
@@ -503,9 +583,11 @@ def invite_member(session: Session, user: User, ident: str, *, email: str, role:
 
 def my_invitations(session: Session, user: User) -> dict[str, Any]:
     rows = list(session.scalars(select(OrganizationMember).where(OrganizationMember.user_id == user.id, OrganizationMember.status == "invited")))
+    tenant_ids = {member.organization_id for member in rows}
+    tenants = {tenant.id: tenant for tenant in session.scalars(select(Organization).where(Organization.id.in_(tenant_ids)))} if tenant_ids else {}
     items: list[dict[str, Any]] = []
     for member in rows:
-        tenant = session.get(Organization, member.organization_id)
+        tenant = tenants.get(member.organization_id)
         items.append(
             {
                 "membership": member.id,

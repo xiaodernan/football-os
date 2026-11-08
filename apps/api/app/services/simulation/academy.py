@@ -29,6 +29,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Career, CareerAppearance, RealPlayer, Team
+from app.services.simulation.ageing import closed_seasons
 from app.services.simulation.carry_over import training_loads
 from app.services.simulation.development import (
     DEVELOPMENT_RATE,
@@ -47,7 +48,8 @@ YOUTH_AGE_MAX: Final = 21
 ACADEMY_FORMULA: Final = (
     "graduation is the engine's own selection read forward: the formation picks the eleven from the "
     "career's current squad by band, best overall first (slug breaks ties) — the career's developed "
-    "overall where a development row applies, the stored overall otherwise; a trainee at or "
+    "overall where a development row applies, the stored overall otherwise; a trainee's age is the "
+    "stored age plus the seasons this career has closed, and a trainee at or "
     "under the age ceiling is `selected` in that eleven, `next_in_line` as the first reserve of his "
     "band (band rank = seats + 1), otherwise `off_the_pace` at his band rank. `projected_overall` "
     "applies the development curve to the stored overall toward the stored potential over "
@@ -55,6 +57,64 @@ ACADEMY_FORMULA: Final = (
 )
 
 VERDICTS: Final = ("selected", "next_in_line", "off_the_pace")
+
+
+def _eleven_context(
+    session: Session,
+    career: Career,
+    squad: Sequence[RealPlayer],
+    *,
+    ratings: Mapping[str, float] | None = None,
+) -> tuple[str, set[str], dict[str, int]]:
+    """The formation, the eleven it would pick from `squad`, and how many seats each band holds.
+
+    One place so the academy page and the boundary intake judge a candidate against the same eleven:
+    a promotion that the page would call `off_the_pace` must not be the one the intake signs.
+    """
+    team = session.get(Team, career.club_id)
+    if career.system_slug:
+        system = system_by_slug(career.system_slug)
+        if system is None:
+            raise LookupError(f"no tactical system {career.system_slug}")
+        formation = system.formation
+    else:
+        formation = team.formation if team is not None else ""
+    defenders, midfielders, attackers = split_formation(formation)
+    bands = select_starting_xi(squad, defenders, midfielders, attackers, ratings)
+    eleven = [player for group in bands.values() for player in group]
+    selected_ids = {player.id for player in eleven}
+    seats_per_band: dict[str, int] = {}
+    for player in eleven:
+        band = band_of_position(player.position)
+        seats_per_band[band] = seats_per_band.get(band, 0) + 1
+    return formation, selected_ids, seats_per_band
+
+
+def judge_candidates(
+    session: Session,
+    career: Career,
+    squad: Sequence[RealPlayer],
+    candidates: Sequence[RealPlayer],
+    *,
+    ratings: Mapping[str, float] | None = None,
+) -> list[dict[str, Any]]:
+    """Judge a pool of outside players by the academy's own ranks against the club's eleven.
+
+    The candidates are appended to the squad for the ranking only: `academy_class` orders each band by
+    rating, so a candidate's `selected` / `next_in_line` verdict is measured against the players this
+    career actually has, not against the other candidates. Only candidate rows are returned.
+    """
+    _formation, selected_ids, seats_per_band = _eleven_context(session, career, squad, ratings=ratings)
+    judged = academy_class(
+        [*squad, *candidates],
+        selected_ids=selected_ids,
+        seats_per_band=seats_per_band,
+        loads={},
+        ratings=ratings,
+        age_offset=closed_seasons(session, career),
+    )
+    wanted = {player.id for player in candidates}
+    return [row for row in judged if row["player_id"] in wanted]
 
 
 def academy_class(
@@ -65,6 +125,7 @@ def academy_class(
     loads: Mapping[str, tuple[int, int]],
     ratings: Mapping[str, float] | None = None,
     youth_age_max: int = YOUTH_AGE_MAX,
+    age_offset: int = 0,
 ) -> list[dict[str, Any]]:
     """The youth class judged against the eleven, one row per trainee.
 
@@ -97,7 +158,8 @@ def academy_class(
 
     rows: list[dict[str, Any]] = []
     for player in squad:
-        if int(player.age) > youth_age_max:
+        age = int(player.age) + max(0, int(age_offset))
+        if age > youth_age_max:
             continue
         band = band_of_position(player.position)
         minutes, training_units = loads.get(player.id, (0, 0))
@@ -120,7 +182,7 @@ def academy_class(
                 "player_name": player.name,
                 "position": player.position,
                 "band": band,
-                "age": int(player.age),
+                "age": age,
                 "stored_overall": int(player.overall),
                 "stored_potential": int(player.potential),
                 "minutes": int(minutes),
@@ -170,24 +232,17 @@ def academy_view(
         squad = [*squad, *(player for player in overlay.added if player.id not in present)]
     if not squad:
         return _empty("the career's club has no players to select from")
-    team = session.get(Team, career.club_id)
-    if career.system_slug:
-        system = system_by_slug(career.system_slug)
-        if system is None:
-            raise LookupError(f"no tactical system {career.system_slug}")
-        formation = system.formation
-    else:
-        formation = team.formation if team is not None else ""
-    defenders, midfielders, attackers = split_formation(formation)
-    bands = select_starting_xi(squad, defenders, midfielders, attackers, overlay.developed_overall if overlay is not None else None)
-    eleven = [player for group in bands.values() for player in group]
-    selected_ids = {player.id for player in eleven}
-    seats_per_band: dict[str, int] = {}
-    for player in eleven:
-        band = band_of_position(player.position)
-        seats_per_band[band] = seats_per_band.get(band, 0) + 1
+    ratings = overlay.developed_overall if overlay is not None else None
+    formation, selected_ids, seats_per_band = _eleven_context(session, career, squad, ratings=ratings)
     loads = {player_id: (minutes, int(training.get(player_id, 0))) for player_id, minutes in minutes_by_player.items()}
-    trainees = academy_class(squad, selected_ids=selected_ids, seats_per_band=seats_per_band, loads=loads, ratings=overlay.developed_overall if overlay is not None else None)
+    trainees = academy_class(
+        squad,
+        selected_ids=selected_ids,
+        seats_per_band=seats_per_band,
+        loads=loads,
+        ratings=ratings,
+        age_offset=closed_seasons(session, career),
+    )
     if not trainees:
         return _empty(f"no squad player is at or under the age ceiling of {YOUTH_AGE_MAX}")
     return {
@@ -245,4 +300,5 @@ __all__ = [
     "YOUTH_AGE_MAX",
     "academy_class",
     "academy_view",
+    "judge_candidates",
 ]

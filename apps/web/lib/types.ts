@@ -1542,10 +1542,43 @@ export type AffordabilityView = {
   /** What the board has paid for closed seasons — the income side of the balance above. */
   granted: number;
   grant_rows: number;
-  /** What the met objectives of closed seasons paid — the award table's other income (item 36). */
+  /** What home rounds have earned — the other income side of the balance above. */
+  received_gate: number;
+  gate_rows: number;
+  /** One clause per home round, `round N: amount`, so the sum can be read as its own rows. */
+  gate_detail: string;
+  /** What cup rounds have paid (M13 Phase 8 item 32) — the third income side of the balance above. */
+  received_cup: number;
+  cup_rows: number;
+  /** One clause per cup round won, `<cup slug>:<stage>: amount`. */
+  cup_detail: string;
+  /** What the objectives the board set and the seasons met have paid (M13 Phase 9 item 36). */
   received_objectives: number;
   objective_rows: number;
+  /** One clause per paid objective, `season N <kind>: amount`. */
   objective_detail: string;
+  /** Every award the table holds, grants, cup prizes and objective bonuses together. */
+  award_rows: number;
+  /** What stands have cost (M13 Phase 9 item 37) — the spending side the market ledger writes. */
+  stadium_spent: number;
+  stadium_rows: number;
+  /** One clause per purchase, `round N: +S seats for amount`. */
+  stadium_detail: string;
+  /** What running the ground has cost so far (M13 Phase 10 item 45). */
+  upkeep_spent: number;
+  upkeep_rows: number;
+  /** One clause per home round charged, `round N: amount`. */
+  upkeep_detail: string;
+  /** What season tickets have brought forward (M13 Phase 10 item 46) — money now for seats later. */
+  season_ticket_income: number;
+  season_ticket_rows: number;
+  /** One clause per season sold, `season N: seats for amount`. */
+  season_ticket_detail: string;
+  /** What training-ground levels have cost (M13 Phase 11 item 47). */
+  training_spent: number;
+  training_rows: number;
+  /** One clause per level, `level N → M: amount`. */
+  training_detail: string;
   weekly_wage_bill: number;
   wage_players: number;
   /** `null` when the career pays no wages at all, so the balance sets no wage-driven limit. */
@@ -1794,6 +1827,23 @@ export type CareerContractRow = {
   expiring_soon: boolean;
   /** In the API's own words: which stored terms the expiry read. */
   basis: string;
+  /** The quote a manager would pay to extend this deal; null for a loan. */
+  renewal: CareerContractRenewal | null;
+};
+
+/** The renewal quote `contract_book` publishes beside a held permanent deal. */
+export type CareerContractRenewal = {
+  years: number;
+  weekly_wage: number;
+  fee: number;
+  fee_units: string;
+  balance_after_fee: number;
+  wage_bill_after: number;
+  wage_ceiling: number;
+  fee_affordable: boolean;
+  wage_affordable: boolean;
+  can_renew: boolean;
+  formula: string;
 };
 
 /** One deal that already ended or was extended (market.py `contract_book` → `recent`). */
@@ -2016,6 +2066,259 @@ export type CareerWindow = {
   formula: string;
 };
 
+/** One prize a won cup round paid, as `career_budget_awards` stores it (M13 Phase 8 item 32). */
+export type CareerCupPrize = {
+  amount: number;
+  units: string;
+  budget_after: number;
+  basis: string;
+};
+
+/** The gate a home tie paid: the crowd it drew and the price each seat was sold at. */
+export type CareerCupGate = {
+  amount: number;
+  units: string;
+  attendance: number;
+  ticket_price: number;
+  budget_after: number;
+  basis: string;
+};
+
+/** One knockout tie a career played: the engine's result, how it was settled and what it paid. */
+export type CareerCupTie = {
+  id: string;
+  season_index: number;
+  season: string;
+  cup_slug: string;
+  cup_name: string;
+  stage: string;
+  stage_index: number;
+  round_index: number;
+  side: "home" | "away";
+  opponent_team_id: string | null;
+  opponent_name: string;
+  opponent_short: string;
+  venue_name: string;
+  club_goals: number;
+  opponent_goals: number;
+  outcome: string;
+  decided_by: string;
+  penalty_note: string;
+  score: string;
+  digest: string;
+  seed: number;
+  model_version: string;
+  match_slug: string;
+  match_path: string | null;
+  world_match_id: string | null;
+  basis: string;
+  prize: CareerCupPrize | null;
+  /** M13 Phase 9 item 34: present only for a home tie; a final is the competition's gate. */
+  gate: CareerCupGate | null;
+  created_at: string | null;
+};
+
+/** The bracket slot the next tie occupies: who, on which side, and where the world drew it. */
+export type CareerCupSlot = {
+  stage: string;
+  stage_index: number;
+  round_index: number;
+  side: "home" | "away";
+  opponent_team_id: string;
+  opponent_name: string;
+  opponent_short: string;
+  venue_name: string;
+  venue_club: string;
+  world_match_id: string | null;
+  world_match_slug: string;
+  seed: number;
+  basis: string;
+};
+
+/** One cup's run through the season: what it has played, what is next, and what it has paid. */
+export type CareerCupRun = {
+  cup_id: string;
+  cup_slug: string;
+  cup_name: string;
+  region: string;
+  season: string;
+  season_index: number;
+  stage: { index: number; label: string; of: number };
+  status: "live" | "eliminated" | "won" | "unavailable";
+  reason: string | null;
+  next: CareerCupSlot | null;
+  ties: CareerCupTie[];
+  record: { played: number; won: number; lost: number; goals_for: number; goals_against: number };
+  prizes: { total: number; rows: number };
+  gates: { total: number; rows: number };
+  formula: string;
+};
+
+/** `career_view["cup"]`: every cup the world entered this career in, read from its own bracket. */
+export type CareerCup = {
+  available: boolean;
+  reason: string | null;
+  season: string;
+  season_index?: number;
+  runs: CareerCupRun[];
+  totals: { runs: number; ties: number; won: number; prizes: number; gates: number };
+  formula: string;
+};
+
+/** One purchase of seats for the club's ground, as `career_stadium_works` stores it. */
+export type CareerStadiumWork = {
+  id: string;
+  round_index: number;
+  seats: number;
+  unit_cost: number;
+  amount: number;
+  amount_units: string;
+  capacity_before: number;
+  capacity_after: number;
+  budget_after: number;
+  basis: string;
+  created_at: string | null;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** `career_view["stadium"]`: the ground, what the next stand costs, and every purchase already made. */
+export type CareerStadium = {
+  available: boolean;
+  reason: string | null;
+  club_name: string;
+  ground: string;
+  stored_capacity: number;
+  bought_seats: number;
+  /** The club's stored seats plus every bought one. */
+  capacity: number;
+  tier_factor: number;
+  /** What the gate can sell: the tier-factor capacity plus every bought seat. */
+  gate_capacity: number;
+  capacity_source: string;
+  seat_cost: number;
+  min_seats: number;
+  max_seats: number;
+  /** The ground's running rate: 25 means a quarter of a credit per seat per home round. */
+  upkeep_per_seat_pct: number;
+  upkeep_per_home_round: number;
+  spent: number;
+  rows: number;
+  upkeep_spent: number;
+  upkeep_rows: number;
+  works: CareerStadiumWork[];
+  formula: string;
+  note: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** `career_view["tickets"]`: the manager's gate price, its demand and the revenue it indexes. */
+export type CareerTickets = {
+  available: boolean;
+  reason: string | null;
+  /** The setting as a percentage of the competition's own price; 100 leaves the gate unchanged. */
+  price_pct: number;
+  min_pct: number;
+  max_pct: number;
+  step_pct: number;
+  neutral_pct: number;
+  /** The competition's own price per seat, before the manager's setting. */
+  base_price: number;
+  price_units: string;
+  /** The crowd this setting draws, as a percentage of the neutral crowd. */
+  demand_pct: number;
+  /** `price_pct × demand_pct / 100`; 100 means the same gate money as a neutral price. */
+  revenue_index: number;
+  best_price_pct: number;
+  best_revenue_index: number;
+  formula: string;
+  note: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** One season's season-ticket sale: the seats, the price they were sold at and the money they brought forward. */
+export type CareerSeasonTicketSale = {
+  id: string;
+  season_index: number;
+  season: string;
+  round_index: number;
+  seats: number;
+  home_rounds: number;
+  unit_price: number;
+  amount: number;
+  amount_units: string;
+  capacity: number;
+  basis: string;
+  budget_after: number;
+  created_at: string | null;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** `career_view["season_tickets"]`: this season's offer, the allocation sold and the money it brought forward. */
+export type CareerSeasonTickets = {
+  available: boolean;
+  reason: string | null;
+  season_index: number;
+  season: string;
+  first_round: number;
+  home_rounds: number;
+  capacity: number;
+  base_price: number;
+  full_price: number;
+  unit_price: number;
+  discount_pct: number;
+  min_seats: number;
+  max_share_pct: number;
+  max_seats: number;
+  price_units: string;
+  sold: CareerSeasonTicketSale | null;
+  rows: CareerSeasonTicketSale[];
+  income: number;
+  formula: string;
+  note: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** One training-ground upgrade: the level either side, the bonus it bought and what it cost. */
+export type CareerTrainingWork = {
+  id: string;
+  round_index: number;
+  level_before: number;
+  level_after: number;
+  bonus_pct_before: number;
+  bonus_pct_after: number;
+  amount: number;
+  amount_units: string;
+  basis: string;
+  budget_after: number;
+  created_at: string | null;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** `career_view["training"]`: the training ground's level, its bonus and what the next one costs. */
+export type CareerTraining = {
+  available: boolean;
+  reason: string | null;
+  level: number;
+  max_level: number;
+  bonus_pct: number;
+  next_level: number | null;
+  next_bonus_pct: number | null;
+  next_cost: number | null;
+  spent: number;
+  rows: CareerTrainingWork[];
+  units: string;
+  formula: string;
+  note: string;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
 export type CareerView = {
   career: CareerRow;
   record: CareerRecord;
@@ -2040,6 +2343,16 @@ export type CareerView = {
   contracts: CareerContracts;
   /** M13 Phase 2 item 5: the season's signing windows against the round the next deal would use. */
   window: CareerWindow;
+  /** M13 Phase 8 item 32: the world's knockout cup, the ties this career played in it and their prizes. */
+  cup: CareerCup;
+  /** M13 Phase 9 item 37: the ground, the seats bought for it and what one more costs. */
+  stadium: CareerStadium;
+  /** M13 Phase 10 item 44: the gate price the manager set and the demand it draws. */
+  tickets: CareerTickets;
+  /** M13 Phase 10 item 46: money now for seats later — this season's season-ticket offer. */
+  season_tickets: CareerSeasonTickets;
+  /** M13 Phase 11 item 47: the training ground, its bonus and the next level's price. */
+  training: CareerTraining;
   /** M13 Phase 2: the season's story — margins, runs, clean sheets and the venue split, read off the fixture rows. */
   highlights: CareerHighlights;
   /** M13 item 4: the minutes-based development curve, projected from the appearance rows on every read. */

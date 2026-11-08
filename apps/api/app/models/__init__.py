@@ -20,6 +20,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -993,6 +994,16 @@ class Career(Base, TimestampMixin):
     # stand in for (a career can be cash-rich and still unable to take on another wage); 0 means the
     # career has none, which is what a row opened before migration 0044 would hold.
     wage_ceiling: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # The manager's ticket price as a percentage of the competition's own price (M13 Phase 10 item 44).
+    # 100 leaves the gate exactly as item 33 stated it; the gate reads demand from this figure, so a
+    # cheaper seat fills more of the ground and a dearer one sells fewer. Stored on the career rather
+    # than derived so a manager's decision survives a reload, and copied onto every receipt so the
+    # crowd a round actually drew does not move when the price is changed afterwards.
+    ticket_price_pct: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
+    # The training ground's level (M13 Phase 11 item 47). Each level makes a world training session
+    # count 10% more toward development; 0 is the club's inherited facility and the curve a career read
+    # before the upgrade existed.
+    training_level: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     objectives: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     rounds_played: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     status: Mapped[str] = mapped_column(String(12), default="active", nullable=False)
@@ -1011,6 +1022,12 @@ class Career(Base, TimestampMixin):
     wage_charges: Mapped[list[CareerWageCharge]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerWageCharge.round_index")
     seasons: Mapped[list[CareerSeason]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSeason.season_index")
     awards: Mapped[list[CareerBudgetAward]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerBudgetAward.round_index")
+    receipts: Mapped[list[CareerGateReceipt]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerGateReceipt.round_index")
+    stadium_works: Mapped[list[CareerStadiumWork]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerStadiumWork.round_index")
+    upkeep_charges: Mapped[list[CareerUpkeepCharge]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerUpkeepCharge.round_index")
+    season_ticket_sales: Mapped[list[CareerSeasonTicket]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerSeasonTicket.season_index")
+    training_works: Mapped[list[CareerTrainingWork]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerTrainingWork.round_index")
+    cup_ties: Mapped[list[CareerCupTie]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerCupTie.season_index")
     appearances: Mapped[list[CareerAppearance]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerAppearance.round_index")
     developments: Mapped[list[CareerDevelopment]] = relationship(back_populates="career", cascade="all, delete-orphan", order_by="CareerDevelopment.round_index")
 
@@ -1064,17 +1081,21 @@ class CareerFixture(Base, TimestampMixin):
 # player's stored attributes do), and a *move* is something the career actually did.
 MARKET_SIDES: Final[tuple[str, ...]] = ("in", "out")
 LISTING_STATUSES: Final[tuple[str, ...]] = ("open", "signed", "withdrawn")
-MOVE_KINDS: Final[tuple[str, ...]] = ("buy", "loan", "sell", "release")
+MOVE_KINDS: Final[tuple[str, ...]] = ("buy", "loan", "youth", "sell", "release", "expire", "renew", "retire")
 MOVE_EFFECT: Final[dict[str, str]] = {
     "buy": "the player joins this career's club and stays",
     "loan": "the player joins until loan_until_round, then stops being available",
+    "youth": "a young world player is promoted at the season boundary on a free contract with a stored expiry",
     "sell": "the player leaves this career's club and the fee arrives",
     "release": "the player leaves this career's club for nothing",
+    "expire": "the player's permanent deal reached its stored last round and the player leaves the club",
+    "renew": "the player's deal is extended beyond its last round: a manager's renewal carries the years, wage and expiry it agreed, and the boundary writes the same kind for an emergency one-season extension",
+    "retire": "the player reached the career-clock retirement age at a season boundary, played the season that just closed and leaves the club",
 }
 # A wage row is the one ledger entry with no player attached to it, so its sentence names the round.
 WAGE_EFFECT: Final = "the wages this career agreed are paid: every deal it holds costs its weekly wage for the round it was held"
 # Stored so the number on a page and the rows behind it can be checked against each other by anyone.
-BUDGET_FORMULA: Final = "career.budget + sum(moves.fee where kind = sell) + sum(budget_awards.amount) - sum(moves.fee where kind in (buy, loan)) - sum(wage_charges.fee)"
+BUDGET_FORMULA: Final = "career.budget + sum(moves.fee where kind = sell) + sum(gate_receipts.amount) + sum(budget_awards.amount) + sum(season_tickets.amount) - sum(moves.fee where kind in (buy, loan)) - sum(wage_charges.fee) - sum(stadium_works.amount) - sum(upkeep_charges.amount) - sum(training_works.amount)"
 
 
 class TransferListing(Base, TimestampMixin):
@@ -1146,6 +1167,10 @@ class CareerSquadMove(Base, TimestampMixin):
     contract_years: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     weekly_wage: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     loan_until_round: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: The last round a permanent deal covers, fixed from the season length when the deal was signed.
+    #: 0 on a legacy row (written before migration 0049) and on loans, whose last round is
+    #: ``loan_until_round`` instead; a reader falls back to the stored terms rather than inventing a date.
+    expiry_round: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     listing_id: Mapped[str | None] = mapped_column(ForeignKey("transfer_listings.id", ondelete="SET NULL"), nullable=True)
     counterparty_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
     counterparty_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
@@ -1234,12 +1259,25 @@ class CareerSeason(Base, TimestampMixin):
     career: Mapped[Career] = relationship(back_populates="seasons")
 
 
-AWARD_KINDS: Final[tuple[str, ...]] = ("season_grant", "objective_bonus")
+AWARD_KINDS: Final[tuple[str, ...]] = ("season_grant", "cup_prize", "objective_bonus")
 AWARD_EFFECT: Final = "the board pays this season's grant: the money arrives as a row of its own and raises the balance the market spends from"
+
+#: The same table pays a cup round as well as a season (M13 Phase 8 item 32). The prize is not the
+#: board's judgment of a season, so it gets its own kind and its own sentence rather than borrowing the
+#: grant's: a reader must be able to tell which income a balance came from.
+CUP_PRIZE_EFFECT: Final = "a cup round this career won pays its prize: the money arrives as a row of its own and raises the balance the market spends from"
 
 #: The board pays the targets it set (M13 Phase 9 item 36): each objective a season met is a row of its own,
 #: so the objectives a manager chooses move the balance rather than only the prose that judges them.
 OBJECTIVE_BONUS_EFFECT: Final = "an objective the board set and the season met pays its bonus: the money arrives as a row of its own and raises the balance the market spends from"
+
+#: The fourth ledger table's sentence: a home round's gate money. It is not a grant (the board did not
+#: pay it) and not a move (no player changed clubs), so it gets its own kind and its own row.
+GATE_EFFECT: Final = "the gate money for this home round arrives: attendance times the competition's ticket price"
+
+#: The ground's running cost (M13 Phase 10 item 45): a home round pays for the seats it opens, so a
+#: bigger stand is not free money. Its own table because the row is a cost, not a gate that arrived.
+UPKEEP_EFFECT: Final = "the ground costs this home round its running rate: every open seat pays a share of a credit"
 
 
 class CareerBudgetAward(Base, TimestampMixin):
@@ -1259,8 +1297,10 @@ class CareerBudgetAward(Base, TimestampMixin):
     __tablename__ = "career_budget_awards"
     __table_args__ = (
         # One award per season, kind and stage. A season's grant is the only row of its kind in its season
-        # (`stage` is empty), and a bonus names the objective it paid for, so several can land in one season
-        # without colliding. A boundary that fired twice would pay twice, and the second payment is the bug.
+        # (`stage` is empty), the way `uq_career_season_index` allows one decision per season: a boundary
+        # that fired twice would pay twice, and the second payment is the bug, not the rule. A cup run's
+        # prizes name the cup and round they were won in, so several can land in one season without
+        # colliding, and replaying the same round cannot pay twice.
         UniqueConstraint("career_id", "season_index", "kind", "stage", name="uq_career_award_stage"),
         Index("ix_budget_award_career_round", "career_id", "round_index"),
     )
@@ -1271,8 +1311,8 @@ class CareerBudgetAward(Base, TimestampMixin):
     #: The round the season ended on — where the money arrives in the ledger's round order.
     round_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     kind: Mapped[str] = mapped_column(String(20), default="season_grant", nullable=False)
-    #: Which stage of a season this award was paid for. Empty for the board's season grant; an objective
-    #: bonus carries its objective's kind, so the row says what was met without reading the basis string.
+    #: Which stage of a season this award was paid for. Empty for the board's season grant; a cup prize
+    #: carries `<cup slug>:<round label>` so the round it was won in is readable from the row alone.
     stage: Mapped[str] = mapped_column(String(80), default="", nullable=False)
     amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
@@ -1284,6 +1324,279 @@ class CareerBudgetAward(Base, TimestampMixin):
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     career: Mapped[Career] = relationship(back_populates="awards")
+
+
+class CareerGateReceipt(Base, TimestampMixin):
+    """One home round's gate money (M13 Phase 7 item 27).
+
+    The fourth ledger table. The season grant (item 24) gave a career a recurring income once a season;
+    a long career still had no income for the rounds it actually played, so a wage bill was paid out of
+    savings and a gate was a figure the world computed and the career never saw. This row is that gate:
+    the attendance the world stored for the fixture (or, for a round played on the career's own
+    rotation, a deterministic share of the home ground's capacity), times the competition's authored
+    ticket price.
+
+    It is its own table rather than part of the fixture row because it is money: like the other three
+    ledger tables it stores the `budget_after` it produced, so the timeline a reader adds up is these
+    four tables in round order. `uq_career_gate_round` makes one gate per round a property of the
+    schema — a round is one fixture, and a second gate for it would be a second fixture nobody played.
+    """
+
+    __tablename__ = "career_gate_receipts"
+    __table_args__ = (
+        #: One gate per *league* round: the partial index carries the rule for the rows a round fixture
+        #: wrote, and leaves the rows a cup tie wrote (`tie_id` set) free to share a round index.
+        Index(
+            "uq_career_gate_round",
+            "career_id",
+            "round_index",
+            unique=True,
+            sqlite_where=text("tie_id IS NULL"),
+            postgresql_where=text("tie_id IS NULL"),
+        ),
+        Index("uq_career_gate_tie", "tie_id", unique=True),
+        Index("ix_gate_receipt_career_round", "career_id", "round_index"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    round_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    #: The fixture row that earned it; SET NULL rather than CASCADE, because losing the fixture must not
+    #: silently delete money the balance already counted.
+    fixture_id: Mapped[str | None] = mapped_column(ForeignKey("career_fixtures.id", ondelete="SET NULL"), nullable=True)
+    #: The cup tie that earned it, or NULL for a league round. SET NULL like `fixture_id`: losing the
+    #: fixture must not delete money the balance already counted.
+    tie_id: Mapped[str | None] = mapped_column(ForeignKey("career_cup_ties.id", ondelete="SET NULL"), nullable=True)
+    attendance: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ticket_price: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: The manager's price setting and the demand it produced, copied onto the row when the gate was
+    #: paid. A later change to `careers.ticket_price_pct` must not rewrite a crowd already in the bank.
+    price_pct: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
+    demand_pct: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
+    #: How many of the attendance were season-ticket holders who paid before the season and are not
+    #: charged again at the gate. Copied onto the row so a later sale cannot rewrite a paid crowd.
+    season_ticket_seats: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    #: Where the attendance came from — the world fixture's stored figure or the rotation's share of capacity.
+    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="receipts")
+
+
+CUP_STAGES: Final[tuple[str, ...]] = ("Quarter-final", "Semi-final", "Final")
+
+
+class CareerStadiumWork(Base, TimestampMixin):
+    """Seats a manager bought for the club's ground (M13 Phase 9 item 37).
+
+    Item 33 made the gate respond to the career through two constants — a tier factor and a form factor —
+    but the ground itself was still the world's row, shared by every career at that club. This table is
+    the career's own expansion history: each row is one purchase, the seats it added and the money it
+    cost. The current ground is the club's stored capacity plus the sum of ``seats``, so there is no
+    second copy of the figure to fall out of step, and the ledger an account page sums is these rows.
+
+    ``capacity_before``/``capacity_after`` count seats in the ground (club capacity plus bought seats),
+    not the tier factor the gate applies on top of them.
+    """
+
+    __tablename__ = "career_stadium_works"
+    __table_args__ = (Index("ix_stadium_work_career", "career_id"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    round_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    seats: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    unit_cost: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    capacity_before: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    capacity_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="stadium_works")
+
+
+class CareerUpkeepCharge(Base, TimestampMixin):
+    """One home round's running cost for the ground (M13 Phase 10 item 45).
+
+    Item 37 made a stand a purchase and item 44 made its seats a price; without a cost the only reason
+    not to build was the once-off fee, which a full house repays in a few seasons. This table charges
+    every home round for the seats it opens — `round(capacity × 25%)` credits, where capacity is the
+    club's stored seats plus every bought one — so a bigger ground has a bigger bill whether or not the
+    crowd fills it. A challenge career pays none, like its gate; a cup final at a neutral venue pays none.
+    """
+
+    __tablename__ = "career_upkeep_charges"
+    __table_args__ = (
+        Index(
+            "uq_career_upkeep_round",
+            "career_id",
+            "round_index",
+            unique=True,
+            sqlite_where=text("tie_id IS NULL"),
+            postgresql_where=text("tie_id IS NULL"),
+        ),
+        Index("uq_career_upkeep_tie", "tie_id", unique=True),
+        Index("ix_upkeep_charge_career_round", "career_id", "round_index"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    round_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    fixture_id: Mapped[str | None] = mapped_column(ForeignKey("career_fixtures.id", ondelete="SET NULL"), nullable=True)
+    tie_id: Mapped[str | None] = mapped_column(ForeignKey("career_cup_ties.id", ondelete="SET NULL"), nullable=True)
+    capacity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: The per-seat rate as a percentage of one budget unit: 25 means a quarter of a credit a seat.
+    seat_rate_pct: Mapped[int] = mapped_column(Integer, default=25, nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="upkeep_charges")
+
+
+class CareerSeasonTicket(Base, TimestampMixin):
+    """One season's season-ticket sale (M13 Phase 10 item 46).
+
+    A season ticket is money now for seats later: the manager sells a block before the season's first
+    round at a discount to the neutral matchday price, and those seats are filled every home league
+    round without being charged again at the gate. One row per season, so a second sale for the same
+    season is a schema error rather than a double income, and the row stores the price, the ground and
+    the `budget_after` so the ledger a reader adds up is these rows.
+    """
+
+    __tablename__ = "career_season_tickets"
+    __table_args__ = (
+        UniqueConstraint("career_id", "season_index", name="uq_career_season_ticket"),
+        Index("ix_season_ticket_career", "career_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    season_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    season: Mapped[str] = mapped_column(String(12), default="", nullable=False)
+    #: The round the money arrived before — the season's first round — so the timeline has a slot.
+    round_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    seats: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: The league home rounds the ticket covers, so the price can be recomputed from the row.
+    home_rounds: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    unit_price: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    capacity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="season_ticket_sales")
+
+
+class CareerTrainingWork(Base, TimestampMixin):
+    """One training-ground upgrade (M13 Phase 11 item 47).
+
+    A level is bought from the balance like a stand, and each level makes the world's training sessions
+    count 10% more toward a player's development. The row stores the level either side of the purchase,
+    the bonus those levels mean, the amount and the `budget_after`, so the ledger a reader adds up is
+    these rows and the development curve can be recomputed from the level they left behind.
+    """
+
+    __tablename__ = "career_training_works"
+    __table_args__ = (Index("ix_training_work_career_round", "career_id", "round_index"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    round_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    level_before: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    level_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: The training-session bonus each level means, copied onto the row so a later constant change
+    #: cannot rewrite what an upgrade actually bought.
+    bonus_pct_before: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    bonus_pct_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
+    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="training_works")
+
+
+class CareerCupTie(Base, TimestampMixin):
+    """One knockout tie a career played in a world cup (M13 Phase 8 item 32).
+
+    The league season is a list of rounds, and a cup is a *second* list: the world already drew the
+    bracket (`world/builder.py` seeds eight entrants and simulates 4 + 2 + 1 ties), so a career does not
+    invent opponents. It plays the same quarters, semis and final against the same clubs, and its own
+    result replaces the slot the world's simulation filled. This row is one of those ties.
+
+    Its own table rather than a `career_fixtures` row because a tie is not a round: it does not advance
+    `career.rounds_played`, does not score league points, and does not belong to the season's
+    double round-robin. `round_index` is the league round the tie was played after, so the ledger's
+    round order still places the prize where the balance saw it.
+
+    `uq_cup_tie_stage` makes one tie per cup stage per season a property of the schema: a replay of the
+    same quarter-final would be a second match nobody played. `season_index` is the career's season, and
+    `season` its calendar label, so a tie stays readable after the boundary has moved the career on.
+    """
+
+    __tablename__ = "career_cup_ties"
+    __table_args__ = (
+        UniqueConstraint("career_id", "season_index", "cup_slug", "stage", name="uq_cup_tie_stage"),
+        Index("ix_cup_tie_career_season", "career_id", "season_index"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
+    season_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    season: Mapped[str] = mapped_column(String(12), default="", nullable=False)
+    #: The world competition the bracket belongs to. SET NULL rather than CASCADE: losing a re-synced
+    #: competition must not delete a tie the career actually played.
+    cup_id: Mapped[str | None] = mapped_column(ForeignKey("competitions.id", ondelete="SET NULL"), nullable=True)
+    cup_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    cup_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    stage: Mapped[str] = mapped_column(String(24), default="Quarter-final", nullable=False)
+    stage_index: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    #: The league round this tie was played after — where its prize lands in the ledger's round order.
+    round_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    match_id: Mapped[str | None] = mapped_column(ForeignKey("sim_matches.id", ondelete="SET NULL"), nullable=True)
+    match_slug: Mapped[str] = mapped_column(String(80), default="", nullable=False)
+    digest: Mapped[str] = mapped_column(String(16), default="", nullable=False)
+    model_version: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    side: Mapped[str] = mapped_column(String(5), default="home", nullable=False)
+    opponent_team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    opponent_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    opponent_short: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    venue_name: Mapped[str] = mapped_column(String(120), default="", nullable=False)
+    club_goals: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    opponent_goals: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: `W` or `L` only: a knockout tie cannot end level, and `decided_by` says how a draw was separated.
+    outcome: Mapped[str] = mapped_column(String(4), default="W", nullable=False)
+    decided_by: Mapped[str] = mapped_column(String(24), default="goals", nullable=False)
+    penalty_note: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+    #: The generated fixture whose bracket slot this tie filled, recorded by value for the same reason
+    #: `CareerFixture.world_match_id` is: the world can be re-synced under a career still being played.
+    world_match_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    #: The opponent and side the bracket gave this tie, in words, so the figure can be checked without code.
+    #: 512 wide because a slot from a draw that stops at the quarter-finals names the adjacent tie and the
+    #: engine's reading of it before the tie's own sentence is appended (M13 Phase 9 item 35).
+    basis: Mapped[str] = mapped_column(String(512), default="", nullable=False)
+    data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
+    is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    career: Mapped[Career] = relationship(back_populates="cup_ties")
 
 
 APPEARANCE_NOTE: Final = (
@@ -1311,7 +1624,27 @@ class CareerAppearance(Base, TimestampMixin):
 
     __tablename__ = "career_appearances"
     __table_args__ = (
-        UniqueConstraint("career_id", "round_index", "player_id", name="uq_career_appearance_round_player"),
+        #: One trace per player per *league* round, and — separately — per cup tie. A cup tie played
+        #: after round 7 shares that round's index, so the league rule is a partial index and the tie
+        #: rule names the tie.
+        Index(
+            "uq_career_appearance_round_player",
+            "career_id",
+            "round_index",
+            "player_id",
+            unique=True,
+            sqlite_where=text("tie_id IS NULL"),
+            postgresql_where=text("tie_id IS NULL"),
+        ),
+        Index(
+            "uq_career_appearance_tie_player",
+            "career_id",
+            "tie_id",
+            "player_id",
+            unique=True,
+            sqlite_where=text("tie_id IS NOT NULL"),
+            postgresql_where=text("tie_id IS NOT NULL"),
+        ),
         Index("ix_appearance_career_round", "career_id", "round_index"),
         Index("ix_appearance_player", "player_id"),
     )
@@ -1319,6 +1652,9 @@ class CareerAppearance(Base, TimestampMixin):
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
     career_id: Mapped[str] = mapped_column(ForeignKey("careers.id", ondelete="CASCADE"), nullable=False)
     round_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: The cup tie these minutes were played in, or NULL for a league round. CASCADE, because a deleted
+    #: tie's minutes are not a league round and must not be summed into one.
+    tie_id: Mapped[str | None] = mapped_column(ForeignKey("career_cup_ties.id", ondelete="CASCADE"), nullable=True)
     player_id: Mapped[str] = mapped_column(ForeignKey("real_players.id", ondelete="CASCADE"), nullable=False)
     player_slug: Mapped[str] = mapped_column(String(160), default="", nullable=False)
     player_name: Mapped[str] = mapped_column(String(160), default="", nullable=False)

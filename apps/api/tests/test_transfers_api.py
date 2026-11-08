@@ -23,7 +23,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from app.core.db import SessionLocal
-from app.models import BUDGET_FORMULA, Career, Team
+from app.models import BUDGET_FORMULA, MOVE_KINDS, Career, Team
 from app.services.simulation.market import MARKET_SIZE, MAX_NEGOTIATION_ROUNDS, RULES
 from app.services.world import sync_world
 
@@ -86,7 +86,7 @@ class TestPublicRules:
         assert response.status_code == 200
         body = response.json()
         assert set(body["rules"]) == set(RULES) and body["rules"]["budget"] == BUDGET_FORMULA
-        assert set(body["move_effects"]) == {"buy", "loan", "sell", "release"}
+        assert set(body["move_effects"]) == set(MOVE_KINDS)
         assert body["data_origin"] == "simulation" and body["is_demo_data"] is True and "generated clubs" in body["disclaimer"]
 
     def test_a_careers_market_needs_an_account(self, client) -> None:  # type: ignore[no-untyped-def]
@@ -308,6 +308,159 @@ class TestTheWageCeiling:
         assert body["budget"]["wage_ceiling"] == int(listing["weekly_wage"])
         assert body["budget"]["wage_committed_per_week"] == int(listing["weekly_wage"])
         assert body["budget"]["wage_headroom"] == 0
+
+
+class TestContractRenewal:
+    """Item 26 over the wire: the quote is the contract book's, and the renewal is the same arithmetic.
+
+    The renewal is the one market door that does not need an open signing window: the player is already
+    this career's. It still publishes the figures it used, writes a `renew` row, and stores a new expiry,
+    so the next read of the career shows the term the server stored rather than the one the page quoted.
+    """
+
+    def test_renewing_writes_the_deal_and_moves_the_expiry_the_quote_named(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id)
+        listing = _opened(auth_client, slug)["listings"][0]
+        auth_client.post(f"{API}/{slug}/buy", json={"listing": listing["id"], "use_clause": True})
+        before = auth_client.get(f"{CAREERS}/{slug}").json()
+        row = next(row for row in before["contracts"]["rows"] if row["player_id"] == listing["player_id"])
+        quote = row["renewal"]
+        assert quote is not None and quote["can_renew"] is True
+        assert quote["fee"] > 0
+        assert quote["fee"] == int(round(listing["asking_fee"] * 0.05 / 5) * 5) * int(quote["years"])
+        assert RULES["renewal"] == quote["formula"]
+
+        renewed = auth_client.post(f"{API}/{slug}/renew", json={"player": listing["player_id"], "years": 2})
+        assert renewed.status_code == 200, renewed.text
+        body = renewed.json()
+        assert body["renewed"] is True and body["move"]["kind"] == "renew"
+        assert body["move"]["fee"] == int(body["detail"]["fee_per_year"]) * 2
+        assert body["move"]["expiry_round"] == body["detail"]["expiry_round"]
+        assert body["detail"]["previous"]["expiry_round"] == row["expiry_round"]
+        assert body["detail"]["expiry_round"] == int(before["career"]["rounds_played"]) + 1 + 2 * int(before["contracts"]["season_rounds"]) - 1
+
+        after = auth_client.get(f"{CAREERS}/{slug}").json()
+        renewed_row = next(row for row in after["contracts"]["rows"] if row["player_id"] == listing["player_id"])
+        assert renewed_row["kind"] == "renew" and renewed_row["signed_round"] == body["move"]["round_index"]
+        assert renewed_row["expiry_round"] == body["detail"]["expiry_round"]
+        assert after["contracts"]["recent"][0]["kind"] == "renew"
+        assert after["contracts"]["recent"][0]["expiry_round"] == body["detail"]["expiry_round"]
+
+    def test_a_loan_has_no_deal_of_its_own_to_renew(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id)
+        listing = _opened(auth_client, slug)["listings"][0]
+        loaned = auth_client.post(f"{API}/{slug}/loan", json={"listing": listing["id"], "rounds": 2})
+        assert loaned.status_code == 200, loaned.text
+        refused = auth_client.post(f"{API}/{slug}/renew", json={"player": listing["player_id"]})
+        assert refused.status_code == 409
+        detail = refused.json()["detail"]
+        assert detail["code"] == "loan_cannot_be_renewed" and detail["kind"] == "loan"
+
+    def test_a_squad_player_with_no_stored_deal_is_refused_by_name(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id)
+        squad = auth_client.get(f"{API}/{slug}").json()["squad"]["players"]
+        refused = auth_client.post(f"{API}/{slug}/renew", json={"player": squad[0]["player_id"]})
+        assert refused.status_code == 409
+        detail = refused.json()["detail"]
+        assert detail["code"] == "no_contract_to_renew" and detail["player_name"] == squad[0]["name"]
+
+    def test_a_renewal_fee_over_the_balance_is_refused_with_its_numbers(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id)
+        listing = _opened(auth_client, slug)["listings"][0]
+        auth_client.post(f"{API}/{slug}/buy", json={"listing": listing["id"], "use_clause": True})
+        quoted = _renewal_quote(auth_client, slug, listing["player_id"])
+        balance = auth_client.get(f"{API}/{slug}").json()["budget"]
+        _set_budget(slug, int(balance["budget"]) - (int(balance["remaining"]) - (int(quoted["fee"]) - 1)))
+        refused = auth_client.post(f"{API}/{slug}/renew", json={"player": listing["player_id"]})
+        assert refused.status_code == 409
+        detail = refused.json()["detail"]
+        assert detail["code"] == "insufficient_budget"
+        assert detail["fee"] == int(quoted["fee"]) and detail["remaining"] == int(quoted["fee"]) - 1
+
+    def test_a_bill_over_the_ceiling_is_refused_then_allowed_once_raised(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id)
+        listing = _opened(auth_client, slug)["listings"][0]
+        bought = auth_client.post(f"{API}/{slug}/buy", json={"listing": listing["id"], "use_clause": True}).json()
+        row = next(row for row in auth_client.get(f"{CAREERS}/{slug}").json()["contracts"]["rows"] if row["player_id"] == listing["player_id"])
+        quote = row["renewal"]
+        assert quote is not None
+        bill = int(bought["budget"]["wage_committed_per_week"])
+        caps = bill - int(row["weekly_wage"]) + int(quote["weekly_wage"])
+        _set_ceiling(slug, caps - 1)
+        refused = auth_client.post(f"{API}/{slug}/renew", json={"player": listing["player_id"]})
+        assert refused.status_code == 409
+        detail = refused.json()["detail"]
+        assert detail["code"] == "wage_ceiling_exceeded"
+        assert detail["wage_bill_after"] == caps and detail["wage_ceiling"] == caps - 1
+        assert detail["wage_bill_before"] == bill
+
+        _set_ceiling(slug, caps)
+        allowed = auth_client.post(f"{API}/{slug}/renew", json={"player": listing["player_id"]})
+        assert allowed.status_code == 200, allowed.text
+        assert allowed.json()["detail"]["wage_bill_after"] == caps
+
+    def test_a_wage_below_the_players_demand_is_refused_over_the_wire(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id)
+        listing = _opened(auth_client, slug)["listings"][0]
+        auth_client.post(f"{API}/{slug}/buy", json={"listing": listing["id"], "use_clause": True})
+        quote = _renewal_quote(auth_client, slug, listing["player_id"])
+        refused = auth_client.post(
+            f"{API}/{slug}/renew",
+            json={"player": listing["player_id"], "years": quote["years"], "wage": int(quote["demand_wage"]) - 5},
+        )
+        assert refused.status_code == 409
+        detail = refused.json()["detail"]
+        assert detail["code"] == "renewal_refused"
+        assert detail["demanded_wage"] == int(quote["demand_wage"]) and detail["offered_wage"] == int(quote["demand_wage"]) - 5
+        accepted = auth_client.post(
+            f"{API}/{slug}/renew",
+            json={"player": listing["player_id"], "years": quote["years"], "wage": int(quote["demand_wage"])},
+        )
+        assert accepted.status_code == 200, accepted.text
+        assert accepted.json()["move"]["weekly_wage"] == int(quote["demand_wage"])
+
+
+class TestGateReceiptsWire:
+    """Item 27 over the wire: a home round's gate is the same row on the market ledger and the timeline."""
+
+    def test_a_home_round_arrives_on_both_reads_with_its_own_rows(self, auth_client, club_id) -> None:  # type: ignore[no-untyped-def]
+        slug = _career(auth_client, club_id)
+        sides: list[str] = []
+        for _ in range(2):
+            played = auth_client.post(f"{CAREERS}/{slug}/play").json()
+            sides.append(str(played["fixtures"][-1]["side"]))
+            if "home" in sides:
+                break
+        assert "home" in sides, "the rotation gives a club a home round inside two matchdays"
+        career = auth_client.get(f"{CAREERS}/{slug}").json()
+        finance = career["affordability"]
+        assert finance["gate_rows"] >= 1 and finance["received_gate"] > 0
+        timeline = finance["timeline"]
+        assert any(row["kind"] == "gate" and row["delta"] > 0 for row in timeline["rows"])
+        assert timeline["disagreements"] == 0, "the gate chains onto the move before it and the wage after it"
+        market_body = auth_client.get(f"{API}/{slug}").json()
+        gates = [row for row in market_body["moves"] if row["kind"] == "gate"]
+        assert gates and all(row["cash"] == "in" and row["fee"] == row["attendance"] * row["ticket_price"] for row in gates)
+        assert market_body["budget"]["received_gate"] == finance["received_gate"]
+        assert market_body["totals"]["gate_rows"] == len(gates)
+        assert market_body["constants"]["gate_ticket_price_tier_1"] > market_body["constants"]["gate_ticket_price_tier_2"] > 0
+
+
+def _renewal_quote(auth_client: TestClient, slug: str, player_id: str) -> dict[str, Any]:
+    rows = auth_client.get(f"{CAREERS}/{slug}").json()["contracts"]["rows"]
+    quote = next(row for row in rows if row["player_id"] == player_id)["renewal"]
+    assert quote is not None
+    return dict(quote)
+
+
+def _set_budget(slug: str, budget: int) -> None:
+    session = SessionLocal()
+    try:
+        career = session.scalars(select(Career).where(Career.slug == slug)).one()
+        career.budget = budget
+        session.commit()
+    finally:
+        session.close()
 
 
 def _set_ceiling(slug: str, ceiling: int) -> None:

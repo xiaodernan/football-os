@@ -6,9 +6,8 @@
  * verdict separately, so a fixture list edited after the fact shows as the API's own re-check sentence
  * rather than as a quiet correction here. The panel does no arithmetic of its own: the two published
  * lines, the span, the pace and the board's grant are the API's numbers, and the verdict is the row's
- * stored word. A closed season's grant sits beside the verdict it was paid for, the objectives it met
- * print their bonus beneath it, and the season being played prints what the boundary's own arithmetic
- * would pay if it closed on the rounds already stored.
+ * stored word. A closed season's grant sits beside the verdict it was paid for, and the season being
+ * played prints what the boundary's own arithmetic would pay if it closed on the rounds already stored.
  */
 
 import { Panel } from "@/components/ui";

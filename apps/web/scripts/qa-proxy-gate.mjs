@@ -86,7 +86,7 @@ const targetOf = (node, source) => {
 };
 
 for (const file of FILES) {
-  const text = (readFileSync(file, "utf8").replace(/\r\n/g, "\n"));
+  const text = readFileSync(file, "utf8");
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   if (source.parseDiagnostics?.length) diagnostics += source.parseDiagnostics.length;
   parsed += 1;
@@ -149,7 +149,7 @@ check(
  */
 const TRACE_CONTEXT = join(WEB, "lib", "trace-context.ts");
 const loadExport = (file, name) => {
-  const compiled = ts.transpileModule((readFileSync(file, "utf8").replace(/\r\n/g, "\n")), {
+  const compiled = ts.transpileModule(readFileSync(file, "utf8"), {
     compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
   }).outputText;
   const module = { exports: {} };
@@ -213,7 +213,7 @@ check(
  * puts it on the outgoing headers. Any one of them missing turns this red.
  */
 const routeFile = join(WEB, PROXY);
-const route = ts.createSourceFile(routeFile, (readFileSync(routeFile, "utf8").replace(/\r\n/g, "\n")), ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
+const route = ts.createSourceFile(routeFile, readFileSync(routeFile, "utf8"), ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
 let computesTrace = false;
 let callApiSends = false;
 const proxied = [];

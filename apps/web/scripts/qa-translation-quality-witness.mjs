@@ -9,7 +9,8 @@
  * what is measured is the gate's behaviour rather than its code being read.
  *
  * Predictions, written before the first run (2026-11-08; baseline: 3 shipped catalogues, 9 checks, the two
- * script rules dormant, 45 named tokens, 90 messages identical to English across zh and zh-TW, all 90 named).
+ * script rules dormant, 45 named tokens, 90 messages identical to English across zh and zh-TW, all 90 named;
+ * the session-language list below now widens to ar and he the day one of them ships).
  *   0  the shipped gate on the real catalogues: 9/9, both script lines reading `dormant`, and the DORMANT
  *      trailer naming both — a PASS that says it judged nothing is the cure for hole 1.
  *   A  an `ar.json` of two Arabic messages and one Latin holdout: 1 red, the Arabic script check, naming that
@@ -59,7 +60,7 @@ const GATE = resolve(HERE, "qa-translation-quality.mjs");
 const WEB = resolve(HERE, "..");
 const REAL = join(WEB, "messages");
 const TOKENS_SOURCE = join(WEB, "scripts", "qa-locale-tokens.mjs");
-const LOCALES = ["en", "zh", "zh-TW"].filter((locale) => existsSync(join(REAL, `${locale}.json`)));
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(REAL, `${locale}.json`)));
 
 /** One named token path, taken from the table rather than copied here: arm C needs a message the gate is
  *  supposed to exempt, and a hand-written path would go stale the day the table changes. */
@@ -261,7 +262,8 @@ const noTable = fixture("H-exemption-table-absent", { withTokens: false });
 const identicalExpected = (() => {
   const reference = read(noTable, "en");
   let count = 0;
-  for (const locale of ["zh", "zh-TW"]) {
+  for (const locale of ["zh", "zh-TW", "ar", "he"]) {
+    if (!existsSync(join(noTable, "messages", `${locale}.json`))) continue;
     for (const [namespace, block] of Object.entries(read(noTable, locale))) {
       for (const [key, value] of Object.entries(block ?? {})) {
         if (typeof value === "string" && reference[namespace]?.[key] === value) count += 1;

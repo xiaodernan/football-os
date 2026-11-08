@@ -327,11 +327,14 @@ class TestJudging:
         # The affordability block is the same arithmetic the transfers page prints, read-only.
         aff = view["affordability"]
         assert aff["formula"] and aff["units"] == career.budget_units
-        assert aff["remaining"] == view["career"]["budget"], "a career with no move and no wage row has spent nothing"
+        assert aff["remaining"] == view["career"]["budget"] + aff["received_gate"] - aff["upkeep_spent"], (
+            "no move and no wage: only the home gate and the ground it opened can move the balance"
+        )
         assert aff["weekly_wage_bill"] == 0 and aff["wage_runway_rounds"] is None
         assert aff["signing"]["price"] == 0 and aff["signing"]["fee_affordable"] is True
-        assert aff["timeline"]["entries"] == 0 and aff["timeline"]["disagreements"] == 0
-        assert aff["timeline"]["opening_balance"] == aff["timeline"]["closing_balance"] == aff["remaining"]
+        assert aff["timeline"]["entries"] == aff["gate_rows"] + aff["upkeep_rows"] and aff["timeline"]["disagreements"] == 0
+        assert aff["timeline"]["opening_balance"] == view["career"]["budget"]
+        assert aff["timeline"]["closing_balance"] == aff["remaining"]
         # The board projection is wired and reads the same record the page prints.
         assert view["board"]["played"] == 1 and view["board"]["season_rounds"] > 0
         assert view["board"]["points_per_round"] == round(view["record"]["points"] / 1, 3)
@@ -953,7 +956,7 @@ def _awards(session: Session, career: Career) -> list[CareerBudgetAward]:
 
 
 def _grants(session: Session, career: Career) -> list[CareerBudgetAward]:
-    """The season grants alone: the award table also pays objective bonuses (item 36)."""
+    """The season grants alone: the award table also pays cup prizes and objective bonuses (items 32, 36)."""
     return [row for row in _awards(session, career) if str(row.kind) == "season_grant"]
 
 

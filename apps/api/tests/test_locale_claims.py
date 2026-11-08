@@ -103,8 +103,9 @@ _NEAR_LOCALE = re.compile(r"zh-TW|zh\.json|`zh`|catalou?gue|locale|key", re.IGNO
 #: What the pair of assertions below refuses is the direction that lies — a stated count above the real one, or a
 #: denominator that is not the live key population. The floors name what the tree has proven, not what it once
 #: held: they stood at 2816/2817 while the catalogue sat at 4051, so prose had 1235 keys of silent headroom to
-#: drift downward before this case noticed. 4051 is the committed count both Chinese catalogues actually hold.
-README_FLOORS: dict[str, int] = {"zh": 4051, "zh-TW": 4051}
+#: drift downward before this case noticed. 4051 is the committed count both Chinese catalogues held before the
+#: consolidated milestone landed; 4224 of 4269 is what they hold now (45 tokens identical in every locale).
+README_FLOORS: dict[str, int] = {"zh": 4224, "zh-TW": 4224}
 
 
 def _flatten(node: Any, prefix: str = "") -> dict[str, str]:
