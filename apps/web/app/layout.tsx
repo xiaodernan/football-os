@@ -12,6 +12,7 @@ import enMessages from "@/messages/en.json";
 import zhMessages from "@/messages/zh.json";
 import zhTWMessages from "@/messages/zh-TW.json";
 import arMessages from "@/messages/ar.json";
+import heMessages from "@/messages/he.json";
 import "../styles/globals.css";
 
 const messagesMap = {
@@ -19,6 +20,7 @@ const messagesMap = {
   zh: zhMessages,
   'zh-TW': zhTWMessages,
   ar: arMessages,
+  he: heMessages,
 } as const;
 
 export const dynamic = "force-dynamic";

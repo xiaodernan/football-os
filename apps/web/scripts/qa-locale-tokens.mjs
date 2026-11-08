@@ -113,7 +113,6 @@ const TOKENS = new Map([
   ["club.createNamePlaceholder", "an example proper name"],
   ["club.teamNamePlaceholder", "an example proper name"],
   ["club.playerSlugPlaceholder", "an example slug"],
-
 ]);
 
 const catalogue = (locale) => JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
@@ -294,7 +293,7 @@ check(
  * a crash is not a verdict either. Shipping a new language means writing down the count its copy starts
  * at, which is the argument the floor exists to force.
  */
-const DRIFT_FLOORS = { zh: 0, "zh-TW": 0, ar: 0 };
+const DRIFT_FLOORS = { zh: 0, "zh-TW": 0, ar: 0, he: 0 };
 const holders = new Map();
 for (const [path, value] of ENGLISH) {
   if (value.length <= 12) continue;

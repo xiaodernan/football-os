@@ -242,11 +242,12 @@ check(
   `${aCheck.detail}; ar shared unnamed ${aShared}, of which ${aEligible} are eligible under the drift gate's lenient rule`,
 );
 
-/* A2 — the same byte copy without a recorded floor still reddens D_FLOORS. */
+/* A2 — the same byte copy without a recorded floor still reddens D_FLOORS. The splice removes the `ar: 0`
+   entry wherever it sits, so a floor line that gained a sibling (`he: 0`) does not strand this arm. */
 const loseArFloor = fixture("A2-arabic-byte-copy-without-recorded-floor", (dir) => {
   const definerPath = join(dir, "scripts", DEFINER);
   const source = readFileSync(definerPath, "utf8");
-  const spliced = source.replace('const DRIFT_FLOORS = { zh: 0, "zh-TW": 0, ar: 0 };', 'const DRIFT_FLOORS = { zh: 0, "zh-TW": 0 };');
+  const spliced = source.replace(/, "?ar"?: 0/, "").replace(/, "?ar"?: 0/, "");
   if (spliced === source) throw new Error("the records floor splice matched nothing, so this arm would judge nothing");
   writeFileSync(definerPath, spliced);
   cpSync(join(dir, "messages", "en.json"), join(dir, "messages", "ar.json"));

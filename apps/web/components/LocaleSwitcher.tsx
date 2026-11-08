@@ -19,6 +19,8 @@ const NAMES: Record<string, string> = {
   en: "English",
   zh: "简体中文",
   "zh-TW": "繁體中文",
+  ar: "العربية",
+  he: "עברית",
 };
 
 export function LocaleSwitcher({ locales }: { locales: string[] }) {

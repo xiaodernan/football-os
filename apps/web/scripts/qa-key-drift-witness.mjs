@@ -163,7 +163,7 @@ check(
 // D — a synthetic catalogue past both ceilings: 60 sentences and 60 keys shared by two namespaces, each
 // translated differently. The agreeing pair inside `alpha` keeps check 1's population guard satisfied.
 const ceilings = fixture("ceilings");
-const synthetic = { en: { alpha: { x1: "Agree", x2: "Agree" }, beta: {} }, zh: { alpha: { x1: "同意", x2: "同意" }, beta: {} }, "zh-TW": { alpha: { x1: "同意", x2: "同意" }, beta: {} }, ar: { alpha: { x1: "موافق", x2: "موافق" }, beta: {} } };
+const synthetic = { en: { alpha: { x1: "Agree", x2: "Agree" }, beta: {} }, zh: { alpha: { x1: "同意", x2: "同意" }, beta: {} }, "zh-TW": { alpha: { x1: "同意", x2: "同意" }, beta: {} }, ar: { alpha: { x1: "موافق", x2: "موافق" }, beta: {} }, he: { alpha: { x1: "מבין", x2: "מבין" }, beta: {} } };
 for (let index = 0; index < 60; index += 1) {
   const sentence = `Shared sentence ${index}`;
   synthetic.en.alpha[`k${index}`] = sentence;
@@ -174,6 +174,8 @@ for (let index = 0; index < 60; index += 1) {
   synthetic["zh-TW"].beta[`k${index}`] = `乙 ${index}`;
   synthetic.ar.alpha[`k${index}`] = `موافق ${index}`;
   synthetic.ar.beta[`k${index}`] = `موافق ${index}`;
+  synthetic.he.alpha[`k${index}`] = `עברית ${index}`;
+  synthetic.he.beta[`k${index}`] = `שנייה ${index}`;
 }
 for (const locale of LOCALES) write(ceilings, locale, synthetic[locale]);
 const d = run(ceilings);

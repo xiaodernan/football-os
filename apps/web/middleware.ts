@@ -99,6 +99,7 @@ function preferredLocale(request: NextRequest): Locale {
     if (base === "zh") return /-(tw|hk|mo)/u.test(tag) ? "zh-TW" : "zh";
     if (base === "en") return "en";
     if (base === "ar") return "ar";
+    if (base === "he") return "he";
   }
   return defaultLocale;
 }

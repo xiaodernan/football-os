@@ -154,13 +154,13 @@ const ONLY = (r, label) =>
   r.status === 1 && r.failed === 1 && r.total === 9 && verdict(r.out, label) === "FAIL" &&
   ALL.filter((l) => l !== label).every((l) => verdict(r.out, l) === "PASS");
 
-// 0 — the shipped gate against the real catalogues, and the dormancy it must say out loud.
+// 0 — the shipped gate against the real catalogues, and both script rules it must count out loud.
 const zero = run(fixture("0-baseline"));
 check(
-  "0 the shipped gate reads the real catalogues 9/9 and names the one dormant rule",
+  "0 the shipped gate reads the real catalogues 9/9 with both script rules counted",
   GREEN(zero) && detailOf(zero.out, SCRIPT_AR).startsWith("4222 of 4222")
-    && detailOf(zero.out, SCRIPT_HE).startsWith("dormant — no he.json")
-    && zero.out.includes("DORMANT  Hebrew script (he.json absent)"),
+    && detailOf(zero.out, SCRIPT_HE).startsWith("4221 of 4221")
+    && !zero.out.includes("DORMANT"),
   `${tallyOf(zero)}; ${detailOf(zero.out, SCRIPT_AR)}`,
 );
 
@@ -274,14 +274,16 @@ const identicalExpected = (() => {
 })();
 const h = run(noTable);
 check(
-  "H a plane with no qa-locale-tokens.mjs reds the exemption table and the two checks its absence opens",
-  h.crashed === false && h.total === 9 && h.status === 1 && h.failed === 3
+  "H a plane with no qa-locale-tokens.mjs reds the exemption table and the checks its absence opens",
+  h.crashed === false && h.total === 9 && h.status === 1 && h.failed === 4
     && verdict(h.out, TABLE) === "FAIL"
     && detailOf(h.out, TABLE).includes("no qa-locale-tokens.mjs beside this gate")
     && verdict(h.out, IDENTICAL) === "FAIL"
     && detailOf(h.out, IDENTICAL).startsWith(`${identicalExpected} of ${identicalExpected}`)
     && verdict(h.out, SCRIPT_AR) === "FAIL"
-    && detailOf(h.out, SCRIPT_AR).startsWith("34 of 4256 message(s) judged in ar.json are Latin text"),
+    && detailOf(h.out, SCRIPT_AR).includes("judged in ar.json are Latin text")
+    && verdict(h.out, SCRIPT_HE) === "FAIL"
+    && detailOf(h.out, SCRIPT_HE).includes("judged in he.json are Latin text"),
   `${tallyOf(h)}; ${identicalExpected} identical message(s) on this plane; ${redSet(h)}`,
 );
 
@@ -302,8 +304,8 @@ check(
 // J — nothing leaked into the tree.
 const j = run(WEB);
 check(
-  "J the real catalogues still read 9/9 after the fixture arms, with the Arabic script rule counted",
-  GREEN(j) && j.out.includes("DORMANT  Hebrew script (he.json absent)"),
+  "J the real catalogues still read 9/9 after the fixture arms, with both script rules counted",
+  GREEN(j) && detailOf(j.out, SCRIPT_HE).startsWith("4221 of 4221") && !j.out.includes("DORMANT"),
   `${tallyOf(j)}; ${redSet(j)}`,
 );
 

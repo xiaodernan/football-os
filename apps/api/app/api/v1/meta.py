@@ -176,6 +176,6 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
         # settings page renders the difference as "coming soon". The claim test holds the two against the
         # catalogues in both directions, so neither can drift.
         "locales": _shipped_locales(),
-        "locales_planned": ["en", "zh", "zh-TW", "ar"],
+        "locales_planned": ["en", "zh", "zh-TW", "ar", "he"],
         "demo_mode": settings.is_demo_mode,
     }

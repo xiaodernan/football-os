@@ -12,12 +12,14 @@ import enMessages from "@/messages/en.json";
 import zhMessages from "@/messages/zh.json";
 import zhTWMessages from "@/messages/zh-TW.json";
 import arMessages from "@/messages/ar.json";
+import heMessages from "@/messages/he.json";
 
 const messagesMap = {
   en: enMessages,
   zh: zhMessages,
   "zh-TW": zhTWMessages,
   ar: arMessages,
+  he: heMessages,
 } as const;
 
 /**
