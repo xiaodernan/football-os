@@ -1,5 +1,5 @@
 /**
- * RTL walk — the production build, fo_locale=ar, four pages, desktop width.
+ * RTL walk — the production build, fo_locale=ar, six pages, desktop width.
  * Writes screenshots to docs/screenshots/ and prints one line per page:
  *   html@dir=... (rtl expected) · <arabic spot-check> · <named catalogues> · no MISSING_MESSAGE.
  *
@@ -53,6 +53,7 @@ const isArabic = (s) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\u
     { path: '/knowledge', name: 'knowledge', shot: 'arabic-knowledge.png' },
     { path: '/login', name: 'login', shot: 'arabic-login.png' },
     { path: '/challenges', name: 'challenges', shot: 'arabic-challenges.png' },
+    { path: '/club/rules', name: 'club rules', shot: 'arabic-club-rules.png' },
   ];
 
   const authPages = AUTH_WALK

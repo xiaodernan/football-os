@@ -3522,3 +3522,37 @@ The walk made three findings, none of them a bug. **First**, session-gated pages
 Neither text is in a gate-verifiable class — both are sentences whose broken bytes rendered, in this repository's web tier, as visible truncation on the settings page in Hebrew. The two catalogues were reassembled from `.scratch/he-work/` which is the same path §56 recorded; the assembly script re-checked global key parity (4269/4269) and ICU placeholder parity before the write.
 
 **What this pass does not claim.** Anything about meaning at the word level — the quality bar that still holds is "machine-authored, native review owed", and nothing in this pass weakens that caveat. A native Hebrew (and Arabic) review remains the condition for either catalogue being called edited rather than shipped. No Hebrew or Arabic value changed except the two above; the gates re-read the tree and stayed green.
+
+
+-----------------------------------------------------------------------------------------
+
+## 61. The played-round walk — the market ledger with real rows, and /club/rules closes the public gap (2026-11-09)
+
+**What §58 honestly declined to claim.** §58 recorded the market ledger under `dir=rtl` with a career that had played zero rounds — "the ledger's *rendering* is proven; a ledger with rows of transactions is not claimed walked." This pass walked it with a played round, and added the one public page neither walk covered.
+
+**Stack.** Identical procedure to §57/§58: disposable PostgreSQL `football_he_probe_i` (alembic `0001 → 0059`), seeder with `--with-demo-user` (catalogue 24, knowledge 155 chunks, `demo@footballos.local` / `demo-password-123`), API on `8760` under `ENV=development` with the project's authenticated Redis; production build (`NEXT_DIST_DIR=.next-ci SITE_URL=http://127.0.0.1:3212 API_INTERNAL_URL=http://127.0.0.1:8760`) on `3212`. A career was opened via the real API as the seeded demo account — `"Walk Manager"` at `Braeford Athletic`, system `3-4-2-1-control-possession`, one objective (`wins ≥ 3`), slug `walk-manager-braa` — and **one round was played through `POST /api/v1/careers/walk-manager-braa/play`**, fixture `cf_yh25rx0bg73DvxgF`, match slug `braa-v-thom-4a745c920c97f0c6`, engine seed 1242595613. The transfers door at `GET /api/v1/transfers/walk-manager-braa` then read `gate_rows: 1` — a real gate receipt row in the ledger, plus `moves/wage_rows/deals/stadium_rows/bonus_rows = 0` (no transfers made; nothing hand-wavy claimed from hollow rows).
+
+**Both walks, 2026-11-09, after the round was played:**
+
+| page (he) | dir | glyphs | console errors | MISSING_MESSAGE |
+| --- | --- | --- | --- | --- |
+| home | rtl | present | 0 | 0 |
+| world | rtl | present | 0 | 0 |
+| knowledge | rtl | present | 0 | 0 |
+| login | rtl | present | 0 | 0 |
+| challenges (anon redirect) | rtl | present | 0 | 0 |
+| club rules (public) | rtl | present | 0 | 0 |
+| authenticated my-football | rtl | present | 0 | 0 |
+| authenticated simulator | rtl | present | 0 | 0 |
+| authenticated challenges | rtl | present | 0 | 0 |
+| authenticated career create | rtl | present | 0 | 0 |
+| authenticated career detail | rtl | present | 0 | 0 |
+| authenticated market ledger | rtl | present | 0 | 0 |
+
+**ALL 24 PASS — 12/12 Hebrew, 12/12 Arabic.** Same assertions, same exit semantics. `/club/rules` is the public rulebook every honest visitor can read without a session, and it now proves both RTL scripts end-to-end on the same tree without a browser extension or JS disabled. Screenshots in `docs/screenshots/` (gitignored).
+
+**Honest remainder, narrowed again.** (1) The ledger carries one real gate-receipt row and nothing else — no transfers signed, no wages charged this round (the engine prices wages when it matters at signing time, and the career signed nobody); "the market ledger under RTL on a played round" is the claim, not "a busy market". (2) `/simulate` renders the seeded synthetic world; no fixture was simulated during the walk. (3) Screenshots are local-only artifacts under `docs/screenshots/`, as before; the served bytes are never asked to prove anything. (4) The `/club/rules` page is long — fullPage screenshots confirm the RTL claim, but no scroll-depth interaction was exercised.
+
+**Instrumentation, honestly stated.** The two walk scripts now carry the sixth page (`/club/rules`, six pages total); comment headers updated to match. `qa-gate-inventory`: **233/233** unchanged in shape — both RTL walks remain `live-tier` with `browser=true server=true`. The wire-gate and wiring-gate from §59 already registered both walks; unchanged this slice. The census file rows stay 11.
+
+**Teardown.** Probe DB dropped, ports 3212/8760 released by PID, `.next-ci` removed, `next-env.d.ts` restored to HEAD — same discipline as §55/§57/§58/§60.

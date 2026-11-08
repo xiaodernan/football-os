@@ -1,5 +1,5 @@
 /**
- * RTL walk — the production build, fo_locale=he, five pages, desktop width.
+ * RTL walk — the production build, fo_locale=he, six pages, desktop width.
  * Writes screenshots to docs/screenshots/ and prints one line per page:
  *   html@dir=... (rtl expected) · <hebrew spot-check> · <named catalogues> · no MISSING_MESSAGE.
  * Mirror of qa-arabic-rtl-walk.mjs; the two were landed together so a Hebrew regression in
@@ -55,6 +55,7 @@ const isHebrew = (s) => /[\u0590-\u05FF\uFB1D-\uFB4F]/.test(String(s ?? ''));
     { path: '/knowledge', name: 'knowledge', shot: 'hebrew-knowledge.png' },
     { path: '/login', name: 'login', shot: 'hebrew-login.png' },
     { path: '/challenges', name: 'challenges', shot: 'hebrew-challenges.png' },
+    { path: '/club/rules', name: 'club rules', shot: 'hebrew-club-rules.png' },
   ];
 
   const authPages = AUTH_WALK
