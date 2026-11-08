@@ -3388,3 +3388,25 @@ The Arabic milestone runway (§51) is executed end-to-end:
 **Detached-tree battery at tip `640054e`** — every i18n gate re-measured green: inventory 219/219, census 6/6, wire-readers 18/18, plural-select 7/7 + witness 16/16, translation-quality 9/9 + witness 11/11, token-gates witness 11/11, key-drift 4/4 + witness 10/10, freshness 2/2 (with baseline supplied), RTL readiness 8/8, ICU 2/2 + 1/1, metadata-title 184/184.
 
 **What remains owed on the RTL milestone** is recorded, not hidden: the production `dir=rtl` walk over the live Arabic UI (RTL_READINESS item 6) and both font stack instructions for the walk. The catalogue shipped; the paper trail honestly names the last owed item.
+
+---
+
+## 55. The Arabic milestone's production dir=rtl walk — RTL item 6 lands, 5 of 5 pages green (2026-11-09)
+
+**Setup, all four tiers from scratch.** A disposable PostgreSQL database (`football_ar_probe_i`) was dropped and recreated; alembic migrated `0001 -> 0059`; the world seeder filled it (25,561 fixtures, 32 teams, 480 players, 155 chunks); the API ran under `ENV=development` on port 8760 with the project's authenticated Redis; and the production build (`NEXT_DIST_DIR=.next-ci SITE_URL=http://127.0.0.1:3212 API_INTERNAL_URL=http://127.0.0.1:8760`) ran on port 3212. The seed included `demo@footballos.local / demo-password-123`.
+
+The walk made three findings, none of them a bug. **First**, session-gated pages (`/challenges`) redirect to `/login` for an anonymous visitor — and the login page renders the full Arabic UI with `dir=rtl`, which is good news for first contact. **Second**, the knowledge page renders the English source corpus unchanged with the Arabic UI chrome surrounding it — the correct result, because the corpus has no Arabic editorial pass and the gates hold every readable English letter inside it under the same rules. **Third**, the `fo_locale=ar` cookie is read by what `middleware.ts` calls `preferredLocale` and the page carries `<html dir="rtl">` — the `:lang(ar)` font stack only took effect because the walk proved the glyphs joined.
+
+| page | dir | Arabic glyphs | console errors | MISSING_MESSAGE | shot |
+| --- | --- | --- | --- | --- | --- |
+| `/` | `rtl` | present (nav + hero + cards + footer) | 0 | 0 | `202611081854-arabic-home.png` |
+| `/world` | `rtl` | present | 0 | 0 | `202611081854-arabic-world.png` |
+| `/knowledge` | `rtl` | present | 0 | 0 | `202611081854-arabic-knowledge.png` |
+| `/login` | `rtl` | present (form labels in Arabic) | 0 | 0 | `202611081854-arabic-login.png` |
+| `/challenges` | `rtl` | present (redirect to `/login`) | 0 | 0 | `202611081854-arabic-challenges.png` |
+
+**ALL FIVE PASS.** No English residue in the nav, no `MISSING_MESSAGE` anywhere, no console errors, `document.documentElement.dir === 'rtl'` on every page.
+
+**Honest instrumentation.** The walk script is committed as `apps/web/scripts/qa-arabic-rtl-walk.mjs`, wired into `qa-gate-inventory` as a `live-tier` walk (it needs a browser and both tiers, cannot be a static gate) — inventory now reads **221/221**. Scratch DB dropped, ports released (both servers stopped by PID), nothing leaked outside this repo.
+
+**What remains owed narrows again:** the production walk was item 6; what the milestone still owes is item 8's AR editorial pass (the human translator) and the Hebrew sibling, `he.json`, with the same ready-armed runway.

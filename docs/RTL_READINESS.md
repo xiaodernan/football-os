@@ -171,8 +171,9 @@ The milestone covers these by page, not by rule.
    the knowledge base — on a production build; no clipped text, no broken joins, pagination and
    back arrows on the correct side. Record in `I18N_ARC_VERIFICATION.md` §23+.
 
-   **Walk procedure (prepared, not yet run — `ar.json` does not ship yet, so item 6 is blocked on the
-   milestone; this checklist is the runbook it will use):**
+   **Landed (§55, 2026-11-09).** `qa-arabic-rtl-walk.mjs` ran against a production build with a freshly seeded scratch PostgreSQL (`0001->0059`), the API up on `8760` and the production Next tier up on `3212`. Five pages walked with `fo_locale=ar`; all printed Arabic under `<html dir="rtl">`, zero `MISSING_MESSAGE`s, zero console errors — and the `/challenges` session-gated URL redirected anonymously to a correctly-rendered Arabic login page, which is the safest thing this locale could do first. Screenshots in `docs/screenshots/202611081854-*`: `arabic-home.png`, `arabic-world.png`, `arabic-knowledge.png`, `arabic-login.png`, `arabic-challenges.png`. Inventory grew by one to **221/221** (the walk is a `live-tier` gate wired into `qa-gate-inventory`).
+
+    **Walk procedure (run; the record is in `I18N_ARC_VERIFICATION.md` §55):**
 
    1. **Build** — `npm run build` on a tree whose `messages/` carries `ar.json`; confirm no RTL-specific
       build error and no `next-intl` missing-locale warning for `ar`.

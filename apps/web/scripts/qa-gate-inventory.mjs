@@ -97,6 +97,7 @@ const LEDGER = {
   "qa-creator.mjs": ["live-tier"], "qa-ledger.mjs": ["live-tier"], "qa-market.mjs": ["live-tier"],
   "qa-portfolio.mjs": ["live-tier"], "qa-scout.mjs": ["live-tier"], "qa-timeline.mjs": ["live-tier"],
   "verify-production.sh": ["live-tier"], "visual-qa.mjs": ["live-tier"],
+  "qa-arabic-rtl-walk.mjs": ["live-tier"],
 };
 
 const reads = (name) => readFileSync(resolve(HERE, name), "utf8");
