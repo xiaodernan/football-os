@@ -3066,3 +3066,45 @@ touched, not wired, not renumbered here.
 **Conclusion, stated exactly.** The committed tip is green on everything the i18n arc owns; the only red is
 the milestone's `qa-wire-readers` six. CI remains unread — the queue has not started a run since
 2026-11-07T16:23Z; these are local, detached readings of the exact bytes master holds.
+
+## 46. The queue drained — what the drained runs read, all twelve (2026-11-08)
+
+**The queue started.** At some point after 2026-11-08T04:12 this repository's Actions backend went live
+again and drained every accumulated run on master. Twelve runs, fetched via the API, jobs and step-level
+conclusions read on 2026-11-08T15:31–15:32:
+
+| run | tip at time | api | web (failing step) |
+| --- | --- | --- | --- |
+| `42410410240` | `c0de713` §45 | **success** | step 38 → Wire-readers |
+| `42410256535` | `24e4004` §44 | **success** | step 38 → Wire-readers |
+| `42406178809` | `9be49f3` §41 | **success** | step 38 → Wire-readers |
+| `42404065788` | `1ac0901` §43 addendum | **success** | step 37 → Wire-readers |
+| `42403997409` | `de79ae7` §43 | **success** | step 37 → Wire-readers |
+| `42403210954` | `2ae56aa` §42 addendum | **success** | step 37 → Wire-readers |
+| `42402943163` | `4a2582f` §42 | **success** | step 37 → Wire-readers |
+| `42401429529` | `5d38bdf` §40 | **success** | step 37 → Wire-readers |
+| `42397778704` | `0a7a9da` | **success** | step 36 → Wire-readers |
+| `42397462452` | `49aca18` | **success** | step 36 → Wire-readers |
+| `42396169784` | `8fd2163` §39 | **success** | step 36 → Wire-readers |
+| `42395644329` | `3c63a26` plan-sync | **success** | **step 22 → Baseline-gate** |
+
+**What the drained runs say.**
+
+- **api is green on all twelve**, including the oldest of this batch — the §36 fix and everything this arc
+  landed on the api surface passes CI on the committed tree today.
+- **web is red on all twelve, and eleven of the twelve red on exactly one step — Wire-readers, the M13
+  milestone's six named reds (§24).** Step numbers drift with the job (36 → 37 → 38) as gates join the
+  runner; the failing gate is always the same. Not one web failure is this arc's.
+- **`42395644329` is the one exception and it is this arc's history, already cured.** That tree (`3c63a26`,
+  after the plan-sync) carried the `qa-baseline-gates` witness drift §39 found locally hours later and fixed
+  at `8fd2163`. CI had independently caught the same disease — step 22 Baseline-gate — on exactly the bytes
+  that needed §39, and every run after `8fd2163` shows the cure taking effect (no run reds at Baseline-gate
+  again). The local catch and the CI catch name the same three needles.
+- **CI is a live signal again.** Every run concludes within minutes-to-hours on this backend; the wall of
+  queued runs was an availability gap, not a configuration defect.
+
+**What still stands, exactly.** The web job stops at Wire-readers, i.e. at the milestone's six reds
+(§24), on every master run. The moment the M13 milestone lands — this arc's §24 reds all close, the README
+pin recomputes (4269/4224), and the web job's remaining steps (`npm run typecheck`, `npm run build`) execute
+for the first time on master since the queue went quiet. Everything this arc owns executes green on the
+committed tree as verified both by this batch and by detached worktrees (§42/§45).
