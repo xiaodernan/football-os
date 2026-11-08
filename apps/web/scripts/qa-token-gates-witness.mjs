@@ -237,7 +237,7 @@ const aCheck = reds(a, [D_UNNAMED, D_TABLE], [R_UNNAMED]);
 check(
   "A a byte-copy ar.json reddens the shared-value rule and the table — the floor is on record at 0, so it does not bite",
   aCheck.ok && detailOf(a.d.out, D_UNNAMED).startsWith(`${aShared} identical value(s) that are not named: ar:`)
-    && detailOf(a.d.out, D_TABLE).includes("ar: the table states no figure")
+    && detailOf(a.d.out, D_TABLE).includes("the catalogue holds 0")
     && detailOf(a.r.out, R_UNNAMED).startsWith(`${aEligible} unnamed identical value(s): ar:`),
   `${aCheck.detail}; ar shared unnamed ${aShared}, of which ${aEligible} are eligible under the drift gate's lenient rule`,
 );
