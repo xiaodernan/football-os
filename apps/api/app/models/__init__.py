@@ -1317,7 +1317,7 @@ class CareerBudgetAward(Base, TimestampMixin):
     amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
     #: The arithmetic in words, so the figure can be checked against the season without the code.
-    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    basis: Mapped[str] = mapped_column(Text, default="", nullable=False)
     promotion: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
@@ -1379,7 +1379,7 @@ class CareerGateReceipt(Base, TimestampMixin):
     amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
     #: Where the attendance came from — the world fixture's stored figure or the rotation's share of capacity.
-    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    basis: Mapped[str] = mapped_column(Text, default="", nullable=False)
     budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -1415,7 +1415,7 @@ class CareerStadiumWork(Base, TimestampMixin):
     amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
     capacity_before: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     capacity_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    basis: Mapped[str] = mapped_column(Text, default="", nullable=False)
     budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -1457,7 +1457,7 @@ class CareerUpkeepCharge(Base, TimestampMixin):
     seat_rate_pct: Mapped[int] = mapped_column(Integer, default=25, nullable=False)
     amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
-    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    basis: Mapped[str] = mapped_column(Text, default="", nullable=False)
     budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -1494,7 +1494,7 @@ class CareerSeasonTicket(Base, TimestampMixin):
     amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
     capacity: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    basis: Mapped[str] = mapped_column(Text, default="", nullable=False)
     budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -1525,7 +1525,7 @@ class CareerTrainingWork(Base, TimestampMixin):
     bonus_pct_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amount: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amount_units: Mapped[str] = mapped_column(String(40), default="career credits", nullable=False)
-    basis: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    basis: Mapped[str] = mapped_column(Text, default="", nullable=False)
     budget_after: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -1590,9 +1590,10 @@ class CareerCupTie(Base, TimestampMixin):
     #: `CareerFixture.world_match_id` is: the world can be re-synced under a career still being played.
     world_match_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
     #: The opponent and side the bracket gave this tie, in words, so the figure can be checked without code.
-    #: 512 wide because a slot from a draw that stops at the quarter-finals names the adjacent tie and the
-    #: engine's reading of it before the tie's own sentence is appended (M13 Phase 9 item 35).
-    basis: Mapped[str] = mapped_column(String(512), default="", nullable=False)
+    #: Unbounded prose by decision (0059): a slot from a draw names the adjacent tie and the engine's reading
+    #: of it, and the tie's own sentence is appended onto that — CI's PostgreSQL leg refused a 468-character
+    #: sentence under the shipped 512, which SQLite accepts silently (M13 Phase 9 item 35 comment, superseded).
+    basis: Mapped[str] = mapped_column(Text, default="", nullable=False)
     data_origin: Mapped[str] = mapped_column(String(20), default="simulation", nullable=False)
     is_demo_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
