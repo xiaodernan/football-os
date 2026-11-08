@@ -3108,3 +3108,40 @@ conclusions read on 2026-11-08T15:31–15:32:
 pin recomputes (4269/4224), and the web job's remaining steps (`npm run typecheck`, `npm run build`) execute
 for the first time on master since the queue went quiet. Everything this arc owns executes green on the
 committed tree as verified both by this batch and by detached worktrees (§42/§45).
+
+## 47. CI says it in its own bytes — the six Wire-readers reds, quoted, and inventory, read (2026-11-08)
+
+**Quoted, not paraphrased** — the web job's failed step on run `42410410240` (the `c0de713` tip, the log
+fetched with `--log-failed`; the timestamps in the bytes read `2026-11-07T22:18:51`):
+
+```text
+FAIL 9  every constant the view publishes is typed by the web tier (14 published) —
+        declared, published by nothing: cup_prize_by_stage, gate_ticket_price_tier_1,
+        gate_ticket_price_tier_2, gate_rotation_attendance_floor, gate_rotation_attendance_ceiling.
+FAIL 12 the totals block's published keys are exactly the keys MarketView["totals"] declares (7 published) —
+        wire 7 vs type 9 — declared, published by nothing: cup_prize_rows, gate_rows
+FAIL 13 every field the totals block declares is read on the page or through the seam, or named with the reason
+        (2 named) — reads: page=bonus_rows, grant_rows, signed, withdrawn MarketTools=listed seam=held — nothing
+        asks: cup_prize_rows, gate_rows
+FAIL 15 the moves element type's published keys are the keys `Move` declares (25 published) —
+        wire 25 vs type 30 — declared, published by nothing: expiry_round, attendance, ticket_price, tie_id, competition
+FAIL 16 every field `Move` declares is read by the market page's moves-row callback, or named with a reason the
+        bytes re-measure (8 named) — nothing asks: attendance, ticket_price, tie_id, competition
+FAIL 17 a moves exemption the bytes stopped earning is stale — attendance — only a gate row carries this; not
+        displayed per-row in the current UI, ticket_price — …, tie_id — …, competition — …
+CHECKS passed=12 total=18 failed=6
+```
+
+Same gate, same six reds on every drained master run (§46). All six live in the market wire's gate/cup
+domain — `cup_prize_*`, `gate_ticket_price_*`, `gate_rotation_attendance_*`, `gate_rows`, `moves`' new
+fields — the exact delta the M13 milestone carries; none of it is an i18n-arc construct, none is fixable
+by this arc without writing the milestone.
+
+**Also read from the same CI log:** `qa-gate-inventory` answered **214/214** in the CI runner itself — the
+committed tree executes the §41-plane figures verbatim on GitHub's runner, not just on detached worktrees;
+`qa-shared-keys-witness` 8/8, `qa-icu-messages`, `qa-i18n-literals`, `qa-locale-completeness`, every gate
+step before Wire-readers passed in the log.
+
+**Timeline.** `d6ce238` (this section) triggered run `42459424587`, started `2026-11-08T07:35:27` — in
+progress when this section was written; the expected verdict is §46's — api success, web red at Wire-readers
+step — and no other claim is made.
