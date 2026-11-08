@@ -170,6 +170,34 @@ The milestone covers these by page, not by rule.
 6. **Walk the representative pages with `dir=rtl`** — the market ledger, a career page, the nav,
    the knowledge base — on a production build; no clipped text, no broken joins, pagination and
    back arrows on the correct side. Record in `I18N_ARC_VERIFICATION.md` §23+.
+
+   **Walk procedure (prepared, not yet run — `ar.json` does not ship yet, so item 6 is blocked on the
+   milestone; this checklist is the runbook it will use):**
+
+   1. **Build** — `npm run build` on a tree whose `messages/` carries `ar.json`; confirm no RTL-specific
+      build error and no `next-intl` missing-locale warning for `ar`.
+   2. **Market ledger** — open `/world/matches` (or the market's ledger page) with `?locale=ar`:
+      - No English residue in stat labels, cap names, or example placeholders
+      - Table pagination renders with `next`/`previous` on the *right* side for RTL reading order
+      - Back/pagination arrows point toward the start of reading (right-to-left)
+   3. **Career page** — open a career detail page with `?locale=ar`:
+      - No clipped text in player cards, contract panels, or badge overflow
+      - No broken Arabic joins (letters connect within words)
+   4. **Nav** — open the global nav with `?locale=ar`:
+      - All nav entries resolve to Arabic (no `MISSING_MESSAGE`, no English fallback)
+      - Nav drawer/popover opens on the correct side for RTL
+   5. **Knowledge base** — open a knowledge article with `?locale=ar`:
+      - Body text direction follows `dir=rtl`; embedded LTR content (numbers, English terms) does not
+        break line flow
+      - No clipped glyphs at paragraph edges
+   6. **Logs** — capture tier logs after the walk:
+      - Zero `MISSING_MESSAGE` entries for `ar`; any entry blocks the slice until fixed in the same commit
+   7. **Record** — write observations to `I18N_ARC_VERIFICATION.md` §23+ (a new RTL walk section, next
+      free number after §50), with page list, screenshot references, and any `MISSING_MESSAGE` entries.
+
+   **Preconditions already met (no edit needed):** `<html dir={textDirection(locale)}>` in the root
+   layout (§8 item 8); `textDirection("ar")` returns `"rtl"` (`i18n/locales.ts` §22 RTL_BASE_LANGUAGES);
+   `qa-rtl-readiness.mjs` 8/8 refuses physical CSS properties that would not follow direction.
 7. **CI registers the new locale** (matrix or shard as the pipeline prefers), and
    `test_locale_claims.py` passes with the new population — the pin will move with it.
 8. **No RTL locale is added to `i18n/locales.ts` before 1–7 are green.** The gate already refuses a

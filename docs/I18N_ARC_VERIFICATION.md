@@ -3211,3 +3211,17 @@ either the paren or a `qa-locale-discovery.mjs` written parseable before any pus
 Four runs, one verdict every time: **api green**, **web stopped at Wire-readers** — the milestone's six named reds (§47 quotes the FAIL lines verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree (detached tip read **28/28** in §45; `qa-gate-inventory` ran **214/214** inside the CI runner itself).
 
 No claim beyond that: CI is a live signal again, and it reads the same red on every master push until the M13 milestone lands. No commit in this window touched `qa-locale-discovery.mjs` — its parse error (inventory 216/218 on the live tree) stays the parallel lane's to fix before its push.
+
+## 51. Arabic milestone runway — what lands after M13, pre-written (2026-11-08)
+
+**The runway.** When the M13 milestone lands, its commits close the six Wire-readers reds (§24), the README pin recomputes to 4269/4224 (compliance item 8), and the web CI job moves past Wire-readers for the first time on master. Only then does the Arabic milestone take over:
+
+**Item 6 — walk under `dir=rtl`.** The market ledger, a career page, the nav, the knowledge base on a production build carrying `ar.json`; no clipped text, no broken joins, pagination and back arrows on the correct side. Walk procedure written into `docs/RTL_READINESS.md` item 6 (this session); observations land in `I18N_ARC_VERIFICATION.md` §23+ (next free number after §50).
+
+**Item 7 — CI registers `ar`.** All gates discover catalogues by existence (§28), so `ar.json` on disk is judged by every gate with zero ci.yml edits; the step name "every locale the directory carries" already names it. `test_locale_claims.py` passes with the new population; the README pin moves with it.
+
+**Item 8 — Arabic ships.** Only after items 1–7 are green. `ar.json` is authored in the milestone's own commits; the README pin and `docs/RTL_READINESS.md` records that land with it carry the walk, the real catalogue, the population and the resolver, and the token claims test live. No `ar` entry in `i18n/locales.ts` before 1–7 are green (item 8's own guard; `<html dir>` disagrees would fail loudly).
+
+**What this arc does not owe.** Arabic translations of the 4,269-key catalogue; gate invention where the catalogue is hand-written (§26 forbids it); a fake "done" for any of these items inside this file or outside it.
+
+**Blocking fact, restated.** `qa-wire-readers` is 12/18 on the committed tree, 18/18 on the working tree; `qa-locale-tokens` is 4/5 on the working tree (README pin 4051/4096 vs in-flight 4269/4224). All six named reds and the pin drift are the M13 milestone's to close. This arc will not close them.
