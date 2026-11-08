@@ -3506,3 +3506,19 @@ The walk made three findings, none of them a bug. **First**, session-gated pages
 **Wiring, honestly stated.** `scripts/check.sh` and `.github/workflows/ci.yml` both invoke the gate and its witness directly after the RTL-readiness step; the census censuses both (`gates=[scripts/check.sh, .github/workflows/ci.yml]`), and `qa-gate-inventory` holds them at 233/233 with both `live-tier`-adjacent but static (`browser=false server=false`).
 
 **What this closes.** The class of defect where a catalogue ships, the content gates hold, the walk is green, and the reader's own language control lies — silently, in the one place the Arabic milestone proved nothing else would ever look. Every future locale (`fr`, `de`, …) inherits the same wiring check the day its `.json` lands.
+
+
+-----------------------------------------------------------------------------------------
+
+## 60. The machine-authored catalogues, re-examined — two real defects, both mine (2026-11-09)
+
+**The claim under test.** The ar/he catalogues ship machine-authored (§54–§58) with the open debt of a native review. This pass applied every mechanical probe the project owns, then a curated set written by hand: ICU placeholder parity (2/2), key parity (2/2), translation-quality (9/9, Hebrew script 4222/4221 judged), tokens/drift (7/7, 4/4, floor he 0), script-contamination across the RTL pair (U+0600–06FF in he; U+0590–05FF in ar), length-asymmetry vs en, unbalanced braces/tags, and sentence-terminator conventions per locale (trailing list of false positives includes Arabic's `۔` and the catalogue's plural-block convention of no trailing terminator — the probe flagged 714 valid messages before those rules were applied). **Zero script contamination, zero truncated messages after the fixes below, zero unbalanced braces, zero fallbacks, zero drift.** The probe did find and fix two genuine defects, both in the Hebrew catalogue, both mine:
+
+| key | defect | fix |
+| --- | --- | --- |
+| `settings.profileFooter` | sentence truncated mid-word ("שינוי דוא" — cut at the email prefix) | full sentence restored: "לקריאה בלבד בכוונה: ה-API עדיין לא מאפשר נקודת עריכת פרופיל, ולכן העמוד הזה לא מעמיד פנים שיש לו אחת. שינוי דוא״ל וסיסמה יגיעו עם אותה נקודה." |
+| `settings.playerDescription` | sentence truncated at the same email prefix ("דוא") | full sentence restored, keeping the account/deletion distinction: "זה מסיר <strong>שחקנים, אימונים, אירועי XP והיסטוריית תכונות</strong>. זה שומר את החשבון עצמו (דוא״ל, תפקיד, תוכנית) — מחיקת החשבון היא פעולת API נפרדת ואינה מחוברת למסך הזה." |
+
+Neither text is in a gate-verifiable class — both are sentences whose broken bytes rendered, in this repository's web tier, as visible truncation on the settings page in Hebrew. The two catalogues were reassembled from `.scratch/he-work/` which is the same path §56 recorded; the assembly script re-checked global key parity (4269/4269) and ICU placeholder parity before the write.
+
+**What this pass does not claim.** Anything about meaning at the word level — the quality bar that still holds is "machine-authored, native review owed", and nothing in this pass weakens that caveat. A native Hebrew (and Arabic) review remains the condition for either catalogue being called edited rather than shipped. No Hebrew or Arabic value changed except the two above; the gates re-read the tree and stayed green.
