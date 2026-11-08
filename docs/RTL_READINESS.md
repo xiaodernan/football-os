@@ -3,7 +3,7 @@
 Measures the tree on 2026-11-06 (re-verified 2026-11-07). Every number is taken, not asserted; reproduce
 with the commands named. **No right-to-left locale ships until the checklist below is closed.** This document is the
 audit; `qa-rtl-readiness.mjs` is the gate; `docs/I18N_ARC_VERIFICATION.md` §20 records the structural
-half.
+half. Both RTL locales this audit prepared for have shipped since it was written (`ar` §55, `he` §57) — the checklist below is what they were held to.
 
 ## What is already true (and gate-able)
 
@@ -141,8 +141,9 @@ The milestone covers these by page, not by rule.
    (`。`, `؟`, `！`, `？`); mojibake detects Latin-1-decoded Hebrew bytes at `Ê`–`Õ` with script absent; a
    Hebrew-script assertion mirrors the Arabic one; punctuation honours Hebrew sentence-ending marks other
    than Chinese/Arabic ones. Verified with a six-arm fixture — see §31.
-   The Arabic milestone still owes: authoring `ar.json`, running the pass on its full population, and every
-   `ar` message passing all six plural categories and all five quality checks. The Hebrew milestone owes the same.
+   The Arabic milestone still owed: authoring `ar.json`, running the pass on its full population, and every
+   `ar` message passing all six plural categories and all five quality checks. The Hebrew milestone owed the same.
+   **Both paid 2026-11-08/09** — `ar` (§54/§55) and `he` (§57) were judged by these same nine checks on their full populations.
    **Cured 2026-11-08, and the counts above are the pre-cure ones:** the gate is now **nine** checks, and its
    scratch fixture is a shipped witness, `qa-translation-quality-witness.mjs` (**11/11**). Both script rules
    were still the weak point — they printed the same clean sentence for a tree with no `ar.json` and for an
@@ -173,6 +174,8 @@ The milestone covers these by page, not by rule.
 
    **Landed (§55, 2026-11-09).** `qa-arabic-rtl-walk.mjs` ran against a production build with a freshly seeded scratch PostgreSQL (`0001->0059`), the API up on `8760` and the production Next tier up on `3212`. Five pages walked with `fo_locale=ar`; all printed Arabic under `<html dir="rtl">`, zero `MISSING_MESSAGE`s, zero console errors — and the `/challenges` session-gated URL redirected anonymously to a correctly-rendered Arabic login page, which is the safest thing this locale could do first. Screenshots in `docs/screenshots/202611081854-*`: `arabic-home.png`, `arabic-world.png`, `arabic-knowledge.png`, `arabic-login.png`, `arabic-challenges.png`. Inventory grew by one to **221/221** (the walk is a `live-tier` gate wired into `qa-gate-inventory`).
 
+   **Landed (§57, 2026-11-09).** `qa-hebrew-rtl-walk.mjs` — the same walk against the same production shape (`football_he_probe_i` seeded 0001→0059 then dropped; API `8760`; prod build `.next-ci` on `3212`). Five pages under `fo_locale=he`; every page printed Hebrew under `<html dir="rtl">`, zero `MISSING_MESSAGE`s, zero console errors; `/challenges` redirected anonymously to a correctly-rendered Hebrew login page. The only Latin string on the rendered home page is `M3 Football World` — the milestone's own proper name inside Hebrew copy. Screenshots `docs/screenshots/202611082102-hebrew-*.png`. Inventory grew to **222/222**. `<html dir>` follows `he` (the shared `RTL_BASE_LANGUAGES` set), and the `:lang(he)` font stack ships in `globals.css` (Noto Kufi Hebrew / Noto Sans Hebrew).
+
     **Walk procedure (run; the record is in `I18N_ARC_VERIFICATION.md` §55):**
 
    1. **Build** — `npm run build` on a tree whose `messages/` carries `ar.json`; confirm no RTL-specific
@@ -201,11 +204,10 @@ The milestone covers these by page, not by rule.
    `qa-rtl-readiness.mjs` 8/8 refuses physical CSS properties that would not follow direction.
 7. **CI registers the new locale** (matrix or shard as the pipeline prefers), and
    `test_locale_claims.py` passes with the new population — the pin will move with it.
-8. **No RTL locale is added to `i18n/locales.ts` before 1–7 are green.** The gate already refuses a
-   tree whose `<html dir>` disagrees; adding `ar` early fails loudly, which is the point.
+8. **No RTL locale is added to `i18n/locales.ts` before 1–7 are green — and both were added only after they were.** `ar` joined at §54 with the walk behind it (§55), `he` at §57 with its walk behind it; the gate refuses a tree whose `<html dir>` disagrees, and the walk proves the page agrees.
 
 ## What is deliberately not claimed
 
-- No RTL locale exists today; nothing in this document renders Arabic or Hebrew.
+- **Both RTL locales now exist and are served: `ar` and `he`** — `locales` discovers them from `messages/` and `locales_planned` lists five. Each shipped with its full catalogue (4269 keys, parity, ICU, plural gates, token/drift/quality gates all green) and its own production `dir=rtl` walk (§55, §57). Neither ships a human editorial pass yet — Arabic's and Hebrew's catalogues are machine-authored to the project's bar and both still owe a native review before either is claimed as *edited* rather than *shipped*; neither numerals policy is finally decided.
 - The 9 JSX arrow sites listed in §3 were all retired 2026-11-07 — the raw glyphs are gone, the catalogue carries the directional copy, and the gates keep new JSX-text arrows out. See §3 of this document.
-- Arabic is the harder script (joining + six plurals); Hebrew is the simpler pass (no case, two plurals: one/two/other — `qa-plural-select` winds both, dormant-by-absence). Both stay behind the same checklist.
+- Arabic is the harder script (joining + six plurals); Hebrew is the simpler pass (no case, two plurals: one/two/other — `qa-plural-select` winds both). Both landed through the same checklist, the same gates and the same production walk shape.
