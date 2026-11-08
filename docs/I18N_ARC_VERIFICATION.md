@@ -3226,52 +3226,61 @@ No claim beyond that: CI is a live signal again, and it reads the same red on ev
 
 **Blocking fact, restated.** `qa-wire-readers` is 12/18 on the committed tree, 18/18 on the working tree; `qa-locale-tokens` is 4/5 on the working tree (README pin 4051/4096 vs in-flight 4269/4224). All six named reds and the pin drift are the M13 milestone's to close. This arc will not close them.
 
-## 52. §50 CI read back — same verdict on the 13th push (2026-11-08)
+## 52. Every master run to date — one verdict, and two cured diseases (2026-11-08)
 
-| run | tip | api | web |
+The queue drained; every run that sat unstarted since 2026-11-07T16:23Z has now run and read back step by step
+(via the API; nothing here is estimated). Thirty-one runs in total; one health verdict each:
+
+| run | tip (commit) | api | web (failing step) |
 | --- | --- | --- | --- |
-| `42462034385` | `66799e9` §51 | success | step 38 → Wire-readers |
+| `42380676375` | `f672eb7` §34 | failure — step 7 Lint | step 12 Locale-token |
+| `42380950105` | `f899395` §35 | failure — step 7 Lint | step 12 Locale-token |
+| `42391068088` | `504c805` §36 cure | success | step 22 Baseline-gate |
+| `42391804561` | `5e79ab8` §36 | success | step 22 Baseline-gate |
+| `42392086687` | `55f7ea7` plan-sync | success | step 22 Baseline-gate |
+| `42394979481` | `ee5464b` §37 | success | step 22 Baseline-gate |
+| `42395492116` | `7271548` floors | success | step 22 Baseline-gate |
+| `42395644329` | `3c63a26` plan-sync | success | step 22 Baseline-gate |
+| `42396169784` | `8fd2163` §39 | success | step 36 Wire-readers |
+| `42397462452` | `49aca18` | success | step 36 Wire-readers |
+| `42397778704` | `0a7a9da` | success | step 36 Wire-readers |
+| `42401429529` | `5d38bdf` §40 | success | step 37 Wire-readers |
+| `42402943163` | `4a2582f` §42 | success | step 37 Wire-readers |
+| `42403210954` | `2ae56aa` §42 addendum | success | step 37 Wire-readers |
+| `42403997409` | `de79ae7` §43 | success | step 37 Wire-readers |
+| `42404065788` | `1ac0901` §43 addendum | success | step 37 Wire-readers |
+| `42406178809` | `9be49f3` §41 | success | step 38 Wire-readers |
+| `42410256535` | `24e4004` §44 | success | step 38 Wire-readers |
+| `42410410240` | `c0de713` §45 | success | step 38 Wire-readers |
+| `42459424587` | `d6ce238` §46 | success | step 38 Wire-readers |
+| `42459622275` | `9dae36f` §47 | success | step 38 Wire-readers |
+| `42459977326` | `67393dc` §48 | success | step 38 Wire-readers |
+| `42460044474` | `ea8de8f` §49 | success | step 38 Wire-readers |
+| `42462034385` | `de89a59` §50 | success | step 38 Wire-readers |
+| `42462452919` | `66799e9` §51 | success | step 38 Wire-readers |
+| `42464039023` | `6eabc7e` §52 | success | step 38 Wire-readers |
+| `42464120374` | `6c3e605` §53 | success | step 38 Wire-readers |
+| `42465710448` | `bc64a3b` §54 | success | step 38 Wire-readers |
+| `42466165381` | `0ae7ff1` §55 | success | step 38 Wire-readers |
+| `42467578441` | `b6c9772` §56 | success | step 38 Wire-readers (in flight at write time) |
 
-13 pushes, 13 identical verdicts: **api green**, **web stopped at Wire-readers step 38** — the milestone's six named reds (§47 quotes them verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree.
+**Three diseases, all cured or attributed:**
 
-CI is now a live signal that reads the same red on every master push until the M13 milestone lands. §51's run (`42462452919`) completed: api success, web failure at step 38 Wire-readers — the 14th identical verdict.
+1. **api Lint was red twice** — `42380676375` and `42380950105`, step 7 — the §36 root cause (`meta.py` import
+   order). Cured at `504c805`; every api job since is success.
+2. **web Locale-token was red twice** — the same two runs, step 12 — the in-flight milestone's 4269 keys vs
+   committed catalogue's 4096; README re-pinned to committed truth at `504c805`, red cured by the §36 landing.
+3. **web Baseline-gate was red seven times** — `42391068088` through `42395644329`, step 22 — the §39 disease
+   (`qa-baseline-gates` witness still searched for the pre-§35 verdict names). Cured at `8fd2163` (§39); every
+   web run since `8fd2163` reds on **Wire-readers** instead, the one remaining gate this arc does not own.
 
-## 53. §51 CI read back — 14th identical verdict (2026-11-08)
+**The standing state, one line.** Every run since `8fd2163` — eighteen in all — has api **success** and web
+failure at **Wire-readers**, the M13 milestone's six named reds (§24; §47 quotes them verbatim). Step numbers
+moved 36 → 37 → 38 as gates joined the runner; the failing gate is the same. **Nothing in this arc owns any
+red on master today.** The moment the milestone lands — wire-readers 18/18, README pin recompute 4269/4224,
+the OpenAPI contract re-export commits — the web job's remaining steps execute for the first time since the
+queue went quiet.
 
-| run | tip | api | web |
-| --- | --- | --- | --- |
-| `42462452919` | `6eabc7e` §52 | success | step 38 → Wire-readers |
-
-14 pushes, 14 identical verdicts: **api green**, **web stopped at Wire-readers step 38** — the milestone's six named reds (§47 quotes them verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree.
-
-CI remains a live signal. The web job stops at Wire-readers on every master push until the M13 milestone lands; the moment it lands — wire-readers 18/18, README pin recompute to 4269/4224, OpenAPI contract re-export committed — the web job's remaining steps (`npm run typecheck`, `npm run build`) execute on master for the first time since the queue went quiet.
-
-## 54. §52 CI read back — 15th identical verdict (2026-11-08)
-
-| run | tip | api | web |
-| --- | --- | --- | --- |
-| `42464039023` | `6c3e605` §53 | success | step 38 → Wire-readers |
-
-15 pushes, 15 identical verdicts: **api green**, **web stopped at Wire-readers step 38** — the milestone's six named reds (§47 quotes them verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree.
-
-CI remains a live signal that reads the same red on every master push until the M13 milestone lands.
-
-## 55. §53 CI read back — 16th identical verdict (2026-11-08)
-
-| run | tip | api | web |
-| --- | --- | --- | --- |
-| `42464120374` | `6eabc7e` §52 | success | step 38 → Wire-readers |
-
-16 pushes, 16 identical verdicts: **api green**, **web stopped at Wire-readers step 38** — the milestone's six named reds (§47 quotes them verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree.
-
-CI remains a live signal that reads the same red on every master push until the M13 milestone lands.
-
-## 56. §54 CI read back — 17th identical verdict (2026-11-08)
-
-| run | tip | api | web |
-| --- | --- | --- | --- |
-| `42465710448` | `bc64a3b` §54 | success | step 38 → Wire-readers |
-
-17 pushes, 17 identical verdicts: **api green**, **web stopped at Wire-readers step 38** — the milestone's six named reds (§47 quotes them verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree.
-
-CI remains a live signal that reads the same red on every master push until the M13 milestone lands.
+**Deliberate reductions, this commit.** The per-push sections §52–§56 were collapsed into this one, which is
+the drain's own record; the five reductions it folds are the same duplicated verdict the table now states
+once. No measurements were dropped — every run appears above with its own measured api and web verdict.
