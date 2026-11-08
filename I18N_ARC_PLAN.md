@@ -71,7 +71,7 @@ so; and the day a locale that does not exist today is added, the cost is one cat
    CI registration, the file. §30 carries the committed-tree read; §33 the API-strings witness; §27 the
    remaining inventory; §31 records the Hebrew arm; §34 closes this session's hand; §40 cures both RTL
    script rules and ships their witness, so an `ar.json` that is English in an Arabic envelope is a finding
-   the day it lands rather than a green line. Do not ship `ar` or `he` before all the items are green.
+   the day it lands rather than a green line. Items 6–8 landed with the Arabic milestone (`ar` §54, walk §55) and the Hebrew one (`he` §57, authenticated walk §58, five locales live); do not ship another locale before its walk is as green.
 4. **The discipline.** Every new slice follows `NEW_SURFACE_COMPLIANCE.md`; gate verdict-shape changes
    ship with witnesses; the verification doc grows a section per slice, push every time.
 

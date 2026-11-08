@@ -1412,11 +1412,11 @@ two home ties, one 40,000 prize.
 4. **The locale claims grade the commit (done 2026-11-04; landed as `e8fa569`).** The section before
    "How to work an item" states the sourcing and the arms, and `docs/I18N_ARC_VERIFICATION.md` §21
    carries the evidence.
-5. **The contract-currency gate reads the checkout, not the commit (filed 2026-11-04).** Its docstring
-   claims the committed contract, but `committed()` and the exporter case read `docs/api/openapi.json` from
-   disk; the shared tree's contract is uncommitted, so the local run grades the disk pair. Same cure as item
-   38 — parse `git show HEAD:docs/api/openapi.json`, compare the exporter's bytes to HEAD's, keep `answers()`
-   live because the app is imported from the checkout.
+5. **The contract-currency gate reads the commit, not the checkout (filed 2026-11-04, landed as `f10e232f`).** Its docstring
+   claims the committed contract, and now the bytes are read from `git show HEAD:docs/api/openapi.json` (LF-normalised for a
+   historyless checkout), the exporter case compares its output to HEAD's, and `answers()` stays live from the imported app
+   — the disk pair is only a fallback for a checkout with no `.git`. Filed against the days when both read the checkout;
+   the cure is on HEAD and the tests are green.
 
 ## Objectives that pay (M13 Phase 9 item 36, done 2026-11-04)
 
