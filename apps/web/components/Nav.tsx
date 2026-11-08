@@ -20,7 +20,7 @@ import type { UserOut } from "@/lib/types";
  * into the tree and read by nobody. A catalogue nothing reads is a translation that ships to nobody, and it also
  * means the plumbing could not be checked: with every page on literals, "the locale works" was untestable.
  *
- * The keys are the `nav.*` namespace, which already existed in all three catalogues and already matched this
+ * The keys are the `nav.*` namespace, which already existed in every catalogue and already matched this
  * list one for one. The few labels that had no key were added rather than renamed, so the English a reader sees
  * is byte-identical to what it was — an i18n change should not be a copy change.
  */

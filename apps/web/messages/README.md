@@ -55,9 +55,9 @@ is not withheld until it is complete; missing keys fall back, which is what ever
    the catalogue directory, so a `zh.json` that differs *is* the trigger — no edit to `meta.py` required;
 4. the suite passes.
 
-The reverse also fails: advertising a locale whose catalogue is still a copy. That was the state all three files
-were in, and it is the check that would have caught somebody switching the field early. `meta.py` cannot make that
-mistake — it reads the catalogue, not a hand-written list.
+The reverse also fails: advertising a locale whose catalogue is still a copy. That was the state these files
+were in at the milestone that landed them, and it is the check that would have caught somebody switching the field early. `meta.py` cannot make that
+mistake — it reads the catalogues, not a hand-written list.
 
 ## Two things to keep true
 
@@ -67,13 +67,13 @@ mistake — it reads the catalogue, not a hand-written list.
 * **A key must parse.** A catalogue message is a program, not a string: next-intl parses it when the page
   renders it, and a message that does not parse throws instead of printing. Nothing in the build reads a
   catalogue — next-intl resolves a key in the browser — so a malformed message compiles, typechecks, lints and
-  then 500s the page that reads it. `apps/web/scripts/qa-icu-messages.mjs` parses **every** message in all
-  three files with the app's own ICU parser, refuses a plural or a select with no `other` branch, and holds the
-  same key to the same placeholders in all three. It was written on 2026-10-21 and found five messages written
+  then 500s the page that reads it. `apps/web/scripts/qa-icu-messages.mjs` parses **every** message in every
+  catalogue with the app's own ICU parser, refuses a plural or a select with no `other` branch, and holds the
+  same key to the same placeholders in all of them. It was written on 2026-10-21 and found five messages written
   with mustache placeholders (`{{count}}`), which ICU reads as an argument that never began: they are fixed,
   and the gate now keeps that class out.
 * **No key twice.** `json.load` keeps the last duplicate and drops the rest silently, so a translator editing the
-  shadowed copy watches their change do nothing. All three files carried four such pairs when this was written
+  shadowed copy watches their change do nothing. The catalogues carried four such pairs when this was written
   (`common.{no,yes,close,error}`); the test parses the raw text, because every check that reads the parsed object
   is blind to them.
 * **A refusal is the reader's copy too.** The `errors` namespace holds one key per refusal code the API publishes, and the **English value is the API's message verbatim** — so the English rendering is byte-identical and the change is a translation rather than a copy change. The code itself needs no translation: it is the locale-neutral handle the page prints beside the sentence. The API's other 39 codes publish a message that names a value the request supplied (“philosophy must be one of […]”) or that a helper chooses at the raise site (“The current password is incorrect”), so the catalogue cannot reproduce them; they keep the API's own words and are **named** in `apps/api/tests/test_locale_claims.py`, which holds the catalogue and the API in step in both directions.
