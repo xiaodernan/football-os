@@ -135,14 +135,17 @@ if (baseline.error) {
   );
   const missing = BASE_LOCALES.filter((locale) => !base[locale]);
 
-  if (missing.length) {
+  if (!base.en) {
     check(
-      `the baseline commit supplies every shipped catalogue`,
+      `the baseline commit supplies the reference catalogue`,
       false,
-      `${missing.join(", ")} could not be read at ${baseline.commit.slice(0, 8)}; nothing was compared and the baseline was left as it was`,
+      `en could not be read at ${baseline.commit.slice(0, 8)}; nothing was compared and the baseline was left as it was`,
     );
   } else {
-    const others = BASE_LOCALES.filter((locale) => locale !== "en");
+    if (missing.length) {
+      console.log(`  judged nothing on ${missing.join(", ")}: not in the baseline (shipped by this push or after it)`);
+    }
+    const others = BASE_LOCALES.filter((locale) => locale !== "en" && base[locale]);
     const stale = Object.fromEntries(others.map((locale) => [locale, []]));
 
     for (const [namespace, block] of Object.entries(current.en)) {
