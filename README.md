@@ -18,7 +18,7 @@ challenges (§21) with **their page**, browser-verified 2026-09-24. The transfer
 
 Every one of those was verified the same way, on a fresh **production build**: **377 API tests** green on SQLite **and** on PostgreSQL+pgvector, **226/226 browser assertions** with 70 screenshots at 1440px and 375px, 1037 sitemap URLs each answering 200, `ruff` + `mypy` clean, and a console gate that fails the walk unless every browser error was one the walk provoked on purpose. SEO surface: `docs/SEO_VERIFICATION.md`; gate table: `ROADMAP.md`; environment audit: `docs/PROJECT_AUDIT.md`.
 
-Open as follow-ups rather than gate gaps: a 3D pitch, boards beyond single ownership (M9's consent story), a frame overlay for the measured centroids, event semantics for video (a claim this build cannot support without a real detector), and §81's five locales (the RTL pair — `ar`, `he` — landed 2026-11-08/09; what they still owe is the human editorial pass on the machine-authored copy).
+Open as follow-ups rather than gate gaps: a 3D pitch, boards beyond single ownership (M9's consent story), a frame overlay for the measured centroids, event semantics for video (a claim this build cannot support without a real detector), and §81's five locales (the RTL pair — `ar`, `he` — landed in the November 2026 RTL milestones; what they still owe is the human editorial pass on the machine-authored copy).
 
 ## Architecture at a glance
 

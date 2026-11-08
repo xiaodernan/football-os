@@ -3456,3 +3456,38 @@ The walk made three findings, none of them a bug. **First**, session-gated pages
 **Two honest footnotes.** (1) The prod server printed one `ENVIRONMENT_FALLBACK` notice at process start — the known next-intl one-shot the request config already documents; no page was affected (the walk read every page `200`, `dir=rtl`, zero `MISSING_MESSAGE`). (2) `apps/api/tests/test_locale_claims.py` showed two reds in the pre-commit working tree — both were the commit boundary itself (`git show HEAD:` had no `he.json` while the running app read the disk), the same failure shape the Arabic milestone hit at its landing; they are green at the commit. CI is the arbiter of the committed bytes — the run for `eba8b98` is named below.
 
 **What is still owed, said plainly.** (a) The human editorial pass on the machine-authored Hebrew — same caveat, same shape as Arabic's; a native Hebrew reviewer should read the catalogue before the milestone claims more than parity of mechanics. (b) Hebrew numerals stay Western digits (`0–9`) by the same decision the other catalogues carry; revisit with the first native review. (c) CI at `eba8b98` (the push of this milestone) is **42522425695** — at the time this line was written it was still running; its verdict is the one that counts, and §55/§56's rule applies: no green is claimed until it is read back.
+
+
+-----------------------------------------------------------------------------------------
+
+## 58. The authenticated RTL leg — the item-6 named surfaces, walked behind a session, both locales (2026-11-09)
+
+**What §55/§57 left open.** The first RTL walks (both locales, 5/5 green) covered `/`, `/world`, `/knowledge`, `/login` and the anonymous `/challenges` (which redirects to `/login`). Item 6's own text names two surfaces those walks never saw as rendered pages: **the market ledger** and **a career page**. Anonymous traffic cannot reach them. They were now walked behind a live session, in both locales, against a freshly seeded disposable database.
+
+**Stack.** Identical to §57's: disposable PostgreSQL `football_he_probe_i` (alembic `0001→0059`, seeded — catalogue 24, knowledge 155 chunks, `demo@footballos.local` / `demo-password-123`), API on `8760` under `ENV=development` with the project's authenticated Redis, prod build (`NEXT_DIST_DIR=.next-ci SITE_URL=http://127.0.0.1:3212 API_INTERNAL_URL=http://127.0.0.1:8760`) on `3212`. One career was opened through the real API as the seeded demo account — `"Walk Manager"` at `Braeford Athletic`, system `3-4-2-1-press-high`, one objective (`wins ≥ 3`), slug `walk-manager-braa` — because a fresh account owns no career and the market ledger renders nothing without one. Career created once; the walks themselves are read-only.
+
+**What changed in the walks.** `qa-arabic-rtl-walk.mjs` and `qa-hebrew-rtl-walk.mjs` both gained an opt-in authenticated leg, `QA_AUTH_WALK=1`: the script signs in through the real API (`/api/v1/auth/login`), sets `fo_access` on the browser context, and walks the session-gated pages with the identical assertions (dir=rtl, zero `MISSING_MESSAGE`, zero console errors, catalogue script present in the body). The authenticated pages are `/my-football`, `/simulate`, `/challenges`, `/career` and — only when `QA_CAREER_SLUG` names a career that exists — `/career/<slug>` (career detail) and `/career/<slug>/market` (the market ledger). Defaults for email/password are the seeded scratch credentials; the leg refuses to run half-way (a failed login prints the status and the authenticated pages are not walked, `exit 2`).
+
+**The walks, 2026-11-09.** Both locales, desktop width, 1440×900:
+
+| page (he) | dir | glyphs | console errors | MISSING_MESSAGE |
+| --- | --- | --- | --- | --- |
+| home | rtl | present | 0 | 0 |
+| world | rtl | present | 0 | 0 |
+| knowledge | rtl | present | 0 | 0 |
+| login | rtl | present | 0 | 0 |
+| challenges (anon redirect) | rtl | present | 0 | 0 |
+| authenticated my-football | rtl | present | 0 | 0 |
+| authenticated simulator | rtl | present | 0 | 0 |
+| authenticated challenges | rtl | present | 0 | 0 |
+| authenticated career create | rtl | present | 0 | 0 |
+| authenticated career detail | rtl | present | 0 | 0 |
+| authenticated market ledger | rtl | present | 0 | 0 |
+
+**ALL 22 PASS — 11/11 he, 11/11 ar.** Screenshots: `docs/screenshots/20261108*-*.png` (gitignored; names carry the locale and the surface, e.g. `hebrew-market.png`, `arabic-career-detail.png`).
+
+**Honest remainder.** (1) `/career/<slug>/market` was walked with one career that has played zero rounds — the ledger's *rendering* is proven; a ledger with rows of transactions is not claimed walked. (2) `/simulate` renders the seeded synthetic world and the possession-block report shape is proven under `dir=rtl`; no fixture was simulated during the walk. (3) The `/career/<slug>` page renders the career-creation confirmation and board projection; static render confirmed, interactions not exercised. (4) Both walks still print `latin-language residue: ["Football World"]` on `/` and `/world` — that is `home.moduleLiveBody` carrying the milestone's own proper name (`M3 Football World`), the same claim in every catalogue, not an untranslated string.
+
+**Instrumentation, honestly stated.** The two walk scripts were rewritten to carry both legs (mirrors, same assertions, same exit semantics: `0` all green, `1` reds, `2` auth setup red). No new script was added; both remain `live-tier` in `qa-gate-inventory` (222/222 unchanged) and in the discovery census (10 file rows unchanged; the walks' spelled locale sets did not move). Neither walk runs in CI — the stack is a seeded scratch PostgreSQL, and CI has no such plane; the two walks are what a human ran locally on 2026-11-09, recorded here.
+
+**Teardown.** Probe DB dropped after the walk, ports 3212/8760 released by PID, `.next-ci` removed, `next-env.d.ts` restored to HEAD. Nothing leaked outside this repo; the screenshots are the only artifacts and they are gitignored.
