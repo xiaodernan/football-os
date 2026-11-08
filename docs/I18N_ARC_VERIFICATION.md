@@ -3225,3 +3225,13 @@ No claim beyond that: CI is a live signal again, and it reads the same red on ev
 **What this arc does not owe.** Arabic translations of the 4,269-key catalogue; gate invention where the catalogue is hand-written (§26 forbids it); a fake "done" for any of these items inside this file or outside it.
 
 **Blocking fact, restated.** `qa-wire-readers` is 12/18 on the committed tree, 18/18 on the working tree; `qa-locale-tokens` is 4/5 on the working tree (README pin 4051/4096 vs in-flight 4269/4224). All six named reds and the pin drift are the M13 milestone's to close. This arc will not close them.
+
+## 52. §50 CI read back — same verdict on the 13th push (2026-11-08)
+
+| run | tip | api | web |
+| --- | --- | --- | --- |
+| `42462034385` | `66799e9` §51 | success | step 38 → Wire-readers |
+
+13 pushes, 13 identical verdicts: **api green**, **web stopped at Wire-readers step 38** — the milestone's six named reds (§47 quotes them verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree.
+
+CI is now a live signal that reads the same red on every master push until the M13 milestone lands. §51's run (`42462452919`) is in progress at write time; its expected verdict is the same — api success, web red at Wire-readers — and no other claim is made.
