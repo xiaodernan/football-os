@@ -233,14 +233,30 @@ const aShared = planeLeaves(byteCopy, "en").size - TABLE_PATHS.length;
 /** The drift gate's own lenient floor: a shared value of three characters or fewer, or one with no letters, is
  *  not charged there. The count is derived from the plane and the table, not copied from the printed line. */
 const aEligible = [...planeLeaves(byteCopy, "en")].filter(([path, value]) => !TABLE_PATHS.includes(path) && value.length > 3 && /[a-zA-Z]/.test(value)).length;
-const aCheck = reds(a, [D_UNNAMED, D_TABLE, D_FLOORS], [R_UNNAMED]);
+const aCheck = reds(a, [D_UNNAMED, D_TABLE], [R_UNNAMED]);
 check(
-  "A a byte-copy ar.json reddens the shared-value rule, the table, and the floors — in both gates",
+  "A a byte-copy ar.json reddens the shared-value rule and the table — the floor is on record at 0, so it does not bite",
   aCheck.ok && detailOf(a.d.out, D_UNNAMED).startsWith(`${aShared} identical value(s) that are not named: ar:`)
     && detailOf(a.d.out, D_TABLE).includes("ar: the table states no figure")
-    && detailOf(a.d.out, D_FLOORS).includes("ar.json ships but no floor is on record")
     && detailOf(a.r.out, R_UNNAMED).startsWith(`${aEligible} unnamed identical value(s): ar:`),
   `${aCheck.detail}; ar shared unnamed ${aShared}, of which ${aEligible} are eligible under the drift gate's lenient rule`,
+);
+
+/* A2 — the same byte copy without a recorded floor still reddens D_FLOORS. */
+const loseArFloor = fixture("A2-arabic-byte-copy-without-recorded-floor", (dir) => {
+  const definerPath = join(dir, "scripts", DEFINER);
+  const source = readFileSync(definerPath, "utf8");
+  const spliced = source.replace('const DRIFT_FLOORS = { zh: 0, "zh-TW": 0, ar: 0 };', 'const DRIFT_FLOORS = { zh: 0, "zh-TW": 0 };');
+  if (spliced === source) throw new Error("the records floor splice matched nothing, so this arm would judge nothing");
+  writeFileSync(definerPath, spliced);
+  cpSync(join(dir, "messages", "en.json"), join(dir, "messages", "ar.json"));
+});
+const a2 = run(loseArFloor);
+const a2Check = reds(a2, [D_UNNAMED, D_TABLE, D_FLOORS], [R_UNNAMED]);
+check(
+  "A2 an ar.json byte copy with no recorded floor reds the floors too",
+  a2Check.ok && detailOf(a2.d.out, D_FLOORS).includes("ar.json ships but no floor is on record"),
+  `${a2Check.detail}; ${detailOf(a2.d.out, D_UNNAMED).slice(0, 120)}`,
 );
 
 /* B — a new locale that ships real copy but only two messages of it. */
@@ -249,9 +265,9 @@ const partial = fixture("B-arabic-partial-catalogue", (dir) => {
   setPath(dir, "ar", "witness.deals", "{count} صفقة");
 });
 const b = run(partial);
-const bCheck = reds(b, [D_STALE, D_TABLE, D_FLOORS], [R_STABLE]);
+const bCheck = reds(b, [D_STALE, D_TABLE], [R_STABLE]);
 check(
-  "B a partial ar.json is charged for the named tokens it lacks, not for values it does not hold",
+  "B a partial ar.json is charged for the named tokens it lacks, and the missing table entry — the floor is on record at 0, so it does not bite",
   bCheck.ok && detailOf(b.d.out, D_STALE).includes("is named a token but the catalogue holds no such key")
     && detailOf(b.d.out, D_UNNAMED).includes(`${TABLE_PATHS.length} token(s) named; 3 catalogue(s)`)
     && detailOf(b.r.out, R_STABLE).startsWith("drift: ; missing: "),
@@ -339,11 +355,6 @@ check(
 /* H — the reverse control: same copy, row written and floor on record. Only the value rule is left. */
 const copyExcused = fixture("H-byte-copy-with-row-and-floor", (dir) => {
   cpSync(join(dir, "messages", "en.json"), join(dir, "messages", "ar.json"));
-  const definerPath = join(dir, "scripts", DEFINER);
-  const source = readFileSync(definerPath, "utf8");
-  const spliced = source.replace('const DRIFT_FLOORS = { zh: 0, "zh-TW": 0 };', 'const DRIFT_FLOORS = { zh: 0, "zh-TW": 0, ar: 0 };');
-  if (spliced === source) throw new Error("the DRIFT_FLOORS splice matched nothing, so this arm would judge nothing");
-  writeFileSync(definerPath, spliced);
   const readmePath = join(dir, "messages", "README.md");
   const readme = readFileSync(readmePath, "utf8");
   const row = `| \`ar.json\` | 0 of ${planeLeaves(dir, "en").size} keys copied from English, byte for byte | **no** |\n`;

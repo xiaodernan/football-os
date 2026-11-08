@@ -11,12 +11,14 @@ import { textDirection } from "@/i18n/locales";
 import enMessages from "@/messages/en.json";
 import zhMessages from "@/messages/zh.json";
 import zhTWMessages from "@/messages/zh-TW.json";
+import arMessages from "@/messages/ar.json";
 import "../styles/globals.css";
 
 const messagesMap = {
   en: enMessages,
   zh: zhMessages,
   'zh-TW': zhTWMessages,
+  ar: arMessages,
 } as const;
 
 export const dynamic = "force-dynamic";

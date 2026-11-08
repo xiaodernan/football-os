@@ -58,6 +58,14 @@ const LOCALE_FORMATS = {
     currency: { style: "currency", currency: "TWD", minimumFractionDigits: 0 },
     percent: { style: "percent", minimumFractionDigits: 0 },
   },
+  ar: {
+    date: { skeleton: "yMMMd", pattern: "d MMM y" },
+    dateTime: { skeleton: "yMMMdjm", pattern: "d MMM y، h:mm a" },
+    time: { skeleton: "jm", pattern: "h:mm a" },
+    number: { style: "decimal", minimumFractionDigits: 0, maximumFractionDigits: 3 },
+    currency: { style: "currency", currency: "SAR", minimumFractionDigits: 2 },
+    percent: { style: "percent", minimumFractionDigits: 0 },
+  },
 };
 
 /** Check that a message contains date/number/currency format patterns.
@@ -105,7 +113,7 @@ function extractFormatPatterns(message) {
 }
 
 /** Find all messages that use format patterns */
-const formatMessages = { en: [], zh: [], "zh-TW": [] };
+const formatMessages = { en: [], zh: [], "zh-TW": [], ar: [] };
 
 for (const locale of LOCALES) {
   for (const [namespace, block] of Object.entries(catalogues[locale])) {

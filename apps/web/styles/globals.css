@@ -66,6 +66,7 @@ h1, h2, h3, h4, p { margin: 0; }
    script. Sixteen declarations in the stylesheets carry letter-spacing; rather than split
    them from their Latin use, the rule resets tracking for the two scripts it cannot serve. */
 :lang(ar), :lang(he) { letter-spacing: normal; text-transform: none; }
+:lang(ar) { font-family: "Noto Kufi Arabic", "Noto Sans Arabic", "Segoe UI", system-ui, sans-serif; }
 
 .container { width: min(1200px, 100% - 2.5rem); margin-inline: auto; }
 .page { padding: 2rem 0 4rem; }

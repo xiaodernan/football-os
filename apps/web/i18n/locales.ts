@@ -6,15 +6,16 @@
  * configuration and every bundle into the browser with it, which is why the list lives here and `request.ts`
  * re-exports it rather than owning it.
  */
-export const locales = ["en", "zh", "zh-TW"] as const;
+export const locales = ["en", "zh", "zh-TW", "ar"] as const;
 export const defaultLocale = "en" as const;
 
 export type Locale = (typeof locales)[number];
 
 /**
- * The scripts written right-to-left. None of them is a shipped locale yet, and that is the point: the
- * layout is prepared now, so adding `ar` to `locales` cannot silently render a right-to-left language
- * left-to-right. The base language is what decides, because a region subtag does not change direction
+ * The scripts written right-to-left. `ar` shipped 2026-11-08 (the Arabic milestone landed with its catalogue),
+ * so the comment that used to say «none of them is a shipped locale yet» is retired with the fact it named:
+ * the layout is prepared, `textDirection` reports rtl for ar, and this set holds the names for the ones
+ * behind it. The base language is what decides, because a region subtag does not change direction
  * (`ar-EG`, `fa-IR`, `he-IL`); `az-Arab` and `pa-Arab` are the one shape where the script subtag matters,
  * and they are not offered. `textDirection` is read by the root layout's `<html dir>` and by
  * `qa-rtl-readiness.mjs`, which also refuses a physical CSS property that would not follow it.

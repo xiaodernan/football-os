@@ -76,10 +76,10 @@ const check = (name, ok, detail) => {
 };
 
 const root = mkdtempSync(join(tmpdir(), "qa-translation-quality-witness-"));
-function fixture(name, { withTokens = true } = {}) {
+function fixture(name, { withTokens = true, locales = LOCALES } = {}) {
   const dir = join(root, name);
   mkdirSync(join(dir, "messages"), { recursive: true });
-  for (const locale of LOCALES) cpSync(join(REAL, `${locale}.json`), join(dir, "messages", `${locale}.json`));
+  for (const locale of locales) cpSync(join(REAL, `${locale}.json`), join(dir, "messages", `${locale}.json`));
   if (withTokens) {
     mkdirSync(join(dir, "scripts"), { recursive: true });
     cpSync(TOKENS_SOURCE, join(dir, "scripts", "qa-locale-tokens.mjs"));
@@ -157,10 +157,10 @@ const ONLY = (r, label) =>
 // 0 — the shipped gate against the real catalogues, and the dormancy it must say out loud.
 const zero = run(fixture("0-baseline"));
 check(
-  "0 the shipped gate reads the real catalogues 9/9 and names its two dormant rules",
-  GREEN(zero) && detailOf(zero.out, SCRIPT_AR).startsWith("dormant — no ar.json")
+  "0 the shipped gate reads the real catalogues 9/9 and names the one dormant rule",
+  GREEN(zero) && detailOf(zero.out, SCRIPT_AR).startsWith("4222 of 4222")
     && detailOf(zero.out, SCRIPT_HE).startsWith("dormant — no he.json")
-    && zero.out.includes("DORMANT  Arabic script (ar.json absent), Hebrew script (he.json absent)"),
+    && zero.out.includes("DORMANT  Hebrew script (he.json absent)"),
   `${tallyOf(zero)}; ${detailOf(zero.out, SCRIPT_AR)}`,
 );
 
@@ -171,8 +171,8 @@ setKey(latin, "ar", "deals", "{count} صفقة");
 setKey(latin, "ar", "holdout", LATIN_HOLDOUT);
 const a = run(latin);
 check(
-  "A one Latin message among Arabic ones reds the Arabic script check alone and names the path",
-  ONLY(a, SCRIPT_AR) && detailOf(a.out, SCRIPT_AR).startsWith("1 of 3 message(s) judged in ar.json are Latin text")
+  "A one Latin message among Arabic ones reds the Arabic script arm and names the path",
+  ONLY(a, SCRIPT_AR) && detailOf(a.out, SCRIPT_AR).startsWith("1 of 4225 message(s) judged in ar.json are Latin text")
     && detailOf(a.out, SCRIPT_AR).includes("ar: witness.holdout")
     && detailOf(a.out, SCRIPT_AR).includes(LATIN_HOLDOUT) && !a.out.includes("DORMANT  Arabic"),
   `${tallyOf(a)}; ${detailOf(a.out, SCRIPT_AR).slice(0, 170)}; ${redSet(a)}`,
@@ -192,7 +192,7 @@ check(
 );
 
 // C — a shipped Arabic catalogue that carries no copy at all.
-const noCopy = fixture("C-arabic-nothing-judged");
+const noCopy = fixture("C-arabic-nothing-judged", { locales: ["en", "zh", "zh-TW"] });
 const enCopy = read(noCopy, "en");
 setPath(noCopy, "ar", A_TOKEN, enCopy[A_TOKEN.split(".")[0]][A_TOKEN.split(".")[1]]);
 setKey(noCopy, "ar", "counter", "{count}");
@@ -205,7 +205,7 @@ check(
 );
 
 // D — the same file correctly translated: the floor must not bite real work.
-const realArabic = fixture("D-arabic-correctly-written");
+const realArabic = fixture("D-arabic-correctly-written", { locales: ["en", "zh", "zh-TW"] });
 setKey(realArabic, "ar", "report", ARABIC_COPY);
 setKey(realArabic, "ar", "deals", "{count} صفقة");
 const d = run(realArabic);
@@ -217,7 +217,7 @@ check(
 );
 
 // E — the same holdout shape in Hebrew.
-const hebrew = fixture("E-hebrew-latin-holdout");
+const hebrew = fixture("E-hebrew-latin-holdout", { locales: ["en", "zh", "zh-TW"] });
 setKey(hebrew, "he", "report", HEBREW_COPY);
 setKey(hebrew, "he", "deals", "{count} עסקה");
 setKey(hebrew, "he", "holdout", LATIN_HOLDOUT);
@@ -274,11 +274,14 @@ const identicalExpected = (() => {
 })();
 const h = run(noTable);
 check(
-  "H a plane with no qa-locale-tokens.mjs reds the table check instead of exempting in silence",
-  h.crashed === false && h.total === 9 && h.status === 1 && h.failed === 2 && verdict(h.out, TABLE) === "FAIL" &&
-    detailOf(h.out, TABLE).includes("no qa-locale-tokens.mjs beside this gate") &&
-    verdict(h.out, IDENTICAL) === "FAIL" &&
-    detailOf(h.out, IDENTICAL).startsWith(`${identicalExpected} of ${identicalExpected}`),
+  "H a plane with no qa-locale-tokens.mjs reds the exemption table and the two checks its absence opens",
+  h.crashed === false && h.total === 9 && h.status === 1 && h.failed === 3
+    && verdict(h.out, TABLE) === "FAIL"
+    && detailOf(h.out, TABLE).includes("no qa-locale-tokens.mjs beside this gate")
+    && verdict(h.out, IDENTICAL) === "FAIL"
+    && detailOf(h.out, IDENTICAL).startsWith(`${identicalExpected} of ${identicalExpected}`)
+    && verdict(h.out, SCRIPT_AR) === "FAIL"
+    && detailOf(h.out, SCRIPT_AR).startsWith("34 of 4256 message(s) judged in ar.json are Latin text"),
   `${tallyOf(h)}; ${identicalExpected} identical message(s) on this plane; ${redSet(h)}`,
 );
 
@@ -299,8 +302,8 @@ check(
 // J — nothing leaked into the tree.
 const j = run(WEB);
 check(
-  "J the real catalogues still read 9/9 after the fixture arms",
-  GREEN(j) && j.out.includes("DORMANT"),
+  "J the real catalogues still read 9/9 after the fixture arms, with the Arabic script rule counted",
+  GREEN(j) && j.out.includes("DORMANT  Hebrew script (he.json absent)"),
   `${tallyOf(j)}; ${redSet(j)}`,
 );
 
