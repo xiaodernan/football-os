@@ -90,9 +90,11 @@ the same glyph is notation elsewhere.
 - **Numerals: keep Western digits** (`0-9`) — the dominant practice in Arabic and Hebrew UIs; the
   catalogue's figures stay as authored. Decide finally with the first Arabic translator; do not
   transliterate numerals by default.
-- **Punctuation:** Arabic uses `،` and `؟`; the translation pass will carry them.
-  `qa-translation-quality.mjs` checks Chinese punctuation; the Arabic equivalent is a milestone item
-  (it has no pass for Arabic yet).
+- **Punctuation:** Arabic uses `،` and `؟`; Hebrew uses `.` and `?`. The Arabic milestone landed 2026-11-08
+  carrying its own punctuation arm in `qa-translation-quality.mjs` (both RTL script rules judge the full
+  shipped populations today: 4222/4222 Arabic messages, 4221/4221 Hebrew messages, zero Latin holdouts;
+  §55/§57/§63). The Hebrew catalogue in particular ships with proper Israeli typography (`דוא״ל`, `סה״כ`,
+  double-angle quotations for reported speech) — see §63 of the verification record.
 - **Bidi:** ICU messages with mixed runs (`"{score} مجريات"`) rely on the bidi algorithm; numbers are
   weak-directional and resolve correctly in practice. Rule: never embed invisible LRM/RLM in the
   catalogue; a message that needs one is written the wrong way — rewrite it.
