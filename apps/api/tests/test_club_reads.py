@@ -148,9 +148,9 @@ def _reads(statements: list[str], table: str) -> int:
 
 
 def _budget(statements: list[str]) -> None:
-    assert len(statements) <= TOTAL_CEILING, "\n".join(statements)
+    assert len(statements) <= TOTAL_CEILING, " | ".join(statements)
     for table in ONE_READ:
-        assert _reads(statements, table) <= 1, f"{table} was read {_reads(statements, table)} times: " + "\n".join(statements)
+        assert _reads(statements, table) <= 1, f"{table} was read {_reads(statements, table)} times: " + " | ".join(statements)
 
 
 def _call(tenant: dict[str, Any], client: TestClient, fn: Any) -> tuple[Any, list[str]]:
@@ -225,7 +225,7 @@ def test_the_consent_listing_reads_the_family_once(tenant: dict[str, Any]) -> No
 
 def test_the_index_lists_in_three_reads(tenant: dict[str, Any]) -> None:
     payload, statements = _call(tenant, tenant["owner"], lambda session, organization, person: club.my_organizations(session, person))
-    assert len(statements) <= 3, "\n".join(statements)
+    assert len(statements) <= 3, " | ".join(statements)
     assert payload["total"] == 1
     card = payload["items"][0]
     assert (card["active_members"], card["teams"]) == (2, 3)
@@ -234,7 +234,7 @@ def test_the_index_lists_in_three_reads(tenant: dict[str, Any]) -> None:
 
 def test_the_invitation_listing_reads_the_tenants_once(tenant: dict[str, Any]) -> None:
     payload, statements = _call(tenant, tenant["invitee"], lambda session, organization, person: club.my_invitations(session, person))
-    assert len(statements) <= 2, "\n".join(statements)
+    assert len(statements) <= 2, " | ".join(statements)
     assert payload["total"] == 2
     assert {item["organization"] for item in payload["items"]} == {tenant["ident"], tenant["second_ident"]}
     assert sorted(item["role"] for item in payload["items"]) == ["analyst", "scout"]

@@ -952,7 +952,7 @@ per-video deletion was missing, is corrected in
 pressed it in a browser — what the delete *did* leave behind was the clip's own analysis job, and that is
 fixed.)
 
-## The gate's security half: a first-party probe, and the report it leaves (2026-10-22, rerun 2026-10-24, rerun 2026-10-28)
+## The gate's security half: a first-party probe, and the report it leaves (2026-10-22, rerun 2026-10-24, rerun 2026-10-28, rerun 2026-11-08)
 
 M12's gate says **"load + pen test report clean"**. The load half had a harness, a ceiling and a paired
 measurement. The security half had a code-level census (§60), the answer-table gates (§51) and a list of
@@ -962,18 +962,18 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `c6cf3bffb52d487fcc563c417cee53a5278b3617cefa430f2cecccf575026134` that population is **226
-secured operations, 54 public operations and 97 private GET paths**, with floors of 200/40/85 printed on
+SHA-256 `86103abc854826f49a1f0c03eb027587ea5328f9e30c907acfaf1d4a31321a56` that population is **235
+secured operations, 54 public operations and 100 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 226 / 54 / 97 |
-| S1 | every secured operation refuses a caller with no credential | **226 knocked, 226 × 401**, 0 deviations |
+| C0 | the door population comes from the contract and is not empty | 235 / 54 / 100 |
+| S1 | every secured operation refuses a caller with no credential | **235 knocked, 235 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |
-| S5 | a login burst is refused, coded, with a retry time | 10 × 200 then **429 at the 11th**, `Retry-After: 295`, `rate_limited` |
+| S5 | a login burst is refused, coded, with a retry time | 10 × 200 then **429 at the 11th**, `Retry-After: 297`, `rate_limited` |
 | S6 | refusals are one coded shape, echo nothing and leak nothing | 422 `validation_error`, exactly `loc`/`msg`/`type`, **no leak marker** in four bodies |
 | S7 | the security headers and a request identity are on every answer, including a refusal | `nosniff` on 200 and 401, referrer policy, distinct ids, numeric durations |
 | S8 | only a configured origin is echoed; a rogue one is never answered | configured 200 + ACAO + credentials; rogue 200 with **no** ACAO; rogue preflight 400 |
@@ -1074,6 +1074,25 @@ The cure was the gate's own prescription: run E, a fresh PostgreSQL database `fo
 migrated to head `0041`, the project's Redis on 63790 in the request path, `ENV=development`, a fresh
 uvicorn on port 8753. **10 passed / 0 failed / 0 server errors**, 9.27 s; 216 doors knocked, 216 × 401.
 The report, the ROADMAP row and this section's figures were refreshed to the numbers run E measured.
+
+### The career milestone moved nine doors, and the ledgers followed again (2026-11-08)
+
+The 2026-11-08 consolidation commit (`cadf3d3`) landed the career-milestone work in one go — the migration
+chain rebased to `0058`, the OpenAPI contract re-exported to 224 paths / 289 operations / 97 schemas, and
+nine new private doors: five behind `/api/v1/careers*` (`cup`, `season-tickets` (get+post), `stadium`,
+`tickets` (get+put), `training` (get+post)) and one new `/api/v1/transfers*` door. All nine declare
+`security`, so the population moved to 235 / 54 / 100 and the three ledgers this gate's currency case
+recomputes still named `c6cf3bff…` — exactly the red CI reported at `cadf3d3`'s push (SQLite leg,
+step 9), and exactly what that case exists to refuse.
+
+The cure followed the gate's own prescription again. Run I: a fresh PostgreSQL database `football_probe_i`
+on port 54321 migrated to head `0058` (`alembic check` — no new operations), the seeded world (25,561
+fixtures, 155 RAG chunks), `ENV=development`, a fresh uvicorn on port 8755 with the project's authenticated
+Redis on 63790 in the request path (db 7). **10 passed / 0 failed / 0 server errors**, 6.52 s; **235 doors
+knocked, 235 × 401, 0 deviations**; the refreshed contract SHA-256 is `86103abc854826f49a1f0c03eb027587ea5328f9e30c907acfaf1d4a31321a56`. The report
+[(SECURITY_PROBE_REPORT.md)](SECURITY_PROBE_REPORT.md) records run I as the current run with the census,
+its floors and the S1 row refreshed to 235 / 54 / 100 and 235 / 235; `ROADMAP.md`'s M12 row names the
+same run and SHA; this section's table and its quoted figures above are refreshed to the same bytes.
 
 ## What M12 does not claim
 

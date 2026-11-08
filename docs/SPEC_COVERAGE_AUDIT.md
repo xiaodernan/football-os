@@ -1,9 +1,9 @@
 # Spec coverage audit — every product module in the master spec, mapped to measured evidence (2026-09-27, revised 2026-09-28, 2026-10-04)
 
 Method (all figures from the tree, not from memory): the committed contract `docs/api/openapi.json` (126 paths when
-this audit was written, **144** re-read 2026-09-28, **160** re-read 2026-10-04, **162** re-read 2026-10-06, **206** re-read 2026-10-28, **218** re-read 2026-10-30), `find apps/web/app -name page.tsx`
+this audit was written, **144** re-read 2026-09-28, **160** re-read 2026-10-04, **162** re-read 2026-10-06, **206** re-read 2026-10-28, **218** re-read 2026-10-30, **224** re-read 2026-11-08), `find apps/web/app -name page.tsx`
 (47 routes then, **48** re-read 2026-09-28, **56** re-read 2026-10-04, **57** re-read 2026-10-06, **62** re-read 2026-10-28, **65** re-read 2026-10-30, **67** re-read 2026-11-07 — the `/live` replay page and its `/live/[slug]` door landed after that count), the committed files in
-`apps/api/migrations/versions` (21 then, **24** re-read 2026-09-28, **26** re-read 2026-10-04, **42** re-read 2026-10-28, **45** re-read 2026-10-30),
+`apps/api/migrations/versions` (21 then, **24** re-read 2026-09-28, **26** re-read 2026-10-04, **42** re-read 2026-10-28, **45** re-read 2026-10-30, **59** re-read 2026-11-08),
 `ls apps/api/app/services[/**]`, and `grep` for the vocabulary
 each module is written in. A module is **landed** only when a route or page a caller can knock on
 carries its noun; a service file with no door is **partial**.
@@ -11,7 +11,7 @@ carries its noun; a service file with no door is **partial**.
 Every figure in this sentence is re-checked against the committed tree by
 `apps/api/tests/test_spec_audit_currency.py`, which reads the machine-readable line below rather than the prose:
 
-`AUDIT_FIGURES contract_paths=218 page_routes=67 migrations=50`
+`AUDIT_FIGURES contract_paths=224 page_routes=67 migrations=59`
 
 ## A. The 30 product modules (spec §3's list, §4–§42)
 
@@ -24,9 +24,9 @@ Every figure in this sentence is re-checked against the committed tree by
 | 15 | Match analysis | `/match/[slug]`, `/world/matches`, `sim_events` | M6 | landed |
 | 16–18 | Tactical Lab / Tactical AI / Simulator | **7 paths / 7 operations** under `/api/v1/tactics*`, **8 paths / 12 operations** under `/api/v1/boards*`, **4 paths / 6 operations** under `/api/v1/simulate*`, 8 `/tactics/*` pages (all four censuses re-read 2026-10-20 over the commit that lands this row; the three route-family figures held and the page census did not, because the gallery lane's `862079a` added the two `/tactics/gallery` pages and migration `0028` — which is where the tree's page total moved from 59 to 61 and its migration count from 28 to 29 — and the last time all four censuses were true together was 2026-10-04 over `8b68b0f`; the row used to print one number per route family without saying whether it counted paths or operations, and neither figure answered for this repository) | M4/M6 | landed |
 | 19 | Football simulation | `/api/v1/simulate`, `/simulate/{id}/replay`, `services/simulation` | M6 | landed |
-| 20 | Career Mode | **6 paths / 8 operations** under `/api/v1/careers*`, `/career`, `/career/[slug]`, `/career/[slug]/market` | M6 | landed |
+| 20 | Career Mode | **11 paths / 16 operations** under `/api/v1/careers*`, `/career`, `/career/[slug]`, `/career/[slug]/market` | M6 | landed |
 | 21 | Manager live challenges | **4 paths / 4 operations** under `/api/v1/challenges*`, `/challenges`, `/challenges/runs/[slug]` | M6 | landed |
-| 22 | Transfer market | **8 paths / 8 operations** under `/api/v1/transfers*`, `/api/v1/scout/simulate-transfer`, `services/scouting` | M6 | landed |
+| 22 | Transfer market | **9 paths / 9 operations** under `/api/v1/transfers*`, `/api/v1/scout/simulate-transfer`, `services/scouting` | M6 | landed |
 | 23–24 | AI Scout + report | `/api/v1/scout/{rules,parse,search,report,compare,shortlists*}`, `/scout` | M7 | landed |
 | 25–26 | News system + AI news analysis | `/api/v1/world/news`, `/api/v1/world/news/{ident}`, `/news/[slug]`, `/world/news` | M3 | landed |
 | 27 | Player analytics | `/api/v1/scout/compare`, `/progress/timeline`, `/history`, `/my-football` | M6/M7 | landed |
