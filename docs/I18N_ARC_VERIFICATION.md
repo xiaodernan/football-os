@@ -3278,13 +3278,83 @@ The queue drained; every run that sat unstarted since 2026-11-07T16:23Z has now 
    (`qa-baseline-gates` witness still searched for the pre-§35 verdict names). Cured at `8fd2163` (§39); every
    web run since `8fd2163` reds on **Wire-readers** instead, the one remaining gate this arc does not own.
 
-**The standing state, one line.** Every run since `8fd2163` — twenty-two in all — has api **success** and web
-failure at **Wire-readers**, the M13 milestone's six named reds (§24; §47 quotes them verbatim). Step numbers
+**The standing state, one line.** Every run since `8fd2163` — twenty-two in all, as of this section — has api
+**success** and web failure at **Wire-readers**, the M13 milestone's six named reds (§24; §47 quotes them verbatim). Step numbers
 moved 36 → 37 → 38 as gates joined the runner; the failing gate is the same. **Nothing in this arc owns any
 red on master today.** The moment the milestone lands — wire-readers 18/18, README pin recompute 4269/4224,
 the OpenAPI contract re-export commits — the web job's remaining steps execute for the first time since the
 queue went quiet.
 
+*Superseded 2026-11-08 (§53): the milestone landed at `cadf3d3` and master CI reads **green on both jobs** at
+`4459828` (run `42489246775`); wire-readers 18/18 committed, census 6/6 wired, README pin restated 4269/4224,
+OpenAPI contract re-exported (224 paths / 289 operations / 97 schemas), `basis` columns widened to TEXT (0059).*
+
 **Deliberate reductions, this commit.** The per-push sections §52–§56 were collapsed into this one, which is
 the drain's own record; the five reductions it folds are the same duplicated verdict the table now states
 once. No measurements were dropped — every run appears above with its own measured api and web verdict.
+
+---
+
+## 53. The milestone landed; CI green on both jobs (2026-11-08)
+
+**The user authorised direct action on blocked lanes; every work branch and detached plane was inventoried
+first.** Local branches `world-calendar` (`a6122e3`), `world-movement` (`7e19513`), `world-pyramid`
+(`41be455`) — all ancestors of master, ahead 0 — and all 18 detached worktrees point at ancestors of master,
+so there was no committed work outside master to merge. The only content that existed outside master was the
+uncommitted working tree: the M13 milestone (96 paths) plus the parallel lane's unparseable
+`qa-locale-discovery.mjs`. The consolidation landed in `cadf3d3`
+(100 files changed, +12768 / −1292), with four cures then needed to make master honest:
+
+1. **`qa-locale-discovery.mjs` parse error at `:134`** — an unterminated `(?:…)` in the `chain` regex
+   (`[…]\.(every|…)\(` opened a `(?:` the file never closed). Fixed (`)\]\.` → `))\]\.`), the gate was
+   then run and its findings cured to green with the file's own ledger mechanism (26 narrower sites held on
+   the ledger, 0 unexcused; 6 file rows — two escaped production-build browser walks `qa-market.mjs` and
+   `visual-qa.mjs` kept their deliberately-en/zh comparisons, 14 site rows after six stale rows were deleted;
+   ceilings may only fall); wired into `scripts/check.sh` and `.github/workflows/ci.yml` in the same commit
+   (P9). Two code-level widenings were preferred over excuses in
+   `qa-translation-quality-witness.mjs` (`LOCALES` and `identicalExpected` now iterate the planned set and
+   skip absent catalogues by existence). **Census 6/6.**
+2. **The figure carriers for the moved contract**: `docs/api/openapi.json` re-exported via
+   `scripts/export_openapi.py` (224 paths / 289 operations / 97 schemas; served prefix censuses move:
+   `/api/v1/careers*` 6 paths/8 ops → **11/16**, `/api/v1/transfers*` 8/8 → **9/9**);
+   `README.md` pins 4224/4269; `README_FLOORS` 4051 → 4224; `RULE_KEYS` gained `training`;
+   `test_world.py` gains the missing `typing.Any` import; `test_club_reads.py` four
+   `\n`-joined assert messages converted to single-line joins; `qa-gate-inventory` **219/219** after wiring.
+3. **The M12 security ledgers the contract moved** (CI 42484907414 went red at step 9, 13 named reds): fresh
+   PostgreSQL `football_probe_i` migrated 0001→0058 and seeded; **`scripts/security_probe.py` run for real
+   (Run I, 2026-11-08T13:14Z, port 8755, fresh process, ENV=development, Redis on 63790 db 7): 10/10 checks,
+   0 failed, 0 server errors, 6.52 s; S1 knocked 235 secured operations, all 401, 0 deviations** —
+   `docs/SECURITY_PROBE_REPORT.md` (run I rendered current), `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`
+   (new dated addendum), `ROADMAP.md` and `docs/SPEC_COVERAGE_AUDIT.md` (`AUDIT_FIGURES` now
+   `224/67/59`, careers and transfers prefix rows updated; the other nine dual censuses re-verified
+   equal) refreshed to the measured bytes — SHA-256 `86103abc854826f49a1f0c03eb027587ea5328f9e30c907acfaf1d4a31321a56`.
+4. **A genuine defect on the production engine** (CI 42484907414, api step 11): `psycopg2.errors.StringDataRightTruncation`
+   — the generated-prose `basis` columns (`String(255)`) are fed >300-character arithmetic-in-words sentences;
+   SQLite accepts them silently. **0059 widens all seven to TEXT** (`career_cup_ties` was 512 — same false
+   assumption), models follow, batch mode for SQLite, fresh scratch PG applies 0001→0059 with
+   `alembic check` clean. AUDIT figures **224 / 67 / 60**.
+
+**The four runs that walked it, verdicts read from the API:**
+
+| run | tip | api | web |
+| --- | --- | --- | --- |
+| `42481306285` | `cadf3d3` consolidation | failure — step 9 Tests (SQLite): the 13 named reds above | **success** |
+| `42484907414` | `8133fd7` | failure — step 11 Tests (PostgreSQL): six cup tests, `StringDataRightTruncation` | success |
+| `42487797978` | `ea484bf` (0059) | failure — step 9: `0059` didn't pass fresh SQLite (`alter_column` without batch) + `AUDIT_FIGURES` 59→60 | success |
+| `42489246775` | `4459828` | **success** | **success** |
+
+**Detached HEAD `4459828`, junctioned `node_modules` — every gate re-measured green:**
+inventory **219/219**, census **6/6**, wire-readers **18/18**, locale-tokens **7/7**, token-drift
+**4/4**, translation-quality **9/9** + witness **11/11**, plural-select **7/7** + **16/16**,
+baseline-gates **16/16**, RTL readiness **8/8**, i18n-literals **9/9**, unused-keys **3/3**, ICU messages
+**2/2**, ICU coverage **1/1**, locale-completeness **2/2**, locale-fallback **3/3**, locale-content
+**3/3**, locale-formatting **2/2**, metadata-title **184/184**, population-floor **3/3**,
+translation-freshness **2/2**, key-drift **4/4** + witness **10/10**, shared-keys **4/4** + **8/8**,
+token-gates-witness **10/10**. The scratch PostgreSQL instance `football_probe_i` and its test stem were
+dropped after the run.
+
+**What changed for this arc, one line.** The thing the arc was holding the door for landed: README pin
+is this tree's truth (4224/4269), Wire-readers is 18/18 committed, the census gate is a named gate of the
+committed runner, master CI is green. The Arabic milestone remains content-owed — an honest `ar.json`
+has not been written (§51's runway executes unchanged once it exists); no gate fires early on an absent
+language, and `ar` must not enter `i18n/locales.ts` until RTL items 1–7 are green again.
