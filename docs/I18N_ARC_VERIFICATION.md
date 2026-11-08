@@ -3198,3 +3198,16 @@ measurement above was taken mid-write). If it is still red, the census gate does
 inventory still carries these two named reds, and the milestone (or the lane writing the census) owes
 either the paren or a `qa-locale-discovery.mjs` written parseable before any push — the same rule §39 and
 §43 already taught, one gate earlier.
+
+## 50. CI read back on the four drained runs — same verdict on every push (2026-11-08)
+
+| run | tip | api | web |
+| --- | --- | --- | --- |
+| `42459424587` | `d6ce238` §46 | success | step 38 → Wire-readers |
+| `42459622275` | `9dae36f` §47 | success | step 38 → Wire-readers |
+| `42459977326` | `67393dc` §48 | success | step 38 → Wire-readers |
+| `42460044474` | `ea8de8f` §49 | success | step 38 → Wire-readers |
+
+Four runs, one verdict every time: **api green**, **web stopped at Wire-readers** — the milestone's six named reds (§47 quotes the FAIL lines verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree (detached tip read **28/28** in §45; `qa-gate-inventory` ran **214/214** inside the CI runner itself).
+
+No claim beyond that: CI is a live signal again, and it reads the same red on every master push until the M13 milestone lands. No commit in this window touched `qa-locale-discovery.mjs` — its parse error (inventory 216/218 on the live tree) stays the parallel lane's to fix before its push.
