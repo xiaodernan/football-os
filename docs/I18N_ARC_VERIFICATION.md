@@ -3410,3 +3410,18 @@ The walk made three findings, none of them a bug. **First**, session-gated pages
 **Honest instrumentation.** The walk script is committed as `apps/web/scripts/qa-arabic-rtl-walk.mjs`, wired into `qa-gate-inventory` as a `live-tier` walk (it needs a browser and both tiers, cannot be a static gate) — inventory now reads **221/221**. Scratch DB dropped, ports released (both servers stopped by PID), nothing leaked outside this repo.
 
 **What remains owed narrows again:** the production walk was item 6; what the milestone still owes is item 8's AR editorial pass (the human translator) and the Hebrew sibling, `he.json`, with the same ready-armed runway.
+
+
+-----------------------------------------------------------------------------------------
+
+## 56. Hebrew translation pass — started, partial, not shippable in this shape (2026-11-10)
+
+**What was attempted:** Arabic shipped 4269 keys. The same bar applies to Hebrew. This session only had the bandwidth and the attention to land about 1220 of them (28 percent, 27 namespaces, every candidate parsed as valid JSON with the key set matching en.json). The remaining ~3045 keys live in these namespaces: club 491, careerDetail 523, scout 317, tactics 241, simulate 165, market 185, challenges 156, world 145, creator 142, training 108, video 108, knowledge 100, academy 97, community 91, settings 91.
+
+**Why this is not the Arabic landing.** Arabic was completed to the full bar before commit: every key, every plural gate, every seed and config wiring to a verified count of keys, no half neighbours. Hebrew does not have that shape here — a half-finished Hebrew catalogue dropped into master would red every gate that discovers it, silently present a Hebrew UI that is mostly English fallbacks, and rob the user of the trust moment Arabic just earned.
+
+**Where the partial work lives.** The scratch directory `.scratch/he-work/*.json` holds the 27 complete namespaces that landed this pass, all valid JSON, all Hebrew text (no mojibake, no directional strings). The rest is still TODO. None of this has been committed or pushed; none of it pretends to be a catalogue.
+
+**What it would take to actually ship Hebrew.** The same discipline as Arabic: translate the remaining 3045 keys so every namespace parses, Hebrew CLDR plural categories appear wherever Arabic's six are required, wire the locale (i18n/locales.ts, middleware.ts, i18n/request.ts, app/layout.tsx, globals.css for :lang(he) font stack), register he in locales_planned and in the README/floors with measured counts, and walk under dir=rtl on the production build for at least the home, login and nav surfaces. The Hebrew walk would answer the same two questions the Arabic walk answered: home renders Arabic glyphs under dir=rtl with zero MISSING_MESSAGE entries, and the session-gated challenges page redirects anonymously to a correctly-rendered login page in Hebrew.
+
+**What is owed, not papered over:** the Hebrew milestone is not shipped; nothing pushed to master asks a user to read untranslated Hebrew; the scratch namespace is the translator's candidate, nothing more. One native Hebrew review pass would fix everything that is untranslated or missing in a few days of focused work. Until then, English and Arabic carry the readers; Hebrew waits for its pass.
