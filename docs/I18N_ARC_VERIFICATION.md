@@ -3245,3 +3245,13 @@ CI is now a live signal that reads the same red on every master push until the M
 14 pushes, 14 identical verdicts: **api green**, **web stopped at Wire-readers step 38** — the milestone's six named reds (§47 quotes them verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree.
 
 CI remains a live signal. The web job stops at Wire-readers on every master push until the M13 milestone lands; the moment it lands — wire-readers 18/18, README pin recompute to 4269/4224, OpenAPI contract re-export committed — the web job's remaining steps (`npm run typecheck`, `npm run build`) execute on master for the first time since the queue went quiet.
+
+## 54. §52 CI read back — 15th identical verdict (2026-11-08)
+
+| run | tip | api | web |
+| --- | --- | --- | --- |
+| `42464039023` | `6c3e605` §53 | success | step 38 → Wire-readers |
+
+15 pushes, 15 identical verdicts: **api green**, **web stopped at Wire-readers step 38** — the milestone's six named reds (§47 quotes them verbatim), never this arc's. Nothing this arc owns changed between runs; every gate this arc owns stayed green on the committed tree.
+
+CI remains a live signal that reads the same red on every master push until the M13 milestone lands.
