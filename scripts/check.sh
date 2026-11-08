@@ -219,6 +219,21 @@ echo "── Web: RTL-readiness gate ──────────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-rtl-readiness.mjs)
 
+echo "── Web: locale-wiring gate ────────────────────────────"
+# Arabic shipped with its catalogue complete, the walk green, every content gate green — and the one
+# control that offers the language (LocaleSwitcher's NAMES) showed the raw tag `ar`. Nothing anywhere
+# read the *wiring*. This gate reads five files: the locales list vs the catalogue directory, the RTL
+# classification, the middleware's Accept-Language branches, the cookie name on both sides of the
+# proxy, the message bundle in i18n/request.ts and app/layout.tsx, the switcher's NAMES, the README
+# rows, and the API-side README_FLOORS. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-locale-wiring.mjs)
+
+echo "── Web: locale-wiring behaviour gate ────────────────────"
+# The same gate over scratch planes: a locale dropped from the switcher, the two message bundles, the
+# locales list, the middleware branches and the README_FLOORS pin, plus an unwired fr.json that lands on
+# disk. Each plane charges the clause it exists for; nothing else may red. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-locale-wiring-witness.mjs)
+
 echo "── Web: shared-sentence gate ──────────────────────────"
 # A shared key NAME is not a contract; a shared VALUE is. This gate used to ask every key name used in
 # two namespaces to be named with a reason — 234 rows, 136 of which were independent keys whose

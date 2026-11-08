@@ -276,6 +276,18 @@ jobs:
         run: node scripts/qa-wire-readers.mjs
       - name: RTL-readiness gate (physical properties follow the locale's direction)
         run: node scripts/qa-rtl-readiness.mjs
+      - name: Locale-wiring gate (the five shipped catalogues are wired everywhere a locale is named)
+        # Born from the Arabic milestone's one silent escape: العربية absent from the switcher's NAMES
+        # while every content gate and the production walk were green. Reads the locales list against
+        # the catalogue directory, the RTL classification, the middleware's branches, the cookie name on
+        # both sides of the proxy, the two message bundles, the switcher's NAMES, the README rows, and
+        # the API-side README_FLOORS pin. Files only: no server, no browser.
+        run: node scripts/qa-locale-wiring.mjs
+      - name: Locale-wiring behaviour gate (each verdict, on scratch planes)
+        # A locale dropped from the switcher, the two bundles, the locales list, the middleware
+        # branches and the README_FLOORS pin, plus an unwired fr.json: each plane charges the clause
+        # it exists for and nothing else.
+        run: node scripts/qa-locale-wiring-witness.mjs
       - name: Types
         run: npm run typecheck
       - name: Build
