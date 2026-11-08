@@ -3166,3 +3166,35 @@ builds into a compiling product *today*, at the bytes the web CI would run if th
 section measures nothing about the web CI outcome itself (the web job stops at Wire-readers until the
 milestone lands, §46/§47), nor about the committed tip's equivalence on any single file, nor about the
 milestone's own test leg consistency (`test_world.py:193`'s `Any`, §43/§44, remains the milestone's to fix).
+
+## 49. The census gate, measured — parse-time breakage; named, not cured (2026-11-08)
+
+**The bytes on disk (live working tree, the parallel lane's in-flight slice; not in HEAD; not this arc's):**
+
+- `node apps/web/scripts/qa-locale-discovery.mjs` refuses with
+  `SyntaxError: Invalid regular expression: /\[(?:"[a-z]{2}(?:-[A-Z]{2})?"…)*\]\.(every|some|map|` /`filter|forEach|flat|join)\(/: Unterminated group`
+  — position `:134`, both runs of the measurement identical.
+- Instrumented measurement of the literal: its first capturing group `(?:…` opens at index 3 and is never
+  closed; a brace-walk of the segment ends at **depth 2** (expected 0). The closing `)` before `\]` is the
+  token the bytes are missing (the first group would need `…")*)?\]` for the intended shape).
+
+**Everything this arc did with that information: nothing, on purpose.**
+
+- Not edited: the file is not this arc's; it is uncommitted; the parallel lane writes it progressively. Any
+  fix here would race a concurrent save and can silently revert.
+- Not wired into `scripts/check.sh` or `.github/workflows/ci.yml`: wiring an unparseable file into master's
+  runners would black-hole the web job whole for every future commit.
+- Not claimed green anywhere.
+
+**What it costs master, measured:** `qa-gate-inventory` on the live tree reads **216/218**, red on exactly
+two named checks whose details quote this file (`qa-locale-discovery.mjs is neither gated nor explained …
+no gate names it and no reason in the ledger holds` · `qa-locale-discovery.mjs needs no tier, so a gate
+must name it`). `git ls-tree HEAD` does not carry the file, so **the committed tip and every master CI run measured in §46–§47
+are unaffected** — this red exists only on the shared working tree, next to the M13 milestone's 96 paths.
+
+**What the next hand needs to know.** If `node apps/web/scripts/qa-locale-discovery.mjs` is green later
+today, the in-flight slice completed its own rescue (the parallel lane was saving progressively and the
+measurement above was taken mid-write). If it is still red, the census gate does not parse, the live
+inventory still carries these two named reds, and the milestone (or the lane writing the census) owes
+either the paren or a `qa-locale-discovery.mjs` written parseable before any push — the same rule §39 and
+§43 already taught, one gate earlier.
