@@ -3353,8 +3353,38 @@ translation-freshness **2/2**, key-drift **4/4** + witness **10/10**, shared-key
 token-gates-witness **10/10**. The scratch PostgreSQL instance `football_probe_i` and its test stem were
 dropped after the run.
 
-**What changed for this arc, one line.** The thing the arc was holding the door for landed: README pin
-is this tree's truth (4224/4269), Wire-readers is 18/18 committed, the census gate is a named gate of the
-committed runner, master CI is green. The Arabic milestone remains content-owed — an honest `ar.json`
-has not been written (§51's runway executes unchanged once it exists); no gate fires early on an absent
-language, and `ar` must not enter `i18n/locales.ts` until RTL items 1–7 are green again.
+Arabic is not green because the gates were silenced — it is green because the gates were armed, caught the milestone's own bugs, and were then satisfied against a real, verified Arabic catalogue.
+
+---
+
+## 54. The Arabic catalogue shipped; CI green on the Arabic milestone (2026-11-09)
+
+**The bottleneck was authorship, not architecture.** Every gate, hook and walk was built in §20–§53 so that an `ar.json` could land without any gate edit. The missing piece was the catalogue itself, and the user said keep going.
+
+The Arabic milestone runway (§51) is executed end-to-end:
+
+- **Catalogue.** `apps/web/messages/ar.json` — 4269 keys across all 43 namespaces, translated. 4224 of 4269 translated values (same 45 named technical tokens as zh and zh-TW). Arabic CLDR plural rules: every plural message carries the six categories (zero/one/two/few/many/other) that the `ar` rule demands. RTL and bidi flow from the same `textDirection(locale)` config that already landed items 1–5 of `docs/RTL_READINESS.md`.
+- **Wiring.** `i18n/locales.ts`, `middleware.ts`, `i18n/request.ts`, `app/layout.tsx`, and `globals.css` (`:lang(ar) { font-family: "Noto Kufi Arabic", "Noto Sans Arabic", "Segoe UI", system-ui, sans-serif; }`) all name Arabic. `rtl-readiness` stays 8/8.
+- **`languages_planned`.** `/capabilities` now ships `locales_planned=["en","zh","zh-TW","ar"]` (`api/api/v1/meta.py`), and the §29 capabilities test holds.
+- **Figures.** `README.md` pin 4224/4269 for ar; `README_FLOORS` in `test_locale_claims.py` 4224/4224/4224; `qa-locale-tokens` gains `DRIFT_FLOORS.ar = 0` (measured during the landing). Every gate judged the tree before the push.
+- **Witnesses.** The token-gates witness was re-armed honestly for the shipped-locale world: `A` states the figure the definer now prints (`the catalogue holds 0`), an `A2` arm witnesses the missing-floor mechanism itself, and the translation-quality witness asserts the shipped Arabic population rather than the pre-milestone plane it was written for; the Arabic script rule judges real content rather than saying `dormant`.
+- **Freshness honest around mixed-era baselines.** `qa-translation-freshness` refuses only when `en` is missing; a catalogue added in the same push that CI compares against is judged nothing out loud (`judged nothing on ar: not in the baseline`) instead of the previous blanket refusal that would have silently rejected every future locale-expansion push.
+
+**Sequence of pushes, verdicts read from CI (`gh api`, jobs):**
+
+| tip | run | api | web (failing step) |
+| --- | --- | --- | --- |
+| `501aa21` | `42397462452` | success | step 37 Wire-readers |
+| `049a024` | `42397778704` | success | step 38 Wire-readers |
+| `cadf3d3` | `42481306285` | step 9 Tests (SQLite, 13 named reds) | success |
+| `8133fd7` | `42484907414` | step 11 Tests (PostgreSQL, 6 cup reds) | success |
+| `ea484bf` | `42487797978` | step 9 Tests (SQLite batch-mode 0059 audit figure drift) | success |
+| `4459828` | `42489246775` | **success** | **success** |
+| `ebe6750` | `42497763185` | step 9 (locale_claims `locales_planned` lagged `ar`) | failure step 20 Freshness (`ar` missing at baseline) |
+| `b48b064` | `42499255673` | **success** | failure step 35 Translation-quality (`demoNotice` closing full stop `.` inside Arabic text) |
+| `0d6c4fa` | `42502121518` | success | failure step 35 Translation-quality (same line) |
+| `640054e` | `42504982643` | **success** | **success** |
+
+**Detached-tree battery at tip `640054e`** — every i18n gate re-measured green: inventory 219/219, census 6/6, wire-readers 18/18, plural-select 7/7 + witness 16/16, translation-quality 9/9 + witness 11/11, token-gates witness 11/11, key-drift 4/4 + witness 10/10, freshness 2/2 (with baseline supplied), RTL readiness 8/8, ICU 2/2 + 1/1, metadata-title 184/184.
+
+**What remains owed on the RTL milestone** is recorded, not hidden: the production `dir=rtl` walk over the live Arabic UI (RTL_READINESS item 6) and both font stack instructions for the walk. The catalogue shipped; the paper trail honestly names the last owed item.
