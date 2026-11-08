@@ -3229,7 +3229,7 @@ No claim beyond that: CI is a live signal again, and it reads the same red on ev
 ## 52. Every master run to date — one verdict, and two cured diseases (2026-11-08)
 
 The queue drained; every run that sat unstarted since 2026-11-07T16:23Z has now run and read back step by step
-(via the API; nothing here is estimated). Thirty-two runs in total; one health verdict each:
+(via the API; nothing here is estimated). Thirty-three runs in total; one health verdict each:
 
 | run | tip (commit) | api | web (failing step) |
 | --- | --- | --- | --- |
@@ -3264,6 +3264,7 @@ The queue drained; every run that sat unstarted since 2026-11-07T16:23Z has now 
 | `42466165381` | `0ae7ff1` §55 | success | step 38 Wire-readers |
 | `42467578441` | `b6c9772` §56 | success | step 38 Wire-readers (superseded by §52's collapse) |
 | `42469039678` | `a0a55ba` §52 collapse | success | step 38 Wire-readers |
+| `42470512035` | `e7a3442` §52 table update | success | step 38 Wire-readers |
 
 **Three diseases, all cured or attributed:**
 
@@ -3275,7 +3276,7 @@ The queue drained; every run that sat unstarted since 2026-11-07T16:23Z has now 
    (`qa-baseline-gates` witness still searched for the pre-§35 verdict names). Cured at `8fd2163` (§39); every
    web run since `8fd2163` reds on **Wire-readers** instead, the one remaining gate this arc does not own.
 
-**The standing state, one line.** Every run since `8fd2163` — nineteen in all — has api **success** and web
+**The standing state, one line.** Every run since `8fd2163` — twenty in all — has api **success** and web
 failure at **Wire-readers**, the M13 milestone's six named reds (§24; §47 quotes them verbatim). Step numbers
 moved 36 → 37 → 38 as gates joined the runner; the failing gate is the same. **Nothing in this arc owns any
 red on master today.** The moment the milestone lands — wire-readers 18/18, README pin recompute 4269/4224,
