@@ -25,19 +25,38 @@ const messagesMap = {
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteOrigin()),
-  title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
-  description: SITE_DESCRIPTION,
-  applicationName: SITE_NAME,
-  openGraph: {
-    siteName: SITE_NAME,
-    type: "website",
-    title: SITE_NAME,
-    description: SITE_DESCRIPTION,
-    images: ogImages(),
-  },
+/** `og:locale` values for the five shipped catalogues, in OpenGraph's own `language_TERRITORY` form. */
+const OG_LOCALE: Record<string, string> = {
+  en: "en_US",
+  zh: "zh_CN",
+  "zh-TW": "zh_TW",
+  ar: "ar_SA",
+  he: "he_IL",
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const localeHeader = headersList.get("x-next-intl-locale") ?? headersList.get("next-intl-locale");
+  const locale = (locales as readonly string[]).includes(localeHeader ?? "")
+    ? (localeHeader as typeof locales[number])
+    : defaultLocale;
+  const self = OG_LOCALE[locale];
+  return {
+    metadataBase: new URL(siteOrigin()),
+    title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+    description: SITE_DESCRIPTION,
+    applicationName: SITE_NAME,
+    openGraph: {
+      siteName: SITE_NAME,
+      type: "website",
+      title: SITE_NAME,
+      description: SITE_DESCRIPTION,
+      images: ogImages(),
+      locale: self,
+      alternateLocale: Object.values(OG_LOCALE).filter((value) => value !== self),
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#06090f",

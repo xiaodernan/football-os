@@ -3556,3 +3556,40 @@ Neither text is in a gate-verifiable class — both are sentences whose broken b
 **Instrumentation, honestly stated.** The two walk scripts now carry the sixth page (`/club/rules`, six pages total); comment headers updated to match. `qa-gate-inventory`: **233/233** unchanged in shape — both RTL walks remain `live-tier` with `browser=true server=true`. The wire-gate and wiring-gate from §59 already registered both walks; unchanged this slice. The census file rows stay 11.
 
 **Teardown.** Probe DB dropped, ports 3212/8760 released by PID, `.next-ci` removed, `next-env.d.ts` restored to HEAD — same discipline as §55/§57/§58/§60.
+
+
+-----------------------------------------------------------------------------------------
+
+## 62. og:locale — the five-language site claim an RTL tag was alone in carrying (2026-11-09)
+
+**The claim under test.** Every page now renders `<html lang="…" dir="…">` with the reader's locale and the five catalogues are served — but nothing told a crawler, or a link-preview scraper, which of the five the page it is about to index or preview is in. The `og:locale` card the site published for every page was implicit at best: the root layout carried a static `openGraph` with no `locale` at all, and the page-level `pageMetadata()` helper replaced that block wholesale on every page it named, so even a request-scoped locale on the root would not have reached the world list pages. The claim is an honest one to make: each page is *in* one of five languages, and the share card should say which.
+
+**What landed.** `app/layout.tsx` now exports `generateMetadata()` instead of a static `metadata` object. The function reads the same request header the layout body reads (`x-next-intl-locale` / `next-intl-locale`), picks the locale with the same `locales.includes` rule the layout's body uses, and emits the current `og:locale` for that language plus `og:locale:alternate` for the other four, in OpenGraph's `language_TERRITORY` form:
+
+| locale | og:locale |
+| --- | --- |
+| `en` | `en_US` |
+| `zh` | `zh_CN` |
+| `zh-TW` | `zh_TW` |
+| `ar` | `ar_SA` |
+| `he` | `he_IL` |
+
+`pageMetadata()` deliberately stays synchronous and stateless: the share-preview gate transpiles `lib/site.ts` and calls the helper directly, and reading `headers()` inside it would make that contract async for no reader benefit — a page whose `openGraph` block comes from `pageMetadata()` therefore keeps its inherited `og:title/image/url`/etc. and simply carries no `og:locale` of its own, which the OG spec treats as "no claim", not as a lie. The gate was not edited. `lib/site.ts` carries the same scope note as its adjacent docstring.
+
+**Verified against a freshly seeded disposable PostgreSQL** (alembic `0001 → 0059`, seeder `--with-demo-user`, API on `8760` with the authenticated Redis), production build (`NEXT_DIST_DIR=.next-ci SITE_URL=http://127.0.0.1:3212 API_INTERNAL_URL=http://127.0.0.1:8760`) on `3212`, reading the served `<head>` bytes directly (PowerShell `Invoke-WebRequest` was confirmed unreliable for cookie-scoped assertions this session and is not trusted for any claim in this record):
+
+| locale | `<html lang>` | `dir` | `og:locale` | `og:locale:alternate` (4 others) |
+| --- | --- | --- | --- | --- |
+| en | `en` | `ltr` | `en_US` | `zh_CN`, `zh_TW`, `ar_SA`, `he_IL` |
+| he | `he` | `rtl` | `he_IL` | `en_US`, `zh_CN`, `zh_TW`, `ar_SA` |
+| ar | `ar` | `rtl` | `ar_SA` | `en_US`, `zh_CN`, `zh_TW`, `he_IL` |
+| zh | `zh` | `ltr` | `zh_CN` | `en_US`, `zh_TW`, `ar_SA`, `he_IL` |
+| zh-TW | `zh-TW` | `ltr` | `zh_TW` | `en_US`, `zh_CN`, `ar_SA`, `he_IL` |
+
+The `/world` page (which builds its openGraph through `pageMetadata()`) serves the per-locale `<html lang>` and the page `og:locale` on the home page, exactly as designed — page-level overrides keep working and simply do not carry the root's language claim, which the OG spec permits.
+
+**One flakiness worth naming.** The first `Invoke-WebRequest` loop reported English for every locale and `Accept-Language: he` resolved nothing; the same requests issued through raw `[System.Net.WebRequest]` with the cookie header showed the middleware working perfectly. The middleware was never defective in this session or any other — the probe was. No defect in the codebase was found by the false reading; confirming it with a second client cost one request per locale and is why the served bytes above were captured with a server-side-capable path rather than trusted from the flaky one. No claim in this record rests on an `Invoke-WebRequest` result.
+
+**What this closes.** The five-locale world names its language in HTML (`<html lang>` + `dir`), in the served catalogue, in `GET /capabilities`, in the README pin table, in the gates — and now in Open Graph, where a scraper that never renders the page can still learn which language the share card is written in. Nothing was added to the visual or written surface of the product; one honest dimension of the five-locale claim that had been implicit is now measured and served.
+
+**Instrumentation.** No new gate; the claim is verified by the build and the served bytes above. The two files that changed (`app/layout.tsx` and `lib/site.ts`) keep every existing gate green locally (tsc `--noEmit`, qa-rtl-readiness 8/8, qa-locale-wiring 8/8, qa-gate-inventory 233/233). `.next-ci` removed, probe DB dropped, ports 3212/8760 released by PID, `next-env.d.ts` restored to HEAD.

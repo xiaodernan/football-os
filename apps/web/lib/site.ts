@@ -47,6 +47,11 @@ export function ogImages(): NonNullable<Metadata["openGraph"]>["images"] {
  * Canonical + OpenGraph for one indexable page. Set this per route, never in the root
  * layout: a layout-level `alternates.canonical` is inherited by every child page, which
  * would make the whole site point at the same URL.
+ *
+ * og:locale is deliberately *not* on this helper: the helper is synchronous and the served
+ * locale is request-scoped, so the claim lives in the root layout's `generateMetadata`
+ * where `headers()` is available. A page keeping its inherited og block can lose og:locale —
+ * valid per the OG spec, which treats the absence as "no claim", not as "a lie".
  */
 export function pageMetadata(input: {
   title: string;
