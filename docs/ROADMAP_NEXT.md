@@ -691,7 +691,7 @@ M3 seeded 20 teams / 300 players / 130 matches / 500 articles. A "very large" wo
    round wrote nothing, the balance moved **1,000,000 → 1,077,450**, the timeline held one `gate` entry
    and **0** disagreements. Recorded in [M13_GATE_RECEIPTS_VERIFICATION.md](M13_GATE_RECEIPTS_VERIFICATION.md).
 
-47. **The honours cabinet.** **Done (2026-11-09).** A career that wins things had nothing that said so:
+57. **The honours cabinet.** **Done (2026-11-09; numbered out of phase order because Phase 11 claimed 47–56 while this was in flight).** A career that wins things had nothing that said so:
     the boundary wrote the verdict, the cup paid the prize, and neither surface counted what a manager
     would call a trophy. `honours_view` reads the stored facts and only the stored facts — `career_seasons`
     holds each closed season's verdict (`promoted` / `relegated` / `stayed`), so promotions, relegations and
@@ -1027,6 +1027,21 @@ gateway — without moving a single domain rule out of the core. The rule that k
     never listened on — and the door is fresher than the route's 30-second LB cache. After pinning
     `SERVICE_HOST=127.0.0.1`, `/api/v1/world/competitions` through the edge was byte-identical to the
     direct read — `docs/M14_SERVICE_PLANE.md` §11.
+
+
+58. **One trace across both planes (done 2026-11-10).** The edge minted only its own `X-Trace-Id`,
+    while the Python core speaks W3C `traceparent` (M12 `qa-proxy-gate` carries a valid one, drops an
+    invalid one and mints no ids of its own) — so a request crossing the Java hop and the Python hop was
+    two different traces. `W3cTraceContextFilter` is a global filter at `HIGHEST_PRECEDENCE + 1` (after
+    `TraceIdFilter`, before `RateLimitFilter`): a valid caller `traceparent` and its `tracestate` pass
+    through byte-for-byte; an absent or invalid one is replaced by a freshly minted version-00 parent
+    whose trace-id is derived from the same `X-Trace-Id` (a UUID is already 32 hex digits), with flags
+    `-00` so the gateway asserts no sampling; the parent is echoed on the response. A `tracestate`
+    describing a discarded parent is dropped. Evidence: `docs/M14_SERVICE_PLANE.md` §12 — 6 pure cases
+    + 3 integration cases, `mvn -o -B package` **26/26** across all four modules, the Python parity /
+    audit / contract gates green (16), and a live walk over the built jar with a stand-in core **12/12**.
+    Stated limits: no Micrometer/OTel spans of the edge's own, no change to a caller's `sampled` flag, and
+    `X-Trace-Id` remains the plane's correlation field.
 
 
 ## How this plan is executed

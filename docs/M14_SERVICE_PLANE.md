@@ -426,3 +426,66 @@ without a trip.
 The rule this leaves: `SERVICE_HOST` must name an address the service really listens on for the clients
 that will dial it. The hostname is right in a container, where it is the pod's network identity; on a
 developer host where the name resolves to a link-local address, pin it.
+
+## 12. One trace across both planes (item 58)
+
+Items 48–56 made the edge a real gateway: it routes by name, traces its own requests with `X-Trace-Id`,
+limits a caller, opens a breaker and serves the web shell through the same door. But the core does not
+speak `X-Trace-Id` as a parent. Since M12 the Python side accepts a **W3C `traceparent`** from an upstream
+caller (`qa-proxy-gate` carries a valid one, drops an invalid one and mints no ids of its own). A request
+crossing the Java gateway therefore carried an id only the Java side understood: the edge's correlation
+field and the core's trace were two different traces with nothing in common.
+
+`W3cTraceContextFilter` is a `GlobalFilter` at `HIGHEST_PRECEDENCE + 1` — after `TraceIdFilter` (which
+mints `X-Trace-Id`) and before `RateLimitFilter` (`+10`). Three rules, each stated in the code rather than
+assumed:
+
+- a **valid** caller `traceparent` (strict version-00 shape, non-zero trace and span ids) passes through
+  byte-for-byte, with its `tracestate`; the caller's trace stays the caller's, and the edge does not
+  re-parent it;
+- an **absent or invalid** one is replaced by a freshly minted valid parent, and a `tracestate` that
+  described the discarded parent is dropped;
+- the minted trace-id is derived from the **same** `X-Trace-Id` the edge already minted — a UUID is already
+  32 hex digits, and any other caller id is hashed into one — so both headers name one trace. Flags are
+  `-00`: the gateway does not assert sampling on a caller's behalf. The parent is also echoed on the
+  response, so a caller can read the id the core was given instead of guessing it.
+
+### 12.1 The tests
+
+`W3cTraceContextFilterTest` (6 cases, no Spring context) holds the pure rules: valid shape, degenerate and
+malformed shapes (all-zero ids, uppercase, missing flags), minted format and `-00` flags, UUID alignment,
+stable derivation from one correlation id, and the filter's order relative to the other two.
+`EdgeTraceContextTest` (3 cases) stands a real JDK HTTP server in for the core and reads the headers the
+core actually received: absent → minted and echoed; valid parent + state → byte-for-byte preserved;
+invalid parent + state → replaced and the stale state dropped.
+
+`mvn -o -B package` over the whole reactor: **26 tests / 0 failures / 0 errors**, all four modules
+SUCCESS. The Python-side gates `test_edge_config_parity.py`, `test_spec_audit_currency.py` and
+`test_openapi_contract_currency.py` stayed green (16 cases) — this filter is code, not a second copy of
+the YAML settings, so the parity gate has nothing new to compare.
+
+### 12.2 The live walk
+
+`.scratch/walk-w3c.py` boots the built `edge-0.1.0.jar` on `18880` with a stand-in core on `18881`
+(Eureka and Config disabled, rate limit off), waits for `/actuator/health`, and reads both ends of three
+routed calls. **12/12 checks, 0 red**:
+
+```
+absent   -> core got 00-06adb1ff52924759986d9effa8dcbc68-d2ca5412ef005244-00
+            echoed to the caller; trace-id == X-Trace-Id (06adb1ff…); flags -00
+valid    -> core got 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+            with tracestate vendor=value, unchanged in both directions
+invalid  -> "garbage" became 00-df7515eeaa514f46b193528b491d72bc-268fafa1b7da78b6-00
+            tracestate dropped at the core; replacement echoed to the caller
+```
+
+### 12.3 What this does not claim
+
+- It is **not** a Micrometer/OTel tracer. The edge emits no spans of its own; it only puts a valid parent
+  on the wire so the core's existing tracing can parent its spans to the caller's trace. A real collector
+  backend is still the local debug container item 50 named.
+- It does **not** change `sampled`. A caller's flags are preserved; a minted parent says `-00`.
+- It does **not** replace `X-Trace-Id`. That header remains the plane's correlation field, and the core's
+  request-id logging still works as before.
+- It does **not** validate `tracestate` beyond the W3C rule that it describes the current parent; a
+  syntactically odd but well-formed `tracestate` is carried through when its parent is valid.
