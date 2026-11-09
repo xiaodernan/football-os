@@ -24,7 +24,7 @@ const MESSAGES = join(WEB, "messages");
 
 /** Discover the catalogues this gate judges, from the directory. Shipped today: en, zh, zh-TW.
  *  Anything additional — `ar.json`, `he.json` — joins with zero further edits. */
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) =>
   existsSync(join(MESSAGES, `${locale}.json`)),
 );
 

@@ -34,9 +34,9 @@ import { fileURLToPath } from "node:url";
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-/** The locales this gate owns a rule for. `ar` and `he` carry a script rule the day their catalogue ships;
+/** The locales this gate owns a rule for. `ar`, `he` and `fr` carry a script/encoding rule the day their catalogue ships;
  *  a catalogue outside this set is charged by filename rather than passing unseen. */
-const KNOWN_LOCALES = new Set(["zh", "zh-TW", "ar", "he"]);
+const KNOWN_LOCALES = new Set(["zh", "zh-TW", "ar", "he", "fr"]);
 
 /** Discovery, not a candidate list: every JSON file in the directory is loaded, and `en` is the reference
  *  every other locale is compared against. */
@@ -53,15 +53,25 @@ for (const locale of SHIPPED) {
 
 /** The values that are the same in every language, read from the gate that names the reason for each one.
  *  An unreadable table is a finding, not a silent empty exemption set: zero keys would make every technical
- *  token a defect, and the gate would be red for a reason its own output does not state. */
+ *  token a defect, and the gate would be red for a reason its own output does not state. The French-only
+ *  doublets (`FR_TOKENS`, named key by key in the same file) are read as their own set and consulted for `fr`
+ *  alone — they are not exemptions for the Chinese, Arabic or Hebrew catalogues, which translate them. */
 const TOKENS_FILE = join(WEB, "scripts", "qa-locale-tokens.mjs");
 const tokenTable = (() => {
-  if (!existsSync(TOKENS_FILE)) return { keys: new Set(), error: `no ${basename(TOKENS_FILE)} beside this gate` };
-  const body = /const TOKENS = new Map\(\[([\s\S]*?)\]\);/.exec(readFileSync(TOKENS_FILE, "utf8"));
-  if (!body) return { keys: new Set(), error: `${basename(TOKENS_FILE)} holds no \`const TOKENS = new Map([...])\` table` };
-  return { keys: new Set([...body[1].matchAll(/\[\s*"([^"]+)"\s*,/g)].map((match) => match[1])), error: null };
+  if (!existsSync(TOKENS_FILE)) return { keys: new Set(), frKeys: new Set(), error: `no ${basename(TOKENS_FILE)} beside this gate` };
+  const source = readFileSync(TOKENS_FILE, "utf8");
+  const universal = /const TOKENS = new Map\(\[([\s\S]*?)\]\);/.exec(source);
+  if (!universal) return { keys: new Set(), frKeys: new Set(), error: `${basename(TOKENS_FILE)} holds no \`const TOKENS = new Map([...])\` table` };
+  const frOnly = /const FR_TOKENS = new Map\(\[([\s\S]*?)\]\);/.exec(source);
+  if (!frOnly) return { keys: new Set(), frKeys: new Set(), error: `${basename(TOKENS_FILE)} holds no \`const FR_TOKENS = new Map([...])\` table` };
+  return {
+    keys: new Set([...universal[1].matchAll(/\[\s*"([^"]+)"\s*,/g)].map((match) => match[1])),
+    frKeys: new Set([...frOnly[1].matchAll(/\[\s*"([^"]+)"\s*,/g)].map((match) => match[1])),
+    error: null,
+  };
 })();
 const TOKENS = tokenTable.keys;
+const EXEMPTIONS = (locale) => (locale === "fr" ? new Set([...TOKENS, ...tokenTable.frKeys]) : TOKENS);
 
 const english = catalogues.en ?? {};
 
@@ -112,7 +122,7 @@ for (const locale of LOCALES) {
       if (english[namespace]?.[key] !== value) continue;
       identicalCount += 1;
       const path = `${namespace}.${key}`;
-      if (TOKENS.has(path)) continue;
+      if (EXEMPTIONS(locale).has(path)) continue;
       identicalUnnamed.push(`${locale}: ${path} — "${value.slice(0, 40)}"`);
     }
   }
@@ -196,14 +206,18 @@ const ALLOWED_ENGLISH = new Set([
   "HTML", "JAVASCRIPT", "NOINDEX", "USER", "KNOWLEDGE", "DOCUMENTS", "SEARCH", "ASK", "OVR", "MOV", "WEBM", "SHA", "KBIT", "PNG", "COMMUNITY", "ONE", "MONO", "FATIGUE", "LAB", "LIB", "READY", "ACTIVE", "OWNERS", "TEAMS", "MATCH", "READ", "CLUB", "PLAYERS", "SCHEMA", "TACTICS", "PRESSING", "CITATIONS", "ISO", "WITHHELD", "ENTITY", "OVERVIEW", "ATTRIBUTES", "TIMELINE", "COUNT", "APPS", "POSSESSION", "TRAININGS", "SESSIONS", "COMPLETED", "WORLD", "APP", "SERVICES", "VIREMONT", "ILJA", "MATCHDAY", "SOURCE", "SYNTHETIC", "SEED",
 ]);
 
-for (const locale of LOCALES) {
+// This rule reads Latin words as untranslated English by construction — in Arabic, Hebrew and Chinese
+// catalogues any Latin word is the tell. French is a Latin-script locale: "Accueil" is French, and every
+// French word in the catalogue would red it (measured: 3908 such "issues" over fr.json). The identical-
+// to-English rule above is fr's judge, so this scan covers the non-Latin catalogues only.
+for (const locale of LOCALES.filter((locale) => locale !== "fr")) {
   for (const [namespace, block] of Object.entries(catalogues[locale])) {
     for (const [key, value] of Object.entries(block ?? {})) {
       if (typeof value !== "string") continue;
       messagesScanned += 1;
 
       const path = `${namespace}.${key}`;
-      if (TOKENS.has(path)) {
+      if (EXEMPTIONS(locale).has(path)) {
         namedTokenSkips += 1;
         continue;
       }
@@ -239,7 +253,7 @@ check(
   "no untranslated English words in translations",
   untranslatedIssues.length === 0,
   untranslatedIssues.length === 0
-    ? `${wordScanned} message(s) word-scanned across ${LOCALES.join(", ")}; ${namedTokenSkips} exempted as named tokens and ${identicalSkips} as identical to English, the identical ones charged by the check above`
+    ? `${wordScanned} message(s) word-scanned across ${LOCALES.filter((locale) => locale !== "fr").join(", ")} (fr excluded: Latin script, judged by the identical-to-English rule); ${namedTokenSkips} exempted as named tokens and ${identicalSkips} as identical to English, the identical ones charged by the check above`
     : `${wordScanned} scanned, ${untranslatedIssues.length} issue(s): ${untranslatedIssues.slice(0, 4).join(" | ")}`,
 );
 
@@ -280,6 +294,11 @@ for (const locale of LOCALES) {
           punctuationIssues.push(`he: ${namespace}.${key} — ends with a non-Hebrew full stop: "${value.slice(-20)}"`);
         }
       }
+      // French sentence-ending punctuation is ?, !, ., … or a guillemet — a full stop from the Arabic or
+      // Chinese tables is the same tell, in a Latin script.
+      if (locale === "fr" && /[؟。！？]$/.test(value.trim())) {
+        punctuationIssues.push(`fr: ${namespace}.${key} — ends with a non-French full stop: "${value.slice(-20)}"`);
+      }
     }
   }
 }
@@ -288,7 +307,7 @@ check(
   "proper punctuation per locale",
   punctuationIssues.length === 0,
   punctuationIssues.length === 0
-    ? `${messagesScanned} message(s) visited across ${LOCALES.join(", ")}; the sentence-ending-punctuation rules fire for zh and zh-TW, and for ar and he the day their catalogues ship`
+    ? `${messagesScanned} message(s) visited across ${LOCALES.join(", ")}; the sentence-ending-punctuation rules fire for zh and zh-TW, and for ar, he and fr outside their own scripts`
     : `${punctuationIssues.length} punctuation issue(s): ${punctuationIssues.slice(0, 4).join(" | ")}`,
 );
 
@@ -314,6 +333,16 @@ for (const locale of LOCALES) {
         // as Latin-1. No Hebrew token uses these bytes legitimately, so flagging them with no Hebrew
         // script in the message reds only mojibake.
         encodingIssues.push(`${locale}: ${namespace}.${key} — Hebrew script bytes decoded as Latin-1: "${value.slice(0, 40)}"`);
+      } else if (locale === "fr") {
+        // French accents are C3-prefixed two-byte sequences any conforming decoder reads correctly, so a
+        // mis-read file wears «Ã» — a codepoint no French word uses (the shape of the ar and he arms).
+        // «Â» alone is NOT a tell: C2 xx mis-read yields Â + a control byte, but a capitalised French
+        // word keeps it ("Âge" — the capitalised form of "âge"), so a bare Â is legitimate and is not
+        // charged. The general branch below cannot tell Ã©-mojibake from the legitimate é it contains,
+        // so this arm owns the call and the general branch never sees fr.
+        if (/Ã/.test(value) || /Â(?![A-Za-z\u00C0-\u00FF])/.test(value)) {
+          encodingIssues.push(`${locale}: ${namespace}.${key} — French UTF-8 bytes decoded as Latin-1: "${value.slice(0, 40)}"`);
+        }
       } else if (/â€|âœ|âœ|â–|â€|â™|âœ|âœ|ï¿½|ï»¿|å|å°|å¸|å±|å²|å³|å´|åµ|å¶|å·|å¸|å¹|åº|å»|å¼|å½|å¾|å¿|æ|ç|è|é|ê|ë|ì|í|î|ï|ð|ñ|ò|ó|ô|õ|ö|÷|ø|ù|ú|û|ü|ý|þ|ÿ/) {
         // Check if the match is actually a legitimate Unicode symbol
         const suspicious = value.match(/â€|âœ|âœ|â–|â€|â™|âœ|âœ|ï¿½|ï»¿|å|å°|å¸|å±|å²|å³|å´|åµ|å¶|å·|å¸|å¹|åº|å»|å¼|å½|å¾|å¿|æ|ç|è|é|ê|ë|ì|í|î|ï|ð|ñ|ò|ó|ô|õ|ö|÷|ø|ù|ú|û|ü|ý|þ|ÿ/g);
@@ -407,7 +436,7 @@ for (const rule of SCRIPT_RULES) {
       for (const [key, value] of Object.entries(block ?? {})) {
         if (typeof value !== "string") continue;
         const path = `${namespace}.${key}`;
-        if (TOKENS.has(path)) {
+        if (EXEMPTIONS(rule.locale).has(path)) {
           namedExempts += 1;
           continue;
         }

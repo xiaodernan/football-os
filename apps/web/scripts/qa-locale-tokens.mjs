@@ -115,6 +115,236 @@ const TOKENS = new Map([
   ["club.playerSlugPlaceholder", "an example slug"],
 ]);
 
+/**
+ * French-only identical values, named key by key (2026-11-09, the fr milestone).
+ *
+ * TOKENS above holds the language-neutral set: those keys are identical in EVERY catalogue, and a
+ * locale that translated one has been charged by this gate for §41 and its siblings. The values
+ * here are not language-neutral: French and English share them as loanword doublets (club, score,
+ * format, note, section…), as the tables' own abbreviations (Min, RPE, p50), or as templates of
+ * names and figures — and the Chinese, Arabic and Hebrew catalogues translate them. French exempts
+ * exactly this set and nothing else; every other locale answers to TOKENS alone.
+ */
+const FR_TOKENS = new Map([
+  // French–English identical values, named key by key (2026-11-09, the fr milestone).
+  // Most are loanword doublets (club, score, note, section…) or templates of names and figures; the rest
+  // are abbreviations of the tables themselves. Naming them keeps the gate honest: an identical value that
+  // is not named is still a finding, and no byte of English prose slipped through — the two English gloss
+  // lines that had (home.metaTitle, home.heroLine1/2) were translated, not named.
+  ["common.sourceLabel", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["common.minutesCount", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["challenges.competitionOption", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["worldCompetition.chipClubs", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["worldCompetition.entrantsEyebrow", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["worldCompetition.movementPath", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["worldMatch.metaDescriptionPlayed", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["worldTeam.eyebrow", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["simulate.matchMeta", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["tactics.sideBoardCaption", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["tactics.measuresEyebrow", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["tactics.sharedPanelEyebrow", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["knowledge.resultLine", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["knowledge.resultLineOne", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["knowledge.passagesCount", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["knowledge.scoreChip", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["knowledge.citationScore", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["simulate.indicesChip", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["training.minuteOption", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["scout.possession", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["market.boardNeedPositions", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["market.figClause", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["market.clauseBtn", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["live.minutesNote", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["live.minutesChip", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["simulate.possessionLabel", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["simulate.simulationBadge", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["worldPlayer.heightValue", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
+  ["world.thMinutes", "the column's, scale's or metric's own abbreviation"],
+  ["worldTeam.thMin", "the column's, scale's or metric's own abbreviation"],
+  ["worldMatch.thMin", "the column's, scale's or metric's own abbreviation"],
+  ["worldTraining.thMin", "the column's, scale's or metric's own abbreviation"],
+  ["worldPlayer.thMin", "the column's, scale's or metric's own abbreviation"],
+  ["worldPlayer.thDiff", "the column's, scale's or metric's own abbreviation"],
+  ["world.thPos", "the column's, scale's or metric's own abbreviation"],
+  ["worldTeam.thPos", "the column's, scale's or metric's own abbreviation"],
+  ["worldMatch.thPos", "the column's, scale's or metric's own abbreviation"],
+  ["worldTraining.thPos", "the column's, scale's or metric's own abbreviation"],
+  ["careerDetail.thPoints", "the column's, scale's or metric's own abbreviation"],
+  ["challenges.tPts", "the column's, scale's or metric's own abbreviation"],
+  ["worldCompetition.thPts", "the column's, scale's or metric's own abbreviation"],
+  ["history.colDiff", "the column's, scale's or metric's own abbreviation"],
+  ["history.colMin", "the column's, scale's or metric's own abbreviation"],
+  ["traces.thP50", "the column's, scale's or metric's own abbreviation"],
+  ["traces.thP95", "the column's, scale's or metric's own abbreviation"],
+  ["traces.milliseconds", "the column's, scale's or metric's own abbreviation"],
+  ["traces.window15", "the column's, scale's or metric's own abbreviation"],
+  ["training.overallChip", "the column's, scale's or metric's own abbreviation"],
+  ["academy.sessionRpeLabel", "the column's, scale's or metric's own abbreviation"],
+  ["careerDetail.contractsBand2125", "the column's, scale's or metric's own abbreviation"],
+  ["careerDetail.contractsBand2629", "the column's, scale's or metric's own abbreviation"],
+  ["careerDetail.contractsBand3033", "the column's, scale's or metric's own abbreviation"],
+  ["career.thPoints", "the column's, scale's or metric's own abbreviation"],
+  ["common.xpGain", "the game's own coin"],
+  ["history.colXp", "the game's own coin"],
+  ["history.metricXp", "the game's own coin"],
+  ["history.xpPlus", "the game's own coin"],
+  ["history.xpAmount", "the game's own coin"],
+  ["training.xpAwarded", "the game's own coin"],
+  ["coach.statXp", "the game's own coin"],
+  ["career.club", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["career.thClub", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["world.thClub", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["world.thClubs", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["world.sectionClubsLabel", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["world.clubsUnit", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["worldCompetition.thClub", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["simulationAggregates.thClub", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["challenges.club", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["challenges.tableClub", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["world.thScore", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["challenges.tScore", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["careerDetail.thScore", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["careerDetail.cupThScore", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["creator.thScore", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["video.matchChip", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["worldTeam.matchFallback", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["worldPlayer.thMatch", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["worldPlayer.rowCleanSheets", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["academy.sessionFocusPlaceholder", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["coach.intentPressing", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["video.tablePosition", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
+  ["nav.club", "the feature's own name"],
+  ["nav.scout", "the feature's own name"],
+  ["settings.milestoneM7", "the feature's own name"],
+  ["settings.milestoneM8", "the feature's own name"],
+  ["scout.title", "the feature's own name"],
+  ["creator.metaTitle", "the feature's own name"],
+  ["nav.notifications", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["nav.traces", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["common.paginationAria", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["common.rowQuestion", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["auth.roleManager", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["auth.roleScout", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["scout.kvPercentile", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["scout.pointsLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["scout.thDelta", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["scout.thDirection", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["scout.thLeader", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["scout.thNote", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["scout.thVerdict", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["scout.versus", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["career.budget", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["career.thManager", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["world.tableHeaderTable", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["world.teamsNationLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["world.competitionsFormatLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["world.thFormat", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["world.thManager", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["coach.tabPlan", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["coach.alternatives", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["coach.horizonLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["progress.groupMental", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["agents.citationsLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["agents.modeLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["agents.rosterLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["agents.traceLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["tactics.labelTempo", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["tactics.phaseLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["tactics.pause", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["tactics.simulation", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["history.colDate", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["history.colNotes", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["training.ratingFocus5", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["training.instructions", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["training.progressions", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["training.testTitle", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["knowledge.provenanceEyebrow", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["knowledge.passagesH2", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["knowledge.modeLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["challenges.kvPoints", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["challenges.tableVerdict", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["market.kvFormation", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["market.badgeRival", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["portfolio.thSections", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["community.thCode", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["simulate.thExpression", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["simulate.minutes", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["simulate.mPasses", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["simulate.mPossession", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.capAxes", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.capInvitations", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.kvCurriculum", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tableHeaderCurriculum", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["market.buyThClause", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["simulationAggregates.backSimulation", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["traces.thCount", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tableHeaderClip", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tableHeaderCoach", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tableHeaderDate", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tableHeaderFocus", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tableHeaderNote", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tableHeaderOrganisation", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tableHeaderPhases", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tableHeaderTable", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.tenantMetaTitle", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.thAudience", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.thNote", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.thOrganisation", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.sharePlanThPlan", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["club.sharedPlanKVFocus", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["careerDetail.academyThVerdict", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["careerDetail.contractsKindBuy", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["careerDetail.rowPoints", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["careerDetail.seasonsThVerdict", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["careerDetail.thClub", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldPlayer.rowMinutes", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldPlayer.thDate", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldPlayer.thPasses", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldPlayer.centre", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["simulationAggregates.thType", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["simulationAggregates.thSlug", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldTeam.rowManager", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldTeam.thNation", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldTeam.thMinutes", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldTeam.thPasses", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["graph.thDirection", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["graph.kvSlug", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["graph.slugPlaceholder", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldTraining.thDate", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldCompetition.claimTitle", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldCompetition.rowFormat", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldCompetition.entrantsTitle", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["worldNews.rowSource", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.rowSections", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.thCode", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.guidesTitle", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.labelSection", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.thGuide", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.thSection", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.thCitations", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.thTokens", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.citationsTitle", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.labelNote", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.thDocument", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.thOrdinal", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.programMinutesLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.programNoteLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.thNote", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["creator.thPoints", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["academy.noteLabel", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["notifications.metaTitle", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["notifications.title", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["live.pause", "a field/interface term French spells the same as English (loanword doublet)"],
+]);
+
+
+/** The exemption set for one locale. `fr` alone carries the FR_TOKENS doublet set on top of the
+ *  language-neutral tokens; no other locale reads FR_TOKENS, so a French-only name cannot excuse a
+ *  key for the other catalogues. */
+const EXEMPTIONS = (locale) =>
+  locale === "fr" ? new Set([...TOKENS.keys(), ...FR_TOKENS.keys()]) : TOKENS;
+
+
 const catalogue = (locale) => JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
 
 /**
@@ -194,18 +424,20 @@ const unnamed = [];
 const stale = [];
 for (const locale of LOCALES) {
   const other = valuesOf(locale);
+  const exempt = EXEMPTIONS(locale);
   for (const [path, value] of ENGLISH) {
-    if (other.get(path) === value && !TOKENS.has(path)) unnamed.push(`${locale}: ${path}`);
+    if (other.get(path) === value && !exempt.has(path)) unnamed.push(`${locale}: ${path}`);
   }
 }
-for (const path of TOKENS.keys()) {
-  const value = ENGLISH.get(path);
-  if (value === undefined) {
-    stale.push(`${path} is not in the English catalogue at all`);
-    continue;
-  }
-  for (const locale of LOCALES) {
-    const other = valuesOf(locale);
+for (const locale of LOCALES) {
+  const other = valuesOf(locale);
+  const exempt = EXEMPTIONS(locale);
+  for (const path of exempt.keys()) {
+    const value = ENGLISH.get(path);
+    if (value === undefined) {
+      stale.push(`${locale}: ${path} is named a token but is not in the English catalogue`);
+      continue;
+    }
     if (!other.has(path)) stale.push(`${locale}: ${path} is named a token but the catalogue holds no such key`);
     else if (other.get(path) !== value) stale.push(`${locale}: ${path} is named a token but is translated`);
   }
@@ -215,7 +447,7 @@ check(
   "every value any catalogue shares with the English is a named technical token",
   unnamed.length === 0,
   unnamed.length === 0
-    ? `${TOKENS.size} token(s) named; ${LOCALES.length} catalogue(s) compared (${LOCALES.join(", ") || "none"})`
+    ? `${EXEMPTIONS("fr").size} token(s) named for fr, ${TOKENS.size} language-neutral; ${LOCALES.length} catalogue(s) compared (${LOCALES.join(", ") || "none"})`
     : `${unnamed.length} identical value(s) that are not named: ${unnamed.slice(0, 8).join(" | ")}`,
 );
 
@@ -223,7 +455,7 @@ check(
   "every named technical token is still a token",
   stale.length === 0,
   stale.length === 0
-    ? `${TOKENS.size} token(s) checked across ${LOCALES.length} catalogue(s)`
+    ? `${TOKENS.size} language-neutral token(s) plus ${FR_TOKENS.size} French-only doublet(s), checked per catalogue across ${LOCALES.length} catalogue(s)`
     : `${stale.length} stale name(s): ${stale.slice(0, 8).join(" | ")}`,
 );
 
@@ -293,7 +525,7 @@ check(
  * a crash is not a verdict either. Shipping a new language means writing down the count its copy starts
  * at, which is the argument the floor exists to force.
  */
-const DRIFT_FLOORS = { zh: 0, "zh-TW": 0, ar: 0, he: 0 };
+const DRIFT_FLOORS = { zh: 0, "zh-TW": 0, ar: 0, he: 0, fr: 0 };
 const holders = new Map();
 for (const [path, value] of ENGLISH) {
   if (value.length <= 12) continue;
@@ -344,19 +576,20 @@ check(
  */
 const COPY_THRESHOLD = 5;
 const SCRIPTS_DIR = join(WEB, "scripts");
+const ALL_TOKEN_KEYS = [...TOKENS.keys(), ...FR_TOKENS.keys()];
 const copiers = [];
 for (const name of readdirSync(SCRIPTS_DIR).filter((f) => f.endsWith(".mjs"))) {
   if (name === SELF) continue;
   const text = readText(join(SCRIPTS_DIR, name));
-  const held = [...TOKENS.keys()].filter((path) => text.includes(`["${path}",`)).length;
-  if (held >= COPY_THRESHOLD) copiers.push(`${name} re-states ${held} of the ${TOKENS.size} entries as its own literals`);
+  const held = ALL_TOKEN_KEYS.filter((path) => text.includes(`["${path}",`)).length;
+  if (held >= COPY_THRESHOLD) copiers.push(`${name} re-states ${held} of the ${ALL_TOKEN_KEYS.length} entries as its own literals`);
 }
 
 check(
   "this table is defined in one file and read by every gate that needs it",
   copiers.length === 0,
   copiers.length === 0
-    ? `${TOKENS.size} entries defined here; no other script in scripts/ holds ${COPY_THRESHOLD}+ of them as literals`
+    ? `${ALL_TOKEN_KEYS.length} entries defined here (${TOKENS.size} language-neutral + ${FR_TOKENS.size} French-only); no other script in scripts/ holds ${COPY_THRESHOLD}+ of them as literals`
     : copiers.join(" | "),
 );
 

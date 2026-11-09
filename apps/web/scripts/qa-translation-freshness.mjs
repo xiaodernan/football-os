@@ -101,7 +101,7 @@ function getCatalogueAtCommit(locale, commit) {
 }
 
 /** Catalogues the gate judges, discovered from the catalogue directory. en always ships. */
-const BASE_LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
+const BASE_LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
 
 /** Get current catalogues */
 function getCurrentCatalogues() {

@@ -17,7 +17,7 @@ import { parse, TYPE } from "@formatjs/icu-messageformat-parser";
 const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const MESSAGES = join(WEB, "messages");
 
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) =>
   existsSync(join(MESSAGES, `${locale}.json`)),
 );
 
@@ -74,6 +74,18 @@ const LOCALE_FORMATS = {
     currency: { style: "currency", currency: "ILS", minimumFractionDigits: 2 },
     percent: { style: "percent", minimumFractionDigits: 0 },
   },
+  // Verified against V8/ICU (the engine next-intl renders with): `Intl.DateTimeFormat('fr', …)` answers
+  // "9 nov. 2026" for yMMMd, "9 nov. 2026, 16:30" for yMMMdjm and "16:30" for jm — 24-hour clock, `.` after
+  // the month abbreviation, a narrow no-break space inside numbers and before the % sign. EUR is the
+  // currency the bare `fr` tag answers with (International French).
+  fr: {
+    date: { skeleton: "yMMMd", pattern: "d MMM y" },
+    dateTime: { skeleton: "yMMMdjm", pattern: "d MMM y, HH:mm" },
+    time: { skeleton: "jm", pattern: "HH:mm" },
+    number: { style: "decimal", minimumFractionDigits: 0, maximumFractionDigits: 3 },
+    currency: { style: "currency", currency: "EUR", minimumFractionDigits: 2 },
+    percent: { style: "percent", minimumFractionDigits: 0 },
+  },
 };
 
 /** Check that a message contains date/number/currency format patterns.
@@ -121,7 +133,7 @@ function extractFormatPatterns(message) {
 }
 
 /** Find all messages that use format patterns */
-const formatMessages = { en: [], zh: [], "zh-TW": [], ar: [], he: [] };
+const formatMessages = { en: [], zh: [], "zh-TW": [], ar: [], he: [], fr: [] };
 
 for (const locale of LOCALES) {
   for (const [namespace, block] of Object.entries(catalogues[locale])) {

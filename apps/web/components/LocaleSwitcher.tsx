@@ -21,6 +21,7 @@ const NAMES: Record<string, string> = {
   "zh-TW": "繁體中文",
   ar: "العربية",
   he: "עברית",
+  fr: "Français",
 };
 
 export function LocaleSwitcher({ locales }: { locales: string[] }) {

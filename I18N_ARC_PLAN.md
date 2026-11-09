@@ -1,7 +1,7 @@
 ﻿# I18N Arc — living plan
 
-Measured on the working tree **2026-11-08** (with the M13 milestone landed as of `cadf3d3` — the arc's own
-record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§63, which is the honest ledger of
+Measured on the working tree **2026-11-09** (with the M13 milestone landed as of `cadf3d3` — the arc's own
+record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§64, which is the honest ledger of
 this arc; this file is a plan, never the evidence). Every figure below is re-derived by the gate named
 beside it.
 
@@ -50,7 +50,7 @@ so; and the day a locale that does not exist today is added, the cost is one cat
 | P4 ICU census hardened | the four ICU gates were vacuous — fixed 2026-11-06 (§22): real placeholder agreement, real plural completeness, a real catalogue parity check, one check retired with its reason written | **done** |
 | P5 RTL readiness | logical CSS, `dir` from `textDirection(locale)`, font stacks end generic, `:lang(ar)/:lang(he)` reset gated (§20, gate 8/8); item 1 done 2026-11-07 (nine JSX arrows moved out of the render path); item 2 decided (keep stack, Noto covers Arabic/Hebrew via platform substitution); item 3 landed (qa-plural-select discovers ar, Arabic six CLDR enforced); item 4 landed (qa-translation-quality Arabic pass judges the shipped population); item 5 landed (qa-locale-completeness discovers catalogues); item 6 landed (§55, 2026-11-09): production dir=rtl walk over the live Arabic UI — 5/5 pages green under `dir=rtl` with `fo_locale=ar`, zero console errors, zero `MISSING_MESSAGE`s, inventory 221/221 | **Production dir=rtl walk landed (§55); Arabic ships; Hebrew lands (§57)** |
 | P6 New-surface compliance | every slice ships with the full checklist — parity, fallback, quality, ICU, tokens, 0 literal sites, namespace ownership, live-tier walk, gates green — `NEW_SURFACE_COMPLIANCE.md` | **protocol in force** (applies to every slice since 2026-11-06) |
-| P7 Locale expansion (ar, he) | each locale: full catalogue, CLDR plural rules (AR: zero/one/two/few/many/other; HE: one/two/other), numerals policy, bidi handling, manifests, walks under `dir=rtl`, CI registration; **not a catalogue drop — a milestone** | **ar shipped 2026-11-08 (§54); he shipped 2026-11-09 (§57) — both full catalogues, both `dir=rtl` production walks green, both in `locales`/`locales_planned`, README floors 4224/4224/4224/4224; what is owed on both is the human editorial pass, same bar** |
+| P7 Locale expansion (ar, he, fr) | each locale: full catalogue, CLDR plural rules (AR: zero/one/two/few/many/other; HE: one/two/other; FR: one/many/other), numerals policy, bidi handling, manifests, walks under `dir=rtl`, CI registration; **not a catalogue drop — a milestone** | **ar shipped 2026-11-08 (§54); he shipped 2026-11-09 (§57); fr shipped 2026-11-09 (§64) — three full catalogues, production walks green (RTL pair under `dir=rtl`, French LTR), all in `locales`/`locales_planned`, README floors 4224/4224/4224/4224/4020; what is owed on all three is the human editorial pass, same bar** |
 | P8 Cross-arc maintenance | the API's refusal catalogue stays in step (`test_locale_claims.py`), OpenAPI claims stay current, catalogue parity holds as surfaces appear | **ongoing** |
 | P9 Hygiene & permanence | any new `qa-*.mjs` registered in **both** `scripts/check.sh` and `.github/workflows/ci.yml` in the same commit; a witness ships with every verdict-shape change; every slice records its figures in `I18N_ARC_VERIFICATION.md` and pushes | **ongoing — and this session it grew two teeth**: the committed-tree pin and witness anchors distinguish committed vs working tree explicitly (§24/§25) |
 
@@ -71,7 +71,7 @@ so; and the day a locale that does not exist today is added, the cost is one cat
    CI registration, the file. §30 carries the committed-tree read; §33 the API-strings witness; §27 the
    remaining inventory; §31 records the Hebrew arm; §34 closes this session's hand; §40 cures both RTL
    script rules and ships their witness, so an `ar.json` that is English in an Arabic envelope is a finding
-   the day it lands rather than a green line. Items 6–8 landed with the Arabic milestone (`ar` §54, walk §55) and the Hebrew one (`he` §57, authenticated walk §58, five locales live); do not ship another locale before its walk is as green.
+   the day it lands rather than a green line. Items 6–8 landed with the Arabic milestone (`ar` §54, walk §55) and the Hebrew one (`he` §57, authenticated walk §58, six locales live since §64); do not ship another locale before its walk is as green.
 4. **The discipline.** Every new slice follows `NEW_SURFACE_COMPLIANCE.md`; gate verdict-shape changes
    ship with witnesses; the verification doc grows a section per slice, push every time.
 

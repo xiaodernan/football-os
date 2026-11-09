@@ -40,7 +40,7 @@ const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLT
 const MESSAGES = join(WEB, "messages");
 /** Discover the catalogues the gate judges, from the directory. Shipped today: en, zh, zh-TW.
  *  Anything additional — `ar.json`, `he.json` — is judged by the same rules with zero further edits. */
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) =>
   existsSync(join(MESSAGES, `${locale}.json`)),
 );
 

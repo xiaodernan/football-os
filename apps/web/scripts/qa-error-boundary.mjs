@@ -54,7 +54,7 @@ check(
       : "app/error.tsx is not a client component",
 );
 
-const keySets = ["en", "zh", "zh-TW", "ar", "he"]
+const keySets = ["en", "zh", "zh-TW", "ar", "he", "fr"]
   .filter((locale) => existsSync(join(WEB, "messages", `${locale}.json`)))
   .map((locale) => Object.keys(catalogue(locale)[namespace] ?? {}).sort().join("|"));
 const same = namespace !== "" && keySets[0] !== "" && keySets.every((set) => set === keySets[0]);

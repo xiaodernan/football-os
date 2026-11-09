@@ -133,26 +133,27 @@ check(
   `${tally(e)}; middleware=${red(e.out, "middleware has an Accept-Language branch for every shipped locale's base script")}`,
 );
 
-/* F — the floors lose `he` — the pin the API-side test holds to. */
-const fPlane = plane("f-floors-drop-he", null);
+/* F — the floors lose `fr` — the newest shipped locale and the pin the API-side test holds to. */
+const fPlane = plane("f-floors-drop-fr", null);
 {
   const path = join(fPlane, "api", "tests", "test_locale_claims.py");
-  writeFileSync(path, replaceOnce(readFileSync(path, "utf8"), ', "he": 4224}', "}"));
+  writeFileSync(path, replaceOnce(readFileSync(path, "utf8"), ', "fr": 4020}', "}"));
 }
 const f = run(fPlane);
 check(
-  "F a README_FLOORS table without `he` reds check 8",
+  "F a README_FLOORS table without `fr` reds check 8",
   f.status === 1 && f.failed === 1 && red(f.out, "apps/api/tests/test_locale_claims.py README_FLOORS pins every shipped non-fallback locale"),
   `${tally(f)}; floors=${red(f.out, "apps/api/tests/test_locale_claims.py README_FLOORS pins every shipped non-fallback locale")}`,
 );
 
-/* G — a catalogue lands that nothing wires; the directory discovery charges it. */
-const g = run(plane("g-fr-lands-unwired", (dir) => {
-  writeFileSync(join(dir, "web", "messages", "fr.json"), JSON.stringify({ nav: { home: "Accueil" } }));
+/* G — a catalogue lands that nothing wires; the directory discovery charges it. `fr` ships wired now, so
+ *     the plane plants a language nothing wires anywhere: Esperanto. */
+const g = run(plane("g-eo-lands-unwired", (dir) => {
+  writeFileSync(join(dir, "web", "messages", "eo.json"), JSON.stringify({ nav: { home: "Hejmo" } }));
 }));
 const gFailed = (g.out.match(/^FAIL/gm) ?? []).length;
 check(
-  "G an unwired fr.json reds every catalogue-dependent check",
+  "G an unwired eo.json reds every catalogue-dependent check",
   g.status === 1 && red(g.out, "the shipped locales list is exactly the catalogue directory") && gFailed >= 5,
   `${tally(g)}; failing checks: ${gFailed}`,
 );

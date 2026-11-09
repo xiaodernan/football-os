@@ -105,8 +105,9 @@ _NEAR_LOCALE = re.compile(r"zh-TW|zh\.json|`zh`|catalou?gue|locale|key", re.IGNO
 #: held: they stood at 2816/2817 while the catalogue sat at 4051, so prose had 1235 keys of silent headroom to
 #: drift downward before this case noticed. 4051 is the committed count both Chinese catalogues held before the
 #: consolidated milestone landed; 4224 of 4269 is what every shipped catalogue holds now (45 tokens identical
-#: in every locale, all of them named in qa-locale-tokens.mjs).
-README_FLOORS: dict[str, int] = {"zh": 4224, "zh-TW": 4224, "ar": 4224, "he": 4224}
+#: in every locale, all of them named in qa-locale-tokens.mjs). French shipped 2026-11-09: 4028 of 4269
+#: (241 identical values, all named — mostly French–English loanword doublets).
+README_FLOORS: dict[str, int] = {"zh": 4224, "zh-TW": 4224, "ar": 4224, "he": 4224, "fr": 4020}
 
 
 def _flatten(node: Any, prefix: str = "") -> dict[str, str]:

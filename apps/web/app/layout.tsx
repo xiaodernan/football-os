@@ -13,6 +13,7 @@ import zhMessages from "@/messages/zh.json";
 import zhTWMessages from "@/messages/zh-TW.json";
 import arMessages from "@/messages/ar.json";
 import heMessages from "@/messages/he.json";
+import frMessages from "@/messages/fr.json";
 import "../styles/globals.css";
 
 const messagesMap = {
@@ -21,17 +22,19 @@ const messagesMap = {
   'zh-TW': zhTWMessages,
   ar: arMessages,
   he: heMessages,
+  fr: frMessages,
 } as const;
 
 export const dynamic = "force-dynamic";
 
-/** `og:locale` values for the five shipped catalogues, in OpenGraph's own `language_TERRITORY` form. */
+/** `og:locale` values for the six shipped catalogues, in OpenGraph's own `language_TERRITORY` form. */
 const OG_LOCALE: Record<string, string> = {
   en: "en_US",
   zh: "zh_CN",
   "zh-TW": "zh_TW",
   ar: "ar_SA",
   he: "he_IL",
+  fr: "fr_FR",
 };
 
 export async function generateMetadata(): Promise<Metadata> {

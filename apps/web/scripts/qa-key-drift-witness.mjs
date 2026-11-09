@@ -37,7 +37,7 @@ import { spawnSync } from "node:child_process";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GATE = resolve(HERE, "qa-key-drift.mjs");
 const REAL = resolve(HERE, "..", "messages");
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) =>
   existsSync(join(REAL, `${locale}.json`)),
 );
 
@@ -163,7 +163,7 @@ check(
 // D — a synthetic catalogue past both ceilings: 60 sentences and 60 keys shared by two namespaces, each
 // translated differently. The agreeing pair inside `alpha` keeps check 1's population guard satisfied.
 const ceilings = fixture("ceilings");
-const synthetic = { en: { alpha: { x1: "Agree", x2: "Agree" }, beta: {} }, zh: { alpha: { x1: "同意", x2: "同意" }, beta: {} }, "zh-TW": { alpha: { x1: "同意", x2: "同意" }, beta: {} }, ar: { alpha: { x1: "موافق", x2: "موافق" }, beta: {} }, he: { alpha: { x1: "מבין", x2: "מבין" }, beta: {} } };
+const synthetic = { en: { alpha: { x1: "Agree", x2: "Agree" }, beta: {} }, zh: { alpha: { x1: "同意", x2: "同意" }, beta: {} }, "zh-TW": { alpha: { x1: "同意", x2: "同意" }, beta: {} }, ar: { alpha: { x1: "موافق", x2: "موافق" }, beta: {} }, he: { alpha: { x1: "מבין", x2: "מבין" }, beta: {} }, fr: { alpha: { x1: "D'accord", x2: "D'accord" }, beta: {} } };
 for (let index = 0; index < 60; index += 1) {
   const sentence = `Shared sentence ${index}`;
   synthetic.en.alpha[`k${index}`] = sentence;
@@ -176,6 +176,8 @@ for (let index = 0; index < 60; index += 1) {
   synthetic.ar.beta[`k${index}`] = `موافق ${index}`;
   synthetic.he.alpha[`k${index}`] = `עברית ${index}`;
   synthetic.he.beta[`k${index}`] = `שנייה ${index}`;
+  synthetic.fr.alpha[`k${index}`] = `Alpha ${index}`;
+  synthetic.fr.beta[`k${index}`] = `Beta ${index}`;
 }
 for (const locale of LOCALES) write(ceilings, locale, synthetic[locale]);
 const d = run(ceilings);

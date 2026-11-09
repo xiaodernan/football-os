@@ -39,7 +39,7 @@ const git = (...args) => spawnSync("git", args, { cwd: REPO, encoding: "utf8" })
 /** Get current catalogues */
 function getCurrentCatalogues() {
   const catalogues = {};
-  for (const locale of ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)))) {
+  for (const locale of ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)))) {
     catalogues[locale] = JSON.parse(readFileSync(join(MESSAGES, `${locale}.json`), "utf8"));
   }
   return catalogues;
@@ -48,7 +48,7 @@ function getCurrentCatalogues() {
 /** Compute population stats */
 function computePopulation(catalogues) {
   const stats = {};
-  for (const locale of ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)))) {
+  for (const locale of ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)))) {
     const cat = catalogues[locale];
     let total = 0;
     const byNamespace = {};

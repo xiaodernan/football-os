@@ -60,7 +60,7 @@ const GATE = resolve(HERE, "qa-translation-quality.mjs");
 const WEB = resolve(HERE, "..");
 const REAL = join(WEB, "messages");
 const TOKENS_SOURCE = join(WEB, "scripts", "qa-locale-tokens.mjs");
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(REAL, `${locale}.json`)));
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) => existsSync(join(REAL, `${locale}.json`)));
 
 /** One named token path, taken from the table rather than copied here: arm C needs a message the gate is
  *  supposed to exempt, and a hand-written path would go stale the day the table changes. */
@@ -89,8 +89,8 @@ function fixture(name, { withTokens = true, locales = LOCALES } = {}) {
 const read = (dir, locale) => JSON.parse(readFileSync(join(dir, "messages", `${locale}.json`), "utf8"));
 const write = (dir, locale, data) =>
   writeFileSync(join(dir, "messages", `${locale}.json`), `${JSON.stringify(data, null, 2)}\n`);
-/** One key of one scratch namespace, in one catalogue. A locale the tree does not ship (`ar`, `he`, `fr`)
- *  gets a file created here, so the gate's own discovery is what the arm exercises. */
+/** One key of one scratch namespace, in one catalogue. A locale the tree does not ship gets a file
+ *  created here, so the gate's own discovery is what the arm exercises. */
 function setKey(dir, locale, key, value) {
   const path = join(dir, "messages", `${locale}.json`);
   const catalogue = existsSync(path) ? read(dir, locale) : {};
@@ -230,13 +230,14 @@ check(
   `${tallyOf(e)}; ${detailOf(e.out, SCRIPT_HE).slice(0, 170)}; ${redSet(e)}`,
 );
 
-// F — a catalogue the gate never named.
-const french = fixture("F-locale-outside-the-candidate-list");
-setKey(french, "fr", "plain", LATIN_HOLDOUT);
-const f = run(french);
+// F — a catalogue the gate never named. `fr` is the shipped sixth now, so the plane plants a language with no
+// rule anywhere: Esperanto. The discovery check must name it rather than pass it over silently.
+const esperanto = fixture("F-locale-outside-the-candidate-list");
+setKey(esperanto, "eo", "plain", LATIN_HOLDOUT);
+const f = run(esperanto);
 check(
-  "F a fourth catalogue on disk is named by the discovery check rather than passed over",
-  ONLY(f, DISCOVER) && detailOf(f.out, DISCOVER).includes("fr.json") && verdict(f.out, UNTRANSLATED) === "PASS",
+  "F a catalogue with no rule is named by the discovery check rather than passed over",
+  ONLY(f, DISCOVER) && detailOf(f.out, DISCOVER).includes("eo.json") && verdict(f.out, UNTRANSLATED) === "PASS",
   `${tallyOf(f)}; ${detailOf(f.out, DISCOVER).slice(0, 170)}; ${redSet(f)}`,
 );
 
@@ -262,7 +263,7 @@ const noTable = fixture("H-exemption-table-absent", { withTokens: false });
 const identicalExpected = (() => {
   const reference = read(noTable, "en");
   let count = 0;
-  for (const locale of ["zh", "zh-TW", "ar", "he"]) {
+  for (const locale of ["zh", "zh-TW", "ar", "he", "fr"]) {
     if (!existsSync(join(noTable, "messages", `${locale}.json`))) continue;
     for (const [namespace, block] of Object.entries(read(noTable, locale))) {
       for (const [key, value] of Object.entries(block ?? {})) {

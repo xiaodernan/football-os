@@ -36,7 +36,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const GATE = resolve(HERE, "qa-api-strings.mjs");
 const REAL = resolve(HERE, "..");
 const MESSAGES = resolve(REAL, "messages");
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) =>
   existsSync(join(MESSAGES, `${locale}.json`)),
 );
 const WEB = REAL;

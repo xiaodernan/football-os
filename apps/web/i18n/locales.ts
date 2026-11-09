@@ -6,7 +6,7 @@
  * configuration and every bundle into the browser with it, which is why the list lives here and `request.ts`
  * re-exports it rather than owning it.
  */
-export const locales = ["en", "zh", "zh-TW", "ar", "he"] as const;
+export const locales = ["en", "zh", "zh-TW", "ar", "he", "fr"] as const;
 export const defaultLocale = "en" as const;
 
 export type Locale = (typeof locales)[number];

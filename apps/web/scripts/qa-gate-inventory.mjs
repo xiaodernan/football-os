@@ -99,6 +99,7 @@ const LEDGER = {
   "verify-production.sh": ["live-tier"], "visual-qa.mjs": ["live-tier"],
   "qa-arabic-rtl-walk.mjs": ["live-tier"],
   "qa-hebrew-rtl-walk.mjs": ["live-tier"],
+  "qa-french-walk.mjs": ["live-tier"],
 };
 
 const reads = (name) => readFileSync(resolve(HERE, name), "utf8");

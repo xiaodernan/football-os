@@ -63,7 +63,7 @@ import { spawnSync } from "node:child_process";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GATE = resolve(HERE, "qa-plural-select.mjs");
 const REAL = resolve(HERE, "..", "messages");
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(REAL, `${locale}.json`)));
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) => existsSync(join(REAL, `${locale}.json`)));
 
 const checks = [];
 const check = (name, ok, detail) => {
@@ -85,7 +85,7 @@ const read = (dir, locale) => JSON.parse(readFileSync(join(dir, "messages", `${l
 const write = (dir, locale, data) =>
   writeFileSync(join(dir, "messages", `${locale}.json`), `${JSON.stringify(data, null, 2)}\n`);
 /** One key of one scratch namespace, in one catalogue of one fixture. A locale the tree does not ship
- *  (`ar`, `he`, `fr`) gets a file created here, so the gate's own discovery is what the arm exercises. */
+ *  gets a file created here, so the gate's own discovery is what the arm exercises. */
 const setKey = (dir, locale, key, value) => {
   const path = join(dir, "messages", `${locale}.json`);
   const catalogue = existsSync(path) ? read(dir, locale) : {};
@@ -264,14 +264,16 @@ check(
   `${tallyOf(j)}; ${detailOf(j.out, ORDINAL).slice(0, 190)}`,
 );
 
-// K — a catalogue in the directory that the gate's candidate list does not name.
-const french = fixture("K-locale-outside-the-candidate-list");
-setKey(french, "en", "deals", PLURAL_EN);
-setKey(french, "fr", "deals", "{count, plural, one {transaction} other {transactions}}");
-const k = run(french);
+// K — a catalogue in the directory that the gate's candidate list does not name. `fr` is the shipped
+// sixth now, so the plane plants a language with no plural row anywhere: Esperanto. The discovery check
+// must name it rather than pass it over silently.
+const esperanto = fixture("K-locale-outside-the-candidate-list");
+setKey(esperanto, "en", "deals", PLURAL_EN);
+setKey(esperanto, "eo", "deals", "{count, plural, one {transakcio} other {transakcioj}}");
+const k = run(esperanto);
 check(
-  "K a fourth catalogue on disk is named by the discovery check rather than passed over",
-  ONLY(k, DISCOVER) && detailOf(k.out, DISCOVER).includes("fr.json") && verdict(k.out, PLURAL) === "PASS",
+  "K a catalogue with no plural row is named by the discovery check rather than passed over",
+  ONLY(k, DISCOVER) && detailOf(k.out, DISCOVER).includes("eo.json") && verdict(k.out, PLURAL) === "PASS",
   `${tallyOf(k)}; ${detailOf(k.out, DISCOVER).slice(0, 160)}`,
 );
 

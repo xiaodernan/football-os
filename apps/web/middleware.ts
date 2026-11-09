@@ -100,6 +100,7 @@ function preferredLocale(request: NextRequest): Locale {
     if (base === "en") return "en";
     if (base === "ar") return "ar";
     if (base === "he") return "he";
+    if (base === "fr") return "fr";
   }
   return defaultLocale;
 }

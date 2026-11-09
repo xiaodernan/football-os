@@ -51,7 +51,7 @@ const ts = require("typescript");
 const WEB = resolve(process.env.QA_METADATA_WEB ? process.env.QA_METADATA_WEB : fileURLToPath(new URL("..", import.meta.url)));
 const APP = join(WEB, "app");
 const MESSAGES = join(WEB, "messages");
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) =>
   existsSync(join(MESSAGES, `${locale}.json`)),
 );
 const die = (m) => {

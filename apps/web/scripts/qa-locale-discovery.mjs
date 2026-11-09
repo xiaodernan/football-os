@@ -47,7 +47,7 @@ const SCRIPTS = join(WEB, "scripts");
  *  on disk and in the commit, and every claim here is scraped from text. JSON reads do not need it. */
 const readText = (path) => readFileSync(path, "utf8").replace(/\r\n/g, "\n");
 
-const PLANNED = new Set(["en", "zh", "zh-TW", "ar", "he"]);
+const PLANNED = new Set(["en", "zh", "zh-TW", "ar", "he", "fr"]);
 const TAG_RE = /^(?:[a-z]{2}|[a-z]{2}-[A-Z]{2})$/;
 
 const checks = [];
@@ -100,7 +100,7 @@ function loadsCatalogues(src) {
  *  `messages/zh.json`. A file that only ever spells one of these has a population of one — which this
  *  census discloses rather than charges, because a rule about English copy is not a rule about all copy. */
 const DIRECT_TARGET =
-  /catalogue\w*\s*\(\s*["'](en|zh|zh-TW|ar|he)["']\s*\)|["'`]messages\/(?:[A-Za-z-]+\/)?(en|zh|zh-TW|ar|he)\.json["'`]|catalogues\s*\[\s*["'](en|zh|zh-TW|ar|he)["']\s*\]|["'](en|zh|zh-TW|ar|he)\.json["']/g;
+  /catalogue\w*\s*\(\s*["'](en|zh|zh-TW|ar|he|fr)["']\s*\)|["'`]messages\/(?:[A-Za-z-]+\/)?(en|zh|zh-TW|ar|he|fr)\.json["'`]|catalogues\s*\[\s*["'](en|zh|zh-TW|ar|he|fr)["']\s*\]|["'](en|zh|zh-TW|ar|he|fr)\.json["']/g;
 
 /** Discovery in the one shape that means it: the directory itself, not a source tree being walked.
  *  `readdirSync(dir, { withFileTypes: true })` appears in eight of these files to walk `app/` and
@@ -157,7 +157,7 @@ for (const name of scriptFiles) {
   const named = [...new Set(sites.flatMap((s) => s.toks))];
   // The universe is the widest reading available: every catalogue the file names by list, by map key, by a
   // direct read, or by a quoted filename. A file cannot open a catalogue it never spells in any of those.
-  const spelled = [...new Set([...src.matchAll(/["'](en|zh|zh-TW|ar|he)(?:\.json)?["']/g)].map((m) => m[1]))];
+  const spelled = [...new Set([...src.matchAll(/["'](en|zh|zh-TW|ar|he|fr)(?:\.json)?["']/g)].map((m) => m[1]))];
   const universe = [...new Set([...(derived ? shipped : []), ...named, ...direct, ...spelled])];
   census.push({
     name,
@@ -175,14 +175,15 @@ for (const name of scriptFiles) {
  * conversion that removes the site orphans the row and claim 5 reddens it: the ledger cannot collect the
  * debts of files that no longer have them. */
 const FILE_LEDGER = new Map([
-  ["qa-api-strings.mjs", "Publishes the API's refusal codes and checks each one against the catalogues that must hold it; the reference English string is read as the code's own text, so the four locales under judgement are the four that must each carry a translation of it."],
+  ["qa-api-strings.mjs", "Publishes the API's refusal codes and checks each one against the catalogues that must hold it; the reference English string is read as the code's own text, so the five locales under judgement are the five that must each carry a translation of it."],
   ["qa-shared-keys.mjs", "Its claim is that one key carries two different meanings in the two translated catalogues. English is the language the key is authored in, so an English value cannot diverge from itself, and `ar`/`he` have no rule here yet — the row is about zh and zh-TW and says so."],
   ["qa-locale-formatting.mjs", "Holds a formatting table per locale (skeletons and number styles). A locale outside the table is charged by its own check with a named finding rather than skipped, so the list is the rule set, not a candidate filter."],
   ["qa-rtl-readiness.mjs", "Judges direction, not copy: it names the LTR locales it expects to ship and filters the RTL set by existence, so a `he.json` that lands is opened by the second list and the first is a statement of today's plan."],
   ["qa-market.mjs", "An evidence walk against a production build: it opens the page under an English cookie and a Simplified Chinese cookie and compares the painted arithmetic against the two catalogues it was written around — the claims under test are the DOM's own figures, which script-variant glyphs do not change; zh-TW holds this tree's same key set and is held by the source-side gates (completeness, tokens, ICU parity), not by a per-locale browser rebuild that triples the walk's runtime."],
   ["qa-arabic-rtl-walk.mjs", "A live-tier, Arabic-first production walk for the RTL milestone's item 6. It drives the page under `fo_locale=ar` on a freshly seeded disposable PostgreSQL and asserts `<html dir=\"rtl\">`, Arabic glyphs in the served body text and zero `MISSING_MESSAGE` entries — the Chinese-language sibling studies are already carried by `visual-qa.mjs` and `qa-market.mjs` on their own planes, and zh/zh-TW's presence on this page is held by the source-side gates on the same tree; this walk does not pretend to cover them."],
   ["qa-hebrew-rtl-walk.mjs", "The Hebrew sibling of the Arabic walk, added with the `he` milestone: same live-tier shape, same two catalogues at arm's length (`he` under test, `en` as the residue probe for the English nav strings). The claim under test is `<html dir=\"rtl\">` and Hebrew glyphs across five pages of a production build on a freshly seeded disposable PostgreSQL — the catalogue is otherwise held by the source-side gates (completeness, tokens, ICU parity) and Arabic's own walk, and this walk does not pretend to cover `ar`, `zh` or `zh-TW`."],
-  ["qa-locale-wiring-witness.mjs", "The wiring gate's behavioural witness, written against the five-catalogue world it owns: each arm plants one defect on ONE seam (the switcher, the two bundles, the locales list, the middleware's branch, the README_FLOORS pin, an unwired `fr.json` catalogue) and demands the clause it exists for. The arms use `he` as the newest shipped locale and the gate's own population is the catalogue directory, so a sixth locale is judged the day its `.json` lands — this file's job is proving the red paths, and it does that once per seam rather than once per locale, the same shape qa-token-gates-witness.mjs carries for Arabic."],
+  ["qa-french-walk.mjs", "The French sibling of the two RTL walks, added with the `fr` milestone: same live-tier shape, same two catalogues at arm's length (`fr` under test, `en` as the residue probe for the English nav strings). The claim under test is `<html dir=\"ltr\">` and French glyphs across the walk's pages of a production build on a freshly seeded disposable PostgreSQL — the catalogue is otherwise held by the source-side gates (completeness, tokens, ICU parity) and this walk does not pretend to cover the RTL pair or Chinese; those are held by their own walks and gates."],
+  ["qa-locale-wiring-witness.mjs", "The wiring gate's behavioural witness, written against the multi-catalogue world it owns: each arm plants one defect on ONE seam (the switcher, the two bundles, the locales list, the middleware's branch, the README_FLOORS pin, an unwired `eo.json` catalogue) and demands the clause it exists for. The arms use `he` as their example catalogue and `fr` as the newest shipped locale, and the gate's own population is the catalogue directory, so a seventh locale is judged the day its `.json` lands — this file's job is proving the red paths, and it does that once per seam rather than once per locale, the same shape qa-token-gates-witness.mjs carries for Arabic."],
   ["qa-token-gates-witness.mjs", "The token gates' behavioural witness, written against the Arabic milestone's shipped tree: its arms rewrite `ar.json` because the floor it witnesses (`DRIFT_FLOORS.ar`) and the table row it witnesses were measured on that catalogue, and a Hebrew-scoped arm set would be a second witness with the same predictions on a locale whose drift floor is also on record at 0. The shipped `he.json` is held by the two gates the witness proves — both derive their population from the catalogue directory and both judge `he` today (definer 7/7, drift 4/4) — not by this file, whose basis is `git show HEAD:` of the three catalogues it was built on and whose predictions name that basis."],
   ["visual-qa.mjs", "The same rule for the flagship walks: two cookie languages by design — the English fallback and the zh translation — because the claims are claims about the painted page's catalogue values in those two; a Traditional Chinese pass would triple a production-build browser walk to re-prove glyph shapes, while the script-variant catalogue is held by the source-side gates on the plane between builds."],
   ["qa-baseline-gates.mjs", "A behavioural witness for the freshness and population-floor gates: it builds scratch catalogues to prove the gates' failure paths (stale key, deleted key, parity break, unreadable baseline) — deliberately minimal triples of en/zh/zh-TW, because the gates under test judge exactly those Chinese-pair populations and nothing this plane could show about the question the shipped `ar.json` answers."],
@@ -194,8 +195,8 @@ const SITE_LEDGER = new Map([
   ["qa-locale-fallback.mjs::zhTw::zh-TW", "A second, deliberately narrower claim beside the main loop: Traditional Chinese keeps its own simplified character list, so this read is about `zh-TW` alone and the fallback rule above still walks every catalogue."],
   ["qa-token-gates-witness.mjs::for (locale)::zh,zh-TW", "Fixture arm E: the two files this witness deletes to build a plane where only the fallback ships. It chooses nothing about the real tree — the arm's own prediction names the population it produces."],
   ["qa-token-gates-witness.mjs::noLocales::zh,zh-TW", "The same arm's fixture builder, naming the catalogues it removes so the plane ships one. Charged as data by the census; listed here because the shape is identical to a population site."],
-  ["qa-translation-quality-witness.mjs::identicalExpected::ar,he,zh,zh-TW", "The identical-to-English count excludes English by definition — the gate's identical-to-English rule judges the translated catalogues' copies of the English text, and English has nothing to compare itself against; `existsSync` skips any of the four that does not ship on the plane yet."],
-  ["qa-translation-quality-witness.mjs::for (locale)::ar,he,zh,zh-TW", "The same loop's fixture-side counterpart: the plane carries the translated catalogues and no English side is ever counted, because every message there matches itself. `existsSync` skips any of the four that does not ship on the plane yet."],
+  ["qa-translation-quality-witness.mjs::identicalExpected::ar,fr,he,zh,zh-TW", "The identical-to-English count excludes English by definition — the gate's identical-to-English rule judges the translated catalogues' copies of the English text, and English has nothing to compare itself against; `existsSync` skips any of the five that does not ship on the plane yet."],
+  ["qa-translation-quality-witness.mjs::for (locale)::ar,fr,he,zh,zh-TW", "The same loop's fixture-side counterpart: the plane carries the translated catalogues and no English side is ever counted, because every message there matches itself. `existsSync` skips any of the five that does not ship on the plane yet."],
 
   ["qa-translation-quality-witness.mjs::noCopy::en,zh,zh-TW", "Fixture arm C: a three-catalogue plane built from the shipped set only, so the Arabic-script arm judges the one planted message instead of 4218 shipped Arabic messages — the arm's name now spans the copies the three arms share."],
   ["qa-translation-quality-witness.mjs::realArabic::en,zh,zh-TW", "Fixture arm D: the same minimal three-catalogue plane with one Arabic room added for the arm's own message — the §40-style minimal plane, and the shipped `ar.json` adds no signal to an arm that asserts a two-message population."],
@@ -309,7 +310,7 @@ if (failed.length) {
   process.exit(1);
 }
 
-const silent = census.filter((c) => !c.derived && !c.sites.some((s) => s.toks.includes("ar") || s.toks.includes("he")));
+const silent = census.filter((c) => !c.derived && !c.sites.some((s) => s.toks.includes("ar") || s.toks.includes("he") || s.toks.includes("fr")));
 console.log(
   `\nSILENT  ${silent.length} script(s) name no unshipped locale anywhere, so a fourth catalogue would reach none of their rules: ` +
     `${silent.map((c) => c.name).join(", ") || "(none)"} — today that is a plan, not a defect: every shipped catalogue is named by every one of them. ` +

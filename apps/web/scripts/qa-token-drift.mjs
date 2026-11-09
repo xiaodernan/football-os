@@ -62,6 +62,30 @@ const table = (() => {
 })();
 const NAMED_TOKENS = new Map(table.entries);
 
+/** The French-only doublets, read from the same definer: `fr` alone exempts them (and is held to them the
+ *  same way); no other locale reads FR_TOKENS, so a French-only name cannot excuse a key for the rest.
+ *  A missing FR_TOKENS table is a finding, for the same reason an unreadable TOKENS table is. */
+const frTable = (() => {
+  try {
+    const source = readText(DEFINER);
+    const body = /const FR_TOKENS = new Map\(\[([\s\S]*?)\]\);/.exec(source);
+    if (!body) {
+      return { entries: [], error: `${basename(DEFINER)} holds no \`const FR_TOKENS = new Map([...])\` table for this gate to read` };
+    }
+    const entries = [...body[1].matchAll(/\[\s*"([^"]+)"\s*,\s*"((?:[^"\\]|\\.)*)"\s*,?\s*\]/g)].map((match) => [match[1], match[2]]);
+    if (entries.length === 0) {
+      return { entries: [], error: `the FR_TOKENS table in ${basename(DEFINER)} scraped to zero entries` };
+    }
+    return { entries, error: null };
+  } catch {
+    return { entries: [], error: `${basename(DEFINER)} is not where this gate looks for it (${DEFINER})` };
+  }
+})();
+const FR_NAMED_TOKENS = new Map(frTable.entries);
+/** The exemption set for one locale, in the same shape the definer exposes. */
+const exemptFor = (locale) =>
+  locale === "fr" ? new Set([...NAMED_TOKENS.keys(), ...FR_NAMED_TOKENS.keys()]) : new Set(NAMED_TOKENS.keys());
+
 /** Discovery, not a candidate list: the directory decides which locales are compared. */
 const SHIPPED = (() => {
   try {
@@ -105,13 +129,13 @@ const check = (name, ok, detail) => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-/* 1. The exemption set is read from its definer, not copied into this file. */
+/* 1. The exemption sets are read from their definer, not copied into this file. */
 check(
   "the named-token table is read from the gate that defines it",
-  table.error === null,
-  table.error === null
-    ? `${NAMED_TOKENS.size} entries read from ${basename(DEFINER)}; no token path is a literal in this file`
-    : table.error,
+  table.error === null && frTable.error === null,
+  table.error === null && frTable.error === null
+    ? `${NAMED_TOKENS.size} language-neutral entries and ${FR_NAMED_TOKENS.size} French-only entries read from ${basename(DEFINER)}; no token path is a literal in this file`
+    : (table.error ?? frTable.error),
 );
 
 /* 2. The population every comparison below is graded on. */
@@ -123,17 +147,20 @@ check(
     : `messages/ ships ${SHIPPED.join(", ") || "nothing"} — ${SHIPPED.includes("en") ? "no catalogue beside en.json, so every comparison below has no second side" : "no en.json, so there is no reference to compare against"}`,
 );
 
-/* 3. Every named token still means the same thing in every language that ships. */
+/* 3. Every named token still means the same thing in every language that ships. The language-neutral 45 are
+ *    judged for every locale; the French-only doublets are judged for `fr` alone, which is the only locale
+ *    that exempts them. */
 const tokenDrift = [];
 const missingTokens = [];
-if (populationOk && table.error === null) {
-  for (const [path, reason] of NAMED_TOKENS) {
-    const enVal = ENGLISH.get(path);
-    if (enVal === undefined) {
-      missingTokens.push(`${path} is not in the English catalogue`);
-      continue;
-    }
-    for (const locale of LOCALES) {
+const checks3 = (locale) => (locale === "fr" ? [...NAMED_TOKENS, ...FR_NAMED_TOKENS] : [...NAMED_TOKENS]);
+if (populationOk && table.error === null && frTable.error === null) {
+  for (const locale of LOCALES) {
+    for (const [path, reason] of checks3(locale)) {
+      const enVal = ENGLISH.get(path);
+      if (enVal === undefined) {
+        missingTokens.push(`${path} is not in the English catalogue`);
+        continue;
+      }
       const other = LEAVES.get(locale);
       if (!other.has(path)) missingTokens.push(`${path} is not in ${locale}.json`);
       else if (other.get(path) !== enVal) tokenDrift.push(`${path}: ${locale}="${other.get(path)}" !== en="${enVal}" (reason: ${reason})`);
@@ -141,14 +168,14 @@ if (populationOk && table.error === null) {
   }
 }
 
-const stableOk = populationOk && table.error === null && tokenDrift.length === 0 && missingTokens.length === 0;
+const stableOk = populationOk && table.error === null && frTable.error === null && tokenDrift.length === 0 && missingTokens.length === 0;
 check(
   "every named technical token is still identical across all locales",
   stableOk,
   stableOk
-    ? `${NAMED_TOKENS.size} token(s) x ${LOCALES.length} locale(s) = ${NAMED_TOKENS.size * LOCALES.length} comparison(s) stable`
-    : !populationOk || table.error
-      ? `not judged — ${table.error ?? `messages/ ships ${SHIPPED.join(", ") || "nothing"}, ${ENGLISH.size} English leaf(s) and ${LOCALES.length} locale(s) to compare them with`}`
+    ? `${NAMED_TOKENS.size} language-neutral token(s) plus ${FR_NAMED_TOKENS.size} French-only doublet(s) held to their catalogues`
+    : !populationOk || table.error || frTable.error
+      ? `not judged — ${table.error ?? frTable.error ?? `messages/ ships ${SHIPPED.join(", ") || "nothing"}, ${ENGLISH.size} English leaf(s) and ${LOCALES.length} locale(s) to compare them with`}`
       : `drift: ${tokenDrift.slice(0, 4).join(" | ")}; missing: ${missingTokens.slice(0, 4).join(" | ")}`,
 );
 
@@ -157,10 +184,10 @@ const unnamedIdentical = [];
 let eligible = 0;
 if (populationOk) {
   for (const [path, enVal] of ENGLISH) {
-    if (NAMED_TOKENS.has(path)) continue;
     if (enVal.length <= 3 || !/[a-zA-Z]/.test(enVal)) continue;
     eligible += 1;
     for (const locale of LOCALES) {
+      if (exemptFor(locale).has(path)) continue;
       if (LEAVES.get(locale).get(path) === enVal) unnamedIdentical.push(`${locale}: ${path}: "${enVal}"`);
     }
   }

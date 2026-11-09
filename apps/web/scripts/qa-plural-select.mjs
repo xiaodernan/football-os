@@ -23,8 +23,8 @@
  *     `zero`, English's ordinal `few` and `many`), and an emptied `other` branch is charged as empty
  *     instead. That is what the parse ledger is for: it is the check that sees the malformed message the
  *     completeness rules cannot, not a spare.
- *   - The locale list is a candidate set, not a discovery: `ar.json` and `he.json` are judged because
- *     their names are written above, and a fourth catalogue — `fr.json` — would sit in the same
+ *   - The locale list is a candidate set, not a discovery: `ar.json`, `he.json` and `fr.json` are judged because
+ *     their names are written above; a catalogue added without writing its name here would sit in the same
  *     directory unread by this gate while every other catalogue gate counted it. The discovery check
  *     refuses a file the directory holds and the gate does not name.
  *
@@ -40,11 +40,11 @@ const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLT
 const MESSAGES = join(WEB, "messages");
 
 /** The locales the gate judges, discovered from the catalogue directory. A locale gets judged
- *  the day its file exists — adding `ar.json` or `he.json` attaches the Arabic/Hebrew plural set
- *  (CLDR: `zero/one/two/few/many/other` for Arabic, `one/two/other` for Hebrew) with zero
- *  further edits, and their absence keeps the population at three rather than splitting the gate
- *  in two. */
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
+ *  the day its file exists — adding `ar.json`, `he.json` or `fr.json` attaches the Arabic/Hebrew/French
+ *  plural set (CLDR: `zero/one/two/few/many/other` for Arabic, `one/two/other` for Hebrew, `one/many/other`
+ *  for French) with zero further edits, and their absence keeps the population at three rather than splitting
+ *  the gate in two. */
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) => existsSync(join(MESSAGES, `${locale}.json`)));
 
 /** Every catalogue the directory actually holds. Compared against `LOCALES` by the discovery check
  *  below, because the candidate list above is a list of *names*: a language added without writing its
@@ -59,6 +59,7 @@ const PLURAL_CATEGORIES = {
   "zh-TW": ["other"],  // Traditional Chinese also has no plural distinction
   ar: ["zero", "one", "two", "few", "many", "other"],  // CLDR: Arabic has six plural categories
   he: ["one", "two", "other"],  // CLDR: singular (1), exactly two, and everything else
+  fr: ["one", "many", "other"],  // CLDR: 0 and 1 (one), exact powers of a thousand ≥ 10⁶ (many), everything else — verified against V8/ICU: 1e6 → many, 1e6+0.5 → other
 };
 
 /** Required *ordinal* categories per locale (CLDR's ordinal ranges). `1st/2nd/3rd` come from a
@@ -66,7 +67,8 @@ const PLURAL_CATEGORIES = {
  *  the walker used to extract the `ordinal` flag and then ignore it. Only the sets stated here were
  *  checked against CLDR: English has five ordinal categories, Chinese and Traditional Chinese have
  *  `other` alone, and Arabic's ordinal table is `other` alone too (its six-category table is
- *  cardinal). `he` is deliberately absent: this file has not verified Hebrew's ordinal ranges, so a
+ *  cardinal). French's ordinal table is `one/other` (ordinal `1` alone is `one`; verified against V8/ICU).
+ *  `he` is deliberately absent: this file has not verified Hebrew's ordinal ranges, so a
  *  Hebrew ordinal makes the gate refuse for a declared table rather than judge it against
  *  `undefined` — which is a TypeError, and a crash is not a verdict. The same refusal covers a locale
  *  file added that has no cardinal row either. */
@@ -75,6 +77,7 @@ const ORDINAL_CATEGORIES = {
   zh: ["other"],
   "zh-TW": ["other"],
   ar: ["other"],
+  fr: ["one", "other"],
 };
 
 /** A floor, not a ratchet: it sits under the population the tree carries today (89 plural nodes at

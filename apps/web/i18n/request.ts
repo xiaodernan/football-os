@@ -13,6 +13,7 @@ import zhMessages from "@/messages/zh.json";
 import zhTWMessages from "@/messages/zh-TW.json";
 import arMessages from "@/messages/ar.json";
 import heMessages from "@/messages/he.json";
+import frMessages from "@/messages/fr.json";
 
 const messagesMap = {
   en: enMessages,
@@ -20,6 +21,7 @@ const messagesMap = {
   "zh-TW": zhTWMessages,
   ar: arMessages,
   he: heMessages,
+  fr: frMessages,
 } as const;
 
 /**

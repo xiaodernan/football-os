@@ -41,7 +41,7 @@ import { spawnSync } from "node:child_process";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GATE = resolve(HERE, "qa-shared-keys.mjs");
 const REAL = resolve(HERE, "..", "messages");
-const LOCALES = ["en", "zh", "zh-TW", "ar", "he"].filter((locale) =>
+const LOCALES = ["en", "zh", "zh-TW", "ar", "he", "fr"].filter((locale) =>
   existsSync(join(REAL, `${locale}.json`)),
 );
 

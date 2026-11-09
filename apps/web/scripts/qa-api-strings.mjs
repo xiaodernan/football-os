@@ -36,7 +36,7 @@ const WEB = resolve(process.env.QA_I18N_WEB ? process.env.QA_I18N_WEB : fileURLT
 const MESSAGES = join(WEB, "messages");
 /** All catalogues besides English — the ones a reader could actually be served in. Any new catalogue
  * dropped in is judged by these rules with zero edits. */
-const LOCALES = ["zh", "zh-TW", "ar", "he"].filter((locale) =>
+const LOCALES = ["zh", "zh-TW", "ar", "he", "fr"].filter((locale) =>
   existsSync(join(MESSAGES, `${locale}.json`)),
 );
 
