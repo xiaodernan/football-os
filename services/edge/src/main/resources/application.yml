@@ -41,6 +41,14 @@ eureka:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 
+# One caller may burst, then is asked to slow down. Sized so a browser page (dozens of calls) never
+# notices, and a loop that asks thousands of times per second does. Keyed by the direct peer address.
+edge:
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    burst: ${RATE_LIMIT_BURST:100}
+    requests-per-second: ${RATE_LIMIT_RPS:50}
+
 resilience4j:
   circuitbreaker:
     configs:

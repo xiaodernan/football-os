@@ -26,3 +26,11 @@ resilience4j:
         wait-duration-in-open-state: 5s
         permitted-number-of-calls-in-half-open-state: 3
         automatic-transition-from-open-to-half-open-enabled: true
+
+# The same policy the edge carries by default, kept here so the config server serves one reviewable
+# copy: how much one caller may burst, and how fast the bucket refills.
+edge:
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    burst: ${RATE_LIMIT_BURST:100}
+    requests-per-second: ${RATE_LIMIT_RPS:50}

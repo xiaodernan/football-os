@@ -1,4 +1,4 @@
-# M14 — the service plane: registry, config, edge (ROADMAP Phase 11, items 47–51)
+# M14 — the service plane: registry, config, edge (ROADMAP Phase 11, items 47–52)
 
 Date: 2026-11-09. The product was one deployable: a FastAPI core behind a Next.js front end. This unit
 gives it the shape a platform has in production — a service registry, a config server and an edge
@@ -24,10 +24,10 @@ has no network behind it.
 services> mvn -o -B package
 [INFO] FOOTBALL OS registry ......... SUCCESS
 [INFO] FOOTBALL OS config server .... SUCCESS
-[INFO] FOOTBALL OS edge ............. SUCCESS   (6 tests, 0 failures)
+[INFO] FOOTBALL OS edge ............. SUCCESS   (9 tests, 0 failures)
 ```
 
-Six edge tests, each a different claim:
+Nine edge tests, each a different claim:
 
 - `EdgeRoutingTest.a_routed_request_reaches_the_core_with_its_path_and_mints_a_trace_id` — a real
   HTTP server (JDK `HttpServer`) stands in for the core; the stub records the path and the trace header
@@ -43,6 +43,12 @@ Six edge tests, each a different claim:
 - `...the_route_table_names_the_service_not_an_address` — the resolved route is `lb://football-core`,
   not a fixed host: a configuration that silently kept the old URI would fail this case while still
   answering 200.
+- `EdgeRateLimitTest.the_burst_is_served_then_the_next_request_is_refused_and_the_bucket_refills` — burst 2
+  at 20/s: two 200s, a 429 in the product's shape with `Retry-After`, the stub core's call count still 2
+  (the refusal was not forwarded), and a 200 again after 300 ms.
+- `...the_policy_is_read_from_the_running_filter` — `/edge/limits` returns the values the filter holds.
+- `EdgeRateLimitDisabledTest.a_disabled_limit_refuses_nothing_and_says_so` — with `enabled=false`, four
+  requests all pass and `/edge/limits` says the limit is off.
 
 One trap recorded: the first `/edge/routes` implementation called `.block()` in the controller. On a
 gateway handler that runs on the netty event loop, `block()` is an `IllegalStateException`, and the door
@@ -192,3 +198,63 @@ renewing it. The core's log carries each `PUT ... HTTP/1.1 200` on the `eureka-l
 Nothing a club reads. The core still computes every figure; the registry now says where the core is, and
 the edge asks. `APC_CORE_URI` remains a supported way to run without a registry, and leaving `EUREKA_URL`
 unset keeps every developer process exactly as it was before this item.
+
+## 8. A ceiling on how fast one caller may ask (item 52)
+
+The fallback and the breaker protect the core when it is *down*. This protects it when it is asked too
+much. `RateLimitFilter` is a global gateway filter holding one token bucket per caller address: `burst`
+requests may arrive back to back, and the bucket refills at `requests-per-second`. Refill is computed from
+elapsed time on each request, so there is no timer thread and no scheduled work — a quiet gateway does
+nothing.
+
+Defaults are deliberately generous — a browser page makes dozens of calls and must never notice:
+
+| variable | default | meaning |
+| --- | --- | --- |
+| `RATE_LIMIT_ENABLED` | `true` | the opt-out |
+| `RATE_LIMIT_BURST` | `100` | back-to-back allowance per caller |
+| `RATE_LIMIT_RPS` | `50` | refill rate |
+
+Every routed response, accepted or refused, carries `X-RateLimit-Limit` and `X-RateLimit-Remaining`; a
+refusal is `429` with `Retry-After` and the product's refusal shape, so a client can back off:
+
+```
+{"code":"rate_limited","message":"this caller is asking faster than the edge accepts; the request was
+ not forwarded","trace_id":"walk-rl-4","at":"2026-11-09T14:00:29.024611600Z","retry_after_seconds":1,
+ "retryable":true}
+```
+
+`GET /edge/limits` reports the policy in force and how many callers are being counted, read from the
+enforcing filter rather than from configuration:
+
+```
+{"enabled":true,"requestsPerSecond":1.0,"burst":3,"trackedClients":1}
+```
+
+Identity is the direct peer address, and the door is honest about the consequence: behind a proxy every
+caller shares the proxy's address and the bucket becomes a global ceiling. Trusting `X-Forwarded-For`
+would let any caller mint a new identity per request and make the limit meaningless. The map is bounded
+at 4096 entries with access-order eviction, so memory has a ceiling even under a scan.
+
+### 8.1 The live walk
+
+Core on 8100, edge on 18080 with `RATE_LIMIT_BURST=3` and `RATE_LIMIT_RPS=1`:
+
+```
+req1 200 limit=3 remaining=2
+req2 200 limit=3 remaining=1
+req3 200 limit=3 remaining=0
+req4 429 Retry-After: 1 X-RateLimit-Remaining: 0     (body above, trace_id walk-rl-4)
+after ~1 s: 200 remaining=2                          (the bucket refilled)
+GET /edge/limits → {"enabled":true,"requestsPerSecond":1.0,"burst":3,"trackedClients":1}
+```
+
+The first live attempt used a stale jar and `/edge/limits` answered 404 — the filter was compiled by
+`mvn test` but the jar predated it. Rebuilding the jar and restarting produced the sequence above; worth
+recording because a walk that does not rebuild can "prove" a missing feature.
+
+### 8.2 What this changes for the product
+
+No football answer changes. A caller that behaves like a browser sees two extra response headers; a loop
+that asks faster than a human ever could is refused by the edge before the core is touched, and is told
+how long to wait.

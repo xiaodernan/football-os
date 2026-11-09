@@ -988,6 +988,12 @@ gateway — without moving a single domain rule out of the core. The rule that k
     evidence: `FOOTBALL-CORE UP` at `localhost:football-core:8100`, `/edge/routes` shows
     `lb://football-core`, the routed health read is `200`, a killed core answers the 503 refusal shape and
     a restart recovers — `docs/M14_SERVICE_PLANE.md` §7.
+52. **One caller cannot flood the edge (done 2026-11-09).** `RateLimitFilter` keeps a per-address token
+    bucket (`RATE_LIMIT_BURST` 100, `RATE_LIMIT_RPS` 50, `RATE_LIMIT_ENABLED` true) in front of routing; an
+    accepted response carries `X-RateLimit-Limit` / `-Remaining`, a refused one is 429 with `Retry-After`
+    and the `rate_limited` refusal shape, and `GET /edge/limits` reports the policy and the number of
+    tracked callers. 3 new edge tests (burst/refusal/refill, policy door, disabled opt-out); live walk with
+    burst 3: 200, 200, 200, 429, refill, `/edge/limits` — `docs/M14_SERVICE_PLANE.md` §8.
 
 
 ## How this plan is executed
