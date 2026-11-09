@@ -106,8 +106,12 @@ class EdgeRoutingTest {
                 .returnResult()
                 .getResponseBody();
 
-        assertThat(routes).isNotNull().hasSize(1);
-        Map<?, ?> route = (Map<?, ?>) routes.getFirst();
+        assertThat(routes).isNotNull();
+        Map<?, ?> route = routes.stream()
+                .map(Map.class::cast)
+                .filter(entry -> "core-api".equals(entry.get("id")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("the resolved route table has no core-api route: " + routes));
         assertThat(route.get("id")).isEqualTo("core-api");
         assertThat(String.valueOf(route.get("uri"))).startsWith("http://127.0.0.1:");
         assertThat((List<?>) route.get("predicates")).anyMatch(entry -> entry.toString().contains("/api/v1/**"));

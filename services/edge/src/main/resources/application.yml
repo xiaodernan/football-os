@@ -14,9 +14,10 @@ spring:
         webflux:
           routes:
             - id: core-api
-              # By default the route asks the registry where the core is, by name. Setting
-              # APC_CORE_URI (or -Dapc.core-uri=) switches to a hand-written address without a
-              # registry, which is what the direct-routing test and a single-process dev run use.
+              # The API door is matched first. By default the route asks the registry where the core is,
+              # by name. Setting APC_CORE_URI (or -Dapc.core-uri=) switches to a hand-written address
+              # without a registry, which is what the direct-routing test and a single-process dev run use.
+              order: 0
               uri: ${apc.core-uri:lb://football-core}
               predicates:
                 - Path=/api/v1/**
@@ -25,6 +26,14 @@ spring:
                   args:
                     name: coreBreaker
                     fallbackUri: forward:/edge/fallback
+            # The web shell is the same product, so it gets the same door. The catch-all is last, so it
+            # only sees what the API route did not claim; the edge's own /edge/** controllers are served
+            # by Spring's request mappings, which are matched before any route.
+            - id: web
+              order: 10
+              uri: ${apc.web-uri:http://localhost:3000}
+              predicates:
+                - Path=/**
           # The trace id is a global filter, not a route filter: a route added tomorrow is traced without
           # anyone remembering to add it.
           httpclient:

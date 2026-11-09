@@ -1003,6 +1003,13 @@ gateway — without moving a single domain rule out of the core. The rule that k
     five failures → OPEN plus a refused call); live walk: five 503s → `OPEN` / buffered 5 / failed 5 /
     `failureRate=100`, a half-open trial opening a new window, then `notPermittedCalls` rising —
     `docs/M14_SERVICE_PLANE.md` §9.
+54. **One door for the whole product (done 2026-11-09).** A catch-all `web` route at order 10
+    (`${apc.web-uri:http://localhost:3000}`) sits behind the `core-api` route at order 0, so `/`,
+    `/_next/**` and every other non-API path reach the Next.js shell through the gateway's own port while
+    `/edge/**` controllers still answer. 3 new tests with two stubs (shell paths unchanged and core never
+    called; the API prefix never reaches the shell; both routes published); live walk with a shell stub
+    on 3210: `/` and `/api/v1/health` each went to the right process, `/` carried both `X-Trace-Id` and
+    the rate-limit headers — `docs/M14_SERVICE_PLANE.md` §10.
 
 
 ## How this plan is executed

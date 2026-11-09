@@ -91,9 +91,12 @@ class EdgeLoadBalancedRoutingTest {
                 .returnResult()
                 .getResponseBody();
 
-        assertThat(routes).isNotNull().hasSize(1);
-        Map<?, ?> route = (Map<?, ?>) routes.getFirst();
-        assertThat(route.get("id")).isEqualTo("core-api");
+        assertThat(routes).isNotNull();
+        Map<?, ?> route = routes.stream()
+                .map(Map.class::cast)
+                .filter(entry -> "core-api".equals(entry.get("id")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("the resolved route table has no core-api route: " + routes));
         assertThat(String.valueOf(route.get("uri"))).isEqualTo("lb://football-core");
     }
 }

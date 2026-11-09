@@ -1,4 +1,4 @@
-# M14 — the service plane: registry, config, edge (ROADMAP Phase 11, items 47–53)
+# M14 — the service plane: registry, config, edge (ROADMAP Phase 11, items 47–54)
 
 Date: 2026-11-09. The product was one deployable: a FastAPI core behind a Next.js front end. This unit
 gives it the shape a platform has in production — a service registry, a config server and an edge
@@ -24,10 +24,10 @@ has no network behind it.
 services> mvn -o -B package
 [INFO] FOOTBALL OS registry ......... SUCCESS
 [INFO] FOOTBALL OS config server .... SUCCESS
-[INFO] FOOTBALL OS edge ............. SUCCESS   (12 tests, 0 failures)
+[INFO] FOOTBALL OS edge ............. SUCCESS   (15 tests, 0 failures)
 ```
 
-Twelve edge tests, each a different claim:
+Fifteen edge tests, each a different claim:
 
 - `EdgeRoutingTest.a_routed_request_reaches_the_core_with_its_path_and_mints_a_trace_id` — a real
   HTTP server (JDK `HttpServer`) stands in for the core; the stub records the path and the trace header
@@ -58,6 +58,13 @@ Twelve edge tests, each a different claim:
 - `...enough_failures_open_the_breaker_and_a_further_call_is_not_permitted` — five failed calls read
   `OPEN`, buffered 5, failed 5, `failureRate=100`; the sixth answers 503 without reaching the stub and
   `notPermittedCalls=1`.
+- `EdgeWebPassthroughTest.the_shell_is_served_through_the_same_door_and_its_paths_survive` — two stubs,
+  one for the core and one for the shell: `/` and `/_next/static/chunks/app.js` answer from the shell
+  stub, the path is unchanged, and the core stub is not called.
+- `...the_api_door_still_belongs_to_the_core` — `/api/v1/health` answers from the core stub and the
+  shell stub's counter stays zero, so the catch-all did not swallow the API prefix.
+- `...the_route_table_publishes_both_doors` — the resolved table names `core-api` and `web`, each with
+  the URI its stub was given and the web route carrying the catch-all predicate.
 
 One trap recorded: the first `/edge/routes` implementation called `.block()` in the controller. On a
 gateway handler that runs on the netty event loop, `block()` is an `IllegalStateException`, and the door
@@ -333,3 +340,38 @@ breaker still holding the door shut?* A 503 with that counter rising means the c
 No football answer changes. An operator gains a door that distinguishes a dead core from an open breaker,
 and the settings that made the breaker unable to open are gone: since item 53 the protection can actually
 trip, and the state it trips into is readable rather than inferred.
+
+## 10. One door for the whole product (item 54)
+
+Until this item the edge published only `/api/v1/**`; a browser still needed the web process's own port,
+so "the gateway" was really the API's gateway. The gateway now owns one door: `core-api` is matched at
+order 0, and a catch-all `web` route at order 10 forwards everything else to
+`${apc.web-uri:http://localhost:3000}`. The edge's own `/edge/**` doors are Spring request mappings,
+which are matched before any route, so they keep answering under a catch-all — a property the live walk
+below checks rather than assumes.
+
+`EdgeWebPassthroughTest` gives the gateway two stubs and reads which one each request arrived at:
+
+| request | what the test proves |
+| --- | --- |
+| `/` and `/_next/static/chunks/app.js` | the shell stub answers both, the path is unchanged and the core stub is never called |
+| `/api/v1/health` | the core stub answers and the shell stub's counter stays zero — a catch-all did not swallow the API prefix |
+| `/edge/routes` | the resolved table names both doors, each with the URI its stub was given |
+
+Live walk — edge on 18080, a marker shell stub on 3210, core stopped:
+
+```
+GET /                            → 200 {"web": true, "path": "/"}
+GET /_next/static/chunks/app.js  → 200 {"web": true, "path": "/_next/static/chunks/app.js"}
+GET /api/v1/health               → 503 {"code":"core_unavailable","trace_id":"ab482864-…",…}
+GET /edge/routes                 → [{"id":"core-api","uri":"lb://football-core",…},
+                                    {"id":"web","uri":"http://127.0.0.1:3210","predicates":["Path=/**"]}]
+```
+
+The two global filters apply to the shell as well: the `/` response carried `X-Trace-Id:
+be53e974-d0b7-4005-a7ae-b2a16f8502dd` and `X-RateLimit-Limit: 100` / `X-RateLimit-Remaining: 99`, so a
+page request is traced and bounded by the same policy as an API request.
+
+**Scope, stated.** The web route has no circuit breaker. The shell is a static asset process; a fallback
+page for it would be the edge inventing product UI, which is the line this plane does not cross. The API
+route keeps its breaker because that is the door whose failure the product has a sentence for.

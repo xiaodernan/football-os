@@ -8,6 +8,7 @@ spring:
             - id: core-api
               # Same default as the edge's own application.yml: discover the core by name, fall
               # back to a fixed address only when APC_CORE_URI is set.
+              order: 0
               uri: ${apc.core-uri:lb://football-core}
               predicates:
                 - Path=/api/v1/**
@@ -16,6 +17,12 @@ spring:
                   args:
                     name: coreBreaker
                     fallbackUri: forward:/edge/fallback
+            - id: web
+              # The shell, through the same door; the catch-all is matched last.
+              order: 10
+              uri: ${apc.web-uri:http://localhost:3000}
+              predicates:
+                - Path=/**
 
 resilience4j:
   circuitbreaker:
