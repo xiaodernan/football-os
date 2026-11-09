@@ -3691,3 +3691,14 @@ M9 Community landed 2026-09-28: five `community_*` tables (migration `0023`), `s
 **Teardown.** Scratch ingest DB deleted; no probe stack touched; no other files moved.
 
 **What this milestone does not claim.** It is not an English-to-multilingual corpus pass — the six-locale reader gets the same English citation the Arabic reader already got, and that is the state the ledger has always described. It is not retrieval retuning (§87 did that hop; this adds no hop). It is one honest passage in the one language the corpus is in, written to fill a hole the engine itself points into.
+
+
+## 67. §64's CI, read honestly — api red on a pre-existing UTC-midnight flake, fixed forward as its own commit (2026-11-09)
+
+**The verdict, not a paraphrase.** Run `42539945033` for `6b7f5f6`: **web green** (1m17s, both catalogue-aware web gates passing inside it) and **api red** (14m44s, 2233/2234 passed, one failure): `tests/test_coach_budget.py::test_the_door_answers_arithmetic_when_todays_spend_cap_is_reached` — `AssertionError: the answer names why the phrasing step is missing: ['Scored 5.12 against 25 eligible drills', …]`.
+
+**The mechanism, measured.** The test plants a provider-spend row for the *today* branch of `_spend` at `datetime.now(UTC) - timedelta(hours=1)` and then asserts the door names the cap when the phrasing step is refused. The cap reads `ModelCall.created_at >= utc_midnight(utc_today())` (`app/services/model_ledger.py::spend_today_usd`). CI ran the leg at **00:29 UTC**, so the planted row landed at 23:29 **yesterday**, outside the day window; the cap never bound; the door correctly produced ordinary arithmetic reasons with no cap-named clause; the assertion failed. Not a defect in the §64 commit, not the French catalogue, not the API contract — a day-boundary flake in the fixture, deterministically red for any run starting between 00:00 and 01:00 UTC. All earlier api legs ran later in the day-UTC clock, which is why none before this one tripped it.
+
+**The fix, attributed to its own slice.** `25bbdde` — its own commit, its own message: plant today's spend at `now` (the 3-day-ago branch keeps its delta). The test file carries a comment naming the trap. 4/4 green locally on the same tree.
+
+**What this does and does not change.** It does not retro on the §64 push: the red is reported as it ran, for the tree as it was pushed; §65 and §66 pushed before the fix rerun against the *same class of clock* and their legs are in flight largely concurrently with this one. The web leg's green is not claimed as the api leg's green anywhere in this ledger. The CI queue drains in the order it drains — the honest statements are: web green, api red on a pre-existing flake, fixed forward as its own commit, §67 pushed to make the record match the clock a little better. The next read of the queue is owed before any further claim.
