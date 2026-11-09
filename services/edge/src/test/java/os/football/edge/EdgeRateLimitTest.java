@@ -21,9 +21,11 @@ import org.springframework.test.web.reactive.server.WebTestClient;
  * The ceiling: a burst is served, the request after it is refused in the product's shape, and the bucket
  * refills by elapsed time rather than by a timer.
  *
- * <p>The policy is set small (burst 2, 20 per second) so the test can spend and replenish it within a
- * second. Both ends are read: the two accepted requests reach the stub core, and the refused one does not
- * — the stub counts its calls, so "the request was not forwarded" is measured, not assumed.
+ * <p>The policy is set small (burst 2, one token per second) so the bucket cannot refill between three
+ * back-to-back requests: at 20 per second a token returned every 50 ms and a loaded machine could hand
+ * the third request a token, which made the refusal case flaky. Both ends are read: the two accepted
+ * requests reach the stub core, and the refused one does not — the stub counts its calls, so "the
+ * request was not forwarded" is measured, not assumed.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class EdgeRateLimitTest {
@@ -53,7 +55,7 @@ class EdgeRateLimitTest {
         registry.add("eureka.client.enabled", () -> "false");
         registry.add("spring.cloud.config.enabled", () -> "false");
         registry.add("edge.rate-limit.burst", () -> "2");
-        registry.add("edge.rate-limit.requests-per-second", () -> "20");
+        registry.add("edge.rate-limit.requests-per-second", () -> "1");
     }
 
     @AfterAll
@@ -90,8 +92,8 @@ class EdgeRateLimitTest {
         assertThat(String.valueOf(refusal.get("trace_id"))).isNotBlank();
         assertThat(coreCalls).as("a refused request must not reach the core").isEqualTo(2);
 
-        // 20 tokens per second: 300 ms buys six, so the next request fits without waiting for a full second.
-        Thread.sleep(300);
+        // One token per second: a wait longer than that refills the bucket by one, and the next request fits.
+        Thread.sleep(1100);
         client.get()
                 .uri("http://localhost:" + edgePort + "/api/v1/health")
                 .exchange()
@@ -100,7 +102,10 @@ class EdgeRateLimitTest {
     }
 
     @Test
-    void the_policy_is_read_from_the_running_filter() {
+    void the_policy_is_read_from_the_running_filter() throws InterruptedException {
+        // The bucket is shared by every request from this address and the refill case spends it, so this
+        // case buys the one token it needs first — true whichever order the two methods run in.
+        Thread.sleep(1100);
         Map<?, ?> limits = client.get()
                 .uri("http://localhost:" + edgePort + "/edge/limits")
                 .exchange()
@@ -112,6 +117,6 @@ class EdgeRateLimitTest {
         assertThat(limits).isNotNull();
         assertThat(limits.get("enabled")).isEqualTo(true);
         assertThat(((Number) limits.get("burst")).intValue()).isEqualTo(2);
-        assertThat(((Number) limits.get("requestsPerSecond")).doubleValue()).isEqualTo(20.0);
+        assertThat(((Number) limits.get("requestsPerSecond")).doubleValue()).isEqualTo(1.0);
     }
 }
