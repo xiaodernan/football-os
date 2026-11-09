@@ -223,6 +223,10 @@ def _native(path: str) -> str:
 def _lint_environment(path_entries: list[Path]) -> dict[str, str]:
     environment = dict(os.environ)
     prefix = [str(entry) for entry in path_entries]
+    # The target's first command is `dirname`, and on Windows the utilities beside the Git-bash binary are not
+    # on the inherited PATH (`Git/cmd` holds `git`, `Git/usr/bin` holds `dirname`). Without them the script dies
+    # at line 20 with `dirname: command not found` and this harness would red a lint target that is green.
+    prefix.append(str(Path(_bash()).parent))
     prefix.append(str(Path(sys.executable).parent))
     environment["PATH"] = os.pathsep.join(prefix + [environment.get("PATH", "")])
     return environment
