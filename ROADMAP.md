@@ -100,6 +100,15 @@ All 13 are verified: `docs/M0_M1_VERIFICATION.md` §2 maps each one to a passing
 
 ## Now → next session
 
+> **Reading this section honestly (added 2026-11-09).** The paragraphs below describe each milestone at
+> the moment it was written; they are history, not current state. The arc has moved far past this
+> section since: M6 through its manager phases, M7 complete, M8's tier spine, M9 landed 2026-09-28
+> (as of §65 a measured, not literal, `m9_community`), M13 board/opponent/contracts, production
+> hardening, and §81's six locales (ar §54, he §57, fr §64). For current truth, read
+> `docs/I18N_ARC_VERIFICATION.md` (the arc's honest ledger, §20–§66) and `PLAN.md`'s pointer rows —
+> and check `gh run list` for whether the last pushes are green before treating any of it as settled.
+> Payments (§42) is the named deferral this arc deliberately does not rush.
+
 **M3 Football World — done.** Backend evidence in [`docs/M3_VERIFICATION.md`](docs/M3_VERIFICATION.md), web-surface
 evidence in [`docs/M3_WEB_VERIFICATION.md`](docs/M3_WEB_VERIFICATION.md).
 
