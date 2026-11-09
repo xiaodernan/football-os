@@ -3715,3 +3715,18 @@ M9 Community landed 2026-09-28: five `community_*` tables (migration `0023`), `s
 **What this milestone does not claim.** It is not medical advice, and does not say "two games in seven days guarantees injury X"; it tells the coach what the calendar means, which is the only claim the corpus can honestly make in English to a football audience. It is not a substitution for the sports-medicine literature referenced normatively elsewhere in the corpus, and adds no new empirical study strategy. It does, in English, for the whole readership, the thing the three sibling documents already knew — and names the coach's question that used to have no passage behind it.
 
 **Teardown.** Scratch ingest DB removed; no probe stack touched.
+
+
+## 69. The first `team-profile` document — the empty category the corpus never filled (2026-11-09)
+
+**The hole, named.** `team-profile` was a named category carrying no passage. Every roster-reading page on the site — the squad table on `/world/teams`, the market's club rows, the career's band readings — answers the question this document exists for: what does the dressing room have left in it? The corpus could script the coach's words on training and sports science but had no passage behind "is this squad deep enough to rotate?"
+
+**The content.** `data\knowledge\team-profile\squad-depth-reading.md` — project-original editorial prose written for this build, `confidence: high`, `last_reviewed: 2026-11-09`. It answers: what depth is (`role arithmetic, not shirt arithmetic`), the three questions a selection meeting asks (cover, across-line cover, anywhere-starts), the overlap case (talent vs depth — "no two cover the role at the same level"), the honest test (`"whose name would the manager put on the paper?"`), and the meaning does not judge individual players. **No invented measurements, no figure that reads like a study — the prose says what depth means, not how much depth any particular club has populated.**
+
+**Honesty notes.** An early draft of this document carried a hand-waved "the number that matters most: 18" and a slogan ("league champions win the league by January") — both deleted before commit; `confidence: high` was not entitled to either figure. The rewrite keeps the express reasoning and the coaching voice, and nothing that reads like research; the category the document fills is the one the corpus left empty, and the passage is not a study either. The first draft lesson mirrors §41's: the discipline is not "fill the hole with anything" but "fill it with what the slot is for, or leave it empty."
+
+**What was measured.** Scratch SQLite ingest: `ok: True`, `docs_seen=22`, `chunks_written=171` (was 166 after §68), no ingestion errors. The golden set still names 18 expected slugs; it does not need this document and does not move, and the RAG gate is not asked to bless it either way.
+
+**What this milestone does not claim.** It is not a click-through tool, a ranking model for depth, or evidence that any one club's squad is deep. It is one English passage behind a question every squad-depth page invites a coach to ask, filling the last empty named category in the corpus contract.
+
+**Teardown.** Scratch ingest DB removed; no probe stack touched. The category names above were read from the shipped `KNOWN_CATEGORIES` tuple in `services/knowledge/chunking.py` before this document was written.
