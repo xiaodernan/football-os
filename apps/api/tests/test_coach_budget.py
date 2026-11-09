@@ -63,8 +63,13 @@ def _player(client: TestClient) -> str:
 
 
 def _spend(db: Session, dollars: float, *, today: bool = True) -> None:
-    """Plant one paid model-call row, as a real provider spend would have left it."""
-    when = datetime.now(UTC) - timedelta(hours=1) if today else datetime.now(UTC) - timedelta(days=3)
+    """Plant one paid model-call row, as a real provider spend would have left it.
+
+    Today's cap reads `created_at >= utc_midnight(utc_today())`; a plant at `now - 1 hour` fell into
+    *yesterday* for any test running between 00:00 and 01:00 UTC, the cap never tripped and the door
+    was un-capped exactly then. Plant at `now` (or three days back), never in the first hour trap.
+    """
+    when = datetime.now(UTC) if today else datetime.now(UTC) - timedelta(days=3)
     db.add(
         ModelCall(
             id=f"mc_{uuid4().hex[:12]}",
