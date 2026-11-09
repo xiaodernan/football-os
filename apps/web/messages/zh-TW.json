@@ -6,6 +6,7 @@
     "coach": "AI 教練",
     "training": "訓練",
     "progress": "成長",
+    "leaderboard": "排行榜",
     "history": "歷史",
     "scout": "球探",
     "agents": "AI 助手",
@@ -4353,5 +4354,28 @@
     "provenanceEyebrow": "分鐘從哪裡來",
     "sourceTitle": "時間線的來源",
     "reportLink": "開啟完整報告"
+  },
+  "leaderboard": {
+    "metaTitle": "排行榜",
+    "metaDescription": "在最近三十天裡選擇讓人看到的帳號，按所得 XP 排名。",
+    "eyebrow": "遊戲化",
+    "title": "排行榜",
+    "lede": "三十天所得 XP，只在選擇讓人看到的帳號之間排名。本頁絕不點名未選擇加入的帳號。",
+    "meTitle": "你",
+    "meNoteOptedOut": "你沒有上榜——開啟可見性即可參賽。",
+    "meNoteOptedIn": "你已上榜。你的顯示名會展示給同樣選擇公開的人。",
+    "optIn": "讓我上榜",
+    "optOut": "把我移出排行榜",
+    "optWorking": "儲存中…",
+    "rank": "第 {rank} 名",
+    "xp": "{xp} 點數",
+    "streak": "連續 {count} 天",
+    "leadersVisible": "{count, plural, other {# 個帳號已選擇上榜}}",
+    "emptyTitle": "榜單是空的",
+    "emptyNote": "還沒有人選擇加入——排行榜是用來激勵，不是用來羞辱——來當第一個吧。",
+    "requestFailed": "排行榜暫時無法讀取。",
+    "thPlayer": "使用者",
+    "thXp": "經驗",
+    "thStreak": "連續訓練"
   }
 }

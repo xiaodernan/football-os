@@ -36,6 +36,7 @@ const LINKS: { href: string; key: string }[] = [
   { href: "/training", key: "training" },
   { href: "/progress", key: "progress" },
   { href: "/history", key: "history" },
+  { href: "/leaderboard", key: "leaderboard" },
 ];
 
 export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolean }) {

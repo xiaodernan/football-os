@@ -59,6 +59,7 @@ const isFrench = (s) => FRENCH_ACCENTS.test(String(s ?? ''));
     { path: '/login', name: 'login', shot: 'french-login.png' },
     { path: '/challenges', name: 'challenges', shot: 'french-challenges.png' },
     { path: '/club/rules', name: 'club rules', shot: 'french-club-rules.png' },
+    { path: '/leaderboard', name: 'leaderboard', shot: 'french-leaderboard.png' },
   ];
 
   const authPages = AUTH_WALK

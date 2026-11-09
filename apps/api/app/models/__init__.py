@@ -95,6 +95,9 @@ class User(TimestampMixin, Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     streak_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     streak_anchor_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    #: Show this account on the gamification leaderboard. False by default: the
+    #: account is invisible to everyone else until it owns its visibility.
+    leaderboard_visible: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     players: Mapped[list[UserPlayer]] = relationship(back_populates="user", cascade="all, delete-orphan")
     sessions: Mapped[list[TrainingSession]] = relationship(back_populates="user", cascade="all, delete-orphan")

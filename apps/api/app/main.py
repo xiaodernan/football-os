@@ -29,6 +29,7 @@ from app.api.v1 import (
     graph,
     jobs,
     knowledge,
+    leaderboard,
     meta,
     metrics,
     model_router,
@@ -410,6 +411,7 @@ def create_app() -> FastAPI:
     app.include_router(model_router.router, prefix=api)
     app.include_router(notifications.router, prefix=api)
     app.include_router(metrics.router, prefix=api)
+    app.include_router(leaderboard.router, prefix=api)
     app.include_router(jobs.router, prefix=api)
     app.include_router(traces.router, prefix=api)
 

@@ -20,6 +20,7 @@ const DISALLOWED = [
   "/coach",
   "/progress",
   "/history",
+  "/leaderboard",
   "/settings",
   // A person's own boards, and links they handed out on purpose. `/tactics` and the 50 authored
   // system pages stay crawlable; these two prefixes are user content, not publication.

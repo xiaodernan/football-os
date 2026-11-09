@@ -11,7 +11,7 @@ interface LocaleProviderProps {
 
 export function LocaleProvider({ children, locale, messages }: LocaleProviderProps) {
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC">
       {children}
     </NextIntlClientProvider>
   );

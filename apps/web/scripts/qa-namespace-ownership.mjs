@@ -96,6 +96,7 @@ const NAMESPACE_OWNERS = {
   "progress": { owner: "progress", purpose: "Player progress pages" },
   "myFootball": { owner: "progress", purpose: "My Football profile pages" },
   "history": { owner: "progress", purpose: "Training history pages" },
+  "leaderboard": { owner: "progress", purpose: "Gamification leaderboard pages" },
 
   // Agents tier
   "agents": { owner: "agents", purpose: "AI agent orchestration pages" },

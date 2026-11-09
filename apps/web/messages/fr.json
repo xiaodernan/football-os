@@ -6,6 +6,7 @@
     "coach": "Entraîneur IA",
     "training": "Entraînement",
     "progress": "Progrès",
+    "leaderboard": "Classement",
     "history": "Historique",
     "scout": "Scouting",
     "agents": "Agents IA",
@@ -4353,5 +4354,28 @@
     "provenanceEyebrow": "D'où viennent les minutes",
     "sourceTitle": "La source de la chronologie",
     "reportLink": "Ouvrir le rapport complet"
+  },
+  "leaderboard": {
+    "metaTitle": "Classement",
+    "metaDescription": "Les comptes qui ont choisi d'être visibles ici, classés par XP gagnés sur les trente derniers jours.",
+    "eyebrow": "Ludification",
+    "title": "Le classement",
+    "lede": "XP sur les trente derniers jours, classés parmi les comptes qui ont dit vouloir être vus. Cette page ne nomme aucun compte qui n'a pas opté.",
+    "meTitle": "Toi",
+    "meNoteOptedOut": "Tu n'es pas sur le tableau — active la visibilité pour concourir.",
+    "meNoteOptedIn": "Tu es sur le tableau. Ton nom affiché n'est visible que par ceux qui ont opté aussi.",
+    "optIn": "Montre-moi sur le classement",
+    "optOut": "Retire-moi du classement",
+    "optWorking": "Enregistrement…",
+    "rank": "Rang {rank}",
+    "xp": "{xp} points d'XP",
+    "streak": "série de {count} jours",
+    "leadersVisible": "{count, plural, one {# compte a opté pour le classement} many {# comptes ont opté pour le classement} other {# comptes ont opté pour le classement}}",
+    "emptyTitle": "Le tableau est vide",
+    "emptyNote": "Personne n'a opté pour l'instant. Le classement existe pour motiver, pas pour humilier — sois le premier.",
+    "requestFailed": "Le classement est indisponible pour le moment.",
+    "thPlayer": "Utilisateur",
+    "thXp": "Points d'XP",
+    "thStreak": "Série"
   }
 }

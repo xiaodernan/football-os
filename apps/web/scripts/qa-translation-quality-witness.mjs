@@ -154,14 +154,19 @@ const ONLY = (r, label) =>
   r.status === 1 && r.failed === 1 && r.total === 9 && verdict(r.out, label) === "FAIL" &&
   ALL.filter((l) => l !== label).every((l) => verdict(r.out, l) === "PASS");
 
-// 0 — the shipped gate against the real catalogues, and both script rules it must count out loud.
+// 0 — the shipped gate against the real catalogues, and both script rules it must count out loud. The
+//     population figures are derived from the live catalogues rather than copied, so a translation batch that
+//     grew the catalogue cannot leave the witness guessing at a stale number.
 const zero = run(fixture("0-baseline"));
+const arJudged = Number((/every Arabic message[^\n]*— (\d+) of/.exec(zero.out) ?? [])[1] ?? 0);
+const heJudged = Number((/every Hebrew message[^\n]*— (\d+) of/.exec(zero.out) ?? [])[1] ?? 0);
 check(
   "0 the shipped gate reads the real catalogues 9/9 with both script rules counted",
-  GREEN(zero) && detailOf(zero.out, SCRIPT_AR).startsWith("4222 of 4222")
-    && detailOf(zero.out, SCRIPT_HE).startsWith("4221 of 4221")
+  GREEN(zero) && arJudged > 4000 && heJudged > 4000
+    && detailOf(zero.out, SCRIPT_AR).startsWith(`${arJudged} of ${arJudged}`)
+    && detailOf(zero.out, SCRIPT_HE).startsWith(`${heJudged} of ${heJudged}`)
     && !zero.out.includes("DORMANT"),
-  `${tallyOf(zero)}; ${detailOf(zero.out, SCRIPT_AR)}`,
+  `${tallyOf(zero)}; ar=${arJudged} he=${heJudged}; ${detailOf(zero.out, SCRIPT_AR)}`,
 );
 
 // A — one Latin holdout sitting in an otherwise correctly written Arabic catalogue.
@@ -172,7 +177,7 @@ setKey(latin, "ar", "holdout", LATIN_HOLDOUT);
 const a = run(latin);
 check(
   "A one Latin message among Arabic ones reds the Arabic script arm and names the path",
-  ONLY(a, SCRIPT_AR) && detailOf(a.out, SCRIPT_AR).startsWith("1 of 4225 message(s) judged in ar.json are Latin text")
+  ONLY(a, SCRIPT_AR) && detailOf(a.out, SCRIPT_AR).startsWith(`1 of ${arJudged + 3} message(s) judged in ar.json are Latin text`)
     && detailOf(a.out, SCRIPT_AR).includes("ar: witness.holdout")
     && detailOf(a.out, SCRIPT_AR).includes(LATIN_HOLDOUT) && !a.out.includes("DORMANT  Arabic"),
   `${tallyOf(a)}; ${detailOf(a.out, SCRIPT_AR).slice(0, 170)}; ${redSet(a)}`,
@@ -306,7 +311,7 @@ check(
 const j = run(WEB);
 check(
   "J the real catalogues still read 9/9 after the fixture arms, with both script rules counted",
-  GREEN(j) && detailOf(j.out, SCRIPT_HE).startsWith("4221 of 4221") && !j.out.includes("DORMANT"),
+  GREEN(j) && detailOf(j.out, SCRIPT_HE).startsWith(`${heJudged} of ${heJudged}`) && !j.out.includes("DORMANT"),
   `${tallyOf(j)}; ${redSet(j)}`,
 );
 

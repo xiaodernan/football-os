@@ -14419,6 +14419,81 @@
         ]
       }
     },
+    "/api/v1/leaderboard": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Get Leaderboard",
+        "description": "The top-ten by 30-day XP among opted-in accounts, plus the caller's own row.\n\nThe caller is the account X is authenticated as. A person's own rank is computed among the\nopted-in; a person who opted out is still shown their own XP and streak without a rank.",
+        "operationId": "get_leaderboard_api_v1_leaderboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Leaderboard Api V1 Leaderboard Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Set Leaderboard Visibility",
+        "description": "Opt in or out of the leaderboard's public rows; the caller's own row is always visible to them.",
+        "operationId": "set_leaderboard_visibility_api_v1_leaderboard_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Set Leaderboard Visibility Api V1 Leaderboard Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/jobs": {
       "get": {
         "tags": [

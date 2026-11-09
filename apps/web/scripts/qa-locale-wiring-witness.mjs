@@ -137,7 +137,7 @@ check(
 const fPlane = plane("f-floors-drop-fr", null);
 {
   const path = join(fPlane, "api", "tests", "test_locale_claims.py");
-  writeFileSync(path, replaceOnce(readFileSync(path, "utf8"), ', "fr": 4020}', "}"));
+  writeFileSync(path, replaceOnce(readFileSync(path, "utf8"), ', "fr": 4042}', "}"));
 }
 const f = run(fPlane);
 check(

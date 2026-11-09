@@ -146,6 +146,18 @@ def current_user(
     return user
 
 
+def optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """The session, when one is carried, or None. The same checks (valid token, row exists, active) as
+    current_user, but answering None instead of 401 — for doors any reader may open with a signed-in or signed-out face."""
+    try:
+        return current_user(credentials=credentials, db=db)
+    except HTTPException:
+        return None
+
+
 def standing_check(allowed: Sequence[str], vocabulary: Sequence[str] = ROLES) -> tuple[str, ...]:
     """Refuse a door that asks for a standing no account can hold, before it ever answers a request.
 

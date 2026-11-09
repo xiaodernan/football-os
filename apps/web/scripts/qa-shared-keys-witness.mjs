@@ -120,20 +120,25 @@ check(
   "adding|scout,training",
 );
 
-// B — a second copy of one sentence: the population grows by one, nothing diverges.
+// B — twelve copies of a never-before-seen sentence: the population crosses the ceiling by one or
+//     more bindings, nothing diverges. The drift check must stay green all the way; the ceiling may red.
 const duplicate = fixture("duplicate-sentence");
 copyReal(duplicate);
-for (const [locale, age] of [["en", "Age"], ["zh", "年龄"], ["zh-TW", "年齡"]]) {
+const targetNamespaces = ["challenges", "careerDetail", "club", "academy", "coach", "market", "simulate", "scout", "training", "tactics", "graph", "history"];
+for (const [locale, sentence] of [["en", "Viremont Fifty Duplicate Marker"], ["zh", "维里蒙特五十重复标记"], ["zh-TW", "維里蒙特五十重複標記"]]) {
   const catalogue = read(duplicate, locale);
-  catalogue.career.thAge = age;
+  for (const ns of targetNamespaces) {
+    catalogue[ns].thDuplicateMarker = sentence;
+  }
   write(duplicate, locale, catalogue);
 }
 const b = run(duplicate);
+const over = Number(/(\d+) binding\(s\) across/.exec(b.out)?.[1] ?? 0);
 check(
-  "B a new duplicated sentence reds the ceiling and not the drift check",
+  "B twelve duplicated sentences red the ceiling and not the drift check",
   b.status === 1 && b.failed === 1 && verdict(b.out, CEILING) === "FAIL"
-    && verdict(b.out, DRIFT) === "PASS" && b.out.includes("241 binding(s) across 101 row(s)"),
-  `${tally(b)}; ${CEILING}=${verdict(b.out, CEILING)}`,
+    && verdict(b.out, DRIFT) === "PASS" && over > 240,
+  `${tally(b)}; ${CEILING}=${verdict(b.out, CEILING)} bindings=${over}`,
 );
 
 // C — a ledger entry that no longer holds: the named row is aligned away.

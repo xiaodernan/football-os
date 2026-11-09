@@ -6,6 +6,7 @@
     "coach": "AI Coach",
     "training": "Training",
     "progress": "Progress",
+    "leaderboard": "Leaderboard",
     "history": "History",
     "scout": "Scouting",
     "agents": "AI Agents",
@@ -4353,5 +4354,28 @@
     "provenanceEyebrow": "Where the minutes come from",
     "sourceTitle": "The timeline's source",
     "reportLink": "Open the full report"
+  },
+  "leaderboard": {
+    "metaTitle": "Leaderboard",
+    "metaDescription": "The accounts that chose to be visible here, ranked by XP earned over the last thirty days.",
+    "eyebrow": "Gamification",
+    "title": "The leaderboard",
+    "lede": "Thirty-day XP, ranked among the accounts that said they wanted to be seen. Nothing on this page names an account that did not opt in.",
+    "meTitle": "You",
+    "meNoteOptedOut": "You're not on the board — turn visibility on to compete.",
+    "meNoteOptedIn": "You're on the board. Your display name is shown to those who asked for the same themselves.",
+    "optIn": "Show me on the leaderboard",
+    "optOut": "Remove me from the leaderboard",
+    "optWorking": "Saving…",
+    "rank": "Rank {rank}",
+    "xp": "{xp} XP",
+    "streak": "{count}-day streak",
+    "leadersVisible": "{count, plural, one {# account has opted in} other {# accounts have opted in}}",
+    "emptyTitle": "The board is empty",
+    "emptyNote": "Nobody has opted in yet. The leaderboard exists to motivate, not to shame — be first.",
+    "requestFailed": "The leaderboard could not be read right now.",
+    "thPlayer": "User",
+    "thXp": "XP",
+    "thStreak": "Streak"
   }
 }
