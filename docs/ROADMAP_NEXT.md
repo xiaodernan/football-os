@@ -1017,6 +1017,16 @@ gateway — without moving a single domain rule out of the core. The rule that k
     (id, order, uri, predicates, filters), the breaker block and the rate-limit block, and assert the
     API route sorts before the catch-all and the breaker's minimum is reachable inside its window —
     `docs/M14_SERVICE_PLANE.md` §1.
+56. **Ask the balancer who it would call (done 2026-11-09).** `GET /edge/instances?service=<name>`
+    (default `football-core`) reads the `DiscoveryClient` the `lb://` route resolves through and returns
+    instance id / host / port / URI / secure per instance; an unknown name is a 200 with `count=0`, not a
+    404. 2 new edge tests (a published instance read back; the zero row). The live walk registered the
+    core as `127.0.0.1:football-core:8100` and showed the door naming it, plus a topology trap: with the
+    default hostname registration the registry read `UP` and the door listed the instance while every
+    routed call fell back, because the hostname resolves to IPv6 link-local addresses the IPv4-bound core
+    never listened on — and the door is fresher than the route's 30-second LB cache. After pinning
+    `SERVICE_HOST=127.0.0.1`, `/api/v1/world/competitions` through the edge was byte-identical to the
+    direct read — `docs/M14_SERVICE_PLANE.md` §11.
 
 
 ## How this plan is executed

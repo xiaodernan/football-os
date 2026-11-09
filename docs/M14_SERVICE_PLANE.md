@@ -1,4 +1,4 @@
-# M14 — the service plane: registry, config, edge (ROADMAP Phase 11, items 47–54)
+# M14 — the service plane: registry, config, edge (ROADMAP Phase 11, items 47–56)
 
 Date: 2026-11-09. The product was one deployable: a FastAPI core behind a Next.js front end. This unit
 gives it the shape a platform has in production — a service registry, a config server and an edge
@@ -31,10 +31,10 @@ whose behaviour depends on whether another container happens to be running.
 services> mvn -o -B package
 [INFO] FOOTBALL OS registry ......... SUCCESS
 [INFO] FOOTBALL OS config server .... SUCCESS
-[INFO] FOOTBALL OS edge ............. SUCCESS   (15 tests, 0 failures)
+[INFO] FOOTBALL OS edge ............. SUCCESS   (17 tests, 0 failures)
 ```
 
-Fifteen edge tests, each a different claim:
+Seventeen edge tests, each a different claim:
 
 - `EdgeRoutingTest.a_routed_request_reaches_the_core_with_its_path_and_mints_a_trace_id` — a real
   HTTP server (JDK `HttpServer`) stands in for the core; the stub records the path and the trace header
@@ -72,6 +72,11 @@ Fifteen edge tests, each a different claim:
   shell stub's counter stays zero, so the catch-all did not swallow the API prefix.
 - `...the_route_table_publishes_both_doors` — the resolved table names `core-api` and `web`, each with
   the URI its stub was given and the web route carrying the catch-all predicate.
+- `EdgeInstancesTest.the_door_reports_the_instance_the_balancer_would_use` — an instance published
+  through the same simple discovery client the `lb://` route resolves through is read back with its
+  host, port and URI: the test sees the gateway's view, not a field the controller kept for itself.
+- `...an_unregistered_service_reads_as_zero_rather_than_an_error` — an unknown name answers 200 with
+  `count=0`, because "nobody is registered" is an answer an operator needs.
 
 One trap recorded: the first `/edge/routes` implementation called `.block()` in the controller. On a
 gateway handler that runs on the netty event loop, `block()` is an `IllegalStateException`, and the door
@@ -382,3 +387,42 @@ page request is traced and bounded by the same policy as an API request.
 **Scope, stated.** The web route has no circuit breaker. The shell is a static asset process; a fallback
 page for it would be the edge inventing product UI, which is the line this plane does not cross. The API
 route keeps its breaker because that is the door whose failure the product has a sentence for.
+
+## 11. Who would the balancer ask? (item 56)
+
+`GET /edge/instances?service=football-core` reads the `DiscoveryClient` the `lb://football-core` route
+resolves through and returns the instance list: instance id, host, port, URI, secure flag. The default
+name is `football-core`. An unknown name answers 200 with `count=0` — "nobody registered it" is an answer
+an operator deciding between a missing registration and a dead instance needs, not a 404.
+
+Two cases bind the door: one publishes an instance through the same simple discovery client the route
+uses and reads back host / port / URI; the other asserts that an unknown name is a zero row.
+
+The live walk, edge on 18080 and registry on 8761:
+
+```
+GET /edge/instances?service=football-edge
+  {"count":1,"service":"football-edge","instances":[{"instanceId":"host.docker.internal:football-edge:18080",
+   "host":"192.168.1.5","port":18080,"uri":"http://192.168.1.5:18080","secure":false}]}
+GET /edge/instances?service=nobody
+  {"count":0,"service":"nobody","instances":[]}
+GET /edge/instances?service=football-core          (after the core registered itself)
+  {"count":1,"service":"football-core","instances":[{"instanceId":"127.0.0.1:football-core:8100",
+   "host":"127.0.0.1","port":8100,"uri":"http://127.0.0.1:8100","secure":false}]}
+```
+
+**The walk found a topology trap.** The first registration used the default `SERVICE_HOST`, the machine's
+hostname (`xiaodernan`). The registry read `UP` and this door showed the instance, but every routed call
+still answered the fallback `core_unavailable`: on this host the name resolves to IPv6 link-local
+addresses (`fe80::…`), while the core listened on IPv4 loopback — the balancer dialled an address nobody
+served. It also measured the door's freshness relative to the route: the door reads the registry on every
+call, while the route resolves through a 30-second load-balancer cache, so the door can name an instance
+seconds before the route uses it. Pinning `SERVICE_HOST=127.0.0.1` for a colocated walk (item 51's walk
+did the same with `localhost`) produced `127.0.0.1:football-core:8100`; `/api/v1/world/competitions`
+through the edge then returned the direct read's 5984 bytes unchanged, and the breaker door read
+`CLOSED, buffered 4, failed 2` — under the minimum of 5 that item 53 set, so the count was visible
+without a trip.
+
+The rule this leaves: `SERVICE_HOST` must name an address the service really listens on for the clients
+that will dial it. The hostname is right in a container, where it is the pod's network identity; on a
+developer host where the name resolves to a link-local address, pin it.
