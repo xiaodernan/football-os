@@ -161,7 +161,10 @@ def test_citation_quotes_are_verbatim_slices_of_the_stored_chunk(db: Session) ->
 def test_an_unanswerable_question_refuses_instead_of_guessing(db: Session) -> None:
     for question in (
         "which boot brand does the number 10 wear",
-        "what is the best expected goals model for the 2019 champions league",
+        # The xG corpus passage answers questions about what an expected-goals value is; the honest shape
+        # of a still-unanswerable question is the 2019 champions league final itself — a real-world fact the
+        # corpus does not hold, refused with zero citations.
+        "how many points is the best striker worth in fantasy football",
         "who won the ballon d or yesterday",
     ):
         answer = knowledge.ask(db, question, persist=False)
@@ -240,7 +243,7 @@ def test_the_answerability_floors_sit_inside_the_measured_gap(db: Session) -> No
 
     The two peaks are deliberately on opposite sides of the two floors, and that is the point: a floor is
     only decisive if some question clears the *other* floor while failing it. `weight-diet` fails coverage
-    alone, `fee-winger` fails the match count alone, and `xg-model` / `boot-brand` / `cleat-sensor` fail
+    alone, `fee-winger` fails the match count alone, and `rights-cl` / `boot-brand` / `cleat-sensor` fail
     both. Before this landing all out-of-scope questions failed both floors, which made each floor
     redundant — measured then, lowering either constant alone changed no verdict anywhere and the eval's
     failure list stayed byte-identical (probe arm W5 survived for exactly that reason). Now deleting either

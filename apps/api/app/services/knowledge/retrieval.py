@@ -46,7 +46,7 @@ DISCRIMINATIVE_DF_RATIO = 0.30
 # `read-game` binds the match axis at exactly 2 and `offside` the coverage axis. The **5** out-of-scope
 # questions carry one single-floor shape each: `weight-diet` matches 2 of 8 (coverage 0.25, so only the
 # coverage clause below refuses it) and `fee-winger` matches 1 of 2 (coverage 0.50, so only the match clause
-# refuses it), while `xg-model`, `boot-brand` and `cleat-sensor` fail both. Delete either clause and the door
+# refuses it), while `rights-cl`, `boot-brand` and `cleat-sensor` fail both. Delete either clause and the door
 # answers a question it must refuse. The figures this comment carried before (16 questions, a 0.33 peak) had
 # both drifted from the file, which is the reason the claim is a gate now and not a comment.
 MIN_DISCRIMINATIVE_COVERAGE = 0.40

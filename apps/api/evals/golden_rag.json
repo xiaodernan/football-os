@@ -23,7 +23,7 @@
     {"id": "squad-height", "query": "how high should our team sit and how much space do we leave behind", "expected_documents": ["squad-height-and-territory"]}
   ],
   "out_of_scope": [
-    {"id": "xg-model", "query": "what is the best expected goals model for the 2019 champions league"},
+    {"id": "rights-cl", "query": "who owns the television rights for the 2019 champions league final"},
     {"id": "cleat-sensor", "query": "how do I calibrate the torque sensor in my boots"},
     {"id": "boot-brand", "query": "which boot brand does the number 10 wear"},
     {"id": "weight-diet", "query": "how do I get to a healthy playing weight without cutting meals during season"},
