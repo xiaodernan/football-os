@@ -53,6 +53,8 @@ eureka:
 # One caller may burst, then is asked to slow down. Sized so a browser page (dozens of calls) never
 # notices, and a loop that asks thousands of times per second does. Keyed by the direct peer address.
 edge:
+  plane:
+    notice: ${PLANE_NOTICE:one door, one trace}
   rate-limit:
     enabled: ${RATE_LIMIT_ENABLED:true}
     burst: ${RATE_LIMIT_BURST:100}
@@ -75,7 +77,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,gateway,refresh
   endpoint:
     health:
       show-details: always

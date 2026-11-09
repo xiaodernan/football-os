@@ -489,3 +489,61 @@ invalid  -> "garbage" became 00-df7515eeaa514f46b193528b491d72bc-268fafa1b7da78b
   request-id logging still works as before.
 - It does **not** validate `tracestate` beyond the W3C rule that it describes the current parent; a
   syntactically odd but well-formed `tracestate` is carried through when its parent is valid.
+
+## 13. A changed setting lands without a restart (item 59)
+
+Item 47 stood up a Spring Cloud Config server serving the edge's settings as reviewable files, but the
+gateway read them **once at boot**: changing a value meant restarting the one door every caller uses.
+That is a config server with half its point missing. Item 59 closes it with three pieces:
+
+- `PlaneSettings` is a `@RefreshScope` bean holding `edge.plane.notice` (`PLANE_NOTICE` in the
+  environment, default `one door, one trace`). Spring Cloud Context rebuilds it after a refresh.
+- `GET /edge/config` reads the **live bean**, not the file, and names its own refresh door and formula.
+  An operator can ask what the running gateway believes before and after a change.
+- Both copies of the settings — the edge's own `application.yml` and the config server's
+  `config-repo/football-edge.yml` — carry the same `edge.plane` block and the same actuator exposure
+  (`health,info,gateway,refresh`). The parity gate gained a fourth case comparing them, because a value
+  that refreshes in one gateway and not the other is two gateways again.
+
+### 13.1 The tests
+
+`EdgeConfigRefreshTest` (3 cases) asks the running process: `PlaneSettings` really carries
+`@RefreshScope` and the door reads the boot value; `POST /actuator/refresh` is exposed and answers 200;
+and changing a property source then rebuilding the scope makes the door answer the new value — twice.
+`test_edge_config_parity.py` holds the two YAML copies one answer (now 4 cases).
+
+`mvn -o -B package` over the whole reactor: **29 tests / 0 failures / 0 errors**, all four modules
+SUCCESS. The Python gates `test_spec_audit_currency`, `test_security_probe_report_currency`,
+`test_openapi_contract_currency` and the parity gate stayed green (28 cases together).
+
+### 13.2 The live walk
+
+`.scratch/walk-refresh.py` boots the **config server** on `18888` with its native search location pointed
+at a scratch file, and the built edge jar on `18882` with `spring.config.import` aimed at it (Eureka and
+the rate limiter off, a stand-in core on `18883`). It reads both ends, changes the file and refreshes.
+**9/9 checks, 0 red**:
+
+```
+config server /football-edge/default      -> v1-before-refresh
+GET /edge/config at boot                  -> v1-before-refresh
+routed /api/v1/health                     -> traceparent 00-5da0beaa…-95fbc769…-00   (item 58 intact)
+write v2-after-refresh
+POST /actuator/refresh                    -> 200
+GET /edge/config                          -> v2-after-refresh   (no restart)
+write v3-third-value
+POST /actuator/refresh
+GET /edge/config                          -> v3-third-value     (a second refresh lands too)
+```
+
+The walk's first attempt returned **415 Unsupported Media Type**: Spring Boot's actuator POST wants a
+JSON content type, and the walk sent an empty form body. That was the harness, not the service — sending
+`{}` as `application/json` answered 200. The check stays in the script so the next runner sees why.
+
+### 13.3 What this does not claim
+
+- It does **not** refresh every setting. Only beans in `@RefreshScope` are rebuilt; the route table,
+  breaker thresholds and rate-limit policy are read at boot by their own components and still need a
+  restart. The one refreshed setting is deliberately a plane-level notice, not a football rule.
+- It is **not** Spring Cloud Bus. A refresh must be posted to each gateway instance; broadcast to a
+  fleet is a separate decision needing a broker.
+- It does **not** compute anything about a club, player or season. The Python core stays canonical.

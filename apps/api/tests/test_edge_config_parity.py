@@ -79,3 +79,20 @@ def test_the_two_copies_set_the_same_limiter() -> None:
         "the limiter behaves differently depending on whether the config server is up: "
         f"{own!r} vs {served!r}"
     )
+
+
+def test_the_two_copies_agree_on_the_plane_setting_and_the_refresh_door() -> None:
+    """Item 59 added a refreshable setting; it must not exist in only one of the two gateways."""
+    own = _doc(EDGE)
+    served = _doc(SERVED)
+    assert own["edge"]["plane"] == served["edge"]["plane"], (
+        "the refreshable plane setting differs between the edge's own config and the config server's copy"
+    )
+    own_include = own["management"]["endpoints"]["web"]["exposure"]["include"]
+    served_include = served["management"]["endpoints"]["web"]["exposure"]["include"]
+    assert own_include == served_include, (
+        f"the actuator exposure differs between the two copies: {own_include!r} vs {served_include!r}"
+    )
+    assert "refresh" in own_include.split(","), (
+        "without the refresh endpoint exposed, a changed setting cannot take effect without a restart"
+    )

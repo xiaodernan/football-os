@@ -1044,6 +1044,20 @@ gateway — without moving a single domain rule out of the core. The rule that k
     `X-Trace-Id` remains the plane's correlation field.
 
 
+59. **A changed setting lands without a restart (done 2026-11-10).** Item 47 stood up a Spring Cloud
+    Config server, but the edge read its settings only at boot. `PlaneSettings` is now a `@RefreshScope`
+    bean holding `edge.plane.notice` (`PLANE_NOTICE`); `GET /edge/config` reads the live bean, names its
+    refresh door and states the formula; and `POST /actuator/refresh` is exposed on the edge. Both
+    copies of the settings (the edge's own YAML and the config server's `football-edge.yml`) carry the
+    same `edge.plane` block and actuator exposure, and `test_edge_config_parity.py` gained a fourth case
+    comparing them. Evidence: `docs/M14_SERVICE_PLANE.md` §13 — 3 integration cases, the parity gate
+    (4), `mvn -o -B package` **29/29** across all four modules, the Python audit/contract gates (28),
+    and a live walk over the built config server + edge jars **9/9**: file `v1` → `/actuator/refresh` →
+    `v2` → refresh → `v3`, no restart, with item 58's W3C parent intact on a routed call. Stated limits:
+    only `@RefreshScope` beans refresh (routes, breaker and limiter still need a restart), no Spring
+    Cloud Bus broadcast, and the Python core stays canonical.
+
+
 ## How this plan is executed
 
 - One phase at a time; a phase does not "open" until the previous one is running, tested and verified

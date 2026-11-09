@@ -39,7 +39,18 @@ resilience4j:
 # The same policy the edge carries by default, kept here so the config server serves one reviewable
 # copy: how much one caller may burst, and how fast the bucket refills.
 edge:
+  plane:
+    notice: ${PLANE_NOTICE:one door, one trace}
   rate-limit:
     enabled: ${RATE_LIMIT_ENABLED:true}
     burst: ${RATE_LIMIT_BURST:100}
     requests-per-second: ${RATE_LIMIT_RPS:50}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,refresh
+  endpoint:
+    health:
+      show-details: always
