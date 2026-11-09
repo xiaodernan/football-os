@@ -980,6 +980,14 @@ gateway — without moving a single domain rule out of the core. The rule that k
 50. **The compose file gains the plane (done 2026-11-09).** `infra/docker-compose.yml` grows
     `registry`, `config` and `edge` under the `plane` profile, running the jars the build produced;
     `docs/M14_SERVICE_PLANE.md` §5 names the start order.
+51. **The core registers itself and the edge finds it by name (done 2026-11-09).** `apps/api/app/core/
+    discovery.py` announces the core at `EUREKA_URL` on startup, renews its lease every 10 s, re-registers
+    on a 404 and withdraws on shutdown; with the variable empty it does nothing at all (6 tests against a
+    real fake registry). The edge route defaults to `lb://football-core` (with
+    `spring-cloud-starter-loadbalancer`) and keeps `${apc.core-uri}` as the registry-less mode. Live
+    evidence: `FOOTBALL-CORE UP` at `localhost:football-core:8100`, `/edge/routes` shows
+    `lb://football-core`, the routed health read is `200`, a killed core answers the 503 refusal shape and
+    a restart recovers — `docs/M14_SERVICE_PLANE.md` §7.
 
 
 ## How this plan is executed

@@ -7,6 +7,7 @@ settings framework so the API surface of configuration stays explicit.
 from __future__ import annotations
 
 import os
+import socket
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -73,6 +74,15 @@ class Settings:
     # without a collector. Off by default because it writes a row per span; a deployment turns it on
     # (or points OpenTelemetry at a collector and leaves this off).
     trace_store_enabled: bool = field(default_factory=lambda: _env("TRACE_STORE_ENABLED", "0") != "0")
+    # Phase 11 service plane: where this process announces itself. Empty means the registry is not
+    # used at all — no connection, no heartbeat, no log line. A deployment sets EUREKA_URL and the
+    # edge can then route `lb://football-core` instead of a hand-written address.
+    eureka_url: str = field(default_factory=lambda: _env("EUREKA_URL"))
+    service_name: str = field(default_factory=lambda: _env("SERVICE_NAME", "FOOTBALL-CORE"))
+    service_host: str = field(default_factory=lambda: _env("SERVICE_HOST", socket.gethostname()))
+    # The port this process serves on. Uvicorn is started with a port, not with this variable, so a
+    # deployment that changes one sets both; the default matches the documented dev command.
+    service_port: int = field(default_factory=lambda: int(_env("SERVICE_PORT", "8000") or 8000))
 
     @property
     def is_demo_mode(self) -> bool:

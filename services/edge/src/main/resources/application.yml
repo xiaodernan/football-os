@@ -14,7 +14,10 @@ spring:
         webflux:
           routes:
             - id: core-api
-              uri: ${apc.core-uri:http://localhost:8000}
+              # By default the route asks the registry where the core is, by name. Setting
+              # APC_CORE_URI (or -Dapc.core-uri=) switches to a hand-written address without a
+              # registry, which is what the direct-routing test and a single-process dev run use.
+              uri: ${apc.core-uri:lb://football-core}
               predicates:
                 - Path=/api/v1/**
               filters:

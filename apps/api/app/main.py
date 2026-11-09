@@ -50,6 +50,7 @@ from app.api.v1 import (
 from app.core.cache import _response_cache, response_cache_key
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
+from app.core.discovery import DiscoverySettings, EurekaRegistrar
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging, get_logger, request_id_var, request_started_var
 from app.core.redis_cache import close_redis_cache, get_redis_cache
@@ -304,11 +305,26 @@ def create_app() -> FastAPI:
                     logger.info("tactical systems synced %s", tactics_report.summary_line())
         logger.info("boot env=%s dialect=%s demo_mode=%s", settings.env, settings.database_url.split(":")[0], settings.is_demo_mode)
         init_tracing()
-        yield
-        # The Redis singleton is built on first use, which may be never, and closing an
-        # unconstructed one is a no-op — so shutdown does not have to know whether the
-        # metrics door was ever called.
-        close_redis_cache()
+        # Phase 11: announce the core to the registry when one is configured. The registrar is a
+        # no-op with an empty EUREKA_URL, and every call it makes is best-effort — a registry that
+        # is down must not stop the product from booting or from shutting down.
+        registrar = EurekaRegistrar.from_settings(
+            DiscoverySettings(
+                registry_url=settings.eureka_url,
+                app=settings.service_name,
+                host=settings.service_host,
+                port=settings.service_port,
+            )
+        )
+        await registrar.start()
+        try:
+            yield
+        finally:
+            await registrar.stop()
+            # The Redis singleton is built on first use, which may be never, and closing an
+            # unconstructed one is a no-op — so shutdown does not have to know whether the
+            # metrics door was ever called.
+            close_redis_cache()
 
     app = FastAPI(
         title="FOOTBALL OS API",

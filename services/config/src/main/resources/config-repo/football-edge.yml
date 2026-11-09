@@ -6,7 +6,9 @@ spring:
         webflux:
           routes:
             - id: core-api
-              uri: ${apc.core-uri:http://localhost:8000}
+              # Same default as the edge's own application.yml: discover the core by name, fall
+              # back to a fixed address only when APC_CORE_URI is set.
+              uri: ${apc.core-uri:lb://football-core}
               predicates:
                 - Path=/api/v1/**
               filters:
