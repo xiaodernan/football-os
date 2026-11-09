@@ -18,6 +18,13 @@ running process, not from the file that configured it.
 The reactor builds offline: `mvn -o -B package` resolves from the local Maven repository, so the gate
 has no network behind it.
 
+Two copies of the edge's settings exist — its own `application.yml`, which must work when no config
+server is up, and `config-repo/football-edge.yml`, which the config server serves when one is. They are
+held equal by `apps/api/tests/test_edge_config_parity.py`: the case reads both files as data and compares
+the route table (id, order, uri, predicates, filters), the whole `resilience4j` breaker block and the
+whole rate-limit block, and asserts `core-api` sorts before the catch-all. A drift would be a gateway
+whose behaviour depends on whether another container happens to be running.
+
 ## 2. The build, as run
 
 ```

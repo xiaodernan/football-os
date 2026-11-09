@@ -1010,6 +1010,13 @@ gateway — without moving a single domain rule out of the core. The rule that k
     called; the API prefix never reaches the shell; both routes published); live walk with a shell stub
     on 3210: `/` and `/api/v1/health` each went to the right process, `/` carried both `X-Trace-Id` and
     the rate-limit headers — `docs/M14_SERVICE_PLANE.md` §10.
+55. **The edge's two copies of its settings cannot drift (done 2026-11-09).** The gateway runs from its
+    own `application.yml` when the config server is absent and from `config-repo/football-edge.yml` when
+    it is present, so a divergence would make behaviour depend on another container being up. 3 cases in
+    `apps/api/tests/test_edge_config_parity.py` read both files as data and compare the route table
+    (id, order, uri, predicates, filters), the breaker block and the rate-limit block, and assert the
+    API route sorts before the catch-all and the breaker's minimum is reachable inside its window —
+    `docs/M14_SERVICE_PLANE.md` §1.
 
 
 ## How this plan is executed
