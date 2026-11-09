@@ -92,7 +92,7 @@ const isFrench = (s) => FRENCH_ACCENTS.test(String(s ?? ''));
     }, enLatinNav);
     const hasFrench = isFrench(bodyText);
     const file = join(OUT_DIR, `${stamp}-${shot}`);
-    await page.screenshot({ path: file, fullPage: true });
+    await page.screenshot({ path: file, fullPage: true, captureBeyondViewport: false });
 
     const ok = dir === 'ltr' && missing.length === 0 && hasFrench && consoleErrors.length === 0;
     console.log(`${ok ? 'PASS' : 'FAIL'} ${name} — dir=${dir} · french=${hasFrench} · missingMessage=${missing.length} · consoleErrors=${consoleErrors.length} · shot=${shot}`);
@@ -130,7 +130,7 @@ const isFrench = (s) => FRENCH_ACCENTS.test(String(s ?? ''));
       }, enLatinNav);
       const hasFrench = isFrench(bodyText);
       const file = join(OUT_DIR, `${stamp}-${shot}`);
-      await page.screenshot({ path: file, fullPage: true });
+      await page.screenshot({ path: file, fullPage: true, captureBeyondViewport: false });
 
       const ok = dir === 'ltr' && missing.length === 0 && hasFrench && consoleErrors.length === 0;
       console.log(`${ok ? 'PASS' : 'FAIL'} ${name} — dir=${dir} · french=${hasFrench} · missingMessage=${missing.length} · consoleErrors=${consoleErrors.length} · shot=${shot}`);

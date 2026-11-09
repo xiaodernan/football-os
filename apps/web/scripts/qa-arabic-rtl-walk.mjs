@@ -54,6 +54,7 @@ const isArabic = (s) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\u
     { path: '/login', name: 'login', shot: 'arabic-login.png' },
     { path: '/challenges', name: 'challenges', shot: 'arabic-challenges.png' },
     { path: '/club/rules', name: 'club rules', shot: 'arabic-club-rules.png' },
+    { path: '/leaderboard', name: 'leaderboard', shot: 'arabic-leaderboard.png' },
   ];
 
   const authPages = AUTH_WALK
@@ -86,7 +87,7 @@ const isArabic = (s) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\u
     }, enLatinNav);
     const hasArabic = isArabic(bodyText);
     const file = join(OUT_DIR, `${stamp}-${shot}`);
-    await page.screenshot({ path: file, fullPage: true });
+    await page.screenshot({ path: file, fullPage: true, captureBeyondViewport: false });
 
     const ok = dir === 'rtl' && missing.length === 0 && hasArabic && consoleErrors.length === 0;
     console.log(`${ok ? 'PASS' : 'FAIL'} ${name} — dir=${dir} · arabic=${hasArabic} · missingMessage=${missing.length} · consoleErrors=${consoleErrors.length} · shot=${shot}`);
@@ -124,7 +125,7 @@ const isArabic = (s) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\u
       }, enLatinNav);
       const hasArabic = isArabic(bodyText);
       const file = join(OUT_DIR, `${stamp}-${shot}`);
-      await page.screenshot({ path: file, fullPage: true });
+      await page.screenshot({ path: file, fullPage: true, captureBeyondViewport: false });
 
       const ok = dir === 'rtl' && missing.length === 0 && hasArabic && consoleErrors.length === 0;
       console.log(`${ok ? 'PASS' : 'FAIL'} ${name} — dir=${dir} · arabic=${hasArabic} · missingMessage=${missing.length} · consoleErrors=${consoleErrors.length} · shot=${shot}`);

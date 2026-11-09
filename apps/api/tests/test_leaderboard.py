@@ -4,13 +4,10 @@ invisible on it until it says so itself, and every rank is plainly computed from
 
 from __future__ import annotations
 
-import os
-import uuid
-
 import pytest
 
 from app.core.db import SessionLocal, init_db
-from app.models import User, XpEvent, UserPlayer
+from app.models import User, UserPlayer, XpEvent
 
 
 @pytest.fixture()

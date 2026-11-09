@@ -4,8 +4,10 @@ Adds the opt-in the account's own leaderboard visibility column. Default false:
 a new account is not shown on the board until it says so itself.
 """
 
-from alembic import op
+from __future__ import annotations
+
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0060_xp_leaderboard"
 down_revision = "0059"

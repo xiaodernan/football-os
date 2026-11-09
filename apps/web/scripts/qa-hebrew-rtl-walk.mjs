@@ -56,6 +56,7 @@ const isHebrew = (s) => /[\u0590-\u05FF\uFB1D-\uFB4F]/.test(String(s ?? ''));
     { path: '/login', name: 'login', shot: 'hebrew-login.png' },
     { path: '/challenges', name: 'challenges', shot: 'hebrew-challenges.png' },
     { path: '/club/rules', name: 'club rules', shot: 'hebrew-club-rules.png' },
+    { path: '/leaderboard', name: 'leaderboard', shot: 'hebrew-leaderboard.png' },
   ];
 
   const authPages = AUTH_WALK
@@ -88,7 +89,7 @@ const isHebrew = (s) => /[\u0590-\u05FF\uFB1D-\uFB4F]/.test(String(s ?? ''));
     }, enLatinNav);
     const hasHebrew = isHebrew(bodyText);
     const file = join(OUT_DIR, `${stamp}-${shot}`);
-    await page.screenshot({ path: file, fullPage: true });
+    await page.screenshot({ path: file, fullPage: true, captureBeyondViewport: false });
 
     const ok = dir === 'rtl' && missing.length === 0 && hasHebrew && consoleErrors.length === 0;
     console.log(`${ok ? 'PASS' : 'FAIL'} ${name} — dir=${dir} · hebrew=${hasHebrew} · missingMessage=${missing.length} · consoleErrors=${consoleErrors.length} · shot=${shot}`);
@@ -126,7 +127,7 @@ const isHebrew = (s) => /[\u0590-\u05FF\uFB1D-\uFB4F]/.test(String(s ?? ''));
       }, enLatinNav);
       const hasHebrew = isHebrew(bodyText);
       const file = join(OUT_DIR, `${stamp}-${shot}`);
-      await page.screenshot({ path: file, fullPage: true });
+      await page.screenshot({ path: file, fullPage: true, captureBeyondViewport: false });
 
       const ok = dir === 'rtl' && missing.length === 0 && hasHebrew && consoleErrors.length === 0;
       console.log(`${ok ? 'PASS' : 'FAIL'} ${name} — dir=${dir} · hebrew=${hasHebrew} · missingMessage=${missing.length} · consoleErrors=${consoleErrors.length} · shot=${shot}`);
