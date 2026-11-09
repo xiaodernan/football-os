@@ -54,6 +54,9 @@ resilience4j:
     configs:
       default:
         sliding-window-size: 10
+        # Resilience4j's default minimum is 100 calls, and with a 10-call window that minimum can never
+        # be reached — the breaker would stay CLOSED forever and its thresholds would be decoration.
+        minimum-number-of-calls: 5
         failure-rate-threshold: 50
         wait-duration-in-open-state: 5s
         permitted-number-of-calls-in-half-open-state: 3

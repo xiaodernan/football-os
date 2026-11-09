@@ -994,6 +994,15 @@ gateway — without moving a single domain rule out of the core. The rule that k
     and the `rate_limited` refusal shape, and `GET /edge/limits` reports the policy and the number of
     tracked callers. 3 new edge tests (burst/refusal/refill, policy door, disabled opt-out); live walk with
     burst 3: 200, 200, 200, 429, refill, `/edge/limits` — `docs/M14_SERVICE_PLANE.md` §8.
+53. **The breaker can be asked what it thinks (done 2026-11-09).** `GET /edge/breaker` reads
+    `coreBreaker` out of the `CircuitBreakerRegistry`: state, the sliding window's counters, the
+    thresholds in force, and `present=false` before the first routed call. The door found a real defect:
+    Resilience4j's stock `minimum-number-of-calls` (100) inside a 10-call window meant the breaker could
+    never open, so the fallback was protecting a trip that could not happen. Both the local YAML and the
+    config-repo copy now set it to 5. 3 new edge tests (cold door, one failure with the thresholds,
+    five failures → OPEN plus a refused call); live walk: five 503s → `OPEN` / buffered 5 / failed 5 /
+    `failureRate=100`, a half-open trial opening a new window, then `notPermittedCalls` rising —
+    `docs/M14_SERVICE_PLANE.md` §9.
 
 
 ## How this plan is executed

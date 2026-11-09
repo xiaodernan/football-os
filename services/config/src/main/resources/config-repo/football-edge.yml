@@ -22,6 +22,8 @@ resilience4j:
     configs:
       default:
         sliding-window-size: 10
+        # Must be reachable inside the window: the stock 100 with a window of 10 could never open.
+        minimum-number-of-calls: 5
         failure-rate-threshold: 50
         wait-duration-in-open-state: 5s
         permitted-number-of-calls-in-half-open-state: 3

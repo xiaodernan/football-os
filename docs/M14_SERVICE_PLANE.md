@@ -1,4 +1,4 @@
-# M14 — the service plane: registry, config, edge (ROADMAP Phase 11, items 47–52)
+# M14 — the service plane: registry, config, edge (ROADMAP Phase 11, items 47–53)
 
 Date: 2026-11-09. The product was one deployable: a FastAPI core behind a Next.js front end. This unit
 gives it the shape a platform has in production — a service registry, a config server and an edge
@@ -24,10 +24,10 @@ has no network behind it.
 services> mvn -o -B package
 [INFO] FOOTBALL OS registry ......... SUCCESS
 [INFO] FOOTBALL OS config server .... SUCCESS
-[INFO] FOOTBALL OS edge ............. SUCCESS   (9 tests, 0 failures)
+[INFO] FOOTBALL OS edge ............. SUCCESS   (12 tests, 0 failures)
 ```
 
-Nine edge tests, each a different claim:
+Twelve edge tests, each a different claim:
 
 - `EdgeRoutingTest.a_routed_request_reaches_the_core_with_its_path_and_mints_a_trace_id` — a real
   HTTP server (JDK `HttpServer`) stands in for the core; the stub records the path and the trace header
@@ -49,6 +49,15 @@ Nine edge tests, each a different claim:
 - `...the_policy_is_read_from_the_running_filter` — `/edge/limits` returns the values the filter holds.
 - `EdgeRateLimitDisabledTest.a_disabled_limit_refuses_nothing_and_says_so` — with `enabled=false`, four
   requests all pass and `/edge/limits` says the limit is off.
+- `EdgeBreakerStateTest.the_door_reports_a_breaker_that_has_not_been_used_yet` — before any routed call
+  `/edge/breaker` answers `present=false` and `state=NOT_CREATED` rather than inventing a CLOSED breaker.
+- `...a_failed_call_is_visible_with_the_thresholds_in_force` — one failed call, then the door reads
+  `CLOSED`, one buffered call, one failure, `failureRate=-1`, and the thresholds actually applied
+  (window 10, threshold 50, minimum 5, half-open permits 3): a config block that is present but not
+  applied fails this comparison.
+- `...enough_failures_open_the_breaker_and_a_further_call_is_not_permitted` — five failed calls read
+  `OPEN`, buffered 5, failed 5, `failureRate=100`; the sixth answers 503 without reaching the stub and
+  `notPermittedCalls=1`.
 
 One trap recorded: the first `/edge/routes` implementation called `.block()` in the controller. On a
 gateway handler that runs on the netty event loop, `block()` is an `IllegalStateException`, and the door
@@ -87,8 +96,14 @@ X-Trace-Id: fallback-live-2
 ```
 
 The header and the body carry the same id: the fallback is not a generic 503 page, it is the product's
-refusal shape. The core was then restarted and the very first retry answered `200` — the breaker's
-half-open trial succeeded and closed it without a restart of the edge.
+refusal shape. The core was then restarted and the very first retry answered `200`, without a restart
+of the edge.
+
+That recovery was **not** the breaker closing: at that point the breaker could never open, because
+`minimum-number-of-calls` was still Resilience4j's stock 100 inside a 10-call window (found and fixed in
+§9, item 53). The 503 was the CircuitBreaker filter's fallback answering a failed call — which it does
+in any state — so the walk proved the fallback and not the trip. Item 53 makes the breaker able to open
+and adds the door that shows it.
 
 ## 5. Compose (item 50)
 
@@ -258,3 +273,63 @@ recording because a walk that does not rebuild can "prove" a missing feature.
 No football answer changes. A caller that behaves like a browser sees two extra response headers; a loop
 that asks faster than a human ever could is refused by the edge before the core is touched, and is told
 how long to wait.
+
+## 9. The breaker can be asked what it thinks (item 53)
+
+The route has been wrapped in a breaker since item 48, but until this item the only way to know what the
+breaker thought was to make a request and infer from the 503. `GET /edge/breaker` now reads the state out
+of the `CircuitBreakerRegistry` that the route's filter writes to: state, the sliding window's counters,
+and the thresholds actually in force. Before the first routed call it answers `present=false` /
+`state=NOT_CREATED`, because Resilience4j creates a breaker lazily and reporting `CLOSED` for one that
+does not exist would be an invented fact.
+
+**The door is what found the defect.** The configuration set `sliding-window-size: 10` but left
+`minimum-number-of-calls` at Resilience4j's stock 100 — a minimum larger than the window can never be
+reached, so `failureRate` stayed `-1` and the breaker could never open. The fallback still answered every
+failed call, because the CircuitBreaker filter's fallback runs on a failed call whichever state the
+breaker is in, which is why the earlier walk's 503 looked like a working breaker. It was a working
+fallback and a decorative breaker. Both `application.yml` and the config server's
+`config-repo/football-edge.yml` now set `minimum-number-of-calls: 5`.
+
+### 9.1 The test
+
+`EdgeBreakerStateTest` points the route at a refused port so every routed call fails, and reads the door
+three times in one breaker's life, in declared order:
+
+| read | what it proves |
+| --- | --- |
+| before traffic | `present=false`, `state=NOT_CREATED` — the door does not invent a CLOSED breaker |
+| after one failure | `present=true`, `CLOSED`, `bufferedCalls=1`, `failedCalls=1`, `failureRate=-1` (the window minimum is not reached), and the applied thresholds read back as 10 / 50 / 5 / 3 — a config block that is present but not applied fails here |
+| after five failures | `OPEN`, `bufferedCalls=5`, `failedCalls=5`, `failureRate=100`; a further call answers 503 without reaching the stub and `notPermittedCalls=1` |
+
+The third read is the one the old configuration could never produce: with minimum 100 it would still read
+`CLOSED` after five failures.
+
+### 9.2 The live walk
+
+Edge on 18080, core on 8100 stopped, registry on 8761:
+
+```
+cold   GET /edge/breaker → {"present":false,"state":"NOT_CREATED",...,"failureRate":-1.0}
+5 calls                  → 503, 503, 503, 503, 503
+       GET /edge/breaker → {"present":true,"state":"OPEN","slidingWindowSize":10,
+                            "failureRateThreshold":50.0,"minimumNumberOfCalls":5,
+                            "permittedCallsInHalfOpenState":3,"bufferedCalls":5,
+                            "failedCalls":5,"successfulCalls":0,"notPermittedCalls":0,
+                            "failureRate":100.0}
+```
+
+After the 5-second wait a trial call was permitted (`HALF_OPEN`); it failed, and the door then read
+`state=HALF_OPEN, bufferedCalls=1, failedCalls=1, failureRate=-1` — the trial opens a **new** window, it
+does not reset the five that opened the breaker. Four further calls in one burst permitted the remaining
+two trials (three in total, all failed) and refused the last two; the door read
+`state=OPEN, bufferedCalls=3, failedCalls=3, notPermittedCalls=2, failureRate=100.0`.
+
+`notPermittedCalls` is the counter that answers the operator's question — *is the core down, or is the
+breaker still holding the door shut?* A 503 with that counter rising means the core was never asked.
+
+### 9.3 What this changes for the product
+
+No football answer changes. An operator gains a door that distinguishes a dead core from an open breaker,
+and the settings that made the breaker unable to open are gone: since item 53 the protection can actually
+trip, and the state it trips into is readable rather than inferred.
