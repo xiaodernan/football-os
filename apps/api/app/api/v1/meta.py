@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.db import get_db, has_pgvector
 from app.providers import provider_status
 from app.services.club import organizations as club_service
+from app.services.community import posts as community_service
 from app.services.scouting.compare import DIMENSIONS, comparison_counts, comparison_ready
 from app.services.scouting.report import REPORT_FIELDS, report_counts, report_ready
 from app.services.scouting.requirements import SCOUT_DISCLAIMER, vocabulary_problems
@@ -167,7 +168,11 @@ def capabilities(db: Session = Depends(get_db)) -> dict[str, object]:
             "permissions": len(club_service.rules()["matrix"]["permissions"]),
             "isolation": club_service.rules()["matrix"]["rule"],
         },
-        "m9_community": False,
+        # M9 reports the way M3, M4 and M6 do: the flag is whether the community storage is present —
+        # the tier built its tables, doors and rules, and the walk measured it green — not whether anybody
+        # has posted yet. This line was a hardcoded `False` after the tier shipped, so every reader of
+        # /capabilities (and every account's Settings feature map) was told the community does not exist.
+        "m9_community": community_service.community_tables_present(db),
         # The languages this app will answer in — `middleware.ts` picks one of these from the `fo_locale`
         # cookie, the browser's `Accept-Language` and the account's own column. `locales` is derived from the
         # catalogue directory by the same discovery the Node gates and `tests/test_locale_claims.py` use; a locale

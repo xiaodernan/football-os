@@ -1,7 +1,7 @@
 ﻿# I18N Arc — living plan
 
 Measured on the working tree **2026-11-09** (with the M13 milestone landed as of `cadf3d3` — the arc's own
-record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§64, which is the honest ledger of
+record lives in `docs/I18N_ARC_VERIFICATION.md` §20–§65, which is the honest ledger of
 this arc; this file is a plan, never the evidence). Every figure below is re-derived by the gate named
 beside it.
 
