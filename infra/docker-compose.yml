@@ -70,5 +70,66 @@ services:
       - "127.0.0.1:4317:4317"
       - "127.0.0.1:4318:4318"
 
+  # ROADMAP Phase 11: the service plane. Profile-gated because these three are infrastructure around
+  # the core rather than part of it — `docker compose --profile plane up -d registry config edge`.
+  # Each runs the jar `mvn -o package` produced in services/; the build is a step, not a container,
+  # so the gate never waits on a Maven download inside Docker.
+  registry:
+    image: eclipse-temurin:21-jre
+    container_name: football_os_registry
+    profiles: ["plane"]
+    restart: unless-stopped
+    command: ["java", "-jar", "/app/registry.jar"]
+    volumes:
+      - ../services/registry/target/registry-0.1.0.jar:/app/registry.jar:ro
+    ports:
+      - "127.0.0.1:8761:8761"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  config:
+    image: eclipse-temurin:21-jre
+    container_name: football_os_config
+    profiles: ["plane"]
+    restart: unless-stopped
+    command: ["java", "-jar", "/app/config.jar"]
+    volumes:
+      - ../services/config/target/config-0.1.0.jar:/app/config.jar:ro
+    ports:
+      - "127.0.0.1:8888:8888"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  edge:
+    image: eclipse-temurin:21-jre
+    container_name: football_os_edge
+    profiles: ["plane"]
+    restart: unless-stopped
+    command: ["java", "-jar", "/app/edge.jar"]
+    volumes:
+      - ../services/edge/target/edge-0.1.0.jar:/app/edge.jar:ro
+    environment:
+      # The core runs on the host in development; from the container that is host.docker.internal.
+      APC_CORE_URI: ${APC_CORE_URI:-http://host.docker.internal:8100}
+      REGISTRY_URL: http://registry:8761/eureka/
+      CONFIG_URL: http://config:8888
+      EDGE_PORT: "8080"
+    ports:
+      - "127.0.0.1:18080:8080"
+    depends_on:
+      - registry
+      - config
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+
 volumes:
   db-data:

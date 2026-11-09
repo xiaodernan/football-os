@@ -49,3 +49,7 @@ var/
 
 # previous local builds kept beside the app (never committed)
 apps/.build-archive/
+
+# Maven build output for the service plane (ROADMAP Phase 11) — the jars are a build step, never committed
+services/**/target/
+

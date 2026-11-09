@@ -1,0 +1,25 @@
+# Shared settings every module in the service plane reads (served by services/config).
+spring:
+  cloud:
+    config:
+      discovery:
+        enabled: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${REGISTRY_URL:http://localhost:8761/eureka/}
+    registry-fetch-interval-seconds: 10
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

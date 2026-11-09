@@ -1,0 +1,24 @@
+server:
+  port: ${CONFIG_PORT:8888}
+
+spring:
+  application:
+    name: football-config
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          # Packaged with the module, so the served configuration travels with the artifact and is
+          # reviewable in the diff rather than assembled from environment variables at boot.
+          search-locations: classpath:/config-repo
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh
+  endpoint:
+    health:
+      show-details: always

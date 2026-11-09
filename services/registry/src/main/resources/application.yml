@@ -1,0 +1,30 @@
+server:
+  port: ${REGISTRY_PORT:8761}
+
+spring:
+  application:
+    name: football-registry
+
+# The first node does not ask itself for directions. Registration and registry fetching are the two
+# calls a Eureka client makes to its server; on the server they would answer "nothing here yet" and
+# keep the server in STARTING, so both are off and the console is the whole of its state.
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: ${REGISTRY_URL:http://localhost:8761/eureka/}
+  server:
+    # A development plane restarts services constantly; a longer eviction window would keep a dead port
+    # in the table for a minute after the process is gone.
+    eviction-interval-timer-in-ms: 5000
+    enable-self-preservation: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

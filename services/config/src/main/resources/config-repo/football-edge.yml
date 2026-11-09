@@ -1,0 +1,26 @@
+# football-edge — the settings the edge runs with, reviewable in the diff.
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: core-api
+              uri: ${apc.core-uri:http://localhost:8000}
+              predicates:
+                - Path=/api/v1/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: coreBreaker
+                    fallbackUri: forward:/edge/fallback
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true

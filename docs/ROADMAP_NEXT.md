@@ -949,6 +949,39 @@ receipt keeps the numbers it was actually paid on.
     12,000, 38,725 in the ground with 37,725 paid, gate 75,450, timeline 0 disagreements).
 
 
+## Phase 11 — the service plane (Spring Cloud, additive)
+
+The product is one deployable today: a FastAPI core behind a Next.js front end. This phase gives it the
+shape a club's platform actually has in production — a service registry, a config server and an edge
+gateway — without moving a single domain rule out of the core. The rule that keeps this honest:
+
+- **the Python core stays canonical.** No football rule, no figure and no sentence about a player is
+  computed in Java. The service plane routes, resolves, configures, traces and protects; it answers no
+  question the core could answer.
+- **every module is built, booted and probed**, not merely written: `mvn -o package` green, the process
+  listening, and a real request read back through it (`docs/M14_SERVICE_PLANE.md`).
+- **offline-first.** The modules resolve from the local Maven repository (Spring Boot 3.5.x, Spring Cloud
+  2025.0.x) so the gate does not depend on a network.
+
+47. **The registry and the config server (done 2026-11-09).** `services/pom.xml` is the reactor
+    (Spring Boot 3.5.16 / Spring Cloud 2025.0.3 / Java 21, offline-resolvable); `services/registry` is a
+    Eureka server on `:8761` and `services/config` a Spring Cloud Config server on `:8888` with the
+    `native` profile over `classpath:/config-repo/`. Evidence: `mvn -o -B package` green,
+    `docs/M14_SERVICE_PLANE.md` §2.
+48. **The edge is a gateway (done 2026-11-09).** `services/edge` is a Spring Cloud Gateway. Its route
+    table sends `/api/v1/**` to the core (`apc.core-uri`, `APC_CORE_URI`), a global `TraceIdFilter` mints
+    or preserves `X-Trace-Id` in both directions, a Resilience4j breaker whose fallback answers
+    `503 {"code": "core_unavailable"}` with the trace id protects the route, and `/edge/routes` prints
+    the resolved table from `RouteDefinitionLocator` — read from the running gateway, not the YAML.
+    Evidence: the walk's 16/16 checks and the live down/back probe in `docs/M14_SERVICE_PLANE.md` §3–4.
+49. **The edge's contract is a test (done 2026-11-09).** Four `@SpringBootTest(webEnvironment =
+    RANDOM_PORT)` cases stand a real JDK HTTP server in for the core and read both ends of the hop:
+    path, minted id, supplied id, resolved route table, and the 503 fallback. All green, 0 failures.
+50. **The compose file gains the plane (done 2026-11-09).** `infra/docker-compose.yml` grows
+    `registry`, `config` and `edge` under the `plane` profile, running the jars the build produced;
+    `docs/M14_SERVICE_PLANE.md` §5 names the start order.
+
+
 ## How this plan is executed
 
 - One phase at a time; a phase does not "open" until the previous one is running, tested and verified

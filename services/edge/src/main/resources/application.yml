@@ -1,0 +1,58 @@
+server:
+  port: ${EDGE_PORT:8080}
+
+spring:
+  application:
+    name: football-edge
+  config:
+    # Optional on purpose: a developer running only the edge still gets a working gateway, and the
+    # config server, when it is up, is the source of the shared settings.
+    import: optional:configserver:${CONFIG_URL:http://localhost:8888}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: core-api
+              uri: ${apc.core-uri:http://localhost:8000}
+              predicates:
+                - Path=/api/v1/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: coreBreaker
+                    fallbackUri: forward:/edge/fallback
+          # The trace id is a global filter, not a route filter: a route added tomorrow is traced without
+          # anyone remembering to add it.
+          httpclient:
+            connect-timeout: 1000
+            response-timeout: 10s
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${REGISTRY_URL:http://localhost:8761/eureka/}
+    registry-fetch-interval-seconds: 10
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
