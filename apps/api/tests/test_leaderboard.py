@@ -7,6 +7,7 @@ from __future__ import annotations
 import pytest
 
 from app.core.db import SessionLocal, init_db
+from app.main import app
 from app.models import User, UserPlayer, XpEvent
 
 
@@ -88,3 +89,18 @@ def test_leaderboard_door_orders_opted_in_accounts_by_xp_and_refuses_unopted(cli
     assert after["leaders"][0]["name"] == "Player One"
     assert after["me"]["visible"] is True
     assert after["me"]["xp"] == 100
+
+
+def test_the_board_reads_without_a_credential_and_the_contract_says_public(client) -> None:
+    """Anyone may read the opted-in board; only the opt-in switch is private.
+
+    This is the shape the security gate knocks: an operation the contract calls secured must answer 401
+    without a credential. The read carries an optional bearer, which FastAPI would otherwise publish as
+    a security requirement — so the route declares `security: []` and this case binds the artifact, the
+    anonymous answer and the private switch together.
+    """
+    assert client.get("/api/v1/leaderboard").status_code == 200
+
+    paths = app.openapi()["paths"]["/api/v1/leaderboard"]
+    assert paths["get"].get("security", []) == []
+    assert paths["post"].get("security"), "the opt-in switch must stay private"

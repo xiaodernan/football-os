@@ -18,7 +18,12 @@ router = APIRouter(tags=["leaderboard"])
 
 @router.get("/leaderboard")
 def get_leaderboard(db: Session = Depends(get_db), user: User | None = Depends(optional_user)) -> dict[str, object]:
-    """The top-ten by 30-day XP among opted-in accounts, plus the caller's own row when signed in."""
+    """The top-ten by 30-day XP among opted-in accounts, plus the caller's own row when signed in.
+
+    The door is read-only and public: the board lists only accounts that opted in, and a reader with no
+    credential gets the same board. `optional_user` still declares the bearer scheme, so `PUBLIC_READS`
+    in `app.main` erases the security requirement this operation never enforces.
+    """
     leaders = leaderboard_service.leaders(db, top=10)
     me = leaderboard_service.my_stats(db, user) if user else None
     visible = leaderboard_service.count_visible(db)

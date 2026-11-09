@@ -952,7 +952,7 @@ per-video deletion was missing, is corrected in
 pressed it in a browser — what the delete *did* leave behind was the clip's own analysis job, and that is
 fixed.)
 
-## The gate's security half: a first-party probe, and the report it leaves (2026-10-22, rerun 2026-10-24, rerun 2026-10-28, rerun 2026-11-08)
+## The gate's security half: a first-party probe, and the report it leaves (2026-10-22, rerun 2026-10-24, rerun 2026-10-28, rerun 2026-11-08, rerun 2026-11-09)
 
 M12's gate says **"load + pen test report clean"**. The load half had a harness, a ceiling and a paired
 measurement. The security half had a code-level census (§60), the answer-table gates (§51) and a list of
@@ -962,14 +962,14 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `86103abc854826f49a1f0c03eb027587ea5328f9e30c907acfaf1d4a31321a56` that population is **235
-secured operations, 54 public operations and 100 private GET paths**, with floors of 200/40/85 printed on
+SHA-256 `79b0d3d342811632455e5aa5a6c2cff0df50663c828082d81da40cccd862d098` that population is **236
+secured operations, 55 public operations and 100 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 235 / 54 / 100 |
-| S1 | every secured operation refuses a caller with no credential | **235 knocked, 235 × 401**, 0 deviations |
+| C0 | the door population comes from the contract and is not empty | 236 / 55 / 100 |
+| S1 | every secured operation refuses a caller with no credential | **236 knocked, 236 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |
@@ -995,12 +995,18 @@ a fresh database migrated to head `0041`, after the notifications tier added fou
 the 11th** — and answered **10/10, 0 failed, 0 server errors** in 9.27 s. Run F repeated the shape on
 2026-10-29 against the walk database after §24's scouting report gained its share token's four doors
 (three private, one public) — **220 doors answered 401, the same pairs, the same 429 at the 11th** —
-and answered **10/10, 0 failed, 0 server errors** in 1.58 s, which is the run
-[the report](SECURITY_PROBE_REPORT.md) now records as current. Runs A–D were made against contracts
+and answered **10/10, 0 failed, 0 server errors** in 1.58 s, which was the run
+[the report](SECURITY_PROBE_REPORT.md) recorded as current then. Runs A–D were made against contracts
 at the earlier SHAs `31000605776d55d3cf0881358087391c65a0cd807869661ed86abe157c88b32e` (A–C) and
 `71a5f9bcd1ba3aa0cf8436ae7fde9dcd881ebd080d5e842249492e37e4fa4a04` (D); their census was
 the same 212 / 52 / 91, because the intervening commits changed descriptions, not doors — the door
-population moved only when the notifications tier and then the share token landed their doors.
+population moved only when the notifications tier and then the share token landed their doors. Runs G
+(2026-10-30, 226 / 54 / 97 after the academy share and cost-alert doors), H (2026-10-31, the same
+census after a field-only change) and I (2026-11-08, 235 / 54 / 100 after the career-milestone
+consolidation) followed. Run J (2026-11-09) is the run this record quotes: the leaderboard read was
+published as public, so the census read 236 / 55 / 100, every secured door still answered 401 without
+a credential, and the ten checks answered **10/10, 0 failed, 0 server errors** in 5.86 s on the
+development PostgreSQL database migrated to head `0060`.
 S4 is constructed so the negative is not vacuous: the private `HIT` and the public `MISS → HIT` are read
 before "the stranger never received the owner's row", so the cache is proven to have been serving at the
 moment the isolation held.

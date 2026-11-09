@@ -14425,7 +14425,7 @@
           "leaderboard"
         ],
         "summary": "Get Leaderboard",
-        "description": "The top-ten by 30-day XP among opted-in accounts, plus the caller's own row.\n\nThe caller is the account X is authenticated as. A person's own rank is computed among the\nopted-in; a person who opted out is still shown their own XP and streak without a rank.",
+        "description": "The top-ten by 30-day XP among opted-in accounts, plus the caller's own row when signed in.\n\nThe door is read-only and public: the board lists only accounts that opted in, and a reader with no\ncredential gets the same board. `optional_user` still declares the bearer scheme, so `PUBLIC_READS`\nin `app.main` erases the security requirement this operation never enforces.",
         "operationId": "get_leaderboard_api_v1_leaderboard_get",
         "responses": {
           "200": {
@@ -14440,11 +14440,7 @@
             }
           }
         },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        "security": []
       },
       "post": {
         "tags": [

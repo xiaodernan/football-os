@@ -269,6 +269,13 @@ async def cached_response_for(
     return replay
 
 
+# Operations that answer without a credential while their dependency graph still carries an optional
+# bearer. FastAPI 0.115 publishes that bearer as a security requirement, and `openapi_extra` cannot
+# remove it (two lists are concatenated, not replaced), so the published schema is corrected below.
+# Every entry here is a promise that the door is readable anonymously — a test must prove it.
+PUBLIC_READS: frozenset[tuple[str, str]] = frozenset({("/api/v1/leaderboard", "get")})
+
+
 def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
@@ -434,6 +441,20 @@ def create_app() -> FastAPI:
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:
         return JSONResponse({"status": "ok", "demo_mode": settings.is_demo_mode})
+
+    # The correction itself: the wrapped function keeps FastAPI's own generation and caching, and this
+    # pass only erases a requirement the framework added for an operation that does not enforce it.
+    original_openapi = app.openapi
+
+    def openapi_with_public_reads() -> dict[str, Any]:
+        schema = original_openapi()
+        for path, method in PUBLIC_READS:
+            operation = schema.get("paths", {}).get(path, {}).get(method)
+            if operation is not None:
+                operation["security"] = []
+        return schema
+
+    app.openapi = openapi_with_public_reads  # type: ignore[method-assign]
 
     return app
 

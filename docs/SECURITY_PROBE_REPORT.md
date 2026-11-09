@@ -15,13 +15,13 @@ answer rather than from an assertion about the code.
 artifact the web client and the currency gates read — and takes every operation that declares a
 `security` requirement as a private door, every operation that declares none as a public one.
 
-At the latest run recorded here (run I, §2) the contract's SHA-256 was
-`86103abc854826f49a1f0c03eb027587ea5328f9e30c907acfaf1d4a31321a56`, and the census read:
+At the latest run recorded here (run J, §2) the contract's SHA-256 was
+`79b0d3d342811632455e5aa5a6c2cff0df50663c828082d81da40cccd862d098`, and the census read:
 
 | measurement | value | floor |
 | --- | --- | --- |
-| secured operations | 235 | 200 |
-| public operations | 54 | 40 |
+| secured operations | 236 | 200 |
+| public operations | 55 | 40 |
 | private `GET` paths | 100 | 85 |
 
 The floors exist so an empty or half-read contract cannot pass as a clean probe; they are printed with
@@ -47,29 +47,33 @@ doors — three private (`POST /club/academy/{ident}/plans/{plan}/share`, `GET /
 `POST /metrics/alerts/{alert}/acknowledge`), so the census moved to 226 / 54 / 97. Run H is the run
 against the contract as committed then: item 6's wage ceiling added the `wage_ceiling` field to
 `CareerIn` (with its 0..10,000,000 bounds), which moved the contract's bytes without adding or removing
-a door, so the census stayed 226 / 54 / 97. Run I is the run against the contract as committed today:
+a door, so the census stayed 226 / 54 / 97. Run I was the run against the contract as committed then:
 the consolidated career-milestone landed nine new private doors (five behind `/api/v1/careers*` —
 cup, season-tickets (get+post), stadium, tickets (get+put), training (get+post) = five paths / eight
 operations — and the new `/api/v1/transfers*` door), so secured operations moved to 235 / 54 / 100 and
-the S1 column moved with them below.
+the S1 column moved with them below. Run J is the run against the contract as committed today:
+`GET /api/v1/leaderboard` is a public read by design and the contract now says so (`security: []`), so
+one operation left the secured set and the public set grew by one — 236 / 55 / 100.
 
 ## 2. The runs
 
 Runs A–C were made on 2026-10-22 local time (their reports' timestamps are UTC, `2026-10-21T19:2x`)
 against a live uvicorn on `127.0.0.1:8751`; run D was made on 2026-10-24 local time (`2026-10-23T19:16`
 UTC) on port 8752; run E was made on 2026-10-28 local time (`2026-10-27T16:32` UTC) on port 8753; run F
-was made on 2026-10-29 local time (`2026-10-29T12:17` UTC) on port 8732; run G was made on 2026-10-30 local time (`2026-10-29T19:27` UTC) on port 8751; run H was made on 2026-10-31 local time (`2026-10-30T16:18` UTC) on port 8754; run I was made on 2026-11-08 local time (`2026-11-08T13:14` UTC) on port 8755. All nine used
+was made on 2026-10-29 local time (`2026-10-29T12:17` UTC) on port 8732; run G was made on 2026-10-30 local time (`2026-10-29T19:27` UTC) on port 8751; run H was made on 2026-10-31 local time (`2026-10-30T16:18` UTC) on port 8754; run I was made on 2026-11-08 local time (`2026-11-08T13:14` UTC) on port 8755; run J was made on 2026-11-09 local time (`2026-11-09T14:52` UTC) on port 8751. All ten used
 `ENV=development` — the configuration in which the response cache and the rate limiter are live, since
-both return early under `ENV=test`. Each run used a fresh server process and a fresh database, because
-the limiter's window and the near cache live in process memory.
+both return early under `ENV=test`. Each run used a fresh server process, because the limiter's window
+and the near cache live in process memory. Runs A–I each used a fresh database; run J ran against the
+development database (`football_os` on the project's PostgreSQL, migrated to head `0060`) while the
+leaderboard contract change was being verified on it, and its evidence is read back below.
 
-| | run A | run B | run C | run D | run E | run F | run G | run H | run I |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| server cache tier | degraded — the default Redis on 6379 refused the handshake, so the near tier served | **live** — the project's authenticated Redis on 63790 (`REDIS_URL`), connected | **live**, same tier and URL as run B | **live**, same tier and URL as run B | **live**, same tier and URL as run B | degraded — Redis unavailable, so the near tier served | degraded — no `REDIS_URL` was set on this server, so the near tier served | degraded — no `REDIS_URL` was set on this server, so the near tier served | **live** — the project's authenticated Redis on 63790 db 7 (`REDIS_URL`), connected |
-| CORS origin configured | `http://localhost:3000` (the probe's old default, set on that server) | the project's own `apps/api/.env` pair, `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` | `http://127.0.0.1:3218` (the web shell this run's page walk used) | `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` |
-| database | `.scratch/m12-probe.db` (SQLite) | `.scratch/m12-probe-redis.db` (SQLite) | `football_os_probe_m12` on the project's PostgreSQL (port 54321), migrated to head | `football_os_probe_m12_d` on the project's PostgreSQL (port 54321), migrated to head `0036` | `football_os_probe_m12_e` on the project's PostgreSQL (port 54321), migrated to head `0041` | `.scratch/walk-academy.db` (SQLite, the world-synced walking database) | `.scratch/probe-g.db` (SQLite, created by the app on startup) | `.scratch/probe-h.db` (SQLite, created by the app on startup) | `football_probe_i` on the project's PostgreSQL (port 54321), migrated to head `0058` |
-| report | `.scratch/security-probe.json` | `.scratch/security-probe-redis.json` | `.scratch/security-probe-pg.json` | `.scratch/security-probe-d.json` | `.scratch/security-probe-e.json` | `.scratch/probe-18.json` | `.scratch/security-probe-g.json` | `.scratch/security-probe-h.json` | `.scratch/security-probe-run-i.json` |
-| result | **10 passed / 0 failed / 0 server errors**, 7.83 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 19.61 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 11.37 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 6.88 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 9.27 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 1.58 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 17.58 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 15.7 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 6.52 s |
+| | run A | run B | run C | run D | run E | run F | run G | run H | run I | run J |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| server cache tier | degraded — the default Redis on 6379 refused the handshake, so the near tier served | **live** — the project's authenticated Redis on 63790 (`REDIS_URL`), connected | **live**, same tier and URL as run B | **live**, same tier and URL as run B | **live**, same tier and URL as run B | degraded — Redis unavailable, so the near tier served | degraded — no `REDIS_URL` was set on this server, so the near tier served | degraded — no `REDIS_URL` was set on this server, so the near tier served | **live** — the project's authenticated Redis on 63790 db 7 (`REDIS_URL`), connected | degraded — no `REDIS_URL` was set on this server, so the near tier served |
+| CORS origin configured | `http://localhost:3000` (the probe's old default, set on that server) | the project's own `apps/api/.env` pair, `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` | `http://127.0.0.1:3218` (the web shell this run's page walk used) | `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` | `http://localhost:3210` |
+| database | `.scratch/m12-probe.db` (SQLite) | `.scratch/m12-probe-redis.db` (SQLite) | `football_os_probe_m12` on the project's PostgreSQL (port 54321), migrated to head | `football_os_probe_m12_d` on the project's PostgreSQL (port 54321), migrated to head `0036` | `football_os_probe_m12_e` on the project's PostgreSQL (port 54321), migrated to head `0041` | `.scratch/walk-academy.db` (SQLite, the world-synced walking database) | `.scratch/probe-g.db` (SQLite, created by the app on startup) | `.scratch/probe-h.db` (SQLite, created by the app on startup) | `football_probe_i` on the project's PostgreSQL (port 54321), migrated to head `0058` | `football_os` on the project's PostgreSQL (port 54321), migrated to head `0060` |
+| report | `.scratch/security-probe.json` | `.scratch/security-probe-redis.json` | `.scratch/security-probe-pg.json` | `.scratch/security-probe-d.json` | `.scratch/security-probe-e.json` | `.scratch/probe-18.json` | `.scratch/security-probe-g.json` | `.scratch/security-probe-h.json` | `.scratch/security-probe-run-i.json` | `.scratch/security-probe-run-j.json` |
+| result | **10 passed / 0 failed / 0 server errors**, 7.83 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 19.61 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 11.37 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 6.88 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 9.27 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 1.58 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 17.58 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 15.7 s, rc=0 | **10 passed / 0 failed / 0 server errors**, 6.52 s | **10 passed / 0 failed / 0 server errors**, 5.86 s |
 
 Run C differs from run B in one input — `DATABASE_URL` — so the engine is the only candidate for any
 difference, and the ten checks read the same evidence: the same 212 doors answering 401, the same
@@ -108,6 +112,14 @@ It answered the ten checks on a live shared Redis tier (db 7); S1 knocked every 
 credential and recorded 401 for all 235. The census it read is the one printed in §1: 235 secured /
 54 public / 100 private `GET` paths; the S1 row in §3 records the same figures.
 
+Run J repeated the shape on the development PostgreSQL database (`football_os`, port 54321) migrated to
+head `0060`, against the contract after the leaderboard read was published as public. It answered the
+ten checks with the near cache tier serving (no `REDIS_URL` was set on that server); S1 knocked every
+secured door with no credential and recorded 401 for all 236 — including `POST /api/v1/leaderboard`,
+which the contract still marks secured — while the now-public `GET /api/v1/leaderboard` answered 200
+without one. The census it read is the one printed in §1: 236 secured / 55 public / 100 private `GET`
+paths; the S1 row in §3 records the same figures.
+
 Runs B and C are the ones that matter for the cache claim: the shared tier was the source of the
 cross-account replay fixed at M12 Item 6, so the probe was repeated with that tier actually in the
 request path rather than with it degraded. `--allow-origin` now defaults to the project's own web origin (3210); run A had
@@ -127,10 +139,10 @@ re-running the probe against the same contract is what reproduces them.
 
 ## 3. The ten checks
 
-| ident | claim | measured in run I |
+| ident | claim | measured in run J |
 | --- | --- | --- |
-| C0 | the private-door population is read from the committed contract and is not empty | 235 secured / 54 public / 100 private GET paths, contract SHA-256 above |
-| S1 | every secured operation refuses a caller with no credential, and asks for one | **235 knocked, 235 answered 401**, 0 deviations |
+| C0 | the private-door population is read from the committed contract and is not empty | 236 secured / 55 public / 100 private GET paths, contract SHA-256 above |
+| S1 | every secured operation refuses a caller with no credential, and asks for one | **236 knocked, 236 answered 401**, 0 deviations |
 | S2 | a token whose signature no longer verifies is refused | 401, body keys `code`, `message` |
 | S3 | one account's row is absent to another, in both the direct read and the listing | create 201; owner read 200; stranger read **404**; stranger patch **404**; stranger's listing 200 with the owner's row absent; `/auth/me` caller-scoped |
 | S4 | a public answer is served from cache under its own request id, and a cached private answer never crosses callers | private: A MISS → HIT, B MISS → HIT, **stranger never received the owner's row**; public: MISS → HIT, bodies byte-identical, request ids different |
