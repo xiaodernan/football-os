@@ -608,7 +608,15 @@
     "milestoneM6": "M6 · Simulation de match",
     "milestoneM7": "M7 · Scouting",
     "milestoneM8": "M8 · Club OS",
-    "milestoneM9": "M9 · Communauté"
+    "milestoneM9": "M9 · Communauté",
+    "prefsEyebrow": "Votre bac de notifications",
+    "prefsTitle": "Les événements qui vous sont destinés",
+    "prefsFooter": "Un type mis en sourdine n'est jamais écrit — le bac reste vide par choix, et la réouverture reprend l'écriture à partir de ce moment.",
+    "prefsNote": "Trois types d'événements peuvent atteindre votre bac. Décochez-en un et ses événements cessent d'être écrits.",
+    "prefsFollower": "Un nouvel abonné",
+    "prefsComment": "Un commentaire sur l'une de vos publications",
+    "prefsReaction": "Une réaction à l'une de vos publications",
+    "prefsFailed": "Échec de l'enregistrement des préférences. Réessayez."
   },
   "disclaimer": {
     "demoData": "Données de démonstration — tout le contenu est synthétique et fictif.",
@@ -4247,7 +4255,8 @@
     "video_limit": "Ce compte détient déjà autant de fichiers qu'il peut.",
     "window_closed": "La fenêtre de ce scénario est close, son effectif est donc définitif.",
     "wrong_path": "Ce chemin n'est pas celui qui sert ceci.",
-    "cannot_play_cup": "Cette carrière ne peut pas jouer ce tour de coupe."
+    "cannot_play_cup": "Cette carrière ne peut pas jouer ce tour de coupe.",
+    "unknown_notification_kind": "Type de notification inconnu. Le bac connaît abonné, commentaire et réaction — c'est toute la liste."
   },
   "errorBoundary": {
     "eyebrow": "Une erreur est survenue",
@@ -4256,11 +4265,11 @@
     "title": "Cette page n'a pas pu être chargée"
   },
   "notifications": {
-    "metaTitle": "Notifications",
-    "metaDescription": "Les événements que votre compte doit entendre : un nouvel abonné, un commentaire, une réaction — chacun écrit quand il s'est produit.",
-    "eyebrow": "Votre plateau",
-    "title": "Notifications",
-    "lede": "Une ligne par événement, écrite quand l'événement s'est produit : quelqu'un vous a suivi, a commenté votre publication, ou a réagi. Vos propres actes ne vous sont pas une nouvelle, donc ils n'apparaissent jamais ici.",
+    "metaTitle": "Le bac de notifications",
+    "metaDescription": "Les événements destinés à votre compte : un nouvel abonné, un commentaire, une réaction — écrits à l'instant où ils arrivent.",
+    "eyebrow": "Votre bac",
+    "title": "Le bac de notifications",
+    "lede": "Une ligne par événement, écrit à l'instant où il arrive : quelqu'un vous suit, commente votre publication ou y réagit. Vos propres actes ne sont pas des nouvelles pour vous, donc ils n'apparaissent jamais ici.",
     "trayEyebrow": "{unread} non lus sur {total}",
     "trayTitle": "Le plateau",
     "markAll": "Tout marquer comme lu",

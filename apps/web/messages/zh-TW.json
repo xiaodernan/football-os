@@ -608,7 +608,15 @@
     "milestoneM6": "M6 · 比賽模擬",
     "milestoneM7": "M7 · 球探",
     "milestoneM8": "M8 · 俱樂部 OS",
-    "milestoneM9": "M9 · 社群"
+    "milestoneM9": "M9 · 社群",
+    "prefsEyebrow": "你的通知托盤",
+    "prefsTitle": "哪些事件進入你的托盤",
+    "prefsFooter": "被靜音的類別完全不會寫入——托盤因你的選擇而保持空白，重新開啟後從那一刻起恢復寫入。",
+    "prefsNote": "有三類事件可以進入你的托盤。取消勾選一類，該類事件就完全不再寫入。",
+    "prefsFollower": "新的追蹤者",
+    "prefsComment": "你貼文上的一則留言",
+    "prefsReaction": "你貼文上的一次反應",
+    "prefsFailed": "偏好儲存失敗。請重試。"
   },
   "disclaimer": {
     "demoData": "示範資料——所有內容均為合成虛構。",
@@ -4247,7 +4255,8 @@
     "video_limit": "這個帳號的片段數量已達上限。",
     "window_closed": "那個劇本的窗口已經關閉，陣容已定。",
     "wrong_path": "那個地址不是提供這項內容的路徑。",
-    "cannot_play_cup": "這個賽季無法進行這場盃賽。"
+    "cannot_play_cup": "這個賽季無法進行這場盃賽。",
+    "unknown_notification_kind": "未知的通知類別。托盤認識追蹤者、留言和反應——這就是全部清單。"
   },
   "errorBoundary": {
     "eyebrow": "出了點問題",
@@ -4256,10 +4265,10 @@
     "title": "這個頁面沒有載入出來"
   },
   "notifications": {
-    "metaTitle": "通知",
+    "metaTitle": "通知托盤",
     "metaDescription": "你的帳號應該聽到的事件：新追蹤者、留言、反應——每個都在事件發生的那一刻寫入。",
     "eyebrow": "你的托盤",
-    "title": "通知",
+    "title": "通知托盤",
     "lede": "一個事件一列，在事件發生的那一刻寫入：有人追蹤了你、留言了你的貼文、或對它作出了反應。你自己的行為不是給你的新聞，所以永遠不會出現在這裡。",
     "trayEyebrow": "{total} 列中 {unread} 列未讀",
     "trayTitle": "托盤",

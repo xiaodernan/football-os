@@ -608,7 +608,15 @@
     "milestoneM6": "M6 · 比赛模拟",
     "milestoneM7": "M7 · 球探",
     "milestoneM8": "M8 · 俱乐部 OS",
-    "milestoneM9": "M9 · 社区"
+    "milestoneM9": "M9 · 社区",
+    "prefsEyebrow": "你的通知托盘",
+    "prefsTitle": "哪些事件进入你的托盘",
+    "prefsFooter": "被静音的类别完全不会写入——托盘因你的选择而保持空白，重新开启后从那一刻起恢复写入。",
+    "prefsNote": "有三类事件可以进入你的托盘。取消勾选一类，该类事件就完全不再写入。",
+    "prefsFollower": "新的关注者",
+    "prefsComment": "你帖子上的一条评论",
+    "prefsReaction": "你帖子上的一次反应",
+    "prefsFailed": "偏好保存失败。请重试。"
   },
   "disclaimer": {
     "demoData": "演示数据——所有内容均为合成虚构。",
@@ -4247,7 +4255,8 @@
     "video_limit": "这个账号的片段数量已达上限。",
     "window_closed": "那个剧本的窗口已经关闭，阵容已定。",
     "wrong_path": "那个地址不是提供这项内容的路径。",
-    "cannot_play_cup": "这个赛季无法进行这场杯赛。"
+    "cannot_play_cup": "这个赛季无法进行这场杯赛。",
+    "unknown_notification_kind": "未知的通知类别。托盘认识关注者、评论和反应——这就是全部清单。"
   },
   "errorBoundary": {
     "eyebrow": "出了点问题",
@@ -4256,10 +4265,10 @@
     "title": "这个页面没有加载出来"
   },
   "notifications": {
-    "metaTitle": "通知",
+    "metaTitle": "通知托盘",
     "metaDescription": "你的账号应该听到的事件：新关注者、评论、反应——每个都在事件发生的那一刻写入。",
     "eyebrow": "你的托盘",
-    "title": "通知",
+    "title": "通知托盘",
     "lede": "一个事件一行，在事件发生的那一刻写入：有人关注了你、评论了你的帖子、或对它作出了反应。你自己的行为不是给你的新闻，所以永远不会出现在这里。",
     "trayEyebrow": "{total} 条中 {unread} 条未读",
     "trayTitle": "托盘",

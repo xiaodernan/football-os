@@ -608,7 +608,15 @@
     "milestoneM6": "M6 · Match simulation",
     "milestoneM7": "M7 · Scouting",
     "milestoneM8": "M8 · Club OS",
-    "milestoneM9": "M9 · Community"
+    "milestoneM9": "M9 · Community",
+    "prefsEyebrow": "Your notification tray",
+    "prefsTitle": "Which events reach your tray",
+    "prefsFooter": "A muted kind is never written — the tray stays empty by choice, and unmuting reopens it from that moment.",
+    "prefsNote": "Three events can land in your tray. Untick one and its events stop being written at all.",
+    "prefsFollower": "A new follower",
+    "prefsComment": "A comment on one of your posts",
+    "prefsReaction": "A reaction to one of your posts",
+    "prefsFailed": "The preferences could not be saved. Try again."
   },
   "disclaimer": {
     "demoData": "Demo data — all content is synthetic and fictional.",
@@ -4247,7 +4255,8 @@
     "video_limit": "This account already holds as many clips as it may.",
     "window_closed": "That scenario's window has closed, so its squad is final.",
     "wrong_path": "That path is not the one that serves this.",
-    "cannot_play_cup": "This career cannot play that cup tie."
+    "cannot_play_cup": "This career cannot play that cup tie.",
+    "unknown_notification_kind": "Unknown notification kind. The tray knows follower, comment and reaction — that is the whole list."
   },
   "errorBoundary": {
     "eyebrow": "Something went wrong",
@@ -4256,10 +4265,10 @@
     "title": "This page could not be loaded"
   },
   "notifications": {
-    "metaTitle": "Notifications",
+    "metaTitle": "The notification tray",
     "metaDescription": "The events your account should hear about: a new follower, a comment, a reaction — each written when it happened.",
     "eyebrow": "Your tray",
-    "title": "Notifications",
+    "title": "The notification tray",
     "lede": "One row per event, written when the event happened: someone followed you, commented on your post, or reacted to it. Your own acts are not news to you, so they never appear here.",
     "trayEyebrow": "{unread} unread of {total}",
     "trayTitle": "The tray",

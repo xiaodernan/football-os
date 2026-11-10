@@ -2845,3 +2845,8 @@ export type TraceSummary = {
   formula: string;
   note: string;
 };
+
+/** GET/PUT /notifications/preferences — the mute map with every known kind present. */
+export type NotificationPrefs = {
+  mutes: { follower: boolean; comment: boolean; reaction: boolean };
+};

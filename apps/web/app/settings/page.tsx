@@ -7,6 +7,7 @@ import { errorMessage } from "@/lib/api";
 import { serverFetch } from "@/lib/server";
 import type { CapabilitiesResponse, HealthResponse, UserOut } from "@/lib/types";
 
+import { NotificationPreferences } from "./NotificationPreferences";
 import { PrivacyPanel } from "./PrivacyPanel";
 
 export const dynamic = "force-dynamic";
@@ -122,6 +123,18 @@ export default async function SettingsPage() {
           }
         >
           <PrivacyPanel mode="export" />
+        </Panel>
+
+        <Panel
+          eyebrow={t("prefsEyebrow")}
+          title={t("prefsTitle")}
+          footer={
+            <span className="muted" style={{ fontSize: "0.82rem" }}>
+              {t("prefsFooter")}
+            </span>
+          }
+        >
+          <NotificationPreferences />
         </Panel>
 
         <Panel eyebrow={t("platformEyebrow")} title={t("platformTitle")}>
