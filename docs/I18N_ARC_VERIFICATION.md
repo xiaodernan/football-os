@@ -4028,6 +4028,6 @@ which is not a file::case in this project
 
 **Local verification.** With the container's layout reproduced on disk (`app/`, `migrations/`, `tests/`, `evals/`, `alembic.ini`, `seed.py` under one root matching the image): `python -c "import app.services.knowledge_graph.verbs"` → `IMPORT_OK proof_gate_passed`. The CI job builds the image and runs it; `containers` prints the result on this commit's verdict.
 
-**Not claimed until the runner prints it.** The boot smoke is expected green on `2591465`'s successor — not before the runner answers. §87's containers run stands as the red record. §86 (`cc2d9c0`) carried the same red; its waterfall is expected to rerun green against this fix.
+**Not claimed until the runner prints it.** The boot smoke is expected green on `e862937`'s successor — not before the runner answers. §86 (`cc2d9c0`) and §87 (`c6a807d`) both printed **failure** at `Boot the API image against a scratch SQLite database` with the same skip on the web boot; both are the same defect this commit cures. Their web/api legs were green in all three runs. The three boot-smoke runs stand as the red record of this defect, and §88's run (`42797743431`) is the attempt to land cured.
 
 **Teardown.** The simulated image layout was removed after the import check; no probe stack stands; the untracked user text file at the repository root remains untouched.
