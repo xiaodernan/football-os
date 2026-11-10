@@ -114,12 +114,29 @@ async function bodyText(page) {
 async function probeStatuses(urls, concurrency = 6, budgetMs = 25_000) {
   const outcomes = new Array(urls.length);
   let cursor = 0;
+  let consecutiveFailures = 0;
+  let bailed = false;
   const workers = Array.from({ length: Math.min(concurrency, urls.length) }, async () => {
     for (;;) {
+      if (bailed) return;
       const index = cursor;
       cursor += 1;
       if (index >= urls.length) return;
-      outcomes[index] = await probeOne(urls[index], budgetMs);
+      const outcome = await probeOne(urls[index], budgetMs);
+      // A wedged tier turns every remaining URL into a full-budget timeout each — 1,782 of
+      // them is a day of hanging. Five consecutive failures mean the tier is gone: bail out,
+      // mark the unread remainder 0, and let the check fail loudly naming what was never read.
+      if (outcome === 0) {
+        consecutiveFailures += 1;
+        if (consecutiveFailures >= 5) {
+          bailed = true;
+          for (let rest = index; rest < urls.length; rest += 1) outcomes[rest] = 0;
+          return;
+        }
+      } else {
+        consecutiveFailures = 0;
+      }
+      outcomes[index] = outcome;
     }
   });
   await Promise.all(workers);
