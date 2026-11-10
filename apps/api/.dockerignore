@@ -9,7 +9,6 @@ __pycache__
 var
 .env
 .env.*
-tests
 *.db
 .dockerignore
 Dockerfile

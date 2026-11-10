@@ -17,9 +17,14 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# The source of truth: the unmodified application tree and its migrations.
+# The source of truth: the unmodified application tree, its migrations, and its
+# tests. The tests directory is not a dev-only artifact here: knowledge_graph/verbs.py
+# imports with a proof gate that requires every SLUG_RELATIONS proof to name a real
+# file::case — the production process asserts its own integrity the same way the test
+# suite does, so boot fails honestly, not silently, if the proof is wrong.
 COPY app ./app
 COPY migrations ./migrations
+COPY tests ./tests
 COPY alembic.ini ./
 COPY evals ./evals
 COPY seed.py ./

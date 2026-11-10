@@ -4010,3 +4010,24 @@ untouched. The plane's `target/` directories stay ignored.
 **Not claimed, named.** The README's verify commands are unchanged and still accurate; the container walk of this sequence has not been run end-to-end on this host (its Docker daemon cannot start a new container, §77's standing fact) — the CI job builds both images and assembles the compose profile on every push, and the item-64/65 smokes (§85, §86) prove them booted. The prose describes what is; it does not claim a live container boot walk happened here.
 
 **Teardown.** No probe stack stood; the untracked user text file at the repository root remains untouched.
+## 88. The image was unbuildable to boot — tests/ was excluded, the proof gate refused to let it start (2026-11-10)
+
+**The red, unedited.** `containers` run `42782991372` (`2591465` §85): the images build green, the plane jars assemble green — and `Boot the API image against a scratch SQLite database` fails at ~1 minute in with:
+
+```
+RuntimeError: slug relation real_training_sessions.drill_slug cites
+'tests/test_knowledge_graph_census.py::test_every_world_training_session_names_a_drill_that_exists',
+which is not a file::case in this project
+```
+
+`curl: (7) Failed to connect to localhost port 18100 after 0 ms` — the container never came up; the web smoke is skipped by definition. Every other gate in the run is green: `web` success, `api` success, `services` success.
+
+**The mechanism, measured.** `app/services/knowledge_graph/verbs.py` runs `_require_proof()` at import time: every `SLUG_RELATIONS` target table's proof must name a real `file::case` in the project. `_API_ROOT = Path(__file__).resolve().parents[3]`, and the image copies the api tree to `/app` with `COPY app ./app`, so `_API_ROOT` is `/app` and the expected file is `/app/tests/test_knowledge_graph_census.py`. The `.dockerignore` I wrote for §77 excluded `tests/` from the build context — so the production image could not satisfy its own proof gate. The `_require_proof` docstring says this repo has already shipped a comment citing a test file that never existed; the gate exists to catch that exact defect, and my §77 image excluded exactly the directory the gate requires. The host never noticed, because on the host the whole api directory is present when the tests run.
+
+**The fix.** `tests/` is no longer in `.dockerignore`, and the Dockerfile now does `COPY tests ./tests` with a comment explaining why. The image now ships the test file the proof demands — not as a testing convenience but because the proof is part of the runtime contract of the application: the app refuses to boot if the contract is broken, exactly as the tests refuse to pass it. Ship the proof, not just the code.
+
+**Local verification.** With the container's layout reproduced on disk (`app/`, `migrations/`, `tests/`, `evals/`, `alembic.ini`, `seed.py` under one root matching the image): `python -c "import app.services.knowledge_graph.verbs"` → `IMPORT_OK proof_gate_passed`. The CI job builds the image and runs it; `containers` prints the result on this commit's verdict.
+
+**Not claimed until the runner prints it.** The boot smoke is expected green on `2591465`'s successor — not before the runner answers. §87's containers run stands as the red record. §86 (`cc2d9c0`) carried the same red; its waterfall is expected to rerun green against this fix.
+
+**Teardown.** The simulated image layout was removed after the import check; no probe stack stands; the untracked user text file at the repository root remains untouched.
