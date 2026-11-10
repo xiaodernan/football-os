@@ -3962,3 +3962,14 @@ untouched. The plane's `target/` directories stay ignored.
 **Not claimed.** The four red runs stay red — they are honest records, not retry candidates. §82's run failed identically and stays failed; the fix in this commit applies to the next push. The verdicts for §82-cure and for this section's push are recorded when the runner prints them — not before.
 
 **Teardown.** No servers stood for this fix; the scratch probe database (`walk_fr_probe`) was re-created empty at the end of the previous milestone and remains empty; the untracked user text file at the repository root remains untouched.
+## 84. The queue drains: §80, §81, §82 and §79-cure read exactly (2026-11-10)
+
+**The step-level verdicts, copied from the runner, not from memory.** The four runs that were in flight throughout §83 — `42774364030` (§79-cure), `42774517059` (§80 docs), `42774709768` (§81 containers), `42775815191` (§82 production walks) — all show **`Locale-discovery census…)=failure`** as the failing web step, with `api` in progress on each at the time of writing, and `services` and `containers` green on every one of them. This is the exact failure §83 fixes: all four pushes shipped trees in which `qa-chinese-walk.mjs` was unledgered by the census, and the census is the first of its gates to run — so every downstream gate was not executed at all, not failed.
+
+**Why this is recorded as failure across four runs, not one.** §79 introduced the file (census unrun locally). §79-cure fixed the *inventory* ledger for the same file and did not re-run the census (census unrun). §80 touched only docs. §81 touched only `.github/workflows/ci.yml` (the containers job: builds the plane jars before `config --quiet`). §82 touched web walk scripts and the ledger only. None of the three between §79's fix and §83's fix added the census row — and so all four fail identically at the same step. The web jobs are deterministic: the same missing FILE_LEDGER row charged all four pushes.
+
+**The api legs.** Each is still in progress at the time of writing — SQLite tests, PostgreSQL/pgvector migrations and tests, and the RAG evaluation leg are the long poles and none of them has yet printed a verdict. This section is amended in place if and when those legs complete — not before.
+
+**Not claimed.** §83's run (`42777056874`) has not printed yet either; the fix it carries is stated above and is expected to greens — but that belongs to its own ledger line, written when it runs, not pre-written here.
+
+**Teardown.** No servers stood for this entry; the untracked user text file at the repository root remains untouched.
