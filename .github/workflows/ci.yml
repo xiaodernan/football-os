@@ -311,3 +311,16 @@ jobs:
         # Spring Cloud 2025.0.3 on Boot 3.5.x; the 37 module tests must pass before the plane
         # claims anything.
         run: mvn -B package
+
+  containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose file parses and names a coherent plane
+        run: docker compose -f infra/docker-compose.yml config --quiet
+      - name: Build the API image
+        # The production canon in one artifact; the image applies migrations on boot.
+        run: docker build apps/api -t football-os-api:ci
+      - name: Build the web image
+        # node:22-alpine, standalone output; NODE_ENV=production.
+        run: docker build apps/web -t football-os-web:ci

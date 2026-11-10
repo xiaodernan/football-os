@@ -19,3 +19,8 @@ opentelemetry-instrumentation-httpx==0.66b1
 # TTLCache when no instance answers, so the service is optional at runtime and
 # REDIS_URL is the only knob.
 redis==8.1.0
+# The production dependency set used to ship without the PostgreSQL driver — a
+# production image built from this file alone could not connect to the database it
+# existed to serve. The dev requirements carried it conditionally (laptops); the
+# container needs it everywhere, so it is pinned unconditionally here.
+psycopg2-binary==2.9.10

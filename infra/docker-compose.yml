@@ -131,5 +131,62 @@ services:
       timeout: 5s
       retries: 18
 
+  # The product itself: the Python canon behind a Next.js front end. With the registry, the config
+  # server and the edge (this same profile), `docker compose --profile plane up -d` is the WHOLE
+  # running product: every request enters through the edge on :18080 (web proxies to it), or hits
+  # the API door directly on :8100. The two join the plane as citizens, not bolted-on services: the
+  # core announces itself to the registry (SERVICE_HOST=api, resolving on the compose network), and
+  # the web shell reaches the core through the edge's name-based route — the same door the plane
+  # exists to provide. `ENV=development` keeps browser cookies working over loopback; a hardened
+  # HTTPS deploy is a separate, named concern (TLS termination, Secure cookies) and not claimed here.
+  api:
+    build: ../apps/api
+    container_name: football_os_api
+    profiles: ["plane"]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg2://football:football@db:5432/football_os
+      REDIS_URL: redis://:football@redis:6379/0
+      EUREKA_URL: http://registry:8761/eureka/
+      SERVICE_HOST: api
+      SERVICE_PORT: "8100"
+      ENV: development
+      SITE_URL: http://127.0.0.1:3210
+    ports:
+      - "127.0.0.1:8100:8100"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8100/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 18
+      start_period: 90s
+
+  web:
+    build: ../apps/web
+    container_name: football_os_web
+    profiles: ["plane"]
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://edge:8080
+      SITE_URL: http://127.0.0.1:3210
+    ports:
+      - "127.0.0.1:3210:3210"
+    depends_on:
+      edge:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3210/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
+
 volumes:
   db-data:

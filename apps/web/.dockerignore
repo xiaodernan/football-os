@@ -1,0 +1,8 @@
+node_modules
+.next*
+.env
+.env.*
+.scratch
+.pytest_cache
+.dockerignore
+Dockerfile
