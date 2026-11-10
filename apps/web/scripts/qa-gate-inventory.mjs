@@ -93,7 +93,8 @@ const REASONS = [
 
 const LEDGER = {
   "probe-hydration.mjs": ["report-only"],
-  "qa-carry.mjs": ["live-tier"], "qa-club.mjs": ["live-tier"], "qa-community.mjs": ["live-tier"],
+  "qa-carry.mjs": ["live-tier"], "qa-chinese-walk.mjs": ["live-tier"],
+  "qa-club.mjs": ["live-tier"], "qa-community.mjs": ["live-tier"],
   "qa-creator.mjs": ["live-tier"], "qa-ledger.mjs": ["live-tier"], "qa-market.mjs": ["live-tier"],
   "qa-portfolio.mjs": ["live-tier"], "qa-scout.mjs": ["live-tier"], "qa-timeline.mjs": ["live-tier"],
   "verify-production.sh": ["live-tier"], "visual-qa.mjs": ["live-tier"],
