@@ -222,13 +222,27 @@ def _native(path: str) -> str:
 
 def _lint_environment(path_entries: list[Path]) -> dict[str, str]:
     environment = dict(os.environ)
+    inherited = environment.get("PATH", "")
     prefix = [str(entry) for entry in path_entries]
+    prefix.append(str(Path(sys.executable).parent))
+    target = prefix
     # The target's first command is `dirname`, and on Windows the utilities beside the Git-bash binary are not
     # on the inherited PATH (`Git/cmd` holds `git`, `Git/usr/bin` holds `dirname`). Without them the script dies
-    # at line 20 with `dirname: command not found` and this harness would red a lint target that is green.
-    prefix.append(str(Path(_bash()).parent))
-    prefix.append(str(Path(sys.executable).parent))
-    environment["PATH"] = os.pathsep.join(prefix + [environment.get("PATH", "")])
+    # at line 20 with `dirname: command not found`, and the stub's own `#!/usr/bin/env bash` interpreter would
+    # resolve to this host's WSL relay instead of Git-bash — so when the shell's directory is NOT already on the
+    # inherited PATH it goes ahead of it, right behind the interpreter. On Linux the inherited PATH already
+    # answers both (`/bin`, `/usr/bin`), so nothing is added and the toolchain python wins.
+    shell_dir = str(Path(_bash()).parent)
+    parts = [part for part in inherited.split(os.pathsep) if part]
+
+    def norm(value: str) -> str:
+        return os.path.normcase(os.path.normpath(value))
+
+    already = any(norm(part) == norm(shell_dir) for part in parts)
+    if not already:
+        target.append(shell_dir)
+    target.append(inherited)
+    environment["PATH"] = os.pathsep.join(part for part in target if part)
     return environment
 
 
