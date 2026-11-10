@@ -547,3 +547,82 @@ JSON content type, and the walk sent an empty form body. That was the harness, n
 - It is **not** Spring Cloud Bus. A refresh must be posted to each gateway instance; broadcast to a
   fleet is a separate decision needing a broker.
 - It does **not** compute anything about a club, player or season. The Python core stays canonical.
+
+## 14. A transient failure heals at the door (item 60)
+
+The breaker (item 53) stops asking a core that is down. It does not help a core that stumbles once: a
+single 503 from a restarting instance went straight to the caller, and the fallback answered a failure
+that a second attempt would have cleared. `Retry` is now the inner route filter on `core-api`, with
+`CircuitBreaker` still the outer one:
+
+```
+filters: [CircuitBreaker, Retry]
+```
+
+That order is a decision, not a default. Gateway route filters are applied in declaration order, so the
+breaker wraps the retry: **one caller request is one breaker observation**, however many attempts went
+downstream. Had Retry been outer, three attempts would have looked like three failures to the breaker,
+and a transient stumble could open a breaker sized for five calls in ten. `EdgeBreakerStateTest` still
+sees `bufferedCalls == 1` after one failed call.
+
+The policy is deliberately narrow — `retries: 2`, `series: []`, `statuses: [SERVICE_UNAVAILABLE,
+BAD_GATEWAY]`, `methods: [GET]`, bounded exponential backoff (20ms → 80ms). **The `series: []` is the
+part that was found by measurement**, not by reading the docs: Spring Cloud Gateway's stock default is
+the whole `SERVER_ERROR` series, and the first configuration used a comma-separated `statuses` string
+that did not bind. The result was that a **500 — a real application error — was replayed three times**.
+Clearing the series and writing both lists as YAML lists makes 500 a single attempt. A non-idempotent
+POST is never replayed.
+
+`test_edge_config_parity.py` now has a fifth case that binds both copies of the route to this exact
+order and policy, so a future edit cannot quietly widen what gets replayed.
+
+### 14.1 The tests and the live walk
+
+`EdgeRetryTest` (4 cases) stands a stub core that counts the attempts it actually received: two transient
+503s heal into a 200 on the third attempt; a 500 is attempted once; a POST 503 is attempted once; a
+permanent 503 is attempted three times and the last 503 reaches the caller.
+
+`mvn -o -B package` over the whole reactor: **37 tests / 0 failures / 0 errors**, all four modules
+SUCCESS. `.scratch/walk-retry.py` boots the built jar on `18890` with a controllable stub on `18891`:
+**12/12 checks, 0 red** — including `/edge/routes` really resolving a `Retry` filter, the three attempts,
+the single 500 and POST attempts, and item 58's W3C parent surviving every retry.
+
+### 14.2 What this does not claim
+
+- It does **not** retry connection failures differently from status failures: Gateway's default exception
+  set still applies, which is why a dead core reaches the 503 fallback as before (`EdgeFallbackTest`).
+- It does **not** make the fallback answer an exhausted HTTP 503. A 503 response is a response, so the
+  caller sees it; the fallback is for an exception or an open breaker. The test says so.
+- It does **not** retry anything on the web-shell route, and it computes no football figure.
+
+## 15. One door for the whole plane (item 61)
+
+Phase 11 grew a door per concern — `/edge/routes` (48), `/edge/limits` (52), `/edge/breaker` (53),
+`/edge/instances` (56), `/edge/config` (59) — plus two global filters for tracing. An operator wanting
+the shape of the platform had to know all five and stitch them together by hand.
+
+`GET /edge/plane` does the stitching by **calling the very same controller methods** those doors call,
+not by reimplementing their predicates. It publishes `routes`, `limits`, `breaker`, `instances` (for
+`football-core`) and `config` as they are, plus a `trace` block naming the three real headers, a `doors`
+map of the six entry points including `/actuator/refresh`, and a `formula` stating that the plane adds no
+figure of its own. Every block is read live on each request; nothing is cached.
+
+### 15.1 The tests and the live walk
+
+`EdgePlaneTest` (4 cases) reads `/edge/plane` and each of the five doors over HTTP and compares parsed
+JSON: every block is byte-for-byte the answer its own door gives. It also walks the `doors` map and
+requires each named door to answer (POST for refresh), checks the trace block names the constants the
+filters actually use, and pins the top-level key set to eight so no unpublished figure can appear.
+
+`.scratch/walk-plane.py` boots the built jar on `18894` with a stub core on `18895`: **16/16 checks,
+0 red** — `/edge/plane` is 200 with exactly eight blocks, all five blocks equal their own doors, all six
+named doors answer 200, and the trace block names the real headers.
+
+### 15.2 What this does not claim
+
+- It is **not** a health check. It describes configuration and state; it does not decide that the plane
+  is "up". `/actuator/health` remains that door.
+- It does **not** aggregate across gateway replicas. One instance answers about itself, like every other
+  `/edge/**` door; a fleet-wide view needs a caller that asks each instance.
+- It does **not** compute a football fact. The Python core stays canonical: this door describes the
+  shape of the way in, not the game behind it.

@@ -96,3 +96,25 @@ def test_the_two_copies_agree_on_the_plane_setting_and_the_refresh_door() -> Non
     assert "refresh" in own_include.split(","), (
         "without the refresh endpoint exposed, a changed setting cannot take effect without a restart"
     )
+
+
+def test_the_core_route_retries_only_idempotent_transient_failures() -> None:
+    """Item 60: the retry must sit inside the breaker, and must not replay real application errors."""
+    for path in (EDGE, SERVED):
+        route = next(row for row in _routes(path) if row["id"] == "core-api")
+        filters = route["filters"]
+        names = [entry["name"] for entry in filters]
+        assert names == ["CircuitBreaker", "Retry"], (
+            f"{path}: CircuitBreaker must be the outer filter so one caller request is one breaker "
+            f"observation, however many attempts Retry makes; got {names}"
+        )
+        args = next(entry for entry in filters if entry["name"] == "Retry")["args"]
+        assert args["retries"] == 2, f"{path}: the retry is bounded"
+        assert args["series"] == [], (
+            f"{path}: the stock SERVER_ERROR series would replay a 500 (a real application error) "
+            f"as if it were a transient outage"
+        )
+        assert args["statuses"] == ["SERVICE_UNAVAILABLE", "BAD_GATEWAY"], (
+            f"{path}: only the two gateway-level outage statuses are retried"
+        )
+        assert args["methods"] == ["GET"], f"{path}: a non-idempotent method must never be replayed"

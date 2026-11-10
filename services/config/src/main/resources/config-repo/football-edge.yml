@@ -13,10 +13,29 @@ spring:
               predicates:
                 - Path=/api/v1/**
               filters:
+                # CircuitBreaker is the outer filter: one caller request is one breaker observation,
+                # however many attempts Retry makes underneath it. Retry is the inner one, so a
+                # transient 503 heals itself without the breaker counting three failures for one caller.
                 - name: CircuitBreaker
                   args:
                     name: coreBreaker
                     fallbackUri: forward:/edge/fallback
+                - name: Retry
+                  args:
+                    retries: 2
+                    # The stock default is the whole SERVER_ERROR series; clearing it and naming two
+                    # statuses keeps 500 (a real application error) from being replayed three times.
+                    series: []
+                    statuses:
+                      - SERVICE_UNAVAILABLE
+                      - BAD_GATEWAY
+                    methods:
+                      - GET
+                    backoff:
+                      firstBackoff: 20ms
+                      maxBackoff: 80ms
+                      factor: 2
+                      basedOnPreviousValue: false
             - id: web
               # The shell, through the same door; the catch-all is matched last.
               order: 10

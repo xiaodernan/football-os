@@ -1058,6 +1058,27 @@ gateway — without moving a single domain rule out of the core. The rule that k
     Cloud Bus broadcast, and the Python core stays canonical.
 
 
+60. **A transient failure heals at the door (done 2026-11-10).** The breaker stopped asking a down
+    core but let a single 503 from a restarting one reach the caller. `Retry` is now the inner filter on
+    `core-api` with `CircuitBreaker` still outer, so one caller request stays one breaker observation:
+    `retries: 2`, `series: []`, `statuses: [SERVICE_UNAVAILABLE, BAD_GATEWAY]`, `methods: [GET]`,
+    bounded backoff. **The `series: []` was found by measurement** — Gateway's stock `SERVER_ERROR`
+    series plus a comma-separated `statuses` string that did not bind meant a 500 (a real application
+    error) was replayed three times; clearing the series and using YAML lists fixes it. Both YAML copies
+    are held to this exact order and policy by a fifth parity case. Evidence: `docs/M14_SERVICE_PLANE.md`
+    §14 — 4 attempt-counting cases, `mvn -o -B package` **37/37**, live walk **12/12** (two 503s heal
+    into a 200 on the third attempt, 500 and POST once each, W3C parent survives every retry).
+
+61. **One door for the whole plane (done 2026-11-10).** `GET /edge/plane` collects the shape of the
+    platform by calling the **same controller methods** the five `/edge/**` doors call — routes, limits,
+    breaker, instances, config — so each block is the same answer its own door gives, with a `trace`
+    block naming the real headers, a `doors` map of six entry points (including `/actuator/refresh`) and
+    a formula stating the plane adds no figure of its own. Evidence: `docs/M14_SERVICE_PLANE.md` §15 —
+    4 cases comparing parsed JSON block by block and walking every named door, and a live walk **16/16**:
+    exactly eight blocks, five exact matches, six doors answering 200. Stated limits: not a health check,
+    no cross-replica aggregation, and the Python core stays canonical.
+
+
 ## How this plan is executed
 
 - One phase at a time; a phase does not "open" until the previous one is running, tested and verified
