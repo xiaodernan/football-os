@@ -4040,3 +4040,22 @@ which is not a file::case in this project
 **What is NOT yet known.** Both §88 runs and any run started before this push predate the instrumentation; their failure prints will be the old, silent kind. The new `poll` output will show its first verdict on the run that this commit pushes. The verdict is recorded here when it prints — not before — and any fix it motivates will carry its own ledger entry.
 
 **Teardown.** No servers were started for this milestone's work; no scratch data remains; the untracked user text file at the repository root remains untouched.
+## 90. The container's second import-time crash — the catalogue path — was cured (2026-11-10)
+
+**The red, unedited.** `42797743431` (§88 fix) and `42797987050` (§88 docs) both fail the exact same step, `Boot the API image against a scratch SQLite database`, with the same new traceback — after §88's proof-gate fix had landed and `web`, `api` and `services` all went green:
+
+```
+File "/app/app/api/v1/meta.py", line 34, in <module>
+    _MESSAGES_DIR = Path(__file__).resolve().parents[5] / "apps" / "web" / "messages"
+IndexError: 5
+```
+
+`/app/app/api/v1/meta.py` — five parents up is `/`, and `/apps/web/messages` does not exist anywhere in the container because the api image build context is `apps/api`. The import crashed before uvicorn ever bound a port, so the boot smoke saw connection-refused, and every run before §88 had failed at the *previous* import-time gate (`knowledge_graph`'s proof gate, missing `tests/`, §88's fix). The containers arc has now fought through both, one push at a time, each time with the runner naming the exact line.
+
+**The cure.** `_MESSAGES_DIR` is no longer computed by bear-stare arithmetic at import time. A `_messages_dir()` resolves in order: (1) `WEB_MESSAGES_DIR` if set, (2) a walk up `Path(__file__).resolve().parents` looking for `apps/web/messages` — covering the repo layout from any depth, and (3) `None` — in which case `_shipped_locales()` answers `["en"]`, exactly the fallback it already had for a missing/unreadable `en.json`, never a wrong list. `apps/api/app/api/v1/meta.py` imports `os`; the one `parents[2]` in the tree (`core/config.py` → `/app`) matches and was checked. **The honest production answer is restored by wiring, not by degrading**: the compose `plane` profile now mounts `../apps/web/messages` read-only at `/messages` and sets `WEB_MESSAGES_DIR=/messages`, so the api answers all six live catalogues inside the docker network instead of the degraded `["en"]`.
+
+**Local verification, with the same image layout.** With only `app/`, `migrations/`, `tests/`, `evals/`, `alembic.ini`, `seed.py` on disk (no `apps/web`): import OK, `_MESSAGES_DIR = None`, `shipped = ['en']`. With `WEB_MESSAGES_DIR` set to a readable catalogues directory: import OK, six locales. In the repository, `tests/test_locale_claims.py` → **7 passed**. `_shipped_locales()` behavior with the catalogues is unchanged — the same six.
+
+**Not claimed, named.** The containers gate has failed on this arc with five pushes before §88 — `§85`, `§86`, `§87` (pre-proof-gate-fix) and `§88`, `§89` (pre-catalogue-path-fix). The `web` legs are green on all of them; `api` and `services` are green on all of them; only the containers leg is red. §90's own CI verdict is recorded in the next section of this ledger when it prints — if the boot smoke answers, the red arc closes; if it doesn't, the runner names the next line and the fix follows.
+
+**Teardown.** No server was started for this work; the untracked user text file at the repository root remains untouched.

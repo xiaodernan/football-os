@@ -152,6 +152,9 @@ services:
       SERVICE_PORT: "8100"
       ENV: development
       SITE_URL: http://127.0.0.1:3210
+      WEB_MESSAGES_DIR: /messages
+    volumes:
+      - ../apps/web/messages:/messages:ro
     ports:
       - "127.0.0.1:8100:8100"
     depends_on:

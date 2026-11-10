@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
@@ -29,9 +30,26 @@ from app.services.video.status import video_readiness
 from app.services.world import world_counts, world_ready, world_tables_present
 
 router = APIRouter(tags=["meta"])
-# The repository root — the depth of `apps/api/app/api/v1/meta.py` — is the dir that holds both `apps/api`
-# and `apps/web`. The catalogues live in `apps/web/messages`.
-_MESSAGES_DIR = Path(__file__).resolve().parents[5] / "apps" / "web" / "messages"
+
+# Where the catalogues live. At home the repository layout resolves from here; inside the
+# api image (build context `apps/api`, no `apps/web` inside) the module-level arithmetic
+# `Path(__file__).resolve().parents[5] / "apps" / "web" / "messages"` raises `IndexError`
+# at import time — the container never starts. The resolution now tolerates any depth and
+# prefers the explicit `WEB_MESSAGES_DIR` when one is mounted (the compose `plane` profile
+# mounts `apps/web/messages` read-only at `/messages`); absent, the API honestly answers
+# `["en"]` for `locales`, never a wrong list.
+def _messages_dir() -> Path | None:
+    override = os.environ.get("WEB_MESSAGES_DIR", "").strip()
+    if override:
+        here = Path(override)
+        return here if here.is_dir() else None
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "apps" / "web" / "messages"
+        if candidate.is_dir():
+            return candidate
+    return None
+
+_MESSAGES_DIR = _messages_dir()
 
 
 def _flatten(node, prefix: str = "") -> dict[str, str]:
@@ -53,10 +71,10 @@ def _shipped_locales() -> list[str]:
     try:
         with open(_MESSAGES_DIR / "en.json", encoding="utf-8") as fh:
             english = _flatten(json.load(fh))
-    except OSError:
+    except (OSError, TypeError):
         return ["en"]
     shipped = ["en"]
-    if not _MESSAGES_DIR.is_dir():
+    if _MESSAGES_DIR is None or not _MESSAGES_DIR.is_dir():
         return shipped
     for path in sorted((p for p in _MESSAGES_DIR.glob("*.json") if p.name != "en.json"), key=lambda p: p.stem):
         try:
