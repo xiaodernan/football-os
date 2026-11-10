@@ -1705,6 +1705,36 @@ walk's next green needs the host quiet (the other lane idle), not a product fix.
 whoever takes it: probe with a HEAD-shaped request if the framework ever grows one, or split the probe across two
 walks (world rows on one, the rest on the other) so no single run carries 1,782 renders.
 
+---
+
+## Item 19 — spec 27's second slice: per-kind mutes, and the tray the account wants
+
+**The gap.** The tray wrote every event the three producers fired; the account could not say "stop telling me
+about reactions". The tier's own products — a tray that fills, a badge that counts — become noise the moment the
+account cannot shape them.
+
+**The shape.** `users.notification_mutes` (migration `0061`, one JSON column) holds the kinds the account wants:
+`notify` checks before inserting, so a muted kind is never written — a muted tray is empty by choice rather than
+by a filter the reader applies after the fact. Two doors (`GET`/`PUT /notifications/preferences`), the GET's map
+carrying every known kind so an untouched key reads as wanted, the PUT raising a 422 from the service's own
+sentence for an unknown kind. The settings page gains the panel: three toggles bound to the door's map, saving
+through the client fetch and refreshing from the answer.
+
+**The six-locale finding.** The catalogue carried four locales when this slice started and six when it landed
+(fr, ar, he joined): the panel's copy went into all six, and the gates taught the difference between the three
+kinds of "same" — fr's page titles were differentiated at the **English source** (the same-sentence gate holds
+each locale to English's own key duplication, so a locale cannot escape a duplicated English sentence by
+translating it differently), fr's `prefsEyebrow` was differentiated because French spells the loanword the same
+way (the tokens gate refuses an unnamed identical value), and the Arabic copy had to end with the Arabic full
+stop (the punctuation gate names the script of every sentence-ending). The README table was recomputed for all
+six locales at population 4,300.
+
+**Evidence.** `tests/test_notifications.py` now 14 cases (mutes 5: untouched reads as wanted, muting stops the
+write while the others still write, muting twice is the same state, unmuting reopens, an unknown kind is a 422;
+producers 3; erasure 1). ruff and mypy (167 files) clean; the i18n gates all green (locale-completeness,
+key-drift, tokens 7/7, translation-quality 9/9 after the Arabic full stop and the English source fix, metadata
+188/188, literals 9/9); the doors verified live through the API (read → mute → re-read → unknown-kind 422).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
