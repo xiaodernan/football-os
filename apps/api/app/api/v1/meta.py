@@ -68,14 +68,14 @@ def _shipped_locales() -> list[str]:
     `tests/test_locale_claims.py` module holds this list to the catalogues in both directions,
     so the two derivations must agree — one says less than the other and both red.
     """
+    if _MESSAGES_DIR is None or not _MESSAGES_DIR.is_dir():
+        return ["en"]
     try:
         with open(_MESSAGES_DIR / "en.json", encoding="utf-8") as fh:
             english = _flatten(json.load(fh))
-    except (OSError, TypeError):
+    except (OSError, json.JSONDecodeError):
         return ["en"]
     shipped = ["en"]
-    if _MESSAGES_DIR is None or not _MESSAGES_DIR.is_dir():
-        return shipped
     for path in sorted((p for p in _MESSAGES_DIR.glob("*.json") if p.name != "en.json"), key=lambda p: p.stem):
         try:
             with open(path, encoding="utf-8") as fh:
