@@ -4031,3 +4031,12 @@ which is not a file::case in this project
 **Not claimed until the runner prints it.** The boot smoke is expected green on `e862937`'s successor — not before the runner answers. §86 (`cc2d9c0`) and §87 (`c6a807d`) both printed **failure** at `Boot the API image against a scratch SQLite database` with the same skip on the web boot; both are the same defect this commit cures. Their web/api legs were green in all three runs. The three boot-smoke runs stand as the red record of this defect, and §88's run (`42797743431`) is the attempt to land cured.
 
 **Teardown.** The simulated image layout was removed after the import check; no probe stack stands; the untracked user text file at the repository root remains untouched.
+## 89. The CI polls print every one of their HTTP codes (2026-11-10)
+
+**Why this section exists.** §85, §86 and §87 all failed step `Boot the API image against a scratch SQLite database` in the containers job. The runner printed the failure from the *poll loop*, which only ever said `failure` — every iteration was silent unless/until the container answered, and then, when the boot died, nobody could tell whether it was "still starting", "permanent 503", or "the container exited and curl sees connection refused". The log the runner produced named the exit; it did not say why.
+
+**What changed.** Each of the three poll loops in the `containers` job now echoes `poll N: <kind>=http:NNN` on every iteration, printing an `http:000` when the container is not yet serving (refused or timed out), the actual status code once it responds, and the success line with the timing and final code when it does. The assertion boundary is unchanged — a container that never serves still fails the step, `curl -fsS` still gates the rest of the job — only the observability is new.
+
+**What is NOT yet known.** Both §88 runs and any run started before this push predate the instrumentation; their failure prints will be the old, silent kind. The new `poll` output will show its first verdict on the run that this commit pushes. The verdict is recorded here when it prints — not before — and any fix it motivates will carry its own ledger entry.
+
+**Teardown.** No servers were started for this milestone's work; no scratch data remains; the untracked user text file at the repository root remains untouched.
