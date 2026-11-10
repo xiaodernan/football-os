@@ -3968,8 +3968,8 @@ untouched. The plane's `target/` directories stay ignored.
 
 **Why this is recorded as failure across four runs, not one.** §79 introduced the file (census unrun locally). §79-cure fixed the *inventory* ledger for the same file and did not re-run the census (census unrun). §80 touched only docs. §81 touched only `.github/workflows/ci.yml` (the containers job: builds the plane jars before `config --quiet`). §82 touched web walk scripts and the ledger only. None of the three between §79's fix and §83's fix added the census row — and so all four fail identically at the same step. The web jobs are deterministic: the same missing FILE_LEDGER row charged all four pushes.
 
-**The api legs.** Each is still in progress at the time of writing — SQLite tests, PostgreSQL/pgvector migrations and tests, and the RAG evaluation leg are the long poles and none of them has yet printed a verdict. This section is amended in place if and when those legs complete — not before.
+**The api legs — verdicts now printed.** All four completed **success** — the SQLite suite, PostgreSQL migrations + pgvector suite and the RAG evaluation legs are green on each of the four trees, as one would expect from pushes whose only defect was a missing ledger row in a web gate. The web leg staying red through all four is the single repeated failure, and it is exactly the one §83 fixes.
 
-**Not claimed.** §83's run (`42777056874`) has not printed yet either; the fix it carries is stated above and is expected to greens — but that belongs to its own ledger line, written when it runs, not pre-written here.
+**The two §83-bearing runs.** §83 itself (`42777056874`) and §84 (`42777224387`) both completed **success** on all four legs — `api`, `web`, `services`, `containers`. The web leg is green again, including the census and every downstream gate that had been skipped across the four failures. The arc resumes with master at `51c0e73` green end-to-end.
 
 **Teardown.** No servers stood for this entry; the untracked user text file at the repository root remains untouched.
