@@ -44,6 +44,9 @@ from app.services.creator.publishing import (
     _slug_of,
     _text,
     ensure_profile,
+    forget_act,
+    meter_act,
+    record_act,
 )
 
 #: How many programs one creator may publish.
@@ -218,8 +221,11 @@ def publish_program(
             slug=slug,
         )
 
+    program_id = new_public_id("cmp")
+    # The monthly meter is consulted last — after the tier's own validations, before the row exists.
+    meter_act(session, actor_id, source_id=program_id)
     row = CreatorProgram(
-        id=new_public_id("cmp"),
+        id=program_id,
         author_id=actor_id,
         slug=slug,
         title=wanted_title,
@@ -239,6 +245,7 @@ def publish_program(
             )
         )
     session.commit()
+    record_act(session, actor_id, source_id=program_id)
     return read_program(session, row.id)
 
 
@@ -337,6 +344,8 @@ def erase_program(session: Session, actor_id: str, ident: str) -> dict[str, Any]
     #: The program goes first and the database's cascade takes its steps with it: deleting the
     #: steps by hand as well would issue a second delete for a row the cascade already took.
     session.delete(row)
+    # The act goes with the artifact, per the meter's own published rule.
+    forget_act(session, actor_id, source_id=row.id)
     session.commit()
     return {"status": "erased", "program": row.id, "sessions_erased": len(planned)}
 

@@ -584,3 +584,38 @@ bytes now exists — `.scratch/whole-pg-2026-10-22.xml`, started while HEAD was 
 `REDIS_URL` was not set on that leg either, so the two environment-gated Redis cases did not run. The 1293-case
 record over `2c0c5f2` above is therefore no longer the last completed whole-suite pair. The 2026-09-29 legs' missing
 exit code is still not back-filled.
+## Addendum (2026-11-10) — the two §36 allowances are now refused on at the doors
+
+**What was owed.** This file's close-out and `docs/SPEC_COVERAGE_AUDIT.md`'s §36 row both record the same open item:
+`creator_publish` and `creator_guide` — the two monthly allowances this tier publishes into §42's table — were
+"ceilings the data holds and no door refuses on yet". The caps that actually bit were the lifetime constants
+(`MAX_GUIDES_PER_CREATOR`, the per-tier artifact limits, the 24-citation cap).
+
+**What landed.** All seven publish doors now consult `creator_publish` before the row exists — `publish_guide`,
+`publish_program`, `publish_tactical_guide`, `publish_player_analysis`, `publish_match_analysis`,
+`publish_scouting_list`, `publish_career_challenge` — and the guide door consults `creator_guide` beside it. The
+meter (`meter_act`/`record_act`/`forget_act` in `app/services/creator/publishing.py`) mirrors §41's reports door
+exactly: consulted after the caller's shape validations and before the insert, committed to as the artifact is
+written, removed as the artifact is erased, idempotent per artifact id, always at `DEFAULT_PLAN` (no door grants a
+plan yet — the same honest state the reports door ships in). Refusal is §42's own `entitlement_limit` code, project-
+wide 409, `enforced: true` in the figures. `ENFORCED` is now
+`("reports_saved", "creator_publish", "creator_guide")`.
+
+**One deliberate product decision, stated.** The `free` plan's `creator_publish` allowance was raised from **3 to
+12 per month** (player 6→24, pro 15→60, coach 30→120, club 60→240, academy 120→480, enterprise 500→2000) so the
+free tier a fresh account is born on can publish at a usable rate now that the allowance is a rule and not a
+decoration. `creator_guide` kept its values. **An already-seeded database keeps its stored rows** — the seed is how
+rows arrive, never how they are kept in step (the doctrine this tier has always published); operators editing
+those two rows in `entitlements` is the supported path, exactly as the matrix design intends. Fresh installs
+(migrations + first `/entitlements/capabilities` read) receive the new column.
+
+**Verification so far, honestly.** `tests/test_creator.py` — the tier's own file — passes end to end; together with
+`tests/test_entitlements.py` and `tests/test_club_reports.py` the three files read **93 passed** on SQLite. The
+rulebook test now asserts the two features print `enforced is True` and no longer claims the old limitation; the
+three new `TestTheMonthlyMeter` cases cover the spend (both allowances in one act), the refusal (409,
+`entitlement_limit`, `enforced: true`, zero spend recorded) and the erase (spend removed). `ruff check apps/api` —
+all checks passed; `mypy app` — **no issues found in 167 source files**. CI's verdict for the push carrying this
+addendum prints after this file is committed; it is recorded in `docs/I18N_ARC_VERIFICATION.md` when it prints, not
+before. The web walks were not re-run because nothing about the page contracts moved: the rules payload prints the
+same keys, and the walk's authoring account spends (guide×2, one program, one challenge) well under the free
+allowance.

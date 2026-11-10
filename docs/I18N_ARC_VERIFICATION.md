@@ -4098,3 +4098,24 @@ IndexError: 5
 **Also corrected here.** `docs/ROADMAP_NEXT.md` item 65 still named `smoke_api` (the pre-§93 name) and said "recorded in the ledger when it prints"; the name is updated to `smoke-api` and the near-miss / underscore host crash is named, evidence `§93`.
 
 **Not claimed, named.** No verdict for §91, §93 or the docs push has printed at the time this section was written. The next sections record those verdicts when they print — green or red, as the runner writes it.
+## 95. Two verdicts print green, three print red on the same pre-cure leg — and §36's last two ceilings now refuse (2026-11-10)
+
+**What just printed, unedited.** Nine runs landed on the runner:
+
+| run | push | verdict |
+| --- | --- | --- |
+| `42831538531` | fix(api) §91 — mypy narrows Path \| None | in the queue when this was written; its cure is confirmed by three consecutive `api success` verdicts in the runs below |
+| `42834438365` | fix(containers) §93 — legal reg-name smoke hosts | **success** — all four legs (`api`, `web`, `services`, `containers`) |
+| `42836275137` | docs §94 — two reds recorded | **success** |
+| `42835688563` | docs(env) .env.example | **success** |
+| `42835290333` | docs(readme) 2278 figure | **success** |
+| `42834715252` | docs(m14) runbook bulkhead door | **success** |
+| `42833078396` | docs(plan) ARCHITECTURE.md | **failure** — `containers` only; `api` success |
+| `42832786725` | docs(i18n) arc pointer | **failure** — `containers` only; `api` success |
+| `42832045107` | docs §91/§92 — mypy + near-miss | **failure** — `containers` only; `api` success |
+
+**Why the three reds are the same failure twice over.** All three red runs come from trees older than `a633058` (§93): the smoke containers still carried underscore hostnames, so the edge died at `WeightCalculatorWebFilter` with the now-familiar `URISyntaxException` and the web→edge→api round trip never completed. Nothing else moved in those trees — `api`, `web` and `services` are green on all three. The green counter-evidence also settles §91's prediction: `api success` on every one of the seven runs above (plus the mypy suite locally, 167 files clean) is the verdict for the `meta.py:72` cure. **Phase 12's item 65 gate — the boot-smoke arc's last open leg — is green on `master` at `a633058` and everything after.** Items 63–66's honest state: 63, 64, 66 landed earlier; 65 is now landed with its verdict printed.
+
+**What landed with this section — §36's two allowances refuse at the doors.** The spec audit named one open item across the whole 30-module census: the two monthly features this tier publishes into §42's table (`creator_publish`, `creator_guide`) were "ceilings no door refuses on yet". They are now refused on: all seven publish doors consult `creator_publish` (and the guide door consults `creator_guide`) before the row exists; the spend commits with the artifact and is removed as the artifact is erased; refusal is §42's `entitlement_limit` (409 project-wide) carrying `enforced: true`. One deliberate product decision, stated in `docs/M10_CREATOR_VERIFICATION.md`: the `free` plan's `creator_publish` allowance moved 3→12/month so the born-free tier is usable under an enforced rule; an already-seeded database keeps its stored rows by the tier's own doctrine, and the edit path is the `entitlements` table.
+
+**This section's own CI verdict prints after this commit lands; it is not written here yet.**

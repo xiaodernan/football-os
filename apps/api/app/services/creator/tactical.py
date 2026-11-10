@@ -38,6 +38,9 @@ from app.services.creator.publishing import (
     _slug_of,
     _text,
     ensure_profile,
+    forget_act,
+    meter_act,
+    record_act,
     visible_authors,
 )
 from app.services.tactics.analysis import metrics_for_rows
@@ -184,8 +187,11 @@ def publish_tactical_guide(
             slug=slug,
         )
 
+    guide_id = new_public_id("ctg")
+    # The monthly meter is consulted last — after the tier's own validations, before the row exists.
+    meter_act(session, actor_id, source_id=guide_id)
     row = CreatorTacticalGuide(
-        id=new_public_id("ctg"),
+        id=guide_id,
         author_id=actor_id,
         slug=slug,
         title=wanted_title,
@@ -199,6 +205,7 @@ def publish_tactical_guide(
     )
     session.add(row)
     session.commit()
+    record_act(session, actor_id, source_id=guide_id)
     return read_tactical_guide(session, row.id, actor_id)
 
 
@@ -292,6 +299,8 @@ def erase_tactical_guide(session: Session, actor_id: str, guide_id: str) -> dict
     row = _owned(session, guide_id, actor_id)
     erased = row.id
     session.delete(row)
+    # The act goes with the artifact, per the meter's own published rule.
+    forget_act(session, actor_id, source_id=erased)
     session.commit()
     return {"status": "erased", "guide": erased}
 

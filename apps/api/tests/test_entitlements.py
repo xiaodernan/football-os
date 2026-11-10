@@ -40,8 +40,8 @@ class TestTheMatrixIsData:
         assert len(held) == 7 * len(ent.FEATURES), "the matrix is total, or a plan silently has no ceiling for a feature"
         assert held[("organizations", "free")] == (1, "month")
         assert body["matrix"]["free"]["organizations"] == [1, "month"], "the published number is the stored one"
-        assert body["enforced"] == ["reports_saved"]
-        assert set(body["published_not_enforced"]) == set(ent.FEATURES) - {"reports_saved"}
+        assert body["enforced"] == list(ent.ENFORCED) == ["reports_saved", "creator_publish", "creator_guide"]
+        assert set(body["published_not_enforced"]) == set(ent.FEATURES) - set(ent.ENFORCED)
 
     def test_editing_the_table_changes_the_answer_because_no_door_keeps_its_own_copy(self, client: TestClient, session: Any) -> None:  # noqa: ANN001, E501
         ent.ensure_matrix(session)

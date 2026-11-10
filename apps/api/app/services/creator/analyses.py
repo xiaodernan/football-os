@@ -38,6 +38,9 @@ from app.services.creator.publishing import (
     _slug_of,
     _text,
     ensure_profile,
+    forget_act,
+    meter_act,
+    record_act,
     visible_authors,
 )
 from app.services.world.plan import web_path
@@ -222,8 +225,11 @@ def publish_player_analysis(
             slug=slug,
         )
 
+    analysis_id = new_public_id("cpa")
+    # The monthly meter is consulted last — after the tier's own validations, before the row exists.
+    meter_act(session, actor_id, source_id=analysis_id)
     row = CreatorPlayerAnalysis(
-        id=new_public_id("cpa"),
+        id=analysis_id,
         author_id=actor_id,
         slug=slug,
         title=wanted_title,
@@ -237,6 +243,7 @@ def publish_player_analysis(
     )
     session.add(row)
     session.commit()
+    record_act(session, actor_id, source_id=analysis_id)
     return read_player_analysis(session, row.id, actor_id)
 
 
@@ -330,6 +337,8 @@ def erase_player_analysis(session: Session, actor_id: str, analysis_id: str) -> 
     row = _owned(session, analysis_id, actor_id)
     erased = row.id
     session.delete(row)
+    # The act goes with the artifact, per the meter's own published rule.
+    forget_act(session, actor_id, source_id=erased)
     session.commit()
     return {"status": "erased", "analysis": erased}
 

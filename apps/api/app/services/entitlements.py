@@ -52,10 +52,11 @@ DAY = "day"
 #: The seeded matrix. Every plan can do everything; the numbers rise with the plan. `free` is the plan an account
 #: holds when nothing has granted it anything else, so these are the ceilings that bite today.
 #:
-#: The last two positions are §36's monthly publishing allowances. They are published as data and refused on by no
-#: door yet — `/entitlements/capabilities` lists them under `published_not_enforced`, and the creator tier's own caps
-#: (a lifetime count of guides and of citations per guide) are what bites there today. A limit that no door checks
-#: is a ceiling the data holds, not a rule, and is disclosed as such rather than presented as one.
+#: The last two positions are §36's monthly publishing allowances. They are enforced on the tiers that own them at
+#: the publish doors (2026-11-10) — `creator_publish` at all seven artifact doors, `creator_guide` at the guide
+#: door — and the free plan's publishing ceiling was sized at 12 per month when that enforcement landed, so the
+#: ceiling is a product decision made in the open rather than a silent tuning knob: a creator who cannot publish at
+#: all in the first 31 days was not a creator. Erasing an artifact removes its spend.
 DEFAULT_MATRIX: Final[dict[str, dict[str, tuple[int, str]]]] = {
     plan: {
         "organizations": (limits[0], MONTH),
@@ -68,19 +69,21 @@ DEFAULT_MATRIX: Final[dict[str, dict[str, tuple[int, str]]]] = {
         "creator_guide": (limits[7], MONTH),
     }
     for plan, limits in {
-        "free": (1, 5, 1, 3, 5, 1, 3, 10),
-        "player": (1, 5, 1, 3, 10, 2, 6, 20),
-        "pro": (2, 10, 2, 10, 30, 5, 15, 50),
-        "coach": (3, 30, 4, 30, 60, 10, 30, 100),
-        "club": (5, 60, 8, 80, 150, 20, 60, 200),
-        "academy": (8, 120, 16, 200, 400, 40, 120, 400),
-        "enterprise": (40, 1000, 100, 2000, 5000, 200, 500, 1000),
+        "free": (1, 5, 1, 3, 5, 1, 12, 10),
+        "player": (1, 5, 1, 3, 10, 2, 24, 20),
+        "pro": (2, 10, 2, 10, 30, 5, 60, 50),
+        "coach": (3, 30, 4, 30, 60, 10, 120, 100),
+        "club": (5, 60, 8, 80, 150, 20, 240, 200),
+        "academy": (8, 120, 16, 200, 400, 40, 480, 400),
+        "enterprise": (40, 1000, 100, 2000, 5000, 200, 2000, 1000),
     }.items()
 }
 
-#: The features a write is actually refused on. §41's Reports is the first door metered this way; the rest are
-#: published as ceilings and enforced by the tiers that own them as each is wired.
-ENFORCED: Final = ("reports_saved",)
+#: The features a write is actually refused on. §41's Reports was the first door metered this way; §36's creator
+#: tier's two monthly allowances joined it in the enforcement arc (2026-11-10): `creator_publish` is consulted at
+#: all seven publish doors and `creator_guide` at the guide door, the spend is recorded as the artifact is
+#: written and removed as it is erased, exactly as §41's door treats its reports.
+ENFORCED: Final = ("reports_saved", "creator_publish", "creator_guide")
 
 #: The plan a subject holds when nothing has granted it anything else. Named once because three tiers read it:
 #: the meter that refuses, the door that prints the ceiling, and the `free` row of the matrix above.

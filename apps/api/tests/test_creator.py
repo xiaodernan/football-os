@@ -40,7 +40,7 @@ from sqlalchemy.orm import Session
 from app.api.v1 import creator as creator_router
 from app.core.db import SessionLocal
 from app.main import app
-from app.models import CommunityFollow, CreatorGuide, GuideCitation, KnowledgeChunk, KnowledgeDocument, User, utc_today
+from app.models import CommunityFollow, CreatorGuide, Entitlement, GuideCitation, KnowledgeChunk, KnowledgeDocument, UsageEvent, User, utc_today
 from app.services import entitlements as ent
 from app.services.club import answers as project_answers
 from app.services.creator import publishing as cre
@@ -339,8 +339,8 @@ def test_the_features_the_rulebook_names_are_rows_this_platform_ships(session: S
     """`GET /creator/rules` names the features this tier publishes into §42's table, so the rows have to be there.
 
     A rulebook that named a feature the matrix does not carry would be a promise with no ceiling behind it, and the
-    entitlements door would not know the name at all. The other half matters as much: no door refuses on these yet,
-    so the meter must print them as ceilings the data holds rather than as rules.
+    entitlements door would not know the name at all. The enforcement landed 2026-11-10: both doors refuse on their
+    own allowance now, so the meter must print them as rules, and the tier's limitation sentence must say so.
     """
     body = TestClient(app).get("/api/v1/creator/rules").json()
     named = body["entitlement_features"]
@@ -352,8 +352,10 @@ def test_the_features_the_rulebook_names_are_rows_this_platform_ships(session: S
 
     printed = {row["feature"]: row for row in ent.entitlements_view(session, "usr_never_here", plan=ent.DEFAULT_PLAN, subject_kind="user")["items"]}
     assert set(named) <= set(printed), "an account's own meter has to print the features this tier publishes into"
-    assert all(printed[feature]["enforced"] is False for feature in named), "no door refuses on them yet, and the meter must not say otherwise"
-    assert "no door refuses on yet" in body["limitation"], "the rulebook has to say which of its ceilings actually bites"
+    assert all(printed[feature]["enforced"] is True for feature in named), "the door refuses on both allowances now, so the meter must say so"
+    assert set(named) <= set(ent.ENFORCED), "this tier's own features are part of the enforced set, and a revert would have to say so"
+    assert "no door refuses on yet" not in body["limitation"], "the rulebook has to say which of its ceilings actually bites"
+    assert "enforced at their own doors" in body["limitation"], "the rulebook has to say that the monthly ceilings bite at the doors"
 
 
 # ------------------------------------------------------------------ the doors
@@ -543,3 +545,50 @@ def test_a_followers_guide_reaches_through_the_door_only_the_accounts_whose_foll
     assert withdrawn.status_code == 200, withdrawn.text
     assert ada.get(f"/api/v1/creator/guides/{secret}").status_code == 404
     assert bo.get(f"/api/v1/creator/guides/{secret}").status_code == 200
+
+
+# ------------------------------------------------------------------ the monthly meter
+
+
+class TestTheMonthlyMeter:
+    """§42's two monthly allowances, as the creator doors enforce them since 2026-11-10."""
+
+    def test_a_guide_spends_both_allowance_kinds_and_the_spend_names_the_artifact(self, voices: dict[str, TestClient], session: Session) -> None:
+        ada = voices["ada"]
+        published = ada.post("/api/v1/creator/guides", json={"section": "plan", "title": "a frame the meter will count"})
+        assert published.status_code in (200, 201), published.text
+        guide = published.json()["guide"]
+        rows = list(session.scalars(select(UsageEvent).where(UsageEvent.subject_id == _actor_id(ada), UsageEvent.source_id == guide["id"])))
+        by_feature = {row.feature: row for row in rows}
+        assert set(by_feature) == {"creator_publish", "creator_guide"}, "a guide is one publish and one guide, named by its own id"
+        assert all(row.subject_kind == "user" and row.plan == ent.DEFAULT_PLAN and row.units == 1 for row in rows), "the act is metered on the account, at the default plan, at one unit"
+
+    def test_a_publish_past_the_monthly_allowance_is_refused_at_the_door_with_figures(self, voices: dict[str, TestClient], session: Session) -> None:
+        ada = voices["ada"]
+        ent.ensure_matrix(session)
+        row = session.scalar(select(Entitlement).where(Entitlement.plan == ent.DEFAULT_PLAN, Entitlement.feature == "creator_publish"))
+        assert row is not None and int(row.limit_value) >= 1, "the seed is the only thing that puts this row there"
+        held = int(row.limit_value)
+        row.limit_value = 0
+        session.commit()
+        try:
+            refused = ada.post("/api/v1/creator/guides", json={"section": "plan", "title": "a refused publish"})
+            assert refused.status_code == 409, refused.text
+            detail = _detail(refused)
+            assert detail["code"] == "entitlement_limit" and detail["feature"] == "creator_publish" and detail["enforced"] is True, detail
+            assert detail["limit"] == 0 and detail["used"] == 0, "the refusal prints the ceiling and the count it beat, and a refused act spent nothing"
+        finally:
+            row.limit_value = held
+            session.commit()
+
+    def test_erasing_the_artifact_removes_its_spend_per_the_published_rule(self, voices: dict[str, TestClient], session: Session) -> None:
+        ada = voices["ada"]
+        created = ada.post("/api/v1/creator/guides", json={"section": "plan", "title": "a frame whose erase is a refund"})
+        assert created.status_code in (200, 201), created.text
+        guide = created.json()["guide"]
+        before = ent.used(session, _actor_id(ada), "creator_guide")
+        assert before >= 1, "the write is the spend, and a spend it cannot see is not a meter"
+        erased = ada.delete(f"/api/v1/creator/guides/{guide['id']}")
+        assert erased.status_code == 200, erased.text
+        after = ent.used(session, _actor_id(ada), "creator_guide")
+        assert after == before - 1, "deleting the act removes its spend, as the meter's own published rule says"

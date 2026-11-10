@@ -47,6 +47,9 @@ from app.services.creator.publishing import (
     _slug_of,
     _text,
     ensure_profile,
+    forget_act,
+    meter_act,
+    record_act,
     visible_authors,
 )
 from app.services.simulation.career import record_of
@@ -257,8 +260,11 @@ def publish_career_challenge(
             slug=slug,
         )
 
+    challenge_id = new_public_id("ccc")
+    # The monthly meter is consulted last — after the tier's own validations, before the row exists.
+    meter_act(session, actor_id, source_id=challenge_id)
     row = CreatorCareerChallenge(
-        id=new_public_id("ccc"),
+        id=challenge_id,
         author_id=actor_id,
         slug=slug,
         title=wanted_title,
@@ -276,6 +282,7 @@ def publish_career_challenge(
     )
     session.add(row)
     session.commit()
+    record_act(session, actor_id, source_id=challenge_id)
     session.refresh(row)
     return read_career_challenge(session, row.id, actor_id)
 
@@ -556,6 +563,8 @@ def erase_career_challenge(session: Session, actor_id: str, challenge_id: Any) -
     row = _owned(session, challenge_id, actor_id)
     erased = row.id
     session.delete(row)
+    # The act goes with the artifact, per the meter's own published rule.
+    forget_act(session, actor_id, source_id=erased)
     session.commit()
     return {"status": "erased", "challenge": erased}
 

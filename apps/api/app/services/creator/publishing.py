@@ -31,7 +31,7 @@ from __future__ import annotations
 
 from typing import Any, Final
 
-from sqlalchemy import func, inspect, select
+from sqlalchemy import delete, func, inspect, select
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
@@ -51,9 +51,12 @@ from app.models import (
     GuideCitation,
     KnowledgeChunk,
     KnowledgeDocument,
+    UsageEvent,
     User,
     utc_today,
 )
+from app.services import entitlements as ent
+from app.services.club.organizations import ClubRefusal
 
 
 class CreatorRefusal(RuntimeError):
@@ -263,10 +266,45 @@ LIMITATION: Final = (
     "text, so re-ingesting the corpus cannot leave a guide quoting words the document no longer holds; the passage "
     "is read where it lives, and a citation whose passage has changed says so through `moved`. Nothing in this tier "
     "carries money: the plan/feature/ceiling rows in `entitlements` are the whole pricing architecture here, and no "
-    "currency, provider or checkout field appears in any payload; the two features this tier names in that table "
-    "(`creator_publish`, `creator_guide`) are ceilings the data holds and no door refuses on yet, so the caps "
-    "published above are what actually bites"
+    "currency, provider or checkout field appears in any payload; the two monthly features this tier names in that "
+    "table (`creator_publish`, `creator_guide`) were enforced at their own doors on 2026-11-10 — the ceiling the "
+    "`free` plan holds is read from the table, the write is refused at the door when it is spent and the spend is "
+    "recorded with the artifact's own id, removed as the artifact is erased — so what the caps published above still "
+    "govern is the lifetime shape of the tier (per-account totals), not the monthly allowance"
 )
+
+
+def meter_act(session: Session, actor_id: str, *, source_id: str, guide: bool = False) -> None:
+    """§42's monthly ceilings, consulted at the door that is about to spend them.
+
+    `creator_publish` counts any of the seven artifacts an actor publishes; `creator_guide` counts guides only.
+    The plan read is `DEFAULT_PLAN` because no door grants a plan yet — the same honest state §41's reports door
+    ships in — so the ceiling the table holds for `free` is the one that bites, and it is printed, met and refused.
+    The ask is idempotent per `source_id`, exactly as `ent.guard` publishes, so re-asking for the same act is not a
+    second spend. Refusal is the table's own `entitlement_limit` code (409), raised as this tier's refusal shape so
+    `/creator/...` answers it the one project-wide way.
+    """
+    plan = ent.DEFAULT_PLAN
+    try:
+        ent.guard(session, subject_id=actor_id, feature="creator_publish", plan=plan, source_id=source_id)
+        if guide:
+            ent.guard(session, subject_id=actor_id, feature="creator_guide", plan=plan, source_id=source_id)
+    except ClubRefusal as error:
+        raise CreatorRefusal(error.code, error.message, **error.figures) from None
+
+
+def record_act(session: Session, actor_id: str, *, source_id: str, guide: bool = False) -> None:
+    """Note the spend after the write exists. A write that failed did not use anybody's allowance."""
+    ent.record(session, subject_id=actor_id, subject_kind="user", feature="creator_publish", plan=ent.DEFAULT_PLAN, source_id=source_id)
+    if guide:
+        ent.record(session, subject_id=actor_id, subject_kind="user", feature="creator_guide", plan=ent.DEFAULT_PLAN, source_id=source_id)
+
+
+def forget_act(session: Session, actor_id: str, *, source_id: str, guide: bool = False) -> int:
+    """Removing the act removes its spend, per the meter's own published rule; returns how many rows went."""
+    features = ["creator_publish"] + (["creator_guide"] if guide else [])
+    removed = session.execute(delete(UsageEvent).where(UsageEvent.subject_id == actor_id, UsageEvent.feature.in_(features), UsageEvent.source_id == source_id))
+    return int(removed.rowcount or 0)
 
 CREATOR_TABLES: Final = (
     CreatorProfile.__tablename__,
@@ -444,8 +482,12 @@ def publish_guide(session: Session, actor_id: str, *, section: Any, title: Any, 
     slug = _slug_of(words)
     if session.scalar(select(CreatorGuide).where(CreatorGuide.author_id == actor_id, CreatorGuide.slug == slug)) is not None:
         raise CreatorRefusal("slug_taken", f"this account already publishes a guide addressed {slug!r}; a second one would be unreachable", slug=slug, author=actor_id)
+    guide_id = new_public_id("guide")
+    # The monthly meter is consulted last — after the tier's own validations, so a caller who sent a refused shape is
+    # told about the shape rather than about a plan, and before the row exists, so a refused act writes nothing.
+    meter_act(session, actor_id, source_id=guide_id, guide=True)
     row = CreatorGuide(
-        id=new_public_id("guide"),
+        id=guide_id,
         author_id=actor_id,
         slug=slug,
         title=words,
@@ -458,6 +500,7 @@ def publish_guide(session: Session, actor_id: str, *, section: Any, title: Any, 
     )
     session.add(row)
     session.commit()
+    record_act(session, actor_id, source_id=guide_id, guide=True)
     session.refresh(row)
     return {"guide": view(session, row, actor_id), "published": True, "rule": LIMITATION}
 
@@ -655,6 +698,8 @@ def erase_guide(session: Session, guide_id: str, actor_id: str) -> dict[str, Any
     row = _owned(session, guide_id, actor_id)
     gone = measures(session, row)
     session.delete(row)
+    # The act goes with the artifact, per the meter's own published rule.
+    forget_act(session, actor_id, source_id=row.id, guide=True)
     session.commit()
     return {"erased": row.id, "author_id": actor_id, **gone}
 

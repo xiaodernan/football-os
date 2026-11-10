@@ -38,6 +38,9 @@ from app.services.creator.publishing import (
     _slug_of,
     _text,
     ensure_profile,
+    forget_act,
+    meter_act,
+    record_act,
     visible_authors,
 )
 from app.services.world.plan import web_path
@@ -243,8 +246,11 @@ def publish_scouting_list(
             slug=slug,
         )
 
+    list_id = new_public_id("csl")
+    # The monthly meter is consulted last — after the tier's own validations, before the row exists.
+    meter_act(session, actor_id, source_id=list_id)
     row = CreatorScoutingList(
-        id=new_public_id("csl"),
+        id=list_id,
         author_id=actor_id,
         slug=slug,
         title=wanted_title,
@@ -267,6 +273,7 @@ def publish_scouting_list(
             )
         )
     session.commit()
+    record_act(session, actor_id, source_id=list_id)
     return read_scouting_list(session, row.id, actor_id)
 
 
@@ -366,6 +373,8 @@ def erase_scouting_list(session: Session, actor_id: str, list_id: str) -> dict[s
     row = _owned(session, list_id, actor_id)
     erased = row.id
     session.delete(row)
+    # The act goes with the artifact, per the meter's own published rule.
+    forget_act(session, actor_id, source_id=erased)
     session.commit()
     return {"status": "erased", "list": erased}
 
