@@ -73,6 +73,7 @@ const hasChineseGlyphs = (s) => CJK.test(String(s ?? ''));
         { path: '/my-football', name: 'authenticated my-football', shot: `${prefix}-my-football.png` },
         { path: '/simulate', name: 'authenticated simulator', shot: `${prefix}-simulate.png` },
         { path: '/challenges', name: 'authenticated challenges', shot: `${prefix}-challenges-authed.png` },
+        { path: '/leaderboard', name: 'authenticated leaderboard', shot: `${prefix}-leaderboard-authed.png` },
         { path: '/career', name: 'authenticated career create', shot: `${prefix}-career.png` },
         ...(CAREER_SLUG
           ? [

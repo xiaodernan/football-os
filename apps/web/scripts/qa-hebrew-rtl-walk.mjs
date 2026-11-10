@@ -64,6 +64,7 @@ const isHebrew = (s) => /[\u0590-\u05FF\uFB1D-\uFB4F]/.test(String(s ?? ''));
         { path: '/my-football', name: 'authenticated my-football', shot: 'hebrew-my-football.png' },
         { path: '/simulate', name: 'authenticated simulator', shot: 'hebrew-simulate.png' },
         { path: '/challenges', name: 'authenticated challenges', shot: 'hebrew-challenges-authed.png' },
+        { path: '/leaderboard', name: 'authenticated leaderboard', shot: 'hebrew-leaderboard-authed.png' },
         { path: '/career', name: 'authenticated career create', shot: 'hebrew-career.png' },
         ...(CAREER_SLUG
           ? [

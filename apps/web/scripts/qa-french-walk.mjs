@@ -67,6 +67,7 @@ const isFrench = (s) => FRENCH_ACCENTS.test(String(s ?? ''));
         { path: '/my-football', name: 'authenticated my-football', shot: 'french-my-football.png' },
         { path: '/simulate', name: 'authenticated simulator', shot: 'french-simulate.png' },
         { path: '/challenges', name: 'authenticated challenges', shot: 'french-challenges-authed.png' },
+        { path: '/leaderboard', name: 'authenticated leaderboard', shot: 'french-leaderboard-authed.png' },
         { path: '/career', name: 'authenticated career create', shot: 'french-career.png' },
         ...(CAREER_SLUG
           ? [

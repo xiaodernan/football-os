@@ -62,6 +62,7 @@ const isArabic = (s) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\u
         { path: '/my-football', name: 'authenticated my-football', shot: 'arabic-my-football.png' },
         { path: '/simulate', name: 'authenticated simulator', shot: 'arabic-simulate.png' },
         { path: '/challenges', name: 'authenticated challenges', shot: 'arabic-challenges-authed.png' },
+        { path: '/leaderboard', name: 'authenticated leaderboard', shot: 'arabic-leaderboard-authed.png' },
         { path: '/career', name: 'authenticated career create', shot: 'arabic-career.png' },
         ...(CAREER_SLUG
           ? [
