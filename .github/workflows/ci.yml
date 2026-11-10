@@ -356,20 +356,38 @@ jobs:
           done
           docker logs smoke_api 2>&1 | tail -30
           curl -fsS --max-time 10 http://localhost:18100/healthz
-      - name: Boot the web image wired to the API container
-        # The web image has never been booted anywhere either; this smoke stands the pair
-        # up on one network and asserts the web tier answers /healthz — whose server
-        # action calls FastAPI through serverFetch — with 200 (degraded answers 503).
+      - name: Boot the web image wired through the edge to the API container
+        # §85's proof: web's /healthz proxies FastAPI via serverFetch, so a 200 means
+        # web and api answered. This item extends it across the only hop a production
+        # deploy adds: the edge. The edge boots direct-routed (APC_CORE_URI, eureka and
+        # config disabled — every developer runs it this way) and web is wired to it, so
+        # one curl from the runner exercises web → edge → api in both directions.
         run: |
+          docker run -d --name smoke_edge --network football_os_smoke \
+            -e APC_CORE_URI="http://smoke_api:8100" \
+            -e REGISTRY_URL="http://localhost:1/eureka/" \
+            -e CONFIG_URL="http://localhost:1" \
+            -p 18480:8080 \
+            -v "$PWD/services/edge/target/edge-0.1.0.jar:/app/edge.jar:ro" \
+            eclipse-temurin:21-jre \
+            java -jar /app/edge.jar \
+            --spring.cloud.config.enabled=false \
+            --eureka.client.enabled=false
+          for i in $(seq 1 150); do
+            body=$(curl -fsS --max-time 2 http://localhost:18480/actuator/health 2>/dev/null || true)
+            if [ -n "$body" ]; then echo "edge healthy after $((i*2))s"; break; fi
+            sleep 2
+          done
+          docker logs smoke_edge 2>&1 | tail -30
           docker run -d --name smoke_web --network football_os_smoke \
-            -e API_INTERNAL_URL="http://smoke_api:8100" \
+            -e API_INTERNAL_URL="http://smoke_edge:8080" \
             -p 18410:3210 \
             football-os-web:ci
           for i in $(seq 1 150); do
             body=$(curl -fsS --max-time 2 http://localhost:18410/healthz 2>/dev/null || true)
-            if [ -n "$body" ]; then echo "healthz answered after $((i*2))s"; break; fi
+            if [ -n "$body" ]; then echo "web healthy after $((i*2))s"; break; fi
             sleep 2
           done
           docker logs smoke_web 2>&1 | tail -30
           curl -fsS --max-time 15 http://localhost:18410/healthz
-          docker rm -f smoke_api smoke_web
+          docker rm -f smoke_api smoke_edge smoke_web
