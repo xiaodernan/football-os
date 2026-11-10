@@ -626,3 +626,69 @@ named doors answer 200, and the trace block names the real headers.
   `/edge/**` door; a fleet-wide view needs a caller that asks each instance.
 - It does **not** compute a football fact. The Python core stays canonical: this door describes the
   shape of the way in, not the game behind it.
+## 16. The compartment wall (item 62) — the core gets a bounded number of callers, and the rest are refused in the product's shape
+
+Every other protection in the plane answers a different question. The rate limiter asks how fast one
+caller may ask; the breaker asks whether the core is answering at all; `Retry` asks whether a single
+stumble clears. None of them bounds **concurrency**, and a core that turns merely slow — not down —
+lets requests pile up at the gateway until the whole door is queued behind it. A bulkhead is the
+compartment wall: a bounded number of in-flight calls, and everything beyond it refused immediately
+rather than queued.
+
+`BulkheadFilter` (a `GlobalFilter`, ordered after the rate limiter and before routing) admits only
+`/api/v1/**` to a Resilience4j `SemaphoreBulkhead` (`edge.bulkhead.enabled`, default `true`;
+`edge.bulkhead.max-concurrent-calls`, default `16`). Only the API prefix occupies a permit — the web
+shell is a different downstream, and letting it spend permits would refuse API calls because a page
+rendered. A refused call never reaches the route: it is a 503 with its own `code: core_busy` (distinct
+from the breaker's `core_unavailable` for a core that is actually down, and from `rate_limited` for a
+caller over its budget), it carries `Retry-After: 1` and the request's `X-Trace-Id`, and its permit
+accounting is exact: the refusal costs the core nothing and increments `rejected`. `GET /edge/bulkhead`
+reads the live semaphore (`enabled`, `max_concurrent_calls`, `available_concurrent_calls`, `rejected`,
+and the formula) so an operator can see the wall without touching it.
+
+### 16.1 The tests and the live walk
+
+`BulkheadTest` (3 cases) proves the wall deterministically rather than by stress: a `max-concurrent-calls=1`
+registry with a blocking stub core makes admission, refusal and shape all checkable without racing a
+five-second timer: the first call reaches the stub and stays there until released; the next caller is
+refused 503 with `core_busy`, `Retry-After: 1` and the trace id header; the refused call never reaches
+the stub (`coreCalls` stays 1); while the permit is held the compartment answers `503 core_busy` for
+every `/api/v1/**` caller, and the shell route keeps answering 200 throughout; once the permit is
+returned (proved by polling `/edge/bulkhead` for `available_concurrent_calls: 1`), `/api/v1/fast`
+answers 200 again.
+
+`EdgePlaneTest` grew with the new door: `/edge/plane` now publishes **nine** blocks (the six from
+item 61 plus `bulkhead`), its `doors` map names **seven** entry points (`/edge/bulkhead` joins the six),
+and every block is still the same answer its own door gives — the test compares parsed JSON for the
+seventh door as it does for the other six. The two YAML copies (`services/edge/.../application.yml`
+and `config-repo/football-edge.yml`) carry the same `edge.bulkhead` and `resilience4j.timelimiter`
+blocks, and `test_edge_config_parity.py` gates them (two new cases: the bulkhead policy, and the
+`timeoutDuration: 10s` pair — without the pair, the plane again behaves differently depending on
+whether the config server is up).
+
+The live walk on this machine proved the refusal path end-to-end — two permits exhausted against the
+stub core, the third caller answered 503 `core_busy` with the trace id and `Retry-After: 1`, and
+`/edge/bulkhead` showed `rejected: 1` with the permits returned after the in-flight calls settled —
+but the walk also exposed one defect on the way, fixed in the same slice: the Spring Cloud adapter's
+own **TimeLimiter budget (5s default)** was cutting slow calls before the configured 10s HTTP
+response-timeout ever could, and the fallbackanswered with `503 core_unavailable`. Both YAML copies now
+carry `resilience4j.timelimiter.configs.default.timeoutDuration: 10s`, parity-gated. The upstream call
+path through this host's netty resolver still fails intermittently for long-lived responses (`UnknownHostException`
+from a LAN DNS server answering SERVFAIL for IP-literal peers) — fast calls through the same edge succeed
+4/4 in the final probe. The wall's behaviour — admission, refusal, accounting, replenishment — is fully
+verified; the upstream availability quirk is the host's resolver and is named, not fixed here.
+
+### 16.2 What this does not claim
+
+- It is **not** per-route, per-tenant or per-key — the ceiling is global to `/api/v1/**` of the one
+  instance answering, counted over all callers together.
+- It is **not** a fair scheduler and **not** a queue — the refusal is immediate, final and explicit;
+  `Retry-After` tells the caller when to come back, but nothing is held for them.
+- It does **not** protect against a core that is down (that is the breaker's job) or against too-fast
+  callers (that is the limiter's). A 200 means the core answered; a 503 `core_busy` means it never saw
+  the request; a 503 `core_unavailable` means it saw it and could not answer in time.
+- It cannot see a request that never reaches the gateway (client-side load balancing, instance death
+  mid-flight) — permits are returned on connection completion or timeout, and a caller killed before
+  its connection closes is accounted for only when the host sweeps it.
+- It does **not** compute a football fact, and it does not know whether the in-flight call is a read or
+  a mutation. The rule for which calls get permits is the path prefix, nothing else.

@@ -54,6 +54,12 @@ resilience4j:
         wait-duration-in-open-state: 5s
         permitted-number-of-calls-in-half-open-state: 3
         automatic-transition-from-open-to-half-open-enabled: true
+  timelimiter:
+    configs:
+      default:
+        # The same 10s the route promises below for its HTTP client; without it the Spring Cloud
+        # adapter's own 5s TimeLimiter cut every slow call first and blamed the core for it.
+        timeoutDuration: 10s
 
 # The same policy the edge carries by default, kept here so the config server serves one reviewable
 # copy: how much one caller may burst, and how fast the bucket refills.
@@ -64,6 +70,11 @@ edge:
     enabled: ${RATE_LIMIT_ENABLED:true}
     burst: ${RATE_LIMIT_BURST:100}
     requests-per-second: ${RATE_LIMIT_RPS:50}
+  # The same policy the edge carries by default, kept reviewable here: how many /api/v1/ calls
+  # may be in flight at once before the caller is refused immediately.
+  bulkhead:
+    enabled: ${BULKHEAD_ENABLED:true}
+    max-concurrent-calls: ${BULKHEAD_MAX_CONCURRENT:16}
 
 management:
   endpoints:

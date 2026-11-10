@@ -65,6 +65,7 @@ class EdgePlaneTest {
         assertThat(plane.get("breaker")).isEqualTo(read("/edge/breaker"));
         assertThat(plane.get("instances")).isEqualTo(read("/edge/instances?service=football-core"));
         assertThat(plane.get("config")).isEqualTo(read(ConfigController.PATH));
+        assertThat(plane.get("bulkhead")).isEqualTo(read(BulkheadController.PATH));
     }
 
     @Test
@@ -87,7 +88,7 @@ class EdgePlaneTest {
                         .expectStatus().isOk();
             }
         });
-        assertThat(doors.size()).isEqualTo(6);
+        assertThat(doors.size()).isEqualTo(7);
     }
 
     @Test
@@ -102,7 +103,7 @@ class EdgePlaneTest {
     void the_plane_publishes_no_figure_of_its_own() throws Exception {
         JsonNode plane = read(PlaneController.PATH);
         assertThat(plane.fieldNames()).toIterable().containsExactlyInAnyOrder(
-                "routes", "limits", "breaker", "instances", "config", "trace", "doors", "formula");
+                "routes", "limits", "breaker", "instances", "config", "bulkhead", "trace", "doors", "formula");
         assertThat(plane.get("formula").asText()).contains("same method");
         List<?> routes = mapper.convertValue(plane.get("routes"), List.class);
         assertThat(routes).isNotEmpty();

@@ -10,9 +10,9 @@ import reactor.core.publisher.Mono;
 /**
  * One door that says what the whole service plane is doing.
  *
- * <p>Phase 11 grew one door per concern: routes, limits, the breaker, instances, config. An operator
- * who wants the shape of the platform would otherwise have to know all five and stitch them together.
- * This door does that stitching — and it does it by <em>calling the very same methods</em> the five doors
+ * <p>Phase 11 grew one door per concern: routes, limits, the breaker, instances, config, the bulkhead.
+ * An operator who wants the shape of the platform would otherwise have to know all six and stitch them.
+ * This door does that stitching — and it does it by <em>calling the very same methods</em> the six doors
  * call, not by retyping their predicates. Each block is therefore the same answer its own door gives,
  * and the test compares them byte for byte. Nothing here computes a football fact; the Python core stays
  * canonical, and this door only describes the shape of the way in.
@@ -27,18 +27,21 @@ public class PlaneController {
     private final BreakerController breaker;
     private final InstancesController instances;
     private final ConfigController config;
+    private final BulkheadController bulkhead;
 
     public PlaneController(
             RoutesController routes,
             LimitsController limits,
             BreakerController breaker,
             InstancesController instances,
-            ConfigController config) {
+            ConfigController config,
+            BulkheadController bulkhead) {
         this.routes = routes;
         this.limits = limits;
         this.breaker = breaker;
         this.instances = instances;
         this.config = config;
+        this.bulkhead = bulkhead;
     }
 
     @GetMapping(PATH)
@@ -50,6 +53,7 @@ public class PlaneController {
             body.put("breaker", breaker.breaker());
             body.put("instances", instances.instances("football-core"));
             body.put("config", config.config());
+            body.put("bulkhead", bulkhead.report());
             body.put("trace", Map.of(
                     "parent_header", W3cTraceContextFilter.TRACE_PARENT,
                     "state_header", W3cTraceContextFilter.TRACE_STATE,
@@ -61,6 +65,7 @@ public class PlaneController {
                     "breaker", "/edge/breaker",
                     "instances", "/edge/instances?service=football-core",
                     "config", ConfigController.PATH,
+                    "bulkhead", BulkheadController.PATH,
                     "refresh", "/actuator/refresh"));
             body.put("formula", "each block is the same method its own door calls; the plane adds no figure of its own");
             return body;

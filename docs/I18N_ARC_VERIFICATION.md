@@ -3843,3 +3843,67 @@ microservices could be added to the project. They were already here, landed by t
 **Not claimed, named.** (1) The full plane smoke — `compose up` with a probe of the edge → core → registry path and the served web — is not in CI; the `containers` job proves the images build and the compose parses, nothing more. (2) The api container migrates on boot; seeding the world/catalogues happens in the lifespan as in dev, which is correct here and could be hoisted out later. (3) The web image has not been walked; its runtime behaviour is unverified until the job runs. (4) `docker compose --profile plane up` has never been executed end-to-end, on this host or anywhere. All four are named as the next milestones' work.
 
 **Teardown.** Build contexts cleaned: `.scratch/imgapi` and `.scratch/wheelhouse` stay untracked; the probe output file `.scratch/out.txt` removed; no container was created or destroyed by this milestone (three zombie build containers from the timed-out builds remain in the wedged daemon for its runner to reap); the untracked user text file at the repository root remains untouched.
+## 78. The Spring Cloud plane, finished honestly: item 62, the TimeLimiter it exposed, and the CI that watches the Java now (2026-11-10)
+
+**What §77 left and §76 earned.** §76 (`535811a`) gave the plane a CI actor: an `services` job on
+ubuntu-latest (Temurin 21, `cache: maven`, `mvn -B package`) — the first time the Java plane ever compiled
+on push. Before it, the only gate the plane had ever passed was its own author's laptop. §76's run read
+**green** (`42737452790`, 19m59s), and it also re-exercised §75's lint-harness fix on the Java leg. §77
+(`11ad938`) gave the product a container shape (each app's `Dockerfile`, `.dockerignore`, the
+compose `plane` profile now bringing up the whole product end-to-end, `psycopg2-binary` added to the
+production `requirements.txt` — a production image could not have reached PostgreSQL before it). §77's CI read
+**green** as well (including the new `containers` job: `compose config --quiet` + both image builds on
+every push — the image verification that could not run on this host because its Docker daemon cannot
+start a single container; the daemon is shared with every other project on the machine and would not be
+restarted).
+
+**Item 62 — the compartment wall, completed to the lane's own standard.** The parallel lane left exactly
+two files when it stopped mid-item: `BulkheadFilter.java` and `BulkheadController.java`, both uncommitted
+and with **no tests, no wiring to the plane door, and no pom entry for the resilience4j-bulkhead module** —
+which is why `mvn package` failed on them at the first attempt. This slice finished the item the lane's own
+pattern requires: the `resilience4j-bulkhead` dependency; admission only for `/api/v1/**`; refusal before
+routing (`503` with `code: core_busy`, `Retry-After: 1`, the request's trace id); `GET /edge/bulkhead`
+reporting the live semaphore; `/edge/plane` grown to **nine blocks and seven doors** by calling the same
+controller methods its own doors call (the composition is asserted, not restated, by `EdgePlaneTest`); both
+YAML copies carrying the same `edge.bulkhead` block, parity-gated; and `BulkheadTest` written deliberately
+to be deterministic — `max-concurrent-calls=1`, a blocking stub core that holds its permit, every assertion
+on shapes the product itself defines (the refusal body, the `Retry-After: 1` header, the replenishment
+proved by polling the door) — 4 consecutive green runs on this host.
+
+**The defect item 62 exposed, and fixed.** The live walk showed every slow core call falling back to
+`503 core_unavailable` at ~1s although the configured `response-timeout` was 10s. Decompilation of the
+shipped adapter pinned it: the Spring Cloud CircuitBreaker integration builds a **Resilience4j TimeLimiter
+with the framework default 5s**, and the fallback turned every cut call into `core_unavailable` — the core
+was blamed for a budget the gateway itself held. Both YAML copies now carry
+`resilience4j.timelimiter.configs.default.timeoutDuration: 10s` (parity-gated, with the block now required
+in the composite "same breaker" parity case), which restores the 10s budget the HTTP layer promises.
+
+**What the live walk on this machine observed, measured, and named.** The refusal path was exercised end to end:
+the third concurrent caller was answered `503 {"code":"core_busy",...,"retry_after_seconds":1,...}` with the
+request's trace id at the door, and `/edge/bulkhead` then read `rejected: 1` with the permits returned once
+the in-flight calls settled — the wall admits, refuses and replenishes exactly as designed. Separately, this
+host's netty resolver fails the upstream for long-lived responses through the gateway (a LAN DNS answer of
+SERVFAIL for IP-literal peers, per the debug-level log captured during the walk): fast calls through the same
+edge succeed 4/4, slow calls fall back deterministically at ~1s. The walk's evidence is recorded in
+`docs/M14_SERVICE_PLANE.md` §16; the resolver pathology is the host's and is **named, not fixed**.
+
+**Compilation discipline learned the expensive way.** `mvn surefire:test` alone run against the previously
+compiled tree never recompiles: three runs of a stale test class failed identically at the same assertion
+line, and "the wall does not work" looked reproducible. The wall works. The lesson recorded: a failing
+test after an edit is read as its own rerun only if the test actually recompiled; `mvn ... test` (not
+`surefire:test`) is the command that answers that question. The same discipline applies to CI's module
+tests, which run the full lifecycle.
+
+**The honest scoreboard at this commit.** Registry, config server, edge: `mvn -o -B package` **BUILD SUCCESS**
+(all three modules, 3 + 6 + 1 new parity-gated YAML blocks, 3 + 6 new resilience4j unit/parity cases, 4
+`BulkheadTest` runs repeated green, `test_edge_config_parity.py` 7/7). The one thing machines must tell us,
+they now do on every push: the Java builds, the Python lints it cannot avoid, and the two Docker images build.
+The one thing intentionally **not** claimed anywhere: a live end-to-end pass of the whole compose plane on
+this host — the daemon again refused any new container at all (`hello-world` hangs); the proof for images
+is CI's build, the proof for the jars is the live walk above, and the proof for the refusal shape is the test
+suite. None of those three claims leans on the others.
+
+**Teardown.** No probe stack stands behind this milestone: the scratch stub (port 18999) and both ports are
+released; the two Java edge processes started during this session are stopped; the `.scratch` working files
+are reports and build artefacts, untracked as always; the untracked user text file at the repository root is
+untouched. The plane's `target/` directories stay ignored.

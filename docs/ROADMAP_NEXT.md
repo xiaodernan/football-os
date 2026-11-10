@@ -1077,6 +1077,18 @@ gateway — without moving a single domain rule out of the core. The rule that k
     4 cases comparing parsed JSON block by block and walking every named door, and a live walk **16/16**:
     exactly eight blocks, five exact matches, six doors answering 200. Stated limits: not a health check,
     no cross-replica aggregation, and the Python core stays canonical.
+62. **The compartment wall (done 2026-11-10).** `BulkheadFilter` admits a bounded number of in-flight
+    `/api/v1/**` requests, refuses everything beyond it **immediately** in the product's refusal shape
+    (503 with `core_busy`, `Retry-After: 1`, the request's trace id), and never spends a permit on the
+    web shell or on `/edge/**` doors; `GET /edge/bulkhead` reads the live semaphore. Two findings from the
+    admission: the Spring Cloud adapter's own **TimeoutException budget of 5 seconds** was cutting every
+    combat leg before the configured 10s response-timeout ever could — now `resilience4j.timelimiter` carries
+    `timeoutDuration: 10s` in **both** YAML copies, parity-gated; and the stub-core harness had to be
+    multi-threaded to observe a blocked permit at all. Evidence: `docs/M14_SERVICE_PLANE.md` §16 — 3
+    `BulkheadTest` cases + extended `EdgePlaneTest` (seven doors, nine blocks) + two new parity cases;
+    `mvn -o -B package` green on both engines; the live probe showed the refusal with the trace id and the
+    permit replenishing. Stated limits: a **global** ceiling over `/api/v1/**`, not per-route or per-tenant,
+    not a fair scheduler, and the refusal is a hard no, never a queued wait.
 
 
 ## How this plan is executed

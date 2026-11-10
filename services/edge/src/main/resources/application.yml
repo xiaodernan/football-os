@@ -78,6 +78,11 @@ edge:
     enabled: ${RATE_LIMIT_ENABLED:true}
     burst: ${RATE_LIMIT_BURST:100}
     requests-per-second: ${RATE_LIMIT_RPS:50}
+  # A bounded number of /api/v1/ requests in flight at once; everything beyond is refused
+  # immediately in the product's shape instead of queued behind a slow core.
+  bulkhead:
+    enabled: ${BULKHEAD_ENABLED:true}
+    max-concurrent-calls: ${BULKHEAD_MAX_CONCURRENT:16}
 
 resilience4j:
   circuitbreaker:
@@ -91,6 +96,12 @@ resilience4j:
         wait-duration-in-open-state: 5s
         permitted-number-of-calls-in-half-open-state: 3
         automatic-transition-from-open-to-half-open-enabled: true
+  timelimiter:
+    configs:
+      default:
+        # The route's documented response-time budget is 10s; without this block the Spring Cloud
+        # adapter's own 5s TimeLimiter cut every slow call first and blamed the core for it.
+        timeoutDuration: 10s
 
 management:
   endpoints:

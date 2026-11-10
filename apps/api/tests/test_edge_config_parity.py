@@ -7,7 +7,7 @@ whether another container happened to be up. That is two gateways wearing one na
 
 Both files are read here as data — no Spring context, no ports — so the gate is fast and fails at the
 first divergent key. The route table is compared as id / order / uri / predicates / filters, and the
-breaker and limiter blocks are compared whole.
+breaker, limiter and bulkhead blocks are compared whole.
 """
 
 from __future__ import annotations
@@ -72,11 +72,32 @@ def test_the_two_copies_set_the_same_breaker() -> None:
     assert own["minimum-number-of-calls"] <= own["sliding-window-size"]
 
 
+def test_the_two_copies_set_the_same_timelimiter() -> None:
+    """Item 62b: the 10s response budget the route promises is in both copies or neither."""
+    own = _doc(EDGE)["resilience4j"]["timelimiter"]["configs"]["default"]
+    served = _doc(SERVED)["resilience4j"]["timelimiter"]["configs"]["default"]
+    assert own == served, (
+        "the TimeLimiter behaves differently depending on whether the config server is up: "
+        f"{own!r} vs {served!r}"
+    )
+    assert own["timeoutDuration"] == "10s"
+
+
 def test_the_two_copies_set_the_same_limiter() -> None:
     own = _doc(EDGE)["edge"]["rate-limit"]
     served = _doc(SERVED)["edge"]["rate-limit"]
     assert own == served, (
         "the limiter behaves differently depending on whether the config server is up: "
+        f"{own!r} vs {served!r}"
+    )
+
+
+def test_the_two_copies_set_the_same_bulkhead() -> None:
+    """Item 62 added a third shared policy; it too must not exist in only one of the two gateways."""
+    own = _doc(EDGE)["edge"]["bulkhead"]
+    served = _doc(SERVED)["edge"]["bulkhead"]
+    assert own == served, (
+        "the bulkhead behaves differently depending on whether the config server is up: "
         f"{own!r} vs {served!r}"
     )
 

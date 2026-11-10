@@ -37,6 +37,12 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
     </dependency>
+    <!-- The starter above resolves circuitbreaker and retry, but not the bulkhead module; the
+         compartment wall needs it directly. Version is managed by Spring Cloud's resilience4j BOM. -->
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-bulkhead</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
