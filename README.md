@@ -30,10 +30,13 @@ apps/api   FastAPI + SQLAlchemy 2     auth · football world model · training c
                                           football world: seeded generator → idempotent sync → unified search → /api/v1/world/*
                                           tactical lab: pitch geometry → 10 shapes × 5 temperaments → 50 measured systems
                                           video analysis: ffprobe facts → ffmpeg frame samples → pixel-statistic vision provider → detections + job/ledger rows
-PostgreSQL + pgvector (docker compose)   dev fallback: SQLite via DATABASE_URL
+services/registry  Eureka (Java 21)   service discovery — the core announces itself, the edge finds it by name
+services/config    Spring Cloud Config one reviewable football-edge.yml, refreshable without a restart (/actuator/refresh)
+services/edge      Spring Cloud Gateway one door — /api/v1/** · the web shell through the same gateway: trace id → rate limit → Resilience4j breaker → bounded Retry → proxy; /edge/* reports its own shape (routes, limits, breaker, plane, bulkhead)
+PostgreSQL + pgvector (docker compose)   dev fallback: SQLite via DATABASE_URL; images: apps/api/Dockerfile, apps/web/Dockerfile, plus docker compose --profile plane up -d for the whole product
 ```
 
-No Redis, no Kafka, no microservices, no Java — added only against a measured bottleneck (ADR-001, ADR-006).
+No Redis server, no Kafka broker. The one exception to "no microservices, no Java": the service plane, landed in M13 Phase 11 against a measured bottleneck. The Python core stays canonical — the plane routes, guards, traces and refreshes; no football rule lives in Java. Added only against a measured bottleneck (ADR-001, ADR-006).
 
 ## Quick start
 
@@ -51,8 +54,9 @@ uvicorn app.main:app --reload --port 8731
 # 2. Web (new terminal)
 cd apps/web && npm install && npm run dev    # http://localhost:3210
 
-# optional: real Postgres + pgvector
-docker compose -f infra/docker-compose.yml up -d
+# optional: the whole product as containers — api (:8100), web (:3210), registry (:8761), config (:8888), edge (→:18080)
+cd services && mvn -B package && cd ..
+docker compose --profile plane build && docker compose --profile plane up -d
 ```
 
 Verification commands: `pytest` and `python -m evals.run_rag_eval` (API, both databases) ·
