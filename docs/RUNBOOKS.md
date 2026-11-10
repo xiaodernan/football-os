@@ -26,6 +26,12 @@ the script is right and the runbook is the bug.
   `apps/api/app/core/security.py`, what a 429 looks like, and why the effective ceiling scales with replicas
   (ADR-001).
 
+## The Spring Cloud service plane
+
+- [`service_plane.md`](runbooks/service_plane.md) — build and boot order for registry / config /
+  core / edge, the seven doors, W3C trace propagation across Java and Python, the four failures
+  this plane has actually had, and how to verify it offline.
+
 ## Tracing
 
 - [`tracing.md`](runbooks/tracing.md) — the OTLP backend and the database span store (`request_spans`,
