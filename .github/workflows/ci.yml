@@ -292,3 +292,22 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
+
+  services:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build the Spring plane (registry, config, edge)
+        # The Java plane had no gate in CI at all: a green local `mvn package` was its only evidence,
+        # and a Java regression would ride a push onto master unseen. The pom targets Java 21;
+        # Spring Cloud 2025.0.3 on Boot 3.5.x; the 37 module tests must pass before the plane
+        # claims anything.
+        run: mvn -B package
