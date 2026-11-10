@@ -316,8 +316,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Compose file parses and names a coherent plane
-        run: docker compose -f infra/docker-compose.yml config --quiet
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build the Spring plane jars the compose profile mounts
+        # The plane profile bind-mounts services/*/target/*.jar, and target/ is gitignored:
+        # a fresh clone builds no images until this runs. The compose config above passes
+        # without checking the mounts; this step is the one that proves the plane is real.
+        working-directory: services
+        run: mvn -B package
+      - name: The compose plane profile can be assembled from this tree
+        # config (not just --quiet) with the profile: resolves every service, every mount,
+        # and every healthcheck declaration. A stale jar path or a renamed service fails here.
+        run: docker compose -f infra/docker-compose.yml --profile plane config --quiet
       - name: Build the API image
         # The production canon in one artifact; the image applies migrations on boot.
         run: docker build apps/api -t football-os-api:ci
