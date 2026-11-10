@@ -98,6 +98,11 @@ class User(TimestampMixin, Base):
     #: Show this account on the gamification leaderboard. False by default: the
     #: account is invisible to everyone else until it owns its visibility.
     leaderboard_visible: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # spec 27's second slice: the kinds the account wants in its tray, as
+    # `{"follower": true, "comment": true, "reaction": true}`. A muted kind is never
+    # written — `notify` checks before inserting, so a muted tray is empty by choice.
+    # Absent keys mean wanted; the default writes every kind the tier knows.
+    notification_mutes: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
 
     players: Mapped[list[UserPlayer]] = relationship(back_populates="user", cascade="all, delete-orphan")
     sessions: Mapped[list[TrainingSession]] = relationship(back_populates="user", cascade="all, delete-orphan")

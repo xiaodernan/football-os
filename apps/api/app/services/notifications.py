@@ -39,6 +39,8 @@ def notify(session: Session, user_id: str, *, kind: str, payload: dict[str, Any]
     """
     if kind not in KINDS:
         raise ValueError(f"unknown notification kind: {kind!r}. Known: {sorted(KINDS)}")
+    if _muted(session, user_id, kind):
+        return None
     held = int(session.scalar(select(func.count()).select_from(Notification).where(Notification.user_id == user_id)) or 0)
     if held >= MAX_PER_ACCOUNT:
         # The oldest read row makes room; if none is read, the event is dropped — an
@@ -55,6 +57,33 @@ def notify(session: Session, user_id: str, *, kind: str, payload: dict[str, Any]
     session.commit()
     session.refresh(row)
     return _row(row, session)
+
+
+def _muted(session: Session, user_id: str, kind: str) -> bool:
+    """Whether the recipient has muted this kind. An absent key means wanted."""
+    mutes = session.scalar(select(User.notification_mutes).where(User.id == user_id))
+    return bool((mutes or {}).get(kind) is False)
+
+
+def preferences(session: Session, user_id: str) -> dict[str, Any]:
+    """The mute map as the account set it, with every known kind present — a key the
+    reader has never touched reads as wanted, which is the tier's own default."""
+    mutes = session.scalar(select(User.notification_mutes).where(User.id == user_id)) or {}
+    return {"mutes": {kind: mutes.get(kind, True) for kind in sorted(KINDS)}}
+
+
+def set_preference(session: Session, user_id: str, kind: str, wanted: bool) -> dict[str, Any]:
+    """Mute or unmute one kind. An unknown kind is a 422 the door raises from."""
+    if kind not in KINDS:
+        raise ValueError(f"unknown notification kind: {kind!r}. Known: {sorted(KINDS)}")
+    mutes = session.scalar(select(User.notification_mutes).where(User.id == user_id)) or {}
+    mutes[kind] = wanted
+    row = session.get(User, user_id)
+    if row is None:
+        raise ValueError(f"no account {user_id!r} to set preferences for")
+    row.notification_mutes = mutes
+    session.commit()
+    return preferences(session, user_id)
 
 
 def _row(row: Notification, session: Session) -> dict[str, Any]:

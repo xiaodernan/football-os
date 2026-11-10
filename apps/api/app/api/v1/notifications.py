@@ -11,12 +11,13 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.security import current_user, limit
 from app.models import User
-from app.services.notifications import list_for, mark_all_read, mark_read, unread_total
+from app.services.notifications import list_for, mark_all_read, mark_read, preferences, set_preference, unread_total
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -65,3 +66,36 @@ def read_one(
     if row is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"code": "not_found", "message": "No such notification for this account"})
     return row
+
+class PreferenceIn(BaseModel):
+    kind: str
+    wanted: bool
+
+
+@router.get("/preferences")
+def my_preferences(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """The mute map with every known kind present — untouched reads as wanted."""
+    limit(request, 60, 60, scope="notifications_preferences")
+    return preferences(db, user.id)
+
+
+@router.put("/preferences")
+def set_my_preference(
+    payload: PreferenceIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    limit(request, 30, 60, scope="notifications_set_preference")
+    try:
+        return set_preference(db, user.id, payload.kind, payload.wanted)
+    except ValueError as error:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"code": "unknown_notification_kind", "message": str(error)},
+        ) from error
+

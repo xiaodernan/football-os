@@ -200,3 +200,55 @@ class TestErasure:
             assert session.query(User).filter(User.id == account_id).first() is None
             assert session.query(Notification).filter(Notification.user_id == account_id).count() == 0
         assert client.get(API).status_code == 401, "the session dies with the account"
+
+
+class TestPreferences:
+    """A muted kind is never written — `notify` checks before inserting, so a muted tray is
+    empty by choice rather than by a filter the reader applies after the fact. An untouched
+    kind reads as wanted, and an unknown kind is a 422 the door raises from."""
+
+    def test_untouched_kinds_read_as_wanted_and_muting_one_stops_the_write(self, client) -> None:  # type: ignore[no-untyped-def]
+        _account(client, "Muter")
+        prefs = client.get("/api/v1/notifications/preferences").json()
+        assert prefs["mutes"] == {"comment": True, "follower": True, "reaction": True}
+
+        muted = client.put("/api/v1/notifications/preferences", json={"kind": "reaction", "wanted": False})
+        assert muted.status_code == 200 and muted.json()["mutes"]["reaction"] is False
+        assert muted.json()["mutes"]["follower"] is True, "the other kinds keep their default"
+
+        from app.core.db import SessionLocal
+
+        with SessionLocal() as session:
+            from app.models import User
+
+            account_id = session.query(User).filter(User.display_name == "Muter").order_by(User.created_at.desc()).first().id
+            assert notify(session, account_id, kind="reaction", payload={"actor_name": "N"}) is None, "a muted kind writes nothing"
+            row = notify(session, account_id, kind="follower", payload={"follower_name": "N"})
+            assert row is not None, "an unmuted kind still writes"
+
+    def test_muting_the_same_kind_twice_is_the_same_state(self, client) -> None:  # type: ignore[no-untyped-def]
+        _account(client, "Twice Muter")
+        client.put("/api/v1/notifications/preferences", json={"kind": "comment", "wanted": False})
+        again = client.put("/api/v1/notifications/preferences", json={"kind": "comment", "wanted": False})
+        assert again.status_code == 200 and again.json()["mutes"]["comment"] is False
+
+    def test_unmuting_reopens_the_kind(self, client) -> None:  # type: ignore[no-untyped-def]
+        _account(client, "Reopener")
+        client.put("/api/v1/notifications/preferences", json={"kind": "follower", "wanted": False})
+        reopened = client.put("/api/v1/notifications/preferences", json={"kind": "follower", "wanted": True})
+        assert reopened.json()["mutes"]["follower"] is True
+
+    def test_an_unknown_kind_is_a_422_from_the_door(self, client) -> None:  # type: ignore[no-untyped-def]
+        _account(client, "Unknown Kind")
+        response = client.put("/api/v1/notifications/preferences", json={"kind": "newsletter", "wanted": False})
+        assert response.status_code == 422 and response.json()["detail"]["code"] == "unknown_notification_kind"
+
+    def test_muted_events_never_reach_the_tray_from_a_producer(self, client) -> None:  # type: ignore[no-untyped-def]
+        author = _client("Muted Author")
+        stranger = _client("Muted Stranger")
+        author.put("/api/v1/notifications/preferences", json={"kind": "comment", "wanted": False})
+        published = author.post("/api/v1/community/posts", json={"kind": "note", "body": "My post, your comment."})
+        post_id = published.json()["post"]["id"]
+        commented = stranger.post(f"/api/v1/community/posts/{post_id}/comments", json={"body": "A reply the author muted."})
+        assert commented.status_code == 200, commented.text
+        assert author.get("/api/v1/notifications/unread-total").json()["unread_total"] == 0, "the muted kind never reaches the tray"
