@@ -3973,3 +3973,20 @@ untouched. The plane's `target/` directories stay ignored.
 **The two §83-bearing runs.** §83 itself (`42777056874`) and §84 (`42777224387`) both completed **success** on all four legs — `api`, `web`, `services`, `containers`. The web leg is green again, including the census and every downstream gate that had been skipped across the four failures. The arc resumes with master at `51c0e73` green end-to-end.
 
 **Teardown.** No servers stood for this entry; the untracked user text file at the repository root remains untouched.
+## 85. The containers CI job proves both images boot — item 64 (2026-11-10)
+
+**The gap §81 left.** §81 made the `containers` job build the plane jars and build both app images, but **no image had ever been started anywhere**: `next start` never accepted `output: "standalone"`, and the api image had never served a request. §77's Dockerfile (python:3.11-slim, psycopg2-binary pinned, migrate-on-boot CMD) was author-written but never exercised — the only evidence it could run was the CI job building it, which is necessary but not sufficient.
+
+**Item 64.** The `containers` CI job now, after building the images:
+
+1. boots the **api image** against a disposable `DATABASE_URL=sqlite:////tmp/football_os_smoke.db` on an isolated `football_os_smoke` network (migrations apply on boot via `alembic upgrade head`; verified against a scratch SQLite file here — full chain 0001 → 0060 applies clean),
+2. polls `http://localhost:18100/healthz` for up to 300 seconds, requiring an actual response body (the same check the image's own HEALTHCHECK does), prints the container's log tail, and then re-probes once for the record, and
+3. boots the **web image** wired to that same api container via `API_INTERNAL_URL=http://smoke_api:8100`, polls `http://localhost:18410/healthz` for up to 300 seconds — the web healthz is a live FastAPI proxy, so a green answer means web and api both answered — prints the web log tail, re-probes, and tears the pair down.
+
+**Why SQLite for the smoke and not PostgreSQL.** The api image's CMD migrates on boot; the point of the smoke is "does this image boot and serve on a fresh database in the runner's network", not "does our production database work" — that is the api job's `PostgreSQL + pgvector` leg, which is the real thing. SQLite keeps this step self-contained on any runner without service containers, exercises the migrate-on-boot path (which is the one thing only this image can do), and fails fast: if migrations do not apply cleanly to a fresh file, the api image never becomes healthy and the job names it.
+
+**Not claimed, named.** No claim about the full compose plane boot in CI (that requires the registry/config/edge jars mounted, and is a different, heavier gate — item 65, not taken yet); no claim about the smoke running twice (each push runs it once, fresh); the web image answers 200 only when FastAPI is reachable, and the api image answers whenever the app is alive — the pair assertion is the honest end-to-end signal for this milestone. If the smoke is red here, the image never booted — exactly what this gate exists to catch.
+
+**Teardown.** The scratch SQLite file used for the local migration check is deleted after the check; no probe stack stands; the untracked user text file at the repository root remains untouched.
+
+**CI verdict.** This milestone is verified locally only insofar as its two halves are provable without the runner: the migration chain applies cleanly to a fresh file (0001 → 0060, verified), and the route/healthz contract of both images is published and honest. The `containers` job's boot smoke itself can only be proven by the runner executing it — it cannot be warmed into a claim by writing it carefully. Its verdict is recorded here when it prints, not before.

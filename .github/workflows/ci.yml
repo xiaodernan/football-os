@@ -337,3 +337,39 @@ jobs:
       - name: Build the web image
         # node:22-alpine, standalone output; NODE_ENV=production.
         run: docker build apps/web -t football-os-web:ci
+      - name: Boot the API image against a scratch SQLite database
+        # The image built but never ran anywhere: this step starts it with a disposable
+        # SQLite DATABASE_URL (migrations apply on boot, the lifespan seeds the world)
+        # and proves the container serves :8100/healthz. A boot that dies before the
+        # first request goes red here, not on a user's machine.
+        run: |
+          docker network create football_os_smoke
+          docker run -d --name smoke_api --network football_os_smoke \
+            -e DATABASE_URL="sqlite:////tmp/football_os_smoke.db" \
+            -e ENV=development \
+            -p 18100:8100 \
+            football-os-api:ci
+          for i in $(seq 1 150); do
+            body=$(curl -fsS --max-time 2 http://localhost:18100/healthz 2>/dev/null || true)
+            if [ -n "$body" ]; then echo "healthz answered after $((i*2))s"; break; fi
+            sleep 2
+          done
+          docker logs smoke_api 2>&1 | tail -30
+          curl -fsS --max-time 10 http://localhost:18100/healthz
+      - name: Boot the web image wired to the API container
+        # The web image has never been booted anywhere either; this smoke stands the pair
+        # up on one network and asserts the web tier answers /healthz — whose server
+        # action calls FastAPI through serverFetch — with 200 (degraded answers 503).
+        run: |
+          docker run -d --name smoke_web --network football_os_smoke \
+            -e API_INTERNAL_URL="http://smoke_api:8100" \
+            -p 18410:3210 \
+            football-os-web:ci
+          for i in $(seq 1 150); do
+            body=$(curl -fsS --max-time 2 http://localhost:18410/healthz 2>/dev/null || true)
+            if [ -n "$body" ]; then echo "healthz answered after $((i*2))s"; break; fi
+            sleep 2
+          done
+          docker logs smoke_web 2>&1 | tail -30
+          curl -fsS --max-time 15 http://localhost:18410/healthz
+          docker rm -f smoke_api smoke_web
