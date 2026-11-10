@@ -25,7 +25,7 @@
                  └──────────────┘
 ```
 
-Deliberately absent in MVP (added only when a measured bottleneck demands it): Redis, Celery/RQ, Kafka, Elasticsearch, Java Spring Boot, Kubernetes, dedicated ML services. See ADR-001.
+Deliberately absent from the original MVP (each admitted only when a measured bottleneck demanded it): a cache tier (now shipped as Redis, M12/Observability arc), a queue (never — the job runner remains Postgres-backed), Elasticsearch, Kubernetes, dedicated ML services. The exceptions, each landed under its own milestone with its evidence: Redis (the shared response cache, M12), the **Spring Cloud service plane** (`services/registry`, `services/config`, `services/edge` — Phase 11 of the roadmap), which routes, rate-limits, traces, circuit-breaks and serves a refreshable configuration — and carries no football rule; the Python core remains canonical. See ADR-001, ADR-006, and `docs/M14_SERVICE_PLANE.md`.
 
 ## 2. Layering inside `apps/api`
 
