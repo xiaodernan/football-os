@@ -34,14 +34,17 @@ GET  /edge/plane      the whole shape: routes, limits, breaker, instances, confi
 GET  /edge/routes     the resolved route table, read from RouteDefinitionLocator (not the YAML)
 GET  /edge/limits     the token-bucket policy in force and the number of tracked callers
 GET  /edge/breaker    coreBreaker's state, window counters, thresholds; present=false before first call
+GET  /edge/bulkhead   the compartment wall: max/available concurrent calls, rejected count
 GET  /edge/instances  ?service=football-core — what the balancer would dial; unknown name is count=0
 GET  /edge/config     the live @RefreshScope value, not the file's
 POST /actuator/refresh  rebuild @RefreshScope beans from the current config (JSON content type!)
 GET  /actuator/health  the only health check; /edge/plane describes state but does not judge it
 ```
 
-`GET /edge/plane` calls the same controller methods the other five doors call, so its blocks are the
+`GET /edge/plane` calls the same controller methods the other six doors call, so its blocks are the
 same answers, not a second set of figures. It names each door in `doors`, including the refresh POST.
+The `bulkhead` block reports live semaphore state for `coreBulkhead` — the permits `/api/v1/**` can
+hold; refusal is `503 core_busy` with `Retry-After: 1`, distinct from the breaker's `core_unavailable`.
 
 ## 3. Traces across the two languages
 
