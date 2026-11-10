@@ -1674,6 +1674,24 @@ and `test_spec_audit_currency` compares the audit's page-route figure against a 
 landing will carry. Both figures agree the moment the landing's commit lands; editing either file now would guess
 at another writer's final numbers. Everything else — 1,600+ tests — green on the committed tree.
 
+---
+
+## Cross-verification (2026-11-11): the M14 service plane booted from clean jars and read back live
+
+The service plane another lane built (M14, items 47–62) was verified end to end from this lane's side, from the
+Maven reactor's own jars — `mvn -o -B package` green over the three modules, then registry (8761), config (8888),
+the core registered at 8100 and the edge at 18080 booted in one shell and probed live:
+
+* `GET /actuator/health` on the edge: **200**;
+* `GET /api/v1/healthz` **through the Gateway**: the product's own answer, with `demo_mode`, `pgvector: true` and
+  the provider table intact — the edge routes and forwards without judging or reshaping;
+* **trace propagation**: a request sent with `X-Trace-Id: verify-trace-001` came back with the same id in the
+  response headers — item 58's "one trace across both planes" read back live rather than quoted.
+
+One boot failure on the way was the operator's, not the plane's: the edge defaulted to port 8080 when `EDGE_PORT`
+was not exported, and the runbook's "EDGE_PORT and `--apc.core-uri` are the two knobs" is the sentence that was
+missed. Recorded because a runbook sentence that saved one verification is worth its place.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
