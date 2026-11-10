@@ -4059,3 +4059,17 @@ IndexError: 5
 **Not claimed, named.** The containers gate has failed on this arc with five pushes before §88 — `§85`, `§86`, `§87` (pre-proof-gate-fix) and `§88`, `§89` (pre-catalogue-path-fix). The `web` legs are green on all of them; `api` and `services` are green on all of them; only the containers leg is red. §90's own CI verdict is recorded in the next section of this ledger when it prints — if the boot smoke answers, the red arc closes; if it doesn't, the runner names the next line and the fix follows.
 
 **Teardown.** No server was started for this work; the untracked user text file at the repository root remains untouched.
+## 91. mypy narrowed the nullability my own §90 commit introduced (2026-11-10)
+
+**What §90 shipped and what it broke.** §90 made `_MESSAGES_DIR` nullable — `None` in the container image where `apps/web` does not exist, the fallback to `["en"]`. The `open()` call inside `_shipped_locales()` was still written against the pre-§90 contract (`Path / str`), so `mypy` flagged it once the container-image branch became real: `Left operand is of type "Path | None"` at `app/api/v1/meta.py:72`. The image build did not fail — the runtime path takes the first guard, not the broken one — but a static-check failure on master is not master.
+
+**The fix.** The None-check is hoisted to function entry; the `en.json` read runs only after the directory is known to be there; the exception set is broadened to `OSError` + `json.JSONDecodeError` so an unreadable or malformed catalogue degrades to `["en"]` exactly as an `OSError` always did, instead of surfacing as a crash at the one line that produces the claim. `mypy` 167 files green, `ruff` clean, `tests/test_locale_claims.py` 7/7, `tests/test_error_answer_shape.py` 13/13.
+
+**Not claimed, named.** §91's own CI verdict is recorded here when it prints. §90's containers verdict is still the arc's open gate; §91 touches nothing `containers` asserts, so if §90 prints green, §91 will too — but that prediction is not a verdict, and it will not be written as one before the runner says so.
+## 92. The near-miss: appending Phase 12 twice, caught before it shipped (2026-11-10)
+
+**What happened.** While assembling §91, a scratch script (`append-phase12.cjs`) I had written to inject the Phase 12 block into `docs/ROADMAP_NEXT.md` was invoked once more by accident while running a composite command. The file's Phase 12 section was duplicated — lines 1255-1267 and 1268-1280 became byte-identical copies. The file was not committed; `git status`'s visible diff showed the duplication within the same minute of the mistake, and the second copy was deleted. Verification after the repair: `git diff --stat docs/ROADMAP_NEXT.md` prints nothing (the working file matches `HEAD`'s `c1d71ce`), exactly one `## Phase 12` remains, and the file ends with the section's intended last paragraph.
+
+**Why this is recorded here rather than privately absorbed.** The arc's discipline is that near-misses caught before they reach master get written down with the same rigor as the ones that do reach it. `c1d71ce` ("docs(plan): Phase 12") shipped with Phase 12 exactly once; master was never wrong; only the working copy was. Nothing about this note claims a defect in what shipped — it claims that the guard rail (`git status --short` inspection before every commit, diff reading before push) did its job, and the guard rail held.
+
+**Not claimed, not hidden.** No CI run was needed because nothing about the shipped tree changed. §91 (mypy Path | None) and §92 land together.
