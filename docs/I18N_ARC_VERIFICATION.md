@@ -4086,3 +4086,15 @@ IndexError: 5
 **Honesty note — the shell-script container names are not legal hostnames; the CI network alias is what Docker resolves by.** The runner's Docker bridge resolves `smoke-api` inside the shared `football_os_smoke` network; the web image reaches `http://smoke-edge:8080`; the edge reaches `http://smoke-api:8100`. None of these names needs public DNS; all are internal in one docker bridge.
 
 **Not claimed, named.** §93's CI verdict is recorded in the next section of this ledger when it prints. The `api` job's `Types` failure is my own and cured locally at §91 (mypy clean) — §90's red at `Types` is already-governed-by-§91 and will be green at §91's own CI. The `containers` leg is now the last failing leg, and the fix for it is the rename in this commit.
+## 94. §90's failed-named run and the Phase 12 doc push — both red on the same two already-cured defects (2026-11-10)
+
+**What the runs printed, unedited.** `42829067347` (§90 containers push) and `42830251936` (Phase 12 docs push) both completed **`web` success, `services` success, `containers` failure, `api` failure**. Neither revealed a new defect class:
+
+- `api` failed at `Types`: `app/api/v1/meta.py:72: error: Unsupported left operand type for / ("None")` — the exact `Path | None` nullability narrowed at `cf4d022` (§91). §91's own CI names this cure.
+- `containers` failed at `Boot the web image wired through the edge to the API container` with the same `URISyntaxException: Expected scheme-specific part at index 5: http:` and the terminal `curl: (22) ... returned error: 503`. That is the underscore hostname cured by §93 (`a633058`), which renamed the smoke containers and their network URIs to legal reg-names.
+
+**Why these runs are recorded here rather than absorbed silently.** The ledger is the honest arc of this build; a red that the tree already cured still happened, still printed, and still cost two runners. Both runs are the same pre-cure tree at the two legs the cures govern. Nothing in these two reds contradicts §91 or §93; both cures are behind them in history.
+
+**Also corrected here.** `docs/ROADMAP_NEXT.md` item 65 still named `smoke_api` (the pre-§93 name) and said "recorded in the ledger when it prints"; the name is updated to `smoke-api` and the near-miss / underscore host crash is named, evidence `§93`.
+
+**Not claimed, named.** No verdict for §91, §93 or the docs push has printed at the time this section was written. The next sections record those verdicts when they print — green or red, as the runner writes it.
