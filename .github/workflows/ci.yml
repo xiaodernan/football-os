@@ -350,8 +350,10 @@ jobs:
             -p 18100:8100 \
             football-os-api:ci
           for i in $(seq 1 150); do
+            http=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://localhost:18100/healthz 2>/dev/null || true)
             body=$(curl -fsS --max-time 2 http://localhost:18100/healthz 2>/dev/null || true)
-            if [ -n "$body" ]; then echo "healthz answered after $((i*2))s"; break; fi
+            echo "poll $i: healthz=http:$http"
+            if [ -n "$body" ]; then echo "healthz answered after $((i*2))s (http:$http)"; break; fi
             sleep 2
           done
           docker logs smoke_api 2>&1 | tail -30
@@ -374,8 +376,10 @@ jobs:
             --spring.cloud.config.enabled=false \
             --eureka.client.enabled=false
           for i in $(seq 1 150); do
+            http=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://localhost:18480/actuator/health 2>/dev/null || true)
             body=$(curl -fsS --max-time 2 http://localhost:18480/actuator/health 2>/dev/null || true)
-            if [ -n "$body" ]; then echo "edge healthy after $((i*2))s"; break; fi
+            echo "poll $i: edge=http:$http"
+            if [ -n "$body" ]; then echo "edge healthy after $((i*2))s (http:$http)"; break; fi
             sleep 2
           done
           docker logs smoke_edge 2>&1 | tail -30
@@ -384,8 +388,10 @@ jobs:
             -p 18410:3210 \
             football-os-web:ci
           for i in $(seq 1 150); do
+            http=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://localhost:18410/healthz 2>/dev/null || true)
             body=$(curl -fsS --max-time 2 http://localhost:18410/healthz 2>/dev/null || true)
-            if [ -n "$body" ]; then echo "web healthy after $((i*2))s"; break; fi
+            echo "poll $i: web=http:$http"
+            if [ -n "$body" ]; then echo "web healthy after $((i*2))s (http:$http)"; break; fi
             sleep 2
           done
           docker logs smoke_web 2>&1 | tail -30
