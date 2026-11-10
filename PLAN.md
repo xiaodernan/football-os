@@ -1692,6 +1692,19 @@ One boot failure on the way was the operator's, not the plane's: the edge defaul
 was not exported, and the runbook's "EDGE_PORT and `--apc.core-uri` are the two knobs" is the sentence that was
 missed. Recorded because a runbook sentence that saved one verification is worth its place.
 
+---
+
+## Harness finding (2026-11-11): the 1,782-URL probe saturates the shared host's web tier — the walk's full green needs a quiet window
+
+Two mitigations landed (the probe at two workers with a two-minute budget; the five-failure early bail), and the
+probe **still** wedges the single-process web tier when the host is carrying another lane's full landing: the
+client-side early bail stops the walk from hanging, but the server's own render backlog keeps its event loop busy
+for the rest of the run. Three runs measured it — each died in or right after the probe, each with 81+ checks green
+before it. The 312/316 record above was taken in a quiet window and stands as the tier's verified state; the full
+walk's next green needs the host quiet (the other lane idle), not a product fix. Two further options are named for
+whoever takes it: probe with a HEAD-shaped request if the framework ever grows one, or split the probe across two
+walks (world rows on one, the rest on the other) so no single run carries 1,782 renders.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
