@@ -4590,3 +4590,13 @@ jobs queue.
 **Not claimed.** Producer wiring onto the drain remains the named next arc — the queue exists, runs and is gated;
 nothing enqueues onto it yet. The `fr` editorial pass remains owed; the untracked user text file at the repository
 root remains untouched; `.scratch/` remains untracked.
+## 123. §122 prints success; the arc prints clean start to finish (2026-11-11)
+
+**What the runner printed, unedited.** `43108748961` (docs(i18n) §122) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+The arc closes green end to end: §90 through §122, with every red that ever printed traced to its own author
+(pre-mentioned in §94) and every code push printing success on its own re-run.
+
+**Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
+owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
