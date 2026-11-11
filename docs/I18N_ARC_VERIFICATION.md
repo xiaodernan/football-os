@@ -4567,3 +4567,13 @@ own hands and fixed by my own commits, and each of those fixes printed success o
 **Not claimed.** Producer wiring onto the drain remains the named next arc — the queue exists, it is gated,
 it drains, but no production code path enqueues onto it yet. The `fr` editorial pass remains owed; the
 untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 121. §120 prints success; every push in the arc prints success (2026-11-11)
+
+**What the runner printed, unedited.** `43099639130` (docs(i18n) §120) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in the arc prints green. The only reds this arc produced were my own, and every one of them was
+fixed by a named commit and then printed green on its own re-run.
+
+**Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
+owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
