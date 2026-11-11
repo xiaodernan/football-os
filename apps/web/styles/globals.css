@@ -380,6 +380,7 @@ body {
   box-shadow: inset 0 -2px 0 var(--accent), 0 6px 18px -12px rgba(53, 240, 164, 0.5);
 }
 .nav__brand span { text-shadow: 0 0 22px rgba(53, 240, 164, 0.45); }
+.nav__actions .btn { white-space: nowrap; }
 
 /* --- Player cards: a light sweep on hover -------------------------------------- */
 .player-card {

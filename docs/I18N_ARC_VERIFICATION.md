@@ -4147,20 +4147,32 @@ a display face for `.h1` (a vertical gradient from near-white to steel, `backgro
 `.eyebrow` that carries the accent's glow; a primary button that is an object (gradient, inner-light
 shadow, accent aura, brighten-on-hover); glass-deck navigation whose active link gets a gradient wash and a
 soft accent glow along its baseline; a light `fo-sheen` sweep across player cards on hover; hover eye-lines
-for table rows; deep-toned scrollbars with an accent thumb; selection kept in the accent. Every animation
-is gated by the existing `prefers-reduced-motion` block, every property is logical (`margin-inline`-safe,
-inline-safe), and every colour is a token from the base file — nothing outside the published palette.
+for table rows; deep-toned scrollbars with an accent thumb; selection kept in the accent; `.nav__actions
+.btn` holds `white-space: nowrap` so a two-word French CTA stays on one line. Every animation is gated by
+the existing `prefers-reduced-motion` block, every property is logical (inline-safe), and every colour is a
+token from the base file — nothing outside the published palette.
 
-**What is verified, honestly.** Nothing about this layer has been walked yet. The local production build
-(`NEXT_DIST_DIR=.next-walk`) started on a host saturated by CI runners and the parallel lane (367 processes,
-16 CPUs) and had not finished when this section was written; the six-locale walk re-run against the etch
-build is **pending on that host**, not on this paragraph. What is asserted here is only what is structurally
-true: the layer removes nothing, renames nothing, sets no `display` to none, hides no walk-targed node,
-and preserves the `data-*` vocabulary the walks read. **CI's `web` job prints the next verdict; that run is
-the arbiter.** If it prints red, the defect is this layer and this section will say so in the next word it
-writes.
+**What was verified, honestly, on the etch build.** The build is `NEXT_DIST_DIR=.next-etch`, served on
+127.0.0.1:3220 against the same scratch SQLite (`0061`) as the walks below:
 
-**Not claimed.** No Lighthouse score, no screenshot diff, no frame-rate figure. The walk (12 pages × six
-locales + the 97/97 creator pass from §96) is the project's own instrument, and it has not yet been turned
-on this layer. `.scratch/` remains untracked; the untracked user text file at the repository root remains
-untouched.
+* **French walk (`qa-french-walk.mjs`, `QA_AUTH_WALK=1`): 12/12 ALL GREEN** — home, world, knowledge,
+  login, challenges, club rules, leaderboard (dir=ltr, French accented glyphs, zero MISSING_MESSAGE, zero
+  console errors) and the five authenticated legs (`my-football`, `simulate`, `challenges`,
+  `leaderboard`, `career create`). The demo account did not exist in the scratch database, so the walk's
+  own credential (`demo@footballos.local` / `demo-password-123`, the API's open registration door) was
+  registered through the front door of the throwaway database; the AUTH leg then walked green.
+* **Creator walk (`qa-creator.mjs`): 97/97 green on the etch build**, the same erase flows and 4xx census
+  as §96.
+* **Portfolio walk (`qa-portfolio.mjs`): 53/53 green** on the etch build.
+* **Rendered surface checked by eye**: `docs/screenshots/etch-home-fr.png` — the aurora stage, the display
+  `h1` (`REGARDEZ. COMPRENEZ.…`), the hero panel with the pitch stripes and floodlight wash, the floating
+  panel grid, the glass nav with the glowing CTA. The creator studio (`202611111101-creator-studio.png`)
+  renders end to end — panels, tables and controls all hold their layout under the etch layer.
+* The etch build on this host cost one failed finalize (`EBUSY` on a `.next-etch/standalone` the walk had
+  populated mid-build — my own operator error, recorded at the time) and one clean rebuild; nothing about
+  the layer itself failed a build or a gate.
+
+**Not claimed.** No Lighthouse score, no screenshot diff, no frame-rate figure, no Arabic/Hebrew walk on the
+etch build yet (the RTL pair rides the next push's CI web gate). `.scratch/` remains untracked; the
+untracked user text file at the repository root remains untouched. CI's `web` leg remains the arbiter for
+the etch bytes; its verdicts for this arc are printed in the runs named in §97's push.
