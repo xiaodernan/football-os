@@ -4610,3 +4610,15 @@ push that printed red was fixed by a named commit and then printed success on it
 
 **Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 125. §124 prints success; the arc prints green throughout (2026-11-11)
+
+**What the runner printed, unedited.** `43117596456` (docs(i18n) §124) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+The full arc is green end to end. Nothing in this ledger claims a green that did not print; every code push
+that printed red was fixed by a named commit and then printed success on its own re-run.
+
+**Not claimed.** Producer wiring onto the drain remains the named next arc — the queue exists, is gated and
+drains, and nothing in this arc claims any production traffic flows through it yet. The `fr` editorial pass
+remains owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains
+untracked.
