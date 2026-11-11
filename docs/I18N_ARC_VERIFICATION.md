@@ -4430,3 +4430,12 @@ commit); the four legs together for this push are all green, unedited.
 team/readiness metadata voice still speaks English on the `World` heading without its own catalogue probe; and the
 ` fr`-milestone machine-translated editorial pass remains outstanding. The untracked user text file at the repository
 root remains untouched; `.scratch/` remains untracked.
+## 109. The §108 docs push prints success; every push this session prints green (2026-11-11)
+
+**What the runner printed, unedited.** `43038504712` (docs(i18n) §108) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in this window printed success; no code push printed red that was not first fixed and then green on its own run: `42842838746` (five ceiling tests — fixed at `88f2499`), `42843029264` (same), `43000312581` (agents-census + Arabic full stop — fixed at `e801718`/`09b0689`/`b82d5db`), `43001304027` (same Arabic full stop), `43001805199` (Arabic full stop — fixed at `b82d5db`
+green). §106/§105/§104/§108 (docs) and §107 (jobs), etch pushes `43006092890`/`43009989353` — all print success.
+
+**Not claimed.** The video pipeline remains synchronous and merely records job rows; it does not enqueue onto the new queue, and wiring producers is the named next arc. `fr` copy and the untracked user text file at the repository root remain untouched; `.scratch/` remains untracked.
