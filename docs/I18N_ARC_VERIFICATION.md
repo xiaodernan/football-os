@@ -4172,7 +4172,6 @@ token from the base file — nothing outside the published palette.
   populated mid-build — my own operator error, recorded at the time) and one clean rebuild; nothing about
   the layer itself failed a build or a gate.
 
-**Not claimed.** No Lighthouse score, no screenshot diff, no frame-rate figure, no Arabic/Hebrew walk on the
-etch build yet (the RTL pair rides the next push's CI web gate). `.scratch/` remains untracked; the
+**Not claimed.** No Lighthouse score, no screenshot diff, no frame-rate figure, all six locales walked green on the etch build — Arabic 7/7, Hebrew 7/7, simplified Chinese 7/7, traditional Chinese 7/7 (dir attributes correct, zero MISSING_MESSAGE, zero console errors), beside French 12/12 and the creator 97/97 above. CI's web leg remains the arbiter for the bytes on master; the runs named in §97's push print its verdict. `.scratch/` remains untracked; the
 untracked user text file at the repository root remains untouched. CI's `web` leg remains the arbiter for
 the etch bytes; its verdicts for this arc are printed in the runs named in §97's push.
