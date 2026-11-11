@@ -4280,3 +4280,33 @@ its own `services` job and `EdgePlaneTest` for the wiring claim.
 the record does not assert that the host resolver is fixed (the M14 §16 resolver quirk remains as the
 host's, named, not fixed).
 
+## 102. The empty states scan — French walk green on the build that carries them — and CI prints success for both code pushes (2026-11-11)
+
+**What this window landed.** `apps/web/styles/globals.css` gains `.empty::before` — a 56×2 px accent scan
+line centred atop the empty-state copy, with an `fo-scan` keyframe that sweeps its background-position back
+and forth on a 2.6s ease-in-out cycle (gated by the existing `prefers-reduced-motion` block; the stripes
+under it are a hand-authored `repeating-linear-gradient(-45deg,…)` at 1.8% opacity plus an inner-top
+highlight). The class vocabulary is unchanged: `empty` still owns its layout, the pseudo is decoration.
+
+**Verification on the etched build that carries the addition.** `NEXT_DIST_DIR=.next-etch3`, served on
+localhost:3221 against the same scratch SQLite (`0061`) the French walk uses:
+
+* **French walk (`qa-french-walk.mjs`, `QA_AUTH_WALK=1`): 12/12 ALL GREEN** — unauthenticated 7 pages
+  plus the five authenticated legs (`my-football`, `simulate`, `challenges`, `leaderboard`,
+  `career create`), `dir=ltr`, French accented glyphs, zero MISSING_MESSAGE, zero console errors.
+* The nav create-account CTA measures `white-space: nowrap`, scrollWidth 125 ≤ width 127 (the nowrap
+  repair in the etch layer working as intended); a shot of this build shows the nav CTA on one line,
+  the scan-line pulse inside the empty states, and the display `h1` in its gradient — the etched surface
+  is now visibly the finished article the user asked for, not a dress rehearsal.
+
+**CI printed, unedited, for the two code pushes this window opened:**
+
+| run | push | verdict |
+| --- | --- | --- |
+| `43015943436` | perf(leaderboard) — one grouped scan | **success** |
+| `43015357092` | fix(redis) — the actionable refused-handshake line | **success** |
+
+`43017374827` (plane §17) is in flight; the ledger will record it when it prints.
+
+**Not claimed.** No frame rate measured; no dashboard screenshot committed (screenshots are local-only by
+gitignore); the plane §17 test has its own run landing when the runner reaches it.

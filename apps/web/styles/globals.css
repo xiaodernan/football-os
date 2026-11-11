@@ -196,9 +196,29 @@ h1, h2, h3, h4, p { margin: 0; }
   border-radius: 50%; background: var(--accent-dim);
 }
 
+/* --- Empty states: a live pulse under the dashed wall, not a static box ------- */
 .empty {
   display: grid; place-items: center; gap: 0.5rem; padding: 2.2rem 1rem; text-align: center;
-  border: 1px dashed var(--line); border-radius: var(--radius); color: var(--text-2);
+  border: 1px dashed rgba(85, 106, 134, 0.45); border-radius: var(--radius); color: var(--text-2);
+  background:
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.018) 0 14px, transparent 14px 28px),
+    linear-gradient(180deg, rgba(19, 29, 46, 0.35), rgba(11, 17, 28, 0.5));
+  box-shadow: inset 0 1px 0 rgba(232, 238, 247, 0.04);
+}
+.empty::before {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 2px;
+  margin: 0 auto 0.4rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  background-size: 200% 100%;
+  animation: fo-scan 2.6s ease-in-out infinite;
+}
+@keyframes fo-scan {
+  0%, 100% { background-position: 200% center; opacity: 0.35; }
+  50% { background-position: -200% center; opacity: 1; }
 }
 .notice { padding: 0.7rem 0.9rem; border-radius: var(--radius-sm); background: var(--accent-soft); border: 1px solid rgba(53, 240, 164, 0.3); font-size: 0.88rem; }
 .notice--warn { background: rgba(255, 182, 72, 0.09); border-color: rgba(255, 182, 72, 0.35); color: var(--warn); }
