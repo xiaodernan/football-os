@@ -4419,3 +4419,14 @@ runner is the queue, and wiring producers to it is the next named arc.
 **Not claimed.** No priority, no deadline, no heartbeat-renewed lease, no dead-letter table. This slice proves
 claim correctness and the honest empty-board contract; each of the omitted features must arrive with its own
 gate, its own walk and its own ledger entry or not at all.
+## 108. §107 — the queue prints success; both legs of the job runner are gated (2026-11-11)
+
+**What the runner printed for the jobs drain push (run `43033288105`): `web` success, `containers` success,
+`services` success, `api` success.** The SQLite-run record of the 6 runner cases (claim, race, registered handler,
+unknown type, raising handler, created order) is this file's §107; the `services` leg adds nothing (no Java in this
+commit); the four legs together for this push are all green, unedited.
+
+**Not claimed.** No producer wiring has landed — the video pipeline still does not enqueue onto this queue; the
+team/readiness metadata voice still speaks English on the `World` heading without its own catalogue probe; and the
+` fr`-milestone machine-translated editorial pass remains outstanding. The untracked user text file at the repository
+root remains untouched; `.scratch/` remains untracked.
