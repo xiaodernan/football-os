@@ -4503,3 +4503,14 @@ fixed by named follow-ups, both of which printed success on their own re-runs.
 
 **Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 115. §114 prints success; the arc prints clean end to end (2026-11-11)
+
+**What the runner printed, unedited.** `43070417825` (docs(i18n) §114) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+The full arc stands green across every push, and the one honest failure class this arc saw — my own five
+ceiling tests at the §36 boundary — was fixed at `88f2499` and both of its sibling red pushes later printed
+green on their own re-runs.
+
+**Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
+owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
