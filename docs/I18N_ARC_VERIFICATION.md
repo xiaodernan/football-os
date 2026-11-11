@@ -4353,3 +4353,20 @@ at §103.
 
 **Not claimed.** No benchmark beyond what the ledger names; the plane still owns no football rule; the untracked
 user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 105. Every locale walks both legs on the etched build — French + Arabic + Hebrew + zh + zh-TW, authenticated and anonymous (2026-11-11)
+
+**What this window measured, against the etched production build (`.next-etch`, served at 127.0.0.1:3220), against the same scratch SQLite (`0061`):**
+
+| walk | legs | verdict |
+| --- | --- | --- |
+| `qa-french-walk.mjs` `QA_AUTH_WALK=1` | 12/12 | ALL GREEN |
+| `qa-arabic-rtl-walk.mjs` `QA_AUTH_WALK=1` | 12/12 | ALL GREEN |
+| `qa-hebrew-rtl-walk.mjs` `QA_AUTH_WALK=1` | 12/12 | ALL GREEN |
+| `qa-chinese-walk.mjs` `QA_ZH_LOCALE=zh` `QA_AUTH_WALK=1` | 12/12 | ALL GREEN |
+| `qa-chinese-walk.mjs` `QA_ZH_LOCALE=zh-TW` `QA_AUTH_WALK=1` | 12/12 | ALL GREEN |
+
+Every page asserts `dir=ltr`/`dir=rtl` as appropriate, French/Chinese/Hebrew accented/CJK glyphs present, zero `missingMessage`, zero console errors; the authenticated legs sign in through the API's open registration door as `demo@footballos.local` (the project's documented seeded credential, registered through the front door of the throwaway database — it had never existed there, and the 201 was read from the response, not assumed). The public leaders' residue notes ("Football World" untranslated in both RTL walks) match the prior walks' behaviour and are not regressions; the word is the proper noun of the module and the caption already names the module.
+
+All of these are the same etched build the previous sections walked; **nothing was rebuilt for this section to make it green**, and the demo-account registration is local scratch state, not a source change. The untracked user file at the repository root remains untouched; `.scratch/` remains untracked.
+
+**Not claimed.** No frame rate, no Lighthouse; the `football-world-section-note` English residue is recorded as observed behaviour and neither hidden nor claimed fixed here. The runner has printed every prior push's verdict; both etched pushes `43009989353`/`43006092890` and the §97/§103/§104 docs pushes are success.
