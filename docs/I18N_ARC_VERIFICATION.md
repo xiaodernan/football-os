@@ -4577,3 +4577,16 @@ fixed by a named commit and then printed green on its own re-run.
 
 **Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 122. §121 prints success; the arc closes fully green (2026-11-11)
+
+**What the runner printed, unedited.** `43104398738` (docs(i18n) §121) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in the arc prints green — no code push printed red that was not fixed by a named commit and then
+printed success on its own re-run. The full arc stands green end to end, from the containers boot smoke through
+the etched web, the six locales (all both-leg walks green), the services plane, the creator enforcement and the
+jobs queue.
+
+**Not claimed.** Producer wiring onto the drain remains the named next arc — the queue exists, runs and is gated;
+nothing enqueues onto it yet. The `fr` editorial pass remains owed; the untracked user text file at the repository
+root remains untouched; `.scratch/` remains untracked.
