@@ -4535,3 +4535,13 @@ of it, then printed green on its own re-run.
 
 **Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 118. §117 prints success; the queue drains to green end to end (2026-11-11)
+
+**What the runner printed, unedited.** `43083609929` (docs(i18n) §117) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+The arc closes with every push printing green. No code push printed red that was not fixed by a named commit
+and then printed green on its own re-run.
+
+**Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
+owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
