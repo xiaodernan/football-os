@@ -4467,3 +4467,16 @@ this is recorded at §99). No red in this ledger survives as unfixed, unaccounte
 the named next arc. The untracked user text file at the repository root remains untouched; `.scratch/` remains
 untracked. The human editorial pass on the machine-translated `fr` catalogue remains owed, as does the
 machine-translated `ar` and `he` copy.
+## 112. §111 prints success; §96→§111 all green (2026-11-12)
+
+**What the runner printed, unedited.** `43053341535` (docs(i18n) §111) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in this arc prints green. `42842838746` (five ceiling tests at the §36 boundary) and `42843029264`
+(the same five) printed failure — both were fixed by named commits (`88f2499`) and both re-runs printed success;
+`43000312581` printed failure on the spec-audit census + the Arabic full stop — fixed by `e801718`/`09b0689`/`b82d5db`,
+then its own re-run and the docs pushes print success. The two pushes competing with §99/§101 each printed
+success, and the §76 era's containers-web follow-up printed success.
+
+**Not claimed.** Producer wiring onto the drain queue remains the named next arc; the fr editorial pass remains
+owed; the two untracked-file disciplines (`.scratch/` untracked, the user text untouched) remain in force.
