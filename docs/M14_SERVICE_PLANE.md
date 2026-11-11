@@ -692,3 +692,28 @@ verified; the upstream availability quirk is the host's resolver and is named, n
   its connection closes is accounted for only when the host sweeps it.
 - It does **not** compute a football fact, and it does not know whether the in-flight call is a read or
   a mutation. The rule for which calls get permits is the path prefix, nothing else.
+## 17. A registry that holds `football-core` with ZERO URIs behind it — pinned by a test, not assumed (2026-11-11)
+
+**The question the plane's own docs left answered by implication.** Every previous degradation test
+covered one shape: a dead URI that connection-refuses (§4, §16). The shape a registry keeps producing
+long after a process dies is different — the route resolves `lb://football-core`, the discovery client
+holds the name with **no URIs behind it**, and the LoadBalancer answers "No servers available for
+service". The plane documented that the breaker catches failures; it had never named what this one
+produces, nor pinned it.
+
+**The probe (`EdgeZeroInstancesTest`, committed).** A `@SpringBootTest` against a live edge with no
+registered instance for the name; the assertion is the refusal shape the product already publishes:
+`503 core_unavailable`, the trace id in the body and the header, `retryable: true`. The run printed the
+cause plainly — `RoundRobinLoadBalancer … No servers available for service: football-core` — and the
+answer was the `/edge/fallback` the route configures, not an exception page. The test passed on the
+first run in 45.3s; the log line above is what the runner recorded.
+
+**Why a test, not an ADR sentence.** An assumed behaviour is indistinguishable from an unverified
+one; this one would have inverted silently the moment a route filter moved (the fallback is a route
+filter — `forward:/edge/fallback` — wired to the CircuitBreaker; a filter reordering would turn the
+503 into a bare 502 without anyone noticing). The gate now holds both halves: the dead core answers
+503 (`EdgeFallbackTest`) and the empty registry answers the same (`EdgeZeroInstancesTest`).
+
+**Not claimed.** A 503 is not availability; the registry being empty means the product is down and the
+edge is honest about it. The breaker is still the owner of slow/timeout failures (§4), the bulkhead
+(§16) owns admission, and this test covers neither. The plane still owns no football rule.

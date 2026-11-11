@@ -4248,3 +4248,35 @@ test PostgreSQL, no benchmark quoted, no percentile invented; the CI PostgreSQL 
 
 **Not claimed.** Nothing about the Redis hint from the same window (§99) is repeated here; its CI verdict rides
 the run named in its own push. The untracked user text file at the repository root remains untouched.
+## 101. Every worktree and branch checked: master is the集大成主, proven rather than claimed — and the empty-registry plane is now gated (2026-11-11)
+
+**The consolidation audit, with its method.** The question — "which of the project's 25 worktrees and
+branches still hold unlanded content?" — was answered mechanically, not by claim. For each of 12 detached
+plain checkouts (`D:/football-os-plane`, `D:/headapi`, `D:/m145-plane`, `D:/m146-plane`, `D:/m147-plane`,
+`D:/m149-plane`, `D:/m151-plane`, `D:/r114-wt`, `D:/r114-wt-parent`, `D:/r117-plane`, `D:/r119-legs`,
+`C:/…/Temp/opencode/verify-tip`) and each `.scratch/wt-*` checkout, the head SHA was compared against
+`master` with `git merge-base --is-ancestor`; every one prints `ancestor=True` and `ahead=0`. The three
+named local branches — `world-calendar` (`a6122e3`), `world-movement` (`7e19513`), `world-pyramid`
+(`41be4551`) — are likewise ancestors of `master`. **No unmerged content remains anywhere in the project's
+worktree population; nothing was force-merged or force-discarded, and the stale detached checkouts remain
+on disk exactly as the user left them.** This section is the record that the集成 was checked, not merely
+presumed, and that it required no merge commit because master already contains it all.
+
+**### "verify-tip" is named because it is not a plane: it is an i18n snapshot tip detached at the verify step of an old push; it too is an ancestor.**
+
+**The plane's last untested degradation is now gated** — `EdgeZeroInstancesTest` (committed
+`services/edge/src/test/java/os/football/edge/EdgeZeroInstancesTest.java`): against a live edge with no
+`football-core` URI behind the registry, the caller meets the product's refusal shape (`503
+core_unavailable`, trace id in body and header, `retryable: true`) rather than a stack trace; the runner's
+own log line names the cause (`RoundRobinLoadBalancer … No servers available for service: football-core`),
+and the route's fallback filter is what executes it. `EdgeFallbackTest` covers the connection-refused
+shape; this test covers the empty-registry shape; both are gates now.
+
+**Verification of the new test**: `mvn -B -o -pl edge test -Dtest=EdgeZeroInstancesTest` on Temurin 25 —
+Tests run 1, Failures 0, Errors 0, Skipped 0, BUILD SUCCESS (45.31s). The Spring plane remains CI-gated by
+its own `services` job and `EdgePlaneTest` for the wiring claim.
+
+**Not claimed.** No performance claim for either code path; the plane still computes no football fact;
+the record does not assert that the host resolver is fixed (the M14 §16 resolver quirk remains as the
+host's, named, not fixed).
+
