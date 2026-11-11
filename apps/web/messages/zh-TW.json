@@ -3968,7 +3968,7 @@
     "refusalsTitle": "這裡的介面拒絕什麼，又如何回覆",
     "thCode": "代碼",
     "thAnswer": "回覆",
-    "entitlementNote": "這一層在 §42 的權益表裡點了兩個功能（{features}）。它們是資料持有的上限，還沒有任何介面據此拒絕，所以真正起作用的是上面的那些上限。",
+    "entitlementNote": "本層級在 §42 權益表中指名了兩個功能（{features}）。它們現在是門會拒絕的上限：所有發佈門會檢查 creator_publish，指南門會對照儲存的列檢查 creator_guide。",
     "profileTitle": "你的創作者檔案",
     "profilePublishedAs": "以 {slug} 發布",
     "profileNone": "還沒有檔案——第一次發布就會建立",

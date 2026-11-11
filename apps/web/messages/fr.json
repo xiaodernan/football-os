@@ -3968,7 +3968,7 @@
     "refusalsTitle": "Ce qu'une porte ici refuse, et avec quelle réponse",
     "thCode": "Code",
     "thAnswer": "Réponse",
-    "entitlementNote": "Ce niveau nomme deux fonctionnalités dans la table d'entitlement §42 ({features}). Ce sont des plafonds que la donnée détient et aucune porte ne refuse encore sur eux, donc les plafonds ci-dessus sont ce qui mord réellement.",
+    "entitlementNote": "Ce niveau nomme deux fonctionnalités dans la table d'entitlement §42 ({features}). Ce sont des plafonds qu'une porte refuse maintenant : les portes de publication vérifient creator_publish et la porte du guide vérifie creator_guide contre les lignes stockées.",
     "profileTitle": "Votre profil créateur",
     "profilePublishedAs": "Publié en tant que {slug}",
     "profileNone": "Pas encore de profil — la première publication le crée",

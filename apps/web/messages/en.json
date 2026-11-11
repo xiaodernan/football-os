@@ -3968,7 +3968,7 @@
     "refusalsTitle": "What a door here refuses, and with what answer",
     "thCode": "Code",
     "thAnswer": "Answer",
-    "entitlementNote": "This tier names two features in §42's entitlement table ({features}). They are ceilings the data holds and no door refuses on yet, so the caps above are what actually bites.",
+    "entitlementNote": "This tier names two features in §42's entitlement table ({features}). They are ceilings a door refuses on now: the publish doors check creator_publish and the guide door checks creator_guide against the stored rows.",
     "profileTitle": "Your creator profile",
     "profilePublishedAs": "Published as {slug}",
     "profileNone": "No profile yet — the first publication creates it",

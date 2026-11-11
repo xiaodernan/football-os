@@ -38,10 +38,12 @@ from app.models import (
     CommunityFollow,
     CreatorScoutingEntry,
     CreatorScoutingList,
+    Entitlement,
     RealPlayer,
     User,
     utc_today,
 )
+from app.services import entitlements as ent
 from app.services.creator import scouting as csc
 from app.services.creator.publishing import VISIBILITIES
 
@@ -389,19 +391,35 @@ def test_the_open_words_are_refused_with_the_vocabulary_they_broke(session: Sess
 
 
 def test_the_ceiling_refuses_one_past_it_with_its_own_figures(session: Session) -> None:
-    author = _user(session, "ceiling")
-    player = _scratch_player(session)
-    for index in range(csc.MAX_SCOUTING_LISTS_PER_CREATOR):
-        csc.publish_scouting_list(
-            session, author.id, title=f"A list {index}", players=[{"player": player.slug}]
-        )
-    error = _refused(
-        lambda: csc.publish_scouting_list(
-            session, author.id, title="One too many", players=[{"player": player.slug}]
-        ),
-        "scouting_list_limit",
+    # The tier's lifetime cap is independent of §42's monthly allowance: this many publications in
+    # one month would burn the free plan's monthly act first. Headroom is granted by editing the
+    # table, the doctrine the matrix itself publishes, and restored in `finally`.
+    ent.ensure_matrix(session)
+    free_publish = session.scalar(
+        select(Entitlement).where(Entitlement.plan == ent.DEFAULT_PLAN, Entitlement.feature == "creator_publish")
     )
-    assert error.figures == {"lists": csc.MAX_SCOUTING_LISTS_PER_CREATOR, "max": csc.MAX_SCOUTING_LISTS_PER_CREATOR}
+    held = int(free_publish.limit_value) if free_publish is not None else 12
+    if free_publish is not None:
+        free_publish.limit_value = 1_000_000
+        session.commit()
+    try:
+        author = _user(session, "ceiling")
+        player = _scratch_player(session)
+        for index in range(csc.MAX_SCOUTING_LISTS_PER_CREATOR):
+            csc.publish_scouting_list(
+                session, author.id, title=f"A list {index}", players=[{"player": player.slug}]
+            )
+        error = _refused(
+            lambda: csc.publish_scouting_list(
+                session, author.id, title="One too many", players=[{"player": player.slug}]
+            ),
+            "scouting_list_limit",
+        )
+        assert error.figures == {"lists": csc.MAX_SCOUTING_LISTS_PER_CREATOR, "max": csc.MAX_SCOUTING_LISTS_PER_CREATOR}
+    finally:
+        if free_publish is not None:
+            free_publish.limit_value = held
+            session.commit()
 
 
 # ------------------------------------------------------------------ reach, absence and erasure

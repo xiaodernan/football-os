@@ -332,8 +332,7 @@ const FR_TOKENS = new Map([
   ["creator.thNote", "a field/interface term French spells the same as English (loanword doublet)"],
   ["creator.thPoints", "a field/interface term French spells the same as English (loanword doublet)"],
   ["academy.noteLabel", "a field/interface term French spells the same as English (loanword doublet)"],
-  ["notifications.metaTitle", "a field/interface term French spells the same as English (loanword doublet)"],
-  ["notifications.title", "a field/interface term French spells the same as English (loanword doublet)"],
+
   ["live.pause", "a field/interface term French spells the same as English (loanword doublet)"],
 ]);
 

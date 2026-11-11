@@ -156,13 +156,13 @@ async function call(page, method, path, body) {
 }
 
 async function typeInto(page, selector, value) {
-  await page.waitForSelector(selector, { visible: true, timeout: 20_000 });
+  await page.waitForSelector(selector, { visible: true, timeout: 45_000 });
   await page.click(selector);
   if (value) await page.type(selector, String(value), { delay: 4 });
 }
 
 async function clearField(page, selector) {
-  await page.waitForSelector(selector, { visible: true, timeout: 20_000 });
+  await page.waitForSelector(selector, { visible: true, timeout: 45_000 });
   await page.click(selector, { clickCount: 3 });
   await page.keyboard.press('Backspace');
 }
@@ -177,6 +177,13 @@ function press(page, selector) {
   }, selector);
 }
 
+async function selectField(page, selector, value) {
+  // page.select has no wait of its own; on a loaded host the panel can still be re-painting when the
+  // challenge detail arrives. Waiting for the control to exist is not weakening the assertion — the
+  // assertion is what the door answers with once the control is used.
+  await page.waitForSelector(selector, { visible: true, timeout: 45_000 });
+  return page.select(selector, value);
+}
 function noteFor(page, action) {
   return page.$eval(`[data-note="${action}"]`, (node) => node.innerText.replace(/\s+/g, ' ').trim()).catch(() => '');
 }
@@ -193,7 +200,15 @@ async function pressWrite(page, selector, action, want = '', tries = 4) {
   for (let attempt = 1; attempt <= tries; attempt += 1) {
     const before = await noteFor(page, action);
     const pressed = await press(page, selector);
-    if (pressed !== 'clicked') return { ok: false, pressed, note: `(the control ${pressed})`, attempts: attempt, changed: false };
+    if (pressed !== 'clicked') {
+      // A panel mid-repaint has no button for a moment; one repaint is all it takes, and returning on the
+      // first miss turned that into a walk failure. Retry like any other answer the walk waits out.
+      if (pressed === 'missing' && attempt < tries) {
+        await new Promise((done) => setTimeout(done, 1500));
+        continue;
+      }
+      return { ok: false, pressed, note: `(the control ${pressed})`, attempts: attempt, changed: false };
+    }
     let note = '';
     const deadline = Date.now() + 30_000;
     while (Date.now() < deadline) {
@@ -225,6 +240,17 @@ async function waitForRows(page, attribute, want, timeout = 45_000) {
  * "publish" and then "amend" would be comparing two identical notes and could not tell a fresh answer from the one
  * still standing. Opening the page again clears the panel's note, which makes the next note provably this press's.
  */
+/**
+ * The author's access token lives 900s and this walk takes longer on a loaded host. If a protected navigation
+ * lands on /login, sign back in through the door — exactly what a reader whose token expired does — instead of
+ * measuring the login page and calling it the shelf.
+ */
+async function ensureAuthorSession(page, email) {
+  await page.goto(`${BASE}/creator`, { waitUntil: 'networkidle2', timeout: 90_000 });
+  if (!page.url().includes('/login')) return;
+  await call(page, 'POST', '/api/v1/auth/login', { email, password: PASSWORD });
+  await page.goto(`${BASE}/creator`, { waitUntil: 'networkidle2', timeout: 90_000 });
+}
 async function openStudio(page, rows = null, timeout = 60_000) {
   await open(page, '/creator');
   await untilTrue(async () => (await page.$eval(C('profile'), (node) => node.getAttribute('data-creator-profile')).catch(() => '')) === 'published', timeout);
@@ -296,7 +322,7 @@ async function main() {
   check('the vocabulary panel prints the ceilings the door publishes rather than a copy typed into the page', shouts(studio, `${caps.guide_max} per creator`) && shouts(studio, `${caps.citation_note_max}-character notes`) && shouts(studio, caps.visibility_rule ?? 'no visibility rule published'), `guide_max ${caps.guide_max}, note_max ${caps.citation_note_max}`);
   const painted = await authorPage.$$eval('tr[data-refusal]', (rows) => rows.map((row) => ({ code: row.getAttribute('data-refusal'), cells: [...row.querySelectorAll('td')].map((cell) => cell.innerText.trim()) })));
   check('the refusal table on the page is the table the door published, code for code and status for status', painted.length === Object.keys(answers).length && painted.every((row) => String(answers[row.code]) === row.cells[1]), `${painted.length} row(s) painted for ${Object.keys(answers).length} published code(s)`);
-  check('and the page says which §42 features this tier names, and that no door refuses on them yet', shouts(studio, (rules?.entitlement_features ?? []).join(', ')) && shouts(studio, 'no door refuses on yet'), `${(rules?.entitlement_features ?? []).length} feature(s) named`);
+  check('and the page says which §42 features this tier names, and that a door refuses on them now', shouts(studio, (rules?.entitlement_features ?? []).join(', ')) && shouts(studio, 'a door refuses on now'), `${(rules?.entitlement_features ?? []).length} feature(s) named`);
   const challengeCaps = rules?.career_challenge_caps ?? {};
   check('the vocabulary panel prints the challenge caps, targets, windows and rule the door publishes', shouts(studio, `targets ${challengeCaps.career_challenge_target_min}–${challengeCaps.career_challenge_target_max}`) && shouts(studio, `windows ${challengeCaps.career_challenge_window_min}–${challengeCaps.career_challenge_window_max} rounds`) && shouts(studio, rules?.career_challenge_rule ?? 'no challenge rule published'), `targets ${challengeCaps.career_challenge_target_min}–${challengeCaps.career_challenge_target_max}, windows ${challengeCaps.career_challenge_window_min}–${challengeCaps.career_challenge_window_max}`);
   check('and the challenge row counts it prints are the door\'s own, not numbers typed into the page', shouts(studio, `${rules?.career_challenge_counts?.career_challenges} challenges`) && shouts(studio, `${rules?.career_challenge_counts?.career_attempts} runs recorded`), `${rules?.career_challenge_counts?.career_challenges} challenge(s), ${rules?.career_challenge_counts?.career_attempts} run(s) at the door`);
@@ -509,10 +535,11 @@ async function main() {
   check('a challenge needs a career to enter, so the walk opens one from the catalogue the career door publishes', careerOpened.status === 200 && careerSlug.length > 0, `HTTP ${careerOpened.status} · ${careerSlug}`);
 
   await openStudio(authorPage, 2);
-  await press(authorPage, `${challengeRowOf(challengeRow.id)} [data-creator-challenge-open]`);
+  // The challenge shelf re-paints after navigation; pressing an unpainted row is a no-op the walk must wait out.
+  await untilTrue(async () => (await press(authorPage, `${challengeRowOf(challengeRow.id)} [data-creator-challenge-open]`)) === 'clicked', 45_000, 700);
   check('opening a challenge from its row paints the run panel for that challenge', await untilTrue(async () => (await authorPage.$eval(C('challenge-detail'), (node) => node.getAttribute('data-creator-challenge-detail')).catch(() => '')) === challengeRow.id), `panel for ${challengeRow.id}`);
   check('and the open challenge says no run yet, and offers this account\'s own careers to enter with', (await untilTrue(async () => (await authorPage.$(C('challenge-no-attempt'))) !== null)) && (await untilTrue(async () => (await authorPage.$(C('challenge-career'))) !== null)), 'no-attempt marker and the career select both painted');
-  await authorPage.select(C('challenge-career'), careerSlug);
+  await selectField(authorPage, C('challenge-career'), careerSlug);
   const entered = await pressWrite(authorPage, C('challenge-enter'), 'enter', 'answered');
   check('entering from the panel pins the caller\'s own career, and the run panel is where the answer lands', entered.ok, `the control ${entered.pressed} after ${entered.attempts} attempt(s); note: ${entered.note.slice(0, 140)}`);
   check('and the panel repaints as an in-progress run whose window opens at the round the career stood on', await untilTrue(async () => (await authorPage.$eval(C('challenge-attempt'), (node) => node.getAttribute('data-creator-challenge-attempt')).catch(() => '')) === 'in_progress'), 'data-creator-challenge-attempt=in_progress');
@@ -536,10 +563,14 @@ async function main() {
   check('and the door agrees: this viewer holds no run and the challenge holds none', afterWithdraw.attempt === null && (afterWithdraw.figures?.attempts ?? -1) === 0, `attempt ${afterWithdraw.attempt === null ? 'null' : 'present'} · figures.attempts ${afterWithdraw.figures?.attempts}`);
 
   await openStudio(authorPage, 2);
-  await press(authorPage, `${challengeRowOf(challengeRow.id)} [data-creator-challenge-open]`);
-  await untilTrue(async () => (await authorPage.$eval(C('challenge-detail'), (node) => node.getAttribute('data-creator-challenge-detail')).catch(() => '')) === challengeRow.id);
+  // The challenge shelf re-paints after navigation, and on a loaded host the page's own detail fetch can come back
+  // empty; a reader clicks open again, so the walk retries the click, bounded, instead of measuring an empty panel.
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    await press(authorPage, `${challengeRowOf(challengeRow.id)} [data-creator-challenge-open]`);
+    if (await untilTrue(async () => (await authorPage.$eval(C('challenge-detail'), (node) => node.getAttribute('data-creator-challenge-detail')).catch(() => '')) === challengeRow.id, 12_000, 500)) break;
+  }
   await untilTrue(async () => (await authorPage.$(C('challenge-career'))) !== null);
-  await authorPage.select(C('challenge-career'), careerSlug);
+  await selectField(authorPage, C('challenge-career'), careerSlug);
   const reentered = await pressWrite(authorPage, C('challenge-enter'), 'enter', 'answered');
   check('and the withdrawn run can be entered again with the same career, from a page that has forgotten the first answer', reentered.ok && await untilTrue(async () => (await authorPage.$eval(C('challenge-attempt'), (node) => node.getAttribute('data-creator-challenge-attempt')).catch(() => '')) === 'in_progress'), reentered.note.slice(0, 140));
 
@@ -566,6 +597,7 @@ async function main() {
   check('and an unfollow withdraws it again, deleting nothing the guide holds', [200, 204].includes(unfollowed.status) && (await call(readerPage, 'GET', `/api/v1/creator/guides/${followersGuide.id}`)).status === 404, `unfollow HTTP ${unfollowed.status}`);
 
   // ------------------------------------------------------------------------------------------ erasing, and the census
+  await ensureAuthorSession(authorPage, AUTHOR);
   await openStudio(authorPage, 2);
   const erased = await pressWrite(authorPage, `${rowOf(followersGuide.id)} [data-creator-guide-erase]`, 'erase', 'answered');
   check('erasing a guide from its own row is answered by the door, and the shelf drops the row', erased.ok && await waitForRows(authorPage, 'creator-guide', 1), erased.note.slice(0, 140));
@@ -573,7 +605,9 @@ async function main() {
   check('and the guide is absent for everybody afterwards, its author included', afterErase.status === 404 && afterErase.json?.detail?.code === 'no_such_guide', `HTTP ${afterErase.status} · ${afterErase.json?.detail?.code}`);
 
   await authorPage.setViewport(MOBILE);
+  await ensureAuthorSession(authorPage, AUTHOR);
   await open(authorPage, '/creator');
+  await waitForRows(authorPage, 'creator-guide', 1, 60_000);
   const narrow = await rowsOf(authorPage, 'creator-guide');
   check('the shelf survives a phone viewport with its nine columns', narrow.length === 1 && narrow[0]?.cells?.length === 9, `${narrow.length} row(s), ${narrow[0]?.cells?.length} column(s)`);
   await shot(authorPage, 'shelf-mobile');

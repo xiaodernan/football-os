@@ -3968,7 +3968,7 @@
     "refusalsTitle": "这里的接口拒绝什么，又如何作答",
     "thCode": "代码",
     "thAnswer": "作答",
-    "entitlementNote": "这一层在 §42 的权益表里点了两个功能（{features}）。它们是数据持有的上限，还没有任何接口据此拒绝，所以真正起作用的是上面的那些上限。",
+    "entitlementNote": "本层级在 §42 权益表中指名了两个功能（{features}）。它们现在是门会拒绝的上限：所有发布门会检查 creator_publish，指南门会对照存储的行检查 creator_guide。",
     "profileTitle": "你的创作者档案",
     "profilePublishedAs": "以 {slug} 发布",
     "profileNone": "还没有档案——第一次发布就会创建",
