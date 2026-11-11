@@ -4453,3 +4453,17 @@ the next run.
 **Not claimed.** The video pipeline remains synchronous; the jobs queue has no production producer wired yet;
 the build's own perf headroom on a real Postgres is CI's to print, not this host's. The untracked user text
 file at the repository root remains untouched; `.scratch/` remains untracked.
+## 111. §110 prints success; every push since §96 now prints green (2026-11-11)
+
+**What the runner printed, unedited.** `43048219108` (docs(i18n) §110) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in this window prints success. `42842838746` and `42843029264` printed failure on my own ancestors
+(five ceiling tests and the agents-census/Arabic defects) — both were fixed by named commits and both
+subsequent pushes printed success (`88f2499` → `43000312581` failure — the *same* five tests were green there;
+this is recorded at §99). No red in this ledger survives as unfixed, unaccounted-for or unverified.
+
+**Not claimed.** The video pipeline remains synchronous; no producer enqueues onto the new drain yet — that is
+the named next arc. The untracked user text file at the repository root remains untouched; `.scratch/` remains
+untracked. The human editorial pass on the machine-translated `fr` catalogue remains owed, as does the
+machine-translated `ar` and `he` copy.
