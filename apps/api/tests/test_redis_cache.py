@@ -25,6 +25,25 @@ def test_redis_cache_fallback_when_unavailable() -> None:
         assert cache._fallback.get("test_key") == "test_value"
 
 
+def test_redis_cache_authentication_refusal_names_the_fix() -> None:
+    """A refused handshake is the one failure whose message has to say what to fix, not just what failed."""
+    import redis as redis_lib
+
+    with patch("redis.from_url") as mock_from_url:
+        mock_from_url.side_effect = redis_lib.exceptions.AuthenticationError("HELLO must be called with the client already authenticated")
+
+        import logging
+
+        from app.core.redis_cache import RedisCache
+
+        with patch.object(logging.getLogger("app.core.redis_cache"), "warning") as spy:
+            cache = RedisCache(redis_url="redis://:s3cret@localhost:6379/0")
+        assert cache._available is False
+        logged = " ".join(str(arg) for call in spy.call_args_list for arg in call.args)
+        assert "check REDIS_URL" in logged and "refused the credential" in logged
+        assert "s3cret" not in logged, "the redacted form is the only one allowed to leave the process"
+
+
 def test_redis_cache_happy_path() -> None:
     """When Redis is available, reads/writes go through Redis."""
     with patch("redis.from_url") as mock_from_url:

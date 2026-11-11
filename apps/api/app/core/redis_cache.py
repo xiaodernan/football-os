@@ -47,6 +47,23 @@ def redact_url(url: str) -> str:
     return urlunsplit((parts.scheme, host, parts.path, parts.query, parts.fragment))
 
 
+def connection_refusal_hint(exc: Exception, url: str) -> str:
+    """One actionable sentence for a refused handshake, or the plain exception text.
+
+    An operator reading "HELLO must be called with the client already authenticated" cannot tell whether
+    the password is missing, wrong, or the instance is a stranger; the redacted URL plus this sentence
+    can. Anything that is not an authentication failure is answered with the exception's own text.
+    """
+    try:
+        from redis import exceptions as redis_exceptions
+
+        if isinstance(exc, redis_exceptions.AuthenticationError):
+            return f"the server refused the credential — check REDIS_URL ({redact_url(url)}); the tier is serving from memory until it is fixed"
+    except Exception:
+        pass
+    return str(exc) or exc.__class__.__name__
+
+
 class RedisCache:
     """Redis-backed cache with TTL and graceful degradation.
 
@@ -97,7 +114,7 @@ class RedisCache:
         except Exception as e:
             self._available = False
             self._redis = None
-            logger.warning("Redis unavailable, using in-memory fallback: %s", e)
+            logger.warning("Redis unavailable, using in-memory fallback: %s (%s)", e.__class__.__name__, connection_refusal_hint(e, self.redis_url))
 
     def _key(self, key: str) -> str:
         """Prefix keys to avoid collisions."""

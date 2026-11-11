@@ -385,7 +385,13 @@ def build_cluster(url: str) -> RedisLimiter | None:
         )
         client.ping()
     except Exception as exc:  # noqa: BLE001 - absence is a state, not an error
-        logger.info("rate limiter has no shared store (%s); process scope only", exc.__class__.__name__)
+        try:
+            from app.core.redis_cache import connection_refusal_hint
+
+            hint = connection_refusal_hint(exc, url)
+        except Exception:
+            hint = str(exc) or exc.__class__.__name__
+        logger.info("rate limiter has no shared store (%s: %s); process scope only", exc.__class__.__name__, hint)
         return None
     return RedisLimiter(client)
 

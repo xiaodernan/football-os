@@ -4197,3 +4197,32 @@ the etch bytes; its verdicts for this arc are printed in the runs named in §97'
 **What landed in this window.** The M15 distributed rate limiter (Lua on Redis' TIME; cluster + process pre-filter; `/api/v1/metrics/rate-limit`; `Retry-After`; `degraded: process` visible), finished and landed with the parallel lane's own in-flight documents (`PLAN.md` Item 20, `docs/M15_RATE_LIMIT_VERIFICATION.md`); the §36 creator ceilings enforced at the seven doors; the notifications per-kind mutes (`0061`); the agents-census and Arabic-full-stop curatives; and the etch layer — one additive CSS pass verified end to end in all six locales (French 12/12 incl. authenticated legs, Arabic 7/7, Hebrew 7/7, zh 7/7, zh-TW 7/7, creator 97/97, portfolio 53/53) — with screenshots at `docs/screenshots/etch-home-fr.png` and `202611111101-creator-studio.png` local-only by gitignore.
 
 **Not claimed.** No comment on whether CI is green for pushes after `43009989353`. `足球 规划图.txt` at the repository root remains the user's, untouched, untracked. `.scratch/` remains untracked.
+## 99. The local Redis is refusing this host's client — and the log now says what to do about it (2026-11-11)
+
+**The discovery, with its evidence.** This host runs a Redis on 127.0.0.1:6379 that answers `PING` only when
+a credential is presented — and `football`, the compose profile's documented default, is **not** the password it
+holds. The API booted against it exactly as it has been: `AuthenticationError (HELLO must be called with the
+client already authenticated)` → the shared cache tier degrades to process-local memory, which every answer
+publishes as `X-RateLimit-Scope: process`. Nothing was wrong with the code; the operator had no way to tell what
+to do next. The password on this host is not the project's to guess, brute force, or log; this section says what
+is known and stops there.
+
+**What landed, and why it is honest.** `app/core/redis_cache.py` gains `connection_refusal_hint(exc, url)`:
+when the failure is an `AuthenticationError`, the log line becomes
+
+> `Redis unavailable, using in-memory fallback: AuthenticationError (the server refused the credential — check REDIS_URL (redis://localhost:6379/0); the tier is serving from memory until it is fixed)`
+
+— proof seen live at a fresh boot (`healthz: 200`, the warning line present verbatim in the output; the log was
+read from the actual process, not predicted). The redacted URL is the only form allowed to leave the process;
+the new test `test_redis_cache_authentication_refusal_names_the_fix` asserts both halves of that promise (the
+guidance text appears, the password never does — `s3cret` is not in the logged args).
+`ratelimit.py`'s `build_cluster` now logs the same actionable sentence for the limiter's no-store path.
+
+**What an operator does with this.** Either put the password in `REDIS_URL` (compose's authenticated profile:
+`redis://:football@127.0.0.1:6379/0` with its own `REDIS_PASSWORD` — the compose file is the supported local
+route) or leave the variable unset and read the published `process` scope as the exact state the host is in.
+`.env.example` now says both, including that an unauthenticated Redis is refused at the door.
+
+**Verification.** `tests/test_redis_cache.py` 12 passed; `tests/test_rate_limit.py` + `test_redis_shared_tier.py` +
+`test_redis_shared_hits.py` — 35 passed, 5 skipped (live-Redis legs); ruff clean; mypy clean over 169 files.
+No Redis was claimed to work locally; the door prints the degraded state honestly instead of the raw redis error.
