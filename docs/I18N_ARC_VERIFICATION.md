@@ -4480,3 +4480,16 @@ success, and the §76 era's containers-web follow-up printed success.
 
 **Not claimed.** Producer wiring onto the drain queue remains the named next arc; the fr editorial pass remains
 owed; the two untracked-file disciplines (`.scratch/` untracked, the user text untouched) remain in force.
+## 113. §112 prints success; the queue prints clean (2026-11-11)
+
+**What the runner printed, unedited.** `43061958985` (docs(i18n) §112) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in this arc prints success. The one failure this arc produced (§112's siblings `42842838746`/`42843029264`)
+was the five ceiling tests at the §36 boundary — fixed by `88f2499`; those same pushes' api leg now runs the
+full suite green at `43015943436` (leaderboard) and here. The video pipeline remains synchronous; it writes
+`RUNNING` then `COMPLETED` in-request, which is the ADR-006 shape for a job that does not outlive its request —
+the queue is for the jobs that do.
+
+**Not claimed.** The fr editorial pass remains owed; the untracked user text file at the repository root remains
+untouched. `.scratch/` remains untracked.
