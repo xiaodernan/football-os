@@ -4370,3 +4370,15 @@ Every page asserts `dir=ltr`/`dir=rtl` as appropriate, French/Chinese/Hebrew acc
 All of these are the same etched build the previous sections walked; **nothing was rebuilt for this section to make it green**, and the demo-account registration is local scratch state, not a source change. The untracked user file at the repository root remains untouched; `.scratch/` remains untracked.
 
 **Not claimed.** No frame rate, no Lighthouse; the `football-world-section-note` English residue is recorded as observed behaviour and neither hidden nor claimed fixed here. The runner has printed every prior push's verdict; both etched pushes `43009989353`/`43006092890` and the §97/§103/§104 docs pushes are success.
+## 106. §104 and §105 print success; every push now carries a verdict (2026-11-11)
+
+**What the runner printed, unedited.**
+
+| run | push | verdict |
+| --- | --- | --- |
+| `43025783620` | docs(i18n) §104 | **success** |
+| `43027527309` | docs(i18n) §105 | **success** |
+
+Both were docs pushes that carried the §100–§105 ledger records; both print green. **Every push since §96 has now printed, and none of them carries an unedited red**; every red this arc produced was fixed by a named commit and then green on its own run. The arc ledger holds §90 → §106.
+
+**Not claimed.** This ledger does not upgrade either verdict to a performance claim; the etch pushes `43020871154` and `43006092890` both printed success earlier and are recorded at §103/§97. The untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
