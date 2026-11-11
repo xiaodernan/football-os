@@ -46,17 +46,20 @@ def leaders(session: Session, *, top: int = 10) -> list[dict[str, Any]]:
 def my_stats(session: Session, user: User) -> dict[str, Any]:
     since = _since()
     xp = session.scalar(select(func.sum(XpEvent.amount)).where(XpEvent.user_id == user.id, XpEvent.created_at >= since)) or 0
+    # One aggregate scan, one outer join — the same shape `leaders` uses. The previous form wrapped a
+    # correlated subquery in the WHERE of an all-accounts scan, which the planner ran once per visible
+    # account; this computes the per-account total once for the whole board.
+    totals = (
+        select(XpEvent.user_id, func.sum(XpEvent.amount).label("total"))
+        .where(XpEvent.created_at >= since)
+        .group_by(XpEvent.user_id)
+    ).subquery()
     ahead = session.scalar(
         select(func.count())
-        .where(User.leaderboard_visible.is_(True), User.is_active.is_(True))
-        .where(User.id != user.id)
-        .where(
-            func.coalesce(
-                select(func.sum(XpEvent.amount)).where(XpEvent.user_id == User.id, XpEvent.created_at >= since).correlate(User).scalar_subquery(),
-                0,
-            )
-            > xp
-        )
+        .select_from(User)
+        .outerjoin(totals, totals.c.user_id == User.id)
+        .where(User.leaderboard_visible.is_(True), User.is_active.is_(True), User.id != user.id)
+        .where(func.coalesce(totals.c.total, 0) > xp)
     )
     rank = (ahead or 0) + 1
     return {

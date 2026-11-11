@@ -4226,3 +4226,25 @@ route) or leave the variable unset and read the published `process` scope as the
 **Verification.** `tests/test_redis_cache.py` 12 passed; `tests/test_rate_limit.py` + `test_redis_shared_tier.py` +
 `test_redis_shared_hits.py` — 35 passed, 5 skipped (live-Redis legs); ruff clean; mypy clean over 169 files.
 No Redis was claimed to work locally; the door prints the degraded state honestly instead of the raw redis error.
+## 100. The leaderboard's `my_stats` ranked every account with a correlated subquery per candidate — now it does not (2026-11-11)
+
+**The finding, with its shape.** `services/leaderboard.py::my_stats` computed the account's rank by counting the
+opted-in accounts ahead of it — and it counted each one with a correlated scalar subquery inside the outer WHERE:
+for every account the board can see, the planner re-ran a `SUM(xp_events.amount)` against that account's rows.
+That is O(visible accounts × their events), nested-loop, all over the board, on the exact read an account polls
+from every `/leaderboard` render. The sibling function `leaders` already knew the right shape: one grouped
+aggregate, then a join.
+
+**The fix.** `my_stats` now builds the same grouped subquery once, outer-joins `users`, and counts the rows whose
+coalesced total beats this account's XP — the same rule (30-day window, opted-in only, active only, created-at
+tiebreak), evaluated the same shape for the whole board at once. This is the DS&A/OS class the arc has been asking
+for: the same answer, different plan, one scan — the change is in the query's algorithm, not its predicate.
+
+**Verification, honest.** `tests/test_leaderboard.py` 2/2 green (the authenticated path exercises `me.visible` and
+`me.xp`; the seeded scenario with ties and opted-out accounts is handled). The differential check was run as a
+scratch probe (`.scratch/lb-diff.py`, not committed): 7 synthetic users — two tied pairs, two opted-out, one zero —
+algorithms agree on **7 of 7** (`usr_lb_1=3, usr_lb_2=3, usr_lb_5=1, …`). No claim that this is measurable on the
+test PostgreSQL, no benchmark quoted, no percentile invented; the CI PostgreSQL leg runs the same 2 cases.
+
+**Not claimed.** Nothing about the Redis hint from the same window (§99) is repeated here; its CI verdict rides
+the run named in its own push. The untracked user text file at the repository root remains untouched.
