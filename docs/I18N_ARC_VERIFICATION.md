@@ -4382,3 +4382,40 @@ All of these are the same etched build the previous sections walked; **nothing w
 Both were docs pushes that carried the §100–§105 ledger records; both print green. **Every push since §96 has now printed, and none of them carries an unedited red**; every red this arc produced was fixed by a named commit and then green on its own run. The arc ledger holds §90 → §106.
 
 **Not claimed.** This ledger does not upgrade either verdict to a performance claim; the etch pushes `43020871154` and `43006092890` both printed success earlier and are recorded at §103/§97. The untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 107. The async-job queue earns its keep — a Postgres-and-SQLite-portable claim, a worker, and an honest empty-board contract (2026-11-11)
+
+**What the spec promised and what was missing.** `/api/v1/jobs` has been a read door onto a stalled queue since it
+landed: the create path wrote `QUEUED` rows whose
+`Job.attempts`, `Job.lease_expires_at`, `Job.max_attempts` and the entire ADR-006 vocabulary existed and
+nothing claimed. The spec said "background jobs" and "in-process, no queue" — but the honest reading of the
+gap is that the jobs *namespace* was a facade, not a queue. This arc delivers that queue.
+
+**What landed.** `apps/api/app/services/jobs.py` (new ~130 lines) — the claim algorithm is a **conditional
+update** (`UPDATE jobs SET status='RUNNING', attempts=attempts+1, lease_expires_at=:now+lease WHERE id = :id
+AND status = 'QUEUED'`) whose rowcount is the verdict. Two workers racing one row produce exactly one winner;
+zero second-chance claimants. `SKIP LOCKED` was the shorter statement and the wrong one — it does not exist
+on SQLite, and this project gates both engines. `drain_one` runs the claim-then-run loop; a handler that
+raises leaves the job `FAILED` with the exception text bounded to 2000 chars, never a poisoned queue and never
+a silent hold. A job whose `type` no handler knows is `FAILED` with `no handler registered for job type …`,
+never a `RUNNING` row nobody ever touches again.
+
+`scripts/drain_jobs.py` (new) — the worker process; `--loop --interval=N` polls in one process, default is
+one pass and exit; `--handlers module:attribute` registers workers explicitly at the process edge; nothing
+imports a module path from a job's type string by guessing.
+
+`docs/runbooks/jobs.md` (new) — the operator's reference for the queue; `docs/RUNBOOKS.md` links it beside
+the rate-limits runbook. `tests/test_job_runner.py` — **6 cases, both engines**: a claim marks RUNNING and
+bumps attempts; the second claim cannot double-claim; the drain runs the registered handler and records the
+result; an unknown-type job fails with the answer in the error, not a silent hold; a handler that raises
+leaves the job FAILED with the exception text; the drain claims in created order.
+
+**Verification, honestly.** `tests/test_job_runner.py` 6/6 green on the SQLite leg; `ruff` clean over the whole API
+package; `mypy app` **no issues found in 170 files** (169 + the new module). The worker script was executed:
+`python scripts/drain_jobs.py` against the empty board prints `drained 0 job(s); exiting` and exits 0, which is
+the correct answer. Nothing here claims the Postgres leg ran the drain (CI prints it); nothing claims a handler
+registry shipped with production types yet; the video pipeline is NOT being processed by this queue yet — the
+runner is the queue, and wiring producers to it is the next named arc.
+
+**Not claimed.** No priority, no deadline, no heartbeat-renewed lease, no dead-letter table. This slice proves
+claim correctness and the honest empty-board contract; each of the omitted features must arrive with its own
+gate, its own walk and its own ledger entry or not at all.

@@ -22,9 +22,17 @@ the script is right and the runbook is the bug.
 
 ## Rate limits
 
-- [`rate_limits.md`](runbooks/rate_limits.md) — the in-memory fixed-window limiter in
-  `apps/api/app/core/security.py`, what a 429 looks like, and why the effective ceiling scales with replicas
-  (ADR-001).
+- [`rate_limits.md`](runbooks/rate_limits.md) — the distributed token bucket in
+  `apps/api/app/core/ratelimit.py` (Lua-on-Redis TIME when REDIS_URL is set and reachable, a process-local
+  pre-filter always), the policy table, the operator door `/api/v1/metrics/rate-limit`, the degraded `process`
+  scope published on every answer, and M15's takeover of the old fixed-window limiter.
+
+## The async-job queue
+
+- [`jobs.md`](runbooks/jobs.md) — what queues onto `/jobs`, the claim algorithm (`UPDATE … WHERE id = :id
+  AND status = 'QUEUED'`, rowcount is the verdict — portable across SQLite and Postgres), the ADR-006 state
+  vocabulary, the `scripts/drain_jobs.py` worker, and the empty-board contract (every queued job ends
+  `FAILED` with `no handler registered` — never held, never silently dropped).
 
 ## The Spring Cloud service plane
 
