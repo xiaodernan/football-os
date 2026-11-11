@@ -53,6 +53,8 @@ from app.core.db import SessionLocal, init_db
 from app.core.discovery import DiscoverySettings, EurekaRegistrar
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging, get_logger, request_id_var, request_started_var
+from app.core.rate_policy import caller_key, policy_for, rate_decision_var
+from app.core.ratelimit import Decision, get_limiter
 from app.core.redis_cache import close_redis_cache, get_redis_cache
 from app.core.request_metrics import record
 from app.core.response_headers import dress_response
@@ -112,7 +114,75 @@ def caller_identity(credential: str) -> str:
     return hashlib.sha256(credential.encode("utf-8")).hexdigest()[:32]
 
 
-PER_REQUEST_HEADERS = frozenset({"x-request-id", "x-request-duration-ms"})
+def judge_request(request: Request) -> Decision | None:
+    """Price this request, or answer `None` when the door is exempt or the tier is switched off.
+
+    Kept out of the middleware body so a test can ask the question directly, with a request it built,
+    rather than starting a server to find out what a path costs. Returns the decision even when it
+    allows — the headers on an allowed answer are the budget the caller has left, and a limiter that
+    only spoke when it refused would leave a client guessing where the ceiling is.
+    """
+    if not settings.rate_limit_enabled:
+        return None
+    policy = policy_for(request.url.path)
+    if policy is None:
+        return None
+    peer = request.client.host if request.client is not None else ""
+    identity = caller_key(
+        authorization=request.headers.get("authorization", ""),
+        peer=peer,
+        forwarded_for=request.headers.get("x-forwarded-for", ""),
+        trusted_proxies=settings.rate_limit_trusted_proxies,
+    )
+    # The policy name is part of the key: an account that has spent its login budget has not spent
+    # its reading budget, and a single bucket per caller would make the second door inherit the first
+    # door's refusal.
+    return get_limiter(settings.rate_limit_redis_url).decide(f"{policy.name}:{identity}", policy)
+
+
+def rate_limit_refusal(decision: Decision) -> JSONResponse:
+    """The 429, in the one refusal shape this project answers in (`detail.code`).
+
+    `rate_limited` is not a new code: §M1's per-door limiter already publishes it and the web tier
+    already holds a sentence for it in six catalogues, so a caller who has seen one throttle
+    recognises the next. What is new is that the answer names the policy and carries the retry, which
+    is the difference between "slow down" and "come back in four seconds".
+
+    The budget headers are not set here. `dress_response` puts them on this answer exactly as it does
+    on a 200, a cache hit and a crash, so there is one list of rate-limit headers in the codebase and
+    a refusal cannot publish a set the success path does not.
+    """
+    response = JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "detail": {
+                "code": "rate_limited",
+                "message": f"Too many requests for this door ({decision.policy}); retry in {max(1, decision.retry_after)}s",
+            }
+        },
+    )
+    return response
+
+
+PER_REQUEST_HEADERS = frozenset(
+    {
+        "x-request-id",
+        "x-request-duration-ms",
+        # M15: the rate-limit headers describe the request that is being answered, not the answer.
+        # They are computed before the cache is consulted, so storing them would replay the miss's
+        # `Remaining` on every hit — a caller reading a number that belongs to another request, and a
+        # budget that appears not to move while it is being spent. `dress_response` writes the
+        # current decision onto every response after this layer returns, hit or miss.
+        "ratelimit-policy",
+        "ratelimit-limit",
+        "ratelimit-remaining",
+        "ratelimit-reset",
+        "x-ratelimit-limit",
+        "x-ratelimit-remaining",
+        "x-ratelimit-scope",
+        "retry-after",
+    }
+)
 """Headers that describe one request and are therefore not part of its answer.
 
 `request_context` sets these while `response_cache` is still collecting the response,
@@ -387,6 +457,17 @@ def create_app() -> FastAPI:
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
         request_id_var.set(request_id)
         request_started_var.set(started)
+        # The price of the door, decided before any work is done and before the cache is consulted.
+        # A refusal here costs one dict lookup and (when the shared tier is up) one script call, and
+        # it stops the request short of the response cache, the database and every provider.
+        decision = judge_request(request)
+        if decision is not None:
+            rate_decision_var.set(decision)
+            if not decision.allowed:
+                record(status.HTTP_429_TOO_MANY_REQUESTS, (time.perf_counter() - started) * 1000)
+                refusal = rate_limit_refusal(decision)
+                dress_response(refusal)
+                return refusal
         try:
             response = await call_next(request)
         except Exception:

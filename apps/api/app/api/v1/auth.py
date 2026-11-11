@@ -20,7 +20,6 @@ from app.core.security import (
     limit,
     new_public_id,
     password_refusal,
-    rate_limiter,
     verify_password,
 )
 from app.core.timeutil import as_utc, is_expired, now_utc
@@ -193,8 +192,10 @@ def delete_account(
     # limiters upstream, while one hijacked session stays bounded at three erasures an hour.
     # Keyed by address alone, the bucket made the Nth verification walk of the day answer
     # 429 for an account that had never erased anything — the limiter was counting walks,
-    # not callers.
-    rate_limiter.check(f"account_delete:{user.id}:{request.url.path}", 3, 3600)
+    # not callers. The scope carries the account for the same reason after M15: `caller_key`
+    # already separates two credentials behind one address, and this keeps the door's own
+    # published ceiling readable in the refusal even when the caller is anonymous to the tier.
+    limit(request, 3, 3600, scope=f"account_delete:{user.id}")
     if payload.confirm != account_deletion.ACCOUNT_DELETE_PHRASE:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,

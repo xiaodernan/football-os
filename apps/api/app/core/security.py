@@ -17,6 +17,8 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.db import get_db
+from app.core.rate_policy import caller_key
+from app.core.ratelimit import Policy, get_limiter
 
 if TYPE_CHECKING:
     from app.models import User
@@ -199,66 +201,72 @@ def password_refusal(*, message: str) -> HTTPException:
     return HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": INVALID_PASSWORD, "message": message})
 
 
-MAX_BUCKETS = 5000
-"""The most distinct rate-limit buckets one process will hold.
-
-Named because the bound it sets is a promise, and a promise needs a name to be checked
-against. Buckets are keyed by `scope:client:path`, and `client` is a dimension no caller
-controls, so the count of live buckets is not something the server can predict.
-"""
+#: One `Policy` per (scope, ceiling, window) the doors publish, built once. `Policy` validates its own
+#: arithmetic in `__post_init__`, and a door called a thousand times a second must not re-run that
+#: validation or re-allocate the object on every call.
+_DOOR_POLICIES: dict[tuple[str, int, int], Policy] = {}
 
 
-class RateLimiter:
-    """Fixed-window in-memory limiter; swap for Redis when horizontally scaled (ADR-001)."""
+def _door_policy(scope: str, limit_per_window: int, window_seconds: int) -> Policy:
+    """The token bucket that means what `limit_per_window per window_seconds` used to mean.
 
-    def __init__(self) -> None:
-        self._hits: dict[str, list[float]] = {}
-
-    def check(self, bucket: str, limit: int, window_seconds: int) -> None:
-        now = time.time()
-        hits = [t for t in self._hits.get(bucket, []) if now - t < window_seconds]
-        if len(hits) >= limit:
-            retry = int(window_seconds - (now - hits[0])) + 1
-            raise HTTPException(
-                status.HTTP_429_TOO_MANY_REQUESTS,
-                detail={"code": "rate_limited", "message": "Too many requests, slow down"},
-                headers={"Retry-After": str(max(retry, 1))},
-            )
-        hits.append(now)
-        self._hits[bucket] = hits
-        self._prune(now, window_seconds)
-
-    def _prune(self, now: float, window_seconds: int) -> None:
-        """Hold the map under `MAX_BUCKETS`.
-
-        Idle buckets go first, because dropping a bucket whose hits are still inside its
-        window would hand a caller a fresh budget for free. But idle-first is not by
-        itself a bound: against a flood of *distinct live* buckets — which is exactly
-        what a rotating source address produces, since the key contains the client — the
-        idle pass removes nothing and the map grows without limit. So the least recently
-        touched survivors are dropped until the promise holds.
-
-        Evicting a live bucket is the lesser of the two ways this can fail. The other is
-        an unbounded map reachable from outside the doors the limiter protects, and a
-        process that dies has no rate limit at all.
-        """
-        if len(self._hits) <= MAX_BUCKETS:
-            return
-        live = {k: v for k, v in self._hits.items() if now - v[-1] < window_seconds}
-        if len(live) > MAX_BUCKETS:
-            keepers = sorted(live, key=lambda k: live[k][-1])[-MAX_BUCKETS:]
-            live = {k: live[k] for k in keepers}
-        self._hits = live
-
-
-rate_limiter = RateLimiter()
+    Burst `limit_per_window`, sustained `limit_per_window / window_seconds` — both numbers the fixed
+    window already published, so no door's stated ceiling moves. What changes is the boundary: a fixed
+    window admits `2 × limit` across one (`limit` at 00:59.9 and `limit` again at 01:00.1), while a
+    bucket admits `capacity + rate × t` over *any* interval, which is the property the `Retry-After`
+    on the refusal actually promises.
+    """
+    key = (scope, limit_per_window, window_seconds)
+    policy = _DOOR_POLICIES.get(key)
+    if policy is None:
+        policy = Policy(scope, capacity=limit_per_window, refill_per_second=limit_per_window / window_seconds)
+        _DOOR_POLICIES[key] = policy
+    return policy
 
 
 def limit(request: Request, limit_per_window: int, window_seconds: int = 60, scope: str = "route") -> None:
+    """Charge this door against the same tier, the same identity and the same clock as the middleware.
+
+    This used to be a second limiter — a fixed window in a process-local dict, keyed on the socket's
+    peer — and two things were wrong with it that no tuning inside it could fix. Behind this project's
+    own edge every caller arrives from the proxy's address, so one bucket counted the whole internet;
+    and a caller presenting a credential was counted by address anyway, so one account could spend
+    another's budget by sharing its NAT. `caller_key` is the one identity rule now and `get_limiter`
+    the one tier: process-local when no store is configured, cluster-wide when one is, and the answer
+    says which (`X-RateLimit-Scope`).
+
+    The path stays in the key, and it has to. `scope` is not a door identifier: the tree reuses
+    `academy_write` at four different ceilings and `club_write` at three, so a bucket per scope would
+    merge doors that were priced apart and let whichever was called last decide the ceiling for all of
+    them. The method is in it for the same reason one level down — `/careers/{ident}/tickets` is a GET
+    priced at 60 a minute and a PUT priced at 20, and without the verb those are one bucket: twenty
+    writes leave the read door serving nothing, against a ceiling it publishes as sixty.
+    `test_a_read_door_and_a_write_door_on_one_path_keep_their_own_budgets` holds that apart.
+
+    The bound on distinct buckets is `ratelimit.MAX_LOCAL_BUCKETS`, and evicting one there is
+    safe for the reason its own comment gives — the shared store is the authority, so an evicted
+    pre-filter bucket costs a round trip, not a budget.
+    """
     if settings.env == "test":
         return
-    client = request.client.host if request.client else "unknown"
-    rate_limiter.check(f"{scope}:{client}:{request.url.path}", limit_per_window, window_seconds)
+    policy = _door_policy(scope, limit_per_window, window_seconds)
+    identity = caller_key(
+        authorization=request.headers.get("authorization", ""),
+        peer=request.client.host if request.client else "",
+        forwarded_for=request.headers.get("x-forwarded-for", ""),
+        trusted_proxies=settings.rate_limit_trusted_proxies,
+    )
+    key = f"door:{scope}:{request.method}:{identity}:{request.url.path}"
+    decision = get_limiter(settings.rate_limit_redis_url).decide(key, policy)
+    if not decision.allowed:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "code": "rate_limited",
+                "message": f"Too many requests for {scope}; retry in {max(1, decision.retry_after)}s",
+            },
+            headers={"Retry-After": str(max(1, decision.retry_after))},
+        )
 
 
 def new_public_id(prefix: str) -> str:

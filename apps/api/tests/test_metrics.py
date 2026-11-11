@@ -22,6 +22,8 @@ METRICS_PATHS = (
     "/api/v1/metrics/cost-optimisation",
     "/api/v1/metrics/latency",
     "/api/v1/metrics/cache",
+    "/api/v1/metrics/alerts",
+    "/api/v1/metrics/rate-limit",
 )
 
 
@@ -50,8 +52,19 @@ class TestTheOperatorStanding:
     The module named administrators as its audience while each door was guarded only by a session,
     so any registered player could read the platform's account totals, AI spend, provider mix,
     latency profile and cache tiers. These cases hold both ends of the fix: the player is refused
-    at all six doors, and the admin still reaches each one.
+    at every door in `METRICS_PATHS`, and the admin still reaches each one.
+
+    The list is held to the router by `test_the_standing_census_covers_every_door_on_the_router`,
+    because a hand-written population is a hiding place: `/metrics/alerts` and `/metrics/rate-limit`
+    both shipped after this class did, and neither was in it.
     """
+
+    def test_the_standing_census_covers_every_door_on_the_router(self) -> None:
+        """A door added to the router must arrive in this census, not beside it."""
+        served = {route.path for route in app.routes if getattr(route, "path", "").startswith("/api/v1/metrics/") and "GET" in getattr(route, "methods", set())}
+        missing = served - set(METRICS_PATHS)
+        assert not missing, f"these metrics doors have no standing case: {sorted(missing)}"
+        assert set(METRICS_PATHS) <= served, f"the census names doors the router does not serve: {sorted(set(METRICS_PATHS) - served)}"
 
     @pytest.mark.parametrize("path", METRICS_PATHS)
     def test_a_player_is_refused_and_an_admin_is_answered(self, path: str, admin_client: TestClient) -> None:
@@ -178,6 +191,37 @@ class TestMetricsEndpoints:
         client = TestClient(app)
         resp = client.get("/api/v1/metrics/cache")
         assert resp.status_code == 401
+
+    def test_the_rate_limit_door_publishes_the_tier_and_the_price_list(self, admin_client: TestClient) -> None:
+        """An operator has to be able to read a limit a caller hit, not guess it.
+
+        The three figures a 429 count cannot give are which tier answered, how many requests the
+        pre-filter kept away from the shared store, and how many the store failed to judge. The
+        price list beside them is derived from the table the middleware actually reads, so a door
+        re-priced in code cannot leave this page describing the old ceiling.
+        """
+        from app.core.config import settings
+        from app.core.rate_policy import DEFAULT, POLICY_TABLE
+
+        resp = admin_client.get("/api/v1/metrics/rate-limit")
+        assert resp.status_code == 200, resp.text[:300]
+        data = resp.json()
+
+        assert data["enabled"] is settings.rate_limit_enabled
+        assert data["trusted_proxies"] == list(settings.rate_limit_trusted_proxies)
+        assert "configured" in data["tiers"], "the tier must say whether it exists before it says what it counted"
+
+        policies = {entry["name"]: entry for entry in data["policies"]}
+        assert set(policies) == {policy.name for _, policy in POLICY_TABLE} | {DEFAULT.name}
+        for entry in policies.values():
+            assert entry["burst"] >= 1
+            assert entry["refill_per_second"] > 0
+            assert 1 <= entry["cost"] <= entry["burst"]
+            assert entry["refill_per_minute"] == round(entry["refill_per_second"] * 60, 2)
+
+        published = [prefix for entry in data["policies"] for prefix in entry["doors"]]
+        assert sorted(published) == sorted(prefix for prefix, _ in POLICY_TABLE), "every priced prefix is named exactly once"
+        assert policies[DEFAULT.name]["doors"] == [], "the fallback prices what no prefix matched; it owns no door of its own"
 
     def test_metrics_auth_gated(self) -> None:
         """Metrics endpoints should require authentication."""

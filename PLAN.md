@@ -1735,6 +1735,65 @@ producers 3; erasure 1). ruff and mypy (167 files) clean; the i18n gates all gre
 key-drift, tokens 7/7, translation-quality 9/9 after the Arabic full stop and the English source fix, metadata
 188/188, literals 9/9); the doors verified live through the API (read → mute → re-read → unknown-kind 422).
 
+## Item 20 — M15: one limiter, one clock, one identity
+
+**The gap.** The project had two rate limiters. The middleware priced every `/api/v1` door against a
+process-local token bucket; the per-door `limit()` helper charged a *fixed window* held in a dict in
+`app.core.security`, keyed on the socket's peer. That second tier's own docstring had said "swap for Redis
+when horizontally scaled" since M1, and four defects sat behind that sentence: behind the project's own
+edge every caller arrives from the proxy's address, so one bucket counted the whole internet; a
+credentialed caller was counted by address anyway, so one account could spend another's budget by sharing
+its NAT; the dict's LRU eviction dropped buckets *still inside their window*, handing that caller a fresh
+budget; and a fixed window admits `2 × limit` across its boundary while its `Retry-After` promised the
+seconds to window rollover. Two places wrote the headers, so a cache HIT replayed the miss's numbers and a
+500 — which never comes back through the middleware — carried no budget at all.
+
+**The shape.** `app/core/ratelimit.py` holds the algorithm (`Policy`, `Decision`, `MemoryLimiter`,
+`RedisLimiter`, `TwoTierLimiter`) and `app/core/rate_policy.py` holds the policy: the ordered prefix table,
+`policy_for`, `caller_key` and `rate_decision_var`. The read-modify-write is one Lua `EVALSHA` that reads
+`redis.call('TIME')` — N workers share the server's clock, and `elapsed` is clamped at zero so a replica
+whose clock is behind cannot mint tokens by travelling backwards. A bucket expires at the instant it would
+have refilled to capacity (`PEXPIRE ceil(capacity/refill_per_ms) + 1000`, floored at `MIN_TTL_MS`), because
+from that instant its state is the state a missing key produces. The local tier is an **admission
+pre-filter** sized to the cluster's capacity, so it can never refuse what the cluster would admit; a caller
+outside its burst is answered locally, so a flood reaches the store at the refill rate rather than the
+flood's rate, and `short_circuited` counts those answers. With no store the tier degrades to per-process and
+**stamps `X-RateLimit-Scope: process` on every answer**. `dress_response` is the one dresser: the 200, the
+HIT, the 429 and the 500 publish the same seven headers from the same `Decision`, and all eight budget names
+joined `PER_REQUEST_HEADERS` so the cache cannot replay another request's `Remaining`. `GET
+/api/v1/metrics/rate-limit` publishes the tier, the counters and the price list behind the administrator
+standing the metrics router already carries.
+
+**The census that decided the key's shape.** A read-only walk of the tree's `limit(...)` call sites measured
+**222 scoped doors, 8 scopes reused at more than one ceiling, and 4 `(scope, path)` pairs priced differently
+by verb** — `career_tickets` is a GET at 60/60 and a PUT at 20/60 on one path. So the door key carries the
+path *and* the verb: `door:{scope}:{method}:{identity}:{path}`. Without the verb, twenty writes leave the
+read door serving nothing against a ceiling it publishes as sixty.
+
+**Three harness findings, each paid for in red.** (1) A test that hard-codes the degraded tier's name lets
+the operator's environment decide the verdict: `test_the_crash_answer_carries_the_budget_too` asserted
+`process` and went red `cluster != process` on a working limiter because `REDIS_URL` was exported. The
+fixture now pins `rate_limit_redis_url=""` and the cluster direction has its own case. (2) A case that counts
+tokens across two HTTP calls is counting the host's speed: `DEFAULT` refills 40/s, so a 25 ms gap puts back
+the token the first request spent. The fixture pins *only the tier's arithmetic*, not `time.monotonic`
+process-wide — the event loop under `TestClient` reads that clock for its own deadlines. (3) The arm script's
+blanket `\n` → `\r\n` re-encode would have written `\r\r\n` into CRLF `security.py`, making A1's red the
+corruption's rather than the verb's; it now matches in LF and re-encodes to the file's own EOL.
+
+**A behaviour change, disclosed.** The limiter answers before routing and before body validation, so a
+throttled door returns 429 where FastAPI previously returned 422. That changed the project's own probe: S1
+now waits out a throttle it caused itself and publishes the count (run K: 3 waits, `retry_after: 10`, policy
+`"upload";q=8;w=1`), and S6's malformed post moved to `POST /api/v1/boards` as the account. The first run of
+the changed probe read **8 passed, 2 failed** — those two — before the run recorded as current.
+
+**Evidence.** `tests/test_rate_limit.py` 26 cases + `tests/test_rate_limiter.py` 12 = **38**, green on both
+legs: **57 passed** with `REDIS_URL` (146.68 s) and **55 passed / 2 skipped** without (121.99 s), the two
+skips named and both live-store cases. **3/3 reverse controls MATCHED** with the tree proved green at rest
+and every file restored byte-exactly. `mypy app` clean over 169 files; ruff clean. Probe run K:
+**10/10, 0 failed, 0 server errors, 44.51 s**, census 239 / 55 / 102 at contract SHA-256 `03fb360b…`,
+**239 knocked, 239 × 401, 0 deviations**; S5's retry is now **22 s to one token** where the fixed window
+published 297 s to rollover. The record is `docs/M15_RATE_LIMIT_VERIFICATION.md`.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

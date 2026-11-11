@@ -80,8 +80,13 @@ class Probe:
         self.started = datetime.now(UTC)
         self.contract_sha = hashlib.sha256(CONTRACT.read_bytes()).hexdigest()
         self.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
-        self.anon = httpx.Client(base_url=self.base, timeout=20.0, follow_redirects=False)
+        # trust_env=False: the probe must reach the server under test directly. An operator's proxy would
+        # route these requests somewhere else and every figure below would describe that somewhere else —
+        # and httpx turns each `NO_PROXY` entry into a URL pattern, so the common `[::1]` entry raises
+        # `InvalidURL: Invalid port: ':1]'` before a single request is made.
+        self.anon = httpx.Client(base_url=self.base, timeout=20.0, follow_redirects=False, trust_env=False)
         self.server_errors: list[dict[str, Any]] = []
+        self.throttle_waits: list[dict[str, Any]] = []
 
     # -- contract ---------------------------------------------------------------------
 
@@ -127,9 +132,30 @@ class Probe:
                 {"method": response.request.method, "url": str(response.request.url), "status": response.status_code}
             )
 
-    def call(self, client: httpx.Client, method: str, path: str, **kwargs: Any) -> httpx.Response:
+    def call(
+        self, client: httpx.Client, method: str, path: str, *, throttle_retries: int = 0, **kwargs: Any
+    ) -> httpx.Response:
+        """One knock, or — when the caller asks for it — a knock that waits out a throttle.
+
+        A census that asks 239 doors who they are is itself a burst, and since M15 the limiter answers
+        before the door does: the upload prefix carries eight tokens, so the last video doors answered
+        `429` and the census reported three authentication failures that were not authentication
+        failures. `throttle_retries` waits the `Retry-After` the answer published and knocks again, so
+        the section measures what the door says about the caller rather than what the tier says about
+        the probe. It is opt-in because S5 exists to provoke a 429 and must be allowed to keep it.
+        """
         response = client.request(method, path, **kwargs)
         self.remember_status(response)
+        for _ in range(throttle_retries):
+            if response.status_code != 429:
+                break
+            wait = max(1, int(response.headers.get("Retry-After", "1")))
+            self.throttle_waits.append(
+                {"method": method, "path": path, "retry_after": wait, "policy": response.headers.get("RateLimit-Policy", "")}
+            )
+            time.sleep(wait)
+            response = client.request(method, path, **kwargs)
+            self.remember_status(response)
         return response
 
     # -- sections ---------------------------------------------------------------------
@@ -161,7 +187,7 @@ class Probe:
             concrete = self.concrete_path(path, op)
             body = {} if method in ("POST", "PUT", "PATCH") else None
             try:
-                response = self.call(self.anon, method, concrete, json=body)
+                response = self.call(self.anon, method, concrete, json=body, throttle_retries=4)
             except httpx.HTTPError as exc:
                 rows.append({"method": method, "path": path, "status": None, "error": type(exc).__name__})
                 continue
@@ -177,7 +203,7 @@ class Probe:
                 "authentication",
                 "every secured operation refuses a caller with no credential, and asks for one",
                 not bad,
-                {"knocked": len(rows), "statuses": statuses, "deviations": bad[:20]},
+                {"knocked": len(rows), "statuses": statuses, "deviations": bad[:20], "throttle_waits": self.throttle_waits},
             )
         )
 
@@ -198,7 +224,7 @@ class Probe:
 
     def accounts(self) -> tuple[Account, Account]:
         def register(label: str) -> Account:
-            client = httpx.Client(base_url=self.base, timeout=20.0, follow_redirects=False)
+            client = httpx.Client(base_url=self.base, timeout=20.0, follow_redirects=False, trust_env=False)
             email = f"probe-{label}-{uuid.uuid4().hex[:12]}@example.test"
             response = self.call(
                 client,
@@ -387,10 +413,11 @@ class Probe:
             )
 
     def error_shapes(self, a: Account) -> None:
-        malformed = self.anon.post(
-            "/api/v1/auth/login", content=b"{", headers={"Content-Type": "application/json"}
-        )
-        self.remember_status(malformed)
+        # Not the login door: S5 has just spent its twelve-token auth burst on purpose, and since M15 the
+        # limiter answers before FastAPI parses the body, so a malformed post there measures the throttle
+        # (429 rate_limited) instead of the validation shape this section exists to read. A board post as
+        # the account is the same framework refusal on a door whose budget the probe has not spent.
+        malformed = self.call_as(a, "POST", "/api/v1/boards", content=b"{", headers={"Content-Type": "application/json"})
         unknown = self.anon.get("/api/v1/probe-does-not-exist")
         self.remember_status(unknown)
         wrong_method = self.anon.request("DELETE", "/api/v1/healthz")

@@ -83,6 +83,19 @@ class Settings:
     # The port this process serves on. Uvicorn is started with a port, not with this variable, so a
     # deployment that changes one sets both; the default matches the documented dev command.
     service_port: int = field(default_factory=lambda: int(_env("SERVICE_PORT", "8000") or 8000))
+    # M15 rate limiting. On everywhere but the test environment, where the suite issues thousands of
+    # requests from one identity on purpose and a budget would be a test that fails for being fast.
+    # The store is the cache tier's unless a deployment points the limiter at its own instance —
+    # they are different workloads (an evictable cache and a stateful counter) and a host may want
+    # them apart. The fallback is written here rather than left to `get_limiter`'s own default,
+    # because both callers pass this field explicitly and an empty string is a value, not an absence:
+    # `get_limiter("")` builds a process-only tier and never consults the environment.
+    rate_limit_enabled: bool = field(default_factory=lambda: _env("RATE_LIMIT_ENABLED", "0" if _env("ENV", "development") == "test" else "1") != "0")
+    rate_limit_redis_url: str = field(default_factory=lambda: _env("RATE_LIMIT_REDIS_URL") or _env("REDIS_URL"))
+    # Only a peer inside one of these networks may name the caller in `X-Forwarded-For`. The default
+    # is the loopback pair, which is where this project's own edge and web tier run; a deployment
+    # behind another proxy adds that proxy's network, and a deployment behind none leaves it empty.
+    rate_limit_trusted_proxies: tuple[str, ...] = field(default_factory=lambda: tuple(p for p in _env("RATE_LIMIT_TRUSTED_PROXIES", "127.0.0.1/32,::1/128").split(",") if p))
 
     @property
     def is_demo_mode(self) -> bool:

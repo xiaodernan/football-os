@@ -14043,6 +14043,79 @@
         }
       }
     },
+    "/api/v1/notifications/preferences": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "My Preferences",
+        "description": "The mute map with every known kind present — untouched reads as wanted.",
+        "operationId": "my_preferences_api_v1_notifications_preferences_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response My Preferences Api V1 Notifications Preferences Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Set My Preference",
+        "operationId": "set_my_preference_api_v1_notifications_preferences_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferenceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Set My Preference Api V1 Notifications Preferences Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/metrics/system": {
       "get": {
         "tags": [
@@ -14407,6 +14480,34 @@
                 "schema": {
                   "type": "object",
                   "title": "Response Cache Stats Api V1 Metrics Cache Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/metrics/rate-limit": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Rate Limit Stats",
+        "description": "What the limiter charged, which tier answered, and whether either is degraded.\n\nThree figures an operator cannot get from a 429 count: how many requests the *pre-filter*\nanswered without asking the shared store (the amplifier), how many the store actually judged,\nand how many it failed to judge (each of those is a request answered on the process's own\nbudget). The policy table is published beside them so a limit a caller hit can be read rather\nthan guessed, and the trusted-proxy list is published because it decides whose\n`X-Forwarded-For` is believed.\n\nAdmin standing, like every door on this router: the numbers describe the process, not the caller.",
+        "operationId": "rate_limit_stats_api_v1_metrics_rate_limit_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Rate Limit Stats Api V1 Metrics Rate Limit Get"
                 }
               }
             }
@@ -17218,6 +17319,24 @@
         "additionalProperties": false,
         "type": "object",
         "title": "PostIn"
+      },
+      "PreferenceIn": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "wanted": {
+            "type": "boolean",
+            "title": "Wanted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "wanted"
+        ],
+        "title": "PreferenceIn"
       },
       "ProfileIn": {
         "properties": {

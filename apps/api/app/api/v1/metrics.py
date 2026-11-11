@@ -271,3 +271,40 @@ def cache_stats() -> dict[str, Any]:
     stats: dict[str, Any] = get_cache_stats()
     stats["redis"] = get_redis_cache().get_stats()
     return stats
+
+
+@router.get("/rate-limit")
+def rate_limit_stats() -> dict[str, Any]:
+    """What the limiter charged, which tier answered, and whether either is degraded.
+
+    Three figures an operator cannot get from a 429 count: how many requests the *pre-filter*
+    answered without asking the shared store (the amplifier), how many the store actually judged,
+    and how many it failed to judge (each of those is a request answered on the process's own
+    budget). The policy table is published beside them so a limit a caller hit can be read rather
+    than guessed, and the trusted-proxy list is published because it decides whose
+    `X-Forwarded-For` is believed.
+
+    Admin standing, like every door on this router: the numbers describe the process, not the caller.
+    """
+    from app.core.config import settings
+    from app.core.rate_policy import DEFAULT, POLICY_TABLE
+    from app.core.ratelimit import snapshot
+
+    policies = {policy.name: policy for _, policy in POLICY_TABLE}
+    policies[DEFAULT.name] = DEFAULT
+    return {
+        "enabled": settings.rate_limit_enabled,
+        "tiers": snapshot(),
+        "trusted_proxies": list(settings.rate_limit_trusted_proxies),
+        "policies": [
+            {
+                "name": policy.name,
+                "burst": policy.capacity,
+                "refill_per_second": round(policy.refill_per_second, 4),
+                "refill_per_minute": round(policy.refill_per_second * 60, 2),
+                "cost": policy.cost,
+                "doors": [prefix for prefix, entry in POLICY_TABLE if entry.name == policy.name],
+            }
+            for policy in policies.values()
+        ],
+    }

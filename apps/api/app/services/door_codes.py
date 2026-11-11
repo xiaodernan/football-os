@@ -78,6 +78,7 @@ UNPROCESSABLE_CODES: Final = frozenset(
         "same_team",  # simulations
         "unknown_change",  # tactics
         "unknown_agent_type",  # agents — the catalogue's own word for a type `AGENT_REGISTRY` does not hold
+        "unknown_notification_kind",  # notifications — the mute kind is not one of the three the tier holds
     }
 )
 
