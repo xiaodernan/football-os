@@ -281,3 +281,153 @@ h1, h2, h3, h4, p { margin: 0; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================================
+   FOOTBALL OS — the etch layer. An additive pass over the base design system:
+   depth, light, and motion, built only from the vocabulary the base file
+   already publishes. Every colour is a token; every motion is gated by the
+   reduced-motion rule at the end of this file. Logical properties throughout
+   so the Arabic and Hebrew surfaces mirror correctly.
+   ============================================================================ */
+
+/* --- Ambient stage: an aurora field with a faint pitch grid underneath ------- */
+body {
+  background:
+    radial-gradient(1200px 720px at 82% -18%, rgba(53, 240, 164, 0.10), transparent 62%),
+    radial-gradient(980px 560px at 6% -6%, rgba(95, 168, 255, 0.10), transparent 60%),
+    radial-gradient(720px 900px at 50% 118%, rgba(53, 240, 164, 0.06), transparent 65%),
+    linear-gradient(180deg, #06090f 0%, #070b13 42%, #06090f 100%);
+  background-attachment: fixed;
+}
+
+/* --- Panels: float above the stage instead of sitting on it ------------------- */
+.panel {
+  background:
+    linear-gradient(180deg, rgba(23, 33, 51, 0.0) 0%, rgba(6, 9, 15, 0.28) 100%),
+    linear-gradient(155deg, #101a2b 0%, var(--bg-panel) 46%, var(--bg-raised) 100%);
+  border: 1px solid rgba(85, 106, 134, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 238, 247, 0.07),
+    0 1px 0 rgba(232, 238, 247, 0.03),
+    0 26px 48px -28px rgba(0, 0, 0, 0.95),
+    0 4px 14px -6px rgba(0, 0, 0, 0.6);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.panel:hover {
+  border-color: rgba(53, 240, 164, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 238, 247, 0.09),
+    0 26px 54px -26px rgba(0, 0, 0, 0.95),
+    0 6px 20px -8px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(53, 240, 164, 0.07);
+  transform: translateY(-1px);
+}
+
+/* --- Type: the display scale carries the product's voice ----------------------- */
+.h1 {
+  font-weight: 760;
+  letter-spacing: -0.032em;
+  line-height: 1.04;
+  background: linear-gradient(172deg, #f3f7fd 12%, #c3cfe0 68%, #8fa2ba 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+
+.h2 { font-weight: 680; letter-spacing: -0.018em; }
+.eyebrow { color: var(--accent); text-shadow: 0 0 18px rgba(53, 240, 164, 0.35); }
+
+/* --- Buttons: primary is an object, not a rectangle ---------------------------- */
+.btn {
+  transition: transform 0.1s ease, border-color 0.16s ease, background 0.16s ease,
+    box-shadow 0.22s ease, color 0.16s ease;
+}
+.btn:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px rgba(53, 240, 164, 0.22), 0 12px 28px -14px rgba(0, 0, 0, 0.8);
+}
+.btn--primary {
+  background: linear-gradient(180deg, #4cffb1 0%, #35f0a4 42%, #17b878 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 0 rgba(4, 18, 11, 0.35),
+    0 10px 26px -8px rgba(53, 240, 164, 0.42),
+    0 2px 6px -2px rgba(53, 240, 164, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.btn--primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #63ffc0 0%, #41f5ab 42%, #1cc783 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(4, 18, 11, 0.35),
+    0 14px 34px -8px rgba(53, 240, 164, 0.5),
+    0 3px 10px -2px rgba(53, 240, 164, 0.5);
+}
+.btn--primary:active:not(:disabled) { transform: translateY(1px); }
+
+/* --- Navigation: glass deck with a live edge ---------------------------------- */
+.nav {
+  background: rgba(6, 9, 15, 0.74);
+  backdrop-filter: blur(18px) saturate(1.15);
+  border-bottom: 1px solid rgba(85, 106, 134, 0.32);
+  box-shadow: 0 10px 34px -18px rgba(0, 0, 0, 0.75);
+}
+.nav__link { transition: color 0.15s ease, background 0.15s ease; }
+.nav__link--active {
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(53, 240, 164, 0.07), rgba(53, 240, 164, 0.03));
+  box-shadow: inset 0 -2px 0 var(--accent), 0 6px 18px -12px rgba(53, 240, 164, 0.5);
+}
+.nav__brand span { text-shadow: 0 0 22px rgba(53, 240, 164, 0.45); }
+
+/* --- Player cards: a light sweep on hover -------------------------------------- */
+.player-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  transition: transform 0.18s ease;
+}
+.player-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.10) 45%, rgba(255, 255, 255, 0.02) 52%, transparent 62%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.player-card:hover { transform: translateY(-2px); }
+.player-card:hover::after { animation: fo-sheen 0.85s ease forwards; }
+@keyframes fo-sheen {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(120%); }
+}
+
+/* --- Tables: reading rhythm, hover eye-lines ----------------------------------- */
+.table tbody tr { transition: background 0.15s ease; }
+.table tbody tr:hover { background: rgba(53, 240, 164, 0.045); }
+
+/* --- Chips and badges: small objects, real depth -------------------------------- */
+.chip { transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease; }
+.chip:hover { border-color: rgba(53, 240, 164, 0.4); transform: translateY(-1px); }
+
+/* --- The pitch backdrop: glow floor under the game ------------------------------ */
+.pitch-backdrop {
+  background:
+    radial-gradient(760px 300px at 50% 118%, rgba(53, 240, 164, 0.16), transparent 62%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.026) 0 8%, transparent 8% 16%),
+    linear-gradient(180deg, #0d1e17, var(--bg-raised) 80%);
+  box-shadow: inset 0 1px 0 rgba(232, 238, 247, 0.05);
+}
+
+/* --- Scrollbars: match the night, keep the accent -------------------------------- */
+@supports (scrollbar-width: thin) {
+  * { scrollbar-width: thin; scrollbar-color: #24334a #0b111c; }
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0b111c; }
+::-webkit-scrollbar-thumb { background: #24334a; border-radius: 999px; border: 2px solid #0b111c; }
+::-webkit-scrollbar-thumb:hover { background: #35f0a4; }
+
+/* --- Selection: the accent already owns the ink; give it the surface too --------- */
+::selection { background: rgba(53, 240, 164, 0.9); }

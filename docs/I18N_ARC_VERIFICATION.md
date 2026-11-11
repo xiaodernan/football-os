@@ -4137,3 +4137,30 @@ lane's document disagree on tense, the lane's document wins. The distributed tok
 **The creator walk, 97/97.** `qa-creator.mjs` was green on this tree (`BUILD_ID LfheP6FIkeb_MDPsYT5AW`, localhost:3219, scratch SQLite at `0061`, api restart required after the stale-scratch-DB 500s were read honestly). The walk itself needed three robustness repairs — none of them weakening a check: (1) `pressWrite` retries a missing control instead of failing (a mid-repaint click is answered on retry, the assertion unchanged); (2) the mobile-viewport read waits one row to paint; (3) the challenge-detail panel open retries the click five times because a loaded host drops the page's own fetch; the walk also re-authenticates the author when the 15-minute token expires mid-run (a returning reader signs back in through `/api/v1/auth/login`). The erase flows, the shelf drop-checks and the 4xx census (47 knocks, zero 400/403/5xx) all pass.
 
 **Not claimed, named.** No live Redis instance was measured for the cluster tier (1 skipped test says exactly that); the container legs are CI's to print; this section's own CI verdict is recorded when it prints. The untracked user text file at the repository root remains untouched; `.scratch/` is untracked everywhere it appeared.
+## 97. The etch layer — the web earns its dark, in one additive CSS pass (2026-11-11)
+
+**What landed.** `apps/web/styles/globals.css` gains an additive layer — the project's own design system
+extended, no new vocabulary, no markup change: a deeper aurora stage (three radial auroras over a
+cool-tempered base, `background-attachment: fixed`); panels that float above the stage (top inner
+highlight, hairline border, layered shadows, hover lift) with the accent only as a border-glow on hover;
+a display face for `.h1` (a vertical gradient from near-white to steel, `background-clip: text`) and a
+`.eyebrow` that carries the accent's glow; a primary button that is an object (gradient, inner-light
+shadow, accent aura, brighten-on-hover); glass-deck navigation whose active link gets a gradient wash and a
+soft accent glow along its baseline; a light `fo-sheen` sweep across player cards on hover; hover eye-lines
+for table rows; deep-toned scrollbars with an accent thumb; selection kept in the accent. Every animation
+is gated by the existing `prefers-reduced-motion` block, every property is logical (`margin-inline`-safe,
+inline-safe), and every colour is a token from the base file — nothing outside the published palette.
+
+**What is verified, honestly.** Nothing about this layer has been walked yet. The local production build
+(`NEXT_DIST_DIR=.next-walk`) started on a host saturated by CI runners and the parallel lane (367 processes,
+16 CPUs) and had not finished when this section was written; the six-locale walk re-run against the etch
+build is **pending on that host**, not on this paragraph. What is asserted here is only what is structurally
+true: the layer removes nothing, renames nothing, sets no `display` to none, hides no walk-targed node,
+and preserves the `data-*` vocabulary the walks read. **CI's `web` job prints the next verdict; that run is
+the arbiter.** If it prints red, the defect is this layer and this section will say so in the next word it
+writes.
+
+**Not claimed.** No Lighthouse score, no screenshot diff, no frame-rate figure. The walk (12 pages × six
+locales + the 97/97 creator pass from §96) is the project's own instrument, and it has not yet been turned
+on this layer. `.scratch/` remains untracked; the untracked user text file at the repository root remains
+untouched.
