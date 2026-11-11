@@ -4310,3 +4310,28 @@ localhost:3221 against the same scratch SQLite (`0061`) the French walk uses:
 
 **Not claimed.** No frame rate measured; no dashboard screenshot committed (screenshots are local-only by
 gitignore); the plane §17 test has its own run landing when the runner reaches it.
+## 103. §102's one open line — the plane §17 test — prints success (2026-11-11)
+
+**What the runner printed, unedited.** `43017374827` (master push `024e470`, the empty-registry gate
+`EdgeZeroInstancesTest`) completed **`web` success, `containers` success, `services` success, `api` success**.
+This is the Java plane's verdict for the new gate; locally the same test printed
+`Tests run: 1, Failures: 0, Errors: 0, Skipped: 0` and `BUILD SUCCESS` on Temurin 25 — both legs of the
+same claim, both recorded.
+
+**Everything printed since §97 is recorded here:**
+
+| run | push | verdict |
+| --- | --- | --- |
+| `43009989353` | feat(web) — the etch layer, verified local 97/97 + 12/12 | success |
+| `43010565940` | docs(i18n) — §97 record | success |
+| `43013859671` | docs(i18n) — §98 record | success |
+| `43015357092` | fix(redis) — the actionable refused-handshake line | success |
+| `43015943436` | perf(leaderboard) — one grouped scan | success |
+| `43017374827` | docs(plane) — empty registry pinned | success |
+
+**§102 is corrected accordingly:** its `43017374827 in flight` line resolved to **success** before this
+section was written; every row above is green on the runner, not predicted.
+
+**Not claimed.** No performance figure for the leaderboard rewrite on real hardware; the plane still
+computes no football fact. The etch empty-state push `3161098` is in flight; its verdict is recorded when
+it prints.
