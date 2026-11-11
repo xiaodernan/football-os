@@ -4556,3 +4556,14 @@ runner.
 
 **Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 120. §119 prints success; the queue drains green end to end (2026-11-11)
+
+**What the runner printed, unedited.** `43092903685` (docs(i18n) §119) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+The arc closes with every push printing green. No red in this ledger survives that was not produced by my
+own hands and fixed by my own commits, and each of those fixes printed success on its own re-run.
+
+**Not claimed.** Producer wiring onto the drain remains the named next arc — the queue exists, it is gated,
+it drains, but no production code path enqueues onto it yet. The `fr` editorial pass remains owed; the
+untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
