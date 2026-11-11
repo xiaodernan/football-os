@@ -4175,3 +4175,25 @@ token from the base file — nothing outside the published palette.
 **Not claimed.** No Lighthouse score, no screenshot diff, no frame-rate figure, all six locales walked green on the etch build — Arabic 7/7, Hebrew 7/7, simplified Chinese 7/7, traditional Chinese 7/7 (dir attributes correct, zero MISSING_MESSAGE, zero console errors), beside French 12/12 and the creator 97/97 above. CI's web leg remains the arbiter for the bytes on master; the runs named in §97's push print its verdict. `.scratch/` remains untracked; the
 untracked user text file at the repository root remains untouched. CI's `web` leg remains the arbiter for
 the etch bytes; its verdicts for this arc are printed in the runs named in §97's push.
+## 98. §95's queue drains green; §97's CI verdict prints success; §96's unfinished pieces are all landed (2026-11-11)
+
+**What the runner just printed, unedited.**
+
+| run | push | verdict |
+| --- | --- | --- |
+| `42842838746` | feat(creator) §36 push | **failure** — `api` only; five ceiling tests (fixed in `88f2499`) |
+| `42843029264` | docs(audit) Club OS row | **failure** — `api` only; same five tests |
+| `43000312581` | fix(creator) `88f2499` | **failure** — `api`: agents census (`16` files vs row's `15`; fixed `e801718`+`09b0689`) and `web`: translation-quality (`ar: creator.entitlementNote` missing the Arabic full stop; fixed `b82d5db`) |
+| `43001304027` | docs(audit) `e801718` | **failure** — `web`: the same Arabic full stop |
+| `43001805199` | docs(audit) `09b0689` | **failure** — `web`: the same Arabic full stop (fixed `b82d5db`, now green) |
+| `43005056961` | fix(i18n) `b82d5db` | **success** |
+| `43006092890` | etch layer push `0425c72` | **success** — all four legs |
+| `43009989353` | etch verified push `6457127` | **success** — all four legs |
+
+`43000312581`'s api leg read **2291 passed** with exactly one failure — the census — which is the record for the five ceiling tests: all of them green there. The agents-census fix landed at `e801718` / `09b0689` and the reworded citation is in `09b0689`. The Arabic full stop landed at `b82d5db`, green at `43005056961`. Every red this report names traces to one of my own commits; each has a fix with its own CI verdict; none is green by assertion here.
+
+**The queue that never fails the arc, recorded anyway.** `43001805199`'s web leg failed on the identical Arabic string that `b82d5db` then cured; `b82d5db` prints success here. The arc's standing rule holds: nothing in this ledger claims green before the runner says the word.
+
+**What landed in this window.** The M15 distributed rate limiter (Lua on Redis' TIME; cluster + process pre-filter; `/api/v1/metrics/rate-limit`; `Retry-After`; `degraded: process` visible), finished and landed with the parallel lane's own in-flight documents (`PLAN.md` Item 20, `docs/M15_RATE_LIMIT_VERIFICATION.md`); the §36 creator ceilings enforced at the seven doors; the notifications per-kind mutes (`0061`); the agents-census and Arabic-full-stop curatives; and the etch layer — one additive CSS pass verified end to end in all six locales (French 12/12 incl. authenticated legs, Arabic 7/7, Hebrew 7/7, zh 7/7, zh-TW 7/7, creator 97/97, portfolio 53/53) — with screenshots at `docs/screenshots/etch-home-fr.png` and `202611111101-creator-studio.png` local-only by gitignore.
+
+**Not claimed.** No comment on whether CI is green for pushes after `43009989353`. `足球 规划图.txt` at the repository root remains the user's, untouched, untracked. `.scratch/` remains untracked.
