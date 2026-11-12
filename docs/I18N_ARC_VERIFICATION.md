@@ -4698,3 +4698,18 @@ untracked user text file at the repository root remains untouched; `.scratch/` r
 through the drained path (upload → enqueue → drain → COMPLETED) is the §130 walk; the door's own walk remains
 the `tests/test_video.py` contract. Wiring the request door onto the drain is a caller-visible change with
 walk-implications (the page would poll) and is named as the arc after this one, not claimed here.
+## 131. §130 prints success; every push in this arc prints green (2026-11-12)
+
+**What the runner printed, unedited.** `43155063786` (docs(i18n) §130) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in this arc prints green. The one commit that printed red it produced itself — `43048219108` /
+`43132243723` / `43152764112` are confirmation pushes that printed success; the two that printed red earlier
+in the arc were my own (five ceiling tests + the agents census + Arabic full stop) and both fixed at named
+commits, both green on their own re-runs.
+
+**Not claimed.** The `/video/{ident}/analyse` door is unchanged and remains the interactive path; the drain is
+production-capable of `video.analyse` but no production caller uses it yet. No claim that /video or /knowledge
+routes were moved onto the drain; that's the next arc, and its walks will tell before this ledger claims it.
+The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
+untouched; `.scratch/` remains untracked.
