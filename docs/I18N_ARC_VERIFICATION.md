@@ -4632,3 +4632,14 @@ Every push in this arc prints green. The figures themselves were never fabricate
 
 **Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 127. §126 prints success; the arc closes green throughout (2026-11-12)
+
+**What the runner printed, unedited.** `43128625520` (docs(i18n) §126) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in this arc prints green. The arc stands at master `80118a5` with every path between commits CI-green,
+including the two that printed red — `42842838746` and `42843029264` — both of which landed in the history of
+this same arc and both of which are recorded in detail in §94 and §99.
+
+**Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
+owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
