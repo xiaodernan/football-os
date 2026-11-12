@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
+import { HeroPitch } from "@/components/HeroPitch";
 import { Empty, Panel, Stat } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
 import { currentUser, serverFetch } from "@/lib/server";
@@ -53,11 +54,12 @@ export default async function HomePage() {
 
   return (
     <div className="container page">
-      {/* Hero */}
-      <section className="pitch-backdrop" style={{ padding: "clamp(2rem, 5vw, 3.5rem)" }}>
-        <div className="stack" style={{ gap: "1.1rem" }}>
+      {/* Hero — copy on the left, the board that scans on the right. The drawing is decoration and
+          says so (`aria-hidden`), so the heading is still the first thing a screen reader meets. */}
+      <section className="hero">
+        <div className="hero__copy">
           <span className="eyebrow">FOOTBALL OS</span>
-          <h1 className="h1" style={{ textTransform: "uppercase", lineHeight: 1.1 }}>
+          <h1 className="h1" style={{ textTransform: "uppercase", lineHeight: 1.08 }}>
             {t("heroLine1")}
             <br />
             {t("heroLine2")}
@@ -78,6 +80,7 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
+        <HeroPitch />
       </section>
 
       {/* Modules: three honest 'not built' columns + a real My Football column */}

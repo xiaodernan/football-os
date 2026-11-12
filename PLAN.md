@@ -1875,6 +1875,61 @@ re-run against a cleared `.next` and finished green.
 
 ---
 
+## Item 24 — M16: the queue gets a transport, and the row stays the truth
+
+**The gap.** ADR-006 built the job state machine and closed with a promise: *"the same repository
+interface can be driven by Redis/Celery later without touching call sites."* Nothing had driven it. The
+only read path was `drain_one`, which claims the oldest `QUEUED` row — so a job waited for a timer, and
+in practice the timer ran inside the web process, where a video analysis holds a request thread for
+minutes.
+
+**The shape.** The row stays authoritative; Redis Streams is only the wake-up. `JobStream`
+(`app/core/job_stream.py`) publishes one message per committed `QUEUED` row (`MAXLEN ~ 20000`), consumes
+through one group created at `$`, recovers a killed consumer with `XAUTOCLAIM` after 60 s, reads delivery
+counts from the pending list, dead-letters a message past `MAX_DELIVERIES` **before** acknowledging it,
+and deregisters a consumer on a clean exit so `consumers` counts processes rather than history. The claim
+is still the conditional `UPDATE … WHERE status='QUEUED'`, now reachable by id (`claim_by_id`) — so
+at-least-once delivery sits on exactly-once execution, and the guarantee is the database's.
+
+`requeue_expired` is the sweep ADR-006 deferred to "the operator": a `RUNNING` row with a past lease
+returns to `QUEUED` without spending an attempt, unless it already spent `max_attempts`, in which case it
+is failed with the reason. `app/worker.py` is the consumer process (`--once`, `--max-jobs`,
+`--sweep-every`, SIGINT/SIGTERM finish the current job); `scripts/drain_jobs.py` is now a thin front end
+over it, so the script, the container and a laptop cannot drift into three loops. `POST /jobs` publishes
+after the commit; `GET /metrics/jobs-stream` reports the transport to an admin.
+
+**Evidence.** `tests/test_job_broker.py` 26 cases, 8 of them live-Redis integration cases — a lost hint,
+a duplicated hint, a hint naming a missing row, a raising handler, a poison message, a claim race, the
+sweep's two verdicts, clean-exit deregistration, reclaim, and end-to-end drain. Live through the API with
+a real worker: `POST /jobs` → `QUEUED` → worker → `COMPLETED` with the echo result, `pending` 0; a worker
+with Redis unreachable logged `job stream unavailable, the poll loop carries the queue` and completed the
+job anyway; a healthy worker then consumed the stale hint, executed 0 jobs and left `pending` 0.
+
+**Two defects found while wiring it.** `JobStream.read` was both the consumer method and the counter of
+messages taken, so `self.read = 0` made every later call `'int' object is not callable` — the counter is
+`taken` now. And redis-py 8 removed the range form of `XPENDING`: the old call raised `TypeError` into the
+`except`, so every delivery count read 0 and the poison rule could never fire. `deliveries()` now asks
+`xpending_range` with a one-millisecond window and reads `times_delivered`.
+
+---
+
+## Item 25 — the home hero: a board that scans, and no copy to translate
+
+**The gap.** The first screen of the product was a heading on `pitch-backdrop` — the same panel every
+other page uses. A reader deciding whether this is serious saw a wall of text and four "not built"
+columns.
+
+**The shape.** `components/HeroPitch.tsx`: one server-rendered `<svg>` — a field in perspective, a pass
+network, opponents, and a wedge sweeping around the player holding the ball, i.e. the thing the product
+actually teaches. Four CSS animations, no client JavaScript, `aria-hidden`, and **no text at all**, so the
+drawing is not a twentieth string to translate and the heading is still the first thing a screen reader
+meets. `prefers-reduced-motion` stops every animation rather than pausing one mid-frame.
+
+**Evidence.** `qa-a11y` 33/33, `qa-i18n-literals` 9/9, `qa-unused-keys` 3/3, `qa-metadata-title` 188/188,
+`tsc --noEmit` exit 0.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

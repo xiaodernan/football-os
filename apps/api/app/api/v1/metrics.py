@@ -308,3 +308,20 @@ def rate_limit_stats() -> dict[str, Any]:
             for policy in policies.values()
         ],
     }
+
+
+@router.get("/jobs-stream")
+def jobs_stream_stats() -> dict[str, Any]:
+    """The job queue's own numbers: what the transport sees, next to what this process has done.
+
+    Four server-side figures separate the failure modes an operator cannot otherwise tell apart:
+    `undelivered` above zero with `consumers` at zero is "no worker is running"; `pending` climbing is
+    "workers are dying mid-handler"; `dead_length` above zero is "a job will never succeed and its
+    reason is in the dead-letter stream"; `stream_length` growing without bound is "the MAXLEN cap is
+    the only thing between this stream and the memory limit".
+
+    Admin standing only, like `/cache` and `/rate-limit`: the numbers describe the deployment.
+    """
+    from app.core.job_stream import get_job_stream
+
+    return get_job_stream().snapshot()

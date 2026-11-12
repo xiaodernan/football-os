@@ -178,6 +178,27 @@ services:
       retries: 18
       start_period: 90s
 
+  # The worker is the same image with a different entrypoint: a queue that the web process drains is a
+  # queue that takes the web process's latency with it. `profiles: ["plane"]` keeps it out of the default
+  # `docker compose up`, which is a web-only development loop.
+  worker:
+    build: ../apps/api
+    container_name: football_os_worker
+    profiles: ["plane"]
+    restart: unless-stopped
+    command: ["python", "-m", "app.worker", "--interval", "1.0", "--sweep-every", "30"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://football:football@db:5432/football_os
+      REDIS_URL: redis://:football@redis:6379/0
+      # The queue on its own logical database: same instance, keyspace that a cache flush cannot empty.
+      JOB_STREAM_REDIS_URL: redis://:football@redis:6379/2
+      ENV: development
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   web:
     build: ../apps/web
     container_name: football_os_web

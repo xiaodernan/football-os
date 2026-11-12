@@ -24,6 +24,7 @@ METRICS_PATHS = (
     "/api/v1/metrics/cache",
     "/api/v1/metrics/alerts",
     "/api/v1/metrics/rate-limit",
+    "/api/v1/metrics/jobs-stream",
 )
 
 

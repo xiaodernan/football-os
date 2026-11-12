@@ -87,8 +87,13 @@ def test_a_queued_video_analyse_job_drains_to_completed_on_a_real_clip() -> None
             session.commit()
 
         with SessionLocal() as session:
-            outcome = runner.drain_one(session, handlers={"video.analyse": drain.drain_analyse})
-            assert outcome is not None and outcome.id == "job_drain_test_1"
+            # The suite runs in one shared database; other files may have left QUEUED rows ahead of ours.
+            # Drain until nothing is claimable — the same loop the worker runs — rather than assume
+            # exactly one job exists on this board.
+            while True:
+                outcome = runner.drain_one(session, handlers={"video.analyse": drain.drain_analyse})
+                if outcome is None:
+                    break
             happened = session.get(Job, "job_drain_test_1")
             assert happened is not None
             assert happened.status == "COMPLETED", f"expected COMPLETED after drain, got {happened.status}: {happened.error}"

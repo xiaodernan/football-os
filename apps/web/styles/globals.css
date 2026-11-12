@@ -11,6 +11,7 @@
    states: .empty .notice .notice--warn .skeleton .unavailable
    nav:    .nav .nav__inner .nav__brand .nav__links .nav__link .nav__link--active .nav__actions
    misc:   .timeline .timeline__row .table .table th .table td .pitch-backdrop
+           .hero .hero__copy .hero-art .hero-pitch (the home hero's board; art only, no copy)
 */
 
 :root {
@@ -492,3 +493,147 @@ body {
    millisecond of unstyled white between two pages is the one moment the product looks broken. */
 .route-loading { min-height: 58vh; }
 
+
+/* --- Hero: the board, the copy, and the light that crosses it ---------------------------
+   The home page's first screen is the only one a reader may see before deciding whether this
+   product is serious. It is built from the same tokens as everything else — no new colours —
+   and its whole budget is spent on two things: light that moves across a still drawing, and a
+   field drawn in perspective so the page has depth the panels below do not.
+   The art is `aria-hidden` and carries no text: decoration that speaks would be one more string
+   to translate and one more thing between the reader and the sentence beside it. */
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: clamp(1.25rem, 3vw, 3rem);
+  align-items: center;
+  padding: clamp(1.6rem, 4vw, 3.1rem);
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) * 1.5);
+  overflow: hidden;
+  background:
+    radial-gradient(760px 380px at 88% 18%, rgba(53, 240, 164, 0.09), transparent 62%),
+    radial-gradient(600px 320px at 4% 96%, rgba(95, 168, 255, 0.07), transparent 60%),
+    linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-raised) 100%);
+  box-shadow: var(--shadow);
+  isolation: isolate;
+}
+
+/* The hairline that says "this surface is lit from above": one pixel of accent, fading out. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(53, 240, 164, 0.65), transparent);
+}
+
+/* A survey grid behind the copy — 1px lines at 2% opacity. It reads as ruled paper, not as texture:
+   enough to stop the large empty area from looking unfinished, faint enough to never compete. */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(120% 90% at 20% 10%, #000 20%, transparent 76%);
+  z-index: -1;
+}
+
+.hero__copy { display: flex; flex-direction: column; gap: 1.05rem; }
+
+.hero-art {
+  position: relative;
+  perspective: 1100px;
+  perspective-origin: 50% 42%;
+}
+
+.hero-pitch {
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: rotateX(23deg) rotateZ(-5deg) translateZ(0);
+  filter: drop-shadow(0 34px 46px rgba(0, 0, 0, 0.55));
+}
+
+.hero-pitch__line {
+  fill: none;
+  stroke: rgba(232, 238, 247, 0.17);
+  stroke-width: 1.4;
+}
+
+.hero-pitch__dot { fill: rgba(232, 238, 247, 0.35); }
+
+.hero-pitch__pass {
+  fill: none;
+  stroke: url(#hp-pass);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 7 9;
+  animation: hero-flow 2.6s linear infinite;
+}
+
+.hero-pitch__pass--slow { animation-duration: 3.8s; animation-direction: reverse; }
+
+.hero-pitch__node {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 7px rgba(53, 240, 164, 0.85));
+}
+
+.hero-pitch__node--info {
+  fill: var(--info);
+  filter: drop-shadow(0 0 6px rgba(95, 168, 255, 0.7));
+}
+
+.hero-pitch__rival {
+  fill: rgba(255, 107, 107, 0.75);
+  stroke: rgba(255, 107, 107, 0.35);
+  stroke-width: 3;
+}
+
+/* The sweep is the drawing's one moving idea: a player looking over a shoulder. It is a wedge
+   rotating about the subject's centre, which is why the origin is named in user units. */
+.hero-pitch__sweep {
+  transform-box: view-box;
+  transform-origin: 150px 236px;
+  animation: hero-sweep 7.5s linear infinite;
+}
+
+.hero-pitch__ring {
+  fill: none;
+  stroke: rgba(53, 240, 164, 0.55);
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hero-ping 3.4s ease-out infinite;
+}
+
+.hero-pitch__ring--late { animation-delay: 1.7s; }
+
+@keyframes hero-sweep { to { transform: rotate(360deg); } }
+
+@keyframes hero-flow { to { stroke-dashoffset: -32; } }
+
+@keyframes hero-ping {
+  0% { transform: scale(1); opacity: 0.5; }
+  72% { transform: scale(2.9); opacity: 0; }
+  100% { transform: scale(2.9); opacity: 0; }
+}
+
+/* Motion is atmosphere here, never information: a reader who asked for less gets the same drawing,
+   still and complete. `animation: none` rather than `paused`, so a paused wedge is not left mid-frame
+   with a hard edge across the field. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-pitch__sweep, .hero-pitch__ring, .hero-pitch__pass { animation: none; }
+  .hero-pitch__ring { opacity: 0.25; }
+}
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .hero-art { order: -1; max-width: 460px; margin-inline: auto; }
+  .hero-pitch { transform: rotateX(14deg) rotateZ(-3deg); }
+}

@@ -16,15 +16,26 @@ from app.core.db import SessionLocal, init_db
 from app.models import Job, User
 from app.services import jobs as runner
 
+#: Rows this module created, deleted with the fixture. One case here deliberately leaves a second job
+#: QUEUED to prove claim order; without this teardown that row survives into the *next* file's
+#: `claim(limit=1)`, which then drains a stranger's job — a failure three files away from its cause.
+_created: list[tuple[str, str]] = []
+
 
 @pytest.fixture()
 def db() -> Iterator[Any]:
     init_db()
     session = SessionLocal()
+    _created.clear()
     try:
         yield session
     finally:
+        for job_id, user_id in _created:
+            session.query(Job).filter(Job.id == job_id).delete()
+            session.query(User).filter(User.id == user_id).delete()
+        session.commit()
         session.close()
+        _created.clear()
 
 
 def _queued(db: Any, ident: str, job_type: str = "test_job") -> Job:
@@ -34,6 +45,7 @@ def _queued(db: Any, ident: str, job_type: str = "test_job") -> Job:
     job = Job(id=f"job_{ident}", type=job_type, status="QUEUED", payload={}, user_id=user.id)
     db.add(job)
     db.commit()
+    _created.append((job.id, user.id))
     return job
 
 

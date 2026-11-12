@@ -128,6 +128,13 @@ def create_job(
     db.commit()
     db.refresh(job)
 
+    # After the commit, never before: a hint for a row that rolled back is a message that names nothing.
+    # The hint is a wake-up, not a delivery — if it fails the row is still QUEUED and the poll loop or
+    # the next worker tick finds it.
+    from app.services.job_broker import publish_queued
+
+    publish_queued(job)
+
     return JobCreateResponse(
         id=job.id,
         type=job.type,

@@ -4782,3 +4782,84 @@ The arc stands green with both pushes in it printing success — the live-provid
 a capability demonstration, not a production activation, and it makes no claim about answer quality, latency
 under load, gateway availability, or track-record of the model. The `fr`/`ar`/`he` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 137. The Redis Streams job broker — finished by hand, printed by the runner (2026-11-12)
+
+**Provenance, stated plainly.** This section records work that arrived in the shared tree uncommitted — a complete
+Redis Streams transport for the job queue, a worker process, a handler registry, an admin door and a test suite —
+not a clean push. The named files `apps/api/app/core/job_stream.py`, `apps/api/app/services/job_broker.py`,
+`apps/api/app/services/job_handlers.py`, `apps/api/app/worker.py` and `apps/api/tests/test_job_broker.py` landed by
+another hand and were sitting unverified. This session's job was the finish line, and every claim below was printed
+by rerunning the suite rather than inherited.
+
+**What the design claims, and why it is not redundant with §107.** §107 built the database-backed drain — the
+state machine decides who wins a row. That is correct and stays; it is the source of truth for every state
+transition. What it cannot do is tell the API that something was just queued without making every producer poll.
+The stream carries that one wake-up as a *hint*: a committed row, a best-effort `XADD`, one consumer group, one
+pending list. A lost hint costs a tick (the poll loop finds the row); a duplicated hint costs one conditional
+`UPDATE` that returns `rowcount == 0`; a crashed worker's message is rescued by `XAUTOCLAIM` after a visibility
+timeout and a poison message lands in the dead-letter stream with its reason after `MAX_DELIVERIES=5`, acknowledged
+in the right order — dead letter written first, acknowledgement second, so the reason survives.
+
+**What took over at the finish line — the fixes this window had to make, honestly named:**
+
+* `tests/test_metrics.py` — the new `/api/v1/metrics/jobs-stream` door was missing from the operator-standing census
+  (`METRICS_PATHS`), failing `test_the_standing_census_covers_every_door_on_the_router`. The census now names it.
+* `tests/test_video_drain.py` — my own drain test assumed exactly one queued row on the shared board. The suite runs
+  in one database; other files queue `video.analyse` rows first. The assertion now drains until empty — the same
+  loop the worker runs — then asserts the named row reached `COMPLETED`.
+* `tests/test_job_runner.py` — the parallel lane hardened the fixture to tear down its own rows, so a leftover
+  `QUEUED` row in one file cannot steal another file's claim three files away. Kept.
+* `ruff check --fix` on `tests/test_job_broker.py` (import sorting) — nothing else was touched.
+
+**Verification, printed.** `ruff` clean; `mypy` clean over **176 source files** (171 + the five new);
+`tests/test_job_runner.py + tests/test_job_broker.py + tests/test_jobs.py + tests/test_video_drain.py +
+tests/test_migration_jobs_done.py + tests/test_metrics.py` → **65 passed, 7 skipped**, the seven being the live-Redis
+integration cases, which skip on this host (its Redis answers only with a password the project does not hold) and
+which CI's `REDIS_URL=redis://:football@localhost:63790/0` takes green there. No claim that the CI leg printed yet —
+it prints when the runner runs it.
+
+**Not claimed.** No producer was told to enqueue by this commit beyond `POST /jobs` itself (which now publishes after
+its commit — the message is a hint, the row is the truth); `system.echo` is the queue's own smoke test registered so
+`worker` can boot and answer; `video.analyse` rides the same path it rode at §107. The `fr`/`ar`/`he` editorial pass
+remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+## 138. The Redis Streams job broker, finished and pushed by this session — and the home hero it was built to draw beside (2026-11-12)
+
+**Provenance, stated plainly.** This section records a large in-flight arc that arrived uncommitted in the tree —
+ADR-008, `JobStream`, the worker, the registry, the broker, the metrics door, the queue-live PLAN entry, and the
+home hero — written by another hand on top of this arc's own §107/§129. Nothing here is claimed as written by this
+session beyond what is listed; what this session did was the finish line, and the claims below were verified by
+running the suite again rather than inherited.
+
+**What finished by hand.** `GET /api/v1/metrics/jobs-stream` was serving an unlisted metrics door — its census in
+`tests/test_metrics.py` was missing, so the standing census failed. Added. `tests/test_video_drain.py` assumed a
+single queued row on the shared board; the whole suite drains now asserts on the eventual fate of the fixture row,
+which is what the worker does — the failure was mine, three files away from its cause. `ruff check --fix` for the
+import sorting in `tests/test_job_broker.py`. That is the complete fix list.
+
+**Verification, printed.** `ruff` clean; `mypy` clean over **176 source files**; the targeted suites —
+`test_job_runner.py` + `test_job_broker.py` + `test_jobs.py` + `test_video_drain.py` +
+`test_migration_jobs_done.py` + `test_metrics.py` — **65 passed, 7 skipped**, the seven being the live-Redis
+integration cases that skip on this host and that CI's `REDIS_URL=redis://:football@localhost:63790/0` takes green.
+`tsc --noEmit` on the new hero exits 0; the production build (`NEXT_DIST_DIR=.next-verify`) completed with
+`BUILD_ID` set (`nX8B6Z3VKEZiW23L4c7YA`) — this section does not claim the hero was walked, only that it
+compiles; the CI `web` leg prints its verdict on this push.
+
+**What the two stores now hold.** The row stays authoritative for every state transition (`QUEUED → RUNNING →
+COMPLETED | FAILED`); the stream holds a bounded window of wake-up hints (`MAXLEN ~ 20000`), created at `$` so a
+fresh group only sees hints published after it exists. A lost hint is a late job the poll loop still finds; a
+duplicated hint costs one conditional `UPDATE` that returns `rowcount == 0`; a poison message is dead-lettered
+with its reason before it is acknowledged. The API no longer runs handlers — `python -m app.worker` is a separate
+process, with a poll fallback for rows the stream never learned about, and a sweep that revives expired leases.
+The docker compose gains a `plane`-profile `worker` service, not added to default `up`.
+
+**Two defects the lane had already fixed before this session touched anything, named honestly.** The
+`JobStream.read` method and its `read` counter shared a name (`self.read = 0` made every later call
+`'int' object is not callable`; the counter is `taken` now), and redis-py 8 removed the range form of `XPENDING`
+(this read returned a `TypeError` at delivery-count read time, quietly zeroing the poison rule; `deliveries()` now
+asks `xpending_range` with a one-millisecond window). Those are the kind of defects only a worker running would
+have surfaced, and they were found by the integration tests, not by reading.
+
+**Not claimed.** The CI leg has not printed for this push at the time this section was written; the integration
+cases were skipped on this host (its Redis is not the compose instance); the hero was not walked by a browser,
+only compiled; the `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository
+root remains untouched; `.workbuddy/` remains untracked.
