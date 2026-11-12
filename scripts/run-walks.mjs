@@ -53,6 +53,18 @@ const CHROME = process.env.CHROME_PATH ?? "C:\\Program Files\\Google\\Chrome\\Ap
 const PAUSE = Number(process.env.QA_WALK_PAUSE ?? 75000);
 
 /**
+ * Where the edge fixture will appear, and the port the walk is told to start it on.
+ *
+ * The walk owns the fixture's lifetime — it starts it when it reaches the service-plane section, switches its
+ * modes, and kills it in its own `finally` — because the fixture's *modes* are part of the assertions. What
+ * the runner owns is the address, and it owns it here so the web tier and the walk cannot disagree about it.
+ * `QA_EDGE_PORT` is passed rather than `QA_EDGE`: the latter means "someone else already started one", which
+ * is the other legitimate arrangement and not this one.
+ */
+const EDGE_PORT = Number(process.env.QA_EDGE_PORT ?? 8799);
+const EDGE_FIXTURE = `http://127.0.0.1:${EDGE_PORT}`;
+
+/**
  * Each walk, the API port it is served on, the web port it is measured on, and the database it gets.
  *
  * The order is the order the tiers depend on nothing but the API: the scouting screen, the community wall,
@@ -157,6 +169,12 @@ async function runWalk(walk) {
         NEXT_DIST_DIR: DIST,
         API_INTERNAL_URL: `http://127.0.0.1:${walk.api}`,
         SITE_URL: `http://127.0.0.1:${walk.web}`,
+        // The service plane page reads the gateway's three doors from here. The walk starts the fixture on
+        // this port (`apps/web/scripts/edge-stub.mjs`) when it reaches its plane section, and a mode of its
+        // own choosing follows; a web tier without this variable would point at localhost:8080, where on a
+        // developer's machine a *real* edge may be listening — and the walk would then assert this machine's
+        // load instead of the fixture's.
+        EDGE_URL: EDGE_FIXTURE,
       },
     });
     watchForMissingMessages(web, `web:${walk.web}`);
@@ -168,6 +186,14 @@ async function runWalk(walk) {
         env: {
           ...process.env,
           QA_BASE: `http://127.0.0.1:${walk.web}`,
+          // The API this walk was actually given. Without it the walk falls back to `http://127.0.0.1:8731`
+          // — the developer's own tier — and a check that acts as a client rather than a browser (the
+          // notification stranger authenticates with Bearer through the API, because the proxy strips the
+          // header by design) then reads an API this run never started. The visual walk's first run under
+          // this file recorded exactly that: a stranger refused with `fetch failed` while the tier it was
+          // supposed to be talking to was answering perfectly on 8773.
+          QA_API: `http://127.0.0.1:${walk.api}`,
+          QA_EDGE_PORT: String(EDGE_PORT),
           QA_DIST: DIST,
           CHROME_PATH: CHROME,
         },

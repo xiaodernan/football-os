@@ -11,6 +11,10 @@
 set -u
 
 PORT="${QA_PORT:-3211}"
+# The service plane page reads the gateway's three doors from this address. The walk starts the fixture on
+# the same port when it reaches its plane section (`scripts/edge-stub.mjs`) — so this only has to agree with
+# the walk about where, which it does by using the same variable.
+EDGE_URL="${QA_EDGE:-http://127.0.0.1:${QA_EDGE_PORT:-8799}}"
 WEB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$WEB_DIR" || exit 1
 
@@ -26,7 +30,7 @@ fi
 
 release_port
 sleep 2
-NEXT_DIST_DIR=.next-ci SITE_URL="http://127.0.0.1:$PORT" node node_modules/next/dist/bin/next start -p "$PORT" > /tmp/next-$PORT.log 2>&1 &
+NEXT_DIST_DIR=.next-ci SITE_URL="http://127.0.0.1:$PORT" EDGE_URL="$EDGE_URL" node node_modules/next/dist/bin/next start -p "$PORT" > /tmp/next-$PORT.log 2>&1 &
 
 # The wait loop polls the one fact the walk depends on, not a health endpoint: /healthz is an app route
 # that proxies the API, so it can answer 500 while the server is perfectly fine, and the walk needs

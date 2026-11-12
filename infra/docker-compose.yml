@@ -206,6 +206,11 @@ services:
     restart: unless-stopped
     environment:
       API_INTERNAL_URL: http://edge:8080
+      # The service plane console (`/plane`) reads the gateway's own three doors — `/edge/lb`,
+      # `/edge/breaker`, `/edge/limits` — from this address. Same gateway as the API's, because they are the
+      # same process: without it the page falls back to `http://localhost:8080`, which inside this container
+      # is the web tier itself, and an operator would be told the edge was unreachable while it was healthy.
+      EDGE_URL: http://edge:8080
       SITE_URL: http://127.0.0.1:3210
     ports:
       - "127.0.0.1:3210:3210"

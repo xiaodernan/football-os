@@ -62,6 +62,7 @@
     ".next-ledger/types/**/*.ts",
     ".next-m12trace/types/**/*.ts",
     ".next-market/types/**/*.ts",
+    ".next-plane/types/**/*.ts",
     ".next-tac/types/**/*.ts",
     ".next-timeline/types/**/*.ts",
     ".next-v/types/**/*.ts",
@@ -70,9 +71,10 @@
     ".next-walks/types/**/*.ts",
     ".next-walks2/types/**/*.ts",
     ".next-walks3/types/**/*.ts",
+    ".next-walks4/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-plane/types/**/*.ts"
+    ".next-exp/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

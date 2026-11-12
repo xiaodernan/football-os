@@ -89,10 +89,17 @@ const REASONS = [
     holds: (f) => f.browser && f.server },
   { id: "report-only", text: "prints a reading and never sets an exit status, so it is a report, not a gate",
     holds: (f) => !f.setsExit },
+  // A fixture is the opposite of a gate: it is the *thing* a walk measures, it needs a listening port rather
+  // than a browser, and the only exit status it ever sets is "I could not bind". Filing one under `report-only`
+  // would be a lie about the exit status, and filing it under `live-tier` a lie about the browser — which is
+  // exactly the shape this ledger exists to refuse. `edge-stub.mjs` is the first, for the service plane walk.
+  { id: "fixture", text: "is a stand-in service a live walk measures against, not a check of its own",
+    holds: (f) => f.server && !f.browser },
 ];
 
 const LEDGER = {
   "probe-hydration.mjs": ["report-only"],
+  "edge-stub.mjs": ["fixture"],
   "qa-carry.mjs": ["live-tier"], "qa-chinese-walk.mjs": ["live-tier"],
   "qa-club.mjs": ["live-tier"], "qa-community.mjs": ["live-tier"],
   "qa-creator.mjs": ["live-tier"], "qa-ledger.mjs": ["live-tier"], "qa-market.mjs": ["live-tier"],
