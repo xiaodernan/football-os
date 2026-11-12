@@ -82,11 +82,18 @@ The read-modify-write is one `EVALSHA`: `HMGET tokens ts` → refill → `HSET` 
 
 `GET /api/v1/metrics/rate-limit` as an `admin` on a live uvicorn (port 8799, the run-K server):
 
+**2026-11-13, the M17 walk arc added `media`, and removed a defect the walk caught.** The `/api/v1/video/`
+prefix was priced `upload` — capacity 8 per minute — but the owner's report page asks for one image per
+frame per navigation, and the eighth frame refused with `429 rate_limited`. The door was never open to its
+own reader. `/api/v1/video/` is now `media` (the default arithmetic, named for the door it serves);
+`/api/v1/video/upload` keeps `upload`. The walk that caught it is recorded in `docs/I18N_ARC_VERIFICATION.md`.
+
 | policy | burst | refill/s | sustained/min | priced doors |
 | --- | --- | --- | --- | --- |
 | `auth` | 12 | 0.2 | 12.0 | `/api/v1/auth/` |
 | `expensive` | 24 | 0.5 | 30.0 | 7 prefixes |
-| `upload` | 8 | 0.1 | 6.0 | 2 prefixes |
+| `upload` | 8 | 0.1 | 6.0 | `/api/v1/video/upload` only |
+| `media` | 240 | 40.0 | 2400.0 | `/api/v1/video/` — immutable owner media (frames, file bytes) |
 | `write` | 60 | 1.0 | 60.0 | 5 prefixes |
 | `default` | 240 | 40.0 | 2400.0 | everything else under `/api/v1/` |
 
