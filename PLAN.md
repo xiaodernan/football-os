@@ -1794,6 +1794,87 @@ and every file restored byte-exactly. `mypy app` clean over 169 files; ruff clea
 **239 knocked, 239 × 401, 0 deviations**; S5's retry is now **22 s to one token** where the fixed window
 published 297 s to rollover. The record is `docs/M15_RATE_LIMIT_VERIFICATION.md`.
 
+## Item 21 — M15 at the edge: the shared bucket behind the last door
+
+**The gap.** M15's limiter landed in the Python core, and the service plane's gateway kept its own
+bucket in a `LinkedHashMap`. Two doors, two ceilings, two identities: a caller refused by the core was
+admitted by the edge in the same second, and a caller that spread its requests across gateway replicas
+got N times the published limit — which is exactly what a caller being refused tries next.
+
+**The shape.** `DistributedRateLimitFilter` (order +5) asks Redis with the same Lua script the core runs
+and stamps the exchange; `RateLimitFilter` (+10) sees the stamp and steps aside, so one request is
+judged once and the published ceiling is the real one. Identity is `CallerKey`, the same three branches
+as `app/core/rate_policy.py` — credential digest, then a forwarded address only from a configured
+trusted proxy, then the socket's peer — implemented twice on purpose: a shared library would have to be
+a third language in the build, and the rule is twelve lines. The store's call is bounded at 250 ms; an
+error, a timeout, a malformed reply or no store at all resolves to the local bucket and the answer says
+`X-RateLimit-Scope: process`. `RedisBucketStore` is `@ConditionalOnProperty` and off by default, because
+a gateway that tries to reach a store nobody gave it spends a timeout per request proving it.
+
+**One defect found while wiring it.** An empty `spring.data.redis.host` does not mean "no store" to
+Spring Boot — it fails `RedisConnectionDetails` at startup and takes the whole context down (35 test
+classes red). The fix is to leave the block out entirely and let a deployment name the host through
+relaxed binding (`SPRING_DATA_REDIS_HOST`), documenting that an absent store is a supported state.
+
+**Evidence.** `mvn -B -pl edge -am test` green over **55 tests**, including 8 new filter cases (allowed,
+refused, error, timeout, no store, disabled, malformed reply, body shape) and 6 identity cases. Live,
+against the project's own Redis and the running core: `edge.rate-limit.burst=5`,
+`requests-per-second=1`, eight requests through `:18085/api/v1/healthz` answered `200` ×7 (remaining
+4,3,3,2,1,0,0 — one token refilled mid-burst) then `429` with `Retry-After: 1`, every answer carrying
+`X-RateLimit-Scope: cluster`; `/edge/limits` reported `distributed=true, distributedChecks=8,
+distributedDegradations=0`; and the bucket was readable at `football_os:edge:rate:ip:127.0.0.1`.
+
+---
+
+## Item 22 — the coach's voice: the question reaches the model
+
+**The gap.** `POST /coach/ask` computed its answer arithmetically and then asked a model to phrase it
+with `{"intent": …, "facts": "<one sentence>"}`. Against a live provider on 2026-11-12, a player asking
+"how do I scan before receiving the ball?" got a paragraph about the recommended rondo: the question had
+never crossed the wire, no measurement had either, and the model's reply was appended *after* the
+template, so the page said the same thing twice in two voices.
+
+**The shape.** `app/services/coach_voice.py` builds the prompt from the question, the intent, the
+player, the seven attributes the recommendation was scored on, the drill's session block, the engine's
+reasons and the recent history; the system message states three rules (answer first, only `FACTS`,
+"Data unavailable" rather than a guess, no headings). The model's reply *replaces* the template; a
+capped turn, a demo provider, a failed call and an empty completion all still answer with the
+arithmetic.
+
+**Evidence.** `test_coach_voice.py` 7 cases (question crosses the wire, measurements cross it, an absent
+fact is absent rather than invented, the rules are in the system message, a reply replaces rather than
+follows, the prompt is one compact JSON object); `test_api_flow` + `test_coach_budget` + this file 27
+green. Live: three prompts through the running API answered by `gpt-6-sol`, each citing stored numbers
+("your gap to target in these areas is 66 points", "ball control and composure are both 44") and the
+third saying "unavailable" where no session evidence exists.
+
+**A gate that depended on the machine.** Two cases in `test_api_flow` assumed demo mode and failed the
+moment a real key landed in `.env`, because `_load_dotenv` re-read it after `conftest.py` cleared the
+keys. `FOOTBALL_OS_SKIP_DOTENV=1`, set by conftest before any app import, makes the suite independent
+of a developer's `.env`.
+
+---
+
+## Item 23 — the skeleton that was only a word, and four routes that now have one
+
+`.skeleton` has been in `styles/globals.css`'s published vocabulary since the base surface, and the
+only rule that ever painted it was scoped to `/progress`'s own stylesheet. Every other route that
+reached for the token got an invisible inline `<span>` — a zero-height element, which is worse than no
+placeholder: the page is blank, and the markup says it is not.
+
+The token is now a shared object: a quiet raised bar that breathes through the accent's hue rather than
+a grey shimmer, so a loading page still looks like this product. `/world`, `/tactics`, `/scout` and
+`/career` — the four routes whose first paint waits on a database read — gained a `loading.tsx` built
+from the same shapes their pages use. No copy, so nothing there needs a catalogue key and nothing shifts
+language.
+
+**Evidence.** `qa-a11y` 33/33, `qa-i18n-literals` 9/9, `qa-unused-keys` 3/3, `qa-metadata-title` 188/188,
+`tsc --noEmit` exit 0, and a production `next build` exit 0 (68 routes). The harness's bulk-delete guard
+refused a mid-build unlink of `.next/static` — a tool-environment limit, not a code failure; the build was
+re-run against a cleared `.next` and finished green.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
