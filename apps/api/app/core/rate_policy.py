@@ -53,6 +53,10 @@ AUTH: Final = Policy("auth", capacity=12, refill_per_second=12 / 60)
 EXPENSIVE: Final = Policy("expensive", capacity=24, refill_per_second=0.5)
 #: Uploads. One clip is tens of megabytes, so the ceiling is about disk and ffmpeg, not about rows.
 UPLOAD: Final = Policy("upload", capacity=8, refill_per_second=0.1)
+#: Immutable media for owner-only clips: frame PNGs and byte ranges of the file itself. A browser
+#: asking for one page of a report issues dozens of these in a second, so the ceiling is a reader's,
+#: not a writer's — `default`'s arithmetic, named for the door it serves.
+MEDIA: Final = Policy("media", capacity=240, refill_per_second=40.0)
 #: Writes that create rows: community posts, comments, reactions, follows.
 WRITE: Final = Policy("write", capacity=60, refill_per_second=1.0)
 #: Everything else. 40/s sustained is far above what a reader or a browser walk asks for and far
@@ -71,7 +75,10 @@ POLICY_TABLE: Final[tuple[tuple[str, Policy], ...]] = (
     ("/api/v1/scout/parse", EXPENSIVE),
     ("/api/v1/simulate", EXPENSIVE),
     ("/api/v1/video/upload", UPLOAD),
-    ("/api/v1/video/", UPLOAD),
+    # The upload door is one concrete path; every other /video/ path serves bytes to the owner's
+    # own report page, which asks for a page's worth of frames per navigation. Pricing bytes-of-media
+    # as uploads made the report unreadable the moment the limiter was on: the eighth frame 429'd.
+    ("/api/v1/video/", MEDIA),
     ("/api/v1/community/posts", WRITE),
     ("/api/v1/community/comments", WRITE),
     ("/api/v1/community/reactions", WRITE),

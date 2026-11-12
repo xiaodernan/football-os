@@ -27,7 +27,9 @@ from fastapi.testclient import TestClient
 from app.core.rate_policy import (
     AUTH,
     DEFAULT,
+    MEDIA,
     POLICY_TABLE,
+    UPLOAD,
     caller_key,
     policy_for,
 )
@@ -59,6 +61,16 @@ def test_policy_table_prices_the_doors_it_names() -> None:
     assert policy_for("/api/v1/coach/askers") is DEFAULT
 
 
+def test_the_video_media_doors_are_priced_as_readers_not_as_uploads() -> None:
+    """A report page asks for one page's worth of frames per navigation; uploads ask for one clip."""
+    assert policy_for("/api/v1/video/upload") is UPLOAD
+    assert policy_for("/api/v1/video/vid_abc123/frames/0") is MEDIA
+    assert policy_for("/api/v1/video/vid_abc123/frames/24") is MEDIA
+    assert policy_for("/api/v1/video/vid_abc123/file") is MEDIA
+    assert policy_for("/api/v1/video/vid_abc123") is MEDIA
+    assert policy_for("/api/v1/video/vid_abc123/analyse") is MEDIA
+
+
 def test_exempt_and_foreign_paths_are_not_priced() -> None:
     assert policy_for("/api/v1/healthz") is None
     assert policy_for("/api/v1/openapi.json") is None
@@ -69,7 +81,7 @@ def test_exempt_and_foreign_paths_are_not_priced() -> None:
 def test_every_policy_is_well_formed() -> None:
     """A policy whose cost exceeds its capacity could never be allowed, and the door would be shut."""
     distinct = {policy.name: policy for _, policy in POLICY_TABLE}
-    assert set(distinct) == {"auth", "expensive", "upload", "write"}, "the table's names are its price list"
+    assert set(distinct) == {"auth", "expensive", "upload", "write", "media"}, "the table's names are its price list"
     distinct[DEFAULT.name] = DEFAULT
     for policy in distinct.values():
         assert policy.capacity >= 1
