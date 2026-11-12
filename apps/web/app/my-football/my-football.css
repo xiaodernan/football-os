@@ -1,5 +1,14 @@
 /* My Football page — additive rules only, built on the globals.css vocabulary. */
 
+/* The page's first panel carries the account's own week, so it is the one surface that earns a tint. The
+   name existed on the element with no rule behind it, which made the "hero" a comment rather than a style. */
+.mp-hero {
+  border-color: rgba(53, 240, 164, 0.22);
+  background:
+    radial-gradient(520px 180px at 82% -30%, rgba(53, 240, 164, 0.1), transparent 70%),
+    var(--bg-panel);
+}
+
 .mp-hero__top {
   display: flex;
   align-items: center;

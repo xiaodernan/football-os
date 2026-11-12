@@ -60,7 +60,7 @@ export default async function LeaderboardPage() {
         )}
 
         {leaders.length === 0 ? (
-          <section className="empty-state">
+          <section className="empty">
             <h2 className="h4">{t("emptyTitle")}</h2>
             <p className="muted">{t("emptyNote")}</p>
           </section>

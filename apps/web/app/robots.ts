@@ -71,6 +71,10 @@ const DISALLOWED = [
   // `noindex` as well, and neither is in the sitemap; the tier behind them has no public page
   // to except, the way `/club/rules` is.
   "/community",
+  // The service plane: the edge's breaker, rate-limit and load-balancer state. Operator material, gated by
+  // the page's own session check, and the kind of page whose numbers change every second — nothing here is
+  // content, and a crawler that indexed a screenshot of a circuit breaker would be indexing a moment.
+  "/plane",
   "/creator",
   // §38's CV and its shared links. The private page redirects a signed-out visitor and every figure in it is one
   // account's own rows. A shared link is public to the person holding it, but it is still user content and is not

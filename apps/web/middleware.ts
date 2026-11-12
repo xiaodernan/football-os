@@ -57,6 +57,9 @@ const PROTECTED_PREFIXES = [
   "/simulate",
   "/simulation",
   "/traces",
+  // The service plane needs the session forwarded mid-render: it prints the operator view of the edge and
+  // gates itself on `currentUser()`, so a stale access token must be refreshed before the page runs.
+  "/plane",
 ];
 
 /**

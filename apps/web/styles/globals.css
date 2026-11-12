@@ -76,6 +76,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .h1 { font-size: clamp(1.9rem, 3.4vw, 2.7rem); letter-spacing: -0.02em; font-weight: 700; }
 .h2 { font-size: 1.35rem; letter-spacing: -0.01em; font-weight: 650; }
 .h3 { font-size: 1.05rem; font-weight: 620; }
+.h4 { font-size: 0.95rem; font-weight: 620; letter-spacing: -0.01em; }
 .eyebrow {
   font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.16em;
   color: var(--text-3); font-weight: 600;
@@ -146,6 +147,11 @@ h1, h2, h3, h4, p { margin: 0; }
 .badge--authored { color: var(--accent); border-color: rgba(53, 240, 164, 0.45); background: rgba(53, 240, 164, 0.08); }
 .badge--sim { color: var(--info); border-color: rgba(95, 168, 255, 0.4); background: rgba(95, 168, 255, 0.1); }
 .badge--live { color: var(--accent); border-color: rgba(53, 240, 164, 0.4); background: var(--accent-soft); }
+/* The two states a verdict wears. They were used by the tools panels before they existed, so a "pointers
+   agree" badge rendered as an uncoloured pill: the difference between agreement and mismatch was a word,
+   not a colour, on a screen whose job is to be read at a glance. */
+.badge--ok { color: var(--accent); border-color: rgba(53, 240, 164, 0.42); background: var(--accent-soft); }
+.badge--warn { color: var(--warn); border-color: rgba(255, 182, 72, 0.42); background: rgba(255, 182, 72, 0.1); }
 
 .player-card { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.15rem; }
 .ovr {
@@ -182,6 +188,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .btn--primary { background: linear-gradient(180deg, var(--accent), var(--accent-dim)); color: #05170e; border-color: transparent; }
 .btn--ghost { background: transparent; }
 .btn--danger { color: var(--danger); border-color: rgba(255, 107, 107, 0.4); background: rgba(255, 107, 107, 0.08); }
+.btn--warn { color: var(--warn); border-color: rgba(255, 182, 72, 0.4); background: rgba(255, 182, 72, 0.08); }
 .btn--sm { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
 
 .list { display: flex; flex-direction: column; }
@@ -223,7 +230,14 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 .notice { padding: 0.7rem 0.9rem; border-radius: var(--radius-sm); background: var(--accent-soft); border: 1px solid rgba(53, 240, 164, 0.3); font-size: 0.88rem; }
 .notice--warn { background: rgba(255, 182, 72, 0.09); border-color: rgba(255, 182, 72, 0.35); color: var(--warn); }
+.notice--info { background: rgba(95, 168, 255, 0.09); border-color: rgba(95, 168, 255, 0.35); color: var(--info); }
+
+/* A board of small cards that wraps by itself. Three tools panels used this name with no rule behind it, so
+   their card grids fell back to block flow — one card per line, full width, at every viewport. */
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.75rem; }
 .unavailable { font-family: var(--mono); font-size: 0.8rem; color: var(--text-3); }
+
+.tac-card__meta { font-size: 0.78rem; color: var(--text-3); }
 
 .table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .table th { text-align: start; color: var(--text-3); font-weight: 600; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); }
@@ -668,4 +682,18 @@ body {
   .hero { grid-template-columns: minmax(0, 1fr); }
   .hero-art { order: -1; max-width: 460px; margin-inline: auto; }
   .hero-pitch { transform: rotateX(14deg) rotateZ(-3deg); }
+}
+
+/* --- The service plane page: one head, three doors ------------------------------- */
+/* This page reads the edge's own three doors (/edge/breaker, /edge/limits, /edge/lb). The head is deliberately
+   quieter than the home hero: it is an instrument panel, and the numbers below it are the subject. */
+.plane-head { display: flex; flex-direction: column; gap: 0.35rem; }
+.plane-head__row { align-items: flex-start; gap: 1rem; }
+.plane-head .lede { max-width: 64ch; }
+.plane-state { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; }
+.plane-foot { font-size: 0.82rem; max-width: 84ch; }
+
+@media (max-width: 640px) {
+  .plane-head__row { flex-direction: column; }
+  .plane-state { align-items: flex-start; }
 }

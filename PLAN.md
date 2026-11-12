@@ -2050,7 +2050,7 @@ first — and `edge.lb.strategy=round-robin` restores the stock balancer. Design
 
 ---
 
-## Item 26 — the background re-analyse door: the queue reaches the product's own UI
+## Item 30 — the background re-analyse door: the queue reaches the product's own UI
 
 **The gap.** M16 built the queue and the worker; `video.analyse` has drained through it since §130. But
 the product's own UI never asked for the queued path — the analyse button ran the pipeline inside the
@@ -2089,6 +2089,41 @@ the analyse door; 228 paths / 295 operations unchanged), and the security probe 
 census **240 / 55 / 103**, contract SHA-256
 `d4b4ae0a8b5e65cf703dca541381534600b8a80d64742bb0eb6a42a2cd258e99`. The three ledgers that name the SHA
 (`SECURITY_PROBE_REPORT.md` §1, the M12 record, the ROADMAP row) moved in the same commit.
+
+---
+
+## Item 31 — the service plane console: the edge's three doors get a page
+
+**The gap.** M15 put a circuit breaker, a rate limiter and a load balancer in the Spring Cloud edge;
+`/edge/breaker`, `/edge/limits` and `/edge/lb` answered JSON, but only to whoever already knew they
+existed. A screen whose job is "what does the edge think right now" was curl-only.
+
+**The shape.** `apps/web/app/plane/page.tsx` (server-rendered, one fetch per door with a 1500 ms
+timeout, `no-store`) renders the operator read of the service plane on one page: the breaker's state
+and failure-rate window, the rate limiter's tier (cluster vs process), its request budget and its
+distributed-check accounting, and the load balancer's score board per core instance with an EWMA, a
+failure streak and a sample age — worst first is the LB's own ordering, restated as a table. Each door
+that does not answer renders as its own unavailable panel; the page never collapses three doors into one
+verdict. The page gates on `currentUser()` and redirects to `/login?next=%2Fplane`; the middleware
+refreshes the session for it (`/plane` in `PROTECTED_PREFIXES`), robots keeps crawlers out of it, and
+`EDGE_URL` names the address the *web server* uses, not a public URL. The head is deliberately quieter
+than the home hero — this is an instrument panel; its numbers are the subject. `.h4`, `.badge--ok`,
+`.badge--warn`, `.btn--warn`, `.notice--info`, `.grid-cards` and `.tac-card__meta` landed with it: those
+names were already used with no rule behind them, and a verdict that differs from its neighbour by a word
+and not a colour is not a verdict.
+
+**The other hand's work, finished by this window.** The page, its CSS, the `plane` i18n namespace in all
+six catalogues (committed ahead of the page itself by 67c8674's sweep — recorded here because it is a
+fact of that commit), the robots and middleware wiring and the tsconfig dist-dir entries were written by
+another hand and arrived uncommitted. This window verified and pushed them: `tsc --noEmit` clean,
+production build (`NEXT_DIST_DIR=.next-plane`) completed (BUILD_ID quoted in the commit message with the
+`plane` catalogue key parity machine-checked across `en`, `zh`, `zh-TW`, `fr`, `ar`, `he`). The two
+leaderboard/my-football one-liners ride the same commit: the empty-state class name the design system
+already ships under `.empty`, and the `.mp-hero` tint that had an element with no rule.
+
+**Evidence.** `tsc --noEmit` exits 0; key parity across the six catalogues holds byte-for-byte in flat
+form (machine-checked); the production build prints its `BUILD_ID` (see the commit message); the edge
+suite is unaffected (no Java changes). CI prints its verdict on this push.
 
 ---
 
