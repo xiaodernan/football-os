@@ -69,6 +69,25 @@ const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 12);
 const EMAIL = `visual-qa-${stamp}@footballos.test`;
 const PLAYER_NAME = `QA Mid ${stamp.slice(-4)}`;
 
+/**
+ * Re-sign in if the walk's session died in flight.
+ *
+ * Refresh tokens are single-use with a short replay grace, and a presentation outside the grace
+ * signs out *every* session of the account — the designed theft response. A two-hour walk makes
+ * several hundred authenticated requests, and any one of them landing a stale cookie outside the
+ * grace cancels the rest of the walk's authed sections, though nothing about it is an error. The
+ * account is the walk's own; the honest recovery is to sign it back in rather than abort the rest.
+ */
+async function ensureSession(page) {
+  const status = await page.evaluate(async () => (await fetch('/api/v1/auth/me', { credentials: 'same-origin' })).status);
+  if (status === 200) return;
+  await open(page, '/login');
+  await page.fill('#email', EMAIL);
+  await page.fill('#password', PASSWORD);
+  await page.click('button[type="submit"]');
+  await page.waitForFunction(() => location.pathname !== '/login', { timeout: 60_000 });
+}
+
 const results = [];
 const consoleErrors = [];
 const shots = [];
@@ -1140,6 +1159,7 @@ async function run() {
     // form and the run tools). The page is session-gated, so this read rides the session the walk already
     // minted at registration; the catalogue it prints comes from the API the evidence run starts beside it.
     await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+      await ensureSession(page);
     await open(page, '/challenges');
     await waitForText(page, chineseMessages.challenges.title);
     const challengesZh = await page.evaluate(() => ({
@@ -1164,6 +1184,7 @@ async function run() {
     );
     await shot(page, '18h-challenges-chinese');
     await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+      await ensureSession(page);
     await open(page, '/challenges');
     check(
       'and the switch back leaves the challenges catalogue in English, so the check is not one-way',
@@ -2022,6 +2043,7 @@ async function run() {
 
     // The live link, at 375px, while it still works — it is revoked a few lines below.
     // (Inlined rather than calling `mobileSurface`, which is defined later in the walk.)
+      await ensureSession(page);
     await page.setViewport(MOBILE);
     await open(page, shareUrl);
     const sharedNarrow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -2084,6 +2106,9 @@ async function run() {
     check('the walk can generate its own test clip with ffmpeg (no third-party video in the repo)', clipReady, clipReady ? `${clipPath} · ${(await stat(clipPath)).size} bytes` : `ffmpeg unavailable: ${clipFailure}`);
 
     if (clipReady) {
+      // The walk is two hours old by the time it reaches the video tiers; re-sign in if the session
+      // died somewhere along the way, so the video section is not skipped for someone else's reason.
+      await ensureSession(page);
       await open(page, '/video');
       await waitForText(page, 'My video analysis');
       const fileInput = await page.$('input[type="file"]');
@@ -2316,6 +2341,7 @@ async function run() {
           `page ${anonReport.status} → ${(anonReport.headers.get('location') ?? '').slice(0, 22)} · api ${anonApi.status} · frame ${anonFrame.status}`,
         );
 
+      await ensureSession(page);
         await page.setViewport(MOBILE);
         await shot(page, '38-mobile-video-report');
         const videoNarrow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -2356,6 +2382,7 @@ async function run() {
     // is reproducible, it is labelled as model output, and it belongs to the account that played it.
     // The walk tests all three against rows it creates and destroys here, in this account.
     const SIM_SEED = '20260922';
+      await ensureSession(page);
     await open(page, '/simulate');
     await waitForText(page, 'Play a fixture');
     const picker = (await bodyText(page)).replace(/\s+/g, ' ');
@@ -2544,6 +2571,7 @@ async function run() {
 
     // A second row from the same fixture, shape and seed must agree with the first on its digest —
     // that is the difference between a seeded model and a page that merely looks stable.
+      await ensureSession(page);
     await open(page, '/simulate');
     await waitForText(page, 'Play a fixture');
     const secondSim = await playFixture(SIM_SEED);
@@ -2590,6 +2618,7 @@ async function run() {
     );
     await shot(page, '45-live-replay-desktop');
 
+      await ensureSession(page);
     await open(page, '/simulate');
     await waitForText(page, 'This account');
     const kept = await page.evaluate(() => ({
@@ -2670,6 +2699,7 @@ async function run() {
       `page ${anonCareer.status} -> ${(anonCareer.headers.get('location') ?? '').slice(0, 34)} · list ${anonCareerList.status} · options ${anonCareerOptions.status}`,
     );
 
+      await ensureSession(page);
     await open(page, '/simulate');
     await waitForText(page, 'Play a fixture');
     const seasonLinks = await page.evaluate(() => [...document.querySelectorAll('a')].map((node) => node.getAttribute('href')).filter((href) => href === '/career').length);
@@ -2971,6 +3001,7 @@ async function run() {
       `page ${anonChallengePage.status} -> ${(anonChallengePage.headers.get('location') ?? '').slice(0, 40)} · catalogue ${anonCatalogue.status} · runs ${anonRuns.status}`,
     );
 
+      await ensureSession(page);
     await open(page, '/challenges');
     await waitForText(page, 'Start a run');
     const catalogueShape = await page.evaluate(() => {
@@ -3482,6 +3513,7 @@ async function run() {
         })),
       );
 
+      await ensureSession(page);
     await open(page, '/plane');
     await waitForText(page, '10.0.0.11:8080', 30_000);
     const planeText = await bodyText(page);
@@ -3543,6 +3575,7 @@ async function run() {
     // Degraded: the same three doors, answering with a breaker that has tripped. The badge must change word,
     // not just colour — a reader who cannot tell green from amber still has to be able to read the sentence.
     await setEdgeMode('degraded');
+      await ensureSession(page);
     await open(page, '/plane');
     await waitForText(page, englishMessages.plane.stateDegraded, 30_000);
     const degradedText = await bodyText(page);
@@ -3556,6 +3589,7 @@ async function run() {
     // showing an empty table — an empty table reads as "the edge is fine and has no instances", which is a
     // different and much more alarming fact.
     await setEdgeMode('down');
+      await ensureSession(page);
     await open(page, '/plane');
     await waitForText(page, englishMessages.plane.unreachableTitle, 30_000);
     const downBody = await page.evaluate(() => ({
@@ -3574,6 +3608,7 @@ async function run() {
     // a reader most needs on this page must be translated like everything else around it.
     await setEdgeMode('up');
     await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+      await ensureSession(page);
     await open(page, '/plane');
     await waitForText(page, planeChinese('decayed'), 30_000);
     const chinesePlane = await page.evaluate(() => document.body.innerText);
@@ -3587,6 +3622,7 @@ async function run() {
 
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
 
+      await ensureSession(page);
     await page.setViewport(MOBILE);
     const mobileSurface = async ([path, marker, label]) => {
       try {
@@ -3714,6 +3750,7 @@ async function run() {
       `follow ${followPress.status} · reaction ${reactionPress.status} · comment ${commentPress.status}`,
     );
 
+      await ensureSession(page);
     await open(page, '/notifications');
     await waitForText(page, 'Notifications');
     const trayBody = await bodyText(page);
@@ -3732,6 +3769,7 @@ async function run() {
     const trayAfter = await bodyText(page);
     check('marking all read empties the badge arithmetic on the page', /0 unread of \d+/iu.test(trayAfter), trayAfter.match(/\d+ unread of \d+/iu)?.[0] ?? 'none');
 
+      await ensureSession(page);
     await open(page, '/notifications');
     const badgeGone = await page.evaluate(() => !document.querySelector('.nav__link[href="/notifications"] .chip--accent'));
     check('the nav badge goes quiet once the tray is read', badgeGone);
