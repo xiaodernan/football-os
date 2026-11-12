@@ -4423,7 +4423,7 @@
     "colScore": "Score",
     "colEwma": "Average",
     "colStreak": "Failures in a row",
-    "colSamples": "Answers",
+    "colSamples": "Samples",
     "colAge": "Last answer",
     "samplesOf": "{answers} answers, {failures} failed",
     "secondsAgo": "{value}s ago",
