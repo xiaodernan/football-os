@@ -4622,3 +4622,13 @@ that printed red was fixed by a named commit and then printed success on its own
 drains, and nothing in this arc claims any production traffic flows through it yet. The `fr` editorial pass
 remains owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains
 untracked.
+## 126. The README figures print green; the arc stands fully verified (2026-11-12)
+
+**What the runner printed, unedited.** `43125706887` (docs(readme) — 2326 collected / 170 files) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in this arc prints green. The figures themselves were never fabricated: the commit message names
+`pytest --collect-only` at HEAD on this commit, which is exactly what the runner re-checks on its own leg.
+
+**Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
+owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
