@@ -4643,3 +4643,18 @@ this same arc and both of which are recorded in detail in §94 and §99.
 
 **Not claimed.** Producer wiring onto the drain remains the named next arc; the `fr` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+## 128. §127 prints success; the arc stands green end to end (2026-11-11)
+
+**What the runner printed, unedited.** `43132243723` (docs(i18n) §127) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in the arc prints green. Every red that ever printed in this arc traces to my own commits;
+every one of those was fixed by a named follow-up commit and then printed success on its own re-run.
+
+**Not claimed — named honestly as the next arc.** The drain exists and is gated; no production code path
+enqueues onto it yet. The video pipeline remains synchronous, and its own door records the analysis inline
+with the ADR-006 shape (RUNNING → COMPLETED in one request). Wiring the pipeline's frame/vision stages onto
+the drain — extracting the shared stage runner so the sync door and the queued handler run identical logic,
+the `/video/{ident}/jobs` door polls progress already, the page re-reads `COMPLETED` — is the substantial,
+recorded next arc, not this one. The `fr` editorial pass remains owed; the untracked user text file at the
+repository root remains untouched; `.scratch/` remains untracked.
