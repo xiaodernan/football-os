@@ -5,8 +5,11 @@ identifying data a user can upload, so there is no public read of any kind — n
 frame, not a filename. The upload path is where the platform's one file-ingress door lives, so the
 allow-list checks the bytes rather than the label, and the size ceiling is configured, not assumed.
 
-The analysis endpoints run the pipeline during the request and record a Job row for it. There is no
-queue and no worker, and nothing in the response claims otherwise (spec §47, PRINCIPLE 1).
+The analysis endpoints can run the pipeline in the request or hand the work to the queue (spec §47, ADR-008):
+`background=true` on the analyse door creates a `QUEUED` job the worker process (`python -m app.worker`)
+picks up, instead of running the stages in this request. The synchronous path stays the interactive
+default; the queue is the honest path for an operator or a client that does not want to hold a
+connection open for minutes. The record never claims the work happened when it did not.
 """
 
 from __future__ import annotations
@@ -19,11 +22,11 @@ from typing import Annotated, Any, Final
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Request, Response, UploadFile, status
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
-from starlette.responses import StreamingResponse
+from starlette.responses import JSONResponse, StreamingResponse
 
 from app.core.config import settings
 from app.core.db import get_db
-from app.core.security import current_user, limit
+from app.core.security import current_user, limit, new_public_id
 from app.models import Job, User, UserPlayer, VideoAsset, VideoDetection
 from app.services.video import pipeline
 from app.services.video.media import MediaToolMissing, to_png
@@ -190,13 +193,75 @@ def clip_report(ident: str, request: Request, db: Session = Depends(get_db), use
 def analyse_clip(
     ident: str,
     request: Request,
+    background: bool = Query(default=False),
     target_frames: int = Query(default=24, ge=4, le=60),
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
-) -> dict[str, Any]:
-    """Sample the clip and measure it. Runs now, in this request, and records the job either way."""
+) -> Any:
+    """Sample the clip and measure it.
+
+    Without `background`, this runs the pipeline in this request and returns the report — the
+    interactive path. With `background=true`, the clip is queued for the worker process instead: the
+    response answers `202` with the job's id, and the caller polls `/api/v1/jobs/{job_id}` (or the
+    clip's `/jobs` listing) until the row settles. An identical pending run is not duplicated.
+    """
     limit(request, 10, 60, scope="video_analyse")
     asset = _one(db, user, ident)
+    if background:
+        from app.services.job_broker import publish_queued
+
+        pending = list(
+            db.scalars(
+                select(Job)
+                .where(Job.type == "video.analyse", Job.status.in_(("QUEUED", "RUNNING")))
+                .order_by(Job.created_at.desc())
+                .limit(50)
+            ).all()
+        )
+        for job in pending:
+            if isinstance(job.payload, dict) and job.payload.get("asset_id") == asset.id:
+                # A client that cannot tell whether its earlier click landed should not start a second
+                # analysis; the pending row is the honest answer.
+                return JSONResponse(
+                    status_code=status.HTTP_202_ACCEPTED,
+                    content={
+                        "asset_id": asset.id,
+                        "type": "video.analyse",
+                        "job_id": job.id,
+                        "status": job.status,
+                        "background": True,
+                        "deduplicated": True,
+                        "note": "a run for this clip is already pending; this response named it rather than start a second one",
+                    },
+                )
+        job = Job(
+            id=new_public_id("job"),
+            type="video.analyse",
+            status="QUEUED",
+            attempts=0,
+            payload={"asset_id": asset.id, "target_frames": target_frames},
+            progress=0,
+            user_id=user.id,
+            created_at=datetime.now(UTC),
+        )
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+        publish_queued(job)
+        return JSONResponse(
+            status_code=status.HTTP_202_ACCEPTED,
+            content={
+                "asset_id": asset.id,
+                "type": "video.analyse",
+                "job_id": job.id,
+                "status": "QUEUED",
+                "background": True,
+                "deduplicated": False,
+                "target_frames": target_frames,
+                "poll": f"/api/v1/jobs/{job.id}",
+                "note": "queued; python -m app.worker measures the clip, and this clip's report reflects it once the row settles",
+            },
+        )
     try:
         return pipeline.analyse_asset(db, asset, target_frames=target_frames, user_id=user.id)
     except MediaToolMissing as error:
@@ -275,7 +340,7 @@ def clip_jobs(ident: str, request: Request, db: Session = Depends(get_db), user:
         ],
         "total": len(relevant),
         "detections": int(db.scalar(select(func.count()).select_from(VideoDetection).where(VideoDetection.asset_id == asset.id)) or 0),
-        "note": "Recorded during the request that asked for the work; there is no queue and no worker behind these rows.",
+        "note": "A row recorded by the request that ran the work shows the run that happened; a QUEUED row is drained by the worker process (python -m app.worker), and this listing shows both kinds.",
     }
 
 

@@ -3885,7 +3885,7 @@
           "video"
         ],
         "summary": "Analyse Clip",
-        "description": "Sample the clip and measure it. Runs now, in this request, and records the job either way.",
+        "description": "Sample the clip and measure it.\n\nWithout `background`, this runs the pipeline in this request and returns the report — the\ninteractive path. With `background=true`, the clip is queued for the worker process instead: the\nresponse answers `202` with the job's id, and the caller polls `/api/v1/jobs/{job_id}` (or the\nclip's `/jobs` listing) until the row settles. An identical pending run is not duplicated.",
         "operationId": "analyse_clip_api_v1_video__ident__analyse_post",
         "security": [
           {
@@ -3900,6 +3900,16 @@
             "schema": {
               "type": "string",
               "title": "Ident"
+            }
+          },
+          {
+            "name": "background",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Background"
             }
           },
           {
@@ -3921,7 +3931,6 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "title": "Response Analyse Clip Api V1 Video  Ident  Analyse Post"
                 }
               }

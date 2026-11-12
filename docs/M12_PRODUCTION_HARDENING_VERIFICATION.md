@@ -962,14 +962,14 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `03fb360b86da20886c4e0066ac381b1ec02b13e9e9857aa089d41bb6699873ff` that population is **239
-secured operations, 55 public operations and 102 private GET paths**, with floors of 200/40/85 printed on
+SHA-256 `d4b4ae0a8b5e65cf703dca541381534600b8a80d64742bb0eb6a42a2cd258e99` that population is **240
+secured operations, 55 public operations and 103 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 239 / 55 / 102 |
-| S1 | every secured operation refuses a caller with no credential | **239 knocked, 239 × 401**, 0 deviations |
+| C0 | the door population comes from the contract and is not empty | 240 / 55 / 103 |
+| S1 | every secured operation refuses a caller with no credential | **240 knocked, 240 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |
@@ -1005,7 +1005,8 @@ population moved only when the notifications tier and then the share token lande
 census after a field-only change) and I (2026-11-08, 235 / 54 / 100 after the career-milestone
 consolidation) followed. Run J (2026-11-09) read 236 / 55 / 100 after the leaderboard read was published
 as public, and answered **10/10, 0 failed, 0 server errors** in 5.86 s on the development PostgreSQL
-database migrated to head `0060`. Run K (2026-11-11) is the run this record quotes: M15's token-bucket
+database migrated to head `0060`. Run K (2026-11-11) was the run this record quoted before the
+broker's window landed: M15's token-bucket
 limiter published its own operator window and the notification tier its per-kind mutes, so the census
 read 239 / 55 / 102, every secured door still answered 401 without a credential, and the ten checks
 answered **10/10, 0 failed, 0 server errors** in 44.51 s on a scratch SQLite database migrated to head
@@ -1014,6 +1015,12 @@ answers before routing and before body validation, so S1 waits out the three upl
 own census provokes (publishing them as `throttle_waits`) and S6's malformed post moved off the spent
 login door onto a board post as the account. Both reds were seen first — **8 passed, 2 failed** — and
 [the report](SECURITY_PROBE_REPORT.md) §2 records them rather than hiding them behind the green.
+Run L (2026-11-12, port 8798, 41.97 s, scratch SQLite created by the app on startup) is the run this
+record now quotes: M16's broker published its own operator window (`GET /api/v1/metrics/jobs-stream`),
+so the census reads 240 / 55 / 103, every secured door still answered 401 without a credential, and
+the ten checks answered **10/10, 0 failed, 0 server errors**. The clip-report's analyse door also
+grew a `background` query parameter, which moved the contract's SHA-256 without moving its population;
+the report's §1 and this record name the SHA of the contract as committed today.
 S4 is constructed so the negative is not vacuous: the private `HIT` and the public `MISS → HIT` are read
 before "the stranger never received the owner's row", so the cache is proven to have been serving at the
 moment the isolation held.

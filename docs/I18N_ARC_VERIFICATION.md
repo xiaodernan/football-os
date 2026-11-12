@@ -4903,3 +4903,60 @@ completed with BUILD_ID **`nX8B6Z3VKEZiW23L4c7YA`**. The api leg on this push pr
 **Not claimed.** No claim that the api leg is green at the moment this section was written — it prints when the
 runner runs it and the verdict lands in this ledger unedited. The `fr`/`ar`/`he` editorial pass remains owed;
 the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+## 140. The background re-analyse door — the queue reaches the page every clip owner lands on (2026-11-12)
+
+**Why this arc next.** M16 made the queue real and `video.analyse` has drained through it since §130; but the
+clip report's own button path ran the pipeline inside the HTTP request, and a browser that clicked Analyse
+held that connection for minutes. The queue was real and unreachable from the one page that asks for
+measurements most. This arc wires it.
+
+**What landed.** `POST /api/v1/video/{ident}/analyse?background=true` commits a `QUEUED` `video.analyse` row
+(payload `asset_id` / `target_frames`, `attempts=0`, `progress=0`), publishes the stream hint **after** the
+commit, and answers `202` with `{job_id, status, poll}`. A second click while a run for the same clip is still
+`QUEUED`/`RUNNING` names the pending row (`deduplicated: true`) instead of starting a second analysis — the
+same refusal the synchronous path never had, expressed in the queue's own vocabulary. The web tools panel
+(`apps/web/components/VideoTools.tsx`) gained a **Queue a background run** button beside the synchronous one:
+it enqueues, polls `GET /api/v1/jobs/{job_id}` every 2 s for up to two minutes, shows QUEUED → RUNNING →
+COMPLETED, and calls `router.refresh()` when the row settles. The two-minute ceiling is honest by
+construction: a slow ffmpeg run outruns the poll, so the UI says what it knows ("the worker process drains
+the queue") instead of spinning a forged progress bar; the row keeps the outcome regardless. The sync door
+is unchanged and remains the default. Eight new `video` keys (`queueAnalyse`, `queueing`, `queueQueued`,
+`queueRunning`, `queueDone`, `queueFailed`, `queuePending`, plus the rewritten `toolsNote`, which now names
+the worker instead of denying it) landed in all six catalogues — `en`, `zh`, `zh-TW`, `fr`, `ar`, `he` — in
+the same commit. The clip's `/jobs` listing no longer says "there is no queue and no worker behind these
+rows"; `SPEC_COVERAGE_AUDIT.md` row 47 says what M16 actually holds.
+
+**What the CI failures in this window cost, and where they are cured.** `43222757800` (the contract fix
+`c103632`) and `43223040020` (§139's docs push) both printed **api failure** at the same step:
+`test_security_probe_report_currency.py` — the report still named the old contract SHA and the 239/55/102
+census while the committed contract (jobs-stream added by `c103632`) answers **240 / 55 / 103**. That red was
+this window's own doing: the contract moved twice without the three ledgers that quote it. This commit cures
+it by re-running the probe live and refreshing every figure:
+
+* `scripts/security_probe.py` against a live uvicorn on `127.0.0.1:8798`, scratch SQLite
+  (`.scratch/probe-l.db`, created by the app on startup, `ENV=development`): **10 passed / 0 failed / 0
+  server errors**, 41.97 s; S1 knocked **240** doors and all **240** answered 401, three of them throttled
+  first (`throttle_waits`: three entries, `retry_after: 10`, policy `"upload";q=8;w=1` — the same three video
+  doors the M15 run names) and waited out. Contract SHA-256 `d4b4ae0a8b5e65cf703dca541381534600b8a80d64742bb0eb6a42a2cd258e99`
+  (re-exported once for `background`; 228 paths / 295 operations unchanged).
+* `docs/SECURITY_PROBE_REPORT.md` — run L added (options table, §2 table, §2 narrative, §3 C0/S1 rows,
+  reproduction block) naming the above figures and the twelve-runs history as twelve.
+* `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md` — quoted SHA and census moved to `d4b4ae…` / **240 / 55 / 103**;
+  run K marked as the record's previous quotation, run L as the current one.
+* `ROADMAP.md` — the M12 row quotes the new SHA and **240/240**, run L.
+
+The currency gates are expected green on this push; they print what they print, and the verdict lands here
+unedited when the runner finishes.
+
+**Verification, printed.** `ruff` clean; `mypy app` clean over **176 files**; the new
+`tests/test_video_background.py` — **5 passed** (202 + row + payload + no-duplicate; the row drained to
+COMPLETED by the same handler the worker registers; `GET /jobs/{job_id}` polls; clip delete erases its own
+queued jobs; 404 + inline default unchanged), 66 s. `tsc --noEmit` clean. Production build
+(`NEXT_DIST_DIR=.next-verify2`) completed with BUILD_ID **`h4ILtLe_xKXyltqn7xUiF`**. The live probe run L
+above was made against the tree this commit carries. No claim that this push's CI legs are green — they print
+when the runner runs them, and the verdict lands in the next section of this ledger, green or red.
+
+**Not claimed.** The CI `api` leg on this push has not printed at the time this section was written; the
+browser walk of the queued button is CI's to print (the sync path is what the existing walk clicks, and it is
+unchanged); the `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository
+root remains untouched; `.workbuddy/` remains untracked.

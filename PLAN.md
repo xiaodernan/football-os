@@ -2050,6 +2050,48 @@ first — and `edge.lb.strategy=round-robin` restores the stock balancer. Design
 
 ---
 
+## Item 26 — the background re-analyse door: the queue reaches the product's own UI
+
+**The gap.** M16 built the queue and the worker; `video.analyse` has drained through it since §130. But
+the product's own UI never asked for the queued path — the analyse button ran the pipeline inside the
+HTTP request and the report rendered from the same response. The queue was real and unreachable from the
+one page every clip owner lands on.
+
+**The shape.** `POST /api/v1/video/{ident}/analyse?background=true` creates a `QUEUED` `video.analyse`
+job (payload `asset_id` / `target_frames`), commits, publishes the stream hint **after** the commit, and
+answers `202` with `{job_id, status, poll}`. A pending run for the same clip is named, not duplicated
+(`deduplicated: true` on the second click), deduped in the same conditional-UPDATE spirit as the rest of
+the queue. The clip report page's tools panel gained a **Queue a background run** button beside
+**Analyse this clip**: it enqueues, then polls `GET /api/v1/jobs/{job_id}` every two seconds for up to
+two minutes, shows QUEUED → RUNNING → COMPLETED, and refreshes the server-rendered report when the row
+settles. A two-minute poll cannot outwait a slow ffmpeg run, so on timeout the UI says what it knows
+("the worker process drains the queue") rather than spinning forever — and the job row keeps the outcome
+either way. The synchronous door is unchanged and remains the interactive default; nothing on the page
+claims visibility the worker does not have.
+
+**The i18n half.** Eight new `video`-namespace keys (`queueAnalyse`, `queueing`, `queueQueued`,
+`queueRunning`, `queueDone`, `queueFailed`, `queuePending`, and the rewritten `toolsNote` that now names
+the worker instead of denying it) landed in all six catalogues — `en`, `zh`, `zh-TW`, `fr`, `ar`, `he` —
+in the same commit, so the completeness and key-drift gates never see a half-translated door.
+
+**The honesty half.** The clip's `jobs` listing no longer says "there is no queue and no worker behind
+these rows" — it names both paths. The `SPEC_COVERAGE_AUDIT.md` async-job row moved from "in-process, no
+queue" to the M16 state. M5's dated verification record and `PROJECT_AUDIT.md` are left as the
+point-in-time snapshots they are.
+
+**Evidence.** `tests/test_video_background.py` (5 cases, real clip): the 202 + queued row + payload +
+no-duplicate rule, the row drained to `COMPLETED` by the same handler the worker registers, the `GET
+/jobs/{job_id}` poll path, the clip-delete erasing its own queued jobs, the 404 shape, and the inline
+default untouched. `tsc --noEmit` clean; the production build (`NEXT_DIST_DIR=.next-verify2`)
+completed with BUILD_ID `h4ILtLe_xKXyltqn7xUiF`. The contract re-exported once more (`background` on
+the analyse door; 228 paths / 295 operations unchanged), and the security probe was rerun live
+(run L, port 8798, scratch SQLite, `ENV=development`): **10 passed / 0 failed / 0 server errors**,
+census **240 / 55 / 103**, contract SHA-256
+`d4b4ae0a8b5e65cf703dca541381534600b8a80d64742bb0eb6a42a2cd258e99`. The three ledgers that name the SHA
+(`SECURITY_PROBE_REPORT.md` §1, the M12 record, the ROADMAP row) moved in the same commit.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
