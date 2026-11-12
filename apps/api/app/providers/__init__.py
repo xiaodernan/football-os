@@ -129,10 +129,20 @@ class OpenAIChatProvider:
     _PRICE_IN = 0.15 / 1_000_000 * 100  # gpt-4o-mini style defaults, USD per token batch
     _PRICE_OUT = 0.60 / 1_000_000 * 100
 
-    def __init__(self, api_key: str, model: str, base_url: str = "https://api.openai.com/v1") -> None:
+    def __init__(self, api_key: str, model: str, base_url: str = "https://api.openai.com/v1", user_agent: str | None = None) -> None:
         self.api_key = api_key
         self.model = model
         self.base_url = base_url.rstrip("/")
+        self.user_agent = user_agent
+
+    def _headers(self) -> dict[str, str]:
+        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}
+        # Some gateways (Cloudflare-fronted OpenAI-compatible proxies) refuse the default urllib UA with a
+        # bare 403; a configured browser UA is what those doors accept. The setting is explicit in `.env`
+        # there, never hidden in code, and never affects OpenAI proper when unset.
+        if self.user_agent:
+            headers["User-Agent"] = self.user_agent
+        return headers
 
     def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4) -> LlmResult:
         body = json.dumps(
@@ -146,7 +156,7 @@ class OpenAIChatProvider:
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
             data=body,
-            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"},
+            headers=self._headers(),
         )
         started = time.perf_counter()
         try:
@@ -358,7 +368,7 @@ def get_storage_provider() -> StorageProvider:
 
 def get_llm_provider() -> LLMProvider:
     if settings.openai_api_key:
-        return OpenAIChatProvider(settings.openai_api_key, settings.openai_model)
+        return OpenAIChatProvider(settings.openai_api_key, settings.openai_model, base_url=settings.openai_base_url, user_agent=settings.openai_user_agent)
     return MockLLMProvider()
 
 

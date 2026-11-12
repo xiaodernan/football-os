@@ -47,6 +47,8 @@ class Settings:
     refresh_reuse_grace_seconds: int = field(default_factory=lambda: int(_env("REFRESH_REUSE_GRACE_SECONDS", "60") or 60))
     openai_api_key: str = field(default_factory=lambda: _env("OPENAI_API_KEY"))
     openai_model: str = field(default_factory=lambda: _env("OPENAI_MODEL", "gpt-4o-mini"))
+    openai_base_url: str = field(default_factory=lambda: _env("OPENAI_BASE_URL", "https://api.openai.com/v1"))
+    openai_user_agent: str | None = field(default_factory=lambda: _env("OPENAI_USER_AGENT"))
     openai_embedding_model: str = field(default_factory=lambda: _env("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"))
     embedding_provider: str = field(default_factory=lambda: _env("EMBEDDING_PROVIDER", "hash-local"))
     knowledge_dir: str = field(default_factory=lambda: _env("KNOWLEDGE_DIR", str(API_ROOT.parent.parent / "data" / "knowledge")))

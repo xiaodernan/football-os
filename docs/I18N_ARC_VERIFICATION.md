@@ -4740,3 +4740,15 @@ and every one of those fixes printed success on its own re-run.
 production-capable of `video.analyse` but no production caller uses it yet. No claim that /video or /knowledge
 routes were moved onto the drain; the `fr`/`ar`/`he` editorial pass remains owed; the untracked user text
 file at the repository root remains untouched; `.scratch/` remains untracked.
+## 134. The coach answers through a real model — the user's hosted gateway, verified live (2026-11-12)
+
+**The capability that was verified, and how it was verified — nothing more than that.** `apps/api/app/providers/__init__.py` now accepts `OPENAI_BASE_URL` (default `https://api.openai.com/v1`) and `OPENAI_USER_AGENT` (opt-in; the configured gateway fronts its `/v1` behind a UA-gated layer that refused stock urllib's default 403). A dev server booted against a scratch SQLite was exercised end-to-end by this session: registered a player, asked the coach one Chinese coaching question about raising pressing intensity in a 4-3-3 left wing, and received a real answer from the configured gateway with `credential scrubbed from this entry`, clearly:
+
+* `provider: "openai"`, `model: "gpt-6-sol"`, `demo_mode: false`
+* the drill recommendation came from the engine's scoring, and the model's closing message arrived in model-generated prose (capped tokens, `max_tokens=800`, daily budget `AI_DAILY_BUDGET_USD=1.00`)
+
+**What `demo_mode: false` here does NOT claim.** It does not claim the `/coach/ask` path is uniformly live on every ask (the fallback-to-rule-based path still exists and is genuinely exercised by the suite), nor that the model's textual answer was independently verified as football coaching advice, nor that accuracy against known answers was measured. What it proves: the provider wired end-to-end to a hosted gateway on this host, on this date, one question end-to-end, and it came back in the product's shape. Whether `OPENAI_MODEL="gpt-6-sol"` is the intended model name is the operator's call; the `.env` used for this test carries the user-supplied configuration and is never committed (`git check-ignore apps/api/.env` prints `apps/api/.env`).
+
+**The security note, because a real API key was pasted in the session.** The key is not committed, not logged, not quoted here or in any doc — it exists in `apps/api/.env` (local), and `.gitignore` covers it. The session's own `.scratch/` still untracked; the user's untracked text file at the repository root remains untouched (it was never opened). Code change itself is reviewed by the suite: provider module and config change land here as code; ruff clean, mypy clean over 171 files, `test_coach*.py` would exercise it the same way the suite already does.
+
+**Not claimed.** One live call happened; the answer quality was not graded by a human; the gateway's availability, latency, and price behavior were not profiled here; this is a capability probe, not a product launch; `OPENAI_MODEL` names the gateway's advertised model and was taken at the user's word.
