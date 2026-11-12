@@ -4397,7 +4397,7 @@
   "plane": {
     "metaTitle": "Plan de service",
     "metaDescription": "La vue opérateur de la passerelle Spring Cloud : l'état du disjoncteur, le palier de limitation qui a jugé la dernière requête, et le score par lequel l'équilibrage choisit chaque instance du cœur.",
-    "eyebrow": "Vue opérateur",
+    "eyebrow": "Console de la passerelle",
     "title": "La porte, décrite par elle-même",
     "lede": "Trois portes de la passerelle ne parlent que de la passerelle : ce que pense le disjoncteur, quel palier de limitation a jugé la dernière requête, et le score par lequel l'équilibrage classe chaque instance du cœur. Chaque chiffre est lu à l'instant — une porte qui ne répond pas le dit dans son propre panneau, sans faire échouer la page.",
     "stateOk": "Toutes les portes répondent",

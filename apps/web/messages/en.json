@@ -4397,7 +4397,7 @@
   "plane": {
     "metaTitle": "Service plane",
     "metaDescription": "The operator view of the Spring Cloud edge: the circuit breaker's state, which rate-limit tier judged the last request, and the score the load balancer decides by for each core instance.",
-    "eyebrow": "Operator view",
+    "eyebrow": "Edge console",
     "title": "The door, describing itself",
     "lede": "Three doors on the gateway answer about the gateway: what the circuit breaker thinks, which rate-limit tier judged the last request, and the score the load balancer ranks each core instance by. Every figure is read live — a door that does not answer says so in its own panel instead of failing the page.",
     "stateOk": "Every door answering",

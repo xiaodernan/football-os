@@ -92,7 +92,7 @@ def test_the_background_door_answers_202_with_a_queued_row(auth_client: TestClie
 
     with SessionLocal() as session:
         pending = [row for row in session.query(Job).filter(Job.type == "video.analyse", Job.status == "QUEUED").all() if (row.payload or {}).get("asset_id") == asset_id]
-        assert len(pending) == 1, [row.id for row in pending]
+        assert len(pending) == 1, f"expected one pending run for the clip, got {len(pending)}: {[row.id for row in pending]}"
 
 
 def test_a_queued_row_from_the_door_drains_to_completed(auth_client: TestClient, clips: Any, created_jobs: list[str]) -> None:  # type: ignore[no-untyped-def]
