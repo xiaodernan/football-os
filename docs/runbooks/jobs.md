@@ -31,8 +31,13 @@ Postgres is a queue you cannot gate in the SQLite leg.
 ```bash
 python scripts/drain_jobs.py                     # drain everything queued right now, exit
 python scripts/drain_jobs.py --loop --interval=2 # poll forever, 2s between passes
-python scripts/drain_jobs.py --handlers mypackage.jobs:my_handler   # register a handler
+python scripts/drain_jobs.py --handlers app.services.video.drain:drain_analyse   # one production handler
 ```
+
+**A production handler ships registered by name**: `--handlers app.services.video.drain:drain_analyse` executes
+the same `probe → extract_frames → vision → writes` sequence the synchronous `/video/{ident}/analyse` door runs,
+against a claimed job row instead of the request lifecycle. The `tests/test_video_drain.py` suite walks that exact
+path on a clip the test builds: queued → drained → `COMPLETED` with frames and events.
 
 A handler is `module:attribute`; the attribute must be callable and take exactly one argument — the claimed
 `Job`. The registry is explicit, at the process edge, never a guessed import. Running with no `--handlers` and

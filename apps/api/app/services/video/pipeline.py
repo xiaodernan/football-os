@@ -153,24 +153,8 @@ def store_upload(session: Session, *, user_id: str, filename: str, data: bytes, 
     return asset
 
 
-def analyse_asset(session: Session, asset: VideoAsset, *, target_frames: int = 24, user_id: str | None = None) -> dict[str, Any]:
-    """Run the stages, write the rows, and return the report the client sees."""
-    job = Job(
-        id=new_public_id("job"),
-        type="video.analyse",
-        status="RUNNING",
-        # The run begins in this request, so the row that records it has already made one attempt.
-        attempts=1,
-        payload={"asset_id": asset.id, "target_frames": target_frames},
-        progress=5,
-        user_id=user_id or asset.owner_id,
-    )
-    session.add(job)
-    session.commit()
-    session.refresh(job)
-
+def _measure(session: Session, asset: VideoAsset, job: Job, *, target_frames: int, user_id: str | None, started: float) -> tuple[list[Stage], dict[str, Any] | None, str | None]:
     stages: list[Stage] = []
-    started = time.perf_counter()
     try:
         stage_started = time.perf_counter()
         info = probe(_stored_path(asset.storage_key))
@@ -257,7 +241,7 @@ def analyse_asset(session: Session, asset: VideoAsset, *, target_frames: int = 2
             "analysis": {key: value for key, value in result.items() if key != "events"},
         }
         session.commit()
-        return report_for(session, asset, job=job, stages=stages, analysis=result)
+        return stages, result, None
     except (MediaToolMissing, PipelineUnavailable) as error:
         message = str(error)
         asset.status = "failed"
@@ -279,7 +263,30 @@ def analyse_asset(session: Session, asset: VideoAsset, *, target_frames: int = 2
             )
         )
         session.commit()
-        return report_for(session, asset, job=job, stages=stages, analysis=None, failure=message)
+        return stages, None, message
+
+
+def analyse_asset(session: Session, asset: VideoAsset, *, target_frames: int = 24, user_id: str | None = None) -> dict[str, Any]:
+    """Run the stages, write the rows, and return the report the client sees."""
+    job = Job(
+        id=new_public_id("job"),
+        type="video.analyse",
+        status="RUNNING",
+        # The run begins in this request, so the row that records it has already made one attempt.
+        attempts=1,
+        payload={"asset_id": asset.id, "target_frames": target_frames},
+        progress=5,
+        user_id=user_id or asset.owner_id,
+    )
+    session.add(job)
+    session.commit()
+    session.refresh(job)
+
+    started = time.perf_counter()
+    stages, result, failure = _measure(session, asset, job, target_frames=target_frames, user_id=user_id, started=started)
+    if failure is not None:
+        return report_for(session, asset, job=job, stages=stages, analysis=None, failure=failure)
+    return report_for(session, asset, job=job, stages=stages, analysis=result)
 
 
 def _stored_path(key: str) -> Path:

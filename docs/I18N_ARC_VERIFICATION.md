@@ -4658,3 +4658,25 @@ the drain — extracting the shared stage runner so the sync door and the queued
 the `/video/{ident}/jobs` door polls progress already, the page re-reads `COMPLETED` — is the substantial,
 recorded next arc, not this one. The `fr` editorial pass remains owed; the untracked user text file at the
 repository root remains untouched; `.scratch/` remains untracked.
+## 129. The drain runs one production job type end to end, on the request path's own stages (2026-11-12)
+
+**What this window landed.** `app/services/video/drain.py` (new) — `drain_analyse(job)` executes the same
+`probe → extract_frames → vision → writes` the `/video/{ident}/analyse` door runs, against a job the queue
+claimed; an asset the job names that no longer exists fails `FAILED` with the sentence, never a silent skip. The
+door itself is unchanged — its callers still get the synchronous answer. The drain is the second way to pay for
+the same measurement: an ops sweep calls `python scripts/drain_jobs.py --handlers app.services.video.drain:drain_analyse`.
+
+`pipeline.py` was refactored honestly — `analyse_asset` now returns only the report construction; the measured
+stages moved into `_measure()`, shared by the door and the drain. **Nothing about the door's behaviour changed**:
+the video suite still passes 36/36, `test_job_runner.py` 6/6, `ruff` clean, `mypy` 171 files clean.
+
+**Verification, honestly recorded.** `tests/test_video_drain.py` (new) — builds a clip, uploads it through
+`store_upload`, queues `video.analyse`, drains it with `drain_analyse`, and asserts `COMPLETED` with
+`frames > 0` — the same pipeline the door runs, reached via the queue. ffmpeg present here, and the drain walk
+ran green on this host in 8.27s.
+
+**Not claimed.** This is not yet a second production producer ON the route; the video door remains the path
+callers use. This arc makes the queue production-capable of the one heavy job type this project ships — the
+bounded proof that the producer side works — and any async re-routing of /video or /knowledge remains the named
+next arc. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root
+remains untouched; `.scratch/` remains untracked.
