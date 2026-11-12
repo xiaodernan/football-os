@@ -5007,3 +5007,48 @@ gate reading the committed tree. Every verdict in the table above is printed by 
 **Not claimed.** No claim that CI will stay green as the tree keeps moving — the lane's arc continues in flight.
 The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
 untouched; `.workbuddy/` remains untracked.
+## 142. What the shared tree did to two commits this window — and what master actually carries now (2026-11-13)
+
+**Two accidents of sweeping a shared working tree, named before they are anything else.** Both are this window's.
+First, `67c8674`'s `git add apps/web/messages` swept the **uncommitted `plane` namespace** into the video arc
+(recorded in §140/§141 — the page landed four commits later, the metadata-title gate caught the orphan). Second,
+`9f00409`'s `git add apps/web/scripts/visual-qa.mjs` swept **the other hand's entire in-flight /plane walk
+section** into what was announced as this window's one addition — the `spawn` of `scripts/edge-stub.mjs`, the EDGE
+fixture bootstrap and mode control, and the full `12k. The service plane console` section, alongside this
+window's `12e-1. The queue door` block. The lane's fixture `apps/web/scripts/edge-stub.mjs` is **untracked** at
+the time of writing, and `verify-production.sh`'s matching fixture startup rides in the working tree too. A bare
+`node scripts/visual-qa.mjs` at master would reach the /plane section and spawn a file that is not on master —
+loudly, not silently; the runner path (`verify-production.sh`, which passes `QA_EDGE`) skips the spawn by design.
+No history was rewritten; the content is durable in `9f00409` for the other hand to build on, and its fixture is
+theirs to push. This section exists so the next reader knows exactly what that commit is.
+
+**Why this window wrote the 12e-1 block at all.** The background door (`?background=true`) needed something a
+unit test cannot say: that the page a clip owner actually lands on prints QUEUED when the queue is draining
+nothing, and that the clip's own jobs listing grows by one. The block clicks "Queue a background run", waits for
+the catalogue's verbatim sentence ("Queued — the worker will pick it up"), then re-reads the jobs endpoint and
+asserts `+1` QUEUED row. It is syntax-checked (`node --check`) and deliberately **not** run in this environment:
+the other hand's stack holds ports 8731/18085 and polluting it is not this window's call. The walk is the next
+`verify-production.sh` invocation's to print.
+
+**Push/verdict ledger since §141, printed by the runner:**
+
+| run | commit | verdict |
+| --- | --- | --- |
+| `43261889398` | `5b7cae6` (§141) | **success** |
+| `43262245968` | `fcec461` (service_plane §6 + EDGE_URL) | **success** |
+| `43254611864` | `dd590f4` (the lane's P2C decay fix + catalogue re-bake) | **success** — all four legs |
+| `43261889398`, `43262245968` | docs pushes | **success** |
+| `43249595253` | `757ad92` | api success; services/containers success; **web failure** (Translation-freshness: `plane.colSamples` — cured on master by `dd590f4`, whose fresh translations all five locales carry) |
+| `43269667870` | `9f00409` (the walk commit) | **success** — all four legs |
+
+**Also re-verified locally during this window** (each printed, none inherited): `ruff` clean; `mypy app` clean over
+176 files; `tests/test_query_plans.py` → **6 passed** on SQLite **and** 6 passed against a provisioned throwaway
+PostgreSQL on `127.0.0.1:54321`; `tests/test_video_background.py` → **5 passed**; `tests/test_assert_message_forms.py`
++ `tests/test_locale_claims.py` → 13 passed; `tsc --noEmit` exit 0; the `qa-locale-tokens` battery → 7/7; the
+translation-freshness gate → 2/2 at `dd590f4`.
+
+**Not claimed.** The 9f00409 verdict printed **success** on all four legs at 2026-11-13T01:5x UTC (api / web /
+services / containers); the table above records it as printed. The /plane walk has still not been run in a browser
+at this commit; 12k is the other hand's section and will print when the walk is next invoked with its fixture
+present. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root
+remains untouched; `.workbuddy/` remains untracked.
