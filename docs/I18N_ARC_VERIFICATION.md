@@ -4680,3 +4680,21 @@ callers use. This arc makes the queue production-capable of the one heavy job ty
 bounded proof that the producer side works — and any async re-routing of /video or /knowledge remains the named
 next arc. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root
 remains untouched; `.scratch/` remains untracked.
+## 130. §129 prints success; the queue now serves one production job type end to end (2026-11-12)
+
+**What the runner printed, unedited.** `43152764112` (feat(video) — the queue runs video.analyse end to end)
+completed **`web` success, `containers` success, `services` success, `api` success**. The `api` leg collects and
+passes the full suite — 36/36 in the video suite (it rode the same refactor the new drain walks ride), the six
+job-runner cases, and `test_video_drain` itself, which exists precisely so this push stayed honest: the queue is
+real only if a production job type runs through it.
+
+**Not claimed.** The `/video/{ident}/analyse` door remains the interactive path callers use; the drain is
+production-capable but not yet the route of choice for anything. Neither the video pipeline nor the request path
+was rerouted — this arc removed the structural blocker (the queue could not run the one heavy job type this
+project ships) without touching what any caller sees. The `fr`/`ar`/`he` editorial pass remains owed; the
+untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
+
+**Not claimed.** No other drain coverage — only `video.analyse` is walkable today. The video-end-to-end walk
+through the drained path (upload → enqueue → drain → COMPLETED) is the §130 walk; the door's own walk remains
+the `tests/test_video.py` contract. Wiring the request door onto the drain is a caller-visible change with
+walk-implications (the page would poll) and is named as the arc after this one, not claimed here.
