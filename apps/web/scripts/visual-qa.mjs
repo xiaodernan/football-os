@@ -623,8 +623,12 @@ async function run() {
       'the answer labels its own provenance: demo says extractive, a live model says AI-generated',
       askPayload !== null &&
         (askPayload.demo_mode === true
-          ? libAnswer.badge === englishMessages.knowledge.demoModeExtractive && libAnswer.live === ''
-          : libAnswer.live === englishMessages.knowledge.aiGenerated && libAnswer.badge === ''),
+          // `.badge` upper-cases its text through CSS, and `innerText` returns the rendered text —
+          // what the reader sees, letter for letter. The comparison is against the catalogue's word, so
+          // it compares case-insensitively; the payload's `demo_mode` is the claim that is under test,
+          // and it is compared exactly.
+          ? libAnswer.badge.replace(/\s+/gu, ' ').trim().toLowerCase() === englishMessages.knowledge.demoModeExtractive.toLowerCase() && libAnswer.live === ''
+          : libAnswer.live.replace(/\s+/gu, ' ').trim().toLowerCase() === englishMessages.knowledge.aiGenerated.toLowerCase() && libAnswer.badge === ''),
       askPayload === null
         ? 'the ask response was never captured'
         : `demo_mode=${askPayload.demo_mode} · model=${askPayload.model} · badge "${libAnswer.badge || libAnswer.live}"`,
