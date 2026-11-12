@@ -25,7 +25,7 @@
                  └──────────────┘
 ```
 
-Deliberately absent from the original MVP (each admitted only when a measured bottleneck demanded it): a cache tier (now shipped as Redis, M12/Observability arc), a queue (never — the job runner remains Postgres-backed), Elasticsearch, Kubernetes, dedicated ML services. The exceptions, each landed under its own milestone with its evidence: Redis (the shared response cache, M12), the **Spring Cloud service plane** (`services/registry`, `services/config`, `services/edge` — Phase 11 of the roadmap), which routes, rate-limits, traces, circuit-breaks and serves a refreshable configuration — and carries no football rule; the Python core remains canonical. See ADR-001, ADR-006, and `docs/M14_SERVICE_PLANE.md`.
+Deliberately absent from the original MVP (each admitted only when a measured bottleneck demanded it): a cache tier (now shipped as Redis, M12/Observability arc), a queue (**the queue is now real, M16 — the `Job` table state machine is claimed by `drain_one` with a conditional `UPDATE` on both engines, `python -m app.worker` runs the handlers in a separate process, and a Redis Streams hint (ADR-008) wakes consumers without being the truth)**, Elasticsearch, Kubernetes, dedicated ML services. The exceptions, each landed under its own milestone with its evidence: Redis (the shared response cache, M12), the **Spring Cloud service plane** (`services/registry`, `services/config`, `services/edge` — Phase 11 of the roadmap), which routes, rate-limits, traces, circuit-breaks and serves a refreshable configuration — and carries no football rule; the Python core remains canonical. See ADR-001, ADR-006, ADR-008, and `docs/M14_SERVICE_PLANE.md`.
 
 ## 2. Layering inside `apps/api`
 
@@ -45,7 +45,7 @@ app/
     progression      explainable XP → skill → attribute → archetype transitions
     coach_engine     deterministic, evidence-based training recommendation
     training_catalog seed catalogue with full spec §10 fields
-    job_service      Job table state machine: QUEUED/RUNNING/COMPLETED/FAILED/CANCELLED/RETRYING
+    jobs.py            the job runner: QUEUED/RUNNING/COMPLETED/FAILED/CANCELLED state machine, claimed with a conditional UPDATE (ADR-006); the drain lives in `app/worker.py`, the Streams hint in `app/core/job_stream.py` (ADR-008)
     rag/*            (M2) ingestion → chunk → embed → hybrid retrieval → rerank → citation
   providers/
     base.py          LLMProvider, EmbeddingProvider, VisionProvider, FootballDataProvider, NewsProvider, StorageProvider
