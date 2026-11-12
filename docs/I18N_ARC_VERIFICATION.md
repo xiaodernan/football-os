@@ -4770,3 +4770,15 @@ quality; the gateway's model identifier `gpt-6-sol` is the operator's advertised
 value; no claim this works on any host but the one where it was probed; no commitment the gateway stays up
 or that its price model holds. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at
 the repository root remains untouched; `.scratch/` remains untracked.
+## 136. §135 prints success; the live-provider arc prints green end to end (2026-11-12)
+
+**What the runner printed, unedited.** `43199156660` (docs(i18n) §135) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+The arc stands green with both pushes in it printing success — the live-provider probe itself
+(`43194180737`) and the docs that record it.
+
+**Not claimed.** The `/coach/ask` path answers one live probe on one host with one question on one date; it is
+a capability demonstration, not a production activation, and it makes no claim about answer quality, latency
+under load, gateway availability, or track-record of the model. The `fr`/`ar`/`he` editorial pass remains
+owed; the untracked user text file at the repository root remains untouched; `.scratch/` remains untracked.
