@@ -5099,3 +5099,57 @@ run; 8731/18085 belong to the other hand's stack and this window did not drive i
 executed in this run — the host cannot authenticate to it, and the log printed `available=False` instead of
 pretending otherwise. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the
 repository root remains untouched; `.workbuddy/` remains untracked.
+## 144. The provenance check tested the host, not the product — and a walk block earns its place (2026-11-13)
+
+**The failure this section is about.** The visual walk this window ran against a freshly provisioned
+build (`NEXT_DIST_DIR=.next-walks4`, ports 8773/3250, a fresh SQLite) printed 81 checks and one red:
+
+```
+FAIL  the answer labels its own provenance: demo says extractive, a live model says AI-generated
+      — demo_mode=false · model=gpt-6-sol · badge "AI-GENERATED"
+```
+
+The check demanded the badge's `innerText` equal the catalogue string `knowledge.aiGenerated`
+(`"AI-generated"`) verbatim. But `.badge` in `globals.css` carries `text-transform: uppercase`
+(line 146), and `innerText` returns the **rendered** text — the same reason the demo branch of the
+check could never have passed on any host either, only no host had yet run the live model through this
+section. The 2026-11-12 rewrite of this check split demo from live by host but kept a case-sensitive
+comparison against a catalogue that never uppercases. The comment in the walk already named this
+class — "a gate that fails when the product is better configured than the gate assumed is measuring
+the environment" — and then walked straight into it.
+
+**The fix, verified the small way and the honest way.** Both branches now compare
+case-insensitively (`libAnswer.badge/live` normalised with `\s+ → ' '`, trimmed, lowercased); the
+`demo_mode` payload — the claim that decides which badge is correct — is compared exactly. Committed
+as `8e6cf8a`. The API-level contract the walk asserts is already held by the suite
+(`test_knowledge_rag.py`'s ask path) and by the live provider probes of §134/§135. The browser-level
+run that this fix exists to turn green is in flight at the time of writing; its verdict lands in the
+next section as the runner writes it.
+
+**What this window built versus what it inherited in `apps/web/scripts/visual-qa.mjs`.** This window
+added `12e-1. The queue door` (a click on "Queue a background run", the catalogue's verbatim QUEUED
+sentence, one QUEUED row counted on the clip's jobs listing). The other hand had, in the same file,
+added the entire `12k` section for the service-plane console and the edge-fixture bootstrap:
+`spawn` of `apps/web/scripts/edge-stub.mjs` on `QA_EDGE_PORT`, mode control over HTTP, and the
+`finally` that closes the fixture so the next run never finds an old one already answering on the port.
+That section landed in `9f00409` before this window noticed the sweep — the accident is recorded in
+§142 and is not repeated here. The fixture (`edge-stub.mjs`, two fixed instances — one inside the trust
+window, one past it, with a 60 ms target and a 30 s window the page must read from the payload) was
+read, verified against a live boot on `127.0.0.1:8799` (all three doors answered, all four modes
+switched), and **left untracked for its author to push** — it is their fixture, and this window's
+commits touched only the two files it wrote itself.
+
+**The other hand's uncommitted deletions, named and not touched.** `apps/web/app/scout/loading.tsx`
+and `apps/web/app/tactics/loading.tsx` were renamed to `.off` in the working tree (skeleton markup
+preserved), alongside untracked `apps/web/probe-notfound.tmp.mjs` (a puppeteer probe of the three
+not-found shapes). Why those two routes and not the other four skeleton routes is the other hand's to
+write down; they are excluded from this window's commits untouched.
+
+**Status at the time of writing, nothing more.** The full visual walk against the fresh build is still
+running (its sitemap probe fetches all 1782 advertised URLs through a six-worker pool with a two-ask
+retry and a loud bail-out after five consecutive unreachable — the honest shape, and expensive on this
+host: each page measures 5–11 s here). Its terminal verdict lands in the next section of this ledger.
+
+**Not claimed.** The `8e6cf8a` badge fix has not been walked yet — this claim is arithmetic on the CSS
+and the DOM, not a printed green. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user
+text file at the repository root remains untouched; `.workbuddy/` remains untracked.
