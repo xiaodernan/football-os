@@ -107,6 +107,15 @@ edge:
     # Multiplied by the target for each consecutive failure: three failures put an instance far above any
     # real latency until it answers once, which is what "unusable" should score like.
     failure-penalty: ${LB_FAILURE_PENALTY:8}
+    # How long a measurement keeps full weight. Inside this window the score is exactly the average beside
+    # it; past it the score fades linearly to the target, reaching neutral at twice the window. Without the
+    # fade a cold first exchange (a dial, a TLS handshake, an uncompiled path) exiles an instance forever,
+    # because the balancer never sends it the request that would correct the number.
+    stale-after-ms: ${LB_STALE_AFTER_MS:30000}
+    # One draw in twenty ignores the scores and takes a random instance. The fade alone is too slow to
+    # correct a bad memory that is younger than the window; exploration is what makes the closed loop of
+    # "measured badly, never chosen, never re-measured" impossible. 0 restores a purely greedy choice.
+    explore-rate: ${LB_EXPLORE_RATE:0.05}
 
 resilience4j:
   circuitbreaker:

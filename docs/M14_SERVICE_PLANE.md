@@ -717,3 +717,58 @@ filter — `forward:/edge/fallback` — wired to the CircuitBreaker; a filter re
 **Not claimed.** A 503 is not availability; the registry being empty means the product is down and the
 edge is honest about it. The breaker is still the owner of slow/timeout failures (§4), the bulkhead
 (§16) owns admission, and this test covers neither. The plane still owns no football rule.
+
+## 18. The score column and the average beside it disagreed — a fade that started at zero (2026-11-12)
+
+**What the console printed.** On the first browser read of `/plane` (item 31), one row said
+`127.0.0.1:8731 | 60 ms | 260.7 ms | 0 | 8 answers, 0 failed | 170s ago`. The score column was the number
+the balancer decided by; the average column was the measurement behind it. They differed by 200 ms on a row
+that had answered in 260 ms, and neither column was wrong: `InstanceStats.score` blends a sample toward the
+neutral target as it ages, and 170 s is past the end of that fade.
+
+**The contradiction was inside one class.** Its docstring said *"a sample older than `edge.lb.stale-after-ms`
+is blended back toward the target"*. The code blended from age zero:
+
+```java
+double stale = Math.min(1.0, (double) ageMillis / staleAfterMillis);   // age 0 → already fading
+return base * (1 - stale) + target * stale;
+```
+
+With a 30 s window, a 3 s old sample was 10 % faded and a 30 s old sample was *entirely* the target. So the
+score column could never equal the average beside it while the page was being read — not on a slow instance,
+not on a fast one — and a reader had no way to separate "this instance improved" from "this number timed
+out". A number that is neither the measurement nor a stable ranking value is the worst of both: it moves
+when nothing happened, and it stops moving when something did.
+
+**The fix, and where each half lives.** The score keeps **full weight** for the whole window and fades
+linearly over the next one, reaching the target at 2× the window — the point at which "no answer for two
+windows" and "never seen" genuinely are the same fact. `/edge/lb` now carries `targetMillis` and
+`staleAfterMillis` so a reader is told the policy rather than guessing it, and the console marks a row
+`decayed` using the identical comparison the edge uses (`ageMillis > staleAfterMillis`) and prints the
+window and the target in the table's footer. The two knobs that had defaults in Java and lines in no config
+file (`stale-after-ms`, `explore-rate`) are now in `application.yml` with `LB_STALE_AFTER_MS` /
+`LB_EXPLORE_RATE` overrides.
+
+**Measured after the fix** (core `127.0.0.1:8731`, edge `:18085`, web `:3211`, production build
+`6-6Zm_ZT_Cygg_mVyorJx`):
+
+| read | score | average | age | mark |
+| --- | --- | --- | --- | --- |
+| 52 answers just taken | `14.2 ms` | `14.2 ms` | `15 秒前` | none |
+| the same instance after 196 s of silence | `60 ms` | `14.2 ms` | `196 秒前` | `已衰减` |
+
+`P2cChoiceTest` pins both sides of the horizon (`a_sample_inside_the_window_keeps_full_weight`,
+`a_sample_past_the_window_fades_to_the_target`), and `EdgeP2cRoutingTest` asserts the two parameters travel
+with the table. Edge suite: **66 tests, 0 failures** (65 before; the +1 is the horizon test).
+
+**The build-cache trap this produced.** The first rebuild after the copy changed kept the *old* `zh.json`
+inside `.next`: the server-side chunk still held the previous catalogue, so the page printed the key
+`plane.decayed` and the old footer next to the new column headers — new code, old words, and every static
+gate green. Grepping the built chunk for `已衰减` is what told the two apart (0 hits before, 2 after a clean
+rebuild). An incremental `next build` is not evidence that a message file changed; delete `.next` when the
+catalogue is the thing being verified.
+
+**What this does not claim.** 2× the window is a chosen horizon, not a tuned one: an instance that answers
+less often than once per two windows will sit at the target and be treated as unknown, which is the intended
+reading and also the cost. The fade is not adaptive to load, and exploration (5 %) remains the only way a
+*young* bad impression is ever re-measured. The console still cannot tell a slow instance from a distant one.

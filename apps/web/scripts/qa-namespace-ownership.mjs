@@ -109,6 +109,7 @@ const NAMESPACE_OWNERS = {
 
   // Operator tier
   "traces": { owner: "core", purpose: "The operator's trace dashboard over the span store" },
+  "plane": { owner: "core", purpose: "The service-plane console: the edge's breaker state, rate limits and load-balancer scores" },
 };
 
 /** Check that every namespace in the catalogue has an owner declaration */

@@ -122,6 +122,11 @@ class EdgeP2cRoutingTest {
 
         assertThat(report).isNotNull();
         assertThat(report.get("strategy")).isEqualTo("p2c");
+        // The two numbers that make a score readable travel with it: without the target a reader cannot
+        // tell 60 from "this instance is doing fine", and without the window they cannot tell why a row's
+        // score and its average disagree. Both are the running policy, not a constant copied into the page.
+        assertThat(((Number) report.get("targetMillis")).doubleValue()).isEqualTo(60.0);
+        assertThat(((Number) report.get("staleAfterMillis")).longValue()).isEqualTo(30_000L);
         Map<?, ?> instances = (Map<?, ?>) report.get("instances");
         assertThat(instances).isNotEmpty();
 

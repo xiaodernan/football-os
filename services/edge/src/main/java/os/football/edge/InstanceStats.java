@@ -35,6 +35,14 @@ import org.springframework.stereotype.Component;
  * decay: a sample older than {@code edge.lb.stale-after-ms} is blended back toward the target, so an
  * instance that has gone quiet is re-measured instead of remembered forever.
  *
+ * <p>The horizon matters, and the first version of this class had it wrong. Decay that starts at age zero
+ * is decay that is always running: at 3 s into a 30 s window a 260 ms measurement already reads 237 ms,
+ * so the operator's table and the moving average behind it never agree — and the reader has no way to tell
+ * a genuine improvement from the clock. A sample therefore keeps <em>full</em> weight for the whole window
+ * and only then fades, linearly to the target over the next window. Two consequences, both wanted: under
+ * normal traffic the score equals the average it claims to be derived from, and the fade is complete at
+ * twice the window, which is when a silent instance should be treated as unknown again.
+ *
  * <p>An instance never seen scores at the target: neither promoted for being new nor punished for being
  * unknown. That is what keeps the balancer from starving a freshly registered instance, which is the
  * classic failure of least-connections balancers in a rolling deploy.
@@ -74,6 +82,16 @@ public class InstanceStats {
     /** The key an instance is remembered under: host and port, the two fields that identify a listener. */
     public static String key(URI uri) {
         return uri.getHost() + ":" + uri.getPort();
+    }
+
+    /** The latency a healthy answer is expected to take, and the neutral score an unknown instance gets. */
+    public double targetMillis() {
+        return targetMillis;
+    }
+
+    /** How long a sample keeps full weight before it begins to fade toward the target. */
+    public long staleAfterMillis() {
+        return staleAfterMillis;
     }
 
     /** Folds one finished exchange into the moving average for that instance. */
@@ -141,11 +159,15 @@ public class InstanceStats {
             // A nanosecond clock here made a fresh 200 ms reading print as 199.9999925 in the very next
             // statement, which is the kind of "almost equal" that turns an assertion into a tolerance.
             long ageMillis = (System.nanoTime() - lastObservedNanos) / 1_000_000L;
-            if (ageMillis <= 0) {
+            if (ageMillis <= staleAfterMillis) {
+                // Inside the trust horizon the score *is* the measurement. Decaying from age zero made the
+                // operator's table disagree with the average beside it on every row, always.
                 return base;
             }
-            double stale = Math.min(1.0, (double) ageMillis / staleAfterMillis);
-            return base * (1 - stale) + target * stale;
+            // Past the horizon the sample fades linearly, reaching the neutral target at twice the window:
+            // an instance that has not answered in two windows is indistinguishable from an unknown one.
+            double fade = Math.min(1.0, (double) (ageMillis - staleAfterMillis) / staleAfterMillis);
+            return base * (1 - fade) + target * fade;
         }
 
         synchronized Snapshot snapshot(double target, int penalty, long staleAfterMillis) {

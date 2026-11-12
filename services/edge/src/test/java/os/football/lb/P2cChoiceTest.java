@@ -109,23 +109,31 @@ class P2cChoiceTest {
     }
 
     @Test
-    void a_sample_older_than_the_stale_window_returns_to_the_target() {
-        // A window of zero-ish is not expressible (the constructor refuses it), so the memory is aged by
-        // construction: a sample recorded against 0 ms staleness is already partly forgotten.
-        InstanceStats fresh = new InstanceStats(1.0, 50, 8, 30_000);
-        fresh.record("127.0.0.1:9001", 200, true);
-        assertThat(fresh.score("127.0.0.1:9001")).isEqualTo(200.0);
+    void a_sample_inside_the_window_keeps_full_weight() {
+        // The score is what the operator reads beside the average, so inside the trust horizon the two
+        // must be the same number. Decay that starts at age zero made them differ on every row, always.
+        InstanceStats stats = new InstanceStats(1.0, 50, 8, 30_000);
+        stats.record("127.0.0.1:9001", 200, true);
+        sleep(3);
+        assertThat(stats.score("127.0.0.1:9001")).isEqualTo(200.0);
+    }
 
-        InstanceStats forgetful = new InstanceStats(1.0, 50, 8, 1);
-        forgetful.record("127.0.0.1:9001", 200, true);
+    @Test
+    void a_sample_past_the_window_fades_to_the_target() {
+        InstanceStats stats = new InstanceStats(1.0, 50, 8, 1);
+        stats.record("127.0.0.1:9001", 200, true);
+        sleep(4);
+        // Window of 1 ms, sample 4 ms old: (4 - 1) / 1 is past the end of the fade, so the reading is back
+        // at the neutral target — which is the point: an instance that has not answered in a long time is
+        // re-measured, not punished by an impression from an hour ago.
+        assertThat(stats.score("127.0.0.1:9001")).isEqualTo(50.0);
+    }
+
+    private static void sleep(long millis) {
         try {
-            Thread.sleep(3);
+            Thread.sleep(millis);
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
         }
-        // One millisecond of staleness is the whole window, so the reading is back at the neutral target —
-        // which is the point: an instance that has not answered in a long time is re-measured, not punished
-        // by an impression from an hour ago.
-        assertThat(forgetful.score("127.0.0.1:9001")).isBetween(50.0, 60.0);
     }
 }

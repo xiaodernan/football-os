@@ -58,7 +58,24 @@ type InstanceRow = {
   ageMillis: number;
 };
 
-type LoadBalancer = { strategy: string; instances: Record<string, InstanceRow> };
+/**
+ * The report's own shape, including the two numbers that give the scores meaning.
+ *
+ * <p>`targetMillis` and `staleAfterMillis` are read from the edge rather than hardcoded here: they are the
+ * running policy, and a console that printed its own guesses would be describing a gateway nobody deployed.
+ * The `?` is honesty about an older edge that has not been upgraded yet — such a build reports no window,
+ * and the page falls back to the documented defaults below.
+ */
+type LoadBalancer = {
+  strategy: string;
+  targetMillis?: number;
+  staleAfterMillis?: number;
+  instances: Record<string, InstanceRow>;
+};
+
+/** The edge's defaults, used only when a report does not carry them (an older gateway, or a stub). */
+const DEFAULT_TARGET_MS = 60;
+const DEFAULT_STALE_AFTER_MS = 30_000;
 
 type Breaker = {
   name: string;
@@ -100,17 +117,25 @@ export default async function PlanePage() {
   const reachable = Boolean(lb || breaker || limits);
   const state = breaker?.state ?? "UNREACHABLE";
   const degraded = Boolean(limits && limits.distributedDegradations > 0) || state === "OPEN";
-  const tone = !reachable ? "bad" : degraded ? "warn" : state === "CLOSED" ? "ok" : "idle";
+  // One badge, two colours: green only when a door answered *and* nothing is degrading. An unreachable edge
+  // and a degrading one are different sentences, not different colours — the word carries which.
+  const badge = reachable && !degraded ? "ok" : "warn";
 
   const ms = (value: number) =>
     new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value) + " ms";
   const count = (value: number) => new Intl.NumberFormat(locale).format(value);
   const seconds = (millis: number) => t("secondsAgo", { value: Math.round(millis / 1000) });
+  const duration = (millis: number) => t("duration", { value: Math.round(millis / 1000) });
   const percent = (value: number) =>
     value < 0 ? "—" : new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(value / 100);
 
   const instances = Object.entries(lb?.instances ?? {});
   const ceiling = Math.max(100, ...instances.map(([, row]) => row.score)) * 1.15;
+  const targetMillis = lb?.targetMillis ?? DEFAULT_TARGET_MS;
+  const staleAfterMillis = lb?.staleAfterMillis ?? DEFAULT_STALE_AFTER_MS;
+  // Mirrors the edge's rule exactly (`ageMillis <= staleAfterMillis` keeps full weight), so the chip and the
+  // number beside it can never disagree about which side of the horizon a row is on.
+  const isDecayed = (row: InstanceRow) => row.ageMillis > staleAfterMillis;
 
   return (
     <main className="page container stack">
@@ -122,7 +147,7 @@ export default async function PlanePage() {
             <p className="lede">{t("lede")}</p>
           </div>
           <div className="plane-state">
-            <span className={`badge badge--${tone === "bad" ? "warn" : tone === "warn" ? "warn" : "ok"}`}>
+            <span className={`badge badge--${badge}`}>
               {!reachable ? t("stateDown") : degraded ? t("stateDegraded") : t("stateOk")}
             </span>
             <span className="mono muted">{t("strategy", { value: lb?.strategy ?? "—" })}</span>
@@ -157,7 +182,11 @@ export default async function PlanePage() {
             />
           </div>
 
-          <Panel title={t("instancesTitle")} eyebrow={t("instancesEyebrow")} footer={t("instancesNote")}>
+          <Panel
+            title={t("instancesTitle")}
+            eyebrow={t("instancesEyebrow")}
+            footer={t("instancesNote", { target: ms(targetMillis), window: duration(staleAfterMillis) })}
+          >
             {instances.length === 0 ? (
               <p className="unavailable">{t("instancesEmpty")}</p>
             ) : (
@@ -178,12 +207,21 @@ export default async function PlanePage() {
                       <tr key={key}>
                         <td className="mono">{key}</td>
                         <td style={{ minWidth: "9rem" }}>
-                          <Meter value={row.score} max={ceiling} label={ms(row.score)} />
+                          <Meter value={row.score} max={ceiling} display={ms(row.score)} />
                         </td>
                         <td className="num mono">{ms(row.ewmaMillis)}</td>
                         <td className="num mono">{row.failStreak}</td>
                         <td className="num mono">{t("samplesOf", { answers: count(row.observations), failures: count(row.failures) })}</td>
-                        <td className="muted">{seconds(row.ageMillis)}</td>
+                        <td>
+                          <div className="row wrap" style={{ gap: "0.4rem" }}>
+                            <span className="muted">{seconds(row.ageMillis)}</span>
+                            {isDecayed(row) && (
+                              <span className="chip chip--warn" title={t("decayedHint")}>
+                                {t("decayed")}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

@@ -162,6 +162,10 @@ const ALLOWED_ENGLISH = new Set([
   "FOOTBALL", "OS", "API", "URL", "HTTP", "HTTPS",
   // Command references
   "SCRIPTS", "DEV", "SH", "NPM", "NODE", "PYTHON", "DOCKER",
+  // The worker's own filename, which the queue message quotes as the command `python -m app.worker`.
+  // Named here for the same reason PYTHON and NPM are: a command printed inside a sentence is the
+  // command, and translating its path would hand the reader something that does not run.
+  "APP", "WORKER",
   // Common technical terms that are used as-is
   "ID", "UUID", "JSON", "API", "REST", "GRAPHQL", "WEBSOCKET",
   "AI", "ML", "GPU", "CPU", "RAM", "SSD", "HDD", "USB",

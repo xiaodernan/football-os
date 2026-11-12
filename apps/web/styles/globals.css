@@ -135,6 +135,9 @@ h1, h2, h3, h4, p { margin: 0; }
   font-size: 0.78rem; color: var(--text-2);
 }
 .chip--accent { border-color: rgba(53, 240, 164, 0.35); color: var(--accent); background: var(--accent-soft); }
+/* A chip that qualifies a figure rather than decorating it: the plane's "decayed" mark sits beside an age
+   and must read as a caveat, not a badge of success. */
+.chip--warn { border-color: rgba(255, 182, 72, 0.4); color: var(--warn); background: rgba(255, 182, 72, 0.1); }
 .tag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 
 .badge {

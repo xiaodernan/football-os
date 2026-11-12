@@ -2127,6 +2127,69 @@ suite is unaffected (no Java changes). CI prints its verdict on this push.
 
 ---
 
+## Item 32 — the score says how old it is, and five gates stop being red on the way
+
+**The defect the page found.** The console printed `60 ms` in the score column beside a `260.7 ms` average,
+and it was not a rendering bug: `InstanceStats.score` blended toward the target **from age zero**, so a
+sample 170 s old was 100 % target while a sample 3 s old was already 10 % faded. The class's own docstring
+said "a sample older than `edge.lb.stale-after-ms` is blended back toward the target" — the horizon the
+code implemented was zero, the horizon the documentation and the operator's mental model named was 30 s.
+Two consequences: the table's score column could never equal the average beside it, and a reader had no way
+to tell a genuine improvement from the passage of time.
+
+**The fix, in three places.**
+1. `InstanceStats.score` keeps **full weight** inside the window and fades linearly over the next one,
+   reaching neutral at twice the window (`P2cChoiceTest` now pins both sides: `a_sample_inside_the_window_keeps_full_weight`
+   asserts the score *is* the measurement; `a_sample_past_the_window_fades_to_the_target` asserts an old
+   sample is indistinguishable from an unknown instance).
+2. `/edge/lb` reports `targetMillis` and `staleAfterMillis` beside the table. A score without its window
+   cannot be read, and the page must not hardcode a policy it did not deploy — `EdgeP2cRoutingTest` asserts
+   both travel (60.0 / 30000).
+3. The page marks a row `decayed` when `ageMillis > staleAfterMillis` — the same comparison the edge makes —
+   and the panel's footer states the window and the neutral target **from the payload**, falling back to the
+   documented defaults only for an older gateway that reports neither. Both `explore-rate` and
+   `stale-after-ms` are now in `application.yml` with env overrides; they were defaults-only knobs that
+   appeared in no file an operator reads.
+
+**The five reds this pushed into the open** (all pre-existing at `e62a971`, none introduced by the fix, each
+measured before it was touched):
+
+| gate | red | fix |
+| --- | --- | --- |
+| `qa-namespace-ownership` | `plane` had no declared owner | declared under the operator tier, with its purpose |
+| `qa-locale-tokens` | the catalogue's own README stated 4300 keys / 4255 / 4053 translated | recomputed from the catalogues: 4367 / 4322 / 4120 |
+| `qa-locale-tokens` | `plane.eyebrow` = `traces.eyebrow` = "Operator view", worded two ways in zh/zh-TW/ar | plane's eyebrow is now "Edge console" — a different thing, a different sentence |
+| `qa-key-drift` | 118 sentence drifts > ceiling 112; 50 key drifts > ceiling 46 | `plane.eyebrow` (4 key + 2 sentence) and the two column headers that duplicated `Score`/`Answers` across five namespaces (2 + 2) — now 112 / 46, exactly the reviewed ceilings, so the next new drift reds immediately rather than being absorbed |
+| `qa-translation-quality` | `video.queuePending` ×4 carried `worker` from the command `python -m app.worker`; `ar: video.toolsNote` ended in a Latin full stop | `APP`/`WORKER` named in the allowed-token table with the reason a command's path is not translated; the Arabic sentence ends in `۔` (U+06D4), the convention 717 other messages already use |
+
+**Evidence.** Edge suite `mvn -pl edge -am test` → `Tests run: 66, Failures: 0, Errors: 0` (was 65; the new
+decay test is the +1). `npx tsc --noEmit` exits 0. Production build succeeds, BUILD_ID `6-6Zm_ZT_Cygg_mVyorJx`.
+Live run — core on `127.0.0.1:8731`, edge on `18085`, web on `3211` — `/edge/lb` answers
+`{"strategy":"p2c","targetMillis":60.0,"staleAfterMillis":30000,…}` and the page's table reads
+`127.0.0.1:8731 | 14.2 ms | 14.2 ms | 0 | 52 次回答，0 次失败 | 15 秒前` — score and average are now the same
+number inside the window; the same row after 196 s of silence reads `60 ms | 14.2 ms | 0 | 52 次回答，0 次失败 |
+196 秒前 | 已衰减`, with the footer naming the 30 s window and the 60 ms target. Screenshot:
+`var/plane-check.png` (not committed). `qa-key-drift` 112/112, `qa-key-drift` keys 46/46, `qa-locale-tokens`
+7/7, `qa-translation-quality` 9/9, `qa-namespace-ownership` 2/2, `qa-table-shape` 116/116, `qa-i18n-literals`
+9/9, `qa-icu-messages` 2/2, `qa-token-drift` 4/4. `scripts/check.sh` lint (ruff 0.8.4) and types (mypy, 176
+files) pass; its API-tests leg was stopped at 6 % after nine minutes — this machine's suite runs for hours —
+and no Python file is touched here, so the API tests that can see this change were run directly instead:
+`test_locale_claims.py`, `test_openapi_contract_currency.py`, `test_spec_audit_currency.py` → 20 passed.
+
+**A build-cache trap, measured.** `next build` run over an existing `.next` **kept a stale `zh.json` module**:
+the page rendered the pre-change catalogue while the page code was new, so the console printed the key
+`plane.decayed` instead of a word and the old footer beside the new column headers. Deleting `.next` and
+rebuilding produced the correct bundle — verified by grepping the built server chunk for `已衰减` (0 hits
+before, 2 after) *before* restarting the server. Message-file edits are not reliably picked up by an
+incremental build here; the recipe this project should use is in the memory note.
+
+**Not claimed.** The fade is not adaptive: 2× the window is a chosen horizon, not a measured optimum, and a
+workload whose instances answer less often than every 60 s will see scores parked at the target. Exploration
+(5 %) is still the only mechanism that re-measures a *young* bad impression; the fake ticker in `P2cChoiceTest`
+is the clock, not a production one.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

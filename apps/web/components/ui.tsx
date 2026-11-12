@@ -48,14 +48,32 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
   );
 }
 
-export function Meter({ value, max = 99, label }: { value: number; max?: number; label?: ReactNode }) {
+/**
+ * A bar with a number beside it.
+ *
+ * <p>`display` exists because the raw value is not always the number to print: a score in milliseconds
+ * wants its unit and its locale's digits, and printing both `{display}` and the raw value would show the
+ * same figure twice with different formatting. Pass `display` to control the text, `label` to annotate the
+ * left side, or neither for a bare bar.
+ */
+export function Meter({
+  value,
+  max = 99,
+  label,
+  display,
+}: {
+  value: number;
+  max?: number;
+  label?: ReactNode;
+  display?: ReactNode;
+}) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
   return (
     <div className="stack-sm" style={{ gap: "0.25rem" }}>
-      {label && (
+      {(label || display) && (
         <div className="between" style={{ fontSize: "0.82rem" }}>
           <span className="muted">{label}</span>
-          <span className="num mono">{value}</span>
+          <span className="num mono">{display ?? value}</span>
         </div>
       )}
       <div className="bar">
