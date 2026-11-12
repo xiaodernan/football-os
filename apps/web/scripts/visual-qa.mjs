@@ -17,7 +17,7 @@
  * Env overrides: QA_BASE, CHROME_PATH.
  */
 
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import { mkdir, stat, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -35,6 +35,20 @@ const API_BASE = process.env.QA_API ?? 'http://127.0.0.1:8731';
 const CHROME =
   process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const OUT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../../docs/screenshots');
+
+/**
+ * The edge fixture's address, for the one section that reads a gateway the walk did not start.
+ *
+ * The service plane page fetches `/edge/lb`, `/edge/breaker` and `/edge/limits` from whatever `EDGE_URL`
+ * the *web tier* was started with — a server-side variable the walk cannot set and must not try to. So the
+ * runners set it (`scripts/run-walks.mjs` and `scripts/verify-production.sh` both pass
+ * `EDGE_URL=http://127.0.0.1:8799`) and this walk drives the fixture's modes over HTTP. Started here when
+ * `QA_EDGE` is absent, which is what a bare `node scripts/visual-qa.mjs` does: the fixture comes up, and if
+ * the web tier was started without `EDGE_URL` the section says so instead of silently passing.
+ */
+const EDGE_PORT = Number(process.env.QA_EDGE_PORT ?? 8799);
+const EDGE_FIXTURE = process.env.QA_EDGE ?? `http://127.0.0.1:${EDGE_PORT}`;
+
 
 /**
  * The catalogues themselves, so a check can assert the page printed a *catalogue's* string rather than a
@@ -83,6 +97,52 @@ async function open(page, path) {
   visitedPaths.add(path);
   await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle2', timeout: 90_000 });
   await sleep(400);
+}
+
+/**
+ * Start the edge fixture, unless the runner already did — and either way, prove it answers before the
+ * section leans on it.
+ *
+ * A fixture that failed to bind is the quietest possible failure: the page renders "edge unreachable", the
+ * section's numeric checks fail with confusing details, and nothing says the port was taken. So this waits
+ * for `/control/mode` and returns the answer rather than a handle.
+ */
+async function startEdgeFixture() {
+  let child = null;
+  if (!process.env.QA_EDGE) {
+    child = spawn(process.execPath, ['scripts/edge-stub.mjs', String(EDGE_PORT)], {
+      cwd: resolve(dirname(fileURLToPath(import.meta.url)), '..'),
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    child.stdout.on('data', (chunk) => process.stdout.write(`  ${chunk}`));
+    child.stderr.on('data', (chunk) => process.stderr.write(`  ${chunk}`));
+  }
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    try {
+      const response = await fetch(`${EDGE_FIXTURE}/control/mode`, { signal: AbortSignal.timeout(1000) });
+      if (response.ok) return { child, mode: (await response.json()).mode };
+    } catch {
+      /* not bound yet */
+    }
+    await sleep(250);
+  }
+  return { child, mode: null };
+}
+
+/** Tell the fixture what to answer next, and wait for it to say it heard. */
+async function setEdgeMode(mode) {
+  const response = await fetch(`${EDGE_FIXTURE}/control/mode/${mode}`, { method: 'POST', signal: AbortSignal.timeout(2000) });
+  if (!response.ok) throw new Error(`the fixture refused mode ${mode}: HTTP ${response.status}`);
+  await sleep(100);
+}
+
+async function stopEdgeFixture(child) {
+  if (!child || child.exitCode !== null) return;
+  await new Promise((done) => {
+    child.on('exit', done);
+    child.kill();
+    setTimeout(done, 3000);
+  });
 }
 
 /** Wait until the page body contains `text`; Next dev compiles routes on first hit. */
@@ -172,6 +232,14 @@ async function probeOne(url, budgetMs = 25_000) {
 
 /** How many URLs only answered on the second ask. Read by the report, so a slow host is visible. */
 let retriedTimeouts = 0;
+
+/**
+ * The edge fixture, held out here so the `finally` that closes the browser can close it too.
+ *
+ * A fixture left listening outlives the walk, and the next run finds the port taken — which is exactly the
+ * failure `startEdgeFixture` cannot report, because the *old* process answers perfectly.
+ */
+let edgeFixture = null;
 
 async function clickByText(page, selector, text) {
   const handle = await page.evaluateHandle(
@@ -511,13 +579,30 @@ async function run() {
     // Ask must answer from citations, and must refuse when the corpus cannot ground an answer.
     await open(page, '/knowledge');
     await waitForText(page, 'Ask the library');
+    // Where the answer came from is the tier's word, not an assumption: the badge this section checks is the
+    // page's own claim, and the only way to test a claim is against something other than itself. So the ask
+    // response is captured as it streams past — `demo_mode` in the payload the page just rendered.
+    //
+    // The check this replaces demanded the demo badge outright, which made it a check on the *host*: on
+    // 2026-11-12 this machine had a language-model key configured, the tier answered `demo_mode: false`, the
+    // page labelled it "AI-generated" — correctly — and the walk went red. A gate that fails when the product
+    // is better configured than the gate assumed is measuring the environment.
+    let askPayload = null;
+    const captureAsk = (response) => {
+      if (!response.url().includes('/api/v1/knowledge/ask') || response.request().method() !== 'POST') return;
+      response.json().then((body) => { askPayload = body; }).catch(() => {});
+    };
+    page.on('response', captureAsk);
     await page.type('#kask-question', 'How should a midfield pair react when the opposition presses their own goalkeeper?');
     await clickByText(page, 'button', 'Ask the library');
     await waitForText(page, 'Cited passages');
+    for (let attempt = 0; attempt < 20 && !askPayload; attempt += 1) await sleep(100);
+    page.off('response', captureAsk);
     const libAnswer = await page.evaluate(() => {
       const citations = [...document.querySelectorAll('.kn-cite')];
       return {
         badge: document.querySelector('.kn-answer-block .badge--demo')?.innerText ?? '',
+        live: document.querySelector('.kn-answer-block .badge--live')?.innerText ?? '',
         answer: document.querySelector('.kn-answer')?.innerText ?? '',
         cites: citations.map((c) => ({
           quote: (c.querySelector('.kn-cite__quote')?.innerText ?? '').replace(/[“”]/gu, '').replace(/…$/u, '').trim(),
@@ -532,7 +617,18 @@ async function run() {
       libAnswer.cites.every((c) => c.quote.length > 40 && c.href.startsWith('/knowledge/')),
       libAnswer.cites.map((c) => `${c.href} (${c.quote.length} chars)`).join(' | '),
     );
-    check('demo-mode answers self-label as extractive, never as generated', /DEMO MODE/iu.test(libAnswer.badge) && /extractive/iu.test(libAnswer.badge), libAnswer.badge || 'no demo badge');
+    // The trust claim, in the direction that matters: a demo answer must never be dressed as generated. An
+    // extractive answer presented as a model's work is the one mislabel a reader cannot detect from the page.
+    check(
+      'the answer labels its own provenance: demo says extractive, a live model says AI-generated',
+      askPayload !== null &&
+        (askPayload.demo_mode === true
+          ? libAnswer.badge === englishMessages.knowledge.demoModeExtractive && libAnswer.live === ''
+          : libAnswer.live === englishMessages.knowledge.aiGenerated && libAnswer.badge === ''),
+      askPayload === null
+        ? 'the ask response was never captured'
+        : `demo_mode=${askPayload.demo_mode} · model=${askPayload.model} · badge "${libAnswer.badge || libAnswer.live}"`,
+    );
     await shot(page, '16-knowledge-ask-desktop');
 
     // Spec §62: a citation only counts if it resolves. Follow the first card's own link and require the quote.
@@ -2174,6 +2270,30 @@ async function run() {
           `206 bytes 0-99/${total} · suffix ${ranged.suffixRange} · past-end ${ranged.pastStatus} ${ranged.pastRange} · whole ${ranged.wholeBytes} B`,
         );
 
+        // 12e-1. The queue door: the same tools panel can hand the run to the worker instead of holding
+        // the request open. During this walk no worker drains the board, so the honest end state the page
+        // can print is QUEUED — the chip says exactly that, and the clip's own jobs listing names the row it created.
+        const jobsUrl = reportPath.replace('/video/', '/api/v1/video/') + '/jobs';
+        const queuedBefore = await page.evaluate(async (url) => {
+          const response = await fetch(url, { credentials: 'same-origin' });
+          if (!response.ok) return null;
+          const payload = await response.json();
+          return (payload?.items ?? []).filter((item) => item.status === 'QUEUED' || item.status === 'RUNNING').length;
+        }, jobsUrl);
+        await clickByText(page, 'button', 'Queue a background run');
+        await waitForText(page, 'Queued — the worker will pick it up');
+        const queuedAfter = await page.evaluate(async (url) => {
+          const response = await fetch(url, { credentials: 'same-origin' });
+          if (!response.ok) return null;
+          const payload = await response.json();
+          return (payload?.items ?? []).filter((item) => item.status === 'QUEUED' || item.status === 'RUNNING').length;
+        }, jobsUrl);
+        check(
+          'the queue door puts one QUEUED row on the clip’s board instead of holding the request',
+          typeof queuedBefore === 'number' && typeof queuedAfter === 'number' && queuedAfter === queuedBefore + 1,
+          `queued rows before ${queuedBefore} · chip says QUEUED · after ${queuedAfter}`,
+        );
+
         const anonReport = await fetch(`${BASE}${reportPath}`, { redirect: 'manual' });
         const anonApi = await fetch(`${BASE}${reportPath.replace('/video/', '/api/v1/video/')}`, { redirect: 'manual' });
         const anonFrame = await fetch(`${BASE}${reportPath}/frames/0`, { redirect: 'manual' });
@@ -3313,6 +3433,147 @@ async function run() {
     );
     await shot(page, 'player-aggregate-desktop');
 
+    // 12k. The service plane console: the edge's own three doors, on one page.
+    //
+    // `/edge/breaker`, `/edge/limits` and `/edge/lb` answered the whole time and were readable by curl only —
+    // by the person who already knew they existed. The page that now reads them is a *reader*, so what it has
+    // to get right is not "does the edge work" (66 Java tests say that) but three narrower things:
+    //
+    //   * it prints the numbers the door sent, and gets the two columns that disagree *right*: a score that
+    //     has faded toward the target is not the same fact as the average beside it, and the page must show
+    //     both and mark the row that has faded;
+    //   * it reads the window and the target out of the payload, so a page cannot quietly describe a gateway
+    //     nobody deployed;
+    //   * a door that stops answering makes that panel say so, and never the page fail — "the edge is down" and
+    //     "the edge is fine but I cannot see it" are different sentences.
+    //
+    // The fixture (`scripts/edge-stub.mjs`) is what makes all three assertable: it answers with numbers chosen
+    // so a wrong rendering is *visible*, and it can be told to degrade or to vanish. `QA_EDGE` points at it;
+    // the runner gave the web tier `EDGE_URL` on the same port.
+    const planeMessage = (key, parameters = {}) =>
+      Object.entries(parameters).reduce((text, [name, value]) => text.split(`{${name}}`).join(String(value)), englishMessages.plane[key]);
+    const planeChinese = (key) => chineseMessages.plane[key];
+
+    const fixture = await startEdgeFixture();
+    edgeFixture = fixture;
+    check(
+      'the edge fixture answers, so the console has a door to read',
+      fixture.mode === 'up',
+      `${EDGE_FIXTURE} answered mode ${fixture.mode ?? '(nothing)'}`,
+    );
+
+    /** The table's rows as the reader sees them: each cell's text, and any chip the row carries. */
+    const planeRows = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('main table tbody tr')].map((row) => ({
+          cells: [...row.querySelectorAll('td')].map((cell) => (cell.innerText ?? '').replace(/\s+/gu, ' ').trim()),
+          chips: [...row.querySelectorAll('.chip')].map((chip) => (chip.textContent ?? '').trim()),
+        })),
+      );
+
+    await open(page, '/plane');
+    await waitForText(page, '10.0.0.11:8080', 30_000);
+    const planeText = await bodyText(page);
+    const planeRowList = await planeRows();
+
+    check(
+      'the console lists the instances the load balancer reported',
+      planeRowList.length === 2 && planeRowList.every((row) => /^10\.0\.0\.1[12]:8080$/u.test(row.cells[0] ?? '')),
+      planeRowList.map((row) => row.cells[0]).join(', ') || 'no rows',
+    );
+
+    // The fresh row is the control: inside the window, the score *is* the measurement, so both columns read
+    // the same number. If the page ever printed a decayed score here, this is the check that notices.
+    const freshRow = planeRowList.find((row) => row.cells[0] === '10.0.0.11:8080');
+    check(
+      'a sample inside the window prints its own average as its score, and carries no decay mark',
+      Boolean(freshRow) && freshRow.cells[1] === '12.5 ms' && freshRow.cells[2] === '12.5 ms' && freshRow.chips.length === 0,
+      `${freshRow?.cells[1]} score · ${freshRow?.cells[2]} average · chips [${freshRow?.chips.join(',')}]`,
+    );
+
+    // The aged row is the defect this page was built for: 143 s of silence past a 30 s window, so the score
+    // has faded to the 60 ms target while the average is still the 240.5 ms it was measured at. Two numbers
+    // that disagree on purpose, and exactly one mark saying why.
+    const agedRow = planeRowList.find((row) => row.cells[0] === '10.0.0.12:8080');
+    check(
+      'a sample past the window prints the faded score beside the average it came from, and says it decayed',
+      Boolean(agedRow) &&
+        agedRow.cells[1] === '60 ms' &&
+        agedRow.cells[2] === '240.5 ms' &&
+        agedRow.chips.includes(englishMessages.plane.decayed),
+      `${agedRow?.cells[1]} score · ${agedRow?.cells[2]} average · chips [${agedRow?.chips.join(',')}]`,
+    );
+
+    check(
+      'exactly the aged row carries the decay mark',
+      planeRowList.filter((row) => row.chips.includes(englishMessages.plane.decayed)).length === 1,
+      `${planeRowList.filter((row) => row.chips.length > 0).length} marked of ${planeRowList.length}`,
+    );
+
+    check(
+      'the window and the target come out of the payload, not out of the page',
+      planeText.includes(planeMessage('duration', { value: 30 })) && planeText.includes('60 ms'),
+      `"${planeMessage('duration', { value: 30 })}" and "60 ms" in the footer: ${/30s/u.test(planeText) && planeText.includes('60 ms')}`,
+    );
+
+    check(
+      'the header names the breaker state and the balancing strategy the doors reported',
+      planeText.includes(englishMessages.plane.stateOk) && planeText.includes(planeMessage('strategy', { value: 'p2c' })),
+      `${englishMessages.plane.stateOk} · p2c`,
+    );
+
+    check(
+      'the console is not indexable, whatever a crawler does with the rest of the site',
+      await page.evaluate(() => /noindex/iu.test(document.querySelector('meta[name="robots"]')?.content ?? '')),
+    );
+
+    await shot(page, 'service-plane-desktop');
+
+    // Degraded: the same three doors, answering with a breaker that has tripped. The badge must change word,
+    // not just colour — a reader who cannot tell green from amber still has to be able to read the sentence.
+    await setEdgeMode('degraded');
+    await open(page, '/plane');
+    await waitForText(page, englishMessages.plane.stateDegraded, 30_000);
+    const degradedText = await bodyText(page);
+    check(
+      'a tripped breaker and degradations turn the badge into the word for degraded',
+      degradedText.includes(englishMessages.plane.stateDegraded) && !degradedText.includes(englishMessages.plane.stateOk),
+      degradedText.match(/Degraded|Every door answering/u)?.[0] ?? 'neither word',
+    );
+
+    // Gone: every door 503s. The page must still render, and it must say the edge did not answer rather than
+    // showing an empty table — an empty table reads as "the edge is fine and has no instances", which is a
+    // different and much more alarming fact.
+    await setEdgeMode('down');
+    await open(page, '/plane');
+    await waitForText(page, englishMessages.plane.unreachableTitle, 30_000);
+    const downBody = await page.evaluate(() => ({
+      text: document.body.innerText,
+      tables: document.querySelectorAll('main table').length,
+      marked: [...document.querySelectorAll('main .notice, main .unavailable')].length,
+    }));
+    check(
+      'an edge that does not answer is said in words, with no table pretending it is empty',
+      downBody.tables === 0 && downBody.text.includes(englishMessages.plane.unreachableTitle),
+      `${downBody.tables} tables · ${downBody.marked} notices`,
+    );
+    await shot(page, 'service-plane-down');
+
+    // Back up, and read again in Chinese: the decay mark is a catalogue value, not a literal, and the one word
+    // a reader most needs on this page must be translated like everything else around it.
+    await setEdgeMode('up');
+    await page.setCookie({ name: 'fo_locale', value: 'zh', url: BASE });
+    await open(page, '/plane');
+    await waitForText(page, planeChinese('decayed'), 30_000);
+    const chinesePlane = await page.evaluate(() => document.body.innerText);
+    check(
+      'the decay mark is translated rather than a literal the English catalogue happened to carry',
+      chinesePlane.includes(planeChinese('decayed')) && !chinesePlane.includes(englishMessages.plane.decayed),
+      `"${planeChinese('decayed')}" present: ${chinesePlane.includes(planeChinese('decayed'))}`,
+    );
+    await shot(page, 'service-plane-zh');
+    await page.setCookie({ name: 'fo_locale', value: 'en', url: BASE });
+
     // 13. Mobile viewport pass on the main surfaces (login is checked after sign-out below).
 
     await page.setViewport(MOBILE);
@@ -3358,6 +3619,7 @@ async function run() {
       ['/simulate', 'Play a fixture', 'simulate'],
       ['/challenges', 'Start a run', 'challenges'],
       ['/graph', 'Knowledge Graph', 'graph'],
+      ['/plane', englishMessages.plane.instancesTitle, 'plane'],
       ['/settings', 'Data', 'settings'],
     ]) {
       await mobileSurface(surface);
@@ -3749,6 +4011,9 @@ async function run() {
     // If Chrome died mid-walk, closing must not throw from the finally — that would swallow the
     // report for the ~80 checks that already passed and leave one silent exit code behind.
     await browser.close().catch(() => {});
+    // The fixture is a child of this process and would die with it anyway, but only after the port is
+    // released — and a port still held by a zombie is what the *next* run mistakes for a healthy fixture.
+    await stopEdgeFixture(edgeFixture?.child).catch(() => {});
   }
 
   // Console noise is a gate, not a footnote: a walk that prints errors and still exits 0 teaches
