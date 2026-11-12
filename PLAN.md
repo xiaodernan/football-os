@@ -1930,6 +1930,34 @@ meets. `prefers-reduced-motion` stops every animation rather than pausing one mi
 
 ---
 
+## Item 26 — the queue's claim was half-indexed, and now it is not
+
+**The gap.** `ix_jobs_status_created` was `(status, created_at)` while every claim reads
+`WHERE status='QUEUED' ORDER BY created_at, id`. `id` is a `String(40)` primary key, not SQLite's rowid, so
+the planner served the filter and the first sort term from the index and then built a temporary B-tree for
+the second:
+
+```
+SEARCH jobs USING INDEX ix_jobs_status_created (status=?)
+USE TEMP B-TREE FOR LAST TERM OF ORDER BY
+```
+
+**The shape.** Migration `0062` recreates the index as `(status, created_at, id)` and the model says why in
+the place the next reader will look. The plan is now one line — `SEARCH jobs USING INDEX
+ix_jobs_status_created (status=?)` — with no sort step, which matters because the claim is the queue's only
+hot path and runs on every worker tick, busy or idle.
+
+**The audit that found it, and did not find more.** `EXPLAIN QUERY PLAN` over the five hot reads (a team's
+sheet, a player's season, articles by entity, articles by category, the claim) against the real fixture —
+16 481 news links, 7 280 stat lines, 856 articles — showed the other four already index-served, with a
+temporary B-tree only where the result set is a dozen rows. No index was added "for performance" at that
+size: it would cost every write and buy nothing a reader could feel. `tests/test_query_plans.py` is the part
+worth keeping — five parametrised plans plus the claim's own, asserting **no SCAN in any relation** and no
+temporary sort on the claim, so the day a filter loses its index the suite says so instead of a page getting
+slow.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

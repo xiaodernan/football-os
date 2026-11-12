@@ -293,7 +293,11 @@ class Job(Base):
     """Async job state machine (spec §47, ADR-006)."""
 
     __tablename__ = "jobs"
-    __table_args__ = (Index("ix_jobs_status_created", "status", "created_at"),)
+    # `id` is the third column because the claim orders by `created_at, id` and `id` is a string primary
+    # key, not SQLite's rowid — without it the planner keeps the first term and sorts the rest in a
+    # temporary B-tree on every claim. Measured: `EXPLAIN QUERY PLAN` said `USE TEMP B-TREE FOR LAST TERM
+    # OF ORDER BY` before this column, and nothing after it (tests/test_query_plans.py holds the line).
+    __table_args__ = (Index("ix_jobs_status_created", "status", "created_at", "id"),)
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
     type: Mapped[str] = mapped_column(String(60), nullable=False)
