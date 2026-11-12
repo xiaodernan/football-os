@@ -86,6 +86,13 @@ def _serve_slice(path: Path, media_type: str, range_header: str | None) -> Respo
     if kind == "partial":
         headers["Content-Range"] = f"bytes {start}-{stop}/{size}"
 
+    # A clip's bytes and its frames are immutable once produced: the uploaded file is never rewritten
+    # in place, and the frames are a function of the file. Without an explicit cache lifetime the
+    # browser treats heuristically uncacheable media as must-revalidate and re-downloads every frame
+    # on every visit — which is how a report page can exhaust its own per-route bucket, 429, and
+    # take the frames strip down with it. One hour, private to this account, no revalidation needed.
+    headers["Cache-Control"] = "private, max-age=3600, immutable"
+
     def chunks() -> Any:
         with path.open("rb") as handle:
             handle.seek(start)
