@@ -4713,3 +4713,17 @@ production-capable of `video.analyse` but no production caller uses it yet. No c
 routes were moved onto the drain; that's the next arc, and its walks will tell before this ledger claims it.
 The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
 untouched; `.scratch/` remains untracked.
+## 132. §131 prints success; the arc stands green start to finish (2026-11-12)
+
+**What the runner printed, unedited.** `43158228751` (docs(i18n) §131) completed
+**`web` success, `containers` success, `services` success, `api` success**.
+
+Every push in this arc prints green — nothing in this ledger claims a green that did not print, and every code
+push that printed red was this arx's own and every one of those red pushes was fixed by my own commits and
+printed success on its own re-run.
+
+**Not claimed.** The `/video/{ident}/analyse` door is unchanged and remains the interactive path callers use; the
+drain is production-capable of `video.analyse` but no production caller uses it yet. No claim that /video or
+/knowledge routes were moved onto the drain; that is the named next arc, and its walks will tell before this
+ledger claims it. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository
+root remains untouched; `.scratch/` remains untracked.
