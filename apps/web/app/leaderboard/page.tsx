@@ -65,26 +65,28 @@ export default async function LeaderboardPage() {
             <p className="muted">{t("emptyNote")}</p>
           </section>
         ) : (
-          <table className="table" aria-label={t("title")}>
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">{t("thPlayer")}</th>
-                <th scope="col">{t("thXp")}</th>
-                <th scope="col">{t("thStreak")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaders.map((entry) => (
-                <tr key={entry.rank}>
-                  <td>{entry.rank}</td>
-                  <td>{entry.name}</td>
-                  <td>{t("xp", { xp: entry.xp })}</td>
-                  <td>{t("streak", { count: entry.streak })}</td>
+          <div className="table-wrap table-wrap--tall">
+            <table className="table table--sticky" aria-label={t("title")}>
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">{t("thPlayer")}</th>
+                  <th scope="col">{t("thXp")}</th>
+                  <th scope="col">{t("thStreak")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {leaders.map((entry) => (
+                  <tr key={entry.rank}>
+                    <td>{entry.rank}</td>
+                    <td>{entry.name}</td>
+                    <td>{t("xp", { xp: entry.xp })}</td>
+                    <td>{t("streak", { count: entry.streak })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         <p className="muted">

@@ -336,7 +336,7 @@ export function CommunityWall({caps, feed, following, profile, viewer}: {caps: C
       <CallNote id="wall" note={wallNote} />
 
       <div className="table-wrap">
-        <table>
+        <table className="table">
           <thead>
             <tr>
               <th scope="col">{t("thPost")}</th>

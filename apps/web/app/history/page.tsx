@@ -191,8 +191,8 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
               cta={t("goToAcademy")}
             />
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table className="table">
+            <div className="table-wrap table-wrap--tall">
+              <table className="table table--sticky">
                 <thead>
                   <tr>
                     <th scope="col">{t("colDate")}</th>

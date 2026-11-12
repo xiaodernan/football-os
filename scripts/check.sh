@@ -78,6 +78,15 @@ echo "── Web: crawl-policy reconciliation gate ─────────�
 # Files only: no server, no browser.
 (cd apps/web && node scripts/qa-crawl-policy.mjs)
 
+echo "── Web: table-shape gate ─────────────────────────────"
+# One sheet, one frame: every <table> names `.table` and sits inside `.table-wrap` (or the world pages'
+# alias). Three tools panels were wrapped but forgot the class, so 112 of 115 sheets carried the design
+# system's rules and three fell back to the browser's defaults — no uppercase head, no row rule, no hover.
+# tsc cannot see a class name and the browser walk only checks that a row is there, not that it is dressed
+# like its neighbours, so this walk resolves each <table> through the repo's TypeScript and asks both
+# questions. Files only: no server, no browser.
+(cd apps/web && node scripts/qa-table-shape.mjs)
+
 echo "── Web: metadata-title i18n gate ─────────────────────"
 # §81 2c's permanent rule over the whole page population: a page may still write its <title> as a load-time
 # literal, but only while its own heading is a literal that says the same thing — a literal tab over a keyed

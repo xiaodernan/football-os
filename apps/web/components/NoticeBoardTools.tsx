@@ -161,7 +161,7 @@ export function NoticeBoard({ audience, caps, ident, list }: { audience: string 
       )}
 
       <div className="table-wrap">
-        <table>
+        <table className="table">
           <thead>
             <tr>
               <th scope="col">{tc("thNotice")}</th>

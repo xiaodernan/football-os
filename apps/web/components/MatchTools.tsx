@@ -154,8 +154,8 @@ export function FixtureBoard({ busy, list, onErase, onPlay }: { busy: string | n
         </span>
       </div>
 
-      <div className="table-wrap">
-        <table>
+      <div className="table-wrap table-wrap--tall">
+        <table className="table table--sticky">
           <thead>
             <tr>
               <th scope="col">{tc("thFixture")}</th>
