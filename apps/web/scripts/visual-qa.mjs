@@ -1834,9 +1834,16 @@ async function run() {
         (analysis.ungrounded.length === 0 || analysisBody.includes(analysis.ungrounded[0].reason.slice(0, 40))),
       analysis.ungrounded.length ? analysis.ungrounded[0].reason.slice(0, 80) : `all ${analysis.points.length} topics grounded · no refusal panel`,
     );
+    // The chip is a fact about the provider, not a vibe: a keyless host renders
+    // `analysisChipDemo`, a keyed one renders `analysisChipModel` with the payload's own `model`
+    // string — and on both, that string says *extractive assembly*. The claim the check carries
+    // is the one the payload makes; the host's key is not the claim.
+    const expectedChip = analysis.demo_mode
+      ? englishMessages.tactics.analysisChipDemo
+      : englishMessages.tactics.analysisChipModel.replace('{model}', analysis.model);
     check(
       'the analysis is labelled extractive assembly, never a model opinion',
-      /EXTRACTIVE · NO AI KEY/u.test(analysisBody) && !/AI-generated/iu.test(analysisBody),
+      analysisBody.includes(expectedChip) && !/AI-generated/iu.test(analysisBody),
       `${analysis.model} · ${analysis.provider}`,
     );
     await shot(page, '32-tactics-detail-desktop');
