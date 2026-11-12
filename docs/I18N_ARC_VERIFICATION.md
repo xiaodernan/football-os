@@ -4960,3 +4960,50 @@ when the runner runs them, and the verdict lands in the next section of this led
 browser walk of the queued button is CI's to print (the sync path is what the existing walk clicks, and it is
 unchanged); the `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository
 root remains untouched; `.workbuddy/` remains untracked.
+## 141. The red ledger of the video and plane arcs — every push, every failure, every cure (2026-11-12/13)
+
+**Why this section exists.** Three pushes over ~15 hours printed **api failure**, two printed **web failure**,
+one printed both. None of them is a mystery now, and none of them was left red on the branch. This section is
+the unedited table plus what each red cost. The two contract-only reds that retired the stale contract on
+`c103632` are recorded in §139; everything after that lands here.
+
+| run | commit | verdict | what failed |
+| --- | --- | --- | --- |
+| `43222757800` | `c103632` | failure (api) | stale `docs/api/openapi.json` by one route (`/metrics/jobs-stream`); currency red by `test_openapi_contract_currency.py` |
+| `43223040020` | `b259d2e` | failure (api) | the same stale contract re-checked at this push; the probe's SHA ledger |
+| `43235112715` | `67c8674` | failure (api ×3 + web) | `test_assert_message_forms` — a list-comprehension as an assert's message operand; `test_locale_claims` — the catalogue README table stated a population of 4300 while `en.json` held 4364; web: `plane.metaTitle` orphaned (namespace committed here, page landed in `e62a971`) |
+| `43237501789` | `e62a971` | failure (api ×4 + web ×2) | the same three api reds + `AUDIT_FIGURES page_routes=68` vs 69 committed pages; web: Locale-token gate — `ar`/`zh`/`zh-TW` rows behind their catalogue figures, and `plane.eyebrow` held the same English sentence as `traces.eyebrow` with different wordings underneath |
+| `43238664935` | `191bd12` (page_routes fix) | failure (api ×3 + web ×2) | the same assert-message and catalogue-table reds — this push cured only the page-route figure |
+| `43241323887` | `a37433f` (catalogue cure) | failure (api + web) | api: the `PostgreSQL + pgvector` leg — `test_query_plans.py` spoke SQLite to a PostgreSQL server (`EXPLAIN QUERY PLAN` is invalid there) — 6 tests that CI runs the whole suite against; web: Key-drift 116 sentence issues over 112 — the plane arc's two shared sentences |
+| `43249595253` | `757ad92` (PG plan + drift cure) | **api success**, **services success**, **containers success**, **web failure** | web: Translation-freshness — `plane.colSamples` changed English (`Answers` → `Samples`) without its five translations moving (baseline `d7784b2`); the api leg that would have caught the PG plan test was green |
+| `43254611864` | `dd590f4` (the lane's P2C decay fix, which also re-baked the catalogue table and cured the Locale-token and translation-quality reds) | **success** | **api, web, services, containers — all four green.** The fresh translations landed in the same commit |
+
+**What this window cured, named exactly.** `test_video_background.py`'s message operand (assert-forms); the
+catalogue README population (4364, numerators recomputed: 4319 in zh/zh-TW/ar/he, 4117 in fr — matching the
+committed tree); `plane.eyebrow` reworded to `Edge console` in all six catalogues (the wording the other hand
+chose in its uncommitted P2C work, taken verbatim so no conflict); the Key-drift cure (`plane.colSamples` "Samples"
+un-shares it from `scout.answers`; `plane.colScore` zh/zh-TW aligned to `比分` with the five existing namespaces —
+the committed season measured **112** drift over **268** shared sentences, exactly the reviewed ceiling) and its
+companion `test_query_plans.py` rewrite — SQLite keeps the plan-shape assertions, PostgreSQL asserts what is
+deterministic on an empty fixture (statement parses; existence and exact column order of the five indexes the hot
+reads stand on; `ix_jobs_status_created` must be `status, created_at, id` in order). Verified on both engines on
+this host: `pytest tests/test_query_plans.py` → **6 passed** (SQLite), **6 passed** (provisioned throwaway database
+on `127.0.0.1:54321`).
+
+**What the lane cured in `dd590f4`, because its gate saw it first.** The catalogue README table re-baked to the
+current figures (4367 / 4322 / 4120), `plane.eyebrow` (identical "Edge console" rewording — the two hands cured
+the same red in parallel and agreed, by the lane landing first in the tree), `qa-translation-quality` on my two
+`video.queue*` strings (a command's path is not translated — `APP`/`WORKER` named in the allowed-token table; the
+Arabic sentence now ends in U+06D4), and `qa-key-drift` back to exactly **112 / 46**. Its commit also landed the
+P2C decay fix and the console's decayed marker, and the CI web leg prints success on it with the six catalogues
+exactly as the freshness gate wants them.
+
+**What the arc delivered.** Item 30 (background re-analyse door — `?background=true` → 202 QUEUED, no-duplicate
+rule, the web tools panel polls the job endpoint and refreshes when the row settles), Item 31 (service-plane
+console `/plane` — server-rendered, per-door degradation), the `plane` namespace in all six catalogues, the five
+translations of the decay copy, the `page_routes=69` audit figure, probe run L (240/55/103, `d4b4ae…`), and every
+gate reading the committed tree. Every verdict in the table above is printed by the runner, not asserted here.
+
+**Not claimed.** No claim that CI will stay green as the tree keeps moving — the lane's arc continues in flight.
+The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
+untouched; `.workbuddy/` remains untracked.
