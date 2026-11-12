@@ -80,6 +80,28 @@ cd apps/api && .venv/Scripts/python.exe -m pytest tests/test_edge_config_parity.
 # walk-retry.py, walk-plane.py — 12/12, 9/9, 12/12, 16/16
 ```
 
+## 6. The /plane console, and how to read it when it is not answering
+
+`GET /plane` on the web tier (session-gated, `PROTECTED_PREFIXES` in `apps/web/middleware.ts`, disallowed
+in `robots`) server-renders the operator's view of the three doors below: `/edge/breaker`, `/edge/limits`
+and `/edge/lb`. It is a reader, not a monitor: each door is fetched per request with a 1500 ms timeout and
+`no-store`, and a door that does not answer renders as **its own** unavailable panel — a breaker that says
+nothing and a breaker that is refusing are different facts, and the page does not collapse them. There is
+no auto-refresh and no polling; reload the page to re-read.
+
+The one knob an operator sets is `EDGE_URL` in `apps/web/.env.local` (see `apps/web/.env.example`): the address
+the **web server** uses to reach the gateway — `http://edge:8080` in the compose network, `http://127.0.0.1:8080`
+for a local edge. It is not a public URL. If the console renders an unavailable panel for all three doors, the
+first checks are `curl -sS "$EDGE_URL/edge/breaker"`, then the compose `plane` profile's `edge` container, then
+the API's own `/healthz` — in that order. A stale `EDGE_URL` fails exactly the same way a dead gateway does,
+and the page's own panels are the honest difference: three absences, one culprit, no guessing from the browser.
+
+`/edge/lb` prints a **decayed** marker when an instance's last answer is older than `staleAfterMillis` past the
+`targetMillis` the payload carries (the edge decays a sample to the neutral target once it passes the window,
+exploring 5 % of the time so a stale memory can be corrected). A row marked `decayed` is not a sick instance;
+it is one the balancer is re-measuring. `/edge/lb` and this console both report the window and the target in the
+payload — nothing in the page hardcodes them, so the console cannot drift from the edge's own policy.
+
 ## What this runbook does not claim
 
 - It does not deploy a collector backend, Spring Cloud Bus, or a Redis-backed shared rate limiter.
