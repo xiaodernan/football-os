@@ -2007,6 +2007,49 @@ goes red instead of shipping.
 
 ---
 
+## Item 29 — two random instances, one comparison, and a deliberate five-percent mistake
+
+**The gap.** `lb://football-core` sat behind Spring Cloud's round-robin balancer, which spreads requests
+evenly by construction — including over an instance that has begun to answer slowly. With two cores and one
+degraded, half of every caller's requests pay the degraded latency, and the edge cannot tell: the only
+per-instance fact it kept was "registered". The circuit breaker does not cover this, because a breaker is a
+binary at five failures; an instance that is merely three times slower never trips it, and by the time it
+does, every caller has paid five times.
+
+**The shape.** Three pieces. `InstanceStats` keeps one exponential moving average of answered latency per
+instance (`edge.lb.ewma-alpha`, 0.3) plus a consecutive-failure streak, and turns them into a score: the
+average, plus `penalty × target` while failing (a 5 ms connection refusal must not outrank a healthy 60 ms
+answer), decayed back toward the target once the sample is older than 30 s. `P2cLoadBalancer` draws two
+*distinct* instances at random and keeps the lower score — power of two choices, whose whole point is that
+randomness prevents a herd and the comparison still finds the better of any pair. `InstanceStatsFilter`
+(order 10151, one step inside `ReactiveLoadBalancerClientFilter`) closes the loop from the response side,
+because nothing in the choice API ever hears how the request ended.
+
+**The first trap: the terminal signal is not a verdict.** The filter's first version skipped every
+cancellation as "the caller left" — which is what a cancellation means in ordinary Reactor. In the gateway
+the body is written by Netty and the routing chain terminates by cancelling its upstream, so *every
+successful proxied exchange* arrives as `SignalType.CANCEL`. Forty of forty samples were dropped, the
+balancer chose between two unknown instances, and the integration test measured **21 of 40** — round robin
+wearing a new name. The status code, not the signal, separates a finished answer from an abandoned one.
+
+**The second trap: an instance exiled by its own first impression.** With the samples flowing, the same test
+measured **1 of 40**. A stub core's first exchange cost 298 ms — cold connection pool, uncompiled path — so
+its score opened at 124 against the other core's 62. Power of two then never chose it again, so its average
+never corrected, so it was never chosen: a closed loop, and the statistics plainly showed it (the "fast"
+instance had answered 35 times and was still scored worst). The fix is two-sided: 5% of draws ignore the
+scores entirely (`edge.lb.explore-rate`), which is the only way a stale memory can be corrected, and the
+memory decays with age so an instance that has gone quiet is re-measured rather than remembered forever.
+
+**Evidence.** `P2cChoiceTest` 7/7 (greedy draws never pick the slower of three over 2 000 draws; a failing
+instance loses to a healthy one even though it answers faster; one recovery restores it; decay returns an
+old sample to neutral), `EdgeP2cRoutingTest` 1/1 through a real gateway against two stub cores (≥ 28 of 40 to
+the fast one, and `/edge/lb` reports both scores), edge suite **65/65**. The policy is inspectable at
+`GET /edge/lb` — strategy plus per-instance score, EWMA, failure streak, observations and sample age, worst
+first — and `edge.lb.strategy=round-robin` restores the stock balancer. Design record:
+[ADR-009](docs/adr/ADR-009-load-balancer-p2c.md).
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

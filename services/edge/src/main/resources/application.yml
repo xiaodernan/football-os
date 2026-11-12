@@ -93,6 +93,20 @@ edge:
   bulkhead:
     enabled: ${BULKHEAD_ENABLED:true}
     max-concurrent-calls: ${BULKHEAD_MAX_CONCURRENT:16}
+  # How the edge chooses between core instances (item 29). `p2c` draws two at random and keeps the one
+  # whose measured latency is lower; `round-robin` restores Spring Cloud's stock balancer.
+  lb:
+    strategy: ${LB_STRATEGY:p2c}
+    # The EWMA's learning rate. 0.3 means one answer moves the average by less than a third, which is
+    # slow enough that a single unlucky request cannot exile an instance and fast enough that a real
+    # slowdown is visible within a handful of requests.
+    ewma-alpha: ${LB_EWMA_ALPHA:0.3}
+    # The latency a healthy answer is expected to take. An instance never seen scores exactly this, so a
+    # freshly registered one is neither promoted nor punished for being unknown.
+    target-ms: ${LB_TARGET_MS:60}
+    # Multiplied by the target for each consecutive failure: three failures put an instance far above any
+    # real latency until it answers once, which is what "unusable" should score like.
+    failure-penalty: ${LB_FAILURE_PENALTY:8}
 
 resilience4j:
   circuitbreaker:
