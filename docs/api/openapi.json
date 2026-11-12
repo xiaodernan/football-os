@@ -14520,6 +14520,34 @@
         ]
       }
     },
+    "/api/v1/metrics/jobs-stream": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Jobs Stream Stats",
+        "description": "The job queue's own numbers: what the transport sees, next to what this process has done.\n\nFour server-side figures separate the failure modes an operator cannot otherwise tell apart:\n`undelivered` above zero with `consumers` at zero is \"no worker is running\"; `pending` climbing is\n\"workers are dying mid-handler\"; `dead_length` above zero is \"a job will never succeed and its\nreason is in the dead-letter stream\"; `stream_length` growing without bound is \"the MAXLEN cap is\nthe only thing between this stream and the memory limit\".\n\nAdmin standing only, like `/cache` and `/rate-limit`: the numbers describe the deployment.",
+        "operationId": "jobs_stream_stats_api_v1_metrics_jobs_stream_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Jobs Stream Stats Api V1 Metrics Jobs Stream Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/leaderboard": {
       "get": {
         "tags": [
