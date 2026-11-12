@@ -31,8 +31,21 @@ Postgres is a queue you cannot gate in the SQLite leg.
 ```bash
 python scripts/drain_jobs.py                     # drain everything queued right now, exit
 python scripts/drain_jobs.py --loop --interval=2 # poll forever, 2s between passes
-python scripts/drain_jobs.py --handlers app.services.video.drain:drain_analyse   # one production handler
+python -m app.worker --max-jobs 1                # bounded batch, for cron/CI smoke
 ```
+
+`python -m app.worker` is the process entry the compose `plane` profile runs (`--interval 1.0 --sweep-every
+30`): one consumer name per process (`host:pid`), SIGINT/SIGTERM finish the current job and leave, the lease
+sweep revives anything a killed worker left `RUNNING`. When no handler is registered it exits 0 on an empty
+board, which is the correct answer, not a hang.
+
+**The background door** is `POST /api/v1/video/{ident}/analyse?background=true`: the clip is committed as a
+`QUEUED` job (payload `asset_id` / `target_frames`), the Streams hint is published **after** the commit, and the
+caller answers with `202 {job_id, poll}`. A pending run for the same clip is named, not duplicated
+(`deduplicated: true`). The browser polls `GET /api/v1/jobs/{job_id}` and refreshes when the row settles; the
+synchronous door (`?background` absent) remains the interactive default. The Streams hint is the wake-up, not the
+truth — the poll loop drains one tick late when Redis is absent or refused, which this host demonstrates on every
+worker run (the log prints `available=False`; nothing pretends otherwise).
 
 **A production handler ships registered by name**: `--handlers app.services.video.drain:drain_analyse` executes
 the same `probe → extract_frames → vision → writes` sequence the synchronous `/video/{ident}/analyse` door runs,
