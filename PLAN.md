@@ -1958,6 +1958,55 @@ slow.
 
 ---
 
+## Item 27 — the door says why it refused, in one header
+
+**The gap.** A caller could see *that* it got a 503 but not *why*. A core refusing connections, a breaker already
+open, and a slow call past its budget all produced the same status and the same body — and those are three
+different operational facts: one is a service to restart, one is a door deliberately held shut, one is a budget to
+raise. The breaker's state was readable at `/edge/breaker`, which is a door an operator has to know about; the
+response the caller already holds is the cheaper place to say it.
+
+**The shape.** `CircuitTraceFilter` (a global filter, order `HIGHEST_PRECEDENCE + 1`, i.e. just inside the trace
+filter) writes `X-Circuit: coreBreaker=<state>;outcome=<pass|fallback>` before commit. Two details are the whole
+design. The state is read **at commit time**, not when the filter starts, so the value describes the breaker after
+this request was counted rather than before the failure that matters. And `FallbackHandler` writes the header
+itself instead of letting the filter do it, because the fallback knows the outcome even when the breaker is still
+CLOSED — the first connection refusal is counted but does not open anything, so a filter-only version would label a
+fallback response `pass`.
+
+**Evidence.** `EdgeCircuitHeaderTest` 2/2 (a live stub core: `coreBreaker=CLOSED;outcome=pass`, and the value is
+two parseable fields with no whitespace), `EdgeFallbackTest` 1/1 — now asserting `outcome=fallback` on the refusal
+body it already checked — and the edge suite 57/57.
+
+---
+
+## Item 28 — one sheet, one frame, and a gate that can see the difference
+
+**The gap.** Three tools panels — `CommunityTools`, `MatchTools`, `NoticeBoardTools` — wrapped their tables in
+`.table-wrap` and forgot `className="table"`. So 112 of the app's 115 sheets carried the design system's rules and
+three fell back to the browser's defaults: no uppercase head, no row rule, no hover, a different size. Nothing in
+the suite could see it. `tsc` does not read a class name, ESLint does not compare two files, and the browser walk
+checks that a row is there, not that it is dressed like its neighbours.
+
+**The shape.** Three classes in `globals.css`: `.table-wrap` (the scroll frame — without it a wide sheet makes the
+*page* scroll sideways and takes the nav with it), `.table--sticky` (the head rides the top of the frame; the
+background is opaque because a translucent sticky head over dark rows is a smudge, and the rule under it is a
+`box-shadow` because `border-collapse: collapse` drops a travelling border), and `.table-wrap--tall` (a long sheet
+scrolls inside its panel instead of stretching the page to thousands of pixels, which is what puts the head and the
+column meanings out of sight at the same time). Phones get one density step rather than disappearing columns.
+`history`'s inline `style={{overflowX:"auto"}}` became the class it was imitating; `leaderboard` gained the frame it
+never had.
+
+**The gate.** `scripts/qa-table-shape.mjs` resolves every `<table>` through the repo's own TypeScript and asks two
+questions of each: does it name `.table`, and does it sit inside a frame (walking the real JSX tree, because a
+`table-wrap` three panels away in the same file does not wrap this table and a regex cannot tell). It found exactly
+the three panels above, and reads 115/115 after the fix. Registered in `scripts/check.sh`, so the next bare table
+goes red instead of shipping.
+
+**Evidence.** `qa-table-shape` 115/115, `qa-gate-inventory` 241/241, `qa-token-drift` 4/4, `tsc --noEmit` exit 0.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

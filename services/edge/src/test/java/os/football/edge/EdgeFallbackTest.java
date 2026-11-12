@@ -41,6 +41,10 @@ class EdgeFallbackTest {
                 .exchange()
                 .expectStatus().isEqualTo(503)
                 .expectHeader().valueEquals(TraceIdFilter.TRACE_HEADER, supplied)
+                // The breaker is still CLOSED after one refusal — five failures open it — so the state
+                // field is not the interesting one here. The outcome is: the caller can tell a fallback
+                // from a pass without reading the body, and that is what the header is for.
+                .expectHeader().valueMatches(CircuitTraceFilter.HEADER, ".*outcome=fallback$")
                 .expectBody(Map.class)
                 .returnResult()
                 .getResponseBody();
