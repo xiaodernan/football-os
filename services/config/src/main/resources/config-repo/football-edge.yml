@@ -70,6 +70,13 @@ edge:
     enabled: ${RATE_LIMIT_ENABLED:true}
     burst: ${RATE_LIMIT_BURST:100}
     requests-per-second: ${RATE_LIMIT_RPS:50}
+    # The shared tier (M15). Off by default: a gateway that tries to reach a store nobody gave it pays a
+    # timeout on every request to prove a configuration mistake. `docker compose --profile plane` turns it
+    # on and names the cache container.
+    distributed: ${RATE_LIMIT_DISTRIBUTED:false}
+    store-timeout-ms: ${RATE_LIMIT_STORE_TIMEOUT_MS:250}
+    # Only a peer inside these networks may name the caller in X-Forwarded-For. Same default as the core.
+    trusted-proxies: ${RATE_LIMIT_TRUSTED_PROXIES:127.0.0.1/32,::1/128}
   # The same policy the edge carries by default, kept reviewable here: how many /api/v1/ calls
   # may be in flight at once before the caller is refused immediately.
   bulkhead:

@@ -56,6 +56,6 @@ class W3cTraceContextFilterTest {
     void it_follows_the_trace_id_filter_and_precedes_rate_limiting() {
         W3cTraceContextFilter filter = new W3cTraceContextFilter();
         assertThat(filter.getOrder()).isEqualTo(new TraceIdFilter().getOrder() + 1);
-        assertThat(filter.getOrder()).isLessThan(new RateLimitFilter(true, 100, 50).getOrder());
+        assertThat(filter.getOrder()).isLessThan(new RateLimitFilter(true, 100, 50.0, java.util.List.of()).getOrder());
     }
 }

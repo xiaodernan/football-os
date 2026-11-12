@@ -120,11 +120,18 @@ services:
       REGISTRY_URL: http://registry:8761/eureka/
       CONFIG_URL: http://config:8888
       EDGE_PORT: "8080"
+      # M15: the same cache container the core uses, so both tiers count the same caller against the
+      # same key. The flag is what turns the shared bucket on; without it the edge keeps its own.
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-football}
+      RATE_LIMIT_DISTRIBUTED: "true"
     ports:
       - "127.0.0.1:18080:8080"
     depends_on:
       - registry
       - config
+      - redis
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
       interval: 10s

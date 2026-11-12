@@ -305,3 +305,51 @@ Run K's full record is in [SECURITY_PROBE_REPORT.md](SECURITY_PROBE_REPORT.md): 
   answers *slowly* rather than not at all is bounded by the 0.5 s socket timeout, not by a circuit
   breaker. There is no breaker.
 * **No third-party penetration test.** Unchanged from M12's own disclosure.
+## 13. The edge tier: the same bucket behind the last door (2026-11-12)
+
+The unit above prices requests inside the Python core. The gateway in `services/edge` is the *other* door
+— every caller reaches the product through it in the `plane` profile — and until this slice it held its
+own `LinkedHashMap` bucket per process. Two ceilings, two identities: a caller refused by the core was
+admitted by the edge in the same second, and a caller that spread its requests across gateway replicas
+got `replicas × limit`, which is what a caller being refused tries next.
+
+**What was built.**
+
+* `RedisBucketStore` — the same Lua script the core runs, byte for byte (`HMGET tokens ts` → refill from
+  `redis.call('TIME')` → `HSET` → `PEXPIRE`), executed through `ReactiveStringRedisTemplate` so the
+  gateway's event loop is never parked on a round trip. The bean is `@ConditionalOnProperty`
+  (`edge.rate-limit.distributed`), off by default.
+* `DistributedRateLimitFilter` (order `HIGHEST_PRECEDENCE + 5`) — takes a token, writes the same seven
+  budget headers, and stamps the exchange with `DECIDED_BY`; the existing `RateLimitFilter` (`+10`) sees
+  the stamp and steps aside. One request is judged once, so the published ceiling is the real one.
+* `CallerKey` — the same three identity branches as `app/core/rate_policy.py`, in Java: credential digest
+  (`acct:`), then a forwarded address only from a configured trusted proxy (`fwd:`, left-most entry),
+  then the socket's peer (`ip:`). The local filter now uses it too, so a whole office behind the web
+  proxy no longer shares one budget.
+* Degradation is explicit: a store that errors, exceeds the 250 ms budget, returns a malformed reply or
+  is not configured at all resolves to the local bucket, and the answer says
+  `X-RateLimit-Scope: process` instead of `cluster`.
+
+**What was measured.**
+
+* `mvn -B -pl edge -am test`: **55 tests green**, including 8 new filter cases (allowed, refused, store
+  error, store timeout, no store, disabled, malformed reply, refusal body) and 6 identity cases
+  (credential wins, left-most forwarded entry, untrusted peer ignored, CIDR matching, bare address, no
+  peer).
+* Live, with the project's own Redis and the running core: `burst=5`, `requests-per-second=1`, eight
+  requests through `:18085/api/v1/healthz` answered **200 ×7** — `X-RateLimit-Remaining` reading
+  4, 3, 3, 2, 1, 0, 0 (one token refilled mid-burst) — then **429** with `Retry-After: 1`. Every answer
+  carried `X-RateLimit-Scope: cluster`. `/edge/limits` read
+  `{"distributed":true,"distributedChecks":8,"distributedDegradations":0}`, and the bucket was readable in
+  the store at `football_os:edge:rate:ip:127.0.0.1`.
+
+**One defect found while wiring it.** An empty `spring.data.redis.host` is not "no store" to Spring Boot:
+`PropertiesRedisConnectionDetails` asserts a non-empty host and the whole application context fails to
+start (35 test classes red). The fix is to omit the block entirely and let a deployment name the host
+through relaxed binding (`SPRING_DATA_REDIS_HOST`), with the absence documented as a supported state.
+
+**What this does not claim.** The gateway and the core keep two copies of the identity rule rather than a
+shared library; the rule is twelve lines and a third language in the build would cost more than it saves,
+but the two copies must be changed together and `CallerKeyTest`/`test_rate_limit.py` are what hold them.
+No load figure is claimed for the edge tier either — the store call is bounded at 250 ms, and a
+saturated gateway is a measurement for a dedicated host, not this one.

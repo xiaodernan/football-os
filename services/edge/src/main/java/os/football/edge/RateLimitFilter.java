@@ -3,6 +3,7 @@ package os.football.edge;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -49,15 +50,18 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
     private final boolean enabled;
     private final int burst;
     private final double requestsPerSecond;
+    private final List<String> trustedProxies;
     private final Map<String, TokenBucket> buckets;
 
     public RateLimitFilter(
             @Value("${edge.rate-limit.enabled:true}") boolean enabled,
             @Value("${edge.rate-limit.burst:100}") int burst,
-            @Value("${edge.rate-limit.requests-per-second:50}") double requestsPerSecond) {
+            @Value("${edge.rate-limit.requests-per-second:50}") double requestsPerSecond,
+            @Value("${edge.rate-limit.trusted-proxies:127.0.0.1/32,::1/128}") List<String> trustedProxies) {
         this.enabled = enabled;
         this.burst = Math.max(1, burst);
         this.requestsPerSecond = Math.max(0.001, requestsPerSecond);
+        this.trustedProxies = List.copyOf(trustedProxies);
         this.buckets = new LinkedHashMap<>(256, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, TokenBucket> eldest) {
@@ -71,6 +75,11 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         if (!enabled) {
+            return chain.filter(exchange);
+        }
+        // The shared tier already judged this request. Judging it again would spend a second token for one
+        // request, so the ceiling a caller reads would be half the ceiling it gets.
+        if (exchange.getAttribute(DistributedRateLimitFilter.DECIDED_BY) != null) {
             return chain.filter(exchange);
         }
         TokenBucket bucket = bucketFor(clientKey(exchange));
@@ -133,12 +142,16 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
         }
     }
 
-    private static String clientKey(ServerWebExchange exchange) {
-        if (exchange.getRequest().getRemoteAddress() == null
-                || exchange.getRequest().getRemoteAddress().getAddress() == null) {
-            return "unknown";
-        }
-        return exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
+    /**
+     * The caller, named by the same rule the Python core uses ({@link CallerKey}).
+     *
+     * <p>It used to be the bare peer address. That is right for a single gateway in front of the internet and
+     * wrong for this product's shape: the web tier proxies a browser's calls, so every reader behind it
+     * arrived as one caller, and a whole classroom shared one budget. The credential is the strongest name
+     * available and it survives both NAT and the proxy hop.
+     */
+    private String clientKey(ServerWebExchange exchange) {
+        return CallerKey.of(exchange, trustedProxies);
     }
 
     /** One caller's bucket. Refilled by elapsed time, never by a scheduled tick. */
