@@ -15,7 +15,7 @@ from app.core.security import current_user, limit, new_public_id, ownership_or_a
 from app.models import CoachMessage, TrainingDrill, User, UserPlayer
 from app.providers import get_llm_provider
 from app.schemas import CoachAskIn, PlanIn
-from app.services import coach_engine
+from app.services import coach_engine, coach_voice
 from app.services.model_ledger import budget_exhausted, record_model_call
 
 router = APIRouter(prefix="/coach", tags=["coach"])
@@ -202,13 +202,29 @@ def ask(
     if spend_capped:
         result = None
     else:
+        # The prompt carries the question and the measurements, not one pre-written sentence. The
+        # module's docstring records what the old prompt cost when a real provider answered it.
+        recent = coach_engine.history_summary(db, user, player)
         result = provider.complete(
-            system="You phrase football coaching guidance in short sentences. Never invent data.",
-            prompt=str({"intent": intent, "facts": structured.get("message", "")}),
+            system=coach_voice.SYSTEM,
+            prompt=coach_voice.build_prompt(
+                question=payload.question,
+                intent=intent,
+                player=player,
+                structured=structured,
+                reasons=reasons,
+                history=recent,
+            ),
+            max_tokens=220,
+            temperature=0.5,
         )
-    content = structured.get("message", "")
-    if result is not None and not result.demo_mode and result.text.strip():
-        content = f"{content}\n\n{result.text.strip()}"
+    # The template is the fallback, never a preamble: a capped turn, a demo provider, an empty
+    # completion and a provider failure all still answer with the arithmetic.
+    template = structured.get("message", "")
+    content = coach_voice.compose_message(
+        template,
+        result.text if result is not None and not result.demo_mode else "",
+    )
     if spend_capped:
         reasons = [*reasons, "Today's AI spend cap is reached, so the phrasing step was skipped; every figure above is still computed from your stored profile and history"]
     db.add(

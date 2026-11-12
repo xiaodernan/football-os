@@ -27,6 +27,10 @@ os.environ["DATABASE_URL"] = os.environ.get("FOOTBALL_OS_TEST_DATABASE_URL") or 
 os.environ["STORAGE_DIR"] = str(Path(tempfile.gettempdir()) / "football_os_test_storage")  # M5 uploads land here, not in the repo tree.
 os.environ["APP_SECRET"] = "test-secret-not-for-production"
 os.environ["ENV"] = "test"
+# Read before `app.core.config` is imported by any test module. The pops below clear the keys a
+# developer's `.env` may hold; this flag stops `_load_dotenv` from putting them back, which is what
+# made two demo-mode cases pass on CI and fail on a laptop with a real provider key.
+os.environ["FOOTBALL_OS_SKIP_DOTENV"] = "1"
 os.environ.pop("OPENAI_API_KEY", None)
 os.environ.pop("ANTHROPIC_API_KEY", None)
 os.environ.pop("OTEL_EXPORTER_OTLP_ENDPOINT", None)  # M12: a test run must not export spans to a developer's collector.

@@ -15,6 +15,13 @@ API_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _load_dotenv() -> None:
+    # A test run sets this before importing any app module. Without it, `setdefault` below re-reads a
+    # developer's `.env` after `tests/conftest.py` has cleared the provider keys, and the suite's
+    # verdict silently depends on whether that developer happens to have a real key configured:
+    # `test_health_reports_demo_mode` passed on CI and failed on a laptop with one. A gate that reads
+    # the environment it is testing is not a gate.
+    if os.environ.get("FOOTBALL_OS_SKIP_DOTENV") == "1":
+        return
     env_file = API_ROOT / ".env"
     if not env_file.exists():
         return
