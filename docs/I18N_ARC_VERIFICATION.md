@@ -4752,3 +4752,21 @@ file at the repository root remains untouched; `.scratch/` remains untracked.
 **The security note, because a real API key was pasted in the session.** The key is not committed, not logged, not quoted here or in any doc — it exists in `apps/api/.env` (local), and `.gitignore` covers it. The session's own `.scratch/` still untracked; the user's untracked text file at the repository root remains untouched (it was never opened). Code change itself is reviewed by the suite: provider module and config change land here as code; ruff clean, mypy clean over 171 files, `test_coach*.py` would exercise it the same way the suite already does.
 
 **Not claimed.** One live call happened; the answer quality was not graded by a human; the gateway's availability, latency, and price behavior were not profiled here; this is a capability probe, not a product launch; `OPENAI_MODEL` names the gateway's advertised model and was taken at the user's word.
+## 135. §134 prints success; the live-provider probe stands verified on the runner (2026-11-12)
+
+**What the runner printed, unedited.** `43194180737` (feat(providers) — OPENAI_BASE_URL and
+OPENAI_USER_AGENT; a live coach ask) completed **`web` success, `containers` success, `services` success,
+`api` success**. The `api` leg collects the full suite — the provider change is additive to the public
+surface, and the suite passes across both database legs, exactly as it did before this entry was written.
+
+**The honest scope of what was proven.** The probe in §134 was one question in a scratch SQLite instance —
+a capability call, not a product activation and not a verification that the global `/coach/ask` path is
+qualified for production traffic. `AI_DAILY_BUDGET_USD` caps the spend; the `OPENAI_MODEL` name came from
+the operator's configuration; the dev-time `.env` that carried the key is never committed
+(`git check-ignore apps/api/.env` prints `.env`).
+
+**Not claimed.** No latency distribution, no accuracy grading, no obligation that ask answers are production
+quality; the gateway's model identifier `gpt-6-sol` is the operator's advertised model and was taken at face
+value; no claim this works on any host but the one where it was probed; no commitment the gateway stays up
+or that its price model holds. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at
+the repository root remains untouched; `.scratch/` remains untracked.
