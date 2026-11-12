@@ -4863,3 +4863,43 @@ have surfaced, and they were found by the integration tests, not by reading.
 cases were skipped on this host (its Redis is not the compose instance); the hero was not walked by a browser,
 only compiled; the `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository
 root remains untouched; `.workbuddy/` remains untracked.
+## 139. The in-flight M16 arc is finished, pushed, and it prints on the runner (2026-11-12)
+
+**Provenance, as §138 recorded it and as honesty now requires: his docs are the authority for the design;
+this window verified, fixed and pushed the whole thing.** The incomplete arc was an ADR-008 Redis-Streams
+job transport — job_stream.py, job_broker.py, job_handlers.py, worker.py, an admin metrics door, a PLAN
+Item 24/25, a home hero — built on this arc's own §107/§129 drain. This session completed the steps the lane
+could not or did not:
+
+* The metrics census was missing `/api/v1/metrics/jobs-stream` — added; the standing census test then passes.
+* My own `test_video_drain.py` asserted exactly one queued row on the shared board; the suite runs in one
+  database, so other files queue video.analyse rows first. Fixed by draining to empty — the loop the worker
+  itself runs — then asserting the fixture reached COMPLETED. That failure was mine.
+* `ruff check --fix` on `tests/test_job_broker.py` for import order (one real type error nothing else
+  caught at commit time).
+* **The CI failure that printed at `43218902548` and again at `43220129932`:** the committed contract was stale
+  by exactly one route — `/api/v1/metrics/jobs-stream` (GET, admin) — and the migration count had moved to 63
+  when the claim's covering index landed (the half-index fix c7627d6). The eyes-open fix is c103632: contract
+  re-exported (228 paths / 295 ops, adding exactly that one route), ROADMAP and the audit's figures quoted up
+  to `contract_paths=228 page_routes=68 migrations=63`. Both currency gates were red before the fix and are
+  green below.
+
+**What CI printed, unedited.** `43218902548` — web success, services success, containers success, **api failure**:
+the contract staleness above. `43220129932` — same red, same reason. `43222757800` (the contract fix) is
+in flight; its verdict lands in the next section of this ledger, green or red, as the runner writes it.
+
+**Local verification, printed.** `ruff` clean; `mypy` clean over **176 files**; targeted suites
+(`test_job_runner.py` + `test_job_broker.py` + `test_jobs.py` + `test_video_drain.py` +
+`test_migration_jobs_done.py` + `test_metrics.py`) — **65 passed, 7 skipped** (the seven live-Redis cases, which
+only CI's instance runs); `tsc --noEmit` on the hero — exit 0; the production build `NEXT_DIST_DIR=.next-verify`
+completed with BUILD_ID **`nX8B6Z3VKEZiW23L4c7YA`**. The api leg on this push prints when the runner runs it.
+
+**Also on the line — the lane worked in parallel and its commits are in this tree, honestly:**
+
+* `766567a` (feat(web) — a Home skeleton first paint), `4f44bd6` (feat(edge) — M15 reaches the gateway),
+  and `c7627d6` (perf(jobs) — the claim's covering index gains its third column) landed by the lane's own hand
+  before this window pushed. This window pushed **after** them and did not reorder or rewrite them.
+
+**Not claimed.** No claim that the api leg is green at the moment this section was written — it prints when the
+runner runs it and the verdict lands in this ledger unedited. The `fr`/`ar`/`he` editorial pass remains owed;
+the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
