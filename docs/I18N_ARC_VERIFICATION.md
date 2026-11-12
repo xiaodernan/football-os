@@ -5052,3 +5052,50 @@ services / containers); the table above records it as printed. The /plane walk h
 at this commit; 12k is the other hand's section and will print when the walk is next invoked with its fixture
 present. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root
 remains untouched; `.workbuddy/` remains untracked.
+## 143. The loop closes end to end: upload → 202 QUEUED → worker tick → COMPLETED, over real HTTP (2026-11-13)
+
+**The claim this section defends.** After Item 30 landed (`?background=true`, commit `67c8674`), the sequence
+"a clip owner clicks the button and the row reports itself" was verified by unit and door tests on both engines
+but not by one process boundary: a live API serving HTTP, a separate worker process draining the queue, the
+browser's own read paths. This window drove it from the outside, on this host, against ports of its own.
+
+**The run, printed.** A scratch SQLite database (`.scratch/journey-e2e.db`), a fresh storage directory
+(`.scratch/journey-storage`), `uvicorn` on `127.0.0.1:8797` (the lane's stack on 8731/18085 untouched), a real
+`ffmpeg`-built `testsrc2` clip (58,056 bytes), then:
+
+```
+register                     → 201, access token minted
+upload (multipart)           → 201, asset vid_Th23nZOrGDqmYeGK
+POST /video/{id}/analyse?background=true&target_frames=6
+                             → 202 {"status":"QUEUED","deduplicated":false,"job_id":"job_VBvX5-141b_BuKGg",
+                                     "poll":"/api/v1/jobs/job_VBvX5-141b_BuKGg", ...}
+python -m app.worker --max-jobs 1 --interval 0.1
+                             → worker started as xiaodernan:<pid>, stream unavailable
+                               (the host's Redis answers only with a password the project does not
+                               hold — recorded, not hidden), poll loop carried the queue,
+                               stopped after 1 job over 1 tick, exit 0
+GET /api/v1/jobs/{job_id}   → 200 COMPLETED, result.frames = 6
+GET /api/v1/video/{id}/jobs → detections = 1, total = 1
+```
+
+The whole chain ran through the production code paths — the cookie-proxy-shaped HTTP client, the upload door's
+magic-byte check, the background door's dedup scan, the broker's publish-after-commit (a no-op here: no Redis, so
+the poll loop is the wake-up, which is exactly the designed degradation), the claim's conditional `UPDATE`, and
+`drain_analyse` on the real ffmpeg stack. The report's measured numbers come from the demo vision provider, as
+everywhere else in the product, and say so.
+
+**A separate worker smoke against a scratch database** (`.scratch/worker-smoke.py`) queued `system.echo`, ran the
+same `python -m app.worker --max-jobs 1`, and read the row back as `COMPLETED` with `{"echo":
+{"hello":"queue"},"job_id":"job_smoke_echo","attempts":1}` — the smallest end-to-end assertion the queue's own
+smoke type can make. Both runs are this window's; neither is inherited.
+
+**Ops surfaces re-verified against the tree.** `docker compose -f infra/docker-compose.yml config --quiet`
+exits 0 on both the default profile and the `plane` profile (which carries the `worker` service with
+`--sweep-every 30`); the worker's `--sweep-every` flag and `host:pid` consumer naming match the compose file's
+invocation; `scripts/drain_jobs.py` and `apps/api/app/worker.py` agree on `--interval` semantics.
+
+**Not claimed.** No claim about a browser walk — the 12e-1 walk section (`9f00409`) is syntax-checked and not
+run; 8731/18085 belong to the other hand's stack and this window did not drive it. No claim that Redis Streams
+executed in this run — the host cannot authenticate to it, and the log printed `available=False` instead of
+pretending otherwise. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the
+repository root remains untouched; `.workbuddy/` remains untracked.
