@@ -2345,6 +2345,72 @@ next build, which is the only one that matters.
 
 ---
 
+## Item 37 — five routes under `/tactics` answered 200 when nothing was there
+
+**The trade Item 36 recorded, taken.** `/tactics/loading.tsx` sat on the segment, so it covered `/tactics`,
+`/tactics/[slug]`, `/tactics/boards`, `/tactics/boards/[slug]`, `/tactics/compare`, `/tactics/gallery`,
+`/tactics/gallery/[slug]` and `/tactics/shared/[token]`. Five of those call `notFound()`: the system page, a board,
+the gallery's token-bearing list, a gallery deck, and a shared board. Every one of them painted the not-found screen
+under a **200** — the same defect Item 36 fixed for `/scout`, repeated five times, because one skeleton had been
+drawn for the whole laboratory and the laboratory has two kinds of route in it.
+
+**The fix is placement, not a trick.** A loading boundary may sit above every route that only *streams*, and must
+sit above none that can *decide a status*. So the skeleton moved down to the routes that want it and the routes that
+can 404 were left without one:
+
+| route | before | after |
+| --- | --- | --- |
+| `/tactics` | skeleton, 200 | skeleton (`(index)/loading.tsx`), 200 |
+| `/tactics/compare` | skeleton, 200 | skeleton, 200 |
+| `/tactics/boards` | skeleton, 307/200 | skeleton (`boards/(index)/loading.tsx`), 307/200 |
+| `/tactics/[slug]` | skeleton, **200** | no skeleton, **404** |
+| `/tactics/boards/[slug]` | skeleton, **200** | no skeleton, **404** (signed in), 307 (signed out) |
+| `/tactics/gallery` | skeleton, 200 | no skeleton, 200 |
+| `/tactics/gallery/[slug]` | skeleton, **200** | no skeleton, **404** |
+| `/tactics/shared/[token]` | skeleton, **200** | no skeleton, **404** |
+
+`/tactics` and `/tactics/boards` kept their skeletons by the route-group move Item 36 used: the page and its
+`loading.tsx` both move into `(index)/`, the URL is unchanged, and the dynamic children beside the group stop
+inheriting a boundary they must not have.
+
+**The three skeletons were the same markup, copied.** They had already drifted — the tactics copy promised four
+panels and six rows on a route that renders three bands. `components/RouteSkeleton.tsx` now holds the one shape and
+each leaf says only how many cards and rows it expects. No copy lives in it: a skeleton with a sentence in it needs a
+catalogue key, and a skeleton that is translated can change language halfway through a page load.
+
+**Measured, production build, not dev.** `NEXT_DIST_DIR=.next-item37 next build`, then `next start` on `:3214`
+against a scratch API on `:8742` (fresh SQLite):
+
+```
+200  /tactics
+200  /tactics/compare
+200  /tactics/gallery
+404  /tactics/no-such-system
+404  /tactics/gallery/no-such-deck
+404  /tactics/shared/deadbeefdeadbeefdeadbeefdeadbeef
+307  /tactics/boards/no-such-board          (signed out — the door refuses before the page runs)
+```
+
+and with a real session minted through the real form (`var/probe-boards-404.mjs`): `/tactics/boards` **200**,
+`/tactics/boards/no-such-board-37` **404**, the not-found screen carrying the account's own nav and the 404 body.
+`tsc --noEmit` exits 0; `qa-gate-inventory`, `qa-population-floor`, `qa-metadata-title`, `qa-error-shape`,
+`qa-i18n-literals` and `qa-baseline-gates` are green.
+
+**A second finding, from writing that probe.** The walk's session-recovery helper called `page.fill('#email', …)` —
+Playwright's verb, in a walk driven by `puppeteer-core`, where it does not exist. The walk could sign *up* (`page.type`
+at the registration step) and never sign back in: the first `ensureSession` after a refresh-token replay would throw
+`page.fill is not a function` and abort every authenticated section after it. It now types through `setInput`, waits
+for the `fo_access` cookie rather than for a navigation (the cookie is the session; the SPA push can be slow behind a
+dev compile), and presses again if the first click landed before hydration.
+
+**Not claimed.** Nothing here was walked in an in-app browser this pass; the artifact is HTTP status codes and page
+text from a production build, plus one headed-by-CDP session for the signed-in pair. `/tactics/gallery` and
+`/tactics/[slug]` no longer draw a skeleton — that is the price of their status code, paid deliberately and written
+down rather than discovered later. The `visual` walk has still not been re-run end to end; the `page.fill` fix above
+is the first thing that has to be true before it can be.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
