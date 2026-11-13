@@ -5383,3 +5383,26 @@ this host. Scraping the plane from a production Prometheus remains the operator'
 (`http_server_requests_*`), it does not speculate on what the core did with them. `fr`/`ar`/`he`
 editorial pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains
 untracked.
+## 152. The scrape door red, then green — the parity gate catches real drift (2026-11-13)
+
+**§151 pushed red on one test; §152 reads its fix; both verdicts below are unedited.** The edge's own
+`application.yml` now exposes `prometheus` in its actuator exposure list, and the config-repo copy of the
+plane profile had not been moved with it. `apps/api/tests/test_edge_config_parity.py::test_the_two_copies_agree_on_the_plane_setting_and_the_refresh_door`
+failed at `own_include != served_include` — the one test in the project that holds the two copies of the
+edge's boot config together caught the drift on the SQLite leg at CI `43372648201`.
+
+**The fix is the parity test itself.** The config-repo copy is updated to match the edge's own exposure
+exactly, so the two gates of the plane boot identically whether the config server is up. The test is green
+against the working tree (7 passed). CI for `906dd3c` prints success on all four legs (`api`, `web`,
+`services`, `containers`).
+
+**What the reds taught this arc.** The edge was built to carry its own boot config and a redundant copy
+served by the config server; the parity test exists precisely so that two configurations never silently
+diverge. It does not matter whether the two copies are booted with or without the config server — either way,
+their behavior is identical, and that is what makes the gate worth its keep. The failure was not wired by an
+operator or a human hand; it was invented by adding the `prometheus` exposure to one copy and not the other.
+
+**Not claimed.** No claim that the prometheus endpoint in production prints rates for these routes yet — the
+scrape works on the private boot recorded in §151; exposure in a shared Prometheus is an operator's act. The
+`fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains untouched;
+`.workbuddy/` remains untracked.
