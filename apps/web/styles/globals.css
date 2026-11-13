@@ -308,7 +308,7 @@ h1, h2, h3, h4, p { margin: 0; }
   transition: transform 0.18s ease, border-color 0.18s ease;
 }
 .podium__cell::before {
-  content: ""; position: absolute; top: 0; left: 14%; right: 14%; height: 3px; border-radius: 999px;
+  content: ""; position: absolute; top: 0; inset-inline: 14%; height: 3px; border-radius: 999px;
   background: var(--text-3); opacity: 0.85;
 }
 .podium__cell:hover { transform: translateY(-2px); }
@@ -318,7 +318,7 @@ h1, h2, h3, h4, p { margin: 0; }
   background: linear-gradient(180deg, rgba(53, 240, 164, 0.11), rgba(53, 240, 164, 0.02));
   box-shadow: 0 16px 36px -24px rgba(53, 240, 164, 0.4);
 }
-.podium__cell--first::before { background: var(--accent); box-shadow: 0 0 14px rgba(53, 240, 164, 0.6); left: 8%; right: 8%; }
+.podium__cell--first::before { background: var(--accent); box-shadow: 0 0 14px rgba(53, 240, 164, 0.6); inset-inline: 8%; }
 .podium__cell--second::before { background: var(--info); box-shadow: 0 0 12px rgba(95, 168, 255, 0.5); }
 .podium__cell--third::before { background: var(--warn); box-shadow: 0 0 12px rgba(255, 182, 72, 0.5); }
 .podium__place { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.22em; color: var(--text-3); text-transform: uppercase; }
