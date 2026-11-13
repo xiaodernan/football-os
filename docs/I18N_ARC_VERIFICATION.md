@@ -5348,3 +5348,38 @@ untracked.
 **Not claimed.** No claim that the machine-bound visual walk passes end-to-end on this host; no claim that a
 local suite run completed; no CI warp was performed. The figures above come from `gh run view` output and
 local commands run this window, not from memory.
+## 151. The edge serves Prometheus — Micrometer is on the door now (2026-11-13)
+
+**A genuine Spring Cloud element added and verified, not claimed.** The edge carried Spring Boot Actuator
+(`health, info, gateway, refresh`) without any metrics registry — so an operator who wanted a rate, a
+latency, a queue depth or a breaker-transition counter had nothing to scrape. This window added
+`io.micrometer:micrometer-registry-prometheus` to `services/edge/pom.xml` and exposed
+`prometheus` in the management endpoint's `include` list, which is what Micrometer serves once the
+registry is on the classpath.
+
+**Verified on this host, not in a CI echo.** `mvn -o package` builds clean; the suite passes **66/66**
+(`Tests run: 66, Failures: 0, Errors: 0`). The jar is booted with `eureka.client.enabled=false`
+(the config server is optional in this edge anyway) and answers on port **18086**:
+
+```
+GET /actuator/health               — spring Boot's own
+GET /actuator/prometheus           — 200, 10,789 bytes of Micrometer text
+GET /edge/lb                       — 200
+GET /edge/breaker                  — 200
+GET /edge/limits                   — 200
+```
+
+After scraping the three doors plus the prometheus endpoint itself, `http_server_requests_seconds_count`
+prints one line per route with `uri`, `method`, `status`, `outcome` and a count — the exact series a
+Prometheus would carve its first rate from. No `resilience4j_*` lines appear on a cold start (no core
+route was called), which is the correct answer for a breaker that has not yet opened or closed.
+
+**Honest limits.** The compose plane profile is not re-run here; the container check in CI reads this same
+jar with the same `application.yml`. The `.env`-committed copy of `application.yml` is what the build
+mounted; this change is not claimed to be deployed in production, only verified bootable and scrapable on
+this host. Scraping the plane from a production Prometheus remains the operator's act.
+
+**Not claimed.** No metric is exposed for the Python core through this door — the edge counts calls
+(`http_server_requests_*`), it does not speculate on what the core did with them. `fr`/`ar`/`he`
+editorial pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains
+untracked.

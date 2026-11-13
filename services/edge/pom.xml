@@ -47,6 +47,13 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
+    <!-- Actuator health/info ship plain; this is what renders them as Prometheus text for an operator's
+         scrape (`/actuator/prometheus`). Managed by Spring Boot's dependency management, deliberately
+         not an explicit version. -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
     <!-- M15: the shared token buckets. Reactive, because the gateway's filter chain is: a blocking Redis
          call inside a reactive filter would park an event-loop thread for the duration of a round trip. -->
     <dependency>

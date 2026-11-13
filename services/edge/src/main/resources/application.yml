@@ -140,7 +140,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway,refresh
+        # `prometheus` is the production scrape. It adds nothing a plain operator needs locally, which
+        # is why it is named rather than `*` — a gateway that publishes everything on its first boot
+        # publishes the heap alongside the request rate.
+        include: health,info,gateway,refresh,prometheus
   endpoint:
     health:
       show-details: always
