@@ -87,7 +87,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway,refresh
+        # Kept in step with the edge's own `application.yml` on purpose; see the parity test. A
+        # gateway whose exposure differs between boots is one whose config drifts between restarts.
+        include: health,info,gateway,refresh,prometheus
   endpoint:
     health:
       show-details: always
