@@ -111,7 +111,14 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
             <div className="grid-3">
               {(byCategory.get(name) ?? []).map((drill) => (
                 <Link key={drill.id} href={`/training/${drill.slug}`} className="drill-card">
-                  <div className="between">
+                  <span className="drill-card__glyph" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="9" />
+                      <circle cx="12" cy="12" r="5" />
+                      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
+                    </svg>
+                  </span>
+                  <div className="between drill-card__top">
                     <span className="h3">{drill.title}</span>
                   </div>
                   <p className="muted drill-card__objective">{drill.objective}</p>

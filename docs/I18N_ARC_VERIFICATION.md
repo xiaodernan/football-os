@@ -5528,3 +5528,41 @@ unaffected by construction, and the greens above say so.
 printed, the gates are printed, the machine-bound visual walk remains the frontier named in §145. The
 `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
 untouched; `.workbuddy/` remains untracked.
+## 155. The drill cards carry a sigil — sugar on the dangerous path (2026-11-13)
+
+**The catalogue page was legible and unadorned: title, objective, meta, a badge, and a hover that only moved a
+hair. It is the door a player actually walks through every week, so it earned the same treatment the tray and
+the board got — and it cost nothing but CSS.**
+
+What changed:
+
+* `app/training/training.css` — `.drill-card` gains a top hairline ember
+  (`linear-gradient(90deg, transparent, var(--accent-dim), transparent)`, brighter dim than the panel seam,
+  cooler than the podium's champion rail), a deeper hover (`translateY(-2px)` plus a soft accent shadow
+  instead of a 1px nudge), and a new `.drill-card__glyph` / `.drill-card__top` pair: a decorative 30px
+  corner tile holding a target SVG (three concentric circles, pure stroke, aria-hidden) and a
+  `padding-inline-end` on the title row so the sigil never overlaps the drill's name.
+* `app/training/page.tsx` — each drill card renders the sigil as the first child and gives the title row the
+  `drill-card__top` class. Nothing else moved: the category chips, the filter link, the badges, the session
+  logger and the copy are untouched.
+
+**Verification, printed, not remembered.**
+
+```
+tsc --noEmit                                        exit 0
+production build (NEXT_DIST_DIR=.next-drills)       BUILD_ID PS6Kk7wUqSi5LFyLWj6W-
+                                                    /training 3.1 kB · 121 kB first load
+qa-i18n-literals   CHECKS passed=9 total=9 failed=0
+qa-unused-keys     passed
+qa-field-labels    CHECKS passed=2 total=2 failed=0
+qa-a11y            CHECKS passed=33 total=33 failed=0
+qa-icu-messages    CHECKS passed=2 total=2 failed=0 (26184 messages, 6 catalogues)
+qa-icu-coverage    CHECKS passed=1 total=1 failed=0
+```
+
+No catalogue key was added; the sigil is `aria-hidden` and the catalogue beneath it says what the drill is for.
+
+**Not claimed.** No claim that `/training` has been walked in a browser this window — the build is printed, the
+gates are printed, the machine-bound visual walk remains the frontier named in §145. The `fr`/`ar`/`he` editorial
+pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains
+untracked.

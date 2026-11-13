@@ -1,6 +1,8 @@
 /* Training Academy pages — additive rules only, built on the globals.css vocabulary. */
 
 .drill-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
@@ -8,12 +10,58 @@
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
   background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-raised) 100%);
-  transition: border-color 0.15s ease, transform 0.08s ease;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* A hairline ember along the top edge, cooler than the podium's champion rail and warmer than the panel —
+   enough to read as "this card is live" without shouting at scan distance. */
+.drill-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+  opacity: 0.7;
 }
 
 .drill-card:hover {
   border-color: var(--accent-dim);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 38px -24px rgba(53, 240, 164, 0.38);
+}
+
+.drill-card__top {
+  padding-inline-end: 2.6rem;
+  min-width: 0;
+}
+
+/* The drill's sigil: a target in the card's corner, pure decoration — the catalogue beneath it says what
+   the drill is for; nothing here speaks, and nothing needs translating. */
+.drill-card__glyph {
+  position: absolute;
+  top: 0.6rem;
+  inset-inline-end: 0.6rem;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--accent);
+  background: rgba(53, 240, 164, 0.08);
+  border: 1px solid rgba(53, 240, 164, 0.2);
+  opacity: 0.95;
+}
+.drill-card__glyph svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .drill-card__objective {
