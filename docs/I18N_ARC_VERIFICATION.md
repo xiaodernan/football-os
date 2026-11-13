@@ -5214,3 +5214,36 @@ nothing outstanding. The untracked user text file at the repository root remains
 **Not claimed.** The CI verdicts for this push print when the runner runs them; the live-probe verifications above are this
 window's own runs, not CI's. The `fr`/`ar`/`he` editorial pass remains owed. No claim that the notifications page has been
 walked in a browser — the build compiles, the gates pass, the walk remains a machine-bound artefact of past sessions.
+## 147. Three reds from one cause — an orphaned catalogue, an honest correction (2026-11-13)
+
+**The sequence of reds, as the runner printed them.** The notifications etch (`54b406a`, CI `43342097189`), the
+§146 docs push (`b409364`, CI `43342221898`), and the first catalogue-fix push (`aa2e1ec`, CI `43345619043`) all
+failed at the web leg on one step with the same three keys named:
+
+```
+FAIL  every catalogue key is asked for by a page, or held for a named reason — 3 key(s) asked for by nothing
+      notifications.kindFollower
+      notifications.kindComment
+      notifications.kindReaction
+```
+
+The §146 entry I committed earlier claimed these gates green — it was written against the working tree and painted
+a picture the runner never affirmed. This section corrects the record: §146's gate claims are wrong; this is the
+unedited truth.
+
+**Root cause.** The notifications etch (`54b406a`) replaced the chip that rendered `kindFollower`, `kindComment`,
+`kindReaction` with an icon glyph. The three ICU keys were left in all six catalogues — nothing asked for them
+anymore, and `qa-unused-keys.mjs` refuses keys nothing reads, with a floor of 0. The population pin in
+`test_locale_claims.py` and the matching `qa-locale-tokens.mjs` check both read the messages/README table, so they
+bounded the catalogue differently; deleting the keys (aa2e1ec) moved the population 4367 → 4364 with it, and the
+README table then needed to read 4364 everywhere — 6f35661 carries that correction, and both gates read it green
+against the committed tree (`test_locale_claims.py` 7 passed locally; `qa-locale-tokens.mjs` 7/7).
+
+**What this debt cost.** Three pushes of fake-green, one undone (b409364) and one follow-through. The fix is the
+cure: the keys are gone from the catalogues, the README table answers for them, both red-gates read the tree as it
+is, locally. The new pushes' verdicts print when the runner finishes; the verdicts are recorded here unedited once
+they do.
+
+**Not claimed.** No claim that CI is green at the time of writing; the three reds above stand as printed until the
+runner's own verdicts replace them. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at
+the repository root remains untouched; `.workbuddy/` remains untracked.
