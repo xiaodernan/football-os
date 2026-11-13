@@ -35,6 +35,7 @@ export default async function LeaderboardPage() {
   }
 
   const { leaders, me, leaders_visible: visible } = result.data;
+  const dais = leaders.length >= 3 ? [leaders[1], leaders[0], leaders[2]] : null;
 
   return (
     <div className="page container">
@@ -59,6 +60,22 @@ export default async function LeaderboardPage() {
           </div>
         )}
 
+        {dais && (
+          <div className="podium" aria-hidden="true">
+            {dais.map((entry) => {
+              const place = entry.rank === 1 ? "first" : entry.rank === 2 ? "second" : "third";
+              const numeral = ["I", "II", "III"][entry.rank - 1] ?? "";
+              return (
+                <div className={`podium__cell podium__cell--${place}`} key={entry.rank}>
+                  <span className="podium__place">{numeral}</span>
+                  <span className="podium__rank">{String(entry.rank).padStart(2, "0")}</span>
+                  <span className="podium__name">{entry.name}</span>
+                  <span className="podium__xp">{t("xp", { xp: entry.xp })}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {leaders.length === 0 ? (
           <section className="empty">
             <h2 className="h4">{t("emptyTitle")}</h2>
@@ -77,7 +94,7 @@ export default async function LeaderboardPage() {
               </thead>
               <tbody>
                 {leaders.map((entry) => (
-                  <tr key={entry.rank}>
+                  <tr className={entry.rank <= 3 ? `tr--podium-${entry.rank}` : undefined} key={entry.rank}>
                     <td>{entry.rank}</td>
                     <td>{entry.name}</td>
                     <td>{t("xp", { xp: entry.xp })}</td>

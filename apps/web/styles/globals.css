@@ -12,6 +12,8 @@
    nav:    .nav .nav__inner .nav__brand .nav__links .nav__link .nav__link--active .nav__actions
    misc:   .timeline .timeline__row .table .table th .table td .pitch-backdrop
            .hero .hero__copy .hero-art .hero-pitch (the home hero's board; art only, no copy)
+           .podium .podium__cell .podium__cell--first/second/third .podium__rank .podium__name .podium__xp
+           .tr--podium-1/2/3 (an inset rank-cell rail marking the sheet's top three)
 */
 
 :root {
@@ -288,6 +290,54 @@ h1, h2, h3, h4, p { margin: 0; }
 .table th { text-align: start; color: var(--text-3); font-weight: 600; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); }
 .table td { padding: 0.6rem; border-bottom: 1px solid var(--line-soft); }
 .table tr:last-child td { border-bottom: 0; }
+/* The podium's places stay marked in the sheet itself: an inset rail on the rank cell, so the board keeps its
+   order even for a reader who never sees the dais above it. */
+.tr--podium-1 td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.tr--podium-2 td:first-child { box-shadow: inset 3px 0 0 var(--info); }
+.tr--podium-3 td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+
+/* The podium: the board's top three get the room they earned — a tinted dais per place, an accent rail above
+   the champion, and no copy of its own. It is decorative for sighted readers; the table below stays the complete,
+   accessible source of the same three rows and everything after them. */
+.podium { display: grid; grid-template-columns: 1fr 1.18fr 1fr; gap: 0.6rem; align-items: end; margin: 0.4rem 0 0.6rem; }
+.podium__cell {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.16rem;
+  padding: 0.85rem 0.7rem 0.75rem; border-radius: var(--radius-sm);
+  background: var(--bg-panel); border: 1px solid var(--line-soft);
+  text-align: center; overflow: hidden; min-width: 0;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+.podium__cell::before {
+  content: ""; position: absolute; top: 0; left: 14%; right: 14%; height: 3px; border-radius: 999px;
+  background: var(--text-3); opacity: 0.85;
+}
+.podium__cell:hover { transform: translateY(-2px); }
+.podium__cell--first {
+  padding-top: 1.2rem; padding-bottom: 1.1rem;
+  border-color: rgba(53, 240, 164, 0.38);
+  background: linear-gradient(180deg, rgba(53, 240, 164, 0.11), rgba(53, 240, 164, 0.02));
+  box-shadow: 0 16px 36px -24px rgba(53, 240, 164, 0.4);
+}
+.podium__cell--first::before { background: var(--accent); box-shadow: 0 0 14px rgba(53, 240, 164, 0.6); left: 8%; right: 8%; }
+.podium__cell--second::before { background: var(--info); box-shadow: 0 0 12px rgba(95, 168, 255, 0.5); }
+.podium__cell--third::before { background: var(--warn); box-shadow: 0 0 12px rgba(255, 182, 72, 0.5); }
+.podium__place { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.22em; color: var(--text-3); text-transform: uppercase; }
+.podium__cell--first .podium__place { color: var(--accent); }
+.podium__cell--second .podium__place { color: var(--info); }
+.podium__cell--third .podium__place { color: var(--warn); }
+.podium__rank { font-family: var(--mono); font-weight: 700; font-size: 1.9rem; line-height: 1; color: var(--text); }
+.podium__cell--first .podium__rank { font-size: 2.35rem; color: var(--accent); text-shadow: 0 0 22px rgba(53, 240, 164, 0.4); }
+.podium__cell--second .podium__rank { color: var(--info); }
+.podium__cell--third .podium__rank { color: var(--warn); }
+.podium__name { max-width: 100%; font-size: 0.82rem; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.podium__xp { font-family: var(--mono); font-size: 0.72rem; color: var(--text-3); }
+@media (max-width: 720px) {
+  .podium { grid-template-columns: 1fr; align-items: stretch; }
+  .podium__cell { flex-direction: row; justify-content: flex-start; gap: 0.8rem; text-align: start; padding: 0.75rem 0.9rem; }
+  .podium__cell--first { padding-top: 0.75rem; padding-bottom: 0.75rem; order: -1; }
+  .podium__rank { font-size: 1.6rem !important; }
+  .podium__name { white-space: normal; }
+}
 
 /* The one scroll frame every sheet sits in. Without it a wide table bleeds past its panel, the page
    scrolls sideways as a whole and the nav goes with it — the reader loses the door they came in by. */

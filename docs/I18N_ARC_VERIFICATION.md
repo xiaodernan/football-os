@@ -5484,3 +5484,47 @@ provider this window — the coach door was live-verified twice (§134, §146) a
 every push. No claim about answer quality beyond these three printed answers. The `fr`/`ar`/`he` editorial
 pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains
 untracked.
+## 154. The leaderboard earns a podium — the top three get the room they earned (2026-11-13)
+
+**The board was a bare sheet: a sticky table of `# / player / XP / streak` with no ceremony for its own
+podium places. The etch that the machine rewards is already the house style — tinted rails, a lift on
+hover, mono numerals, no new copy — so this one follows it exactly, with zero catalogue keys added.**
+
+What changed:
+
+* `app/leaderboard/page.tsx` renders a decorative `.podium` above the sheet when at least three leaders
+  exist — three tinted cells (champion `accent`, runner-up `info`, third `warn`), Roman numeral place,
+  a padded mono rank, the account's name, and the XP figure the row already carries. The dais is
+  `aria-hidden="true"`; the table below remains the complete, accessible source of the same three rows,
+  now with an inset accent/info/warn rail on the rank cell (`tr--podium-1/2/3`) so the order survives
+  for a reader who never sees the dais.
+* `styles/globals.css` gains the podium vocabulary (`.podium`, `.podium__cell--first/second/third`,
+  `.podium__place`, `.podium__rank`, `.podium__name`, `.podium__xp`) next to the table rules, plus the
+  three `inset 3px 0 0` rank-cell rails. Mobile stacks the dais into a column with the champion first.
+  The vocabulary comment at the top of the file is updated to name the new classes. The file's existing
+  "Tables: reading rhythm" section owns the hover rule; no duplicate was left behind.
+
+**Verification, printed, not remembered.**
+
+```
+tsc --noEmit                                        exit 0
+production build (NEXT_DIST_DIR=.next-podium)       BUILD_ID iu0Bb-iT7xeayWhHVPiJY
+                                                    /leaderboard 1.2 kB · 119 kB first load
+qa-i18n-literals   CHECKS passed=9 total=9 failed=0
+qa-unused-keys     CHECKS passed=3 total=3 failed=0
+qa-table-shape     116/116 tables name .table and sit in a frame
+qa-gate-inventory  ran clean against apps/web/scripts
+qa-field-labels    CHECKS passed=2 total=2 failed=0
+qa-a11y            CHECKS passed=33 total=33 failed=0
+qa-locale-fallback CHECKS passed=3 total=3 failed=0
+qa-icu-messages    CHECKS passed=2 total=2 failed=0 (26184 messages, 6 catalogues)
+```
+
+No new catalogue keys were introduced; every visible string on the dais is either the account's own
+name, the `xp` key already used by the row, or a language-free Roman numeral. The i18n gates are
+unaffected by construction, and the greens above say so.
+
+**Not claimed.** No claim that `/leaderboard` has been walked in a browser this window — the build is
+printed, the gates are printed, the machine-bound visual walk remains the frontier named in §145. The
+`fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
+untouched; `.workbuddy/` remains untracked.
