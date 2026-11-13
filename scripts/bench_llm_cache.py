@@ -33,7 +33,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import time
 import urllib.error
@@ -54,12 +53,12 @@ LONG_CONTRACT = (
     "it rests on, and the shape of a correct answer: first sentence answers the question, the citation "
     "follows the claim, and a gap is named rather than filled.\n\n"
 ) + "".join(
-    "Example {i}.\n"
+    f"Example {i}.\n"
     "Question: How should the far-side forward react when the ball is switched quickly?\n"
     "Passage: [1] On a switch of play the far-side forward's first job is to hold width until the ball "
     "travels, then attack the space behind the recovering full-back.\n"
     "Answer: Hold your width until the ball is in flight, then attack the space behind the recovering "
-    "full-back [1]. If the switch is slow, do not leave early; the space closes before the ball arrives.\n\n".format(i=i)
+    "full-back [1]. If the switch is slow, do not leave early; the space closes before the ball arrives.\n\n"
     for i in range(1, 6)
 )
 
