@@ -6130,3 +6130,49 @@ only a consistent observation. The probe ran with `REDIS_URL` unset (the app log
 and serves from the in-memory fallback, as §146's notes record); the authenticated tier was exercised in the
 §149 and §160 runs, not in this one. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text
 file at the repository root remains untouched; `.workbuddy/` remains untracked.
+## 168. The first live browser pass over the etched front-end — what rendered, what was empty, honestly (2026-11-13)
+
+**The build was green; but the machine keeps claiming it has never walked a page. This run booted a fresh scratch
+API and a production web build and drove them with the in-app browser until the flow either worked or said why
+it did not. No pixels were captured — the automated window cannot bring a desktop to the foreground in this
+environment — so every claim below is a printed DOM count, not a screenshot.**
+
+Setup: `ENV=development`, `CORS_ORIGINS=http://localhost:3210,http://127.0.0.1:3210`, a scratch SQLite database
+(`.scratch/visual-check.db`) the app created and seeded on startup; the web tier serving **`BUILD_ID
+hLggDNe-AsKnRCU7bOLl7`** (`.next-verdict`) on port 3210 against the API on 8731. The browser registered a player
+through the real form (zh-locale default, `fo_locale=zh-CN` cookie — the catalogue that decided to render this
+visit was Chinese; that is the correct, self-labelled behavior of the language negotiation, not a bug),
+completed the identity creation on `/onboarding`, and landed on `/my-football`.
+
+**What rendered, printed before this section was written.**
+
+| page | probe | result |
+| --- | --- | --- |
+| `/training` | `.drill-card` / `.drill-card__glyph` | **24 / 24** |
+| `/leaderboard` | `.podium` / `.podium__cell` (+1/1/1 for first/second/third) | **1 / 3** (+ rank rails `tr--podium-1/2/3`, 3) |
+| `/training/1v1-isolation-channel` | `.drill-watchout` / `.drill-adjust` | **1 / 1** |
+| `/challenges` | `.tac-card` ×6, `getComputedStyle(.tac-card::before).height` | **2px** (the ember, computed live) |
+| `/portfolio` | `.cv-front` / `.cv-front__mono` | **1 / 1** |
+| `/progress` | `.bar` meters | **28** rendered (empty state, `pg-medal` 0 — the account earned no achievements) |
+| `/notifications` | `.notice-row` / `.notice-row__icon` | **0 / 0** (fresh account, nothing to read — the correct empty state) |
+
+The leaderboard podium needed three opt-in users to exist at all; the visual-check account was flipped to
+`leaderboard_visible=true` through the documented `POST /api/v1/leaderboard` door (the `LeaderboardToggle` button
+calls exactly it), so the dais was seen with the API answering rather than mocked.
+
+**What did not get walked, with a name on it.** `/challenges/runs/[slug]` — the verdict etch added there this
+window (§167) is unverified as pixels and unverified as DOM; verifying it means playing a full fixture inside the
+challenge runner in the browser, and the probes stopped at the panels this account had actually opened. The
+build compiles the page; that is all claimed. `/progress` and `/notifications` are probed only at empty state.
+No claim about any other page.
+
+**What this corrected about earlier claims.** This session has been telling readers that "the walk remains a
+machine-bound artefact" — technically true for the visual walk's 1782 URLs, but the etches were verifiable in a
+real browser session on this host all along. The tabs were open; nobody had carried the flow to them until now.
+The verification above is first-pass, on a fresh database with no seeded world beyond what the app does for
+itself, against the build CI has already printed SUCCESS for.
+
+**Not claimed.** No screenshot exists; no claim that these probes prove the walk passes at any point on this
+host; no claim about the verdict page beyond compilation; no claim that the Chinese rendering generalises — it
+is what `Accept-Language` chose. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at
+the repository root remains untouched; `.workbuddy/` remains untracked.
