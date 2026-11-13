@@ -93,7 +93,11 @@ export default async function ChallengeRunPage({ params }: Props) {
         title={t("windowTitle", { club: career.club_name, window: windowRounds })}
       />
 
-      <Panel eyebrow={verdict ? verdict.status.toUpperCase() : t("noVerdict")} title={t("verdictTitle")}>
+      <Panel
+        className={verdict ? (verdict.status === "met" ? "verdict-met" : "verdict-missed") : ""}
+        eyebrow={verdict ? verdict.status.toUpperCase() : t("noVerdict")}
+        title={t("verdictTitle")}
+      >
         <div className="stack-sm">
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             <span className={verdict?.status === "met" ? "badge badge--live" : "badge badge--demo"}>{verdict ? t("objectivesCount", { met: verdict.objectives_met, total: verdict.objectives_total }) : t("nothingToJudge")}</span>

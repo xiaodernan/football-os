@@ -6075,3 +6075,58 @@ claim.
 the gates are printed, the machine-bound visual walk remains the frontier named in §145. No claim of embedding
 availability, now or soon. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the
 repository root remains untouched; `.workbuddy/` remains untracked.
+## 167. The verdict screen earns its own two verdicts — and the model stays on the stored numbers (2026-11-13)
+
+**A challenge is the one thing on this site a player reads to learn they either earned it or did not. Its
+verdict panel now carries that difference in its border before a word of copy is read. And the coach's live
+path was re-verified against the committed tree with a different question, to keep an eye on the model.**
+
+What changed:
+
+* `styles/simulate.css` — `.panel.verdict-met` and `.panel.verdict-missed` (a plain two-class selector, no
+  `!important`): accent border + `0 26px 64px -34px rgba(53,240,164,0.4)` glow for `met`, warn border +
+  `rgba(255,182,72,0.35)` glow for `missed`. `.panel`'s base rule loses to the compound selector without
+  touching it; `in_progress` gets no class, which is what a run still in play deserves.
+* `app/challenges/runs/[slug]/page.tsx` — the verdict `<Panel>` takes `className` from the verdict status
+  itself: `met` or `missed`, otherwise nothing. Copy, logic, gates and every measured figure unchanged.
+
+**Live re-verification of the coach door against the current tree (one call, weak-foot question):**
+
+```
+register: 201 | player: 201 | coach ask: 200
+provider: openai   model: gpt-6-sol   demo_mode: False   intent: weak_foot   confidence: 0.74
+answer: This week, complete the 18-minute Rondo Shapes: Press Resistance session and deliberately use
+        your weak foot for passes when the angle allows. ... Your weak-foot rating is 3, and you have no
+        recorded recent sessions, so build consistency through this session before judging progress.
+reasons: ["Weak-foot rating stored as 3",
+          "Ball-mastery and wall-pass drills transfer to the weak foot in 4-6 weeks of consistent reps"]
+```
+
+The model stayed on the stored profile (weak-foot rating 3, zero sessions), named the seeded session, and
+invented nothing. This is the third live confirmation of that property on this door (§134, §146 re-runs) and
+the second after the §159/§161 cache-aware prompt reorder — the reorder did not loosen grounding.
+
+**Verification, printed, not remembered.**
+
+```
+tsc --noEmit                                        exit 0
+production build (NEXT_DIST_DIR=.next-verdict)      BUILD_ID hLggDNe-AsKnRCU7bOLl7
+                                                    /challenges 2.93 kB · 121 kB · runs/[slug] 2.2 kB · 120 kB
+qa-i18n-literals   CHECKS passed=9 total=9 failed=0
+qa-unused-keys     passed
+qa-field-labels    CHECKS passed=2 total=2 failed=0
+qa-a11y            CHECKS passed=33 total=33 failed=0
+qa-icu-messages    CHECKS passed=2 total=2 failed=0 (26184 messages, 6 catalogues)
+qa-rtl-readiness   CHECKS passed=8 total=8 failed=0
+qa-table-shape     116/116 tables name .table and sit in a frame
+```
+
+No catalogue key was added; the verdict classes name the two terminal states and nothing else.
+
+**Not claimed.** No claim that `/challenges/runs/[slug]` has been walked in a browser this window — the
+build is printed, the gates are printed, the machine-bound visual walk remains the frontier named in §145.
+No claim that the model has one good week or one bad week; two fresh live reads do not constitute a proof,
+only a consistent observation. The probe ran with `REDIS_URL` unset (the app logs its own AuthenticationError
+and serves from the in-memory fallback, as §146's notes record); the authenticated tier was exercised in the
+§149 and §160 runs, not in this one. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text
+file at the repository root remains untouched; `.workbuddy/` remains untracked.

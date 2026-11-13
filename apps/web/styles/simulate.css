@@ -1,5 +1,21 @@
 /* M6 simulation surfaces. Shared primitives stay in globals.css; this file only lays out the picker. */
 
+/* The one panel a player reads to learn whether a challenge was won or failed at something —
+   the border carries the verdict before the copy does. `.panel.verdict-*` outranks the base
+   `.panel` rule without getting an !important involved. */
+.panel.verdict-met {
+  border-color: rgba(53, 240, 164, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(53, 240, 164, 0.2),
+    0 26px 64px -34px rgba(53, 240, 164, 0.4);
+}
+.panel.verdict-missed {
+  border-color: rgba(255, 182, 72, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(255, 182, 72, 0.2),
+    0 26px 64px -34px rgba(255, 182, 72, 0.35);
+}
+
 .sim-fixtures {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
