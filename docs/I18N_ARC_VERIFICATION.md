@@ -5982,3 +5982,44 @@ coverage, not premise. No red was re-tagged, re-run until green, or re-worded ou
 `/metrics/system` always was. No new dependency is claimed (the whole arc runs on `fastapi`/`sqlalchemy` and the
 standard library). The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository
 root remains untouched; `.workbuddy/` remains untracked.
+## 165. The mistake panel warns, the progressions panel answers — and the runbook learns both scrapes (2026-11-13)
+
+**The drill detail page is the page a player reads right before doing the thing. Its two halves said
+different things and wore the same gray; now the mistakes panel wears amber and the progressions panel
+wears info, and the service-plane runbook names both scrapes instead of only the edge's.**
+
+What changed:
+
+* `app/training/[slug]/page.tsx` — the "mistakes to avoid" panel carries `drill-watchout`, the "progressions"
+  panel carries `drill-adjust`. Copy, structure and every child are untouched.
+* `app/training/training.css` — two rules: a 3px `--warn` rail with an amber glow on `.drill-watchout`, a 3px
+  `--info` rail with a blue glow on `.drill-adjust`, both `inset-inline-start`, 12% in from top and bottom,
+  plus `padding-inline-start: 1.15rem` so no content sits under the rail. Same geometry as the medal rows and
+  the CV frontispiece.
+* `docs/runbooks/service_plane.md` — the door table now lists `GET /actuator/prometheus` with a one-paragraph
+  account of what it serves after a few probes (one `http_server_requests_seconds_count` series per route,
+  `uri`/`method`/`status`/`outcome`), that `resilience4j_*` appears only after a breaker has moved at least
+  once, and that the Python core answers its own counterpart at `GET /api/v1/metrics/prometheus` — neither
+  lives behind the other.
+
+**Verification, printed, not remembered.**
+
+```
+tsc --noEmit                                        exit 0
+production build (NEXT_DIST_DIR=.next-coach)        BUILD_ID SbpQvaMHMXTlATDvFRB1u
+                                                    /training/[slug] built with its page bundle present
+qa-i18n-literals   CHECKS passed=9 total=9 failed=0
+qa-unused-keys     passed
+qa-field-labels    CHECKS passed=2 total=2 failed=0
+qa-a11y            CHECKS passed=33 total=33 failed=0
+qa-icu-messages    CHECKS passed=2 total=2 failed=0 (26184 messages, 6 catalogues)
+qa-rtl-readiness   CHECKS passed=8 total=8 failed=0
+qa-table-shape     116/116 tables name .table and sit in a frame
+```
+
+No catalogue key was added; the runbook note is prose and names no new behavior, only the two doors as shipped.
+
+**Not claimed.** No claim that `/training/[slug]` has been walked in a browser this window — the build is
+printed, the gates are printed, the machine-bound visual walk remains the frontier named in §145. The
+`fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
+untouched; `.workbuddy/` remains untracked.

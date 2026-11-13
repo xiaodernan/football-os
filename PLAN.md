@@ -2226,6 +2226,36 @@ remains untouched; `.workbuddy/` remains untracked.
 
 ---
 
+## Item 34 — the fleet scrape sees both halves, and the ledger counts its own census
+
+**The defect the operator saw after the edge gained `/actuator/prometheus`: half the platform was scrapable
+and the core was not, and a fleet scrape of "the whole platform" read a missing half.**
+
+**The design.** (1) `app/services/prometheus_export.py` renders twelve label-free `football_os_*` metrics from
+the counters the core already keeps (`request_metrics.snapshot()`, `model_ledger.cache_hit_rate()`, the daily
+spend, the process uptimer). Zero dependencies: no `prometheus_client`, no histogram-of-expectations, no
+account-shaped label by construction, no cardinality trap. (2) The door is `GET /api/v1/metrics/prometheus`
+behind the same router-scoped operator standing every metrics door carries — `require_operator` → a player is
+refused with the platform's own 403 `insufficient_role` before any row. (3) `cache_hit_rate()` grew its own
+`cost_usd` so the exposition carries a real money figure. (4) Consistent with the metrics standing census,
+`METRICS_PATHS` now names the scrape door — a metrics door added to the router must arrive in the census,
+never beside it.
+
+**The verification, one arc long.** `mypy`/`ruff` clean on the three changed files; `pytest
+tests/test_prometheus_export.py` 4 passed (exact twelve-metric contract, HELP/TYPE shape, exposition grammar on
+every value line, zero braces, the p95 absent when unsampled, operator 200 with cached rows, anonymous 401/403,
+player 403); the contract re-exported to **229 paths / 296 operations**; the probe re-run against it
+(**10/10, 10.31 s**, fresh scratch SQLite, `CORS_ORIGINS` at the documented 3210 pair); census moved **240 → 241
+secured, 103 → 104 private `GET` paths**; the three SHA ledgers and `AUDIT_FIGURES` re-name the re-exported
+bytes. The runner caught three reds on the same arc (portfolio cited-scan ×2, metrics standing census ×1); §164
+records them with their runs and their cures, none re-tagged or re-worded.
+
+**Not claimed.** No fleet aggregation exists anywhere; the exposition is this process's counters. The edge's
+scrape and the core's each answer one process. The `fr`/`ar`/`he` editorial pass remains owed; the untracked
+user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

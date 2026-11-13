@@ -169,10 +169,10 @@ export default async function DrillDetailPage({ params }: { params: Promise<{ sl
       </Panel>
 
       <div className="grid-2">
-        <Panel eyebrow={t("watchOutEyebrow")} title={t("mistakesTitle")}>
+        <Panel className="drill-watchout" eyebrow={t("watchOutEyebrow")} title={t("mistakesTitle")}>
           <PointList title={t("mistakesToAvoid")} empty={t("notProvided")} items={mistakes} />
         </Panel>
-        <Panel eyebrow={t("adjustEyebrow")} title={t("progressionsTitle")}>
+        <Panel className="drill-adjust" eyebrow={t("adjustEyebrow")} title={t("progressionsTitle")}>
           <div className="stack">
             <PointList title={t("progressions")} empty={t("notProvided")} items={progressions} />
             <div className="stack-sm">

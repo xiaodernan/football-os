@@ -75,6 +75,39 @@
   padding-inline-start: 0.6rem;
 }
 
+/* The two halves of the detail page carry their own registers: the mistakes panel warns in amber, the
+   progressions panel answers in info — a rail each, the same geometry as the medal rows. */
+.drill-watchout {
+  position: relative;
+  padding-inline-start: 1.15rem;
+}
+.drill-watchout::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--warn);
+  box-shadow: 0 0 12px rgba(255, 182, 72, 0.4);
+}
+.drill-adjust {
+  position: relative;
+  padding-inline-start: 1.15rem;
+}
+.drill-adjust::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--info);
+  box-shadow: 0 0 12px rgba(95, 168, 255, 0.4);
+}
+
 .session-card {
   display: flex;
   flex-direction: column;

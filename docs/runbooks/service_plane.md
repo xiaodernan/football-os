@@ -39,7 +39,15 @@ GET  /edge/instances  ?service=football-core — what the balancer would dial; u
 GET  /edge/config     the live @RefreshScope value, not the file's
 POST /actuator/refresh  rebuild @RefreshScope beans from the current config (JSON content type!)
 GET  /actuator/health  the only health check; /edge/plane describes state but does not judge it
+GET  /actuator/prometheus  Micrometer text for an operator's scrape; the edge closes over `health,info,gateway,refresh,prometheus`
 ```
+
+`GET /actuator/prometheus` is served by `micrometer-registry-prometheus` (since §151): after the three doors answer a
+handful of probes it prints one `http_server_requests_seconds_count` series per route with `uri`, `method`, `status`
+and `outcome`, the shape a Prometheus groups first. `resilience4j_*` appears only after a breaker has opened or
+closed at least once — a cold start prints no breaker line, which is the correct answer for a breaker that has not
+moved. The Python core publishes its own counterpart at `GET /api/v1/metrics/prometheus` (§163, `require_operator`,
+zero labels), so a fleet scrape shows both halves and neither lives behind the other.
 
 `GET /edge/plane` calls the same controller methods the other six doors call, so its blocks are the
 same answers, not a second set of figures. It names each door in `doors`, including the refresh POST.
