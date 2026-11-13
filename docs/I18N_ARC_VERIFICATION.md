@@ -5605,3 +5605,39 @@ mypy   the same two files                                                       
 No other query shape was touched; the two prefetch sites are the only loops this arc found paying per-row
 selects in the market and program paths. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user
 text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+## 157. The milestones panel earns its rosette — achievements that look awarded (2026-11-13)
+
+**The achievements list is the only place on `/progress` that says the account earned something, and it
+rendered as plain rows with a date. Tonight it reads like a shelf of medals.**
+
+What changed:
+
+* `app/progress/page.tsx` — each achievement row now opens with a decorative rosette (`.pg-medal__glyph`,
+  aria-hidden, a two-stroke SVG medallion with ribbon tails), and the row itself carries the house
+  `.pg-medal` class. Copy, layout of the text stack, and the mono awarded-date are untouched.
+* `app/progress/progress.css` — `.pg-medal` adds the hairline accent rail on the inline-start edge
+  (the notifications-tray rail, one level stronger glow), a faint accent hover on the row, and a
+  `translateY(-1px)` lift. `.pg-medal__glyph` is a 38px tinted tile (accent 9% wash, 12px radius)
+  sized to sit beside two lines of type.
+
+**Verification, printed, not remembered.**
+
+```
+tsc --noEmit                                        exit 0
+production build (NEXT_DIST_DIR=.next-medal)        BUILD_ID Nqs2rSqF-CtMgnZfDldYb
+                                                    /progress 299 B · 115 kB first load
+qa-i18n-literals   CHECKS passed=9 total=9 failed=0
+qa-unused-keys     passed
+qa-field-labels    CHECKS passed=2 total=2 failed=0
+qa-a11y            CHECKS passed=33 total=33 failed=0
+qa-icu-messages    CHECKS passed=2 total=2 failed=0 (26184 messages, 6 catalogues)
+qa-icu-coverage    CHECKS passed=1 total=1 failed=0
+```
+
+No catalogue key was added; the rosette is decoration and every visible word was already on the page.
+The `.list__item` base row rule is inherited, not duplicated — the rail and lift layer on top of it.
+
+**Not claimed.** No claim that `/progress` has been walked in a browser this window — the build is printed,
+the gates are printed, the machine-bound visual walk remains the frontier named in §145. The
+`fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
+untouched; `.workbuddy/` remains untracked.

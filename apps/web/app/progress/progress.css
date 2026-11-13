@@ -101,6 +101,53 @@
   margin-bottom: 0.25rem;
 }
 
+/* Achievements: a medal row per milestone — a tinted rosette, a hairline accent rail on the near edge,
+   and a lift on hover. Decoration carries no copy, so the catalogue is untouched. */
+.pg-medal {
+  position: relative;
+  align-items: center;
+  gap: 0.8rem;
+  padding-inline-start: 1.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+.pg-medal::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(53, 240, 164, 0.45);
+}
+.pg-medal:hover {
+  background: rgba(53, 240, 164, 0.05);
+  transform: translateY(-1px);
+}
+.pg-medal__glyph {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--accent);
+  background: rgba(53, 240, 164, 0.09);
+  border: 1px solid rgba(53, 240, 164, 0.22);
+}
+.pg-medal__glyph svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .pg-group__body {
   display: flex;
   flex-direction: column;

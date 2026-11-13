@@ -348,7 +348,13 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
           ) : (
             <div className="list">
               {overview.achievements.map((achievement) => (
-                <div className="list__item" key={achievement.slug}>
+                <div className="list__item pg-medal" key={achievement.slug}>
+                  <span className="pg-medal__glyph" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="9" r="5.2" />
+                      <path d="M9.4 13.2 7 20l5-2.4 5 2.4-2.4-6.8" />
+                    </svg>
+                  </span>
                   <div className="grow stack-sm" style={{ gap: "0.15rem" }}>
                     <span className="h3">{achievement.title}</span>
                     <span className="muted" style={{ fontSize: "0.88rem" }}>
