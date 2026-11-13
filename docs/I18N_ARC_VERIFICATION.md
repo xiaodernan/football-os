@@ -6262,6 +6262,21 @@ tests/test_knowledge_joint.py tests/test_openapi_contract_currency.py` → **89 
 operations detected". `ruff` and `mypy` clean on the five changed Python files; `tsc --noEmit` clean; all
 thirteen web gates green, with the catalogue table re-counted to 4 366 / 4 321 / 4 119.
 
+**Then it was run for real, twice, against the live gateway** (API on `127.0.0.1:8741`, scratch SQLite migrated
+to 0064, `demo_mode: false`, `llm: openai`, model `gpt-6-sol`):
+
+```
+POST /api/v1/knowledge/ask  {"question": "how do I defend a 1v1 without getting beaten"}
+  ask 1  http=200  total=9.789 s  answered=true  cached=false  citations=4  ask_total=151 ms
+  ask 2  http=200  total=0.099 s  answered=true  cached=true   citations=4  ask_total= 78 ms
+```
+
+Same text, same four citations, and the second answer's reasons say the stored phrasing was reused and no
+provider call was made. The ledger holds exactly **one** row for the pair (`input 4 869, output 372,
+cached 0, cache_reported 0, latency 9 589 ms`) — the second ask wrote nothing because it bought nothing — and
+`cache_hit_rate()` over that database reads `hit_rate 0.0, coverage 0.0`, which is the new arithmetic working:
+one silent call is *no measurement*, not a 0 % hit.
+
 **Not claimed.** The cache saves tokens only on *repeated* questions; a sweep of distinct questions pays full
 price and always will. The gateway's token counts are not reproducible even for one identical body — 2 173,
 2 183, 20 626 and 20 625 were all reported for the same request on the same afternoon — which is evidence that
