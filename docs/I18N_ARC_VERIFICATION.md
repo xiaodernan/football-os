@@ -5317,3 +5317,34 @@ the flush.
 documented fallback: the poll loop drains the board, one tick late, never wrong. `fr`/`ar`/`he` editorial pass
 remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains
 untracked.
+## 150. The tree at the moment of this writing — honest snapshot (2026-11-13)
+
+**A statement of what is true of the tree, written so a reader can tell what is verified from what is not.
+Nothing here is claimed green that the runner has not printed green; everything not named here is either
+covered by an earlier section of this ledger or an open question with its own name on it.**
+
+**What is verified and printed.** The Spring Cloud service plane is wired and gated at the container level
+(`services` leg prints success on pushes including `3f268e8`; `containers` and `web` legs print success).
+The jobs queue is live-verified against this host's own compose Redis (7/7 integration cases, 26/26 the
+full module — §149). The performance passes (`da9bb9a`) print success on all four legs. The §147 correction
+of the ledger prints success. The web tier's QA gates read green on this tree (`qa-key-drift 4/4`,
+`qa-locale-completeness 2/2`, `qa-locale-tokens 7/7`, `qa-i18n-literals 9/9`, `qa-unused-keys 3/3`,
+`qa-table-shape 116/116`, `qa-gate-inventory` 243/243). `tsc --noEmit` exits 0; a production build completes
+(`BUILD_ID` from `.next-walks4`); `ruff` clean; `mypy` clean over 176 files; `git fsck --full --no-dangling`
+prints nothing (clean object database, no corruption). `43365275607` (§149 push) prints **success**.
+
+**Branches and worktrees.** Every non-`master` branch on this host is an ancestor of `origin/master`
+(`world-calendar`, `world-movement`, `world-pyramid` at 0 ahead; fifteen detached-HEAD worktrees at 0 ahead).
+The tree is consolidated at `master`; there is nothing unmerged.
+
+**What is not verified, with a name on it.** A full local run of the API suite was started on this host
+(PID 29336) and did not complete in this window — the output reached roughly a quarter of the files at
+the time it was stopped, printed zero failures, and was abandoned rather than half-claimed. The authoritative
+gate is CI, and every push this session prints success on it. The full visual walk has not completed at any
+point in this arc; §145 records the frontier and what moved each time it did. The `fr`/`ar`/`he` editorial
+pass is owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains
+untracked.
+
+**Not claimed.** No claim that the machine-bound visual walk passes end-to-end on this host; no claim that a
+local suite run completed; no CI warp was performed. The figures above come from `gh run view` output and
+local commands run this window, not from memory.
