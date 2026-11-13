@@ -2306,6 +2306,43 @@ for an identical body (2 173 / 2 183 / 20 626 / 20 625 on one afternoon), which 
 upstreams with separate caches — no ratio here is a promise for the next call. The 4 386-token preamble is the
 gateway's and cannot be removed from this repository.
 
+## Item 36 — a closed link answered 200, and a route move poisoned `tsc` for sixty build dirs
+
+**The walk's second red, finally explained.** `closing the link turns the page a stranger just read into a 404,
+not a cached 200 — the old link now answers 200` had been red since the walk gained the check. The API was never
+the problem: `_live_by_token` filters `revoked_at IS NULL` and refuses with `no_such_share`. The page was:
+`app/scout/loading.tsx` wraps the whole `/scout` segment, so Next streams the shell before the page body runs,
+and `notFound()` raised after the flush can only paint the not-found screen under an already-sent **200**.
+
+Two theories were tested before the fix, both against a dev server on `:3212`:
+
+| theory | probe | result |
+| --- | --- | --- |
+| `notFound()` in `generateMetadata` decides the status before the shell | added it to `/tactics/[slug]` | still 200 — **false** |
+| removing the `loading.tsx` above the route restores the status | moved `/scout` into a route group | **404** |
+
+**The fix.** `app/scout/page.tsx` and `app/scout/loading.tsx` moved into `app/scout/(index)/`, so the skeleton
+still covers `/scout` and no longer covers `/scout/shared/[token]`. The URL is unchanged (a route group is not a
+path segment); the two stylesheet imports moved with the file (`../../styles` → `../../../styles`). Measured
+after: `/scout/shared/deadbeef…` → **404** (was 200), `/scout` → **307** to login (unchanged, the page is
+private), and every one of the fourteen web gates stayed green.
+
+**The `/tactics/[slug]` half is left open, deliberately.** It has the same defect (`/tactics/no-such-system`
+answers 200) and the same cure, but its `loading.tsx` also covers `/tactics/boards`, `/tactics/compare` and
+`/tactics/gallery` — three routes that would lose their skeleton to buy one status code. That trade is a
+judgement call, not a bug to sneak through a commit, so it is recorded here instead of half-applied.
+
+**A second finding fell out of the move.** `npx tsc --noEmit` failed with 40 `TS2307` errors about a page that
+no longer exists — none of them in source. `tsconfig.json`'s `include` had accumulated **42 `.next-*/types/**/*.ts`
+globs** from two years of builds that each used a different `NEXT_DIST_DIR`, and each of those directories still
+held a `validator.ts` naming `app/scout/page.ts`. Every route move therefore broke type-checking until the
+directories were deleted, and the repo has **62 such directories** on disk. `include` is now the canonical four
+entries (`next-env.d.ts`, `**/*.ts`, `**/*.tsx`, `.next/types/**/*.ts`); Next re-adds the current `distDir` on the
+next build, which is the only one that matters.
+
+**Evidence.** `npx tsc --noEmit` exits 0 after the `include` cleanup; fourteen web gates green; `/scout/shared/…`
+404 and `/scout` 307 measured on a dev server against a live API on `:8741`.
+
 ---
 
 ## How to work an item

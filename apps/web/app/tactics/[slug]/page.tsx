@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { cache } from "react";
 
 import { ISO_FORMULA, Pitch, Pitch3D } from "@/components/pitch";
 import { PhasePlayer } from "@/components/PhasePlayer";
@@ -16,9 +17,13 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-async function load(slug: string) {
-  return readWorld<SystemDetail>(`/tactics/${encodeURIComponent(slug)}`);
-}
+/**
+ * One read per request, shared by `generateMetadata` and the page.
+ *
+ * `cache()` is not an optimisation here, it is a requirement: the metadata function and the page
+ * both need the same object, and without the wrapper this route would ask the API twice per view.
+ */
+const load = cache(async (slug: string) => readWorld<SystemDetail>(`/tactics/${encodeURIComponent(slug)}`));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
