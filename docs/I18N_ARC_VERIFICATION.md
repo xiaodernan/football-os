@@ -6378,3 +6378,45 @@ ledger will always name the hand it came from, and this section names it.
 **Not claimed.** No claim this cap holds across every dialect of this pattern; no claim on the CV's PDF door;
 no claim about pages other than the two this arc touched. The `fr`/`ar`/`he` editorial pass remains owed; the
 untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+## 172. The world duel door — the other hand's ledger, landed and measured (2026-11-13/14)
+
+**§171 closed a catalogue-read leak on the machine this hand could measure; the other hand opened a whole door
+on the same machine and left it uncommitted on it. This section finishes the landing: the code is theirs, the
+measurements are this hand's, the attribution is explicit.**
+
+What landed on master at this commit: `app/services/world/duel.py` (the arithmetic), `tests/test_world_duel.py`
+(13 cases), and the wiring inside `app/api/v1/world.py` (the `GET /world/duel` door, the two helper closures
+`_duel_player` and `_duel_side`, and the import). **No other file moved.** The web app's `tactics/(index)/`
+moves and the untracked probe scripts stay untouched.
+
+What the door does, per the code itself: seven categories — goals, assists, involvement per 90, season rating,
+minutes, coach rating (overall), discipline (yellows + 3× reds, no ambiguity). Each column wins or loses on
+its own terms; discipline inverts (a booking is not an achievement); the tally resolves left / right / draw /
+counted / levelled / unavailable, and per-90 arithmetic is held to a 90-minute floor precisely because a
+9-minute hat-trick does not exist as a rate. The 404 on a missing ident names the missing side, which is the
+shape the REST of this codebase takes at every multi-address route; the same-player refusal is a 400
+`same_player`, not a silent empty column.
+
+**Measured, printed, not remembered.**
+
+```
+pytest tests/test_world_duel.py     13 passed
+pytest tests/test_world.py
+       tests/test_knowledge_joint.py
+       tests/test_knowledge_rag.py   103 passed
+ruff check (duel.py, world.py)      All checks passed
+mypy  (duel.py, world.py)           Success: no issues found in 2 source files
+```
+
+**The honest frame of this landing.** The module and the door are the other hand's; the tests are the other
+hand's; the decision to finish what is sitting uncommitted on the shared host with both files verified rather
+than nudging it along is this hand's, made by the standing instruction, and the ledger records that it was
+this hand that pushed it. Nothing is rebranded, nothing is re-authored; the commit hash naming this section
+names the contributor.
+
+**Not claimed.** No claim about the duel page rendering in a browser this window — the door answers at the
+API tier and the report is HTML-verifiable at the wire; the web-side **Duel** page that consumes it is not in
+this commit and is not claimed. No claim that the tally constitutes a football judgement — the code's own
+docstring says it plainly (a claim a reader can check column by column; a 0-100 "duel rating" it refuses to be).
+The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
+untouched; `.workbuddy/` remains untracked.

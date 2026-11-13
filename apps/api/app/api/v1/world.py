@@ -37,6 +37,7 @@ from app.models import (
 )
 from app.services.world import search_world, web_path
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
+from app.services.world.duel import compare, per90
 from app.services.world.sync import GATE
 
 router = APIRouter(prefix="/world", tags=["world"])
@@ -741,6 +742,69 @@ def player_detail(ident: str, request: Request, db: Session = Depends(get_db)) -
         training_log=_training_totals(training) | {"items": [_training_row(row) for row in training]},
         method={"rating": STAT_METHOD["rating"], "season_totals": STAT_METHOD["season_totals"]},
     )
+
+
+def _duel_player(db: Session, ident: str, side: str) -> RealPlayer:
+    """One duellist by id or slug.
+
+    The 404 names the side it could not find. A duel URL carries two idents and "no such record" alone leaves
+    the reader guessing which half of the address was wrong — the same ambiguity the API refuses everywhere
+    else by naming the field.
+    """
+    player = db.scalar(select(RealPlayer).where(or_(RealPlayer.id == ident, RealPlayer.slug == ident)))
+    if player is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail={"code": "no_such_player", "message": "No such player in the generated world", "side": side, "ident": ident},
+        )
+    return player
+
+
+def _duel_side(db: Session, player: RealPlayer) -> dict[str, Any]:
+    """One duellist, with the two briefs a reader needs to place him: the club and the competition."""
+    team = db.get(Team, player.team_id) if player.team_id else None
+    return {
+        "player": {
+            **_player_brief_row(player),
+            "club": _team_brief(team),
+            "competition": _competition_brief(team.competition) if team else None,
+        },
+        "attributes": dict(player.attributes or {}),
+        "per_90": per90(player),
+        "season": {
+            "season": player.season,
+            "appearances": player.appearances,
+            "starts": player.starts,
+            "minutes": player.minutes,
+            "goals": player.goals,
+            "assists": player.assists,
+            "clean_sheets": player.clean_sheets,
+            "yellow_cards": player.yellow_cards,
+            "red_cards": player.red_cards,
+            "rating": player.rating,
+            "form": player.form,
+        },
+    }
+
+
+@router.get("/duel")
+def duel(
+    request: Request,
+    left: str = Query(min_length=1, max_length=160),
+    right: str = Query(min_length=1, max_length=160),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Two players, seven columns, one tally — see `app.services.world.duel` for what the verdict is not."""
+    limit(request, 120, 60, scope="world_duel")
+    left_player = _duel_player(db, left, "left")
+    right_player = _duel_player(db, right, "right")
+    if left_player.id == right_player.id:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={"code": "same_player", "message": "A player cannot be compared with himself", "player": left_player.slug},
+        )
+    ledger = compare(left_player, right_player)
+    return _envelope(left=_duel_side(db, left_player), right=_duel_side(db, right_player), **ledger)
 
 
 @router.get("/training")
