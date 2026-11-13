@@ -196,6 +196,11 @@ export function KnowledgeAsk({ signedIn, categories }: { signedIn: boolean; cate
               <span className="badge badge--live">{tk("aiGenerated")}</span>
             )}
             <span className="chip">{tk("confidence", { percent: Math.round(result.confidence * 100) })}</span>
+            {result.answered_from_cache && (
+              <span className="chip chip--accent" title={tk("cachedPhrasingTitle")}>
+                {tk("cachedPhrasing")}
+              </span>
+            )}
             <span className="chip mono">{result.model}</span>
             <span className="chip mono">{result.retrieval_backend}</span>
           </div>

@@ -479,6 +479,8 @@ export type KnowledgeAskResponse = {
   sources: KnowledgeSource[];
   generated_at: string;
   disclaimer: string;
+  /** True when the prose came out of the answer cache; the citations are always this call's own. */
+  answered_from_cache?: boolean;
 };
 
 /* ---------------------------------------------------------------------------

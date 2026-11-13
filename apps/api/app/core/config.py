@@ -70,6 +70,14 @@ class Settings:
     embedding_provider: str = field(default_factory=lambda: _env("EMBEDDING_PROVIDER", "hash-local"))
     knowledge_dir: str = field(default_factory=lambda: _env("KNOWLEDGE_DIR", str(API_ROOT.parent.parent / "data" / "knowledge")))
     knowledge_auto_ingest: bool = field(default_factory=lambda: _env("KNOWLEDGE_AUTO_INGEST", "1") != "0")
+    # The answer cache. A repeated question over the same passages is the same answer, and on the
+    # gateway this project is configured against one repeat costs ~4 500 input tokens for a
+    # paragraph the platform already had. Seven days is the life of a phrasing, not of a fact: the
+    # citations are rebuilt from a fresh retrieval on every call, so a corpus that changed will
+    # change the key before it changes the answer. `KNOWLEDGE_ANSWER_CACHE=0` turns the tier off
+    # (tests that assert a provider was called use that).
+    knowledge_answer_cache_enabled: bool = field(default_factory=lambda: _env("KNOWLEDGE_ANSWER_CACHE", "1") != "0")
+    knowledge_answer_cache_ttl_seconds: int = field(default_factory=lambda: int(_env("KNOWLEDGE_ANSWER_CACHE_TTL", str(7 * 24 * 3600)) or 7 * 24 * 3600))
     world_seed: int = field(default_factory=lambda: int(_env("WORLD_SEED", "3") or 3))
     world_auto_sync: bool = field(default_factory=lambda: _env("WORLD_AUTO_SYNC", "1") != "0")
     tactics_auto_sync: bool = field(default_factory=lambda: _env("TACTICS_AUTO_SYNC", "1") != "0")

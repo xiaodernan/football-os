@@ -29,6 +29,7 @@ from app.models import ModelCall, User, VideoAsset
 from app.services import model_ledger, ops_alerts
 from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
 from app.services.cost_advisor import recommend as cost_recommend
+from app.services.knowledge.answer_cache import stats as answer_cache_stats
 from app.services.latency_profile import profile as latency_profile
 from app.services.prometheus_export import render_prometheus
 
@@ -214,6 +215,7 @@ def prometheus_door(
         model=model_ledger.cache_hit_rate(db),
         spend_today_usd=model_ledger.spend_today_usd(db),
         uptime_seconds=uptime_seconds(),
+        answer_cache=answer_cache_stats(),
     )
     return PlainTextResponse(body, media_type="text/plain; version=0.0.4; charset=utf-8")
 

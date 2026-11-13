@@ -1449,7 +1449,9 @@
     "sectionChars": "{count} 字符",
     "demoExtractiveTitle": "没有配置语言模型密钥；这个答案是从所引段落中抽取拼装的，不是生成的。",
     "demoRerankTitle": "没有配置语言模型密钥；排序使用特征重排器，结果原样呈现。",
-    "noModelKeyTitle": "没有配置语言模型密钥——问答的答案由引用段落抽取式拼装，绝不生成。"
+    "noModelKeyTitle": "没有配置语言模型密钥——问答的答案由引用段落抽取式拼装，绝不生成。",
+    "cachedPhrasing": "缓存作答",
+    "cachedPhrasingTitle": "同样的问题、同样的段落此前已经答过，这里复用当时的措辞，没有再调用模型。"
   },
   "challenges": {
     "applied": "已应用",

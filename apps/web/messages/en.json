@@ -1449,7 +1449,9 @@
     "sectionChars": "{count} chars",
     "demoExtractiveTitle": "No language-model key is configured; this answer is assembled extractively from the cited passages, not generated.",
     "demoRerankTitle": "No language-model key is configured; ranking uses the feature reranker and results are shown verbatim.",
-    "noModelKeyTitle": "No language-model key is configured — ask/search answers are assembled extractively from the cited passages, never generated."
+    "noModelKeyTitle": "No language-model key is configured — ask/search answers are assembled extractively from the cited passages, never generated.",
+    "cachedPhrasing": "served from cache",
+    "cachedPhrasingTitle": "This exact question over these passages was answered before, so the wording was reused and no model call was made."
   },
   "challenges": {
     "applied": "APPLIED",

@@ -6176,3 +6176,96 @@ itself, against the build CI has already printed SUCCESS for.
 host; no claim about the verdict page beyond compilation; no claim that the Chinese rendering generalises — it
 is what `Accept-Language` chose. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at
 the repository root remains untouched; `.workbuddy/` remains untracked.
+
+## 169. The cache was never cold — the meter counted silence as a miss (2026-11-13)
+
+**The complaint, again, and why the previous pass could not close it.** §159 and §160 fixed two real things
+(non-streaming calls, question-first prompts) and then reported that "stream shows a better hit rate" did not
+reproduce. The complaint came back, which means the fix answered the wrong half. This pass measured the gateway
+again, with a committed instrument (`scripts/bench_llm_cache.py`) instead of a one-off probe, and the answer is
+arithmetic rather than opinion: **the cache works, and the number that said it did not was ours.**
+
+**What the gateway reports, twelve calls, one table.** Same question, three prefixes (the two the product ships
+and a long contract), both modes, two calls each. `-` means the gateway printed no `prompt_tokens_details` at
+all — not zero cached, *silence*.
+
+```
+prefix                 mode         #  prompt  cached   ratio   out      ms
+knowledge (shipped)    non-stream   1    4472    4352   97.3%    21    3784
+knowledge (shipped)    non-stream   2    4472    4352   97.3%    24    2493
+knowledge (shipped)    stream       1    4472    4352   97.3%    28    2382
+knowledge (shipped)    stream       2    4472    4352   97.3%    25    2417
+coach (shipped)        non-stream   1    4560       -  silent     7    2274
+coach (shipped)        non-stream   2    4560    4352   95.4%     7    2455
+coach (shipped)        stream       1    4560       -  silent    28    4101
+coach (shipped)        stream       2    4560       -  silent     7    2288
+long contract          non-stream   1    4998       -  silent    32    2633
+long contract          non-stream   2    4998       -  silent    34    2451
+long contract          stream       1    4998    4864   97.3%    30    2548
+long contract          stream       2    4998    4864   97.3%    25    5364
+```
+
+Three facts fall out of it, each measured rather than inferred.
+
+1. **Every reported figure is 95–97 %.** Wherever the gateway answered the question at all, the prefix cache had
+   already done its job — including on the first call of a prefix that earlier runs had warmed. There is no
+   cold-cache problem to fix on this host.
+2. **The gateway prepends about 4 386 tokens of its own.** The knowledge prefix is 344 characters (86 tokens);
+   the gateway counts 4 472. The coach prefix is 673 characters (168 tokens); the gateway counts 4 560. The long
+   contract is 2 729 characters (682 tokens); the gateway counts 4 998. The gaps between those three
+   (4 472 → 4 560 → 4 998) match the text we send to the token, so the constant is not our prompt: it is a
+   preamble the gateway adds. **That preamble is the bill**, and it is why a repeated question is worth caching
+   at the answer layer rather than at the prompt layer.
+3. **Seven of twelve calls reported a figure and five reported nothing.** The five silences are spread across
+   both modes and all three prefixes — which is what rules out "stream reports, non-stream does not" as the
+   explanation, and rules in "the gateway answers the cache question some of the time".
+
+**The bug this exposed, in one line of arithmetic.** `model_ledger.cache_hit_rate()` computed
+`sum(cached) / sum(input)` over *every* row. A silent call contributes its full input to the denominator and
+nothing to the numerator, so a deployment whose warm calls hit 97 % printed **about 50 %** — and the operator,
+quite reasonably, concluded the cache was broken. Migration **0064** adds `model_calls.cache_reported`;
+`LlmResult` carries it out of `_usage_tokens` (which now returns five values, not four); the rate is taken over
+reporting rows only, and a new gauge `football_os_cache_report_coverage` says what share of the bill that covers.
+A rate of `0.97` at coverage `0.55` reads as "of the half we can see, 97 % hit" — which is the truth, and a
+different sentence from "the cache is half broken".
+
+**Two hypotheses that were tested and are false.** *Keep-alive*: a fresh TCP+TLS connection per call versus one
+pooled connection, four calls each, identical bodies — fresh `0 / 93.8 / 100 %`, pooled `93.8 / 100 / 100 / 0 %`.
+Connection reuse moves no cache figure on this gateway, so the provider keeps `urllib` and no pool was invented
+to chase a number it does not move. *Prefix size*: the 344-character prefix hits exactly as well as the
+2 729-character one (97.3 % both), so the "prefix is below the 1024-token threshold" theory is also dead — the
+gateway's own preamble puts every call far above any threshold.
+
+**What was built, and what it is worth.** An answer cache at the knowledge seam
+(`app/services/knowledge/answer_cache.py`): the key is SHA-256 over the normalised question, the sorted citation
+chunk ids, the model and the contract version, so a stored answer can only ever be served with the exact
+evidence it was written from — `AnswerResult.citations` is rebuilt from a fresh retrieval on every call and the
+cache stores prose, never a citation. Refusals and demo-mode digests are never stored. A per-key lane coalesces
+two readers asking the same new question at the same moment into one provider call, and the lane table is
+bounded by concurrency rather than by how many questions have ever been asked. Storage is `app.core.redis_cache`
+— Redis when a deployment has one, the process's own LRU when it does not, the same `get`/`set`/TTL surface
+either way, so a Redis outage degrades to per-process hits instead of to nothing. `KNOWLEDGE_ANSWER_CACHE=0`
+turns it off; `KNOWLEDGE_ANSWER_CACHE_TTL` defaults to seven days, which is the life of a *phrasing*, not of a
+fact: the passages are re-retrieved every time, so a corpus that changed changes the key before it changes the
+answer. The web client shows a `served from cache` chip on such an answer, with a title that says the wording
+was reused and no model was called — a badge that claims a saved call has to be able to prove one.
+
+**Verified.** `pytest tests/test_knowledge_answer_cache.py` → **15 passed** (key normalisation, NFKC width
+folding, chunk-order stability, a model change being a different answer, round-trip, blank refusal, an entry from
+an older contract being unreachable, immediate off-switch, TTL expiry at 1 s, two threads entering one lane one
+at a time, the lane table returning to zero, and four door-level tests with a counting provider: one call for two
+identical asks, fresh citations on the cached answer, two calls for two different questions, two calls with the
+tier off). `pytest tests/test_prometheus_export.py tests/test_metrics.py tests/test_knowledge_rag.py
+tests/test_knowledge_joint.py tests/test_openapi_contract_currency.py` → **89 passed**, including the new
+`test_a_silent_gateway_does_not_drag_the_rate_to_zero`, which fails against the old arithmetic by construction.
+`alembic upgrade head` on a scratch SQLite applies 0063 → 0064 and `alembic check` prints "No new upgrade
+operations detected". `ruff` and `mypy` clean on the five changed Python files; `tsc --noEmit` clean; all
+thirteen web gates green, with the catalogue table re-counted to 4 366 / 4 321 / 4 119.
+
+**Not claimed.** The cache saves tokens only on *repeated* questions; a sweep of distinct questions pays full
+price and always will. The gateway's token counts are not reproducible even for one identical body — 2 173,
+2 183, 20 626 and 20 625 were all reported for the same request on the same afternoon — which is evidence that
+the gateway fans out across upstreams with different tokenizers and separate caches; no figure here is a
+guarantee for the next call, and a warm prefix on one upstream is cold on another. The 4 386-token preamble is
+the gateway's, not ours, and nothing in this repository can remove it. The `fr`/`ar`/`he` editorial pass remains
+owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.

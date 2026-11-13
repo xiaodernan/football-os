@@ -1449,7 +1449,9 @@
     "sectionChars": "{count} 字元",
     "demoExtractiveTitle": "沒有設定語言模型金鑰；這個答案是從所引段落中抽取拼裝的，不是生成的。",
     "demoRerankTitle": "沒有設定語言模型金鑰；排序使用特徵重排器，結果原樣呈現。",
-    "noModelKeyTitle": "沒有設定語言模型金鑰——問答的答案由引用段落抽取式拼裝，絕不生成。"
+    "noModelKeyTitle": "沒有設定語言模型金鑰——問答的答案由引用段落抽取式拼裝，絕不生成。",
+    "cachedPhrasing": "快取作答",
+    "cachedPhrasingTitle": "同樣的問題、同樣的段落先前已經答過，這裡沿用當時的措辭，沒有再呼叫模型。"
   },
   "challenges": {
     "applied": "已應用",

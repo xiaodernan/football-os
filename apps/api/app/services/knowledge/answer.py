@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from app.core.security import new_public_id
 from app.models import KnowledgeQuery
 from app.providers import LlmResult, get_embedding_provider, get_llm_provider
-from app.services.knowledge import graph_join, recall, retrieval
+from app.services.knowledge import answer_cache, graph_join, recall, retrieval
 from app.services.knowledge.chunking import strip_header
 from app.services.knowledge.retrieval import Filters, Hit
 from app.services.knowledge.text import content_words
@@ -61,6 +61,9 @@ class AnswerResult:
     top_score: float
     timings_ms: dict[str, int] = field(default_factory=dict)
     disclaimer: str = ""
+    #: True when the prose came out of `answer_cache` instead of a provider. The citations are
+    #: always rebuilt from this call's own retrieval, so this flag describes the phrasing only.
+    cached: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -80,6 +83,7 @@ class AnswerResult:
             "top_score": round(self.top_score, 4),
             "timings_ms": self.timings_ms,
             "disclaimer": self.disclaimer,
+            "answered_from_cache": self.cached,
         }
 
 
@@ -248,23 +252,53 @@ def ask(
             _record(db, result, user_id=user_id, hit_ids=[])
         return result
 
+    cache_served = False
     if demo_mode:
         text = _extractive_answer(question, digest)
         model_name = "extractive-no-model"
         reasons.append("no language-model key is configured, so the answer is an extractive digest of the cited passages")
     else:
-        llm: LlmResult = provider.complete(
-            system=SYSTEM_PROMPT,
-            prompt=json.dumps({"intent": "knowledge_ask", "question": question, "context": context}, ensure_ascii=False),
-            max_tokens=700,
-            temperature=0.3,
+        # The phrasing is a function of the question, the passages, the model and the contract — so
+        # it is cacheable on exactly those four, and the citations stay this call's own. A hit costs
+        # one Redis GET and zero tokens; a miss takes the per-key lane so two readers asking the same
+        # new question at the same moment buy one answer rather than two.
+        cache_key = answer_cache.cache_key(
+            question=question,
+            chunk_ids=[str(citation.get("chunk_id") or "") for citation in citations],
+            model=str(getattr(provider, "model", "unknown")),
+            locale="en",
         )
-        text = llm.text.strip() or _extractive_answer(question, digest)
-        model_name = llm.model
-        record_model_call(db, result=llm, feature="knowledge_ask", user_id=user_id)
-        demo_mode = llm.demo_mode
-        reasons.append(f"answer phrased by provider '{llm.provider}' using {len(digest)} cited passage(s) only")
-        citations = [{**c, "phrased_by": llm.model} for c in citations]
+        stored = answer_cache.get(cache_key)
+        if stored is None:
+            with answer_cache.single_flight(cache_key):
+                stored = answer_cache.get(cache_key)
+                if stored is None:
+                    llm: LlmResult = provider.complete(
+                        system=SYSTEM_PROMPT,
+                        prompt=json.dumps({"intent": "knowledge_ask", "question": question, "context": context}, ensure_ascii=False),
+                        max_tokens=700,
+                        temperature=0.3,
+                    )
+                    text = llm.text.strip() or _extractive_answer(question, digest)
+                    model_name = llm.model
+                    record_model_call(db, result=llm, feature="knowledge_ask", user_id=user_id)
+                    demo_mode = llm.demo_mode
+                    reasons.append(f"answer phrased by provider '{llm.provider}' using {len(digest)} cited passage(s) only")
+                    citations = [{**c, "phrased_by": llm.model} for c in citations]
+                    # A demo-mode completion is a labelled fallback, not a phrasing: caching it would
+                    # pin today's failure in place after the key is fixed. An empty string is not an
+                    # answer either, and `put` refuses both.
+                    if not llm.demo_mode:
+                        answer_cache.put(cache_key, text=text, model=llm.model, provider=llm.provider)
+        if stored is not None:
+            text = str(stored["text"])
+            model_name = str(stored.get("model") or getattr(provider, "model", "unknown"))
+            cache_served = True
+            reasons.append(
+                "the same question over the same passages was answered before, so the stored phrasing "
+                "was reused and no provider call was made for this answer"
+            )
+            citations = [{**c, "phrased_by": model_name} for c in citations]
 
     result = AnswerResult(
         question=question,
@@ -283,6 +317,7 @@ def ask(
         top_score=found.top_score,
         timings_ms=timings,
         disclaimer=("Grounded in the cited passages below. Coaching practice, not medical or scouting certification; check the current wording of any law."),
+        cached=cache_served,
     )
     if persist:
         _record(db, result, user_id=user_id, hit_ids=[c["chunk_id"] if "chunk_id" in c else "" for c in citations])

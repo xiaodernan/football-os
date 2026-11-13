@@ -328,6 +328,10 @@ class ModelCall(Base):
     output_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     reasoning_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     cached_input_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    #: True when the provider's usage object carried a cache field. A gateway that says nothing and a
+    #: gateway that says zero are different facts, and a hit rate that cannot tell them apart reads a
+    #: working cache as a broken one (see migration 0064).
+    cache_reported: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     latency_ms: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     estimated_cost_usd: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     actual_cost_usd: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)

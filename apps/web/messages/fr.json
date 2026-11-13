@@ -1449,7 +1449,9 @@
     "sectionChars": "{count} caractères",
     "demoExtractiveTitle": "Aucune clé de modèle de langage n'est configurée ; cette réponse est extractive à partir de passages cités, pas générative.",
     "demoRerankTitle": "Aucune clé de modèle de langage n'est configurée ; le classement utilise un filtre de caractéristiques et les passages sont affichés mot à mot.",
-    "noModelKeyTitle": "Aucune clé de modèle de langage n'est configurée — les réponses de question/recherche sont extractives à partir de passages cités, jamais générées."
+    "noModelKeyTitle": "Aucune clé de modèle de langage n'est configurée — les réponses de question/recherche sont extractives à partir de passages cités, jamais générées.",
+    "cachedPhrasing": "réponse mémorisée",
+    "cachedPhrasingTitle": "Cette question exacte sur ces passages a déjà reçu une réponse : la formulation a été réutilisée, sans nouvel appel au modèle."
   },
   "challenges": {
     "applied": "APPLIQUÉ",

@@ -32,6 +32,9 @@ class LlmResult:
     output_tokens: int = 0
     reasoning_tokens: int = 0
     cached_input_tokens: int = 0
+    #: True only when the provider's usage object carried a cache field. Zero cached and *no
+    #: figure reported* are different facts; the ledger keeps them apart.
+    cache_reported: bool = False
     latency_ms: int = 0
     estimated_cost_usd: float = 0.0
     actual_cost_usd: float = 0.0
@@ -167,25 +170,32 @@ class OpenAIChatProvider:
         return headers
 
     @staticmethod
-    def _usage_tokens(usage: Any) -> tuple[int, int, int, int]:
-        """(prompt, completion, reasoning, cached) from either usage dialect.
+    def _usage_tokens(usage: Any) -> tuple[int, int, int, int, bool]:
+        """(prompt, completion, reasoning, cached, cache_reported) from either usage dialect.
 
         OpenAI nests under `prompt_tokens_details.cached_tokens` and
         `completion_tokens_details.reasoning_tokens`; DeepSeek-style gateways print flat
         `prompt_cache_hit_tokens` / `completion_tokens_details` instead. Both are read; a field the
         gateway does not print stays zero, never invented.
+
+        The fifth element is the one that matters for the meter. A gateway that omits the details
+        object entirely is *not* reporting a miss — it is reporting nothing, and folding that into
+        zero makes a cache that hit 97 % read as one that hit 50 %. Measured on this project's
+        gateway on 2026-11-13: four of six warm repeats printed a figure (4 352 of 4 472 tokens) and
+        two printed no details object at all.
         """
         if not isinstance(usage, dict):
-            return 0, 0, 0, 0
+            return 0, 0, 0, 0, False
         prompt = int(usage.get("prompt_tokens", 0) or 0)
         completion = int(usage.get("completion_tokens", 0) or 0)
         raw_in = usage.get("prompt_tokens_details")
         raw_out = usage.get("completion_tokens_details")
         details_in = raw_in if isinstance(raw_in, dict) else {}
         details_out = raw_out if isinstance(raw_out, dict) else {}
+        reported = "cached_tokens" in details_in or "prompt_cache_hit_tokens" in usage
         cached = int(details_in.get("cached_tokens", 0) or usage.get("prompt_cache_hit_tokens", 0) or 0)
         reasoning = int(details_out.get("reasoning_tokens", 0) or usage.get("reasoning_tokens", 0) or 0)
-        return prompt, completion, reasoning, cached
+        return prompt, completion, reasoning, cached, reported
 
     def _estimate(self, *, in_tok: int, out_tok: int, cached: int) -> float:
         """Cache-aware money: hit tokens at the cached price, the rest at the plain price.
@@ -236,7 +246,7 @@ class OpenAIChatProvider:
             choices = raw.get("choices") or [{}]
             message = (choices[0] or {}).get("message", {}) if choices else {}
             text = message.get("content", "") if isinstance(message, dict) else ""
-        in_tok, out_tok, reasoning, cached = self._usage_tokens(usage)
+        in_tok, out_tok, reasoning, cached, cache_reported = self._usage_tokens(usage)
         est = self._estimate(in_tok=in_tok, out_tok=out_tok, cached=cached)
         return LlmResult(
             text=text,
@@ -247,6 +257,7 @@ class OpenAIChatProvider:
             output_tokens=out_tok,
             reasoning_tokens=reasoning,
             cached_input_tokens=cached,
+            cache_reported=cache_reported,
             latency_ms=latency_ms,
             estimated_cost_usd=round(est, 6),
             actual_cost_usd=round(est, 6),
@@ -302,7 +313,7 @@ class OpenAIChatProvider:
             logger.warning("openai_provider_stream_empty")
             return MockLLMProvider().complete(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
         latency = int((time.perf_counter() - started) * 1000)
-        in_tok, out_tok, reasoning, cached = self._usage_tokens(usage)
+        in_tok, out_tok, reasoning, cached, cache_reported = self._usage_tokens(usage)
         est = self._estimate(in_tok=in_tok, out_tok=out_tok, cached=cached)
         return LlmResult(
             text=text,
@@ -313,6 +324,7 @@ class OpenAIChatProvider:
             output_tokens=out_tok,
             reasoning_tokens=reasoning,
             cached_input_tokens=cached,
+            cache_reported=cache_reported,
             latency_ms=latency,
             estimated_cost_usd=round(est, 6),
             actual_cost_usd=round(est, 6),

@@ -42,6 +42,7 @@ def test_the_exposition_carries_the_exact_contract_and_legal_names() -> None:
         "football_os_model_cost_usd_total",
         "football_os_model_spend_today_usd",
         "football_os_cache_hit_rate",
+        "football_os_cache_report_coverage",
     }
     assert set(names) == expected
     for line in lines:
@@ -77,13 +78,47 @@ def test_the_door_answers_the_operator_and_nobody_else(admin_client: TestClient)
     with SessionLocal() as session:
         session.add(ModelCall(id="mc-scraper-1", provider="openai", model="gpt-6-sol", feature="probe",
                               input_tokens=1000, output_tokens=10, cached_input_tokens=800,
-                              demo_mode=False, success=True))
+                              cache_reported=True, demo_mode=False, success=True))
         session.commit()
     response = admin_client.get("/api/v1/metrics/prometheus")
     assert response.status_code == 200
     assert "football_os_model_cached_input_tokens_total 800" in response.text
     cache_line = [line for line in response.text.splitlines() if line.startswith("football_os_cache_hit_rate ")][0]
     assert float(cache_line.split(" ", 1)[1]) == 0.8
+    coverage_line = [line for line in response.text.splitlines() if line.startswith("football_os_cache_report_coverage ")][0]
+    assert float(coverage_line.split(" ", 1)[1]) == 1.0
+
+
+def test_a_silent_gateway_does_not_drag_the_rate_to_zero(admin_client: TestClient) -> None:
+    """The bug this pair of columns exists for, pinned.
+
+    Two calls, same size, one where the gateway printed a cache figure and one where it printed
+    nothing. The old arithmetic divided 800 by 2 000 and reported 0.4 for a cache that hit 80 % of
+    everything it was asked about; a reader cannot tell that from a cache that half works. The rate
+    is now taken over the reporting call only, and `coverage` says the figure covers half the bill.
+    """
+    with SessionLocal() as session:
+        session.query(ModelCall).delete()
+        session.add(ModelCall(id="mc-silent-1", provider="openai", model="gpt-6-sol", feature="probe",
+                              input_tokens=1000, output_tokens=10, cached_input_tokens=800,
+                              cache_reported=True, demo_mode=False, success=True))
+        session.add(ModelCall(id="mc-silent-2", provider="openai", model="gpt-6-sol", feature="probe",
+                              input_tokens=1000, output_tokens=10, cached_input_tokens=0,
+                              cache_reported=False, demo_mode=False, success=True))
+        session.commit()
+    try:
+        body = admin_client.get("/api/v1/metrics/prometheus").text
+        rate = float([line for line in body.splitlines() if line.startswith("football_os_cache_hit_rate ")][0].split(" ", 1)[1])
+        coverage = float([line for line in body.splitlines() if line.startswith("football_os_cache_report_coverage ")][0].split(" ", 1)[1])
+        assert rate == 0.8, f"a silent call must not be read as a miss; got {rate}"
+        assert coverage == 0.5, f"coverage must say half the bill is unseen; got {coverage}"
+        # The raw total is still the whole bill, so a reader who wants it can still sum it themselves.
+        assert "football_os_model_cached_input_tokens_total 800" in body
+    finally:
+        # Leave the ledger as empty as this test found it: the neighbouring test pins an exact rate.
+        with SessionLocal() as session:
+            session.query(ModelCall).delete()
+            session.commit()
 
 
 def test_the_door_refuses_anonymous_and_plain_accounts(client: TestClient) -> None:

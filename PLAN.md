@@ -2254,6 +2254,58 @@ records them with their runs and their cures, none re-tagged or re-worded.
 scrape and the core's each answer one process. The `fr`/`ar`/`he` editorial pass remains owed; the untracked
 user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
 
+## Item 35 — the cache was warm; the meter was reading silence as a miss
+
+**The complaint, third time.** "Cache hit rate is very low and every call shows non-stream." Items 33/34 had
+already fixed the non-stream half and made the prompt stable-first, so this pass measured instead of guessing —
+with a committed instrument rather than a throwaway probe — and found the defect in the arithmetic, not the
+gateway.
+
+**What the bench measured** (`python scripts/bench_llm_cache.py`; 12 calls, 3 prefixes, both modes, twice each):
+
+| prefix | prompt tokens as counted | gateway-reported hits |
+| --- | --- | --- |
+| knowledge (344 chars we send) | 4 472 | 97.3 % on all four calls |
+| coach (673 chars we send) | 4 560 | 95.4 % on the one call that reported; three silent |
+| long contract (2 729 chars) | 4 998 | 97.3 % on the two stream calls; two silent |
+
+Three findings, all measured: (1) every figure the gateway *did* print was 95–97 %, so the cache is not cold;
+(2) the gateway prepends ~4 386 tokens of its own preamble to every call — that difference is the bill, and it is
+why caching matters at the answer layer; (3) seven of twelve calls printed a cache figure and five printed no
+`prompt_tokens_details` object at all, across both modes and all three prefixes — so "stream reports and
+non-stream does not" is not the mechanism.
+
+**The bug.** `cache_hit_rate()` divided `sum(cached)` by `sum(input)` over **every** row. A silent call put its
+whole input in the denominator and nothing in the numerator, so a 97 % cache read as ~50 %. Migration **0064**
+adds `model_calls.cache_reported`; `_usage_tokens` now returns five values and `LlmResult` carries the fifth;
+the rate is computed over reporting rows only and a new `football_os_cache_report_coverage` gauge says how much
+of the bill the ratio covers.
+
+**What was built for the tokens the meter cannot save.** `app/services/knowledge/answer_cache.py`: an answer is
+keyed on the normalised question + sorted citation chunk ids + model + contract version, so a stored phrasing can
+only be served with the evidence it was written from; citations are rebuilt every call and never stored.
+Refusals and demo digests are not cached. A per-key lane coalesces simultaneous identical asks into one provider
+call, and the lane table is bounded by concurrency. Storage is `app.core.redis_cache` (Redis, with the process's
+own LRU underneath), so a Redis outage degrades to per-process hits. `KNOWLEDGE_ANSWER_CACHE=0` disables it; TTL
+defaults to seven days. The answer payload grows `answered_from_cache`, and the knowledge UI shows a
+`served from cache` chip with a title that says so.
+
+**Two hypotheses tested and falsified, so nobody re-runs them.** Keep-alive (fresh connection vs one pooled
+connection): no difference in cache reporting — `0/93.8/100 %` vs `93.8/100/100/0 %` — so `urllib` stays and no
+pool was invented. Prefix size below a 1 024-token threshold: the 344-character prefix hits exactly as well as
+the 2 729-character one, because the gateway's preamble already dwarfs any threshold.
+
+**Evidence.** 15 new tests green (key semantics, TTL, off-switch, coalescing, and four door-level tests with a
+counting provider); `test_prometheus_export` + `test_metrics` + `test_knowledge_rag` + `test_knowledge_joint` +
+`test_openapi_contract_currency` → 89 passed; migration 0064 applies and `alembic check` is clean; ruff, mypy,
+tsc clean; thirteen web gates green with the catalogue table re-counted to 4 366 / 4 321 / 4 119. Prose record:
+`docs/I18N_ARC_VERIFICATION.md` §169.
+
+**Not claimed.** Only *repeated* questions get the saving. The gateway's own token counts are not reproducible
+for an identical body (2 173 / 2 183 / 20 626 / 20 625 on one afternoon), which points at a fan-out across
+upstreams with separate caches — no ratio here is a promise for the next call. The 4 386-token preamble is the
+gateway's and cannot be removed from this repository.
+
 ---
 
 ## How to work an item
