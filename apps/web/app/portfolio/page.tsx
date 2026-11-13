@@ -12,6 +12,7 @@ import { absolute } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
 
 import "../../styles/tactics.css";
+import "./portfolio.css";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,10 @@ export default async function PortfolioPage() {
   const paintedOrder = cv.data.sections.map(row => row.section).join(" → ");
   const orderAgrees = publishedOrder === paintedOrder;
   const origins = [...new Set(cv.data.sections.map(row => row.data_origin))].sort();
+  const nameParts = (cv.data.player?.name ?? "").trim().split(/\s+/).filter(Boolean);
+  const initials = nameParts.length > 0
+    ? ((nameParts[0]?.[0] ?? "?").toUpperCase() + (nameParts.length > 1 ? (nameParts[nameParts.length - 1]?.[0] ?? "").toUpperCase() : ""))
+    : "?";
 
   return (
     <div className="container page stack">
@@ -85,11 +90,14 @@ export default async function PortfolioPage() {
         title={td("whoseTitle")}
       >
         {cv.data.has_player ? (
-          <ul className="stack-sm" style={{ margin: 0, paddingLeft: "1.1rem" }}>
-            <li className="muted" style={{ fontSize: "0.86rem" }}>{td("rowName", { value: cv.data.player?.name ?? "" })}</li>
-            <li className="muted" style={{ fontSize: "0.86rem" }}>{td("rowPosition", { value: cv.data.player?.position ?? "" })}</li>
-            <li className="muted" style={{ fontSize: "0.86rem" }}>{td("rowOrigin", { value: cv.data.player?.data_origin ?? "" })}</li>
-          </ul>
+          <div className="cv-front">
+            <span className="cv-front__mono" aria-hidden="true">{initials}</span>
+            <ul className="stack-sm" style={{ margin: 0 }}>
+              <li className="muted" style={{ fontSize: "0.86rem" }}>{td("rowName", { value: cv.data.player?.name ?? "" })}</li>
+              <li className="muted" style={{ fontSize: "0.86rem" }}>{td("rowPosition", { value: cv.data.player?.position ?? "" })}</li>
+              <li className="muted" style={{ fontSize: "0.86rem" }}>{td("rowOrigin", { value: cv.data.player?.data_origin ?? "" })}</li>
+            </ul>
+          </div>
         ) : (
           <p className="muted" style={{ fontSize: "0.86rem" }}>
             {cv.data.sections.find(row => row.section === "position")?.missing_because ?? ""}{" "}

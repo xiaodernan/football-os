@@ -1,0 +1,48 @@
+/* /portfolio — a document-warm identity block for the CV's own owner.
+   Same vocabulary as the notice tray and the medal rows: a tinted rail,
+   a monogram tile, zero new copy. */
+
+.cv-front {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.45rem 0.6rem;
+  padding-inline-start: 1.15rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-soft);
+  background: linear-gradient(180deg, rgba(53, 240, 164, 0.055), rgba(53, 240, 164, 0.015));
+  overflow: hidden;
+}
+.cv-front::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 14%;
+  bottom: 14%;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(53, 240, 164, 0.45);
+}
+.cv-front__mono {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(53, 240, 164, 0.1);
+  border: 1px solid rgba(53, 240, 164, 0.25);
+}
+.cv-front ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

@@ -5864,3 +5864,41 @@ prefix-cache can reward. Nothing here is claimed green that the runner has not p
 non-stream door; no price for gpt-6-sol is invented — the `OPENAI_PRICE_*` defaults remain placeholders until
 the operator sets the real figures. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text
 file at the repository root remains untouched; `.workbuddy/` remains untracked.
+## 162. The CV's own document gets a frontispiece — a name the monogram cannot counterfeit (2026-11-13)
+
+**The portfolio page is the one place in the product that is a document about a specific person. It bore a
+bare bullet list where a frontispiece belongs.**
+
+What changed:
+
+* `app/portfolio/portfolio.css` (new, route-local) — `.cv-front` is a document-warm identity block: a tinted
+  left rail (`accent`, muted glow, the notice-tray vocabulary), a soft accent wash over the panel, a 46px
+  monogram tile (`.cv-front__mono`, mono letters of the account's own name, accent-on-panel, aria-hidden)
+  beside the facts. The block is what the PDF renders itself from — it should feel like the page of a filed
+  document, not a spreadsheet row.
+* `app/portfolio/page.tsx` — the "Whose CV this is" panel now renders that block when a player row exists
+  (the three lines unchanged — name, position, origin), with the monogram computed at the top of the function
+  beside the other derived values rather than inlined. The facts list drops its `paddingLeft` hack for the
+  block's own grid; the `cv-front ul` rule sets the list to zero margin, zero indent and no bullets.
+
+**Verification, printed, not remembered.**
+
+```
+tsc --noEmit                                        exit 0
+production build (NEXT_DIST_DIR=.next-frontispiece) BUILD_ID x8HFBR8f7GcMq6YgzVNpy
+                                                    /portfolio 2.61 kB · 125 kB first load
+qa-i18n-literals   CHECKS passed=9 total=9 failed=0
+qa-unused-keys     passed
+qa-field-labels    CHECKS passed=2 total=2 failed=0
+qa-a11y            CHECKS passed=33 total=33 failed=0
+qa-icu-messages    CHECKS passed=2 total=2 failed=0 (26184 messages, 6 catalogues)
+qa-rtl-readiness   CHECKS passed=8 total=8 failed=0
+```
+
+No catalogue key was added — the monogram is the account's own initials, aria-hidden, and every visible word
+on the block was already on the page. The rail is `inset-inline-start`; RTL is clean by construction.
+
+**Not claimed.** No claim that `/portfolio` has been walked in a browser this window — the build is printed,
+the gates are printed, the machine-bound visual walk remains the frontier named in §145. The `fr`/`ar`/`he`
+editorial pass remains owed; the untracked user text file at the repository root remains untouched;
+`.workbuddy/` remains untracked.
