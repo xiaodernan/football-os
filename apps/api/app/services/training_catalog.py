@@ -673,18 +673,27 @@ CATEGORIES = sorted({str(d["category"]) for d in DRILLS})
 
 
 def sync_catalog(db: Session) -> int:
-    """Idempotently upsert the drill catalogue so drills are real rows, not fixtures."""
+    """Idempotently upsert the drill catalogue so drills are real rows, not fixtures.
+
+    One bulk read builds a slug -> row map; each drill then costs at most one write. The previous
+    shape ran one SELECT per drill (≈260 round trips over a 130-drill catalogue), which is pure
+    latency on the boot path with no correctness upside.
+    """
     from sqlalchemy import select
 
     from app.core.security import new_public_id
     from app.models import TrainingDrill
 
+    slugs = [str(spec["slug"]) for spec in DRILLS]
+    existing_rows = list(db.scalars(select(TrainingDrill).where(TrainingDrill.slug.in_(slugs))).all())
+    existing = {row.slug: row for row in existing_rows}
+
     created = 0
     for spec in DRILLS:
-        existing = db.scalar(select(TrainingDrill).where(TrainingDrill.slug == spec["slug"]))
-        if existing is not None:
+        row = existing.get(str(spec["slug"]))
+        if row is not None:
             for field_name, value in spec.items():
-                setattr(existing, field_name, value)
+                setattr(row, field_name, value)
             continue
         db.add(TrainingDrill(id=new_public_id("drl"), data_origin="synthetic", is_demo_data=True, **spec))
         created += 1

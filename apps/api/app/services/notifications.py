@@ -16,7 +16,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any, Final
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.security import new_public_id
@@ -139,11 +139,17 @@ def mark_read(session: Session, user_id: str, ident: str) -> dict[str, Any] | No
 
 
 def mark_all_read(session: Session, user_id: str) -> dict[str, Any]:
-    """Mark the whole tray read. The count before and after travels with the answer."""
+    """Mark the whole tray read. One UPDATE statement, one round trip, one transaction.
+
+    The previous shape loaded every unread row and flushed one UPDATE per row — N+1 writes
+    on a tray that can carry hundreds of rows. One statement has no object graph to materialize
+    and returns the driver's row count directly.
+    """
     before = unread_total(session, user_id)
-    rows = list(session.scalars(select(Notification).where(Notification.user_id == user_id, Notification.read_at.is_(None))).all())
-    now = datetime.now(UTC)
-    for row in rows:
-        row.read_at = now
+    result = session.execute(
+        update(Notification)
+        .where(Notification.user_id == user_id, Notification.read_at.is_(None))
+        .values(read_at=datetime.now(UTC))
+    )
     session.commit()
-    return {"marked": len(rows), "unread_before": before, "unread_after": 0}
+    return {"marked": result.rowcount or 0, "unread_before": before, "unread_after": 0}

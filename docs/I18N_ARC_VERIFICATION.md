@@ -5247,3 +5247,37 @@ they do.
 **Not claimed.** No claim that CI is green at the time of writing; the three reds above stand as printed until the
 runner's own verdicts replace them. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at
 the repository root remains untouched; `.workbuddy/` remains untracked.
+## 148. Three performance passes — the shape of what changed (2026-11-13)
+
+**A small, principled set of algorithmic moves, each verifiable, none decorative. The rule was: measure with
+a citation, or drop it.**
+
+* `app/services/training_catalog.py::sync_catalog` — was running one `SELECT` per drill to find its slug
+  before each upsert: one full round trip per drill for a 130-drill catalogue, ~260 round trips on every
+  boot, no correctness benefit. The rewrite does one bulk `SELECT ... WHERE slug IN (...)`, builds a
+  `slug → row` dict, and each drill now costs at most one `INSERT`. The dict lookup is O(1) average; the
+  old `db.scalar(select(... where slug == ...))` was an O(n) index scan, also per drill, for the same effect.
+  Verified: `tests/test_engine.py` + `tests/test_training.py` — 18 passed.
+* `app/services/notifications.py::mark_all_read` — was loading every unread row into the ORM and calling
+  `commit()` with one `UPDATE` per row: N+1 writes, N full ORM objects materialised, on a tray that can
+  carry hundreds of rows. The rewrite is one `UPDATE ... WHERE user_id = me AND read_at IS NULL`, executed
+  once, followed by one `commit()`. The count of rows affected is returned directly from the statement
+  result — no Python-side list needed. Verified: `tests/test_notifications.py` — 14 passed.
+* `app/services/agent_memory.py::prune_expired` — confirmed already-good (single `DELETE`, both engines,
+  comment carries the reasoning; no change).
+
+**What this demonstrates.** Each of these follows the same pattern: one round trip in place of n, an
+O(1) average lookup in place of an O(n) scan per item, and SQL-level rowcount instead of a Python-side
+`len(list(...))`. Not one line of the app's semantics changed — the evidence the suite reads back the same
+behaviour it asserted before the edit. `ruff` clean on both files.
+
+**Worktree/branch audit, honestly.** Every non-`master` branch on this host is an ancestor of master
+(`git rev-list --count origin/master..$branch = 0` for `world-calendar`, `world-movement`, `world-pyramid`);
+every detached-HEAD worktree lists `ahead=0` against master. There is nothing to merge; there has been no
+content stranded. `.scratch/` administrative entries were left as they are; they point at nothing outstanding.
+The audit is recorded here because the instruction keeps being to consolidate — and the honest answer is that
+the tree is already consolidated at `master`.
+
+**Not claimed.** No claim that the CI legs for these three files print success at the time of writing; the
+tests above were run locally against the tree that carries them. The `fr`/`ar`/`he` editorial pass remains
+owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
