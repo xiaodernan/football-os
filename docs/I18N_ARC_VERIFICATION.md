@@ -6420,3 +6420,47 @@ this commit and is not claimed. No claim that the tally constitutes a football j
 docstring says it plainly (a claim a reader can check column by column; a 0-100 "duel rating" it refuses to be).
 The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
 untouched; `.workbuddy/` remains untracked.
+## 173. The duel door, live-verified against the seeded world — and the four-red cure it collected (2026-11-13)
+
+**The world duel arc was built with the contract door out the window. This section records the route live on this
+machine, with real calls, after the push that carried it — and names every red it came bearing, none re-tagged
+or re-worded out of this ledger.**
+
+**The live probe, one call each, full path.**
+
+Setup: fresh SQLite scratch (`.scratch/live-duel-door.db`), `ENV=development`, seeded world (22 docs / 171 chunks /
+12 competitions / 32 teams / 480 players / 320 matches / 7,280 stat lines). Completed through the same lifespan
+path as a real uvicorn boot.
+
+```
+register: 201     player: 201
+two slugs:   balin-sorelli · elum-eldtis
+duel:       200
+left:       Balin Sorelli   right: Elum Eldtis
+verdict:    left | counted: 3 | levelled: 4 | unavailable: 0
+  goals             2.0   0.0   left
+  assists           0.0   0.0   level
+  involvement/90    0.08  0.0   left
+  rating            6.69  6.69  level
+  minutes           2250  2250  level
+  overall           58    59    right
+  discipline        0.0   0.0   level
+```
+
+The door ran exactly once, at the commit whose own path exists at master: `left` = Balin Sorelli (2 goals, 0 assists), `right` = Elum Eldtis (0/0).
+**Scope.** `ENV=development` (demo mode off); no claim about production.
+
+**Reds this arc collected, with the cures, unedited.**
+
+| push | CI | verdict | fault |
+| --- | --- | --- | --- |
+| `4a7b0fb` feat(api): the world duel door | `43487317447` | failure — api only | (1) `test_answer_census.py` — `same_player` raised at 400, the answer table says 422 — **cured by `da405af`** (the duel arc made the table right: the code table was authoritative, so the 400 proved to be an unregistered raise code); (2) `test_locale_claims.py` — two refusal codes published with fixed English no catalogue sentence — **the same `da405af` carries the two catalogue sentences across all six catalogues**; (3) `test_openapi_contract_currency.py` — contract stale, no `/world/duel` listed — **`0cf4d63` re-exported the contract at 230 paths / 297 operations**; (4) `test_spec_audit_currency.py` — claimed 69 page routes vs 71 committed page.tsx at this commit — **the page moves landed in the same commit than the door did; the other hand's `748264b` one commit later removed the duplicates the deletion arc should have included, and the audit passes at `fb5f97c`**. None of these reds were re-tagged or re-worded; the runner ran them again after each push. |
+| `0cf4d63` docs(ledger): contract re-export | `43490108658` | failure — api only | the same `test_spec_audit_currency.py` failing against the 71 committed page.tsx at that exact tree; the page moves landed with the duel door, the deletions landed at `748264b`, and the test passes at `fb5f97c`. |
+| `fb5f97c` fix(test): recompute the catalogue population | `43501783558` | **success** — all four legs | this section's push; the 30m29s four-leg green that shipped at `2026-11-13T20:27:51Z`. |
+| `da405af` fix(api): the duel door's two refusals register | (this push is inside the `0cf4d63..fb5f97c` range; its own CI is not separately scored) | — | (1) `test_answer_census.py` red — the 400 vs 422 never came back to master alone; (2) `test_locale_claims.py` red — the same arc; both cured in `da405af` and included in the `fb5f97c` push. |
+
+**Note on the verdict-map.** Commits `748264b`, `da405af`, and `955551d` rode inside the same push (`da405af..fb5f97c`), so the CI history lists three runs by time, not by SHA — the five-command log above is the record.
+
+**The ledger keeps the numbers.** The duel arc added exactly two catalogue keys per locale (`no_such_player`, `same_player`) to every one of the six catalogues, one route to the contract, one `migrations=65` line in `AUDIT_FIGURES`, and the page count moved twice on the same tree (71 then 69). The gate that counted `page.tsx` first caught the page moves, then caught the deletion that finally made it correct.
+
+**Not claimed.** No claim that the walk passes; §168 stands for the record. No claim that every line of the duel door is exercised by a browser walk — §168 covers the live pass done on this machine. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
