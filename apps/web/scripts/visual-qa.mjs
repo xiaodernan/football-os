@@ -82,10 +82,26 @@ async function ensureSession(page) {
   const status = await page.evaluate(async () => (await fetch('/api/v1/auth/me', { credentials: 'same-origin' })).status);
   if (status === 200) return;
   await open(page, '/login');
-  await page.fill('#email', EMAIL);
-  await page.fill('#password', PASSWORD);
-  await page.click('button[type="submit"]');
-  await page.waitForFunction(() => location.pathname !== '/login', { timeout: 60_000 });
+  await page.waitForSelector('#email', { timeout: 60_000 });
+  await setInput(page, '#email', EMAIL);
+  await setInput(page, '#password', PASSWORD);
+
+  // A click that lands before React has hydrated the form submits the native form, which does nothing
+  // useful, and the walk then waits sixty seconds for a navigation that was never coming. So the promise
+  // is measured where the session actually lives — the `fo_access` cookie the proxy sets, read through the
+  // browser's cookie store because the cookie is http-only — and the click is repeated while it is absent.
+  // Retrying is honest here: the form is idempotent, the account is the walk's own, and a wrong password
+  // would fail every attempt and be reported with the page's own sentence rather than a timeout.
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    await page.click('button[type="submit"]');
+    for (let waited = 0; waited < 25_000; waited += 500) {
+      const jar = await page.cookies();
+      if (jar.some((cookie) => cookie.name === 'fo_access' && cookie.value)) return;
+      await new Promise((done) => setTimeout(done, 500));
+    }
+  }
+  const said = await bodyText(page).catch(() => '');
+  throw new Error(`the sign-in form did not mint a session in three presses — the page said: ${said.replace(/\s+/gu, ' ').slice(0, 240) || '(empty body)'}`);
 }
 
 const results = [];
@@ -279,6 +295,26 @@ async function clickByText(page, selector, text) {
 
 async function setSelect(page, selector, value) {
   await page.select(selector, value);
+}
+
+/**
+ * Type a value into a field, the way the registration step at the top of the walk always has.
+ *
+ * `page.fill('#email', …)` is Playwright's verb; this walk drives puppeteer-core, where no such method
+ * exists — so the call raised `page.fill is not a function` the first time a session had to be re-minted.
+ * The walk could sign *up* (that step used `page.type` all along) and never sign back in, which is the
+ * one failure mode a session-recovery helper exists to survive. One helper, one verb, and the failure is
+ * reported with the sentence the page was showing rather than a bare `TypeError`.
+ */
+async function setInput(page, selector, value) {
+  const field = await page.$(selector);
+  if (!field) {
+    const seen = (await bodyText(page).catch(() => '')).replace(/\s+/g, ' ').slice(0, 200);
+    throw new Error(`no field at ${selector} — the page said: ${seen || '(empty body)'}`);
+  }
+  await field.click({ clickCount: 3 });
+  await page.keyboard.press('Backspace');
+  await field.type(value, { delay: 0 });
 }
 
 async function run() {
