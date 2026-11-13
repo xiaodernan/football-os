@@ -5281,3 +5281,39 @@ the tree is already consolidated at `master`.
 **Not claimed.** No claim that the CI legs for these three files print success at the time of writing; the
 tests above were run locally against the tree that carries them. The `fr`/`ar`/`he` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+## 149. The Redis Streams broker, verified against the project's own Redis on this host (2026-11-13)
+
+**Until now, the live integration cases claimed an obligation to Redis and skipped it on every local host.** The
+queue lands its own Compose service (`football_os_cache` on port 63790, password `football`, DB 3) in
+`infra/docker-compose.yml` — and that container is up on this very machine, answering with `PONG` on 127.0.0.1:63790.
+This window went and proved the broker end-to-end against it, instead of pointing at a CI verdict:
+
+```
+REDIS_URL=redis://:football@127.0.0.1:63790/3 \
+  JOB_STREAM_REDIS_URL=redis://:football@127.0.0.1:63790/3 \
+  DATABASE_URL=sqlite:////scratch/live-redis-broker.db \
+  python -m pytest tests/test_job_broker.py -m integration -v
+7 passed, 19 deselected in 22.76s
+```
+
+The seven live cases, each passing on this host against the compose instance (not a fake client):
+
+```
+test_a_live_round_trip_publishes_reads_and_acknowledges
+test_a_group_created_at_dollar_does_not_replay_history
+test_reclaim_takes_a_message_from_a_consumer_that_stopped_acknowledging
+test_a_dead_letter_carries_its_reason_and_clears_the_pending_list
+test_end_to_end_the_hint_runs_the_row_it_names
+test_a_clean_exit_deregisters_the_consumer
+test_a_consumer_holding_unacked_work_is_not_deregistered
+```
+
+The full broker test module passes against the live instance as well (26/26); the deselected 19 are unit cases
+that don't need Redis. The stream data on DB 3 was inspected after the run — no leaked entries remained before
+the flush.
+
+**Not claimed.** This probe reuses the compose instance; it is not a production activation. The truth stands —
+`worker` runs against whatever `JOB_STREAM_REDIS_URL` (or `REDIS_URL`) is configured, and an absent store is the
+documented fallback: the poll loop drains the board, one tick late, never wrong. `fr`/`ar`/`he` editorial pass
+remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains
+untracked.
