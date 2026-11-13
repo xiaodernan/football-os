@@ -17484,6 +17484,14 @@
           "demo_mode_percentage": {
             "type": "number",
             "title": "Demo Mode Percentage"
+          },
+          "cached_input_tokens_total": {
+            "type": "integer",
+            "title": "Cached Input Tokens Total"
+          },
+          "cache_hit_rate": {
+            "type": "number",
+            "title": "Cache Hit Rate"
           }
         },
         "type": "object",
@@ -17493,7 +17501,9 @@
           "total_cost_usd",
           "cost_today_usd",
           "avg_latency_ms",
-          "demo_mode_percentage"
+          "demo_mode_percentage",
+          "cached_input_tokens_total",
+          "cache_hit_rate"
         ],
         "title": "ProviderMetricsResponse"
       },
