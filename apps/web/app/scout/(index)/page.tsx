@@ -9,8 +9,8 @@ import { absolute } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
 import type { ScoutRulesView } from "@/lib/scout";
 
-import "../../styles/tactics.css";
-import "../../styles/world.css";
+import "../../../styles/tactics.css";
+import "../../../styles/world.css";
 
 export const dynamic = "force-dynamic";
 
