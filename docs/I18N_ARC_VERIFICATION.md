@@ -5406,3 +5406,81 @@ operator or a human hand; it was invented by adding the `prometheus` exposure to
 scrape works on the private boot recorded in §151; exposure in a shared Prometheus is an operator's act. The
 `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains untouched;
 `.workbuddy/` remains untracked.
+## 153. The knowledge door, live-verified against the provided provider — and what it printed (2026-11-13)
+
+**`npx`-style honesty up front: this window ran the RAG answer surface against the configured live
+provider. Nothing here is a mock; the answers below are the model's own output.**
+
+A scratch database (`.scratch/live-knowledge-ask.db`, deleted before the run) was initialized empty and the
+retrieval corpus was ingested from the committed `data/knowledge/` tree in-process:
+
+```
+ingest ok: True | documents seen: 22 | created: 22 | chunks: 171 | errors: []
+```
+
+The web tier was driven through FastAPI's `TestClient` (no standing server, but the same ASGI app, the same
+middleware, the same rate limiter and the same Redis shared tier — `REDIS_URL=redis://:football@127.0.0.1:63790/2`
+connected for real: `Redis cache connected: redis://127.0.0.1:63790/2`). A player account was registered over
+HTTP (`201 Created`), authenticated, and the `/knowledge/ask` door answered three questions:
+
+**One — "What does the offside rule say?"**
+
+```
+answered: True | provider: openai | model: gpt-6-sol | demo_mode: False
+confidence: 0.714 | backend: hybrid-vector-python | scanned: 171 | top_score: 0.488
+citations: [(1,'Offside: position, active involvement and interfering with an opponent','direct'),
+            (2,'Offside: position, active involvement and interfering with an opponent','direct'),
+            (3,'Offside: position, active involvement and interfering with an opponent','direct'),
+            (4,'Expected goals: what the number means when the engine prints it','direct')]
+```
+
+The model answered from the passages, quoted the position-vs-involvement distinction and the timing rule, and
+cited `[1..4]` inline as the system prompt demands. It did not invent laws, and it did not answer outside the
+corpus.
+
+**Two — "When should a team press high?"**
+
+```
+answered: True | provider: openai | model: gpt-6-sol | demo_mode: False
+confidence: 0.825 | backend: hybrid-vector-python | top_score: 0.6263
+```
+
+The answer named compactness, cover and support for the first presser, cited the squad-height passages, and —
+the part worth pinning down — **explicitly declined what the passages do not contain**: *"The passages explain
+why a team might hold a high block, but they do not specify match situations or triggers for when to start a
+high press."* A live model that says no to the part of the question the corpus does not answer is the exact
+grounding the citation surface exists for; this answer demonstrates it on the record.
+
+**Three — "What is the capital of France?" (out of scope)**
+
+```
+answered: False | provider: openai | model: gpt-6-sol | demo_mode: False
+confidence: 0.0 | backend: hybrid-vector-python | top_score: 0.3903
+citations: []
+```
+
+Refused. No model call was made — the discriminative floors declined the question before it reached the
+provider, which is the documented two-floor design working against a real 0.39-score lexical match that the
+naive floor alone would have passed. **Zero rows exist in `model_calls` for this question; the two rows that do
+exist are the two answered questions** (`feature=knowledge_ask`, `in=1671/5132`, `out=941/100`,
+`ms=6165/5637`, `est_cost_usd=0.000815/0.000830`, `demo=False`, `success=True`). The scratch DB 2 was flushed
+afterwards; nothing remains in the compose cache from this probe.
+
+**Two findings recorded, not acted on silently.**
+
+1. **Registration refuses `role="admin"`** (`422 literal_error: Input should be 'fan', 'player', 'coach',
+   'manager', 'scout' or 'academy'`). This is not a defect. `core/security.ROLES` lists `admin`, the public
+   registration vocabulary excludes it, and `tests/test_authorization_census.py` pins exactly that gap
+   (`set(ROLES) - registrable == {"admin"}`) as policy: admin standing is granted out-of-band by an operator,
+   never self-assigned. The ingest door's admin gate is reachable the same way the metrics/traces/model-router
+   doors are. This probe therefore used the same in-process `sync_knowledge()` path an operator's migration
+   uses rather than inventing a registration that should not exist.
+2. **`REDIS_URL` unset means in-memory cache fallback.** Earlier probes on this host logged the refusal and
+   served from memory; this probe pointed `REDIS_URL` at the compose cache (DB 2) and the app picked the real
+   server, which is the correct proof the tier is not decorative.
+
+**Not claimed.** No claim that any other door (coach, builder, community digest) was re-run against the live
+provider this window — the coach door was live-verified twice (§134, §146) and the runner remains the gate for
+every push. No claim about answer quality beyond these three printed answers. The `fr`/`ar`/`he` editorial
+pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains
+untracked.
