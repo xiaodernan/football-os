@@ -57,12 +57,12 @@ const EVENT_KEY: Record<string, string> = {
  */
 export type SideHrefs = { home?: string; away?: string };
 
-async function SideName({ side, href }: { side: SimSide; href?: string }) {
+async function SideName({ side, href, outcome }: { side: SimSide; href?: string; outcome: "win" | "lose" | "draw" }) {
   const t = await getTranslations("simulate");
   const label = side.name;
   const shape = side.system_name || t("ownFormation");
   return (
-    <div className="world-scoreline__side">
+    <div className={`world-scoreline__side${outcome === "draw" ? "" : ` world-scoreline__side--${outcome}`}`}>
       {href ? (
         <Link className="world-link" href={href}>
           {label}
@@ -80,9 +80,11 @@ async function SideName({ side, href }: { side: SimSide; href?: string }) {
 export async function ScoreLine({ report, hrefs }: { report: SimReport; hrefs?: SideHrefs }) {
   const t = await getTranslations("simulate");
   const winner = report.score.winner.side;
+  const homeOutcome = winner === "home" ? "win" : winner === "away" ? "lose" : "draw";
+  const awayOutcome = winner === "away" ? "win" : winner === "home" ? "lose" : "draw";
   return (
     <div className="world-scoreline" data-testid="sim-score">
-      <SideName href={hrefs?.home} side={report.sides.home} />
+      <SideName href={hrefs?.home} outcome={homeOutcome} side={report.sides.home} />
       <div className="world-scoreline__score">
         <span className="num">
           {report.score.home} – {report.score.away}
@@ -92,7 +94,7 @@ export async function ScoreLine({ report, hrefs }: { report: SimReport; hrefs?: 
         </span>
       </div>
       <div className="world-scoreline__side world-scoreline__side--away">
-        <SideName href={hrefs?.away} side={report.sides.away} />
+        <SideName href={hrefs?.away} outcome={awayOutcome} side={report.sides.away} />
       </div>
     </div>
   );

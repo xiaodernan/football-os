@@ -100,7 +100,24 @@
 .world-scoreline__side--away { text-align: end; }
 .world-scoreline__score { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
 
-/* Generated report body: readable measure, no rich text to trust. */
+/* Full-time etch: who won reads before the numbers parse — the winner is lit in the accent, the loser is
+   quieted, and the score keeps a hairline on both flanks. Drawing sits in the middle, plain. */
+.world-scoreline__side--win { color: var(--accent); }
+.world-scoreline__side--win .world-link { color: var(--accent); font-weight: 750; }
+.world-scoreline__side--lose { opacity: 0.72; }
+.world-scoreline__score { position: relative; padding-inline: 1.35rem; }
+.world-scoreline__score::before,
+.world-scoreline__score::after {
+  content: "";
+  position: absolute;
+  top: 12%;
+  bottom: 12%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, var(--line), transparent);
+}
+.world-scoreline__score::before { inset-inline-start: 0; }
+.world-scoreline__score::after { inset-inline-end: 0; }
+
 .news-body { display: flex; flex-direction: column; gap: 0.9rem; font-size: 1rem; line-height: 1.7; max-width: 74ch; }
 
 @media (max-width: 900px) {

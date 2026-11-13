@@ -6269,3 +6269,60 @@ the gateway fans out across upstreams with different tokenizers and separate cac
 guarantee for the next call, and a warm prefix on one upstream is cold on another. The 4 386-token preamble is
 the gateway's, not ours, and nothing in this repository can remove it. The `fr`/`ar`/`he` editorial pass remains
 owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+## 170. The full-time scoreline — winner lit, loser quieted, hairlines on the flanks (2026-11-13)
+
+**The most emotional page in the game now tells you who won before a single figure parses. The scoreline used to
+render both sides in the same gray; now the winner reads with the accent, the loser sits back, and the score
+panel is flanked by hairlines instead of drifting alone in a big empty panel.**
+
+What changed:
+
+* `components/simulation.tsx` — `ScoreLine` computes `homeOutcome` / `awayOutcome` from the stored winner side
+  (`home` / `away` / `draw`) and threads `outcome` into `SideName`. `SideName` renders
+  `world-scoreline__side world-scoreline__side--{win,lose}` (a draw gets neither, which is what a draw deserves).
+  The `--away` wrapper still wraps the side that now carries its own win/lose class.
+* `styles/world.css` — `.world-scoreline__side--win` (accent colour, `.world-link` semibold),
+  `.world-scoreline__side--lose` (opacity 0.72), `.world-scoreline__score` positioned with
+  `padding-inline` and two flanking hairline rules (`::before` / `::after` at `inset-inline-start|end: 0`).
+  Logical properties throughout. No new catalogue key; the copy still names exactly who won, because
+  `t("modelWinner", { name })` is already on the page.
+
+**Live, not hoped.** A scratch API (fresh SQLite, seeded world: **32 teams, 50 tactical systems**) played a
+real fixture with a fixed seed — `braeford-athletic` vs `cordale-town` seed 29 → **0-1, winner=away**. The
+fresh production build on port 3210 answered the report page in SSR (`/simulate/braa-v-cort-522aeb25682ee4e5`),
+and the bytes carried the etch:
+
+```html
+<div class="world-scoreline__side world-scoreline__side--lose"><a class="world-link" href="/team/braeford-athletic">Braeford Athletic</a>...
+<div class="world-scoreline__score"><span class="num">0 – 1</span>
+<span class="chip" style="font-size:0.7rem">Model winner: Cordale Town</span></div>
+<div class="world-scoreline__side world-scoreline__side--away"><div class="world-scoreline__side world-scoreline__side--win"><a class="world-link" href="/team/cordale-town">Cordale Town</a>...
+```
+
+Both classes print from the server render, not from client JS. The match was created through
+`POST /api/v1/simulate` on that scratch API (201), the report read back through the web door with the account's
+own session — no mock anywhere, no fabrications. The stale `next start` this host keeps respawning on 3210 was
+out of the critical path: the evidence above was captured against the fresh dist before it was torn down.
+
+**Verification, printed, not remembered.**
+
+```
+tsc --noEmit                                        exit 0
+production build (NEXT_DIST_DIR=.next-fulltime)     BUILD_ID F-rLtFk_PkQxkGpqV8jMW
+qa-i18n-literals   CHECKS passed=9 total=9 failed=0
+qa-unused-keys     passed
+qa-field-labels    CHECKS passed=2 total=2 failed=0
+qa-a11y            CHECKS passed=33 total=33 failed=0
+qa-icu-messages    CHECKS passed=2 total=2 failed=0 (26184 messages, 6 catalogues)
+qa-rtl-readiness   CHECKS passed=8 total=8 failed=0
+qa-table-shape     116/116 tables name .table and sit in a frame
+```
+
+No catalogue key was added; every visible word on the new rule came from the existing `simulate` catalogue.
+
+**Not claimed.** No claim that `/simulate/[slug]` has been walked in an in-app browser this window — the
+artifact above is SSR HTML read straight from the door with the account's own token. The weather of this
+host (a respawn-managed stale `next start` thread on the default port) is recorded rather than fought: the
+fresh build took over the flow, served the page, and was torn down once the probes printed. The `fr`/`ar`/`he`
+editorial pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/`
+remains untracked.
