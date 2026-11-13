@@ -962,13 +962,13 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `0c4227fd3b1843f75f145ff26bd01cd21c1826f9666a1bffba483fc10369c6f3` that population is **241
-secured operations, 55 public operations and 104 private GET paths**, with floors of 200/40/85 printed on
+SHA-256 `e3f1036f021738d32cab84e4f99f87e2472dc33e18876af5aa5cef190685a818` that population is **241
+secured operations, 56 public operations and 104 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 241 / 55 / 104 |
+| C0 | the door population comes from the contract and is not empty | 241 / 56 / 104 |
 | S1 | every secured operation refuses a caller with no credential | **241 knocked, 241 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
@@ -1017,7 +1017,7 @@ login door onto a board post as the account. Both reds were seen first — **8 p
 [the report](SECURITY_PROBE_REPORT.md) §2 records them rather than hiding them behind the green.
 Run L (2026-11-12, port 8798, 41.97 s, scratch SQLite created by the app on startup) is the run this
 record now quotes: M16's broker published its own operator window (`GET /api/v1/metrics/jobs-stream`),
-so the census reads 241 / 55 / 104, every secured door still answered 401 without a credential, and
+so the census reads 241 / 56 / 104, every secured door still answered 401 without a credential, and
 the ten checks answered **10/10, 0 failed, 0 server errors**. The clip-report's analyse door also
 grew a `background` query parameter, which moved the contract's SHA-256 without moving its population;
 the report's §1 and this record name the SHA of the contract as committed today.

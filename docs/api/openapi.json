@@ -2137,6 +2137,63 @@
         }
       }
     },
+    "/api/v1/world/duel": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Duel",
+        "description": "Two players, seven columns, one tally — see `app.services.world.duel` for what the verdict is not.",
+        "operationId": "duel_api_v1_world_duel_get",
+        "parameters": [
+          {
+            "name": "left",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160,
+              "title": "Left"
+            }
+          },
+          {
+            "name": "right",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160,
+              "title": "Right"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Duel Api V1 World Duel Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/training": {
       "get": {
         "tags": [
