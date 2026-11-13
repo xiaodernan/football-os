@@ -198,6 +198,42 @@ h1, h2, h3, h4, p { margin: 0; }
 .list__item { display: flex; align-items: flex-start; gap: 0.85rem; padding: 0.85rem 0; border-bottom: 1px solid var(--line-soft); }
 .list__item:last-child { border-bottom: 0; }
 
+/* The notification tray: an inbox that already spoke its own language — each kind gets a tinted glyph,
+   unread rows wear a left accent bar and a whisper of accent light, and hover lifts the whole row. */
+.notice-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.notice-row {
+  position: relative;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.85rem;
+  padding: 0.7rem 0.9rem 0.7rem 1.35rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+.notice-row::before {
+  content: "";
+  position: absolute; inset-inline-start: 0; top: 12%; bottom: 12%; width: 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(53, 240, 164, 0.45);
+}
+.notice-row--read::before { background: var(--line); box-shadow: none; }
+.notice-row:hover { background: rgba(53, 240, 164, 0.05); transform: translateY(-1px); }
+.notice-row--read { opacity: 0.62; }
+.notice-row__icon {
+  width: 34px; height: 34px; border-radius: 11px;
+  display: grid; place-items: center;
+  background: rgba(53, 240, 164, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(53, 240, 164, 0.25);
+}
+.notice-row__icon--reaction { background: rgba(255, 182, 72, 0.12); border-color: rgba(255, 182, 72, 0.28); color: var(--warn); }
+.notice-row__icon--comment { background: rgba(95, 168, 255, 0.12); border-color: rgba(95, 168, 255, 0.28); color: var(--info); }
+.notice-row__icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.notice-row__body { min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.notice-row__line { font-size: 0.9rem; color: var(--text); line-height: 1.35; }
+.notice-row__time { font-size: 0.72rem; color: var(--text-3); letter-spacing: 0.04em; }
+.notice-row__meta { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+
 .reasons { display: flex; flex-direction: column; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
 .reasons__item {
   position: relative; padding-inline-start: 1.1rem; font-size: 0.88rem; color: var(--text-2);
