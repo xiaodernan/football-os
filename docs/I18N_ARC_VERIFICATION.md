@@ -5758,3 +5758,65 @@ levels until the operator sets `OPENAI_PRICE_*`; no claim the gateway reports ca
 (its own numbers wobble); no claim that `OPENAI_STREAM=0` behaves identically (it is the documented
 non-stream door); the `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the
 repository root remains untouched; `.workbuddy/` remains untracked.
+## 160. The cache arc: the ledger saw the gateway blind, the runner caught two gates, and the docs carry their own verdicts (2026-11-13)
+
+**The complaint was real, and the app was the problem — not the gateway. Every provider call went out
+non-streaming and the ledger had no sight of the cache. The fix and its evidence below; the two reds it
+pushed into the open are recorded unedited, with their cures.**
+
+What changed (this arc), all on master:
+
+* **Streaming is now the default** (`OPENAI_STREAM`, default on). The call goes out with `stream: true` and
+  `stream_options: {include_usage: true}`; the SSE body folds back to one string; the terminal usage chunk —
+  the only place this gateway reports tokens on the stream path — is parsed from `data:` lines. OpenAI
+  nests `prompt_tokens_details.cached_tokens` and `completion_tokens_details.reasoning_tokens`; a flat
+  DeepSeek-style `prompt_cache_hit_tokens` is read too. `OPENAI_STREAM=0` restores the non-stream door.
+* **The prompt goes stable-first, question-last** (`INTENT → PLAYER → FACTS → SESSION → WHY → QUESTION`).
+  The old shape led with the one field that changes every call. Compact serialization, deterministic key
+  order — two identical asks from the same account are byte-identical prompts.
+* **`cached_input_tokens` lands end-to-end**: provider → `LlmResult` → `ModelCall` → migration **0063**
+  (`alembic upgrade head` + `alembic check` clean on a scratch database) → `/metrics/providers` answers
+  with `cached_input_tokens_total` and `cache_hit_rate` (cached ÷ input over every recorded call; verified
+  over HTTP: two rows, 800/3000 cached, rate `0.2667`).
+* **Token prices are env-configurable** (`OPENAI_PRICE_IN_USD_PER_MTOK` / `OPENAI_PRICE_CACHED_IN_USD_PER_MTOK`
+  / `OPENAI_PRICE_OUT_USD_PER_MTOK`), with cached priced at the plain input rate until the operator sets the
+  gateway's real figure — no invented discount. Estimated cost splits hit vs miss.
+
+**The gateway, measured on this host (wkapi.pro / gpt-6-sol).** Identical prompts hit ~95% cached on both
+shapes (4096/4314 tokens on warm repeats, stream **and** non-stream); a one-character change takes the cache
+from 4096 to **0**; small prompts never cache; a production-size warm prompt landed cached=1083 of 4920 on the
+second identical call (first cold call 65). Token accounting wobbles between calls (91 / 928 / 1035 / 4314 for
+the same shape), so costs are directional. The "stream shows a much better hit rate" perception did **not**
+reproduce: both shapes hit identically on repeats; what changed is that the app now asks, records and reports
+the number. The steady state for this product (the coach's per-account payload) is exact-repeat weather —
+which the stable-first order now maximizes.
+
+**The reds this arc pushed into the open, with their cures, unedited.**
+
+| push | CI | verdict | note |
+| --- | --- | --- | --- |
+| `0d33fe5` §159 (api changes) | `43394390386` | **failure** — api only | `test_openapi_contract_currency`: the committed contract (518330 B) no longer matched the tree's serialization (518642 B, the two new `/metrics/providers` fields). api was the only red; web/services/containers green. |
+| `cd1b482` (contract re-export) | `43396863332` | **failure** — api only | the three SHA ledgers + the audit: `SECURITY_PROBE_REPORT.md` / `M12_…VERIFICATION.md` / `ROADMAP.md` still named `d4b4ae…`, and `AUDIT_FIGURES migrations=63` vs the committed 64 `.py` files. |
+| `4b6bbb5` (SHA ledgers + run M) | `43401224574` | **success** — all four legs | the cure; this section's push |
+| `9992f17` §158 | `43389938481` | **success** | docs-only |
+
+**The re-export moved no door.** The two additive response fields changed the contract's bytes without adding,
+removing or re-gating one — the door census stayed **240 / 55 / 103**. The probe was re-run against the
+re-exported contract instead of being argued about: run M (`scripts/security_probe.py`, port 8751,
+`ENV=development`, fresh scratch SQLite, `CORS_ORIGINS` at the documented 3210 pair) printed
+**10 passed / 0 failed / 0 server errors, 9.88 s**, contract SHA-256 `76341e7365ca5cccb83dead42c538f7a6c54aef33f04f189f3d8ca0c6ae5a5a5`.
+The first run M attempt failed S8 for one environmental reason — the server was booted with the application
+default `CORS_ORIGINS` (`http://localhost:3000`) so neither the configured pair nor the rogue origin echoed a
+header; rebooted with the documented pair, the same probe is 10/10. The misconfiguration was the probe
+environment, not the product; §2 of the probe report records both attempts.
+
+**What this section corrects about the ledger.** §159's local battery did not include the currency gates — the
+run of the whole web QA suite plus seven API test modules was real but incomplete, and the pre-push hook skips
+web builds by design. Two RED pushes later, every gate is green and named. The runner overruled the ledger
+twice before being satisfied once, and the ledger says so instead of editing the past.
+
+**Not claimed.** No specific gpt-6-sol price is claimed — estimates run at the configured defaults until
+`OPENAI_PRICE_*` is set. No claim the gateway reports cache metrics consistently (it does not, reliably). No
+claim that `OPENAI_STREAM=0` behaves identically. Any cost figure in this section is directional. The `fr`/`ar`/`he`
+editorial pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/`
+remains untracked.
