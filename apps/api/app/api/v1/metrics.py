@@ -25,7 +25,7 @@ from app.core.request_metrics import snapshot as request_metrics_snapshot
 from app.core.runtime import uptime_seconds
 from app.core.security import current_user, role_refusal, standing_check
 from app.models import ModelCall, User, VideoAsset
-from app.services import ops_alerts
+from app.services import model_ledger, ops_alerts
 from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
 from app.services.cost_advisor import recommend as cost_recommend
 from app.services.latency_profile import profile as latency_profile
@@ -79,6 +79,8 @@ class ProviderMetricsResponse(BaseModel):
     cost_today_usd: float
     avg_latency_ms: float
     demo_mode_percentage: float
+    cached_input_tokens_total: int
+    cache_hit_rate: float
 
 
 @router.get("/system", response_model=SystemMetricsResponse)
@@ -181,6 +183,8 @@ def provider_metrics(
     demo_calls = int(db.scalar(select(func.count(ModelCall.id)).where(ModelCall.demo_mode.is_(True))) or 0)
     demo_pct = (demo_calls / total_calls * 100) if total_calls > 0 else 0.0
 
+    cache = model_ledger.cache_hit_rate(db)
+
     return ProviderMetricsResponse(
         total_calls=total_calls,
         calls_by_provider=calls_by_provider,
@@ -188,6 +192,8 @@ def provider_metrics(
         cost_today_usd=round(cost_today, 4),
         avg_latency_ms=round(avg_latency, 2),
         demo_mode_percentage=round(demo_pct, 2),
+        cached_input_tokens_total=int(cache["cached_input_tokens"]),
+        cache_hit_rate=float(cache["hit_rate"]),
     )
 
 

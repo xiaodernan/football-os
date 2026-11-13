@@ -22,6 +22,7 @@ def record_model_call(db: Session, *, result: LlmResult, feature: str, user_id: 
             input_tokens=result.input_tokens,
             output_tokens=result.output_tokens,
             reasoning_tokens=result.reasoning_tokens,
+            cached_input_tokens=result.cached_input_tokens,
             latency_ms=result.latency_ms,
             estimated_cost_usd=result.estimated_cost_usd,
             actual_cost_usd=result.actual_cost_usd,
@@ -37,6 +38,26 @@ def spend_today_usd(db: Session) -> float:
 
     start = utc_midnight(utc_today())
     return float(db.scalar(select(func.coalesce(func.sum(ModelCall.actual_cost_usd), 0.0)).where(ModelCall.created_at >= start)) or 0.0)
+
+
+def cache_hit_rate(db: Session) -> dict[str, float | int]:
+    """The measurable prefix-cache story across every recorded call.
+
+    `hit_rate` is cached / input. It is only as honest as the gateway's own usage report — a
+    provider that never prints cached tokens yields zero, not a number. A call recorded before
+    `cached_input_tokens` existed contributes zero to the numerator, which is the correct reading.
+    """
+    from sqlalchemy import func, select
+
+    total_in = int(db.scalar(select(func.coalesce(func.sum(ModelCall.input_tokens), 0))) or 0)
+    cached = int(db.scalar(select(func.coalesce(func.sum(ModelCall.cached_input_tokens), 0))) or 0)
+    calls = int(db.scalar(select(func.count(ModelCall.id))) or 0)
+    return {
+        "cached_input_tokens": cached,
+        "input_tokens": total_in,
+        "calls": calls,
+        "hit_rate": round(cached / total_in, 4) if total_in else 0.0,
+    }
 
 
 def budget_exhausted(db: Session) -> bool:

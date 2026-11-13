@@ -5692,3 +5692,69 @@ prints success. `§153` (docs, live-provider evidence) printed success at `43381
 The four red pushes remain on master unedited — they were not rewritten or re-tagged; this section names them.
 The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
 untouched; `.workbuddy/` remains untracked.
+## 159. The provider call was non-streaming and the ledger could not see a cache — both fixed, and the gateway measured (2026-11-13)
+
+**The complaint: every call showed "非流" and the cache-hit rate was low. The cause was real. What the fix
+found on the gateway — measured here, printed below — is recorded with the same honesty.**
+
+What changed:
+
+* `providers/OpenAIChatProvider` now streams by default: `stream: true` with
+  `stream_options: {include_usage: true}`, the SSE body folded back to one string, and the **final usage
+  chunk** parsed out of the stream (OpenAI prints usage only there). `OPENAI_STREAM=0` forces the plain
+  non-stream call back. `reasoning_tokens` and **`cached_input_tokens`** are read from both usage dialects
+  (OpenAI `prompt_tokens_details.cached_tokens`, DeepSeek-style `prompt_cache_hit_tokens`); reasoning from
+  `completion_tokens_details.reasoning_tokens`. The estimated cost splits cached vs uncached input
+  (`OPENAI_PRICE_CACHED_IN_USD_PER_MTOK`, default = the plain input price — no invented discount), and the
+  plain input/output prices are now env-configurable (`OPENAI_PRICE_IN_USD_PER_MTOK` /
+  `OPENAI_PRICE_OUT_USD_PER_MTOK`) instead of hardcoded gpt-4o-mini math.
+* `coach_voice.build_prompt` orders the payload **stable-first, question-last**
+  (`INTENT → PLAYER → FACTS → SESSION → WHY → QUESTION`). The old shape led with the volatile question, which
+  defeats any prefix-cache on earth. The compact serialisation and the key order are deterministic, so two
+  identical asks from the same account produce byte-identical prompts.
+* `ModelCall.cached_input_tokens` lands end-to-end: provider → `ModelCall` → migration **0063**
+  (`alembic upgrade head` and `alembic check` both clean on a scratch database; 0036/0035 were already
+  taken, so the id is 0063) → `/metrics/providers` now answers with `cached_input_tokens_total` and
+  `cache_hit_rate` (cached ÷ input over all recorded calls, zeros stay zeros).
+
+**What the gateway actually does, measured on this host against `wkapi.pro` / `gpt-6-sol`** (raw samples,
+not interpretation):
+
+```
+non-stream x4   identical prompt:  cached 0, 4096, 4096, 4096   (prompt reported 4314 every time)
+stream     x4   identical prompt:  cached 4096, 4096, 4096, 4096
+alternating     A(4096)  B(65)     A(4096)  B(98)
+one-character change (extra '?'):  cached 0 — the cache is exact-content on this gateway
+small prompt (~91 reported tokens): 0 → 0 → 0 across identical calls (below the cache's useful size)
+production-size prompt with a unique tail nonce, twice: 65 → 1083 (shared prefix did cache)
+provider-path ledger rows recorded: in=4920 cached=65 / 1083; hit_rate 0.1167 on the two-call probe
+```
+
+**The honest reading of the complaint.**
+
+1. "一直显示非流" — true, and now fixed: **every call goes out as `stream`** (unless `OPENAI_STREAM=0`), and
+   the dashboard should now read 流.
+2. "流的时候缓存命中率好的多" — **not reproduced**. Identical prompts hit identically on both shapes
+   (4096 on repeats either way). Stream is not magic on this gateway; the misses are exact-content misses
+   (one character busts the whole cache).
+3. The reason the operator saw "very low cache hit rate" is now visible: **the app never asked, never
+   recorded, and never reported `cached_tokens`**, and the prompt led with the question — the one field that
+   changes every call. The first order is now stable-first, and the ledger shows the real number per call.
+4. The first call of any unique prompt is always a miss (cold); warm steady state on this gateway lands
+   roughly in the 20–95% band depending on prompt size and sharing — not the "all or nothing" the label
+   suggested.
+5. Token accounting on this gateway is unreliable in absolute terms (the same stable prompt reported 91,
+   928, 1035 and 4314 tokens at different times). Estimated costs are therefore directional, not exact.
+
+**Verified locally, printed.** `test_coach_voice` / `test_coach_budget` / `test_metrics` /
+`test_model_router` / `test_knowledge_joint` / `test_knowledge_rag` / `test_api_flow` — exit 0 (100+ tests);
+`ruff` clean on the five changed files; `mypy` clean; `alembic upgrade head` applies 0035→0063 and
+`alembic check` prints "No new upgrade operations detected". The live provider path was re-run end-to-end
+after the change (knowledge_ask and the cache probes above), recording real rows including
+`cached_input_tokens`.
+
+**Not claimed.** No claim of a specific gpt-6-sol price — the placeholder prices default to gpt-4o-mini
+levels until the operator sets `OPENAI_PRICE_*`; no claim the gateway reports cache metrics consistently
+(its own numbers wobble); no claim that `OPENAI_STREAM=0` behaves identically (it is the documented
+non-stream door); the `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the
+repository root remains untouched; `.workbuddy/` remains untracked.

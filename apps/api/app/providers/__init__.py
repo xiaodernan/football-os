@@ -1,7 +1,7 @@
-"""Provider abstraction (spec §45–46, §77, ADR-005).
+"""Provider abstraction (spec §45�?6, §77, ADR-005).
 
 Real providers activate only when credentials exist. Without keys the platform runs
-in DEMO MODE with self-labelled, deterministic responses — never presented as real AI.
+in DEMO MODE with self-labelled, deterministic responses �?never presented as real AI.
 """
 
 from __future__ import annotations
@@ -31,6 +31,7 @@ class LlmResult:
     input_tokens: int = 0
     output_tokens: int = 0
     reasoning_tokens: int = 0
+    cached_input_tokens: int = 0
     latency_ms: int = 0
     estimated_cost_usd: float = 0.0
     actual_cost_usd: float = 0.0
@@ -106,7 +107,7 @@ class MockLLMProvider:
             payload = {"prompt": prompt}
         intent = str(payload.get("intent", "general"))
         lines = [
-            f"[DEMO MODE — deterministic template, no model call] {intent}:",
+            f"[DEMO MODE �?deterministic template, no model call] {intent}:",
             "This surface would be phrased by a language model once a provider key is configured.",
             "The underlying recommendation is computed by the rule-based coach engine and is not a placeholder.",
         ]
@@ -123,17 +124,38 @@ class MockLLMProvider:
 
 
 class OpenAIChatProvider:
-    """Minimal, dependency-free chat completions adapter."""
+    """Minimal, dependency-free chat completions adapter.
+
+    Streams by default. The call goes out with `stream: true` and
+    `stream_options: {include_usage: true}`; the SSE body is folded back into one string and the
+    final `usage` chunk �?the only place the provider reports tokens on this path �?is what the
+    ledger records. Non-stream stays one environment flag away (`OPENAI_STREAM=0`) for gateways
+    that never learned SSE.
+    """
 
     name = "openai"
-    _PRICE_IN = 0.15 / 1_000_000 * 100  # gpt-4o-mini style defaults, USD per token batch
-    _PRICE_OUT = 0.60 / 1_000_000 * 100
 
-    def __init__(self, api_key: str, model: str, base_url: str = "https://api.openai.com/v1", user_agent: str | None = None) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        base_url: str = "https://api.openai.com/v1",
+        user_agent: str | None = None,
+        stream: bool = True,
+        price_in_per_mtok: float = 0.15,
+        price_cached_in_per_mtok: float | None = None,
+        price_out_per_mtok: float = 0.60,
+    ) -> None:
         self.api_key = api_key
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.user_agent = user_agent
+        self.stream = stream
+        self.price_in_per_mtok = price_in_per_mtok
+        # A cached input token is priced at what the operator set, or the plain input price when they
+        # did not (a discount nobody configured is a discount the ledger must not invent).
+        self.price_cached_in_per_mtok = price_cached_in_per_mtok if price_cached_in_per_mtok is not None else price_in_per_mtok
+        self.price_out_per_mtok = price_out_per_mtok
 
     def _headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}
@@ -144,7 +166,46 @@ class OpenAIChatProvider:
             headers["User-Agent"] = self.user_agent
         return headers
 
+    @staticmethod
+    def _usage_tokens(usage: Any) -> tuple[int, int, int, int]:
+        """(prompt, completion, reasoning, cached) from either usage dialect.
+
+        OpenAI nests under `prompt_tokens_details.cached_tokens` and
+        `completion_tokens_details.reasoning_tokens`; DeepSeek-style gateways print flat
+        `prompt_cache_hit_tokens` / `completion_tokens_details` instead. Both are read; a field the
+        gateway does not print stays zero, never invented.
+        """
+        if not isinstance(usage, dict):
+            return 0, 0, 0, 0
+        prompt = int(usage.get("prompt_tokens", 0) or 0)
+        completion = int(usage.get("completion_tokens", 0) or 0)
+        raw_in = usage.get("prompt_tokens_details")
+        raw_out = usage.get("completion_tokens_details")
+        details_in = raw_in if isinstance(raw_in, dict) else {}
+        details_out = raw_out if isinstance(raw_out, dict) else {}
+        cached = int(details_in.get("cached_tokens", 0) or usage.get("prompt_cache_hit_tokens", 0) or 0)
+        reasoning = int(details_out.get("reasoning_tokens", 0) or usage.get("reasoning_tokens", 0) or 0)
+        return prompt, completion, reasoning, cached
+
+    def _estimate(self, *, in_tok: int, out_tok: int, cached: int) -> float:
+        """Cache-aware money: hit tokens at the cached price, the rest at the plain price.
+
+        `cached` is clamped to the input it was billed against so a generous gateway report
+        cannot underflow the miss portion. Nothing here invents a price; unset prices are the
+        configured defaults and cached defaults to plain input.
+        """
+        cached_billed = min(max(0, cached), max(0, in_tok))
+        miss_billed = in_tok - cached_billed
+        cost = (
+            miss_billed * self.price_in_per_mtok / 1_000_000
+            + cached_billed * self.price_cached_in_per_mtok / 1_000_000
+            + out_tok * self.price_out_per_mtok / 1_000_000
+        )
+        return round(cost, 6)
+
     def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4) -> LlmResult:
+        if self.stream:
+            return self._complete_stream(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
         body = json.dumps(
             {
                 "model": self.model,
@@ -166,10 +227,17 @@ class OpenAIChatProvider:
             logger.warning("openai_provider_failure %s", type(exc).__name__)
             return MockLLMProvider().complete(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
         latency = int((time.perf_counter() - started) * 1000)
-        usage = raw.get("usage", {})
-        text = (raw.get("choices") or [{}])[0].get("message", {}).get("content", "")
-        in_tok, out_tok = int(usage.get("prompt_tokens", 0)), int(usage.get("completion_tokens", 0))
-        est = in_tok * self._PRICE_IN / 100 + out_tok * self._PRICE_OUT / 100
+        return self._result(raw, latency_ms=latency)
+
+    def _result(self, raw: Any, *, latency_ms: int) -> LlmResult:
+        usage = raw.get("usage", {}) if isinstance(raw, dict) else {}
+        text = ""
+        if isinstance(raw, dict):
+            choices = raw.get("choices") or [{}]
+            message = (choices[0] or {}).get("message", {}) if choices else {}
+            text = message.get("content", "") if isinstance(message, dict) else ""
+        in_tok, out_tok, reasoning, cached = self._usage_tokens(usage)
+        est = self._estimate(in_tok=in_tok, out_tok=out_tok, cached=cached)
         return LlmResult(
             text=text,
             provider=self.name,
@@ -177,6 +245,74 @@ class OpenAIChatProvider:
             demo_mode=False,
             input_tokens=in_tok,
             output_tokens=out_tok,
+            reasoning_tokens=reasoning,
+            cached_input_tokens=cached,
+            latency_ms=latency_ms,
+            estimated_cost_usd=round(est, 6),
+            actual_cost_usd=round(est, 6),
+        )
+
+    def _complete_stream(self, *, system: str, prompt: str, max_tokens: int, temperature: float) -> LlmResult:
+        body = json.dumps(
+            {
+                "model": self.model,
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "stream": True,
+                # The stream carries no usage unless asked; without this the ledger would record
+                # zero tokens for a successful call, which is how the dashboard emptied out.
+                "stream_options": {"include_usage": True},
+            }
+        ).encode()
+        request = urllib.request.Request(
+            f"{self.base_url}/chat/completions",
+            data=body,
+            headers=self._headers(),
+        )
+        started = time.perf_counter()
+        chunks: list[str] = []
+        usage: dict[str, Any] = {}
+        try:
+            with urllib.request.urlopen(request, timeout=45) as response:  # noqa: S310 - fixed internal endpoint
+                for raw_line in response:
+                    line = raw_line.decode("utf-8", "replace").strip()
+                    if not line.startswith("data:"):
+                        continue
+                    payload = line[len("data:") :].strip()
+                    if payload == "[DONE]":
+                        break
+                    try:
+                        event = json.loads(payload)
+                    except json.JSONDecodeError:
+                        continue
+                    choices = event.get("choices") or []
+                    for choice in choices:
+                        delta = choice.get("delta") or {}
+                        piece = delta.get("content")
+                        if isinstance(piece, str) and piece:
+                            chunks.append(piece)
+                    if isinstance(event.get("usage"), dict):
+                        usage = event["usage"]
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            logger.warning("openai_provider_stream_failure %s", type(exc).__name__)
+            return MockLLMProvider().complete(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
+        text = "".join(chunks)
+        if not text:
+            logger.warning("openai_provider_stream_empty")
+            return MockLLMProvider().complete(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
+        latency = int((time.perf_counter() - started) * 1000)
+        in_tok, out_tok, reasoning, cached = self._usage_tokens(usage)
+        est = self._estimate(in_tok=in_tok, out_tok=out_tok, cached=cached)
+        return LlmResult(
+            text=text,
+            provider=self.name,
+            model=self.model,
+            demo_mode=False,
+            input_tokens=in_tok,
+            output_tokens=out_tok,
+            reasoning_tokens=reasoning,
+            cached_input_tokens=cached,
             latency_ms=latency,
             estimated_cost_usd=round(est, 6),
             actual_cost_usd=round(est, 6),
@@ -186,7 +322,7 @@ class OpenAIChatProvider:
 class HashingEmbeddingProvider:
     """Deterministic local embeddings: signed hashing trick over unigrams and bigrams.
 
-    This is a *lexical* vector, not a semantic one — it is honest for the SQLite/DEMO
+    This is a *lexical* vector, not a semantic one �?it is honest for the SQLite/DEMO
     path because hybrid retrieval pairs it with BM25 and the answer surface cites the
     chunk it used instead of the model's own opinion. A real embedding model replaces it
     as soon as a key exists (see OpenAIEmbeddingProvider), without a schema change: the
@@ -242,12 +378,12 @@ class OpenAIEmbeddingProvider:
             with urllib.request.urlopen(request, timeout=45) as response:  # noqa: S310 - fixed provider endpoint
                 payload = json.loads(response.read().decode())
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            logger.warning("embedding_provider_failure %s — falling back to hash-local", type(exc).__name__)
+            logger.warning("embedding_provider_failure %s �?falling back to hash-local", type(exc).__name__)
             return self.fallback.embed(texts)
         rows = sorted(payload.get("data", []), key=lambda row: row.get("index", 0))
         vectors = [[float(v) for v in row["embedding"]] for row in rows]
         if len(vectors) != len(texts) or any(len(v) != self.dim for v in vectors):
-            logger.warning("embedding_provider_shape_mismatch — falling back to hash-local")
+            logger.warning("embedding_provider_shape_mismatch �?falling back to hash-local")
             return self.fallback.embed(texts)
         return vectors
 
@@ -257,7 +393,7 @@ class FeatureReranker:
 
     A neural cross-encoder can replace this behind RerankerProvider; until then the
     features are declared and inspectable, so a ranking can be explained rather than
-    asserted — which is the whole point of the citation surface.
+    asserted �?which is the whole point of the citation surface.
     """
 
     name = "feature-local"
@@ -368,7 +504,16 @@ def get_storage_provider() -> StorageProvider:
 
 def get_llm_provider() -> LLMProvider:
     if settings.openai_api_key:
-        return OpenAIChatProvider(settings.openai_api_key, settings.openai_model, base_url=settings.openai_base_url, user_agent=settings.openai_user_agent)
+        return OpenAIChatProvider(
+            settings.openai_api_key,
+            settings.openai_model,
+            base_url=settings.openai_base_url,
+            user_agent=settings.openai_user_agent,
+            stream=settings.openai_stream,
+            price_in_per_mtok=settings.openai_price_in_usd_per_mtok,
+            price_cached_in_per_mtok=settings.openai_price_cached_in_usd_per_mtok,
+            price_out_per_mtok=settings.openai_price_out_usd_per_mtok,
+        )
     return MockLLMProvider()
 
 
@@ -395,3 +540,4 @@ def provider_status() -> dict[str, Any]:
         "football_data": "synthetic-world",
         "news": "synthetic-world" if not settings.news_api_key else "licensed-api",
     }
+

@@ -76,15 +76,18 @@ def build_prompt(
     reasons: list[str],
     history: dict[str, Any] | None = None,
 ) -> str:
-    """The user message: the question, the player, the measured facts, the session, the reasons.
+    """The user message: the player, the measured facts, the session, the reasons — then the question.
 
     Everything here is read from a row the caller already loaded. Nothing is looked up, so building
     the prompt cannot fail in a way that changes the answer — a missing optional field is simply
     absent from the block, which rule 2 turns into "Data unavailable" rather than an invention.
     """
     session = structured.get("recommendation") or {}
+    # Stable-first: everything a repeat asker shares with the previous call rides the front of the
+    # payload, so a prefix-caching gateway menus the whole block instead of the first sentence. The
+    # question — the one volatile field — is deliberately last (spec §"stable prefix"): a prompt that
+    # opens with the question misses the cache on every ask by construction.
     block: dict[str, Any] = {
-        "QUESTION": (question or "").strip()[:800],
         "INTENT": intent,
         "PLAYER": {
             "position": getattr(player, "position", None),
@@ -114,6 +117,7 @@ def build_prompt(
             "level": history.get("level"),
             "recent_categories": sorted(history.get("recent_categories") or []),
         }
+    block["QUESTION"] = (question or "").strip()[:800]
     return json.dumps(block, ensure_ascii=False, indent=None, separators=(",", ":"))
 
 

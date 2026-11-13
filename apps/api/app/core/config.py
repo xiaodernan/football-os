@@ -56,6 +56,16 @@ class Settings:
     openai_model: str = field(default_factory=lambda: _env("OPENAI_MODEL", "gpt-4o-mini"))
     openai_base_url: str = field(default_factory=lambda: _env("OPENAI_BASE_URL", "https://api.openai.com/v1"))
     openai_user_agent: str | None = field(default_factory=lambda: _env("OPENAI_USER_AGENT"))
+    # Streaming by default: the gateway reports the same completion tokens but the stream door is the one
+    # its dashboard counts as `stream`; `OPENAI_STREAM=0` forces the plain non-stream call.
+    openai_stream: bool = field(default_factory=lambda: _env("OPENAI_STREAM", "1").strip().lower() not in ("0", "false", "no", "off"))
+    # Token pricing (per 1M tokens), so the ledger can render real money rather than gpt-4o-mini
+    # placeholder math against a model this build does not know the price of. The cached-input price
+    # defaults to the plain input price (no invented discount); set it to the gateway's real figure
+    # once the operator has it.
+    openai_price_in_usd_per_mtok: float = field(default_factory=lambda: float(_env("OPENAI_PRICE_IN_USD_PER_MTOK", "0.15") or 0.15))
+    openai_price_cached_in_usd_per_mtok: float | None = field(default_factory=lambda: (float(v) if (v := _env("OPENAI_PRICE_CACHED_IN_USD_PER_MTOK")) else None))
+    openai_price_out_usd_per_mtok: float = field(default_factory=lambda: float(_env("OPENAI_PRICE_OUT_USD_PER_MTOK", "0.60") or 0.60))
     openai_embedding_model: str = field(default_factory=lambda: _env("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"))
     embedding_provider: str = field(default_factory=lambda: _env("EMBEDDING_PROVIDER", "hash-local"))
     knowledge_dir: str = field(default_factory=lambda: _env("KNOWLEDGE_DIR", str(API_ROOT.parent.parent / "data" / "knowledge")))
