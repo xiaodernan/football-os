@@ -4265,7 +4265,9 @@
     "window_closed": "那个剧本的窗口已经关闭，阵容已定。",
     "wrong_path": "那个地址不是提供这项内容的路径。",
     "cannot_play_cup": "这个赛季无法进行这场杯赛。",
-    "unknown_notification_kind": "未知的通知类别。托盘认识关注者、评论和反应——这就是全部清单。"
+    "unknown_notification_kind": "未知的通知类别。托盘认识关注者、评论和反应——这就是全部清单。",
+    "no_such_player": "这个球员不在生成的世界里。",
+    "same_player": "球员不能与自己比较。"
   },
   "errorBoundary": {
     "eyebrow": "出了点问题",

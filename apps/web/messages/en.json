@@ -4265,7 +4265,9 @@
     "window_closed": "That scenario's window has closed, so its squad is final.",
     "wrong_path": "That path is not the one that serves this.",
     "cannot_play_cup": "This career cannot play that cup tie.",
-    "unknown_notification_kind": "Unknown notification kind. The tray knows follower, comment and reaction — that is the whole list."
+    "unknown_notification_kind": "Unknown notification kind. The tray knows follower, comment and reaction — that is the whole list.",
+    "no_such_player": "No such player in the generated world",
+    "same_player": "A player cannot be compared with himself"
   },
   "errorBoundary": {
     "eyebrow": "Something went wrong",

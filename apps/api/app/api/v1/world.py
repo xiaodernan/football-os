@@ -800,7 +800,7 @@ def duel(
     right_player = _duel_player(db, right, "right")
     if left_player.id == right_player.id:
         raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={"code": "same_player", "message": "A player cannot be compared with himself", "player": left_player.slug},
         )
     ledger = compare(left_player, right_player)

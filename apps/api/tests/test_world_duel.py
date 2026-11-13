@@ -140,7 +140,7 @@ class TestTheDoor:
     def test_the_same_player_twice_is_refused(self, client) -> None:  # type: ignore[no-untyped-def]
         left, _ = self._two(client)
         response = client.get(f"{API}/duel", params={"left": left, "right": left})
-        assert response.status_code == 400
+        assert response.status_code == 422
         assert response.json()["detail"]["code"] == "same_player"
 
     def test_a_missing_half_is_named_left_or_right(self, client) -> None:  # type: ignore[no-untyped-def]

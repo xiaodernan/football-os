@@ -4265,7 +4265,9 @@
     "window_closed": "那個劇本的窗口已經關閉，陣容已定。",
     "wrong_path": "那個地址不是提供這項內容的路徑。",
     "cannot_play_cup": "這個賽季無法進行這場盃賽。",
-    "unknown_notification_kind": "未知的通知類別。托盤認識追蹤者、留言和反應——這就是全部清單。"
+    "unknown_notification_kind": "未知的通知類別。托盤認識追蹤者、留言和反應——這就是全部清單。",
+    "no_such_player": "這個球員不在生成的世界裡。",
+    "same_player": "球員不能與自己比較。"
   },
   "errorBoundary": {
     "eyebrow": "出了點問題",

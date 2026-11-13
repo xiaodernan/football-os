@@ -4265,7 +4265,9 @@
     "window_closed": "La fenêtre de ce scénario est close, son effectif est donc définitif.",
     "wrong_path": "Ce chemin n'est pas celui qui sert ceci.",
     "cannot_play_cup": "Cette carrière ne peut pas jouer ce tour de coupe.",
-    "unknown_notification_kind": "Type de notification inconnu. Le bac connaît abonné, commentaire et réaction — c'est toute la liste."
+    "unknown_notification_kind": "Type de notification inconnu. Le bac connaît abonné, commentaire et réaction — c'est toute la liste.",
+    "no_such_player": "Ceci n'est pas un joueur dans le monde généré.",
+    "same_player": "Un joueur ne peut pas être comparé à lui-même."
   },
   "errorBoundary": {
     "eyebrow": "Une erreur est survenue",
