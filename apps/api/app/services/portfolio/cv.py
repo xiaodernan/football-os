@@ -248,16 +248,26 @@ def _training(session: Session, user_id: str, player_id: str) -> dict[str, Any]:
     rows = list(session.scalars(select(TrainingSession).where(TrainingSession.user_id == user_id, TrainingSession.player_id == player_id)))
     if not rows:
         return _empty("training", because="this account has no training session on record yet; the rows live in `training_sessions` and are written by §10's academy")
+    # One catalogue read for the whole section, not one per row: 60 sessions share a handful of drills, and a
+    # per-row `session.get` pays a round trip per row that the identity map only partially shields. The
+    # minutes pass and the recent-sessions pass both read from this one dictionary.
+    drill_ids = {row.drill_id for row in rows if row.drill_id}
+    drills: dict[str, TrainingDrill] = {}
+    if drill_ids:
+        drills = {
+            drill.id: drill
+            for drill in session.scalars(select(TrainingDrill).where(TrainingDrill.id.in_(drill_ids)))
+        }
     minutes = 0
     for row in rows:
-        drill = session.get(TrainingDrill, row.drill_id)
+        drill = drills.get(row.drill_id)
         minutes += int(drill.duration_min) if drill is not None and row.status == "completed" else 0
     rated = [row.execution_rating for row in rows if row.execution_rating is not None]
     completed = [row for row in rows if row.status == "completed"]
     recent = sorted(completed, key=lambda row: (row.completed_at is None, row.completed_at, row.id))[-RECENT:]
     items = []
     for row in recent:
-        drill = session.get(TrainingDrill, row.drill_id)
+        drill = drills.get(row.drill_id)
         items.append(
             {
                 "session": row.id,

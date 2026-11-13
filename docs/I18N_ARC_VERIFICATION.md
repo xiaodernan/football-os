@@ -6341,3 +6341,40 @@ host (a respawn-managed stale `next start` thread on the default port) is record
 fresh build took over the flow, served the page, and was torn down once the probes printed. The `fr`/`ar`/`he`
 editorial pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/`
 remains untracked.
+## 171. The CV catalogue read landed its one missing IN — and the ledger names its own accident (2026-11-13)
+
+**§169's 1-v-1 two-pass pre-fetch closed the market and program loops; the same shape sat waiting inside the CV.
+This section closes it — and records the one capture mistake of this arc plainly, with its cure.**
+
+The `/portfolio/cv` door had two loops that paid a `session.get(TrainingDrill, …)` per row: the minutes pass
+(sum of completed-session durations) and the recent-sessions pass (the eight rows it prints). `session.get`
+reads the identity map, but over a fresh session every distinct drill still pays one round trip each — here 57
+of them across 60 completed sessions in the bench fixture. The section now performs **one** `TrainingDrill`
+read by `IN` ahead of both loops and indexes into a dictionary. The two loops are otherwise identical; the
+empty-sessions path returns unchanged.
+
+**Measured, this host, fresh scratch database (60 completed sessions over 6 drills).**
+
+```
+BEFORE: 58 SELECTs total, 57 against training_drills
+AFTER:   2 SELECTs total,  1 against training_drills (the IN prefetch)
+```
+
+`tests/test_portfolio.py` and `tests/test_portfolio_share.py` print **40/40 passed** (the section's figures are
+recomputed from the same rows — nothing in the answer changed). `ruff` and `mypy` on the file are clean.
+
+**The accident this section owns.** Commit `cebe13f` (the ruff cure on the other hand's untracked-at-the-time
+`scripts/bench_llm_cache.py`) also committed the other hand's *already-staged* restructure `scout/ → scout/(index)/`
+— the goal of which this hand never intended to pre-empt. Their import paths pointed at `../../styles/*` from one
+directory too deep; CI went red on the web leg and the containers leg of that push, and the commit cure
+(`68250f6`) carries their two import lines verbatim (`../../../styles/tactics.css`, `world.css`) plus the
+`AUDIT_FIGURES migrations=65` bump for the boundary-crossing migration that had already landed on master
+(0064_model_call_cache_reported). With those two lines the build compiles, the audit gate passes, and master
+prints success on all four legs; the other hand's own pipeline for its in-flight files — `.workbuddy/`, the
+probe scripts, `components/RouteSkeleton.tsx`, the tactics restructure — remains untouched by any of this work.
+The lesson that section records: `git commit` without a pathspec swept in another hand's staged work; this
+ledger will always name the hand it came from, and this section names it.
+
+**Not claimed.** No claim this cap holds across every dialect of this pattern; no claim on the CV's PDF door;
+no claim about pages other than the two this arc touched. The `fr`/`ar`/`he` editorial pass remains owed; the
+untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
