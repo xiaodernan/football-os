@@ -245,7 +245,7 @@ function PostRow({announce, caps, following, row, viewer}: {announce: (value: No
   const followsAuthor = following.includes(row.author.id);
 
   return (
-    <tr data-post={row.id}>
+    <tr className={mine ? "community-post community-post--yours" : "community-post"} data-post={row.id}>
       <td>
         <div className="row wrap" style={{gap: "0.35rem"}}>
           <span className="badge badge--demo mono">{row.kind}</span>

@@ -198,6 +198,12 @@ h1, h2, h3, h4, p { margin: 0; }
 .list__item { display: flex; align-items: flex-start; gap: 0.85rem; padding: 0.85rem 0; border-bottom: 1px solid var(--line-soft); }
 .list__item:last-child { border-bottom: 0; }
 
+/* The wall: each post is a room, not a row of cells. A faint tint on hover tells the eye which row it is on;
+   the kind chip carries the type, so no text needs translating. */
+.community-post { transition: background 0.18s ease; }
+.community-post:hover { background: rgba(53, 240, 164, 0.045); }
+.community-post--yours { background: linear-gradient(90deg, rgba(53, 240, 164, 0.055), transparent 62%); }
+
 /* The notification tray: an inbox that already spoke its own language — each kind gets a tinted glyph,
    unread rows wear a left accent bar and a whisper of accent light, and hover lifts the whole row. */
 .notice-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
