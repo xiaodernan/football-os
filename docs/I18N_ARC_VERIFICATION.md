@@ -5641,3 +5641,54 @@ The `.list__item` base row rule is inherited, not duplicated — the rail and li
 the gates are printed, the machine-bound visual walk remains the frontier named in §145. The
 `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
 untouched; `.workbuddy/` remains untracked.
+## 158. Four pushes red, one gate, one cause — the ledger corrects its own entries (2026-11-13)
+
+**The RTL-readiness gate failed four consecutive pushes on this host's work. Their authors are named; the cause is one.
+This section is the unedited record.**
+
+The four pushes and their verdicts, exactly as the runner printed them:
+
+| push | CI | verdict |
+| --- | --- | --- |
+| `32cd9be` feat(web): §154 the leaderboard dais | `43382514097` | failure — web only; api/services/containers success |
+| `3b6f88f` feat(web): §155 the drill cards | `43383162676` | failure — web only; api/services/containers success |
+| `1513872` perf(api): §156 two N+1 selects | `43384680133` | failure — web only; api/services/containers success |
+| `a3bd1f1` feat(web): §157 the milestones rosette | `43385559932` | failure — web only; api/services/containers success |
+
+Every failure is the same gate, the same step, `RTL-readiness gate (physical properties follow the locale's direction)`:
+
+```
+FAIL  no stylesheet carries a horizontal declaration that would not follow the writing direction — N finding(s):
+  styles/globals.css:311 a horizontal offset — left: 14%; right: 14%;   (§154, the podium cell rail)
+  styles/globals.css:321 a horizontal offset — .podium__cell--first::before { … left: 8%; right: 8%; }
+  app/training/training.css:22 a horizontal offset — left: 12%;          (§155, the drill-card ember)
+  app/training/training.css:23 a horizontal offset — right: 12%;
+CHECKS passed=7 total=8 failed=1
+```
+
+(§154 printed 2 findings — globals.css:311/321; §155, §156 and §157 each printed 4 — training.css:22/23 plus the same two globals lines. §156 and §157 added no new physical declarations; their reds were the inherited tree.)
+
+**The cure** was `4219a3f`, pushed and green at CI `43385763786` (web included), whose log prints:
+
+```
+PASS  no stylesheet carries a horizontal declaration that would not follow the writing direction — 11 stylesheet(s) clean
+```
+
+The three two-sided offsets became logical (`inset-inline: 12% | 14% | 8%`). The one-sided rails already used
+`inset-inline-start` / `inset-inline-end` and were never flagged. The gate is not waivable: a physical offset pins
+a rail to the LTR edge under `dir="rtl"`, and the etch pattern is meant to look at home in Arabic and Hebrew.
+
+**What this section corrects about itself.** §154 and §155 claimed "gates green" from local runs that did not
+include `qa-rtl-readiness.mjs`. That claim was wrong — the gate existed on this host the whole time and had simply
+not been run in this window; the push hook skips web builds by design (`[codex-global pre-push] skipped npm build
+by default`), so nothing held the physical declarations back. The runner is the authority, and on this tree it
+overruled the ledger four times before being satisfied once. The local battery this window ran on §157 (i18n-literals,
+unused-keys, field-labels, a11y, icu ×2) was real but incomplete: one gate named "RTL" would have caught it before
+the first red, at a cost of one command.
+
+**What remains true.** api, services and containers were success on all four red runs — the N+1 measurement, the
+podium/rosette/drill markup and the Spring plane are unaffected. The web leg reds are cured by the fix and the fix
+prints success. `§153` (docs, live-provider evidence) printed success at `43381599830` and is untouched by this.
+The four red pushes remain on master unedited — they were not rewritten or re-tagged; this section names them.
+The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
+untouched; `.workbuddy/` remains untracked.
