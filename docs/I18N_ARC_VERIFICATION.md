@@ -5172,3 +5172,45 @@ text file at the repository root remains untouched; `.workbuddy/` remains untrac
 `43329819308` (M15 runbook section) success; `43326998247` (rate policy) success; `43317891500` (service-plane walk) success; `43317705325` (Cache-Control video fix) success; `43306972741` (check.sh comment) success; `43304775851` (session fix) success; `43304074670` (chip fix) success; `43297579637` (runbook worker) success; `43297301610` (§144) success; `43294903984` (badge fix) success; `43280757332` (§143) success; `43277654008` (README figures) success; `43274996897` (§142) success; `43269667870` (9f00409) success; `43262245968` (service_plane §6 + EDGE_URL) success; `43261889398` (§141) success; `43254611864` (dd590f4) success; `43203359346`, `43199156660`, `43194180737`, `43191499899`, `43161085242`, `43158228751`, `43155063786`, `43152764112`, `43135891356`, `43132243723`, `43128625520`, `43125706887`, `43121706714`, `43117596456`, `43113317258`, `43108748961`, `43104398738`, `43099639130`, `43092903685` — all success. The reds this window produced (`43218902548`, `43220129932`, `43223040020`, `43235112715`, `43237501789`, `43238664935`, `43241323887`) are recorded in §139–§144 along with the fixes that closed them.
 
 **Not claimed.** No claim that `node run-walks.mjs visual` passes end-to-end on this machine at the time of writing; the failure at `/world/players` is the current frontier and has moved across three distinct sections over four runs — environment, not one bug. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+## 146. The live-provider loop verified end-to-end again, and the notifications tray earns its own etch (2026-11-13)
+
+**The live-provider probe, run against the committed tree, end-to-end.** A scratch API on port 8799 with a fresh
+database (`.scratch/live-coach.db`), no seed beyond `init_db()`, the `.env`-configured provider (`OPENAI_MODEL=gpt-6-sol`,
+`OPENAI_BASE_URL=https://wkapi.pro/v1`, `OPENAI_USER_AGENT` set). The registered player asked the real question
+*"My first touch under pressure keeps letting opponents win the ball back. What should I work on first?"* and got:
+
+```
+provider  openai
+model     gpt-6-sol
+demo_mode: False
+confidence: 0.95
+intent    general
+message   Work first on your first touch under pressure; your first-touch score is 53 and ball
+          control is 44. Use the 18-minute "Rondo Shapes: Press Resistance" session to keep
+          possession through the press...
+reasons   [Scored 5.95 against 23 eligible drills · Serves your goal 'become_box_to_box' ·
+          Trains pressing, passing, transition where your gap to target is 66 points ·
+          Valid for CM · Session length 18 min fits your 25 min window]
+```
+
+The numbers in the answer are the stored profile's own computed attributes — the model consumed the coach's structured
+recommendation and composed it, it did not invent the fit. This is exactly the live-provider path `§134` first probed; the
+committed tree still answers with `demo_mode: false` after this session's changes. The probe is reproducible with
+`.scratch/live-coach.py`.
+
+**The notifications tray, re-etched.** `/notifications` rendered a truncated bullet list with a chip. Each kind now wears
+a tinted glyph (follower — green, comment — blue, reaction — amber), unread rows carry a left accent rail and a whisper of
+accent light, hover lifts the row one pixel, and the row aligns to a three-column grid: glyph · body · actions (time column
+under the line, in the mono register the codebase already uses for identifiers). No new catalogue keys — the icons are
+`aria-hidden`, every visible string is unchanged, so the six-locale gates are unaffected. Verified: `tsc --noEmit` exit 0;
+production build `.next-check` completes with BUILD_ID **`EGUSkNMPW-v0AP1t-bvO8`**; `qa-i18n-literals 9/9`, `qa-icu-messages 2/2`,
+`qa-icu-coverage` green.
+
+**Worktrees and branches, checked honestly.** Every detached-HEAD worktree on this host lists `ahead=0` commits beyond
+`origin/master` — the fifteen checkouts in `D:/` and the three `world-*` branches are all ancestors of master. Their content is not
+missing from the main branch; there is nothing left to merge. `.scratch/` worktree entries were left as-is; they reference
+nothing outstanding. The untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+
+**Not claimed.** The CI verdicts for this push print when the runner runs them; the live-probe verifications above are this
+window's own runs, not CI's. The `fr`/`ar`/`he` editorial pass remains owed. No claim that the notifications page has been
+walked in a browser — the build compiles, the gates pass, the walk remains a machine-bound artefact of past sessions.
