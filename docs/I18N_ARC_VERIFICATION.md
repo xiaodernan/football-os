@@ -6023,3 +6023,55 @@ No catalogue key was added; the runbook note is prose and names no new behavior,
 printed, the gates are printed, the machine-bound visual walk remains the frontier named in §145. The
 `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains
 untouched; `.workbuddy/` remains untracked.
+## 166. The gateway serves chat only — four models, no embeddings; and the scenario cards take the ember (2026-11-13)
+
+**The probe the ledger owed: what exactly does the provided API serve? Answer, printed verbatim from the
+gateway, then what the project does with that truth. Plus the next etch on the board — the challenges cards.**
+
+**The embedding probe, verbatim.**
+
+```
+POST {base}/v1/embeddings    {"model":"text-embedding-3-small","dimensions":256}
+HTTP 503  {"error":{"code":"model_not_found","message":"No available channel for model text-embedding-3-small
+under group gpt-␉ (distributor) …","type":"new_api_error"}}
+
+GET {base}/v1/models         count: 4
+  gpt-5.6-sol     gpt-5.6-terra
+  gpt-6-astra     gpt-6-sol
+```
+
+The project's knowledge retrieval was built for exactly this moment ("a real embedding model replaces the hash
+fallback as soon as a key exists") — but this plan serves chat four ways and nothing else. The switch stays
+`hash-local`, honestly, with `OpenAIEmbeddingProvider` untouched behind `EMBEDDING_PROVIDER="openai"` for a
+future distributor group that adds an embedding channel. No retrieval change was made, no corpus re-ingest was
+pretended, and no embedding quality claim is invented.
+
+**The challenges etch.** `.tac-card` (the scenario cards used by `/challenges` and `/tactics`) gains the same
+top hairline ember the training drill cards wear — `inset-inline: 14%`, a 2px gradient from transparent to
+`accent-dim` to transparent, opacity 0.65 — and the hover deepens from a color change to a color change plus
+`translateY(-2px)` and the accent-soft shadow the podium carries. One card family, one heat signature. No
+catalogue key was added; the cards' copy is untouched.
+
+**Verification, printed, not remembered.**
+
+```
+tsc --noEmit                                        exit 0
+production build (NEXT_DIST_DIR=.next-challenges)   BUILD_ID 1v_M-lIkY4bea-qfjxAw3
+                                                    /challenges built with its page bundle present
+qa-i18n-literals   CHECKS passed=9 total=9 failed=0
+qa-unused-keys     passed
+qa-field-labels    CHECKS passed=2 total=2 failed=0
+qa-a11y            CHECKS passed=33 total=33 failed=0
+qa-icu-messages    CHECKS passed=2 total=2 failed=0 (26184 messages, 6 catalogues)
+qa-rtl-readiness   CHECKS passed=8 total=8 failed=0
+qa-table-shape     116/116 tables name .table and sit in a frame
+```
+
+Embedding-switch availability is recorded as a fact, not as a migration: the retrieval stays lexical-hash with
+the two floors and the BM25/keyword leg, and `evals/golden_rag.json` keeps passing CI as the reviewer of that
+claim.
+
+**Not claimed.** No claim that `/challenges` has been walked in a browser this window — the build is printed,
+the gates are printed, the machine-bound visual walk remains the frontier named in §145. No claim of embedding
+availability, now or soon. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the
+repository root remains untouched; `.workbuddy/` remains untracked.
