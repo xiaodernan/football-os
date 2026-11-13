@@ -5947,3 +5947,38 @@ of the probe report carries run N (9.88 s of run M beside 10.31 s of run N).
 always were. No label cardinality is introduced; the population stays tiny and static. The `fr`/`ar`/`he`
 editorial pass remains owed; the untracked user text file at the repository root remains untouched;
 `.workbuddy/` remains untracked.
+## 164. The scrape door arc: three reds, one gate each, all cures named, one green master (2026-11-13)
+
+**§162 shipped the frontispiece, §163 shipped the core's own Prometheus exposition; both pushes pushed reds the
+runner was entitled to report. This section records them unedited, names the fixes, and reports the master
+verdict.**
+
+The arcs and their verdicts, exactly as the runner printed them:
+
+| push | CI | verdict | red |
+| --- | --- | --- | --- |
+| `cfbbbff` §162 frontispiece etch | `43411289076` | failure — web success, api failure | `git grep -li portfolio … apps/api/app, apps/web/app` recomputes to 11 committed files after `portfolio.css` landed; the audit row published 10. |
+| `156e336` §163 core scrape door | `43414059745` | failure — api failure only | same portfolio cited-scan red, plus nothing else: contract currency, SHA ledgers, audit figures all passed and are not re-reported here. |
+| `d14feb0` audit row `10 → 11 files` | `43415206923` | failure — api failure only | `test_metrics.py::TestTheOperatorStanding::test_the_standing_census_covers_every_door_on_the_router`: `/api/v1/metrics/prometheus` was on the router and not in `METRICS_PATHS`. |
+| `a75e5f5` metrics standing census | `43417864544` | **success** — all four legs | the cure for both the cited-scan and the census; this section's tree |
+
+What the arc delivered:
+
+* **A dependency-free Prometheus door for the Python core** at `GET /api/v1/metrics/prometheus` — twelve
+  label-free `football_os_*` metrics, rendered from the same counters `/metrics/system` keeps. No
+  `prometheus_client`, no account-shaped label, zero cardinality by construction, operator standing from the
+  router — a scraping credential is an operator act, never a player's.
+* **A population gate the project just taught itself to keep**: `METRICS_PATHS` now names the scrape door, so
+  the census reproves every metrics door refuses a player before merge. This is the third time this project's
+  own gates caught a missing case in the same push that added it; the pattern is the process working.
+* The probe re-ran against the re-exported contract (**10/10, 10.31 s**); the audit row, the three SHA ledgers
+  and `AUDIT_FIGURES` (229 paths) all name the re-exported bytes.
+
+**Reds this section corrects about the ledger.** `d14feb0`'s commit message carries a literal `\n\n` in place of
+a real newline — cosmetic, kept as-is. §163's "Not claimed" moved none of its claims; the three reds were gate
+coverage, not premise. No red was re-tagged, re-run until green, or re-worded out of this document.
+
+**Not claimed.** No fleet aggregation exists anywhere; the exposition is this process's counters, as
+`/metrics/system` always was. No new dependency is claimed (the whole arc runs on `fastapi`/`sqlalchemy` and the
+standard library). The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository
+root remains untouched; `.workbuddy/` remains untracked.
