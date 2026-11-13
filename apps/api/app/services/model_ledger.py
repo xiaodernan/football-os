@@ -52,11 +52,13 @@ def cache_hit_rate(db: Session) -> dict[str, float | int]:
     total_in = int(db.scalar(select(func.coalesce(func.sum(ModelCall.input_tokens), 0))) or 0)
     cached = int(db.scalar(select(func.coalesce(func.sum(ModelCall.cached_input_tokens), 0))) or 0)
     calls = int(db.scalar(select(func.count(ModelCall.id))) or 0)
+    cost = float(db.scalar(select(func.coalesce(func.sum(ModelCall.actual_cost_usd), 0.0))) or 0.0)
     return {
         "cached_input_tokens": cached,
         "input_tokens": total_in,
         "calls": calls,
         "hit_rate": round(cached / total_in, 4) if total_in else 0.0,
+        "cost_usd": round(cost, 6),
     }
 
 

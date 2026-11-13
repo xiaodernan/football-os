@@ -5902,3 +5902,48 @@ on the block was already on the page. The rail is `inset-inline-start`; RTL is c
 the gates are printed, the machine-bound visual walk remains the frontier named in §145. The `fr`/`ar`/`he`
 editorial pass remains owed; the untracked user text file at the repository root remains untouched;
 `.workbuddy/` remains untracked.
+## 163. The core gets its own scrape door — Prometheus text, zero dependencies, admin standing (2026-11-13)
+
+**The edge publishes `/actuator/prometheus`; the Python core published nothing a Prometheus could read, so a
+fleet scrape saw half the platform. The fix is deliberately dependency-free — this codebase already keeps its
+own counters; shipping a `prometheus_client` for those would have bought a supply chain, not information.**
+
+What changed (all on master at this section's commit):
+
+* `app/services/prometheus_export.py` (new) — `render_prometheus(*, snapshot, model, spend_today_usd,
+  uptime_seconds)` builds one exposition body. Twelve metrics, every one label-free, static `football_os_*`
+  names, values only — no account-shaped label exists to leak and nothing is per-account by construction.
+  A p95 line is emitted only when a sample exists (zero inventions); a zero input-token total renders a zero
+  hit rate rather than a fake ratio.
+* `app/api/v1/metrics.py` — `GET /api/v1/metrics/prometheus`, router-scoped `require_operator` standing
+  (the same 403 `insufficient_role` every metrics door carries), `PlainTextResponse` with
+  `text/plain; version=0.0.4`.
+* `app/services/model_ledger.py` — `cache_hit_rate()` now also reports `cost_usd`, the summed
+  `actual_cost_usd` across recorded calls, so the exposition carries a real money figure rather than one
+  summed from thin air on the door.
+* `tests/test_prometheus_export.py` (new, 4 cases) — the exact twelve-metric contract, HELP/TYPE shape on
+  every metric, every value line matching the exposition regex (no `nan`/`inf`), zero braces anywhere, the p95
+  absent when unsampled, operator gets 200 with real rows (cached tokens printed), anonymous 401/403, player 403.
+
+**Verification, printed, not remembered.**
+
+```
+mypy (metrics.py, prometheus_export.py, model_ledger.py)   no issues found
+ruff (the same three)                                      All checks passed
+pytest tests/test_prometheus_export.py                     exit 0 (4 passed)
+an alembic upgrade path                                    unchanged (0063 is head)
+scripts/export_openapi.py                                  wrote docs/api/openapi.json — 229 paths, 296 operations, schemas=98
+scripts/security_probe.py (port 8751, fresh scratch SQLite,
+ENV=development, CORS_ORIGINS at the documented 3210 pair)   10 passed / 0 failed / 0 server errors, 10.31 s
+```
+
+The new door re-gated nothing and opened one private `GET`: the census moved **240 → 241 secured, private
+`GET` paths 103 → 104**. The three SHA ledgers (`SECURITY_PROBE_REPORT`, `M12_PRODUCTION_HARDENING_VERIFICATION`,
+`ROADMAP`) name the re-exported contract (`0c4227fd3b1843f75f145ff26bd01cd21c1826f9666a1bffba483fc10369c6f3`),
+the audit's `AUDIT_FIGURES` moves `contract_paths=229`, and run M's records stay as history; the section-§2 table
+of the probe report carries run N (9.88 s of run M beside 10.31 s of run N).
+
+**Not claimed.** No fleet aggregation is implemented anywhere — the scrape is per-process, as the JSON doors
+always were. No label cardinality is introduced; the population stays tiny and static. The `fr`/`ar`/`he`
+editorial pass remains owed; the untracked user text file at the repository root remains untouched;
+`.workbuddy/` remains untracked.

@@ -14206,6 +14206,33 @@
         ]
       }
     },
+    "/api/v1/metrics/prometheus": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Prometheus Door",
+        "description": "The core's own scrape — the edge publishes `/actuator/prometheus`; the core now answers its counterpart.\n\nSame standing as every metrics door (the router carries `require_operator`): a scrape is an operator\nact, and a ledger that leaks account-shaped labels would be worse unprotected. Zero labels, static names,\nthis process's own counters — a fleet view sums the workers, which is what node-local scrapes produce.",
+        "operationId": "prometheus_door_api_v1_metrics_prometheus_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/metrics/cost-optimisation": {
       "get": {
         "tags": [

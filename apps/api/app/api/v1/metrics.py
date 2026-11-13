@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any, Final
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -29,6 +30,7 @@ from app.services import model_ledger, ops_alerts
 from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
 from app.services.cost_advisor import recommend as cost_recommend
 from app.services.latency_profile import profile as latency_profile
+from app.services.prometheus_export import render_prometheus
 
 METRICS_STANDING: Final = standing_check(("admin",))
 
@@ -195,6 +197,25 @@ def provider_metrics(
         cached_input_tokens_total=int(cache["cached_input_tokens"]),
         cache_hit_rate=float(cache["hit_rate"]),
     )
+
+
+@router.get("/prometheus", response_class=PlainTextResponse)
+def prometheus_door(
+    db: Session = Depends(get_db),
+) -> PlainTextResponse:
+    """The core's own scrape — the edge publishes `/actuator/prometheus`; the core now answers its counterpart.
+
+    Same standing as every metrics door (the router carries `require_operator`): a scrape is an operator
+    act, and a ledger that leaks account-shaped labels would be worse unprotected. Zero labels, static names,
+    this process's own counters — a fleet view sums the workers, which is what node-local scrapes produce.
+    """
+    body = render_prometheus(
+        snapshot=request_metrics_snapshot(),
+        model=model_ledger.cache_hit_rate(db),
+        spend_today_usd=model_ledger.spend_today_usd(db),
+        uptime_seconds=uptime_seconds(),
+    )
+    return PlainTextResponse(body, media_type="text/plain; version=0.0.4; charset=utf-8")
 
 
 @router.get("/cost-optimisation")
