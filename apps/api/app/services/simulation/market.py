@@ -1227,6 +1227,13 @@ def open_market(session: Session, career: Career) -> dict[str, Any]:
     need = club_need(session, career, round_index=round_index)
     chosen, account = market_selection(session, career, round_index=round_index, need=need)
     existing = {row.player_id: row for row in session.scalars(select(TransferListing).where(TransferListing.career_id == career.id))}
+    # The team names a market prints are one read for the whole board, not one per offer: a 12-player
+    # listing used to pay twelve Team lookups, and a league-wide window pays them per club per round.
+    team_names: dict[str, str] = {}
+    wanted_team_ids = {player.team_id for player in chosen if player.team_id}
+    if wanted_team_ids:
+        for team_id, team_name in session.execute(select(Team.id, Team.name).where(Team.id.in_(wanted_team_ids))):
+            team_names[str(team_id)] = team_name
     created = repriced = withdrawn = kept = 0
     for player in chosen:
         price = valuation(player, age=int(player.age) + age_offset)
@@ -1248,7 +1255,7 @@ def open_market(session: Session, career: Career) -> dict[str, Any]:
         row.overall = player.overall
         row.potential = player.potential
         row.from_team_id = player.team_id
-        row.from_team_name = session.scalar(select(Team.name).where(Team.id == player.team_id)) or ""
+        row.from_team_name = team_names.get(str(player.team_id), "")
         row.asking_fee = price["asking_fee"]
         row.current_price = price["asking_fee"]
         row.release_clause = price["release_clause"]

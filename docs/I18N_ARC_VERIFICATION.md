@@ -5566,3 +5566,42 @@ No catalogue key was added; the sigil is `aria-hidden` and the catalogue beneath
 gates are printed, the machine-bound visual walk remains the frontier named in §145. The `fr`/`ar`/`he` editorial
 pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains
 untracked.
+## 156. Two N+1 selects, one line each — batched, and measured, not tasted (2026-11-13)
+
+**§155 gave the catalogue a sigil; this section is the engine side of the same arc: finding the queries the
+loop was paying for one row at a time and paying them once. Two sites, both the same shape, both measured.**
+
+The market prints each listing's selling club. `open_market` iterated the round's chosen players and issued
+`select(Team.name).where(Team.id == …)` once per offer — twelve queries per market open at the 12-player band,
+paid per club, per round, per league-wide window. The program starter does the same with the catalogue:
+`start_program` iterated the program's steps and issued `select(TrainingDrill).where(slug == …)` once per
+step. Both are replaced by a single `IN` read ahead of the loop; the loop body is otherwise identical
+(`team_names.get(str(player.team_id), "")`, `catalogue.get(step.drill_slug)`), and the refusal semantics
+(`no_such_drill`, first missing slug in step order) are unchanged.
+
+**Measured, on this host, against a 400-drill / 400-team bench (`.scratch/micro-bench.py`, best of 40 reps,
+in-memory SQLite):**
+
+```
+OLD drills: 12 x single select   statements/call=12  best_ms=6.48
+NEW drills: 1 x IN-select        statements/call=1   best_ms=1.36
+OLD teams:  12 x single select   statements/call=12  best_ms=3.59
+NEW teams:  1 x IN-select        statements/call=1   best_ms=0.71
+```
+
+Statement count is the headline: a league-wide market window formerly paid ~11 × (offers per club × clubs per
+round) redundant name reads; the per-call latency roughly halved on a warm engine. The bench seeds its own
+scratch database (`.scratch/micro-bench.db`) and never reads the committed catalogue.
+
+**Verified this window, printed.**
+
+```
+pytest tests/test_creator_programs.py tests/test_transfers.py tests/test_wage_ceiling.py   exit 0 (99 tests)
+ruff check app/services/simulation/market.py app/services/creator/programs.py               All checks passed!
+mypy   the same two files                                                                  no issues found
+```
+
+**Measured, not claimed.** The 99-test run above is this window's own; CI is the standing gate for the push.
+No other query shape was touched; the two prefetch sites are the only loops this arc found paying per-row
+selects in the market and program paths. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user
+text file at the repository root remains untouched; `.workbuddy/` remains untracked.

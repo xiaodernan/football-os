@@ -376,9 +376,18 @@ def start_program(session: Session, actor_id: str, ident: str, *, player_id: str
         )
 
     steps = _steps_of(session, row.id)
+    # One catalogue read for the whole program, not one per step: the steps each name a drill, and a
+    # 12-step program used to pay twelve of these identical selects before it planned a single session.
+    slugs = [step.drill_slug for step in steps]
+    catalogue: dict[str, TrainingDrill] = {}
+    if slugs:
+        catalogue = {
+            drill.slug: drill
+            for drill in session.scalars(select(TrainingDrill).where(TrainingDrill.slug.in_(slugs)))
+        }
     planned: list[str] = []
     for step in steps:
-        drill = session.scalar(select(TrainingDrill).where(TrainingDrill.slug == step.drill_slug))
+        drill = catalogue.get(step.drill_slug)
         if drill is None:
             raise CreatorRefusal(
                 "no_such_drill",
