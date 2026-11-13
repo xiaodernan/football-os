@@ -2190,6 +2190,42 @@ is the clock, not a production one.
 
 ---
 
+## Item 33 — the model call streamed, and the ledger learned what the gateway caches
+
+**The defect the operator saw on their dashboard: "非流" on every call and a cache hit rate they could not
+move.** Both were the client's: every completion left this process as a plain non-stream `POST /chat/completions`, and
+the ledger had no sight of `cached_tokens`, so "hit rate" was not even a number the app could compute.
+
+**The design.** (1) `OpenAIChatProvider` streams by default — `stream: true` with
+`stream_options: {include_usage: true}`, the SSE body folded back to one string, and the terminal usage chunk the
+only place tokens are ever reported on this door. `OPENAI_STREAM=0` keeps the non-stream door for a gateway
+that never learned SSE. (2) Both usage dialects are read: OpenAI's `prompt_tokens_details.cached_tokens` and
+`completion_tokens_details.reasoning_tokens`, and DeepSeek-style flat `prompt_cache_hit_tokens`. (3) The coach
+prompt orders **stable-first, question-last** (`INTENT → PLAYER → FACTS → SESSION → WHY → QUESTION`); the old
+shape opened with the one field that changes every call, which is a prefix cache's worst case by construction.
+The serialization is compact and deterministic, so identical asks from one account produce byte-identical prompts
+(verified: `in=4820` twice through the product door, digest-stable through the raw probe). (4) `ModelCall`
+carries `cached_input_tokens` (migration `0063`; `alembic upgrade head` + `alembic check` clean), recorded per
+call and surfaced at `/api/v1/metrics/providers` as `cached_input_tokens_total` and `cache_hit_rate`. (5) Prices
+are env-configurable (`OPENAI_PRICE_IN_ / OPENAI_PRICE_CACHED_IN_ / OPENAI_PRICE_OUT_USD_PER_MTOK`) with the
+cached input token priced at the plain input price until the operator sets the gateway's real figure — no
+invented discount.
+
+**The measurement, because the claim is theirs to make.** Identical prompts on this gateway warm to ~95% cached
+on both shapes (~4096 of 4314); a one-character change takes the same prompt to **0**; small prompts never cache;
+the same shape at 10:23Z this morning needed a third identical call to register one. The gateway's cache is
+exact-content, shared and warm-up-dependent, and it wobbles — the app's job is to always stream, always parse,
+always record, and get out of the way, and that is now done and printed.
+
+**The reds this pushed into the open.** `0d33fe5` red on `test_openapi_contract_currency` (committed contract
+518330 B vs the tree's 518642 B — the two new `/metrics/providers` fields); `cd1b482` red on the three SHA
+ledgers and the audit's migration count (64 `.py` files); cured at `4b6bbb5` (probe re-run against the
+re-exported contract: **10/10, 9.88 s**, SHA `76341e7…`) and all four legs green; §160 records both reds
+unedited. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root
+remains untouched; `.workbuddy/` remains untracked.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

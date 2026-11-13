@@ -5820,3 +5820,47 @@ twice before being satisfied once, and the ledger says so instead of editing the
 claim that `OPENAI_STREAM=0` behaves identically. Any cost figure in this section is directional. The `fr`/`ar`/`he`
 editorial pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/`
 remains untracked.
+## 161. The product door after the fix — and the gateway's own drift, measured live (2026-11-13)
+
+**§159/§160 landed the cache-aware calling shape; this section is the verdict through the real product door,
+plus the one thing the ledger cannot decide for the gateway.**
+
+A fresh scratch database, a player registered through HTTP, and the real `/coach/ask` door, twice, with the
+identical question on an identical account:
+
+```
+attempt 1:  status=200  provider=openai  demo_mode=False
+attempt 2:  status=200  provider=openai  demo_mode=False
+
+coach.ask model_calls rows:
+in=4820 cached=0 out=62 ms=2532   est_cost=0.00076
+in=4820 cached=0 out=61 ms=2910   est_cost=0.00076
+```
+
+The two calls carried byte-identical prompts (`in=4820` both, digest verified via the raw probe below). The
+gateway served neither from cache this run. Re-testing the raw identical prompt through the same provider path
+three calls later:
+
+```
+raw call 1:  prompt=5841 cached=0     digest=76c81f82ec26e6bd
+raw call 2:  prompt=5841 cached=0     digest=76c81f82ec26e6bd
+raw call 3:  prompt=5841 cached=5632  (hit on the identical prompt)
+```
+
+This morning the same shapes hit ~4096 on nearly every repeat (see §159); now the identical payload needed a
+third call to register a hit. The bytes are deterministic everywhere — the difference is the gateway's
+shared cache behavior across time (eviction / load / its own lease policy), not anything this app prints.
+The app side is closed: streaming is default, the usage chunk is parsed on the stream path, `cached_input_tokens`
+is persisted per call, and `/metrics/providers` shows the rolling hit rate (`cached ÷ input` over all
+recorded calls) so the operator sees this fluctuation instead of arguing with it.
+
+**The honest verdict, not a movement promise.** Repeated prompts **can** hit on this gateway (5632/5841 on
+this exact probe, ~95% on this morning's identical prompts); they do not always hit, and the cadence is
+gateway-side. No app code can make it hit when their cache is cold — what the fix guarantees is that when it
+warms, the number is seen, and that the shape of the prompt (stable-first, deterministic) is the only shape a
+prefix-cache can reward. Nothing here is claimed green that the runner has not printed.
+
+**Not claimed.** No hit-rate figure is a guarantee for future calls; `OPENAI_STREAM=0` is the documented
+non-stream door; no price for gpt-6-sol is invented — the `OPENAI_PRICE_*` defaults remain placeholders until
+the operator sets the real figures. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text
+file at the repository root remains untouched; `.workbuddy/` remains untracked.
