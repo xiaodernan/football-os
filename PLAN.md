@@ -2601,7 +2601,17 @@ face. The home panel's visual verification is CI-time too.
 
 ---
 
-## How to work an item## How to work an item
+## Item 44 — the empty picker gains the seam the arena owns
+
+**The defect.** The `/world/duel` picker — the door every shared link meets — rendered two dashed boxes side by side with no relationship between them, while the duel page it leads to opens with the exact ember-gold `v` between its corners. The empty state of the product's own argument looked like two unrelated radio groups.
+
+**What landed.** `.duel-picker__slots` is now `1fr auto 1fr`; between the two slot buttons sits `.duel-picker__seam` — a gold italic `v` inside a 34px ember-bordered ring, collapses under 480px, `aria-hidden`, pointer-safe, no theme tokens invented (uses the same `--gold` fallback the duel page already trusts). The slots render explicitly (`renderSlot`), not as an order-sensitive map; the stale trailing `<span className="duel-picker__seam">` that had landed inside the hits `<ul>` is gone.
+
+**Local evidence.** tsc exit 0; `qa-i18n-literals` 9/9 (4,515 key calls); `qa-icu-messages` (26,736 messages); `qa-unused-keys` (2 judged); `qa-table-shape` 118/118 tables named. Not claimed: no browser verification this pass beyond the opengraph/home sweep captured on 2026-11-14; no CI verification at the time of writing — the runner prints it.
+
+---
+
+## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
 2. Write the check before the feature when the check is expressible — several of this project's best findings
