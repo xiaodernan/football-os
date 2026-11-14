@@ -2411,6 +2411,63 @@ is the first thing that has to be true before it can be.
 
 ---
 
+## Item 38 — the wire learned the word "unchanged", and small answers learned "identity"
+
+Two gaps noticed while reading the stack, both HTTP (RFC 7232, RFC 7233-adjacent) rather than
+application: every JSON answer travelled under no validator, and the middleware stack had no
+compression at all. The 60-second response cache short-circuits *repeat business server-side*;
+nothing on this side of the client could say "the bytes you hold are byte-identical" and go quiet.
+
+**What landed.** `app/core/http_caching.py` — a revalidation gate: every 200 `application/json`
+`GET` answer (the one shape whose bytes this server can vouch for) gets a strong `ETag` —
+the first 32 hex chars of the SHA-256 of the exact body — and `Cache-Control:
+private, max-age=0, must-revalidate`, because the payloads are account-shaped and no shared
+cache may be implied to hold them. `If-None-Match` is honoured with RFC 7232's weak comparison
+(`*`, comma lists, `W/` prefixes) plus the bare-token form a shell strips the quotes into —
+tolerated because the comparison is still byte-strict: a 304 is minted only when the token
+equals the validator for the very bytes held. The 304 carries the dressed headers (identity,
+security, rate-limit, `X-Request-ID`) with the body emptied and `Content-Length: 0`; the gate
+does not double-count the metric — `request_context` inside it already recorded the 200 this
+gate converts, and only the 304 is recorded at the gate, once.
+`app/core/compression.py` — a whole-answer gzip middleware with a stated posture: it buffers
+the answer (exactly the trade the 60-second cache already makes), sends identity below
+512 bytes with `Vary: Accept-Encoding`, gzips above with a fresh `Content-Length`, and skips
+the `/api/v1/video/` doors outright. Starlette's `GZipMiddleware` decides from the ASGI message
+shape, and `BaseHTTPMiddleware` re-emits every answer as multiple body messages here — so the
+stock middleware gzipped a 22-byte JSON into 42 bytes and `minimum_size` was decorative. This
+one measures first, then decides. Streaming event doors would be a recompile-time decision:
+the provider SSE is folded server-side today, and a `text/event-stream` door would join
+`skip_prefixes` in the commit that ships it.
+
+**Measured live** (fresh SQLite scratch instance on `:8765`, real uvicorn):
+
+```
+GET  /api/v1/openapi.json  (Accept-Encoding: gzip)
+     200 · plain length 275,470 B → wire length 38,944 B (−85.9 %) · etag "8cd3f5b84e94a55c160ae200222390c8"
+     · cache-control private, max-age=0, must-revalidate · vary Accept-Encoding
+GET  /api/v1/openapi.json  (If-None-Match: "8cd3…")
+     **304 · 0 bytes** · etag preserved · x-cache HIT (the validator rides on top of the 60-s cache, not instead of it)
+GET  /api/v1/openapi.json  (If-None-Match: "bogus")
+     200 · full body, validator re-minted
+GET  /api/v1/healthz        (445 B < 512)   identity, etag present, vary set
+GET  /api/v1/meta/capabilities (22 B 404)    identity, 22 bytes on the wire (was gzipped to 42 before this item)
+GET  /api/v1/openapi.json  (If-None-Match: 8cd3… bare, shell-stripped)   **304 · 0 bytes**
+```
+
+**Evidence.** `tests/test_http_caching.py`, **27 tests** green (validator stability,
+`is_validatable_json` shape rules, the weak comparison including `*` comma `W/` bare, the gate's
+304/200/POST/non-JSON/streaming-body paths, dressed-header preservation on 304, gzip round-trip,
+below-floor identity, the video skip); live probes above; `ruff`, `mypy app` clean;
+neighboring suites green — response_cache + privacy + tiers + video + metrics + prometheus =
+100 passed; OpenAPI document unchanged (pure middleware, no route moved).
+
+**Not claimed.** 304 still costs one round trip (that is what `max-age=0` asks); saving
+bytes, not requests. Nothing here speeds the first download except compression. The 60-second
+cache is unaffected in behaviour; a hit and a 304 may both appear in the log and that is
+correct — they answer different questions. Video bytes are never recompressed.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

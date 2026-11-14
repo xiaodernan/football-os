@@ -48,10 +48,12 @@ from app.api.v1 import (
     world,
 )
 from app.core.cache import _response_cache, response_cache_key
+from app.core.compression import CompressionMiddleware
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
 from app.core.discovery import DiscoverySettings, EurekaRegistrar
 from app.core.errors import install_error_handlers
+from app.core.http_caching import revalidate_if_stale
 from app.core.logging import configure_logging, get_logger, request_id_var, request_started_var
 from app.core.rate_policy import caller_key, policy_for, rate_decision_var
 from app.core.ratelimit import Decision, get_limiter
@@ -480,6 +482,23 @@ def create_app() -> FastAPI:
         record(response.status_code, (time.perf_counter() - started) * 1000)
         dress_response(response)
         return response
+
+    # The revalidation gate. Registered after `request_context`, and therefore wrapped by it:
+    # the stack outermost-to-innermost is `CompressionMiddleware` (registered at the end of
+    # setup) → this gate → `request_context` → `response_cache` → CORS. The gate therefore
+    # sees the *uncompressed* bytes (gzip sits outside it), which is the only body a strong
+    # validator may hash — a checksum of a gzip stream whose timestamps move is a validator
+    # that never revalidates. Like everything here, it is a wrapper around `call_next`, so a
+    # 429 refused upstream is passed through untouched. It counts only the 304 it mints:
+    # the inner layer has already counted the 200 this gate converts.
+    @app.middleware("http")
+    async def validator_gate(request: Request, call_next):
+        return await revalidate_if_stale(request, call_next)
+
+    # GZip, outermost. Clients that cannot decode are bypassed by the accept-encoding
+    # negotiation inside the middleware, so a non-gzip scraper pays one header check.
+    # The video doors are skipped entirely (see `CompressionMiddleware`).
+    app.add_middleware(CompressionMiddleware, minimum_size=512, compresslevel=6)
 
     install_error_handlers(app)
     api = "/api/v1"
