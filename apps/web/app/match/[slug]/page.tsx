@@ -46,6 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         : t("metaDescriptionScheduled", { round: match.round_label, season: match.season })
       : t("metaDescriptionFallback"),
     path: `/match/${slug}`,
+    images: [{ url: absolute(`/match/${slug}/opengraph-image`), width: 1200, height: 630, alt: "FOOTBALL OS" }],
   });
 }
 
