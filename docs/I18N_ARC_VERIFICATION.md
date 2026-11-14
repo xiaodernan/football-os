@@ -6464,3 +6464,67 @@ The door ran exactly once, at the commit whose own path exists at master: `left`
 **The ledger keeps the numbers.** The duel arc added exactly two catalogue keys per locale (`no_such_player`, `same_player`) to every one of the six catalogues, one route to the contract, one `migrations=65` line in `AUDIT_FIGURES`, and the page count moved twice on the same tree (71 then 69). The gate that counted `page.tsx` first caught the page moves, then caught the deletion that finally made it correct.
 
 **Not claimed.** No claim that the walk passes; §168 stands for the record. No claim that every line of the duel door is exercised by a browser walk — §168 covers the live pass done on this machine. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the repository root remains untouched; `.workbuddy/` remains untracked.
+
+---
+
+## §174 — the red-push chain: six pushes, six cures, and the wire arc they carried
+
+This pass is two stories in one file because the runner told them back to back. §174 records the reds the duel web page push collected and the cures each of them got, in push order, unedited. §175 records the wire arc itself: what shipped, what was measured against the wire, and which of the gates that died on the way back are now home.
+
+### The red-push ledger, unedited
+
+| push | CI | verdict | fault / cure |
+| --- | --- | --- | --- |
+| `b47ab91` feat(web): the world duel page | `43561252840` | failure — web + api | (web) Catalogue-ICU: `zh.json`/`zh-TW.json` `duel.countedLine` and `duel.methodNote` dropped `{total}` while en asked for it. (api) `test_spec_audit_currency.py`: `AUDIT_FIGURES` said 69 page routes, the committed tree holds 71, and the audit module table said 8 `/world/*` pages, committed tree 10. **Cured by `b2fa211`** — the audit document moved with the tree (the gates read `HEAD`, which is the point of the gate), the ROADMAP quote moved with the same commit, and the ICU gate passed locally (26,694 messages parsed). |
+| `b2fa211..ccf7a20` (the cure, Item 38 wire arc, plus Item 39's single-flight and Item 40's follow-ups) | `43563986790` | failure — web + api | (web) Locale-token gate: fr spelled `duel.catDiscipline` and `duel.catMinutes` the same as en without a name in the token table — both are loanword doublets; **cured by `708ca1f`** (249 named tokens). (api) Three crash-answer failures — `RateLimit-Policy` missing from the 500 a client retries — because the revalidation gate was registered through the @app.middleware decorator, which wraps in `BaseHTTPMiddleware` and copies the contextvars `request_context` sets; **cured by `708ca1f`** as a pure-ASGI `RevalidationMiddleware` (server error → gzip → gate → request_context, one context; the three crash-answer tests pass unchanged; ruff + mypy clean; 185-test sweep exit 0). |
+| `708ca1f` | `43567657719` | failure — web + api | (web) Key-drift gate: the duel namespace added ten sentence drifts over five shared groups and four key drifts on its own `vs`. The gate's "only fall" contract held, so the cure was alignment, not a ratchet — the CJK pair agreed with the siblings (综合/類別/持平/分鐘/對陣-class fixes) and en `versus` was moved to `v`, a value no catalogue holds; **cured by `1cb02e6`** (the gate reads 4/4, unreviewed = 0). (api) Lint: I001 import-order red in `http_caching.py` — fixed by `ruff --fix` under scripts/lint.sh's own invocation; 0 remaining. |
+| `1cb02e6..c6b1e67` (the key-drift cure plus the Arabic punctuation half) | `43568950722` | failure — web only | (web) Translation-freshness went red against the push's own `QA_BASELINE_COMMIT` (the commit the push replaced, `708ca1f`): the rename of `duel.versus` and `duel.pickerChange` orphaned four silent rows — `he.versus`, `he.pickerChange`, `fr.versus`, `ar.versus`. A concurrent defect this run did not see: the Arabic tail of the namespace had sixteen Latin sentence stops, which my local sweep caught and cured in `c6b1e67` itself (all U+06D4), so the translation-quality gate stayed green through this run. **Cured by `a9d8411`** — the four rows localized in their own register, driven to the five-PASS local run with the identical formula the runner uses. |
+| `c6b1e67..1215649` (the freshness cure plus Item 40's scrape doors) | `43569381606` | web success, services success, containers success; **api failure** | `test_assert_message_forms.py`, two reds — the gate walks the committed tree and found my `assert errors == [] , [repr(e) for e in errors]` in `test_singleflight.py:197`, a message operand that is a list (truthy, prints nothing). The SQLite dev-fallback leg and PostgreSQL-migrations leg both completed green; the test leg itself was the red. **Cured by `ae811be`** — the joined string replaces the comprehension; the two assert-message-forms tests pass against the new HEAD. |
+| `1215649..ae811be` (the assert-message cure) | `43571411363` | web success, services success, containers success; api run at the time of writing | The leg that counts `assert .+, ` messages in this arc's own new tests; see §175 for the arc this push carries. If this leg prints red, the row follows the pattern above, as always. |
+
+The red pushes are not a clean story and this file does not pretend they are. Three mechanisms cost the most: `test_spec_audit_currency.py` reading `HEAD` (the audit answers for the commit, not the worktree), the web gates enforcing may-only-fall on translation populations (drift must shrink, never be tolerated at a new level), and the ICU equality contract across six catalogues (the placeholder the ask and the sentence are the same sentence everywhere). All three were caught, all three were cured with alignment rather than permission — and the contract behind each is stronger for having been held.
+
+### What the fix chain proved about the gates themselves
+
+* The ICU gate's failure mode is **placeholders**, the audience here is every catalogue's ICU parser; both red halves were invisible to every other check in the stack.
+* The freshness gate silently vindicated the ledger's habit of naming register: he's imperative, fr's column registers, ar'sمقابل-sense choices were each localized on the merits.
+* The Arabic script rule caught a real interleaving of scripts in sixteen sentence bodies — the exact class of defect the ledger has called "the keyboard reached for the wrong script" since the fr/ar/he milestone; the cure was the same byte class the Chinese locales accept.
+
+---
+
+## §175 — the wire arc: unreleased repetitions and bytes found, then counted
+
+Item numbers 38, 39 and 40 are where this arc lives in PLAN.md; the measured evidence moves here.
+
+### Item 38 — a validator on every JSON answer, and a 304 for the unchanged
+
+**What landed.** `app/core/http_caching.py` — a strong `ETag` (first 32 hex of the SHA-256 of the exact bytes) on every 200 `application/json` `GET`, plus `Cache-Control: private, max-age=0, must-revalidate` (payloads are account-shaped; no shared cache). `If-None-Match` honours RFC 7232's weak comparison (`*`, comma lists, `W/` prefixes) **and** the shell-stripped bare token — deliberately tolerated because the comparison stays byte-strict. The 304 carries the dressed headers (`X-Request-ID`, `nosniff`, `RateLimit-*`) with the body emptied and `Content-Length: 0`. `app/core/compression.py` — a whole-answer gzip that measures, then decides: identity below 512 bytes with `Vary: Accept-Encoding`, gzip above with a fresh `Content-Length` and `mtime=0`, `/api/v1/video/` skipped outright. Both were registered in `main.py` as pure ASGI, GZip outermost, the revalidation gate inside it, and `request_context` inside that — one chain, one execution context.
+
+**Why pure ASGI, with the failing combination named.** The first cut registered the gate through the `@app.middleware("http")` decorator — which wraps a function in `BaseHTTPMiddleware`. Every `BaseHTTPMiddleware` layer copies the contextvars `request_context` sets, so the crash dresser got nothing from above: `test_error_response_headers.py` saw "assert None" for `RateLimit-Policy` on the 500 answer, and `test_rate_limit.py` saw it missing in two more. The gate was rewritten as `RevalidationMiddleware` (a pure ASGI wrapper, the same shape `CompressionMiddleware` takes), and all three crash-answer tests pass **unchanged** — the cure lives at the registration boundary, not inside the budget logic.
+
+**Measured live**, on a fresh SQLite instance bound to `:8769` against a real uvicorn:
+
+```
+GET  /api/v1/openapi.json   (Accept-Encoding: gzip)  → 200  wire 38,944 B  (plain 275,470 B, −85.9 %)
+     etag "8cd3f5b84e94a55c160ae200222390c8" · cache-control private, max-age=0, must-revalidate · vary Accept-Encoding
+GET  /api/v1/openapi.json   (If-None-Match: the etag it just handed out)   → **304 · 0 bytes** · etag preserved · x-cache HIT
+GET  /api/v1/openapi.json   (If-None-Match: a bogus token)                → 200 · body re-served, etag re-minted
+GET  /api/v1/healthz        (445 B < 512 floor)                           → identity, etag present
+GET  /api/v1/meta/capabilities (22 B 404)                                     → identity, plain bytes (was gzipped to 42 under the stock middleware)
+```
+
+**Local evidence.** 28 `tests/test_http_caching.py` green (the ASGI transport), then the three crash-answer tests green unchanged; a **185-test sweep** across the neighbouring suites exits 0 (gate + response cache + video + metrics + prometheus + OpenAPI-contract + answer-census + locale-claims + singleflight); `ruff`, `mypy app` clean. The stale `minimum_size` claim of the stock ASGI/BaseHTTP combination is called out in the module docstring so it does not creep back.
+
+### Item 39 — the cold miss, single-file
+
+**What landed.** `app/core/singleflight.py` — an in-process lane per key: the leader executes `fn` outside the lock; followers wait on the lane's event and take a reference to the leader's value; a leader exception is re-raised identically in every follower (a broken scan quarantines the burst instead of tripling it); the table is bounded by concurrency, not history. `world.py::unified_search` keys the lane on exactly `q`, the resolved type list, and the limit — the arguments the ranking sees. The `/api/v1/metrics/prometheus` door now prints `football_os_singleflight_joins_total`, label-free, beside the knowledge tier's coalesced counter — the operator tier sees both coalescing tiers without inference.
+
+**Measured.** A 7-thread burst through the door with `search_world` monkey-patched slow executes it exactly once (`tests/test_singleflight.py`, 6 green incl. lane-collapse 12→1 and the no-hang-on-exception case). Live, this host, with a warm world (vintage SQLite): ten concurrent `q=minutes` searches answered in 8–32 ms each — below the lane window; the scrape door correctly prints `football_os_singleflight_joins_total 0`, and that is the honest answer for a burst this fast. The metric exists for the loaded deployment; nothing was faked to read as savings.
+
+**Not claimed.** Multi-worker deployments coalesce per worker; the shared tier remains the 60-second response cache, which this sits in front of for the miss window only. No header claims a join happened; only the scrape carries that.
+
+### Item 40 — the registry and the config server, scraped
+
+Both modules gained `micrometer-registry-prometheus`; the registry closes over `health,info,prometheus`, the config server keeps `refresh` and gains `prometheus`. Measured live on this host (`mvn -o -B package`, both jars): registry serves **12,109 bytes** of exposition, config serves **16,596**, both opening on `# HELP process_cpu_usage`. No eureka/actuator bespoke series binds on a cold start — JVM and process series only, which is the honest answer for a plane nobody has probed yet; nothing was invented to make the scrape look richer. `docs/runbooks/service_plane.md` now names all three doors, and both jars build on the services leg exactly as before.
+
+**The one lesson worth carrying.** Item 38's crash-answer defect and Item 39's silent-zero scrape are the same class: the gate asked for the behaviour it could prove, and the platform measured exactly what it promised — nothing more. Every number in this section was printed by a command, not recalled.
