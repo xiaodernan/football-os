@@ -270,7 +270,9 @@ const bCheck = reds(b, [D_STALE, D_TABLE], [R_STABLE]);
 check(
   "B a partial ar.json is charged for the named tokens it lacks, and the missing table entry — the floor is on record at 0, so it does not bite",
   bCheck.ok && detailOf(b.d.out, D_STALE).includes("is named a token but the catalogue holds no such key")
-    && detailOf(b.d.out, D_UNNAMED).includes("45 language-neutral") && detailOf(b.d.out, D_UNNAMED).includes("3 catalogue(s)")
+    // re-pinned 2026-11-14: the venue · city skeleton (`worldStory.chapterTwoVenue`) joined the table, so the
+    // definer prints 46 language-neutral named tokens on this plane — the pin moved with the table, not around it.
+    && detailOf(b.d.out, D_UNNAMED).includes("46 language-neutral") && detailOf(b.d.out, D_UNNAMED).includes("3 catalogue(s)")
     && detailOf(b.r.out, R_STABLE).startsWith("drift: ; missing: "),
   `${bCheck.detail}; table holds ${TABLE_PATHS.length} named path(s)`,
 );
