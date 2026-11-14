@@ -2509,6 +2509,29 @@ caller, is the audience.
 
 ---
 
+## Item 40 — the fleet scrape stopped being half a fleet: the registry and config learn to answer too
+
+The edge exposed `/actuator/prometheus`; the Python core learned its own counterpart in §163; the two
+systemd-shaped services at the front of the plane — the registry and the config server — were scrape-blind.
+A Prometheus that walked up to 8761 and 8888 came away with nothing, and a dashboard leaving them out looked
+healthy for the wrong reason: half of the platform's own coordination tier was invisible, and the logs said
+nothing about it because silence is indistinguishable from health until a service misbehaves.
+
+**What landed.** `micrometer-registry-prometheus` in both modules; the registry closes over
+`health,info,prometheus`; the config server keeps its `refresh` and adds `prometheus`. Both scrape at
+`/actuator/prometheus` like the edge, single series names per request the shape of the fleet already expects.
+Measured live on this host (both jars built from `mvn -o -B package` and booted): registry serves **12,109 bytes** of
+exposition, config **16,596**, both `# HELP process_cpu_usage` opening the body. No eureka/actuator bespoke metric
+binds on a cold start — JVM and process series only, which is the honest answer for a plane nobody has
+probed yet; nothing was invented to make the scrape look richer.
+
+**Not claimed.** No behaviour change for the services themselves; this arms the observation half of the plane.
+The edge keeps its `resilience4j_*` honesty (breaker series still require at least one open/close). No tests
+were added — both modules are built by the CI services leg, and neither carried a test population to extend;
+the verification is the boot probe printed above and the CI `services` leg that builds both jars.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
