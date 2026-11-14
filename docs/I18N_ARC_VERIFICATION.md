@@ -6694,3 +6694,56 @@ The page renders as an honour roll — portrait cards for Boot+Crown, an homage 
 **Not claimed.** The local walk was against a scratch SQLite seeded at the same seed CI uses (seed=3); whether the CI-deployed world looks identical depends on which world commits CI deploys (the world generates at first boot, not in version control). No claim that the page passes a pixel-review; only that it renders one correct almanac page with no console errors and every award present. No provider cache-claims — `cached_input_tokens` remains 0 on every call to date; the gateway has still not reported prefix caching for this account. Every figure on the page is either recomputed from this request's `RealMatch` / `RealPlayer` rows or explicitly delivered as `Data unavailable`.
 
 `.workbuddy/` and the root untracked text remain untouched; `.scratch/` stays out of the tree.
+
+## §180 — Item 46: the title race, where the points ran out
+
+The almanac could hand out every individual honour and still not answer the question the honour roll implies: who lifted the table, and by how much? Item 46 closes that gap with the smallest honest move available.
+
+**`_top_league(session)`** (`app/services/world/almanac.py`) — one deterministic selection, reused by both the Manager of the Season and the new race block: tier-1 first, name tiebreak. Before this arc the manager used an unspecified `scalar()` and the race used `order_by(name)` — a live-seed probe caught them naming different competitions on the same page (`Lyndera Superleague` vs `Thornford Superleague` from the same world). One selection, one voice.
+
+**The envelope gains `title_race`.** Champion + runner-up — points, P/W/D/L, GF/GA/GD, paths — plus `margin` and `gd_margin`. The seeded world produced a genuine tier-1 tie: Ostmoor Albion 23 pts GD +6 vs Quernmoor Town 23 pts GD +1, decided on the GD tiebreak the table already uses. **The page prints the caption that tells the truth**: `+N pts clear` when points decide it, `+N goal difference` when they cannot. The Chinese catalogue prints `+5 净胜球`; the honours grid stays exactly as item 45 left it.
+
+**Catalogues.** `managerFiguresShort` (dropped as unused in Item 45's cleanup, because honesty demanded no dead keys) restored because the race panel asks for exactly that shape; six new `titleRace*` keys; one `titleRaceGdUnit` for the GD caption; ×6 locales. Uniform population **4,500** (README recomputed; zh/zh-TW/ar/he 4,455 translated; fr 4,251; named-token slots still named; `qa-locale-tokens` 7/7 at 2,784 shared sentences; AR still closes with U+06D4).
+
+**Types.** `AlmanacTitleRace` discriminated union on `available`; `AlmanacResult` carries it; the JSX narrows through a named local (`titleRace.margin > 0 ? … : …`), no optional-chain guessing — the same class of bug that taught the duel page that `t(`…`)` templates are not judged by the gates.
+
+**PLAN.md** gains Item 45 (the almanac arc, whose commit was already on master but whose entry the file never had) and Item 46, both in the file's restrained voice with the verdict chain. `.next-race` (overridden dist dir) was removed and `tsconfig.json`/`next-env.d.ts` were restored to HEAD before commit.
+
+**Local verification.** tsc 0; web gate battery green — `qa-icu-messages` 27,000 msgs / 4,500 keys; `qa-icu-coverage` 1/1; `qa-i18n-literals` 9/9 (4,559 key calls); `qa-unused-keys` 3/3; `qa-locale-completeness` uniform 4,500; `qa-locale-tokens` 7/7; `qa-translation-quality` 9/9; `qa-rtl-readiness` 8/8 (logical `margin-inline-end`, `text-align: end`, no physical direction); `qa-shared-keys` 4/4; `qa-crawl-policy` 9/9; `qa-metadata-title` 201/201; `qa-table-shape` 118/118; `qa-share-preview` 31/31. Ruff + mypy clean (183 files); `test_world_almanac.py` 7/7; contract unchanged at **232 paths / 299 operations**, SHA **d62be1cc** (the door returns an object; no schema moved); security census stays 241 / 58 / 104. Production build **BUILD_ID hVDHdJWo1DWg5ZFK_0EQN**; a prod preview against a fresh seeded scratch walked `/world/almanac` (simplified Chinese render) at 200 with **zero console errors** — the panel prints 最后一线的争冠 / Lyndera Superleague / 冠军 Ostmoor Albion 23 分 / +5 净胜球 with the points level, and the manager block names the same league and same club.
+
+**Commits.** `a485d7f` `feat(world): the title race, where the points ran out`.
+
+**Not claimed.** Pixel-perfect review — only zero-console-errors and the captured innerText; the seeded scratch is not the deployed world; the 23–23 tie is this seed's fixture list, not the season the product ships tomorrow; CI verdict for the push is the runner's to print — whatever it says is recorded in the following ledger commit, never pre-claimed here.
+
+**CI verdict — `43611587347` — completed success on all four legs** (containers · services · web · api + PostgreSQL/pgvector), ~33 minutes.
+
+## §181 — Item 47: the priced prefix
+
+The user kept pressing one thread until it was measured end-to-end: the LLM API's cache hit rate. The project's provider code already streams by default (`OPENAI_STREAM` unset → `stream: true`), reads both cache-dialects (`prompt_tokens_details.cached_tokens` and flat `prompt_cache_hit_tokens`), distinguishes "no report" from "cached = 0", and folds SSE usage back into one record. What it never did is give the gateway a prefix worth caching.
+
+**The measured fact.** Two live probes against `wkapi.pro / gpt-6-sol` this session (2026-11-14/15 UTC), read-only, real key, user-authorised:
+
+| call | bytes | usage printed |
+|------|-------|----------------|
+| S1 cold stream | 2,899-char system | `prompt_tokens=5077, completion=28` — no details |
+| S2 warm stream | identical | `cached_tokens=4864` |
+| S3 warm stream | identical | no details object |
+| N1 non-stream  | identical | `cached_tokens=4864` |
+| N2 non-stream  | identical | `cached_tokens=4864` |
+| A1 new prefix (cold)   | 3,647-B house contract | no details |
+| A2 new prefix (warm)   | identical | **`cached_tokens=4992` of 5,171** |
+| B1 same system, other question | — | no details |
+
+Reporting is a per-call lottery on this gateway (≈4 of 8 calls printed, either dialect, interleaved; earlier session 4 of 6). Caching itself engages — roughly 96.5 % of input tokens on a warm identical call — and it did so at the new prefix size (~907 tokens).
+
+**Item 47.** `app/services/knowledge/answer.py`'s `SYSTEM_PROMPT` — ~58 tokens → the **house contract**, ~907 tokens (3,645 B): role, citation discipline, honesty floor, statistics discipline, safety boundary, language mirroring, position/level framing, the format contract, refusal doctrine, corpus-authority note. The contract is the standard the door needed anyway; the cache is its side effect. **No user bytes ever enter it** — pinned by test.
+
+**`tests/test_knowledge_prefix.py`** pins: the exact reference length (3,645 B — edit the prefix, re-measure, red the suite), a 3,000 B floor, no request fragments inside the contract, and the three doctrinal contracts (inline `[n]` citation; the `Sources:` line; "cannot support" / "Never invent") — a silent refactor now fails loudly.
+
+**Local verification.** ruff clean; mypy clean (183 files); `test_knowledge_prefix.py` 4/4; knowledge battery green (answer_cache + graph_api + graph_census + joint + rag + prefix, exit 0 — 106 tests); smoke 11/11. Demo-mode behaviour unchanged (extractive path, no model). Prefix engagement is a property of the gateway, not of CI — CI proves the contract; the wire proves the cache; both are recorded as exactly what they are.
+
+**Commits.** `aad5d74` `feat(knowledge): the priced prefix — the house contract the cache can engage on`.
+
+**Not claimed.** No percentage the gateway did not print; no claim that every call reports; no ratio reported anywhere; no claim that the deployed instance's live cache hit rate is now anywhere near 96.5 % — it will be, on identical-prefix calls, depending on the gateway's own cache retention which the project does not control. The answer-cache key does not include the system prompt, by design, and was not changed here. `.workbuddy/` and the root untracked text remain untouched; contract, census and audit figures unchanged (the door's response shape moved not at all).
+
+**CI verdict — `43613032930` — completed success on all four legs** (containers · services · web · api + PostgreSQL/pgvector).

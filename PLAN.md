@@ -2635,6 +2635,18 @@ face. The home panel's visual verification is CI-time too.
 
 ---
 
+## Item 47 — the priced prefix (landed 2026-11-15)
+
+**The gap.** The one real model call in the project sent a ~58-token `SYSTEM_PROMPT` — byte-stable but far below the prefix length at which this gateway's automatic prefix cache engages (measured live: identical bytes, 4,864 of 5,077 cached tokens). Every `knowledge_ask` paid full input price for the one piece identical on every call.
+
+**What landed.** `SYSTEM_PROMPT` is now the house contract — ~907 tokens (3,645 B, byte-stable, module-level): role, citation discipline, honesty floor, statistics discipline, safety boundary, language mirroring across the six catalogues, the format contract, refusal doctrine, corpus-authority note. Live probe on the new prefix: A1 cold printed no cache details; A2 warm printed `cached_tokens = 4992` of 5,171 (≈ 96.5 %); B1 (same prefix, different question) printed nothing. The gateway's reporting is a per-call lottery (~4 of 8 either dialect today; 4 of 6 earlier) — the project already keeps `cache_reported` separate from `cached_tokens` for exactly this reason. `tests/test_knowledge_prefix.py` pins the reference byte count (3,645 B — re-measure or red the suite), a 3,000 B floor, no request fragments inside the contract, and the three doctrinal contracts. ruff + mypy clean; knowledge battery green; demo-mode behaviour unchanged.
+
+**Verdict.** `aad5d74` on master; CI `43613032930` — all four legs success.
+
+**Deliberately not done.** No answer-cache schema change; no ratio claimed anywhere; no deployed-instance hit-rate claim; `OPENAI_STREAM` left unset (defaults to streaming) — the perceived "non-stream" display was the pre-2026-11 code path, plus the gateway's flaky reporting, never the default.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
