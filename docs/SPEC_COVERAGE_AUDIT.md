@@ -2,7 +2,7 @@
 
 Method (all figures from the tree, not from memory): the committed contract `docs/api/openapi.json` (126 paths when
 this audit was written, **144** re-read 2026-09-28, **160** re-read 2026-10-04, **162** re-read 2026-10-06, **206** re-read 2026-10-28, **218** re-read 2026-10-30, **224** re-read 2026-11-08), `find apps/web/app -name page.tsx`
-(47 routes then, **48** re-read 2026-09-28, **56** re-read 2026-10-04, **57** re-read 2026-10-06, **62** re-read 2026-10-28, **65** re-read 2026-10-30, **67** re-read 2026-11-07 — the `/live` replay page and its `/live/[slug]` door landed after that count), the committed files in
+(47 routes then, **48** re-read 2026-09-28, **56** re-read 2026-10-04, **57** re-read 2026-10-06, **62** re-read 2026-10-28, **65** re-read 2026-10-30, **67** re-read 2026-11-07 — the `/live` replay page and its `/live/[slug]` door landed after that count; **71** re-read 2026-11-14 — the `/world/duel` picker and its ledger door landed after that count), the committed files in
 `apps/api/migrations/versions` (21 then, **24** re-read 2026-09-28, **26** re-read 2026-10-04, **42** re-read 2026-10-28, **45** re-read 2026-10-30, **60** re-read 2026-11-08 — the `0059` TEXT widening landed the same day),
 `ls apps/api/app/services[/**]`, and `grep` for the vocabulary
 each module is written in. A module is **landed** only when a route or page a caller can knock on
@@ -11,13 +11,13 @@ carries its noun; a service file with no door is **partial**.
 Every figure in this sentence is re-checked against the committed tree by
 `apps/api/tests/test_spec_audit_currency.py`, which reads the machine-readable line below rather than the prose:
 
-`AUDIT_FIGURES contract_paths=230 page_routes=69 migrations=65`
+`AUDIT_FIGURES contract_paths=230 page_routes=71 migrations=65`
 
 ## A. The 30 product modules (spec §3's list, §4–§42)
 
 | § | module | measured evidence | owner | verdict |
 | --- | --- | --- | --- | --- |
-| 4 | Football World | `/api/v1/world/{status,players,teams,competitions,matches,news,training,search}` + `/world/*` pages (8) | M3 | landed |
+| 4 | Football World | `/api/v1/world/{status,players,teams,competitions,matches,news,training,search,duel}` + `/world/*` pages (10) | M3 | landed |
 | 5–8 | Player profile / archetype / real-vs-user / progression | `/players/{id}`, `/world/players/{ident}`, `/player/[slug]`, `services/attributes.py`, `progression.py` | M1/M3 | landed |
 | 9–12 | AI Coach / training academy / progression / plan | `/api/v1/coach/{ask,plan,today,history}`, `/api/v1/coach/drills/{drill_slug}/knowledge`, `/api/v1/trainings/{drills,sessions}`, `/api/v1/trainings/drills/{drill_id}`, `/api/v1/trainings/sessions/{session_id}/complete`, `/coach`, `/training`, `/training/[slug]` | M2/M1 | landed |
 | 13–14 | Video analysis + output | `/api/v1/video`, `/api/v1/video/upload`, `/api/v1/video/{ident}/{analyse,file,jobs}`, `/api/v1/video/{ident}/frames/{index}`, `/video`, `/video/[id]` | M5 | landed, **vision provider labelled demo** |
