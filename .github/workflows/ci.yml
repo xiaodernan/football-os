@@ -40,7 +40,10 @@ jobs:
         # own entrypoint takes the command, so `--requirepass` is the server's argument rather than
         # an entrypoint override.
         run: |
-          docker run -d --name football_os_cache -p 63790:6379 redis:7-alpine redis-server --requirepass football
+          # The same flags as `infra/docker-compose.yml`'s cache — the gate pins the two naming one
+          # instance, so they must move together. volatile-lru evicts only TTL'd keys (the cache);
+          # the job queue on DB 2 carries no TTLs and is not a victim.
+          docker run -d --name football_os_cache -p 63790:6379 redis:7-alpine redis-server --requirepass football --maxmemory 256mb --maxmemory-policy volatile-lru
           for attempt in $(seq 1 30); do
             if docker exec football_os_cache redis-cli -a football ping 2>/dev/null | grep -q PONG; then
               break

@@ -44,6 +44,17 @@ services:
       - ""
       - --appendonly
       - "no"
+      # The default is `noeviction` + unbounded memory: at the ceiling the cache answers
+      # every write with an error instead of dropping its own coldest TTL'd key. `volatile-lru`
+      # is the policy that matches this instance's actual content: every key the application
+      # writes carries `ex=` (response cache, answer cache, boot-lock hint), and the job
+      # queue on DB 2 does not (`XADD` + `MAXLEN ~` trimming) — so volatile-lru's victim
+      # pool is exactly the cache and never the queue. `allkeys-lru` would be wrong here.
+      # 256 MB is a sane desktop default; production sizing stays the operator's decision.
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - volatile-lru
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-football}
     ports:
