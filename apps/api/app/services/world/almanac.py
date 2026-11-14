@@ -84,8 +84,13 @@ def _top_league(session: Session) -> Competition | None:
     )
 
 
-def _compute_league_table(session: Session) -> dict[str, Any]:
-    """Recompute the league table from completed league fixtures, same way `world.py` does."""
+def _league_centre(session: Session) -> dict[str, Any]:
+    """One tier-1 centre: the league, its completed fixtures, teams and aggregated table.
+
+    Everything the almanac prints about the table is pulled from this one call — the manager
+    block and the title race used to each re-walk every completed fixture per request. The
+    centre is the single-pass answer: one fetch, one walk, two readers.
+    """
     league = _top_league(session)
     if league is None:
         return {"available": False}
@@ -97,14 +102,15 @@ def _compute_league_table(session: Session) -> dict[str, Any]:
             .order_by(RealMatch.kickoff_at.asc())
         ).all()
     )
-    table: dict[str, dict[str, int]] = {}
+    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    table: dict[str, dict[str, Any]] = {}
     for fixture in fixtures:
         if fixture.home_goals is None or fixture.away_goals is None:
             continue
         for team_id, on_home in ((fixture.home_team_id, True), (fixture.away_team_id, False)):
             stats = table.setdefault(
                 team_id,
-                {"played": 0, "won": 0, "drawn": 0, "lost": 0, "goals_for": 0, "goals_against": 0, "points": 0},
+                {"team_id": team_id, "played": 0, "won": 0, "drawn": 0, "lost": 0, "goals_for": 0, "goals_against": 0, "points": 0},
             )
             gf = fixture.home_goals if on_home else fixture.away_goals
             ga = fixture.away_goals if on_home else fixture.home_goals
@@ -121,31 +127,33 @@ def _compute_league_table(session: Session) -> dict[str, Any]:
                 stats["lost"] += 1
     return {
         "available": True,
+        "league": league,
         "competition": league.name,
         "competition_slug": league.slug,
         "table": table,
+        "teams": teams,
+        "fixtures": fixtures,
     }
 
 
-def _title_race(session: Session) -> dict[str, Any]:
-    computed = _compute_league_table(session)
-    if not computed["available"]:
+def _title_race_from(centre: dict[str, Any]) -> dict[str, Any]:
+    if not centre["available"]:
         return {"available": False}
     rows = sorted(
-        computed["table"].items(),
+        centre["table"].items(),
         key=lambda kv: (-kv[1]["points"], -(kv[1]["goals_for"] - kv[1]["goals_against"]), -kv[1]["goals_for"]),
     )
     if len(rows) < 2:
         return {"available": False}
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    teams = centre["teams"]
     champ_id, champ = rows[0]
     runner_id, runner = rows[1]
     champ_team = teams.get(champ_id)
     runner_team = teams.get(runner_id)
     return {
         "available": True,
-        "competition": computed["competition"],
-        "competition_slug": computed["competition_slug"],
+        "competition": centre["competition"],
+        "competition_slug": centre["competition_slug"],
         "champion": {
             "id": champ_id,
             "slug": getattr(champ_team, "slug", ""),
@@ -177,6 +185,11 @@ def _title_race(session: Session) -> dict[str, Any]:
         "margin": champ["points"] - runner["points"],
         "gd_margin": (champ["goals_for"] - champ["goals_against"]) - (runner["goals_for"] - runner["goals_against"]),
     }
+
+
+def _title_race(session: Session) -> dict[str, Any]:
+    """The race over the tier-1 table — kept for callers that have no centre yet."""
+    return _title_race_from(_league_centre(session))
 
 
 def compute_almanac(session: Session) -> dict[str, Any]:
@@ -224,70 +237,22 @@ def compute_almanac(session: Session) -> dict[str, Any]:
     else:
         breakthrough_winner, breakthrough_rest = None, []
 
-    league_competition = _top_league(session)
+    centre = _league_centre(session)
+    teams_centre: dict[str, Team] = centre.get("teams", {})
     best_manager: dict[str, Any] | None = None
-    if league_competition is not None:
-        fixtures = list(
-            session.scalars(
-                select(RealMatch).where(
-                    RealMatch.competition_id == league_competition.id,
-                    RealMatch.status == "completed",
-                )
-            ).all()
-        )
-        teams = {team.id: team for team in session.scalars(select(Team)).all()}
-        table: dict[str, dict[str, Any]] = {}
-
-        def side(team_id: str) -> dict[str, Any]:
-            return table.setdefault(
-                team_id,
-                {
-                    "team_id": team_id,
-                    "played": 0,
-                    "won": 0,
-                    "drawn": 0,
-                    "lost": 0,
-                    "goals_for": 0,
-                    "goals_against": 0,
-                    "points": 0,
-                },
-            )
-
-        for fixture in fixtures:
-            if fixture.home_goals is None or fixture.away_goals is None:
-                continue
-            home, away = side(fixture.home_team_id), side(fixture.away_team_id)
-            home["played"] += 1
-            away["played"] += 1
-            home["goals_for"] += fixture.home_goals
-            home["goals_against"] += fixture.away_goals
-            away["goals_for"] += fixture.away_goals
-            away["goals_against"] += fixture.home_goals
-            if fixture.home_goals == fixture.away_goals:
-                home["drawn"] += 1
-                away["drawn"] += 1
-                home["points"] += 1
-                away["points"] += 1
-            elif fixture.home_goals > fixture.away_goals:
-                home["won"] += 1
-                away["lost"] += 1
-                home["points"] += 3
-            else:
-                away["won"] += 1
-                home["lost"] += 1
-                away["points"] += 3
-
+    if centre["available"]:
         rows = sorted(
-            table.values(),
+            centre["table"].values(),
             key=lambda row: (-row["points"], -(row["goals_for"] - row["goals_against"]), -row["goals_for"]),
         )
         if rows:
             top = rows[0]
+            league = centre["league"]
             best_manager = {
-                "team": _team_payload(teams.get(top["team_id"])),
-                "competition_id": league_competition.id,
-                "competition_name": league_competition.name,
-                "competition_slug": league_competition.slug,
+                "team": _team_payload(teams_centre.get(top["team_id"])),
+                "competition_id": league.id,
+                "competition_name": league.name,
+                "competition_slug": league.slug,
                 "played": top["played"],
                 "won": top["won"],
                 "drawn": top["drawn"],
@@ -334,7 +299,7 @@ def compute_almanac(session: Session) -> dict[str, Any]:
             "golden_boot": _player_payload(golden_boot, golden_boot.goals),
             "playmaker": _player_payload(playmaker, playmaker.assists),
         },
-        "title_race": _title_race(session),
+        "title_race": _title_race_from(centre),
     }
 
 

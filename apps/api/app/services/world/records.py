@@ -14,7 +14,8 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Competition, RealMatch, RealPlayer, RealPlayerMatchStat, Team
+from app.models import RealMatch, RealPlayer, RealPlayerMatchStat, Team
+from app.services.world.almanac import _league_centre
 
 RECORD_KEYS = (
     "biggest_haul",
@@ -63,14 +64,6 @@ def _match_payload(fixture: RealMatch, teams: dict[str, Team]) -> dict[str, Any]
     }
 
 
-def _league(session: Session) -> Competition | None:
-    """The tier-1 league — the same selection `_top_league` makes for the almanac and story."""
-    return session.scalar(
-        select(Competition)
-        .where(Competition.kind == "league")
-        .order_by(Competition.tier.asc(), Competition.name.asc())
-        .limit(1)
-    )
 
 
 def _completed(session: Session) -> list[RealMatch]:
@@ -126,28 +119,28 @@ def goal_fest(session: Session) -> dict[str, Any]:
     }
 
 
-def offence_club(session: Session) -> dict[str, Any]:
+def offence_club(session: Session, centre: dict[str, Any] | None = None) -> dict[str, Any]:
     """The club with the most goals scored across the completed league fixtures."""
-    league = _league(session)
-    if league is None:
+    centre = centre or _league_centre(session)
+    if not centre.get("available"):
         return {"key": "offence_club", "available": False}
-    tally = _goals_by_club(session, league, "for")
-    return _top_club_record("offence_club", tally, session, figure="goals_for")
+    tally = _goals_by_club(centre, "for")
+    return _top_club_record("offence_club", tally, centre, figure="goals_for")
 
 
-def defence_club(session: Session) -> dict[str, Any]:
+def defence_club(session: Session, centre: dict[str, Any] | None = None) -> dict[str, Any]:
     """The club with the fewest goals conceded across the completed league fixtures."""
-    league = _league(session)
-    if league is None:
+    centre = centre or _league_centre(session)
+    if not centre.get("available"):
         return {"key": "defence_club", "available": False}
-    tally = _goals_by_club(session, league, "against")
-    # fewest conceded is the *lowest* figure — pick the smallest, not the largest
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    tally = _goals_by_club(centre, "against")
+    teams: dict[str, Team] = centre["teams"]
+    league = centre["league"]
     if not tally:
         return {"key": "defence_club", "available": False}
     team_id, conceded = min(tally.items(), key=lambda kv: (kv[1], kv[0]))
     team = teams.get(team_id)
-    played = sum(1 for f in _completed_league(session, league) if team_id in (f.home_team_id, f.away_team_id))
+    played = sum(1 for f in centre["fixtures"] if team_id in (f.home_team_id, f.away_team_id))
     return {
         "key": "defence_club",
         "available": True,
@@ -159,13 +152,14 @@ def defence_club(session: Session) -> dict[str, Any]:
     }
 
 
-def castle(session: Session) -> dict[str, Any]:
+def castle(session: Session, centre: dict[str, Any] | None = None) -> dict[str, Any]:
     """The club with the most clean sheets kept across the completed league fixtures."""
-    league = _league(session)
-    if league is None:
+    centre = centre or _league_centre(session)
+    if not centre.get("available"):
         return {"key": "castle", "available": False}
-    fixtures = _completed_league(session, league)
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    fixtures = centre["fixtures"]
+    teams: dict[str, Team] = centre["teams"]
+    league = centre["league"]
     sheets: dict[str, int] = {}
     for fixture in fixtures:
         for team_id, scored_against in ((fixture.home_team_id, fixture.away_goals), (fixture.away_team_id, fixture.home_goals)):
@@ -261,9 +255,9 @@ def highest_rated(session: Session) -> dict[str, Any]:
     }
 
 
-def _goals_by_club(session: Session, league: Competition, direction: str) -> dict[str, int]:
+def _goals_by_club(centre: dict[str, Any], direction: str) -> dict[str, int]:
     tally: dict[str, int] = {}
-    for fixture in _completed_league(session, league):
+    for fixture in centre["fixtures"]:
         for team_id, own, other in (
             (fixture.home_team_id, fixture.home_goals, fixture.away_goals),
             (fixture.away_team_id, fixture.away_goals, fixture.home_goals),
@@ -275,21 +269,11 @@ def _goals_by_club(session: Session, league: Competition, direction: str) -> dic
     return tally
 
 
-def _completed_league(session: Session, league: Competition) -> list[RealMatch]:
-    return [
-        f
-        for f in session.scalars(
-            select(RealMatch)
-            .where(RealMatch.competition_id == league.id, RealMatch.status == "completed")
-            .order_by(RealMatch.kickoff_at.asc())
-        ).all()
-        if f.home_goals is not None and f.away_goals is not None
-    ]
 
 
-def _top_club_record(key: str, tally: dict[str, int], session: Session, *, figure: str) -> dict[str, Any]:
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
-    league = _league(session)
+def _top_club_record(key: str, tally: dict[str, int], centre: dict[str, Any], *, figure: str) -> dict[str, Any]:
+    teams: dict[str, Team] = centre["teams"]
+    league = centre["league"]
     if not tally:
         return {"key": key, "available": False}
     team_id, total = max(tally.items(), key=lambda kv: (kv[1], kv[0]))
@@ -298,21 +282,22 @@ def _top_club_record(key: str, tally: dict[str, int], session: Session, *, figur
         "available": True,
         "team": _team_payload(teams.get(team_id)),
         figure: total,
-        "competition": league.name if league else None,
-        "competition_slug": league.slug if league else None,
+        "competition": league.name,
+        "competition_slug": league.slug,
     }
 
 
 def compute_records(session: Session) -> dict[str, Any]:
-    """Every record in the book, computed from the world's own rows."""
+    """Every record in the book, computed from the world's own rows — one league centre."""
+    centre = _league_centre(session)
     return {
         "season": {"label": "2026/27", "kind": "7:3"},
         "records": [
             biggest_haul(session),
             goal_fest(session),
-            offence_club(session),
-            defence_club(session),
-            castle(session),
+            offence_club(session, centre),
+            defence_club(session, centre),
+            castle(session, centre),
             cards_fixture(session),
             keeper_wall(session),
             highest_rated(session),
