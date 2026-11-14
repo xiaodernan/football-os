@@ -6791,3 +6791,36 @@ Verified live on a scratch container (created, measured, torn down): baseline 1.
 **Local evidence.** YAML parse of the compose; the eviction drill printed above; `test_redis_shared_tier.py` 10/10 (file-only cases unchanged, plus the live case against the shipped policy); CI as named. The docs quote the tier by image, password and port only and remain accurate.
 
 **Deliberately not done.** No production memory budget — sizing per deploy target stays the operator's decision, said so in the compose comment; the 1 MB drill documented the flange exception (a ceiling below the process baseline refuses even `XADD`) and is the reason the shipped default is 256 MB, far from it. Neither arc touches a provider, a secret or a user record; no queue, lock or cached answer was modified to verify this.
+
+## §184 — Item 51: the record book — eight marks the world truly wrote
+
+**`GET /api/v1/world/records`** — anonymous read, world tier 60/min, one door, eight formulas, no invention. The world now prints three complementary surfaces over one set of stored rows:
+
+* the almanac honours individuals (goals, assists, rating, caps),
+* the story tells the season (three chapters),
+* the book records **fixtures and aggregates** — nothing else in the project had this lens.
+
+**`app/services/world/records.py::compute_records`** — every figure is adjectival arithmetic on `real_matches` + `real_player_match_stats` (recomputed per read, no provider, no stored column):
+
+| mark | what it prints (seed 7:3) |
+|---|---|
+| **The Biggest Haul** | Coriel Toboux, 2 goals in MD-5 at Ildwick Athletic |
+| **The Goal-Fest** | Cordale Town 5–4 Thorndera Town, MD 1, 9 combined goals |
+| **The Onslaught** | Ostmoor Albion, 21 league goals |
+| **The Fortress** | Ostmoor Albion, 15 conceded in 14 played |
+| **The Castle** | Quernmoor Town, 6 league clean sheets |
+| **The Cards Bill** | the most-weighted-cards fixture (yellow×1 + red×3) — seeded 1; the figure is printed honestly |
+| **The Wall** | Peleth Genberg, 9 saves in one fixture |
+| **The Pinnacle** | Coriel Toboux, 7.99 single-match rating (≥60 min floor) |
+
+**Honesty work performed in the arc.** The `hat_trick` key was renamed `biggest_haul` because the seeded world tops out at 2 goals by a player — the original label would publish a fiction of three. The cards record stays available and prints the world's dull figure rather than refusing or inflating it. The `unavailable` key prints when a mark has nothing to write; the test suite pins the shape, including the record-ordering and the fixture-path joins.
+
+**Contract moved deliberately.** `openapi.json` re-exported at **234 paths / 301 operations**; SHA-256 re-pinned to `9b34f05b929f414f56b993f6eb87ed93c40d10d6ac6d25b38c3d33350e7224a7`; the three ledgers re-pinned (probe report, M12 verification, ROADMAP, roadmap figures); the public-operations census moved 59 → **60** (anonymous by design; floors 40); secured 241 / private-GET 104 unchanged. `AUDIT_FIGURES` → **`contract_paths=234 page_routes=74 migrations=65`**; `/world/*` census → **13**; sitemap and crawl both at **14 advertised** of 74.
+
+**Catalogues.** `worldRecords` namespace, 32 keys × 6 locales (en/zh/zh-TW/ar/he/fr), uniform population **4,561**; README figures recomputed (zh/zh-TW/ar/he 4,515 translated; fr 4,311; the shared `weighted cards` sentence unified in Arabic with the duel and almanac occurrences — the cross-namespace shared-sentence gate caught and held it; the Arabic full stop remains U+06D4). `/world` browse grid gains a "records" tile chip (all six locales, incl. zh/fr translation); OG poster `RECORDS` (product token + 2026/27, static).
+
+**Gates.** tsc 0; the full CI-ordered web battery green: qa-icu-messages 27,366 msgs / 4,561 keys ×6; qa-icu-coverage 1/1; qa-i18n-literals 9/9 (4,620 key calls); qa-unused-keys 3/3; qa-locale-completeness uniform; qa-locale-tokens 7/7; qa-translation-quality 9/9; qa-rtl-readiness 8/8; qa-token-drift 4/4; qa-crawl-policy 74/14; qa-metadata-title 209/209; qa-table-shape 118/118; qa-share-preview 31/31; qa-namespace-ownership 2/2. API: ruff + mypy (185 files) clean; `test_world_records.py` 4/4; almanac 7/7; story 5/5; the commit-anchored currency gates green at HEAD (25/25 post-commit). Seeded-scratch walk of the page in simplified Chinese printed every figure with zero console errors; prod build not attempted on this host (741 MB free, below the ~1.5 GB floor); CI is the verifier.
+
+**Commits.** `a13ef50` (`feat(world): the record book — eight marks the world truly wrote`).
+
+**Not claimed.** Anything the rows didn't print: no award weighting, no ceremony dividend, no cards figure the fixture didn't hold; the hat-trick books are not invented — the seeded world has a maximum and the page prints it; the weakest cells (the Cards Bill) print unapologetically. The figures are this seed's, not every deploy's. CI for the push — `43632128872` — **completed success on all four legs** (containers · services · web · api + PostgreSQL/pgvector).

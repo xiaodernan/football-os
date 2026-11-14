@@ -2682,6 +2682,18 @@ face. The home panel's visual verification is CI-time too.
 
 ---
 
+## Item 51 — the record book: /world/records (landed 2026-11-14)
+
+**The gap.** The almanac honours individuals and the story narrates three chapters, but the fixtures themselves had nowhere to rest their own marks — the most productive midfielder's line, the biggest haul of goals in a night, the strongest offence, the leakiest defensive week — were all buried in the tables with no page that bears them.
+
+**What landed.** `**/world/records**` — one anonymous read door and one page with eight tiles recomputed from `real_matches` + `real_player_match_stats` on every read: **The Biggest Haul** (most goals by one player in a fixture — seeded 2, Toboux), **The Goal-Fest** (most goals in a completed fixture — MD 1, 5–4, 9 goals), **The Onslaught** (most league goals, Ostmoor Albion 21), **The Fortress** (fewest conceded, 15 in 14), **The Castle** (league clean sheets, Quernmoor Town 6), **The Cards Bill** (weighted cards yellow×1 + red×3 — printed honestly at the seed's own low total), **The Wall** (9 saves by Peleth Genberg), **The Pinnacle** (top single-match rating ≥60 minutes — 7.99).
+
+Two honest deliveries shipped under the arc: `hat_trick` was renamed `biggest_haul` (the seed tops out at 2 goals — a "hat-trick" label would have been fiction), and the weakest mark prints flat, unembellished, alongside the strong ones. The public-operations census moved 59 → **60** with the door; the audit figures moved to **234 paths / 74 pages / 65 migrations**; the contract SHA re-pinned to `9b34f05b…`; `/world/*` census to 13; crawl advertised 14 of 74.
+
+**Local evidence.** tsc 0; the CI-ordered web battery green (qa-icu-messages 27,366 msgs / 4,561 keys ×6; qa-translation-quality 9/9; qa-locale-tokens 7/7 after the Arabic `weighted cards` shared sentence was unified across three keys; qa-rtl-readiness 8/8; qa-crawl-policy 74/14); ruff + mypy (185 files) clean; `test_world_records.py` 4/4; almanac 7/7; story 5/5; dev-walk of the Chinese render with zero console errors. **Not done locally: a prod build** (host memory 741 MB, below the floor) — CI for push `43632128872` printed **all four legs success**.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
