@@ -47,6 +47,7 @@ export default async function PlayerDetailPage({ params }: Props) {
   const { slug } = await params;
   const tw = await getTranslations("world");
   const tp = await getTranslations("worldPlayer");
+  const td = await getTranslations("duel");
   const result = await load(slug);
 
   if (!result.ok) {
@@ -102,6 +103,9 @@ export default async function PlayerDetailPage({ params }: Props) {
           <span className="chip">
             {tp("leagueLabel")} <CompetitionLink competition={player.competition} />
           </span>
+          <Link className="btn btn--ghost btn--sm" href={`/world/duel?left=${encodeURIComponent(player.slug)}`}>
+            {td("compareCta")}
+          </Link>
         </div>
       </WorldHead>
 

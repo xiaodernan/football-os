@@ -2852,3 +2852,72 @@ export type TraceSummary = {
 export type NotificationPrefs = {
   mutes: { follower: boolean; comment: boolean; reaction: boolean };
 };
+
+/**
+ * GET /world/duel?left=&right= — two players and the ledger the API keeps between them.
+ *
+ * `categories[].winner` is `left`, `right`, `level` or `unavailable`. The last one is not a loss: a rate over
+ * fewer than ninety minutes cannot be computed honestly, so the row is shown greyed and left out of the tally.
+ * `basis` is a code (`per_90`, `season_mean`, …) that the page translates; no sentence crosses the wire.
+ */
+export type DuelSide = {
+  player: PlayerRow & {
+    club: TeamBrief | null;
+    competition: CompetitionBrief | null;
+  };
+  attributes: Record<string, number>;
+  per_90: {
+    goals: number | null;
+    assists: number | null;
+    involvement: number | null;
+    minutes_per_appearance: number | null;
+  };
+  season: {
+    season: string;
+    appearances: number;
+    starts: number;
+    minutes: number;
+    goals: number;
+    assists: number;
+    clean_sheets: number;
+    yellow_cards: number;
+    red_cards: number;
+    rating: number;
+    form: number;
+  };
+};
+
+export type DuelCategory = {
+  key: "goals" | "assists" | "involvement_per_90" | "rating" | "minutes" | "overall" | "discipline";
+  basis: string;
+  lower_wins: boolean;
+  left: number | null;
+  right: number | null;
+  winner: "left" | "right" | "level" | "unavailable";
+  margin: number | null;
+};
+
+export type DuelResult = WorldEnvelope & {
+  left: DuelSide;
+  right: DuelSide;
+  categories: DuelCategory[];
+  verdict: {
+    winner: "left" | "right" | "draw";
+    left_wins: number;
+    right_wins: number;
+    levelled: number;
+    unavailable: number;
+    counted: number;
+    decided_by: string[];
+    left_categories: string[];
+    right_categories: string[];
+  };
+  method: {
+    categories: string[];
+    basis: Record<string, string>;
+    per90_floor_minutes: number;
+    red_weight: number;
+    verdict: string;
+    tie: string;
+  };
+};

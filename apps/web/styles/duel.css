@@ -1,0 +1,522 @@
+/* The head-to-head — two corners, one ledger.
+   Vocabulary follows styles/globals.css: panels, tables and type come from there; only what a duel needs is new.
+   The two hues are the palette's own accent (left) and info (right); no third colour is introduced, so a duel
+   reads as part of the product rather than as a poster pasted onto it. */
+
+.duel__arena {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1.25rem;
+  padding: 1.6rem 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(620px 320px at 0% 60%, rgba(53, 240, 164, 0.07), transparent 72%),
+    radial-gradient(620px 320px at 100% 40%, rgba(95, 168, 255, 0.07), transparent 72%),
+    var(--bg-panel);
+  overflow: hidden;
+}
+
+/* The etched centre line: a duel is two halves, and the seam should be visible without a border doing the talking. */
+.duel__arena::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(90deg, transparent calc(50% - 0.5px), var(--line-soft) calc(50% - 0.5px), var(--line-soft) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  pointer-events: none;
+}
+
+.duel__corner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.duel__corner--right {
+  text-align: end;
+  align-items: flex-end;
+}
+
+.duel__corner--right .eyebrow,
+.duel__corner--right .duel__meta {
+  align-self: flex-end;
+}
+
+.duel__name {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.1vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+}
+
+.duel__corner.is-winner .duel__name {
+  color: var(--accent);
+}
+
+.duel__corner--right.is-winner .duel__name {
+  color: var(--info);
+}
+
+/* The winner's rail sits under the name rather than around the panel: a border would redraw the arena's own edge. */
+.duel__corner.is-winner::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: -0.55rem;
+  width: 56px;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0.85;
+}
+
+.duel__corner--right.is-winner::after {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+  background: var(--info);
+}
+
+.duel__figures {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  color: var(--text-2);
+  font-size: 0.82rem;
+}
+
+.duel__corner--right .duel__figures {
+  justify-content: flex-end;
+}
+
+.duel__ovr {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+
+.duel__figures-label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+  color: var(--text-3);
+}
+
+.duel__dot {
+  color: var(--line-control);
+}
+
+.duel__meta {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.duel__ribbon {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(53, 240, 164, 0.4);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.duel__corner--right .duel__ribbon {
+  align-self: flex-end;
+  border-color: rgba(95, 168, 255, 0.4);
+  background: rgba(95, 168, 255, 0.12);
+  color: var(--info);
+}
+
+.duel__middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 132px;
+  text-align: center;
+}
+
+.duel__vs {
+  font-size: 0.62rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding-inline-start: 0.34em;
+}
+
+.duel__tally {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--text-3);
+  line-height: 1;
+}
+
+.duel__tally .is-win {
+  color: var(--text);
+}
+
+.duel__middle:not(.is-draw) .duel__tally span:first-child.is-win {
+  color: var(--accent);
+}
+
+.duel__middle:not(.is-draw) .duel__tally span:last-child.is-win {
+  color: var(--info);
+}
+
+.duel__tally-dash {
+  color: var(--line-control);
+  font-weight: 400;
+}
+
+.duel__verdict {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  max-width: 16ch;
+}
+
+.duel__counted {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  max-width: 18ch;
+}
+
+/* ── radar ───────────────────────────────────────────────────────────────── */
+
+.duel__radar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.duel-radar__shape {
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.duel-radar__shape--left {
+  fill: rgba(53, 240, 164, 0.16);
+  stroke: var(--accent);
+}
+
+.duel-radar__shape--right {
+  fill: rgba(95, 168, 255, 0.15);
+  stroke: var(--info);
+}
+
+.duel__legend {
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+  color: var(--text-2);
+}
+
+.duel__legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.duel__swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.duel__swatch--left {
+  background: var(--accent);
+}
+
+.duel__swatch--right {
+  background: var(--info);
+}
+
+/* ── the ledger ──────────────────────────────────────────────────────────── */
+
+.duel__caption {
+  caption-side: top;
+  text-align: start;
+  color: var(--text-3);
+  font-size: 0.72rem;
+  padding-bottom: 0.5rem;
+}
+
+.duel__ledger th[scope="row"] {
+  text-align: start;
+}
+
+.duel__category {
+  display: table-cell;
+}
+
+.duel__category > span {
+  display: block;
+}
+
+.duel__basis {
+  color: var(--text-3);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.duel__value {
+  width: 22%;
+  font-size: 1.02rem;
+}
+
+.duel__value.is-win {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.duel__ledger tbody tr:first-child .duel__value.is-win,
+.duel__per90 tbody tr .num {
+  color: inherit;
+}
+
+.duel__ledger tr.is-unavailable .duel__value {
+  color: var(--text-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--line-control);
+}
+
+.duel__ledger tr.is-unavailable .duel__category > span:first-child {
+  color: var(--text-2);
+}
+
+.duel__per90 th[scope="row"] {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+/* ── the reading ─────────────────────────────────────────────────────────── */
+
+.duel__reading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.94rem;
+}
+
+.duel__reading p {
+  margin: 0;
+}
+
+.duel__reading-line {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.duel__method {
+  font-size: 0.78rem;
+}
+
+/* ── the picker ──────────────────────────────────────────────────────────── */
+
+.duel-picker__slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.duel-picker__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  min-height: 108px;
+  padding: 0.85rem 0.9rem;
+  border: 1px dashed var(--line-control);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.duel-picker__slot:hover {
+  border-color: var(--text-3);
+}
+
+.duel-picker__slot.is-active {
+  border-style: solid;
+  border-color: var(--line-control);
+  background: var(--bg-panel-2);
+  box-shadow: inset 0 0 0 1px rgba(53, 240, 164, 0.18);
+}
+
+.duel-picker__slot--right.is-active {
+  box-shadow: inset 0 0 0 1px rgba(95, 168, 255, 0.2);
+}
+
+.duel-picker__slot.is-filled {
+  border-style: solid;
+}
+
+.duel-picker__corner {
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.duel-picker__slot--left.is-filled .duel-picker__corner {
+  color: var(--accent);
+}
+
+.duel-picker__slot--right.is-filled .duel-picker__corner {
+  color: var(--info);
+}
+
+.duel-picker__name {
+  font-size: 1.12rem;
+  line-height: 1.15;
+}
+
+.duel-picker__sub {
+  font-size: 0.78rem;
+  color: var(--text-2);
+}
+
+.duel-picker__empty {
+  color: var(--text-3);
+  font-size: 0.9rem;
+  margin-top: auto;
+}
+
+.duel-picker__change {
+  margin-top: auto;
+  font-size: 0.7rem;
+  color: var(--text-3);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.duel-picker__hits {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--line);
+}
+
+.duel-picker__hit {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  background: var(--bg-panel);
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.duel-picker__hit:hover,
+.duel-picker__hit:focus-visible {
+  background: var(--bg-panel-2);
+}
+
+.duel-picker__hit .muted {
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.duel-picker__actions {
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.duel-rules {
+  margin: 0;
+  padding-inline-start: 1.1rem;
+  display: grid;
+  gap: 0.55rem;
+  color: var(--text-2);
+  font-size: 0.88rem;
+}
+
+.duel-rules li::marker {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 860px) {
+  .duel__arena {
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  .duel__arena::before {
+    background-image: linear-gradient(180deg, transparent calc(50% - 0.5px), var(--line-soft) calc(50% - 0.5px), var(--line-soft) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  }
+
+  .duel__corner--right {
+    text-align: start;
+    align-items: flex-start;
+  }
+
+  .duel__corner--right .eyebrow,
+  .duel__corner--right .duel__meta,
+  .duel__corner--right .duel__figures,
+  .duel__corner--right .duel__ribbon {
+    align-self: flex-start;
+    justify-content: flex-start;
+  }
+
+  .duel__corner--right.is-winner::after {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+  }
+
+  .duel__middle {
+    padding: 0.4rem 0;
+  }
+
+  .duel-picker__slots {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The page's one h1 names the pair for a screen reader and for the document outline; the two names a sighted
+   reader sees are h2s inside the arena, because "both of these are the title" is not a heading structure. */
+.duel__h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
