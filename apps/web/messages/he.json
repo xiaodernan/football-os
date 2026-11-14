@@ -4465,7 +4465,7 @@
     "footnote": "המספרים האלה מגיעים מתהליך השער שענה לבקשה הזאת. הם נקראים בכל טעינת עמוד, לא נשמרים במטמון ולא נכתבים בחזרה — העמוד הזה הוא קורא בלבד, וקובצי התצורה של המישור נשארים מקור האמת היחיד."
   },
   "duel": {
-    "metaPickerTitle": "השוו בין שני שחקנים · FOOTBALL OS",
+    "metaPickerTitle": "השוו בין שני שחקנים",
     "metaPickerDescription": "שני שחקנים, יומנת של שבע עמודות. המספרים מהעולם, וההכרעה מהיומן; שום דבר כאן אינו ציון מוסווה.",
     "pickerTitle": "השוו בין שני שחקנים",
     "pickerLede": "בחרו שני שחקנים מהעולם המובנה וראו מי זוכה בכל עמודה — היומן הוא חשבון, לא דעה.",
@@ -4518,8 +4518,8 @@
     "ledgerTitle": "ההכרעה, עמודה עמודה",
     "metaLine": "{age} שנים · {nation} · עונת {season}",
     "metaDescription": "{left} זוכה ב-{leftWins} עמודות לעומת {rightWins} ל-{right}. היומן לא מתעניין במוניטין.",
-    "metaTitle": "{left} נגד {right} · FOOTBALL OS",
-    "metaTitleFallback": "השוו בין שני שחקנים · FOOTBALL OS",
+    "metaTitle": "{left} נגד {right}",
+    "metaTitleFallback": "השוו בין שני שחקנים",
     "metaDescriptionFallback": "זווגו שני שחקנים מהעולם המובנה וּראו מי זוכה בכל עמודה.",
     "methodNote": "נספר על {counted} מתוך {total} עמודות; השאר בשוויון.",
     "nationUnknown": "לא רשום",

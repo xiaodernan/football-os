@@ -4465,7 +4465,7 @@
     "footnote": "这些数字来自回答本次请求的那个网关进程。每次打开页面都重新读取，不缓存，也不回写——这一页只是读者，平面的配置文件仍然是唯一的事实来源。"
   },
   "duel": {
-    "metaPickerTitle": "对比两名球员 · FOOTBALL OS",
+    "metaPickerTitle": "对比两名球员",
     "metaPickerDescription": "两名球员、七列账本。数据来自世界本身，判决来自账本本身，没有什么伪装成能力的评分。",
     "pickerTitle": "对比两名球员",
     "pickerLede": "挑出世界里两名球员，看谁赢下哪一列——账本是算术，不是意见。",
@@ -4518,8 +4518,8 @@
     "ledgerTitle": "逐列判决",
     "metaLine": "{age} 岁 · {nation} · {season} 赛季",
     "metaDescription": "{left} 赢下 {leftWins} 列，{right} 赢下 {rightWins} 列。账本不看声望。",
-    "metaTitle": "{left} 对 {right} · FOOTBALL OS",
-    "metaTitleFallback": "对比两名球员 · FOOTBALL OS",
+    "metaTitle": "{left} 对 {right}",
+    "metaTitleFallback": "对比两名球员",
     "metaDescriptionFallback": "从生成的世界挑两名球员，看谁赢下哪一列。",
     "methodNote": "只统计了 {total} 列中的 {counted} 列，其余列为平手。",
     "nationUnknown": "未记录",

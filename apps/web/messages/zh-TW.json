@@ -4465,7 +4465,7 @@
     "footnote": "這些數字來自回答本次請求的那個閘道行程。每次開啟頁面都重新讀取，不快取，也不回寫——這一頁只是讀者，平面的設定檔仍然是唯一的事實來源。"
   },
   "duel": {
-    "metaPickerTitle": "對比兩名球員 · FOOTBALL OS",
+    "metaPickerTitle": "對比兩名球員",
     "metaPickerDescription": "兩名球員、七列帳本。數據來自世界本身，判決來自帳本本身，沒有什麼偽裝成能力的評分。",
     "pickerTitle": "對比兩名球員",
     "pickerLede": "挑出世界裡兩名球員，看誰贏下哪一列——帳本是算術，不是意見。",
@@ -4518,8 +4518,8 @@
     "ledgerTitle": "逐列判決",
     "metaLine": "{age} 歲 · {nation} · {season} 賽季",
     "metaDescription": "{left} 贏下 {leftWins} 列，{right} 贏下 {rightWins} 列。帳本不看聲望。",
-    "metaTitle": "{left} 對 {right} · FOOTBALL OS",
-    "metaTitleFallback": "對比兩名球員 · FOOTBALL OS",
+    "metaTitle": "{left} 對 {right}",
+    "metaTitleFallback": "對比兩名球員",
     "metaDescriptionFallback": "從生成的世界挑兩名球員，看誰贏下哪一列。",
     "methodNote": "只統計了 {total} 列中的 {counted} 列，其餘列為平手。",
     "nationUnknown": "未記錄",

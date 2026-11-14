@@ -4465,7 +4465,7 @@
     "footnote": "Ces chiffres viennent du processus de passerelle qui a répondu à cette requête. Ils sont lus à chaque chargement, jamais mis en cache ni réécrits — cette page est un lecteur, et les fichiers de configuration du plan restent la source de vérité."
   },
   "duel": {
-    "metaPickerTitle": "Comparer deux joueurs · FOOTBALL OS",
+    "metaPickerTitle": "Comparer deux joueurs",
     "metaPickerDescription": "Deux joueurs, un registre de sept colonnes. Les chiffres viennent du monde, le verdict vient du registre ; rien ici n'est une note déguisée.",
     "pickerTitle": "Comparer deux joueurs",
     "pickerLede": "Choisissez deux joueurs du monde généré et voyez qui emporte quelle colonne — le registre est l'arithmétique, pas une opinion.",
@@ -4518,8 +4518,8 @@
     "ledgerTitle": "Le verdict, colonne par colonne",
     "metaLine": "{age} ans · {nation} · saison {season}",
     "metaDescription": "{left} emporte {leftWins} catégories contre {rightWins} pour {right}. Le registre ne se soucie pas des réputations.",
-    "metaTitle": "{left} contre {right} · FOOTBALL OS",
-    "metaTitleFallback": "Comparer deux joueurs · FOOTBALL OS",
+    "metaTitle": "{left} contre {right}",
+    "metaTitleFallback": "Comparer deux joueurs",
     "metaDescriptionFallback": "Appariez deux joueurs du monde généré et voyez qui emporte quelle colonne.",
     "methodNote": "Compté sur {counted} des {total} colonnes ; les autres sont à égalité.",
     "nationUnknown": "non enregistré",

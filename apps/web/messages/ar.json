@@ -4465,7 +4465,7 @@
     "footnote": "تأتي هذه الأرقام من عملية البوابة التي أجابت على هذا الطلب. تُقرأ عند كل تحميل للصفحة، ولا تُخزَّن ولا تُكتب مرة أخرى — هذه الصفحة قارئ فقط، وملفات إعداد المستوى تبقى المصدر الوحيد للحقيقة"
   },
   "duel": {
-    "metaPickerTitle": "قارن بين لاعبيْن · FOOTBALL OS",
+    "metaPickerTitle": "قارن بين لاعبيْن",
     "metaPickerDescription": "لاعبيْن، سجل واحد من سبع خانات. الأرقام من العالم، والحكم من السجل؛ لا شيء هنا تقييم مقنّع۔",
     "pickerTitle": "قارن بين لاعبيْن",
     "pickerLede": "اختر لاعبيْن من العالم المُولَّد وانظر من يفوز بأي خانة — السجل حساب، لا رأي۔",
@@ -4518,8 +4518,8 @@
     "ledgerTitle": "الحكم عموداً عموداً",
     "metaLine": "{age} سنة · {nation} · موسم {season}",
     "metaDescription": "{left} يفوز بـ {leftWins} خانة، و{rightWins} لـ {right}. السجل لا يعبأ بالسمعة۔",
-    "metaTitle": "{left} ضد {right} · FOOTBALL OS",
-    "metaTitleFallback": "قارن بين لاعبيْن · FOOTBALL OS",
+    "metaTitle": "{left} ضد {right}",
+    "metaTitleFallback": "قارن بين لاعبيْن",
     "metaDescriptionFallback": "أقرن لاعبيْن من العالم المُولَّد وانظر من يفوز بأي خانة۔",
     "methodNote": "محتسب على {counted} من {total} خانة؛ والباقي تعادل۔",
     "nationUnknown": "غير مسجّل",

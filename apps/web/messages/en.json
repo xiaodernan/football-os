@@ -4465,7 +4465,7 @@
     "footnote": "These numbers come from the gateway process that answered this request. They are read on every page load, never cached and never written back — this page is a reader, and the plane's own configuration files remain the source of truth."
   },
   "duel": {
-    "metaPickerTitle": "Compare two players · FOOTBALL OS",
+    "metaPickerTitle": "Compare two players",
     "metaPickerDescription": "Two players, one ledger, seven categories. The stats are the world's stats, and the verdict is the ledger's; nothing here is a rating in disguise.",
     "pickerTitle": "Compare two players",
     "pickerLede": "Pick any two players from the generated world and see who takes which column — the ledger is arithmetic, not opinion.",
@@ -4518,8 +4518,8 @@
     "ledgerTitle": "The column-by-column verdict",
     "metaLine": "{age} years · {nation} · {season} season",
     "metaDescription": "{left} takes {leftWins} categories to {right}'s {rightWins}. The ledger does not care about reputations.",
-    "metaTitle": "{left} vs {right} · FOOTBALL OS",
-    "metaTitleFallback": "Compare two players · FOOTBALL OS",
+    "metaTitle": "{left} vs {right}",
+    "metaTitleFallback": "Compare two players",
     "metaDescriptionFallback": "Pair two players from the generated world and see who takes which column.",
     "methodNote": "Counted from {counted} of {total} columns; the rest are levelled.",
     "nationUnknown": "not recorded",
