@@ -16,12 +16,12 @@ artifact the web client and the currency gates read — and takes every operatio
 `security` requirement as a private door, every operation that declares none as a public one.
 
 At the latest run recorded here (run O, §2) the contract's SHA-256 was
-`e3f1036f021738d32cab84e4f99f87e2472dc33e18876af5aa5cef190685a818`, and the census read:
+`a7555510d0f2dd4dd6476d646d7a4c8764bec89acd83417045c954541abbb3f2`, and the census read:
 
 | measurement | value | floor |
 | --- | --- | --- |
 | secured operations | 241 | 200 |
-| public operations | 56 | 40 |
+| public operations | 57 | 40 |
 | private `GET` paths | 104 | 85 |
 
 The floors exist so an empty or half-read contract cannot pass as a clean probe; they are printed with
@@ -62,6 +62,8 @@ of them `GET`s — so the census moved to 239 / 55 / 102 and the public set did 
 Run N is the run against the contract as committed today: the metrics tier gained its own scrape door (GET /api/v1/metrics/prometheus, one private GET across one new path), the contract was re-exported on 2026-11-13 and its SHA moved with it, so the census moved to 241 / 55 / 104. The run recorded here was made against the tree as committed (2026-11-13T10:53 UTC, port 8751), on a scratch SQLite database the app created on startup, ENV=development, CORS_ORIGINS set to the project's own 3210 pair.
 
 Run O is the run against the contract as committed today: the world gained its head-to-head door (GET /api/v1/world/duel, one public GET across one new path, comparing two players column-by-column with a 90-minute floor for per-90 rates), the contract was re-exported on 2026-11-13 and its SHA moved with it, so the census moved to 241 / 56 / 104. The run recorded here was made against the tree as committed (2026-11-13T18:57 UTC, port 8751), on a scratch SQLite database the app created on startup, ENV=development, CORS_ORIGINS set to the project's own 3210 pair.
+
+Run P is the ledger's own note for the contract as committed today: the featured-duel door landed (GET /api/v1/world/duel/featured, one public GET across one new path, picking the world's own sharpest scorer and most creative hand, answering with the exact /world/duel envelope), the contract was re-exported on 2026-11-14 and its SHA moved with it, so the census moved to 241 / 57 / 104. No fresh probe was executed for this row — the run O execution (10/10) remains the last run recorded against a live server; the counts and the SHA above are this ledger's account of the committed tree, which the currency gates recompute for themselves.
 ## 2. The runs
 
 Runs A–C were made on 2026-10-22 local time (their reports' timestamps are UTC, `2026-10-21T19:2x`)
