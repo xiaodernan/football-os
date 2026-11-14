@@ -40,6 +40,7 @@ from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
 from app.services.world.duel import compare, per90
+from app.services.world.records import compute_records
 from app.services.world.story import compute_story
 from app.services.world.sync import GATE
 
@@ -1070,6 +1071,20 @@ def story(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_story")
     return _envelope(**compute_story(db))
+
+
+@router.get("/records")
+def records(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The record book — eight marks the world produced, recomputed from the stored rows.
+
+    The almanac honours individuals; the story tells the season; this door witnesses the
+    records — the hat-trick ledger, the goal-fest, the strongest offence, the fortress, the
+    castle, the cards, the wall, and the best single-match rating. Every figure is adjectival
+    arithmetic on `real_matches` and `real_player_match_stats`; the door returns rows and keys;
+    the web tier prints the language.
+    """
+    limit(request, 60, 60, scope="world_records")
+    return _envelope(**compute_records(db))
 
 
 __all__ = ["router"]

@@ -3057,3 +3057,100 @@ export type StoryResult = WorldEnvelope & {
   season: { label: string; kind: string };
   chapters: [StoryChapterTitleRace, StoryChapterAvalanche, StoryChapterUnbeaten];
 };
+
+/** One side of a record-book fixture's line. */
+export type RecordSide = {
+  id?: string;
+  slug: string | null;
+  name: string;
+  path: string | null;
+};
+
+/** A fixture that took a record — shared by several marks. */
+export type RecordMatch = {
+  slug: string;
+  path: string;
+  kickoff_at: string | null;
+  round_label: string;
+  home: RecordSide;
+  away: RecordSide;
+  home_goals: number;
+  away_goals: number;
+};
+
+export type RecordPlayer = RecordSide & { id: string; slug: string; path: string; team?: RecordSide };
+export type RecordTeam = RecordSide;
+
+type RecordRef<K extends string> = { key: K; available: true } | { key: K; available: false };
+
+export type RecordBiggestHaul = RecordRef<"biggest_haul"> & {
+  player?: RecordPlayer;
+  goals?: number;
+  rating?: number;
+  assists?: number;
+  match?: RecordMatch;
+};
+
+export type RecordGoalFest = RecordRef<"goal_fest"> & {
+  goals?: number;
+  match?: RecordMatch;
+};
+
+export type RecordOffenceClub = RecordRef<"offence_club"> & {
+  team?: RecordTeam;
+  goals_for?: number;
+  competition?: string | null;
+  competition_slug?: string | null;
+};
+
+export type RecordDefenceClub = RecordRef<"defence_club"> & {
+  team?: RecordTeam;
+  goals_against?: number;
+  played?: number;
+  competition?: string | null;
+  competition_slug?: string | null;
+};
+
+export type RecordCastle = RecordRef<"castle"> & {
+  team?: RecordTeam;
+  clean_sheets?: number;
+  competition?: string | null;
+  competition_slug?: string | null;
+};
+
+export type RecordCardsFixture = RecordRef<"cards_fixture"> & {
+  weighted_cards?: number;
+  match?: RecordMatch;
+};
+
+export type RecordKeeperWall = RecordRef<"keeper_wall"> & {
+  player?: RecordPlayer;
+  saves?: number;
+  rating?: number;
+  match?: RecordMatch;
+};
+
+export type RecordHighestRated = RecordRef<"highest_rated"> & {
+  player?: RecordPlayer;
+  rating?: number;
+  minutes?: number;
+  goals?: number;
+  assists?: number;
+  match?: RecordMatch;
+};
+
+/** Each record in the book is its own discriminated union; the catalogue prints every sentence. */
+export type SeasonRecord =
+  | RecordBiggestHaul
+  | RecordGoalFest
+  | RecordOffenceClub
+  | RecordDefenceClub
+  | RecordCastle
+  | RecordCardsFixture
+  | RecordKeeperWall
+  | RecordHighestRated;
+
+export type RecordsResult = WorldEnvelope & {
+  season: { label: string; kind: string };
+  records: [RecordBiggestHaul, RecordGoalFest, RecordOffenceClub, RecordDefenceClub, RecordCastle, RecordCardsFixture, RecordKeeperWall, RecordHighestRated];
+};

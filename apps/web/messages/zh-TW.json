@@ -773,7 +773,10 @@
     "sectionAlmanacChip": "榮譽",
     "sectionStoryLabel": "本賽季的故事",
     "sectionStoryNote": "存檔裡一直躺著的三個章節",
-    "sectionStoryChip": "故事"
+    "sectionStoryChip": "故事",
+    "sectionRecordsLabel": "紀錄簿",
+    "sectionRecordsNote": "八個這個世界真正打出來的紀錄",
+    "sectionRecordsChip": "紀錄"
   },
   "coach": {
     "metaTitle": "AI 教練",
@@ -4620,5 +4623,39 @@
     "chapterThreeRun": "{run} 場不敗",
     "unavailable": "這個世界暫時還沒有寫完這一章",
     "chapterOneGdGap": "淨勝球作計"
+  },
+  "worldRecords": {
+    "metaTitle": "本賽季的紀錄",
+    "metaDescription": "八個這個世界真正打出的紀錄——最高產、進球盛宴、火力最猛、鋼鐵堡壘。每一個數字都從存檔的比賽裡重新算。",
+    "eyebrow": "紀錄簿",
+    "title": "本賽季的紀錄",
+    "lede": "這些紀錄寫在這裡，因為這個世界親手打出來了——每一項都在每次讀取時，從存檔的比賽裡重新演算。",
+    "backWorld": "回到世界",
+    "seasonLabel": "2026/27 賽季",
+    "recordBiggestHaul": "最高產",
+    "recordBiggestHaulHint": "單場一名球員進最多球——這個世界讓他打進了這麼多",
+    "recordGoalFest": "進球盛宴",
+    "recordGoalFestHint": "已完賽比賽中進球最多的一場——聯賽和盃賽一起算",
+    "recordOffenceClub": "進攻火力最猛",
+    "recordOffenceClubHint": "聯賽進球最多的球隊",
+    "recordDefenceClub": "鋼鐵堡壘",
+    "recordDefenceClubHint": "聯賽失球最少的球隊",
+    "recordCastle": "堅城",
+    "recordCastleHint": "聯賽零封場次最多的球隊",
+    "recordCardsFixture": "吃牌大戶",
+    "recordCardsFixtureHint": "加權吃牌最多的一場——黃牌×1 + 紅牌×3",
+    "recordKeeperWall": "守門鐵閘",
+    "recordKeeperWallHint": "單場最多撲救的一名球員",
+    "recordHighestRated": "巔峰時刻",
+    "recordHighestRatedHint": "單場最高評分——至少站了六十分鐘",
+    "captionGoals": "進球",
+    "captionSaves": "撲救",
+    "captionRating": "評分",
+    "captionCleanSheets": "零封",
+    "captionCards": "加權吃牌",
+    "captionScored": "進球",
+    "captionConceded": "失球",
+    "captionGames": "{games} 場已賽",
+    "unavailable": "這一條還沒有寫完"
   }
 }

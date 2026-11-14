@@ -2872,6 +2872,29 @@
         }
       }
     },
+    "/api/v1/world/records": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Records",
+        "description": "The record book — eight marks the world produced, recomputed from the stored rows.\n\nThe almanac honours individuals; the story tells the season; this door witnesses the\nrecords — the hat-trick ledger, the goal-fest, the strongest offence, the fortress, the\ncastle, the cards, the wall, and the best single-match rating. Every figure is adjectival\narithmetic on `real_matches` and `real_player_match_stats`; the door returns rows and keys;\nthe web tier prints the language.",
+        "operationId": "records_api_v1_world_records_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Records Api V1 World Records Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [

@@ -773,7 +773,10 @@
     "sectionAlmanacChip": "honneurs",
     "sectionStoryLabel": "L'histoire",
     "sectionStoryNote": "les trois chapitres que les matchs avaient déjà écrits",
-    "sectionStoryChip": "récit"
+    "sectionStoryChip": "récit",
+    "sectionRecordsLabel": "Le livre des records",
+    "sectionRecordsNote": "les huit marques que le monde a gagnées",
+    "sectionRecordsChip": "marques"
   },
   "coach": {
     "metaTitle": "Entraîneur IA",
@@ -4620,5 +4623,39 @@
     "chapterThreeRun": "{run} sans défaite",
     "unavailable": "ce chapitre n'est pas encore écrit pour ce monde",
     "chapterOneGdGap": "à la différence de buts"
+  },
+  "worldRecords": {
+    "metaTitle": "Les records de la saison",
+    "metaDescription": "Huit marques que le monde a vraiment produites — le plus gros butin, le festival des buts, la meilleure attaque, la défense la plus étanche. Chaque chiffre recalculé depuis les matchs enregistrés.",
+    "eyebrow": "le livre des records",
+    "title": "Les records de la saison",
+    "lede": "Les records vivent ici parce que le monde les a gagnés — chaque marque recalculée depuis les matchs à chaque lecture.",
+    "backWorld": "retour au monde",
+    "seasonLabel": "saison 2026/27",
+    "recordBiggestHaul": "La Plus Grosse Rafle",
+    "recordBiggestHaulHint": "le plus de buts par un joueur dans un match — ce que le monde lui a laissé marquer",
+    "recordGoalFest": "Le Festival des buts",
+    "recordGoalFestHint": "le plus de buts qu'un match joué ait produits — coupe et championnat réunis",
+    "recordOffenceClub": "La Déferlante",
+    "recordOffenceClubHint": "le club qui a marqué le plus de buts au championnat",
+    "recordDefenceClub": "La Forteresse",
+    "recordDefenceClubHint": "le club qui a encaissé le moins de buts au championnat",
+    "recordCastle": "Le Château",
+    "recordCastleHint": "le club avec le plus de cleansheets au championnat",
+    "recordCardsFixture": "La Note de cartons",
+    "recordCardsFixtureHint": "le match aux plus de cartons pondérés — jaune ×1 + rouge ×3",
+    "recordKeeperWall": "Le Mur",
+    "recordKeeperWallHint": "le plus d'arrêts d'un gardien dans un seul match",
+    "recordHighestRated": "Le Sommet",
+    "recordHighestRatedHint": "la meilleure note d'un match — soixante minutes sur le terrain",
+    "captionGoals": "buts",
+    "captionSaves": "arrêts",
+    "captionRating": "note",
+    "captionCleanSheets": "cleansheets",
+    "captionCards": "cartons pondérés",
+    "captionScored": "buts marqués",
+    "captionConceded": "buts encaissés",
+    "captionGames": "{games} joués",
+    "unavailable": "cette marque n'est pas encore écrite"
   }
 }

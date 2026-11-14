@@ -773,7 +773,10 @@
     "sectionAlmanacChip": "أشرف",
     "sectionStoryLabel": "قصة الموسم",
     "sectionStoryNote": "الفصول الثلاثة التي كتبتها المباريات بالفعل",
-    "sectionStoryChip": "قصة"
+    "sectionStoryChip": "قصة",
+    "sectionRecordsLabel": "كتاب السجلات",
+    "sectionRecordsNote": "العلامات الثماني التي امتلكها العالم",
+    "sectionRecordsChip": "سجلات"
   },
   "coach": {
     "metaTitle": "المدرب الذكي",
@@ -4620,5 +4623,39 @@
     "chapterThreeRun": "{run} بلا هزيمة",
     "unavailable": "هذا الفصل لم يُكتب بعد لهذا العالم",
     "chapterOneGdGap": "بفارق الأهداف"
+  },
+  "worldRecords": {
+    "metaTitle": "سجلات الموسم",
+    "metaDescription": "ثمانية سجلات سجلها العالم فعلاً — الحصيدة الكبرى، مهرجان الأهداف، الهجوم الكاسح، الحصن۔ كل رقم يُعاد احتسابه من المباريات المخزّنة۔",
+    "eyebrow": "كتاب السجلات",
+    "title": "سجلات الموسم",
+    "lede": "تعيش السجلات هنا لأن العالم امتلكها۔ كل علامة تُعاد حسابها من المباريات المخزّنة في كل قراءة۔",
+    "backWorld": "العودة إلى العالم",
+    "seasonLabel": "موسم 2026/27",
+    "recordBiggestHaul": "الحصيلة القصوى",
+    "recordBiggestHaulHint": "أكثر أهداف أحرزها لاعب في مباراة واحدة — ما سمح له العالم به",
+    "recordGoalFest": "مهرجان الأهداف",
+    "recordGoalFestHint": "أكثر الأهداف التي أفرزتها مباراة منتهية — الدوري والكأس معاً",
+    "recordOffenceClub": "الهجوم الكاسح",
+    "recordOffenceClubHint": "الفريق الأكثر تهديفاً في الدوري",
+    "recordDefenceClub": "الحصن",
+    "recordDefenceClubHint": "الفريق الأقل استقبالاً للأهداف في الدوري",
+    "recordCastle": "القلعة",
+    "recordCastleHint": "الفريق الأكثر حفاظاً على شباكه نظيفة في الدوري",
+    "recordCardsFixture": "حساب البطاقات",
+    "recordCardsFixtureHint": "المباراة الأثقل بطاقات موزونة — صفراء ×1 وحمراء ×3",
+    "recordKeeperWall": "الجدار",
+    "recordKeeperWallHint": "أكثر تصديات قام بها حارس في مباراة واحدة",
+    "recordHighestRated": "القمة",
+    "recordHighestRatedHint": "أعلى تقييم في مباراة واحدة — ستون دقيقة على الأقل ميدانياً",
+    "captionGoals": "أهداف",
+    "captionSaves": "تصديات",
+    "captionRating": "تقييم",
+    "captionCleanSheets": "نظافة شباك",
+    "captionCards": "بطاقات مرجحة",
+    "captionScored": "أهداف مسجلة",
+    "captionConceded": "أهداف مهدرة",
+    "captionGames": "{games} مباريات",
+    "unavailable": "هذه العلامة لم تُكتب بعد۔"
   }
 }

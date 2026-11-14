@@ -773,7 +773,10 @@
     "sectionAlmanacChip": "荣誉",
     "sectionStoryLabel": "本赛季的故事",
     "sectionStoryNote": "存档里一直躺着的三个章节",
-    "sectionStoryChip": "故事"
+    "sectionStoryChip": "故事",
+    "sectionRecordsLabel": "纪录簿",
+    "sectionRecordsNote": "八个这个世界真正打出来的纪录",
+    "sectionRecordsChip": "纪录"
   },
   "coach": {
     "metaTitle": "AI 教练",
@@ -4620,5 +4623,39 @@
     "chapterThreeRun": "{run} 场不败",
     "unavailable": "这个世界暂时还没有写完这一章",
     "chapterOneGdGap": "净胜球作计"
+  },
+  "worldRecords": {
+    "metaTitle": "本赛季的纪录",
+    "metaDescription": "八个这个世界真正打出的纪录——最高产、进球盛宴、火力最猛、钢铁堡垒。每一个数字都从存档的比赛里重新算。",
+    "eyebrow": "纪录簿",
+    "title": "本赛季的纪录",
+    "lede": "这些纪录写在这里，因为这个世界亲手打出来了——每一项都在每次读取时，从存档的比赛里重新演算。",
+    "backWorld": "回到世界",
+    "seasonLabel": "2026/27 赛季",
+    "recordBiggestHaul": "最高产",
+    "recordBiggestHaulHint": "单场一名球员进最多球——这个世界让他打进了这么多",
+    "recordGoalFest": "进球盛宴",
+    "recordGoalFestHint": "已完赛比赛中进球最多的一场——联赛和杯赛一起算",
+    "recordOffenceClub": "进攻火力最猛",
+    "recordOffenceClubHint": "联赛进球最多的球队",
+    "recordDefenceClub": "钢铁堡垒",
+    "recordDefenceClubHint": "联赛失球最少的球队",
+    "recordCastle": "坚城",
+    "recordCastleHint": "联赛零封场次最多的球队",
+    "recordCardsFixture": "吃牌大户",
+    "recordCardsFixtureHint": "加权吃牌最多的一场——黄牌×1 + 红牌×3",
+    "recordKeeperWall": "守门铁闸",
+    "recordKeeperWallHint": "单场最多扑救的一名球员",
+    "recordHighestRated": "巅峰时刻",
+    "recordHighestRatedHint": "单场最高评分——至少站了六十分钟",
+    "captionGoals": "进球",
+    "captionSaves": "扑救",
+    "captionRating": "评分",
+    "captionCleanSheets": "零封",
+    "captionCards": "加权吃牌",
+    "captionScored": "进球",
+    "captionConceded": "失球",
+    "captionGames": "{games} 场已赛",
+    "unavailable": "这一条还没有写完"
   }
 }

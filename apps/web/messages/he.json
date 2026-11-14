@@ -773,7 +773,10 @@
     "sectionAlmanacChip": "כבוד",
     "sectionStoryLabel": "סיפור העונה",
     "sectionStoryNote": "שלושת הפרקים שהמשחקים כבר כתבו",
-    "sectionStoryChip": "סיפור"
+    "sectionStoryChip": "סיפור",
+    "sectionRecordsLabel": "ספר השיאים",
+    "sectionRecordsNote": "שמונת הסימנים שהעולם הרוויח",
+    "sectionRecordsChip": "שיאים"
   },
   "coach": {
     "metaTitle": "המאמן ה-AI",
@@ -4620,5 +4623,39 @@
     "chapterThreeRun": "{run} ללא הפסד",
     "unavailable": "הפרק הזה עדיין לא נכתב לעולם הזה",
     "chapterOneGdGap": "בהפרש שערים"
+  },
+  "worldRecords": {
+    "metaTitle": "שיאי העונה",
+    "metaDescription": "שמונה סימנים שהעולם באמת ייצר — הקציר הגדול, פסטיבל השערים, המתקפה השוטפת, המבצר. כל מספר מחושב מחדש מהמשחקים השמורים.",
+    "eyebrow": "ספר השיאים",
+    "title": "שיאי העונה",
+    "lede": "שיאים חיים כאן כי העולם הרוויח אותם — כל סימן מחושב מחדש מהמשחקים השמורים בכל קריאה.",
+    "backWorld": "חזרה אל העולם",
+    "seasonLabel": "עונת 2026/27",
+    "recordBiggestHaul": "הקציר הגדול",
+    "recordBiggestHaulHint": "הכי הרבה שערים שחקן כבש במשחק אחד — מה שהעולם איפשר לו",
+    "recordGoalFest": "פסטיבל השערים",
+    "recordGoalFestHint": "המשחק עם הכי הרבה שערים שהסתיים — הליגה והגביע גם יחד",
+    "recordOffenceClub": "המתקפה השוטפת",
+    "recordOffenceClubHint": "הקבוצה שכבשה הכי הרבה שערי ליגה",
+    "recordDefenceClub": "המבצר",
+    "recordDefenceClubHint": "הקבוצה שספגה הכי פחות שערי ליגה",
+    "recordCastle": "הטירה",
+    "recordCastleHint": "הקבוצה עם הכי הרבה משמרות נקיות בליגה",
+    "recordCardsFixture": "חשבון הכרטיסים",
+    "recordCardsFixtureHint": "המשחק עם הכי הרבה כרטיסים משוקללים — צהוב ×1 + אדום ×3",
+    "recordKeeperWall": "החומה",
+    "recordKeeperWallHint": "הכי הרבה הצלות של שחקן במשחק אחד",
+    "recordHighestRated": "הפסגה",
+    "recordHighestRatedHint": "הציון הגבוה ביותר של משחק אחד — שישים דקות על המגרש",
+    "captionGoals": "שערים",
+    "captionSaves": "הצלות",
+    "captionRating": "ציון",
+    "captionCleanSheets": "משמרים נקיים",
+    "captionCards": "כרטיסים משוקללים",
+    "captionScored": "שערים הבקעו",
+    "captionConceded": "שערים ספגו",
+    "captionGames": "{games} משחקים",
+    "unavailable": "הסימן הזה עדיין לא נכתב"
   }
 }

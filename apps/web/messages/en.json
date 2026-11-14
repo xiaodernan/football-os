@@ -773,7 +773,10 @@
     "sectionAlmanacChip": "honours",
     "sectionStoryLabel": "The Story",
     "sectionStoryNote": "the three chapters the fixtures already wrote",
-    "sectionStoryChip": "story"
+    "sectionStoryChip": "story",
+    "sectionRecordsLabel": "The Record Book",
+    "sectionRecordsNote": "the eight marks the world truly earned",
+    "sectionRecordsChip": "records"
   },
   "coach": {
     "metaTitle": "AI Coach",
@@ -4620,5 +4623,39 @@
     "chapterThreeRun": "{run} unbeaten",
     "unavailable": "this chapter is not written for this world yet",
     "chapterOneGdGap": "on goal difference"
+  },
+  "worldRecords": {
+    "metaTitle": "The Season's Records",
+    "metaDescription": "Eight marks the world truly produced — the biggest haul, the goal-fest, the best offence, the impregnable defence. Every figure recomputed from the stored fixtures.",
+    "eyebrow": "the record book",
+    "title": "The Season's Records",
+    "lede": "Records live here because the world earned them — every mark recomputed from the stored fixtures on each read.",
+    "backWorld": "back to the world",
+    "seasonLabel": "season 2026/27",
+    "recordBiggestHaul": "The Biggest Haul",
+    "recordBiggestHaulHint": "most goals by one player in one fixture — whatever the world let him have",
+    "recordGoalFest": "The Goal-Fest",
+    "recordGoalFestHint": "the most goals a completed fixture has produced — cup or league alike",
+    "recordOffenceClub": "The Onslaught",
+    "recordOffenceClubHint": "the club that scored the most league goals",
+    "recordDefenceClub": "The Fortress",
+    "recordDefenceClubHint": "the club that conceded the fewest league goals",
+    "recordCastle": "The Castle",
+    "recordCastleHint": "the club with the most league clean sheets",
+    "recordCardsFixture": "The Cards Bill",
+    "recordCardsFixtureHint": "the fixture with the most weighted cards — yellows plus three per red",
+    "recordKeeperWall": "The Wall",
+    "recordKeeperWallHint": "the most saves by one player in a single fixture",
+    "recordHighestRated": "The Pinnacle",
+    "recordHighestRatedHint": "the best single-match rating — sixty minutes on the park",
+    "captionGoals": "goals",
+    "captionSaves": "saves",
+    "captionRating": "rating",
+    "captionCleanSheets": "clean sheets",
+    "captionCards": "weighted cards",
+    "captionScored": "goals scored",
+    "captionConceded": "goals against",
+    "captionGames": "{games} played",
+    "unavailable": "the season has not written this mark yet"
   }
 }
