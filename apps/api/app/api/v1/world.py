@@ -40,6 +40,7 @@ from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
 from app.services.world.duel import compare, per90
+from app.services.world.story import compute_story
 from app.services.world.sync import GATE
 
 router = APIRouter(prefix="/world", tags=["world"])
@@ -1054,6 +1055,21 @@ def almanac(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_almanac")
     return _envelope(**compute_almanac(db))
+
+
+@router.get("/story")
+def story(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The season's story — three chapters, straight out of the stored fixtures.
+
+    Chapter I reuses the almanac's own `_title_race` by design — two surfaces printing two
+    different champions out of one league table would be a defect, not a feature — so this door
+    and the almanac cannot disagree about who lifted the table, nor by how much. Chapter II finds
+    the biggest margin any completed fixture produced (cup or league); chapter III walks the league
+    for the longest unbeaten streak. Same discipline as the rest of the world doors: arithmetic on
+    the stored rows, every read, no provider, no stored figure.
+    """
+    limit(request, 60, 60, scope="world_story")
+    return _envelope(**compute_story(db))
 
 
 __all__ = ["router"]

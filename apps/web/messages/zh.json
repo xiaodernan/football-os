@@ -770,7 +770,10 @@
     "searchEmpty": "生成的世界里没有与“{query}”匹配的内容。这是一个真实的回答，而不是一份兜底清单：搜索只读取已存储的行。",
     "sectionAlmanacLabel": "赛季年鉴",
     "sectionAlmanacNote": "每项荣誉——金靴、助攻王、最佳主帅——都是现场重新算出来的",
-    "sectionAlmanacChip": "荣誉"
+    "sectionAlmanacChip": "荣誉",
+    "sectionStoryLabel": "本赛季的故事",
+    "sectionStoryNote": "存档里一直躺着的三个章节",
+    "sectionStoryChip": "故事"
   },
   "coach": {
     "metaTitle": "AI 教练",
@@ -4592,5 +4595,30 @@
     "titleRaceRunnerUp": "亚军",
     "titleRaceMarginUnit": "分之差",
     "titleRaceGdUnit": "净胜球"
+  },
+  "worldStory": {
+    "metaTitle": "本赛季的故事",
+    "metaDescription": "三个章节，直接写自存檔的比赛——争冠的结局、最大的分差、最长的不败纪录。",
+    "eyebrow": "赛季叙事",
+    "title": "本赛季的故事",
+    "lede": "赛季不止是一张积分榜。这些章节一直埋在比赛里——本页按存档的世界重新演算，每次读取都是新的。",
+    "backWorld": "回到世界",
+    "seasonLabel": "2026/27 赛季",
+    "chapterOneLabel": "第一章",
+    "chapterOneHint": "争冠",
+    "chapterOneLede": "谁最终举起了联赛——分差几何——算法与年鉴相同",
+    "chapterTwoLabel": "第二章",
+    "chapterTwoHint": "大雪崩",
+    "chapterTwoLede": "存档比赛中任何一场最大的分差——联赛和杯赛一起算",
+    "chapterTwoMargin": "球之差",
+    "chapterTwoVenue": "{venue} · {city}",
+    "chapterThreeLabel": "第三章",
+    "chapterThreeHint": "不败纪录",
+    "chapterThreeLede": "联赛最长的不败场次——赢平皆可，输了就断",
+    "chapterThreeAlive": "至今仍在延续",
+    "chapterThreeEnded": "最近一场败局让它终结",
+    "chapterThreeRun": "{run} 场不败",
+    "unavailable": "这个世界暂时还没有写完这一章",
+    "chapterOneGdGap": "净胜球作计"
   }
 }

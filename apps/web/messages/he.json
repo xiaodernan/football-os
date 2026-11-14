@@ -770,7 +770,10 @@
     "searchEmpty": "שום דבר בעולם שנוצר לא תואם ל-„{query}”. זו תשובה אמיתית, לא רשימת גיבוי: החיפוש קורא רק שורות שמורות.",
     "sectionAlmanacLabel": "יומנת העונה",
     "sectionAlmanacNote": "כל כבוד — נעל הזהב, המסירה, המאמן הטוב — מחושב מחדש במקום",
-    "sectionAlmanacChip": "כבוד"
+    "sectionAlmanacChip": "כבוד",
+    "sectionStoryLabel": "סיפור העונה",
+    "sectionStoryNote": "שלושת הפרקים שהמשחקים כבר כתבו",
+    "sectionStoryChip": "סיפור"
   },
   "coach": {
     "metaTitle": "המאמן ה-AI",
@@ -4592,5 +4595,30 @@
     "titleRaceRunnerUp": "הסגן",
     "titleRaceMarginUnit": "נקודות פער",
     "titleRaceGdUnit": "הפרש שערים"
+  },
+  "worldStory": {
+    "metaTitle": "סיפור העונה",
+    "metaDescription": "שלושה פרקים, ישירות מהמשחקים השמורים — מירוץ האליפות, הפער הרחב ביותר שהושג, והריצה הארוכה ביותר ללא הפסד.",
+    "eyebrow": "העונה מסופרת",
+    "title": "סיפור העונה",
+    "lede": "עונה היא יותר מטבלת נקודות. הפרקים האלה ישנו בתוך המשחקים כל הזמן — זה הסיפר שלהם, מחושב מחדש מהעולם השמור בכל קריאה.",
+    "backWorld": "חזרה אל העולם",
+    "seasonLabel": "עונת 2026/27",
+    "chapterOneLabel": "הפרק הראשון",
+    "chapterOneHint": "מירוץ האליפות",
+    "chapterOneLede": "מי הרים את התואר, ובאיזה פער — אותם חישובים שביומן העונה",
+    "chapterTwoLabel": "הפרק השני",
+    "chapterTwoHint": "המפולת",
+    "chapterTwoLede": "הפער הרחב ביותר שרשם משחק שהסתיים — הליגה והגביע גם יחד",
+    "chapterTwoMargin": "פער",
+    "chapterTwoVenue": "{venue} · {city}",
+    "chapterThreeLabel": "הפרק השלישי",
+    "chapterThreeHint": "הריצה ללא הפסד",
+    "chapterThreeLede": "הריצה הארוכה ביותר בליגה ללא הפסד — ניצחון או תיקו, לעולם לא תבוסה",
+    "chapterThreeAlive": "עדיין עומדת",
+    "chapterThreeEnded": "התבוסה האחרונה סוגרת פרק",
+    "chapterThreeRun": "{run} ללא הפסד",
+    "unavailable": "הפרק הזה עדיין לא נכתב לעולם הזה",
+    "chapterOneGdGap": "בהפרש שערים"
   }
 }

@@ -770,7 +770,10 @@
     "searchEmpty": "Rien dans le monde généré ne correspond à « {query} ». C'est une vraie réponse, pas une liste de secours : la recherche ne lit que les lignes stockées.",
     "sectionAlmanacLabel": "L'Almanach",
     "sectionAlmanacNote": "chaque honneur — soulier d'or, passe décisive, meilleur coach — recalculé sur-le-champ",
-    "sectionAlmanacChip": "honneurs"
+    "sectionAlmanacChip": "honneurs",
+    "sectionStoryLabel": "L'histoire",
+    "sectionStoryNote": "les trois chapitres que les matchs avaient déjà écrits",
+    "sectionStoryChip": "récit"
   },
   "coach": {
     "metaTitle": "Entraîneur IA",
@@ -4592,5 +4595,30 @@
     "titleRaceRunnerUp": "Le dauphin",
     "titleRaceMarginUnit": "pts d'avance",
     "titleRaceGdUnit": "différence de buts"
+  },
+  "worldStory": {
+    "metaTitle": "L'histoire de la saison",
+    "metaDescription": "Trois chapitres tirés des matchs enregistrés — la course au titre, la plus large marge d'un match joué, et la plus longue série sans défaite.",
+    "eyebrow": "le récit du championnat",
+    "title": "L'histoire de la saison",
+    "lede": "Une saison ne se résume pas à un classement. Ces chapitres dormaient dans les matchs ; ceci est leur récit — recalculé depuis le monde à chaque lecture.",
+    "backWorld": "retour au monde",
+    "seasonLabel": "saison 2026/27",
+    "chapterOneLabel": "Chapitre premier",
+    "chapterOneHint": "la course au titre",
+    "chapterOneLede": "qui a soulevé le titre, et à quelle marge — les mêmes calculs que l'almanach",
+    "chapterTwoLabel": "Chapitre deux",
+    "chapterTwoHint": "l'avalanche",
+    "chapterTwoLede": "la plus large marge jamais produite par un match joué — championnat et coupe réunis",
+    "chapterTwoMargin": "d'avance",
+    "chapterTwoVenue": "{venue} · {city}",
+    "chapterThreeLabel": "Chapitre trois",
+    "chapterThreeHint": "la série sans défaite",
+    "chapterThreeLede": "la plus longue série sans défaite au championnat — victoire ou nul, jamais la défaite",
+    "chapterThreeAlive": "toujours debout",
+    "chapterThreeEnded": "la dernière défaite ferme le chapitre",
+    "chapterThreeRun": "{run} sans défaite",
+    "unavailable": "ce chapitre n'est pas encore écrit pour ce monde",
+    "chapterOneGdGap": "à la différence de buts"
   }
 }

@@ -113,6 +113,11 @@ const TOKENS = new Map([
   ["club.createNamePlaceholder", "an example proper name"],
   ["club.teamNamePlaceholder", "an example proper name"],
   ["club.playerSlugPlaceholder", "an example slug"],
+
+  // Templates of the page's own placeholders — the mark between the API's fields is the
+  // page's own furniture (a middle dot between venue and city), identical in every catalogue
+  // by construction and untranslatable without inventing a language.
+  ["worldStory.chapterTwoVenue", "a template of the API's own venue and city fields"],
 ]);
 
 /**

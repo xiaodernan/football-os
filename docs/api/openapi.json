@@ -2849,6 +2849,29 @@
         }
       }
     },
+    "/api/v1/world/story": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Story",
+        "description": "The season's story — three chapters, straight out of the stored fixtures.\n\nChapter I reuses the almanac's own `_title_race` by design — two surfaces printing two\ndifferent champions out of one league table would be a defect, not a feature — so this door\nand the almanac cannot disagree about who lifted the table, nor by how much. Chapter II finds\nthe biggest margin any completed fixture produced (cup or league); chapter III walks the league\nfor the longest unbeaten streak. Same discipline as the rest of the world doors: arithmetic on\nthe stored rows, every read, no provider, no stored figure.",
+        "operationId": "story_api_v1_world_story_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Story Api V1 World Story Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [

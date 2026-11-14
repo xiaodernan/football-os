@@ -770,7 +770,10 @@
     "searchEmpty": "لا يطابق أي شيء في العالم المُولَّد «{query}». ذلك جواب حقيقي، وليس قائمة احتياطية: يقرأ البحث الصفوف المحفوظة فقط۔",
     "sectionAlmanacLabel": "سجل الموسم",
     "sectionAlmanacNote": "كل شرف——الحذاء الذهبي، الأكثر تمريراً حاسمة، أفضل مدرب——مُعاد حسابه في الموضع",
-    "sectionAlmanacChip": "أشرف"
+    "sectionAlmanacChip": "أشرف",
+    "sectionStoryLabel": "قصة الموسم",
+    "sectionStoryNote": "الفصول الثلاثة التي كتبتها المباريات بالفعل",
+    "sectionStoryChip": "قصة"
   },
   "coach": {
     "metaTitle": "المدرب الذكي",
@@ -4592,5 +4595,30 @@
     "titleRaceRunnerUp": "الوصيف",
     "titleRaceMarginUnit": "نقطة فارق",
     "titleRaceGdUnit": "فارق الأهداف"
+  },
+  "worldStory": {
+    "metaTitle": "قصة الموسم",
+    "metaDescription": "ثلاثة فصول تُسحب من المباريات المخزّنة — سباق اللقب، وأوسع نتيجة حدثت، وأطول سلسلة بلا هزيمة۔",
+    "eyebrow": "حين يُروى الموسم",
+    "title": "قصة الموسم",
+    "lede": "الموسم أكثر من جدول نقاط۔ هذه الفصول كانت نائمة في المباريات؛ وهذا سردها — تُحسب من جديد من العالم المخزّن في كل قراءة۔",
+    "backWorld": "العودة إلى العالم",
+    "seasonLabel": "موسم 2026/27",
+    "chapterOneLabel": "الفصل الأول",
+    "chapterOneHint": "سباق اللقب",
+    "chapterOneLede": "من رفع الكأس، وبأي فارق — نفس حسابات السجل الموسمي",
+    "chapterTwoLabel": "الفصل الثاني",
+    "chapterTwoHint": "الانهيار",
+    "chapterTwoLede": "أوسع فارق أفرزته أي مباراة منتهية — الدوري والكأس معاً",
+    "chapterTwoMargin": "فارق",
+    "chapterTwoVenue": "{venue} · {city}",
+    "chapterThreeLabel": "الفصل الثالث",
+    "chapterThreeHint": "سلسلة بلا هزيمة",
+    "chapterThreeLede": "أطول سلسلة دوري بلا هزيمة — فوز أو تعادل وليس هزيمة",
+    "chapterThreeAlive": "ما زالت قائمة",
+    "chapterThreeEnded": "آخر هزيمة تختم الفصل",
+    "chapterThreeRun": "{run} بلا هزيمة",
+    "unavailable": "هذا الفصل لم يُكتب بعد لهذا العالم",
+    "chapterOneGdGap": "بفارق الأهداف"
   }
 }

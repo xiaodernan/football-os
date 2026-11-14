@@ -1,0 +1,131 @@
+/* The Season's Story — the fixtures already wrote it; these are the chapters. */
+
+.story-book { display: flex; flex-direction: column; gap: 0; margin-top: 1rem; }
+
+.story-chapter {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+  padding: 1.6rem 0 2.1rem;
+  border-top: 1px solid var(--line-soft);
+}
+@media (max-width: 720px) {
+  .story-chapter { grid-template-columns: 1fr; gap: 0.5rem; }
+}
+
+.story-chapter__numeral {
+  font-size: 5.5rem;
+  line-height: 0.85;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(216, 181, 107, 0.5);
+  user-select: none;
+  padding-top: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 720px) {
+  .story-chapter__numeral { font-size: 3.4rem; }
+}
+
+.story-chapter__eyebrow {
+  display: block;
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold, #d8b56b);
+  font-weight: 700;
+  margin: 0 0 0.3rem;
+}
+.story-chapter__title {
+  font-size: 1.9rem;
+  line-height: 1.05;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-wrap: balance;
+}
+.story-chapter__lede {
+  font-size: 0.85rem;
+  color: var(--text-2);
+  max-width: 46ch;
+  margin: 0.45rem 0 1rem;
+}
+
+.story-chapter__figures { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.story-scoreline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  font-variant-numeric: tabular-nums;
+}
+.story-scoreline__club {
+  font-size: 1.35rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+.story-scoreline__goals {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.story-scoreline__dash { color: var(--text-3); font-weight: 800; font-size: 1.2rem; }
+
+.story-margin-figure {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+.story-margin-figure strong { font-size: 2rem; color: var(--gold, #d8b56b); }
+.story-margin-figure span { color: var(--text-2); font-size: 0.82rem; }
+
+.story-venue { color: var(--text-2); font-size: 0.78rem; }
+
+.story-vs-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0.25rem 0 0.35rem;
+}
+
+.story-gd-story { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.15rem; }
+.story-gd-story abbr { border: none; text-decoration: none; font-size: 0.78rem; color: var(--text-2); }
+
+.story-alive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #04140c;
+  background: var(--accent);
+  margin-top: 0.3rem;
+}
+.story-ended {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-2);
+  background: var(--bg-panel-2);
+  border: 1px solid var(--line-soft);
+  margin-top: 0.3rem;
+}
+
+.story-unavailable { padding: 1.5rem 0; color: var(--text-2); }
+.story-ref-sep { margin-inline: auto; }

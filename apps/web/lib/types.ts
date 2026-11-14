@@ -3008,3 +3008,52 @@ export type AlmanacResult = WorldEnvelope & {
   portrait: Record<string, AlmanacWinner> | null;
   title_race: AlmanacTitleRace;
 };
+
+/** One side of the avalanche — the fixture's club and how many it scored. */
+export type StorySide = {
+  id: string | null;
+  slug: string | null;
+  name: string;
+  path: string | null;
+  goals: number;
+};
+
+/** Chapter I — the same table the almanac prints, by design: the doors cannot disagree. */
+export type StoryChapterTitleRace = AlmanacTitleRace & { key: "title_race" };
+
+export type StoryChapterAvalancheAvailable = {
+  key: "avalanche";
+  available: true;
+  competition: string | null;
+  competition_slug: string | null;
+  round_label: string;
+  kickoff_at: string | null;
+  venue_name: string;
+  venue_city: string;
+  match_path: string;
+  home: StorySide;
+  away: StorySide;
+  winner_name: string;
+  winner_path: string | null;
+  margin: number;
+};
+
+export type StoryChapterAvalanche = StoryChapterAvalancheAvailable | { key: "avalanche"; available: false };
+
+export type StoryChapterUnbeatenAvailable = {
+  key: "unbeaten_run";
+  available: true;
+  competition: string;
+  competition_slug: string;
+  team: { id: string; slug: string | null; name: string; path: string | null };
+  run: number;
+  alive: boolean;
+};
+
+export type StoryChapterUnbeaten = StoryChapterUnbeatenAvailable | { key: "unbeaten_run"; available: false };
+
+/** The stories page: one door, three chapters, fixed deterministic order. */
+export type StoryResult = WorldEnvelope & {
+  season: { label: string; kind: string };
+  chapters: [StoryChapterTitleRace, StoryChapterAvalanche, StoryChapterUnbeaten];
+};

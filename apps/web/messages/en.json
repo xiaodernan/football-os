@@ -770,7 +770,10 @@
     "searchEmpty": "Nothing in the generated world matches “{query}”. That is a real answer, not a fallback list: the search reads the stored rows only.",
     "sectionAlmanacLabel": "The Almanac",
     "sectionAlmanacNote": "every honoured figure — boot, crown, best manager — recomputed live",
-    "sectionAlmanacChip": "honours"
+    "sectionAlmanacChip": "honours",
+    "sectionStoryLabel": "The Story",
+    "sectionStoryNote": "the three chapters the fixtures already wrote",
+    "sectionStoryChip": "story"
   },
   "coach": {
     "metaTitle": "AI Coach",
@@ -4592,5 +4595,30 @@
     "titleRaceRunnerUp": "The runner-up",
     "titleRaceMarginUnit": "pts clear",
     "titleRaceGdUnit": "goal difference"
+  },
+  "worldStory": {
+    "metaTitle": "The Season's Story",
+    "metaDescription": "Three chapters, straight out of the stored fixtures — the title race, the widest margin any match produced, and the longest run without defeat.",
+    "eyebrow": "the season, told",
+    "title": "The Season's Story",
+    "lede": "A season is more than a table. These chapters were in the fixtures all along; this is the telling of them — recomputed from the stored world on every read.",
+    "backWorld": "back to the world",
+    "seasonLabel": "season 2026/27",
+    "chapterOneLabel": "Chapter One",
+    "chapterOneHint": "the title race",
+    "chapterOneLede": "who lifted the table, and by how much — the same arithmetic the almanac prints",
+    "chapterTwoLabel": "Chapter Two",
+    "chapterTwoHint": "the avalanche",
+    "chapterTwoLede": "the widest margin any completed fixture produced — cup and league alike",
+    "chapterTwoMargin": "goals clear",
+    "chapterTwoVenue": "{venue} · {city}",
+    "chapterThreeLabel": "Chapter Three",
+    "chapterThreeHint": "the unbeaten streak",
+    "chapterThreeLede": "the longest league run without defeat — win or draw, never a loss",
+    "chapterThreeAlive": "still standing",
+    "chapterThreeEnded": "the last defeat closes it",
+    "chapterThreeRun": "{run} unbeaten",
+    "unavailable": "this chapter is not written for this world yet",
+    "chapterOneGdGap": "on goal difference"
   }
 }

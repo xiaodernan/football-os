@@ -770,7 +770,10 @@
     "searchEmpty": "生成的世界裡沒有與「{query}」相符的內容。這是一個真實的回答，而不是一份備援清單：搜尋只讀取已儲存的列。",
     "sectionAlmanacLabel": "賽季年鑑",
     "sectionAlmanacNote": "每項榮譽——金靴、助攻王、最佳主帥——都是現場重新算出來的",
-    "sectionAlmanacChip": "榮譽"
+    "sectionAlmanacChip": "榮譽",
+    "sectionStoryLabel": "本賽季的故事",
+    "sectionStoryNote": "存檔裡一直躺著的三個章節",
+    "sectionStoryChip": "故事"
   },
   "coach": {
     "metaTitle": "AI 教練",
@@ -4592,5 +4595,30 @@
     "titleRaceRunnerUp": "亞軍",
     "titleRaceMarginUnit": "分之差",
     "titleRaceGdUnit": "淨勝球"
+  },
+  "worldStory": {
+    "metaTitle": "本賽季的故事",
+    "metaDescription": "三個章節，直接寫自存檔的比賽——爭冠的結局、最大的分差、最長的不敗紀錄。",
+    "eyebrow": "賽季敘事",
+    "title": "本賽季的故事",
+    "lede": "賽季不只是一張積分榜。這些章節一直藏在比賽裡——本頁按存檔的世界重新演算，每次讀取都是新的。",
+    "backWorld": "回到世界",
+    "seasonLabel": "2026/27 賽季",
+    "chapterOneLabel": "第一章",
+    "chapterOneHint": "爭冠",
+    "chapterOneLede": "誰最終舉起了聯賽——分差幾何——演算法與年鑑相同",
+    "chapterTwoLabel": "第二章",
+    "chapterTwoHint": "大雪崩",
+    "chapterTwoLede": "存檔比賽中任何一場最大的分差——聯賽和盃賽一起算",
+    "chapterTwoMargin": "球之差",
+    "chapterTwoVenue": "{venue} · {city}",
+    "chapterThreeLabel": "第三章",
+    "chapterThreeHint": "不敗紀錄",
+    "chapterThreeLede": "聯賽最長的不敗場次——贏平皆可，輸了就斷",
+    "chapterThreeAlive": "至今仍在延續",
+    "chapterThreeEnded": "最近一場敗局讓它終結",
+    "chapterThreeRun": "{run} 場不敗",
+    "unavailable": "這個世界暫時還沒有寫完這一章",
+    "chapterOneGdGap": "淨勝球作計"
   }
 }

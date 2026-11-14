@@ -38,6 +38,7 @@ export default async function WorldIndexPage() {
     { href: "/world/players", label: t("sectionPlayersLabel"), note: t("sectionPlayersNote"), countKey: "players" },
     { href: "/world/matches", label: t("sectionFixturesLabel"), note: t("sectionFixturesNote"), countKey: "matches" },
     { href: "/world/almanac", label: t("sectionAlmanacLabel"), note: t("sectionAlmanacNote"), chip: t("sectionAlmanacChip") },
+    { href: "/world/story", label: t("sectionStoryLabel"), note: t("sectionStoryNote"), chip: t("sectionStoryChip") },
     { href: "/world/news", label: t("sectionReportsLabel"), note: t("sectionReportsNote"), countKey: "articles" },
   ];
 

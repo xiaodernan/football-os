@@ -58,6 +58,7 @@ const NAMESPACE_OWNERS = {
   "worldTraining": { owner: "world", purpose: "World training pages" },
   "duel": { owner: "world", purpose: "The head-to-head between two footballers: the ledger, its verdict and the picker that chooses the pair" },
   "almanac": { owner: "world", purpose: "The season's honours in one page — eight awards and the manager of the table, recomputed live from the world's own rows" },
+  "worldStory": { owner: "world", purpose: "The season's story in three chapters — the pairs the almanac certifies, the widest avalanche, the longest clean streak, recomputed live" },
 
   // Tactics tier
   "tactics": { owner: "tactics", purpose: "Tactics system pages" },
