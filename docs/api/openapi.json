@@ -2826,6 +2826,29 @@
         }
       }
     },
+    "/api/v1/world/almanac": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Almanac",
+        "description": "The world's own almanac — every award recomputed from the stored rows.\n\nNo award is authored, no column is cached, no figure is served from anywhere but the world's\nown row. The whole answer is straight arithmetic over `real_players` and the league's completed\nfixtures — exactly the way the standings chart is derived on every read — so the almanac can't\ndisagree with the pages the numbers came from.",
+        "operationId": "almanac_api_v1_world_almanac_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Almanac Api V1 World Almanac Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [

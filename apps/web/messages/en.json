@@ -767,7 +767,10 @@
     "searchResultsTitle": "Results, ranked by term overlap",
     "thCompetition": "Competition",
     "thPos": "Pos",
-    "searchEmpty": "Nothing in the generated world matches “{query}”. That is a real answer, not a fallback list: the search reads the stored rows only."
+    "searchEmpty": "Nothing in the generated world matches “{query}”. That is a real answer, not a fallback list: the search reads the stored rows only.",
+    "sectionAlmanacLabel": "The Almanac",
+    "sectionAlmanacNote": "every honoured figure — boot, crown, best manager — recomputed live",
+    "sectionAlmanacChip": "honours"
   },
   "coach": {
     "metaTitle": "AI Coach",
@@ -4546,5 +4549,41 @@
     "unavailableNote": "Minutes under {minutes} ⇒ per-90 unavailable.",
     "ratingShort": "Rating",
     "compareCta": "Compare"
+  },
+  "almanac": {
+    "metaTitle": "The Season Almanac",
+    "metaDescription": "The world's season, summed in one page — the golden boot, the playmaker's crown, the manager who lifted the table. Every figure recomputed from the stored world.",
+    "eyebrow": "season awards",
+    "title": "The Almanac",
+    "lede": "The world is the season's memory: every goal, every assist, every minute counted. Every honour here is computed from the stored rows and rebuilt fresh on every read. Nothing is invented.",
+    "goldenBoot": "The Golden Boot",
+    "goldenBootHint": "Most goals this season.",
+    "playmaker": "The Playmaker's Crown",
+    "playmakerHint": "The velvet knife — most assists in the world.",
+    "completeForward": "The Complete Forward",
+    "completeForwardHint": "Goals and assists added together — the forward who does both.",
+    "goldenGlove": "The Golden Glove",
+    "goldenGloveHint": "The most clean sheets kept.",
+    "playerOfSeason": "Player of the Season",
+    "playerOfSeasonHint": "Best rating across a significant sample.",
+    "theEnforcer": "The Enforcer",
+    "theEnforcerHint": "Most weighted cards — yellows plus three per red.",
+    "breakthrough": "The Breakthrough",
+    "breakthroughHint": "Under-23, most involved.",
+    "goalsUnit": "goals",
+    "assistsUnit": "assists",
+    "involvementUnit": "involvement",
+    "cleanSheetsUnit": "clean sheets",
+    "ratingUnit": "rating",
+    "cardsUnit": "weighted cards",
+    "runnerUps": "runner-ups",
+    "bootShort": "The boot",
+    "crownShort": "The crown",
+    "managerLabel": "Manager of the season",
+    "managerHint": "Most league points, computed from completed fixtures.",
+    "managerFigures": "{points} points · {won} wins · {drawn} draws",
+    "managerGoals": "{goalsFor} scored · {goalsAgainst} conceded",
+    "unavailable": "The season has not yet completed a league fixture — the almanac is still being written.",
+    "backWorld": "back to the world"
   }
 }

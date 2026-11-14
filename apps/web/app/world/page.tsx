@@ -32,11 +32,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function WorldIndexPage() {
   const t = await getTranslations("world");
   
-  const sections = [
+  const sections: { href: string; label: string; note: string; countKey?: string; chip?: string }[] = [
     { href: "/world/competitions", label: t("sectionCompetitionsLabel"), note: t("sectionCompetitionsNote"), countKey: "competitions" },
     { href: "/world/teams", label: t("sectionClubsLabel"), note: t("sectionClubsNote"), countKey: "teams" },
     { href: "/world/players", label: t("sectionPlayersLabel"), note: t("sectionPlayersNote"), countKey: "players" },
     { href: "/world/matches", label: t("sectionFixturesLabel"), note: t("sectionFixturesNote"), countKey: "matches" },
+    { href: "/world/almanac", label: t("sectionAlmanacLabel"), note: t("sectionAlmanacNote"), chip: t("sectionAlmanacChip") },
     { href: "/world/news", label: t("sectionReportsLabel"), note: t("sectionReportsNote"), countKey: "articles" },
   ];
 
@@ -190,7 +191,9 @@ export default async function WorldIndexPage() {
             <Link className="world-card" href={section.href} key={section.href}>
               <span className="world-card__title">{section.label}</span>
               <span className="world-card__meta">{section.note}</span>
-              <span className="chip mono">{(world.counts[section.countKey] ?? 0).toLocaleString("en-GB")} {t("rowsUnit")}</span>
+              {section.chip
+                ? <span className="chip">{section.chip}</span>
+                : <span className="chip mono">{(world.counts[section.countKey ?? ""] ?? 0).toLocaleString("en-GB")} {t("rowsUnit")}</span>}
             </Link>
           ))}
         </div>

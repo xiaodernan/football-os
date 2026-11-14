@@ -767,7 +767,10 @@
     "searchResultsTitle": "Résultats, triés par recouvrement de termes",
     "thCompetition": "Compétition",
     "thPos": "Pos",
-    "searchEmpty": "Rien dans le monde généré ne correspond à « {query} ». C'est une vraie réponse, pas une liste de secours : la recherche ne lit que les lignes stockées."
+    "searchEmpty": "Rien dans le monde généré ne correspond à « {query} ». C'est une vraie réponse, pas une liste de secours : la recherche ne lit que les lignes stockées.",
+    "sectionAlmanacLabel": "L'Almanach",
+    "sectionAlmanacNote": "chaque honneur — soulier d'or, passe décisive, meilleur coach — recalculé sur-le-champ",
+    "sectionAlmanacChip": "honneurs"
   },
   "coach": {
     "metaTitle": "Entraîneur IA",
@@ -4546,5 +4549,41 @@
     "unavailableNote": "Minutes sous {minutes} ⇒ par 90 indisponible.",
     "ratingShort": "Note",
     "compareCta": "Comparer"
+  },
+  "almanac": {
+    "metaTitle": "L'Almanach de la saison",
+    "metaDescription": "La saison du monde, en une page — le Soulier d'or, la couronne du passeur, l'entraîneur qui a décroché le titre. Chaque chiffre recalculé depuis le monde stocké.",
+    "eyebrow": "récompenses de saison",
+    "title": "L'Almanach",
+    "lede": "Le monde est la mémoire de la saison : chaque but, chaque passe, chaque minute — comptés. Chaque honneur est recalculé depuis les lignes stockées et reconstruit à chaque lecture. Rien n'est inventé.",
+    "goldenBoot": "Le Soulier d'or",
+    "goldenBootHint": "Le plus de buts cette saison.",
+    "playmaker": "La Couronne du passeur",
+    "playmakerHint": "Le couteau de velours — le plus de passes décisives dans le monde.",
+    "completeForward": "Le Buteur complet",
+    "completeForwardHint": "Buts et passes ajoutés — l'attaquant qui fait tout.",
+    "goldenGlove": "Le Gant d'or",
+    "goldenGloveHint": "Le plus de cleansheets.",
+    "playerOfSeason": "Joueur de la saison",
+    "playerOfSeasonHint": "La meilleure note sur un échantillon significatif.",
+    "theEnforcer": "Le Exécuteur",
+    "theEnforcerHint": "Le plus de cartons pondérés — jaune ×1 + rouge ×3.",
+    "breakthrough": "La Révélation",
+    "breakthroughHint": "23 ans et moins, le plus impliqué.",
+    "goalsUnit": "buts",
+    "assistsUnit": "passes",
+    "involvementUnit": "impliqué",
+    "cleanSheetsUnit": "cleansheets",
+    "ratingUnit": "note",
+    "cardsUnit": "cartons pondérés",
+    "runnerUps": "deuxièmes à quatrièmes",
+    "bootShort": "Le Soulier",
+    "crownShort": "La Couronne",
+    "managerLabel": "Entraîneur de la saison",
+    "managerHint": "Le plus de points au classement — calculé depuis les matchs joués.",
+    "managerFigures": "{points} points · {won} victoires · {drawn} nuls",
+    "managerGoals": "{goalsFor} marqués · {goalsAgainst} encaissés",
+    "unavailable": "La saison n'a pas encore disputé un seul match de championnat — l'almanach est en train d'être écrit.",
+    "backWorld": "retour au monde"
   }
 }

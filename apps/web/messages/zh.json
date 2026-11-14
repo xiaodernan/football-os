@@ -767,7 +767,10 @@
     "searchResultsTitle": "结果，按词条重合度排序",
     "thCompetition": "赛事",
     "thPos": "位置",
-    "searchEmpty": "生成的世界里没有与“{query}”匹配的内容。这是一个真实的回答，而不是一份兜底清单：搜索只读取已存储的行。"
+    "searchEmpty": "生成的世界里没有与“{query}”匹配的内容。这是一个真实的回答，而不是一份兜底清单：搜索只读取已存储的行。",
+    "sectionAlmanacLabel": "赛季年鉴",
+    "sectionAlmanacNote": "每项荣誉——金靴、助攻王、最佳主帅——都是现场重新算出来的",
+    "sectionAlmanacChip": "荣誉"
   },
   "coach": {
     "metaTitle": "AI 教练",
@@ -4546,5 +4549,41 @@
     "unavailableNote": "出场时间不足 {minutes} 分钟，每90分钟数据不可用。",
     "ratingShort": "评分",
     "compareCta": "对比"
+  },
+  "almanac": {
+    "metaTitle": "赛季年鉴",
+    "metaDescription": "这个世界的赛季，一页之内——金靴、助攻王、领航的主帅。每个数字都重新从世界本身算来。",
+    "eyebrow": "赛季奖项",
+    "title": "赛季年鉴",
+    "lede": "这个世界自己记着赛季的每一项数字：每一球、每一次助攻、每一分钟。每一项荣誉都是从存档的世界里重新算出来的，每次都读取最新。",
+    "goldenBoot": "金靴",
+    "goldenBootHint": "本赛季进球最多。",
+    "playmaker": "助攻王",
+    "playmakerHint": "最锋利的刀——助攻最多的那一位。",
+    "completeForward": "全能前锋",
+    "completeForwardHint": "进球加助攻加在一起——什么都会做的前锋。",
+    "goldenGlove": "金手套",
+    "goldenGloveHint": "零封场次最多。",
+    "playerOfSeason": "赛季最佳球员",
+    "playerOfSeasonHint": "在足够大的样本上评分最高。",
+    "theEnforcer": "执法者",
+    "theEnforcerHint": "加权吃牌最多——黄牌 ×1 + 红牌 ×3。",
+    "breakthrough": "新星",
+    "breakthroughHint": "23岁以下，参与最多的球员。",
+    "goalsUnit": "进球",
+    "assistsUnit": "助攻",
+    "involvementUnit": "参与",
+    "cleanSheetsUnit": "零封",
+    "ratingUnit": "评分",
+    "cardsUnit": "加权吃牌",
+    "runnerUps": "二至四名",
+    "bootShort": "金靴",
+    "crownShort": "助攻王",
+    "managerLabel": "赛季最佳主教练",
+    "managerHint": "联赛积分榜最高——从已完赛的比赛里算出来。",
+    "managerFigures": "{points} 分 · {won} 胜 · {drawn} 平",
+    "managerGoals": "进 {goalsFor} 球 · 失 {goalsAgainst} 球",
+    "unavailable": "联赛还没踢完一个完整的主客场对——年鉴还在被写出来。",
+    "backWorld": "回到世界"
   }
 }

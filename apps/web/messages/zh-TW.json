@@ -767,7 +767,10 @@
     "searchResultsTitle": "結果，按詞條重疊度排序",
     "thCompetition": "賽事",
     "thPos": "位置",
-    "searchEmpty": "生成的世界裡沒有與「{query}」相符的內容。這是一個真實的回答，而不是一份備援清單：搜尋只讀取已儲存的列。"
+    "searchEmpty": "生成的世界裡沒有與「{query}」相符的內容。這是一個真實的回答，而不是一份備援清單：搜尋只讀取已儲存的列。",
+    "sectionAlmanacLabel": "賽季年鑑",
+    "sectionAlmanacNote": "每項榮譽——金靴、助攻王、最佳主帥——都是現場重新算出來的",
+    "sectionAlmanacChip": "榮譽"
   },
   "coach": {
     "metaTitle": "AI 教練",
@@ -4546,5 +4549,41 @@
     "unavailableNote": "出場時間不足 {minutes} 分鐘，每90分鐘數據不可用。",
     "ratingShort": "評分",
     "compareCta": "對比"
+  },
+  "almanac": {
+    "metaTitle": "賽季年鑑",
+    "metaDescription": "這個世界的賽季，一頁之內——金靴、助攻王、帶領球隊拿下積分冠軍的主帥。每個數字都重新從世界本身算來。",
+    "eyebrow": "賽季獎項",
+    "title": "賽季年鑑",
+    "lede": "這個世界自己記著賽季裡每一項數字：每一球、每一次助攻、每一分鐘。每一項榮譽都是從存檔的世界裡重新算出來的，每次都讀取最新。",
+    "goldenBoot": "金靴",
+    "goldenBootHint": "本賽季進球最多。",
+    "playmaker": "助攻王",
+    "playmakerHint": "最鋒利的刀——助攻最多的那一位。",
+    "completeForward": "全能前鋒",
+    "completeForwardHint": "進球加助攻加在一起——什麼都會做的前鋒。",
+    "goldenGlove": "金手套",
+    "goldenGloveHint": "零封場次最多。",
+    "playerOfSeason": "賽季最佳球員",
+    "playerOfSeasonHint": "在足夠大的樣本上評分最高。",
+    "theEnforcer": "執法者",
+    "theEnforcerHint": "加權吃牌最多——黃牌 ×1 + 紅牌 ×3。",
+    "breakthrough": "新星",
+    "breakthroughHint": "23歲以下，參與最多的球員。",
+    "goalsUnit": "進球",
+    "assistsUnit": "助攻",
+    "involvementUnit": "參與",
+    "cleanSheetsUnit": "零封",
+    "ratingUnit": "評分",
+    "cardsUnit": "加權吃牌",
+    "runnerUps": "二至四名",
+    "bootShort": "金靴",
+    "crownShort": "助攻王",
+    "managerLabel": "賽季最佳主教練",
+    "managerHint": "聯賽積分榜最高——從已完賽的比賽裡算出來。",
+    "managerFigures": "{points} 分 · {won} 勝 · {drawn} 平",
+    "managerGoals": "進 {goalsFor} 球 · 失 {goalsAgainst} 球",
+    "unavailable": "聯賽還沒踢完一個完整的主客場對——年鑑還在被寫出來。",
+    "backWorld": "回到世界"
   }
 }

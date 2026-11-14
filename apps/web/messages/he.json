@@ -767,7 +767,10 @@
     "searchResultsTitle": "תוצאות, ממוינות לפי חפיפת מונחים",
     "thCompetition": "תחרות",
     "thPos": "עמדה",
-    "searchEmpty": "שום דבר בעולם שנוצר לא תואם ל-„{query}”. זו תשובה אמיתית, לא רשימת גיבוי: החיפוש קורא רק שורות שמורות."
+    "searchEmpty": "שום דבר בעולם שנוצר לא תואם ל-„{query}”. זו תשובה אמיתית, לא רשימת גיבוי: החיפוש קורא רק שורות שמורות.",
+    "sectionAlmanacLabel": "יומנת העונה",
+    "sectionAlmanacNote": "כל כבוד — נעל הזהב, המסירה, המאמן הטוב — מחושב מחדש במקום",
+    "sectionAlmanacChip": "כבוד"
   },
   "coach": {
     "metaTitle": "המאמן ה-AI",
@@ -4546,5 +4549,41 @@
     "unavailableNote": "דקות מתחת {minutes} ⇒ לכל 90 אינו זמין.",
     "ratingShort": "ציון",
     "compareCta": "השוו"
+  },
+  "almanac": {
+    "metaTitle": "יומנת העונה",
+    "metaDescription": "העונה של העולם — בצל אחד: נעל הזהב, כתר המסירה, המאמן שהעמיס את הליגה. כל מספר מחושב מחדש מהעולם השמור.",
+    "eyebrow": "פרסי עונה",
+    "title": "יומנת העונה",
+    "lede": "העולם הוא זכרון העונה: כל שער, כל מסירה, כל דקה — נספרים. כל פרס מחושב מהשורות השמורות ונבנה מחדש בכל קריאה. שום דבר לא מומצא.",
+    "goldenBoot": "נעל הזהב",
+    "goldenBootHint": "הכי הרבה שערים העונה.",
+    "playmaker": "כתר המסירה",
+    "playmakerHint": "הסכין מקטיפה — הכי הרבה מסירות בישול בעולם.",
+    "completeForward": "החלוץ המלא",
+    "completeForwardHint": "שערים ומסירות ביחד — החלוץ שעושה הכל.",
+    "goldenGlove": "הכפפה הזהב",
+    "goldenGloveHint": "הכי הרבה משמרות נקיות.",
+    "playerOfSeason": "שחקן העונה",
+    "playerOfSeasonHint": "הציון הגבוה ביותר על מדגם משמעותי.",
+    "theEnforcer": "המבצע",
+    "theEnforcerHint": "הכי הרבה כרטיסים משוקללים — צהוב ×1 + אדום ×3.",
+    "breakthrough": "הפריצה",
+    "breakthroughHint": "גיל 23 ומתחת, הכי מעורב.",
+    "goalsUnit": "שערים",
+    "assistsUnit": "מסירות בישול",
+    "involvementUnit": "מעורבות",
+    "cleanSheetsUnit": "משמרות נקיות",
+    "ratingUnit": "ציון",
+    "cardsUnit": "כרטיסים משוקללים",
+    "runnerUps": "מקומות שני עד רביעי",
+    "bootShort": "הנעל",
+    "crownShort": "הכתר",
+    "managerLabel": "המאמן הטוב ביותר של העונה",
+    "managerHint": "הכי הרבה נקודות בליגה — מחושב מהמשחקים שהסתיימו.",
+    "managerFigures": "{points} נקודות · {won} ניצחונות · {drawn} תיקו",
+    "managerGoals": "{goalsFor} בקעו · {goalsAgainst} ספגו",
+    "unavailable": "הליגה עדיין לא שיחקה משחק שלם — היומנת עדיין נכתבת.",
+    "backWorld": "חזרה אל העולם"
   }
 }

@@ -2921,3 +2921,57 @@ export type DuelResult = WorldEnvelope & {
     tie: string;
   };
 };
+
+/** Award's winner 鈥?what the almanac prints in the winner's panel and runner-ups row. */
+export type AlmanacWinner = {
+  id: string;
+  slug: string;
+  name: string;
+  position: string;
+  overall: number;
+  age: number;
+  nation: string;
+  path: string;
+  stat: number | null;
+  data_origin: string;
+  is_demo_data: boolean;
+};
+
+/** One of the season's eight awards; runner-ups are three next-best players. */
+export type AlmanacAward = {
+  key:
+    | "golden_boot"
+    | "playmaker_crown"
+    | "complete_forward"
+    | "golden_glove"
+    | "player_of_season"
+    | "the_enforcer"
+    | "breakthrough";
+  label: string;
+  hint: string;
+  winner: AlmanacWinner | null;
+  runner_ups: AlmanacWinner[];
+};
+
+/** The season's manager-of-the-season, computed from stored completed league fixtures. */
+export type AlmanacManager = {
+  team: { id: string; slug: string; name: string; path: string };
+  competition_id: string;
+  competition_name: string;
+  competition_slug: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goals_for: number;
+  goals_against: number;
+  points: number;
+  data_origin: string;
+};
+
+export type AlmanacResult = WorldEnvelope & {
+  season: { label: string; kind: string };
+  awards: AlmanacAward[];
+  best_manager: AlmanacManager | null;
+  portrait: Record<string, AlmanacWinner> | null;
+};

@@ -37,6 +37,7 @@ from app.models import (
     Team,
 )
 from app.services.world import search_world, web_path
+from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
 from app.services.world.duel import compare, per90
 from app.services.world.sync import GATE
@@ -1040,6 +1041,19 @@ def unified_search(
         types=sorted({hit.type for hit in hits}),
         note="Ranked by term overlap over the stored world rows only; no provider call and no web fetch.",
     )
+
+
+@router.get("/almanac")
+def almanac(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The world's own almanac — every award recomputed from the stored rows.
+
+    No award is authored, no column is cached, no figure is served from anywhere but the world's
+    own row. The whole answer is straight arithmetic over `real_players` and the league's completed
+    fixtures — exactly the way the standings chart is derived on every read — so the almanac can't
+    disagree with the pages the numbers came from.
+    """
+    limit(request, 60, 60, scope="world_almanac")
+    return _envelope(**compute_almanac(db))
 
 
 __all__ = ["router"]
