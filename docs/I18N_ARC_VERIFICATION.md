@@ -6747,3 +6747,47 @@ Reporting is a per-call lottery on this gateway (≈4 of 8 calls printed, either
 **Not claimed.** No percentage the gateway did not print; no claim that every call reports; no ratio reported anywhere; no claim that the deployed instance's live cache hit rate is now anywhere near 96.5 % — it will be, on identical-prefix calls, depending on the gateway's own cache retention which the project does not control. The answer-cache key does not include the system prompt, by design, and was not changed here. `.workbuddy/` and the root untracked text remain untouched; contract, census and audit figures unchanged (the door's response shape moved not at all).
 
 **CI verdict — `43613032930` — completed success on all four legs** (containers · services · web · api + PostgreSQL/pgvector).
+
+## §182 — Item 49: the season's story — the fixtures already wrote it
+
+One door, one page, three chapters — computed from the stored world on every read. The almanac hands out the honours; the story *tells the season*.
+
+**Chapter I — the title race.** Deliberately the almanac's own `_title_race`, imported by `services/world/story.py` rather than copied: two surfaces printing two champions out of one table would be a defect, not a feature. The seeded world prints Ostmoor Albion champions of Lyndera Superleague at **23–23 on goal difference (+6 vs +1)** — the same level-points tie the almanac carries.
+
+**Chapter II — the avalanche.** The widest margin any completed fixture produced, cup and league alike: Ostmoor Albion 5–0 Obrhaven Union, Matchday 11, Ostmoor Ridge, 2026-10-17. The door publishes a winner only when goals separated the sides — a season of draws publishes no chapter rather than an invented one (`available: false`).
+
+**Chapter III — the longest unbeaten run.** League-only; wins + draws; reset by each defeat. Reported with `alive: bool` (the last fixture unbeaten). The live probe answered Elndera Naval's **8-match** run, ended.
+
+**`GET /api/v1/world/story`** — anonymous read, world tier 60/min; rows and keys only; the catalogue owns every sentence: `worldStory` namespace, 23 keys × 6 locales. Catalogues at uniform population **4,526** (README recomputed; Arabic/Hebrew still pass script-rendering; U+06D4 still closes Arabic sentences; `qa-locale-tokens` 7/7 with the venue · city skeleton emitted as its own named token with the reason, 46 language-neutral named total); `/world` browse grid links the tile; crawl advertised **13** of **73** pages; OG poster `STORY` (static tokens).
+
+**The contract moved on purpose.** `openapi.json` re-exported at **233 paths / 300 operations / 98 schemas**; SHA-256 re-pinned to `193df3cd87e1bfc91579c7703e1c8a204be15b39eaa4989684aea9422144ba89`; the three SHA ledgers re-pinned (probe report, M12 verification, ROADMAP); the public-operations census moved 58 → **59** (the story door is anonymous by design; floors unchanged at 40); secured 241 unchanged; private GET 104 unchanged. `AUDIT_FIGURES` → **`contract_paths=233 page_routes=73 migrations=65`**; `/world/*` census → **12**.
+
+**Commits this arc carries.** `8df0508` (the arc), `350b3ed` (ROADMAP snapshot line re-pin 233/73/65 after the audit-currency gate refused the older quote), `8f21a2d` (the witness re-pin).
+
+**CI verdicts, verbatim.**
+* `43619910539` — services / containers / api all **success**; web **failure** at the single step `Token-gates behaviour gate (the two token gates' verdicts, on scratch catalogues)` — the witness's arm B literally pinned "45 language-neutral" against a definer now printing 46.
+* `43623143937` — **all four legs success** (web, services, containers, api + PostgreSQL/pgvector).
+
+**Local verification.** tsc 0; the web gate battery green (qa-icu-messages 27,156 msgs / 4,526 keys ×6 uniform; qa-icu-coverage 1/1; qa-i18n-literals 9/9 (4,585 key calls); qa-unused-keys 3/3 — `chapterTwoScore` deleted as unread, `seasonLabel` earned its chip on the page instead; qa-locale-tokens 7/7 (2,803 shared sentences); qa-translation-quality 9/9; qa-rtl-readiness 8/8; qa-shared-keys 4/4; qa-crawl-policy population 73 / advertised 13; qa-metadata-title 205/205; qa-table-shape 118/118; qa-share-preview 31/31; full CI-ordered web battery re-run locally green except the CRLF-host artifacts named next). API: ruff + mypy (184 source files) clean; `test_world_story.py` 5/5 (chapter order pinned; chapter I byte-equal to the almanac door's payload — asserted, not inferred; the avalanche figure asserted equal to `max(margins)` over the stored rows); `test_world_almanac.py` 7/7; the three commit-anchored currency gates green at HEAD (25/25). **A dev-server walk of the page in simplified Chinese printed all three chapters with zero console errors** (Ostmoor Albion 23–23 +5 净胜球作计; the avalanche scoreline; the ended streak chip). **Not done locally: a production build** (host memory 741 MB against the measured ~1.5 GB floor); CI's web leg is the verifier; a prod-preview walk of the *rendered* page remains owed to whoever can allocate that much. OG poster renders 1200×630 static tokens (`STORY` + romance numerals I/II/III on ember gold), not walked on this machine.
+
+**Item 50 folded into this entry's record.** `01a119f` — `.gitattributes` pinning `* text=auto eol=lf` and `-text` on the generated contract (`docs/api/openapi.json`) so no merge driver or editor can normalize the bytes the SHA names into a different digest. The committed tree was already 100% LF at HEAD (zero CRLF sequences); the attributes file binds future checkouts to LF and ends this host's recurring class of LF-needle witness failures (`qa-a11y-witness`, `qa-locale-wiring-witness` — both are now failing only on the CRLF working tree, both pass in CI's LF checkout).
+
+**Not claimed.** No figure the stored rows did not print; no chapter with nothing to say; no winner invented for a fixture nobody separated (the draws-only world publishes `available: false` and the page prints `unavailable` for that chapter); no deployed-seed claim (the names are the seeded world's); no production-build claim beyond what CI printed. `.workbuddy/` and the root untracked text remained untouched throughout; `.scratch/` stays out of the tree.
+
+## §183 — Item 48: the shared tier learns to evict, and Item 50 pins the LF it always had
+
+Two small arcs, both closed this night, both honest and neither decorative.
+
+**Item 48 — volatile-lru over the shared cache (`806fa4d`).** `infra/docker-compose.yml` published an authenticated Redis with the server defaults — no `maxmemory`, no `maxmemory-policy` — the textbook recipe for refusing writes at the ceiling instead of dropping the coldest TTL'd cache entry. The same instance also carries the job queue on DB 2, whose stream keys carry **no TTL** by design (`XADD` + `MAXLEN ~` trimming). A `maxmemory 256mb` + `volatile-lru` pair landed in BOTH the compose service and the CI job (`.github/workflows/ci.yml`'s redis start), because the shared-tier gate pins the two naming one instance — they move together or not at all.
+
+`volatile-lru` is the policy this instance's content asks for: the application writes the response cache, the answer cache and the boot-lock hint with `ex=`; the queue's stream keys never carry a TTL, so they are *definitionally* outside the victim pool. `allkeys-lru` would have been the same denial wearing a policy name.
+
+Verified live on a scratch container (created, measured, torn down): baseline 1.30 MB used; a 2 MB test ceiling; one TTL-less `XADD` + 620 TTL'd keys; `evicted_keys` delta 321; **every** TTL'd cache key evicted; the stream entry byte-intact (`xrange` returns the job_id the producer wrote). `test_redis_shared_tier.py`: 10/10 green against the `volatile-lru` 256 MB container. CI `43616922934` — **all four legs success** (containers · services · web · api + PostgreSQL/pgvector), 33m54s.
+
+**Item 50 — `.gitattributes` pins LF (`01a119f`).** This host runs `core.autocrlf=true`, which rewrote every working copy to CRLF and left `check.sh` unrunnable locally: every LF-needle witness (a11y, locale-wiring) matched zero bytes, while CI's LF checkout tolerated them. The repo's bytes were already entirely LF — verified at HEAD across every committed text file (zero CRLF sequences, zero bare CR) — so the attributes file binds future checkouts to what the repo already is, and pins the generated contract (`docs/api/openapi.json`, the bytes the SHA names) as `-text` so no merge driver or editor can silently normalize it. This is not a new policy; it is the repo's own invariant, written where checkouts decide.
+
+**Commits.** `806fa4d` (the volatile-lru fix), `01a119f` (`.gitattributes`).
+
+**Local evidence.** YAML parse of the compose; the eviction drill printed above; `test_redis_shared_tier.py` 10/10 (file-only cases unchanged, plus the live case against the shipped policy); CI as named. The docs quote the tier by image, password and port only and remain accurate.
+
+**Deliberately not done.** No production memory budget — sizing per deploy target stays the operator's decision, said so in the compose comment; the 1 MB drill documented the flange exception (a ceiling below the process baseline refuses even `XADD`) and is the reason the shipped default is 256 MB, far from it. Neither arc touches a provider, a secret or a user record; no queue, lock or cached answer was modified to verify this.

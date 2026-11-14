@@ -2647,6 +2647,41 @@ face. The home panel's visual verification is CI-time too.
 
 ---
 
+## Item 48 — the shared tier learns to evict (landed 2026-11-14)
+
+**The gap.** `infra/docker-compose.yml` published an authenticated Redis with the server defaults — no `maxmemory`, no `maxmemory-policy` — the textbook shape for refusing writes at the ceiling instead of dropping the coldest TTL'd entry. The same instance carries the job queue on DB 2 with **TTL-less** stream keys (`XADD` + `MAXLEN ~`), which rules out `allkeys-lru` as answer and begs for the policy whose victim pool is exactly the TTL'd cache.
+
+**What landed.** `--maxmemory 256mb` + `--maxmemory-policy volatile-lru` in BOTH the compose service and the CI job (the shared-tier gate pins them naming one instance, so they move together). Verified live on a scratch container: baseline 1.30 MB, 2 MB test ceiling, one TTL-less `XADD` + 620 TTL'd keys — `evicted_keys` delta 321, **every** TTL'd key evicted, the stream entry byte-intact. `test_redis_shared_tier.py` 10/10. CI `43616922934` — all four legs success.
+
+**Deliberately not done.** A production memory budget — operator decision per deploy target; the comment in the compose says so. The 1 MB drill documented the flange exception; the shipped default stays clear of it.
+
+---
+
+## Item 49 — /world/story: the fixtures already wrote it (landed 2026-11-14)
+
+**The gap.** The world could sum its season (the almanac) and answer its argument (the duel), but it could not *tell* it — the three chapters the stored fixtures had been carrying all season lived inside raw fixture tables, not in the product.
+
+**What landed.** `/world/story` — one anonymous read door, three chapters recomputed per read:
+**Chapter I — the title race** — deliberately the almanac's own `_title_race`, imported rather than copied: two surfaces printing two champions would be a defect, not a feature. Ostmoor Albion champions of Lyndera Superleague at 23–23 on goal difference.
+**Chapter II — the avalanche** — the widest margin any completed fixture produced, cup and league alike: Ostmoor Albion 5–0 Obrhaven Union, fully linked to the match. No winner claimed when nothing separated anyone.
+**Chapter III — the longest unbeaten run** — league-only, with `alive: bool` from the last fixture's result. Elndera Naval, 8 matches, ended. Every sentence lives in the `worldStory` namespace, 23 keys × 6 locales (uniform population 4,526); `/world` browse tile with a "story" chip; crawl advertised 13 of 73; OG poster `STORY`.
+
+**The contract moved deliberately.** `openapi.json` re-exported at **233 paths / 300 operations**; SHA re-pinned to `193df3cd…` (three ledgers re-pinned with it); the public-operations census moved 58 → **59** (anonymous door; floors 40); `AUDIT_FIGURES` → **233 / 73 / 65**; the audit's `/world/*` census → **12**.
+
+**Local evidence.** tsc 0; the web battery green (qa-icu-messages 27,156 msgs / 4,526 keys uniform; qa-unused-keys 3/3 after `chapterTwoScore` was deleted as unread; qa-locale-tokens 7/7; qa-rtl-readiness 8/8); ruff + mypy (184 files) clean; `test_world_story.py` 5/5; almanac tests still 7/7; the three commit-anchored currency gates green at HEAD. A dev-server walk of the page in simplified Chinese printed all three chapters with **zero console errors**. **Not done locally: a production build** (host memory 741 MB, below the measured ~1.5 GB floor) — CI's web leg is the verifier; the rendered-page prod walk is owed to whoever can allocate that much.
+
+**CI this arc.** Push 1 (`43619910539`, `8df0508`+`350b3ed`) — services/containers/api success, **web failure at exactly one step** (`Token-gates behaviour gate`): the witness's arm B literally pinned "45 language-neutral" against a definer now printing 46 (the `worldStory.chapterTwoVenue` named-token entry). Push 2 (`43623143937`, `8f21a2d` re-pin) — **all four legs success**.
+
+---
+
+## Item 50 — the repo pins LF on every checkout (landed 2026-11-14)
+
+**The gap.** `HEAD` holds zero CRLF sequences — the tree is LF by construction. This host runs `core.autocrlf=true`, which rewrote every working copy to CRLF, and that one config made two LF-needle witnesses unrunnable locally (a11y, locale-wiring) while CI's LF checkout tolerated them. Nothing was wrong with the tree; nothing was known to be wrong with it either — the gap was an invariant written down nowhere.
+
+**What landed.** `.gitattributes` — `* text=auto eol=lf`, binaries left alone by content; `docs/api/openapi.json` `-text`, so the digest the SHA names can never be normalized by a merge driver or an editor.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
