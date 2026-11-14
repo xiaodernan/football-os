@@ -6864,3 +6864,15 @@ One page knows what the rest of the season had won. The almanac awards names; th
 **Not claimed.** That the next deploy's seed prints these exact names; the slaying figures are this world's, not yours. The chips print only `winner`, not runner-up marks (a runner-up badge on every page would flood with noise); the almanac page itself shows the full three-up. No new colour, no new component, no provider call anywhere.
 
 **CI** — **`43643717748`** — completed success on all four legs.
+
+## §188 — Item 55: the player's poster
+
+One door had no poster. The almanac has one; the story has one; the record book has one; `/player/[slug]` — the canonical link every search, every share, every settled argument routes to — had none.
+
+**What landed.** `app/player/[slug]/opengraph-image.tsx`: a dynamic 1200×630 ImageResponse in the almanac/story families — ember-black canvas; the giant `+68` OVR in raw gold; the name in paper-white; club eyebrow in caps; position token (`ST`) top-right in gold; chips row (OVR · POT · age · nation); ember gradient rule bottom-left; `FOOTBALL OS` header-footer. **The whole vocabulary of the card is the whitelisted token shapes the duel and almanac cards already use** — no prose in the image, no `t()` call exists in it; the i18n literals gate reads 9/9. **Degrades never.** If `readWorld<PlayerDetail>(/world/players/{slug})` cannot answer (500, timeout, network), the card falls back to a tokens-only poster rather than 500 — the OG route cannot crash the routes that depend on it.
+
+**Live walk (seeded scratch 7:3 SQLite).** `GET /player/zein-sorek/opengraph-image` — 200 · 42,243 bytes · `image/png`, clean render: OVR 68 gold, name in paper, chips (OVR 68 / POT 77 / 21 · Braeenheim), club eyebrow `CORDALE TOWN`, position `ST` in gold, zero console errors. **The seeded walk touched only the pinned seeds this world generates**; any other deploy prints its own names — no other claim is made.
+
+**`page.tsx` traffic to it.** `generateMetadata` now lists the card under `images` — copied from the almanac arc's pattern — pointing Next's OG fetchers at `/player/{slug}/opengraph-image`.
+
+**CI** — **`43647932788`** — completed success on all four legs.

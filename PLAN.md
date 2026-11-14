@@ -2726,6 +2726,22 @@ Two honest deliveries shipped under the arc: `hat_trick` was renamed `biggest_ha
 
 ---
 
+## Item 55 — the player's poster (landed 2026-11-14)
+
+**The gap.** `/player/[slug]` is the door every share settles on — and in the feeds it appeared empty. The almanac, story and record book all print dedicated share cards; the player never had one.
+
+**What landed.** `app/player/[slug]/opengraph-image.tsx` — a dynamic 1200×630 entry in the almanac/story families: giant gold OVR, paper-white name, club eyebrow in caps, position chip, chips row (OVR · POT · age · nation), ember gradient rule, `FOOTBALL OS` header-footer. **Zero literals beyond the whitelisted token set** — no prose, no `t()` call, the gate's vocabulary inventory unchanged. **Degrades never:** if the anonymous world door cannot answer, the card falls back to a tokens-only poster instead of crashing the routes that read it. `page.tsx` `generateMetadata` now lists the route under `images` — duel/almanac/story pattern.
+
+**Seeded live walk.** Fresh 7:3 scratch SQLite + a fresh dev server: `GET /player/zein-sorek/opengraph-image` — 200 · 42,243 bytes · clean render: OVR 68 in gold, name in paper, chips (68 OVR / POT 77 / 21 · Braeenheim), club eyebrow `CORDALE TOWN`, position `ST` top-right, zero console errors. No other seed's names are promised.
+
+**Local verification.** tsc 0; the i18n-literals gate reads 9/9 (the card carries no sentences); the rest of the CI-ordered web battery re-ran green at the same bytes (catalogues untouched — the card has no catalogues).
+
+**Deliberately not done.** No player data other than the live world door answers is rendered; no per-position colour; no club crest (the world does not generate crests); no per-position font pack. The card is the first social-completeness arc of three — the almanac and duel arcs already landed theirs.
+
+---
+
+**CI `43647932788` — all four legs success.**
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
