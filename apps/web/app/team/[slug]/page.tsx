@@ -40,6 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? `${team.summary.slice(0, 220)}${t("metaDescriptionSuffix")}`
       : t("metaDescriptionFallback"),
     path: `/team/${slug}`,
+    images: [{ url: absolute(`/team/${slug}/opengraph-image`), width: 1200, height: 630, alt: "FOOTBALL OS" }],
   });
 }
 
