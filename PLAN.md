@@ -2742,6 +2742,22 @@ Two honest deliveries shipped under the arc: `hat_trick` was renamed `biggest_ha
 
 **CI `43647932788` — all four legs success.**
 
+## Item 56 — the fixture's poster (landed 2026-11-14)
+
+**The gap.** `/match/[slug]` is the door every argument and every settled score gets pointed at — and in every feed it rendered as a bare link. The family of shareable cards (duel, player, almanac, story, records) left the fixture cold.
+
+**What landed.** `app/match/[slug]/opengraph-image.tsx` — a dynamic 1200×630 in the family language, ember-black with an ember gradient rule; home right-aligned, away left, the score in tabular gold (or `VS` in gold-stroke for scheduled fixtures), competition in caps upper-left, round chip in a gold-rimmed lozenge upper-right (`MD 11` short), `FT` tag beside amateur goals, date chip for scheduled fixtures, `FOOTBALL OS` header-footer. Tokens-only vocabulary — zero prose; every token in the file already whitelisted. `generateMetadata` registers it under `images` — link unfurls now preview the fixture.
+
+**The two-render honest fix.** First render clipped the away club past the right edge — flex columns without an explicit width. Fix: bounded name columns (360px), no mid-word `wordBreak`, font driver from the longest WORD. Second render verified — 200 · 44,509 bytes, zero console errors.
+
+**Seeded live walk.** Fresh 7:3 scratch + fresh dev server; the completed `Matchday 11` fixture rendered exactly as the message ran. No other seed's names are promised.
+
+**Local verification.** tsc 0; `qa-i18n-literals` 9/9 (the card carries zero prose); catalogues untouched (no `t()` in the image; the whole card is the token shapes the duel and almanac already share).
+
+**Deliberately not done.** No scoreline beyond what the rows say; no club crests (the world does not generate them); no per-competition colour grammar — one ember poster family for every fixture is the honest universalist answer. The other four doors in the family already landed; the match was the last gap and is the gap this arc closed.
+
+**CI verdict.** Push `43651851747` — api / web / containers **success**; services **failure** at `EdgeBreakerStateTest.enough_failures_open_the_breaker_and_a_further_call_is_not_permitted` (5-second blocking-read ceiling; shared-runner stall, zero Java source in this push). Retried in-place — retry printed **all four legs success**. Master is green at `5f6fe0b`.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

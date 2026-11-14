@@ -6876,3 +6876,15 @@ One door had no poster. The almanac has one; the story has one; the record book 
 **`page.tsx` traffic to it.** `generateMetadata` now lists the card under `images` — copied from the almanac arc's pattern — pointing Next's OG fetchers at `/player/{slug}/opengraph-image`.
 
 **CI** — **`43647932788`** — completed success on all four legs.
+
+## §189 — Item 56: the match centre's poster
+
+Every argument settles at `/match/[slug]` — and every shared link in the feeds rendered as a bare URL, the one door left bare in the social family. The duel has its corner duel poster; the player his giant OVR; the almanac, story and record book have theirs; the match still had nothing.
+
+**What landed.** `app/match/[slug]/opengraph-image.tsx` — a dynamic 1200×630 in the family language: ember-black field; home club right-aligned; away club left-aligned; the score centred in tabular gold (or `VS` in gold-stroke when the fixture is scheduled); the competition in caps at upper-left; the round chip in a gold-rimmed lozenge at upper-right (shortened `Matchday 11` → `MD 11`); `FT` tag beside amateur goals; `SEASON` date chip for scheduled fixtures; ember gradient rule bottom-left; `FOOTBALL OS` header-footer. **Every token in the file is whitelisted** — no prose anywhere in the card; `FT`, `VS`, `SEASON`, `FOOTBALL OS`, `POSTER` are all already-members of the gate's token set. `page.tsx` registers it under `images` in `generateMetadata` — link unfurls now preview the fixture.
+
+**Two-iteration honest fix.** The first render clipped Durford Town past the right edge — the away column had no bound. Root cause: flex columns without an explicit width; the away block at `alignItems: flex-start` followed by an unconstrained name string. Fixed: both name columns bounded at 360px; no mid-word `wordBreak` (switching to it pulverised `Durford Miners` into "Obrfor|d Min|er|s" fragments — the exact failure mode named in the commit); driver-sizing driven off the longest WORD (140/118/98/84/72/62), not the full string. Second render is the proof: 200 · 44,509 bytes, zero console errors.
+
+**Seeded live walk.** Completed Matchday-11 fixture from the seeded scratch (`Obrford Miners 3–0 Durford Town Thornford Superleague`). Rendered, iterated, committed. No other seed's names are promised.
+
+**CI verdict (verbatim).** Push `43651851747` — api / web / containers **success**; services **failure** at `Build the Spring plane (registry, config, edge)`: `EdgeBreakerStateTest.enough_failures_open_the_breaker_and_a_further_call_is_not_permitted` at the 5-second blocking-read ceiling (shared-runner stall; this push touches zero Java source). Retried in-place — same run id, only the services job re-run — the retry printed **all four legs success**. Master is green at `5f6fe0b`.
