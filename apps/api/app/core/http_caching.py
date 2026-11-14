@@ -13,32 +13,28 @@ body to be told what it already has. This module is the missing half:
 * **304 Not Modified** with the dressed headers kept and the body emptied, when the caller's
   `If-None-Match` matches — the one answer this door exists to make cheap.
 
-This module never counts a metric. `request_context`, which sits inside the gate, has already
-recorded the answer it forwarded (a 200 that this gate converts to a 304 is counted there
-visibly and the mismatch is named here). The one outcome it cannot see is the 304 itself, so
-that outcome alone is counted, once.
+`RevalidationMiddleware` is a pure ASGI wrapper, deliberately not a `BaseHTTPMiddleware`:
+the crash-answer dresser needs the contextvars `request_context` sets
+(`rate_decision_var`, `request_id_var`) to be visible *above* it, and every
+`BaseHTTPMiddleware` layer copies and isolates that context. A pure ASGI pass keeps the
+chain: server error → gzip → revalidation → `request_context`, one context.
 
-Kept out of the middleware body so a test can ask the question directly, with a request it
-built, rather than starting a server to find out what a client is told. The middleware in
-`app.main` holds nothing but the registration.
+This module never counts a metric. `request_context`, which sits inside the gate, has already
+recorded the answer it forwarded (a 200 that this gate converts to a 304 is counted there). The
+one outcome it cannot see is the 304 itself, so that outcome alone is counted, once.
 """
 
 from __future__ import annotations
 
 import hashlib
 import time
-from collections.abc import Awaitable, Callable
-
 from starlette import status
-from starlette.requests import Request
-from starlette.responses import Response
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.request_metrics import record
 
 REVALIDATE_CACHE_CONTROL = "private, max-age=0, must-revalidate"
 _ETAG_HEX_CHARS = 32
-
-Origin = Callable[[Request], Awaitable[Response]]
 
 
 def compute_etag(body: bytes) -> str:
@@ -46,14 +42,13 @@ def compute_etag(body: bytes) -> str:
     return '"' + hashlib.sha256(body).hexdigest()[:_ETAG_HEX_CHARS] + '"'
 
 
-def is_validatable_json(response: Response) -> bool:
+def is_validatable_json(status_code: int, content_type: str, content_encoding: str | None) -> bool:
     """A JSON answer that may be validated — nothing else carries this door's validator."""
-    if response.status_code != status.HTTP_200_OK:
+    if status_code != status.HTTP_200_OK:
         return False
-    content_type = response.headers.get("content-type", "")
     if not content_type.startswith("application/json"):
         return False
-    if response.headers.get("content-encoding"):
+    if content_encoding:
         # The gate owns the hash of the bytes it reads; a body already encoded by whoever
         # built it belongs to somebody else's invariant, and a validator over the wrong bytes
         # is worse than no validator.
@@ -61,7 +56,7 @@ def is_validatable_json(response: Response) -> bool:
     return True
 
 
-def if_none_match(request: Request, etag: str) -> bool:
+def if_none_match(header_value: str | None, etag: str) -> bool:
     """RFC 7232 weak comparison against the caller's `If-None-Match`, when present.
 
     Beyond the RFC (a quoted entity-tag, `W/` weak prefix, `*`, comma list), this also
@@ -69,10 +64,9 @@ def if_none_match(request: Request, etag: str) -> bool:
     comparison stays byte-strict anyway: a 304 is only minted when the bare token equals
     the validator for the exact bytes held; anything else keeps the body.
     """
-    header = request.headers.get("if-none-match")
-    if not header:
+    if not header_value:
         return False
-    for raw in header.split(","):
+    for raw in header_value.split(","):
         candidate = raw.strip()
         if candidate == "*":
             return True
@@ -83,60 +77,70 @@ def if_none_match(request: Request, etag: str) -> bool:
     return False
 
 
-def _clone_headers(response: Response, drop: tuple[str, ...] = ()) -> dict[str, str]:
-    """The answer's headers, keys lower-cased (as the wire wants) minus the ones being re-decided."""
-    re_decided = ("content-length", "etag", "cache-control") + drop
-    out: dict[str, str] = {}
-    for key, value in response.headers.items():
-        lowered = key.lower()
-        if lowered in re_decided:
-            continue
-        out[lowered] = value
-    return out
+def _header_map(headers: list[tuple[bytes, bytes]]) -> dict[bytes, bytes]:
+    return {key.lower(): value for key, value in headers}
 
 
-def _strip_for_not_modified(response: Response, etag: str) -> Response:
-    """The 304: the dressed answer's headers kept, the body emptied, nothing recomputed."""
-    headers = _clone_headers(response, drop=("content-encoding", "transfer-encoding"))
-    headers["etag"] = etag
-    headers["cache-control"] = REVALIDATE_CACHE_CONTROL
-    headers["content-length"] = "0"
-    return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers=headers)
+class RevalidationMiddleware:
+    """Pure ASGI gate: buffer the answer, tag it, answer 304 when the validator holds."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        started = time.perf_counter()
+        if scope.get("type") != "http" or scope.get("method", "GET") != "GET":
+            await self.app(scope, receive, send)
+            return
+
+        start: Message | None = None
+        body = bytearray()
+
+        async def gather(message: Message) -> None:
+            nonlocal start
+            if message["type"] == "http.response.start":
+                start = message
+            elif message["type"] == "http.response.body":
+                body.extend(message.get("body", b""))
+
+        await self.app(scope, receive, gather)
+        assert start is not None, "the inner app answered without an http.response.start"
+
+        headers = _header_map(start["headers"])
+        etag = compute_etag(bytes(body))
+        content_type = headers.get(b"content-type", b"").decode("latin-1")
+        content_encoding_header = headers.get(b"content-encoding")
+        if is_validatable_json(start["status"], content_type, content_encoding_header.decode("latin-1") if content_encoding_header else None):
+            request_headers = {k.lower(): v for k, v in scope.get("headers", [])}
+            if_none = request_headers.get(b"if-none-match")
+            if if_none_match(if_none.decode("latin-1") if if_none else None, etag):
+                record(status.HTTP_304_NOT_MODIFIED, (time.perf_counter() - started) * 1000)
+                keep = dict(headers)
+                keep.pop(b"content-length", None)
+                keep.pop(b"content-encoding", None)
+                keep.pop(b"transfer-encoding", None)
+                keep[b"etag"] = etag.encode("latin-1")
+                keep[b"cache-control"] = REVALIDATE_CACHE_CONTROL.encode("latin-1")
+                keep[b"content-length"] = b"0"
+                await send({"type": "http.response.start", "status": status.HTTP_304_NOT_MODIFIED, "headers": [(k, v) for k, v in keep.items()]})
+                await send({"type": "http.response.body", "body": b""})
+                return
+            keep = dict(headers)
+            keep[b"etag"] = etag.encode("latin-1")
+            keep[b"cache-control"] = REVALIDATE_CACHE_CONTROL.encode("latin-1")
+            keep[b"content-length"] = str(len(body)).encode("ascii")
+            await send({"type": "http.response.start", "status": start["status"], "headers": [(k, v) for k, v in keep.items()]})
+            await send({"type": "http.response.body", "body": bytes(body)})
+            return
+
+        await send(start)
+        await send({"type": "http.response.body", "body": bytes(body)})
 
 
-def _with_validator(response: Response, body: bytes, etag: str) -> Response:
-    """The same answer, re-tagged: bytes identical, headers extend the original, never replace it."""
-    headers = _clone_headers(response)
-    headers["etag"] = etag
-    headers["cache-control"] = REVALIDATE_CACHE_CONTROL
-    headers["content-length"] = str(len(body))
-    return Response(
-        status_code=response.status_code,
-        headers=headers,
-        content=body,
-    )
-
-
-async def _read_body(response: Response) -> bytes:
-    """Drain whichever shape the answered body arrived in."""
-    iterator = getattr(response, "body_iterator", None)
-    if iterator is None:
-        return getattr(response, "body", b"")
-    chunks: list[bytes] = []
-    async for chunk in iterator:
-        chunks.append(chunk if isinstance(chunk, bytes) else chunk.encode("utf-8"))
-    return b"".join(chunks)
-
-
-async def revalidate_if_stale(request: Request, call_next: Origin) -> Response:
-    """The gate: hash a JSON 200 GET answer, honour `If-None-Match`, re-tag the body otherwise."""
-    started = time.perf_counter()
-    response = await call_next(request)
-    if request.method != "GET" or not is_validatable_json(response):
-        return response
-    body = await _read_body(response)
-    etag = compute_etag(body)
-    if if_none_match(request, etag):
-        record(status.HTTP_304_NOT_MODIFIED, (time.perf_counter() - started) * 1000)
-        return _strip_for_not_modified(response, etag)
-    return _with_validator(response, body, etag)
+__all__ = [
+    "REVALIDATE_CACHE_CONTROL",
+    "RevalidationMiddleware",
+    "compute_etag",
+    "if_none_match",
+    "is_validatable_json",
+]

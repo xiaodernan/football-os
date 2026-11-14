@@ -220,6 +220,8 @@ const FR_TOKENS = new Map([
   ["scout.title", "the feature's own name"],
   ["creator.metaTitle", "the feature's own name"],
   ["nav.notifications", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["duel.catDiscipline", "a field/interface term French spells the same as English (loanword doublet)"],
+  ["duel.catMinutes", "a field/interface term French spells the same as English (loanword doublet)"],
   ["nav.traces", "a field/interface term French spells the same as English (loanword doublet)"],
   ["common.paginationAria", "a field/interface term French spells the same as English (loanword doublet)"],
   ["common.rowQuestion", "a field/interface term French spells the same as English (loanword doublet)"],
