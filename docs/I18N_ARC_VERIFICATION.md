@@ -6590,3 +6590,20 @@ container-boot leg that ran at `43580104470` and `43581209675`. The home panel's
 not yet walked anywhere; visual-qa's long walk is the frontier named in §145 and this arc does not
 claim to close it. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the
 repository root remains untouched; `.workbuddy/` remains untouched.
+
+---
+
+### The featured door, live on the wire
+
+The same Item 41 arc, verified end-to-end on a scratch uvicorn against a fresh SQLite of the same seeded world (`seed=3`, `25,561` created rows, `ENV=test`, `APP_SECRET=probe-live-secret`, port `8771`):
+
+```
+GET /api/v1/world/duel/featured  →  200
+  pair:      Ranek Gener (slug `ranek-gener`)  v  Unek Kastek (slug `unek-kastek`)
+  verdict:   left | counted 5 | left_wins 4 | right_wins 1 | levelled 2
+  categories: goals, assists, involvement_per_90, rating, minutes, overall, discipline
+  etag:      "678318778c72926a1fce3de962f2d036"  (stable across calls)
+Repeat with If-None-Match: same etag → 304 · 0 bytes
+```
+
+The door speaks the exact compare envelope — same categories in the documented order, same verdict shape the page argues over — and Item 38's revalidation gate holds over it: a warm call with the returned validator is answered with a 304 and an empty body, crediting exactly the bytes the wire did not have to carry. Nothing here was mocked, nothing faked to a number; every figure was printed by the wire itself.
