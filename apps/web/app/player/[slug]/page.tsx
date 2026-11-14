@@ -63,6 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? tp("metaDescriptionPlayer", { position: player.position, overall: player.overall, goals: player.goals, assists: player.assists, minutes: player.minutes, summary: player.summary.slice(0, 120) })
       : tp("metaDescriptionFallback"),
     path: `/player/${slug}`,
+    images: [{ url: absolute(`/player/${slug}/opengraph-image`), width: 1200, height: 630, alt: "FOOTBALL OS" }],
   });
 }
 
