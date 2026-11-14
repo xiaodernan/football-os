@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { DuelPicker } from "@/components/DuelPicker";
 import { Panel } from "@/components/ui";
 import { WorldHead } from "@/components/world";
-import { pageMetadata } from "@/lib/site";
+import { absolute, pageMetadata } from "@/lib/site";
 import { cleanParams, readWorld } from "@/lib/world";
 import type { PlayerDetail } from "@/lib/types";
 
@@ -14,7 +14,12 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("duel");
-  return pageMetadata({ title: t("metaPickerTitle"), description: t("metaPickerDescription"), path: "/world/duel" });
+  return pageMetadata({
+    title: t("metaPickerTitle"),
+    description: t("metaPickerDescription"),
+    path: "/world/duel",
+    images: [{ url: absolute("/world/duel/opengraph-image"), width: 1200, height: 630, alt: "FOOTBALL OS — pick two players, the ledger decides" }],
+  });
 }
 
 /**

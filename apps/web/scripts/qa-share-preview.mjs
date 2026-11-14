@@ -245,7 +245,18 @@ check("8c and its colours come from the stylesheet's tokens, not from hex typed 
   !/#[0-9a-f]{6}/i.test(markup) && markup.includes("${tokens.bg}") && markup.includes("${tokens.accent}"),
   (markup.match(/#[0-9a-f]{6}/gi) ?? []).join(", ") || "no token read");
 
-const staticPageExists = (path) => existsSync(join(APP, path.replace(/^\//, ""), "page.tsx"));
+const staticPageExists = (path) => {
+  const stem = path.replace(/^\//, "");
+  // A route group (`app/scout/(index)/page.tsx`) is not a path segment: `/scout` is still the route it
+  // answers, so the exists-check must look under the group as well as straight under the folder.
+  if (existsSync(join(APP, stem, "page.tsx"))) return true;
+  const parent = join(APP, stem || ".");
+  if (!existsSync(parent)) return false;
+  for (const entry of readdirSync(parent, { withFileTypes: true })) {
+    if (entry.isDirectory() && /^\(.*\)$/.test(entry.name) && existsSync(join(parent, entry.name, "page.tsx"))) return true;
+  }
+  return false;
+};
 /** `app/<area>/shared/[token]/page.tsx` is the route `/…/shared`, so the page's own route is everything between
  * `app/` and the dynamic segment — derived once and read by both clauses that need it. */
 const ownRoute = (rel) => `/${rel.split("/").slice(1, -2).join("/")}`;

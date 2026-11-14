@@ -7,7 +7,7 @@ import { DuelRadar } from "@/components/DuelRadar";
 import type { RadarAxis } from "@/components/DuelRadar";
 import { Panel } from "@/components/ui";
 import { EntityLink, Provenance, WorldUnavailable } from "@/components/world";
-import { pageMetadata } from "@/lib/site";
+import { absolute, pageMetadata } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { DuelResult } from "@/lib/types";
 
@@ -32,9 +32,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const t = await getTranslations("duel");
   const result = await load(left, right);
   if (!result.ok) {
-    return pageMetadata({ title: t("metaTitleFallback"), description: t("metaDescriptionFallback"), path: `/world/duel/${left}/${right}` });
+    return pageMetadata({
+      title: t("metaTitleFallback"),
+      description: t("metaDescriptionFallback"),
+      path: `/world/duel/${left}/${right}`,
+      images: [{ url: absolute(`/world/duel/${left}/${right}/opengraph-image`), width: 1200, height: 630, alt: t("metaTitleFallback") }],
+    });
   }
   const { left: a, right: b, verdict } = result.data;
+  const sharePath = `/world/duel/${a.player.slug}/${b.player.slug}/opengraph-image`;
+  const images = [{ url: absolute(sharePath), width: 1200, height: 630, alt: t("metaTitle", { left: a.player.name, right: b.player.name }) }];
   return pageMetadata({
     title: t("metaTitle", { left: a.player.name, right: b.player.name }),
     description: t("metaDescription", {
@@ -44,6 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       rightWins: verdict.right_wins,
     }),
     path: `/world/duel/${a.player.slug}/${b.player.slug}`,
+    images,
   });
 }
 

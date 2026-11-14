@@ -52,6 +52,10 @@ export function ogImages(): NonNullable<Metadata["openGraph"]>["images"] {
  * locale is request-scoped, so the claim lives in the root layout's `generateMetadata`
  * where `headers()` is available. A page keeping its inherited og block can lose og:locale —
  * valid per the OG spec, which treats the absence as "no claim", not as "a lie".
+ *
+ * `images` overrides the site card for routes that render their own share card
+ * (`world/duel/**\/opengraph-image`). The callers pass the card they actually serve —
+ * a page that says it previews as X and links Y is the metadata bug this parameter ends.
  */
 export function pageMetadata(input: {
   title: string;
@@ -62,9 +66,10 @@ export function pageMetadata(input: {
    * public but never indexed — the gallery, the clip report — pass their robots here
    * instead of leaving the helper, which is what the metadata gate's forms check reads. */
   robots?: Metadata["robots"];
+  images?: NonNullable<Metadata["openGraph"]>["images"];
 }): Metadata {
   const url = absolute(input.path);
-  const images = ogImages();
+  const images = input.images ?? ogImages();
   return {
     title: input.title,
     description: input.description,
