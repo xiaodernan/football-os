@@ -2880,10 +2880,10 @@
     "policyAiTitle": "الذكاء الاصطناعي تقدير",
     "featuredDuelEyebrow": "اختيار السجل",
     "featuredDuelTitle": "لاعبان، حكم واحد",
-    "featuredDuelBody": "حدة المهاجم ضد صنعة المبدع. سبع خانات، حكم واحد.",
-    "featuredDuelLevelled": "تعادل السجل — بلا فائز.",
-    "featuredDuelWinner": "{name} يفوز بالسجل.",
-    "featuredDuelRefused": "العالم لم يولّد هذين بعد — اختر اثنين بنفسك.",
+    "featuredDuelBody": "حدة المهاجم ضد صنعة المبدع. سبع خانات، حكم واحد۔",
+    "featuredDuelLevelled": "تعادل السجل — بلا فائز۔",
+    "featuredDuelWinner": "{name} يفوز بالسجل۔",
+    "featuredDuelRefused": "العالم لم يولّد هذين بعد — اختر اثنين بنفسك۔",
     "featuredDuelCta": "افتح النزال"
   },
   "careerDetail": {
