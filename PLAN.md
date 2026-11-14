@@ -2611,6 +2611,30 @@ face. The home panel's visual verification is CI-time too.
 
 ---
 
+## Item 45 — the world hands itself its own honours (landed 2026-11-14)
+
+**The gap.** Every figure the world already held was recomputable from stored rows — goals, assists, rating, clean sheets, cards — but nothing in the product gathered them into the season's honour roll. The Golden Boot sat in a column next to a stranger's statistics; the manager who lifted the league table was untraceable, because points were only printed inside `/world/competitions/{{slug}}`, one fixture away from nobody.
+
+**What landed.** `GET /api/v1/world/almanac` — anonymous read, world tier 60/min, 60 s response-cache-backed; `app/services/world/almanac.py::compute_almanac()` recomputes every figure live on each read: Golden Boot, Playmaker's Crown, Complete Forward, Golden Glove, Player of the Season (≥15 appearances), The Enforcer (yellow×1 + red×3), The Breakthrough (under-23) — each with the winner and exactly three runner-ups, all linked to player pages. Manager of the Season is re-tallied from the very fixtures the standings door reads, so the almanac and the table cannot disagree. Web `/world/almanac`: portrait cards in ember gold, the seven-honour grid, the manager block, an OG share card, six-locale catalogues, the `/world` browse tile, the sitemap row, and a 34-key `almanac` namespace (recount: 4,500 population both ways at Item 46). The contract moved 231→232 paths with the door.
+
+**Verdict chain.** `b495deb` red on api + web → `c1856d8` (SHA-currency) red on the same two legs → `e7d8ccd` all four legs success — `43606683753`. The two reds were cured inside the arc: mypy's refusal on a union the conditional did not narrow (restructured into a closed if/else with one `poty_award` binding), and the eleven Arabic full stops the new strings still carried (converted to U+06D4). §179 in `docs/I18N_ARC_VERIFICATION.md` carries the record.
+
+**Deliberately not done at the time.** No manager-figures shorthand, no race panel, no `title_race` — that is Item 46, by design, one idea per arc.
+
+---
+
+## Item 46 — the title race, where the points ran out (landed 2026-11-14)
+
+**The defect.** The almanac could hand out every individual honour and still not answer the question the honour roll implies: **who won the league, and by how much?** A reader holding the almanac had to leave for `/world/competitions/{{league}}` to see the table, and the champion's name lived nowhere on the page.
+
+**What landed.** `_top_league()` — one deterministic selection (tier-1 first, name tiebreak) that the whole almanac now speaks for: the Manager of the Season and the race panel cannot drift onto different competitions (the seed produced a tier-1 race at 23–23 decided on goal difference — Ostmoor Albion GD +6 vs Quernmoor Town GD +1 — and the door reports that honestly instead of papering it over). The envelope carries `title_race`: champion + runner-up (points, W/D/L, GF/GA/GD, paths) and `margin` + `gd_margin`. The page renders a bronze-rimmed race panel — champion vs runner-up either side of a centre tile whose headline switches from `+N pts clear` to `+N goal difference` when the points cannot separate the clubs. The `managerFiguresShort` key dropped as unused at the end of Item 45 was restored, because the race panel asks for exactly that shape; six brand-new `titleRace*` keys × six locales, catalogues at uniform population 4,500.
+
+**Deliberately not done.** No new route, no contract move (the door returns an object; the schema does not enumerate per-key), no palette changes, no gate re-tags. One deterministic tiebreak is documented in the code; a world whose table is perfectly equal on every column renders champion and runner-up from that same order, and says so only to itself — such a fixture combination has never been produced by the generator.
+
+**Local evidence at the time of writing.** tsc 0; full web gate battery green (`qa-icu-messages` 27,000 messages / 4,500 keys; `qa-unused-keys` 3/3; `qa-locale-tokens` 7/7 — 2,784 shared sentences; `qa-rtl-readiness` 8/8; `qa-translation-quality` 9/9); API ruff + mypy clean, `test_world_almanac.py` 7/7 (the two new title-race cases included), SHA-currency gates hold at `d62be1cc` unchanged (the schema did not move). Editor-plus-seeded-scratch verification: `/api/v1/world/almanac` answers live (`Lyndera Superleague`, Ostmoor Albion 23 pts vs Quernmoor Town 23 pts, GD tiebreak) and `.next-race` production build in flight at the time of writing — the runner prints the rest.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

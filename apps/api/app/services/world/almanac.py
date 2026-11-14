@@ -70,6 +70,115 @@ def _award(
     }
 
 
+def _top_league(session: Session) -> Competition | None:
+    """The same league the whole almanac speaks for — the top tier, name-broken ties.
+
+    The world's pyramid has a tier-1 league and at least one tier-2; the almanac honours one
+    competition, never two, so the manager figure and the title race cannot drift apart.
+    """
+    return session.scalar(
+        select(Competition)
+        .where(Competition.kind == "league")
+        .order_by(Competition.tier.asc(), Competition.name.asc())
+        .limit(1)
+    )
+
+
+def _compute_league_table(session: Session) -> dict[str, Any]:
+    """Recompute the league table from completed league fixtures, same way `world.py` does."""
+    league = _top_league(session)
+    if league is None:
+        return {"available": False}
+
+    fixtures = list(
+        session.scalars(
+            select(RealMatch)
+            .where(RealMatch.competition_id == league.id, RealMatch.status == "completed")
+            .order_by(RealMatch.kickoff_at.asc())
+        ).all()
+    )
+    table: dict[str, dict[str, int]] = {}
+    for fixture in fixtures:
+        if fixture.home_goals is None or fixture.away_goals is None:
+            continue
+        for team_id, on_home in ((fixture.home_team_id, True), (fixture.away_team_id, False)):
+            stats = table.setdefault(
+                team_id,
+                {"played": 0, "won": 0, "drawn": 0, "lost": 0, "goals_for": 0, "goals_against": 0, "points": 0},
+            )
+            gf = fixture.home_goals if on_home else fixture.away_goals
+            ga = fixture.away_goals if on_home else fixture.home_goals
+            stats["played"] += 1
+            stats["goals_for"] += gf or 0
+            stats["goals_against"] += ga or 0
+            if fixture.home_goals == fixture.away_goals:
+                stats["drawn"] += 1
+                stats["points"] += 1
+            elif (on_home and fixture.home_goals > fixture.away_goals) or (not on_home and fixture.away_goals > fixture.home_goals):
+                stats["won"] += 1
+                stats["points"] += 3
+            else:
+                stats["lost"] += 1
+    return {
+        "available": True,
+        "competition": league.name,
+        "competition_slug": league.slug,
+        "table": table,
+    }
+
+
+def _title_race(session: Session) -> dict[str, Any]:
+    computed = _compute_league_table(session)
+    if not computed["available"]:
+        return {"available": False}
+    rows = sorted(
+        computed["table"].items(),
+        key=lambda kv: (-kv[1]["points"], -(kv[1]["goals_for"] - kv[1]["goals_against"]), -kv[1]["goals_for"]),
+    )
+    if len(rows) < 2:
+        return {"available": False}
+    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    champ_id, champ = rows[0]
+    runner_id, runner = rows[1]
+    champ_team = teams.get(champ_id)
+    runner_team = teams.get(runner_id)
+    return {
+        "available": True,
+        "competition": computed["competition"],
+        "competition_slug": computed["competition_slug"],
+        "champion": {
+            "id": champ_id,
+            "slug": getattr(champ_team, "slug", ""),
+            "name": getattr(champ_team, "name", "Data unavailable"),
+            "path": f"/team/{getattr(champ_team, 'slug', '')}" if champ_team is not None else None,
+            "played": champ["played"],
+            "won": champ["won"],
+            "drawn": champ["drawn"],
+            "lost": champ["lost"],
+            "goals_for": champ["goals_for"],
+            "goals_against": champ["goals_against"],
+            "points": champ["points"],
+            "goal_difference": champ["goals_for"] - champ["goals_against"],
+        },
+        "runner_up": {
+            "id": runner_id,
+            "slug": getattr(runner_team, "slug", ""),
+            "name": getattr(runner_team, "name", "Data unavailable"),
+            "path": f"/team/{getattr(runner_team, 'slug', '')}" if runner_team is not None else None,
+            "played": runner["played"],
+            "won": runner["won"],
+            "drawn": runner["drawn"],
+            "lost": runner["lost"],
+            "goals_for": runner["goals_for"],
+            "goals_against": runner["goals_against"],
+            "points": runner["points"],
+            "goal_difference": runner["goals_for"] - runner["goals_against"],
+        },
+        "margin": champ["points"] - runner["points"],
+        "gd_margin": (champ["goals_for"] - champ["goals_against"]) - (runner["goals_for"] - runner["goals_against"]),
+    }
+
+
 def compute_almanac(session: Session) -> dict[str, Any]:
     """The whole almanac, computed from the world's own stored rows."""
     players = list(
@@ -115,7 +224,7 @@ def compute_almanac(session: Session) -> dict[str, Any]:
     else:
         breakthrough_winner, breakthrough_rest = None, []
 
-    league_competition = session.scalar(select(Competition).where(Competition.kind == "league"))
+    league_competition = _top_league(session)
     best_manager: dict[str, Any] | None = None
     if league_competition is not None:
         fixtures = list(
@@ -225,6 +334,7 @@ def compute_almanac(session: Session) -> dict[str, Any]:
             "golden_boot": _player_payload(golden_boot, golden_boot.goals),
             "playmaker": _player_payload(playmaker, playmaker.assists),
         },
+        "title_race": _title_race(session),
     }
 
 

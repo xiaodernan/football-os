@@ -4584,6 +4584,13 @@
     "managerFigures": "{points} 分 · {won} 胜 · {drawn} 平",
     "managerGoals": "进 {goalsFor} 球 · 失 {goalsAgainst} 球",
     "unavailable": "联赛还没踢完一个完整的主客场对——年鉴还在被写出来。",
-    "backWorld": "回到世界"
+    "backWorld": "回到世界",
+    "managerFiguresShort": "{points} 分 · {won}胜{drawn}平{lost}负",
+    "titleRaceEyebrow": "最后一线的争冠",
+    "titleRaceLede": "冠军就是从这张积分榜里走出来的——每场比赛都在本次请求里重新统计。",
+    "titleRaceChampion": "冠军",
+    "titleRaceRunnerUp": "亚军",
+    "titleRaceMarginUnit": "分之差",
+    "titleRaceGdUnit": "净胜球"
   }
 }

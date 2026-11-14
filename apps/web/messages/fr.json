@@ -4584,6 +4584,13 @@
     "managerFigures": "{points} points · {won} victoires · {drawn} nuls",
     "managerGoals": "{goalsFor} marqués · {goalsAgainst} encaissés",
     "unavailable": "La saison n'a pas encore disputé un seul match de championnat — l'almanach est en train d'être écrit.",
-    "backWorld": "retour au monde"
+    "backWorld": "retour au monde",
+    "managerFiguresShort": "{points} pts · {won}-{drawn}-{lost}",
+    "titleRaceEyebrow": "la course sur la ligne",
+    "titleRaceLede": "Le classement d'où sort le champion — chaque match recompté à cette requête.",
+    "titleRaceChampion": "Le champion",
+    "titleRaceRunnerUp": "Le dauphin",
+    "titleRaceMarginUnit": "pts d'avance",
+    "titleRaceGdUnit": "différence de buts"
   }
 }

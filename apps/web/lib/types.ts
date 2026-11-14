@@ -2969,9 +2969,42 @@ export type AlmanacManager = {
   data_origin: string;
 };
 
+/** One side of the title race — `_title_race()`'s `champion` / `runner_up` payload. */
+export type AlmanacTitleRaceFinisher = {
+  id: string;
+  slug: string;
+  name: string;
+  path: string | null;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goals_for: number;
+  goals_against: number;
+  points: number;
+  goal_difference: number;
+};
+
+/**
+ * The title-race block: either the world published no champion (a half-written league publishes
+ * none) or it carries both finishers and the margin. The discriminant is `available`.
+ */
+export type AlmanacTitleRace =
+  | { available: false }
+  | {
+      available: true;
+      competition: string;
+      competition_slug: string;
+      champion: AlmanacTitleRaceFinisher;
+      runner_up: AlmanacTitleRaceFinisher;
+      margin: number;
+      gd_margin: number;
+    };
+
 export type AlmanacResult = WorldEnvelope & {
   season: { label: string; kind: string };
   awards: AlmanacAward[];
   best_manager: AlmanacManager | null;
   portrait: Record<string, AlmanacWinner> | null;
+  title_race: AlmanacTitleRace;
 };

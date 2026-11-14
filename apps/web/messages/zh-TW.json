@@ -4584,6 +4584,13 @@
     "managerFigures": "{points} 分 · {won} 勝 · {drawn} 平",
     "managerGoals": "進 {goalsFor} 球 · 失 {goalsAgainst} 球",
     "unavailable": "聯賽還沒踢完一個完整的主客場對——年鑑還在被寫出來。",
-    "backWorld": "回到世界"
+    "backWorld": "回到世界",
+    "managerFiguresShort": "{points} 分 · {won}勝{drawn}平{lost}負",
+    "titleRaceEyebrow": "最後一線的爭冠",
+    "titleRaceLede": "冠軍就是從這張積分榜裡走出來的——每場比賽都在本次請求裡重新統計。",
+    "titleRaceChampion": "冠軍",
+    "titleRaceRunnerUp": "亞軍",
+    "titleRaceMarginUnit": "分之差",
+    "titleRaceGdUnit": "淨勝球"
   }
 }

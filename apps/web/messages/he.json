@@ -4584,6 +4584,13 @@
     "managerFigures": "{points} נקודות · {won} ניצחונות · {drawn} תיקו",
     "managerGoals": "{goalsFor} בקעו · {goalsAgainst} ספגו",
     "unavailable": "הליגה עדיין לא שיחקה משחק שלם — היומנת עדיין נכתבת.",
-    "backWorld": "חזרה אל העולם"
+    "backWorld": "חזרה אל העולם",
+    "managerFiguresShort": "{points} נק׳ · {won}-{drawn}-{lost}",
+    "titleRaceEyebrow": "המירוץ על הקו",
+    "titleRaceLede": "הטבלה שממנה עלה האלוף — כל משחק נספר מחדש בבקשה הזו.",
+    "titleRaceChampion": "האלוף",
+    "titleRaceRunnerUp": "הסגן",
+    "titleRaceMarginUnit": "נקודות פער",
+    "titleRaceGdUnit": "הפרש שערים"
   }
 }

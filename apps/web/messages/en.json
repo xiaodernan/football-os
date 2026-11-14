@@ -4584,6 +4584,13 @@
     "managerFigures": "{points} points · {won} wins · {drawn} draws",
     "managerGoals": "{goalsFor} scored · {goalsAgainst} conceded",
     "unavailable": "The season has not yet completed a league fixture — the almanac is still being written.",
-    "backWorld": "back to the world"
+    "backWorld": "back to the world",
+    "managerFiguresShort": "{points} points · {won}-{drawn}-{lost}",
+    "titleRaceEyebrow": "the race at the line",
+    "titleRaceLede": "The table the champion was lifted over — every fixture re-tallied on this request.",
+    "titleRaceChampion": "The champion",
+    "titleRaceRunnerUp": "The runner-up",
+    "titleRaceMarginUnit": "pts clear",
+    "titleRaceGdUnit": "goal difference"
   }
 }

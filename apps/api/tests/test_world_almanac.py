@@ -75,6 +75,23 @@ class TestTheAlmanac:
         assert body["data_origin"] == "synthetic"
         assert body["is_demo_data"] is True
         assert body["disclaimer"]
-        assert set(body) >= {"awards", "season", "best_manager"}
+        assert set(body) >= {"awards", "season", "best_manager", "title_race"}
+
+    def test_the_title_race_is_computed_from_completed_league_fixtures(self, session) -> None:  # type: ignore[no-untyped-def]
+        from app.services.world import almanac as almanac_module
+
+        result = almanac_module._title_race(session)
+        if not result["available"]:
+            # a world that is still being written may publish no champion — never a tie-broken guess
+            return
+        assert result["champion"]["points"] >= result["runner_up"]["points"]
+        assert result["margin"] == result["champion"]["points"] - result["runner_up"]["points"]
+        assert result["competition_slug"]
+
+    def test_the_envelope_carries_a_title_race_field(self, client) -> None:  # type: ignore[no-untyped-def]
+        body = client.get(f"{API}/world/almanac").json()
+        assert "title_race" in body
+        if body["title_race"].get("available"):
+            assert body["title_race"]["margin"] == body["title_race"]["champion"]["points"] - body["title_race"]["runner_up"]["points"]
 
 __all__ = ["AWARD_KEYS"]

@@ -163,3 +163,35 @@
 .almanac__manager-form span.l { background: #f06d5d; color: #1a0a08; }
 
 .almanac__unavailable { padding: 2rem 0; color: var(--text-2); }
+
+.almanac__race {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1.4fr);
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 0.25rem;
+}
+@media (max-width: 720px) {
+  .almanac__race { grid-template-columns: 1fr; text-align: center; }
+  .almanac__race-club--right { text-align: center; }
+  .almanac__race-figure { order: -1; }
+}
+
+.almanac__race-club { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.almanac__race-club--right { text-align: end; }
+@media (max-width: 720px) {
+  .almanac__race-club { align-items: center; }
+}
+
+.almanac__race-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 110px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(216, 181, 107, 0.35);
+  border-radius: var(--radius);
+  background: radial-gradient(circle at 50% 20%, rgba(216, 181, 107, 0.12), transparent 70%);
+}
+.almanac__race-figure .almanac__portrait-number { font-size: 2.4rem; }

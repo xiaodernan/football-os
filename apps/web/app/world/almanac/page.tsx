@@ -35,7 +35,7 @@ export default async function AlmanacPage() {
     );
   }
 
-  const { awards, best_manager, portrait } = result.data;
+  const { awards, best_manager, portrait, title_race: titleRace } = result.data;
 
   // Static calls: a template key would hide the message from the i18n gates (which is what the
   // ledger's t(`cat_${key}`) trap warns about in the duel page).
@@ -119,6 +119,47 @@ export default async function AlmanacPage() {
           );
         })}
       </div>
+
+      {titleRace && titleRace.available ? (
+        <Panel eyebrow={t("titleRaceEyebrow")} title={titleRace.competition}>
+          <p className="muted" style={{ marginTop: 0, marginBottom: "1rem" }}>
+            {t("titleRaceLede")}
+          </p>
+          <div className="almanac__race">
+            <div className="almanac__race-club">
+              <p className="almanac__manager-label">{t("titleRaceChampion")}</p>
+              <Link href={titleRace.champion.path ?? "/world"} className="almanac__portrait-name">
+                {titleRace.champion.name}
+              </Link>
+              <p className="almanac__manager-caption">
+                {t("managerFiguresShort", { points: titleRace.champion.points, won: titleRace.champion.won, drawn: titleRace.champion.drawn, lost: titleRace.champion.lost })}
+              </p>
+            </div>
+            <div className="almanac__race-figure">
+              {titleRace.margin > 0 ? (
+                <>
+                  <span className="almanac__portrait-number">+{titleRace.margin}</span>
+                  <span className="almanac__portrait-unit">{t("titleRaceMarginUnit")}</span>
+                </>
+              ) : (
+                <>
+                  <span className="almanac__portrait-number">+{titleRace.gd_margin}</span>
+                  <span className="almanac__portrait-unit">{t("titleRaceGdUnit")}</span>
+                </>
+              )}
+            </div>
+            <div className="almanac__race-club almanac__race-club--right">
+              <p className="almanac__manager-label">{t("titleRaceRunnerUp")}</p>
+              <Link href={titleRace.runner_up.path ?? "/world"} className="almanac__portrait-name">
+                {titleRace.runner_up.name}
+              </Link>
+              <p className="almanac__manager-caption">
+                {t("managerFiguresShort", { points: titleRace.runner_up.points, won: titleRace.runner_up.won, drawn: titleRace.runner_up.drawn, lost: titleRace.runner_up.lost })}
+              </p>
+            </div>
+          </div>
+        </Panel>
+      ) : null}
 
       {best_manager && (
         <Panel eyebrow={t("managerLabel")} title={best_manager.team.name}>
