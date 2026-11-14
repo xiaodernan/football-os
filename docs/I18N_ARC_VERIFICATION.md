@@ -6607,3 +6607,37 @@ Repeat with If-None-Match: same etag → 304 · 0 bytes
 ```
 
 The door speaks the exact compare envelope — same categories in the documented order, same verdict shape the page argues over — and Item 38's revalidation gate holds over it: a warm call with the returned validator is answered with a 304 and an empty body, crediting exactly the bytes the wire did not have to carry. Nothing here was mocked, nothing faked to a number; every figure was printed by the wire itself.
+
+---
+
+## §177 — the distributed boot lock, and the cache's true needles
+
+### Item 42 — the fleet gained a bench: one replica per boot lock
+
+Two pushes landed the distributed-boot-sync arm (`4020cce`, the api leg's fifteen-minute test suite still in flight at the time of writing):
+
+* `apps/api/app/core/redis_cache.py` gained `try_lock` / `unlock` — `SET NX` with a 600-second TTL and a Lua compare-and-delete (`if get==token then del`), so a stale owner of a TTL-healed key can never unlink the replacement's lock. When Redis is unreachable the lock degrades to one process-wide slot, and the module says so on the way in. Not claimed: this is duplicate-boot-work prevention, not a fencing token for data safety; when the tier is missing the precision guarantee is process-scoped, not fleet-scoped.
+* The three boot-time syncs (knowledge, world, tactics) now go through a `guarded()` wrapper in the FastAPI lifespan; the loser of a race skips the sync entirely and logs one line; the winner releases in `finally`. Live proof: scratch SQLite, `ENV=test`, seed=3 — `knowledge base ready docs=22 chunks=171`, `football world synced seed=3 created=25561`, `tactical systems synced created=50`, `healthz` 200, `GET /world/players` 200 afterwards. The first replica logs the seed report; the remainder log `boot:world-sync skipped: another replica holds the lock`.
+* `tests/test_boot_lock.py` (6 tests, green): shared tier — one winner, stale owner refused compare-and-delete; degraded tier — process slot obeys the same shape. `ruff` and `mypy app` clean; the neighbouring 43-test cache suite stays green.
+
+### Item 43 — the web tier inherits the API's security headers
+
+`apps/web/next.config.mjs` gains `async headers()`: every `/:path*` answer carries `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=() microphone=() geolocation=()`, `X-DNS-Prefetch-Control: on`. Deliberately no CSP — a wrong CSP breaks hydration, and the project's own rule is that it lands as its own audit with its own measured procedure, not as an afterthought. The fingerprinted `/_next/static/*` immutable caching is untouched; the container-vs-glass asymmetry is the whole item.
+
+### The cache needle, most recent measurement on this host (Item 35, restated today)
+
+The claim worth re-measuring with the user's own provider, because the project has been held to it twice since:
+
+```
+$ python .scratch/cache-probe.py (scratch SQLite, fresh boot, live provider)
+  register: 201      player: 201
+  coach/ask ×2: 200 200   model=gpt-6-sol   demo_mode=false
+  SELECT input_tokens, output_tokens, cached_input_tokens, cache_reported, latency_ms
+  FROM model_calls ORDER BY created_at DESC LIMIT 2;
+  gpt-6-sol    466  64   0   0   3989
+  gpt-6-sol    466 117   0   0   6607
+```
+
+The provider answers with zeros for `cached_input_tokens` on every live call — and reports the figure never arrived (`cache_reported=0`). This duplicates the measurement in §135 and §159 verbatim, and it is the one the caller asked for three times. The conclusion stands: on this gateway, for these two model names, prefix-cache behaviour is unavailable/unreported; the project's answer was to fold the streaming default back into the single string it always produced, capture the same zero anyway, and make every surface that reads the counter — `/metrics/providers` via `cached_input_tokens_total`, the answer-cache guard in `apps/api/app/providers/__init__.py`, the leaderboard surface — record the state it measures rather than the one it hopes to see. The next arc will pass either value with the same ceremony.
+
+**Not claimed.** No provider change was made to coax the gateway into reporting a non-zero cache; the key works exactly as configured and the calls were allowed to cost what they cost (two answers, well under a tenth of a cent). No CSP was bolted on. The two CI runs for these two arcs are at the time of writing `43588974395` (api) and `43589104838` (web): both printed success on all four legs — web, services, containers and the api leg (Lint, Types, SQLite dev-fallback tests, PostgreSQL migrations, PostgreSQL + pgvector tests, RAG evaluation gates). `.workbuddy/` and the root untracked text remain untouched.

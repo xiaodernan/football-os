@@ -2579,7 +2579,29 @@ face. The home panel's visual verification is CI-time too.
 
 ---
 
-## How to work an item
+## Item 42 — the fleet gained a bench: one replica per boot lock
+
+**The failure mode.** On any multi-replica boot — staging with two replicas, the ten k of autoscale nights, a rollout that dies halfway — every uvicorn instance used to run the same 25,561-row seed concurrently, racing the same natural keys into the same database. One of them would win, the others would waste seconds and file dead rows under a bad name, and the only clue was an error line in a log nobody reads.
+
+**What landed.** `apps/api/app/core/redis_cache.py` gained `try_lock` / `unlock`: `SET NX` with a 600-second TTL and compare-and-delete via Lua (`if get==token then del`), so a stale owner of a TTL-healed key can never unlink the replacement's lock. The three boot-time syncs (knowledge, world, tactics) in the FastAPI lifespan now go through a `guarded()` wrapper: the loser of a race skips the sync entirely and logs one line (`%s skipped: another replica holds the lock`); the winner releases in a `finally` block. The honest limits are documented in the codebase: this is duplicate-boot-work prevention, not a fencing token for data safety; the skip path logs only on a true cross-replica race; when Redis is unreachable the lock degrades to one process-wide slot — and says so — never to silence.
+
+**Live evidence.** Fresh SQLite tick, `seed=3 created=25561`, boot through the lifespan: knowledge `docs=22 chunks=171` ready, world `created=25561`, tactics `created=50`, `healthz` 200, `/world/players` 200 after the sync. `tests/test_boot_lock.py`: 6 green — shared tier (loser refused, winner releases, stale owner cannot unlink replacement), degraded tier (process-wide owner/release cycle), and fallback visibility. `ruff` and `mypy app` clean.
+
+**Not claimed.** No contention test against two processes against one database was run — the degrade proof is single-process; the multi-replica proof is the Redis compare-and-delete semantics, not a fleet simulation on this host.
+
+---
+
+## Item 43 — the web tier inherits the API's security headers
+
+**The gap.** The FastAPI answers every browser with `nosniff`, `nosniff`-shaped rate-limit and identity headers (`dress_response` in `apps/api/app/core/response_headers.py`). The HTML the browser actually browses — every page the project ships — went out with `poweredByHeader: false` and nothing else: no `X-Content-Type-Options`, no `X-Frame-Options`, no `Referrer-Policy`, no `Permissions-Policy`, no `X-DNS-Prefetch-Control`. The container was hardened; the glass was not.
+
+**What landed.** `apps/web/next.config.mjs` gains `async headers()`: every `/:path*` answer carries `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=() microphone=() geolocation=()`, `X-DNS-Prefetch-Control: on`. The fingerprinted `/_next/static/*` immutable caching remains exactly as Next produces it — this does not touch anything about the build or the hydration.
+
+**Deliberately not done.** No CSP. A wrong CSP breaks inline styles and React hydration and is not a bolt-on; it belongs to its own audit with the SAME care as Item 38, which is how it will land.
+
+---
+
+## How to work an item## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
 2. Write the check before the feature when the check is expressible — several of this project's best findings
