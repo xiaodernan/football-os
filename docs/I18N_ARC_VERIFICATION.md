@@ -6824,3 +6824,31 @@ Verified live on a scratch container (created, measured, torn down): baseline 1.
 **Commits.** `a13ef50` (`feat(world): the record book — eight marks the world truly wrote`).
 
 **Not claimed.** Anything the rows didn't print: no award weighting, no ceremony dividend, no cards figure the fixture didn't hold; the hat-trick books are not invented — the seeded world has a maximum and the page prints it; the weakest cells (the Cards Bill) print unapologetically. The figures are this seed's, not every deploy's. CI for the push — `43632128872` — **completed success on all four legs** (containers · services · web · api + PostgreSQL/pgvector).
+
+## §185 — Item 52: the single-pass centre — the league table walked once, not twice
+
+Behaviour-preserving refactor with a measurable shape. Every `/world/almanac` request previously computed the tier-1 table **twice**: the Manager block walked every completed fixture of the league to print the table-topping row; the title race walked the same fixtures again to pick the champion. Same queries, same arithmetic, same answer — paid twice per request, plus one redundant `select(Team)` per reader.
+
+**What landed.** `_league_centre(session)` (`app/services/world/almanac.py`) — one call: tier-1 `Competition`, the completed `real_matches`, the teams, the points aggregate (P/W/D/L/GF/GA/GD). Returns `{ available, league, competition, competition_slug, table, teams, fixtures }`. `_title_race_from(centre)` performs the race arithmetic over the pre-aggregated centre; `_title_race(session)` inlines the same shape for back-compat callers; `compute_almanac` reads centre once for both the manager block and the title race; `services/world/records.py` walks `centre["fixtures"]` for offence/defence/castle via the shared `_goals_by_club(centre, direction)`; `_league`, `_completed_league` and the `Competition` import deleted with them. `records.py`'s three separate league selects left the codebase with this commit.
+
+**Verification.** ruff + mypy (185 source files) clean; `test_world_records.py` 4/4, `test_world_almanac.py` 7/7, `test_world_story.py` 5/5 — sixteen passing. Seeded-scratch live walk: all three doors answered 200 with Ostmoor Albion champions everywhere (23 pts, tier-1 GD decided), manager aggregate exactly matching the title-race arithmetic (21/15, GD 6), zero duplicated tables across the readers.
+
+**CI** — **`43636728644` — completed success on all four legs.**
+
+**Not claimed.** A percentage speedup figure — none was measured masked into one; the win is the eliminated second walk, visible only as the door exits identical. This refactor introduced zero new product behaviour.
+
+---
+
+## §186 — Item 53: the home's three doors — the world's book
+
+The record book, the almanac and the story had all landed — but the home page never mentioned them. A reader arriving at the address bar saw a hero, a featured duel, and the modules grid, with no path into the three season surfaces the project had just shipped.
+
+**What landed.** A single ember-ruled panel between the featured-duel section and the modules grid: eyebrow `the world keeps a book`, three linked rows — **I / The Almanac** (`honours the world grants itself`), **II / The Season's Story** (`three chapters straight out of the fixtures`), **III / The Record Book** (`the eight marks the world truly earned`) — editorial hairline-divided links with ember-stroke numerals, swapping to `←`-feel via `[dir="rtl"] .worldbook__arrow { transform: scaleX(-1) }` so the mirror lands clean for Hebrew and Arabic. No new palette colour; no new component (`Panel` from `@/components/ui`); logical-property `margin-inline-start` throughout. Seven `home` keys × 6 locales (uniform population **4,568**; README recomputed; zh/zh-TW/ar/he 4,522 translated, fr 4,318); `qa-unused-keys` held the first intermediate commit red at the gate — the keys landed before the JSX — and passed once the JSX rode the same commit.
+
+**Verification.** tsc 0; the CI-ordered web battery green (qa-icu-messages 27,408 msgs / 4,568 keys ×6; qa-i18n-literals 9/9 (4,627 key calls); qa-unused-keys 3/3; qa-locale-completeness uniform 4,568; qa-locale-tokens 7/7; qa-token-drift 4/4; qa-rtl-readiness 8/8; qa-translation-quality 9/9); dev-walk of the home in-simplified-Chinese with the panel rendering, zero console errors.
+
+**CI** — **`43637114871` — completed success on all four legs.**
+
+**Deliberately not done.** No new copy on the hero copy itself; no palette extras; no route changes; no nav re-order — the panels live exactly where one look is cheapest for a first-time reader, and the hero still answers "what is this product?". The trio now exists on one shared entry path.
+
+---

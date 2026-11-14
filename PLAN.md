@@ -2694,6 +2694,28 @@ Two honest deliveries shipped under the arc: `hat_trick` was renamed `biggest_ha
 
 ---
 
+## Item 52 — the single-pass centre (landed 2026-11-15)
+
+**The defect.** Every `/world/almanac` request walked the tier-1 league twice — the Manager block aggregated it for the winning row, then `_title_race` walked the same fixtures again to pick the champion. Manager + race both compute the league table; the code did the work twice so the two surfaces could not drift and, in practice, did duplicate it byte-for-byte.
+
+**What landed.** `_league_centre(session)` — one call: tier-1 `Competition`, the completed `real_matches`, the teams, aggregate P/W/D/L/GF/GA/GD. `_title_race_from(centre)` performs the race arithmetic over the pre-aggregated centre; `compute_almanac` gets one centre and hands it to both the manager block and its own door's title-race payload; `services/world/records.py` aligns (`_goals_by_club(centre, direction)`; `_league` and `_completed_league` deleted; `records.py`'s three separate league selects are gone with them — `records.py`'s foot-print dropped one select and one walk per request, every request, for every caller that passes its centre in). `test_world_*` suite re-run and green (16 passed). The champion-points entry-carried figure now can't drift between the two surfaces — they read one centre, so a future bug must reproduce through the shared arithmetic, not slip in through a copy of it.
+
+**Local evidence.** ruff + mypy (185 files) clean; sixteen world-tier tests green; live seeded walk of `/api/v1/world/{almanac,story,records}` all 200 with Ostmoor Albion champions in every surface (23 pts, GD stride, all consistent).
+
+**Deliberately not done.** No "speedup" number — the centre saves a select and an aggregate per call; the benchmark before/after was not instrumented with the masking this project refuses to fake. CI prints the verdict — **`43636728644` all four legs success.**
+
+---
+
+## Item 53 — the world's book: the home panel (landed 2026-11-15)
+
+**The gap.** The record book, the almanac and the story had all landed; a reader at the address bar met a hero and a featured duel with no path to them. The home now carries one quiet panel between the featured-duel section and the modules grid: eyebrow `the world keeps a book`, three numbered rows (I / II / III, ember-stroke numerals, characters mirror-safe in RTL) linking to `/world/almanac`, `/world/story`, `/world/records`.
+
+**What landed.** `apps/web/styles/worldbook.css` (`.worldbook`, logical properties only, no new palette key, `[dir="rtl"] .worldbook__arrow { transform: scaleX(-1) }`); `apps/web/app/page.tsx` renders it after the featured-duel section; seven `home` keys × 6 locales (uniform 4,568); four commits quiesced in the web battery and stayed quiet in the search re-run.
+
+**Local evidence.** tsc 0; battery green; Chinese-rendered dev walk shows the panel — zero console errors. **CI `43637114871` — all four legs success.**
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
