@@ -2716,6 +2716,16 @@ Two honest deliveries shipped under the arc: `hat_trick` was renamed `biggest_ha
 
 ---
 
+## Item 54 — the almanac's honours on the player page (landed 2026-11-14)
+
+**The gap.** The almanac pages the winners; the record book ranks their marks; the story narrates the season — none of these surfaces exists on the player page, the door every shared link meets first. A reader visiting `/player/zein-sorek` saw a raw stat sheet with no sign that this 21-year-old ST is the Complete Forward, the Player of the Season and the Breakthrough of the same synthetic season at once.
+
+**What landed.** `page.tsx` reads `/world/almanac` server-side (same anonymous door the almanac page consumes; no provider, no new contract), filters awards whose `winner.slug === slug`, and renders them under the header: the restored `almanac.portraitEyebrow` in the reader's locale ("本赛季荣誉" in Simplified Chinese), then one gold-rimmed chip per honour, each linking to `/world/almanac`. Award label and unit re-used verbatim from the almanac namespace in all six languages — no new copy outside the eyebrow; zero new palette; zero new components; the strip is a hairline-row of chips in `styles/almanac.css` with no physical `margin-right`; logical borders only.
+
+**Local evidence.** tsc 0; the full CI-ordered web battery green (qa-icu-messages 27,414 msgs / 4,569 keys ×6 uniform; qa-i18n-literals 9/9 (4,628 key calls); qa-unused-keys 3/3; qa-locale-completeness uniform 4,569; qa-locale-tokens 7/7 (2,828 shared sentences); qa-rtl-readiness 8/8; qa-translation-quality 9/9; qa-shared-keys 4/4; qa-namespace-ownership 2/2). A seeded dev-walk printed the three Chinese chips on Zein Sorek's page with zero console errors ("本赛季荣誉 · 全能前锋 · 13 参与", "赛季最佳球员 · 6.95 评分", "新星 · 13 参与"). **CI `43643717748` — all four legs success.**
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

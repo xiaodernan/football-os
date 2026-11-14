@@ -6852,3 +6852,15 @@ The record book, the almanac and the story had all landed — but the home page 
 **Deliberately not done.** No new copy on the hero copy itself; no palette extras; no route changes; no nav re-order — the panels live exactly where one look is cheapest for a first-time reader, and the hero still answers "what is this product?". The trio now exists on one shared entry path.
 
 ---
+
+## §187 — Item 54: the almanac's honours on the player page
+
+One page knows what the rest of the season had won. The almanac awards names; the record book prints marks; the story narrates; the player page — the door every shared link meets — saw none of it.
+
+**What landed.** `page.tsx` gained a second anonymous read alongside the player's own — `readWorld<AlmanacResult>("/world/almanac")`, filtered client-side to awards where `award.winner?.slug === slug` — and renders the held ones under the header: the eyebrow `本赛季荣誉` in the reader's own locale, then one ember chip per honour linking to `/world/almanac`. The label and its unit come straight from the almanac namespace in all six languages — `goldenBoot` / `goalsUnit`, `playmaker` / `assistsUnit`, `completeForward` / `involvementUnit`, `goldenGlove` / `cleanSheetsUnit`, `playerOfSeason` / `ratingUnit`, `theEnforcer` / `cardsUnit` — every award name and unit is an existing message; the only new key is `almanac.portraitEyebrow`, restored across six catalogues because Item 45's unused-keys cleanup had dropped it; it now has one job.
+
+**Live seeded walk (simplified Chinese).** Zein Sorek holds three honours in this seed — `全能前锋 · 13 参与`, `赛季最佳球员 · 6.95 评分`, `新星 · 13 参与` — each honour a chip linking to the almanac. Zero console errors. The API door serves the same award set to the page and the almanac; they cannot disagree on who holds what.
+
+**Not claimed.** That the next deploy's seed prints these exact names; the slaying figures are this world's, not yours. The chips print only `winner`, not runner-up marks (a runner-up badge on every page would flood with noise); the almanac page itself shows the full three-up. No new colour, no new component, no provider call anywhere.
+
+**CI** — **`43643717748`** — completed success on all four legs.
