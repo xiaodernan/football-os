@@ -16,6 +16,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
+import time
+import uuid
 from typing import Any, cast
 from urllib.parse import urlsplit, urlunsplit
 
@@ -87,6 +90,10 @@ class RedisCache:
         self._redis: redis.Redis | None = None
         self._fallback = TTLCache(max_size=max_size, default_ttl=default_ttl)
         self._available = False
+        #: In-process fallback for the boot lock: name → (token, expiry). Used only when the
+        #: shared tier is missing or narrow, never as the production path.
+        self._held_locks: dict[str, tuple[str, float]] = {}
+        self._lock_guard = threading.Lock()
         #: This process's own count of the shared tier's reads: a read Redis answered and a read
         #: it did not. The server's own counters are not used - they count every client of the
         #: instance, so they could not be attributed to this application.
@@ -180,6 +187,59 @@ class RedisCache:
                 self._available = False
 
         return deleted
+
+    #: The compare-and-delete half of a two-phase lock: only the owner that set the key
+    #: may drop it, so a slow winner never unlinks a lock a faster replica replaced after
+    #: the first one's TTL expired. Lua keeps the two steps one command.
+    _UNLOCK_SCRIPT = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end"
+
+    def try_lock(self, name: str, ttl_seconds: float = 300.0) -> str | None:
+        """Take a bounded, best-effort distributed lock. Returns the token, or None if locked elsewhere.
+
+        Honest limits, stated once: this is a hint for avoiding duplicate boot-time work between
+        replicas, not a fencing token for data safety. A replica that loses the race does not sync;
+        the winner's sync is the same bytes the seed would produce anyway. Redis unreachable ⇒ fall
+        back to one process-wide slot (a host that runs two boot-time syncs is already oversubscribed).
+        """
+        token = uuid.uuid4().hex
+        with self._lock_guard:
+            now = time.time()
+            entry = self._held_locks.get(name)
+            if entry is not None and entry[1] > now:
+                return None  # held by another live owner in this process
+            self._held_locks[name] = (token, now + ttl_seconds)
+        client = self._redis
+        if self._available and client is not None:
+            try:
+                locked = client.set(self._key(name), token, nx=True, ex=max(1, int(ttl_seconds)))
+                if not locked:
+                    # someone else holds it: this replica must not sync at all
+                    with self._lock_guard:
+                        if self._held_locks.get(name, (None, 0))[0] == token:
+                            self._held_locks.pop(name, None)
+                    return None
+                return token
+            except Exception as e:
+                logger.warning("Redis SET NX failed: %s; falling back to process-wide lock", e)
+                self._available = False
+        # No Redis: the process-wide slot is all we can hand this replica.
+        return token
+
+    def unlock(self, name: str, token: str | None) -> bool:
+        """Release the lock if and only if we still own it (compare-and-delete)."""
+        if token is None:
+            return False
+        with self._lock_guard:
+            if self._held_locks.get(name, (None, 0))[0] == token:
+                self._held_locks.pop(name, None)
+        client = self._redis
+        if self._available and client is not None:
+            try:
+                return bool(client.eval(self._UNLOCK_SCRIPT, 1, self._key(name), token))
+            except Exception as e:
+                logger.warning("Redis unlock failed: %s", e)
+                self._available = False
+        return True
 
     def clear(self) -> None:
         """Clear all entries."""

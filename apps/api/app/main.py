@@ -354,34 +354,57 @@ def create_app() -> FastAPI:
         init_db()
         with SessionLocal() as session:
             sync_catalog(session)
+        cache = get_redis_cache()
+
+        def guarded(name: str, body) -> None:
+            """One boot-time sync per replica per name: the first replica takes the lock and runs it;
+            the rest of the fleet skips it, because all of them would produce the same bytes."""
+            token = cache.try_lock(name, ttl_seconds=600)
+            if token is None:
+                logger.info("%s skipped: another replica holds the lock", name)
+                return
+            try:
+                body()
+            finally:
+                cache.unlock(name, token)
+
         if settings.knowledge_auto_ingest:
-            with SessionLocal() as session:
-                report = sync_knowledge(session)
-                if report.errors:
-                    logger.error("knowledge ingestion problems: %s", "; ".join(report.errors[:8]))
-                else:
-                    stats = corpus_stats(session)
-                    logger.info(
-                        "knowledge base ready docs=%d chunks=%d written_now=%d backend=%s",
-                        report.documents_seen,
-                        stats["chunks"],
-                        report.chunks_written,
-                        report.embedding_model,
-                    )
+            def knowledge() -> None:
+                with SessionLocal() as session:
+                    report = sync_knowledge(session)
+                    if report.errors:
+                        logger.error("knowledge ingestion problems: %s", "; ".join(report.errors[:8]))
+                    else:
+                        stats = corpus_stats(session)
+                        logger.info(
+                            "knowledge base ready docs=%d chunks=%d written_now=%d backend=%s",
+                            report.documents_seen,
+                            stats["chunks"],
+                            report.chunks_written,
+                            report.embedding_model,
+                        )
+
+            guarded("boot:knowledge-sync", knowledge)
         if settings.world_auto_sync:
-            with SessionLocal() as session:
-                world_report = sync_world(session)
-                if world_report.errors:
-                    logger.error("football world sync problems: %s", "; ".join(world_report.errors[:8]))
-                elif world_report.changed:
-                    logger.info("football world synced %s", world_report.summary_line())
+            def world() -> None:
+                with SessionLocal() as session:
+                    world_report = sync_world(session)
+                    if world_report.errors:
+                        logger.error("football world sync problems: %s", "; ".join(world_report.errors[:8]))
+                    elif world_report.changed:
+                        logger.info("football world synced %s", world_report.summary_line())
+
+            guarded("boot:world-sync", world)
         if settings.tactics_auto_sync:
-            with SessionLocal() as session:
-                tactics_report = sync_tactics(session)
-                if tactics_report.errors:
-                    logger.error("tactical catalogue sync problems: %s", "; ".join(tactics_report.errors[:8]))
-                elif tactics_report.changed:
-                    logger.info("tactical systems synced %s", tactics_report.summary_line())
+            def tactics() -> None:
+                with SessionLocal() as session:
+                    tactics_report = sync_tactics(session)
+                    if tactics_report.errors:
+                        logger.error("tactical systems sync problems: %s", "; ".join(tactics_report.errors[:8]))
+                    elif tactics_report.changed:
+                        logger.info("tactical systems synced %s", tactics_report.summary_line())
+
+            guarded("boot:tactics-sync", tactics)
         logger.info("boot env=%s dialect=%s demo_mode=%s", settings.env, settings.database_url.split(":")[0], settings.is_demo_mode)
         init_tracing()
         # Phase 11: announce the core to the registry when one is configured. The registrar is a
