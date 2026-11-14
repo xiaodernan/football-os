@@ -94,23 +94,27 @@ export default async function HomePage() {
             <p className="muted" style={{ marginTop: 0, marginBottom: "1rem" }}>
               {t("featuredDuelBody")}
             </p>
-            <div className="duel__arena" style={{ padding: "0.9rem 1rem", gap: "0.75rem" }}>
-              <div className="duel__corner">
-                <p className="eyebrow">{featured.left.player.position}</p>
-                <h3 className="duel__name" style={{ fontSize: "1.5rem" }}>
-                  {featured.left.player.name}
-                </h3>
-                <span className="num duel__ovr">{featured.left.player.overall}</span>
+            <div className="row wrap" style={{ gap: "0.75rem" }}>
+              <div className="player-card grow" style={{ padding: 0 }}>
+                <span className="ovr">{featured.left.player.overall}</span>
+                <span className="stack-sm grow">
+                  <strong>{featured.left.player.name}</strong>
+                  <span className="muted" style={{ fontSize: "0.85rem" }}>
+                    {featured.left.player.position}
+                  </span>
+                </span>
               </div>
-              <span aria-hidden="true" className="num" style={{ color: "var(--gold, #d4b16a)", fontSize: "1.5rem", alignSelf: "center" }}>
+              <span aria-hidden="true" className="num muted" style={{ fontSize: "1.5rem", color: "var(--gold, #d8b56b)" }}>
                 v
               </span>
-              <div className="duel__corner duel__corner--right">
-                <p className="eyebrow">{featured.right.player.position}</p>
-                <h3 className="duel__name" style={{ fontSize: "1.5rem" }}>
-                  {featured.right.player.name}
-                </h3>
-                <span className="num duel__ovr">{featured.right.player.overall}</span>
+              <div className="player-card grow" style={{ padding: 0, flexDirection: "row-reverse", textAlign: "end" }}>
+                <span className="ovr">{featured.right.player.overall}</span>
+                <span className="stack-sm grow" style={{ alignItems: "flex-end" }}>
+                  <strong>{featured.right.player.name}</strong>
+                  <span className="muted" style={{ fontSize: "0.85rem" }}>
+                    {featured.right.player.position}
+                  </span>
+                </span>
               </div>
             </div>
             <div className="row wrap" style={{ justifyContent: "space-between", marginTop: "1rem", alignItems: "center" }}>
