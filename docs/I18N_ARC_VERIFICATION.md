@@ -6657,3 +6657,40 @@ Item 41/44 close-out. Five pushes this arc carried, every one of them printed su
 **A build produced by this host, verified by a real browser.** At roughly 4 GB of free memory (the other hand had gone quiet), `npx next build` with a fresh `.next-local` distDir compiled in **32.9 s**, types checked green, every route listed with its bundle (`BUILD_ID=mCOYYjwouB-7c0TaxVX3f`); the standalone server booted on `:3220` against a fresh-seeded scratch API on `:8779` (seed=3, 25,561 rows). The home page rendered in Simplified Chinese (locale negotiated live); the featured panel showed `LW Ranek Gener 68 v 66 Unek Kastek RW`, the verdict sentence and the CTA; `/world/duel` rendered both corners and the rules ledger; `/world/duel/ranek-gener/unek-kastek` rendered the full 9–1 goals ledger, the per-90 table, the six-axis radar and the verdict, zero console errors; the per-pair OG card answered `200 · 107,429 bytes` with the ember palette, the winner glow and the seven tinted cells — captured and inspected. The tsconfig/next-env globs Next auto-added for the non-default distDir were reverted on the same tree (`git checkout -- apps/web/tsconfig.json apps/web/next-env.d.ts`) — the exact trap earlier red runs proved.
 
 **Not claimed.** The OG image was visually verified on this host at 1200×630; no other page beyond those named above was walked in a browser. The local preview servers were killed after inspection. No failed CI was re-run green under a re-tag. `.workbuddy/` and the root untracked text remain untouched; `.scratch/` stays out of git.
+## §179 — the world hands itself its own honours: `/world/almanac`
+
+Item 45. The generated world gains a **season almanac** — one page, seven honours — computed live from the stored world, not held in a table somewhere.
+The largest content arc since the world itself landed; the second composite-domain module (behind the duel page) and the first page whose every surface is derived on the fly.
+
+* **The Golden Boot** — goals total. Ranek Gener, 9 (Mirand Qelberg, Zein Sorek, Coriel Toboux).
+* **The Playmaker's Crown** — assists. Unek Kastek, 7 (Pelum Tanard, Hinek Kasttis, Toriel Harmann).
+* **The Complete Forward** — goals + assists. Zein Sorek, 13.
+* **The Golden Glove** — clean sheets kept. Unum Marnelli, 11.
+* **Player of the Season** — rating at ≥15 appearances. Zein Sorek, 6.95.
+* **The Enforcer** — yellow×1 + red×3. Adum Brynard, 2.
+* **The Breakthrough** — under-23 involvements. Zein Sorek, 13.
+
+Plus **Manager of the Season**: Thorndera Town over Thornford Superleague, 34 points from 32 fixtures (11W 1D 4L), recomputed fresh from the identical `RealMatch` rows the standings table prints — points, wins, draws, goals for/against, GD.
+
+**`GET /api/v1/world/almanac`** — anonymous read, world tier 60/min, 60 s response-cache-backed. `app/services/world/almanac.py::compute_almanac(session)` — live arithmetic over the stored rows; every award carries the winner and exactly three runner-ups, all linked into the world. No award is authored, no figure is memorised; every figure on the page is traceable to one stored row.
+The page renders as an honour roll — portrait cards for Boot+Crown, an homage grid, the manager block — in ember to match the duel's engraved-brass palette; no new colour entered the design system.
+
+**Catalogues** — `almanac` namespace, 34 keys × 6 locales; uniform population **4493** across the six catalogues; 4,448 translated in zh/zhTW/ar/he, 4,244 in fr; the README table recomputed; `qa-locale-tokens` 7/7; named-token slots still named; one sentence shared with the duel namespace aligned (weighted cards — in the shared Arabic, replaced with the duel's translation); eleven Arabic full stops converted to U+06D4.
+
+**OG card** — `apps/web/app/world/almanac/opengraph-image.tsx`: static ALMANAC poster, ember gradient rule, six chips `GLS/AST/INV/RAT/OVR/CARDS`, 1200×630 — zero English copy beyond the single-word tokens the gate allows (in the same shape the duel card uses); `qa-i18n-literals` reads 9/9.
+
+**Tests** — `tests/test_world_almanac.py`: 5 cases covering the full award list, the runner-up arithmetic, the symmetry with the standings table for the manager figure, and the door's envelope parity with its world neighbours; all 5 pass; mypy clean; ruff clean. The SHA-currency gates were re-pinned to `d62be1cc5b804a05481626114df00efd1373de0d290f70e2fbdeb620d787a97b` (232 contract paths / 299 operations), counts 241 secured / 58 public / 104 private-GET; floors 200/40/85 unchanged.
+
+**Gates this arc ran on:** tsc, qa-icu-messages (26,958 msg / 4,493 keys / 6 catalogues), qa-icu-coverage, qa-i18n-literals, qa-unused-keys, qa-locale-completeness, qa-locale-tokens, qa-namespace-ownership, qa-share-preview 31/31, qa-token-drift 4/4, qa-metadata-title 201/201, qa-crawl-policy (population 72 pages, advertised 12), qa-rtl-readiness 8/8 (almanac's `.almanac__runner-ups span` used logical `margin-inline-end`), qa-table-shape 118/118, qa-shared-keys — all green locally before push.
+
+**Commits this arc carries:**
+
+* `b495deb` `feat(world): the season's honours, in one page — /world/almanac` — the door, the page, the `almanac` namespace alone in six catalogues, the OG card, the `/world` browse tile, the sitemap entry, the contract re-export (232/299), the audit figure moved to 72 pages, the README population table recomputed. This push printed red on web and api.
+* `c1856d8` `fix(docs): the almanac arc's SHA-currency — the contract moved, three ledgers follow` — the three SHA-pins re-pinned against the 232-path / 299-operation re-export; census moved 241 / 57 / 104 → 241 / 58 / 104; floors unchanged. This push printed red on the same two legs.
+* `e7d8ccd` `fix(api,web): the almanac arc's two reds — mypy's union sight, and the Arabic full stops eleven new strings still carried` — the mypy split restructured into a closed if/else with a named `poty_award` — the gate's narrow condition now sees a guaranteed non-`None` binding. The eleven Arabic terminal periods converted to U+06D4. This push printed success on all four legs (~23 minutes end-to-end).
+
+**CI verdict — `43606683753` — completed success on all four legs** (SQLite dev-fallback · PostgreSQL + pgvector · web · services). The runner printed success; each red this arc saw was cured inside it — never re-tagged.
+
+**Not claimed.** The local walk was against a scratch SQLite seeded at the same seed CI uses (seed=3); whether the CI-deployed world looks identical depends on which world commits CI deploys (the world generates at first boot, not in version control). No claim that the page passes a pixel-review; only that it renders one correct almanac page with no console errors and every award present. No provider cache-claims — `cached_input_tokens` remains 0 on every call to date; the gateway has still not reported prefix caching for this account. Every figure on the page is either recomputed from this request's `RealMatch` / `RealPlayer` rows or explicitly delivered as `Data unavailable`.
+
+`.workbuddy/` and the root untracked text remain untouched; `.scratch/` stays out of the tree.
