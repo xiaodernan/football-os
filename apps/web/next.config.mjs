@@ -15,6 +15,23 @@ const nextConfig = {
     // `npm run lint` is the lint gate; the build stays focused on types + rendering.
     ignoreDuringBuilds: true,
   },
+  // The API tier already ships the same set (app/core/response_headers.py); the web tier was the
+  // only place a reader's browser got nothing. Fingerprinted `/_next/static/*` keeps its long
+  // immutable life (Next sets it); these cover every store the browser can navigate.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "X-DNS-Prefetch-Control", value: "on" },
+        ],
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);
