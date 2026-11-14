@@ -90,35 +90,41 @@ export function DuelPicker({ initialLeft }: { initialLeft?: Hit }) {
 
   const ready = chosen.left && chosen.right && chosen.left.slug !== chosen.right.slug;
 
+  const renderSlot = (side: "left" | "right") => {
+    const picked = chosen[side];
+    return (
+      <button
+        key={side}
+        type="button"
+        className={`duel-picker__slot duel-picker__slot--${side}${slot === side ? " is-active" : ""}${picked ? " is-filled" : ""}`}
+        onClick={() => {
+          setSlot(side);
+          input.current?.focus();
+        }}
+        aria-pressed={slot === side}
+      >
+        <span className="duel-picker__corner">{side === "left" ? t("pickerLeft") : t("pickerRight")}</span>
+        {picked ? (
+          <>
+            <strong className="duel-picker__name">{picked.title}</strong>
+            <span className="duel-picker__sub">{picked.subtitle}</span>
+            <span className="duel-picker__change">{t("pickerChange")}</span>
+          </>
+        ) : (
+          <span className="duel-picker__empty">{t("pickerChoose")}</span>
+        )}
+      </button>
+    );
+  };
+
   return (
     <div className="duel-picker stack">
       <div className="duel-picker__slots">
-        {(["left", "right"] as const).map((side) => {
-          const picked = chosen[side];
-          return (
-            <button
-              key={side}
-              type="button"
-              className={`duel-picker__slot duel-picker__slot--${side}${slot === side ? " is-active" : ""}${picked ? " is-filled" : ""}`}
-              onClick={() => {
-                setSlot(side);
-                input.current?.focus();
-              }}
-              aria-pressed={slot === side}
-            >
-              <span className="duel-picker__corner">{side === "left" ? t("pickerLeft") : t("pickerRight")}</span>
-              {picked ? (
-                <>
-                  <strong className="duel-picker__name">{picked.title}</strong>
-                  <span className="duel-picker__sub">{picked.subtitle}</span>
-                  <span className="duel-picker__change">{t("pickerChange")}</span>
-                </>
-              ) : (
-                <span className="duel-picker__empty">{t("pickerChoose")}</span>
-              )}
-            </button>
-          );
-        })}
+        {renderSlot("left")}
+        <span className="duel-picker__seam" aria-hidden="true">
+          v
+        </span>
+        {renderSlot("right")}
       </div>
 
       <div className="field">
