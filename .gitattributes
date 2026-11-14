@@ -1,0 +1,21 @@
+# The project's bytes are entirely LF — verified at HEAD (zero CRLF sequences, zero bare CR
+# across every committed text file). On Windows, `core.autocrlf=true` used to rewrite working
+# copies to CRLF, which silently broke every LF-needle witness in `check.sh`
+# (qa-a11y-witness.mjs, qa-locale-wiring-witness.mjs), making the local definition of done
+# unrunnable on the host every developer this arc uses. `text=auto` classifies by content,
+# so binaries are untouched; `eol=lf` pins the LF this repository has always used.
+* text=auto eol=lf
+
+# Pre-generated artefacts are treated as binary by `text=auto` only when git's heuristic agrees,
+# and their bytes are published hashes — pin them so a merge driver can never helpfully normalize
+# them into a different digest.
+docs/api/openapi.json -text
+*.png -text
+*.jpg -text
+*.jpeg -text
+*.gif -text
+*.ico -text
+*.pdf -text
+*.zip -text
+*.jar -text
+*.class -text
