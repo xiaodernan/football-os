@@ -4604,7 +4604,8 @@
     "titleRaceChampion": "The champion",
     "titleRaceRunnerUp": "The runner-up",
     "titleRaceMarginUnit": "pts clear",
-    "titleRaceGdUnit": "goal difference"
+    "titleRaceGdUnit": "goal difference",
+    "portraitEyebrow": "honours — held this season"
   },
   "worldStory": {
     "metaTitle": "The Season's Story",

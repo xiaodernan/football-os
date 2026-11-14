@@ -17,11 +17,34 @@ import {
 } from "@/components/world";
 import { absolute, pageMetadata } from "@/lib/site";
 import { readWorld } from "@/lib/world";
-import type { PlayerDetail } from "@/lib/types";
+import type { PlayerDetail, AlmanacResult } from "@/lib/types";
+
+import "@/styles/almanac.css";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
+
+/** Award key to the almanac catalogue key — every label re-used from the almanac namespace, never re-written here. */
+const AWARD_LABEL: Record<string, string> = {
+  golden_boot: "goldenBoot",
+  playmaker_crown: "playmaker",
+  complete_forward: "completeForward",
+  golden_glove: "goldenGlove",
+  player_of_season: "playerOfSeason",
+  the_enforcer: "theEnforcer",
+  breakthrough: "breakthrough",
+};
+
+const AWARD_UNIT: Record<string, string> = {
+  golden_boot: "goalsUnit",
+  playmaker_crown: "assistsUnit",
+  complete_forward: "involvementUnit",
+  golden_glove: "cleanSheetsUnit",
+  player_of_season: "ratingUnit",
+  the_enforcer: "cardsUnit",
+  breakthrough: "involvementUnit",
+};
 
 async function load(slug: string) {
   return readWorld<PlayerDetail>(`/world/players/${encodeURIComponent(slug)}`);
@@ -48,12 +71,18 @@ export default async function PlayerDetailPage({ params }: Props) {
   const tw = await getTranslations("world");
   const tp = await getTranslations("worldPlayer");
   const td = await getTranslations("duel");
+  const ta = await getTranslations("almanac");
   const result = await load(slug);
 
   if (!result.ok) {
     if (result.notFound) notFound();
     return <WorldUnavailable message={result.message} />;
   }
+
+  const almanac = await readWorld<AlmanacResult>("/world/almanac");
+  const held = almanac.ok
+    ? almanac.data.awards.filter((award) => award.winner?.slug === slug)
+    : [];
 
   const {
     player,
@@ -131,6 +160,27 @@ export default async function PlayerDetailPage({ params }: Props) {
             : undefined,
         }}
       />
+
+      {held.length > 0 && (
+        <div className="honours" aria-label={ta("portraitEyebrow")}>
+          <span className="honours__note" style={{ width: "100%" }}>{ta("portraitEyebrow")}</span>
+          {held.map((award) => {
+            const label = ta(AWARD_LABEL[award.key]);
+            const unit = ta(AWARD_UNIT[award.key]);
+            const stat = award.winner?.stat ?? null;
+            return (
+              <Link key={award.key} className="honours__chip" href="/world/almanac">
+                {label}
+                {stat !== null && (
+                  <strong>
+                    {typeof stat === "number" && stat % 1 !== 0 ? stat.toFixed(2) : stat} {unit}
+                  </strong>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       <div className="grid grid-2">
         <Panel eyebrow={tp("seasonEyebrow", { season: season.season })} title={tp("seasonTotalsTitle")}>

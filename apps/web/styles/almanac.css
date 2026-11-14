@@ -195,3 +195,21 @@
   background: radial-gradient(circle at 50% 20%, rgba(216, 181, 107, 0.12), transparent 70%);
 }
 .almanac__race-figure .almanac__portrait-number { font-size: 2.4rem; }
+
+.honours { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.1rem 0 1.1rem; }
+.honours__chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.32rem 0.65rem;
+  border: 1px solid rgba(216, 181, 107, 0.4);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(216, 181, 107, 0.14), rgba(216, 181, 107, 0.04) 55%, transparent 100%);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: var(--text);
+}
+.honours__chip::before { content: "◆"; color: var(--gold, #d8b56b); font-size: 0.65rem; vertical-align: 0.08em; }
+.honours__chip strong { color: var(--gold, #d8b56b); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.honours__note { margin: 0 0 0.6rem; font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-3); font-weight: 700; }
