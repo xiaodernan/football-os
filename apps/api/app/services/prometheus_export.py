@@ -42,6 +42,7 @@ def render_prometheus(
     spend_today_usd: float,
     uptime_seconds: float,
     answer_cache: dict[str, Any] | None = None,
+    singleflight: dict[str, Any] | None = None,
 ) -> str:
     """One exposition body from the pieces each caller already owns.
 
@@ -97,6 +98,13 @@ def render_prometheus(
             "gauge",
             "Stored phrasings served divided by lookups this process made; 0 when it made none.",
             round(float(answer_cache.get("hit_rate", 0.0) or 0.0), 4),
+        )
+    if singleflight is not None:
+        out += _metric(
+            "football_os_singleflight_joins_total",
+            "counter",
+            "Calls that waited behind an identical in-flight call and reused its value instead of duplicating the work (world search lane).",
+            int(singleflight.get("joins", 0) or 0),
         )
     return "\n".join(out) + "\n"
 

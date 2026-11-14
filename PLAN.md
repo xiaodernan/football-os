@@ -2468,6 +2468,47 @@ correct — they answer different questions. Video bytes are never recompressed.
 
 ---
 
+## Item 39 — one cold miss, one scan: the world search learned to go single-file
+
+Item 38 closed the *repeat* answer on the wire. The remaining duplicate is the *first* one:
+K callers land on `/world/search` in the same second before the 60-second response cache
+has an answer, and K identical `LIKE '%'` scans hit SQLite. The knowledge door has carried
+this answer since M17 (`services/knowledge/answer_cache.single_flight`); the public door did not.
+
+**What landed.** `app/core/singleflight.py` — a per-key lane, in-process, one owner per key:
+the leader executes `fn` **outside the lock**; followers wait on the lane's event and take a
+reference to the leader's value (nothing copied, nothing marshalled). An exception becomes the
+same exception in every follower — a broken scan quarantines the burst instead of tripling
+it under load. The lane table is bounded by concurrency, not history; `joins` counts waits
+turned into answers. The door (`world.py::unified_search`) keys the lane on exactly the
+arguments the ranking sees — query, resolved types, limit — so no answer is ever shared
+across different questions.
+
+The joins ride the scrape door: `football_os_singleflight_joins_total` (label-free) appears
+next to `football_os_answer_cache_coalesced_total` in `/api/v1/metrics/prometheus`, passed
+from `world_search_flight.stats()` — the operator tier sees one number for each tier's
+coalescing, and the two are never summed into one.
+
+**Measured.** Unit lane test: 12 threads through `Singleflight.call` against a 5-second
+synthetic scan — `executions == 1`, every caller held the same object, `joins == 11`. The
+door test runs the wiring itself: a 7-way burst through `unified_search` with a slowed
+`search_world` executes it exactly once. Live, on this host (Windows, SQLite), the burst of
+10 identical `q=minutes` questions completes in ~7–30 ms each, which is *below the lane
+window* — the scrape door correctly reports `football_os_singleflight_joins_total 0`, and
+the ledger says so rather than claiming a working demo that the host cannot produce. The
+number this operator reads on a loaded deployment is the same counter, now wired.
+
+**Evidence.** `tests/test_singleflight.py` — 6 green (lane semantics: 12→1 execution, lane
+empties, fresh lane after completion, leader exception identical in all, followers re-raise
+the same object, door-level burst with monkeypatched `search_world` executes it once);
+`test_prometheus_export` + `test_http_caching` = 32 passed; `ruff`, `mypy app` clean;
+neighboring suite 100 passed. **Not claimed.** Multi-worker deployments coalesce per worker
+(the shared tier remains the 60-second response cache; the lane covers the miss window
+inside one process). No header reports the coalescing on the wire — the metric, not the
+caller, is the audience.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import limit
+from app.core.singleflight import world_search_flight
 from app.models import (
     WORLD_DISCLAIMER,
     Competition,
@@ -998,7 +999,11 @@ def unified_search(
     """One query, typed and ranked results across the whole world (spec §56)."""
     limit(request, 60, 60, scope="world_search")
     wanted = [item.strip() for item in (types or "").split(",") if item.strip()] or None
-    hits = search_world(db, q, types=wanted, limit=limit_rows)
+    # One hot miss is the only expensive miss here: K identical questions before the 60-second
+    # cache warms would otherwise open K identical LIKE scans. The lane is keyed on exactly the
+    # arguments the ranking sees, so no answer is shared across different questions.
+    lane_key = f"{q}│{','.join(sorted(wanted)) if wanted else '*'}│{limit_rows}"
+    hits = world_search_flight.call(lane_key, lambda: search_world(db, q, types=wanted, limit=limit_rows))
     return _envelope(
         query=q,
         results=[hit.to_dict() for hit in hits],

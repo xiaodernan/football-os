@@ -25,6 +25,7 @@ from app.core.redis_cache import get_redis_cache
 from app.core.request_metrics import snapshot as request_metrics_snapshot
 from app.core.runtime import uptime_seconds
 from app.core.security import current_user, role_refusal, standing_check
+from app.core.singleflight import world_search_flight
 from app.models import ModelCall, User, VideoAsset
 from app.services import model_ledger, ops_alerts
 from app.services.cost_advisor import DEFAULT_WINDOW_DAYS
@@ -216,6 +217,7 @@ def prometheus_door(
         spend_today_usd=model_ledger.spend_today_usd(db),
         uptime_seconds=uptime_seconds(),
         answer_cache=answer_cache_stats(),
+        singleflight=world_search_flight.stats(),
     )
     return PlainTextResponse(body, media_type="text/plain; version=0.0.4; charset=utf-8")
 
