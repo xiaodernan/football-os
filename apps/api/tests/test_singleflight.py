@@ -194,7 +194,7 @@ def test_the_door_coalesces_a_cold_cache_burst(monkeypatch) -> None:
     leader.join(5)
     for follower in followers:
         follower.join(5)
-    assert errors == [], [repr(e) for e in errors]
+    assert errors == [], "; ".join(repr(e) for e in errors)
     assert executions == ["viremont"]
     assert len(results) == 7
     assert all(body["results"] and body["results"][0]["slug"] == "viremont" for body in results)
