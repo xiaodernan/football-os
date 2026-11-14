@@ -153,3 +153,22 @@ class TestTheDoor:
 
     def test_both_idents_are_required(self, client) -> None:  # type: ignore[no-untyped-def]
         assert client.get(f"{API}/duel", params={"left": "one"}).status_code == 422
+
+
+class TestTheFeaturedDoor:
+    def test_the_world_picks_its_scorer_against_its_maker(self, client) -> None:  # type: ignore[no-untyped-def]
+        """Deterministic, and honest about what it is: the ledger the world can build without a curator."""
+        response = client.get(f"{API}/duel/featured")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["left"]["player"]["slug"] != body["right"]["player"]["slug"]
+        assert [row["key"] for row in body["categories"]] == list(CATEGORY_ORDER)
+        assert body["verdict"]["counted"] >= 1
+        assert body["left"]["player"]["overall"] and body["right"]["player"]["overall"]
+
+    def test_the_featured_pick_is_stable_across_calls(self, client) -> None:  # type: ignore[no-untyped-def]
+        """Same door, same world: two calls answer the same pair — the door is arithmetic, not a lottery."""
+        first = client.get(f"{API}/duel/featured").json()
+        second = client.get(f"{API}/duel/featured").json()
+        assert first["left"]["player"]["slug"] == second["left"]["player"]["slug"]
+        assert first["right"]["player"]["slug"] == second["right"]["player"]["slug"]

@@ -2137,6 +2137,29 @@
         }
       }
     },
+    "/api/v1/world/duel/featured": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Featured Duel",
+        "description": "The duel the world picks for you: its best scorer against its most creative hand.\n\nDeterministic, and the columns are the same seven the duel page argues over — the door\nanswers with the exact envelope `/world/duel` returns, so a client reads it without\nknowing this route exists. Published rather than \"editorial\": no one curates a demo\nworld's biggest rivalry, we can only count it. When the world is empty the door refuses\nwith `no_such_player` (the same code as a missing side), never with a made-up pair.",
+        "operationId": "featured_duel_api_v1_world_duel_featured_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Featured Duel Api V1 World Duel Featured Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/duel": {
       "get": {
         "tags": [

@@ -788,6 +788,35 @@ def _duel_side(db: Session, player: RealPlayer) -> dict[str, Any]:
     }
 
 
+@router.get("/duel/featured")
+def featured_duel(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The duel the world picks for you: its best scorer against its most creative hand.
+
+    Deterministic, and the columns are the same seven the duel page argues over — the door
+    answers with the exact envelope `/world/duel` returns, so a client reads it without
+    knowing this route exists. Published rather than "editorial": no one curates a demo
+    world's biggest rivalry, we can only count it. When the world is empty the door refuses
+    with `no_such_player` (the same code as a missing side), never with a made-up pair.
+    """
+    limit(request, 120, 60, scope="world_duel")
+    scorer = db.scalar(
+        select(RealPlayer).order_by(RealPlayer.goals.desc(), RealPlayer.assists.desc(), RealPlayer.overall.desc(), RealPlayer.minutes.desc())
+    )
+    creator = (
+        db.scalar(
+            select(RealPlayer)
+            .where(RealPlayer.id != scorer.id)
+            .order_by(RealPlayer.assists.desc(), RealPlayer.goals.desc(), RealPlayer.overall.desc(), RealPlayer.minutes.desc())
+        )
+        if scorer is not None
+        else None
+    )
+    if scorer is None or creator is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=NOT_FOUND)
+    ledger = compare(scorer, creator)
+    return _envelope(left=_duel_side(db, scorer), right=_duel_side(db, creator), **ledger)
+
+
 @router.get("/duel")
 def duel(
     request: Request,
