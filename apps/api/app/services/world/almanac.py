@@ -96,8 +96,14 @@ def compute_almanac(session: Session) -> dict[str, Any]:
     player_season_pool = sorted(poty_pool, key=lambda p: (p.rating, p.minutes), reverse=True)[:4]
     if player_season_pool:
         season_winner, *season_rest = player_season_pool
+        poty_award = _award(
+            "player_of_season",
+            season_winner,
+            season_winner.rating,
+            [(p, p.rating) for p in season_rest],
+        )
     else:
-        season_winner, season_rest = None, []
+        poty_award = _award("player_of_season", None, None, [])
 
     enforcer_pool = sorted(players, key=lambda p: (p.yellow_cards + CARD_WEIGHT * p.red_cards, p.yellow_cards), reverse=True)[:4]
     enforcer_winner, *enforcer_rest = enforcer_pool
@@ -200,12 +206,7 @@ def compute_almanac(session: Session) -> dict[str, Any]:
                 glove_winner.clean_sheets,
                 [(p, p.clean_sheets) for p in glove_rest],
             ),
-            _award(
-                "player_of_season",
-                season_winner if player_season_pool else None,
-                season_winner.rating if player_season_pool else None,
-                [(p, p.rating) for p in season_rest],
-            ),
+            poty_award,
             _award(
                 "the_enforcer",
                 enforcer_winner,
