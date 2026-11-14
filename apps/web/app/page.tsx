@@ -7,7 +7,7 @@ import { HeroPitch } from "@/components/HeroPitch";
 import { Empty, Panel, Stat } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
 import { currentUser, serverFetch } from "@/lib/server";
-import type { CapabilitiesResponse, Player, ProgressOverview } from "@/lib/types";
+import type { CapabilitiesResponse, DuelResult, Player, ProgressOverview } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +19,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [user, capabilitiesResult, t, td, ta, tn, tc] = await Promise.all([
+  const [user, capabilitiesResult, featuredResult, t, td, ta, tn, tc] = await Promise.all([
     currentUser(),
     serverFetch<CapabilitiesResponse>("/capabilities"),
+    serverFetch<DuelResult>("/world/duel/featured"),
     getTranslations("home"),
     getTranslations("disclaimer"),
     getTranslations("auth"),
@@ -29,6 +30,7 @@ export default async function HomePage() {
     getTranslations("common"),
   ]);
   const capabilities = capabilitiesResult.ok ? capabilitiesResult.data : null;
+  const featured = featuredResult.ok ? featuredResult.data : null;
 
   let players: Player[] | null = null;
   let overview: ProgressOverview | null = null;
@@ -83,6 +85,65 @@ export default async function HomePage() {
         <HeroPitch />
       </section>
 
+      {/* Featured duel: the ledger's own pick from the sharp end of the world — the panel an
+          unauthenticated reader can knock on, and the page it hands them is the duel itself.
+          Names arrive at request time, so this card never disagrees with the arena. */}
+      {featured ? (
+        <section className="section">
+          <Panel eyebrow={t("featuredDuelEyebrow")} title={t("featuredDuelTitle")}>
+            <p className="muted" style={{ marginTop: 0, marginBottom: "1rem" }}>
+              {t("featuredDuelBody")}
+            </p>
+            <div className="duel__arena" style={{ padding: "0.9rem 1rem", gap: "0.75rem" }}>
+              <div className="duel__corner">
+                <p className="eyebrow">{featured.left.player.position}</p>
+                <h3 className="duel__name" style={{ fontSize: "1.5rem" }}>
+                  {featured.left.player.name}
+                </h3>
+                <span className="num duel__ovr">{featured.left.player.overall}</span>
+              </div>
+              <span aria-hidden="true" className="num" style={{ color: "var(--gold, #d4b16a)", fontSize: "1.5rem", alignSelf: "center" }}>
+                v
+              </span>
+              <div className="duel__corner duel__corner--right">
+                <p className="eyebrow">{featured.right.player.position}</p>
+                <h3 className="duel__name" style={{ fontSize: "1.5rem" }}>
+                  {featured.right.player.name}
+                </h3>
+                <span className="num duel__ovr">{featured.right.player.overall}</span>
+              </div>
+            </div>
+            <div className="row wrap" style={{ justifyContent: "space-between", marginTop: "1rem", alignItems: "center" }}>
+              <p className="muted" style={{ margin: 0 }}>
+                {featured.verdict.winner === "draw"
+                  ? t("featuredDuelLevelled")
+                  : t("featuredDuelWinner", {
+                      name:
+                        featured.verdict.winner === "left"
+                          ? featured.left.player.name
+                          : featured.right.player.name,
+                    })}
+              </p>
+              <Link className="btn btn--sm" href={`/world/duel/${featured.left.player.slug}/${featured.right.player.slug}`}>
+                {t("featuredDuelCta")}
+              </Link>
+            </div>
+          </Panel>
+        </section>
+      ) : (
+        <section className="section">
+          <Panel eyebrow={t("featuredDuelEyebrow")} title={t("featuredDuelTitle")}>
+            <p className="muted">{t("featuredDuelRefused")}</p>
+            <Link className="btn btn--ghost" href="/world/duel">
+              {t("featuredDuelCta")}
+            </Link>
+          </Panel>
+        </section>
+      )}
+
+      {/* Featured duel: the ledger's own pick from the sharp end of the world — the panel an
+          unauthenticated reader can knock on, and the page it hands them is the duel itself.
+          Names arrive at request time, so this card never disagrees with the arena. */}
       {/* Modules: three honest 'not built' columns + a real My Football column */}
       <section className="section grid grid-2">
         <NotBuiltPanel

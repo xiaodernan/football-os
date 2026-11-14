@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t("metaPickerTitle"),
     description: t("metaPickerDescription"),
     path: "/world/duel",
-    images: [{ url: absolute("/world/duel/opengraph-image"), width: 1200, height: 630, alt: "FOOTBALL OS — pick two players, the ledger decides" }],
+    images: [{ url: absolute("/world/duel/opengraph-image"), width: 1200, height: 630, alt: t("metaPickerTitle")  }],
   });
 }
 

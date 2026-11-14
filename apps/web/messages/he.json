@@ -2877,7 +2877,14 @@
     "policySyntheticBody": "פרופילי שחקנים, תכונות ותוכן בבנייה הזו הם נתוני הדגמה מלאכותיים. הם לא ספורטאים אמיתיים ומתויגים כהדגמה בכל מקום שהם מופיעים.",
     "policyLicensedTitle": "אין נכסים מורשים",
     "policyLicensedBody": "לא בשימוש ולא נחשבות תמונות מועדונים, ליגות, שחקנים או שידורים. כל מה שהיה דורש רישוי פשוט לא מוצג עדיין.",
-    "policyAiTitle": "AI הוא הערכה"
+    "policyAiTitle": "AI הוא הערכה",
+    "featuredDuelEyebrow": "הבחירה של היומן",
+    "featuredDuelTitle": "שני שחקנים, הכרעה אחת",
+    "featuredDuelBody": "החדדה של החלוץ נגד יצירתיות היוצר. שבע עמודות, הכרעה אחת.",
+    "featuredDuelLevelled": "שוויון ביומן — בלי מנצח.",
+    "featuredDuelWinner": "{name} זוכה ביומן.",
+    "featuredDuelRefused": "העולם עדיין לא יצר את הצמד הזה — בחרו שניכם לבדכם.",
+    "featuredDuelCta": "פתחו את הדו-קרב"
   },
   "careerDetail": {
     "academyEyebrow": "מחזור של {count} בגיל {ceiling} ומטה, נשפט לפי האחד-עשר הבא של המנוע",

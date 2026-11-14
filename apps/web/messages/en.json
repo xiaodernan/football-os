@@ -2877,7 +2877,14 @@
     "policySyntheticBody": "Player profiles, attributes and content in this build are synthetic demo data. They are not real athletes and are labelled as demo wherever they appear.",
     "policyLicensedTitle": "No licensed assets",
     "policyLicensedBody": "No club, league, player imagery or broadcast assets are used or claimed. Anything that would need a licence simply is not shown yet.",
-    "policyAiTitle": "AI is an estimate"
+    "policyAiTitle": "AI is an estimate",
+    "featuredDuelEyebrow": "THE LEDGER'S PICK",
+    "featuredDuelTitle": "Two players, one verdict",
+    "featuredDuelBody": "The world's sharpest finisher against its most creative hand. Seven columns, one verdict.",
+    "featuredDuelLevelled": "Level at the ledger — seven columns, no winner.",
+    "featuredDuelWinner": "{name} takes the ledger.",
+    "featuredDuelRefused": "The world has not generated a pair yet — open the picker and choose your own two.",
+    "featuredDuelCta": "Open the duel"
   },
   "careerDetail": {
     "academyEyebrow": "a class of {count} at or under {ceiling}, judged by the engine's next eleven",

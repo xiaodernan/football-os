@@ -2877,7 +2877,14 @@
     "policySyntheticBody": "这个版本里的球员档案、属性与内容都是合成演示数据。它们不是真实球员，并且在出现的地方都标注为演示。",
     "policyLicensedTitle": "没有授权素材",
     "policyLicensedBody": "没有使用也没有声称使用任何俱乐部、联赛、球员图像或转播素材。任何需要授权的内容都还没有显示。",
-    "policyAiTitle": "AI 是估算"
+    "policyAiTitle": "AI 是估算",
+    "featuredDuelEyebrow": "账本的挑选",
+    "featuredDuelTitle": "两名球员，一个判决",
+    "featuredDuelBody": "世界进球王对上助攻王——七列数据，一个判决。",
+    "featuredDuelLevelled": "平手，七列账本决不出胜负。",
+    "featuredDuelWinner": "{name} 赢下账本。",
+    "featuredDuelRefused": "世界还没生成这一对——挑选你自己的两名球员。",
+    "featuredDuelCta": "进入对决"
   },
   "careerDetail": {
     "academyEyebrow": "现役阵容中 {ceiling} 岁及以下的 {count} 人，由引擎的下一个十一人裁决",

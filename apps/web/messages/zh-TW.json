@@ -2877,7 +2877,14 @@
     "policySyntheticBody": "這個版本裡的球員檔案、屬性與內容都是合成示範資料。它們不是真實球員，並且在出現的地方都標註為示範。",
     "policyLicensedTitle": "沒有授權素材",
     "policyLicensedBody": "沒有使用也沒有聲稱使用任何俱樂部、聯賽、球員圖像或轉播素材。任何需要授權的內容都還沒有顯示。",
-    "policyAiTitle": "AI 是估算"
+    "policyAiTitle": "AI 是估算",
+    "featuredDuelEyebrow": "帳本的挑選",
+    "featuredDuelTitle": "兩名球員，一個判決",
+    "featuredDuelBody": "世界進球王對上助攻王——七列數據，一個判決。",
+    "featuredDuelLevelled": "平手，七列帳本決不出勝負。",
+    "featuredDuelWinner": "{name} 贏下帳本。",
+    "featuredDuelRefused": "世界還沒生成這一對——挑選你自己的兩名球員。",
+    "featuredDuelCta": "進入對決"
   },
   "careerDetail": {
     "academyEyebrow": "現役陣容中 {ceiling} 歲及以下的 {count} 人，由引擎的下一個十一人裁決",

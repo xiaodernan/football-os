@@ -2877,7 +2877,14 @@
     "policySyntheticBody": "Les profils de joueurs, attributs et contenu de cette version sont des données de démo synthétiques. Ce ne sont pas de vrais athlètes et ils sont étiquetés comme démo partout où ils apparaissent.",
     "policyLicensedTitle": "Aucun actif sous licence",
     "policyLicensedBody": "Aucun club, ligue, image de joueur ni actif de diffusion n'est utilisé ou revendiqué. Tout ce qui nécessiterait une licence n'est simplement pas montré pour l'instant.",
-    "policyAiTitle": "L'IA est une estimation"
+    "policyAiTitle": "L'IA est une estimation",
+    "featuredDuelEyebrow": "LE CHOIX DU REGISTRE",
+    "featuredDuelTitle": "Deux joueurs, un verdict",
+    "featuredDuelBody": "Le plus tranchant du monde, face au plus créatif. Sept colonnes, un verdict.",
+    "featuredDuelLevelled": "Égalité au registre — personne ne l'emporte.",
+    "featuredDuelWinner": "{name} emporte le registre.",
+    "featuredDuelRefused": "Le monde n'a pas encore généré cette paire — choisissez-en deux vous-mêmes.",
+    "featuredDuelCta": "Ouvrir le duel"
   },
   "careerDetail": {
     "academyEyebrow": "une classe de {count} à ou sous {ceiling}, jugée par les onze suivants du moteur",

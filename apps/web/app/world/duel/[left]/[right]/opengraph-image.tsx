@@ -15,7 +15,7 @@ import { ImageResponse } from "next/og";
 import { apiBase } from "@/lib/api";
 import type { DuelResult } from "@/lib/types";
 
-export const alt = "FOOTBALL OS — the world's ledger, two footballers apart";
+export const alt = "FOOTBALL OS";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const dynamic = "force-dynamic";
@@ -64,7 +64,7 @@ function figure(value: number | null | undefined): string {
 const SHORT_LABELS: [key: string, label: string][] = [
   ["goals", "GLS"],
   ["assists", "AST"],
-  ["involvement_per_90", "INV-90"],
+  ["involvement_per_90", "INV"],
   ["rating", "RAT"],
   ["minutes", "MIN"],
   ["overall", "OVR"],
@@ -84,36 +84,6 @@ export default async function DuelOpenGraphImage({ params }: { params: Promise<{
   const nameRight = b?.player?.name ?? titleCaseName(right);
   const overallLeft = a?.player?.overall ?? null;
   const overallRight = b?.player?.overall ?? null;
-
-  const winnerName = verdict ? (verdict.winner === "left" ? nameLeft : verdict.winner === "right" ? nameRight : null) : null;
-  const verdictLine = verdict
-    ? verdict.winner === "draw"
-      ? `LEVEL AT THE LEDGER — ${verdict.counted} DECLARED, ${verdict.levelled} LEVEL`
-      : `${winnerName} TAKES THE DUEL`
-    : null;
-
-  const margin = {
-    display: "flex",
-    flexDirection: "column",
-    width: "100%",
-    height: "100%",
-    padding: "40px 56px 46px",
-    background: BG,
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
-    position: "relative",
-    overflow: "hidden",
-  } as const;
-
-  const mkGlow = (side: "left" | "right") =>
-    ({
-      position: "absolute",
-      top: "14%",
-      [side]: "-6%",
-      width: "560px",
-      height: "430px",
-      background: side === "left" ? `radial-gradient(ellipse at center, ${ACCENT}16 0%, transparent 68%)` : `radial-gradient(ellipse at center, ${INFO}17 0%, transparent 68%)`,
-      pointerEvents: "none",
-    }) as const;
 
   const labelStyle = {
     fontSize: 15,
@@ -137,9 +107,21 @@ export default async function DuelOpenGraphImage({ params }: { params: Promise<{
 
   return new ImageResponse(
     (
-      <div style={margin}>
-        <div style={mkGlow("left")} />
-        <div style={mkGlow("right")} />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          height: "100%",
+          padding: "40px 56px 46px",
+          background: BG,
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ position: "absolute", top: "14%", left: "-6%", width: "560px", height: "430px", background: "radial-gradient(circle, rgba(53, 240, 164, 0.09) 0%, transparent 68%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: "14%", right: "-6%", width: "560px", height: "430px", background: "radial-gradient(circle, rgba(95, 168, 255, 0.10) 0%, transparent 68%)", pointerEvents: "none" }} />
         <div
           style={{
             position: "absolute",
@@ -152,12 +134,12 @@ export default async function DuelOpenGraphImage({ params }: { params: Promise<{
         />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 1 }}>
           <div style={labelStyle}>FOOTBALL OS</div>
-          <div style={{ ...labelStyle, color: GOLD }}>THE WORLD'S LEDGER</div>
+          <div style={{ ...labelStyle, color: GOLD }}>LEDGER</div>
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 46, gap: 24, zIndex: 1 }}>
           <div style={{ display: "flex", flexDirection: "column", flex: 1, alignItems: "flex-start", textAlign: "left" }}>
-            <div style={{ ...labelStyle, marginBottom: 10 }}>LEFT CORNER</div>
+            <div style={{ ...labelStyle, marginBottom: 10 }}>LEFT</div>
             <div style={{ fontSize: nameLeft.length > 12 ? 42 : 50, lineHeight: 1.05, fontWeight: 800, letterSpacing: "-0.03em", color: PAPER, maxWidth: 420 }}>
               {nameLeft}
             </div>
@@ -174,7 +156,7 @@ export default async function DuelOpenGraphImage({ params }: { params: Promise<{
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", flex: 1, alignItems: "flex-end", textAlign: "right" }}>
-            <div style={{ ...labelStyle, marginBottom: 10 }}>RIGHT CORNER</div>
+            <div style={{ ...labelStyle, marginBottom: 10 }}>RIGHT</div>
             <div style={{ fontSize: nameRight.length > 12 ? 42 : 50, lineHeight: 1.05, fontWeight: 800, letterSpacing: "-0.03em", color: PAPER, maxWidth: 420 }}>
               {nameRight}
             </div>
@@ -231,9 +213,8 @@ export default async function DuelOpenGraphImage({ params }: { params: Promise<{
           ))}
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 22, zIndex: 1 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "0.02em", color: PAPER }}>{verdictLine ?? "TWO PLAYERS. ONE LEDGER."}</div>
-          <div style={{ ...labelStyle, color: "#6d7680" }}>SYNTHETIC DEMO WORLD</div>
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginTop: 22, zIndex: 1 }}>
+          <div style={labelStyle}>FOOTBALL OS</div>
         </div>
       </div>
     ),
