@@ -2893,7 +2893,14 @@
     "featuredDuelLevelled": "Level at the ledger — seven columns, no winner.",
     "featuredDuelWinner": "{name} takes the ledger.",
     "featuredDuelRefused": "The world has not generated a pair yet — open the picker and choose your own two.",
-    "featuredDuelCta": "Open the duel"
+    "featuredDuelCta": "Open the duel",
+    "worldBookEyebrow": "the world keeps a book",
+    "worldBookAlmanac": "The Almanac",
+    "worldBookAlmanacNote": "the honours the world grants itself",
+    "worldBookStory": "The Season's Story",
+    "worldBookStoryNote": "three chapters straight out of the fixtures",
+    "worldBookRecords": "The Record Book",
+    "worldBookRecordsNote": "the eight marks the world truly earned"
   },
   "careerDetail": {
     "academyEyebrow": "a class of {count} at or under {ceiling}, judged by the engine's next eleven",

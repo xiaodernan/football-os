@@ -2893,7 +2893,14 @@
     "featuredDuelLevelled": "平手，七列账本决不出胜负。",
     "featuredDuelWinner": "{name} 赢下账本。",
     "featuredDuelRefused": "世界还没生成这一对——挑选你自己的两名球员。",
-    "featuredDuelCta": "进入对决"
+    "featuredDuelCta": "进入对决",
+    "worldBookEyebrow": "这个世界自己写书",
+    "worldBookAlmanac": "赛季年鉴",
+    "worldBookAlmanacNote": "这个世界自己颁发的荣誉",
+    "worldBookStory": "本赛季的故事",
+    "worldBookStoryNote": "三章，直接从存档的比赛里写出来",
+    "worldBookRecords": "纪录簿",
+    "worldBookRecordsNote": "八个这个世界真正打出来的纪录"
   },
   "careerDetail": {
     "academyEyebrow": "现役阵容中 {ceiling} 岁及以下的 {count} 人，由引擎的下一个十一人裁决",

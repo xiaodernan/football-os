@@ -2893,7 +2893,14 @@
     "featuredDuelLevelled": "تعادل السجل — بلا فائز۔",
     "featuredDuelWinner": "{name} يفوز بالسجل۔",
     "featuredDuelRefused": "العالم لم يولّد هذين بعد — اختر اثنين بنفسك۔",
-    "featuredDuelCta": "افتح النزال"
+    "featuredDuelCta": "افتح النزال",
+    "worldBookEyebrow": "العالم يحتفظ بكتاب",
+    "worldBookAlmanac": "سجل الموسم",
+    "worldBookAlmanacNote": "الأشرف التي يمنحها العالم لنفسه",
+    "worldBookStory": "قصة الموسم",
+    "worldBookStoryNote": "ثلاثة فصول تُسحب من المباريات",
+    "worldBookRecords": "كتاب السجلات",
+    "worldBookRecordsNote": "العلامات الثماني التي امتلكها العالم"
   },
   "careerDetail": {
     "academyEyebrow": "فوج من {count} في {ceiling} أو دونها، يقيّمها الأحد عشر التالية للمحرك",

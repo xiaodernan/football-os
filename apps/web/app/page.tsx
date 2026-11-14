@@ -9,6 +9,8 @@ import { errorMessage } from "@/lib/api";
 import { currentUser, serverFetch } from "@/lib/server";
 import type { CapabilitiesResponse, DuelResult, Player, ProgressOverview } from "@/lib/types";
 
+import "@/styles/worldbook.css";
+
 export const dynamic = "force-dynamic";
 
 // `generateMetadata` rather than a constant — the tab follows the reader's locale instead of
@@ -148,6 +150,40 @@ export default async function HomePage() {
       {/* Featured duel: the ledger's own pick from the sharp end of the world — the panel an
           unauthenticated reader can knock on, and the page it hands them is the duel itself.
           Names arrive at request time, so this card never disagrees with the arena. */}
+      {/* The world's book — the almanac, the story and the record book: three doors to the same
+          synthetic season, each rendered fresh from the world's own rows. The hero's glow keeps
+          its distance; these three pages are the library, not the stage. */}
+      <section className="section">
+        <Panel eyebrow={t("worldBookEyebrow")}>
+          <div className="worldbook">
+            <Link className="worldbook__row" href="/world/almanac">
+              <span className="worldbook__numeral" aria-hidden="true">I</span>
+              <span className="worldbook__body">
+                <strong>{t("worldBookAlmanac")}</strong>
+                <span className="muted">{t("worldBookAlmanacNote")}</span>
+              </span>
+              <span className="worldbook__arrow" aria-hidden="true">→</span>
+            </Link>
+            <Link className="worldbook__row" href="/world/story">
+              <span className="worldbook__numeral" aria-hidden="true">II</span>
+              <span className="worldbook__body">
+                <strong>{t("worldBookStory")}</strong>
+                <span className="muted">{t("worldBookStoryNote")}</span>
+              </span>
+              <span className="worldbook__arrow" aria-hidden="true">→</span>
+            </Link>
+            <Link className="worldbook__row" href="/world/records">
+              <span className="worldbook__numeral" aria-hidden="true">III</span>
+              <span className="worldbook__body">
+                <strong>{t("worldBookRecords")}</strong>
+                <span className="muted">{t("worldBookRecordsNote")}</span>
+              </span>
+              <span className="worldbook__arrow" aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </Panel>
+      </section>
+
       {/* Modules: three honest 'not built' columns + a real My Football column */}
       <section className="section grid grid-2">
         <NotBuiltPanel

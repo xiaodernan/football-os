@@ -2893,7 +2893,14 @@
     "featuredDuelLevelled": "平手，七列帳本決不出勝負。",
     "featuredDuelWinner": "{name} 贏下帳本。",
     "featuredDuelRefused": "世界還沒生成這一對——挑選你自己的兩名球員。",
-    "featuredDuelCta": "進入對決"
+    "featuredDuelCta": "進入對決",
+    "worldBookEyebrow": "這個世界自己寫書",
+    "worldBookAlmanac": "賽季年鑑",
+    "worldBookAlmanacNote": "這個世界自己頒發的榮譽",
+    "worldBookStory": "本賽季的故事",
+    "worldBookStoryNote": "三章，直接從存檔的比賽裡寫出來",
+    "worldBookRecords": "紀錄簿",
+    "worldBookRecordsNote": "八個這個世界真正打出來的紀錄"
   },
   "careerDetail": {
     "academyEyebrow": "現役陣容中 {ceiling} 歲及以下的 {count} 人，由引擎的下一個十一人裁決",

@@ -1,0 +1,34 @@
+/* The world keeps a book — three doors on the home page, no colour, just typography. */
+
+.worldbook { display: flex; flex-direction: column; }
+.worldbook__row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.85rem 0.35rem;
+  border-top: 1px solid var(--line-soft);
+  text-decoration: none;
+  color: inherit;
+  transition: background 120ms ease;
+}
+.worldbook__row:last-child { border-bottom: 1px solid var(--line-soft); }
+.worldbook__row:hover { background: var(--bg-panel); }
+.worldbook__row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.worldbook__numeral {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 1.2px rgba(216, 181, 107, 0.65);
+  user-select: none;
+  min-width: 2.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.worldbook__body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.worldbook__body strong { font-size: 1.15rem; letter-spacing: -0.01em; }
+.worldbook__body .muted { font-size: 0.8rem; }
+.worldbook__arrow { margin-inline-start: auto; color: var(--gold, #d8b56b); font-size: 1.25rem; }
+[dir="rtl"] .worldbook__arrow { transform: scaleX(-1); }

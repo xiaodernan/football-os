@@ -2893,7 +2893,14 @@
     "featuredDuelLevelled": "שוויון ביומן — בלי מנצח.",
     "featuredDuelWinner": "{name} זוכה ביומן.",
     "featuredDuelRefused": "העולם עדיין לא יצר את הצמד הזה — בחרו שניכם לבדכם.",
-    "featuredDuelCta": "פתחו את הדו-קרב"
+    "featuredDuelCta": "פתחו את הדו-קרב",
+    "worldBookEyebrow": "העולם שומר ספר",
+    "worldBookAlmanac": "יומנת העונה",
+    "worldBookAlmanacNote": "הכבודות שהעולם מעניק לעצמו",
+    "worldBookStory": "סיפור העונה",
+    "worldBookStoryNote": "שלושה פרקים, ישירות מהמשחקים השמורים",
+    "worldBookRecords": "ספר השיאים",
+    "worldBookRecordsNote": "שמונת הסימנים שהעולם הרוויח"
   },
   "careerDetail": {
     "academyEyebrow": "מחזור של {count} בגיל {ceiling} ומטה, נשפט לפי האחד-עשר הבא של המנוע",
