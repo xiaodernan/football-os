@@ -6528,3 +6528,65 @@ GET  /api/v1/meta/capabilities (22 B 404)                                     �
 Both modules gained `micrometer-registry-prometheus`; the registry closes over `health,info,prometheus`, the config server keeps `refresh` and gains `prometheus`. Measured live on this host (`mvn -o -B package`, both jars): registry serves **12,109 bytes** of exposition, config serves **16,596**, both opening on `# HELP process_cpu_usage`. No eureka/actuator bespoke series binds on a cold start — JVM and process series only, which is the honest answer for a plane nobody has probed yet; nothing was invented to make the scrape look richer. `docs/runbooks/service_plane.md` now names all three doors, and both jars build on the services leg exactly as before.
 
 **The one lesson worth carrying.** Item 38's crash-answer defect and Item 39's silent-zero scrape are the same class: the gate asked for the behaviour it could prove, and the platform measured exactly what it promised — nothing more. Every number in this section was printed by a command, not recalled.
+
+---
+
+## §176 — the featured duel arc: one door, one panel, two cards, six pushes, every red named
+
+### What shipped
+
+Item 41, two arcs back to back:
+
+* **API — `GET /api/v1/world/duel/featured`** (`3fde4a7`). The world argues with itself: sharpest
+  scorer (`goals` desc, ties to `assists` desc, then `overall` desc, then `minutes` desc) against the
+  most creative hand (`assists` desc, `goals` desc, `overall` desc, `minutes` desc), answered with the
+  exact `compare()` envelope — same seven columns, same verdict shape. The empty world refuses with
+  the tier's shared `NOT_FOUND`, never with a made-up pair. Two new unit cases pin it down
+  (featured door answers a stable non-empty pair; the pair never meets itself). Contract re-exported
+  at **231 paths / 298 operations**; `AUDIT_FIGURES` moved in the same commit.
+* **Web — one home panel + two share cards** (`12d1a1b`). The home page gains one server-rendered
+  panel between hero and modules — the ledger's pick, dressed in the same `.player-card` ornament the
+  My Football card above it wears (per `c555eae`), OVR figures, the verdict sentence, the CTA into the
+  canonical duel URL, and a refusal with a next step when the door cannot answer. Two `opengraph-image.tsx`
+  files were added: the antenna (ONE v TWO, LEDGER frame) and the per-pair card (glow per winning corner,
+  seven cells tinted by the winning side, gold `v`, never 500). `pageMetadata()` gained the `images` override
+  so the duel pages and the picker preview with the card they actually serve. `qa-share-preview` was cured
+  at its own check — the gate could not see route groups, and both route-moved shared pages graded their own
+  canonicalPath as 404-shaped since Item 36/37; it now resolves `app/<path>/(index)/page.tsx` exactly the way
+  Next does. 31/31 again.
+* **PLAN.md — one accident of consequence, cured in the open** (`162e35c`, `35e668a`). A
+  narrow-anchor edit against `## How to work an item` emptied the file for a push and a half; the
+  restore used Python byte-slices from `git show 71cab0c:PLAN.md` (never PowerShell redirection — the
+  pipe re-encodes non-ASCII), with Item 41 re-inserted at the byte before the tail anchor, and the whole
+  file verified after write: 44 item sections, Items 0 through 41, 2,572 lines at `35e668a`.
+
+### The red chain, in push order, unedited
+
+| push | CI | verdict | fault / cure |
+| --- | --- | --- | --- |
+| `71cab0c..162e35c` (duel-card arc incl. OG images + home panel initial wiring + `qa-share-preview` route-group cure) | `43577097250` | failure — web | The English-literal gate counted **13** sites the catalogues do not carry — the alt sentence on both cards, the colour-template gradients, `INV-90`, the verdict template, `Two Players`, the padding/fontFamily strings, and the picker's `FOOTBALL OS` alt. **Cured by `12d1a1b`** — the styles went inline, the templates were replaced by colour tokens without sentence-shaped words, and `alt` became the bare brand. The gate read 9/9 after the change (4,515 key calls). |
+| `162e35c..35e668a` (the freshness/web arc chain) | `43579607205` | failure — web | Translation-quality found **4** Arabic full stops my home panel authored — `home.featuredDuel*` ending with Latin punctuation inside Arabic text, identical to the defect class the duel namespace collected earlier. **Cured by `875597d`** — all four now close with U+06D4; the gate reads 9/9. |
+| `35e668a..875597d` (the Arabic punctuation cure) | `43580104470` | failure — api only | The SHA-currency test pinned three committed documents to the contract's own SHA-256 of the day they were written, and the featured-duel door moved the population (secured 241 unchanged, public 56 → 57, private GET 104 unchanged), so the tree and the ledgers disagreed. **Cured by `2546d72`** — the three ledgers re-pin to `a7555510d0f2dd4dd6476d646d7a4c8764bec89acd83417045c954541abbb3f2`, the counts read 241 / 57 / 104, and a Run P note states — explicitly — that no fresh probe was executed; run O remains the last execution recorded against a live server. |
+| `875597d..2546d72` (the SHA-currency cure) | `43581209675` | **success — all four legs** | web green (36+ gates, Types, Build), services green (the scrape pair boots), containers green (both images build and boot), **api green — Lint, Types, SQLite dev-fallback tests, PostgreSQL migrations, SQLite + PostgreSQL suites, RAG evaluation gates**. The arc is landed. |
+
+### What this arc proved about the wiring
+
+* **Share cards are cheap to build, and the gates judge them too.** An `opengraph-image.tsx` is a
+  TypeScript file in the tree; if its visible strings are sentences, the English-literal gate holds them
+  to the catalogues like everyone else. The cure — pure proof tokens, zero copy sentences anywhere in
+  the card — is strictly shorter than sourcing ten brand sentences through six catalogues, and it is
+  the only form that survives the default latin-face renderer without tofu.
+* **PLAN.md is load-bearing, not a sketch.** The gate and the runner both recompute from the committed
+  tree when numbers are cited; dropping 2,800 lines of item history in one edit would have left every
+  later reader asking why the project had no diary for its own decisions. The restore path, saved as a
+  scratch script, produced the byte-perfect file `35e668a`.
+* **EN, zh, zh-TW all registered 4411/4456; fr 4207/4456 stays consistent** — seven new home keys,
+  five identical values in none of the five translated languages, zero in fr either, so all are
+  translations needing the same named exemptions they already hold.
+
+**Not claimed.** The OG image path itself has not been rendered on this host (Next 15 is build-heavy
+here); the proof is the web leg's gates, `Types` and `Build`, all green at `43580104470`, plus the
+container-boot leg that ran at `43580104470` and `43581209675`. The home panel's rendered appearance is
+not yet walked anywhere; visual-qa's long walk is the frontier named in §145 and this arc does not
+claim to close it. The `fr`/`ar`/`he` editorial pass remains owed; the untracked user text file at the
+repository root remains untouched; `.workbuddy/` remains untouched.
