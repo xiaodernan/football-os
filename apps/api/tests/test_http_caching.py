@@ -17,7 +17,7 @@ import json
 
 from starlette.types import Message
 
-from app.core.compression import CompressionMiddleware, VIDEO_PREFIX
+from app.core.compression import VIDEO_PREFIX, CompressionMiddleware
 from app.core.http_caching import (
     REVALIDATE_CACHE_CONTROL,
     RevalidationMiddleware,
