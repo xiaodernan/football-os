@@ -1,12 +1,12 @@
 {
-  "head": "ff9703f",
-  "total_commits": 1108,
+  "head": "8e353e2",
+  "total_commits": 1110,
   "milestone": "§208",
   "milestone_full": "§208 — the spotlight arc closes: every red named, the green cures, and the fact pack that ended it",
   "pushed_at": "2026-11-16",
-  "screens": 77,
-  "assets": 189,
-  "world_doors": 14,
+  "screens": 78,
+  "assets": 190,
+  "world_doors": 15,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-15T16:25:08.367Z"
+  "generated_at": "2026-11-15T17:03:12.959Z"
 }
