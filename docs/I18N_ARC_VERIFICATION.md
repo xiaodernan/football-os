@@ -6917,3 +6917,23 @@ The pinned golden was the *door's* own clock all along; the test file was the on
 **CI.** Push `2928426` (the cure) — **completed success on all four legs**: push `43659348718`; the midnight seam no longer fails for the only reason it ever could. These tests no longer flake at the midnight seam by construction — the doors read the day from the same clock the app does, per call.
 
 **Deliberately not done.** No re-tag of any red; no repinning of any figure; no acceptance of the midnight seam as "expected flake". The cure is the fix the door was owed all along: the clock is read fresh.
+
+## §193 — The world picks its XI · Item 59
+
+The eleven this world would send into the opening fixture of the tier-1 league — computed fresh on every read, never invented, never cached. The seventh major door landed this arc: `/world/matchday-xi` — the seventh cluster surface the world's almanac/story/record family surfaces.
+
+**The door.** `GET /api/v1/world/matchday-xi` — anonymous read, 60/min world tier. One league per request (`_top_league()` — the same deterministic tier-1 selection the almanac, story and records use, so this vote speaks for the same cup the rest of the world does). Slot assignment by primary position on the tier-pruned pool, ties broken by minutes, each player printed exactly once. A slot filled from a secondary position flags itself: `substituted: true` with the player's actual position named as `slack` — the reader can see *why* a slot is filled by a secondary without reading the algorithm.
+
+**The eleven (as this seed prints them).** Zeek Drosttis (1, GK, 68) — captain by minutes —, Peleth Sorith (2, RB, 70), Vain Mortis (4, CB, 70), Farash Kreshelli (5, CB, 68), Vain Brynek (3, LB, 68), Corira Dolmann (6, CDM, 68), Lorus Qelek (8, CM, 68), Fariel Toban (10, CM, 68), Toriel Veitoux (7, RW, 70), Pelune Eldmann (9, ST, 68), Pelash Marnberg (11, LW, 69). The captain row carries the ember-gold `C` this pitch is known for. The door also returns the one fixture it would actually play — `Matchday 1 game 1` at `2027-08-09` in the seed, linked to its own match page.
+
+**The page.** `/world/matchday-xi` — a 1/4/3/3 shirt grid (number ember in gold; paper-white name beside each; OVR in gold lower-right; `C` absolutely-positioned on the captain's shirt); the browse tile on `/world` plus the sitemap entry; the catalogue namespace covers 15 keys ×6 locales. The three-tier `/world/*` inventory renamed for the new doors; the world's `/world` browse grew a third chip row. qa-crawl-policy reads `population=75 gated=39 advertised=15`.
+
+**Catalogues.** Arabic and Hebrew line chips reworded in native script (`حد عشر` / `אחדעשר`) — the translation-quality gate caught `XI` in the same arc and the probe-arm re-pinned at 47 language-neutral named tokens. The `captainTag` token joins the `qa-locale-tokens` table with the game's own one-letter rationale named aloud. The README translation counts and per-locale identical-to-English totals re-verified uniform at 4,587.
+
+**Commits.** `054a63c` (the arc) → `a9f627f` + `08cabe1` + `74dcb49` (the census cures — the gate reading HEAD demanded every push have the census right at HEAD before continuing) → `32dc499` (the web and api legs' reds cured: `qa-token-gates-witness` re-pinned 46→47; the api leg's unused-import dropped) → CI read the full tree as success end to end.
+
+**Local verification.** tsc 0; the CI-ordered web battery green at 47 named entries (`qa-icu-messages`, `qa-icu-coverage`, `qa-i18n-literals` 9/9 with 4,646 key calls, `qa-locale-completeness` uniform 4,587, `qa-locale-tokens` 7/7 at 251 entries, `qa-translation-quality` 9/9, `qa-rtl-readiness` 8/8, `qa-namespace-ownership`, `qa-shared-keys`, `qa-token-drift`, `qa-crawl-policy population=75`); API: ruff + mypy (186 source files) clean, `test_world_matchday_xi.py` 6/6, three commit-anchored currency gates green at HEAD.
+
+**CI verdict (verbatim).** Push `054a63c…32dc499` — run `43668412702` — web / containers / services / **api — each leg red at exactly its own gate**, each cured in-tree, each push green from there. Re-run `43669964718` — **all four legs success**. Master is green at `32dc499` today.
+
+**Not claimed.** No prediction of match outcome beyond the XI composition; no simulation; no ranked preferences; every figure on screen is adjectival — an OVR, a minute count, a shirt number, a spot in a line formation from one select query, nothing dressed up as anything it is not.

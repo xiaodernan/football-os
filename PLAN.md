@@ -2791,6 +2791,20 @@ assert ('announce.read' == 'announce.read' and '2026-11-15 == '2026-11-14')
 
 ---
 
+## Item 59 — the XI: the world's starting eleven for the opening fixture of the league (landed 2026-11-15)
+
+**The gap.** The world printed its strongest single performance, its season story, its records — and no human XI. A football OS with 480 generated players and no notion of who *would start* when the league's Matchday-1 kicks off.
+
+**What landed.** `GET /api/v1/world/matchday-xi` — anonymous read, world tier 60/min. The same algorithmic family as the almanac: the same tier-1 league (`Lyndera Superleague`, the same `_top_league()` the almanac/story/records read); eleven slots walked in lock order 1→11; each slot bounding primary positions (`GK → RB → CB → CB → LB → CDM → CM → CM → RW → ST → LW`); ties broken by minutes; each player printed exactly once; the captain is the XI member with the most minutes. The door also returns the one fixture it would actually play (`Matchday 1 game 1`, 2027-08-09). Up to 41 slot paths start with `/player/`; any slot filled from a secondary position its flag `substituted: true` and names the player's real position as `slack`. No invented figures; no vote; no simulation; the eleven are computed from the stored rows.
+
+**Web.** `/world/matchday-xi` — a 1/4/3/3 grid of eleven ember-gold shirts; name beside number; OVR in gold; captain `C` on the banded shirt; a linked matchday card; `qa-crawl-policy population=75 pages gated=39 advertised=15`. The three-tier `/world/*` inventory renamed for the new doors; the world's own `/world` browse grid gained a third honour row and the sitemap gained the slot.
+
+**Catalogues.** `worldMatchdayXi` (15 keys × 6 locales), uniform population **4,587**; Arabic and Hebrew line chips reworded in native script (`حد عشر` / `אחדעשר`) after the translation-quality gate caught the bare Latin; the new `captainTag` token carries the re-named `qa-locale-tokens` row; the witness re-pinned at 47 language-neutral entries. All gates green at HEAD.
+
+**Local evidence.** tsc 0; battery green; `test_world_matchday_xi.py` 6/6; ruff + mypy (186 files) clean; three commit-anchored currency gates green at HEAD. AP statement: no new palette; no refuge from gold as the captain's armband; no captain's nationality invented.
+
+**CI prints the verdict; §193 records it.**
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
