@@ -2908,7 +2908,7 @@ listed page reads 1.00 A/BP/SEO now. `tsc` 0; `qa-i18n-literals` 9/9; no gate si
 
 **Not claimed.** Full brand-colour sweep on other engines; motion or perceived beauty.
 
-**CI** — run `43688578733` (in flight at write time); verdict in §200.
+**CI** — run `43688578733` — all four legs success.
 
 ## How to work an item
 
