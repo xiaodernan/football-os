@@ -2805,6 +2805,14 @@ assert ('announce.read' == 'announce.read' and '2026-11-15 == '2026-11-14')
 
 **CI prints the verdict; §193 records it.**
 
+## Item 60 — the home panel expands to four doors (landed 2026-11-15)
+
+**The gap.** The world book on the home already carried three doors — `I` almanac, `II` story, `III` records — and Item 59 slipped the fourth door (`/world/matchday-xi`) onto disk without ever putting the fourth row on the panel where a reader could reach it. A fourth button in code with three rows in render is a publication that never shipped.
+
+**What landed.** The fourth row — `IV` World's XI, label in the reader's own locale (`世界首发十一人` — "the eleven this world would send out first" in Simplified Chinese) — on the same hairline rail, identical spacing, identical arrow. Two new keys × 6 locales (`worldBookXi`, `worldBookXiNote`); uniform population **4,589**; README recomputed accordingly. No palette changes, no new routes, no `/world/*` census change (the door already counted).
+
+**Local verification.** tsc 0; web battery green; Chinese render walks the home and reads all four rows, zero console errors. **CI `43676101814` — all four legs success.**
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

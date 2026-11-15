@@ -6937,3 +6937,17 @@ The eleven this world would send into the opening fixture of the tier-1 league �
 **CI verdict (verbatim).** Push `054a63c…32dc499` — run `43668412702` — web / containers / services / **api — each leg red at exactly its own gate**, each cured in-tree, each push green from there. Re-run `43669964718` — **all four legs success**. Master is green at `32dc499` today.
 
 **Not claimed.** No prediction of match outcome beyond the XI composition; no simulation; no ranked preferences; every figure on screen is adjectival — an OVR, a minute count, a shirt number, a spot in a line formation from one select query, nothing dressed up as anything it is not.
+
+## §194 — Item 60: the home book keeps four doors now
+
+The home page has carried three seasonal surfaces on the world's first line since Item 53 — almanac, story, records. The XI arc shipped a door one item later, and the panel stayed three doors. This is the honest halfafter that rule.
+
+**What landed.** The world book on the home page expanded from three to four rows: `I` 赛季年鉴, `II` 本赛季的故事, `III` 纪录簿, `IV` 世界首发十一人 — each a one-tap front door into its page, rows continuing on the same hairline seam, same numeral italic, same arrow glyph at the right edge. No new palette, no new component, no new budget site: `.worldbook__row` carries four.
+
+**Catalogues.** `worldBookXi`,`worldBookXiNote` × 6 locales — `worldBookXi` set as product token; `worldBookXiNote` — "the eleven this world would send out first" (zh 简： "首发就是世界自己挑出来的这十一人"; zh-TW 繁： "世界自己挑出來的這十一人"; fr: "les onze que le monde alignerait au coup d'envoi"; ar: "الإحدى عشر التي سيبدأ بها العالم"; he: "האחד-עשר שהעולם יציב במגרש קודם כול"). Population uniform at **4,589**; README recomputed (4,542 zh/zh-TW/ar/he; 4,338 fr; 45/251 unchanged; six catalogues green through `qa-locale-tokens 7/7`).
+
+**Verification.** tsc 0; the CI-ordered web battery green — qa-i18n-literals 9/9 4,648 key calls, `qa-locale-completeness` uniform 4,589, `qa-translation-quality 9/9` with the new Arabic sentence judged, `qa-rtl-readiness 8/8`, `qa-crawl-policy population=75 gated=39 advertised=15`, `qa-metadata-title 213/213`. The home page renders in simplified Chinese with the four rows reading where they should; zero console errors.
+
+**CI for the push** — `43676101814` — **all four legs success**.
+
+**Not claimed.** No accessibility claim beyond the gate's scope; no claim of visual elegance fraction across page width — only the seeded-walk render and the gates.
