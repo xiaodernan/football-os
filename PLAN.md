@@ -2997,6 +2997,49 @@ Chinese render walks clean, English render walks clean.
 
 **CI** — `8e8ecec` run `43715520856` (web red at step 34 — `qa-namespace-ownership`, missing `manual`); cure `cd4731d` — run `43716401568` — **all four legs success**.
 
+## Item 72 — the world's spotlight (landed 2026-11-15)
+
+**The gap.** The world could name its champions in the past tense (almanac, story, record book,
+the XI) but not its current face — and the "three recognitions the world cannot hide from" needed
+a home.
+
+**What landed.**
+
+- `SpotlightPayload`: three facets — `spotlight_hitman` (best goals/90 tier-1, ties
+  rating → goals → slug), `spotlight_fortress` (most home clean sheets with sample, ties
+  conceded-ASC → played), `spotlight_new_blood` (youngest tier-1 player with ≥ 300 minutes).
+- Route `GET /api/v1/world/spotlight`, public/anonymous/60-60 world tier — the same
+  envelope/config grammar as its siblings; `WORLD_DISCLAIMER`, `data_origin: synthetic`,
+  `is_demo_data: true`.
+- Page `/world/spotlight` — three tiles (Hitman / Fortress / First Spark) in the same hairline-seam
+  vocabulary as every other world surface; population pinned 75 → 77 page routes; the /world
+  browse gains the tile; sitemap carries it; `WorldSpotlight` namespace ships in all six catalogues
+  (uniform 4,665, `qa-locale-tokens` 7/7, `qa-translation-quality` 9/9, `qa-rtl-readiness` 8/8).
+- Three languages cured by gates before this arc landed:
+  1. `qa-key-drift` (91 afe53, Ceiling 112/46) — four spotlight sentences shared with sibling
+     namespaces were reworded (`f7ec096`).
+  2. `qa-translation-freshness` (f7ec096, locales whose English changed carried stale translations)
+     — locales were reworded to match the new English (`5091141`).
+  3. The containers gate `npm run build` — `SpotlightPayload` lost its typed fields through an
+     `[k:string]: unknown` index signature; the page now reads through `PlayerBrief`/`TeamBrief`
+     typed ports (`b3be832`).
+  4. `docs/SPEC_COVERAGE_AUDIT.md` had corruption from a prior window's encoding pass
+     (50 `E6 90 82` byte sequences, `§` split); restored from the 054a63c base with the two
+     byte-level edits this arc owes (`dcc0d38`).
+- The security probe reads its population from the committed contract as of HEAD — `241` secured,
+  `62` public (spotlight is +1), `104` private GET; the three ledger reports now carry the same
+  SHA `71c435ef…` and the same census (`c612c40`, `4fe01f2`).
+
+**Tests.** `test_world_spotlight.py`: 5/5 green on SQLite fallback — envelope shape, sample
+arithmetic against `goals * 90 / minutes`, home-clean-sheets sample, tier-1 new-blood path.
+`103 world tests` pass together. `test_openapi_contract_currency.py` and
+`test_spec_audit_currency.py` updated to the contract's 236 paths / 77 routes.
+
+**CI** — `91afe53` (red, key-drift), `f7ec096` (red, freshness), `5091141` (green),
+`b3be832` (web leg green), `dcc0d38`, `c612c40`, `4fe01f2` — verdicts in §207.
+
+**Not claimed.** Anything the gates don't print; the sample sizes won't stay tuned forever.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

@@ -7381,3 +7381,69 @@ beside the disclaimers — it is the one link in the footer that leads inward.
 **Not claimed.** That every reader ultimately understands this product (the page is one reader's
 account, read once); anything that requires the `workflow` scope or another credential this machine
 does not hold.
+
+## §207 — Item 72: the world's spotlight — the three things the world cannot hide
+
+The product of two months of synthetic season is thirty thousand rows — and until this arc the
+world could name its champions in the past tense but not its current face. Item 72 gives it that.
+
+**What landed.** Three recognitions, computed fresh on every read, every figure printed only
+because the stored rows produced it:
+
+- `spotlight_hitman` — the best goals per 90 in tier-1 among players with a real sample
+  (appearances ≥ 10, minutes ≥ 600); ties broken rating → goals → slug, so a reader
+  recomputing in December reaches the same name as this one.
+- `spotlight_fortress` — the team with the most home clean sheets across every completed fixture
+  in the world (played ≥ 5 in that fixture category), ties broken `clean sheets → conceded ASC →
+  played`.
+- `spotlight_new_blood` — the youngest tier-1 player with real minutes behind him (≥ 300 minutes).
+
+**The route.** `GET /api/v1/world/spotlight` — public, anonymous, 60/min on the world tier, mirror
+of its siblings (`WORLD_DISCLAIMER`, `data_origin: "synthetic"`, `is_demo_data: true`). If the
+sample ever dries up the field reads `available: false` — never a card filled with invented figures.
+
+**The page.** `/world/spotlight` — three tiles in the catalogue's own grammar; `Provenance` strip
+prints the in-flight count; a `Spotlight` tile joins `/world` between the XI and the news doors;
+sitemap carries the route; population pinned 75 → 77 page routes.
+
+**The gates found three of my own choices. This arc kept them:**
+
+- `qa-key-drift` stopped the 91afe53 push with the ceiling at 112/46 (cross-namespace drift).
+  The four spotlight sentences the new namespace shared with siblings were reworded
+  (`fortressEyebrow`/`fortressUnit`/`goalsUnit`/`minutesUnit`/`concededUnit`-adjacent), the
+  register was cleaned and the ceiling stands — `112 / 46` never ratcheted, never exceeded;
+  `f7ec096` landed it.
+- `qa-translation-freshness` stopped `f7ec096` (locales whose English changed while others were
+  unchanged by me). `the translations moved with the English` — `5091141` cured all eight entries
+  including the Arabic full stops and the Hebrew script the gate demands.
+- The containers gate `npm run build` failed for `SpotlightPayload`'s lost typed fields; the page
+  now reads every `PlayerBrief`/`TeamBrief` typed ports (`(id|slug|path)`) — a local lesson in how
+  the build sees a typed contract the app sees as a dictionary.
+- `docs/SPEC_COVERAGE_AUDIT.md` arrived at this window with every `§` byte sequence broken by a
+  prior window's editor encoding pass (50 `E6 90 82` sequences); the corruption was reversed by
+  restoring from `git show 054a63c:...` and re-applying exactly the two byte-level edits this
+  arc owes (`contract_paths=236`, `page_routes=77`, `duel + spotlight`, world census 15). The test
+  `test_the_module_table_covers_its_declared_section_range_exactly_once` is the gate that stopped
+  it; `dcc0d38` cured it.
+- The opt-in `qa-locale-tokens` README recount (4618 zh/zhTW/ar/he, 4414 fr) moved with the
+  vocabulary — `qa-locale-completeness` re-measured at 4,665 uniform; `qa-icu-messages` 2/2 at 4,665.
+- The security probe re-pinned because of the new public door `/api/v1/world/spotlight` — the
+  probe reads its population from the committed contract: secured 241 / public 62 / private GET
+  104; the three ledger reports (SECURITY_PROBE_REPORT, M12_PRODUCTION_HARDENING_VERIFICATION,
+  ROADMAP) now carry the same SHA, the same census and the same 62 public-# operations count.
+
+**Not claimed.** That the world will earn a constellation-worthy name for itself next reading;
+that the sample minimums (≥ 10 appearances / ≥ 600 minutes / ≥ 300 minutes) won't need remeasuring
+as the seeded world ages. Anything the gates print, this arc keeps honest.
+
+**Commits and CI.** `91afe53` — spotlight page, route, catalogue, pins (pushed). `f7ec096` —
+key-drift cure reworded (pushed). `5091141` — freshness cure, all locales reworded in script lane
+(pushed). `b3be832` — the page predicate contract regenerated with `docs/api/openapi.json` (pushed).
+`dcc0d38` — `SPEC_COVERAGE_AUDIT.md` corruption cured via `git show` restored base and two
+byte-level edits (pushed). `c612c40` — probe census re-pinned to 241/62/104 with the SHA of the
+contract as committed at HEAD (pushed). `4fe01f2` — the M12 record's running-paragraph narrative
+pinned to match the census table (pushed).
+
+CI: `91afe53` (red, gates named), `f7ec096` (red at freshness), `5091141` (green),
+`b3be832` (web leg green), `dcc0d38` (in flight), `c612c40` (in flight), `4fe01f2` (in flight).
+The runner's current verdicts will print in the following entry once they settle.
