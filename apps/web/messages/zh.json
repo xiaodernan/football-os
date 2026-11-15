@@ -2903,7 +2903,9 @@
     "worldBookStory": "本赛季的故事",
     "worldBookStoryNote": "三章，直接从存档的比赛里写出来",
     "worldBookRecords": "纪录簿",
-    "worldBookRecordsNote": "八个这个世界真正打出来的纪录"
+    "worldBookRecordsNote": "八个这个世界真正打出来的纪录",
+    "worldBookXi": "世界首发十一人",
+    "worldBookXiNote": "首发就是世界自己挑出来的这十一人"
   },
   "careerDetail": {
     "academyEyebrow": "现役阵容中 {ceiling} 岁及以下的 {count} 人，由引擎的下一个十一人裁决",

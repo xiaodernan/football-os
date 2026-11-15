@@ -2903,7 +2903,9 @@
     "worldBookStory": "The Season's Story",
     "worldBookStoryNote": "three chapters straight out of the fixtures",
     "worldBookRecords": "The Record Book",
-    "worldBookRecordsNote": "the eight marks the world truly earned"
+    "worldBookRecordsNote": "the eight marks the world truly earned",
+    "worldBookXi": "The World's XI",
+    "worldBookXiNote": "the eleven this world would send out first"
   },
   "careerDetail": {
     "academyEyebrow": "a class of {count} at or under {ceiling}, judged by the engine's next eleven",

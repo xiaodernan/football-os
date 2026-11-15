@@ -2903,7 +2903,9 @@
     "worldBookStory": "סיפור העונה",
     "worldBookStoryNote": "שלושה פרקים, ישירות מהמשחקים השמורים",
     "worldBookRecords": "ספר השיאים",
-    "worldBookRecordsNote": "שמונת הסימנים שהעולם הרוויח"
+    "worldBookRecordsNote": "שמונת הסימנים שהעולם הרוויח",
+    "worldBookXi": "האחת-עשרה של העולם",
+    "worldBookXiNote": "האחת-עשרה שהעולם יציב במגרש קודם כול"
   },
   "careerDetail": {
     "academyEyebrow": "מחזור של {count} בגיל {ceiling} ומטה, נשפט לפי האחד-עשר הבא של המנוע",

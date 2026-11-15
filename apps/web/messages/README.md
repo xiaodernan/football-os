@@ -5,11 +5,11 @@ The catalogues, one per locale (`apps/api/app/api/v1/meta.py` publishes whicheve
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 4540 of 4587 keys in Simplified Chinese, and all 4587 present (the other 46 are placeholders, machine tokens and acronyms that are identical in every locale) | **yes** |
-| `zh-TW.json` | 4540 of 4587 keys written in Traditional Chinese, not converted from the `zh` file, and all 4587 present (same 46 identical tokens) | **yes** |
-| `ar.json` | 4540 of 4587 keys in Arabic, and all 4587 present (same 46 identical tokens) | **yes** |
-| `he.json` | 4540 of 4587 keys in Hebrew, and all 4587 present (same 46 identical tokens) | **yes** |
-| `fr.json` | 4336 of 4587 keys in French, and all 4587 present (250 identical values, each named in `qa-locale-tokens.mjs` — most are loanword doublets French spells the same as English, like *club*, *score* and *format*; two English gloss lines (`home.metaTitle`, `home.heroLine1/2`) were translated, not named) | **yes** |
+| `zh.json` | 4542 of 4589 keys in Simplified Chinese, and all 4589 present (the other 46 are placeholders, machine tokens and acronyms that are identical in every locale) | **yes** |
+| `zh-TW.json` | 4542 of 4589 keys written in Traditional Chinese, not converted from the `zh` file, and all 4589 present (same 46 identical tokens) | **yes** |
+| `ar.json` | 4542 of 4589 keys in Arabic, and all 4589 present (same 46 identical tokens) | **yes** |
+| `he.json` | 4542 of 4589 keys in Hebrew, and all 4589 present (same 46 identical tokens) | **yes** |
+| `fr.json` | 4338 of 4589 keys in French, and all 4589 present (250 identical values, each named in `qa-locale-tokens.mjs` — most are loanword doublets French spells the same as English, like *club*, *score* and *format*; two English gloss lines (`home.metaTitle`, `home.heroLine1/2`) were translated, not named) | **yes** |
 
 ## What a reader gets today
 

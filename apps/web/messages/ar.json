@@ -2903,7 +2903,9 @@
     "worldBookStory": "قصة الموسم",
     "worldBookStoryNote": "ثلاثة فصول تُسحب من المباريات",
     "worldBookRecords": "كتاب السجلات",
-    "worldBookRecordsNote": "العلامات الثماني التي امتلكها العالم"
+    "worldBookRecordsNote": "العلامات الثماني التي امتلكها العالم",
+    "worldBookXi": "تشكيلة العالم",
+    "worldBookXiNote": "الإحدى عشر التي سيبدأ بها العالم"
   },
   "careerDetail": {
     "academyEyebrow": "فوج من {count} في {ceiling} أو دونها، يقيّمها الأحد عشر التالية للمحرك",

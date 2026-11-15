@@ -2903,7 +2903,9 @@
     "worldBookStory": "L'histoire de la saison",
     "worldBookStoryNote": "trois chapitres extraits des matchs",
     "worldBookRecords": "Le livre des records",
-    "worldBookRecordsNote": "les huit marques que le monde a gagnées"
+    "worldBookRecordsNote": "les huit marques que le monde a gagnées",
+    "worldBookXi": "Le Onze du monde",
+    "worldBookXiNote": "les onze que le monde alignerait au coup d'envoi"
   },
   "careerDetail": {
     "academyEyebrow": "une classe de {count} à ou sous {ceiling}, jugée par les onze suivants du moteur",
