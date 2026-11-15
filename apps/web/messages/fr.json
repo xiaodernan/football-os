@@ -2172,7 +2172,8 @@
     "visibilityLabel": "Visibilité — la portée est décidée par les lignes de suivi, pas par une liste stockée sur la publication",
     "wordsLabel": "Mots (au plus {max} caractères, et jamais vides)",
     "yours": "vôtres",
-    "yoursOf": "{posts} sur {max} vôtres"
+    "yoursOf": "{posts} sur {max} vôtres",
+    "ariaPublishPost": "Publie — {room} sur {max} publications restantes. Cette action écrit la publication sur ton profil."
   },
   "simulate": {
     "metaTitle": "Simulateur de match",

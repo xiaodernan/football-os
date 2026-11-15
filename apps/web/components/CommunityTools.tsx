@@ -161,7 +161,10 @@ export function PostComposer({caps, profile}: {caps: CommunityCaps; profile: Com
         </label>
       )}
 
-      <button className="btn" data-testid="community-publish" disabled={busy !== null || room <= 0} onClick={publish} type="button">
+      {/* The visible sentence is minimal and identical to the accessible name's start —
+          WCAG 4.1.2 requires the name to contain the visible text; the accessible name
+          tells the fuller story without reading it twice. */}
+      <button aria-label={t("ariaPublishPost", { room, max: caps.post_max })} className="btn" data-testid="community-publish" disabled={busy !== null || room <= 0} onClick={publish} type="button">
         {busy === "publish" ? t("publishing") : t("publish", { room, max: caps.post_max })}
       </button>
       {room <= 0 && <p className="notice notice--warn" data-testid="community-post-ceiling">{t("ceiling", { max: caps.post_max })}</p>}

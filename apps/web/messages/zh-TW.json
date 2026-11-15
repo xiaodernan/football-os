@@ -2172,7 +2172,8 @@
     "visibilityLabel": "可見性——觸達由追蹤列決定，而不是貼文上的某個名單",
     "wordsLabel": "文字（最多 {max} 個字元，且不能為空）",
     "yours": "你的",
-    "yoursOf": "你的 {posts}/{max}"
+    "yoursOf": "你的 {posts}/{max}",
+    "ariaPublishPost": "發佈（還剩 {max} 個名額中的 {room} 個）。發佈會把這條寫入你的個人檔案。"
   },
   "simulate": {
     "metaTitle": "比賽模擬",

@@ -2172,7 +2172,8 @@
     "visibilityLabel": "可见性——触达由关注行决定，而不是帖子上的某个名单",
     "wordsLabel": "文字（最多 {max} 个字符，且不能为空）",
     "yours": "你的",
-    "yoursOf": "你的 {posts}/{max}"
+    "yoursOf": "你的 {posts}/{max}",
+    "ariaPublishPost": "发布（还剩 {max} 个名额中的 {room} 个）。发布会把这条写入你的个人档案。"
   },
   "simulate": {
     "metaTitle": "比赛模拟",

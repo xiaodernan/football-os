@@ -2172,7 +2172,8 @@
     "visibilityLabel": "Visibility — reach is decided by the follow rows, not by a list stored on the post",
     "wordsLabel": "Words (at most {max} characters, and never blank)",
     "yours": "yours",
-    "yoursOf": "{posts} of {max} yours"
+    "yoursOf": "{posts} of {max} yours",
+    "ariaPublishPost": "Publish it — {room} of {max} posts left. This writes the post to your profile."
   },
   "simulate": {
     "metaTitle": "Match simulator",
