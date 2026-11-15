@@ -776,7 +776,10 @@
     "sectionStoryChip": "story",
     "sectionRecordsLabel": "The Record Book",
     "sectionRecordsNote": "the eight marks the world truly earned",
-    "sectionRecordsChip": "records"
+    "sectionRecordsChip": "records",
+    "sectionMatchdayXiLabel": "The World's XI",
+    "sectionMatchdayXiNote": "the eleven this world would send out next",
+    "sectionMatchdayXiChip": "xi"
   },
   "coach": {
     "metaTitle": "AI Coach",
@@ -4665,5 +4668,22 @@
     "captionConceded": "goals against",
     "captionGames": "{games} played",
     "unavailable": "the season has not written this mark yet"
+  },
+  "worldMatchdayXi": {
+    "metaTitle": "The World's XI",
+    "metaDescription": "The starting eleven this world would send out for its next tier-1 matchday — picked by OVR, left-to-right 4-3-3, no simulation gymnastics.",
+    "eyebrow": "the matchday XI",
+    "title": "The World's XI",
+    "lede": "One eleven, one formation, selected from the stored rosters of the tier-1 league the almanac already speaks for. No simulator invented this; nobody voted on it; it is the cup of the strongest eleven the world can currently field — every figure on this page recomputes on every read.",
+    "backWorld": "back to the world",
+    "seasonLabel": "season 2026/27",
+    "unavailable": "this world has not yet enough stored tier-1 players to fill an eleven",
+    "captainTag": "C",
+    "lineDefence": "defence",
+    "lineMidfield": "midfield",
+    "lineAttack": "attack",
+    "slackSub": "filled by {slack}",
+    "noteFinePrint": "Slots filled by secondary positions are flagged — the XI picked by OVR on this request's stored rows, one player never printed twice, and no numbers were invented to fill an empty seat.",
+    "lineKeeper": "keeper"
   }
 }

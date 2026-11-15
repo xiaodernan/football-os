@@ -776,7 +776,10 @@
     "sectionStoryChip": "故事",
     "sectionRecordsLabel": "纪录簿",
     "sectionRecordsNote": "八个这个世界真正打出来的纪录",
-    "sectionRecordsChip": "纪录"
+    "sectionRecordsChip": "纪录",
+    "sectionMatchdayXiLabel": "世界首发十一人",
+    "sectionMatchdayXiNote": "这个世界下一场比赛会派出去的十一人",
+    "sectionMatchdayXiChip": "首发"
   },
   "coach": {
     "metaTitle": "AI 教练",
@@ -4665,5 +4668,22 @@
     "captionConceded": "失球",
     "captionGames": "{games} 场已赛",
     "unavailable": "这一条还没有写完"
+  },
+  "worldMatchdayXi": {
+    "metaTitle": "世界首发十一人",
+    "metaDescription": "这个世界要派出去打下一轮一级联赛的首发十一人——按能力值顺序排列，4-3-3，没有任何模拟器操作。",
+    "eyebrow": "首发十一人",
+    "title": "世界首发十一人",
+    "lede": "一支队，一个阵型，从赛季年鉴已经提及的一级联赛存档名单里挑选出来。没有模拟器谁都不投票，它就是这个世界目前能摆出来的最强阵容——每个数字每次读取时重新演算。",
+    "backWorld": "回到世界",
+    "seasonLabel": "2026/27 赛季",
+    "unavailable": "这个世界暂时还没有足够存档的一级联赛球员来组成首发十一人",
+    "captainTag": "C",
+    "lineDefence": "后卫线",
+    "lineMidfield": "中场线",
+    "lineAttack": "前锋线",
+    "slackSub": "由{slack}顶上",
+    "noteFinePrint": "由次级位置改打的首发位置上有标记——本页 XI 都是按本请求存档球员的能力值排出来的，没有人上过两次，没人替谁编了数字来填空位。",
+    "lineKeeper": "守门员"
   }
 }

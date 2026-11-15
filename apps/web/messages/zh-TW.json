@@ -776,7 +776,10 @@
     "sectionStoryChip": "故事",
     "sectionRecordsLabel": "紀錄簿",
     "sectionRecordsNote": "八個這個世界真正打出來的紀錄",
-    "sectionRecordsChip": "紀錄"
+    "sectionRecordsChip": "紀錄",
+    "sectionMatchdayXiLabel": "世界首發十一人",
+    "sectionMatchdayXiNote": "這個世界下一場比賽會派出去的十一人",
+    "sectionMatchdayXiChip": "首發"
   },
   "coach": {
     "metaTitle": "AI 教練",
@@ -4665,5 +4668,22 @@
     "captionConceded": "失球",
     "captionGames": "{games} 場已賽",
     "unavailable": "這一條還沒有寫完"
+  },
+  "worldMatchdayXi": {
+    "metaTitle": "世界首發十一人",
+    "metaDescription": "這個世界要派出去打下一輪一級聯賽的首發十一人——按能力值順序排列，4-3-3，沒有任何模擬器操作。",
+    "eyebrow": "首發十一人",
+    "title": "世界首發十一人",
+    "lede": "一支隊，一個陣型，從賽季年鑑已經提及的一級聯賽存檔名單裡挑選出來。沒有模擬器誰都不投票，它就是這個世界目前能擺出來的最強陣容——每個數字每次讀取時重新演算。",
+    "backWorld": "回到世界",
+    "seasonLabel": "2026/27 賽季",
+    "unavailable": "這個世界暫時還沒有足夠存檔的一級聯賽球員來組成首發十一人",
+    "captainTag": "C",
+    "lineDefence": "後衛線",
+    "lineMidfield": "中場線",
+    "lineAttack": "前鋒線",
+    "slackSub": "由{slack}頂上",
+    "noteFinePrint": "由次級位置改打的首發位置上有標記——本頁 XI 都是按本請求存檔球員的能力值排出來的，沒有人上過兩次，沒人替誰編了數字來填空位。",
+    "lineKeeper": "守門員"
   }
 }

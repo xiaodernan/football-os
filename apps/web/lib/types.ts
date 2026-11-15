@@ -3154,3 +3154,38 @@ export type RecordsResult = WorldEnvelope & {
   season: { label: string; kind: string };
   records: [RecordBiggestHaul, RecordGoalFest, RecordOffenceClub, RecordDefenceClub, RecordCastle, RecordCardsFixture, RecordKeeperWall, RecordHighestRated];
 };
+
+/** One slot of the world's matchday XI — the web state translates this into a visual chip. */
+export type XISlot = {
+  number: number;
+  position: string;
+  id: string | null;
+  slug: string | null;
+  name: string | null;
+  path: string | null;
+  overall: number | null;
+  minutes: number | null;
+  age: number | null;
+  nation: string | null;
+  team: { slug: string | null; name: string; path: string | null; id?: string | null } | null;
+  substituted: boolean;
+  slack: string | null;
+};
+
+export type MatchdayXiResult = WorldEnvelope & {
+  available: boolean;
+  season: string | null;
+  competition: { id: string; slug: string; name: string; tier: number } | null;
+  formation: string | null;
+  slots: XISlot[];
+  captain: { number: number | null; position: string | null; name: string | null; slug: string | null; path: string | null } | null;
+  next_fixture: {
+    slug: string;
+    path: string;
+    kickoff_at: string | null;
+    round_label: string;
+    home_team_id: string | null;
+    away_team_id: string | null;
+  } | null;
+  note: string | null;
+};

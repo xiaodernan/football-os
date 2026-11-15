@@ -776,7 +776,10 @@
     "sectionStoryChip": "סיפור",
     "sectionRecordsLabel": "ספר השיאים",
     "sectionRecordsNote": "שמונת הסימנים שהעולם הרוויח",
-    "sectionRecordsChip": "שיאים"
+    "sectionRecordsChip": "שיאים",
+    "sectionMatchdayXiLabel": "האחת-עשרה של העולם",
+    "sectionMatchdayXiNote": "האחד-עשר שהעולם ישלח למשחק הבא",
+    "sectionMatchdayXiChip": "אחדעשר"
   },
   "coach": {
     "metaTitle": "המאמן ה-AI",
@@ -4665,5 +4668,22 @@
     "captionConceded": "שערים ספגו",
     "captionGames": "{games} משחקים",
     "unavailable": "הסימן הזה עדיין לא נכתב"
+  },
+  "worldMatchdayXi": {
+    "metaTitle": "האחת-עשרה של העולם",
+    "metaDescription": "האחד-עשר ההתחלתי שהעולם ישלח למפגש הבא של ליגת העל — 4-3-3, מסודר לפי OVR, בלי מניפולציות של סימולטור.",
+    "eyebrow": "האחד-עשר של המחזור",
+    "title": "האחת-עשרה של העולם",
+    "lede": "אחת-עשרה אחת, מערך אחד, שנבחרה ממאגר השמות של ליגת העל שיומן שכבר חידש. אין סימולטור שממציא את זה, אין הצבעה, זה האחד-עשר החזק ביותר שהעולם יכול להציב על המגרש היום — כל מספר מחושב מחדש בכל קריאה.",
+    "backWorld": "חזרה אל העולם",
+    "seasonLabel": "עונת 2026/27",
+    "unavailable": "לעולם הזה עדיין אין מספיק שחקני ליגת על שמורים כדי להציב אחד-עשר",
+    "captainTag": "C",
+    "lineDefence": "הגנה",
+    "lineMidfield": "קישור",
+    "lineAttack": "התקפה",
+    "slackSub": "מולא על ידי {slack}",
+    "noteFinePrint": "עמדות שכוסו על ידי עמדה משנית מסומנות — האחד-עשר מסודר לפי ה-OVR הנקראים כרגע, אף שחקן לא מופיע פעמיים, ואף מספר לא הומצא כדי למלא מקום ריק.",
+    "lineKeeper": "שוער"
   }
 }

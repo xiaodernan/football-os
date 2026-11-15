@@ -776,7 +776,10 @@
     "sectionStoryChip": "récit",
     "sectionRecordsLabel": "Le livre des records",
     "sectionRecordsNote": "les huit marques que le monde a gagnées",
-    "sectionRecordsChip": "marques"
+    "sectionRecordsChip": "marques",
+    "sectionMatchdayXiLabel": "Le Onze du monde",
+    "sectionMatchdayXiNote": "les onze que le monde enverrait au prochain match",
+    "sectionMatchdayXiChip": "onze"
   },
   "coach": {
     "metaTitle": "Entraîneur IA",
@@ -4665,5 +4668,22 @@
     "captionConceded": "buts encaissés",
     "captionGames": "{games} joués",
     "unavailable": "cette marque n'est pas encore écrite"
+  },
+  "worldMatchdayXi": {
+    "metaTitle": "Le Onze du monde",
+    "metaDescription": "L'onze de départ que le monde enverrait pour son prochain matchday de première division — 4-3-3 aligné, par OVR, sans astuces de simulateur.",
+    "eyebrow": "le onze du matchday",
+    "title": "Le Onze du monde",
+    "lede": "Une équipe, une formation, piochée dans les effectifs de première division que l'almanach célèbre déjà. Aucun simulateur n'a inventé ça, personne n'a voté; c'est le onze le plus fort que le monde puisse ranger sur le terrain aujourd'hui — chaque chiffre recalculé à chaque lecture.",
+    "backWorld": "retour au monde",
+    "seasonLabel": "saison 2026/27",
+    "unavailable": "ce monde n'a pas encore assez de joueurs de première division enregistrés pour aligner un onze",
+    "captainTag": "C",
+    "lineDefence": "défense",
+    "lineMidfield": "milieu",
+    "lineAttack": "attaque",
+    "slackSub": "tenu par {slack}",
+    "noteFinePrint": "Les postes occupés par des positions secondaires sont marqués — l'onze est ordonné selon les OVR lus à l'instant présent, personne ne figure deux fois, et aucun nombre n'a été fabriqué pour combler les trous.",
+    "lineKeeper": "gardien"
   }
 }

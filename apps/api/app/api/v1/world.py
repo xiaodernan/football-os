@@ -40,6 +40,7 @@ from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
 from app.services.world.duel import compare, per90
+from app.services.world.matchday_xi import compute_matchday_xi
 from app.services.world.records import compute_records
 from app.services.world.story import compute_story
 from app.services.world.sync import GATE
@@ -1085,6 +1086,24 @@ def records(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_records")
     return _envelope(**compute_records(db))
+
+
+@router.get("/matchday-xi")
+def matchday_xi(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The world's XI — the eleven players this world would send to its next tier-1 fixture.
+
+    The world already knows every player's OVR and position; nothing here is invented. The door picks
+    the highest-rated eleven for the same tier-1 competition the almanac `_top_league` selects — the
+    same deterministic choice, so the almanac, the story and this door speak for one world's leading
+    league — and lays them out 4-3-3 by position.
+
+    A player never appears twice. When a slot's primary position is unavailable in the qualified tier-1
+    pool, the door fills the slot from the nearest accepted secondary (`CB` for `RB`/`LB`, etc.) and marks
+    the slot with `substituted: true` and `slack` — the player's actual position — so a reader can see
+    the XI was filled honestly, not propped up silently.
+    """
+    limit(request, 60, 60, scope="world_matchday_xi")
+    return _envelope(**compute_matchday_xi(db))
 
 
 __all__ = ["router"]

@@ -60,6 +60,7 @@ const NAMESPACE_OWNERS = {
   "almanac": { owner: "world", purpose: "The season's honours in one page — eight awards and the manager of the table, recomputed live from the world's own rows" },
   "worldStory": { owner: "world", purpose: "The season's story in three chapters — the pairs the almanac certifies, the widest avalanche, the longest clean streak, recomputed live" },
   "worldRecords": { owner: "world", purpose: "The season's record book — eight marks (biggest haul, goal-fest, onslaught, fortress, castle, cards bill, the wall, the pinnacle), recomputed live from the stored rows" },
+  "worldMatchdayXi": { owner: "world", purpose: "The world's XI — eleven slots in 4-3-3 filled by OVR across the Lyndera Superleague's stored roster, the same tier-1 the almanac speaks for" },
 
   // Tactics tier
   "tactics": { owner: "tactics", purpose: "Tactics system pages" },
