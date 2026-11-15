@@ -4739,7 +4739,13 @@
     "faq3a": "Le coach lit votre profil stocké contre le même monde semé qui sous-tend tout le reste, et répond en langage simple avec l'arithmétique à côté.",
     "faq4q": "Puis-je perdre mon compte ?",
     "faq4a": "Oui, comme n'importe quel compte. La suppression retire votre joueur, vos séances, vos attributs et votre historique de coach — après confirmation, jamais avant.",
-    "closingNote": "C'est tout le livre. Tout ici fonctionne à la seconde où vous tapez dessus ; un onglet, un compte, le monde est le vôtre."
+    "closingNote": "C'est tout le livre. Tout ici fonctionne à la seconde où vous tapez dessus ; un onglet, un compte, le monde est le vôtre.",
+    "tour9t": "Le Regard",
+    "tour9d": "trois regards recalculés en direct — le buteur, la forteresse, la première étincelle",
+    "tour10t": "La chronique",
+    "tour10d": "la saison journée par journée — qui menait, quand ça a basculé, qui a tenu",
+    "tour11t": "La Gazette",
+    "tour11d": "le journal du monde — une édition chaque journée, imprimée depuis les lignes"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",

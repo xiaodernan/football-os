@@ -48,6 +48,9 @@ export default async function ManualPage() {
     { href: "/world/records", title: t("tour6t"), desc: t("tour6d") },
     { href: "/world/matchday-xi", title: t("tour7t"), desc: t("tour7d") },
     { href: "/world/duel", title: t("tour8t"), desc: t("tour8d") },
+    { href: "/world/spotlight", title: t("tour9t"), desc: t("tour9d") },
+    { href: "/world/timeline", title: t("tour10t"), desc: t("tour10d") },
+    { href: "/world/gazette", title: t("tour11t"), desc: t("tour11d") },
   ];
 
   const rules = [t("rule1"), t("rule2"), t("rule3"), t("rule4"), t("rule5"), t("rule6")];

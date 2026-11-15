@@ -4739,7 +4739,13 @@
     "faq3a": "The coach reads your stored profile against the same seeded world that underpins everything else, and returns a plain-language answer with the arithmetic beside it.",
     "faq4q": "Can I lose my account?",
     "faq4a": "Yes, like any account. Deleting it removes your player, sessions, attributes and coach history — after confirmation, not before.",
-    "closingNote": "That is the whole book. Everything on it runs the moment you tap it; one tab, one account, the world is yours to walk."
+    "closingNote": "That is the whole book. Everything on it runs the moment you tap it; one tab, one account, the world is yours to walk.",
+    "tour9t": "The Spotlight",
+    "tour9d": "three recognitions computed live — the hitman, the fortress, the first spark",
+    "tour10t": "The Timeline",
+    "tour10d": "the season matchday by matchday — who led, when it turned, who held it",
+    "tour11t": "The Gazette",
+    "tour11d": "the world's paper of record — one edition every matchday, printed from the rows"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
