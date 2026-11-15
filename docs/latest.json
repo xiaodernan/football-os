@@ -1,12 +1,12 @@
 {
-  "head": "2194ac6",
-  "total_commits": 1119,
+  "head": "34f47c1",
+  "total_commits": 1122,
   "milestone": "§210",
   "milestone_full": "§210 — two arcs close: the Gazette (Item 74) and the manual deepens (Item 75)",
   "pushed_at": "2026-11-16",
-  "screens": 79,
-  "assets": 191,
-  "world_doors": 16,
+  "screens": 80,
+  "assets": 192,
+  "world_doors": 17,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-15T18:16:38.817Z"
+  "generated_at": "2026-11-15T18:36:39.320Z"
 }
