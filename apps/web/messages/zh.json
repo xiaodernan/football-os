@@ -4740,5 +4740,32 @@
     "faq4q": "我的账号会丢吗？",
     "faq4a": "删除是你自己的决定。删除将移除你的球员、训练、属性、教练记录——经过确认才做，不是自动做。",
     "closingNote": "这就是全部了。上面每个入口点开就用，一个标签页，一个账号，世界随你走。"
+  },
+  "worldSpotlight": {
+    "metaTitle": "世界之眼",
+    "metaDescription": "世界藏不住的三个认得：世界藏不住的击手、最稳的主场、最年轻的第一步——每一项都在读取时重算。",
+    "eyebrow": "世界之眼",
+    "title": "世界之眼",
+    "lede": "世界藏不住的三个认得——击手、主场、第一颗星。每一项，都是这一读算出来的。",
+    "hitmanEyebrow": "击手",
+    "hitmanTitle": "每 90 分钟进球最高",
+    "hitmanNote": "首发 10 次以上、出场 600 分钟以上，第一联赛每 90 分钟进球最多。",
+    "hitmanUnit": "每 90 分钟进球",
+    "fortressEyebrow": "主场堡垒",
+    "fortressTitle": "主场零封最多的球队",
+    "fortressNote": "主场效力 5 场以上，零封对手次数最多的那支——每一次读取都重新算。",
+    "fortressUnit": "零封场次",
+    "bloodEyebrow": "第一颗星",
+    "bloodTitle": "出场最少但真实出场时间的最年轻人",
+    "bloodNote": "首发 300 分钟以上的最年轻顶级联赛球员——不是填数的替补",
+    "bloodUnit": "岁",
+    "goalsUnit": "球",
+    "minutesUnit": "分钟",
+    "playedUnit": "主场场次",
+    "concededUnit": "失球",
+    "unavailable": "本赛季还没攒出够样本的球员",
+    "sectionSpotlightLabel": "世界之眼",
+    "sectionSpotlightNote": "世界藏不住的三个认得",
+    "sectionSpotlightChip": "世界之眼"
   }
 }

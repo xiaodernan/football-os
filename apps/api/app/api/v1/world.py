@@ -42,6 +42,7 @@ from app.services.world.builder import STAT_METHOD, WORLD_VERSION
 from app.services.world.duel import compare, per90
 from app.services.world.matchday_xi import compute_matchday_xi
 from app.services.world.records import compute_records
+from app.services.world.spotlight import compute_spotlight
 from app.services.world.story import compute_story
 from app.services.world.sync import GATE
 
@@ -1104,6 +1105,18 @@ def matchday_xi(request: Request, db: Session = Depends(get_db)) -> dict[str, An
     """
     limit(request, 60, 60, scope="world_matchday_xi")
     return _envelope(**compute_matchday_xi(db))
+
+
+@router.get("/spotlight")
+def spotlight(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The world's spotlight — three recognitions computed from the stored rows.
+
+    Same discipline as the almanac, the story and the record book: arithmetic on `real_matches`,
+    `real_players` and the tier-1 league the almanac already speaks for, recomputed on every read.
+    Nothing here is authored by a provider, stored in a column, or invented for display.
+    """
+    limit(request, 60, 60, scope="world_spotlight")
+    return _envelope(**compute_spotlight(db))
 
 
 __all__ = ["router"]

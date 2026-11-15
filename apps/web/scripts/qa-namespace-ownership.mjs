@@ -51,6 +51,9 @@ const NAMESPACE_OWNERS = {
   "home": { owner: "core", purpose: "Home page messages" },
   "errors": { owner: "core", purpose: "Error/refusal messages" },
 
+  // The spotlight — the three recognitions the world cannot hide from
+  "worldSpotlight": { owner: "world", purpose: "the world's three recognitions, recomputed live from the rows: best goals per 90 in tier-1, the most home clean sheets, and the youngest tier-1 player with real minutes" },
+
   // World tier
   "world": { owner: "world", purpose: "World overview pages" },
   "worldPlayer": { owner: "world", purpose: "World player pages" },

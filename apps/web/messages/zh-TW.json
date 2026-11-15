@@ -4740,5 +4740,32 @@
     "faq4q": "我的帳號會丟嗎？",
     "faq4a": "刪除是你自己的決定。刪除將移除你的球員、訓練、屬性、教練記錄——經過確認才做，不是自動做。",
     "closingNote": "這就是全部了。上面每個入口點開就用，一個分頁，一個帳號，世界隨你走。"
+  },
+  "worldSpotlight": {
+    "metaTitle": "世界之眼",
+    "metaDescription": "世界藏不住的三個認得：世界藏不住的擊手、最穩的主場、最年輕的第一步——每一項都在讀取時重算。",
+    "eyebrow": "世界之眼",
+    "title": "世界之眼",
+    "lede": "世界藏不住的三個認得——擊手、主場、第一顆星。每一項，都是這一讀算出來的。",
+    "hitmanEyebrow": "擊手",
+    "hitmanTitle": "每 90 分鐘進球最高",
+    "hitmanNote": "首發 10 次以上、出場 600 分鐘以上，第一聯賽每 90 分鐘進球最多。",
+    "hitmanUnit": "每 90 分鐘進球",
+    "fortressEyebrow": "主場堡壘",
+    "fortressTitle": "主場零封最多的球隊",
+    "fortressNote": "主場效力 5 場以上，零封對手次數最多的那支——每一次讀取都重新算。",
+    "fortressUnit": "零封場次",
+    "bloodEyebrow": "第一顆星",
+    "bloodTitle": "出場最少但真實出場時間的最年輕人",
+    "bloodNote": "首發 300 分鐘以上的最年輕頂級聯賽球員——不是填數的替補",
+    "bloodUnit": "歲",
+    "goalsUnit": "球",
+    "minutesUnit": "分鐘",
+    "playedUnit": "主場場次",
+    "concededUnit": "失球",
+    "unavailable": "本賽季還沒攢出夠樣本的球員",
+    "sectionSpotlightLabel": "世界之眼",
+    "sectionSpotlightNote": "世界藏不住的三個認得",
+    "sectionSpotlightChip": "世界之眼"
   }
 }

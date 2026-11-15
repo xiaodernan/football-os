@@ -4740,5 +4740,32 @@
     "faq4q": "Puis-je perdre mon compte ?",
     "faq4a": "Oui, comme n'importe quel compte. La suppression retire votre joueur, vos séances, vos attributs et votre historique de coach — après confirmation, jamais avant.",
     "closingNote": "C'est tout le livre. Tout ici fonctionne à la seconde où vous tapez dessus ; un onglet, un compte, le monde est le vôtre."
+  },
+  "worldSpotlight": {
+    "metaTitle": "Les Regards du monde",
+    "metaDescription": "Trois regards que le monde ne peut cacher — celui que le monde mérite, celui qui tient à la maison, celui qui a tout à gagner.",
+    "eyebrow": "Le Regard",
+    "title": "Le Regard du monde",
+    "lede": "Trois regards que le monde ne peut cacher — le buteur, la forteresse, le premier éclat. Chaque chiffre est recalculé à la lecture.",
+    "hitmanEyebrow": "Le Buteur",
+    "hitmanTitle": "Meilleur ratio buts / 90",
+    "hitmanNote": "Buts par 90 minutes — tier-1, ≥ 10 titularisations, ≥ 600 minutes.",
+    "hitmanUnit": "buts par 90",
+    "fortressEyebrow": "La Forteresse",
+    "fortressTitle": "Plus de clean sheets à domicile",
+    "fortressNote": "Plus grand nombre de clean sheets à domicile — recalculé à chaque lecture.",
+    "fortressUnit": "réseaux intacts",
+    "bloodEyebrow": "La Première Étincelle",
+    "bloodTitle": "Le plus jeune avec de vraies minutes",
+    "bloodNote": "Le plus jeune avec de vraies minutes de liges d'élite, pas un bouche-trou",
+    "bloodUnit": "ans",
+    "goalsUnit": "buts",
+    "minutesUnit": "temps de jeu",
+    "playedUnit": "matchs à domicile",
+    "concededUnit": "buts encaissés",
+    "unavailable": "la saison n'a pas encore assez d'échantillon",
+    "sectionSpotlightLabel": "Le Regard",
+    "sectionSpotlightNote": "trois regards que le monde ne peut cacher",
+    "sectionSpotlightChip": "regard"
   }
 }
