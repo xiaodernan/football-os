@@ -7308,3 +7308,75 @@ is simply unrecorded and the warning line names the failure. Nothing else change
 thresholds or provider paths were touched.
 
 **CI** — `d7a53ff` — run `43703340972` — **all four legs success** (web / containers / services / api).
+
+## §205 — Item 70: the fact pack — football-os's heartbeat on a page of the personal site
+
+The personal site has always shown what each public repo does — minicc, crossrealm, nexus-platform.
+This repository had nothing a reader could see at a glance. Item 70 gives it that.
+
+**What landed.** `scripts/generate-latest-json.mjs` walks the tree — HEAD, the commit count,
+the ledger's last § heading, the web-route and world-door and locale counts, the gate inventory
+— and writes `docs/latest.json` (head 078fa97 at first generation, 1,093 commits, 75 routes,
+6 locales, 13 world doors, milestone §204). `.github/workflows/profile-sync.yml` re-cuts the
+pack weekly (Sunday 04:00 UTC) and commits **only when the semantic surface moved** — the ledger
+arc, the route census, the door list or the feature list — never for churn's sake; the volatile
+counters (head, commits, generated_at) are left alone until a real arc lands. The pack is
+`pwa_kb`-free on purpose: this product is not a PWA.
+
+**The personal page now reads this repository.** `./assets/football/latest.json` was refreshed
+from master; the index's football card reads
+`raw.githubusercontent.com/xiaodernan/football-os/master/docs/latest.json` on every visit, with
+the refreshed static pack as fallback; the card copy was rewritten — React/Vite swapped for the
+studio's fullstack build, six-locale politesse and WCAG inclusion named — and the early React
+showcase kept honestly in the card's second link. The commit message also documents the one file
+this machine cannot push (`.github/workflows/sync-football-os.yml`; the token here lacks the
+`workflow` scope; the README states the cadence without pretending the cron exists).
+
+**CI** — `e05e006` — run `43710376133` — all four legs success.
+
+**Not claimed.** That the weekly cron on the profile repo is live today (it is not — the token
+scope stops it; the fallback chain keeps the card honest in the meantime); anything that needs
+a credential this machine does not hold. The fact-pack refresh on master is a semantic-move-only
+process regardless, which is the cadence the user asked for.
+
+## §206 — Item 71: the manual — the page a stranger's hand goes to first
+
+The product carries six catalogues, a seeded synthetic season, the almanac, the story, the record
+book, the matchday XI, the duel, the coach — and until this arc there was no single page a stranger
+could be handed and told "read this first". Item 71 is that page.
+
+**What landed.** `apps/web/app/manual/page.tsx` — a public, indexable page from its own `manual`
+namespace (51 keys × 6 catalogues, uniform 4,640 everywhere; README recomputed from the trees).
+What it prints, in the reader's own language, none of it invented:
+
+- an opener that says what this page is and why it exists;
+- five quick-start doors — register → create player → first session → ask the coach → look at the world;
+- eight tour doors, one per true product surface, each linking live (`/my-football`, `/coach`,
+  `/world`, the almanac, the story, the record book, the matchday XI, the duel);
+- the seeded-world honesty contract (six items; no row claims to be from a real person,
+  every row is derived from the stored rows);
+- four frequently-asked questions — real data? the chip's meaning? how the coach answers? the
+  account's end condition?
+- a quiet closing line, and a footer link from every page in the app.
+
+`styles/manual.css` carries the manual in the same hairline-seam vocabulary as the world catalogue
+(`--accent`, `--gold`, `--line-soft`, `--radius`); the Arabic punctuation is corrected to Arabic
+full stops throughout; the RTL readiness for the new stylesheet passes the 8/8 gate after the
+physical-property attributes became logical (`padding-inline-start`, `inset-inline-start`).
+
+**Verification.** Population pin recomputed 75 → 76 page routes (ROADMAP and SPEC_COVERAGE_AUDIT
+both re-pinned); crawled population=76, advertised=16, noindex=35; `qa-metadata-title` keyed at
+65 of 76; `qa-i18n-literals` 9/9 at 4,699 calls (two genuine English literals the first run caught,
+both cured in-tree); `qa-icu-messages` 2/2 at 4,640; `qa-locale-completeness` uniform 4,640;
+`qa-translation-quality` 9/9 (the Arabic 25-sentence reflow verified letter-by-letter by the gate);
+`qa-rtl-readiness` 8/8; `qa-locale-tokens` 7/7 at the new figures (ar 4593, fr 4389, zh/zh-TW/he 4593,
+identical 47 ×4 / 251 fr); `qa-crawl-policy` population=76; tsc clean; zero console errors;
+Lighthouse 1.00 on accessibility/best-practices/SEO. The manual is linked in every page's footer
+beside the disclaimers — it is the one link in the footer that leads inward.
+
+**CI** — `8e8ecec` — run `43715520856` — in flight at the time of writing; the verdict prints in
+the following entry once the runner concludes, never pre-claimed.
+
+**Not claimed.** That every reader ultimately understands this product (the page is one reader's
+account, read once); anything that requires the `workflow` scope or another credential this machine
+does not hold.

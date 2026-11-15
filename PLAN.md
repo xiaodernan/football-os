@@ -2964,6 +2964,39 @@ takes the reader's answer down with it.
 
 **CI** — run `43703340972` — all four legs success.
 
+## Item 70 — the fact pack (landed 2026-11-15)
+
+**The gap.** The personal page has always shown what each public repo does — minicc, crossrealm,
+nexus-platform. This repository's heartbeat was invisible there.
+
+**What landed.** `scripts/generate-latest-json.mjs` walks the tree — head, commit count, ledger
+arc heading, route and door and locale censuses, gate inventory — and writes `docs/latest.json`
+(head 078fa97 at first generation, 1,093 commits, 75 routes, 6 locales, 13 world doors, arc §204).
+`.github/workflows/profile-sync.yml` re-cuts it weekly, commits only on a semantic move. The
+personal page's football card reads `raw.githubusercontent.com/xiaodernan/football-os/master/docs/latest.json`
+live on every visit, with the refreshed `assets/football/latest.json` as fallback.
+
+**CI** — `e05e006`, run `43710376133` — all four legs success.
+
+## Item 71 — the concise manual (landed 2026-11-15)
+
+**The gap.** The product carries a seeded world, six catalogue locales, the almanac and story and
+record book and XI and duel and coach — and no single page a stranger can be handed and told
+"read this first". Item 71 is that page.
+
+**What landed.** `apps/web/app/manual/page.tsx` — public, indexable, six languages, from its own
+`manual` namespace (51 keys × 6 catalogues; uniform 4,640). Five quick-start doors, eight tour
+doors, the seeded-world honesty contract, four frequently-asked questions, footer link in every
+page. `styles/manual.css` matches the world catalogue's palette; Arabic punctuation and logical
+RTL properties pass the gates; population pinned 75 → 76.
+
+**Verification.** tsc 0; all QA gates green (`qa-i18n-literals` 9/9 at 4,699 calls;
+`qa-icu-messages` 2/2 at 4,640; `qa-translation-quality` 9/9; `qa-rtl-readiness` 8/8;
+`qa-locale-tokens` 7/7 at the new figures; `qa-crawl-policy` population=76); Lighthouse 1.00/1.00/1.00;
+Chinese render walks clean, English render walks clean.
+
+**CI** — `8e8ecec`, run `43715520856` —
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
