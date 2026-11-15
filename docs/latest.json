@@ -1,8 +1,8 @@
 {
-  "head": "864e1ad",
-  "total_commits": 1131,
-  "milestone": "§211",
-  "milestone_full": "§211 — the Finals land; the red order is recorded straight: one bug, five push-bound api legs",
+  "head": "dd821bc",
+  "total_commits": 1134,
+  "milestone": "§212",
+  "milestone_full": "§212 — the quiet closes: the Noise Dossier, the fixture index arc, an ADR-010 entry",
   "pushed_at": "2026-11-16",
   "screens": 81,
   "assets": 193,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-15T21:09:45.022Z"
+  "generated_at": "2026-11-15T21:41:00.081Z"
 }
