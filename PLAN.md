@@ -2813,6 +2813,29 @@ assert ('announce.read' == 'announce.read' and '2026-11-15 == '2026-11-14')
 
 **Local verification.** tsc 0; web battery green; Chinese render walks the home and reads all four rows, zero console errors. **CI `43676101814` — all four legs success.**
 
+## Item 61 — the world gets its own number (landed 2026-11-15)
+
+**The gap.** `/world` was the one World-tier door whose unfurl rendered a bare URL — the almanac,
+story, record book, XI, duel, match, player and team had all been given cards; the catalogue's
+first page and the door every world link previews had none.
+
+**What landed.** `apps/web/app/world/opengraph-image.tsx` — ember-black canvas, the word
+`WORLD` in paper, an ember→gold gradient rule, a row of stat tokens (`GLS · AST · INV · OVR · RAT ·
+CARDS`), `SEASON 2026/27` foot. `page.tsx` registers it under `images` in `generateMetadata`
+(the almanac pattern). No catalogue keys added; no token rows added; `qa-share-preview`
+31/31 and `qa-i18n-literals` 9/9 re-run on the new card. `tsc --noEmit` 0.
+
+**Not claimed.** Visual rendering by eye (the browser namespace is unavailable on this host) —
+the claim stops at the gates; CI carries the build.
+
+**Measurement appended to this window, recorded in §195.** Live probe against
+`wkapi.pro / gpt-6-sol` on 2026-11-15 prints no usage cache details on the four streamed calls;
+raw A/B shows the gateway serving two accounting branches (details envelope vs none) as a
+server-side lottery. The project's ledger records `cache_reported = False` for silent calls,
+never phantom zeros — the meter is honest under both branches.
+
+**CI** — run `43680479730` — all four legs success.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

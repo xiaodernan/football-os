@@ -6951,3 +6951,48 @@ The home page has carried three seasonal surfaces on the world's first line sinc
 **CI for the push** — `43676101814` — **all four legs success**.
 
 **Not claimed.** No accessibility claim beyond the gate's scope; no claim of visual elegance fraction across page width — only the seeded-walk render and the gates.
+
+## §195 — Item 61: the world gets its own face
+
+`/world` was the one World-tier door whose unfurl rendered a bare URL. The almanac, the
+story, the record book, the XI, duel, match, player and team had all been given cards; the
+catalogue's first page — and the door every world link previews — had none. This arc gave it
+one.
+
+**The card.** `apps/web/app/world/opengraph-image.tsx` — the almanac family's shape, held on
+purpose: ember-black field; the word `WORLD` in paper; an ember-to-gold gradient rule; a row of
+stat tokens the sibling cards already use (`GLS · AST · INV · OVR · RAT · CARDS`); a
+`SEASON 2026/27` foot pinned to the same frame as the duel and records cards. No prose appears
+in the image; no catalogue messages were added; every token was already inside the sibling
+cards' inventory, so the token gates stayed at 47 language-neutral entries and `qa-i18n-literals`
+stayed 9/9 at 4,648 key calls. `page.tsx` now registers the card under `images` in
+`generateMetadata` — the same shape the almanac page uses, via `absolute("/world/opengraph-image")`.
+
+**Not claimed.** Nothing until the gates say so: no local `next build` was forced this window
+(host free memory measured at ~506 MB during the arc, which a build wants far more of than it had
+to spare); correctness lives in `tsc --noEmit` 0 and the CI web leg. The card has not been rendered
+by eye on this host — the browser namespace is unavailable — so no claim is made about how it
+*looks*, only about what the gates measured.
+
+**CI for the push** (`07de483`, run `43680479730`) — **all four legs success**, web / containers / services / api (the api leg started 05:29 UTC and concluded well past its usual eleven minutes — a slow PostgreSQL+pgvector window, not a code change; SQLite leg was green as usual).
+
+**Measured while this arc was in flight (not part of the item).** A live probe against
+`wkapi.pro / gpt-6-sol` on 2026-11-15, from this host, with the user's authorised key, in the
+provider's shipping configuration (streamed, `stream_options.include_usage`):
+
+- Four streamed calls over a ~6.5k-token knowledge-style prefix printed **no
+  `prompt_tokens_details`** — `cached_input_tokens = 0` and `cache_reported = False` each time,
+  cold and warm alike.
+- Two extra raw calls to `/v1/chat/completions` (tiny two-message prompt) printed two different
+  accounting branches on the same model: a `prompt_tokens ≈ 4.4k` branch whose usage object
+  carries a `prompt_tokens_details` key, and a `prompt_tokens ≈ 18.5k` branch whose usage object
+  does not (one of them `prompt_tokens_details: null`; the non-streamed draw printed no details
+  key at all). Which branch serves a request is a gateway-side lottery the client cannot select.
+- The project's meter was already correct for this world: a missing details object is recorded
+  as `cache_reported = False`, never as a 0 % hit. The same code path read a warm repeat at
+  ≈96 % cached when the gateway last printed its details (2026-11-14/15 measurements in §194
+  lineage). Today's silence is the lottery, not the call sites; `OPENAI_STREAM` is not pinned in
+  `apps/api/.env`, so the provider's default (stream + include_usage) is in force.
+
+**Not claimed there either.** No verdict on the gateway's internal accounting; no claim that the
+cache "works" or "doesn't"; only what was printed on the wire, verbatim.
