@@ -1,12 +1,12 @@
 {
-  "head": "894e7d0",
-  "total_commits": 1113,
+  "head": "4faad74",
+  "total_commits": 1115,
   "milestone": "§209",
   "milestone_full": "§209 — Item 73: the world's timeline reaches the tree (all four legs green)",
   "pushed_at": "2026-11-16",
-  "screens": 78,
-  "assets": 190,
-  "world_doors": 15,
+  "screens": 79,
+  "assets": 191,
+  "world_doors": 16,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-15T17:41:37.212Z"
+  "generated_at": "2026-11-15T18:00:32.807Z"
 }
