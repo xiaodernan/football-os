@@ -1,8 +1,8 @@
 {
-  "head": "dd821bc",
-  "total_commits": 1134,
-  "milestone": "§212",
-  "milestone_full": "§212 — the quiet closes: the Noise Dossier, the fixture index arc, an ADR-010 entry",
+  "head": "9fb6726",
+  "total_commits": 1137,
+  "milestone": "§213",
+  "milestone_full": "§213 — the honest close: master prints all four legs green across the nine most recent pushes",
   "pushed_at": "2026-11-16",
   "screens": 81,
   "assets": 193,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-15T21:41:00.081Z"
+  "generated_at": "2026-11-15T22:19:49.492Z"
 }
