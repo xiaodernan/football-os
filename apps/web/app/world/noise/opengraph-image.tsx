@@ -42,7 +42,7 @@ export default function NoiseOpenGraphImage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={{ fontSize: 150, fontWeight: 800, color: PAPER, lineHeight: 0.95, letterSpacing: "-0.03em" }}>
+          <div style={{ display: "flex", alignItems: "baseline", fontSize: 150, fontWeight: 800, color: PAPER, lineHeight: 0.95, letterSpacing: "-0.03em" }}>
             28.57
             <span style={{ fontSize: 80, color: ACCENT }}>%</span>
           </div>
