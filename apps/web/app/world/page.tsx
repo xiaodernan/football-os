@@ -26,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t("title"),
     description: t("description"),
     path: "/world",
+    images: [{ url: absolute("/world/opengraph-image"), width: 1200, height: 630, alt: "FOOTBALL OS" }],
   });
 }
 
