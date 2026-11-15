@@ -73,7 +73,25 @@ def _completed(session: Session) -> list[RealMatch]:
     return [f for f in fixtures if f.home_goals is not None and f.away_goals is not None]
 
 
-def biggest_haul(session: Session) -> dict[str, Any]:
+def _shared_context(
+    session: Session, context: dict[str, Any] | None, *, needs_fixtures: bool = True
+) -> tuple[list[RealMatch], dict[str, Team]]:
+    """One set of the shared reads a record might want, built once per caller.
+
+    `compute_records` builds this once and threads it through the record functions so a
+    single read never re-scans the completed fixtures or the whole team table for the
+    book's benefit. Callers that invoke a record on its own (tests, scripts) get the
+    same reads, just scoped to that call — identical SQL shape, identical answer. A
+    record that needs teams but no fixtures passes ``needs_fixtures=False``.
+    """
+    if context is not None:
+        return context["fixtures"], context["teams"]
+    fixtures = _completed(session) if needs_fixtures else []
+    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    return fixtures, teams
+
+
+def biggest_haul(session: Session, context: dict[str, Any] | None = None) -> dict[str, Any]:
     """Most goals by one player in a single fixture — the hat-trick ledger."""
     rows = session.execute(
         select(RealPlayerMatchStat, RealPlayer, RealMatch, Team)
@@ -87,8 +105,7 @@ def biggest_haul(session: Session) -> dict[str, Any]:
     if not rows:
         return {"key": "biggest_haul", "available": False}
     stat, player, fixture, team = rows[0]
-    fixtures = _completed(session)
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    fixtures, teams = _shared_context(session, context)
     related = next((f for f in fixtures if f.id == fixture.id), fixture)
     return {
         "key": "biggest_haul",
@@ -101,16 +118,15 @@ def biggest_haul(session: Session) -> dict[str, Any]:
     }
 
 
-def goal_fest(session: Session) -> dict[str, Any]:
+def goal_fest(session: Session, context: dict[str, Any] | None = None) -> dict[str, Any]:
     """The highest-scoring completed fixture, league and cup alike."""
-    fixtures = _completed(session)
+    fixtures, teams = _shared_context(session, context)
     if not fixtures:
         return {"key": "goal_fest", "available": False}
     best = max(
         fixtures,
         key=lambda f: ((f.home_goals or 0) + (f.away_goals or 0), max(f.home_goals or 0, f.away_goals or 0)),
     )
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
     return {
         "key": "goal_fest",
         "available": True,
@@ -179,7 +195,7 @@ def castle(session: Session, centre: dict[str, Any] | None = None) -> dict[str, 
     }
 
 
-def cards_fixture(session: Session) -> dict[str, Any]:
+def cards_fixture(session: Session, context: dict[str, Any] | None = None) -> dict[str, Any]:
     """The fixture with the most weighted cards across both teams (yellow×1 + red×3)."""
     weighted = (
         select(
@@ -193,7 +209,7 @@ def cards_fixture(session: Session) -> dict[str, Any]:
     row = session.execute(weighted).first()
     if row is None or row.cards is None or row.cards == 0:
         return {"key": "cards_fixture", "available": False}
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    _, teams = _shared_context(session, context, needs_fixtures=False)
     fixture = session.get(RealMatch, row.match_id)
     return {
         "key": "cards_fixture",
@@ -203,7 +219,7 @@ def cards_fixture(session: Session) -> dict[str, Any]:
     }
 
 
-def keeper_wall(session: Session) -> dict[str, Any]:
+def keeper_wall(session: Session, context: dict[str, Any] | None = None) -> dict[str, Any]:
     """The single-match wall — most saves by one player in a completed fixture."""
     rows = session.execute(
         select(RealPlayerMatchStat, RealPlayer, RealMatch, Team)
@@ -217,7 +233,7 @@ def keeper_wall(session: Session) -> dict[str, Any]:
     if not rows:
         return {"key": "keeper_wall", "available": False}
     stat, player, fixture, team = rows[0]
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    _, teams = _shared_context(session, context, needs_fixtures=False)
     return {
         "key": "keeper_wall",
         "available": True,
@@ -228,7 +244,7 @@ def keeper_wall(session: Session) -> dict[str, Any]:
     }
 
 
-def highest_rated(session: Session) -> dict[str, Any]:
+def highest_rated(session: Session, context: dict[str, Any] | None = None) -> dict[str, Any]:
     """The best single-match rating across the completed world (≥60 minutes)."""
     rows = session.execute(
         select(RealPlayerMatchStat, RealPlayer, RealMatch, Team)
@@ -242,7 +258,7 @@ def highest_rated(session: Session) -> dict[str, Any]:
     if not rows:
         return {"key": "highest_rated", "available": False}
     stat, player, fixture, team = rows[0]
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    _, teams = _shared_context(session, context, needs_fixtures=False)
     return {
         "key": "highest_rated",
         "available": True,
@@ -288,19 +304,27 @@ def _top_club_record(key: str, tally: dict[str, int], centre: dict[str, Any], *,
 
 
 def compute_records(session: Session) -> dict[str, Any]:
-    """Every record in the book, computed from the world's own rows — one league centre."""
+    """Every record in the book, computed from the world's own rows — one league centre.
+
+    The shared reads (the completed-fixture scan, the full team table) are built once and
+    threaded through the record functions so the book never repeats them; the record
+    functions keep their standalone defaults for direct callers.
+    """
     centre = _league_centre(session)
+    fixtures = _completed(session)
+    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    context = {"fixtures": fixtures, "teams": teams}
     return {
         "season": {"label": "2026/27", "kind": "7:3"},
         "records": [
-            biggest_haul(session),
-            goal_fest(session),
+            biggest_haul(session, context),
+            goal_fest(session, context),
             offence_club(session, centre),
             defence_club(session, centre),
             castle(session, centre),
-            cards_fixture(session),
-            keeper_wall(session),
-            highest_rated(session),
+            cards_fixture(session, context),
+            keeper_wall(session, context),
+            highest_rated(session, context),
         ],
     }
 
