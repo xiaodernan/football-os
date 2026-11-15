@@ -1,0 +1,52 @@
+name: The fact pack on master
+
+# A weekly re-cut, never a hammer, and no churn for churn's sake: the pack only commits when a
+# semantic fact moved — the ledger arc, the route census, the surface or the catalogues — never when
+# only the internal counters moved. The personal page fetches raw from master; the in-page fallback
+# is assets/football/latest.json, refreshed by the profile's own weekly cron.
+on:
+  schedule:
+    # Every Sunday 04:00 UTC — weekly check, commit only if reality moved
+    - cron: "0 4 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  latest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Regenerate docs/latest.json
+        run: node scripts/generate-latest-json.mjs
+      - name: Commit the pack only when the semantic surface moved
+        run: |
+          if git diff --quiet -- docs/latest.json && git diff --cached --quiet; then
+            echo "no diff at all; nothing to decide"
+            exit 0
+          fi
+          node -e "
+            const cur = require('./docs/latest.json');
+            const base = require('child_process').execFileSync('git', ['show', 'HEAD:docs/latest.json'], { encoding: 'utf8' });
+            const prev = JSON.parse(base);
+            const semantic = ['milestone', 'milestone_full', 'screens', 'world_doors', 'locales', 'feature_surface'];
+            const changed = semantic.filter((k) => JSON.stringify(cur[k]) !== JSON.stringify(prev[k]));
+            if (changed.length === 0) {
+              console.log('semantic surface unchanged; keeping the old pack (head/commits are volatile)');
+              process.exit(2);
+            }
+            console.log('semantic surface moved:', changed.join(', '));
+          " || { echo "no semantic move; leaving master alone"; git checkout -- docs/latest.json; exit 0; }
+          git config user.name "football-os-bot"
+          git config user.email "bot@football-os.web"
+          git add docs/latest.json
+          git commit -m "fact pack: $(node -e "const d = require('./docs/latest.json'); console.log('total_commits=' + d.total_commits, 'milestone=' + d.milestone, 'screens=' + d.screens)")"
+          git push
