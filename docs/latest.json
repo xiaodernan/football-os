@@ -1,6 +1,6 @@
 {
-  "head": "0ea955f",
-  "total_commits": 1126,
+  "head": "2e9c297",
+  "total_commits": 1128,
   "milestone": "§211",
   "milestone_full": "§211 — the Finals land; the red order is recorded straight: one bug, five push-bound api legs",
   "pushed_at": "2026-11-16",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-15T20:02:09.615Z"
+  "generated_at": "2026-11-15T20:11:46.221Z"
 }
