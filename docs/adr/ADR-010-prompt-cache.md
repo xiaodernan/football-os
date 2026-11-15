@@ -48,3 +48,22 @@ stream path, and `model_ledger.cache_hit_rate()` divides only by `input_tokens` 
   lottery controls that; this product sends byte-identical prefixes and records the answer it gets.
 * When the gateway changes its behaviour (e.g. always reporting on every call), nothing in this
   ADR needs changing; the ledger and the `cache_reported` column were designed for this.
+
+## Appendix — 2026-11-15: the 403 that looked like zero cache
+
+This ADR was accepted the day the user reported that the ledger was always returning
+`provider=mock, demo_mode=true, cache_reported=false, cached_tokens=0`. Investigation inside the
+same window found every wkapi.pro call answered `HTTP 403 insufficient_user_quota` — the account
+behind `sk-4W8L…` is overdrawn at ¥-0.000088 — and that the provider's two failure paths collapsed
+every one of those into a single word (`openai_provider_stream_failure HTTPError`). Every reader
+fell back to `MockLLMProvider` and the product worked honestly: arithmetic on the player's own rows
+answered the question; only the prose was template.
+
+Action since: `_http_failure_detail` logs `code / reason / body` on every provider failure; the
+log now reads `adsence HTTPError code=403 reason=Forbidden body={…insufficient_user_quota…}` in one
+sentence; no cache claim in this ADR is invalidated by it — the warm-repeat measurements quoted
+in the Context section were taken on live wkapi.pro calls that answered 200 OK.
+
+Until the account is topped up, the ledger will continue to show `provider=mock`. That is correct
+behaviour, not a regression; the path back to saturating the cache meter runs through the wallet,
+not through this product.
