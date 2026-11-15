@@ -2964,6 +2964,59 @@
         }
       }
     },
+    "/api/v1/world/gazette": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Gazette",
+        "description": "The season's paper of record — one edition per completed tier-1 matchday.\n\nStraight arithmetic on `real_matches`: the table after the round, the loudest fixture, the\nclub that did the most damage, the number of shutouts, and one number per edition. Public,\nunauthenticated, irrefutable; an out-of-range edition is a 422, never an invented dateline.",
+        "operationId": "gazette_api_v1_world_gazette_get",
+        "parameters": [
+          {
+            "name": "edition",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 1000,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Edition"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Gazette Api V1 World Gazette Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [

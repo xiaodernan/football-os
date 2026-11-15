@@ -1,0 +1,173 @@
+/* The Gazette — the season's paper of record, in the catalogue's own palette. */
+
+.gazette__masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 0.25rem;
+}
+.gazette__kicker {
+  font-family: var(--serif, Georgia, serif);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.gazette__edition {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold, #d8b56b);
+  font-weight: 700;
+}
+.gazette__rule {
+  border-top: 2.5px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  padding: 0.22rem 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.63rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.gazette__lead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 1.1rem 0.15rem 1rem;
+}
+.gazette__lead-eyebrow {
+  font-size: 0.64rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold, #d8b56b);
+  font-weight: 750;
+}
+.gazette__lead-title {
+  font-family: var(--serif, Georgia, serif);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 4.6vw, 3rem);
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  margin: 0;
+}
+.gazette__lead-title a { color: inherit; text-decoration: none; }
+.gazette__lead-title a:hover { text-decoration: underline; text-underline-offset: 5px; }
+.gazette__lead-body { margin: 0; color: var(--text-2); font-size: 1rem; }
+.gazette__score { font-variant-numeric: tabular-nums; color: var(--gold, #d8b56b); }
+
+.gazette__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  .gazette__grid { grid-template-columns: 1fr; }
+}
+
+.gazette__panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-panel-2);
+  padding: 0.85rem 0.95rem 0.85rem;
+}
+.gazette__panel-eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold, #d8b56b);
+  font-weight: 750;
+}
+.gazette__panel h3 {
+  font-family: var(--serif, Georgia, serif);
+  margin: 0.16rem 0 0.45rem;
+  font-size: 1.15rem;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  font-weight: 750;
+}
+
+.gazette__table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.gazette__table th, .gazette__table td { padding: 0.34rem 0.5rem; text-align: end; font-size: 0.8rem; }
+.gazette__table th { color: var(--text-3); font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 750; border-bottom: 1px solid var(--line); padding-bottom: 0.3rem; }
+.gazette__table td { border-bottom: 1px solid var(--line-soft, var(--line)); color: var(--text-2); }
+.gazette__table tr:last-child td { border-bottom: none; }
+.gazette__table tr[data-leader] { box-shadow: inset 3px 0 0 var(--gold, #d8b56b); }
+.gazette__table tr[data-leader] td { color: var(--text); }
+.gazette__table td:first-child, .gazette__table th:first-child { text-align: start; }
+.gazette__table td:nth-child(2), .gazette__table th:nth-child(2) { text-align: start; }
+.gazette__table a { color: var(--accent); text-decoration: none; font-weight: 650; }
+.gazette__table a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+.gazette__fixture {
+  display: grid;
+  grid-template-columns: 5.8rem 1fr auto;
+  gap: 0.55rem;
+  align-items: baseline;
+  padding: 0.32rem 0.1rem;
+  border-bottom: 1px solid var(--line-soft, var(--line));
+  font-size: 0.8rem;
+  color: var(--text-2);
+}
+.gazette__fixture:last-child { border-bottom: none; }
+.gazette__fixture a { color: inherit; text-decoration: none; font-weight: 600; }
+.gazette__fixture a:hover { color: var(--accent); }
+.gazette__fixture-score { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 750; letter-spacing: 0.04em; }
+.gazette__fixture-time { color: var(--text-3); font-size: 0.68rem; letter-spacing: 0.04em; }
+
+.gazette__number {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.gazette__number-big {
+  font-family: var(--serif, Georgia, serif);
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.gazette__number-caption { color: var(--text-2); font-size: 0.78rem; max-width: 60%; }
+
+.gazette__archive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+.gazette__edition-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.gazette__edition-link:hover { border-color: var(--gold, #d8b56b); color: var(--text); }
+.gazette__edition-link[data-current="true"] {
+  background: var(--gold, #d8b56b);
+  border-color: var(--gold, #d8b56b);
+  color: #0d0f0c;
+}
+
+.gazette__hot { display: flex; flex-direction: column; gap: 0.3rem; }
+.gazette__hot .gazette__number-big { font-size: 2.2rem; }

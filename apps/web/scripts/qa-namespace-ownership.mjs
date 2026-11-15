@@ -57,6 +57,9 @@ const NAMESPACE_OWNERS = {
   // The timeline — the season matchday by matchday, told with arithmetic
   "worldTimeline": { owner: "world", purpose: "the season's timeline, recomputed live from the rows: the leader per matchday, the loudest round, the takeover and the whistle that settled the title" },
 
+  // The Gazette — the season's paper of record, one edition per matchday
+  "worldGazette": { owner: "world", purpose: "the season's edition-by-edition paper of record, recomputed live from the rows: the table after each round, the loudest fixture, the hot hand, the number that matters" },
+
   // World tier
   "world": { owner: "world", purpose: "World overview pages" },
   "worldPlayer": { owner: "world", purpose: "World player pages" },

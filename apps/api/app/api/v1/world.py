@@ -40,6 +40,7 @@ from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
 from app.services.world.duel import compare, per90
+from app.services.world.gazette import compute_gazette
 from app.services.world.matchday_xi import compute_matchday_xi
 from app.services.world.records import compute_records
 from app.services.world.spotlight import compute_spotlight
@@ -1132,6 +1133,32 @@ def timeline(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_timeline")
     return _envelope(**compute_timeline(db))
+
+
+@router.get("/gazette")
+def gazette(
+    request: Request,
+    edition: int | None = Query(default=None, ge=1, le=1000),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """The season's paper of record — one edition per completed tier-1 matchday.
+
+    Straight arithmetic on `real_matches`: the table after the round, the loudest fixture, the
+    club that did the most damage, the number of shutouts, and one number per edition. Public,
+    unauthenticated, irrefutable; an out-of-range edition is a 422, never an invented dateline.
+    """
+    limit(request, 60, 60, scope="world_gazette")
+    result = compute_gazette(db, edition)
+    if result.get("out_of_range"):
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "edition_out_of_range",
+                "message": "The world has not played that matchday; the latest edition is available now.",
+                "total_editions": result.get("total_editions"),
+            },
+        )
+    return _envelope(**result)
 
 
 __all__ = ["router"]
