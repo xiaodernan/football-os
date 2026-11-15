@@ -4857,5 +4857,24 @@
     "sectionGazetteLabel": "世界新聞紙",
     "sectionGazetteNote": "每輪一版——算術寫成的新聞紙",
     "sectionGazetteChip": "新聞紙"
+  },
+  "worldFinals": {
+    "metaTitle": "杯賽終章 — 世界的杯季",
+    "metaDescription": "本賽季每一場杯賽決賽、每場的球員、以及杯主的名冊——每項數字都在讀取時從列裡重算。",
+    "eyebrow": "杯賽",
+    "title": "杯賽終章",
+    "lede": "八場決賽。八場合十九十分鐘的故事。這裡印出的每個數字都是一行紀錄。",
+    "statFinalsLabel": "決賽場數",
+    "statGoalsLabel": "總進球",
+    "statLoudestLabel": "最響的一場",
+    "winnersLabel": "杯主名冊",
+    "holdersLede": "這個賽季每家俱樂部捧杯幾次——從列裡重算。",
+    "mvpLabel": "決賽最有價值球員",
+    "winnerLabel": "{name} 捧杯",
+    "drawnLabel": "打成平局——無人捧杯",
+    "unavailable": "存行資料裡還沒有完賽的杯賽決賽。",
+    "sectionFinalsLabel": "杯賽終章",
+    "sectionFinalsNote": "每場杯賽決賽——算出來的，不是寫出來的",
+    "sectionFinalsChip": "決賽"
   }
 }

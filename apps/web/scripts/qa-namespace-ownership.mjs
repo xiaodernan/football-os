@@ -60,6 +60,9 @@ const NAMESPACE_OWNERS = {
   // The Gazette — the season's paper of record, one edition per matchday
   "worldGazette": { owner: "world", purpose: "the season's edition-by-edition paper of record, recomputed live from the rows: the table after each round, the loudest fixture, the hot hand, the number that matters" },
 
+  // The Finals — the world's cup hemisphere, computed, not told
+  "worldFinals": { owner: "world", purpose: "the finals of every cup, recomputed live from the rows: the score, the player of each final, the cup holders' table, the loudest fixture" },
+
   // World tier
   "world": { owner: "world", purpose: "World overview pages" },
   "worldPlayer": { owner: "world", purpose: "World player pages" },

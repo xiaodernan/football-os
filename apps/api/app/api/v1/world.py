@@ -40,6 +40,7 @@ from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
 from app.services.world.duel import compare, per90
+from app.services.world.finals import compute_finals
 from app.services.world.gazette import compute_gazette
 from app.services.world.matchday_xi import compute_matchday_xi
 from app.services.world.records import compute_records
@@ -1159,6 +1160,19 @@ def gazette(
             },
         )
     return _envelope(**result)
+
+
+@router.get("/finals")
+def finals(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Finals — every completed cup Final, the player of each, the cup holders' table.
+
+    All eight finals recomputed on every read from `real_matches` and `real_player_match_stats`:
+    the scorecard, the winning club, the player of each final (best-rated starter by the rows'
+    own arithmetic), the loudest fixture and the cup-haul ranking. Public, anonymous, the same
+    seeded grammar as its siblings — never a stored figure, never an authored result.
+    """
+    limit(request, 60, 60, scope="world_finals")
+    return _envelope(**compute_finals(db))
 
 
 __all__ = ["router"]

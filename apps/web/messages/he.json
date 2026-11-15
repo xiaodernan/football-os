@@ -4857,5 +4857,24 @@
     "sectionGazetteLabel": "הגזטה",
     "sectionGazetteNote": "מהדורה לכל מחזור — עיתונות בעט החישוב",
     "sectionGazetteChip": "גזטה"
+  },
+  "worldFinals": {
+    "metaTitle": "הגמרות — עונת הגביעים של העולם",
+    "metaDescription": "כל גמר גביע של העונה, השחקן בכל אחד, טבלת מנצחי הגביעים — כל מספר מחושב מחדש מן השורות.",
+    "eyebrow": "הגביעים",
+    "title": "הגמרות",
+    "lede": "שמונה גמרות. שמונה סיפורים של תשעים דקות. כל מספר מודפס כאן הוא שורה בקובץ.",
+    "statFinalsLabel": "גמרות",
+    "statGoalsLabel": "שערים",
+    "statLoudestLabel": "הכי רועשת",
+    "winnersLabel": "בעלי הגביעים",
+    "holdersLede": "כמה גביעים הרים כל מועדון העונה — מחושב מחדש מן השורות.",
+    "mvpLabel": "שחקן הגמר",
+    "winnerLabel": "{name} הרים את הגביע",
+    "drawnLabel": "תיקו — אף אחד לא הרים גביע",
+    "unavailable": "אף גמר גביע לא הושלם במאגר הנתונים השמור.",
+    "sectionFinalsLabel": "הגמרות",
+    "sectionFinalsNote": "כל גמר גביע — מחושב, לא מסופר",
+    "sectionFinalsChip": "גמרות"
   }
 }

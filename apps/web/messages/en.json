@@ -4857,5 +4857,24 @@
     "sectionGazetteLabel": "The Gazette",
     "sectionGazetteNote": "one edition per matchday — the paper of record by the arithmetic",
     "sectionGazetteChip": "edition"
+  },
+  "worldFinals": {
+    "metaTitle": "The Finals — The World's Cups",
+    "metaDescription": "Every cup Final of the season, the player of each, the cup holders' table — every figure recomputed from the rows.",
+    "eyebrow": "The Cups",
+    "title": "The Finals",
+    "lede": "Eight finals. Eight stories in ninety minutes. Every figure printed here is a row.",
+    "statFinalsLabel": "Finals",
+    "statGoalsLabel": "Goals",
+    "statLoudestLabel": "The Loudest",
+    "winnersLabel": "The Cup Holders",
+    "holdersLede": "How many cups each club lifted this season — recomputed from the rows.",
+    "mvpLabel": "Player of the final",
+    "winnerLabel": "{name} lifted the cup",
+    "drawnLabel": "Drawn — nobody lifted the cup",
+    "unavailable": "No cups have been completed in the stored world yet.",
+    "sectionFinalsLabel": "The Finals",
+    "sectionFinalsNote": "every cup final — computed, not narrated",
+    "sectionFinalsChip": "finals"
   }
 }

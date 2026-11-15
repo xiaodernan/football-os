@@ -4857,5 +4857,24 @@
     "sectionGazetteLabel": "La Gazette",
     "sectionGazetteNote": "une édition par journée — le journal écrit par l'arithmétique",
     "sectionGazetteChip": "édition"
+  },
+  "worldFinals": {
+    "metaTitle": "Les finales — la saison des coupes du monde",
+    "metaDescription": "Toutes les finales de coupe de la saison, les joueurs de chacune, le tableau des vainqueurs — chaque chiffre recalculé depuis les lignes.",
+    "eyebrow": "Les coupes",
+    "title": "Les finales",
+    "lede": "Huit finales. Huit histoires de quatre-vingt-dix minutes. Chaque chiffre imprimé ici est une ligne.",
+    "statFinalsLabel": "Finales",
+    "statGoalsLabel": "Buts",
+    "statLoudestLabel": "La plus bruyante",
+    "winnersLabel": "Les vainqueurs de coupes",
+    "holdersLede": "Combien de coupes chaque club a soulevées cette saison — recalculé depuis les lignes.",
+    "mvpLabel": "Joueur de la finale",
+    "winnerLabel": "{name} a soulevé la coupe",
+    "drawnLabel": "Égalité — personne ne soulève la coupe",
+    "unavailable": "Aucune coupe n'a été jouée jusqu'au bout dans les lignes enregistrées.",
+    "sectionFinalsLabel": "Les finales",
+    "sectionFinalsNote": "chaque finale de coupe — calculée, pas racontée",
+    "sectionFinalsChip": "finales"
   }
 }

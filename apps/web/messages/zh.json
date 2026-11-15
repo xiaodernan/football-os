@@ -4857,5 +4857,24 @@
     "sectionGazetteLabel": "世界新闻纸",
     "sectionGazetteNote": "每轮一版——算术写成的新闻纸",
     "sectionGazetteChip": "新闻纸"
+  },
+  "worldFinals": {
+    "metaTitle": "杯赛终章 — 世界的杯季",
+    "metaDescription": "本赛季每一场杯赛决赛、每场的球员、以及杯主的名册——每项数字都在读取时从行里重算。",
+    "eyebrow": "杯赛",
+    "title": "杯赛终章",
+    "lede": "八场决赛。八场九十分钟的故事。这里印出的每个数字都是一行记录。",
+    "statFinalsLabel": "决赛场数",
+    "statGoalsLabel": "总进球",
+    "statLoudestLabel": "最响的一场",
+    "winnersLabel": "杯主名册",
+    "holdersLede": "这个赛季每家俱乐部捧杯几次——从行里重算。",
+    "mvpLabel": "决赛最有价值球员",
+    "winnerLabel": "{name} 捧杯",
+    "drawnLabel": "打成平局——无人捧杯",
+    "unavailable": "存行数据里还没有完赛的杯赛决赛。",
+    "sectionFinalsLabel": "杯赛终章",
+    "sectionFinalsNote": "每场杯赛决赛——算出来的，不是写出来的",
+    "sectionFinalsChip": "决赛"
   }
 }

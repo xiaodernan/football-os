@@ -35,6 +35,7 @@ export default async function WorldIndexPage() {
   const ts = await getTranslations("worldSpotlight");
   const tt = await getTranslations("worldTimeline");
   const tg = await getTranslations("worldGazette");
+  const tf = await getTranslations("worldFinals");
 
   const sections: { href: string; label: string; note: string; countKey?: string; chip?: string }[] = [
     { href: "/world/competitions", label: t("sectionCompetitionsLabel"), note: t("sectionCompetitionsNote"), countKey: "competitions" },
@@ -48,6 +49,7 @@ export default async function WorldIndexPage() {
     { href: "/world/spotlight", label: ts("sectionSpotlightLabel"), note: ts("sectionSpotlightNote"), chip: ts("sectionSpotlightChip") },
     { href: "/world/timeline", label: tt("sectionTimelineLabel"), note: tt("sectionTimelineNote"), chip: tt("sectionTimelineChip") },
     { href: "/world/gazette", label: tg("sectionGazetteLabel"), note: tg("sectionGazetteNote"), chip: tg("sectionGazetteChip") },
+    { href: "/world/finals", label: tf("sectionFinalsLabel"), note: tf("sectionFinalsNote"), chip: tf("sectionFinalsChip") },
     { href: "/world/news", label: t("sectionReportsLabel"), note: t("sectionReportsNote"), countKey: "articles" },
   ];
 
