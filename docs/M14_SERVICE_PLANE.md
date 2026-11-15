@@ -82,7 +82,14 @@ One trap recorded: the first `/edge/routes` implementation called `.block()` in 
 gateway handler that runs on the netty event loop, `block()` is an `IllegalStateException`, and the door
 answered 500. The controller now returns `Flux<ResolvedRoute>` — a stream, never blocked.
 
-## 3. The live walk (sixteen checks, `.scratch/walk-plane.ps1` → `.scratch/plane-walk.json`)
+## 3. The live walk (sixteen checks, `services/plane-walk.ps1`)
+
+The walk now lives in the tree as `services/plane-walk.ps1` (parameterised: `-Edge`, `-Core`, `-Registry`,
+`-Config`, `-OutFile`) so any operator on any host can re-run it against their own plane. The witness
+artefact is a run product, not source: the script writes it outside the repository (default
+`.scratch\plane-walk.json`) and exits 1 with the per-check map when any check reads false. The copy used
+to produce §3 was run from `.scratch/`; the committed walker is the same check list, read fresh from a
+running process.
 
 Topology on this host: core `uvicorn app.main:app` on `127.0.0.1:8100` (SQLite
 `.scratch/plane/core.db`, migrated to head), registry on 8761, config on 8888, edge on 18080.
