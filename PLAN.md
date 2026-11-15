@@ -3194,6 +3194,40 @@ verdict prints in §211 and gets recorded verbatim.
 **Not claimed.** Anything the gates don't print; the eight cups are what the seed wrote as finals,
 nothing more.
 
+## Item 79 — the quiet closes: fixture indexes, the Noise Dossier, the ADR-010 record
+
+**The gap.** The world supported every case anyone could think of, twice. Two gaps remained: (a)
+the `RealMatch`/`RealPlayerMatchStat` rows were hot-walked by every tier-1 door without a composite
+index matching the full `WHERE competition_id=?, status='completed' ORDER BY kickoff_at` shape, and
+(b) the LLM prefix-cache behaviour the user kept reporting ("low hit rate, always shows non-stream")
+had never been written down so it could not be an argument again.
+
+**What landed.** Migration `0065_composite_world_fixture_index` adds
+`ix_match_competition_status_kickoff` on `real_matches(competition_id, status, kickoff_at)` and
+`ix_stat_team_match` on `real_player_match_stats(team_id, match_id)`; the models carry matching
+`Index(...)` declarations so `Base.metadata.create_all` and an alembic upgrade both build the same
+shape. Chain verified end-to-end on a disposable scratch: `alembic upgrade head` 0001 → 0065 on a
+fresh file, downgrade/upgrade back to 0065 — no errors. `AUDIT_FIGURES migrations=65 → 66`.
+
+The Noise Dossier lands as `/world/noise` — the rating-caller's honest record against rows it never
+saw: accuracy_pct 28.57% (chance 33.33%), draw_call rate 19.23%, best run of 2, five largest misses
+(upsets list sorted by rating_gap desc), all computed from `real_matches` and never from a provider.
+The door is also the first to name its own limitations on the wire:
+
+- cache-hit is a server-side lottery — we publish `cache_hit_rate(...)` with `coverage` beside it;
+- the tokens the gateway prints are the gateway's business;
+- the page does not pretend a model that does not exist exists.
+
+`docs/adr/ADR-010-prompt-cache.md` closes the long discussion about the prefix-cache story in the
+same style: measurement and the design invariants, no retry-warm-up theatre.
+
+**CI** — `43759715752` (the fixture index arc push): step 9 `test_spec_audit_currency` red with the
+ROADMAP `65 migrations` figure vs audit `66`; cured at `864e1ad` (the cited figure moves in the same
+commit that changes the tree it counts). `43756643271` (the Noise Dossier OG cure): all four legs
+success. `43762111313` (roadmap figure): all four success.
+
+**Not claimed.** That any of this changes the seed. The noise floor stays wherever the seed put it.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

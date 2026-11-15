@@ -7691,3 +7691,49 @@ recounts it.
 
 **The fact pack stood at `414dfc7` — `1,122` commits, routes 80, doors 17, world_pages 17, milestone
 `§210`, and the profile mirror `assets/football/latest.json` carries the same bytes.**
+
+## §212 — the quiet closes: the Noise Dossier, the fixture index arc, an ADR-010 entry
+
+**The reds, verbatim, in push order.**
+
+- `43755728263` — Item 77 — the Noise Dossier — web step 44 `Build` red:
+  `Expected <div> to have explicit "display: flex"` on one row of the OG card (a div carried two
+  children). Cured at `2e9c297`; the cure's run `43756643271` printed web/containers/services/api
+  green — the reds went with it.
+- `43755760246` — the 1,126-commit refresh — inherited the same web step 44 red by design; cured
+  by the same commit. Nothing re-pinned, nothing retyped.
+- `43759715752` — Item 78 — the fixture-index arc — api step 9 `Tests (SQLite dev fallback)`
+  red on `test_spec_audit_currency.py::test_the_roadmap_quotes_the_audit_s_current_figures_not_an_older_snapshot`:
+  ROADMAP quoted `65 migrations`; the AUDIT_FIGURES line added in this push read `66`.
+  Cured at `864e1ad`.
+
+**What landed.**
+
+- **Item 77 — `/world/noise`** — the Noise Dossier: every fixture walked with a rating-caller
+  (best eleven by overall, draw under a 4-point spread, otherwise the favoured side calls the match).
+  Payload published honestly: accuracy against unseen rows (28.57% on tier-1; chance is 33.33 %),
+  the draw record (19.23 %), the longest correct run (2), the five largest misses (sorted by gap of
+  expected — every figure from `real_matches` and nothing from a provider).
+  `apps/web/app/world/noise/page.tsx` — three tiles (the accuracy number carries the `red219` ember
+  radial), `verdictBody` rendering the "Chance would have beaten it" sentence in serif, and
+  `.noise__row-call` markup linking every miss to its match. Catalogue 4,790 uniform; page census
+  pinned 80 → 81; crawl policy 81; metadata population 81.
+- **Item 78 — the fixture-index arc** — migration `0065` adds
+  `ix_match_competition_status_kickoff` (competition_id, status, kickoff_at) on `real_matches`
+  and `ix_stat_team_match` (team_id, match_id) on `real_player_match_stats`. Chain verified from
+  empty via `alembic upgrade head` (0001 → 0065 applies clean on a disposable scratch),
+  `alembic downgrade 0065 → 0064`, `alembic upgrade head` re-applied 0065. The models got matching
+  `Index(...)` declarations so the SQLite fallback (`create_all`) and an upgraded production
+  database carry the same schema. `AUDIT_FIGURES migrations=65 → 66` moved in the same push;
+  `test_spec_audit_currency` re-pass at 9/9 locally.
+- **ADR-010 — the LLM prefix-cache story, measured, not hoped.** Stream is the default because the
+  gateway counts its own `stream` metric. `stream_options: {include_usage: true}` is set on every
+  LLM request. `cache_reported` and `cached_input_tokens` sit in two ledger columns on purpose.
+  The gateway prints `cached_tokens` on a server-side lottery — warm calls measure ~96% cache-hit on
+  the bytes sent (drew 4,352/4,546 and 19,980/19,983 cached); the ledger reports
+  `cache_hit_rate` with `coverage` beside it so the unreported half is never read as a miss.
+- **Fact pack** `8acf55b` — 1,124 commits, arc §211, routes 81. `6a50dc5`'s message said "1,133
+  commits" over a file reading 1,131; the mismatch stays in the log.
+
+**Not claimed.** That any of the red runs went green post hoc; anything the runner did not print.
+When `43762132230` and `43763981422` settle, §213 carries their verdict verbatim.
