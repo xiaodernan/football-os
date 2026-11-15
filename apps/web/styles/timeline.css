@@ -1,0 +1,167 @@
+/* The Timeline — the season matchday by matchday, in the catalogue's own vocabulary. */
+
+.timeline__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+@media (max-width: 900px) {
+  .timeline__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .timeline__stats { grid-template-columns: 1fr; }
+}
+
+.timeline__tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-height: 10.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.95rem 1rem 0.85rem;
+  background:
+    radial-gradient(circle at 14% 0%, rgba(216, 181, 107, 0.14), transparent 65%),
+    var(--bg-panel-2);
+}
+.timeline__tile-eyebrow {
+  font-size: 0.64rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold, #d8b56b);
+  font-weight: 700;
+}
+.timeline__big {
+  font-size: 3rem;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.15rem;
+}
+.timeline__sub {
+  color: var(--text-2);
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+}
+.timeline__tile a { color: var(--accent); font-weight: 700; text-decoration: none; }
+.timeline__tile a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.timeline__race {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.15rem 0.95rem;
+  background: var(--bg-panel-2);
+  overflow-x: auto;
+}
+.timeline__race-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.timeline__race-title {
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin: 0;
+}
+.timeline__legend { display: flex; gap: 0.9rem; flex-wrap: wrap; }
+.timeline__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--text-2);
+}
+.timeline__swatch { width: 1.35rem; height: 0.18rem; border-radius: 999px; display: inline-block; }
+.timeline__swatch--champ { background: var(--gold, #d8b56b); }
+.timeline__swatch--runner { background: transparent; border-top: 2px dashed var(--text-3); height: 0; }
+
+.timeline__beats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (max-width: 1100px) {
+  .timeline__beats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .timeline__beats { grid-template-columns: 1fr; }
+}
+.timeline__beat {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem 0.95rem 0.85rem;
+  background: var(--bg-panel-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+.timeline__beat h3 {
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0;
+  font-weight: 700;
+}
+.timeline__beat p { font-size: 0.78rem; color: var(--text-2); margin: 0.1rem 0 0; }
+.timeline__beat strong { color: var(--text); }
+.timeline__beat-key {
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold, #d8b56b);
+  font-weight: 750;
+}
+.timeline__chip {
+  align-self: flex-start;
+  margin-top: 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #0d0f0c;
+  background: var(--gold, #d8b56b);
+  border-radius: 999px;
+  padding: 0.14rem 0.55rem;
+}
+.timeline__chip--hollow {
+  background: transparent;
+  color: var(--gold, #d8b56b);
+  border: 1px solid var(--gold, #d8b56b);
+}
+
+.timeline__archive {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  background: var(--bg-panel-2);
+}
+.timeline__table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.timeline__table th,
+.timeline__table td {
+  padding: 0.42rem 0.85rem;
+  text-align: end;
+  font-size: 0.8rem;
+}
+.timeline__table th {
+  color: var(--text-3);
+  font-size: 0.64rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+  font-weight: 750;
+}
+.timeline__table td { border-bottom: 1px solid var(--line-soft, var(--line)); color: var(--text-2); }
+.timeline__table td:first-child,
+.timeline__table th:first-child { text-align: start; }
+.timeline__table tr:last-child td { border-bottom: none; }
+.timeline__table tr[data-champion] td { color: var(--text); }
+.timeline__table tr[data-champion] { box-shadow: inset 3px 0 0 var(--gold, #d8b56b); }
+.timeline__table a { color: var(--accent); text-decoration: none; font-weight: 650; }
+.timeline__table a:hover { text-decoration: underline; text-underline-offset: 2px; }

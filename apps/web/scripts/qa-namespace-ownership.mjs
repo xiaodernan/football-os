@@ -54,6 +54,9 @@ const NAMESPACE_OWNERS = {
   // The spotlight — the three recognitions the world cannot hide from
   "worldSpotlight": { owner: "world", purpose: "the world's three recognitions, recomputed live from the rows: best goals per 90 in tier-1, the most home clean sheets, and the youngest tier-1 player with real minutes" },
 
+  // The timeline — the season matchday by matchday, told with arithmetic
+  "worldTimeline": { owner: "world", purpose: "the season's timeline, recomputed live from the rows: the leader per matchday, the loudest round, the takeover and the whistle that settled the title" },
+
   // World tier
   "world": { owner: "world", purpose: "World overview pages" },
   "worldPlayer": { owner: "world", purpose: "World player pages" },

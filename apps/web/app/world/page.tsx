@@ -33,6 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function WorldIndexPage() {
   const t = await getTranslations("world");
   const ts = await getTranslations("worldSpotlight");
+  const tt = await getTranslations("worldTimeline");
 
   const sections: { href: string; label: string; note: string; countKey?: string; chip?: string }[] = [
     { href: "/world/competitions", label: t("sectionCompetitionsLabel"), note: t("sectionCompetitionsNote"), countKey: "competitions" },
@@ -44,6 +45,7 @@ export default async function WorldIndexPage() {
     { href: "/world/records", label: t("sectionRecordsLabel"), note: t("sectionRecordsNote"), chip: t("sectionRecordsChip") },
     { href: "/world/matchday-xi", label: t("sectionMatchdayXiLabel"), note: t("sectionMatchdayXiNote"), chip: t("sectionMatchdayXiChip") },
     { href: "/world/spotlight", label: ts("sectionSpotlightLabel"), note: ts("sectionSpotlightNote"), chip: ts("sectionSpotlightChip") },
+    { href: "/world/timeline", label: tt("sectionTimelineLabel"), note: tt("sectionTimelineNote"), chip: tt("sectionTimelineChip") },
     { href: "/world/news", label: t("sectionReportsLabel"), note: t("sectionReportsNote"), countKey: "articles" },
   ];
 

@@ -2941,6 +2941,29 @@
         }
       }
     },
+    "/api/v1/world/timeline": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Timeline",
+        "description": "The season, matchday by matchday — arithmetic the whole way, no stored figures.\n\nThe league table is held running over the tier-1 league's completed fixtures in kickoff order,\nand the season is told by what it printed: the first leader, the goal-avalanche matchday, the\nmatchday from which the eventual champion never surrendered the lead, and the matchday after\nwhich every rival's remaining-fixture ceiling fell short of the champion's points. Deterministic;\nif the season has not written enough to be told, the body reads `available: false` and invents nothing.",
+        "operationId": "timeline_api_v1_world_timeline_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Timeline Api V1 World Timeline Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [

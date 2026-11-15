@@ -16,12 +16,12 @@ artifact the web client and the currency gates read — and takes every operatio
 `security` requirement as a private door, every operation that declares none as a public one.
 
 At the latest run recorded here (run O, §2) the contract's SHA-256 was
-`71c435ef0bfeaf4df87a29253a0ae43f59c9e235f3c47eb6bb3339f7332ece86`, and the census read:
+`e0708ca448482a96c46d23182b07cda4299917504da9a38e470e37e6a6f9fea6`, and the census read:
 
 | measurement | value | floor |
 | --- | --- | --- |
 | secured operations | 241 | 200 |
-| public operations | 62 | 40 |
+| public operations | 63 | 40 |
 | private `GET` paths | 104 | 85 |
 
 The floors exist so an empty or half-read contract cannot pass as a clean probe; they are printed with
@@ -203,7 +203,7 @@ re-running the probe against the same contract is what reproduces them.
 
 | ident | claim | measured in run L |
 | --- | --- | --- |
-| C0 | the private-door population is read from the committed contract and is not empty | 241 secured / 62 public / 104 private GET paths, contract SHA-256 above |
+| C0 | the private-door population is read from the committed contract and is not empty | 241 secured / 63 public / 104 private GET paths, contract SHA-256 above |
 | S1 | every secured operation refuses a caller with no credential, and asks for one | **241 knocked, 241 answered 401**, 0 deviations, 3 throttled knocks waited out and re-knocked |
 | S2 | a token whose signature no longer verifies is refused | 401, body keys `code`, `message` |
 | S3 | one account's row is absent to another, in both the direct read and the listing | create 201; owner read 200; stranger read **404**; stranger patch **404**; stranger's listing 200 with the owner's row absent; `/auth/me` caller-scoped |

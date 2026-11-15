@@ -45,6 +45,7 @@ from app.services.world.records import compute_records
 from app.services.world.spotlight import compute_spotlight
 from app.services.world.story import compute_story
 from app.services.world.sync import GATE
+from app.services.world.timeline import compute_timeline
 
 router = APIRouter(prefix="/world", tags=["world"])
 
@@ -1117,6 +1118,20 @@ def spotlight(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]
     """
     limit(request, 60, 60, scope="world_spotlight")
     return _envelope(**compute_spotlight(db))
+
+
+@router.get("/timeline")
+def timeline(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The season, matchday by matchday — arithmetic the whole way, no stored figures.
+
+    The league table is held running over the tier-1 league's completed fixtures in kickoff order,
+    and the season is told by what it printed: the first leader, the goal-avalanche matchday, the
+    matchday from which the eventual champion never surrendered the lead, and the matchday after
+    which every rival's remaining-fixture ceiling fell short of the champion's points. Deterministic;
+    if the season has not written enough to be told, the body reads `available: false` and invents nothing.
+    """
+    limit(request, 60, 60, scope="world_timeline")
+    return _envelope(**compute_timeline(db))
 
 
 __all__ = ["router"]
