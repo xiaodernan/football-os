@@ -7749,3 +7749,17 @@ The direct consequence of the last two arcs:
 - every fact-pack refresh in this window reads arc §212 — the fact pack now licenses the next phone call, not the next argument.
 
 Not claimed: that queueing noise is gone forever; anything the runner hasn't printed for pushes newer than `152f5da`.
+
+## §214 — the ledger, the last two pushes, and the genuine 403 found inside the cache-hit question
+
+This window closed two arcs and one long-standing customer request: **"why is my wkapi.pro provider showing as if nothing caches, always non-stream/mock?"** The truth, this time with the door open: **every live request answers `HTTP 403 insufficient_user_quota`** (the account behind `sk-4W8L…` is ¥-0.000088 overdrawn). The app falls back to `MockLLMProvider` — arithmetic on the player's own rows answers genuinely, but every string the user once read as "non-stream / template-demo / cache 0" was that path eating 403s silently because the two log lines in the provider printed `HTTPError` and nothing else.
+
+**Item 79 — the provider sees what the upstream says now.** `_http_failure_detail(exc)` logs `code / reason / body` (first 200 chars of the upstream body) for both the stream and the non-stream failure paths; the 403 login shows in one sentence: `openai_provider_stream_failure HTTPError code=403 reason=Forbidden body={"error":{"message":"剩余额度: ¥-0.000088 …","code":"insufficient_user_quota"}}`. `test_provider_failure_logging.py` pins the shape. The fix does NOT make the cache meter move — the cache meter could only move once the provider gains a real response again.
+
+**Item 78 — the Spring plane is now four citizens.** `services/worldcheck` (Java 21 / Spring Boot 3.5.16 / Spring Cloud 2025.0.3) — Eureka-registered, config-consuming (`services/config-repo/football-worldcheck.yml`), fetches `/world/status` on a schedule, publishes `/world/check` `/world/check/cached` (HTTP 428 until the first probe completes), and `/actuator/health` reports `up`/`down`/`UNKNOWN` aligned to the thresholds.
+
+**Carried through unchanged.** `AUDIT_FIGURES contract_paths=240 page_routes=81 migrations=66`; the audit's own books are still green; the Spring contract, the Spring plane, the Redis tier, the OpenTelemetry adapter, the otel-collector profile — all stay as they were.
+
+**Fact pack** — `docs/latest.json` now reads `head=fdd919c, 1,139 commits, arc §213`; arc §214 lands with this entry.
+
+**Not claimed.** That the cache hit rate will improve; it will not move until wkapi.pro tops up the account. That the plane actually launches all four services in this window; it does not. That the order of commits matches the order of pushes; it does not. The reds are recorded verbatim; nothing is re-pinned.

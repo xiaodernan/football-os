@@ -3236,6 +3236,34 @@ success. `43762111313` (roadmap figure): all four success.
 
 **Not claimed.** Anything the runner hasn't printed; the noise-arc class is recorded verbatim in §212.
 
+## Item 78 — the world-check service (landed 2026-11-15)
+
+**The gap.** The Spring plane already assembled registry, config server and edge — what it lacked was a citizen whose job was to watch the Python core's own world on a schedule and publish whether its invariants still held.
+
+**What landed.** `services/worldcheck`: a fourth service in the plane profile. An Eureka-registered, config-consuming, actuator-exposing Java 21 / Spring Boot 3.5.16 citizen that fetches `/api/v1/world/status` on an interval (default 300 s, wired from `services/config-repo/football-worldcheck.yml`). It decodes only the counts the core publishes, applies six threshold checks (competitions, teams, players, matches, stat_lines, articles) and publishes the result under `GET /world/check`, `GET /world/check/cached`, `/actuator/health`. `/world/check/cached` returns HTTP 428 until the first scheduled probe completes; the health indicator reads `up`/`down` aligned to the invariants and `UNKNOWN` before cold-start. No football rule appears in any file.
+
+**The plane becomes a four-service plane.** `services/pom.xml` lists `worldcheck`; `infra/docker-compose.yml` routes it to the `plane` profile on `127.0.0.1:8870` next to api, registry, config, edge; `services/config-repo/football-worldcheck.yml` carries every tunable property.
+
+**Build.** `mvn -o package` green at the worldcheck module; 12 tests (invariants exact-once pass/fail; absent count sentinel → -1; fetcher 200/403/unreachable; controller's two routes incl. PRECONDITION_REQUIRED; health indicator aligned / down / cold-start.
+
+**Not claimed.** That docker compose was executed end-to-end here; that the config server is probed only in warnings during local tests; that the thresholds are football-hard-optimal (conservative floors by design; tune via the config server without rebuild).
+
+**Tests.** worldcheck 12/12 green locally at build; the full `services` build (`mvn -o package`) packs all four services in ~92 s.
+
+**CI** — run `43773484398` — in flight at the time of writing; verdicts in §214.
+
+## Item 79 — the provider failure line now sees everything the upstream wrote (landed 2026-11-15)
+
+**The gap.** Investigating the reported low cache-hit dashboard ("always appears non-stream/mock") found every wkapi.pro call answering `HTTP 403 insufficient_user_quota` — the account behind `sk-…` is ¥-0.000088 overdrawn. The provider's two logging sites collapsed that into a single word (`openai_provider_stream_failure HTTPError`); operators could not tell whether the server had crashed, refused auth, hit a budget, or run out of money.
+
+**What landed.** `_http_failure_detail(exc)` in `app/providers/__init__.py` — in both the stream and the non-stream failure paths logs `code=<int> reason=<str> body=<first 200 chars of upstream payload>`. The 403 login shows in one line: `openai_provider_stream_failure HTTPError code=403 reason=Forbidden body={"error":{"message":"剩余额度: ¥-0.000088 …","code":"insufficient_user_quota"}}`.
+
+**Tests.** `test_provider_failure_logging.py` — 4 cases: code appears, reason appears, body appears, body capsed, `URLError` (no read) logged without crashing.
+
+**Not cured.** The quota exhaustion itself: calls fall back to `MockLLMProvider`, which is the correct product behaviour when the upstream is unavailable; the coach's answer is arithmetic on the local player's own rows, the model only phrases prose. The cache-hit paragraph in ADR-010 remains exactly what it measured: warm repeats print ~95–97% cached prompt bytes — and that behaviour is unchanged.
+
+**CI** — run `43772043844` — in flight at the time of writing; verdicts in §214.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
