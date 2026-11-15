@@ -63,6 +63,9 @@ const NAMESPACE_OWNERS = {
   // The Finals — the world's cup hemisphere, computed, not told
   "worldFinals": { owner: "world", purpose: "the finals of every cup, recomputed live from the rows: the score, the player of each final, the cup holders' table, the loudest fixture" },
 
+  // The Noise Dossier — the world's own noise graded against the rows it never saw
+  "worldNoise": { owner: "world", purpose: "the rating-based caller's record against rows it never saw, recomputed live: accuracy, draw-calling, the longest correct run, the five largest misses" },
+
   // World tier
   "world": { owner: "world", purpose: "World overview pages" },
   "worldPlayer": { owner: "world", purpose: "World player pages" },

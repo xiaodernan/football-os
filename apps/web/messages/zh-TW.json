@@ -4876,5 +4876,29 @@
     "sectionFinalsLabel": "杯賽終章",
     "sectionFinalsNote": "每場杯賽決賽——算出來的，不是寫出來的",
     "sectionFinalsChip": "決賽"
+  },
+  "worldNoise": {
+    "metaTitle": "噪聲單——模型公審",
+    "metaDescription": "這個世界的噪聲，量出來公之於眾：評分推斷的準確率、平局判斷的命中紀錄、連續答對的最長串——每項數字都是一行紀錄，不是承諾。",
+    "eyebrow": "受審的模型",
+    "title": "噪聲單",
+    "lede": "這個世界裡的每一場——都是種子一手畫出的。這裡是按評分推斷的調用方從沒看過的比賽裡的分數帳——量出來的，公開的，無爭議的",
+    "statAccuracyLabel": "調用被印證",
+    "statDrawLabel": "平局判斷命中",
+    "statStreakLabel": "最長連對",
+    "accuracyCaption": "{judged} 場裡 {correct} 場被印證",
+    "drawCaption": "{calls} 次平局判斷 {hits} 次成真",
+    "streakCaption": "然後種子又贏回去",
+    "verdictBody": "運氣會贏過它——三向硬幣不用挪動一根毛，穩落在 {chance}%。",
+    "upsetBoardTitle": "冷門榜",
+    "upsetBoardLede": "模型簽下的五場最大漏判斷——每一場種子都在用它自己背書。",
+    "upsetCallLabel": "模型叫了",
+    "upsetActualLabel": "結果打出來了",
+    "methodEyebrow": "方法，公開在上",
+    "methodBody": "本頁每個數字都來自 `real_matches`：模型按評分取每隊最強 11 人（無陣容不可參與），總體評分相差不到 4 分時叫平局，按已結算的紀錄打分。沒有供應商、沒有模擬、沒有什麼訓練集——世界自己給自己打分",
+    "unavailable": "賽季還沒有寫出夠多的噪聲給你來打分。",
+    "sectionNoiseLabel": "噪聲單",
+    "sectionNoiseNote": "模型從没碰過的列裡的分數帳",
+    "sectionNoiseChip": "噪聲"
   }
 }

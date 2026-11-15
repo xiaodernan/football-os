@@ -4876,5 +4876,29 @@
     "sectionFinalsLabel": "The Finals",
     "sectionFinalsNote": "every cup final — computed, not narrated",
     "sectionFinalsChip": "finals"
+  },
+  "worldNoise": {
+    "metaTitle": "The Noise Dossier — The Model on Trial",
+    "metaDescription": "The world's own noise, measured and published: the rating-based caller's accuracy, its draw-calling record and the run of correct calls — every figure a row, not a promise.",
+    "eyebrow": "The Accused Model",
+    "title": "The Noise Dossier",
+    "lede": "Every fixture in this world is a seed's draw. Here is the rating-based caller's record against rows it never saw — measured, published, uncontested.",
+    "statAccuracyLabel": "Called, then confirmed",
+    "statDrawLabel": "Draws called correctly",
+    "statStreakLabel": "Longest correct run",
+    "accuracyCaption": "{correct} of {judged} fixtures confirmed",
+    "drawCaption": "{hits} of {calls} called draws held",
+    "streakCaption": "in a row, then the seed won again",
+    "verdictBody": "Chance would have beaten it — a coin flipped three ways settles in at {chance}% without lifting a finger.",
+    "upsetBoardTitle": "The upset board",
+    "upsetBoardLede": "The five largest misses the model signed — every one of them the world validating itself.",
+    "upsetCallLabel": "The model called",
+    "upsetActualLabel": "The result printed",
+    "methodEyebrow": "The method, in the open",
+    "methodBody": "Every number on this page comes from `real_matches`: the model takes the best eleven by overall rating per team (squads with no players are ineligible), calls a draw when the ratings differ by under 4 points, and is graded against the scored rows themselves. No provider, no simulation, no training set — the world graded its own noise.",
+    "unavailable": "The season has not written enough noise to grade yet.",
+    "sectionNoiseLabel": "The Noise Dossier",
+    "sectionNoiseNote": "the model's record against rows it never saw",
+    "sectionNoiseChip": "noise"
   }
 }

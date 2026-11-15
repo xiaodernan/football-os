@@ -43,6 +43,7 @@ from app.services.world.duel import compare, per90
 from app.services.world.finals import compute_finals
 from app.services.world.gazette import compute_gazette
 from app.services.world.matchday_xi import compute_matchday_xi
+from app.services.world.noise import compute_noise
 from app.services.world.records import compute_records
 from app.services.world.spotlight import compute_spotlight
 from app.services.world.story import compute_story
@@ -1173,6 +1174,19 @@ def finals(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_finals")
     return _envelope(**compute_finals(db))
+
+
+@router.get("/noise")
+def noise(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The predictor's ledger — the world's own noise, measured, not hidden.
+
+    The world's fixtures are a seed, not prophecies: this door publishes the rating-based caller's
+    accuracy against the rows it never saw, and the margin by which the seed defeated it. Honest
+    to a fault — a door advertising predictive power it does not have would be re-shipped to the
+    bin with this one still standing.
+    """
+    limit(request, 60, 60, scope="world_noise")
+    return _envelope(**compute_noise(db))
 
 
 __all__ = ["router"]

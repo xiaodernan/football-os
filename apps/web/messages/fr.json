@@ -4876,5 +4876,29 @@
     "sectionFinalsLabel": "Les finales",
     "sectionFinalsNote": "chaque finale de coupe — calculée, pas racontée",
     "sectionFinalsChip": "finales"
+  },
+  "worldNoise": {
+    "metaTitle": "Le Dossier du Bruit — le modèle au banc des accusés",
+    "metaDescription": "Le bruit du monde, mesuré et publié : la précision de l'appelant à rating, son bilan de nuls, la plus longue série d'appels confirmés — chaque chiffre une ligne, pas une promesse.",
+    "eyebrow": "Le modèle accusé",
+    "title": "Le dossier du bruit",
+    "lede": "Chaque fixture de ce monde est un tirage de la graine. Voici le bilan de l'appelant à rating contre des lignes qu'il n'a jamais vues — mesuré, publié, incontesté.",
+    "statAccuracyLabel": "Appelés, puis confirmés",
+    "statDrawLabel": "Nuls appelés correctement",
+    "statStreakLabel": "Plus longue série juste",
+    "accuracyCaption": "{correct} sur {judged} confirmés",
+    "drawCaption": "{hits} nuls appelés sur {calls}",
+    "streakCaption": "d'affilée, puis la graine reprend la main",
+    "verdictBody": "Le hasard l'aurait battu — un tirage à trois issues atterrit à {chance}% sans lever le petit doigt.",
+    "upsetBoardTitle": "Le tableau des surprises",
+    "upsetBoardLede": "Les cinq plus grands ratés que le modèle a signés — chacun la graine se certifiant elle-même.",
+    "upsetCallLabel": "Le modèle a appelé",
+    "upsetActualLabel": "Le résultat a imprimé",
+    "methodEyebrow": "La méthode, au grand jour",
+    "methodBody": "Chaque chiffre de cette page vient de `real_matches` : le modèle prend les onze meilleurs par rating (les équipes sans joueurs sont inéligibles), appelle un nul sous 4 points d'écart, et est noté sur les lignes déjà compptabilisées. Aucun fournisseur, aucune simulation, aucun jeu d'entraînement — le monde se note lui-même.",
+    "unavailable": "La saison n'a pas encore écrit assez de bruit pour être notée.",
+    "sectionNoiseLabel": "Le dossier du bruit",
+    "sectionNoiseNote": "le bilan du modèle contre des lignes qu'il n'a jamais vues",
+    "sectionNoiseChip": "bruit"
   }
 }

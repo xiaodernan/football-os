@@ -4876,5 +4876,29 @@
     "sectionFinalsLabel": "杯赛终章",
     "sectionFinalsNote": "每场杯赛决赛——算出来的，不是写出来的",
     "sectionFinalsChip": "决赛"
+  },
+  "worldNoise": {
+    "metaTitle": "噪声单——模型公审",
+    "metaDescription": "这个世界的噪声，量出来公之于众：评分推断的准确率、平局判断的命中纪录、连续答对的最长串——每项数字都是一行记录，不是承诺。",
+    "eyebrow": "受审的模型",
+    "title": "噪声单",
+    "lede": "这个世界里的每一场——都是种子一手画出的。这里是按评分推断的调用方从没看过的比赛里的分数账——量出来的，公开的，无争议的",
+    "statAccuracyLabel": "调用被印证",
+    "statDrawLabel": "平局判断命中",
+    "statStreakLabel": "最长连对",
+    "accuracyCaption": "{judged} 场里 {correct} 场被印证",
+    "drawCaption": "{calls} 次平局判断 {hits} 次成真",
+    "streakCaption": "然后种子又赢回去",
+    "verdictBody": "运气会赢过它——三向硬币不用挪动一根毛，稳落在 {chance}%。",
+    "upsetBoardTitle": "冷门榜",
+    "upsetBoardLede": "模型签下的五场最大漏判断——每一场种子都在用它自己背书。",
+    "upsetCallLabel": "模型叫了",
+    "upsetActualLabel": "结果打出来了",
+    "methodEyebrow": "方法，公开在上",
+    "methodBody": "本页每个数字都来自动于 `real_matches`：模型按评分取每队最强 11 人（无阵容不可参与），总体评分相差不到 4 分时叫平局，按已结算的记录打分。没有供应商、没有模拟、没有什么训练集——世界自己给自己打分",
+    "unavailable": "赛季还没有写出够多的噪声给你来打分。",
+    "sectionNoiseLabel": "噪声单",
+    "sectionNoiseNote": "模型从没碰过的行里的分数账",
+    "sectionNoiseChip": "噪声"
   }
 }

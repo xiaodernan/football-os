@@ -3040,6 +3040,29 @@
         }
       }
     },
+    "/api/v1/world/noise": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Noise",
+        "description": "The predictor's ledger — the world's own noise, measured, not hidden.\n\nThe world's fixtures are a seed, not prophecies: this door publishes the rating-based caller's\naccuracy against the rows it never saw, and the margin by which the seed defeated it. Honest\nto a fault — a door advertising predictive power it does not have would be re-shipped to the\nbin with this one still standing.",
+        "operationId": "noise_api_v1_world_noise_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Noise Api V1 World Noise Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [
