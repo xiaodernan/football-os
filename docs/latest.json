@@ -1,11 +1,11 @@
 {
-  "head": "9fb6726",
-  "total_commits": 1137,
+  "head": "fdd919c",
+  "total_commits": 1139,
   "milestone": "§213",
   "milestone_full": "§213 — the honest close: master prints all four legs green across the nine most recent pushes",
   "pushed_at": "2026-11-16",
   "screens": 81,
-  "assets": 193,
+  "assets": 194,
   "world_doors": 18,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-15T22:19:49.492Z"
+  "generated_at": "2026-11-15T22:56:52.624Z"
 }
