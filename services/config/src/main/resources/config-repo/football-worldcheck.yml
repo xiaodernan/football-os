@@ -1,0 +1,13 @@
+worldcheck:
+  world:
+    base-url: ${APC_CORE_URI:http://host.docker.internal:8100}
+    timeout-ms: 2000
+  check:
+    interval-seconds: 300
+  min:
+    competitions: 10
+    teams: 32
+    players: 400
+    matches: 200
+    stat-lines: 6000
+    articles: 700

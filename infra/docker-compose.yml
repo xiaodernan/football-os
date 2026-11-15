@@ -81,8 +81,8 @@ services:
       - "127.0.0.1:4317:4317"
       - "127.0.0.1:4318:4318"
 
-  # ROADMAP Phase 11: the service plane. Profile-gated because these three are infrastructure around
-  # the core rather than part of it — `docker compose --profile plane up -d registry config edge`.
+  # ROADMAP Phase 11: the service plane. Profile-gated because these are infrastructure around
+  # the core rather than part of it — `docker compose --profile plane up -d registry config edge worldcheck`.
   # Each runs the jar `mvn -o package` produced in services/; the build is a step, not a container,
   # so the gate never waits on a Maven download inside Docker.
   registry:
@@ -234,6 +234,35 @@ services:
       timeout: 5s
       retries: 18
       start_period: 60s
+
+  worldcheck:
+    image: eclipse-temurin:21-jre
+    container_name: football_os_worldcheck
+    profiles: ["plane"]
+    restart: unless-stopped
+    command: ["java", "-jar", "/app/worldcheck.jar"]
+    volumes:
+      - ../services/worldcheck/target/worldcheck-0.1.0.jar:/app/worldcheck.jar:ro
+    environment:
+      # Same pattern the rest of the plane follows — the core is a sibling on the plane's network.
+      APC_CORE_URI: ${APC_CORE_URI:-http://api:8100}
+      REGISTRY_URL: http://registry:8761/eureka/
+      CONFIG_URL: http://config:8888
+    ports:
+      - "127.0.0.1:8870:8870"
+    depends_on:
+      api:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+      config:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8870/actuator/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
 volumes:
   db-data:

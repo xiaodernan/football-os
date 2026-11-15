@@ -1,0 +1,44 @@
+server:
+  port: ${WORLDCHECK_PORT:8870}
+
+spring:
+  application:
+    name: football-worldcheck
+  config:
+    # The config server is the source of truth for every property this service reads. Missing
+    # config is a *configuration* problem, not a build problem: local-profile boots stay strict.
+    import: "optional:configserver:${CONFIG_URL:http://localhost:8888}"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${REGISTRY_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+worldcheck:
+  world:
+    # The Python core's world-status door. The service authenticates to it anonymously — the door
+    # publishes no secret — so a credential here would be a spurious liability.
+    base-url: ${APC_CORE_URI:http://localhost:8100}
+    timeout-ms: 2000
+  check:
+    interval-seconds: 300
+  min:
+    competitions: 10
+    teams: 32
+    players: 400
+    matches: 200
+    stat-lines: 6000
+    articles: 700
