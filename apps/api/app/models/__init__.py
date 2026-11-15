@@ -525,6 +525,7 @@ class RealMatch(Base, TimestampMixin):
     __tablename__ = "real_matches"
     __table_args__ = (
         Index("ix_match_competition_season", "competition_id", "season"),
+        Index("ix_match_competition_status_kickoff", "competition_id", "status", "kickoff_at"),
         Index("ix_match_kickoff", "kickoff_at"),
         Index("ix_match_home_team", "home_team_id"),
         Index("ix_match_away_team", "away_team_id"),
@@ -565,6 +566,7 @@ class RealPlayerMatchStat(TimestampMixin, Base):
         UniqueConstraint("natural_key", name="uq_match_stat_natural_key"),
         Index("ix_stat_line_player", "player_id"),
         Index("ix_stat_line_match", "match_id"),
+        Index("ix_stat_team_match", "team_id", "match_id"),
     )
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
