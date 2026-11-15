@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.world.matchday_xi import compute_matchday_xi
-
 API = "/api/v1"
 SLOTS = (
     (1, "GK"),
