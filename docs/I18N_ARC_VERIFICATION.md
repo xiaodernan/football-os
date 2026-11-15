@@ -6996,3 +6996,123 @@ provider's shipping configuration (streamed, `stream_options.include_usage`):
 
 **Not claimed there either.** No verdict on the gateway's internal accounting; no claim that the
 cache "works" or "doesn't"; only what was printed on the wire, verbatim.
+
+## §196 — Item 62: the index doors share one canvas
+
+Six of the seven index doors under `/world` now unfurl with the family's face — `competitions`,
+`matches`, `news`, `players`, `teams`, `training`. Each door's `opengraph-image.tsx` is a thin
+five-line wrapper around one shared element, so the six doors cannot drift apart. The seventh
+door, `/world/search`, is deliberately bare: it is a noindex query shell, not a content page;
+its unfurl is left to the result links.
+
+**The shape.** `apps/web/app/world/_og/index-card.tsx` — a private module (`_`-prefixed folder, not
+routable) exports the family's canvas: ember-black field; the door's own word in paper (the full
+`COMPETITIONS` at 132px, every shorter door at 186px); an ember→gold gradient rule; the six tokens
+the sibling cards print (`GLS · AST · INV · OVR · RAT · CARDS`); a `SEASON 2026/27` foot; ring-border
+ornaments matching the world card. The door brings exactly one parameter. Zero copy, zero catalogue
+keys, zero new tokens.
+
+**The doors.** Each `page.tsx` registers its card under `images` in `generateMetadata` via
+`absolute()` — the almanac pattern, one line each. `tsc --noEmit` 0; `qa-i18n-literals` initially
+flagged one literal (`THE WORLD` in the shared canvas) and the cure was printing a single token,
+not suppressing the gate; 9/9 after. `qa-share-preview` 31/31, `qa-crawl-policy` 9/9 at
+`population=75`, `qa-i18n-literals` 4,648 key calls unchanged.
+
+**Not claimed.** Rendering by eye — the browser namespace remains unavailable on this host; the
+claim stops at the gates, CI carries the build. No claim that any caller's unfurl renders before
+a deploy; no claim about `search`'s bareness except the reason above.
+
+**CI for the push** (`53cef8f`, run `43681970213`) — **all four legs success**, web / containers / services / api.
+
+## §197 — Item 63: the plane walker leaves the scratch
+
+M14's live walk was recorded as `.scratch/walk-plane.ps1` — a correct witness that
+only the producing host could re-run. The sixteen claims in §3 of the M14 document were,
+in practice, unverifiable by anyone else. This arc puts the walker in the tree.
+
+**What landed.** `services/plane-walk.ps1` — parameterised (`-Edge`, `-Core`, `-Registry`,
+`-Config`, `-OutFile`); defaults match the documented host (18080 / 8100 / 8761 / 8888);
+the witness artefact default moves to `.scratch\plane-walk.json` (untracked by design — the
+artefact is a run product, not source). All sixteen checks read from a running process:
+health-through-edge and the edge-minted trace; the supplied id echoed back; gateway
+transparency on byte-compare of `/api/v1/world/competitions`; the route table from the running
+gateway (`/edge/routes`), not the YAML; registry membership and instance status; the config
+server serving the edge's route from `classpath:/config-repo`. Exit 0 with `PLANE WALK OK 16/16`,
+or exit 1 with the per-check map printed.
+
+**Verification, honestly split.** The file parses clean under PowerShell's own language parser
+(0 parse errors). The plane is **not** booted on this host today — only the Eureka registry
+(8761) still listens; core/config/edge are down and re-booting two JVMs on a host measured at
+~506 MB free is not a witness, it's a risk. No live run is claimed. The walker is the same check
+list that printed `PLANE WALK OK 16/16` on 2026-11-09 (the witness preserved in the M14 doc);
+what changed is where it lives and that its paths are now parameters. `M14_SERVICE_PLANE.md` §3
+references the committed walker and names it the witness of record.
+
+**Not claimed.** Any result from a fresh run on this host; any symmetry between authored-YAML and
+served-config (already pinned by `test_edge_config_parity.py` on the services leg); no new service,
+no registry registration, no configuration value.
+
+**CI for the push** (`69a7264`, run `43681990858`) — **all four legs success**, web / containers / services / api. (The walker is read by no build leg; the services leg re-built the reactor from an unchanged `pom.xml`.)
+
+## §198 — Item 64: the record book asks the world fewer questions
+
+`compute_records` paid for the same two reads eight ways: `biggest_haul` and
+`goal_fest` each re-scanned the completed fixtures, and five records each re-pulled
+the full `teams` table — **14 SQL statements** per read before a single figure was
+printed. The almanac's single-pass `_league_centre` (Item 52) had stopped at the
+league door; the record book still walked the world one visitor at a time.
+
+**The cure, in the file's own idiom.** Two pushes, one shape. `_shared_context(
+session, context, *, needs_fixtures=True)` builds `{"fixtures", "teams"}` once per
+caller; every record that needs the shared reads accepts `context=` and uses it when
+supplied (`ddf7366`). The team table turned out to be shared again — one pull inside
+`_league_centre`, one in the record context — so the second push threaded the same
+dict into the centre via an additive, keyword-only seam (`e50f7cb`); every existing
+caller of `_league_centre` keeps its historic behaviour unchanged.
+
+**Measured, not guessed.** A `before_cursor_execute` counter on the seeded world
+(280 completed fixtures, 480 players, 7,280 stats rows): **14 → 8 statements** after
+both pushes. The complete JSON print of the book is **byte-identical** to the base
+revision, captured from both trees on the same seed DB. `test_world_records.py` 5/5
+passed (the suite grew one case — see below); ruff + mypy clean on the touched files.
+
+**The witness ships with the cure.** `test_the_book_asks_the_world_once` counts flat
+table scans by their table-qualified `SELECT <table>.` prefix and pins each of the
+three shapes at ≤ 1 per read: the league-scoped fixtures scan (`competition_id =`),
+the world-wide completed set, and the team-table pull. A future change that
+re-introduces a repeat scan fails this case with the scan named.
+
+**Commits & CI.** `ddf7366` — run `43682726706` — **all four legs success**.
+`e50f7cb` — run `43683918680` — web / containers / services success; api — verdict.
+
+**Not claimed.** Any PostgreSQL planner difference; any latency claim beyond the
+statement count on this host; nothing about what the record book prints.
+
+## §199 — Item 65: the story reads the world once
+
+`compute_story` paid for the world three times per read: chapter I built a league centre,
+chapter II re-scanned every completed fixture plus the whole team and competition tables on its
+own, and chapter III built a second league centre — same pick, same fixtures, same teams.
+Nine statements for three chapters of arithmetic.
+
+**The cure is Item 64's shape, applied to the narrative door.** `_world_context(session,
+context)` builds the world-wide completed-fixtures scan, the full team table and the
+competition table once per caller and threads them into `chapter_avalanche`;
+`chapter_unbeaten_run` accepts `centre=` and shares chapter I's single `_league_centre` —
+whose title race now comes from `_title_race_from`, the same function and inputs the almanac
+door serves. Standalone defaults keep every direct caller unchanged.
+
+**Measured, not guessed.** A `before_cursor_execute` counter on the seeded world (280 completed
+fixtures): **9 → 5 statements** per `compute_story`. The chapter JSON print is **byte-identical**
+to the base revision, captured from both trees on the same seed DB. `test_world_story.py` 6/6
+passed (the suite grew one case); ruff + mypy clean on the touched files.
+
+**The witness ships with the cure.** `test_the_story_asks_the_world_once` pins each duplicated
+shape at ≤ 1 flat scan per read: the league-scoped fixtures scan (`competition_id =`), the
+world-wide completed set, and the team-table pull.
+
+**Commits & CI.** `4c47286` — run `43686784954` — in flight at the time of writing; the verdict
+prints in the following ledger entry once the runner concludes, never pre-claimed here.
+
+**Not claimed.** Any PostgreSQL planner difference; any latency claim beyond the statement
+count on this host; nothing about the story's prose.

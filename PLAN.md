@@ -2836,6 +2836,64 @@ never phantom zeros — the meter is honest under both branches.
 
 **CI** — run `43680479730` — all four legs success.
 
+## Item 62 — the index doors share one canvas (landed 2026-11-15)
+
+**The gap.** `/world` got its own card (Item 61) but the seven index doors underneath it stayed
+bare — six of them indexable content doors a reader (or a link unfurl) lands on first.
+
+**What landed.** `apps/web/app/world/_og/index-card.tsx` (private shared canvas) + six thin
+`opengraph-image.tsx` wrappers over it. Wired as `images` in `pageMetadata` for six doors —
+`competitions`, `matches`, `news`, `players`, `teams`, `training` — each `absolute()` and
+1200×630. `/world/search` is deliberately bare (noindex query shell). Gates: `tsc --noEmit` 0;
+`qa-i18n-literals` 9/9 after one real literal was retired at the gate's own line (`THE WORLD`
+→ `WORLD`); `qa-share-preview` 31/31; `qa-crawl-policy` population=75.
+
+**Not claimed.** Eye-rendered elegance (the browser namespace was unavailable at the time);
+any claim about the bare `search` door beyond the reason above.
+
+**CI** — run `43681970213` — all four legs success.
+
+## Item 63 — the plane walker in the tree (landed 2026-11-15)
+
+**The gap.** M14 §3's live walk was a `.scratch` script — the sixteen claims were unverifiable
+by any other reader of the tree.
+
+**What landed.** `services/plane-walk.ps1` — the documented sixteen checks, parameterised
+(`-Edge`, `-Core`, `-Registry`, `-Config`, `-OutFile`), witness written outside the repository
+by default, exit 1 with the per-check map on any false reading. Parsed clean (PowerShell's own
+parser). No live run is claimed on this host (only the registry still listens; two JVMs were
+not booted against a ~0.5 GB-free host). `M14_SERVICE_PLANE.md` §3 names the committed walker
+as the witness of record.
+
+**CI** — run `43681990858` — all four legs success.
+
+## Item 64 — the record book reads the world once (landed 2026-11-15)
+
+**The gap.** `compute_records` re-queried the world eight ways: the completed-fixture scan
+twice, the full `teams` table five times — 14 SQL statements per read for the eight records.
+
+**What landed.** Two pushes, one shape: a shared `_shared_context` seam threaded through
+every record (`ddf7366`), then the team table threaded into the league centre itself
+(`e50f7cb`, additive keyword-only seam) plus the record book's own witness
+(`test_the_book_asks_the_world_once`). **14 → 8 statements**, measured with
+`before_cursor_execute` on the seeded world. Byte-identical JSON. `test_world_records.py` 5/5;
+ruff + mypy clean.
+
+**CI** — `ddf7366` run `43682726706`, `e50f7cb` run `43683918680` — all four legs success, both.
+
+## Item 65 — the story reads the world once (landed 2026-11-15)
+
+**The gap.** `compute_story` walked the world three times per read: chapter I's league centre,
+chapter II's unshared fixture/team/competition scans, chapter III's second league centre — nine
+statements for three chapters.
+
+**What landed.** `_world_context` threads the world-wide scans through `chapter_avalanche`;
+`chapter_unbeaten_run` shares chapter I's single `_league_centre` (`_title_race_from` on the
+same centre). **9 → 5 statements**, measured the same way. Byte-identical JSON.
+`test_world_story.py` 6/6 (one new witness case); ruff + mypy clean.
+
+**CI** — run `43686784954` (in flight at the time of writing); the verdict prints in §199.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
