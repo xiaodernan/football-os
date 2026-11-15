@@ -1,12 +1,12 @@
 {
-  "head": "b770107",
-  "total_commits": 1124,
+  "head": "0ea955f",
+  "total_commits": 1126,
   "milestone": "§211",
   "milestone_full": "§211 — the Finals land; the red order is recorded straight: one bug, five push-bound api legs",
   "pushed_at": "2026-11-16",
-  "screens": 80,
-  "assets": 192,
-  "world_doors": 17,
+  "screens": 81,
+  "assets": 193,
+  "world_doors": 18,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-15T19:10:15.603Z"
+  "generated_at": "2026-11-15T20:02:09.615Z"
 }
