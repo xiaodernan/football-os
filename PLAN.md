@@ -2892,7 +2892,23 @@ statements for three chapters.
 same centre). **9 → 5 statements**, measured the same way. Byte-identical JSON.
 `test_world_story.py` 6/6 (one new witness case); ruff + mypy clean.
 
-**CI** — run `43686784954` (in flight at the time of writing); the verdict prints in §199.
+**CI** — run `43686784954` — all four legs success.
+
+## Item 66 — WCAG 2.5.8 and the self-inking crest (landed 2026-11-15)
+
+**The gap.** A Lighthouse sweep of the public surface found two real failures —
+`target-size` on `/world/records` (inline references under 24px, and a rejected
+first fix that created overlapping boxes) and `color-contrast` on `/team/[slug]`
+(a fixed `#04140c` ink on any club colour — Braeford's brick `#93441f` at 2.77:1).
+
+**What landed.** Minimum-height targets on the records tile links, `.world-back` and
+`.nav__brand` (children keep baseline); `crestInk()`, a luminance-aware ink chosen per
+club colour by WCAG channel math. Both pages re-audited from 0.96 to **1.00**; every
+listed page reads 1.00 A/BP/SEO now. `tsc` 0; `qa-i18n-literals` 9/9; no gate silenced.
+
+**Not claimed.** Full brand-colour sweep on other engines; motion or perceived beauty.
+
+**CI** — run `43688578733` (in flight at write time); verdict in §200.
 
 ## How to work an item
 

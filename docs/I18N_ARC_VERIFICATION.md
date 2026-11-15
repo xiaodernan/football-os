@@ -7116,3 +7116,42 @@ prints in the following ledger entry once the runner concludes, never pre-claime
 
 **Not claimed.** Any PostgreSQL planner difference; any latency claim beyond the statement
 count on this host; nothing about the story's prose.
+
+## §200 — Item 66: WCAG 2.5.8, and a crest ink chosen by the colour itself
+
+*Closing §199: Item 65's CI `43686784954` — **all four legs success** (web / containers / services / api).*
+
+
+A full Lighthouse sweep of the site's public surface — `/`, `/world`, the twelve catalogue
+doors, one player, one team, one match page (three direct audits, Chromium) — found exactly
+two failures, one per rule. This arc cures both at their source.
+
+**Cure 1 — target-size on `/world/records`.** The record book's inline references printed at
+15–18px, under the WCAG 2.5.8 floor for activation targets. The first fix (padding with
+negative margins) made the now-25px boxes overlap — which axe correctly rejected; the honest
+cure is minimum-height on the boxes: `inline-flex` + `align-items: center` + `min-height: 24px`
+on `.records__tile-who a`, `.records__tile-sub a`, `.world-back`, and `min-height: 24px` on
+`.nav__brand` (global site element; children keep their baseline alignment, so the wordmark
+does not move optically).
+
+**Cure 2 — color-contrast on `/team/[slug]`.** The club crest's initials were fixed ink
+`#04140c` on whatever brand colour the club ships — Braeford Athletic's brick `#93441f` gives
+2.77:1 (needs 4.5:1). `crestInk()` now chooses the ink from the background's own relative
+luminance per WCAG channel math (hex and `rgb()/rgba()` parsing; named or unknown colours take
+light ink, the safe read on the dark panel): `#04140c` above the 0.179 luminance midpoint,
+`#f0ede6` below it. No other surface fixed ink on a data-driven background exists in the
+components; the OG cards are self-drawn with verified token pairings and unchanged.
+
+**Measured, not glanced.** `/world/records` 0.96 → **1.00**, `/team/braeford-athletic` 0.96 →
+**1.00**, verified by re-audit after the cure; every page re-audited after the change reads
+1.00 accessibility / 1.00 best-practices / 1.00 SEO. `tsc --noEmit` 0; `qa-i18n-literals` 9/9
+(no copy touched); no catalogue, gate or byte-pin was silenced to get here.
+
+**Commits & CI.** `77dd0e7` — run `43688578733` — in flight at the time of writing; the verdict
+prints in the following entry, never pre-claimed here.
+
+**Not claimed.** That every club colour in the world renders compellingly at every viewport —
+the audit covered what Chromium rendered on the seeded world, not the whole brand-colour space
+in motion; that Safari performs the audited path identically (the dev server, the audit runs
+and the runtime are Chromium); anything about paint or perceived beauty at any density. The
+gates, the audits and the build are the eyes this project has, and they read 1.00.
