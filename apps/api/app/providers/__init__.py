@@ -126,6 +126,29 @@ class MockLLMProvider:
         )
 
 
+def _http_failure_detail(exc: BaseException) -> str:
+    """One line for the log: code, reason, and a small slice of the upstream body.
+
+    A bare `HTTPError` string is `HTTP Error 403: Forbidden` with no body and no sense of what the upstream wanted to say — during 2026-11 every wkapi.pro call is answered `403 insufficient_user_quota`, and the old log collapsed all of that into a single word.
+    """
+    code = getattr(exc, "code", None)
+    reason = getattr(exc, "reason", None)
+    read = getattr(exc, "read", None)
+    try:
+        raw = read() if callable(read) else b""
+    except Exception:
+        raw = b""
+    body = raw.decode("utf-8", "replace").replace("\n", " ")[:200] if raw else ""
+    parts = [type(exc).__name__]
+    if code is not None:
+        parts.append(f"code={code}")
+    if reason:
+        parts.append(f"reason={reason}")
+    if body:
+        parts.append(f"body={body}")
+    return " ".join(parts)
+
+
 class OpenAIChatProvider:
     """Minimal, dependency-free chat completions adapter.
 
@@ -234,7 +257,7 @@ class OpenAIChatProvider:
             with urllib.request.urlopen(request, timeout=45) as response:  # noqa: S310 - fixed internal endpoint
                 raw = json.loads(response.read().decode())
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            logger.warning("openai_provider_failure %s", type(exc).__name__)
+            logger.warning("openai_provider_failure %s", _http_failure_detail(exc))
             return MockLLMProvider().complete(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
         latency = int((time.perf_counter() - started) * 1000)
         return self._result(raw, latency_ms=latency)
@@ -306,7 +329,7 @@ class OpenAIChatProvider:
                     if isinstance(event.get("usage"), dict):
                         usage = event["usage"]
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
-            logger.warning("openai_provider_stream_failure %s", type(exc).__name__)
+            logger.warning("openai_provider_stream_failure %s", _http_failure_detail(exc))
             return MockLLMProvider().complete(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
         text = "".join(chunks)
         if not text:
