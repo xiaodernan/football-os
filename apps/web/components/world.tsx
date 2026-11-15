@@ -294,10 +294,48 @@ export function WorldUnavailable({
   );
 }
 
+/**
+ * Ink on a club's brand colour, chosen by the colour's own relative luminance.
+ *
+ * The crest prints its initials in one of two inks: `#04140c` on a light brand, or
+ * `#f0ede6` on a dark one. A fixed ink could never hold on every shipped colour — a
+ * brick club like #93441f left the pairing at 2.77:1, failing WCAG; with the split,
+ * the lightest brand still reads 4.5+ against dark ink and the darkest stays legible
+ * against light ink. Named or unknown values take light ink, the safer read on a
+ * dark panel (spec: the page never relies on an injected colour being safe).
+ */
+function crestInk(background?: string): string {
+  const raw = background?.trim();
+  if (!raw) return "#f0ede6";
+  let r = -1, g = -1, b = -1;
+  const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(raw);
+  if (hex) {
+    const digits = hex[1];
+    const full = digits.length === 3 ? digits.split("").map((c) => c + c).join("") : digits;
+    r = parseInt(full.slice(0, 2), 16);
+    g = parseInt(full.slice(2, 4), 16);
+    b = parseInt(full.slice(4, 6), 16);
+  } else {
+    const rgb = /rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i.exec(raw);
+    if (rgb) {
+      r = Number(rgb[1]);
+      g = Number(rgb[2]);
+      b = Number(rgb[3]);
+    }
+  }
+  if (r < 0) return "#f0ede6";
+  const chan = (v: number) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const luminance = 0.2126 * chan(r) + 0.7152 * chan(g) + 0.0722 * chan(b);
+  return luminance >= 0.179 ? "#04140c" : "#f0ede6";
+}
+
 /** Initials on the club's own colour. No crest, badge or logo image is reproduced (spec §61). */
 export function Crest({ color, name }: { color?: string; name: string }) {
   return (
-    <span aria-hidden="true" className="world-crest" style={color ? { background: color } : undefined}>
+    <span aria-hidden="true" className="world-crest" style={{ background: color, color: crestInk(color) }}>
       {name.slice(0, 2).toUpperCase()}
     </span>
   );

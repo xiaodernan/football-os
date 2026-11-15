@@ -1,7 +1,7 @@
 /* Football World (M3). Class prefix `.world-`; everything else comes from styles/globals.css.
    These pages are public and crawlable, so layout must hold at 375px without client JS. */
 
-.world-back { display: inline-block; font-size: 0.85rem; }
+.world-back { display: inline-flex; align-items: center; font-size: 0.85rem; min-height: 24px; padding-block: 2px; margin-block: -2px; }
 /* The back arrow is directional: it points at the page behind, which in a right-to-left locale is
    the opposite way. The glyph is chosen per direction rather than flipped, so a screen reader and
    a bidi algorithm both read one unambiguous marker. */
@@ -79,7 +79,7 @@
 
 .world-crest {
   display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px;
-  font-weight: 800; font-size: 0.85rem; color: #04140c; flex: none; letter-spacing: 0.02em;
+  font-weight: 800; font-size: 0.85rem; color: #f0ede6; flex: none; letter-spacing: 0.02em;
 }
 
 .world-pos {

@@ -59,12 +59,24 @@
   border-top: 1px solid var(--line-soft);
   font-size: 0.85rem;
 }
-.records__tile-who a { font-weight: 650; }
+/* Touch targets stay >= 24px even inside the tile's small type: the hit area is a
+   padded box around the glyphs; the visual rhythm of the tile does not move. */
+.records__tile-who a {
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
 .records__tile-sub {
   display: block;
   font-size: 0.72rem;
   color: var(--text-2);
   margin-top: 0.1rem;
+}
+.records__tile-sub a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
 }
 
 .records__chip-row { margin-block: 0.1rem 0; }
