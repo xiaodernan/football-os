@@ -122,7 +122,7 @@ export default async function MyFootballPage() {
             </span>
             <span className="mono">{td("pctToNext", { pct: xpPct })}</span>
           </div>
-          <div className="bar" role="progressbar" aria-valuenow={xpPct} aria-valuemin={0} aria-valuemax={100}>
+          <div className="bar" role="progressbar" aria-valuenow={xpPct} aria-valuemin={0} aria-valuemax={100} aria-label={td("pctToNext", { pct: xpPct })}>
             <div className="bar__fill" style={{ width: `${xpPct}%` }} />
           </div>
         </div>

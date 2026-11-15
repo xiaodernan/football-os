@@ -161,7 +161,7 @@ export function PostComposer({caps, profile}: {caps: CommunityCaps; profile: Com
         </label>
       )}
 
-      <button aria-label={t("ariaPublishPost")} className="btn" data-testid="community-publish" disabled={busy !== null || room <= 0} onClick={publish} type="button">
+      <button className="btn" data-testid="community-publish" disabled={busy !== null || room <= 0} onClick={publish} type="button">
         {busy === "publish" ? t("publishing") : t("publish", { room, max: caps.post_max })}
       </button>
       {room <= 0 && <p className="notice notice--warn" data-testid="community-post-ceiling">{t("ceiling", { max: caps.post_max })}</p>}

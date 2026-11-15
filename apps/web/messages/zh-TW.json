@@ -2091,7 +2091,6 @@
     "ariaPostKind": "貼文類別",
     "ariaPostPointerTail": "貼文指標後綴",
     "ariaPostVisibility": "貼文可見性",
-    "ariaPublishPost": "發佈貼文",
     "ariaRepliesOn": "貼文 {snippet} 的回覆",
     "ariaReplyOn": "回覆貼文 {snippet}",
     "ariaRepostPost": "轉發貼文 {snippet}",
