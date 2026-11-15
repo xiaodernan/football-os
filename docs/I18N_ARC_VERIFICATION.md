@@ -7543,7 +7543,7 @@ plane was re-walked (memory still forbids it); that the sample minimums in the s
 (≥ 10 appearances / ≥ 600 minutes / ≥ 300 minutes) will hold as the world ages; anything the runner
 did not print.
 
-## Item 73 — the world's timeline: the season matchday by matchday (landed 2026-11-15)
+## §209 — Item 73: the world's timeline reaches the tree (all four legs green)
 
 **The gap.** The world could name its champions (the almanac), tell its season in three chapters
 (the story), keep its marks (the record book), name the week's faces (the spotlight) — but the
