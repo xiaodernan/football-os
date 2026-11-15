@@ -18,18 +18,28 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Competition, RealMatch, Team
-from app.services.world.almanac import _title_race, _top_league
+from app.services.world.almanac import _league_centre, _title_race_from
 
 STORY_CHAPTER_KEYS = ("title_race", "avalanche", "unbeaten_run")
 
 
-def chapter_avalanche(session: Session) -> dict[str, Any]:
+def _world_context(session: Session, context: dict[str, Any] | None) -> tuple[list[RealMatch], dict[str, Team], dict[str, Competition]]:
+    """The world-wide reads the avalanche chapter wants, built once per caller.
+
+    `compute_story` builds this once and threads it; direct callers keep the
+    historic standalone behaviour — identical SQL shape, identical answer.
+    """
+    if context is not None:
+        return context["fixtures"], context["teams"], context["competitions"]
+    fixtures = list(session.scalars(select(RealMatch).where(RealMatch.status == "completed")).all())
+    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    competitions = {c.id: c for c in session.scalars(select(Competition)).all()}
+    return fixtures, teams, competitions
+
+
+def chapter_avalanche(session: Session, context: dict[str, Any] | None = None) -> dict[str, Any]:
     """The biggest margin any completed fixture produced — all competitions, cup and league alike."""
-    fixtures = list(
-        session.scalars(
-            select(RealMatch).where(RealMatch.status == "completed")
-        ).all()
-    )
+    fixtures, teams, competitions = _world_context(session, context)
     scored: list[RealMatch] = [
         f for f in fixtures if f.home_goals is not None and f.away_goals is not None
     ]
@@ -40,8 +50,6 @@ def chapter_avalanche(session: Session) -> dict[str, Any]:
         return abs((fixture.home_goals or 0) - (fixture.away_goals or 0))
 
     biggest = max(scored, key=lambda f: (goal_margin(f), max(f.home_goals or 0, f.away_goals or 0)))
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
-    competitions = {c.id: c for c in session.scalars(select(Competition)).all()}
     home = teams.get(biggest.home_team_id)
     away = teams.get(biggest.away_team_id)
     competition = competitions.get(biggest.competition_id) if biggest.competition_id else None
@@ -79,24 +87,24 @@ def chapter_avalanche(session: Session) -> dict[str, Any]:
     }
 
 
-def chapter_unbeaten_run(session: Session) -> dict[str, Any]:
-    """The longest unbeaten streak of the league season (wins + draws, reset by each defeat)."""
-    league = _top_league(session)
-    if league is None:
+def chapter_unbeaten_run(session: Session, *, centre: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The longest unbeaten streak of the league season (wins + draws, reset by each defeat).
+
+    A caller that already walked the league centre passes it in — the fixtures and teams are
+    the same rows, read once — so the story never opens a second league transaction for this
+    chapter. Without the argument the chapter builds its standalone centre, as it always did.
+    """
+    if centre is None:
+        centre = _league_centre(session)
+    if not centre.get("available"):
         return {"key": "unbeaten_run", "available": False}
 
-    fixtures = list(
-        session.scalars(
-            select(RealMatch)
-            .where(RealMatch.competition_id == league.id, RealMatch.status == "completed")
-            .order_by(RealMatch.kickoff_at.asc())
-        ).all()
-    )
+    fixtures = centre["fixtures"]
     scored = [f for f in fixtures if f.home_goals is not None and f.away_goals is not None]
     if not scored:
         return {"key": "unbeaten_run", "available": False}
 
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    teams = centre["teams"]
     unbeaten: dict[str, int] = {}
     best: dict[str, int] = {}
     for fixture in scored:
@@ -131,8 +139,8 @@ def chapter_unbeaten_run(session: Session) -> dict[str, Any]:
     return {
         "key": "unbeaten_run",
         "available": True,
-        "competition": league.name,
-        "competition_slug": league.slug,
+        "competition": centre["competition"],
+        "competition_slug": centre["competition_slug"],
         "team": {
             "id": team_id,
             "slug": team.slug if team else None,
@@ -145,16 +153,29 @@ def chapter_unbeaten_run(session: Session) -> dict[str, Any]:
 
 
 def compute_story(session: Session) -> dict[str, Any]:
-    """The whole story in deterministic chapter order."""
-    title_race = _title_race(session)
+    """The whole story in deterministic chapter order.
+
+    The world's shared rows (the full team table, the completed fixtures) are pulled once per
+    call and threaded through the chapters; the league centre is built once and shared between
+    chapter I and chapter III, so the streak never re-walks the league this chapter I already
+    walked. The chapters keep their standalone defaults for direct callers.
+    """
+    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    centre = _league_centre(session, teams=teams)
+
+    title_race = _title_race_from(centre)
     if title_race.get("available"):
         chapter_one = {"key": "title_race", **title_race}
     else:
         chapter_one = {"key": "title_race", "available": False}
 
+    competitions = {c.id: c for c in session.scalars(select(Competition)).all()}
+    fixtures = list(session.scalars(select(RealMatch).where(RealMatch.status == "completed")).all())
+    avalanche_context = {"fixtures": fixtures, "teams": teams, "competitions": competitions}
+
     return {
         "season": {"label": "2026/27", "kind": "7:3"},
-        "chapters": [chapter_one, chapter_avalanche(session), chapter_unbeaten_run(session)],
+        "chapters": [chapter_one, chapter_avalanche(session, avalanche_context), chapter_unbeaten_run(session, centre=centre)],
     }
 
 

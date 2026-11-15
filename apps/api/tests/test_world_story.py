@@ -8,11 +8,13 @@ and chapter I can never disagree with the door next to it.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterator
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import event, select
 
+from app.core import db as db_module
 from app.core.db import SessionLocal
 from app.models import RealMatch
 from app.services.world import sync_world
@@ -81,3 +83,36 @@ class TestTheStory:
         assert body["is_demo_data"] is True
         assert body["disclaimer"]
         assert set(body) >= {"chapters", "season"}
+
+    def test_the_story_asks_the_world_once(self, session) -> None:  # type: ignore[no-untyped-def]
+        """Pin the hot path's read shape — the same discipline the record book witnesses.
+
+        The arc cut `compute_story` from nine statements to five: the league centre is
+        built once and shared between chapter I and chapter III, and the world-wide
+        completed scan and the full team table are threaded through the chapters. This
+        case counts flat table scans by their table-qualified `SELECT <table>.` prefix
+        and pins each duplicated shape at ≤ 1 per read. Joins against the same tables
+        from the chapters' aggregate queries do not inflate the count.
+        """
+        counts = {"league": 0, "completed": 0, "teams": 0}
+
+        def before(conn, clauseelement, statement, parameters, context, executemany):  # type: ignore[no-untyped-def]
+            text = " ".join(statement.split())
+            if re.match(r"^SELECT\s+real_matches\.", text):
+                # `field =`, not the bare column — every flat scan of this table projects `competition_id`
+                if "competition_id =" in text:
+                    counts["league"] += 1
+                else:
+                    counts["completed"] += 1
+            elif re.match(r"^SELECT\s+teams\.", text) and "FROM teams" in text:
+                counts["teams"] += 1
+
+        engine = db_module.engine
+        event.listen(engine, "before_cursor_execute", before)
+        try:
+            compute_story(session)
+        finally:
+            event.remove(engine, "before_cursor_execute", before)
+        assert counts["league"] <= 1, f"the league-scoped fixtures scan ran {counts['league']} times"
+        assert counts["completed"] <= 1, f"the completed-fixtures scan ran {counts['completed']} times"
+        assert counts["teams"] <= 1, f"the teams table was pulled {counts['teams']} times"
