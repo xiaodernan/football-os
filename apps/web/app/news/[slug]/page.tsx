@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : t("metaDescriptionFallback"),
     path: `/news/${slug}`,
     type: "article",
+    images: [{ url: absolute(`/news/${slug}/opengraph-image`), width: 1200, height: 630, alt: "FOOTBALL OS" }],
   });
 }
 
