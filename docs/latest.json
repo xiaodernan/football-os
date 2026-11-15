@@ -1,9 +1,9 @@
 {
-  "head": "a0ca289",
-  "total_commits": 1106,
-  "milestone": "§207",
-  "milestone_full": "§207 — Item 72: the world's spotlight — the three things the world cannot hide",
-  "pushed_at": "2026-11-15",
+  "head": "ff9703f",
+  "total_commits": 1108,
+  "milestone": "§208",
+  "milestone_full": "§208 — the spotlight arc closes: every red named, the green cures, and the fact pack that ended it",
+  "pushed_at": "2026-11-16",
   "screens": 77,
   "assets": 189,
   "world_doors": 14,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-15T15:43:34.314Z"
+  "generated_at": "2026-11-15T16:25:08.367Z"
 }
