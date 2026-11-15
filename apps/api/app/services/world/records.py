@@ -307,13 +307,14 @@ def compute_records(session: Session) -> dict[str, Any]:
     """Every record in the book, computed from the world's own rows — one league centre.
 
     The shared reads (the completed-fixture scan, the full team table) are built once and
-    threaded through the record functions so the book never repeats them; the record
-    functions keep their standalone defaults for direct callers.
+    threaded through the record functions so the book never repeats them; the team table
+    is threaded into the league centre as well, so the request pulls it exactly once.
+    The record functions keep their standalone defaults for direct callers.
     """
-    centre = _league_centre(session)
     fixtures = _completed(session)
     teams = {team.id: team for team in session.scalars(select(Team)).all()}
     context = {"fixtures": fixtures, "teams": teams}
+    centre = _league_centre(session, teams=teams)
     return {
         "season": {"label": "2026/27", "kind": "7:3"},
         "records": [

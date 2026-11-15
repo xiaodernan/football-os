@@ -84,12 +84,15 @@ def _top_league(session: Session) -> Competition | None:
     )
 
 
-def _league_centre(session: Session) -> dict[str, Any]:
+def _league_centre(session: Session, *, teams: dict[str, Team] | None = None) -> dict[str, Any]:
     """One tier-1 centre: the league, its completed fixtures, teams and aggregated table.
 
     Everything the almanac prints about the table is pulled from this one call — the manager
     block and the title race used to each re-walk every completed fixture per request. The
     centre is the single-pass answer: one fetch, one walk, two readers.
+
+    `teams` may be handed in by a caller that already pulled the full table (the record book
+    does exactly one pull and shares it); omitting it preserves the historic standalone behaviour.
     """
     league = _top_league(session)
     if league is None:
@@ -102,7 +105,8 @@ def _league_centre(session: Session) -> dict[str, Any]:
             .order_by(RealMatch.kickoff_at.asc())
         ).all()
     )
-    teams = {team.id: team for team in session.scalars(select(Team)).all()}
+    if teams is None:
+        teams = {team.id: team for team in session.scalars(select(Team)).all()}
     table: dict[str, dict[str, Any]] = {}
     for fixture in fixtures:
         if fixture.home_goals is None or fixture.away_goals is None:
