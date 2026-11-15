@@ -7605,3 +7605,41 @@ the mistake; `6ea9c44` is the record master prints.
 **Not claimed.** Any figure the runner did not print; the two matchday-1 `game N` slots mean
 nothing beyond the seed's choices; the sample in the timeline chips will not hold as the world
 ages.
+
+## §210 — two arcs close: the Gazette (Item 74) and the manual deepens (Item 75)
+
+This window landed two doors on master and keeps the runner's ordering honest: at the time of
+writing, the CI for the two arcs is in flight — `43744262009` (the Gazette, `4faad74`), `43744307908`
+(the Gazette's fact-pack refresh), `43744789936` (the manual, `a19ebe9`) — the prior §209 batch
+`43742353625` printed all four legs success on its push, `43742544778` (the README-and-latest
+refresh `4be199e`) is in flight. Nothing here pre-claims those verdicts; when they print, they
+will be recorded verbatim below.
+
+**The shape of the window, honestly told.**
+
+- Item 74 went in as a full arc — new service folder module (`gazette.py`), new door, new page, new
+  OG card, new CSS family, new namespace ×6 locales (4,744 uniform), the world-page browse tile,
+  sitemap at 79, the module-table census (17 doors), the contract regenerated (238 paths) and
+  re-pinned, the probe re-pinned (± public: 63 → 64), and a fact pack refresh (1,115 commits at
+  `fba3ccf`). Ships as `4faad74`.
+- Item 75 went in as a small arc — the manual's curated tour grows to eleven doors ×6 locales
+  (4,750 uniform), README re-measured (4,703 / 4,499 fr), as `a19ebe9` + fact pack `6cb0231`
+  (which ALSO fixed the fact-pack message-file mistake — the `ed57dc7` commit carried a stale
+  message ("a0ca289 §207") over the §209 heartbeat; the mistake was caught by me before push, the
+  amend landed under `6cb0231`, and §209's ledger records the `9efe863` generation of the same
+  class of error for completeness).
+- The stale-message lesson this session turned into a rule I run by: every commit message lives in
+  its own fresh file under `.scratch/`, never a shared reuse of an old one.
+- Live walk of the Gazette door against a local API at `127.0.0.1:8797` printed `edition 14 of 14`
+  (hot hand `dunstead-naval 4`, Ostmoor Albion victorious on the tiebreak), edition 1's snapshot,
+  the `?edition=999` 422 (`edition_out_of_range`) and the `?edition=0` framework 422 — what the
+  catalogues have been saying all along, seen over HTTP.
+
+**What this arc does not claim.** Anything the gates don't print; any figure at the kickoff that
+the runner has not yet printed (the three in-flight runs above print at their own hour, and when
+they do, §211 records exactly what they say); the wall-clock hold on the runner's queue.
+
+**Commits named.** `8e353e2` (Item 73 timeline), `4faad74` (Item 74), `fba3ccf` (fact pack),
+`a19ebe9` (Item 75), `6cb0231` (fact pack corrected). The Gazette ships with its tests reading
+133 passed on SQLite fallback; the manual holds no invented claims; the README's figures are
+re-measured at every arc and printed above, no rounder than the table shows.

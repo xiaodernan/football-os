@@ -3082,6 +3082,70 @@ defect before the runner ever saw one.
 **Not claimed.** Any figure the gates don't print; the two `game N` slots mean nothing beyond the
 seed's choices.
 
+## Item 74 — the Gazette: the season's paper of record (landed 2026-11-15)
+
+**The gap.** The world could name its champions, tell three chapters, keep its marks and print the
+season's diary matchday by matchday — but nobody had folded the rows into a publication. The
+season has a diary; the diary needed a newsstand.
+
+**What landed.** `app/services/world/gazette.py` — `compute_gazette(edition)`: the tier-1 league's
+completed fixtures grouped by matchday (the timeline's `Matchday N` grammar), walked for the named
+edition — the running table after that round (almanac tie-break), the loudest match (by total
+goals), the hot hand (the club that scored most in the round), and the standing numbers (goals,
+draws, shutouts, the season's per-matchday average). `GET /api/v1/world/gazette` (latest edition
+or `?edition=N`), public/anonymous/60-min, seeded envelope; an out-of-range edition is a 422
+(`edition_out_of_range`), never an invented dateline; framework bound `le=1000` guards the door.
+Page `/world/gazette` — the league's two-line masthead rule, one lead story (the loudest fixture,
+linked), the table, the results in order, the hot hand, the number that matters; server-rendered;
+sitemap, browse tile added, census 78 → 79; `?edition=N` navigation; OG card digits-only
+(force-static); `/world/*` page census (17).
+
+**The catalogues.** `worldGazette` ×6 locales, fully authored per-language; population 4,744
+everywhere; the README re-measured (4,697 ×4 / 4,493 fr). The gates found and cured seven of their
+own: `qa-locale-tokens` demanded a byte-identical sentence held under `tableTeamHead` and two
+siblings to stay byte-identical everywhere (ar kept the sibling word; en was reworded to "Side"
+then "Entrant" when "Side" and "Club" each shared a sibling sentence); `qa-key-drift` printed 116 →
+114 → 112 — the ceiling stands at exactly 112: the shared sentences `The Archive`/`Pts`/`Club` were
+reworded to "Back Issues"/"Pts banked"/"Entrant"; Arabic trailing Latin stops were stripped;
+`qa-crawl-policy` population 79; `qa-metadata-title` population 79.
+
+**Census and probes.** `AUDIT_FIGURES contract_paths=238 page_routes=79 migrations=65`; module-table
+row 4 names `gazette`; `docs/api/openapi.json` regenerated (238 paths); probe census re-pinned at
+**241 / 64 / 104** (public +1), SHA-256 `5350d1a0…` pinned in the report, M12 and ROADMAP;
+ROADMAP quotes `(238 contract paths, 79 page`.
+
+**Tests.** `test_world_gazette.py`: 8/8 — latest edition is the most complete matchday; an edition
+reads the table at its own date (no drift); the loudest fixture matches the edition's goal tally;
+hot hand is the biggest scorer; out-of-range refused; 422 envelope grammar; framework bounds;
+the `world/gazette/?edition=999` route enforces the 422 with `edition_out_of_range`. 133 world-suite
+tests pass on SQLite fallback; 25/25 currency trio. Live walk against a local API: `?edition=1`,
+`?edition=14`, out-of-range and zero editions all answered as printed.
+
+**Honesty note.** Live HTTP walk printed `edition 14 of 14`, hot hand `dunstead-naval 4`, Ostmoor
+Albion champions on goal difference; the edition 1 snapshot: `braewick-athletic` first look, 6 goals
+on 2026-08-10.
+
+**CI** — run `43744262009` — in flight at the time of writing; the verdicts print in §210.
+
+**Not claimed.** Anything the gates don't print; the Gazette covers the tier-1 league only, deliberately.
+
+## Item 75 — the manual gains the world's three newest doors (landed 2026-11-15)
+
+**The gap.** The concise manual held eight doors; the world's three newest — spotlight, timeline,
+Gazette — were absent from the stranger's first walk.
+
+**What landed.** `/manual`'s tour consolidates eleven doors ×6 locales — spotlight (three
+recognitions recomputed live), timeline (the season matchday by matchday) and Gazette (the paper of
+record) join the curated stranger's path; population 4,744 → 4,750 uniform; README re-measured
+(4,703 ×4 / 4,499 fr); `qa-icu-messages` 2/2 at 4,750; unused keys stayed clean. The manual holds
+no invented claims — every door it opens exists on master. The catalogue table's identical-to-en
+figures held at 47/251 throughout.
+
+**CI** — run `43744789936` — in flight at the time of writing; the verdicts print in §210.
+
+**Not claimed.** That the tour is final; every gate that prints a green number is one stranger
+from printing it in the reader's language.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
