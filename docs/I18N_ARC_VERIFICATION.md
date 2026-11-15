@@ -7374,8 +7374,9 @@ identical 47 ×4 / 251 fr); `qa-crawl-policy` population=76; tsc clean; zero con
 Lighthouse 1.00 on accessibility/best-practices/SEO. The manual is linked in every page's footer
 beside the disclaimers — it is the one link in the footer that leads inward.
 
-**CI** — `8e8ecec` — run `43715520856` — in flight at the time of writing; the verdict prints in
-the following entry once the runner concludes, never pre-claimed.
+**CI** — `8e8ecec` — run `43715520856` — **web red at step 34** (`qa-namespace-ownership`:
+`FAIL every namespace has a declared owner — missing: manual`); services/containers/api legs otherwise green. The cure `cd4731d` added the `manual` namespace to the ownership map (owner `core`, one-line purpose) and the gate re-ran green locally (51 namespaces all owned).
+`cd4731d` — run `43716401568` — **all four legs success**. The two reds this arc produced are named here because they are the arc: a namespace without an owner is invisible to the roadmap, and this project holds that with a gate, not a promise.
 
 **Not claimed.** That every reader ultimately understands this product (the page is one reader's
 account, read once); anything that requires the `workflow` scope or another credential this machine

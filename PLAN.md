@@ -2995,7 +2995,7 @@ RTL properties pass the gates; population pinned 75 → 76.
 `qa-locale-tokens` 7/7 at the new figures; `qa-crawl-policy` population=76); Lighthouse 1.00/1.00/1.00;
 Chinese render walks clean, English render walks clean.
 
-**CI** — `8e8ecec`, run `43715520856` —
+**CI** — `8e8ecec` run `43715520856` (web red at step 34 — `qa-namespace-ownership`, missing `manual`); cure `cd4731d` — run `43716401568` — **all four legs success**.
 
 ## How to work an item
 
