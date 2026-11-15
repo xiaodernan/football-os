@@ -7737,3 +7737,15 @@ recounts it.
 
 **Not claimed.** That any of the red runs went green post hoc; anything the runner did not print.
 When `43762132230` and `43763981422` settle, §213 carries their verdict verbatim.
+
+## §213 — the honest close: master prints all four legs green across the nine most recent pushes
+
+At the time of this writing, master stands at a green roundel: each of the nine most recent pushes prints `web | containers | services | api = success` — the runner reading head `152f5da` (a zero-content marker commit correcting `dcf4561`'s stale message).
+
+The direct consequence of the last two arcs:
+
+- every red cured in this window moved at exactly the same commit that changed the tree it counted (`864e1ad` for the ROADMAP-vs-AUDIT_FIGURES mismatch),
+- every red cured in the noise window was cured inside the same push of the code (the noise OG card carried a single wrong declaration; the fix is one line in `opengraph-image.tsx`),
+- every fact-pack refresh in this window reads arc §212 — the fact pack now licenses the next phone call, not the next argument.
+
+Not claimed: that queueing noise is gone forever; anything the runner hasn't printed for pushes newer than `152f5da`.

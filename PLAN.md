@@ -3228,6 +3228,14 @@ success. `43762111313` (roadmap figure): all four success.
 
 **Not claimed.** That any of this changes the seed. The noise floor stays wherever the seed put it.
 
+## Item 80 — the quiet closes: all four legs green across the nine most recent pushes (landed 2026-11-16)
+
+**The gap.** After Item 78/79, master was at a working head but the pipeline was noisy: several reds in flight while fixes landed, red class cures scattered across the last handful of pushes.
+
+**What the runner printed.** At the time of writing, every one of the nine most recent pushes on master prints `services=success | web=success | containers=success | api=success`. The reds that did happen — the fixture-index push (`43759715752`, cured at `864e1ad`) and the noise OG card (`43755728263` / `43755760246`, cured at `2e9c297`) — were cured in the commit that changed the tree they counted, never re-pinned.
+
+**Not claimed.** Anything the runner hasn't printed; the noise-arc class is recorded verbatim in §212.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
