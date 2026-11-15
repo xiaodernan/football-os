@@ -30,7 +30,9 @@ from app.services.club import announcements as ann
 from tests.test_club_academy import _detail, _joined, world  # noqa: F401 — the world §40 seeds, so every club file reads one generated world
 
 CLUB = "/api/v1/club"
-TODAY = utc_today().isoformat()
+def _today() -> str:
+    """The door reads `utc_today()` at request time — compute per call, not once at import. A run crossing midnight must not assert against yesterday's day."""
+    return utc_today().isoformat()
 
 
 def _account(name: str) -> TestClient:
@@ -91,7 +93,7 @@ def _seed(session: Session, organization_id: str, *, count: int, audience: str =
                 body="",
                 author_role="owner",
                 pinned=pinned,
-                published_on=TODAY,
+                published_on=_today(),
             )
         )
     session.commit()
@@ -105,7 +107,7 @@ class TestAnAudienceIsAPredicate:
         assert body["limit"] == ann.MAX_ANNOUNCEMENTS_PER_ORGANIZATION
         assert body["announcements_held"] == 0
         assert body["pinned_by_audience"] == {name: 0 for name in ann.AUDIENCES}
-        assert body["read_through"] == "announce.read" and body["today"] == TODAY
+        assert body["read_through"] == "announce.read" and body["today"] == _today()
 
     def test_a_notice_selects_its_readers_from_the_roster_and_stores_nobody(self, session: Session) -> None:
         owner, ident = _tenant("Roster Selected")
@@ -229,7 +231,7 @@ class TestAReceiptIsAFact:
         assert second["recorded_now"] is False and second["receipt"] == "already recorded"
         assert second["announcement"]["read_by"] == 1, "a receipt re-marked must not count twice"
         rows = list(session.scalars(select(ClubAnnouncementRead).where(ClubAnnouncementRead.announcement_id == notice)))
-        assert len(rows) == 1 and rows[0].read_on == TODAY
+        assert len(rows) == 1 and rows[0].read_on == _today()
         # And the row the *author* reads is their own: an author is an audience member who has not read it.
         mine = _board(owner, ident).json()["items"][0]
         assert mine["read_by"] == 1 and mine["unread"] == 1 and mine["read"] is False

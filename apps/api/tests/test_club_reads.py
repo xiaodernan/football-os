@@ -40,7 +40,11 @@ CLUB = "/api/v1/club"
 ACADEMY = f"{CLUB}/academy"
 PASSWORD = "strong-pass-1234"
 FULL_RATINGS = {"technique": 61, "tactics": 40, "physical": 55, "mental": 70, "competition_readiness": 33}
-TODAY = datetime.datetime.now(datetime.UTC).date()
+
+
+def _today() -> datetime.date:
+    """Compute per call — a run crossing midnight must not stay pinned to yesterday's date."""
+    return datetime.datetime.now(datetime.UTC).date()
 
 #: The tables a batched read may name once per call, and the ceiling on total statements. Both are budgets
 #: rather than exact figures for the whole call: a future read that adds one more grouped query still passes,
@@ -102,7 +106,7 @@ def tenant(world: dict[str, Any]) -> dict[str, Any]:
         assert plan.status_code == 200, plan.text
         plan_ids.append(str(plan.json()["plan"]["id"]))
         for days in (60, 30):
-            day = (TODAY - datetime.timedelta(days=days)).isoformat()
+            day = (_today() - datetime.timedelta(days=days)).isoformat()
             review = owner.post(f"{ACADEMY}/{ident}/plans/{plan_ids[-1]}/assessments", json={"assessed_on": day, "ratings": FULL_RATINGS})
             assert review.status_code == 200, review.text
     guardian = _account("Reads Guardian")

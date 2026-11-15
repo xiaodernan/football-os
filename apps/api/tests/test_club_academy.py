@@ -61,9 +61,13 @@ CLUB = "/api/v1/club"
 ACADEMY = f"{CLUB}/academy"
 CAPABILITIES = f"{ACADEMY}/capabilities"
 PASSWORD = "strong-pass-1234"
-TODAY = datetime.datetime.now(datetime.UTC).date()  # the service reads `datetime.now(UTC).date()`; a local `date.today()` on a UTC+8 host is a day off
+def _today() -> datetime.date:
+    """The service reads `datetime.now(UTC).date()`; a local read would disagree for the hours a local-ahead host sits behind UTC. Computed per call — a run that crosses midnight must not keep yesterday's TODAY pinned at import."""
+    return datetime.datetime.now(datetime.UTC).date()
+
+
 #: Dates inside the season a test writes about, all of them in the past so `date_in_future` cannot fire by accident.
-PAST = [(TODAY - datetime.timedelta(days=days)).isoformat() for days in (120, 90, 60, 30, 7)]
+PAST = [(_today() - datetime.timedelta(days=days)).isoformat() for days in (120, 90, 60, 30, 7)]
 FULL_RATINGS = {"technique": 61, "tactics": 40, "physical": 55, "mental": 70, "competition_readiness": 33}
 #: The two files the cross-plane gate below reads: the handler that composes the published `counts`, and the type
 #: the browser imports for it. Named by path so a rename reddens the gate instead of grading an empty set.
@@ -1103,9 +1107,9 @@ class TestProgressIsArithmetic:
         refused = owner.post(f"{ACADEMY}/{ident}/plans/{plan}/assessments", json={"assessed_on": PAST[0], "ratings": FULL_RATINGS})
         assert refused.status_code == 422 and _detail(refused)["code"] == "date_before_plan"
         assert _detail(refused)["newest"] == PAST[1] and _detail(refused)["assessments"] == 1
-        future = (TODAY + datetime.timedelta(days=3)).isoformat()
+        future = (_today() + datetime.timedelta(days=3)).isoformat()
         ahead = owner.post(f"{ACADEMY}/{ident}/plans/{plan}/assessments", json={"assessed_on": future, "ratings": FULL_RATINGS})
-        assert _detail(ahead)["code"] == "date_in_future" and _detail(ahead)["today"] == TODAY.isoformat()
+        assert _detail(ahead)["code"] == "date_in_future" and _detail(ahead)["today"] == _today().isoformat()
         shaped = owner.post(f"{ACADEMY}/{ident}/plans/{plan}/assessments", json={"assessed_on": "last tuesday", "ratings": FULL_RATINGS})
         assert _detail(shaped)["code"] == "date_shape" and _detail(shaped)["expected"] == "YYYY-MM-DD"
         impossible = owner.post(f"{ACADEMY}/{ident}/plans/{plan}/assessments", json={"assessed_on": "2026-13-40", "ratings": FULL_RATINGS})
@@ -1125,7 +1129,7 @@ class TestProgressIsArithmetic:
                     PlanAssessment(
                         id=new_public_id("pas"),
                         plan_id=plan_id,
-                        assessed_on=(TODAY - datetime.timedelta(days=edu.MAX_ASSESSMENTS_PER_PLAN + 2 - index)).isoformat(),
+                        assessed_on=(_today() - datetime.timedelta(days=edu.MAX_ASSESSMENTS_PER_PLAN + 2 - index)).isoformat(),
                         ratings=dict(FULL_RATINGS),
                         created_at=datetime.datetime.now(datetime.UTC),
                         updated_at=datetime.datetime.now(datetime.UTC),
@@ -1134,7 +1138,7 @@ class TestProgressIsArithmetic:
                 ]
             )
             session.commit()
-            refused = owner.post(f"{ACADEMY}/{ident}/plans/{plan_id}/assessments", json={"assessed_on": TODAY.isoformat(), "ratings": FULL_RATINGS})
+            refused = owner.post(f"{ACADEMY}/{ident}/plans/{plan_id}/assessments", json={"assessed_on": _today().isoformat(), "ratings": FULL_RATINGS})
             assert refused.status_code == 422 and _detail(refused)["code"] == "assessment_limit"
             assert _detail(refused)["held"] == edu.MAX_ASSESSMENTS_PER_PLAN
         finally:
@@ -1635,7 +1639,7 @@ class TestTheAcademyIntegrityGate:
             row = session.get(PlanAssessment, review["id"])
             assert row is not None
             row.ratings = {"technique": 140, "aggression": 60}
-            row.assessed_on = (TODAY + datetime.timedelta(days=30)).isoformat()
+            row.assessed_on = (_today() + datetime.timedelta(days=30)).isoformat()
             session.commit()
             problems = _read(owner, ident, plan)["integrity"]["problems"]
             assert any("rated 'aggression', which is not one of the published axes" in problem for problem in problems), problems

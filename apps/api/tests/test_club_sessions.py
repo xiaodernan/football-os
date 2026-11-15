@@ -29,11 +29,17 @@ from tests.test_club_academy import _detail, _validation, world  # noqa: F401 �
 CLUB = "/api/v1/club"  # the same door prefix §39 and §40 test through
 
 ACADEMY = f"{CLUB}/academy"
-# The app's own day, not the host's: the door these constants probe answers from `utc_today()`, and a test that
-# read `date.today()` would disagree with the code under test for the hours a local-ahead host sits behind UTC.
-YESTERDAY = (utc_today() - timedelta(days=1)).isoformat()
-TODAY = utc_today().isoformat()
-TOMORROW = (utc_today() + timedelta(days=1)).isoformat()
+# Computed per call — a run that crosses midnight must not assert against yesterday's day.
+def _today() -> str:
+    return utc_today().isoformat()
+
+
+def _yesterday() -> str:
+    return (utc_today() - timedelta(days=1)).isoformat()
+
+
+def _tomorrow() -> str:
+    return (utc_today() + timedelta(days=1)).isoformat()
 
 
 def _account(name: str) -> TestClient:
@@ -85,7 +91,7 @@ def _pick(session: Session, *, minor: bool, count: int = 2) -> list[RealPlayer]:
 
 
 def _post(client: TestClient, ident: str, **body: Any) -> Any:
-    payload = {"team": "Under 16s", "scheduled_on": YESTERDAY, "duration_min": 90, "rpe": 6, **body}
+    payload = {"team": "Under 16s", "scheduled_on": _yesterday(), "duration_min": 90, "rpe": 6, **body}
     return client.post(f"{ACADEMY}/{ident}/sessions", json=payload)
 
 
@@ -137,10 +143,10 @@ class TestRecordingASession:
         team = _team_of(owner, ident, "Under 16s")
         adult = _pick(session, minor=False, count=1)[0]
         _add(owner, ident, team["id"], adult.slug)
-        refused = _post(owner, ident, attendees=[adult.id], scheduled_on=TOMORROW)
+        refused = _post(owner, ident, attendees=[adult.id], scheduled_on=_tomorrow())
         assert refused.status_code == 422, refused.text
         assert _detail(refused)["code"] == "date_in_future"
-        assert _detail(refused)["scheduled_on"] == TOMORROW
+        assert _detail(refused)["scheduled_on"] == _tomorrow()
         assert owner.get(f"{ACADEMY}/{ident}/sessions").json()["total"] == 0, "a refusal is not a write"
 
     def test_the_day_a_form_should_open_on_is_published_by_the_door_that_would_refuse_it(self, client: TestClient, session: Session) -> None:  # noqa: E501
@@ -156,7 +162,7 @@ class TestRecordingASession:
         adult = _pick(session, minor=False, count=1)[0]
         _add(owner, ident, team["id"], adult.slug)
         listing = owner.get(f"{ACADEMY}/{ident}/sessions").json()
-        assert listing["today"] == TODAY, "the door's day is the day the app's clock says it is"
+        assert listing["today"] == _today(), "the door's day is the day the app's clock says it is"
         assert "date_in_future" in listing["today_rule"]
 
         on_the_published_day = _post(owner, ident, attendees=[adult.id], scheduled_on=listing["today"])
@@ -306,7 +312,7 @@ class TestSlotsAndDeletion:
         assert _post(owner, ident, attendees=[adult.id]).status_code == 200
         clash = _post(owner, ident, attendees=[adult.id])
         assert clash.status_code == 409 and _detail(clash)["code"] == "slot_taken"
-        assert _detail(clash)["slot"] == 1 and _detail(clash)["scheduled_on"] == YESTERDAY
+        assert _detail(clash)["slot"] == 1 and _detail(clash)["scheduled_on"] == _yesterday()
         assert _post(owner, ident, attendees=[adult.id], slot=2).status_code == 200, "the next slot is the answer the refusal gave"
 
     def test_erasing_a_session_leaves_the_sheet_and_the_plan_it_named_alone(self, client: TestClient, session: Session) -> None:

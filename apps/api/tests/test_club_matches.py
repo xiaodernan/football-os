@@ -48,8 +48,13 @@ _ANSWERS = club_router._ANSWERS
 
 # The app's own day, not the host's: the door judges `scheduled_on` against `utc_today()`, and a test that read
 # `date.today()` disagrees with the code under test for the hours a local-ahead host sits behind UTC.
-YESTERDAY = (utc_today() - timedelta(days=1)).isoformat()
-TOMORROW = (utc_today() + timedelta(days=1)).isoformat()
+# Computed per call — a run that crosses midnight must not assert against yesterday's day.
+def _yesterday() -> str:
+    return (utc_today() - timedelta(days=1)).isoformat()
+
+
+def _tomorrow() -> str:
+    return (utc_today() + timedelta(days=1)).isoformat()
 
 
 @pytest.fixture()
@@ -148,7 +153,7 @@ class TestArranging:
     def test_a_fixture_names_its_side_the_date_and_an_opponent(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Riverside Matchday")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        answer = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY, "competition": "County Cup", "note": ""})
+        answer = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday(), "competition": "County Cup", "note": ""})
         row = answer["fixture"]
         assert row["team"]["name"] == "First Team"
         assert row["status"] == "scheduled"
@@ -159,17 +164,17 @@ class TestArranging:
     def test_a_date_that_has_not_happened_is_refused_not_accepted_as_a_plan(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Tomorrow Club")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": TOMORROW})
+        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _tomorrow()})
         assert refused.status_code == 422
         detail = _detail(refused)
         assert detail["code"] == "date_in_future"
-        assert detail["scheduled_on"] == TOMORROW
+        assert detail["scheduled_on"] == _tomorrow()
         assert detail["today"] == utc_today().isoformat()
 
     def test_an_opponent_not_in_the_ladder_names_what_was_sent(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("No Such Cup")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": "united-of-nowhere", "scheduled_on": YESTERDAY})
+        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": "united-of-nowhere", "scheduled_on": _yesterday()})
         # 404, not the 422 the draft expected: `no_such_world_club` is §39's code and the team door registers
         # it as an absence, so the fixtures door cannot answer the same sentence a second way. `assemble()`
         # raised at import until the claim was dropped.
@@ -181,7 +186,7 @@ class TestArranging:
     def test_a_team_nobody_placed_in_the_world_cannot_be_played(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Unbound Athletic")
         team = _team(owner, ident, "Reserves")  # §39's team door allows a sheet with no world binding
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         played = _played(owner, ident, arranged["fixture"]["id"])
         assert played.status_code == 422
         detail = _detail(played)
@@ -193,20 +198,20 @@ class TestArranging:
     def test_one_side_cannot_be_at_home_twice_on_one_date(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Double Home")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        body = {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY, "side": "home"}
+        body = {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday(), "side": "home"}
         _arranged(owner, ident, body)
         again = owner.post(f"{CLUB}/{ident}/fixtures", json=body)
         assert again.status_code == 409
         detail = _detail(again)
         assert detail["code"] == "side_taken"
-        assert detail["side"] == "home" and detail["scheduled_on"] == YESTERDAY and detail["team"] == "First Team"
+        assert detail["side"] == "home" and detail["scheduled_on"] == _yesterday() and detail["team"] == "First Team"
         # The other side of the same tie, on the same date, is a different fixture and stays legal.
         assert owner.post(f"{CLUB}/{ident}/fixtures", json={**body, "side": "away"}).status_code == 200
 
     def test_a_side_is_one_of_two_words_and_the_answer_says_which(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Third Side")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY, "side": "neutral"})
+        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday(), "side": "neutral"})
         assert refused.status_code == 422
         detail = _detail(refused)
         assert detail["code"] == "side_shape"
@@ -216,7 +221,7 @@ class TestArranging:
     def test_an_unknown_field_is_refused_before_the_service_reads_it(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Extra Field")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY, "medical_note": "a knee"})
+        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday(), "medical_note": "a knee"})
         assert refused.status_code == 422
         assert "medical_note" in str(_validation(refused))
 
@@ -225,7 +230,7 @@ class TestPlaying:
     def test_playing_reads_the_result_through_the_engines_row(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Played Once")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         played = _played(owner, ident, arranged["fixture"]["id"], {"seed": 7})
         assert played.status_code == 200, played.text
         answer = played.json()
@@ -241,7 +246,7 @@ class TestPlaying:
     def test_the_eleven_that_played_is_the_tenants_sheet(self, side: dict[str, Any], db: Session) -> None:
         owner, ident = _tenant("Own Eleven")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         played = _played(owner, ident, arranged["fixture"]["id"], {"seed": 3})
         assert played.status_code == 200, played.text
         named = set(side["eleven"])
@@ -288,7 +293,7 @@ class TestPlaying:
         """
         owner, ident = _tenant("Disagreement Club")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         monkeypatch.setattr(mat, "_appearance_agreement", lambda recorded, selected: (False, "the stored report names an eleven this sheet does not"))
         played = _played(owner, ident, arranged["fixture"]["id"])
         assert played.status_code == 200, played.text
@@ -303,7 +308,7 @@ class TestPlaying:
     def test_a_fixture_answers_once_and_the_refusal_prints_the_first_answer(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Twice Played")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         first = _played(owner, ident, arranged["fixture"]["id"], {"seed": 11})
         assert first.status_code == 200, first.text
         again = _played(owner, ident, arranged["fixture"]["id"], {"seed": 12})
@@ -317,7 +322,7 @@ class TestPlaying:
         for label in ("Seed Left", "Seed Right"):
             owner, ident = _tenant(label)
             team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-            arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+            arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
             played = _played(owner, ident, arranged["fixture"]["id"], {"seed": 2026})
             assert played.status_code == 200, played.text
             digests.append(played.json()["digest"])
@@ -328,7 +333,7 @@ class TestErasing:
     def test_erasing_takes_the_appearances_and_leaves_the_engine_row(self, side: dict[str, Any], db: Session) -> None:
         owner, ident = _tenant("Erased Fixture")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         played = _played(owner, ident, arranged["fixture"]["id"], {"seed": 5})
         assert played.status_code == 200, played.text
         slug = played.json()["match_slug"]
@@ -343,7 +348,7 @@ class TestErasing:
         owner, ident = _tenant("Owner A Fixtures")
         other, other_ident = _tenant("Owner B Fixtures")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         stolen = other.get(f"{CLUB}/{other_ident}/fixtures/{arranged['fixture']['id']}")
         assert stolen.status_code == 404
         detail = _detail(stolen)
@@ -355,7 +360,7 @@ class TestRoles:
     def test_a_role_the_matrix_gives_no_match_right_is_answered_403(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Scout Watch")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         for role in ("scout", "parent"):
             guest = _joined(owner, ident, role, f"{role.title()} Of Nobody")
             refused = guest.get(f"{CLUB}/{ident}/fixtures")
@@ -365,13 +370,13 @@ class TestRoles:
     def test_an_analyst_reads_the_list_and_cannot_arrange_it(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Analyst Desk")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         guest = _joined(owner, ident, "analyst", "Match Analyst")
         listed = guest.get(f"{CLUB}/{ident}/fixtures")
         assert listed.status_code == 200, listed.text
         assert listed.json()["total"] == 1
         assert listed.json()["role"] == "analyst"
-        assert guest.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY}).status_code == 403
+        assert guest.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()}).status_code == 403
 
 
 class TestFielding:
@@ -380,7 +385,7 @@ class TestFielding:
     def test_a_side_too_small_to_field_is_refused_with_the_counts_that_decided_it(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Five A Side")
         team = _bind(owner, ident, "Colts", side["world_team"], *side["eleven"][:5])
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         # Arranging is not fielding: the promise stands, and the answer says in figures what it would take.
         assert arranged["fielding"]["ok"] is False
         assert arranged["fielding"]["players"] == 5 and arranged["fielding"]["needs_players"] == mat.CAPS["needs_players"]
@@ -397,7 +402,7 @@ class TestFielding:
         # far from its boundary proves the boundary is somewhere, not where the tier says it is.
         owner, ident = _tenant("Ten Trying")
         team = _bind(owner, ident, "Reserves", side["world_team"], *side["eleven"][:10])
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         assert arranged["fielding"]["ok"] is False and arranged["fielding"]["players"] == 10
         played = _played(owner, ident, arranged["fixture"]["id"])
         assert played.status_code == 422, played.text
@@ -410,7 +415,7 @@ class TestFielding:
         # `players: 11`, so the refusal says which of the two counts it failed on rather than both at once.
         owner, ident = _tenant("No Keeper Club")
         team = _bind(owner, ident, "Outfield Eleven", side["world_team"], *_outfield_names(11, exclude=side["base"]))
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         assert arranged["fielding"]["players"] == 11 and arranged["fielding"]["keepers"] == 0
         played = _played(owner, ident, arranged["fixture"]["id"])
         assert played.status_code == 422, played.text
@@ -423,7 +428,7 @@ class TestFielding:
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
         outsider = _adults()[-1]
         assert outsider not in side["eleven"], "the point of the case: a player the world holds and this sheet does not"
-        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY, "named": [outsider]})
+        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday(), "named": [outsider]})
         assert refused.status_code == 422, refused.text
         detail = _detail(refused)
         assert detail["code"] == "not_on_sheet" and detail["player"] == outsider
@@ -433,7 +438,7 @@ class TestFielding:
         owner, ident = _tenant("Whole Village")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
         too_many = _adults()[: mat.NAMED_MAX + 1]
-        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY, "named": too_many})
+        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday(), "named": too_many})
         assert refused.status_code == 422, refused.text
         detail = _detail(refused)
         assert detail["code"] == "named_limit"
@@ -442,7 +447,7 @@ class TestFielding:
     def test_a_block_length_the_engine_does_not_play_is_refused_with_its_choices(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Forty Five Minutes")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        arranged = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         played = _played(owner, ident, arranged["fixture"]["id"], {"minutes": 45})
         assert played.status_code == 422, played.text
         detail = _detail(played)
@@ -454,7 +459,7 @@ class TestFielding:
     def test_a_tenant_cannot_be_arranged_against_the_club_it_is_placed_as(self, side: dict[str, Any]) -> None:
         owner, ident = _tenant("Mirror Game")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
-        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["world_team"], "scheduled_on": YESTERDAY})
+        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["world_team"], "scheduled_on": _yesterday()})
         assert refused.status_code == 422, refused.text
         detail = _detail(refused)
         assert detail["code"] == "opponent_is_own_club" and detail["team"] == "First Team"
@@ -471,18 +476,18 @@ class TestTheChildsGate:
         child = world_child(ident, owner, team["name"], 0)
         # Empty `named` means the whole sheet, and the sheet now holds a child: the default selection is refused
         # rather than quietly recording a minor who has no consent on file.
-        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY})
+        refused = owner.post(f"{CLUB}/{ident}/fixtures", json={"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday()})
         assert refused.status_code == 422, refused.text
         detail = _detail(refused)
         assert detail["code"] == "consent_required" and detail["scope"] == "plan"
         assert detail["threshold"] == edu.MINOR_AGE
         # Naming only the adults is a selection with no minor in it, and it needs no consent at all.
-        held = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY, "named": adults})
+        held = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday(), "named": adults})
         assert [row["slug"] for row in held["fixture"]["named"]] == adults
         guardian = _joined(owner, ident, "parent", "Guardian Of The Match Child")
         assert guardian.get(f"{CLUB}/{ident}/fixtures").status_code == 403, "a parent holds no match right; the consent opens the row, not the door"
         _grant(guardian, ident, child)
-        after = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY, "side": "away"})
+        after = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday(), "side": "away"})
         assert any(row["slug"] == child for row in after["fixture"]["named"]), "with the yes on file the child is on the arrangement"
         assert any(row["is_minor"] for row in after["fixture"]["named"])
 
@@ -492,7 +497,7 @@ class TestTheCalendar:
         owner, ident = _tenant("Fixture Book")
         team = _bind(owner, ident, "First Team", side["world_team"], *side["eleven"])
         reserves = _team(owner, ident, "Reserves")
-        _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": YESTERDAY, "competition": "County Cup"})
+        _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": _yesterday(), "competition": "County Cup"})
         played = _arranged(owner, ident, {"team": team["name"], "opponent": side["opponent_slug"], "scheduled_on": (utc_today() - timedelta(days=8)).isoformat(), "side": "away"})
         _played(owner, ident, played["fixture"]["id"], {"seed": 99})
         _arranged(owner, ident, {"team": reserves["name"], "opponent": side["opponent_slug"], "scheduled_on": (utc_today() - timedelta(days=15)).isoformat()})
