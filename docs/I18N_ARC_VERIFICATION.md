@@ -7542,3 +7542,66 @@ Item 72 `**CI**` line read the same way. Both now read red with their cure commi
 plane was re-walked (memory still forbids it); that the sample minimums in the spotlight facets
 (≥ 10 appearances / ≥ 600 minutes / ≥ 300 minutes) will hold as the world ages; anything the runner
 did not print.
+
+## Item 73 — the world's timeline: the season matchday by matchday (landed 2026-11-15)
+
+**The gap.** The world could name its champions (the almanac), tell its season in three chapters
+(the story), keep its marks (the record book), name the week's faces (the spotlight) — but the
+season's own diary, matchday by matchday, had never been written.
+
+**What landed.** `compute_timeline` in `app/services/world/timeline.py` walks the tier-1 league's
+fixtures in kickoff order (`Matchday N` labels; the two late "game N" slots carried into their
+matchday), holds the points table running (points → GD → goals-for tie-break, the almanac's own
+rule) and emits: every round's leader and runner-up with paths, the points chart for both
+trajectories (champion and runner-up, 14 segments), and four computed — never authored — beats:
+`opening` (the leader after Matchday 1), `avalanche` (the matchday with the most goals), `takeover`
+(the earliest matchday from which the eventual champion never surrendered) and `settled` (the
+earliest matchday whose rivals' remaining-fixture ceiling all fell strictly short of the champion's
+points; an unsettled finish is printed as `decided_on_tiebreak: true`, never as an invented date).
+
+`GET /api/v1/world/timeline` — public/anonymous/60-min, the world tier's own envelope.
+
+**The page.** `/world/timeline` — three tiles (champion / points with the W-D-L split / goal
+margin), the race chart as server SVG (gold champion hairline against dashed runner-up, points
+unit at the ends, M1/M14 labels), the four beats as tiles, and the archive: matchday by matchday
+with fixtures, goals, the leader linked, points and the gap, the eventual champion's matchdays
+seamed in gold. `/world` browse gains the tile; sitemap carries the route; census pinned
+77 → 78 pages; the `worldTimeline` namespace ×6 locales (uniform population 4,710; README recount
+4663 ×4 / 4459 fr; `qa-locale-completeness`/`qa-icu-messages` re-measured uniform at 4,710).
+
+**The contract, census and gates.** `docs/api/openapi.json` regenerated (237 paths);
+`AUDIT_FIGURES contract_paths=237 page_routes=78 migrations=65`; the module-table world row names
+`timeline` among the doors and the page census is (16); the security probe re-pinned at
+**241 secured / 63 public / 104 private GET** (public +1 — the new door), SHA-256
+`e0708ca448482a96c46d23182b07cda4299917504da9a38e470e37e6a6f9fea6` pinned through
+`SECURITY_PROBE_REPORT.md` (§1 + C0), `M12_PRODUCTION_HARDENING_VERIFICATION.md` and `ROADMAP.md`'s
+M12 row; `ROADMAP.md` quotes `(237 contract paths, 78 page`; `qa-key-drift` held at its pinned
+112/46 ceilings (six sentences reworded, none ratcheted); `qa-locale-tokens` 7/7 at the new README
+figures; `qa-translation-freshness` green with all five locales rewritten in the same commit as the
+English; `qa-rtl-readiness` 8/8 after the archive table's physical alignment was made logical;
+`qa-i18n-literals` 9/9 with the OG card stripped to digit-only copy; `qa-crawl-policy` page
+population 78; Lighthouse not re-claimed.
+
+**The two defects this arc found in itself, and kept.**
+
+1. The seeded world plays **a cross-tier fixture inside the Lyndera Superleague's list** —
+   `ostmont-albion` (whose home league is the Braehaven Elite League) appears in Lyndera's round
+   2/3 marker — so the timeline's first team map (league-scoped) printed "Data unavailable" for
+   two leaders. The fix pulls the full team table, the discipline every sibling door already
+   followed.
+2. The title race ends **level on points** (23 = 23, goal difference decided it): takeover at
+   matchday 14, `settled.available = false`, `decided_on_tiebreak = true`. The page renders exactly
+   that sentence — the season the numbers already wrote.
+
+**Honesty note.** The fact-pack push `9efe863` carried a stale message file naming `a0ca289` /
+"1,106 commits, arc §207" over tree-bytes that said otherwise (`8e353e2`, 1,110 commits, arc
+§208). It was corrected by `6ea9c44`, which pushed the regenerated pack with a message that names
+the mistake; `6ea9c44` is the record master prints.
+
+**CI** — run `43738898538` — all four legs success on the timeline push; `43738974044` and
+`43738930657` (the fact-pack pushes) all four legs success on each; `43735334196` (§208 ledger) and
+`43735413622` (the §208 fact pack) all four legs success.
+
+**Not claimed.** Any figure the runner did not print; the two matchday-1 `game N` slots mean
+nothing beyond the seed's choices; the sample in the timeline chips will not hold as the world
+ages.

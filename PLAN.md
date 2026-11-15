@@ -3042,6 +3042,46 @@ register), `4fe01f2` (all four legs success) — verdicts in §208.
 
 **Not claimed.** Anything the gates don't print; the sample sizes won't stay tuned forever.
 
+## Item 73 — the timeline: the season matchday by matchday (landed 2026-11-15)
+
+**The gap.** The world could name its champions (the almanac), tell its season in three chapters
+(the story), keep its marks (the record book), name the week's faces (the spotlight) — but the
+season's own diary had never been written.
+
+**What landed.** `compute_timeline` in `app/services/world/timeline.py`: kickoff-ordered tier-1
+fixtures (`Matchday N` labels; the two late `game N` replay slots carried into their matchday),
+the table held running, and four computed beats — `opening`, `avalanche`, `takeover` (the earliest
+matchday from which the eventual champion never surrendered), `settled` (the earliest matchday
+whose rivals' remaining-fixture ceiling fell short of the champion's points; an unsettled finish
+is printed as `decided_on_tiebreak: true`, never as an invented date). Chart trajectories for both
+the champion and the runner-up per matchday. Route `/world/timeline` beside its world siblings,
+public/anonymous/60-min. Page `/world/timeline` — three tiles, server-SVG race chart, four beat
+tiles, the archive with champion-led matchdays seamed in gold; `/world` browse tile; sitemap;
+OG card digit-only; census pinned 77 → 78 pages; `worldTimeline` ×6 (population 4,710; README
+recount; key-drift held at 112/46 with six reworded sentences; tokens 7/7; crawl population 78).
+The contract regenerated (237 paths); the probe census re-pinned at **241 / 63 / 104** (public
++1), SHA-256 `e0708ca4…` through the report, M12 and ROADMAP; ROADMAP quotes
+`(237 contract paths, 78 page`; `AUDIT_FIGURES contract_paths=237 page_routes=78 migrations=65`;
+the module-table world row names `timeline` and the /world census is (16). Two honest notes: the
+seeded world plays a cross-tier fixture inside Lyndera's list (a Braehaven Elite League side) so
+the first team map printed "Data unavailable" — cured by mapping the full team table; and the
+title race ended level on points (goal difference decided it) — the page prints exactly that.
+
+**A stale fact-pack commit `9efe863` (wrong message file — titled `a0ca289`/§207 over §208 bytes)
+was corrected by `6ea9c44`, which names the mistake in its own message; history was not rewritten.**
+
+**Tests.** `test_world_timeline.py`: 7/7 — envelope grammar, matchday order, chart ↔ rounds
+one-for-one, the takeover/settlement arithmetic's independence, avalanche = the max-goals matchday,
+and the tie between the timeline's champion and the almanac's own title race. 133 passed across the
+world + currency batteries on SQLite fallback; the currency trio reads 25/25.
+
+**CI** — `43738898538` (the timeline arc push) and `43738930657` / `43738974044` (the fact-pack
+pushes) — all four legs success. The arc produced zero red pushes; the local gates caught every
+defect before the runner ever saw one.
+
+**Not claimed.** Any figure the gates don't print; the two `game N` slots mean nothing beyond the
+seed's choices.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
