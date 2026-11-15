@@ -72,6 +72,7 @@ UNPROCESSABLE_CODES: Final = frozenset(
         "bad_philosophy",  # careers
         "bad_status",  # world
         "cannot_choose_club",  # challenges
+        "edition_out_of_range",  # world
         "entity_type_required",  # world
         "invalid_board",  # boards
         "no_objectives",  # careers

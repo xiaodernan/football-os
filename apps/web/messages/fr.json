@@ -4296,7 +4296,8 @@
     "cannot_play_cup": "Cette carrière ne peut pas jouer ce tour de coupe.",
     "unknown_notification_kind": "Type de notification inconnu. Le bac connaît abonné, commentaire et réaction — c'est toute la liste.",
     "no_such_player": "Ceci n'est pas un joueur dans le monde généré.",
-    "same_player": "Un joueur ne peut pas être comparé à lui-même."
+    "same_player": "Un joueur ne peut pas être comparé à lui-même.",
+    "edition_out_of_range": "Le monde n'a pas encore joué cette journée ; la dernière édition est déjà disponible."
   },
   "errorBoundary": {
     "eyebrow": "Une erreur est survenue",

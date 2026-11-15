@@ -4296,7 +4296,8 @@
     "cannot_play_cup": "這個賽季無法進行這場盃賽。",
     "unknown_notification_kind": "未知的通知類別。托盤認識追蹤者、留言和反應——這就是全部清單。",
     "no_such_player": "這個球員不在生成的世界裡。",
-    "same_player": "球員不能與自己比較。"
+    "same_player": "球員不能與自己比較。",
+    "edition_out_of_range": "世界還沒有打到那個輪次；最新一期已經備好。"
   },
   "errorBoundary": {
     "eyebrow": "出了點問題",

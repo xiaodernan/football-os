@@ -4296,7 +4296,8 @@
     "cannot_play_cup": "This career cannot play that cup tie.",
     "unknown_notification_kind": "Unknown notification kind. The tray knows follower, comment and reaction — that is the whole list.",
     "no_such_player": "No such player in the generated world",
-    "same_player": "A player cannot be compared with himself"
+    "same_player": "A player cannot be compared with himself",
+    "edition_out_of_range": "The world has not played that matchday; the latest edition is available now."
   },
   "errorBoundary": {
     "eyebrow": "Something went wrong",
