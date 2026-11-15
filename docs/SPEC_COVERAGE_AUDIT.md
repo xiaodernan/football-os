@@ -17,7 +17,7 @@ Every figure in this sentence is re-checked against the committed tree by
 
 | § | module | measured evidence | owner | verdict |
 | --- | --- | --- | --- | --- |
-| 4 | Football World | `/api/v1/world/{status,players,teams,competitions,matches,news,training,search,duel}` + `/world/*` pages (15) | M3 | landed |
+| 4 | Football World | `/api/v1/world/{status,players,teams,competitions,matches,news,training,search,duel}` + `/world/*` pages (14) | M3 | landed |
 | 5–8 | Player profile / archetype / real-vs-user / progression | `/players/{id}`, `/world/players/{ident}`, `/player/[slug]`, `services/attributes.py`, `progression.py` | M1/M3 | landed |
 | 9–12 | AI Coach / training academy / progression / plan | `/api/v1/coach/{ask,plan,today,history}`, `/api/v1/coach/drills/{drill_slug}/knowledge`, `/api/v1/trainings/{drills,sessions}`, `/api/v1/trainings/drills/{drill_id}`, `/api/v1/trainings/sessions/{session_id}/complete`, `/coach`, `/training`, `/training/[slug]` | M2/M1 | landed |
 | 13–14 | Video analysis + output | `/api/v1/video`, `/api/v1/video/upload`, `/api/v1/video/{ident}/{analyse,file,jobs}`, `/api/v1/video/{ident}/frames/{index}`, `/video`, `/video/[id]` | M5 | landed, **vision provider labelled demo** |
