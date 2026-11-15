@@ -2918,6 +2918,29 @@
         }
       }
     },
+    "/api/v1/world/spotlight": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Spotlight",
+        "description": "The world's spotlight — three recognitions computed from the stored rows.\n\nSame discipline as the almanac, the story and the record book: arithmetic on `real_matches`,\n`real_players` and the tier-1 league the almanac already speaks for, recomputed on every read.\nNothing here is authored by a provider, stored in a column, or invented for display.",
+        "operationId": "spotlight_api_v1_world_spotlight_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Spotlight Api V1 World Spotlight Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [
