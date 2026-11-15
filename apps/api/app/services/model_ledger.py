@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import logging
+
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.db import SessionLocal
 from app.core.security import new_public_id
 from app.core.timeutil import utc_midnight
 from app.models import ModelCall, utc_today
 from app.providers import LlmResult
+
+logger = logging.getLogger("football_os.model_ledger")
 
 
 def record_model_call(db: Session, *, result: LlmResult, feature: str, user_id: str | None = None) -> None:
@@ -32,6 +38,28 @@ def record_model_call(db: Session, *, result: LlmResult, feature: str, user_id: 
             demo_mode=result.demo_mode,
         )
     )
+
+
+def record_model_call_safely(*, result: LlmResult, feature: str, user_id: str | None = None) -> bool:
+    """Best-effort ledger write, isolated in its own session.
+
+    The ledger is a sidecar: a reader is owed the answer the model, the rules and the profile
+    add up to — and that answer must not hostage to the ledger's table being damaged, locked or
+    already-migrated on this host. The caller's own rows stay on their own transaction; the
+    ledger records in a session of its own. A damaged ledger costs a warning log and one
+    unrecorded spend, never the reader's turn.
+
+    Returns ``True`` when the row was written, ``False`` otherwise. Never raises.
+    """
+    with SessionLocal() as session:
+        try:
+            record_model_call(session, result=result, feature=feature, user_id=user_id)
+            session.commit()
+        except SQLAlchemyError as exc:
+            session.rollback()
+            logger.warning("model_ledger_unrecordable feature=%s error=%s", feature, type(exc).__name__)
+            return False
+    return True
 
 
 def spend_today_usd(db: Session) -> float:

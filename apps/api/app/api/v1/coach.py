@@ -16,7 +16,7 @@ from app.models import CoachMessage, TrainingDrill, User, UserPlayer
 from app.providers import get_llm_provider
 from app.schemas import CoachAskIn, PlanIn
 from app.services import coach_engine, coach_voice
-from app.services.model_ledger import budget_exhausted, record_model_call
+from app.services.model_ledger import budget_exhausted, record_model_call_safely
 
 router = APIRouter(prefix="/coach", tags=["coach"])
 
@@ -244,8 +244,12 @@ def ask(
         )
     )
     if result is not None:
-        record_model_call(db, result=result, feature="coach.ask", user_id=user.id)
-    db.commit()
+        # The reader's turn first: the answer row commits before the ledger asks for anything —
+        # the ledger is a sidecar, never part of the answer's own transaction.
+        db.commit()
+        record_model_call_safely(result=result, feature="coach.ask", user_id=user.id)
+    else:
+        db.commit()
     # The envelope names the provider that answered. A capped turn is answered by the rule engine alone,
     # which is what the CoachMessage defaults already say — the door keeps one vocabulary for "no model
     # was called" rather than inventing a second one for the capped path.

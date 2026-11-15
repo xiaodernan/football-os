@@ -22,7 +22,7 @@ from app.services.knowledge import answer_cache, graph_join, recall, retrieval
 from app.services.knowledge.chunking import strip_header
 from app.services.knowledge.retrieval import Filters, Hit
 from app.services.knowledge.text import content_words
-from app.services.model_ledger import record_model_call
+from app.services.model_ledger import record_model_call_safely
 
 MAX_CONTEXT_CHUNKS = 4
 CONTEXT_CHAR_BUDGET = 3200
@@ -342,7 +342,7 @@ def ask(
                     )
                     text = llm.text.strip() or _extractive_answer(question, digest)
                     model_name = llm.model
-                    record_model_call(db, result=llm, feature="knowledge_ask", user_id=user_id)
+                    record_model_call_safely(result=llm, feature="knowledge_ask", user_id=user_id)
                     demo_mode = llm.demo_mode
                     reasons.append(f"answer phrased by provider '{llm.provider}' using {len(digest)} cited passage(s) only")
                     citations = [{**c, "phrased_by": llm.model} for c in citations]
