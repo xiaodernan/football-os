@@ -7444,6 +7444,101 @@ byte-level edits (pushed). `c612c40` — probe census re-pinned to 241/62/104 wi
 contract as committed at HEAD (pushed). `4fe01f2` — the M12 record's running-paragraph narrative
 pinned to match the census table (pushed).
 
-CI: `91afe53` (red, gates named), `f7ec096` (red at freshness), `5091141` (green),
-`b3be832` (web leg green), `dcc0d38` (in flight), `c612c40` (in flight), `4fe01f2` (in flight).
-The runner's current verdicts will print in the following entry once they settle.
+CI: `91afe53` (red — web key-drift step 27, containers step 7), `f7ec096` (red — web
+Translation-freshness step 20), `5091141` (red — web Types step 43 and containers step 7),
+`b3be832` (red — api Tests step 9), `dcc0d38` (red — api Tests step 9, probe currency),
+`c612c40` (red — api Tests step 9, M12 register), `4fe01f2` (all four legs success, run
+`43731204750`), `a0ca289` (all four legs success, run `43731416932`), `d10c905` (all four legs
+success, run `43731510404`). Every red named in §208.
+
+## §208 — the spotlight arc closes: every red named, the green cures, and the fact pack that ended it
+
+This window moved `/world/spotlight` from nothing to a shipped door on master and paid the full
+price the gates asked at every step of the way. Two claims in the committed text needed correcting,
+not decorating — the `§207` tail said "`5091141` (green)", and the runner printed the opposite; this
+entry names every red in order and fixes both claims in the tree in the same commit that carries it.
+
+**The reds, in push order, with the step each one stopped at.**
+
+- `91afe53` — run `43725109901` — **failure**: web step 27 `Key-drift gate` (`worldSpotlight`
+  shared four sentences with siblings — the reworded sentences cured at `f7ec096`); containers
+  step 7 `Build the web image`; api step 9 `Tests (SQLite dev fallback)` — the committed contract
+  did not list `/api/v1/world/spotlight` (it was regenerated at `b3be832`), `AUDIT_FIGURES` read
+  235 while the tree answered 236, the module-table `/world/*` census miscounted, and the three
+  `git grep` file-count lines the audit published at lines 35/36/40 sat in a shape no reader could
+  recompute.
+- `f7ec096` — run `43726154508` — **failure**: web step 20 `Translation-freshness` (en changed;
+  zh-TW/ar/he/fr stale against `91afe53`'s reworded English — cured at `5091141`, all five were
+  rewritten native), containers step 7 `Build the web image`, api step 9 `Tests`.
+- `5091141` — run `43727160035` — **failure**: web step 43 `Types` (`page.tsx`, lines 62–103 — `TS2339`/`TS2322` verbatim in the web leg of `43727160035`:
+  'property does not exist on type '{}'', and `Type '{ spotlights: … }' is not assignable to RowProvenance`; the `[k: string]: unknown` index signature), containers step 7 `Build the web image` (`npm run build`, same root cause), api
+  step 9 `Tests` — the contract at this commit still had the old bytes and the tree's audit
+  still read 235.
+- `b3be832` — run `43728131713` — **failure**: api step 9 `Tests` only — web success, containers
+  success, services success. The committed contract was regenerated in this commit (236
+  paths); the audit's AUDIT_FIGURES line was still 235 at the red run, and the three `git grep`
+  lines were only restored to recomputable bytes at `dcc0d38`.
+- `dcc0d38` — run `43730370608` — **failure**: api step 9 `Tests` — `test_security_probe_report_currency.py`
+  (ROADMAP named contract SHA-256 `1115733d31d…` where the committed `docs/api/openapi.json` hashes
+  to `71c435ef…`; the probe report declared public operations 61 against the committed contract's
+  62). web/containers/services success.
+- `c612c40` — run `43730925684` — **failure**: api step 9 `Tests` — the M12 running register still
+  read `241 / 61 / 104` where the census computed `241 / 62 / 104`; the census table in the same
+  file already read 62. web/containers/services success.
+
+**The green cures.** `4fe01f2` — run `43731204750` — all four legs success; `a0ca289` — run
+`43731416932` — all four legs success; `d10c905` — run `43731510404` — all four legs success. The
+lineage from red to green was seven commits; each one carries its own gate failure and its own
+cure, none of them re-tagged, none of them cloaked.
+
+**What the audit's own corruption was, and how it reversed.** A prior window's census edit
+(`8e8ecec`) passed `docs/SPEC_COVERAGE_AUDIT.md` through a PowerShell pipeline whose encoding
+mangled every UTF-8 `§` byte sequence into `E6 90 82` (50 occurrences across the file). The
+corruption was reversed by restoring the file from `git show 054a63c:docs/SPEC_COVERAGE_AUDIT.md` —
+the last commit known to have passed its gates — and re-applying exactly the two intentional edits
+this arc owes the file, by byte: `AUDIT_FIGURES contract_paths=236 page_routes=77 migrations=65`,
+and `duel,spotlight` join the `/world/{status,…,duel,spotlight}` list with `/world/*` pages at
+`(15)`. No § symbol was re-typed anywhere else. `test_the_module_table_covers_its_declared_section_range_exactly_once`
+was the gate that stopped it; it was not disabled or re-pinned in place.
+
+**The probe re-pin.** The security probe reads its population from the committed contract as of
+HEAD: secured 241 / public 62 / private GET 104. The `public` count rose 61 → 62 because
+`/api/v1/world/spotlight` is a public GET door. The SHA-256 `71c435ef…` was pinned into
+`docs/SECURITY_PROBE_REPORT.md` (§1 and the C0 row), `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`
+(the C0 row, the run-L narrative paragraph at the `241 / 61 / 104` sentence, and the footnote at
+line ~965), and `ROADMAP.md`'s M12 row. The M12 register sentence was the last blocker on the red
+line; it moved to `241 / 62 / 104` at `4fe01f2`.
+
+**The contract.** `docs/api/openapi.json` was never committed with its regenerated bytes until
+`b3be832` — the exporter was run in-tree by the author but its output was not part of the arc's
+first push. The regenerated artifact was committed at `b3be832`; SHA `71c435ef…` is byte-identical to
+what the exporter produces from the tree at HEAD; the currency gates read the same bytes.
+
+**The I18N numbers the arc moved, in one place.** Uniform population held at 4,665 across zh,
+zh-TW, ar, he, fr and en, before and after. `identical-to-en` held at 47 (×4 locales) and 251 (fr)
+with every one named in `scripts/qa-locale-tokens.mjs`. The arc added `worldSpotlight` (25 keys ×
+6 locales, fully authored per-language, Arabic/Hebrew punctuation rules honoured, FR loanword stops
+named or reworded). `qa-key-drift` printed 4/4 green at its pinned ceilings (112/46 — neither
+ratcheted nor exceeded). `qa-translation-quality` 9/9; `qa-rtl-readiness` 8/8; `qa-icu-messages`
+2/2; `qa-locale-completeness` re-measured uniform at 4,665; `qa-translation-freshness` green after
+`5091141` moved the translations with the English. `qa-namespace-ownership` carries the
+`worldSpotlight` declaration (owner `world`, one purpose sentence). The page route population pinned
+75 → 77; `qa-crawl-policy` reads 77.
+
+**The personal page.** `docs/latest.json` (the fact pack) was regenerated at `d10c905` (head
+`a0ca289`, 1,106 commits, routes 77, world_doors 14, locales 6, milestone `§207`); the profile
+clone's fallback (`assets/football/latest.json`) was refreshed from the same bytes and rebased
+onto the crossrealm sync and pushed as `6ffe37d` — the same byte set the live raw fetch serves. The
+page's football card on the live site reads master's HEAD; the arc is visible there without a
+separate sync pipeline. `docs/latest.json` will need one more regeneration once this entry lands
+(head becomes §208's commit; the fact pack's milestone string becomes `§208`).
+
+**Corrections to committed claims made by this entry**: `§207`'s tail line said "`5091141` (green)" —
+false; the runner's run `43727160035` printed web step 43 `Types` and containers step 7. PLAN.md's
+Item 72 `**CI**` line read the same way. Both now read red with their cure commits (`b3be832` /
+`5091141` split of the work), and the "verdicts in §207" pointer in PLAN.md now points to §208.
+
+**Not claimed.** That any of these failures were predictable by the author at write-time; that the
+plane was re-walked (memory still forbids it); that the sample minimums in the spotlight facets
+(≥ 10 appearances / ≥ 600 minutes / ≥ 300 minutes) will hold as the world ages; anything the runner
+did not print.

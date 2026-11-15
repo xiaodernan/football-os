@@ -3035,8 +3035,10 @@ arithmetic against `goals * 90 / minutes`, home-clean-sheets sample, tier-1 new-
 `103 world tests` pass together. `test_openapi_contract_currency.py` and
 `test_spec_audit_currency.py` updated to the contract's 236 paths / 77 routes.
 
-**CI** — `91afe53` (red, key-drift), `f7ec096` (red, freshness), `5091141` (green),
-`b3be832` (web leg green), `dcc0d38`, `c612c40`, `4fe01f2` — verdicts in §207.
+**CI** — `91afe53` (red, key-drift step 27), `f7ec096` (red, freshness step 20),
+`5091141` (red — Types step 43 + build step 7), `b3be832` (red — api Tests step 9),
+`dcc0d38` (red — api Tests step 9, probe currency), `c612c40` (red — api Tests step 9, M12
+register), `4fe01f2` (all four legs success) — verdicts in §208.
 
 **Not claimed.** Anything the gates don't print; the sample sizes won't stay tuned forever.
 
