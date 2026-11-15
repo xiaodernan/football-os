@@ -28,6 +28,9 @@ const check = (name, ok, detail) => {
 
 /** Namespace ownership declarations */
 const NAMESPACE_OWNERS = {
+  // Manual tier — the concise manual served from /manual; public, indexable, six locales
+  "manual": { owner: "core", purpose: "The concise manual — one page that teaches the reader every door this product opens: languages, onboarding, world, coach, training; footer-linked, six-locale" },
+
   // Core app namespaces
   "nav": { owner: "core", purpose: "Navigation and locale switching" },
   "common": { owner: "core", purpose: "Shared UI constants and common labels" },
