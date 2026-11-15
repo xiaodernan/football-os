@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { FilterChips, Provenance, WorldHead, WorldPager, WorldUnavailable } from "@/components/world";
-import { pageMetadata } from "@/lib/site";
+import { absolute, pageMetadata } from "@/lib/site";
 import { buildHref, cleanParams, pageOf, readWorld } from "@/lib/world";
 import type { WorldTrainingList } from "@/lib/types";
 
@@ -20,6 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: tw("trainingLogLink"),
     description: tw("metaTraining"),
     path: "/world/training",
+    images: [{ url: absolute("/world/training/opengraph-image"), width: 1200, height: 630, alt: "FOOTBALL OS" }],
   });
 }
 

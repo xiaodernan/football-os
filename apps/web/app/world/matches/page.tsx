@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { FilterChips, Provenance, WorldHead, WorldPager, WorldUnavailable, formatMoment } from "@/components/world";
-import { pageMetadata } from "@/lib/site";
+import { absolute, pageMetadata } from "@/lib/site";
 import { buildHref, cleanParams, pageOf, readWorld } from "@/lib/world";
 import type { MatchList } from "@/lib/types";
 
@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: tw("sectionFixturesLabel"),
     description: tw("metaMatches"),
     path: "/world/matches",
+    images: [{ url: absolute("/world/matches/opengraph-image"), width: 1200, height: 630, alt: "FOOTBALL OS" }],
   });
 }
 

@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { ClaimChip, FilterChips, OriginBadge, Provenance, RefLink, WorldHead, WorldPager, WorldUnavailable, formatMoment } from "@/components/world";
-import { pageMetadata } from "@/lib/site";
+import { absolute, pageMetadata } from "@/lib/site";
 import { buildHref, cleanParams, pageOf, readWorld } from "@/lib/world";
 import type { NewsList } from "@/lib/types";
 
@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: tw("sectionReportsLabel"),
     description: tw("metaNews"),
     path: "/world/news",
+    images: [{ url: absolute("/world/news/opengraph-image"), width: 1200, height: 630, alt: "FOOTBALL OS" }],
   });
 }
 

@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { Crest, FilterChips, Provenance, WorldHead, WorldPager, WorldUnavailable } from "@/components/world";
-import { pageMetadata } from "@/lib/site";
+import { absolute, pageMetadata } from "@/lib/site";
 import { brandColor, buildHref, cleanParams, pageOf, readWorld } from "@/lib/world";
 import type { TeamList } from "@/lib/types";
 
@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: tw("sectionClubsLabel"),
     description: tw("metaTeams"),
     path: "/world/teams",
+    images: [{ url: absolute("/world/teams/opengraph-image"), width: 1200, height: 630, alt: "FOOTBALL OS" }],
   });
 }
 
