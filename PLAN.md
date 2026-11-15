@@ -2945,6 +2945,25 @@ all named, all cured in `c6c8dd1`). `c6c8dd1` — **all four legs success**.
 **CI** — `a020095` `43698201482` (red, api green); `b5d22f7` `43699084882` (red at web 12 and
 api 9); `c6c8dd1` `43699464729` — all four legs success.
 
+## Item 69 — the ledger, kept a sidecar (landed 2026-11-15)
+
+**The gap.** The `/coach/ask` live walk — the real gateway, the authorised key — composed an
+answer from the model's own words and then 500'd at `db.commit()`, because the local template's
+`model_calls` table predated Items 47/M17 and lacked the two columns. A recording of the turn
+had taken the turn down with it.
+
+**What landed.** `services/model_ledger.py` gains `record_model_call_safely(*, result, feature,
+user_id)` — a bool-returning, never-raising best-effort write in its own session, §46's
+sidecar honoured in the code; both doors switched (coach commits the message first, knowledge
+ask calls the safe variant). `tests/test_model_ledger_resilience.py` pins the contract: write/
+rollback/False-instead-of-raise + the two doors answer 200 against a monkeypatched-dead ledger.
+67/67 LLM-adjacent tests green; ruff clean; mypy app clean.
+
+**Not claimed.** Immunity against every SQLAlchemy failure; only that a failed ledger never
+takes the reader's answer down with it.
+
+**CI** — run `43703340972` — all four legs success.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

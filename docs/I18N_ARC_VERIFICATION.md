@@ -7273,3 +7273,38 @@ Nothing in this paragraph is a re-tell of a red the gate caught; it is the place
 belong, and the two test-claims they forced — `tests/test_locale_claims.py::test_the_readme_table_states_the_coverage_the_catalogues_actually_have`
 in the api leg is the thing that holds this project honest twice a day — held this window
 honest at step 9.
+
+## §204 — Item 69: §46's ledger, kept a sidecar
+
+**The night this window produced.** The live walk against the real gateway walked end to end —
+register → player profile → `/api/v1/coach/ask` — and the answer came back composed from the
+model's own words (`provider: openai`, `model: gpt-6-sol`, confidence 0.95), then the commit
+five seconds later 500'd the whole turn: the local template's `model_calls` table predates
+Items 47/M17 and lacks `cached_input_tokens` / `cache_reported`; the commit took the user's
+answer down with a table it shares. The fresh checkout's migrations (alembic HEAD, `0064`) are
+correct; this fix is for the failure shape itself, not the one template.
+
+**The defect it cures.** The ledger was being committed inside the same transaction as the
+user's turn — one damaged row, and the model's own phrasing never reached the reader. §46
+always wanted the ledger to be a recording of the turn, not a part of it.
+
+**What landed.** `services/model_ledger.py` gains `record_model_call_safely(*, result, feature,
+user_id)` — a bool-returning, never-raising best-effort write isolated in its own session;
+`record_model_call` is unchanged for callers that want the strict path. Both doors switched:
+
+- `/coach/ask` commits the CoachMessage before the ledger is asked for anything — the reader
+  already owns the answer when the ledger insert happens (or fails);
+- `/knowledge/ask` calls the safe variant instead of the raw insert.
+
+`tests/test_model_ledger_resilience.py` pins the contract: the variant writes when it can, rolls
+back without leaking on a dead ledger, returns False instead of raising; and two door-level
+cases — the coach turn and the knowledge ask both answer 200 with their answer while the ledger
+is monkeypatched dead. 67/67 across the LLM-adjacent battery green; ruff clean; mypy app clean
+(186 files).
+
+**Not claimed.** That the ledger is now immune to every conceivable SQLAlchemy failure — the
+guarantee is narrower and honest: a failed ledger never takes the answer down with it; spend
+is simply unrecorded and the warning line names the failure. Nothing else changed; no budgets,
+thresholds or provider paths were touched.
+
+**CI** — `d7a53ff` — run `43703340972` — **all four legs success** (web / containers / services / api).
