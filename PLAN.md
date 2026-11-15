@@ -2758,6 +2758,39 @@ Two honest deliveries shipped under the arc: `hat_trick` was renamed `biggest_ha
 
 **CI verdict.** Push `43651851747` — api / web / containers **success**; services **failure** at `EdgeBreakerStateTest.enough_failures_open_the_breaker_and_a_further_call_is_not_permitted` (5-second blocking-read ceiling; shared-runner stall, zero Java source in this push). Retried in-place — retry printed **all four legs success**. Master is green at `5f6fe0b`.
 
+## Item 57 — the club's poster: /team/[slug]/opengraph-image (landed 2026-11-15)
+
+**The gap.** Six shareable doors had share cards — duel, player, match, almanac, story, records — but the club, the single most-linked team in every world reader's argument, was the one door everyone clicked that never draped.
+
+**What landed.** `app/team/[slug]/opengraph-image.tsx` (dynamic): the crest disc filled with the club's own `brand_color` (`radial-gradient` inward into a darker cast computed by a `shade()` helper inside the file, no new palette), the `short_name` centred in paper — `COR` for Cordale Town — competition eyebrow in caps above the paper-white club name, `4-3-3` gold formation chip, `CAP 30,329` accent chip, and the gold `OVR` at right, the same shape as the player's poster. **Zero prose** on the card; tokens only; `qa-i18n-literals` reads 9/9. `generateMetadata` registers the route under `images` as the rest of the family already does.
+
+**Walked live.** Fresh 7:3 scratch SQLite; `GET /team/cordale-town/opengraph-image` answered 200 · 57,803 bytes with clean render — eyebrow `THORNFORD SUPERLEAGUE`, `OVR 68`, disc gold on `#1f6f5c` initials. No claim beyond the seed's own names.
+
+**Local evidence.** tsc 0; `qa-i18n-literals` 9/9 — the card carries no prose; `.workbuddy/` and the root text remain untouched.
+
+**Deliberately not done.** No crest artwork beyond what the seed prints — the world says what it says with three letters (the crest is the brand colour + the short name; no upload, no new field, no invented badge). The `formation` chip shows what the rows hold (`4-3-3`), a token rather than prose; no per-formation palette invented.
+
+**CI `43655536332` — all four legs success.**
+
+---
+
+## Item 58 — the club test files stop pinning the day at import (landed 2026-11-15)
+
+**The defect this arc was born with.** Five test files — `test_club_academy`, `test_club_announcements`, `test_club_matches`, `test_club_sessions`, `test_club_reads` — evaluated `TODAY`/`TOMORROW`/`YESTERDAY` at module import time via `utc_today()`. The door judges `scheduled_on` and `read_on` against `utc_today()` at **request time**; the test asserted at import time. A CI run that crossed the UTC midnight boundary mid-suite turned the door's behaviour (cleanly legal for tomorrow) into a refusal red — the runner called it out twice from one shape:
+
+```
+assert ('date_in_future' == 'date_in_future' and '2026-11-15 == '2026-11-14')
+assert ('announce.read' == 'announce.read' and '2026-11-15 == '2026-11-14')
+```
+
+**The cure.** Every module-level constant became a per-call helper (`_today()`, `_yesterday()`, `_tomorrow()`); every read site across all five files was migrated; no application code changed; the door never moved. The five files pass 159/159 on SQLite; ruff is clean over them; the comment the files already carried updated to match the cure's shape. **CI `43659348718` (the cure) — all four legs success.** The club_under_pressure cohort now reads the day from the same clock the app does — fresh per call, no import-time pinning.
+
+**Local evidence.** 159/159 pass (SQLite), ruff green over the five files, zero behaviour change on the door's clock — every date read still matches the app's own clock.
+
+**Deliberately not done.** No pretend-flake retagging; no repinning of any figure; the seam itself (the door/test disagreement on "today") is the artefact this arc dissolves, not a thing to document as expected.
+
+---
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

@@ -6888,3 +6888,32 @@ Every argument settles at `/match/[slug]` — and every shared link in the feeds
 **Seeded live walk.** Completed Matchday-11 fixture from the seeded scratch (`Obrford Miners 3–0 Durford Town Thornford Superleague`). Rendered, iterated, committed. No other seed's names are promised.
 
 **CI verdict (verbatim).** Push `43651851747` — api / web / containers **success**; services **failure** at `Build the Spring plane (registry, config, edge)`: `EdgeBreakerStateTest.enough_failures_open_the_breaker_and_a_further_call_is_not_permitted` at the 5-second blocking-read ceiling (shared-runner stall; this push touches zero Java source). Retried in-place — same run id, only the services job re-run — the retry printed **all four legs success**. Master is green at `5f6fe0b`.
+
+## §190 — Item 57: the club's poster
+
+**What landed.** `app/team/[slug]/opengraph-image.tsx` — the crest disc in `brand_color` with the `short_name` centred in paper (`COR` for Cordale Town), an inward-darkened wash computed by `shade()` inside the file (no new palette), the competition eyebrow in caps above the club name, `4-3-3` gold formation chip and `CAP 30,329` accent chip, and the gold `OVR 68` at right. Zero prose in the card; every token in the file is a whitelisted shape; `qa-i18n-literals` reads 9/9. `generateMetadata` registers the route under `images` as the rest of the family already does — the social-family sequence is now complete: duel, player, match, almanac, story, record, club.
+
+**Seeded walk.** Fresh 7:3 scratch; `GET /team/cordale-town/opengraph-image` — 200 · 57,803 bytes · clean render (disc `#1f6f5c`, initials `COR`, `4-3-3` `CAP 30,329`, `OVR 68`); the names are this seed's and not promised to match any other.
+
+**Catalogues untouched** — the card carries no prose; no `t()` call exists in the image.
+
+**CI for the push — `43655536332` — completed success on all four legs** (containers · services · web · api + PostgreSQL/pgvector).
+## §191 — Item 58: the club test files stop pinning the day at import
+
+**The defect this arc was born with.** Five test files (`test_club_academy`, `test_club_announcements`, `test_club_matches`, `test_club_sessions`, `test_club_reads`) evaluated `TODAY`/`TOMORROW`/`YESTERDAY` at **module import time** via `utc_today()`. The door judges `scheduled_on` and `read_on` against `utc_today()` at **request time**. A CI run that crosses the UTC midnight boundary mid-suite reads `scheduled_on=TOMORROW` computed at import as "tomorrow", but by the time the request arises the date is already tomorrow — the complaint the runner printed, verbatim:
+
+```
+assert ('date_in_future' == 'date_in_future' and '2026-11-15  ==  '2026-11-14')
+assert ('announce.read' == 'announce.read' and '2026-11-15  ==  '2026-11-14')
+```
+
+Both were the same assertion shape: a date pinned at import against a door judging at request time, crossing midnight mid-run — the CI timezone behaves exactly as declared: UTC.
+
+**What landed.** The module-level constants were replaced by small functions — `_today()`, `_yesterday()`, `_tomorrow()` — evaluated at call time. No application code changed; the door never moved. Every read site across all five files migrated to the helper shape; the comment the files already carried was updated to say "Computed per call — a run that crosses midnight must not assert against yesterday's day."
+The pinned golden was the *door's* own clock all along; the test file was the one that couldn't keep in step with it. This commit is the cure this arc was owed.
+
+**Local proof before push.** All five files re-run on the SQLite fallback engine: 159 passed in 560.53s (pytest, one warning pre-existing, rc=0). ruff clean. The cure is in the tree.
+
+**CI.** Push `2928426` (the cure) — **completed success on all four legs**: push `43659348718`; the midnight seam no longer fails for the only reason it ever could. These tests no longer flake at the midnight seam by construction — the doors read the day from the same clock the app does, per call.
+
+**Deliberately not done.** No re-tag of any red; no repinning of any figure; no acceptance of the midnight seam as "expected flake". The cure is the fix the door was owed all along: the clock is read fresh.
