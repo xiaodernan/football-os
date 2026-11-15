@@ -1,0 +1,142 @@
+/* The manual — one screen per promise, same family as /world.
+   The page leads with ember-green accents (the accent the world already uses),
+   a single gold line under the title, a rule grid for the line-by-line promises,
+   and a doors grid that looks like the world catalogue's own rows with one arrow. */
+
+.manual__hero {
+  padding: 1.4rem 0 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.manual__title {
+  max-width: 30ch;
+}
+.manual__lede {
+  max-width: 58ch;
+}
+
+.manual__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.manual__step {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  gap: 1rem;
+  padding: 0.8rem 0.2rem;
+  border-top: 1px solid var(--line-soft);
+  align-items: baseline;
+}
+.manual__step:first-child {
+  border-top: 0;
+}
+.manual__step-num {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.04em;
+}
+.manual__step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.manual__doors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+@media (max-width: 720px) {
+  .manual__doors {
+    grid-template-columns: 1fr;
+  }
+}
+.manual__door {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-panel-2);
+  color: var(--text);
+  text-decoration: none;
+  align-items: start;
+}
+.manual__door .muted {
+  grid-column: 1 / -1;
+  font-size: 0.84rem;
+}
+.manual__door-arrow {
+  color: var(--gold, #d8b56b);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding-top: 0.1rem;
+}
+.manual__door:hover {
+  border-color: rgba(53, 240, 164, 0.4);
+  box-shadow: 0 0 0 1px rgba(53, 240, 164, 0.25);
+}
+.manual__door:hover .manual__door-arrow {
+  transform: translateX(3px);
+}
+
+.manual__rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 62ch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.manual__rules li {
+  position: relative;
+  padding-inline-start: 1.35rem;
+  line-height: 1.55;
+}
+.manual__rules li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.42rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: var(--gold, #d8b56b);
+}
+
+.manual__faq {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-width: 62ch;
+}
+.manual__faq-item {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+  background: var(--bg-panel-2);
+}
+.manual__faq-q {
+  margin: 0 0 0.3rem;
+  font-weight: 650;
+}
+.manual__faq-a {
+  margin: 0;
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
+.manual__closing {
+  text-align: center;
+  font-size: 0.92rem;
+  padding: 0.6rem 0;
+}

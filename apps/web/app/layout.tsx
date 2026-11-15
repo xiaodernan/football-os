@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Nav } from "@/components/Nav";
@@ -72,11 +73,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const localeHeader = headersList.get("x-next-intl-locale") ?? headersList.get("next-intl-locale");
   const locale = (locales as readonly string[]).includes(localeHeader ?? "") ? (localeHeader as typeof locales[number]) : defaultLocale;
 
-  const [user, capabilities, t, tNav] = await Promise.all([
+  const [user, capabilities, t, tNav, tCommon] = await Promise.all([
     currentUser().catch(() => null),
     serverFetch<CapabilitiesResponse>("/capabilities").then((result) => (result.ok ? result.data : null)),
     getTranslations("disclaimer"),
     getTranslations("nav"),
+    getTranslations("common"),
   ]);
   const messages = messagesMap[locale];
   const demoMode = capabilities?.demo_mode ?? true;
@@ -117,6 +119,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <span className="muted" style={{ fontSize: "0.82rem" }}>
                 {t("aiEstimate")}
               </span>
+              <Link href="/manual" className="muted" style={{ fontSize: "0.82rem", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+                {tCommon("manualLabel")} →
+              </Link>
             </div>
           </footer>
         </LocaleProvider>
