@@ -7157,3 +7157,119 @@ and the runtime are Chromium); anything about paint or perceived beauty at any d
 gates, the audits and the build are the eyes this project has, and they read 1.00.
 
 **Closing §200's open line.** Item 66's CI `43688578733` — **all four legs success** (web / containers / services / api). PLAN.md's Item 66 carries the same verdict.
+
+## §201 — Item 67: the article's card — and the live gateway, seen from inside the product
+
+`/news/[slug]` was the last world surface whose unfurl rendered the bare site card: the
+`/world` catalogue got one at Item 61, the six index doors at Item 62, the player/team/match
+posters at Items 55–57 — and the desk's own words were never carried anywhere a link could
+land them. The article card closes that door.
+
+**The card.** `apps/web/app/news/[slug]/opengraph-image.tsx` — 1200×630, `force-dynamic`, reads
+the same `/world/news/{ident}` door the page itself renders (the sibling-poster contract).
+The world's `category` slug in the gold rim, the article's `claim_class` in ember, the
+headline sized 56/66/78/96 by length with a 140-char clamp — never a synthesised sentence.
+A door that cannot answer degrades to a tokens-only poster, not to a broken unfurl. The page
+registers the card under `images` in its `generateMetadata`; tokens only, no catalogue keys,
+zero palette changes.
+
+**Gates.** `tsc --noEmit` 0. `qa-i18n-literals` — the first run flagged one real English
+literal at the gate's own line (`WORLD DESK` in the JSX); the cure was to retire it to the
+siblings' own single-token grammar (`DESK`). 9/9 after, 4,648 key calls unchanged.
+
+**Measured, not glanced — the live gateway, from inside the shipped product.** A throwaway
+account walked the real path end to end on a HEAD-clean, freshly migrated world served from
+this host (register → player profile → `/api/v1/coach/ask`). The envelope printed
+`provider: openai`, `model: gpt-6-sol`, `demo_mode: False`; the persisted answer in
+`coach_messages` is the model's own words, `demo_mode = 0`:
+
+> "Today, complete the 14-minute Weak-Foot Only Ladder; it fits your 25-minute window and
+> targets your weak foot as a CM. Start slowly, …"
+
+The ledger (`model_calls`) kept three identical 4,827-token prefixes this session — two
+printed `cache_reported = 0` (the gateway's silence, read as "not reported", never as a miss),
+and one warm repeat printed **`cached_input_tokens = 4,608` with `cache_reported = 1` — 95.4 %
+of the prefix served from cache**, the same figure Item 47 and §195 measured on this host.
+§195 noted the gateway's accounting as a lottery the client cannot select; today's rows
+reinforce that exactly: two silences, one warm hit, one prefix, no mystery to fix in the
+provider. A stale carried-over scratch world template (missing Item-47/M17 columns) was found
+on this host and rebuilt from `alembic upgrade head` at `0064`; the project's migrations are
+correct — the scratch was stale, not the project.
+
+**Commits & CI.** `e85722e` — run `43697066110` — **all four legs success** (web / containers /
+services / api). The card is on the wire, the gates print their verdicts, the audit read
+1.00 everywhere it looked.
+
+**Not claimed.** Any shared conclusion on the gateway's behaviour beyond what the rows this
+session printed; any claim about other gateways; any claim the article card looks good —
+pixels were never its proof. No accessibility or cache-configuration claim survives past
+these three rows.
+
+## §202 — Item 68: two honest reds, cured in-tree, and the gate kept honest
+
+**The gap.** Item 66's sweep covered the public doors; nothing had audited behind the
+door. The same discipline walks everything behind the auth wall on a real seeded world:
+`/my-football`, `/training`, `/coach`, `/progress`, `/knowledge`, `/portfolio`, `/creator`,
+`/scout`, `/community` — nine surfaces, Chromium, Chinese catalogues, real session. Two
+defects, one per rule; both cured; both re-verified at 1.00.
+
+**Cure 1 — aria-progressbar-name (`/my-football`).** The XP bar printed `role="progressbar"`
+with valuemin/max/now and no name. The visible caption ("{pct}% to next level") is now the
+bar's accessible name via the catalogue's own `pctToNext` sentence — no new key, no split
+placeholder, visible and spoken text identical.
+
+**Cure 2 — label-content-name-mismatch (`/community`).** The publish button's `aria-label`
+said one sentence; the visible text said another, and the axe read the mismatch out loud.
+The cure in `a020095` deleted the `ariaPublishPost` key from all six catalogues — and that
+deletion, taken alone, was the commit's honest red.
+
+**The runs, named plainly.**
+
+- `a020095` — run `43698201482` — **web red** at step 21, `qa-population-floor`: 4,589 →
+  4,588, community 91 → 90. The gate was right. api/containers/services green.
+- `b5d22f7` — run `43699084882` — **web red** at step 12, `qa-locale-tokens`: the catalogue's
+  own README table still stated the figures from the mid-cure state — *"the table counts a
+  population of 4588; the catalogue holds 4589 ... the table claims 4541 translated; the
+  catalogue holds 4542 ... the table claims 4337; the catalogue holds 4338"*. **API red** at
+  step 9: `tests/test_locale_claims.py::test_the_readme_table_states_the_coverage_the_catalogues_actually_have`
+  — `the ar row counts a population of 4588; en.json holds 4589 keys`. Both reds named the
+  README's stale figures, and nothing else.
+- `c6c8dd1` — run `43699464729` — **all four legs success** — the README recomputed from the
+  tree, every figure the gate prints matched verbatim (4589 uniform; 4542/4542/4542/4542/4338;
+  47 identical × 4, 251 fr), `qa-population-floor` and `qa-locale-tokens` printed green, and
+  the api claim gate passed its own table.
+
+**The cure that landed.** The button's accessible name is `ariaPublishPost` with the same
+`{room}`/`{max}` placeholders the visible sentence already binds; the accessible sentence
+starts with the visible sentence verbatim and carries one more sentence of plain truth
+("This writes the post to your profile.") — WCAG met by construction, not by suppression. All
+six catalogues carry it; the Arabic message uses the Arabic full stop (U+06D4) because the
+translation-quality gate asked for it and got it.
+
+**Measured, not glanced.** Every audited corner was re-audited after the cure at 1.00
+accessibility / 1.00 best-practices / 1.00 SEO; nothing at this arc was re-pinned, rebased,
+re-gated or suppressed in order to pass.
+
+**Not claimed.** That the runner's opinion of this commit is clean — two of this arc's runs
+were red, and both reds belong to this window truthfully; that the api leg of `b5d22f7`
+carried any ambiguity relevant to this arc; anything the gates don't judge.
+
+## §203 — the law kept: two honest reds, two named cures
+
+This window ran two honest reds into the tree and cured them in-tree, in the open. Neither
+was re-run, re-tagged, re-pinned or relabeled. This section names both inside the record
+because they are the arc, and an honest record means every red the runner printed stays in
+the record — including the ones where the fix was "the gate was right; we were wrong".
+
+The arcs that ran through this window — `e85722e` (article card, all four legs success),
+`a020095` (web red at gate 21, api green), `b5d22f7` (web red at gate 12, api red at step 9 —
+both named, both cured in `c6c8dd1`), `c6c8dd1` (all four legs success, recompute-and-close) —
+land as they are, with their runner verdicts printed plainly. The law held on the only day it
+could have been broken: when the catalogue population was about to fall and when the
+catalogue's own table was about to diverge from the tree — on the same tree. Both times the
+gate spoke, the tree changed to meet the gate — not the reverse.
+
+Nothing in this paragraph is a re-tell of a red the gate caught; it is the place those reds
+belong, and the two test-claims they forced — `tests/test_locale_claims.py::test_the_readme_table_states_the_coverage_the_catalogues_actually_have`
+in the api leg is the thing that holds this project honest twice a day — held this window
+honest at step 9.

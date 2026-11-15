@@ -2910,6 +2910,41 @@ listed page reads 1.00 A/BP/SEO now. `tsc` 0; `qa-i18n-literals` 9/9; no gate si
 
 **CI** — run `43688578733` — all four legs success.
 
+## Item 67 — the article's card (landed 2026-11-15)
+
+**The gap.** `/news/[slug]` was the world's last shareable surface rendered with the bare site
+`og:image`. The catalogue doors all print their own cards now; the desk's words did not.
+
+**What landed.** `apps/web/app/news/[slug]/opengraph-image.tsx` — force-dynamic sibling to the
+player/team posters; reads the same `/world/news/{ident}` door the page renders; headline sized
+by length (140-char clamp), category slug in the gold rim, claim-class in ember, `SEASON
+2026/27` foot. Tokens only; no catalogue keys; the page registers the card in `pageMetadata`.
+
+**Measured live this same window (ledger §201).** The shipped coach door walked end to end
+from a HEAD-clean, migrated world with the user's authorised key — provider `openai`, model
+`gpt-6-sol`, one warm repeat at 4,608/4,827 cached tokens (95.4 %), two silences correctly
+read as unreported, never as misses.
+
+**CI** — run `43697066110` — all four legs success.
+
+## Item 68 — the authenticated sweep (landed 2026-11-15)
+
+**The gap.** Item 66's sweep covered the public doors; nothing had audited behind the door.
+
+**What landed.** Two cures, both re-audited to 1.00 — `/my-football` XP bar's accessible name
+(`pctToNext`, the visible sentence, re-used; no new key), the `/community` publish button
+whose accessible name now IS its visible sentence (`ariaPublishPost` with the same `{room}`/
+`{max}` placeholders, plus one more plain sentence); `CommunityTools.tsx` and all six
+catalogues updated; the README recomputed from the tree after the gate called it out.
+
+**The arc includes two honest reds.** `a020095` (web red at gate 21 — `qa-population-floor`
+stopped the deletion of a key; api green). `b5d22f7` (web red at gate 12 — `qa-locale-tokens`;
+api red at step 9 — `test_the_readme_table_states_the_coverage_the_catalogues_actually_have`;
+all named, all cured in `c6c8dd1`). `c6c8dd1` — **all four legs success**.
+
+**CI** — `a020095` `43698201482` (red, api green); `b5d22f7` `43699084882` (red at web 12 and
+api 9); `c6c8dd1` `43699464729` — all four legs success.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
