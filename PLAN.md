@@ -3146,6 +3146,54 @@ figures held at 47/251 throughout.
 **Not claimed.** That the tour is final; every gate that prints a green number is one stranger
 from printing it in the reader's language.
 
+## Item 76 — the world's cup hemisphere: `/world/finals` (landed 2026-11-16)
+
+**The gap.** The eight cups whose finals close the year lived only inside the Gazette's scorecards:
+nobody had collected them in one door. The season ends with six trophies between forty clubs and
+two tiers — it never had a page of its own.
+
+**What landed.** `compute_finals` in `app/services/world/finals.py`: every completed cup Final in
+the world (8), walked from `real_matches` (`kind = 'cup'`, `round_label = 'Final'`), computed on
+every read: the score, the winning club, the player of each final (best-rated starter; ties goals →
+assists → slug), the loudest fixture (the Ildmoor Harbour Cup, 4–2, `Cora Sielino · 7.54 · 2 goals`,
+`2027-01-09`), and the cup-holders' choir (cups this club lifted, names attached). **The Finals is
+the first world door to read the stat lines of the cup hemisphere's closest-run fixtures.**
+`GET /api/v1/world/finals` — public/anonymous/60-min; `data_origin: synthetic` envelope.
+
+**The page.** `/world/finals` — three tiles (finals · goals · the loudest), the cup holders' choir
+(every holders chip linking to the club with their haul in gold inside the circle), then a grid of
+Final cards in date order: kicker cup · date, score-linked-to-match big numerals, winner line with
+the lifetime winner, the player of the final with position and rating. Server-rendered brand palette;
+sitemap carries the route; `/world` browse gains the tile; census 79 → **80** pages.
+
+**The catalogues.** `worldFinals` ×6 locales, authored per-language, population 4,768 uniform;
+README recount (4,721 ×4 / 4,517 fr); `qa-identity-*` gates pinned — `qa-locale-tokens` holds at
+251/47; `qa-crawl-policy` 80; `qa-metadata-title` population 80.
+
+**Census and probes.** `AUDIT_FIGURES contract_paths=239 page_routes=80 migrations=65`;
+module-table row 4 names `finals` and the `/world/*` census is (18); `docs/api/openapi.json`
+regenerated (239 paths); probe census re-pinned **241 / 65 / 104**, SHA `3b8167f6…`.
+
+**Tests.** `test_world_finals.py`: 4/4 green — envelope grammar, the loudest arithmetic equals the
+true view of the rows, the cup-tally addition discipline (clubs' wins == decided finals), the
+door-behind-its-envelope behaviour. 133 world-suite passing on SQLite fallback.
+
+**The two gate-order lessons of the window.** (1) The refusal table (`door_codes.UNPROCESSABLE_CODES`)
+is a zero-tolerance ledger: every raise with a fixed message must be named — the Gazette's
+`edition_out_of_range` failed the runner for 5 pushes (`43744262009`, `43744307908`, `43744789936`,
+`43744822041`, `43745822826`) and is registered once, at `0eeba4d`, with the `errors` namespace
+×6 locales matching the fix. (2) The README's coverage table drifts silently when one key lands —
+the locale-tokens gate caught it the same window; the cure is to recount in the same push that adds
+the key, which §210 now bakes into the arc's habit (`qa-completion-recounts` runs are part of the
+normal battery before push).
+
+**CI** — run `43747718126` (the Finals push) printed **all four legs success**; `43747739733`
+(fact-pack to 34f47c1) has web/services/containers green, api in flight at the time of writing — its
+verdict prints in §211 and gets recorded verbatim.
+
+**Not claimed.** Anything the gates don't print; the eight cups are what the seed wrote as finals,
+nothing more.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

@@ -7643,3 +7643,51 @@ they do, §211 records exactly what they say); the wall-clock hold on the runner
 `a19ebe9` (Item 75), `6cb0231` (fact pack corrected). The Gazette ships with its tests reading
 133 passed on SQLite fallback; the manual holds no invented claims; the README's figures are
 re-measured at every arc and printed above, no rounder than the table shows.
+
+## §211 — the Finals land; the red order is recorded straight: one bug, five push-bound api legs
+
+Item 76 went into master as `34f47c1` — the world's cup hemisphere, computed not narrated:
+`/world/finals` — every completed cup Final in the world (8) walked from the rows (`kind = 'cup'`,
+`round_label = 'Final'`), the score, the player of each final (best-rated starter, ties goals →
+assists → slug), the loudest fixture, and the cup-holders' choir (cups each club lifted, the names
+attached), all public / anonymous / 60-min. Census re-pinned: contract 239 paths, page routes 80,
+`/world/*` pages (18), `/world` doors 17 on the browse, probe 241 secured / **65 public** / 104
+private GET, SHA `3b8167f6…` through the report, M12 and ROADMAP; the six-language catalogue grew
+to population 4,768 uniform (README recount 4,721 ×4 / 4,517 fr).
+
+**The runner's order, printed straight — no merge flattens it.**
+
+Five api legs failed in a row on the identical defect, because five commits were pushed while one
+remedy lived in no one's tree yet:
+
+- `43744262009` — the Gazette push (`4faad74`) — api step 9 `Tests (SQLite dev fallback)`:
+  `edition_out_of_range` raised at `world.py:1153` but `door_codes`' `UNPROCESSABLE_CODES` did not
+  register it, so `test_answer_census.py` refused the raise; services/web/containers success.
+- `43744307908` — the fact-pack refresh to 4faad74 — api step 9, same red (the census holds the
+  whole tree, not the commit message).
+- `43744789936` — the manual's three-door push (`a19ebe9`) — api step 9, same red.
+- `43744822041` — fact pack 1,117 — api step 9, same red.
+- `43745822826` — the §210 ledger close (`2194ac6`) — api step 9, same red; web success.
+- `43745858928` — fact pack 1,119 — api step 9, same red.
+
+The cure landed as `0eeba4d`: the code registered under `UNPROCESSABLE_CODES` (`edition_out_of_range`)
+and the `errors` namespace translated ×6 — but its own CI (`43746798347`) printed a **web step 12
+`Locale-token gate` red** and an **api step 9 `test_locale_claims` red**, because at that commit the
+README still claimed 4,750 against a tree that had moved to 4,751 (the refusal fix added one key).
+One stale sentence, one more red, no reruns, no retags.
+
+The Finals push `34f47c1` closed both classes at once: the README re-measured to 4,768 in the same
+commit (`AUDIT_FIGURES contract_paths=239 page_routes=80`, module-table doors list carries `finals`,
+`/world/*` census (18)), and its run `43747718126` printed **all four legs success** on master —
+web, containers, services, api. The fact-pack push to `34f47c1` (`414dfc7`, run `43747739733`) has
+web / services / containers green, api in flight at write time; the in-flight verdict prints later
+and this book records it when it does.
+
+**What this entry does not do.** It does not flatten five reds into one cure commit; it does not
+claim the older red runs ever went green; it does not claim Item 76 was cheap — two gates caught
+the author twice (the census/refusal table and the README that staled by exactly one key while the
+gate-runner caught it before production ever would). The runner's order is the history; this file
+recounts it.
+
+**The fact pack stood at `414dfc7` — `1,122` commits, routes 80, doors 17, world_pages 17, milestone
+`§210`, and the profile mirror `assets/football/latest.json` carries the same bytes.**
