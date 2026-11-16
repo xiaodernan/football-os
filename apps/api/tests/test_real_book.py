@@ -258,6 +258,56 @@ class TestTheRealBook:
         assert facts["goals_scored"] == 132
         assert result["scorers"] == []
 
+    def test_euro_2024_prints_its_own_arithmetic_computed_from_the_bytes(self) -> None:
+        result = compute_real_book("euro2024")
+        assert result["available"] is True
+        assert result["tournament"] == "euro2024"
+        facts = result["facts"]
+        assert facts["tournament"] == "UEFA Euro 2024"
+        assert facts["total_matches"] == 51
+        assert facts["venues"] == 10
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
+        assert facts["champion"]["name"] == "Spain"
+        assert facts["final"]["home"] == "Spain"
+        assert facts["final"]["away"] == "England"
+        assert facts["final"]["score_regular"] == [2, 1]
+        assert facts["has_penalties"] is False
+        assert facts["biggest_win"]["match"] == "Germany 5-1 Scotland"
+        assert facts["biggest_win"]["matchday_date"] == "2024-06-14"
+        assert facts["goals_scored"] == 117
+        # The Euro 2024 file carries every goal; the snapshot counts 117 total.
+        assert result["scorers"]
+        assert result["scorers"][0]["goals"] == 3
+        assert any(row["name"] == "Kane" and row["goals"] == 3 for row in result["scorers"])
+
+    def test_euro_2021_prints_its_own_arithmetic_computed_from_the_bytes(self) -> None:
+        result = compute_real_book("euro2021")
+        assert result["available"] is True
+        assert result["tournament"] == "euro2021"
+        facts = result["facts"]
+        assert facts["tournament"] == "UEFA Euro 2021 (the 2020 European Championship)"
+        assert facts["total_matches"] == 51
+        assert facts["venues"] == 11
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
+        assert facts["champion"]["name"] == "Italy"
+        assert facts["final"]["home"] == "Italy"
+        assert facts["final"]["away"] == "England"
+        assert facts["final"]["score_penalties"] == [3, 2]
+        assert facts["has_penalties"] is True
+        assert facts["biggest_win"]["match"] == "Slovakia 0-5 Spain"
+        assert facts["biggest_win"]["matchday_date"] == "2021-06-23"
+        assert facts["goals_scored"] == 142
+        assert result["scorers"]
+        assert result["scorers"][0]["goals"] == 5
+        assert any(row["name"] == "Ronaldo" and row["goals"] == 5 for row in result["scorers"])
+
+    def test_the_champions_door_carries_worldcups_only(self) -> None:
+        from app.services.world.real_book import tournaments
+
+        assert "euro2024" not in tournaments()
+        assert "euro2021" not in tournaments()
+        assert set(tournaments()) == {"1986", "1990", "1994", "1998", "2002", "2006", "2010", "2014", "2018", "2022"}
+
     def test_the_scorers_tables_derive_from_the_committed_snapshots(self) -> None:
         scorers_2022 = {row["name"]: row for row in compute_real_book("2022")["scorers"]}
         assert scorers_2022["Kylian Mbappé"]["goals"] == 8

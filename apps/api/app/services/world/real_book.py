@@ -29,6 +29,7 @@ _DATA = Path(__file__).resolve().parent / "data"
 # merges them for the door's scorers table — the fixture ledger keeps the source's own bytes.
 _REGISTRY: dict[str, dict[str, Any]] = {
     "2022": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-2022.json",
         "spelling_merge": {"Mbappé": "Kylian Mbappé"},
         "facts": {
@@ -68,6 +69,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         "joint_top_scorers_note": "goals are counted from the openfootball goal lists; France's No. 10 is spelled two ways in the source and merged here.",
     },
     "2018": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-2018.json",
         "spelling_merge": {},
         "facts": {
@@ -106,6 +108,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         "joint_top_scorers_note": "goals are counted from the openfootball goal lists as committed, without merging; the FIFA Golden Boot credit is curator knowledge.",
     },
     "2014": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-2014.json",
         "spelling_merge": {},
         "facts": {
@@ -144,6 +147,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         "joint_top_scorers_note": "goals are counted from the openfootball goal lists as committed, without merging; the FIFA Golden Boot credit is curator knowledge (James Rodríguez's six-goal tally is the canonical citation)",
     },
     "2010": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-2010.json",
         "spelling_merge": {},
         "facts": {
@@ -182,6 +186,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         "joint_top_scorers_note": "the 2010 snapshot carries fixtures and scorelines, not scorer lists; the scorers table is absent from this cup and every top-scorer claim on the tiles is curator knowledge, labelled as such.",
     },
     "2006": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-2006.json",
         "spelling_merge": {},
         "facts": {
@@ -221,6 +226,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         "skip_scorers": True,
     },
     "2002": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-2002.json",
         "spelling_merge": {},
         "facts": {
@@ -259,6 +265,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         "joint_top_scorers_note": "the 2002 snapshot carries fixtures and scorelines, not scorer lists; the scorers table is absent from this cup and every top-scorer claim on the tiles is curator knowledge, labelled as such.",
     },
     "1998": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-1998.json",
         "spelling_merge": {},
         "facts": {
@@ -297,6 +304,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         "joint_top_scorers_note": "the 1998 snapshot carries fixtures and scorelines, not scorer lists; the scorers table is absent from this cup and every top-scorer claim on the tiles is curator knowledge, labelled as such.",
     },
     "1994": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-1994.json",
         "spelling_merge": {},
         "facts": {
@@ -335,6 +343,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         "joint_top_scorers_note": "the 1994 snapshot carries fixtures and scorelines, not scorer lists; the scorers table is absent from this cup and every top-scorer claim on the tiles is curator knowledge, labelled as such.",
     },
     "1990": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-1990.json",
         "spelling_merge": {},
         "facts": {
@@ -374,6 +383,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         "skip_scorers": True,
     },
     "1986": {
+        "kind": "worldcup",
         "snapshot": "openfootball-worldcup-1986.json",
         "spelling_merge": {},
         "facts": {
@@ -411,6 +421,82 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         },
         "joint_top_scorers_note": "the 1986 snapshot carries fixtures and scorelines, not scorer lists; the scorers table is absent from this cup and every top-scorer claim on the tiles is curator knowledge, labelled as such.",
     },
+    "euro2024": {
+        "kind": "euro",
+        "snapshot": "openfootball-euro-2024.json",
+        "spelling_merge": {},
+        "facts": {
+            "tournament": "UEFA Euro 2024",
+            "host": "Germany",
+            "final_date": "2024-07-14",
+            "final_rounds": [
+                {"round": "Group stage", "matches": 36},
+                {"round": "Round of 16", "matches": 8},
+                {"round": "Quarter-finals", "matches": 4},
+                {"round": "Semi-finals", "matches": 2},
+                {"round": "Final", "matches": 1},
+            ],
+            "venues": 10,
+            "total_matches": 51,
+            "has_penalties": False,
+            "champion": {
+                "name": "Spain",
+                "note": "Won the final 2-1 vs England (Oyarzabal, 86') at Berlin.",
+            },
+            "final": {
+                "home": "Spain",
+                "away": "England",
+                "score_regular": [2, 1],
+                "score_extra_time": [2, 1],
+                "score_penalties": [0, 0],
+                "venue": "Berlin",
+                "attendance": None,
+                "matchday_date": "2024-07-14",
+            },
+            "runner_up": {"name": "England", "star": "Harry Kane — co-top scorer with 3 goals; the Golden Boot was shared by six players with 3 goals each (Musiala, Kane, Gakpo, Malen, Schranz, Mikautadze) (curator knowledge; the snapshot carries the goals, not the boot credit)"},
+            "golden_ball": {"name": "Rodri", "note": "Golden Ball, Spain — the tournament's best player (curator knowledge)"},
+            "openfootball_url": "https://github.com/openfootball/euro.json",
+        },
+        "joint_top_scorers_note": "goals are counted from the openfootball euro.json snapshot (Euro 2024, CC-BY 4.0) as committed. The Golden Boot was shared by six players with 3 goals each; the snapshot does not name a single winner.",
+    },
+    "euro2021": {
+        "kind": "euro",
+        "snapshot": "openfootball-euro-2021.json",
+        "spelling_merge": {},
+        "facts": {
+            "tournament": "UEFA Euro 2021 (the 2020 European Championship)",
+            "host": "11 cities across Europe",
+            "final_date": "2021-07-11",
+            "final_rounds": [
+                {"round": "Group stage", "matches": 36},
+                {"round": "Round of 16", "matches": 8},
+                {"round": "Quarter-finals", "matches": 4},
+                {"round": "Semi-finals", "matches": 2},
+                {"round": "Final", "matches": 1},
+            ],
+            "venues": 11,
+            "total_matches": 51,
+            "has_penalties": True,
+            "champion": {
+                "name": "Italy",
+                "note": "Won the final 1-1 vs England (Bonucci 67') 3-2 on penalties at London (Wembley).",
+            },
+            "final": {
+                "home": "Italy",
+                "away": "England",
+                "score_regular": [1, 1],
+                "score_extra_time": [1, 1],
+                "score_penalties": [3, 2],
+                "venue": "London",
+                "attendance": None,
+                "matchday_date": "2021-07-11",
+            },
+            "runner_up": {"name": "England", "star": "Patrick Schick and Cristiano Ronaldo — co-top scorers with 5 goals each (curator knowledge; the snapshot carries the goals, not the boot credit)"},
+            "golden_ball": {"name": "Gianluigi Donnarumma", "note": "Golden Ball, Italy — the tournament's best player, the final's shoot-out hero (curator knowledge)"},
+            "openfootball_url": "https://github.com/openfootball/euro.json",
+        },
+        "joint_top_scorers_note": "goals are counted from the openfootball euro.json snapshot (Euro 2021, played in 2021 against Global tournament postponement, CC-BY 4.0) as committed. The Golden Boot was shared; the snapshot does not name a single winner.",
+    },
 }
 
 ATTRIBUTION = (
@@ -424,8 +510,10 @@ class UnknownTournament(ValueError):
     """Raised when the requested tournament is not one the door carries."""
 
 
-def tournaments() -> list[str]:
-    return list(_REGISTRY)
+def tournaments(kind: str | None = "worldcup") -> list[str]:
+    if kind is None:
+        return list(_REGISTRY)
+    return [key for key, entry in _REGISTRY.items() if entry.get("kind", "worldcup") == kind]
 
 
 def _load_snapshot(filename: str) -> dict[str, Any]:

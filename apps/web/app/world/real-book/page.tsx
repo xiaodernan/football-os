@@ -109,12 +109,15 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
   const { facts, provenance, results, scorers } = result.data;
   const days = groupByDay(results);
   const order = ["2022", "2018", "2014", "2010", "2006", "2002", "1998", "1994", "1990", "1986"] as const;
-  const active = (order as readonly string[]).includes(tournament) ? (tournament as (typeof order)[number]) : "2022";
-  const ledes = { "2018": "lede2018", "2014": "lede2014", "2010": "lede2010", "2006": "lede2006", "2002": "lede2002", "1998": "lede1998", "1994": "lede1994", "1990": "lede1990", "1986": "lede1986" } as const;
-  const openings = { "2018": "opening2018", "2014": "opening2014", "2010": "opening2010", "2006": "opening2006", "2002": "opening2002", "1998": "opening1998", "1994": "opening1994", "1990": "opening1990", "1986": "opening1986" } as const;
+  const euroOrder = ["euro2024", "euro2021"] as const;
+  const all = [...order, ...euroOrder] as readonly string[];
+  const active = all.includes(tournament) ? tournament : "2022";
+  const ledes = { "2018": "lede2018", "2014": "lede2014", "2010": "lede2010", "2006": "lede2006", "2002": "lede2002", "1998": "lede1998", "1994": "lede1994", "1990": "lede1990", "1986": "lede1986", euro2024: "lede2024", euro2021: "lede2021" } as const;
+  const openings = { "2018": "opening2018", "2014": "opening2014", "2010": "opening2010", "2006": "opening2006", "2002": "opening2002", "1998": "opening1998", "1994": "opening1994", "1990": "opening1990", "1986": "opening1986", euro2024: "opening2024", euro2021: "opening2021" } as const;
   const ledeKey = (ledes as Record<string, string>)[active] ?? "lede";
   const openingKey = (openings as Record<string, string>)[active] ?? "opening";
   const hasScorers = scorers.length > 0;
+  const chipOf = (id: string): string => (id === "euro2024" ? "chip2024" : id === "euro2021" ? "chip2021" : `chip${id}`);
   const homeWon =
     facts.final.score_regular[0] !== facts.final.score_regular[1]
       ? facts.final.score_regular[0] > facts.final.score_regular[1]
@@ -132,7 +135,12 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
 
       <nav className="realbook__switch" aria-label={t("eyebrow")}>
         {order.map((year) => (
-          <Link key={year} href={`?tournament=${year}`} className={`realbook__chip${active === year ? " realbook__chip--active" : ""}`} aria-current={active === year ? "page" : undefined}>{t(`chip${year}` as "chip2022")}</Link>
+          <Link key={year} href={`?tournament=${year}`} className={`realbook__chip${active === year ? " realbook__chip--active" : ""}`} aria-current={active === year ? "page" : undefined}>{t(chipOf(year) as "chip2022")}</Link>
+        ))}
+      </nav>
+      <nav className="realbook__switch" aria-label={t("eyebrow")}>
+        {euroOrder.map((year) => (
+          <Link key={year} href={`?tournament=${year}`} className={`realbook__chip${active === year ? " realbook__chip--active" : ""}`} aria-current={active === year ? "page" : undefined}>{t(chipOf(year) as "chip2022")}</Link>
         ))}
       </nav>
 

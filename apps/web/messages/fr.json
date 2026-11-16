@@ -4320,7 +4320,7 @@
     "admin_refused": "Le mot de passe partagé est faux.",
     "bad_path": "Le chemin sort du format accepté.",
     "bad_session": "La référence de session sort du format accepté.",
-    "unknown_tournament": "Le vrai Cahier ne porte que 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018 et 2022."
+    "unknown_tournament": "Le vrai Cahier ne porte que les Coupes du monde 1986–2022 et les Euros 2021/2024."
   },
   "errorBoundary": {
     "eyebrow": "Une erreur est survenue",
@@ -5059,8 +5059,8 @@
     "step10Body": "Vous êtes désormais le lecteur que le monde attendait. Revenez demain — la saison 2026/27 continue de s'écrire sur les lignes, et cette porte est comment vous continuez de la lire."
   },
   "worldRealBook": {
-    "metaTitle": "Le Vrai Cahier — ce que le monde a vraiment imprimé sur dix Coupes du monde",
-    "metaDescription": "Les dix Coupes du monde portées par ce produit — les vraies 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018 et 2022, documentées chiffre par chiffre : les finales, les nombres, les prix — depuis les archives ouvertes.",
+    "metaTitle": "Le Vrai Cahier — ce que le vrai monde a imprimé sur ses plus grands tournois",
+    "metaDescription": "Les dix vraies Coupes du monde et les deux vrais Championnats d’Europe portés par ce produit — de 1986 à 2024, documentés chiffre par chiffre : les finales, les nombres, les prix — depuis les archives ouvertes.",
     "eyebrow": "Le Vrai Livre",
     "title": "Un monde de vrai football",
     "lede": "Voici la Coupe du monde 2022, portée par ce produit — chaque chiffre passé par la communauté openfootball, chaque donnée extraite d'un fichier public, attribution incluse.",
@@ -5129,7 +5129,13 @@
     "lede1994": "La vraie Amérique, portée par ce produit — la Coupe du monde 1994, chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
     "opening1994": "En 1994, le vrai monde du football a couronné son héros, brièvement, exactement ainsi.",
     "lede1998": "La vraie France, portée par ce produit — la Coupe du monde 1998, chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
-    "opening1998": "En 1998, le vrai monde du football a retenu son souffle, brièvement, exactement ainsi."
+    "opening1998": "En 1998, le vrai monde du football a retenu son souffle, brièvement, exactement ainsi.",
+    "chip2024": "Euro 2024 · Berlin",
+    "chip2021": "Euro 2020 · Londres",
+    "lede2024": "La vraie Allemagne, portée par ce produit — l'Euro 2024, chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
+    "opening2024": "En 2024, le vrai monde du football a applaudi son tournoi ici, brièvement, exactement ainsi.",
+    "lede2021": "La vraie Europe, portée par ce produit — l'Euro 2021 (celui de 2020, reporté), chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
+    "opening2021": "En 2021, le vrai monde du football a retenu son souffle, brièvement, exactement ainsi."
   },
   "worldAtlas": {
     "metaTitle": "L'Atlas — les portes du monde, dessinées",

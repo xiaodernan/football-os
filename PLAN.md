@@ -3879,6 +3879,42 @@ tsc clean · all web gates green (`qa-locale-tokens` 7/7 · `qa-translation-qual
 is live (all are committed-byte computed); that the six-rotating chip grid renders identically at
 every viewport (the `realbook__switch` grid wraps; verified only as bytes, not walks).
 
+## Item 110 — the Real Book carries Euros too: the European Championship joins the door (landed 2026-11-16)
+
+**The gap.** The Real Book was ten real World Cups — and the real world plays another tournament
+in-between. The openfootball archive carries `euro.json` (UEFA European Championship), CC-BY 4.0,
+with **full scorer lists** — unlike seven of the ten FIFA snapshots.
+
+**What landed.**
+
+- `openfootball-euro-2024.json` (Spain beat England 2–1 at Berlin, Oyarzabal 86'; 117 goals, 51
+  matches, 10 venues) and `openfootball-euro-2021.json` (Italy beat England 2–1 on penalties at
+  Wembley after 1–1, the postponed 2020 tournament; 142 goals, 51 matches, 11 venues).
+- **Two more chips** on the door — `Euro 2024 · Berlin` and `Euro 2020 · London` — on their own
+  row beneath the ten FIFA chips; both carry goals, final ET/PEN markers, venues, scoring
+  totals and scorer tables computed from the committed bytes on every read.
+- Registry keys are `euro2024` / `euro2021`; `tournaments("worldcup")` keeps the /world/champions
+  door ten cups wide and worldcup-only — **the Champions door and its merged scorers ledger are
+  unchanged by design**.
+- The refusal sentence now reads **"The Real Book carries the 1986–2022 World Cups and the
+  2021/2024 European Championships."** — API and catalogue moved together, six tongues.
+- Catalogue population **5,118 ×6** (fr gains `chip2024` as a named doublet — the host venue,
+  spelled the same in French); README re-pinned (5,071 · 4,859 · 47/259 named identicals).
+- Contract re-exported: **246 paths / 313 operations / 99 schemas unchanged**, regex now admits
+  `euro2021|euro2024`; SHA `f1e1332d56265d34477f82628dd54fea5fc15da4bcb7ac1db546212f80be3e31`;
+  secured 241 / public 72 / private GET 104; the three ledgers re-pinned.
+
+**Verified on this host:** ruff clean · `mypy app` **199/199** · pytest **27/27** on the door
+suites (including the two exclusive-EURO arithmetic cases and the worldcup-only guard) ·
+tsc clean · all web gates green (`qa-locale-tokens` 7/7 · `qa-translation-quality` 9/9 ·
+`qa-unused-keys` · `qa-plural-select` · `qa-metadata-title` · `qa-crawl-policy` · `qa-i18n-literals`
+· `qa-token-drift` · `qa-shared-keys` · `qa-key-drift` · `qa-locale-wiring` 8/8 · `qa-table-shape`
+124/124). The contract currency suites re-run against the committed head.
+
+**Not claimed.** That the runner prints any leg of this item green before it has run; that the
+champions ledger will absorb Euros (it stays worldcup-ten by design); that either Euro is a
+FIFA tournament archive (they are `euro.json`, officially UEFA).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

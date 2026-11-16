@@ -9031,3 +9031,47 @@ were still printing; Item 109 (`43875407379`, `43875481259`) queued behind them.
 **Not claimed.** That Item 108 or Item 109 legs have printed green; what has is the runner's own
 answer for the two commits this section names. This artefact exists so the next section can quote
 the queue honestly instead of reconstructing it from memory.
+
+## §249 — Item 110: the European Championship joins The Real Book — the openfootball Euro files land carry-all scorers
+
+**What landed.** Two snapshots from `openfootball/euro.json` (CC-BY 4.0, unmodified; the NOTICE
+now names all thirteen files):
+
+| cup | host | final | goals | venues | scorers |
+| --- | --- | --- | --- | --- | --- |
+| Euro 2024 | Germany | **Spain 2–1 England** (Oyarzabal 86'), Berlin | 117 | 10 | full list |
+| Euro 2021 (the postponed 2020) | 11 cities | **Italy 1–1 England**, 3–2 pens (Bonucci 67'), Wembley | 142 | 11 | full list |
+
+Both carry **every goal** — unlike the seven FIFA World Cup snapshots that print none. The door
+prints scorer tables for both on every read; finals' `has_penalties` semantics unchanged (only
+2021 went to penalties: 2024 False, 2021 True). The `/world/champions` door and its merged
+scorers ledger are **kept ten-cups-wide by `tournaments("worldcup")`** — the Champions door is
+a World Cup door, and Euros do not blur it.
+
+**Named red cured in its own form:**
+
+- `qa-locale-tokens`: fr identical to en for `chip2024` (`Euro 2024 · Berlin` — the host venue,
+  spelled the same in French); named in `FR_TOKENS`; fr identicals **259** (was 258); README
+  re-pinned to **population 5,118 ×6** (zh/zh-TW/ar/he **5,071** · fr **4,859** · tokens 47 / 259).
+- `test_openapi_contract_currency` red against the un-committed working tree was exactly the
+  intended handshake: the suite reads `git show HEAD:openapi.json` and the diff rides this
+  commit (the contract changes **with** the door, not after it).
+- The refusal sentence now reads **"The Real Book carries the 1986–2022 World Cups and the
+  2021/2024 European Championships."** — API and catalogue in lockstep, six tongues; the
+  census finds it byte-true (`test_locale_claims` green).
+
+**Contract moved** (query regex gains `euro2021|euro2024`):
+SHA-256 `f1e1332d56265d34477f82628dd54fea5fc15da4bcb7ac1db546212f80be3e31` — **246 paths /
+313 operations / 99 schemas unchanged**; secured 241 / public 72 / private GET 104; the three
+SHA ledgers re-pinned; `AUDIT_FIGURES` unchanged (no routes added or removed).
+
+**Gates re-measured on this tree:** ruff clean · `mypy app` **199/199** · pytest door suites
+**27/27** · `tsc` clean · full web gate battery green (locale-tokens 7/7 · translation-quality
+9/9 · key-drift 4/4 · shared-keys 4/4 · i18n-literals 9/9 · metadata-title 253/253 ·
+crawl-policy 9/9 · locale-wiring 8/8 · token-drift 4/4 · plural-select 7/7 ·
+table-shape 124/124 · namespace-ownership · icu-messages / icu-coverage / locale-completeness).
+
+**Not claimed.** That the runner has printed any leg of this item green; that the Champions door
+will ever carry Euros (it stays a World Cup door until the world's book grows a sibling section);
+that "the real world plays another tournament" is a problem — it is an opportunity, and this arc
+sinks no new flagship claims into it.

@@ -4320,7 +4320,7 @@
     "admin_refused": "The passphrase is wrong.",
     "bad_path": "The path is outside the accepted shape.",
     "bad_session": "The session reference is outside the accepted shape.",
-    "unknown_tournament": "The Real Book carries 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018 and 2022."
+    "unknown_tournament": "The Real Book carries the 1986–2022 World Cups and the 2021/2024 European Championships."
   },
   "errorBoundary": {
     "eyebrow": "Something went wrong",
@@ -5059,8 +5059,8 @@
     "step10Body": "You are now the reader the world was asking for. Come back tomorrow — the 2026/27 season keeps writing itself onto the rows, and this door is how you keep reading."
   },
   "worldRealBook": {
-    "metaTitle": "The Real Book — what the actual world printed at ten World Cups",
-    "metaDescription": "The ten World Cups this product carries — the real 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018 and 2022, documented figure by figure: the finals, the numbers, the awards — from the open archive.",
+    "metaTitle": "The Real Book — what the actual world printed at its biggest tournaments",
+    "metaDescription": "The ten real World Cups and two real European Championships this product carries — 1986 to 2024, documented figure by figure: the finals, the numbers, the awards — from the open archive.",
     "eyebrow": "The Real Book",
     "title": "A world of real football",
     "lede": "Here is the 2022 World Cup, carried right inside this product — every figure passed on from the openfootball community, every one of it from a public file, attribution included.",
@@ -5129,7 +5129,13 @@
     "lede1994": "The real world's United States, carried right inside this product — the 1994 World Cup, every figure passed on from the open archive community, attribution included.",
     "opening1994": "The real football world crowned its hero in 1994, briefly, exactly this way.",
     "lede1998": "The real world's France, carried right inside this product — the 1998 World Cup, every figure passed on from the open archive community, attribution included.",
-    "opening1998": "The real football world held its breath in 1998, briefly, exactly this way."
+    "opening1998": "The real football world held its breath in 1998, briefly, exactly this way.",
+    "chip2024": "Euro 2024 · Berlin",
+    "chip2021": "Euro 2020 · London",
+    "lede2024": "The real world's Germany, carried right inside this product — Euro 2024, every figure passed on from the open archive community, attribution included.",
+    "opening2024": "The real football world applauded its tournament here in 2024, briefly, exactly this way.",
+    "lede2021": "The real world's Europe, carried right inside this product — Euro 2021 (the postponed 2020), every figure passed on from the open archive community, attribution included.",
+    "opening2021": "The real football world held its breath in 2021, briefly, exactly this way."
   },
   "worldAtlas": {
     "metaTitle": "The Atlas — the world's doors, drawn once",
