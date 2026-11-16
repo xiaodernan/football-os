@@ -2925,7 +2925,7 @@
     "navHomeTutorial": "Le guide",
     "navHomeTutorialNote": "dix portes, une belle soirée — votre première heure ici",
     "worldBookRealBook": "Le Vrai Livre",
-    "worldBookRealBookNote": "ce que le vrai monde a vraiment imprimé en 2022 — l'Argentine à Lusail, par les chiffres"
+    "worldBookRealBookNote": "ce que le vrai monde a imprimé sur dix Coupes du monde et deux Euros — de 1986 à 2024"
   },
   "careerDetail": {
     "academyEyebrow": "une classe de {count} à ou sous {ceiling}, jugée par les onze suivants du moteur",
@@ -4800,9 +4800,11 @@
     "tour16t": "Le tutoriel",
     "tour16d": "la tablée des dix — dix portes, une belle soirée, votre première heure ici",
     "tour17t": "Le Vrai Livre",
-    "tour17d": "ce que le vrai monde a imprimé en 2022 — l'Argentine à Lusail, par les chiffres",
+    "tour17d": "ce que le vrai monde a imprimé sur dix Coupes du monde et deux Euros — de 1986 à 2024, par les chiffres",
     "tour18t": "L'Atlas",
-    "tour18d": "tout le monde dessiné en une seule constellation — chaque porte de cette page y est"
+    "tour18d": "tout le monde dessiné en une seule constellation — chaque porte de cette page y est",
+    "tour19t": "Champions du monde",
+    "tour19d": "les dix Coupes du monde côte à côte — du Mexique 1986 à l’Argentine 2022, un chapitre par finale"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",

@@ -3925,6 +3925,29 @@ page; no key moved, no gate touched; tsc clean; `qa-unused-keys` 3/3. Record: §
 
 **Not claimed.** That the runner printed anything green yet.
 
+## Item 112 — VIII on the worldbook rail, tour19 on the manual — the Champions takes its seat (landed 2026-11-16)
+
+**The gap.** The Champions sat on the /world index and in the Atlas — but the homepage worldbook rail
+and the in-product tutorial did not know it; `/manual` tour18 was the Atlas, and the rail's book ended
+at VII (The Real Book) with the 2022 fiction still on the label.
+
+**What landed.**
+
+- **VIII on the rail** — `/world/champions`, with `worldChampions.sectionChampionsLabel/Note`; the
+  Atlas stays off the rail on purpose (it is a map, not a chapter).
+- **tour19 on the manual** — `/world/champions`, natively in six locales (population **5,120 ×6**);
+  the tutorial's chapter order follows the world's book.
+- **Stale tells cured**: `manual.tour17d` and `home.worldBookRealBookNote` now describe the door as
+  ten World Cups and two European Championships — the 2022-only sentences are gone.
+- `tour19t` uses the shared sentence "World Cup Champions" (the timeline's), not a contested new
+  one; locale-token floors hold; README re-pinned (**5,073** ×4 / **4,861** fr).
+
+**Verified on this host:** tsc clean · `qa-unused-keys` 3/3 · `qa-translation-quality` 9/9 ·
+`qa-key-drift` 4/4 · `qa-shared-keys` 4/4 · `qa-namespace-ownership` 2/2 · `qa-metadata-title`
+(88 pages, 253 checks) · `qa-crawl-policy` 9/9 · `qa-locale-tokens` 7/7.
+
+**Not claimed.** The runner's verdict on this item; that the rail will ever outgrow the book.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

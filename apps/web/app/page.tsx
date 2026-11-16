@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [user, capabilitiesResult, featuredResult, t, td, ta, tn, tc] = await Promise.all([
+  const [user, capabilitiesResult, featuredResult, t, td, ta, tn, tc, tChampions] = await Promise.all([
     currentUser(),
     serverFetch<CapabilitiesResponse>("/capabilities"),
     serverFetch<DuelResult>("/world/duel/featured"),
@@ -30,6 +30,7 @@ export default async function HomePage() {
     getTranslations("auth"),
     getTranslations("nav"),
     getTranslations("common"),
+    getTranslations("worldChampions"),
   ]);
   const capabilities = capabilitiesResult.ok ? capabilitiesResult.data : null;
   const featured = featuredResult.ok ? featuredResult.data : null;
@@ -209,6 +210,14 @@ export default async function HomePage() {
               <span className="worldbook__body">
                 <strong>{t("worldBookRealBook")}</strong>
                 <span className="muted">{t("worldBookRealBookNote")}</span>
+              </span>
+              <span className="worldbook__arrow" aria-hidden="true">→</span>
+            </Link>
+            <Link className="worldbook__row" href="/world/champions">
+              <span className="worldbook__numeral" aria-hidden="true">VIII</span>
+              <span className="worldbook__body">
+                <strong>{tChampions("sectionChampionsLabel")}</strong>
+                <span className="muted">{tChampions("sectionChampionsNote")}</span>
               </span>
               <span className="worldbook__arrow" aria-hidden="true">→</span>
             </Link>

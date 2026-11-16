@@ -9130,3 +9130,25 @@ literal `t(...)` calls; the queued `43878961938`/`43879150897`/`43879200387` run
 **Not claimed.** That either of those runs prints green; that the cure moves anything on the
 content side; that the runner owes us two fresh green legs to §250's name list — it re-judges on
 its own and this section records what printed, not what would be convenient.
+
+## §252 — Item 112: VIII lands on the rail; the tutorial and home tell the door's true name
+
+**Stale tells retired in the same commit:**
+
+- `home.worldBookRealBookNote` named only 2022 (the door has been ten World Cups plus two European
+  Championships since §245/§247/§249); now names the same range; the rail holds **VIII — The Champions**
+  beside VII (The Real Book).
+- `manual.tour17d` — same retire; `manual.tour19` added for the Champions door (population **5,120 ×6**;
+  README re-pinned 5,073 / 4,861; identical tokens named 47 / 259; fr's tour19t deliberately reads
+  "Champions du monde" to keep the locale-token floor at zero drift).
+
+**The 2022 of the front door is gone.** Every literal "2022" the home/tutorial carried — in six tongues —
+was found by reading the catalogues and retired; the only 2022 left is inside the Real Book's own
+chip/catalogue.
+
+**Gates re-measured on this tree:** tsc clean · `qa-unused-keys` 3/3 · `qa-translation-quality` 9/9 ·
+`qa-locale-tokens` 7/7 · `qa-shared-keys` 4/4 · `qa-key-drift` 4/4 (116 held) · `qa-namespace-ownership`
+2/2 · `qa-metadata-title` (88 pages, 253 checks) · `qa-crawl-policy` 9/9 · `qa-icu-messages` 2/2.
+
+**Not claimed.** That the runner prints anything green ahead of this commit; that tour18 (the Atlas)
+belongs on the rail (it is a map, and deliberately not — see §229).
