@@ -9152,3 +9152,20 @@ chip/catalogue.
 
 **Not claimed.** That the runner prints anything green ahead of this commit; that tour18 (the Atlas)
 belongs on the rail (it is a map, and deliberately not — see §229).
+
+## §253 — Item 113: the book never says 2022 where it means the book
+
+**Four hard-coded 2022 sentences retired.** §226 named all tournaments this door carries — now
+twelve — and three of the door's most visible strings still read as though the book ended in
+2022: the open line (the §4 anchor), the ledger's lede ("every match of the real 2022 World
+Cup") and the snapshot note. All three are now the same truth on every tab; the /world index and
+the Atlas door's note (worldRealBook.sectionRealBookNote in both) likewise stopped meaning 2022.
+
+**Catalogue population** unchanged (**5,120 ×6**; no key added or removed, four reaped).
+
+**Gates re-measured on this tree:** tsc clean · `qa-translation-quality` 9/9 · `qa-unused-keys` 3/3 ·
+`qa-locale-tokens` 7/7 · `qa-key-drift` 4/4 · `qa-i18n-literals` 9/9.
+
+**Not claimed.** That the runner prints any leg of this item green before it has run; that any
+2022 in the catalogue remains stale (the scan above finds none — remaining 2022s are the door's
+own chips and per-tab ledes, which is what they are for).

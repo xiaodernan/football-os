@@ -3948,6 +3948,31 @@ at VII (The Real Book) with the 2022 fiction still on the label.
 
 **Not claimed.** The runner's verdict on this item; that the rail will ever outgrow the book.
 
+## Item 113 — the book never says 2022 where it means the whole book (landed 2026-11-16)
+
+**The gap.** After the six-cup, ten-cup and Euros arcs landed, four hard-coded "2022" sentences
+still described the door as it was at launch: the `/world` index and atlas door note, the
+`ledgerLede` and `snapshotNote` on the page itself, the `attributionLine` (still claiming only
+the 2022 archive).
+
+**What landed — four keys, agnostic across the twelve tournaments:**
+
+- `worldRealBook.sectionRealBookNote` — **what the actual world printed across ten World Cups and
+  two European Championships — 1986 to 2024** (six locales; the /world index and the Atlas door
+  both read it).
+- `worldRealBook.ledgerLede` / `snapshotNote` — travel with the ledger; they must be true of all
+  twelve tabs, not just 2022, so they describe grouped-by-day print, byte-for-byte provenance,
+  no network at render time.
+- `worldRealBook.attributionLine` — **CC BY 4.0 over the World Cup *and* European Championship
+  open archives** (six locales).
+
+**Gates re-measured on this tree:** `tsc` clean · `qa-translation-quality` 9/9 · `qa-unused-keys`
+3/3 · `qa-key-drift` 4/4 · `qa-locale-tokens` clean · `qa-i18n-literals` 9/9.
+
+**Not claimed.** That other hard-Coded years remain (the six locales hold 12 chip labels naming
+their cup; the per-tab ledes name their year; the attribution is now correct). That the runner
+prints anything green ahead of this commit.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
