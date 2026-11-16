@@ -3997,6 +3997,56 @@ named (they entered the queue pre-cure).
 **Not claimed.** That Item 113 or 114 prints green before it has; that the queue contains anything
 other than what it contains.
 
+## Item 116 — the admin console gains a coach, wired to the live gateway: three moves from the actual numbers (landed 2026-11-16)
+
+**The gap.** `/admin` printed the arithmetic but never the coach. The user's standing ask was a
+depth of LLM integration — and the coach already existed, reached by `/coach/ask`, answering from
+the corpus and the account census. The admin's half of the product had no voice.
+
+**What landed.** `GET /api/v1/admin/coach-read` — same shared passphrase, same constant-time
+compare, same 10/min circuit and everything recomputed from the rows on every press:
+
+- `behavior_coach.py` — assembles the 90-day window (totals, pages, three funnels, least-squares
+  forecast, the console's own rule-based recommendations) into a compact prompt, calls the
+  configured LLM exactly once per press, **never invents a figure** — every fact in the prompt
+  comes from the rows, and the coach is instructed to cite numbers, not generalities.
+- `record_model_call_safely` writes the call to `model_calls` with feature `admin.coach.read`;
+  the console's own view shows exactly how often the button was pressed and what the gateway
+  charged it — the ledger never hides the console's own activity.
+- Falls back to `available: false` on any provider failure; the console's rule-based recommendations
+  remain as the stand-alone read, honestly labelled.
+- The front panel: one button; the answer renders; the provider/model/cache-share chip prints
+  under it; a fallback sentence when the coach cannot answer. Localized natively in six locales
+  (population **5,126 ×6**).
+
+**The live answer** — through the operator's Clash Verge node, from this host, on the seeded
+cohort (task §Item 105's own data):
+
+> "The seeded cohort is true, so these are deterministic demo-cohort figures rather than organic
+> traffic; use them to choose direction, not to claim absolute market performance. First, improve
+> the existing entry experience: `/` and `/world` account for 846 views, with bounce around 0.36…
+> Third, strengthen the world-to-real-book transition. `world_to_realbook` is 0.0745 despite
+> `/world/real-book` showing 202 views… audience activation should come before a new feature."
+
+`provider: openai · model: gpt-6.1-terra · demo_mode: false · 4973 in / 522 out · 27.4s` —
+**every number above is in the payload the coach was handed**, which is the discipline the door
+is built around. The call was made twice; the second showed the same cache-reported `False` —
+no cached share is claimed for this door; the 96-97% cache wins live on `/coach/ask`.
+
+**Contract re-exported:** **247 paths / 314 operations / 99 schemas** (secured 241 / public 73 /
+private GET 104), SHA `09209dd7163c002b961053284112447361beb98cc425342e7802ca9cf769df7c`;
+`AUDIT_FIGURES contract_paths=247`, both ledgers re-pinned; ROADMAP's SHA re-pinned.
+
+**Gates re-measured on this tree:** ruff clean · `mypy app` **200/200** · pytest door suites
+**25/25** · tsc clean · all web gates green (`qa-translation-quality` 9/9 · `qa-key-drift` 4/4 at
+ceiling 116 · `qa-shared-keys` 4/4 · `qa-locale-tokens` 7/7 · `qa-unused-keys` 3/3 ·
+`qa-metadata-title` · `qa-crawl-policy` · `qa-i18n-literals` 9/9 · `qa-locale-completeness` 2/2 ·
+`qa-icu-messages` 2/2).
+
+**Not claimed.** That the runner prints any leg of this item green before it has run — the coach
+seed fallback was exercised live in this arc; the failure path answers without crashing and is
+tested as such; the answers will differ run to run.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

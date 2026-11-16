@@ -6,6 +6,21 @@ import { useTranslations } from "next-intl";
 import { Panel } from "@/components/ui";
 import "@/styles/admin.css";
 
+type CoachReadPayload = {
+  available: boolean;
+  window_days: number;
+  provider?: string;
+  model?: string;
+  demo_mode?: boolean;
+  cached_input_tokens?: number;
+  input_tokens?: number;
+  cache_reported?: boolean;
+  output_tokens?: number;
+  latency_ms?: number;
+  answer?: string;
+  error?: string;
+};
+
 type BehaviorPayload = {
   available: boolean;
   window_days: number;
@@ -46,6 +61,8 @@ export function AdminConsole() {
   );
   const [state, setState] = useState<"idle" | "loading" | "ok" | "wrong" | "error">("idle");
   const [data, setData] = useState<BehaviorPayload | null>(null);
+  const [coachState, setCoachState] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [coachData, setCoachData] = useState<CoachReadPayload | null>(null);
 
   useEffect(() => {
     if (!passphrase) return;
@@ -60,6 +77,8 @@ export function AdminConsole() {
         if (cancelled) return;
         setData(payload);
         setState("ok");
+        setCoachState("idle");
+        setCoachData(null);
       })
       .catch((error: { status?: number }) => {
         if (cancelled) return;
@@ -75,6 +94,21 @@ export function AdminConsole() {
       cancelled = true;
     };
   }, [passphrase]);
+
+  const loadCoachRead = () => {
+    setCoachState("loading");
+    fetch("/api/v1/admin/coach-read", { headers: { "x-admin-passphrase": passphrase } })
+      .then(async (response) => (response.ok ? ((await response.json()) as CoachReadPayload) : null))
+      .then((payload) => {
+        if (!payload) {
+          setCoachState("error");
+          return;
+        }
+        setCoachData(payload);
+        setCoachState("ok");
+      })
+      .catch(() => setCoachState("error"));
+  };
 
   const chart = useMemo(() => {
     if (!data) return null;
@@ -155,6 +189,36 @@ export function AdminConsole() {
           </div>
         ))}
       </section>
+
+      <Panel eyebrow={t("coachReadEyebrow")} title={t("coachReadTitle")}>
+        <p className="muted" style={{ maxWidth: "72ch" }}>{t("coachReadHint")}</p>
+        <div style={{ marginTop: "0.6rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {coachState === "idle" ? (
+            <button className="btn btn--primary" type="button" onClick={loadCoachRead}>
+              {t("coachReadCta")}
+            </button>
+          ) : null}
+          {coachState === "loading" ? <p className="muted">{t("gateEntering")}</p> : null}
+          {coachState === "error" ? <p className="admin__gate-error" role="alert">{t("gateError")}</p> : null}
+          {coachState === "ok" && coachData ? (
+            coachData.available ? (
+              <>
+                <div className="admin__coach-answer">{coachData.answer}</div>
+                <p className="admin__coach-meta muted mono">
+                  {t("coachReadProvider", {
+                    provider: coachData.provider ?? "mock",
+                    model: coachData.model ?? "mock",
+                    cached: coachData.cached_input_tokens ?? 0,
+                    prompt: coachData.input_tokens ?? 0,
+                  })}
+                </p>
+              </>
+            ) : (
+              <p className="muted">{t("coachReadEmpty")}</p>
+            )
+          ) : null}
+        </div>
+      </Panel>
 
       {chart ? (
         <Panel eyebrow={t("dailyTitle")} title={t("dailyTitle")}>

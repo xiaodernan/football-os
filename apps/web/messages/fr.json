@@ -5206,7 +5206,13 @@
     "recForecastFalling": "les sessions par jour baissent de {value}/jour — audite le chemin d'onboarding avant d'ajouter du monde",
     "recStrongPage": "{path} retient bien — copie ses recettes ailleurs",
     "metaTitle": "Console d'administration — le tableau comportemental",
-    "metaDescription": "La console au mot de passe partagé qui surveille chaque porte du navigateur : sessions, rebonds, temps de visite, entonnoirs, la prévision à deux semaines et le registre du modèle."
+    "metaDescription": "La console au mot de passe partagé qui surveille chaque porte du navigateur : sessions, rebonds, temps de visite, entonnoirs, la prévision à deux semaines et le registre du modèle.",
+    "coachReadEyebrow": "la lecture de l'entraîneur",
+    "coachReadTitle": "Trois coups que l'entraîneur propose",
+    "coachReadHint": "L'entraîneur répond à partir de ces chiffres exacts, une requête par pression ; sans clé configurée, les lectures ci-dessous tiennent seules.",
+    "coachReadCta": "Demander au coach",
+    "coachReadEmpty": "l'entraîneur se tait sans clé configurée — les lectures ci-dessous tiennent seules",
+    "coachReadProvider": "{provider} · {model} — {cached} des {prompt} tokens de prompt servis depuis le cache"
   },
   "worldChampions": {
     "metaTitle": "Les Champions — dix vraies Coupes du monde, côte à côte",

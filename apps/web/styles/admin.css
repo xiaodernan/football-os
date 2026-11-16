@@ -79,3 +79,18 @@
   color: var(--text);
   line-height: 1.5;
 }
+
+.admin__coach-answer {
+  border-inline-start: 3px solid var(--accent, #6ea8ff);
+  padding-inline-start: 0.9rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.65;
+  max-width: 84ch;
+  white-space: pre-wrap;
+}
+.admin__coach-meta {
+  font-size: 0.72rem;
+  color: var(--text-2);
+  margin-top: 0.2rem;
+}

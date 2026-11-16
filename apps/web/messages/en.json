@@ -5206,7 +5206,13 @@
     "recForecastFalling": "sessions per day are falling {value}/day — audit the onboarding path before adding more world",
     "recStrongPage": "{path} is holding readers well — mine it for patterns to copy",
     "metaTitle": "Admin console — the behavioural board",
-    "metaDescription": "The shared-passphrase console that watches every browser door: sessions, bounces, dwell, funnels, the two-week forecast and the model ledger."
+    "metaDescription": "The shared-passphrase console that watches every browser door: sessions, bounces, dwell, funnels, the two-week forecast and the model ledger.",
+    "coachReadEyebrow": "the coach's read",
+    "coachReadTitle": "Three moves the coach makes",
+    "coachReadHint": "The coach answers from exactly these figures, one provider call per press; without a configured key, the reads below stand on their own.",
+    "coachReadCta": "Ask the coach",
+    "coachReadEmpty": "the coach is quiet without a configured key — the arithmetic reads below stand",
+    "coachReadProvider": "{provider} · {model} — {cached} of {prompt} prompt tokens served from cache"
   },
   "worldChampions": {
     "metaTitle": "The Champions — ten real World Cups, side by side",

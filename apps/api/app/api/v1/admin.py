@@ -18,6 +18,7 @@ from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import limit
 from app.services.behavior import compute_behavior
+from app.services.behavior_coach import compute_admin_coach_read
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -36,3 +37,9 @@ def require_admin_passphrase(passphrase: str | None = Header(default=None, alias
 def behavior(request: Request, window_days: int = Query(default=90, ge=7, le=365), db: Session = Depends(get_db)) -> dict[str, Any]:
     limit(request, 60, 60, scope="admin_behavior")
     return compute_behavior(db, window_days=window_days)
+
+
+@router.get("/coach-read", dependencies=[Depends(require_admin_passphrase)])
+def coach_read(request: Request, window_days: int = Query(default=90, ge=7, le=365), db: Session = Depends(get_db)) -> dict[str, Any]:
+    limit(request, 10, 10, scope="admin_coach_read")
+    return compute_admin_coach_read(db, window_days=window_days)

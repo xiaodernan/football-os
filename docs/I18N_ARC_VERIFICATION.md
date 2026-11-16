@@ -9198,3 +9198,45 @@ not printed their legs at the time of this section.
 **Not claimed.** That Item 110's web will print green — the cure landed after those runs entered
 the queue; the runner judges each in turn. That Item 113/114 legs are green — they print on
 their own, and this section quotes what printed, not what would compile.
+
+## §256 — Item 116: the Admin coach answers with the numbers, through the gateway, or says it cannot
+
+**Named live run, verbatim for the record (2026-11-16T14:35Z):**
+
+```
+seed cohort: 2,513 views · 1,597 sessions · 27 paths · bounce 0.158 · median dwell 11.7 s
+funnels: home→world 0.179 · tutorial→manual 0.192 · world→real-book 0.075
+slope +0.070/day · r² 0.276 · projection days 14 (flat)
+
+the coach: «The seeded cohort is true… First, improve the existing entry experience: / and /world
+account for 846 views, with bounce around 0.36, while only 17.88% of home sessions continue to
+world. Second, repair the tutorial-to-manual handoff… Third, strengthen the world-to-real-book
+transition. world_to_realbook is 0.0745 … audience activation should come before a new feature.»
+
+provider: openai · model: gpt-6.1-terra · demo_mode: false
+tokens in: 4,973 · cached: 0 (cache_reported: false) · out: 522 · latency_ms: 27,415
+```
+
+**Every figure above appears in the payload the coach was handed** — the door is built so the
+coach cannot invent one. The 336-pixel-wide answer reads coherently; the three moves map exactly
+onto `home→world 0.179`, `tutorial→manual 0.192`, `world→real-book 0.075` — the three funnels
+this console publishes. The coach did not guess; it read.
+
+**The fallback stands honestly.** `behavior_coach.compute_admin_coach_read` caught the first
+live failure (`host.docker.internal` unresolvable from this host — the container's own address,
+not the operator's request) and answered `available: false` without crashing; verified thereafter
+through `http://127.0.0.1:7897` (the operator's Clash Verge node), where the gateway answered 200s.
+No model artefact claims a cache hit for this door; the `/coach/ask` prefix cache is recorded
+separately in §231/§232 for that lane.
+
+**Contract moved once more:** SHA-256 `09209dd7163c002b961053284112447361beb98cc425342e7802ca9cf769df7c`
+— **247 paths / 314 operations / 99 schemas**; secured 241 / public **73** / private GET 104;
+both ledgers and ROADMAP re-pinned; `AUDIT_FIGURES` updated to `247 / 88 / 67`.
+
+**Ledger-gate discipline held:** the first `test_locale_claims` red (old refusal sentence shape)
+and the `mypy` optional-slice error were both caught in this arc and cured in their own right;
+population re-pinned to **5,126 ×6**; README re-pinned (5,079 · 4,867).
+
+**Not claimed.** That the runner prints any leg of this item green before it has; that the coach's
+figures can be read without the passphrase (impossible — 401); that the coach's answer is warranted
+by anything but the aggregates it read (it is a read of five numbers, not a judge of the product).

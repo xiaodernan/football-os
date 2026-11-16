@@ -5206,7 +5206,13 @@
     "recForecastFalling": "每日会话数以每天 {value} 下滑——先审引导路径，再往世界里加门",
     "recStrongPage": "{path} 留住了读者——把它的做法抄过去",
     "metaTitle": "管理员控制台——行为仪表盘",
-    "metaDescription": "共享口令背后的控制台：看每一扇浏览器之门——会话、跳出、停留、漏斗、两周预测与模型账本。"
+    "metaDescription": "共享口令背后的控制台：看每一扇浏览器之门——会话、跳出、停留、漏斗、两周预测与模型账本。",
+    "coachReadEyebrow": "教练的答复",
+    "coachReadTitle": "教练给出的三步走",
+    "coachReadHint": "教练只根据这些数字作答——每按一次，就是一次模型调用；若未配置密钥，下面的读数仍是独立的。",
+    "coachReadCta": "问教练",
+    "coachReadEmpty": "未配置密钥时教练不出声——下面的读数仍是独立的",
+    "coachReadProvider": "{provider} · {model} —— {prompt} 个提示词 token 中 {cached} 来自缓存"
   },
   "worldChampions": {
     "metaTitle": "冠军并置 — 十届真实世界杯，比肩而立",
