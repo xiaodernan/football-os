@@ -196,6 +196,14 @@ export default async function HomePage() {
               </span>
               <span className="worldbook__arrow" aria-hidden="true">→</span>
             </Link>
+            <Link className="worldbook__row" href="/tutorial">
+              <span className="worldbook__numeral" aria-hidden="true">VI</span>
+              <span className="worldbook__body">
+                <strong>{t("navHomeTutorial")}</strong>
+                <span className="muted">{t("navHomeTutorialNote")}</span>
+              </span>
+              <span className="worldbook__arrow" aria-hidden="true">→</span>
+            </Link>
           </div>
         </Panel>
       </section>

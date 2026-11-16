@@ -26,6 +26,7 @@ import type { UserOut } from "@/lib/types";
  */
 const LINKS: { href: string; key: string }[] = [
   { href: "/", key: "home" },
+  { href: "/tutorial", key: "tutorial" },
   { href: "/my-football", key: "myFootball" },
   { href: "/coach", key: "coach" },
   { href: "/knowledge", key: "knowledge" },

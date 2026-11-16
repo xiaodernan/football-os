@@ -29,6 +29,7 @@ export const dynamic = "force-dynamic";
 
 const PUBLIC: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
   { path: "/manual", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/tutorial", changeFrequency: "weekly", priority: 0.9 },
   { path: "/knowledge", changeFrequency: "weekly", priority: 0.9 },
   { path: "/world", changeFrequency: "daily", priority: 0.9 },
   { path: "/tactics", changeFrequency: "weekly", priority: 0.9 },

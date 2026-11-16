@@ -22,7 +22,8 @@
     "traces": "Traces",
     "skipToContent": "Skip to content",
     "primaryNav": "Primary navigation",
-    "live": "Live"
+    "live": "Live",
+    "tutorial": "Tutorial"
   },
   "common": {
     "accept": "Accept",
@@ -2914,7 +2915,9 @@
     "worldBookXi": "The World's XI",
     "worldBookXiNote": "the eleven this world would send out first",
     "worldBookDynasties": "The Dynasties",
-    "worldBookDynastiesNote": "the streak ledger — the longest reigns and unbeaten runs in tier-1, straight from the rows"
+    "worldBookDynastiesNote": "the streak ledger — the longest reigns and unbeaten runs in tier-1, straight from the rows",
+    "navHomeTutorial": "The Tutor",
+    "navHomeTutorialNote": "ten doors, one evening — your first hour here"
   },
   "careerDetail": {
     "academyEyebrow": "a class of {count} at or under {ceiling}, judged by the engine's next eleven",
@@ -4781,7 +4784,9 @@
     "gUpsetTitle": "upset",
     "gUpsetBody": "A match where the lower-rated side won. The door computes an 'upset register' for the tier — the days where the favourite's edge surrendered.",
     "gOriginTitle": "data_origin",
-    "gOriginBody": "Where the figure came from: 'synthetic' for the generated world, 'user' for your own drawings, 'derived' for arithmetic on rows. Read it on every Provenance line."
+    "gOriginBody": "Where the figure came from: 'synthetic' for the generated world, 'user' for your own drawings, 'derived' for arithmetic on rows. Read it on every Provenance line.",
+    "tour16t": "The Tutorial",
+    "tour16d": "the ten-seat table — ten doors, one good evening, your first hour here"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
@@ -4993,5 +4998,48 @@
     "sectionDynastiesLabel": "The Dynasties",
     "sectionDynastiesNote": "the streak ledger",
     "sectionDynastiesChip": "dynasties"
+  },
+  "tutorial": {
+    "metaTitle": "FOOTBALL OS — the ten-seat table",
+    "metaDescription": "Ten doors, ten steps, the world explained at a glance: arrive, find your club, sit in one seat, learn how the world sees itself, read the manual — and come back tomorrow.",
+    "eyebrow": "The Ten-Seat Table",
+    "title": "Ten doors in, one good evening out",
+    "lede": "A football operating system is a slippery thing to describe. This page walks you through ten doors in the order a new reader should knock on them, and tells you, honestly, what to expect on each.",
+    "honestyNote": "Nothing on this page is gated. Every door below opens for a spectator; every claim below can be checked by pressing it.",
+    "quickTitle": "The ten steps",
+    "openLink": "Open",
+    "deepDiveEyebrow": "Footnotes",
+    "deepDiveTitle": "What this product lives by, in four sentences",
+    "deepDiveLede": "If you take nothing else from this door, take these four sentences — they survive any rebuild of any feature.",
+    "dd1Term": "Real world",
+    "dd1Body": "The world inside this product is a generated, seeded, deterministic football universe — no licensed assets, no real club infringements, nothing that pretends to be reporting about the Premier League. What you read here is the world the seed produces, nothing more.",
+    "dd2Term": "Derive, never invent",
+    "dd2Body": "Every figure you can see is arithmetic on the stored rows. The scoring, the ratings, the upset register — all of it is recomputed on this request, not stored. If a number would be cheaper to make up than to compute, we compute it anyway.",
+    "dd3Term": "Six doors, six locales",
+    "dd3Body": "Every sentence on this product is authored in English and Chinese (Simplified and Traditional), Arabic, French and Hebrew. Same words, same layout, same standards — never mixed.",
+    "dd4Term": "Local-first",
+    "dd4Body": "The world is stored locally. Your drawings live on your machine. Your stats live on your tables. Nothing about your game requires a cloud that you didn't choose to put it on.",
+    "toManual": "Read the full manual",
+    "toHome": "Back to the homepage",
+    "step1Title": "Step one — sign in, or don't",
+    "step1Body": "You do not need an account to read. You need one to draw a board. Bring one if you have one; the door refuses nobody.",
+    "step2Title": "Step two — My Football",
+    "step2Body": "The training journal. A ledger of every set you logged, every club you walked in, every ball you touched. Your world is local and yours.",
+    "step3Title": "Step three — the world",
+    "step3Body": "The world's mirror. Every door — the almanac, the story, the records, the matchday XI, the duel, the dynasties — is a recompute of the same rows.",
+    "step4Title": "Step four — the coach",
+    "step4Body": "The coach is the same engine with two settings. With a cloud key live, it calls a real model. Without one, it returns the player's own-row arithmetic — also honest, also useful.",
+    "step5Title": "Step five — the almanac",
+    "step5Body": "The 2026/27 awards, the manager of the season, the top-committed side, the youngest bronze. All re-derived on every read from the stored rows.",
+    "step6Title": "Step six — the tactics lab",
+    "step6Body": "The chemistry of eleven players. 10 shapes × 5 temperaments × 50 systems. Not suggestions — geometry you can measure.",
+    "step7Title": "Step seven — challenges",
+    "step7Body": "180-goal targets, mystery boxes, blind taste, freeze moments. The world's games you play against yourself.",
+    "step8Title": "Step eight — live",
+    "step8Body": "The live replay stream. Every event of the seed's stored replay — not a broadcast — with pause as the honesty control.",
+    "step9Title": "Step nine — the manual",
+    "step9Body": "Every feature, every gate, every door explained to you in one book. Read it after you knock; it makes the doors open cleanly for you.",
+    "step10Title": "Step ten — come home",
+    "step10Body": "You are now the reader the world was asking for. Come back tomorrow — the 2026/27 season keeps writing itself onto the rows, and this door is how you keep reading."
   }
 }

@@ -22,7 +22,8 @@
     "traces": "Traces",
     "skipToContent": "Aller au contenu",
     "primaryNav": "Navigation principale",
-    "live": "En direct"
+    "live": "En direct",
+    "tutorial": "Tutoriel"
   },
   "common": {
     "accept": "Accepter",
@@ -2914,7 +2915,9 @@
     "worldBookXi": "Le Onze du monde",
     "worldBookXiNote": "les onze que le monde alignerait au coup d'envoi",
     "worldBookDynasties": "Les Dynasties",
-    "worldBookDynastiesNote": "le registre des séries — les plus longs règnes et les plus longues séries d’invincibilité"
+    "worldBookDynastiesNote": "le registre des séries — les plus longs règnes et les plus longues séries d’invincibilité",
+    "navHomeTutorial": "Le guide",
+    "navHomeTutorialNote": "dix portes, une belle soirée — votre première heure ici"
   },
   "careerDetail": {
     "academyEyebrow": "une classe de {count} à ou sous {ceiling}, jugée par les onze suivants du moteur",
@@ -4781,7 +4784,9 @@
     "gUpsetTitle": "upset",
     "gUpsetBody": "Un match où le camp le moins bien noté a gagné. La porte calcule un registre des upsets propres à ce championnat – les jours où l'avance du favori s'est effondrée.",
     "gOriginTitle": "data_origin",
-    "gOriginBody": "D'où vient le chiffre : 'synthetic' pour le monde généré, 'user' pour vos propres dessins, 'derived' pour l'arithmétique sur les lignes. On le lit sur chaque Provenance."
+    "gOriginBody": "D'où vient le chiffre : 'synthetic' pour le monde généré, 'user' pour vos propres dessins, 'derived' pour l'arithmétique sur les lignes. On le lit sur chaque Provenance.",
+    "tour16t": "Le tutoriel",
+    "tour16d": "la tablée des dix — dix portes, une belle soirée, votre première heure ici"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -4993,5 +4998,48 @@
     "sectionDynastiesLabel": "Les Dynasties",
     "sectionDynastiesNote": "le registre des séries",
     "sectionDynastiesChip": "règnes"
+  },
+  "tutorial": {
+    "metaTitle": "FOOTBALL OS — la tablée des dix",
+    "metaDescription": "Dix portes, dix étapes, le monde expliqué d'un coup d'œil : arrivez, trouvez votre club, prenez un siège, percevez comment le monde se lit lui-même, ouvrez le manuel — et revenez demain.",
+    "eyebrow": "La tablée des dix",
+    "title": "Dix portes d'entrée, une belle soirée chez nous",
+    "lede": "« Système d'exploitation du football », ça veut rien dire. Cette page vous fait frapper les dix portes dans l'ordre — et vous dit honnêtement à quoi vous attendre sur chacune.",
+    "honestyNote": "Aucune des portes ci-dessous n'exige un compte ; chaque affirmation ci-dessous se vérifie d'une pression.",
+    "quickTitle": "Les dix étapes",
+    "openLink": "Ouvrir",
+    "deepDiveEyebrow": "Notes de bas de page",
+    "deepDiveTitle": "Ce que ce produit prend pour vivre, en quatre phrases",
+    "deepDiveLede": "Si vous n'emportez rien d'autre de cette page, emportez ces quatre phrases — elles survivent à n'importe quelle refonte.",
+    "dd1Term": "Un monde réel",
+    "dd1Body": "Le monde de ce produit est un univers de football généré, à graine fixe et déterministe — pas d'assets sous licence, pas de clubs réels en infraction, rien qui prétende couvrir la Premier League. Ce que vous lisez ici, c'est le monde que le seed produit — rien d'autre.",
+    "dd2Term": "Déduire, jamais inventer",
+    "dd2Body": "Chaque chiffre que vous voyez est une arithmétique sur les lignes stockées. Les buts, les notes, le registre des upsets — tout est recalculé à cette requête, pas stocké. S'il était moins cher de fabriquer un nombre que de le calculer, on le calculerait quand même.",
+    "dd3Term": "Six portes, six locales",
+    "dd3Body": "Chaque phrase de ce produit est écrite en anglais, chinois simplifié et traditionnel, arabe, français et hébreu. Mêmes mots, même mise en page, mêmes standards — jamais mélange.",
+    "dd4Term": "Local d'abord",
+    "dd4Body": "Le monde vit chez vous. Vos dessins vivent sur votre machine. Vos stats vivent sur vos tables. Rien dans votre jeu ne vous oblige à un nuage que vous n'auriez pas choisi.",
+    "toManual": "Lire le manuel complet",
+    "toHome": "Retour à l'accueil",
+    "step1Title": "Première porte — connectez-vous, ou pas",
+    "step1Body": "Vous n'avez pas besoin d'un compte pour lire. Il en faut un pour dessiner un schéma. Apportez-en un si vous en avez un ; la porte refuse personne.",
+    "step2Title": "Deuxième porte — My Football",
+    "step2Body": "Le carnet d'entraînement. Chaque séance, chaque club visité, chaque ballon touché — votre monde est local, c'est le vôtre.",
+    "step3Title": "Troisième porte — le monde",
+    "step3Body": "Le miroir du monde. Chaque porte — l'almanach, l'histoire, les records, l'équipe-type de la journée, le duel, les dynasties — est un recalcul des mêmes lignes.",
+    "step4Title": "Quatrième porte — l'entraîneur",
+    "step4Body": "L'entraîneur est le même moteur à deux réglages. Avec une clé cloud, il appelle un vrai modèle ; sans, il rend l'arithmétique de votre propre ligne — tout aussi honnête, tout aussi utile.",
+    "step5Title": "Cinquième porte — l'almanach",
+    "step5Body": "Les récompenses 2026/27, l'entraîneur de la saison, le côté le plus loyal, la plus jeune médaille de bronze — tout est recalculé des lignes stockées.",
+    "step6Title": "Sixième porte — le labo tactique",
+    "step6Body": "La chimie des onze. 10 formes × 5 tempéraments × 50 systèmes. Pas des suggestions — une géométrie que vous pouvez mesurer.",
+    "step7Title": "Septième porte — les défis",
+    "step7Body": "Buts, coffre mystérieux, dégustation à yeux fermés, moments gelés. Les jeux du monde que vous jouez contre vous-même.",
+    "step8Title": "Huitième porte — Live",
+    "step8Body": "Le flux de rediffusion Live. Chaque événement du replay stocké — pas une diffusion — avec la pause comme contrôle d'intégrité.",
+    "step9Title": "Neuvième porte — le manuel",
+    "step9Body": "Chaque fonctionnalité, chaque porte, chaque seuil — tout est écrit dans ce livre. Lisez-le après avoir frappé ; il rend les portes plus nettes.",
+    "step10Title": "Dixième porte — rentrez à la maison",
+    "step10Body": "Vous êtes désormais le lecteur que le monde attendait. Revenez demain — la saison 2026/27 continue de s'écrire sur les lignes, et cette porte est comment vous continuez de la lire."
   }
 }
