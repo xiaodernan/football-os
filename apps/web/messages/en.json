@@ -23,7 +23,13 @@
     "skipToContent": "Skip to content",
     "primaryNav": "Primary navigation",
     "live": "Live",
-    "tutorial": "Tutorial"
+    "tutorial": "Tutorial",
+    "navHintHome": "come back to the front door — the world, retold",
+    "navHintTutorial": "the ten-seat table — a first meal inside this world",
+    "navHintWorld": "the 2026/27 world — matches, clubs, players, the books",
+    "navHintCoach": "your coach — a rule engine that talks like one",
+    "navHintKnowledge": "the reading room — answers with their citations",
+    "navHintTraining": "your training — picked from your weakest attributes"
   },
   "common": {
     "accept": "Accept",

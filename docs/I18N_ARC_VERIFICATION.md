@@ -8659,3 +8659,22 @@ isort'd; `qa-namespace-ownership`, `qa-icu-messages`, `qa-icu-coverage`, `qa-loc
 **Not claimed.** That these cured runs printed green at the time of this commit — the named
 runs (43824743371, 43825135684, 43825693896) stand as recorded; this cure moves as its own
 commit, nothing re-run or renumbered.
+
+## §237 — The nav learns to whisper — twenty-six characters, six locales, zero invention
+
+**Scope discipline, on purpose.** This arc does not invent microcopy for the fourteen doors
+that did not already carry a canonical teaching sentence somewhere in the catalogue. Instead:
+six dedicated `nav.navHint*` keys are authored natively in en/zh/zh-TW/fr/ar/he — **population
+5,048 ×6** — and the other eight reuse those six stems (my-football → navHintHome; tactics,
+agents, scout → navHintKnowledge/navHintCoach; progress, history → navHintTraining; leaderboard →
+navHintWorld). No new sentence exists that cannot be justified against the existing catalogue.
+
+**Wiring.** `Nav.tsx` gains a `hint` per row and `title={t(link.hint)}` on each overlay link.
+Nothing moves: no layout change, no key rename, no gate repair; every existing gate stays green
+on the cured tree. Population 5,048 ×6; `qa-icu-messages` / `qa-i18n-literals` /
+`qa-icu-coverage` / `qa-unused-keys` / `qa-key-drift` / `qa-shared-keys` all green; tsc clean;
+`/` walks 200.
+
+**Scope note, read plainly.** In Item 84 the reverse-wheel was answered with a `/settings`
+localStorage switch and an honest note; in §232/§233 two exposed I18n gates red'd and were cured
+in their own commits. This arc adds copy, not behavior.

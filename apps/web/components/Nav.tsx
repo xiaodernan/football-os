@@ -24,20 +24,20 @@ import type { UserOut } from "@/lib/types";
  * list one for one. The few labels that had no key were added rather than renamed, so the English a reader sees
  * is byte-identical to what it was — an i18n change should not be a copy change.
  */
-const LINKS: { href: string; key: string }[] = [
-  { href: "/", key: "home" },
-  { href: "/tutorial", key: "tutorial" },
-  { href: "/my-football", key: "myFootball" },
-  { href: "/coach", key: "coach" },
-  { href: "/knowledge", key: "knowledge" },
-  { href: "/world", key: "world" },
-  { href: "/tactics", key: "tactics" },
-  { href: "/agents", key: "agents" },
-  { href: "/scout", key: "scout" },
-  { href: "/training", key: "training" },
-  { href: "/progress", key: "progress" },
-  { href: "/history", key: "history" },
-  { href: "/leaderboard", key: "leaderboard" },
+const LINKS: { href: string; key: string; hint: string }[] = [
+  { href: "/", key: "home", hint: "navHintHome" },
+  { href: "/tutorial", key: "tutorial", hint: "navHintTutorial" },
+  { href: "/my-football", key: "myFootball", hint: "navHintHome" },
+  { href: "/coach", key: "coach", hint: "navHintCoach" },
+  { href: "/knowledge", key: "knowledge", hint: "navHintKnowledge" },
+  { href: "/world", key: "world", hint: "navHintWorld" },
+  { href: "/tactics", key: "tactics", hint: "navHintKnowledge" },
+  { href: "/agents", key: "agents", hint: "navHintCoach" },
+  { href: "/scout", key: "scout", hint: "navHintKnowledge" },
+  { href: "/training", key: "training", hint: "navHintTraining" },
+  { href: "/progress", key: "progress", hint: "navHintTraining" },
+  { href: "/history", key: "history", hint: "navHintTraining" },
+  { href: "/leaderboard", key: "leaderboard", hint: "navHintWorld" },
 ];
 
 export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolean }) {
@@ -86,6 +86,7 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
                 className={`nav__link ${active ? "nav__link--active" : ""}`}
                 href={link.href}
                 key={link.href}
+                title={t(link.hint)}
               >
                 {t(link.key)}
               </Link>

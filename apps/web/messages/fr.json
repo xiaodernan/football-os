@@ -23,7 +23,13 @@
     "skipToContent": "Aller au contenu",
     "primaryNav": "Navigation principale",
     "live": "En direct",
-    "tutorial": "Tutoriel"
+    "tutorial": "Tutoriel",
+    "navHintHome": "l'accueil — le monde raconté depuis le seuil",
+    "navHintTutorial": "la table des dix — le premier repas dans ce monde",
+    "navHintWorld": "le monde 2026/27 — matchs, clubs, joueurs, registres",
+    "navHintCoach": "votre coach — un moteur de règles qui parle comme un entraîneur",
+    "navHintKnowledge": "la salle de lecture — des réponses avec leurs citations",
+    "navHintTraining": "votre entraînement — choisi sur vos attributs les plus faibles"
   },
   "common": {
     "accept": "Accepter",

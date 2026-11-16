@@ -23,7 +23,13 @@
     "skipToContent": "跳到主要内容",
     "primaryNav": "主导航",
     "live": "直播",
-    "tutorial": "新手教程"
+    "tutorial": "新手教程",
+    "navHintHome": "回到门口——世界从这里重新讲起",
+    "navHintTutorial": "十人餐桌——进入这个世界的第一顿饭",
+    "navHintWorld": "2026/27 赛季的世界——比赛、俱乐部、球员、各类名册",
+    "navHintCoach": "你的教练——像教练一样说话的规则引擎",
+    "navHintKnowledge": "阅读室——答案都附引用原文",
+    "navHintTraining": "你的训练——按最弱的属性挑出来的"
   },
   "common": {
     "accept": "接受",

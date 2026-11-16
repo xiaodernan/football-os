@@ -23,7 +23,13 @@
     "skipToContent": "跳到主要內容",
     "primaryNav": "主導覽",
     "live": "直播",
-    "tutorial": "新手教學"
+    "tutorial": "新手教學",
+    "navHintHome": "回到門口——世界從這裡重新講起",
+    "navHintTutorial": "十人餐桌——踏進這個世界的第一頓飯",
+    "navHintWorld": "2026/27 賽季的世界——比賽、俱樂部、球員、各類名冊",
+    "navHintCoach": "你的教練——像教練一樣說話的規則引擎",
+    "navHintKnowledge": "閱讀室——答案都附引用原文",
+    "navHintTraining": "你的訓練——按最弱的屬性挑出來的"
   },
   "common": {
     "accept": "接受",

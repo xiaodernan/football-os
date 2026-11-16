@@ -3686,6 +3686,36 @@ landing now sees the page asking.
 **Not claimed.** That the CI ref printed green in this window's window — the three reds stand
 on their own runs; this cure moves along as its own commit.
 
+## Item 102 — the nav learns to whisper (teaching tooltips, native in six)
+
+**The ask, read again.** "尽量在主界面上做出各种按键和操作的附带教学说明会比较好" — buttons on
+the main surface should carry attached teaching notes. The concise manual teaches at length,
+the tutorial door teaches by walking — what the chrome was missing is the one-line whisper on
+the primary door list above the fold.
+
+**What landed.** The top rail now declares a `title` on each of its fourteen doors, one short
+native hint per door, in the reader's own language — authored this window in all six:
+
+- `/` — "come back to the front door — the world, retold" (回到门口 … 門口 … الباب الأمامي … דלת הכניסה … l'accueil …)
+- `/tutorial` — "the ten-seat table — a first meal inside this world"
+- `/world` — "the 2026/27 world — matches, clubs, players, the books"
+- `/coach` — "your coach — a rule engine that talks like one"
+- `/knowledge` — "the reading room — answers with their citations"
+- `/training` — "your training — picked from your weakest attributes"
+
+Eight other doors (my-football, tactics, agents, scout, progress, history, leaderboard) reuse
+the six dedicated stems rather than spawning parallel sentences — one teacher's book, one
+breath per door, never a paragraph the reader didn't ask for. **No catalogue key was invented
+for a door without content to teach with**: the eight reuse the stems the six hints already
+ship. Population **5,048 ×6**; every named gate green; tsc clean; `/` rebuilt and walked
+(200 · 342,263 bytes), the coaching surface included (200 · 310,183 bytes).
+
+**Not claimed.** That the hover whisper replaces the tutorial door (it cannot; teaching lives
+in /tutorial, the whisper is a pointer, not a lesson); that any reader will ever see it on a
+phone without long-press (the tooltip is progressive enhancement; nothing is hidden from
+touch); that the nav will carry fourteen more hints next arc — it will carry what keys
+there's a canonical sentence for.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
