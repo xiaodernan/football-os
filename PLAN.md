@@ -3973,6 +3973,18 @@ the 2022 archive).
 their cup; the per-tab ledes name their year; the attribution is now correct). That the runner
 prints anything green ahead of this commit.
 
+## Item 114 — the Real Book OG card catches up with twelve tournaments (landed 2026-11-16)
+
+**The gap.** The Real Book's OG card still printed **10** over `1986 — 2022` — honest at ten cups,
+stale at twelve: the door has carried Euro 2024 and Euro 2021 since §249.
+
+**What landed.** The card now prints **12** over `1986 — 2024`. Nothing else moved; the champions
+card stays at its ten-cups-only claim by design.
+
+**Gates re-measured on this tree:** `tsc` clean · `qa-i18n-literals` 9/9 · `qa-unused-keys` 3/3.
+
+**Not claimed.** A rendered visual of the new card on this host; the runner's verdict.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

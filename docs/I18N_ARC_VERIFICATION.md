@@ -9169,3 +9169,13 @@ the Atlas door's note (worldRealBook.sectionRealBookNote in both) likewise stopp
 **Not claimed.** That the runner prints any leg of this item green before it has run; that any
 2022 in the catalogue remains stale (the scan above finds none — remaining 2022s are the door's
 own chips and per-tab ledes, which is what they are for).
+
+## §254 — Item 114: the Real Book's OG card prints 12 over 1986 — 2024
+
+**Named.** `apps/web/app/world/real-book/opengraph-image.tsx` — the card still asserted ten cups over
+`1986 — 2022`, a count that stopped being true when §249 added the two European Championships. It
+now prints **12** over **1986 — 2024**, pixels only, same palette, same kicker.
+
+**Not claimed.** Any rendered verification of the OG card on this host (the OG build is a `next/og`
+static render done at build time — the CI containers leg proves it builds and the image carries
+it; `tsc` clean; `qa-i18n-literals` 9/9).
