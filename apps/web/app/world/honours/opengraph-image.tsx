@@ -44,7 +44,7 @@ export default function HonoursOpenGraphImage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 26, fontSize: 150, fontWeight: 800, color: PAPER, lineHeight: 0.95, letterSpacing: "-0.03em" }}>
-            23
+            24
           </div>
           <div style={{ height: 3, background: GOLD, width: "34%" }} />
         </div>

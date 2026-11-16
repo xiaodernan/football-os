@@ -9495,3 +9495,42 @@ section quotes it only as it printed.
 **Not claimed.** That the runner has printed this cure green; that the freshening commit repairs all
 the runs the runner owes — the runs queue is the runner's, the words are the renderers', and the seq.
 `43909685273` drains in the order it entered it.
+
+## §265 — Item 125: the inaugural cup lands — the world's real first champion, end to end, from committed bytes
+
+**The unblock.** `1930/worldcup.json` had answered HTTP 503 through the previous arc; Item 125 defers
+nothing about where it landed: fetched **200 OK · 7,475 B** this arc; the file is committed under
+`apps/api/app/services/world/data/` unmodified; the openfootball licence pack stands (CC-BY 4.0).
+
+**1930, printed from the bytes on every read:**
+
+| fact | value |
+| --- | --- |
+| Host | Uruguay (three venues, Montevideo) |
+| Final | Uruguay **4–2** Argentina · ht 1–2 · no extra time · no penalties · 1930-07-30 |
+| Final venue | Estadio Centenario, Montevideo |
+| Matches | 18 (13 teams; no quarter-finals; two semi-finals) |
+| Goals | 70 on the field |
+| Scorers | **70 entries, all printed** (`GOLDEN-1930` discipline: the file carries them) |
+| Biggest win | Argentina 6–1 USA (and Uruguay 6–1 Yugoslavia — the two semi-finals ran the same score) |
+| Wanderers | thirteen teams, three stadiums, two nations sent — the United States fielded six |
+
+**The spine grows to 24 rows** — **1,066 matches · 2,979 goals** — surfaced in the Roll of Honours
+as arithmetic from the committed bytes; the repeat-champions ledger now reads:
+
+**Brazil 5** · **Italy 5** · **Argentina 3** · **West Germany 3** · **France 2** · **Spain 2** ·
+**Uruguay 2** (1930, 1950 — the only back-to-back inaugural defenders) · **England 1** · **Germany 1**.
+
+**Front-of-the-house:** the real-book rail now prints the full chronological six-chip backwards run
+to 1930; the OG cards print **24 tournaments over 1930 — 2024**; the Champions card lists 1930…2022;
+catalogue population **5,227 ×6**; README re-pinned (5,180 / 4,948 / 278/279 fr doublets);
+eleven stale «twenty-one/twenty-three» literals natively reworded in six tongues.
+
+**Contract re-exported once:** regex only; SHA
+`60094658c2a4bc012eeda881e945f015acd81a9764d93fc06b521fc871989423`; ledgers re-pinned;
+`AUDIT_FIGURES` unchanged (249/90/67).
+
+**Not claimed.** That attendance is cited anywhere for 1930 (it isn't — `null` everywhere); that the
+inaugural arbitration is described anywhere as saints or satyrs; that the runner has printed this
+item green before it has; that the Stábile boot call is derived from the file (it is curator
+knowledge, labelled as such on every tile).

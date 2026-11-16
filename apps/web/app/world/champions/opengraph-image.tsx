@@ -44,6 +44,8 @@ export default function ChampionsOpenGraphImage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, fontSize: 24, fontWeight: 800, color: PAPER, lineHeight: 1.3, letterSpacing: "-0.02em", flexWrap: "wrap", maxWidth: 760 }}>
+            1930
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1934
             <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1938

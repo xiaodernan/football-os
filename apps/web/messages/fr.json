@@ -2925,7 +2925,7 @@
     "navHomeTutorial": "Le guide",
     "navHomeTutorialNote": "dix portes, une belle soirée — votre première heure ici",
     "worldBookRealBook": "Le Vrai Livre",
-    "worldBookRealBookNote": "les vraies Coupes du monde et Euros que ce produit porte — de 1934 à 2024"
+    "worldBookRealBookNote": "les vraies Coupes du monde et Euros que ce produit porte — de 1930 à 2024"
   },
   "careerDetail": {
     "academyEyebrow": "une classe de {count} à ou sous {ceiling}, jugée par les onze suivants du moteur",
@@ -4806,15 +4806,15 @@
     "tour16t": "Le tutoriel",
     "tour16d": "la tablée des dix — dix portes, une belle soirée, votre première heure ici",
     "tour17t": "Le Vrai Livre",
-    "tour17d": "ce que le vrai monde a imprimé sur les vraies Coupes du monde et Euros que ce produit porte — de 1934 à 2024, par les chiffres",
+    "tour17d": "ce que le vrai monde a imprimé sur les vraies Coupes du monde et Euros que ce produit porte — de 1930 à 2024, par les chiffres",
     "tour18t": "L'Atlas",
     "tour18d": "tout le monde dessiné en une seule constellation — chaque porte de cette page y est",
     "tour19t": "Champions du monde",
-    "tour19d": "les vraies Coupes du monde côte à côte — de l'Italie 1934 à l'Argentine 2022, un chapitre par finale",
+    "tour19d": "les vraies Coupes du monde côte à côte — de l'Uruguay 1930 à l'Argentine 2022, un chapitre par finale",
     "tour20t": "La Charte",
     "tour20d": "les six articles auxquels ce monde répond — les lignes s’écrivent elles-mêmes, le vrai et le synthétique ne se mélangent jamais",
     "tour21t": "Le Registre d'honneur",
-    "tour21d": "vingt-trois vrais tournois en une colonne — hôte, finale, vainqueur, buts, chaque case recalculée depuis les fichiers"
+    "tour21d": "vingt-quatre vrais tournois en une colonne — hôte, finale, vainqueur, buts, chaque case recalculée depuis les fichiers"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -5072,7 +5072,7 @@
   },
   "worldRealBook": {
     "metaTitle": "Le Vrai Cahier — ce que le vrai monde a imprimé sur ses plus grands tournois",
-    "metaDescription": "Les vraies Coupes du monde et Euros portés par ce produit — de 1934 à 2024, documentés chiffre par chiffre : les finales, les nombres, les prix — depuis les archives ouvertes.",
+    "metaDescription": "Les vraies Coupes du monde et Euros portés par ce produit — de 1930 à 2024, documentés chiffre par chiffre : les finales, les nombres, les prix — depuis les archives ouvertes.",
     "eyebrow": "Le Vrai Livre",
     "title": "Un monde de vrai football",
     "lede": "Voici la Coupe du monde 2022, portée par ce produit — chaque chiffre passé par la communauté openfootball, chaque donnée extraite d'un fichier public, attribution incluse.",
@@ -5092,7 +5092,7 @@
     "biggestWinTitle": "Victoire la plus dominatrice",
     "attributionLine": "chiffres des archives ouvertes de la Coupe du monde et de l'Euro — CC BY 4.0",
     "sectionRealBookLabel": "Le Vrai Livre",
-    "sectionRealBookNote": "les vraies Coupes du monde et Euros que ce produit porte — de 1934 à 2024",
+    "sectionRealBookNote": "les vraies Coupes du monde et Euros que ce produit porte — de 1930 à 2024",
     "sectionRealBookChip": "Le vrai livre",
     "sourceLabel": "l’espèce",
     "onFieldGoalsCaption": "buts marqués sur le terrain",
@@ -5181,7 +5181,10 @@
     "opening1938": "En 1938, le vrai monde du football a laissé l'Italie remonter seule, brièvement, exactement ainsi.",
     "lede1934": "La vraie Italie, portée par ce produit — la Coupe du monde 1934, chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
     "opening1934": "En 1934, le vrai monde du football a couronné une Italie à domicile, brièvement, exactement ainsi.",
-    "unplayedNote": "Le fichier archivé marque ce match comme {status} : {team1} v {team2} ({date}). L'arithmétique de cette page ne compte que les matchs qui ont imprimé un score."
+    "unplayedNote": "Le fichier archivé marque ce match comme {status} : {team1} v {team2} ({date}). L'arithmétique de cette page ne compte que les matchs qui ont imprimé un score.",
+    "chip1930": "1930 · Centenario",
+    "lede1930": "La première Coupe du monde de l'histoire — l'Uruguay 1930 rassemble les treize voyageurs, portée par ce produit, chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
+    "opening1930": "En 1930, le vrai monde du football s’est rassemblé à Montevideo, brièvement, exactement ainsi."
   },
   "worldAtlas": {
     "metaTitle": "L'Atlas — les portes du monde, dessinées",
@@ -5259,12 +5262,12 @@
     "coachReadProvider": "{provider} · {model} — {cached} des {prompt} tokens de prompt servis depuis le cache"
   },
   "worldChampions": {
-    "metaTitle": "Les Champions — vingt et une vraies Coupes du monde, côte à côte",
-    "metaDescription": "Les vingt et une Coupes du monde portées par ce produit — de 1934 à 2022, chiffre par chiffre : qui a gagné, comment, et qui a marqué — chaque chiffre recalculé depuis les instantanés openfootball archivés.",
+    "metaTitle": "Les Champions — vingt-deux vraies Coupes du monde, côte à côte",
+    "metaDescription": "Les vingt-deux Coupes du monde portées par ce produit — de 1930 à 2022, chiffre par chiffre : qui a gagné, comment, et qui a marqué — chaque chiffre recalculé depuis les instantanés openfootball archivés.",
     "eyebrow": "Champions du monde",
     "title": "Dix Coupes du monde, côte à côte",
-    "lede": "Italie 1934, France 1938, Brésil 1950, Suisse 1954, Suède 1958, Chili 1962, Angleterre 1966, Mexique 1970, Allemagne 1974, Argentine 1978, Espagne 1982, Mexique 1986, Italie 1990, États-Unis 1994, France 1998, Corée du Sud-Japon 2002, Allemagne 2006, Afrique du Sud 2010, Brésil 2014, Russie 2018, Qatar 2022 — les vingt et une vraies Coupes du monde que ce produit porte, imprimées côte à côte depuis les instantanés archivés, chiffre par chiffre.",
-    "opening": "Vingt et une finales, vingt et une façons dont le monde se souvient d’une vie de football.",
+    "lede": "Uruguay 1930, Italie 1934, France 1938, Brésil 1950, Suisse 1954, Suède 1958, Chili 1962, Angleterre 1966, Mexique 1970, Allemagne 1974, Argentine 1978, Espagne 1982, Mexique 1986, Italie 1990, États-Unis 1994, France 1998, Corée du Sud-Japon 2002, Allemagne 2006, Afrique du Sud 2010, Brésil 2014, Russie 2018, Qatar 2022 — les vingt-deux vraies Coupes du monde que ce produit porte, imprimées côte à côte depuis les instantanés archivés, chiffre par chiffre.",
+    "opening": "Vingt-deux finales, vingt-deux façons dont le monde se souvient d’une vie de football.",
     "finalKicker": "La finale",
     "goalsOnFieldCaption": "buts sur le terrain",
     "goalsPerMatchCaption": "buts par match",
@@ -5289,7 +5292,7 @@
     "sourceLabel": "l’espèce",
     "snapshotNote": "chaque chiffre de cette page est recalculé à chaque lecture depuis les instantanés archivés — rien n'est récupéré sur le réseau au moment du rendu.",
     "sectionChampionsLabel": "Champions du monde",
-    "sectionChampionsNote": "vingt et une vraies Coupes du monde, côte à côte",
+    "sectionChampionsNote": "vingt-deux vraies Coupes du monde, côte à côte",
     "sectionChampionsChip": "les champions",
     "aetChip": "a.p.",
     "penChip": "TAB {a}–{b}",
@@ -5329,11 +5332,11 @@
   },
   "worldHonours": {
     "metaTitle": "Le Registre d'honneur — tous les vrais tournois portés par ce produit, côte à côte",
-    "metaDescription": "Le Registre d'honneur : les vingt et une vraies Coupes du monde et les deux Euros portés par ce produit — chaque finale, chaque hôte, chaque vainqueur, chaque marge la plus large — recalculés depuis les instantanés openfootball archivés.",
+    "metaDescription": "Le Registre d'honneur : les vingt-deux vraies Coupes du monde et les deux Euros portés par ce produit — chaque finale, chaque hôte, chaque vainqueur, chaque marge la plus large — recalculés depuis les instantanés openfootball archivés.",
     "eyebrow": "Le Registre d'honneur",
     "title": "Le règne, match après match",
-    "lede": "Vingt et une Coupes du monde et deux Euros, un seul tableau qui file — hôte, finale, sort, marge, chaque case recalculée depuis les instantanés archivés à chaque lecture.",
-    "opening": "Vingt-trois tournois, vingt-trois finales, une colonne vertébrale.",
+    "lede": "Vingt-deux Coupes du monde et deux Euros, un seul tableau qui file — hôte, finale, sort, marge, chaque case recalculée depuis les instantanés archivés à chaque lecture.",
+    "opening": "Vingt-quatre tournois, vingt-quatre finales, une colonne vertébrale.",
     "kindWorldCup": "Coupe du monde",
     "kindEuro": "Euro",
     "thYear": "Année",
@@ -5347,7 +5350,7 @@
     "thWidest": "Plus large marge",
     "championLinesEyebrow": "Gagnants récurrents",
     "championLinesTitle": "Qui a régné plus d’une fois",
-    "championLinesLede": "Le règne compte pour chaque tournoi que ce produit porte — les quatorze Coupes du monde et les deux Euros.",
+    "championLinesLede": "Le règne compte pour chaque tournoi que ce produit porte — les vingt-deux Coupes du monde et les deux Euros.",
     "thChampionTh": "Champions",
     "thWinsTh": "Titres",
     "thYearsTh": "Années",

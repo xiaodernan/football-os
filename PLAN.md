@@ -4263,6 +4263,39 @@ this item).
 an exercise in language quality rather than one in fidelity to the freshness contract — it is the
 latter, with each locale carrying its own defensible rendering of the new English.
 
+## Item 125 — The inaugural cup lands: Uruguay 1930 ends the drought upstream kept open (landed 2026-11-17)
+
+**The gap and the unblock.** The 1930 World Cup fetch sat on `503` from the openfootball host for two
+arcs; the runner's environment, the workaround policy, and honesty all said: don't invent it. The
+upstream file now serves 200, and the cup can play where it belongs.
+
+**What landed.**
+
+- `openfootball-worldcup-1930.json` — the inaugural tournament, CC-BY 4.0, unmodified bytes:
+  **18 scored fixtures** (thirteen teams, three Montevideo venues), **70 goals**, fully printed
+  scorer lists (start the arc-long silence between 1930 and the full-list era around 1934/1938/1950
+  printing, with every later cup carrying whatever its own file does).
+- **Scorer table** prints on the 1930 door (`sc=10`) — same as 1934/1938/1950.
+- Honours spine grows to **24 rows** (22 World Cups + 2 Euros); **1,066 matches · 2,979 goals**;
+  repeat-champions ledger gains **Uruguay 2** (1930 · 1950, the only back-to-back inaugural defenders
+  before 1950).
+- Champions door compares all **22 World Cups**; the Champions card prints the 22-year spine;
+  the real-book rail now spans **1930 — 2024**; the OG cards print **24** tournaments over 1930 — 2024.
+- Catalogue population **5,227 ×6**; eleven stale twenty-one/twenty-three literals natively reworded
+  in six tongues; new chip1930 plus lede1930/opening1930 in six locales.
+- Unplayed-fixture silence: all 18 scored; no unplayed payload on this edition.
+
+**Honest silences.** No attendance claims for these editions (`attendance: null`); no 1930 captaincy
+claim out loud; the Stábile boot call is labelled curator knowledge; biggest margin is file-verified
+(**Argentina 6-1 USA**, and matches — the file prints the same 6-1 twice in the square; both tell the
+file's own truth).
+
+**Contract re-exported once more:** regex only; new SHA
+`60094658c2a4bc012eeda881e945f015acd81a9764d93fc06b521fc871989423`; ledgers re-pinned;
+`AUDIT_FIGURES` unchanged (249/90/67).
+
+Not claimed. Anything the runner hasn't printed yet; anything the file doesn't print verbatim.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
