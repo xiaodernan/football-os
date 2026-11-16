@@ -3375,6 +3375,29 @@ were fixed in their own commit `10d0982`.
 remains the caller and its figure stands. That CI has printed this push green at the time of
 writing; the verdict prints with the next run.
 
+## Item 87 — six red runs, one window, two root causes, both cured (2026-11-16)
+
+**The gap.** The four most recent pushes after `43782773793` printed failure legs, and the
+follow-on two as well — the project had not seen a red since `91afe53`'s window. Project law:
+reds are recorded verbatim, cures land in their own commits, no red is re-run into disguise.
+
+**What the runner printed.** Six completed runs (`43787554623`, `43787570420`, `43787604625`,
+`43788760730`, `43789115930`, `43789140732`) failed on the web leg with `settings.wheelNote`
+hand-authored in the reverse-wheel commit and read by nothing in the tree (the unused-key gate's
+floor is 0). The last three also failed the api leg on `scripts/loadtest.py`: ruff B023 ×2
+(loop variables `semaphore`, `endpoint` captured by a late-binding closure) and B007 (`status`
+unused in the result unpacking).
+
+**The cures.** The web cure landed inside the door's own commit `a5963b8` (the toggle now
+renders `t("wheelNote")`), because Item 84's change was the one red-naming call site. The api
+cure is its own commit `a469ec5`: the closure binds at definition time as keyword-only defaults
+(`*, endpoint: str = endpoint, semaphore: asyncio.Semaphore = semaphore`) and the unused slot is
+`_status`. Local witness: `ruff check` over the lint target's two derived directories prints
+`All checks passed!`. The six red runs stand as printed.
+
+**CI at the time of writing.** The door pushes and the §217/§218 pushes were in the runner's
+queue; the newest run prints the verdicts. Recorded in §218 verbatim.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

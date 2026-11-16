@@ -7874,3 +7874,31 @@ remain in the runner's queue at the time of writing.
 bytes are re-measured by the currency gates; the last live run is run O). That cache conditions
 changed (they cannot — ADR-011 stands). That CI has printed the door push green. That the upset
 register predicts anything (it records, it does not call).
+
+## §218 — six red runs, two root causes, cures in their own commits
+
+The runner printed **failure** on the six most recent completed pushes. Both reds are root-caused
+and the cures are separated by cause:
+
+| run | commit (message) | legs red | root cause |
+| --- | --- | --- | --- |
+| `43787554623` | `c9956f4` feat(web) reverse-wheel switch (01:39:46Z) | web | `settings.wheelNote` — authored, never read; qa-unused-keys floor 0 |
+| `43787570420` | `3eec272` fact pack refresh to e9dd19e (01:39:58Z) | web | same |
+| `43787604625` | `d839c87` fact pack refresh to c9956f4 (01:40:18Z) | web | same |
+| `43788760730` | `91a9ac7` feat(scripts) loadtest.py (01:52:15Z) | web + api | wheelNote orphan; api lint: `scripts/loadtest.py` B023 ×2 (`semaphore`, `endpoint`), B007 (`status`) |
+| `43789115930` | `7ad7ce1` docs(ledger,plan) §216 (01:56:00Z) | web + api | same two |
+| `43789140732` | `7f5bfbc` fact pack refresh to 7ad7ce1 (01:56:15Z) | web + api | same two |
+
+**Cures.** `a5963b8` (Item 86, the door) wired the toggle to read `wheelNote`. `a469ec5`
+re-quoted `loadtest.py`'s closures (keyword-only defaults bound at definition time) and renamed
+the unused slot to `_status`; `ruff check` over the whole lint target prints `All checks passed!`;
+`py_compile` and `--help` clean. The five web-only reds and the three api-included reds print the
+same two causes; nothing else failed in any of the six.
+
+**Not claimed.** That this re-runs anything — it does not; the six runs stand as printed and no
+push was re-pinned, re-ordered or re-tagged. That CI has printed green since the cures: the door
+runs (`43790746770`, `43790810946`, `43790904855`, and the cure push onwards) were in the
+runner's queue at the time of writing; their verdicts print with the next runs and are recorded
+honestly when they do. That the fact pack refreshed at `7ad7ce1` is the currently mirrored one —
+the §217 refresh (`9d01dbb`, milestone §217, world_doors 18) is the mirrored bytes. ADR-011
+stands; the seed stands.
