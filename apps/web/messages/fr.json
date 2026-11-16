@@ -4806,7 +4806,9 @@
     "tour19t": "Champions du monde",
     "tour19d": "les dix Coupes du monde côte à côte — du Mexique 1986 à l’Argentine 2022, un chapitre par finale",
     "tour20t": "La Charte",
-    "tour20d": "les six articles auxquels ce monde répond — les lignes s’écrivent elles-mêmes, le vrai et le synthétique ne se mélangent jamais"
+    "tour20d": "les six articles auxquels ce monde répond — les lignes s’écrivent elles-mêmes, le vrai et le synthétique ne se mélangent jamais",
+    "tour21t": "Le Registre d'honneur",
+    "tour21d": "douze vrais tournois en une colonne — hôte, finale, vainqueur, buts, chaque case recalculée depuis les fichiers"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -5284,5 +5286,31 @@
     "a6Body": "Sens du défilement, réduction des animations, mode sombre — l'interface vous demande ce qu'elle peut, et quand elle ne peut pas la porte /settings vous laisse décider, une fois pour toutes.",
     "a6Link": "Ouvrir les paramètres",
     "footerClaim": "Le monde synthétique n'usurpe pas le vrai ; le vrai n'usurpe pas le synthétique. Lisez les deux."
+  },
+  "worldHonours": {
+    "metaTitle": "Le Registre d'honneur — tous les vrais tournois portés par ce produit, côte à côte",
+    "metaDescription": "Le Registre d'honneur : les dix vraies Coupes du monde et les deux vrais Euros portés par ce produit — chaque finale, chaque hôte, chaque vainqueur, chaque marge la plus large — recalculés depuis les instantanés openfootball archivés.",
+    "eyebrow": "Le Registre d'honneur",
+    "title": "Le règne, match après match",
+    "lede": "Dix Coupes du monde et deux Euros, un seul tableau qui file — hôte, finale, sort, marge, chaque case recalculée depuis les instantanés archivés à chaque lecture.",
+    "opening": "Douze tournois, douze finales, une colonne vertébrale.",
+    "kindWorldCup": "Coupe du monde",
+    "kindEuro": "Euro",
+    "thYear": "Année",
+    "thKind": "Type",
+    "thHost": "Hôte",
+    "thFinal": "La finale",
+    "thChampion": "Champions",
+    "thRunnerUp": "Finalistes",
+    "thGoals": "Buts",
+    "thMatches": "Matches",
+    "thWidest": "Plus large marge",
+    "championLinesEyebrow": "Gagnants récurrents",
+    "championLinesTitle": "Qui a régné plus d’une fois",
+    "championLinesLede": "Le règne compte pour chaque tournoi que ce produit porte — les dix vraies Coupes du monde et les deux Euros.",
+    "thChampionTh": "Champions",
+    "thWinsTh": "Titres",
+    "thYearsTh": "Années",
+    "snapshotNote": "chaque chiffre de cette page est recalculé à chaque lecture depuis les instantanés archivés — rien n'est récupéré sur le réseau au moment du rendu."
   }
 }

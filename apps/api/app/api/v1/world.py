@@ -44,6 +44,7 @@ from app.services.world.duel import compare, per90
 from app.services.world.dynasties import compute_dynasties
 from app.services.world.finals import compute_finals
 from app.services.world.gazette import compute_gazette
+from app.services.world.honours import compute_honours
 from app.services.world.matchday_xi import compute_matchday_xi
 from app.services.world.noise import compute_noise
 from app.services.world.real_book import UnknownTournament, compute_real_book
@@ -1231,6 +1232,18 @@ def dynasties(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]
     """
     limit(request, 60, 60, scope="world_dynasties")
     return _envelope(**compute_dynasties(db))
+
+
+@router.get("/honours")
+def honours(request: Request) -> dict[str, Any]:
+    """The Roll of Honours — every real tournament the door carries, side by side.
+
+    One row per tournament we hold in the committed openfootball snapshots, computed on every read:
+    year, host, final, outcome, widest margin, match and goal totals. World Cup and European
+    Championship, distinguished per row. No synthetic data, no authored prose — every cell is arithmetic.
+    """
+    limit(request, 60, 60, scope="world_honours")
+    return _envelope(**compute_honours())
 
 
 @router.get("/real-book")

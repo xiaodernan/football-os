@@ -198,6 +198,11 @@ const FR_TOKENS = new Map([
   ["history.xpAmount", "the game's own coin"],
   ["training.xpAwarded", "the game's own coin"],
   ["coach.statXp", "the game's own coin"],
+  // The Roll of Honours — French and English share the same words.
+  ["worldHonours.kindEuro", "the tournament's own name, spelled the same in French"],
+  ["worldHonours.thChampion", "a French/English cognate, kept as the table functional word"],
+  ["worldHonours.thMatches", "a French/English cognate, kept as the table functional word"],
+  ["worldHonours.thChampionTh", "a French/English cognate, kept as the table functional word"],
   // The six article numbers of the world's own creed are kept as a book's markings.
   ["worldCreed.a1Eyebrow", "the article's own numeral, kept as a book's marking"],
   ["worldCreed.a2Eyebrow", "the article's own numeral, kept as a book's marking"],

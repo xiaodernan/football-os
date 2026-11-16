@@ -4806,7 +4806,9 @@
     "tour19t": "World Cup Champions",
     "tour19d": "ten World Cups side by side — from Mexico 1986 to Argentina 2022, one chapter per final",
     "tour20t": "The Creed",
-    "tour20d": "the six articles the world lives by — the rows write themselves, the real and the synthetic never mix, and the reader keeps their own rules"
+    "tour20d": "the six articles the world lives by — the rows write themselves, the real and the synthetic never mix, and the reader keeps their own rules",
+    "tour21t": "The Roll of Honours",
+    "tour21d": "twelve real tournaments in one column — the host, the final, the winner, the goals, every cell recomputed from the bytes"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
@@ -5284,5 +5286,31 @@
     "a6Body": "Wheel direction, reduced motion, dark mode — the interface asks you where it can, and where it cannot the /settings door lets you decide, once and for good.",
     "a6Link": "Open settings",
     "footerClaim": "The synthetic world does not pretend to be the real one; the real one does not pretend to be synthetic. Read them both."
+  },
+  "worldHonours": {
+    "metaTitle": "The Roll of Honours — every real tournament this product carries, side by side",
+    "metaDescription": "The Roll of Honours: the ten real World Cups and two European Championships carried inside this product — every final, every host, every winner, every widest margin — recomputed from the committed openfootball snapshots.",
+    "eyebrow": "The Roll of Honours",
+    "title": "The reign, match after match",
+    "lede": "Ten World Cups and two European Championships, one running table — host, final, outcome, margin, every cell recomputed from the committed snapshots on every read.",
+    "opening": "Twelve tournaments, twelve finals, one spine.",
+    "kindWorldCup": "World Cup",
+    "kindEuro": "Euro",
+    "thYear": "Year",
+    "thKind": "Kind",
+    "thHost": "Host",
+    "thFinal": "The final",
+    "thChampion": "Champions",
+    "thRunnerUp": "Runner-up",
+    "thGoals": "Goals",
+    "thMatches": "Matches",
+    "thWidest": "Widest margin",
+    "championLinesEyebrow": "Repeat champions",
+    "championLinesTitle": "Who reigned more than once",
+    "championLinesLede": "The reign counts for every tournament this product carries — the ten real World Cups and the two European Championships.",
+    "thChampionTh": "Champions",
+    "thWinsTh": "Titles",
+    "thYearsTh": "Years",
+    "snapshotNote": "every figure on this page is recomputed from the committed snapshots on every read; nothing is fetched from the network."
   }
 }

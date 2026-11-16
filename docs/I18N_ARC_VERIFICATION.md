@@ -9263,3 +9263,44 @@ by anything but the aggregates it read (it is a read of five numbers, not a judg
 **Gates re-measured on this tree:** ruff clean · tsc clean · full battery green.
 
 **Not claimed.** That the runner prints anything green ahead of this commit — the runner runs one pass per commit and the outcome is recorded when it drains; that the creed is a legal document — it is a restatement of what the product demonstrably does, written to the reader instead of to the auditor.
+
+## §258 — Item 118: the Roll of Honours — twelve real tournaments, one spine
+
+**Named live walk, verbatim, from the committed bytes:**
+
+| year | kind | host | champions | final | widest |
+| --- | --- | --- | --- | --- | --- |
+| 2022 | wc | Qatar | Argentina | 3–3 AET (4–2 pens) vs France | Spain 7–0 Costa Rica |
+| 2018 | wc | Russia | France | 4–2 vs Croatia | Russia 5–0 Saudi Arabia |
+| 2014 | wc | Brazil | Germany | 1–0 AET vs Argentina | Brazil 1–7 Germany |
+| 2010 | wc | South Africa | Spain | 1–0 AET vs Netherlands | Portugal 7–0 North Korea |
+| 2006 | wc | Germany | Italy | 1–1 AET (5–3 pens) vs France | Argentina 6–0 Serbia & Montenegro |
+| 2002 | wc | South Korea & Japan | Brazil | 2–0 vs Germany | Germany 8–0 Saudi Arabia |
+| 1998 | wc | France | France | 3–0 vs Brazil | Spain 6–1 Bulgaria |
+| 1994 | wc | United States | Brazil | 0–0 AET (3–2 pens) vs Italy | Russia 6–1 Cameroon |
+| 1990 | wc | Italy | West Germany | 1–0 vs Argentina | United States 1–5 Czechoslovakia |
+| 1986 | wc | Mexico | Argentina | 3–2 vs West Germany | Soviet Union 6–0 Hungary |
+| 2021 | euro | 11 cities | Italy | 1–1 AET (3–2 pens) vs England | Slovakia 0–5 Spain |
+| 2024 | euro | Germany | Spain | 2–1 vs England | Germany 5–1 Scotland |
+
+**Stats from the committed bytes:** 706 matches · 1,783 goals on the field · 12 finals ·
+repeat champions (≥2): Argentina, Brazil, France, Italy, Spain ×2 each. The door is two views:
+the spine (all twelve finals in one table) and the repeat champions ledger.
+
+**The door as built:** `GET /api/v1/world/honours`, public, 60/min; the page computes on every read
+from the committed snapshots — no authored favourites, no network. `compute_honours()` is pure.
+Catalogue **5,184 ×6** (README re-pinned 5,137 / 4,915 / 47+216 French doublets);
+OG: big 12, kicker `THE ROLL OF HONOURS`.
+
+**Named red cured in its own form.** `qa-locale-tokens` flagged four fr doublets
+(`kindEuro`, `thChampion`, `thMatches`, `thChampionTh` — French spells them the same as English);
+all four named in `FR_TOKENS`. `qa-translation-quality` flagged `openfootball`/`settings`-shaped
+literals in zh/zh-TW a3Body-like cells; all native rewrites; gates re-measured green.
+
+**Contract moved once more:** SHA `7639ce40ed462e1237fc59a71767b329d45b93eed7112f588e0d8d721ddf694d` —
+**248 paths / 315 operations / 99 schemas**; secured 241 / public **74** / private GET 104; ledgers
+re-pinned; `AUDIT_FIGURES` 248/90/67.
+
+**Not claimed.** That the runner prints anything green for this item yet — it runs in its own
+time; that any WC-wide reign beyond the snapshot file is claimed (Argentina's is 2 WCs in this
+file's repertoire; the door prints exactly that).

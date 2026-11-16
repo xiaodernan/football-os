@@ -78,6 +78,9 @@ const NAMESPACE_OWNERS = {
   // The Champions — ten real World Cups side by side, recomputed from the committed snapshots
   "worldChampions": { owner: "world", purpose: "the ten real World Cups (1986–2022) compared side by side: finals, on-field goals, venues, widest margins, one merged scorers ledger counted from the openfootball snapshots" },
 
+  // The Roll of Honours — every tournament this product carries, side by side
+  "worldHonours": { owner: "world", purpose: "every tournament in the openfootball family this product carries (10 real World Cups + 2 Euros) printed side by side with final, outcome, goals, matches, widest margin and repeat champions — computed from the committed snapshots on every read" },
+
   // The Creed — the six articles the world lives by
   "worldCreed": { owner: "world", purpose: "the six articles the whole product lives by: the arithmetic is never invented, the real and the synthetic stay apart, attribution comes first, no hidden god writes the scores, six locales one voice, the reader keeps machine's own rules" },
 

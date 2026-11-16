@@ -16,12 +16,12 @@ artifact the web client and the currency gates read — and takes every operatio
 `security` requirement as a private door, every operation that declares none as a public one.
 
 At the latest account recorded here (run R, §2) the contract's SHA-256 was
-`09209dd7163c002b961053284112447361beb98cc425342e7802ca9cf769df7c`, and the census reads:
+`7639ce40ed462e1237fc59a71767b329d45b93eed7112f588e0d8d721ddf694d`, and the census reads:
 
 | measurement | value | floor |
 | --- | --- | --- |
 | secured operations | 241 | 200 |
-| public operations | 73 | 40 |
+| public operations | 74 | 40 |
 | private `GET` paths | 104 | 85 |
 
 The floors exist so an empty or half-read contract cannot pass as a clean probe; they are printed with

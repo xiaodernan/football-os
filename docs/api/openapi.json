@@ -3132,6 +3132,29 @@
         }
       }
     },
+    "/api/v1/world/honours": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Honours",
+        "description": "The Roll of Honours — every real tournament the door carries, side by side.\n\nOne row per tournament we hold in the committed openfootball snapshots, computed on every read:\nyear, host, final, outcome, widest margin, match and goal totals. World Cup and European\nChampionship, distinguished per row. No synthetic data, no authored prose — every cell is arithmetic.",
+        "operationId": "honours_api_v1_world_honours_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Honours Api V1 World Honours Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/real-book": {
       "get": {
         "tags": [

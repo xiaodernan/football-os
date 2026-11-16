@@ -4048,6 +4048,39 @@ seed fallback was exercised live in this arc; the failure path answers without c
 tested as such; the answers will differ run to run.
 
 
+## Item 118 — the Roll of Honours — every real tournament side by side (landed 2026-11-16)
+
+**The gap.** Many doors showed each tournament side-by-side, but nothing answered *which of the
+tournaments the product carries have been won, and by whom*, with every figure counted from
+committed bytes, with the two European Championships joining the ten World Cups on one table.
+
+**What landed.** `/world/honours` — a new public door under `/api/v1/world/honours`:
+
+- the twelve tournaments this product carries (10 real World Cups + 2 European Championships) —
+  host, final, outcome, goals, matches, widest margin — all recomputed from the committed snapshots;
+- a "repeat champions" ledger (Argentina ×2, Brazil ×2, France ×2, Italy ×2, Spain ×2) — counted
+  from the rows, not asserted;
+- no network at render time; the server reads from the committed bytes on every request.
+
+**Live figures from the committed bytes:** 706 matches; 1,783 goals on the field; six repeat
+champions ×2; four shared tournaments per champion across the two families (World Cup / Euro);
+every final prints from the file (`2006 Italy 1–1 France, pens 5–3`).
+
+**Gates re-measured on this tree:** ruff clean · `mypy app` **201/201** · pytest door suites
+**4/4** honours · tsc clean · all web gates green (`qa-icu-messages` 2/2 · `qa-unused-keys` 3/3
+· `qa-translation-quality` 9/9 · `qa-key-drift` 4/4 · `qa-locale-tokens` 7/7 ·
+`qa-namespace-ownership` 2/2 · `qa-locale-wiring` 8/8 · `qa-table-shape` 124/124 ·
+`qa-metadata-title` · `qa-crawl-policy`).
+
+**Contract re-exported:** **248 paths / 315 operations / 99 schemas** (secured 241 / public 74 /
+private GET 104), SHA `7639ce40ed462e1237fc59a71767b329d45b93eed7112f588e0d8d721ddf694d`;
+`AUDIT_FIGURES contract_paths=248 page_routes=90 migrations=67`; all ledgers re-pinned; ROADMAP
+and the audit rows updated to 248/90/67.
+
+**Not claimed.** That the runner printed any leg of this item green before it has; that repeat
+champions are a statement about football history — they describe exactly the twelve tournaments
+this product carries, and nothing outside it.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
