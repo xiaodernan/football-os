@@ -1,10 +1,10 @@
 {
-  "head": "45698e1",
-  "total_commits": 1183,
-  "milestone": "§224",
-  "milestone_full": "§224 — the CI queue drains the inherited reds; the cures hold",
+  "head": "d5bc84b",
+  "total_commits": 1186,
+  "milestone": "§225",
+  "milestone_full": "§225 — the in-product tutorial door lands; eight red runs cured with named fixes",
   "pushed_at": "2026-11-16",
-  "screens": 83,
+  "screens": 84,
   "assets": 196,
   "world_doors": 19,
   "locales": 6,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T03:50:56.382Z"
+  "generated_at": "2026-11-16T04:03:11.524Z"
 }
