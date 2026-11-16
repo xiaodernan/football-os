@@ -1,6 +1,6 @@
 {
-  "head": "e9dd19e",
-  "total_commits": 1149,
+  "head": "c9956f4",
+  "total_commits": 1151,
   "milestone": "§215",
   "milestone_full": "§215 — the cache-hit resolves honestly; three items landed; the fourth citizen is wired in",
   "pushed_at": "2026-11-16",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T00:50:32.960Z"
+  "generated_at": "2026-11-16T01:39:50.887Z"
 }
