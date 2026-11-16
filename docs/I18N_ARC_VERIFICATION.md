@@ -1,4 +1,4 @@
-# §81 — the interface in the reader's language, and the gates that hold it there
+﻿# §81 — the interface in the reader's language, and the gates that hold it there
 
 What this certifies: that every string a reader sees on the web tier is read from a **catalogue**, in one
 of three languages, and that the gates named below refuse the day it stops being true. §1 lists the four
@@ -8678,3 +8678,11 @@ on the cured tree. Population 5,048 ×6; `qa-icu-messages` / `qa-i18n-literals` 
 **Scope note, read plainly.** In Item 84 the reverse-wheel was answered with a `/settings`
 localStorage switch and an honest note; in §232/§233 two exposed I18n gates red'd and were cured
 in their own commits. This arc adds copy, not behavior.
+
+## §238 — Item 103: two more CI reds cured; mypy 198/198, witness 11/11
+
+**`api :: Types`** (43834268672, the same run whose provider-cache-key arm B red'd twice in a row): `app/services/behavior.py` inferred row-values as `object`, rejecting every arithmetic op; `app/providers/__init__.py:201` left an unused `# type: ignore` on a signature already fully annotated. `behavior.py` is now fully typed end-to-end (2026-11-16 inline: `daily: list[dict[str, Any]]`, `pages: list[dict[str, Any]]`, an `_gv` reader for object-typed page dicts, casts through `float()`/`int()` where the SQLAlchemy result really is an int). `app/providers/__init__.py:201`'s ignore is gone; the signature now ends `-> Any`. `mypy app` → 198/198.
+
+**`web :: Translation-quality behaviour gate` arm B** — the same fixture Item 101 tightened deletes `worldRealBook.topScorerTitle`; Item 94 added a second French-accented string (`spellingNote`, also "Mbappé") and the general mojibake branch charged it too. The arm now deletes **every value containing a Latin-1 misread byte** (`ØÙÚÛÃÂâ€ï¿½À-ÖØ-ø`) from the scratch plane rather than one key at a time — the cure travels with the branch's own byte list, so when the next accented footballer joins `en.json`, the arm survives without a hand. Witness **11/11**.
+
+**Not claimed.** That the runner printed `bba27e6` green at the time of this push; it printed `api :: Types` red and `web :: Translation-quality behaviour gate` red on that exact tree. The cure rides in its own commit and the reds stand on their runs.

@@ -198,7 +198,7 @@ class OpenAIChatProvider:
             headers["User-Agent"] = self.user_agent
         return headers
 
-    def _open(self, request: urllib.request.Request, *, timeout: int = 45):  # type: ignore[no-untyped-def]
+    def _open(self, request: urllib.request.Request, *, timeout: int = 45) -> Any:
         """One place decides which door the call goes out through.
 
         `self._opener` is a `build_opener(...)` product when the operator set `OPENAI_PROXY`

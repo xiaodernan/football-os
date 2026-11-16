@@ -79,7 +79,8 @@ def compute_behavior(session: Session, *, window_days: int = WINDOW_DAYS) -> dic
     for row in rows:
         key = row.created_at.date().isoformat() if hasattr(row.created_at, "date") else str(row.created_at)[:10]
         by_day.setdefault(key, []).append(row)
-    daily = []
+
+    daily: list[dict[str, Any]] = []
     day = start
     while day <= today:
         rows_for_day = by_day.get(day.isoformat(), [])
@@ -98,7 +99,7 @@ def compute_behavior(session: Session, *, window_days: int = WINDOW_DAYS) -> dic
     by_page: dict[str, list[PageView]] = {}
     for row in rows:
         by_page.setdefault(row.path, []).append(row)
-    pages = []
+    pages: list[dict[str, Any]] = []
     for path, page_rows in sorted(by_page.items(), key=lambda kv: len(kv[1]), reverse=True)[:12]:
         page_bounces = sum(1 for row in page_rows if row.bounced)
         dwells = [row.dwell_ms for row in page_rows]
@@ -140,36 +141,43 @@ def compute_behavior(session: Session, *, window_days: int = WINDOW_DAYS) -> dic
 
     # Recommendations — rule-based reads, labelled as suggestions by the console
     recs: list[dict[str, Any]] = []
-    worst = max(pages, key=lambda p: (p["views"] * p["bounce_rate"]) if p["views"] >= 20 else 0.0, default=None)
-    if worst and worst["bounce_rate"] >= 0.55 and worst["views"] >= 20:
-        recs.append({"kind": "high_bounce_page", "path": worst["path"], "value": round(worst["bounce_rate"], 4)})
-    dowdy = [p for p in pages if p["views"] >= 20 and p["median_dwell_ms"] < 4000]
+
+    def _gv(obj: Any, key: str, default: Any = 0) -> Any:
+        """One hand to read object-typed row dicts."""
+        return obj.get(key, default) if isinstance(obj, dict) else default
+
+    worst = max(
+        (page for page in pages if _gv(page, "views", 0) >= 20),
+        key=lambda page: float(_gv(page, "bounce_rate", 0.0)) * int(_gv(page, "views", 0)),
+        default=None,
+    )
+    if worst is not None and float(_gv(worst, "bounce_rate", 0.0)) >= 0.55 and int(_gv(worst, "views", 0)) >= 20:
+        recs.append({"kind": "high_bounce_page", "path": str(_gv(worst, "path", "")), "value": round(float(_gv(worst, "bounce_rate", 0.0)), 4)})
+    dowdy = [page for page in pages if int(_gv(page, "views", 0)) >= 20 and int(_gv(page, "median_dwell_ms", 0)) < 4000]
     if dowdy:
-        recs.append({"kind": "low_dwell_page", "path": dowdy[0]["path"], "value": dowdy[0]["median_dwell_ms"]})
-    tutorial = next((entry for entry in funnels if entry["id"] == "tutorial_to_manual"), None)
-    if tutorial and tutorial["rate"] < 0.25:
-        recs.append({"kind": "tutorial_drop", "value": round(tutorial["rate"], 4)})
+        recs.append({"kind": "low_dwell_page", "path": str(_gv(dowdy[0], "path", "")), "value": int(_gv(dowdy[0], "median_dwell_ms", 0))})
+    tutorial = next((entry for entry in funnels if _gv(entry, "id") == "tutorial_to_manual"), None)
+    if tutorial is not None and float(_gv(tutorial, "rate", 0.0)) < 0.25:
+        recs.append({"kind": "tutorial_drop", "value": round(float(_gv(tutorial, "rate", 0.0)), 4)})
     if abs(slope) < 0.5:
         recs.append({"kind": "forecast_flat", "value": round(slope, 4)})
     else:
         recs.append({"kind": "forecast_rising" if slope > 0 else "forecast_falling", "value": round(slope, 4)})
-    top = next((p for p in pages if p["views"] >= 100 and p["bounce_rate"] <= 0.3), None)
-    if top:
-        recs.append({"kind": "strong_page", "path": top["path"]})
+    top = next((page for page in pages if int(_gv(page, "views", 0)) >= 100 and float(_gv(page, "bounce_rate", 1.0)) <= 0.3), None)
+    if top is not None:
+        recs.append({"kind": "strong_page", "path": str(_gv(top, "path", ""))})
 
     # Model traffic: the window's own ledger reads back into the console
-    reported = list(
-        session.execute(
-            select(
-                func.count(ModelCall.id),
-                func.coalesce(func.sum(ModelCall.input_tokens), 0),
-                func.coalesce(func.sum(ModelCall.cached_input_tokens), 0),
-            ).where(ModelCall.created_at >= cutoff, ModelCall.cache_reported.is_(True))
-        ).one()
-    )
+    reported = session.execute(
+        select(
+            func.count(ModelCall.id),
+            func.coalesce(func.sum(ModelCall.input_tokens), 0),
+            func.coalesce(func.sum(ModelCall.cached_input_tokens), 0),
+        ).where(ModelCall.created_at >= cutoff, ModelCall.cache_reported.is_(True))
+    ).one()
     all_calls = int(session.scalar(select(func.count(ModelCall.id)).where(ModelCall.created_at >= cutoff)) or 0)
-    input_tokens = int(reported[1])
-    cached_tokens = int(reported[2])
+    input_tokens = int(reported[1] or 0)
+    cached_tokens = int(reported[2] or 0)
     cached_share = (cached_tokens / input_tokens) if input_tokens else 0.0
 
     return {

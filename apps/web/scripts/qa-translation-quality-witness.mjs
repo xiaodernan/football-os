@@ -189,12 +189,21 @@ cpSync(join(REAL, "en.json"), join(copyPlane, "messages", "ar.json"));
 // 2026-11-16 (Item 94): en.json legitimately gained `worldRealBook.topScorerTitle`
 // ("Top scorer — Mbappé"), and the gate's general mojibake branch charges an ar file
 // carrying the é bytes — a third red the arm was not written to predict. The arm exists
-// to prove the script check and the identical check redden; the charged line is copied
-// out of the scratch plane so the arm keeps pinning exactly what it exists to prove.
+// to prove the script check and the identical check redden; every key whose bytes the
+// gate's mojibake branches charge an Arabic reader is copied out of the scratch plane so
+// the arm keeps pinning exactly what it exists to prove.
 {
   const path = join(copyPlane, "messages", "ar.json");
   const catalogue = JSON.parse(readFileSync(path, "utf8"));
-  delete catalogue.worldRealBook.topScorerTitle;
+  for (const block of Object.values(catalogue)) {
+    for (const key of Object.keys(block ?? {})) {
+      // every byte class the gate's mojibake arms charge an Arabic file (ØÙÚÛ, the Latin-1
+      // misread pair Ã/Â, and the UTF-8-as-Latin-1 triplets). An Arabic reader cannot see
+      // these bytes legitimately, so striking them from the scratch plane keeps the arm
+      // pinned to the two reds it exists to prove — deletes travel with the gate's own list.
+      if (typeof block[key] === "string" && /[ØÙÚÛÃÂâ€ï¿½À-ÖØ-ø]/.test(block[key])) delete block[key];
+    }
+  }
   writeFileSync(path, `${JSON.stringify(catalogue, null, 2)}\n`);
 }
 const b = run(copyPlane);
