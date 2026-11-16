@@ -4081,6 +4081,18 @@ and the audit rows updated to 248/90/67.
 champions are a statement about football history — they describe exactly the twelve tournaments
 this product carries, and nothing outside it.
 
+## Item 119 — Item 117's two api reds recorded; the cure rode in Item 118 (landed 2026-11-16)
+
+**The two reds, named verbatim.** `test_the_audit_s_declared_figures_answer_for_the_committed_tree`
+— `AUDIT_FIGURES says 88 page routes; apps/web/app has 89 committed page.tsx` · `test_every_door
+and_page_census_in_the_module_table_recomputes` — `the table says 24 '/world/*' pages; committed
+apps/web/app holds 25 page.tsx`.
+
+**The cure, in its own commits.** `e7719d6` corrected the audit family list to real API doors and
+`f3487…`, `dc93e64` set the audit to 248/90/67 — both are now part of Item 118's committed arc.
+
+**Not claimed.** That the runner printed Item 118 green before it has.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

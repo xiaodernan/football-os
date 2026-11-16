@@ -9304,3 +9304,27 @@ re-pinned; `AUDIT_FIGURES` 248/90/67.
 **Not claimed.** That the runner prints anything green for this item yet — it runs in its own
 time; that any WC-wide reign beyond the snapshot file is claimed (Argentina's is 2 WCs in this
 file's repertoire; the door prints exactly that).
+
+## §259 — the queue names Item 117's two api reds; Item 118's cure rode through already
+
+**The named reds on `43892883731` — two legs, one root cause (wrong pinned figure at ledger time):**
+
+```
+FAILED tests/test_spec_audit_currency.py::test_the_audit_s_declared_figures_answer_for_the_committed_tree
+  AssertionError: AUDIT_FIGURES says 88 page routes; apps/web/app has 89 committed page.tsx
+
+FAILED tests/test_spec_audit_currency.py::test_every_door_and_page_census_in_the_module_table_recomputes
+  AssertionError: the table says 24 '/world/*' pages; committed apps/web/app holds 25 page.tsx
+```
+
+Both were cured in Item 118's commits (`248 paths / 90 routes / 67 migrations` and the world row
+now reads **26** doors; the API-family line reads only doors the contract answers — `creed` is a
+web door, `honours` is its `/api/v1/world/honours` sibling). The fact packs after Item 118
+already count 89 → 90 routes; the mirror carries them.
+
+**Item 117's web leg** printed success with the creed active; the fact-pack run
+(`43892962156`) prints the same two api reds for the same reason (the pre-correct commit).
+
+**Not claimed.** That the runner has printed Item 118 green before it has; the two runs Item 118
+split into (`43897668488` / `43897757151`) run against the cured constants and will be recorded
+when they drain.
