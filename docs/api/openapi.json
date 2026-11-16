@@ -3086,6 +3086,29 @@
         }
       }
     },
+    "/api/v1/world/champions": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Champions",
+        "description": "The Champions — Germany 2014, France 2018, Argentina 2022, side by side.\n\nEvery figure here is recomputed on every read from the committed openfootball\nsnapshots (CC-BY 4.0) the Real Book ships — the final score, the on-field goal totals,\nthe venues, the widest margins and the merged scorers ledger. Nothing is authored,\nstored or fetched from the network. The synthetic world is not present in this door.",
+        "operationId": "champions_api_v1_world_champions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Champions Api V1 World Champions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/dynasties": {
       "get": {
         "tags": [

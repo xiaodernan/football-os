@@ -49,6 +49,7 @@ export default async function AtlasPage() {
   const tu = await getTranslations("worldUpsets");
   const td = await getTranslations("worldDynasties");
   const tr = await getTranslations("worldRealBook");
+  const tc = await getTranslations("worldChampions");
 
   const world = await readWorld<WorldEnvelope>("/world/status");
   if (!world.ok) return <WorldUnavailable message={world.message} />;
@@ -76,6 +77,7 @@ export default async function AtlasPage() {
   ];
   const book: AtlasNode[] = [
     { href: "/world/real-book", label: tr("sectionRealBookLabel"), note: tr("sectionRealBookNote") },
+    { href: "/world/champions", label: tc("sectionChampionsLabel"), note: tc("sectionChampionsNote") },
     { href: "/tutorial", label: t("tutorialLabel"), note: t("tutorialNote") },
     { href: "/manual", label: t("manualLabel"), note: t("manualNote") },
   ];

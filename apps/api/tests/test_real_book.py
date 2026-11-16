@@ -75,7 +75,7 @@ class TestTheRealBook:
         assert facts["final"]["away"] == "Argentina"
         assert facts["final"]["score_regular"] == [0, 0]
         assert facts["final"]["score_extra_time"] == [1, 0]
-        assert facts["has_penalties"] is True
+        assert facts["has_penalties"] is False
         assert facts["runner_up"]["name"] == "Argentina"
         assert "Messi" in facts["runner_up"]["star"]
         assert facts["biggest_win"]["match"] == "Brazil 1-7 Germany"

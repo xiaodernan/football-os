@@ -276,3 +276,34 @@
   color: var(--gold, #d8b56b);
   font-weight: 700;
 }
+
+.champions__cups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+.champions__cup {
+  text-decoration: none;
+  color: inherit;
+  align-items: stretch;
+  transition: border-color 140ms ease, transform 140ms ease;
+}
+.champions__cup:hover,
+.champions__cup:focus-visible {
+  border-color: var(--gold, #d8b56b);
+  transform: translateY(-2px);
+  outline: none;
+}
+.champions__cup h2 {
+  font-size: 1.6rem;
+}
+.champions__score {
+  padding: 0.9rem 0.6rem;
+}
+@media (max-width: 980px) {
+  .champions__cups {
+    grid-template-columns: 1fr;
+  }
+}

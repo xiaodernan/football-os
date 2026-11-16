@@ -3758,6 +3758,46 @@ there's a canonical sentence for.
 **Not claimed.** That any run after this commit prints green; that the world's CI is clean right now.
 
 
+## Item 107 — The Champions — three real World Cups side by side (landed 2026-11-17)
+
+**The gap.** Three real World Cups sat inside the product, each behind its own tab — but nothing
+held them side by side, and every comparison an honest cross-cup page would want lived only in
+the reader's head.
+
+**What landed.** `/world/champions` — a new door that prints the three cups objectively beside
+one another, **recomputed from the committed openfootball snapshots on every read**:
+
+- the three finals as cards (Germany 1–0 Argentina, Götze 113', Maracanã · France 4–2 Croatia,
+  Luzhniki · Argentina 3–3 France, 4–2 pens, Lusail) with ET/PEN markers and per-cup figures
+  (goals on the field, goals per match, venues, matches);
+- the widest margin of each tournament (computed, never asserted);
+- **the merged scorers ledger**: one row per player per cup, per-cup figures straight from each
+  snapshot's own scorer list (the 2022 Mbappé spelling merge applied), totals as sums — zero
+  for a cup whose committed file does not credit that player;
+- public door `GET /api/v1/world/champions` (60/min, anonymous); contract re-exported —
+  **246 paths / 313 operations / 99 schemas**, SHA `1efb7ee0…51cf89`; secured 241 / public
+  **72** / private GET 104; AUDIT_FIGURES `246 / 88 / 67`; both currency suites re-pinned; the
+  §4 audit row's world-doors list and census re-read to **24**.
+
+**Honest cures that rode along** (§240-adjacent defects, named):
+
+- `has_penalties` in the curated registry now means **the final went to penalties** (2022 only).
+  The old reading ("the tournament contained shoot-outs somewhere") made the 2014 final panel
+  print a phantom `0–0 on penalties` beside Götze's 113'. The `real-book` test updated; nothing
+  else changed on the door.
+- The `worldChampions` namespace was aligned by meaning to the established `worldRealBook` pairs
+  the catalogue keeps (matchesCaption, venuesCaption, sourceLabel, aetChip, penChip, thPlayer);
+  catalogue population **5,090 ×6**; README re-pinned (5,043 ar/he/zh/zh-TW · 4,839 fr).
+
+**Verified on this host:** pytest 26/26 for the door's own files; `ruff` clean; `mypy app`
+**199/199**; `tsc` clean; all web gates green (`qa-locale-tokens` 7/7, `qa-translation-quality`
+9/9, `qa-key-drift` 4/4 at ceiling **116**, `qa-unused-keys` / `qa-namespace-ownership` /
+contributors green); alembic drift check clean; `qa-shared-keys` 4/4.
+
+**Not claimed.** That the runner prints this green before it has run; that the cross-cup door
+renders identically at every viewport (walked 200 with markers on this host).
+
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

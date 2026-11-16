@@ -75,6 +75,9 @@ const NAMESPACE_OWNERS = {
   // The Real Book — the real world's 2022 World Cup, carried in this product
   "worldRealBook": { owner: "world", purpose: "the real world's football facts carried in this product: the 2022 World Cup final, the numbers added up, the awards, the openfootball source with attribution" },
 
+  // The Champions — three real World Cups side by side, recomputed from the committed snapshots
+  "worldChampions": { owner: "world", purpose: "the three real World Cups (2014/2018/2022) compared side by side: finals, on-field goals, venues, widest margins, one merged scorers ledger counted from the openfootball snapshots" },
+
   // The Atlas — every door of the world on one page
   "worldAtlas": { owner: "world", purpose: "the navigation star-chart for the whole world: the browsing doors, the league doors, the real book and the manual, drawn in one constellation with the same doors' names and notes reused from their own namespaces" },
 

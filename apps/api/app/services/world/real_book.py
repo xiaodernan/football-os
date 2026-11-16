@@ -122,7 +122,7 @@ _REGISTRY: dict[str, dict[str, Any]] = {
             ],
             "venues": 12,
             "total_matches": 64,
-            "has_penalties": True,
+            "has_penalties": False,
             "champion": {
                 "name": "Germany",
                 "note": "Won the final 1–0 vs Argentina (Götze, 113') at Maracanã Stadium, Rio de Janeiro.",

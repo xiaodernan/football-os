@@ -8819,3 +8819,50 @@ nothing is re-pinned, re-tagged or re-run to fit a green run.
 **Not claimed.** That any run after this commit prints green; that the gate's own DIVERGENCES ledger
 is the final word (it is, by construction — `DIVERGENCES.size` is read by the gate itself); that
 `552656d`'s api leg is green (it had not printed when this arc was written).
+
+## §243 — Item 107: The Champions — three real World Cups, side by side, computed on every read
+
+**What landed.** `/world/champions` — the worldbook's ninth documented door and the first public
+page in the product that holds the three committed real World Cups **next to each other**:
+Germany 2014 at Maracanã (1–0 AET vs Argentina), France 2018 at Luzhniki (4–2 vs Croatia),
+Argentina 2022 at Lusail (3–3 AET, 4–2 pens vs France). Every figure is recomputed from the
+committed snapshots at request time — the ET/PEN markers, the on-field goal totals (171 / 169 /
+172), the goals-per-match ratios, the venues count, the widest margins, and the merged scorers
+ledger (Mbappé 8 in 2022, Kane 5 in 2018, Rodríguez 5 in 2014, printed as the files spell them;
+the 2022 France No. 10 spelling merge applied, nothing else merged).
+
+**API.** `GET /api/v1/world/champions` — public, anonymous, 60/min (`world_champions` scope).
+`app/services/world/champions.py` composes `compute_real_book()` thrice — no parsing logic
+duplicated, no new snapshot files, nothing authored. `test_champions.py` — 7 cases: three cups
+in order, champions, final markers, goal totals cross-checked against `compute_real_book`,
+widest-margin arithmetic computed from the files, the ledger summing its own columns in order,
+and the door answering through TestClient. Contract re-exported: **246 paths / 313 operations /
+99 schemas**, SHA-256 `1efb7ee018f3b0b63d31b93b08f9009418a53fd46d21d77ff821dd386e51cf89`, secured
+241 / public **72** / private GET 104; re-pinned through the three ledgers; `AUDIT_FIGURES
+contract_paths=246 page_routes=88 migrations=67`; the §4 audit row moves `/world/* pages (23)` →
+`(24)` and lists `champions` among the world doors' contract families; ROADMAP's triple quote
+follows the same re-read.
+
+**Honest cures that rode along, named:**
+
+1. `has_penalties` now means **the final went to penalties** (2022 only). The old reading made
+   the 2014 final panel demand a phantom `0–0 on penalties` beside Götze's 113'.
+   `test_real_book.py` updated; the door's ET/PEN chips now agree with the score they annotate.
+2. `worldChampions` aligned by meaning to the established `worldRealBook` pairs
+   (`matchesCaption`/`venuesCaption`/`sourceLabel`/`aetChip`/`penChip`/`thPlayer` are verbatim) —
+   the key-drift ceiling stays at **116**. Population **5,090 ×6**; README re-pinned
+   (5,043 ar/he/zh/zh-TW · 4,839 fr · 47/251 identical tokens).
+3. The OG card reads its words from `enMessages` and its digits from literal numerals — zero raw
+   English literals (`qa-i18n-literals` 9/9). The doors census and sitemap track it
+   (`/world/champions`, weekly, 0.8).
+
+**Gates re-measured on this tree:** ruff clean · `mypy app` **199/199** · pytest door cases
+**17/17** (champions + real_book) · alembic drift check clean · tsc clean · `qa-translation-quality`
+9/9 · `qa-key-drift` 4/4 (116 ceiling held) · `qa-shared-keys` 4/4 · `qa-locale-tokens` 7/7 ·
+`qa-unused-keys` 3/3 · `qa-namespace-ownership` 2/2 · `qa-locale-completeness` 2/2 ·
+`qa-icu-messages` 2/2 · `qa-i18n-literals` 9/9 · `qa-locale-completeness` clean.
+
+**Not claimed.** That the runner has printed any leg of this item green; that the page has been
+walked in a browser on this host beyond the `200`/`markers` checks recorded in the commit message;
+that the 2018 Golden Boot dispute (FIFA credited Kane 6) is resolved here — the door prints the
+snapshot and names the FIFA tally as curator knowledge, as the Real Book does.

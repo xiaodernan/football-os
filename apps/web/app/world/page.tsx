@@ -40,6 +40,7 @@ export default async function WorldIndexPage() {
   const tu = await getTranslations("worldUpsets");
   const td = await getTranslations("worldDynasties");
   const tr = await getTranslations("worldRealBook");
+  const tc = await getTranslations("worldChampions");
   const tat = await getTranslations("worldAtlas");
 
   const sections: { href: string; label: string; note: string; countKey?: string; chip?: string }[] = [
@@ -59,6 +60,7 @@ export default async function WorldIndexPage() {
     { href: "/world/upsets", label: tu("sectionUpsetsLabel"), note: tu("sectionUpsetsNote"), chip: tu("sectionUpsetsChip") },
     { href: "/world/dynasties", label: td("sectionDynastiesLabel"), note: td("sectionDynastiesNote"), chip: td("sectionDynastiesChip") },
     { href: "/world/real-book", label: tr("sectionRealBookLabel"), note: tr("sectionRealBookNote"), chip: tr("sectionRealBookChip") },
+    { href: "/world/champions", label: tc("sectionChampionsLabel"), note: tc("sectionChampionsNote"), chip: tc("sectionChampionsChip") },
     { href: "/world/atlas", label: tat("title"), note: tat("cardNote"), chip: tat("eyebrow") },
     { href: "/world/news", label: t("sectionReportsLabel"), note: t("sectionReportsNote"), countKey: "articles" },
   ];

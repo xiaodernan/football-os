@@ -39,6 +39,7 @@ from app.models import (
 from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
+from app.services.world.champions import compute_champions
 from app.services.world.duel import compare, per90
 from app.services.world.dynasties import compute_dynasties
 from app.services.world.finals import compute_finals
@@ -1204,6 +1205,19 @@ def upsets(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_upsets")
     return _envelope(**compute_upsets(db))
+
+
+@router.get("/champions")
+def champions(request: Request) -> dict[str, Any]:
+    """The Champions — Germany 2014, France 2018, Argentina 2022, side by side.
+
+    Every figure here is recomputed on every read from the committed openfootball
+    snapshots (CC-BY 4.0) the Real Book ships — the final score, the on-field goal totals,
+    the venues, the widest margins and the merged scorers ledger. Nothing is authored,
+    stored or fetched from the network. The synthetic world is not present in this door.
+    """
+    limit(request, 60, 60, scope="world_champions")
+    return _envelope(**compute_champions())
 
 
 @router.get("/dynasties")
