@@ -4,8 +4,10 @@
 
 .DESCRIPTION
   Sixteen checks against a locally running plane; when the world-check citizen (services/worldcheck) is also up,
-  five more land — live invariants, eureka registration, and the config server serving the worldcheck properties file.
-  The exact count is printed at the bottom of the run; do not pin it in prose.
+  five more land — live invariants, eureka registration, and the config server serving the worldcheck properties file;
+  the jobs-observer citizen adds its own five (live ledger door, consumer-group wiring, eureka registration,
+  config server serving the jobs-observer properties file). The exact count is printed at the bottom of the run;
+  do not pin it in prose.
 
   The walk is a *witness*, not a test suite: it answers "does the plane behave as the
   document claims, on this host, right now?" — trace minted, trace echoed, gateway
@@ -30,6 +32,9 @@
 .PARAMETER WorldCheck
   Base URL of the world-check service. Default http://127.0.0.1:8870. Pass a $null value to skip.
 
+.PARAMETER JobsObserver
+  Base URL of the jobs-observer service. Default http://127.0.0.1:8871. Pass a $null value to skip.
+
 .PARAMETER OutFile
   Where the JSON witness lands. Default: .scratch/plane-walk.json (untracked by design —
   witnesses are run artifacts, not source).
@@ -47,6 +52,7 @@ param(
   [string]$Registry = 'http://127.0.0.1:8761',
   [string]$Config   = 'http://127.0.0.1:8888',
   [string]$WorldCheck = 'http://127.0.0.1:8870',
+  [string]$JobsObserver = 'http://127.0.0.1:8871',
   [string]$OutFile  = '.scratch\plane-walk.json'
 )
 
@@ -123,12 +129,39 @@ if ($WorldCheck -ne '') {
   }
 }
 
+# 7b. the fifth citizen speaks arithmetic only: live ledger + eureka registration + config serving
+if ($JobsObserver -ne '') {
+  try {
+    $jo = Get-Body "$JobsObserver/jobs/observer" -Headers @{ 'Accept' = 'application/json' }
+    $checks['jobsobserver_live_200'] = ($jo.status -eq 200)
+    $checks['jobsobserver_has_ledger'] = ($jo.body -match '"total_observed"')
+    $checks['jobsobserver_connection_present'] = ($jo.body -match '"connection"')
+  } catch {
+    $checks['jobsobserver_live_200'] = $false
+    $checks['jobsobserver_has_ledger'] = $false
+    $checks['jobsobserver_connection_present'] = $false
+  }
+
+  $names3 = @($apps.applications.application | ForEach-Object { $_.name })
+  $checks['jobsobserver_registered'] = ($names3 -contains 'FOOTBALL-JOBS-OBSERVER')
+
+  try {
+    $joServed = (Get-Body "$Config/football-jobs-observer/default").body | ConvertFrom-Json
+    $joSource = ($joServed.propertySources | Where-Object { $_.name -match 'football-jobs-observer' } | Select-Object -First 1).source
+    $checks['config_serves_jobsobserver_group'] = ($joSource.'jobsobserver.group' -eq 'football_os:jobs:observers')
+  } catch {
+    $checks['config_serves_jobsobserver_group'] = $false
+  }
+}
+
 $result = [ordered]@{
   at = (Get-Date).ToString('o')
   edge = $Edge
   core = $Core
   registry = $Registry
   config = $Config
+  worldcheck = $WorldCheck
+  jobsobserver = $JobsObserver
   checks = $checks
   passed = (@($checks.Values | Where-Object { $_ -ne $true }).Count -eq 0)
   count = $checks.Count

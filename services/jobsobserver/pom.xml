@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The service plane's fifth citizen: the jobs observer. One rule holds here too — no football
+  rule lives in this module. It consumes the `football_os:jobs` Redis Stream (M16) under its own
+  consumer group and keeps an arithmetic ledger of what it saw; it never acts on a job, never
+  rewrites a row, never claims a win. The Python core remains canonical for everything the
+  job *means*; this citizen counts hints only.
+
+  Maven is offline-pinned against the local repository; every dependency is already required
+  by the other plane citizens or by Spring Boot's own 2025.0.3 / 3.5.16 closure.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>os.football</groupId>
+    <artifactId>service-plane</artifactId>
+    <version>0.1.0</version>
+  </parent>
+
+  <artifactId>jobs-observer</artifactId>
+  <name>FOOTBALL OS jobs observer</name>
+  <description>A plane citizen that watches the jobs Redis Stream and reports what crossed it</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-config</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

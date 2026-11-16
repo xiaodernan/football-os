@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  The service plane (ROADMAP Phase 11). Three modules and one rule: no football rule lives here.
+  The service plane (ROADMAP Phase 11). Five modules and one rule: no football rule lives here.
 
   The Python core in apps/api stays canonical — it computes every figure, judges every question and
   publishes every sentence about a club, a player or a season. These modules give that core the shape a
@@ -35,6 +35,7 @@
     <module>config</module>
     <module>edge</module>
     <module>worldcheck</module>
+    <module>jobsobserver</module>
   </modules>
 
   <properties>

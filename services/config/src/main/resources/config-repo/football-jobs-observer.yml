@@ -1,0 +1,28 @@
+# football-jobs-observer — the observable-filter for the jobs broker, served by the config server.
+# The stream the core publishes to is not a private secret; the observer's own consumer group keeps
+# its place in the pending list. Nothing here configures what a job *is* — only how eagerly the
+# plane watches it cross an XADD.
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:football}
+      database: ${REDIS_DATABASE:2}
+      timeout: 2s
+
+jobsobserver:
+  stream: ${JOBS_STREAM:football_os:jobs}
+  group: ${JOBS_OBSERVER_GROUP:football_os:jobs:observers}
+  poll:
+    interval-ms: ${JOBSOBSERVER_POLL_INTERVAL_MS:1000}
+    initial-delay-ms: ${JOBSOBSERVER_INITIAL_DELAY_MS:2500}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always

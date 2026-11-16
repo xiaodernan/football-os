@@ -33,10 +33,12 @@ apps/api   FastAPI + SQLAlchemy 2     auth · football world model · training c
 services/registry  Eureka (Java 21)   service discovery — the core announces itself, the edge finds it by name
 services/config    Spring Cloud Config one reviewable football-edge.yml, refreshable without a restart (/actuator/refresh)
 services/edge      Spring Cloud Gateway one door — /api/v1/** · the web shell through the same gateway: trace id → rate limit → Resilience4j breaker → bounded Retry → proxy; /edge/* reports its own shape (routes, limits, breaker, plane, bulkhead)
+services/worldcheck Java 21 citizen that fetches the Python core's world status on a schedule and reports arithmetic-only invariants (/world/check)
+services/jobsobserver Java 21 citizen watching the jobs Redis Stream under its own consumer group - counts hints, never acts on them (/jobs/observer)
 PostgreSQL + pgvector (docker compose)   dev fallback: SQLite via DATABASE_URL; images: apps/api/Dockerfile, apps/web/Dockerfile, plus docker compose --profile plane up -d for the whole product
 ```
 
-The queue and the cache both speak Redis when a store is reachable — the jobs queue on Redis Streams as a wake-up hint (ADR-008) with the database state machine as the truth (ADR-006), and the shared response cache behind the near tier (ADR-007) — and both degrade to in-process behaviour with an honest signal when it is not (the limiter prints `X-RateLimit-Scope: process`; the queue's poll loop drains one tick late). No Kafka broker. The one exception to "no microservices, no Java": the service plane, landed in M13 Phase 11 against a measured bottleneck. The Python core stays canonical — the plane routes, guards, traces and refreshes; no football rule lives in Java. Added only against a measured bottleneck (ADR-001, ADR-006).
+The queue and the cache both speak Redis when a store is reachable — the jobs queue on Redis Streams as a wake-up hint (ADR-008) with the database state machine as the truth (ADR-006), and the shared response cache behind the near tier (ADR-007) — and both degrade to in-process behaviour with an honest signal when it is not (the limiter prints `X-RateLimit-Scope: process`; the queue's poll loop drains one tick late). No Kafka broker. The one exception to "no microservices, no Java": the service plane, landed in M13 Phase 11 against a measured bottleneck (five citizens: registry, config, edge, worldcheck, jobs-observer). The Python core stays canonical — the plane routes, guards, traces and refreshes; no football rule lives in Java. Added only against a measured bottleneck (ADR-001, ADR-006).
 
 ## Quick start
 

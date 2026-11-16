@@ -1,0 +1,49 @@
+server:
+  port: ${JOBSOBSERVER_PORT:8871}
+
+spring:
+  application:
+    name: football-jobs-observer
+  config:
+    # The config server is the source of truth for the observable-filter property; local-profile
+    # boots stay strict — a missing config server means a *configuration* problem, not a build one.
+    import: "optional:configserver:${CONFIG_URL:http://localhost:8888}"
+  data:
+    redis:
+      # The same logical database the API publishes its hints to on a healthy deployment;
+      # a plain observer default that matches `JOB_STREAM_REDIS_URL` on the production plane.
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:football}
+      database: ${REDIS_DATABASE:2}
+      timeout: 2s
+
+jobsobserver:
+  stream: ${JOBS_STREAM:football_os:jobs}
+  group: ${JOBS_OBSERVER_GROUP:football_os:jobs:observers}
+  poll:
+    interval-ms: ${JOBSOBSERVER_POLL_INTERVAL_MS:1000}
+    initial-delay-ms: ${JOBSOBSERVER_INITIAL_DELAY_MS:2500}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+      status:
+        # A DEGRADED plane citizen must never read as DOWN to Kubernetes probes: the plane
+        # only restarts on DOWN, and a brief Redis blip is not worth a restart.
+        http-mapping:
+          DEGRADED: 200
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${REGISTRY_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true

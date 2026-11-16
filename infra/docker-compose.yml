@@ -235,6 +235,39 @@ services:
       retries: 18
       start_period: 60s
 
+  jobs-observer:
+    image: eclipse-temurin:21-jre
+    container_name: football_os_jobs_observer
+    profiles: ["plane"]
+    restart: unless-stopped
+    command: ["java", "-jar", "/app/jobsobserver.jar"]
+    volumes:
+      - ../services/jobsobserver/target/jobs-observer-0.1.0.jar:/app/jobsobserver.jar:ro
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-football}
+      REDIS_DATABASE: "2"
+      JOBS_STREAM: football_os:jobs
+      JOBS_OBSERVER_GROUP: football_os:jobs:observers
+      REGISTRY_URL: http://registry:8761/eureka/
+      CONFIG_URL: http://config:8888
+    ports:
+      - "127.0.0.1:8871:8871"
+    depends_on:
+      redis:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+      config:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8871/actuator/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
   worldcheck:
     image: eclipse-temurin:21-jre
     container_name: football_os_worldcheck
