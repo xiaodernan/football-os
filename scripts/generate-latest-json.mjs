@@ -62,6 +62,7 @@ const countByExt = (dir, pattern) => {
 const apiTestFiles = countByExt(resolve(root, "apps", "api", "tests"), /^test_.*\.py$/);
 const webGateScripts = readdirSync(resolve(root, "apps", "web", "scripts")).filter((f) => f.endsWith(".mjs")).length;
 const worldDoors = readdirSync(resolve(root, "apps", "web", "app", "world")).filter((f) => {
+  if (f.startsWith("_")) return false; // `_og` share-card helpers are not doors
   try { return statSync(resolve(root, "apps", "web", "app", "world", f)).isDirectory(); } catch { return false; }
 }).length;
 const localeCatalogues = readdirSync(resolve(root, "apps", "web", "messages")).filter((f) => f.endsWith(".json")).length;
