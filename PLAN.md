@@ -4229,6 +4229,40 @@ set; nothing else moved. New SHA-256
 in this tree (it does not — upstream answers 503 today); that attendance is cited for these editions (every
 `attendance` ships as `null` — these crowds are disputed, and no number is printed where the file is silent).
 
+## Item 124 — the runner's freshness red named; the five keys freshen in five tongues (landed 2026-11-17)
+
+**The red, verbatim from `43909685273` (Item 122):**
+
+```
+api  Tests (SQLite dev fallback)  => FAILED tests/test_openapi_contract_currency.py::test_the_exporter_derives_the_contract_from_the_tree_and_reproduces_the_committed_bytes
+web  Translation-freshness gate   => 3 stale zh, 3 stale zh-TW, 4 stale ar translations:
+      almanac.coachReadEyebrow  en="the coach on this edition" vs baseline="the coach's read"
+      almanac.coachReadCta      en="Ask the coach on this edition" vs baseline="Ask the coach"
+      worldHonours.thKind       en="Type" vs baseline="Kind"
+      worldHonours.thMatches    en="Games" vs baseline="Matches"
+```
+
+**The cures.** The translation-freshness red is closed by native rewrites in all five locales
+(`场次数/場次數/المباريات المقامة/משחקים שנערכו/…` for thMatches; `教练读这一期/教練讀這一期/قراءة المدرب
+لهذه النسخة/קריאת המאמן למהדורה הזו/la lecture que l'entraîneur fait de cette édition` for the almanac
+eyebrow; `…这一期` for the CTA), so the en change rides into every catalogue. `qa-translation-freshness`
+prints **5/5 on the runner's own baseline** (`cac7ec4e`). The API contract red was cured by Item 123's
+re-export — `test_openapi_contract_currency.py` prints green on the committed HEAD and the currency
+seed prints **62 passed** across the contract, spec-audit, security-probe, assert-forms and door suites.
+
+**CI in this arc, recorded verbatim where it printed:** `43925129367` — **Item 123: success** (24m13s,
+all four legs), the first green printed for the Real Book's complete World Cup history.
+`43907034254`/`43906895963` — the Item 121 fact pack and licence-pack legs (failure, recorded §262
+prior red). `43902405470`/`43902475645`/`43900003755` — Item 120/119 runs (failure; reds cured,
+this item).
+
+**Gates re-measured on this tree:** freshness **5/5** (against `cac7ec4e`) · `tsc` clean ·
+`qa-translation-quality` 9/9 · `qa-key-drift` 4/4 · `qa-shared-keys` 4/4 · `qa-locale-tokens` 7/7.
+
+**Not claimed.** That the runner has printed this item green before it has; that the freshening was
+an exercise in language quality rather than one in fidelity to the freshness contract — it is the
+latter, with each locale carrying its own defensible rendering of the new English.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

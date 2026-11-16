@@ -9466,3 +9466,32 @@ M12_PRODUCTION_HARDENING_VERIFICATION / ROADMAP) re-pinned; `AUDIT_FIGURES` **24
 figures are printed anywhere in these seven books (all `attendance` are `null` — disputed crowds are never
 invented); that the runner would even catch the 1938 fixture — the pytest door suites are written against
 the committed bytes and print exactly what this section records.
+
+## §264 — Item 124: the freshness red named; the five keys freshen in five tongues; Item 123's leg already printed green
+
+**Named from the runner:** `43909685273` (Item 122) printed
+
+- api `Tests (SQLite dev fallback)` — `test_openapi_contract_currency.py` vs a contract still older
+  than the tree (the §261→§263 re-export wave absorbs this on the next commit);
+- web `Translation-freshness gate` — the three keys en moved but the locales did not, verbatim:
+  `almanac.coachReadEyebrow`, `almanac.coachReadCta`, `worldHonours.thMatches` (zh/zh-TW/ar) and
+  `worldHonours.thKind` (ar).
+
+**Cure.** The locales now carry both shapes of the en change — `场次数`, `場次數`, `المباريات المقامة`,
+`משחקים שנערכו` for thMatches; eyebrow `教练读这一期`, `教練讀這一期`, `قراءة المدرب لهذه النسخة`,
+`קריאת המאמן למהדורה הזו`, `la lecture que l'entraîneur fait de cette édition`; CTA `问教练这一期`,
+`問教練這一期`, `اسأل المدرب عن هذه النسخة`, `שאל את המאמן על המהדורה הזו`, `Demander au coach sur
+cette édition`; `worldHonours.thKind` moved once before (Item 122) — Arabic now carries `الفئة`, Hebrew
+`קטגוריה`.
+
+**What printed since:** `43925129367` — **Item 123, success**, 24m13s; the Real Book's complete World
+Cup history passed every leg the runner loves to fail. That run is the runner's own verdict, and this
+section quotes it only as it printed.
+
+**Measured on this host:** `qa-translation-freshness` **5/5** on the runner's exact baseline
+(`QA_BASELINE_COMMIT=cac7ec4e`) · `qa-translation-quality` 9/9 · `qa-key-drift` 4/4 ·
+`qa-shared-keys` 4/4 · `qa-locale-tokens` 7/7 · catalogue population **5,224 ×6**.
+
+**Not claimed.** That the runner has printed this cure green; that the freshening commit repairs all
+the runs the runner owes — the runs queue is the runner's, the words are the renderers', and the seq.
+`43909685273` drains in the order it entered it.
