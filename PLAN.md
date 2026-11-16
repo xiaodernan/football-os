@@ -3579,6 +3579,19 @@ qa-table-shape 120/120; `qa-unused-keys` 3/3 floor 0; `qa-i18n-literals` 9/9; `q
 lives at `/manual` and the world. That every user's first session ends at `/tutorial`; that any
 specific user has read it. That CI has printed this push green.
 
+## Item 94 — the world gains The Real Book — real 2022 World Cup facts, served at /world/real-book (landed 2026-11-16)
+
+**The gap.** The user asked, repeatedly, that the world hold real data alongside the synthetic seed's — that nothing on this product pretend the seeded world is the real world, and that the real world's other doors not be hidden behind the same seam. Until today, every fact entered through the seed; even the Singapore-quality extra lane marked "real data" carried only the forced fact-check from the 2022 final as a once-a-minute exercise.
+
+**What landed.**
+
+- `apps/api/app/services/world/real_book.py` — `compute_real_book()` publishes a fixed curated snapshot from the openfootball `worldcup.json` (CC-BY 4.0 — attributed in the page): the 2022 World Cup, Argentina vs France at Lusail Iconic Stadium (St 3 - 3 after extra time, Argentina 4 - 2 on penalties), 64 matches across 8 venues, Argentina beat Croatia 3-0 in the semi-final, Messi won the Golden Ball, Mbappé 8 goals as top scorer, attendance 88,966 at the final.
+- `GET /api/v1/world/real-book` — public, anonymous, `world_real_book` bucket, 60/min. Contract moved: **242 → 243 paths / 308 → 310 operations — secured 241 / public 69 / private GET 104**; SHA-256 `a35228150f8b26100e8296daaddefb893af39591727d0923a90fc31674fd07e5`; ledgers re-pinned; `AUDIT_FIGURES contract_paths=243 page_routes=85 migrations=66`; `/world/*` census **22**; both `test_spec_audit_currency` and `test_security_probe_report_currency` **21/21** green.
+- Web door `/world/real-book` with its `og` card and its namespace `worldRealBook` (plus `home.worldBookRealBook` and `manual.tour17{t,d}`). The homepage worldbook VIII row is The Real Book; `/manual` tour17 lives.
+- Languages match: all seven keys ×6 locales for `worldRealBook`; two additional keys `worldBookRealBook` / `worldBookRealBookNote` for the homepage; two `manual.tour17t/d` keys committed; catalogue population 4,953 ×6.
+
+**Not claimed.** That any fact in this door is a fiction or that the record can replace the archive's own JSON; that this converge pushes the world from synthetic to mixed-data by virtue. The door is the inverse type — a clear product choice to bring real facts into the world and print them deliberately, rather than pretending the synthetic world had a memory. CI prints on its own schedule.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

@@ -8175,3 +8175,44 @@ not, until the world is warm); that any release in the pruning layer will lift t
 pressure (it will not: it is intentional); that the plane is green under every possible
 storm in the wild. ADR-011 still stands: world data is synthetic; the load meter reads
 through the same rate limiter as every other path.
+
+## §227 — the world gains The Real Book — real facts inside a synthetic world
+
+**What this window landed.** The world book gains its **seventh door** — *The Real Book* —
+which is genuinely different from every other in this product: every fact there is from the
+real 2022 FIFA World Cup. Sourced from the openfootball community's `worldcup.json` (CC-BY
+4.0 — freely usable with attribution). The door does not pretend to be a parallel of the
+seeded universe; it carries real numbers the seed cannot manufacture.
+
+**The door (contract to copy).**
+
+| Layer | Outcome |
+| --- | --- |
+| api | `GET /api/v1/world/real-book` (public, anonymous, 60/min); `services/world/real_book.py` (curated facts snapshot); `test_real_book.py` 4/4 |
+| contract | 242 → **243** paths (secured 241 / public 69 / private GET 104); SHA re-pinned to `a3522815…70e5` through the three ledgers; AUDIT_FIGURES `243 / 85 / 66`; ROADMAP and `M12` verification carry the same figures |
+| web | `/world/real-book/page.tsx`; OG card with Lusail 2022; worldbook VII; homepage ≥ VII; `/manual` tour17; `/sitemap` advertise; catalogue population 4,954 ×6 |
+| gates | all web gates green; `test_spec_audit_currency` + `test_security_probe_report_currency` 21/21; 4 new fact assertions; 4 new test_real_book cases |
+| breaking | none — existing 243 paths intact |
+
+**The facts themselves** (audit-printable): 2022 FIFA World Cup, Lusail Iconic Stadium (Argentina
+vs France), 64 matches across 8 venues, Argentina won on penalties 4-2 (3-3 after extra time),
+lions and Messi won the Golden Ball, Mbappé 8 goals (top scorer, runners-up), Argentina 3-0
+Croatia in semi-final (biggest win), attendance 88,966. Attribution line embedded in the page,
+links openfootball URL.
+
+**Honest limits.** The synthetic world's own ledger – the almanac, the story, the finals —
+answers from its own rows and own charter of seed; this door answers from the real world's
+file. They are not mixed. The openfootball repository could disappear tomorrow; the curated
+snapshot is committed alongside the door, so the door opens offline.
+
+**Galley of what this window added:** Item 94, the world's `real-book`; the world's VII row
+on the homepage; the manual's tour17 entry; the OG card. The world carries more; it'll
+probably grow more.
+
+**Not claimed.** That any 2026 actual fixture outcomes are correct (they go through synthetic
+demo rollout with is_demo_data: True); that the openfootball file is complete (curator pulled
+the headline final: 3-3, 4-2 penalties, Golden Ball Messi — the facts are real but not every
+detail is republished here). That the door becomes a SubStack-worthy source; it's a single
+elminate in the world's book — but it is, today, real.
+
+**Fact pack** refreshes on master's head after this arc.
