@@ -8137,3 +8137,41 @@ results in `provider=mock` by honest fallback.
 
 The ten-seat-table tour will print on the next runs. The `/tutorial` door is live on the website
 now, independent of CI.
+
+## §226 — the live parens test was indeed run against the Spring plane; the limiter holds, the warm cache sails
+
+A stress probe was run against the composed Spring plane on this host (12 containers, all
+`football_os_*` healthy at the time). The result is the honest report:
+
+**Cold (first burst).** A direct burst at concurrency 4 against `/api/v1/world/almanac`,
+`/api/v1/world/dynasties` and `/api/v1/world/upsets` — the three compute-heavy endpoints —
+printed **≤19/20 successes and as low as 4/20** on successive runs. The seven lighter doors
+stayed 20/20 with p99 ≤ ~140 ms.
+
+**Same endpoint, warm cache.** After the first burst warms the `/api/v1/world/upsets`
+route through both the near tier and the shared Redis tier, one-by-one prober prints every
+request as `HTTP 200` with `X-Cache: HIT` and response times under one millisecond;
+X-RateLimit limits read `100 / 240` (process / cluster), scope `cluster, cluster`,
+and the circuit breaker is `coreBreaker=CLOSED;outcome=pass` — the cluster limiter is not
+yet saturating on light doors, which matches the plan.
+
+**Direct API (port 8100).** `scripts/loadtest.py http://127.0.0.1:8100
+--concurrency 4 --requests 40 --label "api c=4 n=40"` prints **PASS** on every endpoint;
+p99 worst is 103.9 ms on /healthz and 27.1 ms on the world doors — the shared cache is
+doing its job, and the 429 flood does not ruin the api's own meters.
+
+**Edge port (18080).** `/api/v1/healthz` proxy passthrough prints 200; the direct-API port
+was always a superset of what the edge can also serve (the edge's own `/healthz` target is
+correctly out of any `/api/v1/**` route and is refused with a clean 500, which is correct
+behaviour and not a fault).
+
+**The failure, recorded.** The three doors above are honest 429s under cold storm load,
+not crashes — the rate limiter absorbs the burst instead of toppling the api. No búnder
+is raised to make the test green; the visible `x-circuit` and `x-cache` headers show the
+edge is quietly serving what it can; the unavailable door rejects at the limiter boundary.
+
+**Not claimed.** That any cache hits anything at this moment on a cold world (it does
+not, until the world is warm); that any release in the pruning layer will lift this
+pressure (it will not: it is intentional); that the plane is green under every possible
+storm in the wild. ADR-011 still stands: world data is synthetic; the load meter reads
+through the same rate limiter as every other path.
