@@ -61,7 +61,6 @@ const DIVERGENCES = new Map([
   [id("home", ["nav", "simulate"]), "the nav's Home page (首页) and the home side of a fixture (主队)"],
   [id("nobody", ["club", "scout"]), "no opponent in the club's fixture table (无对手), no person in the scout's report (无人)"],
   [id("searching", ["knowledge", "scout"]), "the library's retrieval (检索) and the scout's player search (搜索)"],
-  [id("thFixture", ["careerDetail", "club", "scout", "world"]), "the match-up in two tables (对阵) and the scheduled round in the others (赛程)"],
   [id("thGd", ["career", "careerDetail", "worldCompetition"]), "the league table abbreviates the column to one character (净) to fit"],
   [id("vs", ["careerDetail", "challenges"]), "'vs' is a token in the challenge card and 对阵 in the fixture line"],
   [id("erase", ["community", "creator"]), "delete a post (删除), or erase the account's own data (擦除)"],

@@ -5061,7 +5061,6 @@
     "matchesCaption": "matches played",
     "venuesCaption": "stadiums used",
     "championCaption": "champions of the real world",
-    "finalGoalsCaption": "goals after extra time in the final",
     "awardsEyebrow": "Trophies & awards",
     "awardsTitle": "Whose names the real world wrote",
     "goldenBallTitle": "Golden Ball — Messi",
@@ -5071,6 +5070,24 @@
     "sectionRealBookLabel": "The Real Book",
     "sectionRealBookNote": "what the actual world printed in 2022",
     "sectionRealBookChip": "realbook",
-    "sourceLabel": "source"
+    "sourceLabel": "source",
+    "onFieldGoalsCaption": "goals scored on the field",
+    "scorersEyebrow": "Who scored",
+    "scorersTitle": "The Golden Boot, counted from the file",
+    "scorersLede": "Every goal below is counted from the committed snapshot — the archive's own goal lists, minutes and penalty flags untouched.",
+    "thPlayer": "player",
+    "thGoals": "goals",
+    "thPenalties": "penalties",
+    "spellingNote": "the source file spells France's No. 10 two ways — Mbappé and Kylian Mbappé. The table merges the two into one scorer; no other name was merged.",
+    "ledgerEyebrow": "The complete ledger",
+    "ledgerTitle": "All 64 fixtures, printed",
+    "ledgerLede": "Every match of the real 2022 World Cup, grouped by the day it was played — the scores, extra time, penalties and the venues — read straight from the committed snapshot.",
+    "matchesOnDay": "{count, plural, one {# match} other {# matches}}",
+    "thFixture": "Fixture",
+    "thScore": "score",
+    "thVenue": "venue",
+    "aetChip": "AET",
+    "penChip": "PEN {a}–{b}",
+    "snapshotNote": "the ledger is the committed snapshot of the openfootball worldcup.json, byte for byte — nothing on this page is fetched from the network at render time."
   }
 }

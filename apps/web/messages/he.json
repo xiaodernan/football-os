@@ -5061,7 +5061,6 @@
     "matchesCaption": "משחקים שנערכו",
     "venuesCaption": "אצטדיונים שנעשה בהם שימוש",
     "championCaption": "אלוף העולם האמיתי",
-    "finalGoalsCaption": "שערים אחרי הארכה בגמר",
     "awardsEyebrow": "פרסים וגביעים",
     "awardsTitle": "אילו שמות העולם האמיתי כתב",
     "goldenBallTitle": "כדור הזהב — מסי",
@@ -5071,6 +5070,24 @@
     "sectionRealBookLabel": "הספר האמיתי",
     "sectionRealBookNote": "מה שהעולם האמיתי באמת הדפיס ב-2022",
     "sectionRealBookChip": "הספר האמיתי",
-    "sourceLabel": "מקור"
+    "sourceLabel": "מקור",
+    "onFieldGoalsCaption": "שערים שנכבשו על המגרש",
+    "scorersEyebrow": "מי הבקיע",
+    "scorersTitle": "מלך השערים, נספר מקובץ המקור",
+    "scorersLede": "כל שער למטה נספר מהצילום השמור — רשימת השערים של ארכיון המקור עצמו, עם הדקות ודגלי הפנדלים כמות שהם",
+    "thPlayer": "השחקן",
+    "thGoals": "שערים",
+    "thPenalties": "פנדלים",
+    "spellingNote": "קובץ המקור כותב את מספר 10 של צרפת בשתי צורות, הטבלה ממזגת אותן למבקיע אחד; שום שם אחר לא מוזג",
+    "ledgerEyebrow": "המגילה המלאה",
+    "ledgerTitle": "כל 64 המשחקים, מודפסים",
+    "ledgerLede": "כל משחק במונדיאל 2022 האמיתי, מקובצים לפי יום המשחק — התוצאות, ההארכה, הפנדלים והאצטדיונים — נקראים ישירות מהצילום השמור",
+    "matchesOnDay": "{count, plural, one {# משחק} two {# משחקים} many {# משחקים} other {# משחקים}}",
+    "thFixture": "המשחק",
+    "thScore": "התוצאה",
+    "thVenue": "האצטדיון",
+    "aetChip": "הארכה",
+    "penChip": "פנדלים {a}–{b}",
+    "snapshotNote": "המגילה כאן היא צילום שמור של קובץ המקור, בייט מול בייט — שום דבר בדף הזה לא נמשך מהרשת בזמן התצוגה"
   }
 }

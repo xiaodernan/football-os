@@ -8216,3 +8216,80 @@ detail is republished here). That the door becomes a SubStack-worthy source; it'
 elminate in the world's book — but it is, today, real.
 
 **Fact pack** refreshes on master's head after this arc.
+
+## §228 — The Real Book deepens: all 64 fixtures printed; and the two CI reds a1d21e8 left behind (2026-11-16)
+
+**Two parts, honest both.**
+
+**Part A — the two red legs `a1d21e8` left on its own run (cured in `2069564`).**
+`gh run 43806752733` printed **api :: Lint** and **web :: Translation-quality behaviour gate**:
+
+* api :: Lint — ruff found **4 errors**, all unused imports left over from the authoring template
+  in `tests/test_real_book.py` (`collections.abc.Iterator`, `pytest`,
+  `app.core.db.SessionLocal`, `REAL_FACTS_2022`). Removed; `ruff check` answers
+  "All checks passed!" Nothing else changed.
+* web :: Translation-quality behaviour gate — arm **B** reddened a third check the arm had not
+  predicted. Since Item 94, `en.json` legitimately carries `worldRealBook.topScorerTitle`
+  ("Top scorer — Mbappé"), and the gate's general mojibake branch
+  (the Latin-1-misread byte class `é|ê|ë|…`) charges an Arabic file holding those bytes — so the
+  scratch plane where `ar.json` is a byte copy of `en.json` now **also** reds
+  `no encoding issues (mojibake) in translations`, beside the two reds arm B exists to pin.
+  The product copy is right as it stands; the arm's premise moved with a real footballer's
+  name. The fixture now deletes exactly that one key before it runs (reason named in a
+  comment), so arm B pins the two reds it exists to prove. The witness now prints
+  **CHECKS passed=11 total=11 failed=0**; the gate itself stays 9/9.
+
+Not claimed: that any runner printed these cured until this pushed; the reds stand on run
+`43806752733`; the cure was confined to the two files. `3431510` and `d58a896` — the two
+commits published before this cure — add only ledger lines and the fact pack and do not carry it.
+
+**Part B — Item 95: the door deepens; every fixture and every scorer printed.**
+
+* The snapshot: `apps/api/app/services/world/data/openfootball-worldcup-2022.json` — the
+  openfootball community's `worldcup.json` for the 2022 FIFA World Cup, byte-for-byte,
+  under its CC-BY 4.0 licence. `data/NOTICE-2022-WORLDCUP.txt` carries the attribution the
+  licence requires. Nothing on the page is fetched from the network at render time.
+* `compute_real_book()` now recomputes from the committed bytes: the **64 fixtures** (matchdays
+  1–13 with group tags, the rounds of 16 onward, the semi-finals, the match for third place and
+  the final), the **on-field goal total of 172**, and per-match rows (date, round, group,
+  teams, HT/FT/ET splits, penalties, venue) delivered as `results`. The scorers table
+  (`scorers`) merges exactly the source's two spellings of France's No. 10 ("Mbappé" and
+  "Kylian Mbappé") into one scorer — per the code note; no other name is merged.
+  Result: **Mbappé 8** (two of them from the spot), **Messi 7** (four from the spot).
+* **Honest cure of a curated fact carried on this door since Item 94**: "Most dominant win"
+  printed *Argentina 3-0 Croatia (Semi-final)*. The snapshot's own arithmetic crowns
+  **Spain 7-0 Costa Rica** (Group E, 2022-11-23, Al Thumama Stadium). The page now
+  computes the widest-margin fixture instead of asserting one.
+* Web: `/world/real-book` prints two new sections — the scorers table and **The Complete
+  Ledger** (all 64 fixtures grouped by the day they were played, reusing `world-tablewrap` /
+  `table .table`, with AET and PEN markers). The numbers panel now shows **172** goals on
+  the field (the redundant "3 goals after extra time" tile is gone). New catalogue keys
+  authored natively in all six locales (+18 net of removing `finalGoalsCaption`):
+  population **4,971 ×6**.
+* Alignments forced by the gates, all by meaning: `worldRealBook.scorersEyebrow` aligned to
+  the established `谁进的球 / 誰進的球` pair; `worldRealBook.thFixture` aligned to the
+  established `赛程 / 賽程` pair; the two `对阵` holders (`careerDetail`, `world`) were
+  aligned to `赛程 / 賽程` in both Chinese catalogues (a Fixture column is a schedule),
+  which dissolved the `thFixture` named divergence row in `qa-shared-keys` — its ledger
+  entry was removed, the stale-entry check now reads green — and brought `qa-key-drift`
+  back inside its 116/46 ceilings. French identicals cured natively (résultat / a.p. / TAB);
+  `en` `thFixture` is now "Fixture" (sentence-identical to its siblings);
+  `messages/README.md` re-pinned to **4,971** (ar/he/zh/zh-TW 4,924 · fr 4,720).
+* Gates re-measured on this tree: tsc clean; `qa-locale-completeness` 2/2 · `qa-icu-messages`
+  2/2 (4,971 ×6) · `qa-translation-quality` 9/9 · `qa-locale-tokens` 7/7 · `qa-i18n-literals`
+  9/9 · `qa-unused-keys` 3/3 · `qa-key-drift` 4/4 · `qa-namespace-ownership` 2/2 ·
+  `qa-shared-keys` 4/4 · `qa-icu-coverage` 1/1 · `qa-table-shape` 122/122 (193 files walked) ·
+  ruff clean · `test_real_book.py` 6/6 · both spec-audit currency suites 21/21
+  (after `ROADMAP.md`'s audit sentence was found wrapping "242 contract paths" across a
+  line break — the working-tree cure and this commit are the same change).
+* Docker images rebuilt (api, web); live walk on this host: `/api/v1/world/real-book`
+  answers 200 with 64 results and the scorers list; the page answers 200 with markers
+  *The complete ledger · Who scored · Spain · Mbappé · 172 · All 64 fixtures · Lusail*.
+
+**Not claimed**: that the synthetic world changed (it did not, by one row); that any figure
+on this page is live (it is a committed snapshot; the door never phones home);
+that openfootball's accounting is beyond dispute (the door prints it, attributed, and
+links the source); that the Contract moved (no path was added or removed —
+**243 paths / 310 operations / SHA `a3522815…070e5` unchanged**, verified by re-export);
+and that the two CI reds of `a1d21e8` were erased — they stand on `43806752733` with their
+cure in `2069564`.

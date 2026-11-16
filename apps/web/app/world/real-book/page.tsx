@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
-import { Provenance, RefLink, WorldHead, WorldUnavailable } from "@/components/world";
+import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import { pageMetadata } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { WorldEnvelope } from "@/lib/types";
@@ -48,17 +48,50 @@ type FactVerse = {
     matchday_date: string;
     venue: string;
   };
+  goals_scored: number;
+  joint_top_scorers_note: string;
   runner_up: FactChallenge;
   golden_ball: FactChallenge;
   biggest_attendance: { match: string; attendance: string };
   openfootball_url: string;
 };
+type FixtureRow = {
+  date: string;
+  round: string;
+  group: string | null;
+  team1: string;
+  team2: string;
+  ht: [number, number] | null;
+  ft: [number, number];
+  et: [number, number] | null;
+  penalties: [number, number] | null;
+  on_field: [number, number];
+  ground: string;
+};
+type RealBookScorer = { name: string; goals: number; penalties: number };
 type RealBookPayload = WorldEnvelope & {
   source: string;
   attribution: string;
   facts: FactVerse;
+  results: FixtureRow[];
+  scorers: RealBookScorer[];
   provenance: { data_origin: string; is_demo_data: boolean; license: string };
 };
+
+type FixtureDay = { date: string; round: string; rows: FixtureRow[] };
+
+function groupByDay(rows: FixtureRow[]): FixtureDay[] {
+  const days: FixtureDay[] = [];
+  for (const row of rows) {
+    const last = days[days.length - 1];
+    if (last && last.date === row.date) {
+      last.rows.push(row);
+    } else {
+      days.push({ date: row.date, round: row.round, rows: [row] });
+    }
+  }
+  return days;
+}
 
 export default async function RealBookPage() {
   const t = await getTranslations("worldRealBook");
@@ -67,7 +100,8 @@ export default async function RealBookPage() {
   const result = await readWorld<RealBookPayload>("/world/real-book");
   if (!result.ok) return <WorldUnavailable message={result.message} />;
 
-  const { facts, attribution, provenance } = result.data;
+  const { facts, provenance, results, scorers } = result.data;
+  const days = groupByDay(results);
 
   return (
     <div className="container page stack" style={{ gap: "2rem" }}>
@@ -112,12 +146,12 @@ export default async function RealBookPage() {
             <span className="records__number-sub muted">{t("venuesCaption")}</span>
           </div>
           <div className="records__number">
-            <span className="records__number-big">{facts.champion.name}</span>
-            <span className="records__number-sub muted">{t("championCaption")}</span>
+            <span className="records__number-big num">{facts.goals_scored}</span>
+            <span className="records__number-sub muted">{t("onFieldGoalsCaption")}</span>
           </div>
           <div className="records__number">
-            <span className="records__number-big num">3</span>
-            <span className="records__number-sub muted">{t("finalGoalsCaption")}</span>
+            <span className="records__number-big">{facts.champion.name}</span>
+            <span className="records__number-sub muted">{t("championCaption")}</span>
           </div>
         </div>
       </section>
@@ -144,10 +178,82 @@ export default async function RealBookPage() {
         </div>
       </section>
 
+      <section className="records__panel">
+        <span className="records__panel-eyebrow">{t("scorersEyebrow")}</span>
+        <h2>{t("scorersTitle")}</h2>
+        <p className="records__lede muted">{t("scorersLede")}</p>
+        <div className="world-tablewrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">{t("thPlayer")}</th>
+                <th scope="col">{t("thGoals")}</th>
+                <th scope="col">{t("thPenalties")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scorers.map((scorer, index) => (
+                <tr key={scorer.name}>
+                  <td className="num muted">{index + 1}</td>
+                  <td>{scorer.name}</td>
+                  <td className="num">{scorer.goals}</td>
+                  <td className="num muted">{scorer.penalties}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="records__fineprint muted">{t("spellingNote")}</p>
+      </section>
+
+      <section className="records__panel">
+        <span className="records__panel-eyebrow">{t("ledgerEyebrow")}</span>
+        <h2>{t("ledgerTitle")}</h2>
+        <p className="records__lede muted">{t("ledgerLede")}</p>
+        {days.map((day) => (
+          <div key={day.date} className="realbook__day">
+            <div className="realbook__dayhead">
+              <span className="mono realbook__daydate">{day.date}</span>
+              <span className="chip">{day.round}</span>
+              <span className="num muted realbook__daycount">{t("matchesOnDay", { count: day.rows.length })}</span>
+            </div>
+            <div className="world-tablewrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">{t("thFixture")}</th>
+                    <th scope="col">{t("thScore")}</th>
+                    <th scope="col">{t("thVenue")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {day.rows.map((row) => (
+                    <tr key={`${row.team1}-${row.team2}`}>
+                      <td>
+                        {row.team1} v {row.team2}
+                        {row.group ? <span className="muted realbook__group">{row.group}</span> : null}
+                      </td>
+                      <td className="num">
+                        <span className="realbook__score num">{row.on_field[0]}–{row.on_field[1]}</span>
+                        {row.et ? <span className="chip">{t("aetChip")}</span> : null}
+                        {row.penalties ? <span className="chip">{t("penChip", { a: row.penalties[0], b: row.penalties[1] })}</span> : null}
+                      </td>
+                      <td className="muted">{row.ground}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+      </section>
+
       <p className="records__ledger muted">
         {t("attributionLine")}
         <a href={facts.openfootball_url} rel="noopener" target="_blank" className="records__link">{t("sourceLabel")}</a>
       </p>
+      <p className="records__fineprint muted">{t("snapshotNote")}</p>
 
       <Provenance provenance={provenance} />
     </div>

@@ -1,0 +1,21 @@
+openfootball worldcup.json — 2022 FIFA World Cup
+
+The file beside this notice (`openfootball-worldcup-2022.json`) is an unmodified
+copy of the openfootball community's `worldcup.json` for the 2022 FIFA World Cup.
+
+Source:   https://github.com/openfootball/worldcup.json
+File:     https://raw.githubusercontent.com/openfootball/worldcup.json/master/2022/worldcup.json
+Licence:  Creative Commons Attribution 4.0 International (CC-BY 4.0)
+          https://creativecommons.org/licenses/by/4.0/
+
+Attribution (required by the licence, and given here): the match data, scores,
+goals and venues in this file were compiled by the openfootball project, an
+open-data football results archive. The figures this product prints from it
+(Argentina vs France at Lusail Iconic Stadium, the 3–3 extra time, the 4–2
+on-penalties result, Messi's Golden Ball, Mbappé's eight goals, the 64 fixtures
+and the 172 goals on the field) are derived from this file.
+
+This product does not modify the file. Its synthetic world is a separate
+universe and shares none of these figures. Any discrepancy between this file and
+any other account of the tournament is the reader's call to settle with the
+source, not with us.

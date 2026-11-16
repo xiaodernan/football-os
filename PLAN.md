@@ -3592,6 +3592,20 @@ specific user has read it. That CI has printed this push green.
 
 **Not claimed.** That any fact in this door is a fiction or that the record can replace the archive's own JSON; that this converge pushes the world from synthetic to mixed-data by virtue. The door is the inverse type — a clear product choice to bring real facts into the world and print them deliberately, rather than pretending the synthetic world had a memory. CI prints on its own schedule.
 
+## Item 95 — The Real Book deepens: all 64 fixtures printed, plus the a1d21e8 CI cure (landed 2026-11-16)
+
+**The gap.** Item 94 put the headline facts of the real 2022 World Cup into the product (the final, the numbers, the awards) — but a curated hand of facts is not the record. The user asked for the real world inside the product, and the real world leaves a 64-match ledger. A world door that carried only highlights was still borrowing the seed's habits.
+
+**What landed.**
+
+- `apps/api/app/services/world/data/openfootball-worldcup-2022.json` — the openfootball `worldcup.json` snapshot, byte-for-byte under CC-BY 4.0, with `NOTICE-2022-WORLDCUP.txt` carrying the licence attribution. The synthetic world is untouched.
+- `app/services/world/real_book.py` — `compute_real_book()` now recomputes everything derived from the snapshot: `results` (all 64 fixtures: matchdays 1–13 with group tags, knockouts, venue, HT/FT/ET, penalties), `goals_scored` (**172**), and `scorers` (top 10; the source's two spellings of France's No. 10 merged — Mbappé **8**, Messi **7**). The "Most dominant win" curated fact was **Spain 7-0 Costa Rica**, not the previously printed Argentina 3-0 Croatia; the page now computes the widest margin instead of asserting one.
+- `/world/real-book` — two new sections: the scorers table and **The Complete Ledger** (fixtures grouped by day, `world-tablewrap` + `table`, AET/PEN markers). Numbers panel prints 172. All six locales natively authored for the new copy; catalogue population **4,971 ×6**. The gates: alignments done by meaning (`谁进的球`, `赛程/賽程` everywhere in the Fixture column), the shared-keys `thFixture` named divergence resolved and its ledger entry removed, `qa-key-drift` and `qa-shared-keys` green at 116/46 and zero stale entries.
+- **The two CI reds of `a1d21e8` cured in `2069564` and put on record**: api :: Lint (4 unused imports in `test_real_book.py`) and web :: Translation-quality behaviour gate (arm B's premise moved when `en.json` gained "Top scorer — Mbappé"; the scratch fixture now drops exactly that one key, arm B pins the two reds it exists to prove — witness 11/11, gate 9/9).
+- Contract unchanged (**243 paths**, SHA `a3522815…070e5` re-verified by re-export); ROADMAP's audit sentence re-pinned (wrapped "242" → 243). Docker rebuilt; live walk 200 with all markers.
+
+**Not claimed.** That the synthetic world changed; that anything on the door is fetched live; that openfootball's figures are beyond dispute; that `a1d21e8`'s reds were erased rather than cured. The synthetic world's rows and the real world's file remain visibly distinct, and this door prints which is which.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

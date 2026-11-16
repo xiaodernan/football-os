@@ -5061,7 +5061,6 @@
     "matchesCaption": "matchs joués",
     "venuesCaption": "enceintes utilisées",
     "championCaption": "champion du vrai monde",
-    "finalGoalsCaption": "buts après prolongation en finale",
     "awardsEyebrow": "Trophées & prix",
     "awardsTitle": "Quels noms le vrai monde a écrits",
     "goldenBallTitle": "Ballon d'Or — Messi",
@@ -5071,6 +5070,24 @@
     "sectionRealBookLabel": "Le Vrai Livre",
     "sectionRealBookNote": "ce que le vrai monde a imprimé en 2022",
     "sectionRealBookChip": "Le vrai livre",
-    "sourceLabel": "l’espèce"
+    "sourceLabel": "l’espèce",
+    "onFieldGoalsCaption": "buts marqués sur le terrain",
+    "scorersEyebrow": "Qui a marqué",
+    "scorersTitle": "Le Soulier d'Or, compté depuis le fichier",
+    "scorersLede": "Chaque but ci-dessous est compté depuis l'instantané du fichier source — la liste des buts de l'archive elle-même, minutes et tirs au but conservés tels quels.",
+    "thPlayer": "joueur",
+    "thGoals": "buts",
+    "thPenalties": "tirs au but",
+    "spellingNote": "le fichier source écrit le numéro 10 de la France de deux façons. Le tableau fusionne les deux en un seul buteur ; aucun autre nom n'a été fusionné.",
+    "ledgerEyebrow": "L'année complète",
+    "ledgerTitle": "Les 64 matchs, imprimés",
+    "ledgerLede": "Chaque match de la vraie Coupe du monde 2022, groupé par jour de match — scores, prolongations, tirs au but et stades — lu directement depuis l'instantané archivé dans ce dépôt.",
+    "matchesOnDay": "{count, plural, one {# match} other {# matchs}}",
+    "thFixture": "affiche",
+    "thScore": "résultat",
+    "thVenue": "stade",
+    "aetChip": "a.p.",
+    "penChip": "TAB {a}–{b}",
+    "snapshotNote": "l'année imprimée ici est l'instantané du fichier worldcup.json, octet pour octet — rien de cette page n'est récupéré sur le réseau lors du rendu."
   }
 }
