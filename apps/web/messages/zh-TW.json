@@ -4316,7 +4316,11 @@
     "unknown_notification_kind": "未知的通知類別。托盤認識追蹤者、留言和反應——這就是全部清單。",
     "no_such_player": "這個球員不在生成的世界裡。",
     "same_player": "球員不能與自己比較。",
-    "edition_out_of_range": "世界還沒有打到那個輪次；最新一期已經備好。"
+    "edition_out_of_range": "世界還沒有打到那個輪次；最新一期已經備好。",
+    "admin_refused": "共享口令不對",
+    "bad_path": "路徑不符合允許的格式",
+    "bad_session": "會話引用不符合允許的格式",
+    "unknown_tournament": "真實名冊只收錄 2014、2018 與 2022"
   },
   "errorBoundary": {
     "eyebrow": "出了點問題",

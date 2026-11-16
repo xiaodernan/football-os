@@ -50,7 +50,7 @@ class TestTelemetryPageView:
                 "dwell_ms": 1,
                 "bounced": True,
             })
-            assert response.status_code in (422,), (bad, response.status_code)
+            assert response.status_code == 422, f"expected 422 for {bad!r}, got {response.status_code}"
 
     def test_the_session_ref_is_shape_checked(self, client) -> None:  # type: ignore[no-untyped-def]
         response = client.post(f"{API}/telemetry/page-view", json={

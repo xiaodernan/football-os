@@ -80,17 +80,23 @@ UNPROCESSABLE_CODES: Final = frozenset(
         "unknown_change",  # tactics
         "unknown_agent_type",  # agents — the catalogue's own word for a type `AGENT_REGISTRY` does not hold
         "unknown_notification_kind",  # notifications — the mute kind is not one of the three the tier holds
+        "bad_path",  # telemetry — the beacon's path failed shape check
+        "bad_session",  # telemetry — the beacon's session reference failed shape check
+        "unknown_tournament",  # world/real-book — the door does not carry this tournament
     }
 )
 
 #: No session, or a session that no longer proves an identity — 401. The token mints themselves live in
-#: `core.security`; these four are raised by `auth.py`'s login and refresh doors.
+#: `core.security`; these four are raised by `auth.py`'s login and refresh doors. `admin_refused` is the
+#: operator console's own passphrase: a shared secret that is not an account, and whose answer the same
+#: census demands from the one table like any other.
 UNAUTHORIZED_CODES: Final = frozenset(
     {
         "invalid_credentials",  # auth
         "no_refresh",  # auth
         "refresh_invalid",  # auth
         "refresh_reused",  # auth
+        "admin_refused",  # admin — the shared-passphrase door refuses the wrong word
     }
 )
 

@@ -4316,7 +4316,11 @@
     "unknown_notification_kind": "Type de notification inconnu. Le bac connaît abonné, commentaire et réaction — c'est toute la liste.",
     "no_such_player": "Ceci n'est pas un joueur dans le monde généré.",
     "same_player": "Un joueur ne peut pas être comparé à lui-même.",
-    "edition_out_of_range": "Le monde n'a pas encore joué cette journée ; la dernière édition est déjà disponible."
+    "edition_out_of_range": "Le monde n'a pas encore joué cette journée ; la dernière édition est déjà disponible.",
+    "admin_refused": "Le mot de passe partagé est faux.",
+    "bad_path": "Le chemin sort du format accepté.",
+    "bad_session": "La référence de session sort du format accepté.",
+    "unknown_tournament": "Le vrai Cahier ne porte que 2014, 2018 et 2022."
   },
   "errorBoundary": {
     "eyebrow": "Une erreur est survenue",
