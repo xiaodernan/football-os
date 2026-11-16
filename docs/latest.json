@@ -1,8 +1,8 @@
 {
-  "head": "b819ed3",
-  "total_commits": 1234,
-  "milestone": "§250",
-  "milestone_full": "§250 — Item 111: the dead-key gate's verdict was right — my dynamic read exempts the whole namespace",
+  "head": "e3277af",
+  "total_commits": 1237,
+  "milestone": "§252",
+  "milestone_full": "§252 — Item 112: VIII lands on the rail; the tutorial and home tell the door's true name",
   "pushed_at": "2026-11-16",
   "screens": 88,
   "assets": 200,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T13:47:16.555Z"
+  "generated_at": "2026-11-16T13:55:33.659Z"
 }
