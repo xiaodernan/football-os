@@ -12,8 +12,8 @@ spring:
       timeout: 2s
 
 jobsobserver:
-  stream: ${JOBS_STREAM:football_os:jobs}
-  group: ${JOBS_OBSERVER_GROUP:football_os:jobs:observers}
+  stream: football_os:jobs
+  group: football_os:jobs:observers
   poll:
     interval-ms: ${JOBSOBSERVER_POLL_INTERVAL_MS:1000}
     initial-delay-ms: ${JOBSOBSERVER_INITIAL_DELAY_MS:2500}

@@ -93,8 +93,10 @@ services:
     command: ["java", "-jar", "/app/registry.jar"]
     volumes:
       - ../services/registry/target/registry-0.1.0.jar:/app/registry.jar:ro
+    # The dev host pins 8761 for the Docker backend proxy; the plane itself talks container-to-container
+    # at 8761, so only the host-side publish moves, to 18760. plane-walk accepts -Registry as a parameter.
     ports:
-      - "127.0.0.1:8761:8761"
+      - "127.0.0.1:18760:8761"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8761/actuator/health || exit 1"]
       interval: 10s
@@ -183,7 +185,8 @@ services:
       registry:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8100/healthz || exit 1"]
+      # The api image carries no curl; the interpreter that built it is the healthcheck that always works.
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; d=urllib.request.urlopen('http://127.0.0.1:8100/healthz', timeout=5); sys.exit(0 if d.status==200 else 1)\" || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 18
@@ -204,6 +207,10 @@ services:
       # The queue on its own logical database: same instance, keyspace that a cache flush cannot empty.
       JOB_STREAM_REDIS_URL: redis://:football@redis:6379/2
       ENV: development
+    # The image carries a HEALTHCHECK aimed at :8100 — the api's own port. The worker owns no port;
+    # the service above only inherits that check, and it always fails the wrong container as unhealthy.
+    healthcheck:
+      disable: true
     depends_on:
       api:
         condition: service_healthy

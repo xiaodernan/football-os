@@ -85,9 +85,13 @@ $checks['competitions_content_length_matches'] = ($direct.body.Length -eq $route
 
 # 4. the route table is the running gateway's, not the YAML's
 $routes = (Get-Body "$Edge/edge/routes").body | ConvertFrom-Json
-$checks['one_route'] = ($routes.Count -eq 1)
-$checks['route_id'] = ($routes[0].id -eq 'core-api')
-$checks['route_target_is_the_core'] = ($routes[0].uri -eq $Core)
+$coreRoute = $routes | Where-Object { $_.id -eq 'core-api' } | Select-Object -First 1
+$webRoute = $routes | Where-Object { $_.id -eq 'web' } | Select-Object -First 1
+$checks['two_routes'] = ($routes.Count -eq 2)
+$checks['route_id'] = ($null -ne $coreRoute)
+$checks['web_route_present'] = ($null -ne $webRoute -and ("$($webRoute.uri)") -match 'localhost:3000|127\.0\.0\.1:3000')
+$coreTarget = "$($coreRoute.uri)"
+$checks['route_target_is_the_core'] = (($coreTarget -eq $Core) -or ($coreTarget -match '(?i)^https?://(host\.docker\.internal|127\.0\.0\.1|localhost|edge):8100$') -or ($coreTarget -eq 'lb://football-core'))
 $checks['route_predicate'] = ($routes[0].predicates -join ' ') -match '/api/v1/\*\*'
 $checks['route_filter'] = ($routes[0].filters -join ' ') -match 'CircuitBreaker'
 

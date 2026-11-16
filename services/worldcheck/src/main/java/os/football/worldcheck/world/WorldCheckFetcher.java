@@ -1,5 +1,6 @@
 package os.football.worldcheck.world;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -20,6 +21,7 @@ public class WorldCheckFetcher {
     private final RestClient rest;
     private final String baseUrl;
 
+    @Autowired
     public WorldCheckFetcher(@Value("${worldcheck.world.base-url:http://localhost:8100}") String baseUrl,
                              @Value("${worldcheck.world.timeout-ms:2000}") long timeoutMs) {
         this.baseUrl = trim(baseUrl);
