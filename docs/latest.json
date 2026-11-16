@@ -1,9 +1,9 @@
 {
-  "head": "62bf72f",
-  "total_commits": 1254,
-  "milestone": "§260",
-  "milestone_full": "§260 — Item 120: the almanac has a voice — the coach reads the season back to the reader",
-  "pushed_at": "2026-11-16",
+  "head": "e5c74f9",
+  "total_commits": 1257,
+  "milestone": "§261",
+  "milestone_full": "§261 — Item 121: the four forgotten cups land — 1970, 1974, 1978, 1982",
+  "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 203,
   "world_doors": 24,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T15:59:08.461Z"
+  "generated_at": "2026-11-16T16:23:12.744Z"
 }
