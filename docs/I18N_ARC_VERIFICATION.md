@@ -8866,3 +8866,32 @@ follows the same re-read.
 walked in a browser on this host beyond the `200`/`markers` checks recorded in the commit message;
 that the 2018 Golden Boot dispute (FIFA credited Kane 6) is resolved here — the door prints the
 snapshot and names the FIFA tally as curator knowledge, as the Real Book does.
+
+## §244 — the runner answers §242: `721bb07` prints all four legs green; `552656d`'s api leg follows
+
+**The named prints, copied from `gh run list` on 2026-11-16T13:00Z+:**
+
+| run | head | api | web | services | containers |
+| --- | --- | --- | --- | --- | --- |
+| `43846844255` | `721bb07` — fact pack over Item 106 | **success** | **success** | **success** | **success** |
+| `43842917505` | `552656d` — Item 105 | **success** | failure | success | success |
+
+**What this proves, and what it does not.**
+
+* The `api` leg greens twice now on the refusal-census line — `552656d` (Item 105's own commit,
+  35 minutes in) and `721bb07` (its parent, Item 106's lineage) — which is the runner printing,
+  not this host, that the four refusal doors register in the one table and the catalogue carries
+  their sentences in six tongues.
+* The `web` leg greens on `721bb07` — **Translation-quality gate** passed with the four `ar`
+  refusal sentences now carrying the Arabic full stop, and the **Shared-sentence behaviour gate**
+  passed with the derived-crossing witness — both cures from Item 106.
+* `552656d`'s web leg stands on its run as a failure at Translation-quality (the four `ar`
+  U+002E terminals); that exact red is what `5510f9a` cured, and `721bb07` carries the cure.
+  No re-run happened; the runner printed this in one pass at the head of the queue.
+* **Not claimed.** That the Item 107 head (`e8007f4` / fact pack `3658fe3`) is green — its runs
+  `43867767582` and `43867800372` were still `in_progress` at the time of this entry; they will
+  be recorded when they drain.
+
+**Where the fact pack stands.** The mirror (`xiaodernan.github.io/assets/football/latest.json`)
+now carries the head `e8007f4`, 88 routes, 22 world doors, arc §243; the arc grows this section
+so §245 can quote the runner's own print for Item 107.
