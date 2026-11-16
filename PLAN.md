@@ -3645,6 +3645,14 @@ specific user has read it. That CI has printed this push green.
 
 **Not claimed.** That the cohort is organic traffic (it is not — every row is `seeded=true` and the console says so); that `123` is a secure credential (it is the deliberate shared low-security gate the operator specified — anyone who knows it gets read-only aggregates, no writes, no identities); that the console identifies any person (no user keys in `page_views`, no user ids returned); that the forecast predicts anything real (it is least-squares on a seeded cohort — labelled as arithmetic, not prophecy); and that `x-admin-passphrase` rides the proxy for any other route (the new forward site is this one path, by design).
 
+## Item 99 — The display type stops clipping CJK and Arabic (landed 2026-11-16)
+
+**The gap.** The user reported the frontend as distorted and overlapping. A byte audit of every stylesheet found no font-stretch, no skew/scale distortion, no nowrap on running copy, one sticky nav with a sane z-index, and zero `letter-spacing` disasters outside the display scale — but one real defect: the display face ships `line-height: 1.04` and negative tracking tuned for Latin, which renders CJK cramped and clips Arabic ascenders.
+
+**What landed.** `:lang(zh)/`:lang(zh-TW)/`:lang(ar)/`:lang(he)` overrides in `globals.css` — the display h1 gets room (1.18 CJK, 1.30 RTL) and zero tracking; h2/h4/stat values/nav brand tracking zeroed for those locales; the records book gets 1.6 line-height and normal tracking in Arabic/Hebrew. No structural, colour or spacing changes.
+
+**Verified on this host.** Web rebuilt; `/`, `/world/atlas`, `/admin` all walk 200 live. tsc clean. **Not claimed:** that every overlap the user sees is gone — the remaining ones need their eyes (the embedded browser cannot reach this host's container; from here only bytes are auditable). The public showcase (`football-os-web`) audited clean in-browser at 990px.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

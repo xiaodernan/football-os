@@ -8541,3 +8541,41 @@ web :: Catalogue dead-key gate — admin.metaTitle: /admin is a client page, no 
 **Not claimed.** Anything about the runner printing this cure green before it has run — the
 named runs stand on their own verdicts; the cure rides in its own commit; nothing was
 re-run, renumbered or re-pinned.
+
+## §234 — Item 99: the display type stops clipping CJK and Arabic — measured, not eyeballed
+
+**The complaint, twice over.** "前端有很多不合理的地方：有很多字体的变形、歪曲、重叠、扭曲，
+实体块的互相重叠、挤压". This window does the honest slice of that work: the one systematic
+font defect in the CSS, measured rather than eyeballed (the embedded browser cannot reach the
+container on this host — it answers the local port from another machine, 502 — so every
+claim here is made from the bytes).
+
+**What the bytes show.**
+
+- `.h1` (the display scale every hero page uses) ships `line-height: 1.04` and
+  `letter-spacing: -0.032em` — a Latin display convention. CJK glyphs fill their own em-box
+  and Arabic marks overshoot it: 1.04 clips the script's own ascenders/descenders and turns
+  strokes into mush at display size. `.h2`/`.h4`/stat values/nav brand carry the same negative
+  tracking.
+- The CSS audit found: **no** `font-stretch`, **no** `skew`, **no** `scaleX/scaleY`
+  distortion (the two `scale()` uses are a pulse animation and an intentional RTL arrow flip),
+  **no** `white-space: nowrap` on running copy, one `position: sticky` nav with a working
+  z-index — nothing else of the "entity blocks overlapping text" class in the stylesheets.
+- The public showcase (`xiaodernan.github.io/football-os-web`) audited clean in-browser at
+  990px: no horizontal overflow, no clipped text, no images stretched, font stack intact.
+
+**What landed.** Scoped language overrides in `globals.css` (`:lang(zh/zh-TW/ar/he)`) — h1 gets
+1.18 (CJK) / 1.30 (RTL) with zero tracking; h2/h4/stat values/nav brand zero tracking;
+`records__book` becomes 1.6 line-height with normal tracking in Arabic/Hebrew. No page
+structure, no colours, no spacing families touched — the display stays the display, only its
+collisions with scripts it was never designed for are removed.
+
+**Verified.** Web image rebuilt; `/` → 200, `/world/atlas` → 200, `/admin` → 200 live on this
+host; tsc clean; the full web gate battery already re-measured green in §231/§233's tree
+(the CSS is not within any gate's charter — nothing about this fix is claimed as "gates pass
+therefore beautiful", which is exactly why the line-heights above are the deliverable).
+
+**Not claimed.** That this resolves every overlap the user sees — the specific offending
+page/element needs their eyes at their machine; this pass removed the one class of damage a
+byte-audit can name. Flicker/z-index collisions need element refs to confirm; no element was
+missed for want of trying, only for want of visibility.
