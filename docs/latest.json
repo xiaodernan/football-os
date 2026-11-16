@@ -1,8 +1,8 @@
 {
-  "head": "720ec4b",
-  "total_commits": 1181,
-  "milestone": "§223",
-  "milestone_full": "§223 — the concise manual grows its glossary; nine red runs cured in line",
+  "head": "45698e1",
+  "total_commits": 1183,
+  "milestone": "§224",
+  "milestone_full": "§224 — the CI queue drains the inherited reds; the cures hold",
   "pushed_at": "2026-11-16",
   "screens": 83,
   "assets": 196,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T03:46:03.325Z"
+  "generated_at": "2026-11-16T03:50:56.382Z"
 }
