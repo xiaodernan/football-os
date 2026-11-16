@@ -5108,11 +5108,9 @@
     "tutorialNote": "les dix portes dans l'ordre où un nouveau lecteur devrait les frapper",
     "manualLabel": "Le Manuel concis",
     "manualNote": "toutes les portes en une assise, la ligue comprise",
-    "cardNote": "tout le monde dessiné d'un trait — ouvrez la carte",
-    "ogTag": "CHAQUE PORTE, UN MONDE"
+    "cardNote": "tout le monde dessiné d'un trait — ouvrez la carte"
   },
   "admin": {
-    "metaTitle": "Admin — le tableau comportemental",
     "eyebrow": "Console d'administration",
     "title": "Le pouls du monde",
     "lede": "Ce que les navigateurs nous disent : qui est arrivé, qui est resté, qui est parti tôt — recalculé depuis les lignes brutes, anonyme, jamais inventé.",

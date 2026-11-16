@@ -12,7 +12,7 @@ export const dynamic = "force-static";
 import enMessages from "../../../messages/en.json";
 
 const kicker = enMessages.worldAtlas.eyebrow.toUpperCase();
-const tag = enMessages.worldAtlas.ogTag;
+const line = enMessages.worldAtlas.title;
 
 const BG = "#0b1118";
 const PAPER = "#f0ede6";
@@ -58,8 +58,8 @@ export default function AtlasOpenGraphImage() {
         </svg>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <div style={{ fontSize: 16, color: SUBTLE, letterSpacing: "0.08em", display: "flex" }}>{tag}</div>
-          <div style={{ fontSize: 12, color: SUBTLE, letterSpacing: "0.3em", display: "flex" }}>FOOTBALL</div>
+          <div style={{ fontSize: 15, color: SUBTLE, letterSpacing: "0.04em", display: "flex" }}>{line}</div>
+          <div style={{ fontSize: 12, color: SUBTLE, letterSpacing: "0.3em", display: "flex" }}>{kicker}</div>
         </div>
       </div>
     ),

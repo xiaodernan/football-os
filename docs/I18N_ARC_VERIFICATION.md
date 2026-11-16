@@ -8508,3 +8508,36 @@ added; `qa-plural-select` 7/7; ledger §231; pushed as its own commit.
 `123` authenticates anyone (it is the operator's explicit shared passphrase, read-only and
 unidentified by design); and that the runner has printed §232's runs green at the time of
 writing — nothing re-ran or re-pinned.
+
+## §233 — Item 99's CI cure: the two gates Item 96 left red, and one dead key Item 98 left behind
+
+**The named reds.** Three master runs — `43820772465` (Item 96/97), `43820808509` (the fact
+refresh after it) and `43821001483` (the §231 plural cure) — each printed exactly two red legs:
+
+```
+api :: Lint — scripts/lint.sh — UP028 tests/test_provider_cache_key.py:36 —
+  "__iter__ … yield line"        → `yield from …`
+web :: Catalogue dead-key gate — worldAtlas.ogTag was asked for by nothing
+  (the OG card read it through enMessages directly, which the scanner cannot see)
+```
+
+Item 98's own run (`43824743371`) was still printing when this cure was cut; it carries the
+same two reds plus one its own content added:
+
+```
+web :: Catalogue dead-key gate — admin.metaTitle: /admin is a client page, no page asks for it
+```
+
+**Cures, in place.**
+
+1. `test_provider_cache_key.py` — the generator's body became `yield from self._body.splitlines(keepends=True)`.
+2. `worldAtlas.ogTag` deleted from all six catalogues; the OG card now reads `worldAtlas.title`
+   (the page itself asks for it — visible to the scanner) for its bottom-left line, `eyebrow`
+   for its right mark and the product name for the wordmark.
+3. `admin.metaTitle` deleted from all six catalogues; `/admin` is a client page and cannot
+   export metadata; the layout default carries the tab. Population **5,034 ×6**;
+   `messages/README.md` re-pinned (ar/he/zh/zh-TW 4,987 · fr 4,783 per the gate's own arithmetic).
+
+**Not claimed.** Anything about the runner printing this cure green before it has run — the
+named runs stand on their own verdicts; the cure rides in its own commit; nothing was
+re-run, renumbered or re-pinned.

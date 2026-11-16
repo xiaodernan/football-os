@@ -33,8 +33,7 @@ class _FakeResponse:
         return self._body
 
     def __iter__(self):
-        for line in self._body.splitlines(keepends=True):
-            yield line
+        yield from self._body.splitlines(keepends=True)
 
 
 def _capture(monkeypatch, body: bytes) -> list[dict]:

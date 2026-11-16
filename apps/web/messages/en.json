@@ -5108,11 +5108,9 @@
     "tutorialNote": "ten doors in the order a fresh reader knocks on them",
     "manualLabel": "The Concise Manual",
     "manualNote": "every door in one sitting, the league included",
-    "cardNote": "the whole world drawn as one chart — open it",
-    "ogTag": "EVERY DOOR, ONE WORLD"
+    "cardNote": "the whole world drawn as one chart — open it"
   },
   "admin": {
-    "metaTitle": "Admin — the behavioural board",
     "eyebrow": "Admin console",
     "title": "The pulse of the world",
     "lede": "What the browsers told us: who arrived, who stayed, who left early — recomputed from raw rows, anonymous by design, never invented.",
