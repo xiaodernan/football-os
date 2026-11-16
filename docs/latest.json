@@ -1,8 +1,8 @@
 {
-  "head": "3b70db7",
-  "total_commits": 1217,
-  "milestone": "§240",
-  "milestone_full": "§240 — Item 104: The Real Book, Volume III — the 2014 World Cup joins the door",
+  "head": "5510f9a",
+  "total_commits": 1220,
+  "milestone": "§242",
+  "milestone_full": "§242 — Item 106: the two reds 552656d printed, cured in their own commit",
   "pushed_at": "2026-11-16",
   "screens": 87,
   "assets": 199,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T09:27:00.216Z"
+  "generated_at": "2026-11-16T10:12:54.891Z"
 }
