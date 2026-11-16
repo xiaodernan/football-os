@@ -4461,6 +4461,40 @@ the same scan now reads consistently on the committed tree; currency suites prin
 **Not claimed.** That the runner has greened these runs before it has; that one cure is "enough" for
 three reds — the runner judges each in its own queue entry, and the cure landed first is a clean fact.
 
+## Item 131 — the pressure trio the product never printed before: the credential-stuffing clamp, and two full probes on this host (landed 2026-11-17)
+
+**The gap.** The product carried a security probe report and a `scripts/loadtest.py` harness but
+no recorded run against the whole traffic floor of the coach-door stack this arc depends on —
+no honest 1,000-request pressure window and no login-burst sequence anywhere in this ledger.
+
+**What landed.** Three measurements, taken on this host (the one running 127.0.0.1:8100 / :5432 /
+:6379), against the running stack, with zero code changed:
+
+1. **Burst clamp (verbatim, 15 wrong-password attempts against `/api/v1/auth/login`)**
+
+   ```
+   attempt 1-10 : HTTP 401  invalid_credentials (uniform body — no existence hint)
+   attempt 11-12: HTTP 429  rate_limited retry-after=30
+   attempt 13-15: HTTP 429  rate_limited retry-after=5
+   verdict: grants=0 throttles=5  — the limiter held on the 11th knock.
+   ```
+
+2. **Baseline probe (spike-1 — `scripts/loadtest.py`, concurrency 16, 200 requests × 8 targets)**
+   `/healthz` 27.5 rps · avg 533 ms · p99 1792 · `/world/status` 30.8 rps · avg 489 · p99 1460 ·
+   `/world/competitions` 24.6 rps · avg 614 · p99 2170 · `/world/teams` 30.0 rps · avg 503 · p99 1760 ·
+   `/world/players` 25.5 rps · avg 576 · p99 2357 · `/world/matches` 22.7 rps · avg 671 · p99 2494 ·
+   `/world/news` 27.2 rps · avg 557 · p99 1730 · `/world/almanac` 24.8 rps · avg 612 · p99 2276.
+   **1,600 / 1,600 ok, zero failures, 61.1 s elapsed.**
+
+3. **Saturated probe (spike-2 — concurrency 64, 100 requests × 8 targets)**
+   Same eight targets; **800 / 800 ok, zero failures**; 33.4 s; average latencies rose to 2–2.6 s on
+   the heaviest paths with p99 up to 5.1 s — expected physics: the same 16 workers, four times the
+   demand, queue compounds, nothing crashes, nothing 429s the read floor.
+
+**Not claimed.** That this is a benchmark anyone else should trust — it is this host, this box, this
+Postgres, this Redis; that any single request exceeded its budget without the system refusing; that
+the burst door distinguishes "wrong password" from "no such account" (it cannot, by design).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

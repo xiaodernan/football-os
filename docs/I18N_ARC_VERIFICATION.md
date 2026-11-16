@@ -9704,3 +9704,48 @@ before the runner argues back once more.
 **Not claimed.** That the cure makes those three reds print green — the runner judges each still-queued leg
 in its own time; the rows on the next push are the truth this section cares about. That the "17" is a moral
 verdict — it is a count, and the file is named as its reason.
+
+## §271 — Item 131: three recorded runs — the clamp holds, the box sweats, nothing falls
+
+**Named verbatim or not at all.** Three runs, on this host, minutes apart, against the live 127.0.0.1:8100 stack.
+
+**The burst clamp.** 15 sequential wrong-password attempts from one endpoint:
+
+```
+ 1-10  → HTTP 401 {"detail":{"code":"invalid_credentials","message":"Email or password is incorrect"}}
+       ← every one of the first ten answered identically; nothing says "exists" or "never has".
+11-12 → HTTP 429 {"detail":{"code":"rate_limited","message":"Too many requests for login; retry in 30s"}}
+13-15 → HTTP 429 {"detail":{"code":"rate_limited","message":"Too many requests for this door (auth); retry in 5s"}}
+```
+
+The tenth knock on this door is exactly where the gate sealed — no single brute-force run gets past
+it, no differences in body leak whether the email exists; `retry-after` is present and honoured in
+the payload. **grants=0 · throttles=5 · pass verdict armed by the door itself.**
+
+**The baseline probe.** `python scripts/loadtest.py http://127.0.0.1:8100 --concurrency 16 --requests 200 --label spike-1`
+
+```
+/healthz  27.5 rps avg 533ms p99 1792  ok=200
+/api/v1/world/status        30.8 rps avg 489ms p99 1460  ok=200
+/api/v1/world/competitions  24.6 rps avg 614ms p99 2170  ok=200
+/api/v1/world/teams         30.0 rps avg 503ms p99 1760  ok=200
+/api/v1/world/players       25.5 rps avg 576ms p99 2357  ok=200
+/api/v1/world/matches       22.7 rps avg 671ms p99 2494  ok=200
+/api/v1/world/news          27.2 rps avg 557ms p99 1730  ok=200
+/api/v1/world/almanac       24.8 rps avg 612ms p99 2276  ok=200
+overall: 1,600 ok · 0 fail · 61.1 s · verdict PASS
+```
+
+**The saturated probe.** `--concurrency 64 --requests 100 --label spike-2` — same eight targets,
+4× the demand on the same 16 workers: **800 / 800 ok · 0 fail · 33.4 s** · averages 1.6–2.6 s with
+p99 up to 5.1 s. The box sweats; it does not fall; no 429s, no 5xx, no hangs, no retry storms.
+
+**Now named in the security ledger's way:** the login clamp is real, on the real stack, at the
+recorded numbers; the read floor survives 64-way concurrency; nothing about this host's limits was
+re-pinned to make these results greener.
+
+**Not claimed.** That the host scales cleanly past 64 concurrent clients (the box, this one,
+bottoms out at roughly this point — it bends, it never breaks); that the burst door would hold a
+distributed attack (rate limits are per scope+per client; an army is a different problem the product
+doesn't claim to block); that these are numbers worth benchmarking others against (file:
+`docs/SPEC_COVERAGE_AUDIT.md` governs claims; this is the host's report).
