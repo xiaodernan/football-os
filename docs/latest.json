@@ -1,12 +1,12 @@
 {
-  "head": "5f57127",
-  "total_commits": 1191,
-  "milestone": "§226",
-  "milestone_full": "§226 — the live parens test was indeed run against the Spring plane; the limiter holds, the warm cache sails",
+  "head": "3431510",
+  "total_commits": 1194,
+  "milestone": "§227",
+  "milestone_full": "§227 — the world gains The Real Book — real facts inside a synthetic world",
   "pushed_at": "2026-11-16",
-  "screens": 84,
-  "assets": 196,
-  "world_doors": 19,
+  "screens": 85,
+  "assets": 197,
+  "world_doors": 20,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T04:26:47.280Z"
+  "generated_at": "2026-11-16T04:53:56.217Z"
 }
