@@ -8028,3 +8028,24 @@ already answered 403 insufficient_user_quota at that time, and the account is no
 this host today. ADR-011 stands; the cache-miss / non-stream mystery is an account condition —
 not a code path — and no commit in this repository can change it without the account returning
 to a funded state.
+
+## §222 — the worldbook rail grows its fifth; Item 91
+
+Master continues at `a7a008d`. Item 91 (this window): the `/` worldbook rail — the house's
+book of five doors into the season — gains **V The Dynasties**, the streak-ledger door the
+rail had never carried. Two new keys ×6 locales (`worldBookDynasties`,
+`worldBookDynastiesNote`), population **4,860 × 6**, tsc clean, qa-i18n-literals 9/9, the
+unused-key gate's floor-0 held (the two keys are read by the home page itself).
+
+The Dynasties commit chain (Item 89), the fact-pack arc §221 and the plane-walk 27/27
+(Item 90) complete the current ledger state; the two new entries on the rail are absent
+from any world index payload; the rail keeps its order, numerals and arrow styling exactly
+as the other four.
+
+**CI at the time of writing.** The runner's queue keeps burning through favours; the three
+recent pushes' api legs still print at the cadence the runner prints at; their verdicts
+land on their own runs and are not claimed here.
+
+**Not claimed.** That the CI prints anything on Item 91's push; that the worldbook stays at
+five if another world door lands; ADR-011 stands; the plane remains where it is (live on
+this host) at the time of writing.

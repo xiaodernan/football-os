@@ -3513,6 +3513,22 @@ The compose-web serves `/` and `/world/dynasties` 200.
 next invocation; that 8761 will be available for earlier scripts unchanged (it is pinned on
 this host and this is documented in the compose file and the ledger §221).
 
+## Item 91 — the homepage's worldbook rail grows its fifth — the Dynasties (landed 2026-11-16)
+
+**The gap.** The `/` worldbook rail — the library of doors into the season — carried four
+books: I Almanac, II Story, III Record Book, IV the World's XI. Item 89 added the fifth door
+to the house (`/world/dynasties`) but never added it to that rail.
+
+**What landed.** `apps/web/app/page.tsx` worldbook rail grows to five rows — **V The Dynasties**
+with numeral/East-Asian-friendly copy; two keys (`worldBookDynasties`,
+`worldBookDynastiesNote`) natively authored in all six locales; population 4,860 uniform;
+the arrow, typography, gap and muted styling of the other four unchanged. tsc clean;
+qa-i18n-literals 9/9; qa-unused-keys floor-0 held (the keys are read by the home page itself).
+
+**Not claimed.** That the worldbook stay closed at five — it grows each time a door lands.
+That anything on this path touched the world data, the contract, or the plane; it is a
+homepage-only change.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
