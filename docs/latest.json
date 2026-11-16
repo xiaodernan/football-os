@@ -1,11 +1,11 @@
 {
-  "head": "155ca75",
-  "total_commits": 1175,
-  "milestone": "§222",
-  "milestone_full": "§222 — the worldbook rail grows its fifth; Item 91",
+  "head": "9d92b11",
+  "total_commits": 1178,
+  "milestone": "§223",
+  "milestone_full": "§223 — the concise manual grows its glossary; nine red runs cured in line",
   "pushed_at": "2026-11-16",
   "screens": 83,
-  "assets": 196,
+  "assets": 198,
   "world_doors": 19,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T03:24:11.445Z"
+  "generated_at": "2026-11-16T03:36:06.819Z"
 }
