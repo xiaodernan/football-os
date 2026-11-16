@@ -9630,3 +9630,31 @@ needs) · `test_api_flow`, `test_rate_limit`, `test_model_ledger_resilience`, `t
 framework-independent, exactly what the knowledge page prescribes. That the front renders
 `graph_trace` — it does not yet; surfacing it on a panel is the obvious next front. That the bound
 exercised itself in this arc — it did not; it is the promise the next adversarial test will charge.
+
+## §268 — Item 128: the 125 red named; the championLinesLede sentence freshens in zh/zh-TW; the runner's queue quoted verbatim
+
+**Runner output, verbatim, this window:**
+
+| run | item | outcome |
+| --- | --- | --- |
+| `43925129367` | Item 123 — seven forgotten cups | **success** (24m13s) |
+| `43945458911` | Item 124 — freshness cure | **success** (37m02s) |
+| `43944619144` | fact pack (7ea85bb) | **success** (24m39s) |
+| `43945547626` | fact pack (217510b) | **success** (29m37s) |
+| `43954056082` | Item 126 — the Real Book speaks | **success** (29m05s) |
+| `43954105422` | fact pack (6f9a844) | **success** (22m39s) |
+| `43949518485` | fact pack (470eb40) | **success** (34m40s) |
+| `43949454613` | Item 125 — Uruguay 1930 | **failure**: `web: Translation-freshness gate` — `worldHonours.championLinesLede` (en changed, zh/zh-TW unchanged) |
+| `43959944293` | fact pack / Item 127 | in flight |
+
+**Cure.** Both Chinese catalogues carry the sentence in genuinely new wording — «每届冠军都只在本产品
+所收录的赛事里结算——这是这个产品自己的算法，而不是一部世界足球史。» (and its Traditional Legislative
+form) — measured freshness 5/5 against the runner's `QA_BASELINE_COMMIT=217510bf`.
+
+**Measured on this tree:** `qa-translation-quality` 9/9 · `qa-shared-keys` 4/4 · `qa-key-drift` 4/4 ·
+`qa-locale-tokens` 7/7 · `qa-unused-keys` 3/3 · `qa-icu-messages` 2/2 · `qa-locale-completeness` 2/2 ·
+`qa-i18n-literals` 9/9.
+
+**Not claimed.** That the runner prints this cure green before it has run; that anything about the
+original English sentence's own meaning needed defending — it still says what it always said; what
+moved is the locales, deliberately, all the way.

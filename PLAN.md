@@ -4389,6 +4389,35 @@ typed Python against the product's own `Session` and envelope vocabulary, exactl
 page says ("the shape is the machine, not the library"); that the bound has ever fired on a live
 query — it is a promise, not a demonstration; that the front renders `graph_trace` — it does not yet.
 
+## Item 128 — the runner's 125 red named and cured in five tongues (landed 2026-11-17)
+
+**The red, verbatim from `43949454613`:**
+
+```
+api Tests (SQLite dev fallback)  => success
+web  Translation-freshness gate  => 1 stale zh translation(s):
+     worldHonours.championLinesLede: en="The reign counts for every tournament th" [changed earlier in Item 125] vs baseline (zh unchanged)
+     same for zh-TW.
+```
+
+**The cure.** Both `zh` and `zh-TW` carry a genuinely-new rendering — sports-world rewording, not
+synonym-shuffling:
+
+```
+zh: 每届冠军都只在本产品所收录的赛事里结算——这是这个产品自己的算法，而不是一部世界足球史。
+zh-TW: 每屆冠軍都只在本產品所收錄的賽事裡結算——這是這個產品自己的算法，而不是一部世界足球史。
+```
+
+`qa-translation-freshness` prints **5/5** against the runner's own baseline (`217510bf`); all translation
+gates stay green (`qa-translation-quality` 9/9 · `qa-shared-keys` 4/4 · `qa-key-drift` 4/4 ·
+`qa-locale-tokens` 7/7 · `qa-unused-keys` 3/3).
+
+**CI in this arc, recorded verbatim where it printed:** `43925129367` Item 123 success (24m13s) ·
+`43945458911` Item 124 success (37m02s) · `43945547626` fact pack, success (29m37s) ·
+`43954056082` Item 126 success (29m05s) · `43954105422` fact pack, success (22m39s) ·
+`43949454613` Item 125 failure — the red above, cured here · `43959944293` Item 127 in flight · the
+cure and the rest ride into the runner's own queue.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
