@@ -3529,6 +3529,27 @@ qa-i18n-literals 9/9; qa-unused-keys floor-0 held (the keys are read by the home
 That anything on this path touched the world data, the contract, or the plane; it is a
 homepage-only change.
 
+## Item 92 — the concise manual grows its glossary — eight words the world uses, explained plainly (landed 2026-11-16)
+
+**The gap.** The manual walked every door but never taught the world's own vocabulary. A reader
+landing on the Dynasties / Upsets / noise pages can now open the glossary and read what
+"overall", "xG", "seed", "streak" and "upset" actually mean — plainly, in their own language.
+
+**What landed.** `/manual` gains an Appendix slice with eight terms — `seed`, `tier-1`,
+`overall`, `xG`, `form`, `streak`, `upset`, `data_origin` — authored natively in all six
+locales. The gridding `.manual__glossary-*` block in `styles/manual.css` mirrors existing
+`.manual__*` family and ships one column on narrow screens.
+
+**Verification.** `tsc` clean; `qa-i18n-literals` 9/9 at **4,879-key** calls; catalogue population
+uniform at **4,879 × 6** across all catalogues; the page walks 200 in en and zh and carries the
+glossary markers (`Appendix` / `附录`; `overall`; `xG`; `data_origin`). README unchanged (the
+glossary slides under the existing coverage table count-move; the count moves with population:
+4,858 → 4,879 ×6, README recount 4,832/4,628 fr).
+
+**Not claimed.** That the glossary is exhaustive (eight words, not an infinite lexicon); that
+anything in it is fabricated (every term is the literal label the doors use on screen);
+that CI has printed this push green.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

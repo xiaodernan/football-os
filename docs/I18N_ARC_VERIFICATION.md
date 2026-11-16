@@ -8049,3 +8049,31 @@ land on their own runs and are not claimed here.
 **Not claimed.** That the CI prints anything on Item 91's push; that the worldbook stays at
 five if another world door lands; ADR-011 stands; the plane remains where it is (live on
 this host) at the time of writing.
+
+## §223 — the concise manual grows its glossary; nine red runs cured in line
+
+This arc landed Item 93 — the concise manual's **appendix**: eight words the world uses,
+explained plainly, natively authored in all six locales (population 4,858 → **4,879 × 6**;
+README recount 4,832 ×4 / 4,628 fr; `qa-i18n-literals` 9/9; `tsc` clean; verified live in en
+and zh dev render with the markers present — `overall`, `xG`, `data_origin`, `Appendix`).
+
+**Plan Items this window (88–93).** `**Item 88**` closed
+the jobs-observer plane arc. `**Item 89**` delivered the Dynasties door. `**Item 90**`
+brought the plane live end-to-end and printed 27/27 checks. `**Item 91**` grew the homepage worldbook rail in
+zh/en/etc. to the Dynasties chapter V. `**Item 92**` was composed (broadcasted in `5d1f980`)
+as the combined window. `**Item 93**` landed as `e74c88e`.
+
+**The red window (six more runs).** The `2fd1539` I001 ruff cure was the actual shipped fix for
+three completed red runs (`43794854202`, `43794941661`, `43794966620` — all api legs, identical
+I001), and `c84d595` for the two that hit the SHA-currency wording; the plane-arc runs
+`43797333930` and `43797567772` also printed red at the same I001, cured inside `2fd1539`
+before push. Per the ledger policy, none of the red runs was re-pinned, re-tagged or reworked;
+theCure was committed inside the tree each cure counted. The runner prints web/containers/
+services success on every one of these runs (the four legs do not fail green — they fail red,
+only on the api leg, only at the two cured root causes).
+
+**Fact pack** refreshes to §223 on master's head; the personal mirror receives the same bytes.
+**Not claimed.** That CI is currently green — the newest runs' api legs need to finish printing
+to know which side of the cures the runner is on; the only verified green runs of this window
+are the older five `master = success` prints already on the ledger. ADR-011 stands (wkapi.pro
+still 403-insufficient quota / now HTTP 403 code 1010).
