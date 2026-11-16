@@ -9359,3 +9359,43 @@ fact pack.
 
 **Not claimed.** That the runner prints any leg of this item green before it has; that anyone
 should plan around this specific wording — every press produces a different rendering.
+
+## §261 — Item 121: the four forgotten cups land — 1970, 1974, 1978, 1982
+
+**The four new years, printed from the committed bytes, on every read:**
+
+| year | host | final | goals | venues | biggest win (computed) | scorers |
+| --- | --- | --- | --- | --- | --- | --- |
+| **1970** | Mexico | **Brazil 4–1 Italy** (Azteca) | 95 | 5 | Mexico 4–0 El Salvador | none |
+| **1974** | West Germany | **Netherlands 1–2 West Germany** (München) | 97 | 9 | Yugoslavia 9–0 Zaire | none |
+| **1978** | Argentina | **Netherlands 1–3 Argentina AET** (Buenos Aires) | 102 | 8 | West Germany 6–0 Mexico | none |
+| **1982** | Spain | **Italy 3–1 West Germany** (Santiago Bernabéu) | 146 | 18 | Hungary 10–1 El Salvador | none |
+
+**Honest silences.** None of the four files carries a scorer ledger; the doors return `scorers: []`
+the same way 2002/2006/2010/etc. do — every tile caption that needs a scorer is marked
+*curator knowledge* on its face, and no name is read from the file for a scorer we don't carry.
+
+**Curated facts this arc, for honesty (all labelled):**
+
+- **1970** — Pelé, Gérson, Jairzinho, Carlos Alberto; the Golden Boot was Gerd Müller (Germany).
+- **1974** — Grzegorz Lato, Poland; Golden Ball was Johan Cruyff. Report: *the wire says never a mention*.
+- **1978** — Kempes; Golden Ball was Kempes (he was the tournament, in every frame).
+- **1982** — Paolo Rossi; Golden Ball was Rossi with 6.
+
+All marked *curator knowledge* on every tile, never expressed as "from the file."
+
+**Catalogue re-pinned.** Population **5,202 ×6**; README (5,155 translations ×4 ·
+4,929 fr · 47+273 named identical tokens); fr gains six `chip1970-1982` named doublets — host
+cities "spelled the same in French" kept distinct from the translation tables.
+
+**Test recount.** The champions suite asserts fourteen entries; honours asserts sixteen; real-book
+asserts the exact finals by year; the six-year rep from 1986-2022 remains; new measured lists
+print exactly what the file gives. All 31 new door facts tests + real_book green.
+
+**Not claimed.** That the runner has printed anything green just from the amend — the currency
+tests accepts only HEAD; the new census lands via `latest.json` on this push; CI will witness its
+own journey. That the Champions door would be meaningful with only two more finals added.
+
+**Pointed directly at the goal.** The product prints every tournament the openfootball archive
+gives freely, with attribution, computed on every read. The next obvious frontier — 1930–1966 —
+waits in the same place.

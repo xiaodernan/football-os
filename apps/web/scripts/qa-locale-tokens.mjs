@@ -217,6 +217,10 @@ const FR_TOKENS = new Map([
   ["worldRealBook.chip1990", "the host venue's own name, spelled the same in French"],
   ["worldRealBook.chip1994", "the host venue's own name, spelled the same in French"],
   ["worldRealBook.chip1998", "the host venue's own name, spelled the same in French"],
+  ["worldRealBook.chip1970", "the host venue's own name, spelled the same in French"],
+  ["worldRealBook.chip1974", "the host venue's own name, spelled the same in French"],
+  ["worldRealBook.chip1978", "the host venue's own name, spelled the same in French"],
+  ["worldRealBook.chip1982", "the host venue's own name, spelled the same in French"],
   // The host cities of the 2002/2006/2010 World Cups are spelled the same in French.
   ["worldRealBook.chip2002", "the host city's own name, spelled the same in French"],
   ["worldRealBook.chip2006", "the host city's own name, spelled the same in French"],

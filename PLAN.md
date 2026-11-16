@@ -4127,6 +4127,44 @@ private GET 104), SHA `9ec10dd6cacb2a57fed5720fba7556e64935dc4e5a6cca96caedd35ca
 should expect the same answer every press — the coach is instructed to answer the reader, not to
 repeat itself.
 
+## Item 121 — the 1970–1984 cup years join the Real Book: Ver. IV through VII complete (landed 2026-11-17)
+
+**The gap.** The door carried 1986–2022 WCs and the two recent Euros — the older 70s/80s era was
+still missing from the product's curated prose and fixture list, even though the snapshots are
+byte-fetchable and CC-BY 4.0.
+
+**What landed.**
+
+- `openfootball-worldcup-1970.json` (32 matches / 5 venues / 95 goals),
+  `-1974.json` (38 matches / 9 venues / 97 goals),
+  `-1978.json` (38 matches / 8 venues / 102 goals),
+  `-1982.json` (52 matches / 18 venues / 146 goals) — all unmodified snapshots.
+- Registry entries, curated facts and finals: **Brazil 4–1 Italy** (Azteca),
+  **Netherlands 1–2 West Germany** (München), **Netherlands 1–3 Argentina AET** (Buenos Aires),
+  **Italy 3–1 West Germany** (Santiago Bernabéu).
+- The composite scoring model applies cleanly to the 32–52-match era; scorer silence carries
+  through; the champion-lines streak extends; GOALS_PER_MATCH now ≥2.58 for 1970 and ≥2.4 for
+  the rest.
+- The `/world/real-book` tab set grows to sixteen-plus-Euro; the `/world/honours` spine grows to
+  sixteen rows; the `/world/champions` comparison grows to fourteen.
+- OG cards updated to 16 tournaments.
+- Catalogue population **5,202 ×6** (README re-pinned 5,155 / 4,929 / 47/273 fr doublets).
+
+**Curatorial honesty preserved.** The four new cups are tagged `skip_scorers: true`; the door
+surfaces no table it does not hold; the final round-games (especially '78 5–0 systems of 36→'82 52)
+match the file exactly.
+
+**Gates re-measured on this tree:** ruff clean · `mypy app` **202/202** · pytest door suites
+**31/31** · tsc clean · full web gate battery green (`qa-icu-messages` 2/2 · `qa-i18n-literals`
+9/9 · `qa-translation-quality` 9/9 · `qa-unused-keys` 3/3 · `qa-key-drift` 4/4 at ceiling 116 ·
+`qa-locale-tokens` 7/7 (269+4 named fr doublets)).
+
+**Contract unchanged:** **249 paths / 316 operations / 99 schemas**; `AUDIT_FIGURES` unchanged
+(249/90/67). No routes were added; only content deepened.
+
+**Not claimed.** That the runner printed anything green for this item before it has; that the
+FIFA estimates one detail wrong (the door prints the file's own bytes).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

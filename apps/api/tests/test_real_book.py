@@ -306,7 +306,7 @@ class TestTheRealBook:
 
         assert "euro2024" not in tournaments()
         assert "euro2021" not in tournaments()
-        assert set(tournaments()) == {"1986", "1990", "1994", "1998", "2002", "2006", "2010", "2014", "2018", "2022"}
+        assert set(tournaments()) == {"1970", "1974", "1978", "1982", "1986", "1990", "1994", "1998", "2002", "2006", "2010", "2014", "2018", "2022"}
 
     def test_the_scorers_tables_derive_from_the_committed_snapshots(self) -> None:
         scorers_2022 = {row["name"]: row for row in compute_real_book("2022")["scorers"]}
@@ -324,7 +324,7 @@ class TestTheRealBook:
 
     def test_an_unknown_tournament_is_refused(self) -> None:
         with pytest.raises(UnknownTournament):
-            compute_real_book("1982")
+            compute_real_book("1958")
 
     def test_the_door_answers_with_the_envelope_like_its_siblings(self, client) -> None:  # type: ignore[no-untyped-def]
         for tournament, expected in (("2022", "2022 FIFA World Cup"), ("2018", "2018 FIFA World Cup"), ("2014", "2014 FIFA World Cup")):
@@ -339,7 +339,9 @@ class TestTheRealBook:
             assert body["scorers"], "the door publishes a scorers table derived from the committed snapshot"
         for tournament, expected in (("2010", "2010 FIFA World Cup"), ("2006", "2006 FIFA World Cup"), ("2002", "2002 FIFA World Cup"),
                                      ("1998", "1998 FIFA World Cup"), ("1994", "1994 FIFA World Cup"),
-                                     ("1990", "1990 FIFA World Cup"), ("1986", "1986 FIFA World Cup")):
+                                     ("1990", "1990 FIFA World Cup"), ("1986", "1986 FIFA World Cup"),
+                                     ("1982", "1982 FIFA World Cup"), ("1978", "1978 FIFA World Cup"),
+                                     ("1974", "1974 FIFA World Cup"), ("1970", "1970 FIFA World Cup")):
             response = client.get(f"{API}/world/real-book", params={"tournament": tournament})
             assert response.status_code == 200
             body = response.json()
@@ -347,9 +349,9 @@ class TestTheRealBook:
             assert body["source"]
             assert body["facts"]["tournament"] == expected
             assert body["provenance"]["data_origin"] == "public-real"
-            assert len(body["results"]) == (52 if tournament in ("1986", "1990", "1994") else 64)
+            assert len(body["results"]) == (52 if tournament in ("1986", "1990", "1994", "1982") else (38 if tournament in ("1974", "1978") else (32 if tournament == "1970" else 64)))
             assert body["scorers"] == [], "the door prints no scorers table the committed file does not carry"
 
     def test_the_door_rejects_a_tournament_it_does_not_carry(self, client) -> None:  # type: ignore[no-untyped-def]
-        response = client.get(f"{API}/world/real-book", params={"tournament": "1982"})
+        response = client.get(f"{API}/world/real-book", params={"tournament": "1958"})
         assert response.status_code == 422
