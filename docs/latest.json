@@ -1,8 +1,8 @@
 {
-  "head": "e3277af",
-  "total_commits": 1237,
-  "milestone": "§252",
-  "milestone_full": "§252 — Item 112: VIII lands on the rail; the tutorial and home tell the door's true name",
+  "head": "a4eb1bb",
+  "total_commits": 1239,
+  "milestone": "§253",
+  "milestone_full": "§253 — Item 113: the book never says 2022 where it means the book",
   "pushed_at": "2026-11-16",
   "screens": 88,
   "assets": 200,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T13:55:33.659Z"
+  "generated_at": "2026-11-16T14:07:10.883Z"
 }
