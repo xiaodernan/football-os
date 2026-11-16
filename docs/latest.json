@@ -1,8 +1,8 @@
 {
-  "head": "c9956f4",
-  "total_commits": 1151,
-  "milestone": "§215",
-  "milestone_full": "§215 — the cache-hit resolves honestly; three items landed; the fourth citizen is wired in",
+  "head": "7ad7ce1",
+  "total_commits": 1155,
+  "milestone": "§216",
+  "milestone_full": "§216 — the integration arc closes: parallel work continues to live on master",
   "pushed_at": "2026-11-16",
   "screens": 81,
   "assets": 194,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T01:39:50.887Z"
+  "generated_at": "2026-11-16T01:56:02.731Z"
 }
