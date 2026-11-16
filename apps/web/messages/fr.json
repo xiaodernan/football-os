@@ -2912,7 +2912,9 @@
     "worldBookRecords": "Le livre des records",
     "worldBookRecordsNote": "les huit marques que le monde a gagnées",
     "worldBookXi": "Le Onze du monde",
-    "worldBookXiNote": "les onze que le monde alignerait au coup d'envoi"
+    "worldBookXiNote": "les onze que le monde alignerait au coup d'envoi",
+    "worldBookDynasties": "Les Dynasties",
+    "worldBookDynastiesNote": "le registre des séries — les plus longs règnes et les plus longues séries d’invincibilité"
   },
   "careerDetail": {
     "academyEyebrow": "une classe de {count} à ou sous {ceiling}, jugée par les onze suivants du moteur",

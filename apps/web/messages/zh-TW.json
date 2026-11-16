@@ -2912,7 +2912,9 @@
     "worldBookRecords": "紀錄簿",
     "worldBookRecordsNote": "八個這個世界真正打出來的紀錄",
     "worldBookXi": "世界首發十一人",
-    "worldBookXiNote": "首發就是世界自己挑出來的這十一人"
+    "worldBookXiNote": "首發就是世界自己挑出來的這十一人",
+    "worldBookDynasties": "王朝登記冊",
+    "worldBookDynastiesNote": "連串名冊——頂級聯賽最長連勝與最長不敗之旅"
   },
   "careerDetail": {
     "academyEyebrow": "現役陣容中 {ceiling} 歲及以下的 {count} 人，由引擎的下一個十一人裁決",

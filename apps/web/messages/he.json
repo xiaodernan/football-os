@@ -2912,7 +2912,9 @@
     "worldBookRecords": "ספר השיאים",
     "worldBookRecordsNote": "שמונת הסימנים שהעולם הרוויח",
     "worldBookXi": "האחת-עשרה של העולם",
-    "worldBookXiNote": "האחת-עשרה שהעולם יציב במגרש קודם כול"
+    "worldBookXiNote": "האחת-עשרה שהעולם יציב במגרש קודם כול",
+    "worldBookDynasties": "השושלות",
+    "worldBookDynastiesNote": "מגילת הרצפים — הניצחונות העוקבים הארוכים והרצפים בלי הפסד בליגת העל"
   },
   "careerDetail": {
     "academyEyebrow": "מחזור של {count} בגיל {ceiling} ומטה, נשפט לפי האחד-עשר הבא של המנוע",

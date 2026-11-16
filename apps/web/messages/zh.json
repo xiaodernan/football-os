@@ -2912,7 +2912,9 @@
     "worldBookRecords": "纪录簿",
     "worldBookRecordsNote": "八个这个世界真正打出来的纪录",
     "worldBookXi": "世界首发十一人",
-    "worldBookXiNote": "首发就是世界自己挑出来的这十一人"
+    "worldBookXiNote": "首发就是世界自己挑出来的这十一人",
+    "worldBookDynasties": "王朝登记册",
+    "worldBookDynastiesNote": "连串名册——顶级联赛最长连胜与最长不败之旅"
   },
   "careerDetail": {
     "academyEyebrow": "现役阵容中 {ceiling} 岁及以下的 {count} 人，由引擎的下一个十一人裁决",

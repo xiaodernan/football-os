@@ -2912,7 +2912,9 @@
     "worldBookRecords": "كتاب السجلات",
     "worldBookRecordsNote": "العلامات الثماني التي امتلكها العالم",
     "worldBookXi": "تشكيلة العالم",
-    "worldBookXiNote": "الإحدى عشر التي سيبدأ بها العالم"
+    "worldBookXiNote": "الإحدى عشر التي سيبدأ بها العالم",
+    "worldBookDynasties": "السلالات",
+    "worldBookDynastiesNote": "سجل السلاسل — أطول انتصارات الدرجة الأولى وأطول سلاسلها بلا هزيمة"
   },
   "careerDetail": {
     "academyEyebrow": "فوج من {count} في {ceiling} أو دونها، يقيّمها الأحد عشر التالية للمحرك",

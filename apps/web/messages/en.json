@@ -2912,7 +2912,9 @@
     "worldBookRecords": "The Record Book",
     "worldBookRecordsNote": "the eight marks the world truly earned",
     "worldBookXi": "The World's XI",
-    "worldBookXiNote": "the eleven this world would send out first"
+    "worldBookXiNote": "the eleven this world would send out first",
+    "worldBookDynasties": "The Dynasties",
+    "worldBookDynastiesNote": "the streak ledger — the longest reigns and unbeaten runs in tier-1, straight from the rows"
   },
   "careerDetail": {
     "academyEyebrow": "a class of {count} at or under {ceiling}, judged by the engine's next eleven",
