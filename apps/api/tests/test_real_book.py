@@ -25,7 +25,7 @@ class TestTheRealBook:
         assert facts["total_matches"] == 64
         assert facts["venues"] == 8
         # 48 + 8 + 4 + 2 + 1 + 1 = 64
-        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"] == 64
         assert facts["champion"]["name"] == "Argentina"
         assert facts["final"]["home"] == "Argentina"
         assert facts["final"]["away"] == "France"
@@ -47,7 +47,7 @@ class TestTheRealBook:
         assert facts["tournament"] == "2018 FIFA World Cup"
         assert facts["total_matches"] == 64
         assert facts["venues"] == 13
-        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
         assert facts["champion"]["name"] == "France"
         assert facts["final"]["home"] == "France"
         assert facts["final"]["away"] == "Croatia"
@@ -69,7 +69,7 @@ class TestTheRealBook:
         assert facts["tournament"] == "2014 FIFA World Cup"
         assert facts["total_matches"] == 64
         assert facts["venues"] == 12
-        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
         assert facts["champion"]["name"] == "Germany"
         assert facts["final"]["home"] == "Germany"
         assert facts["final"]["away"] == "Argentina"
@@ -129,7 +129,7 @@ class TestTheRealBook:
         assert facts["tournament"] == "2010 FIFA World Cup"
         assert facts["total_matches"] == 64
         assert facts["venues"] == 10
-        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
         assert facts["champion"]["name"] == "Spain"
         assert facts["final"]["home"] == "Netherlands"
         assert facts["final"]["away"] == "Spain"
@@ -149,7 +149,7 @@ class TestTheRealBook:
         assert facts["tournament"] == "2006 FIFA World Cup"
         assert facts["total_matches"] == 64
         assert facts["venues"] == 12
-        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
         assert facts["champion"]["name"] == "Italy"
         assert facts["final"]["home"] == "Italy"
         assert facts["final"]["away"] == "France"
@@ -169,7 +169,7 @@ class TestTheRealBook:
         assert facts["tournament"] == "2002 FIFA World Cup"
         assert facts["total_matches"] == 64
         assert facts["venues"] == 20
-        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
         assert facts["champion"]["name"] == "Brazil"
         assert facts["final"]["home"] == "Germany"
         assert facts["final"]["away"] == "Brazil"
@@ -179,6 +179,83 @@ class TestTheRealBook:
         assert facts["biggest_win"]["matchday_date"] == "2002-06-01"
         assert facts["goals_scored"] == 161
         # The snapshot transcribes fixtures and scorelines, not scorer lists.
+        assert result["scorers"] == []
+
+    def test_1998_prints_its_own_arithmetic_and_its_silence(self) -> None:
+        result = compute_real_book("1998")
+        assert result["available"] is True
+        assert result["tournament"] == "1998"
+        facts = result["facts"]
+        assert facts["tournament"] == "1998 FIFA World Cup"
+        assert facts["total_matches"] == 64
+        assert facts["venues"] == 10
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
+        assert facts["champion"]["name"] == "France"
+        assert facts["final"]["home"] == "Brazil"
+        assert facts["final"]["away"] == "France"
+        assert facts["final"]["score_regular"] == [0, 3]
+        assert facts["has_penalties"] is False
+        assert facts["biggest_win"]["match"] == "Spain 6-1 Bulgaria"
+        assert facts["biggest_win"]["matchday_date"] == "1998-06-24"
+        assert facts["goals_scored"] == 171
+        assert result["scorers"] == []
+
+    def test_1994_prints_its_own_arithmetic_and_its_silence(self) -> None:
+        result = compute_real_book("1994")
+        assert result["available"] is True
+        assert result["tournament"] == "1994"
+        facts = result["facts"]
+        assert facts["tournament"] == "1994 FIFA World Cup"
+        assert facts["total_matches"] == 52
+        assert facts["venues"] == 9
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
+        assert facts["champion"]["name"] == "Brazil"
+        assert facts["final"]["home"] == "Brazil"
+        assert facts["final"]["away"] == "Italy"
+        assert facts["final"]["score_penalties"] == [3, 2]
+        assert facts["has_penalties"] is True
+        assert facts["biggest_win"]["match"] == "Russia 6-1 Cameroon"
+        assert facts["biggest_win"]["matchday_date"] == "1994-06-28"
+        assert facts["goals_scored"] == 141
+        assert result["scorers"] == []
+
+    def test_1990_prints_its_own_arithmetic_and_its_silence(self) -> None:
+        result = compute_real_book("1990")
+        assert result["available"] is True
+        assert result["tournament"] == "1990"
+        facts = result["facts"]
+        assert facts["tournament"] == "1990 FIFA World Cup"
+        assert facts["total_matches"] == 52
+        assert facts["venues"] == 14
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
+        assert facts["champion"]["name"] == "West Germany"
+        assert facts["final"]["home"] == "West Germany"
+        assert facts["final"]["away"] == "Argentina"
+        assert facts["final"]["score_regular"] == [1, 0]
+        assert facts["has_penalties"] is False
+        assert facts["biggest_win"]["match"] == "United States 1-5 Czechoslovakia"
+        assert facts["biggest_win"]["matchday_date"] == "1990-06-10"
+        assert facts["goals_scored"] == 115
+        # The snapshot transcribes goal minutes only for eight entries in five matches.
+        assert result["scorers"] == []
+
+    def test_1986_prints_its_own_arithmetic_and_its_silence(self) -> None:
+        result = compute_real_book("1986")
+        assert result["available"] is True
+        assert result["tournament"] == "1986"
+        facts = result["facts"]
+        assert facts["tournament"] == "1986 FIFA World Cup"
+        assert facts["total_matches"] == 52
+        assert facts["venues"] == 12
+        assert sum(r["matches"] for r in facts["final_rounds"]) == facts["total_matches"]
+        assert facts["champion"]["name"] == "Argentina"
+        assert facts["final"]["home"] == "Argentina"
+        assert facts["final"]["away"] == "West Germany"
+        assert facts["final"]["score_regular"] == [3, 2]
+        assert facts["has_penalties"] is False
+        assert facts["biggest_win"]["match"] == "Soviet Union 6-0 Hungary"
+        assert facts["biggest_win"]["matchday_date"] == "1986-06-02"
+        assert facts["goals_scored"] == 132
         assert result["scorers"] == []
 
     def test_the_scorers_tables_derive_from_the_committed_snapshots(self) -> None:
@@ -197,7 +274,7 @@ class TestTheRealBook:
 
     def test_an_unknown_tournament_is_refused(self) -> None:
         with pytest.raises(UnknownTournament):
-            compute_real_book("1994")
+            compute_real_book("1982")
 
     def test_the_door_answers_with_the_envelope_like_its_siblings(self, client) -> None:  # type: ignore[no-untyped-def]
         for tournament, expected in (("2022", "2022 FIFA World Cup"), ("2018", "2018 FIFA World Cup"), ("2014", "2014 FIFA World Cup")):
@@ -210,7 +287,9 @@ class TestTheRealBook:
             assert body["provenance"]["data_origin"] == "public-real"
             assert len(body["results"]) == 64
             assert body["scorers"], "the door publishes a scorers table derived from the committed snapshot"
-        for tournament, expected in (("2010", "2010 FIFA World Cup"), ("2006", "2006 FIFA World Cup"), ("2002", "2002 FIFA World Cup")):
+        for tournament, expected in (("2010", "2010 FIFA World Cup"), ("2006", "2006 FIFA World Cup"), ("2002", "2002 FIFA World Cup"),
+                                     ("1998", "1998 FIFA World Cup"), ("1994", "1994 FIFA World Cup"),
+                                     ("1990", "1990 FIFA World Cup"), ("1986", "1986 FIFA World Cup")):
             response = client.get(f"{API}/world/real-book", params={"tournament": tournament})
             assert response.status_code == 200
             body = response.json()
@@ -218,9 +297,9 @@ class TestTheRealBook:
             assert body["source"]
             assert body["facts"]["tournament"] == expected
             assert body["provenance"]["data_origin"] == "public-real"
-            assert len(body["results"]) == 64
+            assert len(body["results"]) == (52 if tournament in ("1986", "1990", "1994") else 64)
             assert body["scorers"] == [], "the door prints no scorers table the committed file does not carry"
 
     def test_the_door_rejects_a_tournament_it_does_not_carry(self, client) -> None:  # type: ignore[no-untyped-def]
-        response = client.get(f"{API}/world/real-book", params={"tournament": "1994"})
+        response = client.get(f"{API}/world/real-book", params={"tournament": "1982"})
         assert response.status_code == 422

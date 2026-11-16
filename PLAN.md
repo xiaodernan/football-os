@@ -3837,6 +3837,48 @@ openfootball archive our other three come from; nothing about them needs synthes
 2006/2010 totals recur in any FIFA print (the source's own arithmetic is printed, attribution
 included).
 
+## Item 109 — the Real Book, Vols. VII–X: 1986–1998 join the six (landed 2026-11-16)
+
+**The gap.** The door held 2002–2022. The openfootball archive carries every World Cup since
+**1986** (Mexico at Azteca), and those four cups complete the modern era's own hard-line:
+Mexico 1986 · Italy 1990 (24-team era, 52 matches) · USA 1994 (52 matches) · France 1998 (the
+first 32-team cup, 64 matches) — all now carried.
+
+**What landed.** Ten CC-BY snapshots side by side under one door pattern.
+
+- The 1986 cup (**Argentina 3–2 West Germany at Estadio Azteca**; **Italy 1990 1–0 Argentina,
+  Brehme 85'**; **Brazil 1994 0–0 Italy, 3–2 pens at the Rose Bowl**; **France 1998 3–0 Brazil at
+  Stade de France**) — every one of their venue and scoreline facts computed from the committed
+  bytes (132 / 115 / 141 / 171 goals; 52 / 52 / 52 / 64 matches).
+- **Honest silence, held.** 1990's snapshot carries eight scorer entries for five matches and nothing
+  else; 1986/1994/1998 carry none. The doors print zero scorers for the four cups; the curator
+  knowledge on the tiles (Maradona's 1986 Golden Ball, Schillaci's 1990 Golden Ball, Romário's
+  1994 Golden Ball, Ronaldo's 1998 Golden Ball, Lineker's 1986 Boot, Baggio's 1994 final miss)
+  is printed as curator knowledge, labelled.
+- `/world/real-book` now carries **ten tabs** in reverse-chronological order; the winner side is
+  computed from data; the scorers tiles print only where the committed file carries scorer rows.
+- `/world/champions` graduates to **ten side by side**; the OG card prints all ten years;
+  the merged scorers ledger keeps the three scorer-bearing cups (2014/2018/2022) and nothing else.
+- Contract SHA re-exported: **246 paths / 313 operations / 99 schemas unchanged**, now carrying
+  `?tournament=1986|1990|1994|1998|2002|2006|2010|2014|2018|2022`; re-pinned through the three
+  ledgers; `AUDIT_FIGURES` unchanged (the door's count of routes did not move).
+- Catalogue population **5,112 ×6**; fr gains four named doublets (Azteca/Olimpico/Pasadena/Saint-Denis —
+  the venues'/cities' own names, spelled the same in French); README re-pinned
+  (5,065 zh/zh-TW/ar/he · **4,854** fr · 47/258 named identical tokens).
+- `unknown_tournament` now reads "The Real Book carries **1986, 1990, 1994, 1998, 2002, 2006,
+  2010, 2014, 2018 and 2022.**" — API and catalogue moved together or not at all.
+
+**Verified on this host:** ruff clean · `mypy app` **199/199** · pytest door suites **43/43** ·
+tsc clean · all web gates green (`qa-locale-tokens` 7/7 · `qa-translation-quality` 9/9 ·
+`qa-key-drift` 4/4 · `qa-shared-keys` 4/4 · `qa-metadata-title` 253/253 · `qa-crawl-policy` 9/9 ·
+`qa-i18n-literals` 9/9 · `qa-token-drift` 4/4 · `qa-unused-keys` 3/3 · `qa-plural-select` 7/7 ·
+`qa-locale-completeness` 2/2 · `qa-icu-messages` 2/2 · `qa-icu-coverage` 1/1 ·
+`qa-namespace-ownership` 2/2 · `qa-locale-wiring` 8/8).
+
+**Not claimed.** That the runner has printed any leg of this item green; that any figure above
+is live (all are committed-byte computed); that the six-rotating chip grid renders identically at
+every viewport (the `realbook__switch` grid wraps; verified only as bytes, not walks).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

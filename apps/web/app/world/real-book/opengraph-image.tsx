@@ -8,7 +8,7 @@ export const contentType = "image/png";
 export const dynamic = "force-static";
 
 const kicker = enMessages.worldRealBook.eyebrow.toUpperCase();
-const ground = "LUSAIL";
+const ground = "1986 — 2022";
 
 const BG = "#10151a";
 const PAPER = "#f0ede6";
@@ -43,10 +43,8 @@ export default function RealBookOpenGraphImage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={{ display: "flex", alignItems: "baseline", fontSize: 150, fontWeight: 800, color: PAPER, lineHeight: 0.95, letterSpacing: "-0.03em" }}>
-            3
-            <span style={{ fontSize: 80, color: GOLD }}>–</span>
-            3
+          <div style={{ display: "flex", alignItems: "baseline", fontSize: 170, fontWeight: 800, color: PAPER, lineHeight: 0.95, letterSpacing: "-0.03em" }}>
+            10
           </div>
           <div style={{ height: 3, background: GOLD, width: "34%" }} />
         </div>

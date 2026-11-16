@@ -198,6 +198,11 @@ const FR_TOKENS = new Map([
   ["history.xpAmount", "the game's own coin"],
   ["training.xpAwarded", "the game's own coin"],
   ["coach.statXp", "the game's own coin"],
+  // The host cities of the 1986/1990/1994/1998 World Cups are spelled the same in French.
+  ["worldRealBook.chip1986", "the host venue's own name, spelled the same in French"],
+  ["worldRealBook.chip1990", "the host venue's own name, spelled the same in French"],
+  ["worldRealBook.chip1994", "the host venue's own name, spelled the same in French"],
+  ["worldRealBook.chip1998", "the host venue's own name, spelled the same in French"],
   // The host cities of the 2002/2006/2010 World Cups are spelled the same in French.
   ["worldRealBook.chip2002", "the host city's own name, spelled the same in French"],
   ["worldRealBook.chip2006", "the host city's own name, spelled the same in French"],

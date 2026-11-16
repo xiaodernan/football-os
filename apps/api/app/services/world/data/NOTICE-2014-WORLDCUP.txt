@@ -1,10 +1,15 @@
-﻿openfootball worldcup.json — the 2002, 2006, 2010, 2014, 2018 and 2022 FIFA World Cups
+﻿openfootball worldcup.json — the 1986–2022 FIFA World Cups
 
 The files beside this notice are unmodified copies of the openfootball community's
-`worldcup.json` for the 2002, 2006, 2010, 2014, 2018 and 2022 FIFA World Cups.
+`worldcup.json` for the 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018 and 2022
+FIFA World Cups.
 
 Source:   https://github.com/openfootball/worldcup.json
-Files:    https://raw.githubusercontent.com/openfootball/worldcup.json/master/2002/worldcup.json
+Files:    https://raw.githubusercontent.com/openfootball/worldcup.json/master/1986/worldcup.json
+          https://raw.githubusercontent.com/openfootball/worldcup.json/master/1990/worldcup.json
+          https://raw.githubusercontent.com/openfootball/worldcup.json/master/1994/worldcup.json
+          https://raw.githubusercontent.com/openfootball/worldcup.json/master/1998/worldcup.json
+          https://raw.githubusercontent.com/openfootball/worldcup.json/master/2002/worldcup.json
           https://raw.githubusercontent.com/openfootball/worldcup.json/master/2006/worldcup.json
           https://raw.githubusercontent.com/openfootball/worldcup.json/master/2010/worldcup.json
           https://raw.githubusercontent.com/openfootball/worldcup.json/master/2014/worldcup.json
@@ -15,17 +20,18 @@ Licence:  Creative Commons Attribution 4.0 International (CC-BY 4.0)
 
 Attribution (required by the licence, and given here): the match data, scores, goals and venues
 in these files were compiled by the openfootball project, an open-data football results archive.
-The figures this product prints from them (Korea & Japan 2002: the final at Yokohama, Germany the
-runners-up, 161 goals, 20 venues; Germany 2006: the final at the Olympiastadion, 147 goals,
-12 venues; South Africa 2010: the final at Soccer City, 145 goals, 10 venues;
-Brazil 2014: the final at Maracanã, 171 goals, 12 venues and the 1–7 semi-final; Russia 2018:
-the final at Luzhniki, 169 goals, 13 venues; Qatar 2022: the final at Lusail Iconic Stadium,
-172 goals, 8 venues) are derived from these files.
+The figures this product prints from them (Mexico 1986: 132 goals, 12 venues; Italy 1990: 115 goals,
+14 venues; United States 1994: 141 goals, 9 venues; France 1998: 171 goals, 10 venues; Korea & Japan
+2002: 161 goals, 20 venues; Germany 2006: 147 goals, 12 venues; South Africa 2010: 145 goals,
+10 venues; Brazil 2014: 171 goals, 12 venues and the 1–7 semi-final; Russia 2018: 169 goals,
+13 venues; Qatar 2022: 172 goals, 8 venues) are derived from these files.
 
-The 2002 and 2010 snapshots transcribe fixtures and scorelines without goal minutes or scorer
-lists; the 2006 snapshot carries goal minutes only for nine entries in four matches. This product
-does not merge or invent those rows: the doors print scorer tables only where the committed file
-carries one and label every scorer claim from curator knowledge otherwise.
+Scorer coverage in the archive varies by year: the 1990 file transcribes goal minutes for eight
+entries in five matches; the 1986, 1994, 1998, 2002, 2006 and 2010 files transcribe none. This
+product does not merge or invent scorer rows: it prints scorer tables only where the committed
+file carries one and labels every scorer claim from curator knowledge otherwise. The 1998 absence
+of a scorer list is the reason the final at Stade de France prints without a Golden Boot table;
+every scorer cell on this tour is honest about what the bytes carry.
 
 This product does not modify these files. Its synthetic world is a separate universe and shares
 none of these figures. Any discrepancy between these files and any other account of the

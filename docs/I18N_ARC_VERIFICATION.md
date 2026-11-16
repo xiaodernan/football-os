@@ -8964,3 +8964,54 @@ written; Item 108 (six World Cups, `67fdbb9` / fact-pack `392aea4`, runs `438720
 **Not claimed.** That Item 108's legs are green before they print. That this section exists to
 unblock anything — it exists so the runner's words sit in the same committed arc as the code
 they judge.
+
+## §247 — Item 109: ten World Cups — the 1986–1998 cups join the Real Book, and the honest silences hold
+
+**The ledger of snapshots, now complete for the modern era:**
+
+| cup | matches | goals | venues | the final | biggest margin (computed) |
+| --- | --- | --- | --- | --- | --- |
+| 2022 | 64 | 172 | 8 | Argentina 3–3 France, 4–2 pens | Spain 7–0 Costa Rica |
+| 2018 | 64 | 169 | 13 | France 4–2 Croatia | Russia 5–0 Saudi Arabia |
+| 2014 | 64 | 171 | 12 | Germany 1–0 Argentina AET | Brazil 1–7 Germany |
+| 2010 | 64 | 145 | 10 | Netherlands 0–1 Spain AET | Portugal 7–0 North Korea |
+| 2006 | 64 | 147 | 12 | Italy 1–1 France, 5–3 pens | Argentina 6–0 Serbia & Montenegro |
+| 2002 | 64 | 161 | 20 | Germany 0–2 Brazil | Germany 8–0 Saudi Arabia |
+| 1998 | 64 | 171 | 10 | Brazil 0–3 France | Spain 6–1 Bulgaria |
+| 1994 | 52 | 141 | 9 | Brazil 0–0 Italy, 3–2 pens | Russia 6–1 Cameroon |
+| 1990 | 52 | 115 | 14 | West Germany 1–0 Argentina | United States 1–5 Czechoslovakia |
+| 1986 | 52 | 132 | 12 | Argentina 3–2 West Germany | Soviet Union 6–0 Hungary |
+
+The 1986–1994 cups are the 24-team era: 52 matches, structured as 36 group + 8 R16 + 4 QF + 2 SF
++ 1 third-place + 1 final; 1998 opened the 32-team era with 64 matches. The catalogue of rounds
+per cup is printed from the file itself.
+
+**Honest silences, by evidence, not convenience.** 1990's snapshot carries scorer minutes for
+**eight entries in five matches**; 1986, 1994, 1998 carry none; 2002/2006/2010 already silent from
+§245. Every scorer-bearing final is catalogued as such (`skip_scorers` registry flag for 1990);
+curator knowledge (Maradona 1986, Schillaci 1990, Romário 1994, Ronaldo 1998 honors) is labelled.
+
+**Named reds cured in their own form this arc:**
+
+- `qa-locale-tokens`: four fr doublets adopted (Azteca/Olimpico/Pasadena/Saint-Denis — the
+  venues'/cities' own names, spelled the same in French), named in `FR_TOKENS`; fr identicals
+  **258** (was 254), translated **4,854** (was 4,846); population **5,112 ×6**; README re-pinned.
+- `qa-key-drift` held at ceiling **116** without a hand (the four opening sentences all carry
+  the year, all unique by construction).
+- `unknown_tournament` now reads **"The Real Book carries 1986, 1990, 1994, 1998, 2002, 2006,
+  2010, 2014, 2018 and 2022."** — API and catalogue moved together (`test_locale_claims` green).
+
+**Contract moved** (new query regex):
+SHA-256 `7b1e41d2f471a5cd36dd53b0b525d7d6dff785311a30e65ef0eb44a80398f742` — **246 paths /
+313 operations / 99 schemas unchanged**; secured 241 / public 72 / private GET 104; the three
+SHA ledgers re-pinned; `AUDIT_FIGURES` unchanged (the route census did not move). OG cards: real-book
+now prints the big **10** over `1986 — 2022`; champions prints every year 1986→2022.
+
+**Gates re-measured on this tree:** ruff clean · `mypy app` **199/199** · pytest door suites
+**43/43** · `tsc` clean · full web gate battery green (translation-quality 9/9 · key-drift 4/4 ·
+shared-keys 4/4 · locale-tokens 7/7 · unused-keys 3/3 · token-drift 4/4 · metadata-title 253/253 ·
+crawl-policy 9/9 · i18n-literals 9/9 · locale-wire 8/8).
+
+**Not claimed.** That the runner prints any leg of this item green before it has run — Item 108
+(spec-audit 21/21, six cups, factpack `392aea4`) ran into the queue ahead of this commit; the four
+greened leg-true prints for Item 107 stand in §246.

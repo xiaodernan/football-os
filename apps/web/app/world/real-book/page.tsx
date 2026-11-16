@@ -108,9 +108,12 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
 
   const { facts, provenance, results, scorers } = result.data;
   const days = groupByDay(results);
-  const active = ["2022", "2018", "2014", "2010", "2006", "2002"].includes(tournament) ? tournament : "2022";
-  const ledeKey = active === "2018" ? "lede2018" : active === "2014" ? "lede2014" : active === "2010" ? "lede2010" : active === "2006" ? "lede2006" : active === "2002" ? "lede2002" : "lede";
-  const openingKey = active === "2018" ? "opening2018" : active === "2014" ? "opening2014" : active === "2010" ? "opening2010" : active === "2006" ? "opening2006" : active === "2002" ? "opening2002" : "opening";
+  const order = ["2022", "2018", "2014", "2010", "2006", "2002", "1998", "1994", "1990", "1986"] as const;
+  const active = (order as readonly string[]).includes(tournament) ? (tournament as (typeof order)[number]) : "2022";
+  const ledes = { "2018": "lede2018", "2014": "lede2014", "2010": "lede2010", "2006": "lede2006", "2002": "lede2002", "1998": "lede1998", "1994": "lede1994", "1990": "lede1990", "1986": "lede1986" } as const;
+  const openings = { "2018": "opening2018", "2014": "opening2014", "2010": "opening2010", "2006": "opening2006", "2002": "opening2002", "1998": "opening1998", "1994": "opening1994", "1990": "opening1990", "1986": "opening1986" } as const;
+  const ledeKey = (ledes as Record<string, string>)[active] ?? "lede";
+  const openingKey = (openings as Record<string, string>)[active] ?? "opening";
   const hasScorers = scorers.length > 0;
   const homeWon =
     facts.final.score_regular[0] !== facts.final.score_regular[1]
@@ -128,7 +131,7 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
       />
 
       <nav className="realbook__switch" aria-label={t("eyebrow")}>
-        {(["2022", "2018", "2014", "2010", "2006", "2002"] as const).map((year) => (
+        {order.map((year) => (
           <Link key={year} href={`?tournament=${year}`} className={`realbook__chip${active === year ? " realbook__chip--active" : ""}`} aria-current={active === year ? "page" : undefined}>{t(`chip${year}` as "chip2022")}</Link>
         ))}
       </nav>
