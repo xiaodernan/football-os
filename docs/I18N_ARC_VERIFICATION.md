@@ -7940,3 +7940,41 @@ Item 88) prints its verdicts on the next pushes; the standing state of eleven re
 and this section record. That the jobs broker's queue has been drained by anything here (it has
 not — the only consumer-observer stopped with the smoke window closing). That the plane-walk has
 printed clean with the fifth citizen (it has not been executed in this window). ADR-011 stands.
+
+## §220 — the Dynasties land; eleven-plus-some-reds stand closed; the fact pack moves again
+
+Master continues its arc. This cycle landed **Item 89 — `/world/dynasties`** at `d9618dd`
+(the twenty-second public world door, 242 paths / 309 operations / public census 241/68/104,
+ROADMAP's audit sentence at 242/83/66, `/world/*` census 21, population 4,858 × 6,
+metadata-title 239/239 at population 83), and the whole verification chain ran green locally
+(completeness, ICU 2/2, translation-quality 9/9 after the "longest undefeated run" reword,
+tokens 7/7 after the FR "règnes" cure, crawl 9/9 at population 83, tsc clean, both currency
+gates will read the committed bytes).
+
+**The red window's eleven runs, cured and recorded.** §218+§219 recorded the eleven red pushes;
+this window also found the one-word `"is" → "was"` currency red (`43791106275`, `43791195583`)
+and cured it at `c84d595`. The eleven runs print the same three classes (wheelNote orphan ×6,
+loadtest B023/B007 ×9-ish across the six overlapping windows, SHA-currency ×2); every cure is
+its own commit (`a5963b8` wiring, `a469ec5` lint, `c84d595` wording) and nothing was re-pinned.
+The standing state: the runner's queue burns through the cures — verdicts honestly recorded
+when printed.
+
+**One arc end to end.** Both the Upset Register and the Dynasties ship through the same law:
+the door is real arithmetic on `real_matches`/`real_players` (never an LLM call, never stored
+state), the contract is re-exported and re-pinned through the three SHA ledgers with the census
+re-measured from the committed bytes (never retyped), the page renders live in all six locales,
+the tour and the index door grow in the same arc, and every gate red the arc triggers is cured
+inside the arc's own commit — the FR `"dynasties"` chip and the shared-sentence collision with
+`challenges.kvLongestUnbeaten` are recorded in Item 89, not hidden in passing.
+
+**Fact pack** refreshes to §220 on this push; the personal mirror receives the same bytes.
+
+**Commits this window (oldest → newest):** `7ad7ce1`, `7f5bfbc`, `91a9ac7` (loadtest),
+`10d0982` (table-shape cure), `a5963b8` (the Upset Register), `4037f46`, `9d01dbb`,
+`a469ec5` (ruff cure), `4ab631f` (§218), `c84d595` (SHA-currency cure), `0305f0b` (jobs-observer,
+Item 88), `5bc69e5` (§219 record), `b6b847f` (fact pack §218→§219 era), `d9618dd` (Item 89).
+
+**Not claimed.** That CI is currently green — the queue prints on the next runs; the eleven+ red
+runs stand as printed. That the runner has executed a fresh live probe — Run R/R+0 entries in
+the report state no execution; run O remains the last live run. That any streak or upset is a
+prophecy (they are records, not forecasts). ADR-011 stands.

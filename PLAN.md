@@ -3439,6 +3439,46 @@ product (the witness hint was deleted; the stream prints xlen 0 after cleanup). 
 observer drains anything the workers drain (it does not — independent group). That CI has
 printed this push green at the time of writing.
 
+## Item 89 — The Dynasties — the tier-1 streak ledger (`/world/dynasties`, the twenty-second door, landed 2026-11-16)
+
+**The gap.** The Noise Dossier graded the caller; the Upset Register honoured the underdog.
+Nothing kept the reigns — the world needed its own streak book.
+
+**What landed.** `apps/api/app/services/world/dynasties.py` (`compute_dynasties`): every
+completed tier-1 fixture scored W/D/L per club in kickoff order; win runs (≥2) and unbeaten
+runs (≥3) with provenance (length, kickoff dates, round labels); the five longest of each
+board; "currently ablaze" (longest *current* winning streak); no provider, nothing stored.
+Measured on the seed: longest win **3 — Quernmoor Town (MW4→6)**; longest unbeaten **8 —
+Elndera Naval (MW6→13)**; judged 56; ablaze = Dunstead Naval (2 in a row, 14 played).
+`GET /api/v1/world/dynasties` — public, `world_dynasties` bucket.
+
+**Contract moved deliberately.** `openapi.json` re-exported (**242 / 309 / 98**); SHA-256
+`78cdbeb18d73cd0be3dabbb6f41b908b0ed59130e09a82e899833f9d1ecd8cdd` re-pinned through the
+three ledgers; public census re-measured (241/68/104); Run R recorded (no fresh live probe).
+`AUDIT_FIGURES contract_paths=242 page_routes=83 migrations=66`; `/world/*` census **21**.
+
+**Web door.** Page + force-static OG card (the 8 as the whole subject), `--gold` palette,
+sitemap entry, `/world` index door, manual tour15, `worldDynasties` namespace natively
+authored ×6 (population **4,858 × 6**, README recount **4,811 ×4 / 4,607 fr**); namespace
+ownership declared.
+
+**Gates cured in the same arc (the two that bit).** `qa-locale-tokens`: the shared-sentence
+gate refused `statUnbeatenLabel` because the sentence already belonged to
+`challenges.kvLongestUnbeaten` and `careerDetail.rowUnbeaten` — it is now "Longest
+undefeated run" ×6 locales with distinct translations. `qa-translation-quality` /
+`qa-locale-tokens`: FR `sectionDynastiesChip` cannot be "dynasties" (identical to English
+without a named reason) — it is "règnes".
+
+**Verification.** API 4/4 (`test_world_dynasties.py` + envelope siblings); web gates green
+(completeness, ICU 2/2 at 4,858, quality 9/9, tokens 7/7, literals 9/9, unused-keys 3/3,
+drift 4/4, ownership 2/2, coverage 1/1, crawl 9/9, metadata-title 239/239 (population 83), table-shape
+120/120, rtl 8/8, tsc clean); live walk on :8793/:3212 with the markers both locales. Live
+witness of the whole seeded figure set recomputed-on-request.
+
+**Not claimed.** That any of this predicts anything (records, not calls); that CI has
+printed this push green; that the Dynasties door stays small if the world gains a second
+season (it will grow by arithmetic, not by authoring).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
