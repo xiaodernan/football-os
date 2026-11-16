@@ -8579,3 +8579,56 @@ therefore beautiful", which is exactly why the line-heights above are the delive
 page/element needs their eyes at their machine; this pass removed the one class of damage a
 byte-audit can name. Flicker/z-index collisions need element refs to confirm; no element was
 missed for want of trying, only for want of visibility.
+
+## §235 — Item 100: The Real Book grows a Volume II — the 2018 World Cup joins the door
+
+**The ask, answered to the byte.** The user repeated the brief that real data must sit inside this
+product: "尽可能加入一些联网搜索得到的真实数据、或者真实实验数据，而不要全部都是演示数据的堆砌".
+Item 94 landed the real 2022 World Cup as the world's first public-real door; Item 95 deepened it
+to every fixture and scorer printed from the committed snapshot. Item 100 does it again for
+**Russia 2018** — same source family (the openfootball project, CC-BY 4.0), same committed-byte
+discipline, no live fetch anywhere in the request path.
+
+**What the snapshot adds.** `apps/api/app/services/world/data/openfootball-worldcup-2018.json`
+— byte-for-byte the upstream file (25,333 bytes), beside its licence notice; the 2022 file and
+its notice stand unchanged.
+
+**What `compute_real_book("2018")` recomputes from the committed bytes:**
+
+- **64 fixtures**, every round from matchday 1 to the final;
+- **169 goals** on the field (penalties are shootouts, never counted);
+- **13 venues**;
+- the final: **France 4–2 Croatia** (2–1 HT), Luzhniki Stadium, Moscow, 2018-07-15;
+- the scorers table straight from the source's own names/minutes — **Kane 5** (two of them from
+  the spot), Cheryshev 4, Ronaldo 4 — printed as the source spells them, with the warning that
+  FIFA's official tally (6 for the Golden Boot) is curator knowledge, not this snapshot's
+  arithmetic;
+- the widest margin — **Russia 5–0 Saudi Arabia**, matchday 1, 2018-06-14 — computed, not asserted;
+- venues and the final's attendance: **none are claimed** (the snapshot prints what it holds;
+  a crowd count is not in this file, and where the number cannot be sourced, it is not printed);
+- the 2022 door is byte-identical in behaviour: `compute_real_book()` with no argument is the
+  default tournament.
+
+**The door.** `/world/real-book` carries a small two-chip switch — **2022 · 卢塞尔 / 盧塞爾 /
+لوسيل / לוסאיל / Lusail** — **2018 · 卢日尼基 / …** — with `aria-current` on the active one.
+The final panel renders the penalties chip only when the payload says the final went there
+(2018 did not); the attendance line renders only when the payload carries an attendance
+(2018 does not). Server-rendered; no client JavaScript; provenance badge unchanged on both tabs.
+
+**Contract & figures.** Re-exported: the real-book door gained a `tournament` query parameter
+(pattern `^(2018|2022)$`), so the bytes moved: SHA-256
+`b2ac23dd99546828de345bffbcec1e144399914f591c03abd0887f6df207fa58` (245 paths / 312 operations /
+99 schemas — counts unchanged). Re-pinned through the three ledgers and ROADMAP;
+`test_spec_audit_currency` + `test_security_probe_report_currency` 21/21 green; the 422 door for
+an unsupported tournament still answers.
+
+**Gates re-measured on this tree**: tsc clean · all locale gates green (the fr chips tripped the
+identical-to-English rule — cured with the honest French abbreviation `CdM 2022 · Lusail` /
+`CdM 2018 · Loujniki`; the population moved 5,040 ×6) · `qa-table-shape` 123/123 ·
+`qa-translation-quality` 9/9 after the curation of the two ar/he ledes out of the Latin word.
+
+**Not claimed.** That the 2018 door is a FIFA-endorsed record (it is the openfootball snapshot,
+cited, and it disagrees with FIFA's Golden Boot print on purpose by omission — no figure is
+printed that this snapshot does not hold); that the two tabs share a canonical URL split (they do
+not — `?tournament=` selects, the door is one door); or that anything here is live — the door
+reads a committed file at request time and never phones home.

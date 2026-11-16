@@ -4790,7 +4790,9 @@
     "tour16t": "The Tutorial",
     "tour16d": "the ten-seat table — ten doors, one good evening, your first hour here",
     "tour17t": "The Real Book",
-    "tour17d": "what the actual world printed in 2022 — Argentina at Lusail, by the numbers"
+    "tour17d": "what the actual world printed in 2022 — Argentina at Lusail, by the numbers",
+    "tour18t": "The Atlas",
+    "tour18d": "the whole world drawn as one constellation — every door on this page, found"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
@@ -5088,7 +5090,11 @@
     "thVenue": "venue",
     "aetChip": "AET",
     "penChip": "PEN {a}–{b}",
-    "snapshotNote": "the ledger is the committed snapshot of the openfootball worldcup.json, byte for byte — nothing on this page is fetched from the network at render time."
+    "snapshotNote": "the ledger is the committed snapshot of the openfootball worldcup.json, byte for byte — nothing on this page is fetched from the network at render time.",
+    "chip2022": "2022 · Lusail",
+    "chip2018": "2018 · Luzhniki",
+    "lede2018": "The real world's Russia, carried right inside this product — the 2018 World Cup, every figure passed on from the openfootball community, attribution included.",
+    "opening2018": "The real football world held its breath here, briefly, exactly this way."
   },
   "worldAtlas": {
     "metaTitle": "The Atlas — the world's doors, drawn once",

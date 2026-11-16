@@ -3653,6 +3653,19 @@ specific user has read it. That CI has printed this push green.
 
 **Verified on this host.** Web rebuilt; `/`, `/world/atlas`, `/admin` all walk 200 live. tsc clean. **Not claimed:** that every overlap the user sees is gone — the remaining ones need their eyes (the embedded browser cannot reach this host's container; from here only bytes are auditable). The public showcase (`football-os-web`) audited clean in-browser at 990px.
 
+## Item 100 — The Real Book, Volume II: the 2018 World Cup joins the door (landed 2026-11-16)
+
+**The gap.** The Real Book held one real tournament; the world holds seven (as of this writing, openfootball's file names 1930→2022). The 2018 Russian tournament is the same shape of public-real exhibit this door exists for — France's first World Cup in twenty years.
+
+**What landed.**
+
+- `data/openfootball-worldcup-2018.json` — byte-for-byte the openfootball file (CC-BY 4.0), beside `data/NOTICE-2018-WORLDCUP.txt` (both files' attribution now named in one notice).
+- `compute_real_book("2018")` — 64 fixtures, 169 on-field goals, 13 venues, the final at Luzhniki (France 4–2 Croatia, 2–1 HT), the scorers straight from the source (**Kane 5, two from the spot**; Cheryshev 4; Ronaldo 4), the widest margin (**Russia 5–0 Saudi Arabia**, Matchday 1, 2018-06-14) — computed, not asserted.
+- The door gained a two-chip switch (**2022 · Lusail / 2018 · Luzhniki**), localized in six languages including the French players' obvious `CdM`. Both tabs render from the same payload shape; the penalties chip and the attendance line render only when the payload carries them (2018 carries neither — no figure is printed that the snapshot does not hold).
+- Contract moved once, by the query parameter (`tournament ∈ {2018, 2022}`): SHA `b2ac23dd…07fa58`, re-pinned through the three ledgers; 245 paths / 312 operations / 99 schemas; secured 241 / public 71 / private GET 104; spec-audit currency suites 21/21.
+
+**Not claimed.** That the absence of the official attendance is a bug (it is the source's silence, printed as such); that the 2022 door changed; that the synthetic world moved an inch. The door is two real tournaments now; the next volumes can be added the same way, one snapshot at a time, with the licence honoured at every step.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

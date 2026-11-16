@@ -4790,7 +4790,9 @@
     "tour16t": "Le tutoriel",
     "tour16d": "la tablée des dix — dix portes, une belle soirée, votre première heure ici",
     "tour17t": "Le Vrai Livre",
-    "tour17d": "ce que le vrai monde a imprimé en 2022 — l'Argentine à Lusail, par les chiffres"
+    "tour17d": "ce que le vrai monde a imprimé en 2022 — l'Argentine à Lusail, par les chiffres",
+    "tour18t": "L'Atlas",
+    "tour18d": "tout le monde dessiné en une seule constellation — chaque porte de cette page y est"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -5088,7 +5090,11 @@
     "thVenue": "stade",
     "aetChip": "a.p.",
     "penChip": "TAB {a}–{b}",
-    "snapshotNote": "l'année imprimée ici est l'instantané du fichier worldcup.json, octet pour octet — rien de cette page n'est récupéré sur le réseau lors du rendu."
+    "snapshotNote": "l'année imprimée ici est l'instantané du fichier worldcup.json, octet pour octet — rien de cette page n'est récupéré sur le réseau lors du rendu.",
+    "chip2022": "CdM 2022 · Lusail",
+    "chip2018": "CdM 2018 · Loujniki",
+    "lede2018": "La vraie Russie, portée par ce produit — la Coupe du monde 2018, chaque chiffre passé par la communauté openfootball, attribution incluse.",
+    "opening2018": "Le vrai football du monde a retenu son souffle ici, brièvement, exactement ainsi."
   },
   "worldAtlas": {
     "metaTitle": "L'Atlas — les portes du monde, dessinées",

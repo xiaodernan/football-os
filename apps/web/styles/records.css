@@ -245,3 +245,34 @@
   font-weight: 750;
   margin-inline-end: 0.45rem;
 }
+
+/* The Real Book Vol. II switch â€?2022 and 2018 under one door. */
+.realbook__switch {
+  display: flex;
+  gap: 0.5rem;
+  margin-block: 0.5rem 0;
+}
+.realbook__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+.realbook__chip:hover,
+.realbook__chip:focus-visible {
+  border-color: var(--gold, #d8b56b);
+  color: var(--text);
+  outline: none;
+}
+.realbook__chip--active {
+  border-color: var(--gold, #d8b56b);
+  background: rgba(216, 181, 107, 0.1);
+  color: var(--gold, #d8b56b);
+  font-weight: 700;
+}

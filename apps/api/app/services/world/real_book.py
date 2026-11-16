@@ -1,16 +1,15 @@
-"""The Real Book — the real world's football 2022, snapshot-verified, not derived from the seed.
+"""The Real Book — the real world's football, snapshot-verified, not derived from the seed.
 
 The 2026/27 world is synthetic and flagged synthetic on every render. This door is neither of
-those things: it carries a curated hand of the largest, most cited real-world facts about the
-2022 World Cup, contributed by the openfootball community (CC-BY 4.0 — freely usable), and every
-score, goal minute and venue is printed straight from a committed snapshot of that file
-(``data/openfootball-worldcup-2022.json``, byte-for-byte the upstream file), so the door works
-offline and never has to trust the network.
+those things: it carries curated facts about the real FIFA World Cups of 2018 and 2022,
+contributed by the openfootball community (CC-BY 4.0 — freely usable), and every score, goal
+minute and venue is printed straight from committed snapshots of those files (under ``data/``),
+so the door works offline and never has to trust the network.
 
-The numbers here are checked against the snapshot at import of ``compute_real_book()`` — the
-64 fixtures, the on-field goal total and the top-scorers table are recomputed from the committed
-bytes, the same way the door's tests recompute them. The curated prose (Messi's Golden Ball,
-the Lusail attendance) is hand-written and labelled as curated in the page's provenance line.
+The numbers here are recomputed from the committed bytes on every ``compute_real_book()`` call —
+the fixtures, the on-field goal total and the top-scorers table included. The curated prose
+(Messi's Golden Ball, the Luzhniki attendance question) is hand-written and labelled as curated
+in the page's provenance line.
 
 No real club or player is represented in the synthetic world by any of this — this door
 is the synthetic world's own exhibit of the real one.
@@ -23,57 +22,108 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-_SNAPSHOT = Path(__file__).resolve().parent / "data" / "openfootball-worldcup-2022.json"
+_DATA = Path(__file__).resolve().parent / "data"
 
-# The source file spells France's No. 10 two ways in its goals lists for this tournament
-# ("Mbappé" ×2, "Kylian Mbappé" ×6). They are the same scorer; the door merges the two
-# spellings for its top-scorers table only. The fixture ledger below keeps the source's
-# own bytes — team names, scores and minutes are never rewritten.
-_SPELLING_MERGE = {"Mbappé": "Kylian Mbappé"}
-
-REAL_FACTS_2022 = {
-    "tournament": "2022 FIFA World Cup",
-    "host": "Qatar",
-    "final_date": "2022-12-18",
-    "final_rounds": [
-        {"round": "Group stage", "matches": 48},
-        {"round": "Round of 16", "matches": 8},
-        {"round": "Quarter-finals", "matches": 4},
-        {"round": "Semi-finals", "matches": 2},
-        {"round": "Match for third place", "matches": 1},
-        {"round": "Final", "matches": 1},
-    ],
-    "venues": 8,
-    "total_matches": 64,
-    "champion": {
-        "name": "Argentina",
-        "note": "Won the final 3–3 vs France (4–2 on penalties at Lusail Iconic Stadium).",
+# Per-tournament registry. The 2018 snapshot spells players the way the source spells them;
+# no names are merged there. The 2022 snapshot spells France's No. 10 two ways and this module
+# merges them for the door's scorers table — the fixture ledger keeps the source's own bytes.
+_REGISTRY: dict[str, dict[str, Any]] = {
+    "2022": {
+        "snapshot": "openfootball-worldcup-2022.json",
+        "spelling_merge": {"Mbappé": "Kylian Mbappé"},
+        "facts": {
+            "tournament": "2022 FIFA World Cup",
+            "host": "Qatar",
+            "final_date": "2022-12-18",
+            "final_rounds": [
+                {"round": "Group stage", "matches": 48},
+                {"round": "Round of 16", "matches": 8},
+                {"round": "Quarter-finals", "matches": 4},
+                {"round": "Semi-finals", "matches": 2},
+                {"round": "Match for third place", "matches": 1},
+                {"round": "Final", "matches": 1},
+            ],
+            "venues": 8,
+            "total_matches": 64,
+            "has_penalties": True,
+            "champion": {
+                "name": "Argentina",
+                "note": "Won the final 3–3 vs France (4–2 on penalties at Lusail Iconic Stadium).",
+            },
+            "final": {
+                "home": "Argentina",
+                "away": "France",
+                "score_regular": [2, 2],
+                "score_extra_time": [3, 3],
+                "score_penalties": [4, 2],
+                "venue": "Lusail Iconic Stadium",
+                "attendance": "88,966",
+                "matchday_date": "2022-12-18",
+            },
+            "runner_up": {"name": "France", "star": "Kylian Mbappé — 8 goals, the highest scorer of the tournament"},
+            "golden_ball": {"name": "Lionel Messi", "note": "Won the Golden Ball (best player) of the final; seven goals for Argentina."},
+            "biggest_attendance": {"match": "Argentina vs France", "attendance": "88,966"},
+            "openfootball_url": "https://github.com/openfootball/worldcup.json",
+        },
+        "joint_top_scorers_note": "goals are counted from the openfootball goal lists; France's No. 10 is spelled two ways in the source and merged here.",
     },
-    "final": {
-        "home": "Argentina",
-        "away": "France",
-        "score_regular": [2, 2],
-        "score_extra_time": [3, 3],
-        "score_penalties": [4, 2],
-        "venue": "Lusail Iconic Stadium",
-        "attendance": "88,966",
-        "matchday_date": "2022-12-18",
+    "2018": {
+        "snapshot": "openfootball-worldcup-2018.json",
+        "spelling_merge": {},
+        "facts": {
+            "tournament": "2018 FIFA World Cup",
+            "host": "Russia",
+            "final_date": "2018-07-15",
+            "final_rounds": [
+                {"round": "Group stage", "matches": 48},
+                {"round": "Round of 16", "matches": 8},
+                {"round": "Quarter-finals", "matches": 4},
+                {"round": "Semi-finals", "matches": 2},
+                {"round": "Match for third place", "matches": 1},
+                {"round": "Final", "matches": 1},
+            ],
+            "venues": 13,
+            "total_matches": 64,
+            "has_penalties": False,
+            "champion": {
+                "name": "France",
+                "note": "Won the final 4–2 vs Croatia (2–1 at half time) at Luzhniki Stadium, Moscow.",
+            },
+            "final": {
+                "home": "France",
+                "away": "Croatia",
+                "score_regular": [4, 2],
+                "score_extra_time": [4, 2],
+                "score_penalties": [0, 0],
+                "venue": "Luzhniki Stadium",
+                "attendance": None,
+                "matchday_date": "2018-07-15",
+            },
+            "runner_up": {"name": "Croatia", "star": "Luka Modrić — the Golden Ball, won by the final's runner-up"},
+            "golden_ball": {"name": "Luka Modrić", "note": "Golden Ball, Croatia — the tournament's best player, won by a player whose team lost the final."},
+            "openfootball_url": "https://github.com/openfootball/worldcup.json",
+        },
+        "joint_top_scorers_note": "goals are counted from the openfootball goal lists as committed, without merging; the FIFA Golden Boot credit is curator knowledge.",
     },
-    "runner_up": {"name": "France", "star": "Kylian Mbappé — 8 goals, the highest scorer of the tournament"},
-    "golden_ball": {"name": "Lionel Messi", "note": "Won the Golden Ball (best player) of the final; seven goals for Argentina."},
-    "biggest_attendance": {"match": "Argentina vs France", "attendance": "88,966"},
-    "openfootball_url": "https://github.com/openfootball/worldcup.json",
 }
 
 ATTRIBUTION = (
-    "The 2022 World Cup facts in this door are derived from the openfootball worldcup.json "
+    "The World Cup facts in this door are derived from the openfootball worldcup.json "
     "(CC-BY 4.0 — the data is freely usable, with attribution). The synthetic world in this "
     "product is a separate universe that shares none of these figures."
 )
 
 
-def _load_snapshot() -> dict[str, Any]:
-    with _SNAPSHOT.open(encoding="utf-8") as handle:
+class UnknownTournament(ValueError):
+    """Raised when the requested tournament is not one the door carries."""
+
+
+def tournaments() -> list[str]:
+    return list(_REGISTRY)
+
+
+def _load_snapshot(filename: str) -> dict[str, Any]:
+    with (_DATA / filename).open(encoding="utf-8") as handle:
         return json.load(handle)
 
 
@@ -103,21 +153,25 @@ def _fixture_row(match: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _scorers(matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _scorers(matches: list[dict[str, Any]], merge: dict[str, str]) -> list[dict[str, Any]]:
     goals: Counter[str] = Counter()
     penalties: Counter[str] = Counter()
     for match in matches:
         for side in ("goals1", "goals2"):
             for goal in match.get(side, []):
-                name = _SPELLING_MERGE.get(goal["name"], goal["name"])
+                name = merge.get(goal["name"], goal["name"])
                 goals[name] += 1
                 if goal.get("penalty"):
                     penalties[name] += 1
     return [{"name": name, "goals": count, "penalties": penalties.get(name, 0)} for name, count in goals.most_common(10)]
 
 
-def compute_real_book() -> dict[str, Any]:
-    snapshot = _load_snapshot()
+def compute_real_book(tournament: str = "2022") -> dict[str, Any]:
+    registry = _REGISTRY.get(tournament)
+    if registry is None:
+        raise UnknownTournament(tournament)
+
+    snapshot = _load_snapshot(registry["snapshot"])
     matches = snapshot["matches"]
     results = [_fixture_row(match) for match in matches]
     goals_on_field = sum(row["on_field"][0] + row["on_field"][1] for row in results)
@@ -131,21 +185,22 @@ def compute_real_book() -> dict[str, Any]:
         "venue": widest["ground"],
     }
 
-    facts = dict(REAL_FACTS_2022)
+    facts = dict(registry["facts"])
     facts = {
         **facts,
         "goals_scored": goals_on_field,
         "biggest_win": biggest_win,
-        "joint_top_scorers_note": "goals are counted from the openfootball goal lists; France's No. 10 is spelled two ways in the source and merged here.",
+        "joint_top_scorers_note": registry["joint_top_scorers_note"],
     }
 
     return {
         "available": True,
+        "tournament": tournament,
         "source": "openfootball worldcup.json (CC-BY 4.0)",
         "attribution": ATTRIBUTION,
         "facts": facts,
         "results": results,
-        "scorers": _scorers(matches),
+        "scorers": _scorers(matches, registry["spelling_merge"]),
         "provenance": {
             "data_origin": "public-real",
             "is_demo_data": False,
@@ -154,4 +209,4 @@ def compute_real_book() -> dict[str, Any]:
     }
 
 
-__all__ = ["compute_real_book", "REAL_FACTS_2022", "ATTRIBUTION"]
+__all__ = ["compute_real_book", "ATTRIBUTION", "tournaments", "UnknownTournament"]

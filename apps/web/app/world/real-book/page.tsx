@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
@@ -38,7 +39,7 @@ type FactVerse = {
     score_extra_time: [number, number];
     score_penalties: [number, number];
     venue: string;
-    attendance: string;
+    attendance: string | null;
     matchday_date: string;
   };
   biggest_win: {
@@ -49,6 +50,7 @@ type FactVerse = {
     venue: string;
   };
   goals_scored: number;
+  has_penalties: boolean;
   joint_top_scorers_note: string;
   runner_up: FactChallenge;
   golden_ball: FactChallenge;
@@ -70,6 +72,7 @@ type FixtureRow = {
 };
 type RealBookScorer = { name: string; goals: number; penalties: number };
 type RealBookPayload = WorldEnvelope & {
+  tournament: string;
   source: string;
   attribution: string;
   facts: FactVerse;
@@ -93,27 +96,36 @@ function groupByDay(rows: FixtureRow[]): FixtureDay[] {
   return days;
 }
 
-export default async function RealBookPage() {
+type RealBookScreen = { tournament?: string };
+
+export default async function RealBookPage({ searchParams }: { searchParams: Promise<RealBookScreen> }) {
   const t = await getTranslations("worldRealBook");
   const tw = await getTranslations("world");
+  const { tournament = "2022" } = await searchParams;
 
-  const result = await readWorld<RealBookPayload>("/world/real-book");
+  const result = await readWorld<RealBookPayload>("/world/real-book", { tournament });
   if (!result.ok) return <WorldUnavailable message={result.message} />;
 
   const { facts, provenance, results, scorers } = result.data;
   const days = groupByDay(results);
+  const is2018 = tournament === "2018";
 
   return (
     <div className="container page stack" style={{ gap: "2rem" }}>
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={t("eyebrow")}
-        lede={t("lede")}
+        lede={is2018 ? t("lede2018") : t("lede")}
         provenance={provenance}
         title={t("title")}
       />
 
-      <p className="records__book">{t("opening")}</p>
+      <nav className="realbook__switch" aria-label={t("eyebrow")}>
+        <Link href="?tournament=2022" className={`realbook__chip${is2018 ? "" : " realbook__chip--active"}`} aria-current={is2018 ? undefined : "page"}>{t("chip2022")}</Link>
+        <Link href="?tournament=2018" className={`realbook__chip${is2018 ? " realbook__chip--active" : ""}`} aria-current={is2018 ? "page" : undefined}>{t("chip2018")}</Link>
+      </nav>
+
+      <p className="records__book">{is2018 ? t("opening2018") : t("opening")}</p>
 
       <section className="records__panel">
         <span className="records__panel-eyebrow">{t("finalPanelEyebrow")}</span>
@@ -128,8 +140,10 @@ export default async function RealBookPage() {
           </div>
         </div>
         <div className="records__fixture-note">
-          <span className="chip num">{t("penaltiesChip", { a: facts.final.score_penalties[0], b: facts.final.score_penalties[1] })}</span>
-          <span className="muted">{facts.final.venue} · {facts.final.attendance} · {facts.final.matchday_date}</span>
+          {facts.has_penalties ? (
+            <span className="chip num">{t("penaltiesChip", { a: facts.final.score_penalties[0], b: facts.final.score_penalties[1] })}</span>
+          ) : null}
+          <span className="muted">{facts.final.venue}{facts.final.attendance ? ` · ${facts.final.attendance}` : ""} · {facts.final.matchday_date}</span>
         </div>
       </section>
 
