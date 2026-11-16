@@ -1,11 +1,11 @@
 {
-  "head": "470eb40",
-  "total_commits": 1264,
-  "milestone": "§265",
-  "milestone_full": "§265 — Item 125: the inaugural cup lands — the world's real first champion, end to end, from committed bytes",
+  "head": "6f9a844",
+  "total_commits": 1266,
+  "milestone": "§266",
+  "milestone_full": "§266 — Item 126: the Real Book speaks — one honest live sentence per press",
   "pushed_at": "2026-11-17",
   "screens": 90,
-  "assets": 203,
+  "assets": 204,
   "world_doors": 24,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T20:24:36.700Z"
+  "generated_at": "2026-11-16T20:51:20.783Z"
 }
