@@ -112,12 +112,12 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
   const euroOrder = ["euro2024", "euro2021"] as const;
   const all = [...order, ...euroOrder] as readonly string[];
   const active = all.includes(tournament) ? tournament : "2022";
-  const ledes = { "2018": "lede2018", "2014": "lede2014", "2010": "lede2010", "2006": "lede2006", "2002": "lede2002", "1998": "lede1998", "1994": "lede1994", "1990": "lede1990", "1986": "lede1986", euro2024: "lede2024", euro2021: "lede2021" } as const;
-  const openings = { "2018": "opening2018", "2014": "opening2014", "2010": "opening2010", "2006": "opening2006", "2002": "opening2002", "1998": "opening1998", "1994": "opening1994", "1990": "opening1990", "1986": "opening1986", euro2024: "opening2024", euro2021: "opening2021" } as const;
-  const ledeKey = (ledes as Record<string, string>)[active] ?? "lede";
-  const openingKey = (openings as Record<string, string>)[active] ?? "opening";
+  const ledes: Record<string, string> = { "2022": t("lede"), "2018": t("lede2018"), "2014": t("lede2014"), "2010": t("lede2010"), "2006": t("lede2006"), "2002": t("lede2002"), "1998": t("lede1998"), "1994": t("lede1994"), "1990": t("lede1990"), "1986": t("lede1986"), euro2024: t("lede2024"), euro2021: t("lede2021") };
+  const openings: Record<string, string> = { "2022": t("opening"), "2018": t("opening2018"), "2014": t("opening2014"), "2010": t("opening2010"), "2006": t("opening2006"), "2002": t("opening2002"), "1998": t("opening1998"), "1994": t("opening1994"), "1990": t("opening1990"), "1986": t("opening1986"), euro2024: t("opening2024"), euro2021: t("opening2021") };
+  const chips: Record<string, string> = { "2022": t("chip2022"), "2018": t("chip2018"), "2014": t("chip2014"), "2010": t("chip2010"), "2006": t("chip2006"), "2002": t("chip2002"), "1998": t("chip1998"), "1994": t("chip1994"), "1990": t("chip1990"), "1986": t("chip1986"), euro2024: t("chip2024"), euro2021: t("chip2021") };
+  const lede = ledes[active];
+  const opening = openings[active];
   const hasScorers = scorers.length > 0;
-  const chipOf = (id: string): string => (id === "euro2024" ? "chip2024" : id === "euro2021" ? "chip2021" : `chip${id}`);
   const homeWon =
     facts.final.score_regular[0] !== facts.final.score_regular[1]
       ? facts.final.score_regular[0] > facts.final.score_regular[1]
@@ -128,23 +128,23 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={t("eyebrow")}
-        lede={t(ledeKey as "opening")}
+        lede={lede}
         provenance={provenance}
         title={t("title")}
       />
 
       <nav className="realbook__switch" aria-label={t("eyebrow")}>
         {order.map((year) => (
-          <Link key={year} href={`?tournament=${year}`} className={`realbook__chip${active === year ? " realbook__chip--active" : ""}`} aria-current={active === year ? "page" : undefined}>{t(chipOf(year) as "chip2022")}</Link>
+          <Link key={year} href={`?tournament=${year}`} className={`realbook__chip${active === year ? " realbook__chip--active" : ""}`} aria-current={active === year ? "page" : undefined}>{chips[year]}</Link>
         ))}
       </nav>
       <nav className="realbook__switch" aria-label={t("eyebrow")}>
         {euroOrder.map((year) => (
-          <Link key={year} href={`?tournament=${year}`} className={`realbook__chip${active === year ? " realbook__chip--active" : ""}`} aria-current={active === year ? "page" : undefined}>{t(chipOf(year) as "chip2022")}</Link>
+          <Link key={year} href={`?tournament=${year}`} className={`realbook__chip${active === year ? " realbook__chip--active" : ""}`} aria-current={active === year ? "page" : undefined}>{chips[year]}</Link>
         ))}
       </nav>
 
-      <p className="records__book">{t(openingKey as "opening")}</p>
+      <p className="records__book">{opening}</p>
 
       <section className="records__panel">
         <span className="records__panel-eyebrow">{t("finalPanelEyebrow")}</span>
