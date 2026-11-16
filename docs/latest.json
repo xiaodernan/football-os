@@ -1,8 +1,8 @@
 {
-  "head": "5ca1518",
-  "total_commits": 1207,
-  "milestone": "§235",
-  "milestone_full": "§235 — Item 100: The Real Book grows a Volume II — the 2018 World Cup joins the door",
+  "head": "bba27e6",
+  "total_commits": 1209,
+  "milestone": "§236",
+  "milestone_full": "§236 — Items 101: Item 98's tab, named by the gate, fixed the way the gate prescribes",
   "pushed_at": "2026-11-16",
   "screens": 87,
   "assets": 199,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T08:44:08.011Z"
+  "generated_at": "2026-11-16T08:54:45.502Z"
 }
