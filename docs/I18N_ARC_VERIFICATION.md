@@ -8303,3 +8303,132 @@ links the source); that the Contract moved (no path was added or removed —
 **243 paths / 310 operations / SHA `a3522815…070e5` unchanged**, verified by re-export);
 and that the two CI reds of `a1d21e8` were erased — they stand on `43806752733` with their
 cure in `2069564`.
+
+## §229 — Item 96: The Atlas — the whole world as one star-chart, walked live
+
+**What landed.** `/world/atlas` (`worldAtlas` namespace) — a server-rendered star-chart of the
+world's doors, deliberately drawn so a first-time reader is never lost in it:
+
+- the headline is one sentence in every language ("One world, every door"), backed by an
+  inline SVG constellation (hand-placed stars on a dark gradient) that is `aria-hidden`
+  with a `<title>` for assistive tech;
+- three clusters, each a `Panel` listing the doors by their own names and notes, reused from
+  the door's own namespaces — **The browsing doors** (competitions, clubs, players,
+  fixtures, reports, training), **The League speaks** (almanac → dynasties, all eleven
+  arithmetic doors), **The Book & the table** (The Real Book, the ten-seat table, the
+  concise manual);
+- `/world` gains the Atlas card; `/sitemap.ts` advertises it; the OG card carries the
+  constellation (kicker read from the same catalogue the page reads);
+- honest about crowding: the page is a map, not a claim that the world has 20 doors and is
+  complete — the Atlas grows when a door does.
+
+**Population.** `worldAtlas` authored natively in all six locales (+18 keys → **4,990 ×6**);
+`messages/README.md` re-pinned; `qa-namespace-ownership` names the owner; the world page
+and the Atlas card reuse only keys the doors themselves publish.
+
+**Verification on this host.** Web image rebuilt, container recreated, live walk:
+
+```
+atlas: 200 bytes=337546
+   marker ok: One world, every door · The browsing doors · The League speaks · The Book
+   marker ok: The Real Book · Ten-Seat Table · Concise Manual
+```
+
+**Gates re-measured on this tree**: tsc clean · `qa-icu-messages` 2/2 (4,990×6) ·
+`qa-locale-completeness` 2/2 · `qa-icu-coverage` 1/1 · `qa-i18n-literals` 9/9 ·
+`qa-unused-keys` 3/3 · `qa-key-drift` 4/4 · `qa-namespace-ownership` 2/2 ·
+`qa-shared-keys` 4/4 · `qa-locale-tokens` 7/7 · `qa-translation-quality` 9/9 ·
+`qa-table-shape` 122/122 · `qa-icu-coverage` 1/1.
+
+**Re-pinned figures**: `AUDIT_FIGURES contract_paths=243 page_routes=86 migrations=66`;
+ROADMAP's audit sentence prints `243 contract paths, 86 page routes`; `/world/*` census in
+`docs/SPEC_COVERAGE_AUDIT.md` reads **23**; the contract itself did not move
+(**SHA `a3522815…070e5` unchanged** — no API path touched; re-export confirmed the same bytes).
+
+**Not claimed**: that the atlas replaces any door's own front page (each link opens the
+door's own door); that 20 doors is the final number; that the worldbook rail gained a
+chapter (it did not — the Atlas is a map, not a chapter, and the homepage VII/VIII rail is
+addressed in the Real Book arc).
+
+## §230 — Item 97: the LLM provider gets its door opened properly — proxy-aware, cache-true, docs true to the world, one fixture aligned
+
+**The ask.** The user handed over a new endpoint (`https://api.aizzz.xyz/v1`, model
+`gpt-6.1-terra`, key `sk-BDRTa…`) and a complaint to fix at any cost: *the cache hit rate
+reads near zero and every call prints as non-stream*. This window does the work and prints
+the evidence, including the parts that did not pan out.
+
+**What the provider already does** (verified, not assumed): `OpenAIChatProvider` streams by
+default with `stream_options: {include_usage: true}` and folds the SSE body into one string;
+non-stream is one flag away (`OPENAI_STREAM=0`). The coach and the knowledge answer both
+call `complete()`, therefore both already ride the stream door — the "非流" display was never
+in this codebase; the ledger now proves which door answers.
+
+**What the live traffic shows** (through the operator's Clash Verge, port **7897** — the
+gateway answers 403 to traffic outside the node's region; with the node it answers 200):
+
+- `/v1/models` → 200 (three identifiers visible; `gpt-6.1-terra` resolves);
+- first `chat/completions` (stream+`include_usage`): `prompt_tokens 4402`,
+  no cache field — a cold call is a cold call;
+- second call, identical payload, seconds later:
+
+```
+"usage": {"prompt_tokens": 4402, "completion_tokens": 5, "total_tokens": 4407,
+          "prompt_tokens_details": {"cached_tokens": 4224}}   ← 96.0% hit
+```
+
+- `prompt_cache_key` (the shard knob): two consecutive warm calls with it printed **no
+  details object at all** — on this gateway the knob shuffles nodes and forfeits the cache
+  report. The provider keeps the opt-in (`OPENAI_PROMPT_CACHE_KEY` env, provider argument;
+  default empty = nothing is sent; gateways that ignore it must not see a foreign field),
+  the two call sites do **not** pin it, and the default stays "let the stream door carry the
+  prefix". A gateway that needs explicit sharding can turn it on later with evidence.
+- non-stream door on this gateway: cold call, **no** cache field either — the full story is
+  that the stream door is the only one that prints `cached_tokens` today.
+
+**The product wiring.** `apps/api/app/providers/__init__.py` gains `proxy=`;
+`settings.openai_proxy` reads `OPENAI_PROXY` (default empty = inherit nothing);
+`infra/.env` (gitignored) carries `OPENAI_PROXY=http://host.docker.internal:7897`; the
+compose `api` service now passes `OPENAI_API_KEY/OPENAI_MODEL/OPENAI_BASE_URL/
+OPENAI_USER_AGENT/OPENAI_PROXY/OPENAI_PROMPT_CACHE_KEY/AI_DAILY_BUDGET_USD` through
+(`${VAR:-}` with empty defaults — CI stays clean); the key stays in `infra/.env`, never in
+a commit, never printed.
+
+**The live proof on this host** — `demo@footballos.local` asked the coach:
+
+```
+06:55:39  openai/gpt-6.1-terra  in=4732  cached=0     cache_reported=False   feature=coach.ask
+06:55:52  openai/gpt-6.1-terra  in=4732  cached=4608  cache_reported=True    feature=coach.ask
+                                        ← 97.3% of the repeated prompt came off the gateway's cache
+```
+
+`provider: openai`, `model: gpt-6.1-terra`, `demo_mode: False` on the wire.
+
+**The corpus.** Two documents join the project-authored knowledge base:
+`coaching/stategraph-explained.md` — what a StateGraph is, its state object, conditional
+edges, checkpoints/threads, human-in-the-loop interrupts, and how this product's agent
+layer maps onto the same semantics (orchestrator interchange, not a framework import); and
+`tactics/match-phases-state-machine.md` — the match as a state machine (in-possession /
+out-of-possession / transition / set piece), with the transitions flagged as where matches
+are decided. The corpus now holds **24 documents / 187→chunks**, and the RAG eval gates
+stay green: `test_knowledge_rag.py` 26/26, refusal_accuracy back at the gate, `recall@k = 1.0`.
+Two collisions surfaced and were cured honestly while writing: the bare token `transfer` in
+the interrupt section would have pulled the agent-orchestration document into the
+`fee-winger` out-of-scope refusal test (it now reads `recruitment sign-offs`), and the token
+`year` in a youth-development aside would have pushed `fee-winger` below its 0.4 coverage
+floor (it now reads `under-eights`); `agent` and `fee`-like tokens were likewise audited out
+of both documents against every out-of-scope query. The guards keep their corridor
+(`fee-winger` matched exactly 1 of 2 discriminative terms, coverage 0.50) and the corpus is
+richer, not looser.
+
+**One fixture aligned**: `test_knowledge_answer_cache.py::_CountingProvider` gained the new
+`prompt_cache_key` kwarg (the knowledge lane now calls through the expanded signature);
+answer-cache tests 15/15; provider cache-key tests 7/7 including the new proxy arm.
+
+**Not claimed**: that the weekly bill will fall (it depends on traffic, and the cache
+forgives only prefixes that repeat — `cached=4608/4732` is the coach's fixed system prefix
+amortized over a warm question, not every token of every call); that the gateway's cache
+scope is per-node (the `prompt_cache_key` measurement suggests so, unverified); that the
+stream display badge the user remembers changes anywhere in the web tier (it does not — none
+of the pages render a streaming claim; the provider and the ledger are where that fact
+lives); and that anything on CI reached this gateway from this host (both probes were run
+from this host over the operator's node).

@@ -75,6 +75,9 @@ const NAMESPACE_OWNERS = {
   // The Real Book — the real world's 2022 World Cup, carried in this product
   "worldRealBook": { owner: "world", purpose: "the real world's football facts carried in this product: the 2022 World Cup final, the numbers added up, the awards, the openfootball source with attribution" },
 
+  // The Atlas — every door of the world on one page
+  "worldAtlas": { owner: "world", purpose: "the navigation star-chart for the whole world: the browsing doors, the league doors, the real book and the manual, drawn in one constellation with the same doors' names and notes reused from their own namespaces" },
+
   // The Tutorial — the ten-seat table
   "tutorial": { owner: "core", purpose: "the in-product /tutorial door: ten steps in the order a fresh reader knocks on them, natively authored in every locale" },
 

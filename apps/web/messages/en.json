@@ -5089,5 +5089,26 @@
     "aetChip": "AET",
     "penChip": "PEN {a}–{b}",
     "snapshotNote": "the ledger is the committed snapshot of the openfootball worldcup.json, byte for byte — nothing on this page is fetched from the network at render time."
+  },
+  "worldAtlas": {
+    "metaTitle": "The Atlas — the world's doors, drawn once",
+    "metaDescription": "Every door of the FOOTBALL OS world on one page — the browsing doors, the league speaking through its arithmetic, The Real Book — open any star and go in.",
+    "eyebrow": "The Atlas",
+    "title": "One world, every door",
+    "lede": "The whole atlas at a glance: the doors you browse with, the league counting on its rows, and The Real Book leaning on the true world — pick one and go in.",
+    "footerNote": "every door on this page goes somewhere real — nothing here is decorative; the atlas exists so no first-time reader is ever lost in the world.",
+    "diagramTitle": "The constellation of the FOOTBALL OS world — every door on this page is linked to it.",
+    "clusterEyebrow": "The doors",
+    "clusterBrowsing": "The browsing doors",
+    "clusterLeague": "The League speaks",
+    "clusterBook": "The Book & the table",
+    "trainingLabel": "The Training Log",
+    "trainingNote": "what the generated squad rehearsed between fixtures — every figure traced",
+    "tutorialLabel": "The Ten-Seat Table",
+    "tutorialNote": "ten doors in the order a fresh reader knocks on them",
+    "manualLabel": "The Concise Manual",
+    "manualNote": "every door in one sitting, the league included",
+    "cardNote": "the whole world drawn as one chart — open it",
+    "ogTag": "EVERY DOOR, ONE WORLD"
   }
 }

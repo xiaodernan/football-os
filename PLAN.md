@@ -3606,6 +3606,28 @@ specific user has read it. That CI has printed this push green.
 
 **Not claimed.** That the synthetic world changed; that anything on the door is fetched live; that openfootball's figures are beyond dispute; that `a1d21e8`'s reds were erased rather than cured. The synthetic world's rows and the real world's file remain visibly distinct, and this door prints which is which.
 
+## Item 96 — The Atlas — the world's doors drawn as one constellation (landed 2026-11-16)
+
+**The gap.** The world kept growing doors (an almanac, a record book, upsets, dynasties, The Real Book…) and a first-time reader still had no single place that made the world's size obvious and legible. `/world` lists 17 sections; the tutorial holds the ten seats; the worldbook rail lists VII chapters — none of them is a map.
+
+**What landed.** `/world/atlas` — a server-rendered constellation page: an inline SVG star chart (hand-placed, aria-hidden, titled for screen readers), three native-six clusters — **The browsing doors** (competitions, clubs, players, fixtures, reports, training), **The League speaks** (all eleven arithmetic world doors, almanac → dynasties), **The Book & the table** (the real 2022 World Cup, the ten-seat table, the concise manual) — each door listed under its own namespace's own name and note, nothing duplicated, nothing new to learn. `/world` gains the Atlas card; `/sitemap.ts` advertises it; the OG card prints the constellation with the kicker read from the same catalogue the page reads.
+
+**Not claimed.** That twenty doors is the final census; that any door is replaced by this map (every link opens the door itself); that the page is static — it renders the same `/world/status` envelope as its siblings and carries the same provenance badge.
+
+## Item 97 — The gateway gets named: aizzz.xyz, the operator's proxy is honoured, the corpus gains StateGraph (landed 2026-11-16)
+
+**The ask.** A real endpoint handed over — `https://api.aizzz.xyz/v1`, model `gpt-6.1-terra`, a key that answers 200 through the operator's local Clash Verge (port 7897) but 403 to traffic outside the node's region — together with the standing complaint that cache hit reads near zero and everything prints as non-stream.
+
+**What landed.**
+
+- The provider is **proxy-aware**: `settings.openai_proxy` reads `OPENAI_PROXY` (empty = inherit nothing); `OpenAIChatProvider(proxy=...)` builds one `build_opener(ProxyHandler)`; `docker-compose.yml` passes `OPENAI_PROXY`/`OPENAI_PROMPT_CACHE_KEY` through with empty defaults (CI untouched); `infra/.env` (gitignored) carries the operator's `OPENAI_PROXY=http://host.docker.internal:7897`.
+- **Live evidence printed**: `/v1/models` → 200; coach call 1 cold (4732 in / 0 cached / not reported), coach call 2 warm — **4608 of 4732 tokens served from the gateway's cache (97.3%)**, `cache_reported=True`, recorded in `model_calls` beside every UI read of the coach (`provider: openai`, `model: gpt-6.1-terra`, `demo_mode: false`).
+- The `prompt_cache_key` shard knob stays opt-in (env + provider argument, default empty), is **not** pinned by any call site, and is documented as a measured regression on this gateway — two warm keyed calls reported no cache object at all against the unkeyed call's 4224.
+- The knowledge corpus gains two project-authored documents: `coaching/stategraph-explained.md` (StateGraph semantics — state object, conditional edges, checkpoints/threads, human-in-the-loop, and how this product's orchestrator maps onto the same semantics — LangChain/LangGraph vocabulary included without pretending the repo imports them) and `tactics/match-phases-state-machine.md` (the match as a state machine; the transitions as the place matches are decided). Two vocabulary collisions against the RAG eval's out-of-scope corridor were caught and cured (`recruitment sign-offs` replaces `transfer decisions`; `under-eights` replaces `eight-year-olds`), so the refusal guards keep their exact (1, 0.50) shape on `fee-winger`; RAG eval **26/26 green**.
+- One fixture aligned (`_CountingProvider` gained the kwarg); provider cache-key tests 7/7 incl. the proxy arm.
+
+**Not claimed.** That the cache will pay for itself yet; that the display the user sees anywhere in the web tier says "stream" — nothing in the UI renders a streaming claim; the truth lives in the provider and the ledger, and there it now reads warm.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

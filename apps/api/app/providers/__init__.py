@@ -48,7 +48,7 @@ class LlmResult:
 class LLMProvider(Protocol):
     name: str
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4) -> LlmResult: ...
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult: ...
 
 
 class EmbeddingProvider(Protocol):
@@ -101,7 +101,7 @@ class MockLLMProvider:
 
     name = "mock"
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4) -> LlmResult:
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:
         started = time.perf_counter()
         payload: dict[str, Any] = {}
         try:
@@ -171,12 +171,18 @@ class OpenAIChatProvider:
         price_in_per_mtok: float = 0.15,
         price_cached_in_per_mtok: float | None = None,
         price_out_per_mtok: float = 0.60,
+        proxy: str | None = None,
     ) -> None:
         self.api_key = api_key
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.user_agent = user_agent
         self.stream = stream
+        self._opener = (
+            urllib.request.build_opener(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
+            if proxy
+            else None
+        )
         self.price_in_per_mtok = price_in_per_mtok
         # A cached input token is priced at what the operator set, or the plain input price when they
         # did not (a discount nobody configured is a discount the ledger must not invent).
@@ -191,6 +197,17 @@ class OpenAIChatProvider:
         if self.user_agent:
             headers["User-Agent"] = self.user_agent
         return headers
+
+    def _open(self, request: urllib.request.Request, *, timeout: int = 45):  # type: ignore[no-untyped-def]
+        """One place decides which door the call goes out through.
+
+        `self._opener` is a `build_opener(...)` product when the operator set `OPENAI_PROXY`
+        (the aizzz.xyz door answers 403 to traffic outside the node's region); its method is
+        `.open()`. The module-level `urlopen()` is the same call through the default opener.
+        """
+        if self._opener is not None:
+            return self._opener.open(request, timeout=timeout)
+        return urllib.request.urlopen(request, timeout=timeout)
 
     @staticmethod
     def _usage_tokens(usage: Any) -> tuple[int, int, int, int, bool]:
@@ -236,15 +253,17 @@ class OpenAIChatProvider:
         )
         return round(cost, 6)
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4) -> LlmResult:
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:
+        cache_key = prompt_cache_key if prompt_cache_key is not None else (settings.openai_prompt_cache_key or None)
         if self.stream:
-            return self._complete_stream(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
+            return self._complete_stream(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature, prompt_cache_key=cache_key)
         body = json.dumps(
             {
                 "model": self.model,
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
                 "max_tokens": max_tokens,
                 "temperature": temperature,
+                **({"prompt_cache_key": cache_key} if cache_key else {}),
             }
         ).encode()
         request = urllib.request.Request(
@@ -254,7 +273,7 @@ class OpenAIChatProvider:
         )
         started = time.perf_counter()
         try:
-            with urllib.request.urlopen(request, timeout=45) as response:  # noqa: S310 - fixed internal endpoint
+            with self._open(request, timeout=45) as response:  # noqa: S310 - fixed internal endpoint
                 raw = json.loads(response.read().decode())
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
             logger.warning("openai_provider_failure %s", _http_failure_detail(exc))
@@ -286,7 +305,7 @@ class OpenAIChatProvider:
             actual_cost_usd=round(est, 6),
         )
 
-    def _complete_stream(self, *, system: str, prompt: str, max_tokens: int, temperature: float) -> LlmResult:
+    def _complete_stream(self, *, system: str, prompt: str, max_tokens: int, temperature: float, prompt_cache_key: str | None = None) -> LlmResult:
         body = json.dumps(
             {
                 "model": self.model,
@@ -297,6 +316,7 @@ class OpenAIChatProvider:
                 # The stream carries no usage unless asked; without this the ledger would record
                 # zero tokens for a successful call, which is how the dashboard emptied out.
                 "stream_options": {"include_usage": True},
+                **({"prompt_cache_key": prompt_cache_key} if prompt_cache_key else {}),
             }
         ).encode()
         request = urllib.request.Request(
@@ -308,7 +328,7 @@ class OpenAIChatProvider:
         chunks: list[str] = []
         usage: dict[str, Any] = {}
         try:
-            with urllib.request.urlopen(request, timeout=45) as response:  # noqa: S310 - fixed internal endpoint
+            with self._open(request, timeout=45) as response:  # noqa: S310 - fixed internal endpoint
                 for raw_line in response:
                     line = raw_line.decode("utf-8", "replace").strip()
                     if not line.startswith("data:"):
@@ -548,6 +568,7 @@ def get_llm_provider() -> LLMProvider:
             price_in_per_mtok=settings.openai_price_in_usd_per_mtok,
             price_cached_in_per_mtok=settings.openai_price_cached_in_usd_per_mtok,
             price_out_per_mtok=settings.openai_price_out_usd_per_mtok,
+            proxy=settings.openai_proxy or None,
         )
     return MockLLMProvider()
 

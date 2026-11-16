@@ -165,7 +165,7 @@ class _CountingProvider:
         self.calls = 0
         self.prompts: list[str] = []
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4) -> LlmResult:
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:
         self.calls += 1
         self.prompts.append(prompt)
         return LlmResult(

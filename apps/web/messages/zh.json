@@ -5089,5 +5089,26 @@
     "aetChip": "加时",
     "penChip": "点球 {a}–{b}",
     "snapshotNote": "本年鉴是已提交的 2022 世界杯公开数据快照，字节级一致——本页渲染时没有任何内容来自网络。"
+  },
+  "worldAtlas": {
+    "metaTitle": "星图——世界之门，一页画完",
+    "metaDescription": "足球操作系统世界的每一扇门都在这一页——供你浏览的门、联赛用算术发声的门、真实名册——选一扇走进去。",
+    "eyebrow": "星图",
+    "title": "一个世界，每扇门都在这里",
+    "lede": "整本星图铺开：你用来浏览世界的那些门，联赛在自己的行里说话的那些门，和真实名册里倚着真世界的那些门——挑一扇，进去。",
+    "footerNote": "本页每一扇门都通向真实功能——没有一扇是装饰；星图存在，就是为了不让初来乍到的读者在世界里迷路。",
+    "diagramTitle": "足球操作系统世界的星图——本页每一扇门都链向它。",
+    "clusterEyebrow": "门",
+    "clusterBrowsing": "浏览之门",
+    "clusterLeague": "联赛在说",
+    "clusterBook": "书与桌",
+    "trainingLabel": "训练日志",
+    "trainingNote": "生成的阵容在赛程之间练了什么——每个数字都可追踪",
+    "tutorialLabel": "十人餐桌",
+    "tutorialNote": "十扇门，按新读者该敲的顺序排好",
+    "manualLabel": "简明说明书",
+    "manualNote": "所有门一坐读完，包括这个联赛",
+    "cardNote": "全世界画成一张图——点开看看",
+    "ogTag": "每一扇门，一个世界"
   }
 }

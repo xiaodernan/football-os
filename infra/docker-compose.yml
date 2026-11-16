@@ -173,12 +173,16 @@ services:
       ENV: development
       SITE_URL: http://127.0.0.1:3210
       WEB_MESSAGES_DIR: /messages
-      # The user's real wkapi.pro key lives in infra/.env (gitignored). Compose expands it here,
+      # The LLM provider key lives in infra/.env (gitignored). Compose expands it here,
       # which is the same contract every other secret follows.
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
       OPENAI_USER_AGENT: ${OPENAI_USER_AGENT:-}
+      # Host-specific proxy (the operator's local Clash Verge, when the gateway blocks the exit
+      # region) and an optional prompt-cache shard key. Empty inherits nothing.
+      OPENAI_PROXY: ${OPENAI_PROXY:-}
+      OPENAI_PROMPT_CACHE_KEY: ${OPENAI_PROMPT_CACHE_KEY:-}
       AI_DAILY_BUDGET_USD: ${AI_DAILY_BUDGET_USD:-1.00}
     volumes:
       - ../apps/web/messages:/messages:ro

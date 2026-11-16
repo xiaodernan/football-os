@@ -59,6 +59,14 @@ class Settings:
     # Streaming by default: the gateway reports the same completion tokens but the stream door is the one
     # its dashboard counts as `stream`; `OPENAI_STREAM=0` forces the plain non-stream call.
     openai_stream: bool = field(default_factory=lambda: _env("OPENAI_STREAM", "1").strip().lower() not in ("0", "false", "no", "off"))
+    # An explicit shard for the gateway's prompt cache. Empty sends nothing (gateways without the knob
+    # must not see an unknown field break their parser); measured on aizzz/gpt-6.1-terra the stream door
+    # reports `cached_tokens` without it, and the knob shuffled two warm calls to report nothing.
+    openai_prompt_cache_key: str = field(default_factory=lambda: (_env("OPENAI_PROMPT_CACHE_KEY") or "").strip())
+    # An HTTP proxy for the provider, e.g. the operator's local Clash Verge (the aizzz.xyz door answers
+    # 403 to traffic outside the node's region). Empty inherits no proxy; set it in infra/.env only —
+    # it is host-specific and never committed.
+    openai_proxy: str = field(default_factory=lambda: (_env("OPENAI_PROXY") or "").strip())
     # Token pricing (per 1M tokens), so the ledger can render real money rather than gpt-4o-mini
     # placeholder math against a model this build does not know the price of. The cached-input price
     # defaults to the plain input price (no invented discount); set it to the gateway's real figure

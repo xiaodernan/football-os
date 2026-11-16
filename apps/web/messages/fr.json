@@ -5089,5 +5089,26 @@
     "aetChip": "a.p.",
     "penChip": "TAB {a}–{b}",
     "snapshotNote": "l'année imprimée ici est l'instantané du fichier worldcup.json, octet pour octet — rien de cette page n'est récupéré sur le réseau lors du rendu."
+  },
+  "worldAtlas": {
+    "metaTitle": "L'Atlas — les portes du monde, dessinées",
+    "metaDescription": "Chaque porte du monde FOOTBALL OS sur une page — les portes de navigation, la ligue qui compte sur ses lignes, Le Vrai Livre — ouvrez-en une, entrez.",
+    "eyebrow": "L'Atlas",
+    "title": "Un monde, chaque porte dessinée",
+    "lede": "Tout l'atlas en un coup d'œil : les portes que vous ouvrez pour chercher, la ligue qui parle en arithmétique, et Le Vrai Livre qui s'appuie sur le monde réel — choisissez, entrez.",
+    "footerNote": "chaque porte de cette page mène quelque part de réel — rien ici n'est décoratif ; l'atlas existe pour qu'aucun nouveau lecteur ne se perde dans ce monde.",
+    "diagramTitle": "La constellation du monde FOOTBALL OS — chaque porte du site y est reliée.",
+    "clusterEyebrow": "Les portes",
+    "clusterBrowsing": "Les portes de navigation",
+    "clusterLeague": "La Ligue parle",
+    "clusterBook": "Le Livre et la table",
+    "trainingLabel": "Le Journal d'entraînement",
+    "trainingNote": "ce que l'effectif généré a répété entre les matchs — chaque figure tracée",
+    "tutorialLabel": "La tablée des dix",
+    "tutorialNote": "les dix portes dans l'ordre où un nouveau lecteur devrait les frapper",
+    "manualLabel": "Le Manuel concis",
+    "manualNote": "toutes les portes en une assise, la ligue comprise",
+    "cardNote": "tout le monde dessiné d'un trait — ouvrez la carte",
+    "ogTag": "CHAQUE PORTE, UN MONDE"
   }
 }

@@ -5089,5 +5089,26 @@
     "aetChip": "加時",
     "penChip": "點球 {a}–{b}",
     "snapshotNote": "本年鑑是已提交的 2022 世界盃公開資料快照，位元組級一致——本頁渲染時沒有任何內容來自網路。"
+  },
+  "worldAtlas": {
+    "metaTitle": "星圖——世界之門，一頁畫完",
+    "metaDescription": "足球操作系統世界的每一扇門都在這一頁——供你瀏覽的門、聯賽用算術發聲的門、真實名冊——選一扇走進去。",
+    "eyebrow": "星圖",
+    "title": "一個世界，每扇門都在這裡",
+    "lede": "整本星圖鋪開：你用來瀏覽世界的那些門，聯賽在自己的列裡說話的那些門，和真實名冊裡倚著真世界的那些門——挑一扇，進去。",
+    "footerNote": "本頁每一扇門都通向真實功能——沒有一扇是裝飾；星圖存在，就是為了不讓初來乍到的讀者在世界裡迷路。",
+    "diagramTitle": "足球操作系統世界的星圖——本頁每一扇門都鏈向它。",
+    "clusterEyebrow": "門",
+    "clusterBrowsing": "瀏覽之門",
+    "clusterLeague": "聯賽在說",
+    "clusterBook": "書與桌",
+    "trainingLabel": "訓練日誌",
+    "trainingNote": "生成的陣容在賽程之間練了什麼——每個數字都可追蹤",
+    "tutorialLabel": "十人餐桌",
+    "tutorialNote": "十扇門，按新讀者該敲的順序排好",
+    "manualLabel": "簡明說明書",
+    "manualNote": "所有門一坐讀完，包括這個聯賽",
+    "cardNote": "全世界畫成一張圖——點開看看",
+    "ogTag": "每一扇門，一個世界"
   }
 }
