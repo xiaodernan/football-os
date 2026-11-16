@@ -8949,3 +8949,18 @@ ledgers re-pinned. The six-cup OG card prints "2002 · 2006 · 2010 · 2014 · 2
 **Not claimed.** That the runner prints this green before it runs. That any figure above is live
 (all are committed-byte computed). That the door walks in a browser on this host (tsc clean is
 what is verified; the container build is the strength CI owns).
+
+## §246 — Item 107's run prints success; Item 108 queued behind it
+
+**The named print:** `43867767582` (head `e8007f4`, "feat(world): Item 107 — The Champions")
+completed **success** — api, web, services, containers. The Champions door ships green on the
+runner's own four legs, including the full i18n/web battery against the six-locale catalogue at
+population **5,090 ×6** and the contract at **246 / 313 / 99**, SHA `1efb7ee0…51cf89`.
+
+Item 107's fact pack run (`43867800372`, head `3658fe3`) was still printing when this section was
+written; Item 108 (six World Cups, `67fdbb9` / fact-pack `392aea4`, runs `43872007852` /
+`43872116695`) queued behind it; §245 records the covenant for those prints too.
+
+**Not claimed.** That Item 108's legs are green before they print. That this section exists to
+unblock anything — it exists so the runner's words sit in the same committed arc as the code
+they judge.
