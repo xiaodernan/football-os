@@ -105,6 +105,44 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         },
         "joint_top_scorers_note": "goals are counted from the openfootball goal lists as committed, without merging; the FIFA Golden Boot credit is curator knowledge.",
     },
+    "2014": {
+        "snapshot": "openfootball-worldcup-2014.json",
+        "spelling_merge": {},
+        "facts": {
+            "tournament": "2014 FIFA World Cup",
+            "host": "Brazil",
+            "final_date": "2014-07-13",
+            "final_rounds": [
+                {"round": "Group stage", "matches": 48},
+                {"round": "Round of 16", "matches": 8},
+                {"round": "Quarter-finals", "matches": 4},
+                {"round": "Semi-finals", "matches": 2},
+                {"round": "Match for third place", "matches": 1},
+                {"round": "Final", "matches": 1},
+            ],
+            "venues": 12,
+            "total_matches": 64,
+            "has_penalties": True,
+            "champion": {
+                "name": "Germany",
+                "note": "Won the final 1–0 vs Argentina (Götze, 113') at Maracanã Stadium, Rio de Janeiro.",
+            },
+            "final": {
+                "home": "Germany",
+                "away": "Argentina",
+                "score_regular": [0, 0],
+                "score_extra_time": [1, 0],
+                "score_penalties": [0, 0],
+                "venue": "Maracanã Stadium",
+                "attendance": None,
+                "matchday_date": "2014-07-13",
+            },
+            "runner_up": {"name": "Argentina", "star": "Lionel Messi — the Golden Ball, won for the second tournament in a row"},
+            "golden_ball": {"name": "Lionel Messi", "note": "Golden Ball, Argentina — won while losing the final, as in 2010."},
+            "openfootball_url": "https://github.com/openfootball/worldcup.json",
+        },
+        "joint_top_scorers_note": "goals are counted from the openfootball goal lists as committed, without merging; the FIFA Golden Boot credit is curator knowledge (James Rodríguez's six-goal tally is the canonical citation)",
+    },
 }
 
 ATTRIBUTION = (

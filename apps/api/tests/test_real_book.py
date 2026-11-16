@@ -61,6 +61,28 @@ class TestTheRealBook:
         assert facts["biggest_win"]["matchday_date"] == "2018-06-14"
         assert facts["goals_scored"] == 169
 
+    def test_2014_prints_its_own_arithmetic(self) -> None:
+        result = compute_real_book("2014")
+        assert result["available"] is True
+        assert result["tournament"] == "2014"
+        facts = result["facts"]
+        assert facts["tournament"] == "2014 FIFA World Cup"
+        assert facts["total_matches"] == 64
+        assert facts["venues"] == 12
+        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert facts["champion"]["name"] == "Germany"
+        assert facts["final"]["home"] == "Germany"
+        assert facts["final"]["away"] == "Argentina"
+        assert facts["final"]["score_regular"] == [0, 0]
+        assert facts["final"]["score_extra_time"] == [1, 0]
+        assert facts["has_penalties"] is True
+        assert facts["runner_up"]["name"] == "Argentina"
+        assert "Messi" in facts["runner_up"]["star"]
+        assert facts["biggest_win"]["match"] == "Brazil 1-7 Germany"
+        assert facts["biggest_win"]["stage"] == "Semi-finals"
+        assert facts["biggest_win"]["matchday_date"] == "2014-07-08"
+        assert facts["goals_scored"] == 171
+
     def test_attribution_is_required_and_complete(self) -> None:
         for tournament in tournaments():
             result = compute_real_book(tournament)
@@ -77,7 +99,7 @@ class TestTheRealBook:
             assert result["provenance"]["license"] == "CC-BY 4.0"
 
     def test_the_committed_snapshots_print_all_64_fixtures_each(self) -> None:
-        for tournament, goals in (("2022", 172), ("2018", 169)):
+        for tournament, goals in (("2022", 172), ("2018", 169), ("2014", 171)):
             result = compute_real_book(tournament)
             results = result["results"]
             assert len(results) == 64
@@ -95,6 +117,9 @@ class TestTheRealBook:
         assert final_2018["team1"] == "France" and final_2018["team2"] == "Croatia"
         assert final_2018["on_field"] == [4, 2]
         assert final_2018["penalties"] is None
+        final_2014 = next(row for row in compute_real_book("2014")["results"] if row["round"] == "Final")
+        assert final_2014["team1"] == "Germany" and final_2014["team2"] == "Argentina"
+        assert final_2014["on_field"] == [1, 0]
 
     def test_the_scorers_tables_derive_from_the_committed_snapshots(self) -> None:
         scorers_2022 = {row["name"]: row for row in compute_real_book("2022")["scorers"]}
@@ -105,10 +130,14 @@ class TestTheRealBook:
         scorers_2018 = {row["name"]: row for row in compute_real_book("2018")["scorers"]}
         assert scorers_2018["Kane"]["goals"] == 5
         assert scorers_2018["Kane"]["penalties"] == 2
+        scorers_2014 = {row["name"]: row for row in compute_real_book("2014")["scorers"]}
+        # The snapshot spells him both ways; the door prints the file's own name for 2014.
+        assert scorers_2014["James Rodríguez"]["goals"] == 5
+        assert scorers_2014["Thomas Müller"]["goals"] == 5
 
     def test_an_unknown_tournament_is_refused(self) -> None:
         with pytest.raises(UnknownTournament):
-            compute_real_book("2014")
+            compute_real_book("2010")
 
     def test_the_door_answers_with_the_envelope_like_its_siblings(self, client) -> None:  # type: ignore[no-untyped-def]
         for tournament, expected in (("2022", "2022 FIFA World Cup"), ("2018", "2018 FIFA World Cup")):
@@ -123,5 +152,5 @@ class TestTheRealBook:
             assert body["scorers"], "the door publishes a scorers table derived from the committed snapshot"
 
     def test_the_door_rejects_a_tournament_it_does_not_carry(self, client) -> None:  # type: ignore[no-untyped-def]
-        response = client.get(f"{API}/world/real-book", params={"tournament": "2014"})
+        response = client.get(f"{API}/world/real-book", params={"tournament": "2010"})
         assert response.status_code == 422

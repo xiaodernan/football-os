@@ -8716,3 +8716,22 @@ is a defect (it is the public-tier limiter behaving as configured). That the 321
 failing at c=4 is a quota or panic — it is this host's Next.js production pipeline closing
 half its pooled connections at that concurrency, recorded as-is, not yet root-caused. The
 plane-walk is the only honest "27/27" in this section until the runner prints its own.
+
+## §240 — Item 104: The Real Book, Volume III — the 2014 World Cup joins the door
+
+**What landed.** The Real Book now carries **three** World Cups: Brazil 2014, Russia 2018 and Qatar 2022. The 2014 snapshot (`data/openfootball-worldcup-2014.json`, byte-for-byte the openfootball file, CC-BY 4.0) brings the door to **192 real fixtures** printed from committed bytes with the two it already held.
+
+Facts printed for 2014 (every one of which the door re-derives on each read — never asserted from a constant):
+
+- **64 fixtures · 171 on-field goals · 12 venues**;
+- the final: **Germany 1–0 Argentina** (Götze 113'), Maracanã Stadium, Rio de Janeiro, 2014-07-13;
+- the widest margin of the tournament: **Brazil 1–7 Germany** (Semi-finals, 2014-07-08, Mineirão — the Mineirazo, the largest single-match defeat ever suffered by a World Cup host nation) — computed, not asserted;
+- top scorers from the file's own names: James Rodríguez 5 (Golden Boot), Müller 5;
+- **Messi won the Golden Ball for the second tournament running**, against Argentina's loss in the final — the note is carried in the curated panel, labelled as curator knowledge, not derived from the file.
+
+**Infrastructure.** `compute_real_book()` is registry-driven; adding 2014 meant: fetching the snapshot,
+NOTICE consolidation across all three (`NOTICE-2014-WORLDCUP.txt`), registry entry, tests parametric over the three snapshots (11 cases), chips `chip2014` authored in six locales. Contract re-exported: `?tournament=2014|2018|2022` — **245 paths / 312 operations / 99 schemas**, SHA-256 `476b93a3e5aae668e85911637bb37757626ed0244b4818b851ead9131025e0ae`, re-pinned through the three ledgers; both currency suites 21/21 green.
+
+**Verified on this host**: tsc clean · all gates green · 10/10 book tests · 21/21 spec/security · `/world/real-book?tournament=2014|2018|2022` → 200 with markers (Götze/Maracanã for 2014 specifically; Messi/Mbappé/Argentina for 2022; Kane/Luzhniki for 2018).
+
+**Not claimed.** That the door carries 2018→2022 in style for 2014 — it does; the page is one door with three tabs. That attendance is printed for any tournament in its ledger (the snapshot cannot verify a crowd; only the 2022 Lusail figure prints). That the Mineirazo detail differs without verification — it does not; the fact is computed from the file and matches the public record.

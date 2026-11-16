@@ -3724,6 +3724,19 @@ there's a canonical sentence for.
 
 **The door 3210 load fact** (FastAPI at :8100 320/320 PASS; Next proxy at :3210 reproducible RemoteProtocolError; the edge gateway correctly 429s at burst) is recorded verbatim in §239 and not claimed as anything.
 
+## Item 104 — The Real Book, Volume III: the 2014 World Cup joins the door (landed 2026-11-16)
+
+**The gap.** Two real World Cups sat inside the door; the world has seven.
+
+**What landed.**
+
+- `data/openfootball-worldcup-2014.json` (CC-BY 4.0) beside its siblings; NOTICE consolidated across the three tournaments.
+- `compute_real_book("2014")` — 64 fixtures, **171 goals**, 12 venues, the final at Maracanã (Germany 1–0 Argentina, Götze 113'), the widest margin **computed**: Brazil 1–7 Germany (Semi-finals, 2014-07-08); scorers from the file's own names; Golden Ball awarded to Messi for the second tournament running (curated note, labelled).
+- `/world/real-book` — **three-tab switch**: 2022 · 2018 · 2014 · all localized, all walks 200 with script-appropriate markers.
+- Contract re-exported — `tournament ∈ {2014, 2018, 2022}`, SHA `476b93a3e5aae668e85911637bb37757626ed0244b4818b851ead9131025e0ae`; secured 241 / public 71 / private GET 104; spec-audit currency suites 21/21 green.
+
+**Not claimed.** That openfootball equals FIFA's official print (they don't always agree — the door reprints the snapshot, not the FIFA ledger); that any tournament finished without controversy (it did not); that the door prints an attendance figure for any of the three finals (the snapshot cannot verify a crowd — only the 2022 Lusail figure prints). The synthetic world is untouched by any of this.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

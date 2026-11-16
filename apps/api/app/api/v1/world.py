@@ -1220,11 +1220,11 @@ def dynasties(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]
 
 
 @router.get("/real-book")
-def real_book(request: Request, tournament: str = Query("2022", pattern=r"^(2018|2022)$")) -> dict[str, Any]:
+def real_book(request: Request, tournament: str = Query("2022", pattern=r"^(2014|2018|2022)$")) -> dict[str, Any]:
     """The Real Book — what real football looked like, from a CC-BY openfootball snapshot.
 
     The synthetic world in this product is its own universe; this door is a curated
-    hand-of-facts from the real 2018 and 2022 World Cups, pulled from openfootball's
+    hand-of-facts from the real 2014, 2018 and 2022 World Cups, pulled from openfootball's
     worldcup.json files (CC-BY 4.0, with attribution). Every figure on this page is from the
     public record, not from the seed. No synthetic club or player is named in it.
     """
@@ -1234,7 +1234,7 @@ def real_book(request: Request, tournament: str = Query("2022", pattern=r"^(2018
     except UnknownTournament:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"code": "unknown_tournament", "message": "The Real Book carries 2018 and 2022 only."},
+            detail={"code": "unknown_tournament", "message": "The Real Book carries 2014, 2018 and 2022."},
         ) from None
 
 

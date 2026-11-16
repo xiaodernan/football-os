@@ -3115,7 +3115,7 @@
           "world"
         ],
         "summary": "Real Book",
-        "description": "The Real Book — what real football looked like, from a CC-BY openfootball snapshot.\n\nThe synthetic world in this product is its own universe; this door is a curated\nhand-of-facts from the real 2018 and 2022 World Cups, pulled from openfootball's\nworldcup.json files (CC-BY 4.0, with attribution). Every figure on this page is from the\npublic record, not from the seed. No synthetic club or player is named in it.",
+        "description": "The Real Book — what real football looked like, from a CC-BY openfootball snapshot.\n\nThe synthetic world in this product is its own universe; this door is a curated\nhand-of-facts from the real 2014, 2018 and 2022 World Cups, pulled from openfootball's\nworldcup.json files (CC-BY 4.0, with attribution). Every figure on this page is from the\npublic record, not from the seed. No synthetic club or player is named in it.",
         "operationId": "real_book_api_v1_world_real_book_get",
         "parameters": [
           {
@@ -3124,7 +3124,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "pattern": "^(2018|2022)$",
+              "pattern": "^(2014|2018|2022)$",
               "default": "2022",
               "title": "Tournament"
             }

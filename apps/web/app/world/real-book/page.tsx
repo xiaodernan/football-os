@@ -109,23 +109,25 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
   const { facts, provenance, results, scorers } = result.data;
   const days = groupByDay(results);
   const is2018 = tournament === "2018";
+  const is2014 = tournament === "2014";
 
   return (
     <div className="container page stack" style={{ gap: "2rem" }}>
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={t("eyebrow")}
-        lede={is2018 ? t("lede2018") : t("lede")}
+        lede={is2014 ? t("lede2014") : is2018 ? t("lede2018") : t("lede")}
         provenance={provenance}
         title={t("title")}
       />
 
       <nav className="realbook__switch" aria-label={t("eyebrow")}>
-        <Link href="?tournament=2022" className={`realbook__chip${is2018 ? "" : " realbook__chip--active"}`} aria-current={is2018 ? undefined : "page"}>{t("chip2022")}</Link>
+        <Link href="?tournament=2022" className={`realbook__chip${!is2018 && !is2014 ? " realbook__chip--active" : ""}`} aria-current={!is2018 && !is2014 ? "page" : undefined}>{t("chip2022")}</Link>
         <Link href="?tournament=2018" className={`realbook__chip${is2018 ? " realbook__chip--active" : ""}`} aria-current={is2018 ? "page" : undefined}>{t("chip2018")}</Link>
+        <Link href="?tournament=2014" className={`realbook__chip${is2014 ? " realbook__chip--active" : ""}`} aria-current={is2014 ? "page" : undefined}>{t("chip2014")}</Link>
       </nav>
 
-      <p className="records__book">{is2018 ? t("opening2018") : t("opening")}</p>
+      <p className="records__book">{is2014 ? t("opening2014") : is2018 ? t("opening2018") : t("opening")}</p>
 
       <section className="records__panel">
         <span className="records__panel-eyebrow">{t("finalPanelEyebrow")}</span>
