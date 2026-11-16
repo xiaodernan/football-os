@@ -63,6 +63,9 @@ class Settings:
     # must not see an unknown field break their parser); measured on aizzz/gpt-6.1-terra the stream door
     # reports `cached_tokens` without it, and the knob shuffled two warm calls to report nothing.
     openai_prompt_cache_key: str = field(default_factory=lambda: (_env("OPENAI_PROMPT_CACHE_KEY") or "").strip())
+    # Behavioural beacon: shared low-security passphrase for the admin console (spec §42).
+    # Default is exactly the value the operator asked to ship with; override with ADMIN_PASSPHRASE.
+    admin_passphrase: str = field(default_factory=lambda: (_env("ADMIN_PASSPHRASE") or "123").strip() or "123")
     # An HTTP proxy for the provider, e.g. the operator's local Clash Verge (the aizzz.xyz door answers
     # 403 to traffic outside the node's region). Empty inherits no proxy; set it in infra/.env only —
     # it is host-specific and never committed.

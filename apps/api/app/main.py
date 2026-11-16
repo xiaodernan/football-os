@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
 from app.api.v1 import (
+    admin,
     agent_memory,
     agents,
     auth,
@@ -43,6 +44,7 @@ from app.api.v1 import (
     tactics,
     traces,
     trainings,
+    telemetry,
     transfers,
     video,
     world,
@@ -556,6 +558,8 @@ def create_app() -> FastAPI:
     app.include_router(leaderboard.router, prefix=api)
     app.include_router(jobs.router, prefix=api)
     app.include_router(traces.router, prefix=api)
+    app.include_router(telemetry.router, prefix=api)
+    app.include_router(admin.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:

@@ -3628,6 +3628,23 @@ specific user has read it. That CI has printed this push green.
 
 **Not claimed.** That the cache will pay for itself yet; that the display the user sees anywhere in the web tier says "stream" — nothing in the UI renders a streaming claim; the truth lives in the provider and the ledger, and there it now reads warm.
 
+## Item 98 — The Admin Console: shared passphrase in, behavioural board out (landed 2026-11-16)
+
+**The ask.** The user asked for three things: (1) simulate realistic user behaviour — including the impatient reader who closes a page and the lost reader who wanders and clicks at random; (2) an admin-facing panel that watches all of it, entered with the password `123` by anyone who knows it; (3) statistics, analysis, trend prediction and the project's own next-step recommendation derived from those numbers.
+
+**What landed.**
+
+- **`page_views` table** (`migration 0066`) — one row per browser navigation: anonymous `session_ref` (client-minted, no account linkage), path, dwell, bounced, `seeded`, created_at. Migration applied on this host's dev Postgres; `ruff` clean; `test_behavior_admin` 7/7.
+- **`POST /api/v1/telemetry/page-view`** (public, 240/min) — the beacon door; writes `seeded=false` rows. Path and session_ref are shape-checked; 204 on success. The web proxy now explicitly forwards one extra header (`x-admin-passphrase`) and only that.
+- **`app/services/behavior_seed.py`** — the deterministic synthetic cohort: ~2,500 views across ~1,600 sessions over 90 days, entry-weighted like a real product, log-normal dwell, bounces under ~6s, weekend/upward seasonality, seeded-flagged. Live in this host's database (`python -m app.services.behavior_seed --reset`); the console labels it "seeded demo cohort" until live beacons outnumber it.
+- **`GET /api/v1/admin/behavior`** (30/min, `x-admin-passphrase`) — constant-time passphrase check (HMAC, default `123`, override with `ADMIN_PASSPHRASE`). Everything recomputed on the read: sessions/views/bounce/median-dwell, the 90-day series, per-page roll-up, three honest funnels (`/ → /world`, `/tutorial → /manual`, `/world → /world/real-book`), a least-squares 14-day session forecast with R², model-ledger cache share for the window, and rule-based recommendations (`high_bounce_page`, `low_dwell_page`, `tutorial_drop`, `forecast_flat/rising/falling`, `strong_page`).
+- **`/admin`** — the console page itself: passphrase gate (sessionStorage, cleared on a wrong pass), headline KPIs, a hand-drawn SVG daily chart, the funnel panel, the forecast panel ("r² of the fit"), the page table with bounce share, the model ledger panel, and the recommendations panel — native copy in all six languages (`admin` namespace, 46 keys ×6; population **5,036**).
+- **proxy pass-through** — the Next proxy forwards exactly one new header, `x-admin-passphrase`, and only for this door; nothing else about its credential handling changed.
+- **Live walk on this host** — beacon → 204; gate 401/401/200; `/admin` renders 200; cohort aggregates read correctly (1,596 seeded sessions / 2,512 views; 15.8% bounce; median dwell 11.7s; tutorial→manual funnel 19.2% fires `tutorial_drop`; forecast R² 0.27; cache share reported).
+- **Contract & figures**: 243 → **245 paths** (312 operations, 98→99 schemas) with the two new doors; the SHA re-pinned to `e10ffca9…139daf8` through the three ledgers; secured 241 / public **71** / private GET 104; `AUDIT_FIGURES contract_paths=245 page_routes=87 migrations=67`; ROADMAP audit sentence tracks the same; `/world/*` census 23 unchanged.
+
+**Not claimed.** That the cohort is organic traffic (it is not — every row is `seeded=true` and the console says so); that `123` is a secure credential (it is the deliberate shared low-security gate the operator specified — anyone who knows it gets read-only aggregates, no writes, no identities); that the console identifies any person (no user keys in `page_views`, no user ids returned); that the forecast predicts anything real (it is least-squares on a seeded cohort — labelled as arithmetic, not prophecy); and that `x-admin-passphrase` rides the proxy for any other route (the new forward site is this one path, by design).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

@@ -15432,6 +15432,102 @@
           }
         }
       }
+    },
+    "/api/v1/telemetry/page-view": {
+      "post": {
+        "tags": [
+          "telemetry"
+        ],
+        "summary": "Page View",
+        "operationId": "page_view_api_v1_telemetry_page_view_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PageViewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/behavior": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Behavior",
+        "operationId": "behavior_api_v1_admin_behavior_get",
+        "parameters": [
+          {
+            "name": "window_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 7,
+              "default": 90,
+              "title": "Window Days"
+            }
+          },
+          {
+            "name": "x-admin-passphrase",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Passphrase"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Behavior Api V1 Admin Behavior Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -17410,6 +17506,40 @@
           "player"
         ],
         "title": "OutIn"
+      },
+      "PageViewIn": {
+        "properties": {
+          "session_ref": {
+            "type": "string",
+            "maxLength": 48,
+            "minLength": 8,
+            "title": "Session Ref"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Path"
+          },
+          "dwell_ms": {
+            "type": "integer",
+            "maximum": 3600000.0,
+            "minimum": 0.0,
+            "title": "Dwell Ms",
+            "default": 0
+          },
+          "bounced": {
+            "type": "boolean",
+            "title": "Bounced",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_ref",
+          "path"
+        ],
+        "title": "PageViewIn"
       },
       "ParseIn": {
         "properties": {

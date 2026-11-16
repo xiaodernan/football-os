@@ -48,7 +48,7 @@ function requestAccept(range?: string | null): string {
 async function callApi(
   method: string,
   path: string,
-  options: { body?: ArrayBuffer | null; token?: string | null; refreshCookie?: string | null; contentType?: string | null; range?: string | null; trace?: Record<string, string> },
+  options: { body?: ArrayBuffer | null; token?: string | null; refreshCookie?: string | null; contentType?: string | null; range?: string | null; trace?: Record<string, string>; adminPassphrase?: string | null },
 ): Promise<{ response: Response; captured: Captured }> {
   // The caller's trace follows the request, so the API's span belongs to the trace that started upstream.
   const headers: Record<string, string> = { accept: requestAccept(options.range), ...options.trace };
@@ -57,6 +57,9 @@ async function callApi(
   if (options.body && options.contentType) headers["content-type"] = options.contentType;
   // A <video> element seeks by byte range; without this the player would get the whole clip for every hop.
   if (options.range) headers.range = options.range;
+  // The admin console's shared passphrase crosses the proxy explicitly: it is not one of the
+  // credentials the proxy otherwise mints or forwards, and it only exists on this one path.
+  if (options.adminPassphrase) headers["x-admin-passphrase"] = options.adminPassphrase;
 
   const response = await fetch(`${apiBase()}${path}`, {
     method,
@@ -122,6 +125,7 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
   const contentType = request.headers.get("content-type");
   const range = request.headers.get("range");
   const trace = traceContextHeaders(request.headers);
+  const adminPassphrase = request.headers.get("x-admin-passphrase");
   const jar = await cookies();
   let token = jar.get(ACCESS_COOKIE)?.value ?? null;
   const refreshCookie = jar.get(REFRESH_COOKIE)?.value ?? null;
@@ -139,12 +143,12 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
     }
   }
 
-  let { response, captured } = await callApi(method, target, { body, token, refreshCookie, contentType, range, trace });
+  let { response, captured } = await callApi(method, target, { body, token, refreshCookie, contentType, range, trace, adminPassphrase });
 
   if (response.status === 401 && !isAuthRoute && !attemptedRefresh) {
     const minted = await refreshSession(refreshCookie);
     if (minted?.accessToken) {
-      const retry = await callApi(method, target, { body, token: minted.accessToken, refreshCookie, contentType, range, trace });
+      const retry = await callApi(method, target, { body, token: minted.accessToken, refreshCookie, contentType, range, trace, adminPassphrase });
       response = retry.response;
       captured = retry.captured;
       mintedCookies = minted;

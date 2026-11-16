@@ -78,6 +78,9 @@ const NAMESPACE_OWNERS = {
   // The Atlas — every door of the world on one page
   "worldAtlas": { owner: "world", purpose: "the navigation star-chart for the whole world: the browsing doors, the league doors, the real book and the manual, drawn in one constellation with the same doors' names and notes reused from their own namespaces" },
 
+  // The Admin console — the shared-passphrase behavioural board
+  "admin": { owner: "core", purpose: "the shared-passphrase /admin console: the behavioural board — sessions, views, bounces, dwell, funnels, a least-squares forecast, model-ledger cache share and rule-based recommendations, every figure recomputed from the rows" },
+
   // The Tutorial — the ten-seat table
   "tutorial": { owner: "core", purpose: "the in-product /tutorial door: ten steps in the order a fresh reader knocks on them, natively authored in every locale" },
 

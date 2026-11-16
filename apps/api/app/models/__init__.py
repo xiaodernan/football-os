@@ -3026,3 +3026,16 @@ class Notification(Base, TimestampMixin):
     kind: Mapped[str] = mapped_column(String(40), nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+class PageView(Base):
+    """The browser behavioural beacon, one row per navigation. From the web tier (seeded=False) or the deterministic demo cohort (app.services.behavior_seed, seeded=True). session_ref is a client-minted random handle, never PII."""
+
+    __tablename__ = "page_views"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=lambda: new_public_id("pv"))
+    session_ref: Mapped[str] = mapped_column(String(48), nullable=False, index=True)
+    path: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    dwell_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    bounced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    seeded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False, index=True)

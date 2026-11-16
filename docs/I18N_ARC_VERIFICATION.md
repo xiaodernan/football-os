@@ -8461,3 +8461,50 @@ for exact multiples of a million); neither local gate was re-run after the ICU l
 **Not claimed.** That the CI queue printed this cure green by the time you read it — the
 three reds stand on their own runs; the cure rides in its own commit; nothing was re-run,
 renumbered or re-pinned. The Item 96/97 push (`b55c2dc`) predates this cure.
+
+## §232 — The Admin Console lands — and the cache meter moved from zero to 97.3% on this host
+
+**Part A — Item 98: the passphrase door and the behavioural board (web + api).**
+
+* `page_views` (`migration 0066`): anonymous `session_ref`, path, dwell, bounced, seeded —
+  two sources kept apart, `seeded` labels every row. Applied 0065 → 0066 on this host's dev
+  Postgres.
+* `POST /api/v1/telemetry/page-view` — public beacon door; shape-checked `path`
+  (`/`, `//`, `..`, percent-encoding rejected), `session_ref` (8–48 `[A-Za-z0-9_-]`); 240/min; 204.
+* `app/services/behavior.py` — aggregates-on-the-read: sessions/views/bounce/median dwell,
+  90-day series, per-page roll-up, funnels, least-squares 14-day session forecast with R²,
+  rule-based recommendations — never a stored counter.
+* `app/services/behavior_seed.py` — the deterministic demo cohort (SEED=20261116): ~2,512 rows
+  across ~1,596 sessions on this host's dev DB; marked `seeded=true`; console says so.
+* `GET /api/v1/admin/behavior` — `x-admin-passphrase`, constant-time (`hmac.compare_digest`),
+  default exactly `123` (override `ADMIN_PASSPHRASE`); 401 otherwise; 30/min.
+* `/admin` — gate + KPI row + hand-drawn SVG chart + funnel panel + forecast panel + page table
+  + model ledger + recommendations — native copy in six locales (`admin` namespace, 46 keys,
+  population **5,036 ×6**); `qa-namespace-ownership` records the owner; the proxy forwards one
+  extra header and only for this door.
+* Figures: contract **245 paths / 312 operations / 99 schemas**, SHA `e10ffca9…139daf8`,
+  re-pinned through `docs/SECURITY_PROBE_REPORT.md`, `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`,
+  `ROADMAP.md`; `AUDIT_FIGURES contract_paths=245 page_routes=87 migrations=67`;
+  secured 241 / public 71 / private GET 104; both currency suites 21/21 green.
+
+**Part B — the LLM gateway, named.**
+
+* `/v1/models` via Clash Verge (`127.0.0.1:7897`) → 200; direct → 200; host browser edge →
+  403 `本站不对您所在的国家及地区进行商业服务` recorded verbatim.
+* Provider is now **proxy-aware** (`OPENAI_PROXY`, opt-in; `build_opener(ProxyHandler)` when set;
+  default inherits nothing — CI untouched).
+* Stream door with `include_usage` prints `cached_tokens` on this gateway; the coach's warm
+  repeat measured **4608/4732 = 97.3%** cached; recorded in `model_calls` (cache_reported=true).
+* `prompt_cache_key` kept opt-in, un-pinned by call sites, measured not to help this gateway —
+  recorded in §230 and in code comments; the two call sites stay un-pinned.
+* Live `/coach/ask` answered with `provider: openai`, `model: gpt-6.1-terra`,
+  `demo_mode: false`.
+
+**Part C — §231 (the Plural-select red) recap.** Three master runs went red on one new
+purpose — a plural without CLDR's `zero` (ar) and `many` (fr) branch in `matchesOnDay`; both
+added; `qa-plural-select` 7/7; ledger §231; pushed as its own commit.
+
+**Not claimed.** That any of this paid for itself yet; that the seeded cohort is organic; that
+`123` authenticates anyone (it is the operator's explicit shared passphrase, read-only and
+unidentified by design); and that the runner has printed §232's runs green at the time of
+writing — nothing re-ran or re-pinned.

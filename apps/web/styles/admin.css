@@ -1,0 +1,81 @@
+/* The Admin console — the shared-passphrase behavioural board. */
+
+.admin__header { display: flex; flex-direction: column; gap: 0.35rem; }
+.admin__eyebrow {
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold, #d8b56b);
+  font-weight: 750;
+}
+.admin__source {
+  font-size: 0.75rem;
+  color: var(--text-2);
+  border-inline-start: 3px solid var(--gold, #d8b56b);
+  padding-inline-start: 0.6rem;
+  margin-block-start: 0.35rem;
+}
+
+.admin__gate {
+  display: flex;
+  gap: 0.6rem;
+  max-width: 30rem;
+  margin-block: 0.6rem;
+}
+.admin__gate .input { flex: 1; font-size: 1.15rem; letter-spacing: 0.35em; }
+@media (max-width: 560px) {
+  .admin__gate { flex-direction: column; }
+  .admin__gate .input { letter-spacing: 0.15em; }
+}
+.admin__gate-error { color: var(--danger, #ff7a7a); font-size: 0.85rem; }
+
+.admin__kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+@media (max-width: 900px) { .admin__kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .admin__kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.admin__kpi {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-panel-2);
+  padding: 0.85rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.admin__kpi-value { font-size: clamp(1.45rem, 2.4vw, 2rem); font-weight: 800; letter-spacing: -0.02em; }
+.admin__kpi-label { font-size: 0.7rem; color: var(--text-2); letter-spacing: 0.04em; }
+
+.admin__chartwrap { display: flex; flex-direction: column; gap: 0.5rem; }
+.admin__chart { width: 100%; height: auto; display: block; }
+.admin__line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.admin__line--views { stroke: var(--gold, #d8b56b); }
+.admin__line--sessions { stroke: var(--accent, #6ea8ff); opacity: 0.8; }
+.admin__chartfoot { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; font-size: 0.72rem; }
+.admin__legend { display: inline-flex; align-items: center; gap: 0.4rem; }
+.admin__dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; display: inline-block; }
+.admin__dot--views { background: var(--gold, #d8b56b); }
+.admin__dot--sessions { background: var(--accent, #6ea8ff); }
+
+.admin__funnels { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; padding: 0; margin: 0; }
+.admin__funnels li { display: grid; grid-template-columns: minmax(9rem, auto) 1fr auto; gap: 0.6rem; align-items: center; }
+.admin__funnel-id { font-size: 0.74rem; }
+.admin__funnel-track { height: 0.55rem; background: var(--bg-panel-2); border-radius: 99px; overflow: hidden; }
+.admin__funnel-fill { height: 100%; background: linear-gradient(90deg, rgba(216,181,107,0.45), var(--gold, #d8b56b)); border-radius: 99px; }
+.admin__funnel-rate { font-size: 0.8rem; color: var(--text-2); }
+
+.admin__kv { display: flex; flex-direction: column; gap: 0.45rem; margin: 0; }
+.admin__kv div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px dashed var(--line-soft); padding-block: 0.3rem; }
+.admin__kv dt { color: var(--text-2); font-size: 0.8rem; }
+.admin__kv dd { margin: 0; font-size: 0.85rem; }
+
+.admin__recs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.admin__recs li {
+  border-inline-start: 3px solid var(--gold, #d8b56b);
+  padding-inline-start: 0.6rem;
+  font-size: 0.84rem;
+  color: var(--text);
+  line-height: 1.5;
+}
