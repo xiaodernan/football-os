@@ -9683,3 +9683,24 @@ in the same commit.
 **Not claimed.** That the trace opens itself; that the disclosure is keyboard-discoverable without the
 summary being focused (it is — `<summary>` like every native disclosure); that any other panel in the
 product renders the trace (they do not yet).
+
+## §270 — Item 130: three runs, one red, one cure — the agents scan pays for the new file
+
+**Verbatim from the runner:**
+
+| run | head | red |
+| --- | --- | --- |
+| `43959944293` | `5d0b5dd` — Item 127 | `test_every_cited_scan_in_either_ledger_answers_with_the_count_its_row_publishes — AssertionError: \`git grep -li agents -- apps/api/app\` recomputes to 17 committed file(s); the row publishes 16` |
+| `43960454185` | `df9fe46` — Item 128 | same line, 1 failed, 2,549 passed |
+| `43959994290` | `5c3ab85` — fact pack | same line, 1 failed, 2,549 passed |
+
+The cure: `2ac525c` re-pins the row to **17** with the seventeenth named in the row's own text
+(`services/agents/coach_graph.py`, landed Item 127); currency suites pass **25/25** on the committed
+tree. The same test condemns the same sentence — three runs, three copies of the same failure line,
+three queued runs behind them. That the §267 engine's own artifact exists before the ledger row was
+corrected is the process doing its job: CI found the row first, and the row is corrected with the commit
+before the runner argues back once more.
+
+**Not claimed.** That the cure makes those three reds print green — the runner judges each still-queued leg
+in its own time; the rows on the next push are the truth this section cares about. That the "17" is a moral
+verdict — it is a count, and the file is named as its reason.

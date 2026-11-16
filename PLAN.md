@@ -4449,6 +4449,18 @@ compat: the additive `graph_trace` ride is optional-typed in the web-side type.
 static DOM); that the node names are localized (they are not — they are the product's own vocabulary);
 that the disclosure is pinned open by default (it is not).
 
+## Item 130 — the agents scan: three runs, one red, one cure (landed 2026-11-17)
+
+**The red.** `test_every_cited_scan_in_either_ledger_answers_with_the_count_its_row_publishes` — the
+`git grep -li agents -- apps/api/app` scan now recomputes to 17 committed files; the row in the SPEC
+ledger still published 16. `coach_graph.py` (Item 127) is the seventeenth.
+
+**The cure.** `2ac525c` re-pins the row to 17 and names the seventeenth file in the row's own text —
+the same scan now reads consistently on the committed tree; currency suites print 25/25.
+
+**Not claimed.** That the runner has greened these runs before it has; that one cure is "enough" for
+three reds — the runner judges each in its own queue entry, and the cure landed first is a clean fact.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
