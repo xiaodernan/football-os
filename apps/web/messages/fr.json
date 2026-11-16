@@ -4746,7 +4746,11 @@
     "tour10t": "La chronique",
     "tour10d": "la saison journée par journée — qui menait, quand ça a basculé, qui a tenu",
     "tour11t": "La Gazette",
-    "tour11d": "le journal du monde — une édition chaque journée, imprimée depuis les lignes"
+    "tour11d": "le journal du monde — une édition chaque journée, imprimée depuis les lignes",
+    "tour12t": "Les finales",
+    "tour12d": "les huit coupes — qui a soulevé la coupe, les coups d'éclat de l'année, tirés des lignes",
+    "tour13t": "Le dossier du bruit",
+    "tour13d": "le modèle au banc des accusés — précision, nuls appelés juste, les plus gros ratés, depuis les lignes"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",

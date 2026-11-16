@@ -4746,7 +4746,11 @@
     "tour10t": "The Timeline",
     "tour10d": "the season matchday by matchday — who led, when it turned, who held it",
     "tour11t": "The Gazette",
-    "tour11d": "the world's paper of record — one edition every matchday, printed from the rows"
+    "tour11d": "the world's paper of record — one edition every matchday, printed from the rows",
+    "tour12t": "The Finals",
+    "tour12d": "the eight cups — who lifted, the year's thunderbolts, all read from the rows",
+    "tour13t": "The Noise Dossier",
+    "tour13d": "the model on trial — accuracy, draws called right, the loudest misses, straight from the rows"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
