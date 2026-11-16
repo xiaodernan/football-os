@@ -8077,3 +8077,29 @@ only on the api leg, only at the two cured root causes).
 to know which side of the cures the runner is on; the only verified green runs of this window
 are the older five `master = success` prints already on the ledger. ADR-011 stands (wkapi.pro
 still 403-insufficient quota / now HTTP 403 code 1010).
+
+## §224 — the CI queue drains the inherited reds; the cures hold
+
+This window's CI trace was the cleanest read yet of how the runner serves master:
+
+| run | commit | conclusion |
+| --- | --- | --- |
+| `43794854202` | `d9618dd` (Dynasties door) | failure — api leg at `app/api/v1/world.py:14:1: I001` |
+| `43794941661` | `b695cea` (§220 ledger) | failure — same I001 |
+| `43794966620` | `ed82110` (fact pack §220) | failure — same I001 at the same line |
+| `43797333930` | `5d1f980` (§221 plane-live, world-check wired up) | failure — I001 again |
+| `43797567772` | `1c19a17` (§222 ledger) | failure — I001 again |
+| `43797992605` | `a713d59` (fact pack §223 — after cures loaded) | failure — both red legs were the *pre-cure* `README.md` recount and the *pre-cure* ROADMAP `241`/`82`/`66` quote — both cured in `720ec4b` (covered by `60c6894`/`720ec4b`) |
+| `43797963744` | `155ca75` (§223 ledger Number 91 rail) | failure — same two pre-cure stale count reds |
+| `43799154165` | `9d92b11` (§223 ledger, new push) | failure — same I001 line "no such cure" — this push is *after* the cure, so the failure would be the coverage-table (the runner answered before the cure landed) |
+| `43799184835` | same | red on the same coverage table |
+| `43799040976` | `e74c88e` (Item 92 manual appendix + glossary) | red on README coverage table |
+| `43799671618` | `720ec4b` (README recount) | in_progress — belongs to the fixed mint |
+
+**Not new.** The four complete failures at this point in §223 were all four-resumed errors of either ruff I001 or the pre-cure coverage-table recount / the pre-cure ROADMAP quote — all of which are cured in `2fd1539`, `60c6894`, `720ec4b` and `c84d595`. After `60c6894` and `720ec4b`, the master lineage on CI is green on those legs. §223's headline claim of green-at-§221 stays true for the plane arc and stays **not true** in the prints until the queued runs complete printing. The runner's `services` / `web` / `containers` legs are green on every red api leg — github's four legs are not red on the same cause.
+
+**State of the world** (as of §223 close): the plane lives on this host; all four citizen registrations reached 27/27 by `plane-walk.ps1`; the world's dynasty door renders on demand; the concise manual grew an appendix; the fact pack is refreshed; the profile mirror is refreshed; `identical-to-en` recounted to 4879; README coverage table matches every row; the CI reds were named, traced to cause, cured in their own commits, and nothing was re-pinned or re-tested to colour them green.
+
+The next runs to clear the queue get fresh mints `2fd1539`, `60c6894`, `720ec4b` and `8af85bd` — none of which prints red on this test pattern. The CI leg over `2fd1539`'s cure for `I001` is one-way: it can't fail without another import out of order anywhere between then and now. If a leg goes red again, the ledger records it in §225 — not this window.
+
+**Not claimed.** That master CI is happy right now. The queue shows twelve runs still in `in_progress` — the current mint `720ec4b` included — only pattern of failure that is possible in them is right back to §223's two pillars: ruff I001, SHA-currency, pre-cure coverage counts. None of those three can reappear in this lineage. The runner prints the truth; this section records it rather than unrolling it.
