@@ -3737,6 +3737,27 @@ there's a canonical sentence for.
 
 **Not claimed.** That openfootball equals FIFA's official print (they don't always agree — the door reprints the snapshot, not the FIFA ledger); that any tournament finished without controversy (it did not); that the door prints an attendance figure for any of the three finals (the snapshot cannot verify a crowd — only the 2022 Lusail figure prints). The synthetic world is untouched by any of this.
 
+## Item 105 — four new refusal doors join the one table; the census is green locally (landed 2026-11-16)
+
+**The gap.** Four codes raised inline at doors sat in no answer table, so they fell through to 400:
+`admin_refused` (`/admin/behavior`, 401), `bad_path` and `bad_session` (`/telemetry/page-view`, 422) and
+`unknown_tournament` (`/world/real-book`, 422).
+
+**What landed (commit `552656d`).** `door_codes.py` gains the three 422 codes in `UNPROCESSABLE_CODES` and `admin_refused` in `UNAUTHORIZED_CODES`; all six catalogues carry sentences (en byte-identical to the API English; zh/zh-TW/fr/ar/he natives); `test_behavior_admin.py`'s one non-string assert message is a native f-string. Census **26/26 green** on this host at the head.
+
+**Not claimed.** That the runner printed anything green — `552656d`'s api leg was still printing at the fact-pack move; its web leg printed the Translation-quality red the next item cures (§241).
+
+## Item 106 — the two reds 552656d printed, cured in their own commit (landed 2026-11-16)
+
+**Cure 1.** The four `ar` refusal sentences ended with U+002E; `qa-translation-quality` demanded U+06D4 inside Arabic copy. Re-terminated; the gate reads **9/9**.
+
+**Cure 2.** `qa-shared-keys-witness.mjs` pinned premises that legitimately moved when honest work shrank the world (`10` named divergences → `9`; `228` bindings against `VALUE_CEILING = 240`). Arm 0 now asserts the phrase with no pinned count; arm B derives the crossing from the gate's own `VALUE_CEILING` read at run time (`need = ceiling − baseline + 1` = **13** today). Witness **8/8**.
+
+**Named reds.** `3b70db7` and `85f90dc` — web :: Shared-sentence behaviour gate (`rc=0`/`bindings=240`); `552656d` (`43842917505`) — web :: Translation-quality gate; api leg not yet printed. No re-pins, no re-runs, no renumbering (§242).
+
+**Not claimed.** That any run after this commit prints green; that the world's CI is clean right now.
+
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

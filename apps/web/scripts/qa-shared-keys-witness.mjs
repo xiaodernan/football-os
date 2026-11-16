@@ -13,20 +13,25 @@
  * Revised 2026-11-06 for the live surface: 43 namespaces, 101 value-shared rows, 151 name-only rows,
  * 10 named divergences (`live|nav,settings` added), the ceiling ratcheted 234 → 240 on the same review;
  * the fixture arms below were re-measured against that baseline:
- *   0  the shipped gate reads the real catalogues 4/4 green.
- *   0  the shipped gate reads the real catalogues 4/4 green.
+ *   0  the shipped gate reads the real catalogues 4/4 green (asserted with the live divergence count, never a pin).
+ * Revised 2026-11-16 — the population has fallen legitimately since (honest improvements removed duplicate
+ * bindings): today the shipped gate prints 9 named divergences and 228 bindings against the same 240 review
+ * ceiling, so the arms must derive from the tree instead of pinning:
+ *   0  arm 0 asserts the phrase with any count — a count that legitimately falls must not turn affirmation into a lie.
+ *   B  the marker is added to as many namespaces as the gate's OWN `VALUE_CEILING` requires (read from GATE's source,
+ *      crossed by the bindings the real catalogues print) — twelve copies no longer exceed a 240 ceiling at 228.
  *   A  one namespace's Chinese value for a value-shared key given a unique string: failed=1 — check 2 names
  *      `adding|scout,training`. The row keeps its English, so neither the ledger nor the ceiling can move.
- *   B  a sixth namespace added to "Age" (`career.thAge`), translated like the five that hold it: failed=1 — check 4
- *      ("the duplicated-sentence population does not exceed its reviewed ceiling"), because the sentence is now held
- *      in 241 bindings and no translation diverges, so check 2 must stay green. Row counts alone would read 101.
+ *   B  the marker copies: ceiling reds, drift stays green, bindings print past 240.
  *   C  a named divergence aligned away (`simulate.home` → the nav's 首页): failed=1 — check 3, which refuses a
  *      ledger that no longer holds; the row itself leaves the divergence list, so check 2 stays green.
- *   D  three empty catalogues: failed=2 — check 1 (the population guard) and check 3 (all ten entries stale).
+ *   D  three empty catalogues: failed=2 — check 1 (the population guard) and check 3 (stale entries ledgered).
  *      Check 2 is green at zero rows, which is precisely why the guard exists rather than why the arm is vacuous.
  *   E  a shared key NAME with a different English value (`career.asking`): green 4/4 — name-only sharing is not a
  *      finding, which is the control that keeps the gate from drifting back to counting names.
  *   F  the real catalogues after the fixture arms: 4/4, so no arm leaked into the tree.
+ *   (The 2026-11-06 draft of arm B pinned "twelve copies" — a 240-ceiling contract; the cure keeps the arm's
+ *    claim — the ceiling can red when the population crosses it — by deriving the crossing, not the number.)
  * Checks: 8, all green on the fixed gate.
  *
  * Files only: no server, no browser, no port.
@@ -94,7 +99,7 @@ const zero = run(baseline);
 check(
   "0 the shipped gate reads the real catalogues 4/4 green",
   zero.status === 0 && zero.passed === 4 && zero.total === 4 && zero.failed === 0
-    && zero.out.includes("10 of the value-shared rows are translated differently"),
+    && /\d+ of the value-shared rows are translated differently/.test(zero.out),
   tally(zero),
 );
 
@@ -120,25 +125,37 @@ check(
   "adding|scout,training",
 );
 
-// B — twelve copies of a never-before-seen sentence: the population crosses the ceiling by one or
-//     more bindings, nothing diverges. The drift check must stay green all the way; the ceiling may red.
+// B — a never-before-seen marker sentence, one copy per namespace, added until the population crosses the gate's
+//     OWN reviewed ceiling. The crossing point is derived at run time from (a) the `VALUE_CEILING` the gate
+//     declares and (b) the bindings the real catalogues print — so a legitimately smaller real population can
+//     never turn "twelve copies do not cross a 240 ceiling" into a false red, nor a bigger one into a quiet pass.
+//     The drift check must stay green all the way; the ceiling may red.
 const duplicate = fixture("duplicate-sentence");
 copyReal(duplicate);
-const targetNamespaces = ["challenges", "careerDetail", "club", "academy", "coach", "market", "simulate", "scout", "training", "tactics", "graph", "history"];
-for (const [locale, sentence] of [["en", "Viremont Fifty Duplicate Marker"], ["zh", "维里蒙特五十重复标记"], ["zh-TW", "維里蒙特五十重複標記"]]) {
-  const catalogue = read(duplicate, locale);
-  for (const ns of targetNamespaces) {
-    catalogue[ns].thDuplicateMarker = sentence;
+const gateSource = readFileSync(GATE, "utf8");
+const ceilingMatch = /VALUE_CEILING = (\d+)/.exec(gateSource);
+const ceiling = ceilingMatch ? Number(ceilingMatch[1]) : null;
+const baselineBindings = Number(/(\d+) binding\(s\) across/.exec(zero.out)?.[1] ?? -1);
+const realEnglish = JSON.parse(readFileSync(join(REAL, "en.json"), "utf8"));
+const namespaceNames = Object.keys(realEnglish);
+const need = ceiling !== null && baselineBindings >= 0 ? ceiling - baselineBindings + 1 : -1;
+if (need > 0 && need <= namespaceNames.length) {
+  const targetNamespaces = namespaceNames.slice().sort().slice(0, need);
+  for (const [locale, sentence] of [["en", "Viremont Fifty Duplicate Marker"], ["zh", "维里蒙特五十重复标记"], ["zh-TW", "維里蒙特五十重複標記"]]) {
+    const catalogue = read(duplicate, locale);
+    for (const ns of targetNamespaces) {
+      catalogue[ns].thDuplicateMarker = sentence;
+    }
+    write(duplicate, locale, catalogue);
   }
-  write(duplicate, locale, catalogue);
 }
 const b = run(duplicate);
 const over = Number(/(\d+) binding\(s\) across/.exec(b.out)?.[1] ?? 0);
 check(
-  "B twelve duplicated sentences red the ceiling and not the drift check",
+  "B marker copies red the ceiling and not the drift check",
   b.status === 1 && b.failed === 1 && verdict(b.out, CEILING) === "FAIL"
-    && verdict(b.out, DRIFT) === "PASS" && over > 240,
-  `${tally(b)}; ${CEILING}=${verdict(b.out, CEILING)} bindings=${over}`,
+    && verdict(b.out, DRIFT) === "PASS" && over > (ceiling ?? 240) && need > 0 && need <= namespaceNames.length,
+  `${tally(b)}; ${CEILING}=${verdict(b.out, CEILING)} bindings=${over} ceiling=${ceiling} need=${need}`,
 );
 
 // C — a ledger entry that no longer holds: the named row is aligned away.

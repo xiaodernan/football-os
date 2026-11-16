@@ -8735,3 +8735,87 @@ NOTICE consolidation across all three (`NOTICE-2014-WORLDCUP.txt`), registry ent
 **Verified on this host**: tsc clean · all gates green · 10/10 book tests · 21/21 spec/security · `/world/real-book?tournament=2014|2018|2022` → 200 with markers (Götze/Maracanã for 2014 specifically; Messi/Mbappé/Argentina for 2022; Kane/Luzhniki for 2018).
 
 **Not claimed.** That the door carries 2018→2022 in style for 2014 — it does; the page is one door with three tabs. That attendance is printed for any tournament in its ledger (the snapshot cannot verify a crowd; only the 2022 Lusail figure prints). That the Mineirazo detail differs without verification — it does not; the fact is computed from the file and matches the public record.
+
+## §241 — Item 105: four new refusal doors join the one table — census 26/26 locally; the 552656d run printed two reds
+
+**The four CI reds from the pre-105 master, in one batch, all the same root cause this window.**
+`admin_refused` (`/admin/behavior`, 401), `bad_path` and `bad_session` (`/telemetry/page-view`, 422) and
+`unknown_tournament` (`/world/real-book`, 422) were raised inline at doors that no answer table knew,
+so the census trio lit every one at once: `test_answer_census` (the raise now answers from
+`answers.SETS`), `test_locale_claims` (no catalogue sentence → "a reader is shown the API's English"),
+and `test_assert_message_forms` (a tuple operand at `test_behavior_admin.py:53`). All four codes now
+live in `door_codes.py`'s two sets exactly once:
+
+- `UNAUTHORIZED_CODES` gains `admin_refused` (**401**).
+- `UNPROCESSABLE_CODES` gains `bad_path`, `bad_session`, `unknown_tournament` (**422** each).
+
+**The catalogue holds a sentence for each, in all six languages.** `en` is byte-identical to the
+API's English (that is what the locale-claims gate demands):
+
+- `en`: `The passphrase is wrong.` · `The path is outside the accepted shape.` ·
+  `The session reference is outside the accepted shape.` · `The Real Book carries 2014, 2018 and 2022.`
+- `zh` / `zh-TW`: `共享口令不对` / `共享口令不對` · `路径不符合允许的格式` / `路徑不符合允許的格式` ·
+  `会话引用不符合允许的格式` / `會話引用不符合允許的格式` · `真实名册只收录 2014、2018 与 2022` /
+  `真實名冊只收錄 2014、2018 與 2022`
+- `fr`: `Le mot de passe partagé est faux.` · `Le chemin sort du format accepté.` ·
+  `La référence de session sort du format accepté.` · `Le vrai Cahier ne porte que 2014, 2018 et 2022.`
+- `ar`: terminated with the Arabic full stop — `كلمة المرور المشتركة غير صحيحة۔` ·
+  `المسار خارج الشكل المقبول۔` · `مرجع الجلسة خارج الشكل المقبول۔` ·
+  `الكتاب الحقيقي يحمل 2014 و2018 و2022 فقط۔` **(the first `ar` cut of this commit shipped the Latin
+  full stop and red shifted into §242 — the terminal punctuation is named there, not buried here)**
+- `he`: `הסיסמה המשותפת שגויה.` · `הנתיב מחוץ לצורה המוסכמת.` · `ההפניה למפגש מחוץ לצורה המוסכמת.` ·
+  `הספר האמיתי נושא את 2014, 2018 ו-2022 בלבד.`
+
+Population **5,055 ×6**; badge README re-pinned to the same figures; `qa-locale-tokens` green 7/7.
+
+**`test_behavior_admin.py`** — one non-`str` assert message (`(bad, response.status_code)`) replaced
+by an f-string a traceback prints cleanly.
+
+**What the runner printed on `552656d`, named.** `web` failed at
+**Translation-quality gate** — the four `ar` refusal sentences ended in U+002E; `api` was still
+draining when the fact pack moved. `web` had earlier failed the same way on `3b70db7` / `85f90dc`
+at **Shared-sentence behaviour gate** — arms 0 and B pinned a live premise (`10` rows / `240` ceiling
+against a population that had fallen to `9`/`228`). Neither red is claimed cured-by-citation; the
+cures are their own commit and the runner will say on its own.
+
+**Verified on this host at the head of the item:** `pytest test_answer_census`, `test_locale_claims`,
+`tests/test_assert_message_forms`, `test_behavior_admin` → **26/26 passed**; `qa-translation-quality`
+→ **9/9**; `qa-translation-quality-witness` → **11/11**; `qa-locale-tokens` → **7/7**;
+`qa-locale-completeness` / the other locale gates unchanged.
+
+**Not claimed.** That the runner has printed anything green since `552656d` — the 552656d queue held
+one in-flight api run at the time of writing; the two named reds above were red on that exact head.
+
+## §242 — Item 106: the two reds 552656d printed, cured in their own commit
+
+**Cure 1 — `ar` refusal sentences re-terminated with the Arabic full stop.** The four sentences added
+in §241 ended with U+002E (Latin). `qa-translation-quality` (the run's own red) demands the Arabic
+full stop U+06D4 inside Arabic copy — the same terminal mark every other `ar` errors entry carries.
+All four re-terminated; the gate now reads **9/9** locally.
+
+**Cure 2 — `qa-shared-keys-witness.mjs` derives its arms from the tree instead of pinning them.**
+Arm **0** asserted the phrase `"10 of the value-shared rows are translated differently"`; the shipped
+gate today prints `"9 of …"` — nine named divergences, all held by the one table. The arm now asserts
+the phrase with **no pinned count** (`/\d+ of the value-shared rows are translated differently/`),
+keeping the check's intent (the shipped gate reads the real catalogues 4/4 green) without tying it
+to a number the world legitimately moves. Arm **B** added *twelve* marker copies expecting the
+population to cross `VALUE_CEILING = 240`; the real population had fallen to **228 bindings**, so
+`228 + 12 = 240`, not `> 240` — ceiling green, verdict absent, `status 0`. Arm B now reads the gate's
+own `VALUE_CEILING` from `qa-shared-keys.mjs`'s source and crosses it live:
+`need = ceiling - baselineBindings + 1` namespaces (today **13**), and fails **honestly** if the
+crossing is impossible. `"twelve copies"` is gone from the surface too — the arm's claim (the ceiling
+can red when the population crosses it, the drift arm stays green) is now derived, not pinned.
+
+**Verified on this host after the cure:** `qa-shared-keys-witness` → **8/8 PASS** (arm 0 rc=0; arm B
+rc=1, `bindings=241`, `need=13`, `ceiling=240`); `qa-translation-quality` → **9/9**;
+`qa-translation-quality-witness` → **11/11**; `qa-locale-tokens` → **7/7**.
+
+**What the runner printed, named.** `3b70db7` (Real Book III) and `85f90dc` (fact pack) both failed
+at **web :: Shared-sentence behaviour gate** with exactly this two-verdict print
+(`0 … FAIL … rc=0` / `B … FAIL … bindings=240`); `43842917505` (`552656d`) printed the
+Translation-quality red above, and its api leg had not landed yet. Each cure rides in this commit and
+nothing is re-pinned, re-tagged or re-run to fit a green run.
+
+**Not claimed.** That any run after this commit prints green; that the gate's own DIVERGENCES ledger
+is the final word (it is, by construction — `DIVERGENCES.size` is read by the gate itself); that
+`552656d`'s api leg is green (it had not printed when this arc was written).
