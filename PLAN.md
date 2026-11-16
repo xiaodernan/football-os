@@ -4190,6 +4190,45 @@ the tuple message on the `assert went == ...` line, called out by name rather th
 
 **Not claimed.** That the runner prints any leg of this cure green before it has; that the two ratchet ceilings (`116`/`240`) were ever raised for this fix — they were not, the renderings were aligned instead.
 
+## Item 123 — the 1934–1966 forgotten cups land — the Real Book now carries the complete World Cup history (landed 2026-11-17)
+
+**The gap.** The door carried 1970 forward. The seven editions between 1934 and 1966 — the Mussolini-era Cup,
+the Anschluss Cup, the Maracanazo, the Miracle of Bern, the teenage-Pelé Cup, 1962 and 1966 — were absent,
+even though openfootball publishes all seven and they are CC-BY 4.0. 1930 upstream keeps answering HTTP 503;
+it is not carried.
+
+**What landed.**
+
+- `openfootball-worldcup-1934.json` (17 scored), `openfootball-worldcup-1938.json` (18 scored, one committed
+  fixture the file marks canceled — Sweden v Austria, 1938-06-05, Stade Gerland; the door counts only fixtures
+  with scores and says so on the page), `openfootball-worldcup-1950.json` (22), `openfootball-worldcup-1954.json`
+  (26), `openfootball-worldcup-1958.json` (35), `openfootball-worldcup-1962.json` (32),
+  `openfootball-worldcup-1966.json` (32).
+- Scorer-honesty, per file: 1934, 1938 and 1950 carry full scorer lists (70/84/88 entries matching the printed
+  goal totals exactly) and the door prints them; 1954, 1958, 1962, 1966 are scoreline-only and print `[]`.
+- The honours spine grows to **23 rows** (21 World Cups + 2 Euros); the repeat-champions ledger now reads
+  **Brazil 5** (1958, 1962, 1970, 1994, 2002) · **Italy 5** (1934, 1938, 1982, 2006, Euro 2021) ·
+  **Argentina 3** (1978, 1986, 2022) · **West Germany 3** (1954, 1974, 1990) · **France 2** (1998, 2018) ·
+  **Spain 2** (2010, Euro 2024) · **England 1** (1966) · **Germany 1** (2014) · **Uruguay 1** (1950).
+- The Champions door compares all **21 World Cups**; the Real Book carries all of them plus the two Euros;
+  the Roll of Honours prints **23 rows** and **1,048 matches / 2,909 goals**, computed on every read.
+- OG cards print **23** tournaments over **1934 — 2024**; the Champions card lists all 21 years.
+- Catalogue population **5,224 ×6**; eleven stale "fourteen/sixteen" literals natively reworded in six
+  tongues; the unplayed-fixture note localizes natively with ICU variables.
+
+**Honest silences, every one.** Every scoreline-only edition keeps the scorer-silence discipline verbatim;
+the unplayed 1938 fixture prints no row and travels onward in the payload as a named object; curator knowledge
+is labelled on every tile.
+
+**Contract re-exported:** the regex of `/world/real-book`'s `tournament` parameter widened to the complete
+set; nothing else moved. New SHA-256
+`ffabba91ec09b0cb6d8913c0674d1d64ec2bff408b2035e16c2584a2ba467862`; the three ledgers re-pinned;
+`AUDIT_FIGURES` unchanged (249/90/67).
+
+**Not claimed.** That the runner prints any leg of this item green before it has; that a 1930 snapshot exists
+in this tree (it does not — upstream answers 503 today); that attendance is cited for these editions (every
+`attendance` ships as `null` — these crowds are disputed, and no number is printed where the file is silent).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

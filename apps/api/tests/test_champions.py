@@ -8,7 +8,7 @@ from app.services.world.champions import compute_champions
 def test_the_ten_cups_are_present_in_order() -> None:
     payload = compute_champions()
     assert payload["available"] is True
-    assert [entry["tournament"] for entry in payload["entries"]] == ["2022", "2018", "2014", "2010", "2006", "2002", "1998", "1994", "1990", "1986", "1982", "1978", "1974", "1970"]
+    assert [entry["tournament"] for entry in payload["entries"]] == ["2022", "2018", "2014", "2010", "2006", "2002", "1998", "1994", "1990", "1986", "1982", "1978", "1974", "1970", "1966", "1962", "1958", "1954", "1950", "1938", "1934"]
 
 
 def test_each_cup_prints_its_own_champion_and_final_from_the_snapshot() -> None:
@@ -88,7 +88,7 @@ def test_the_door_answers() -> None:
     response = client.get("/api/v1/world/champions")
     assert response.status_code == 200
     body = response.json()
-    assert len(body["entries"]) == 14
-    assert {entry["tournament"] for entry in body["entries"]} == {"1970", "1974", "1978", "1982", "1986", "1990", "1994", "1998", "2002", "2006", "2010", "2014", "2018", "2022"}
+    assert len(body["entries"]) == 21
+    assert {entry["tournament"] for entry in body["entries"]} == {"1934", "1938", "1950", "1954", "1958", "1962", "1966", "1970", "1974", "1978", "1982", "1986", "1990", "1994", "1998", "2002", "2006", "2010", "2014", "2018", "2022"}
     assert body["provenance"]["data_origin"] == "public-real"
-    assert [entry["has_scorers"] for entry in body["entries"]] == [True, True, True, False, False, False, False, False, False, False, False, False, False, False]
+    assert [entry["has_scorers"] for entry in body["entries"]] == [True, True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, True, True]

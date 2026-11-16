@@ -16,10 +16,18 @@ from typing import Any
 from app.services.world.real_book import ATTRIBUTION, compute_real_book
 
 
-def _final_row(results: list[dict[str, Any]]) -> dict[str, Any] | None:
+def _final_row(results: list[dict[str, Any]], final_facts: dict[str, Any] | None = None) -> dict[str, Any] | None:
     for row in results:
         if row.get("round") == "Final":
             return row
+    # 1950 was decided by a four-team Final Round group — the decider is the row the two champions played in.
+    if final_facts:
+        home, away = final_facts.get("home"), final_facts.get("away")
+        if home and away:
+            return next(
+                (row for row in results if (row.get("team1"), row.get("team2")) in {(home, away), (away, home)}),
+                None,
+            )
     return None
 
 
@@ -28,7 +36,7 @@ def _cup_entry(tournament: str) -> dict[str, Any]:
     facts = book["facts"]
     results = book["results"]
     goals = facts["goals_scored"]
-    final_row = _final_row(results)
+    final_row = _final_row(results, facts["final"])
     return {
         "tournament": tournament,
         "title": facts["tournament"],

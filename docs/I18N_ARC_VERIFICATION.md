@@ -9423,3 +9423,46 @@ waits in the same place.
 **Measured on this host:** `qa-shared-keys` **4/4** (bindings 244 → 236) · `qa-key-drift` **4/4** (112 < 116) · `qa-locale-tokens` **7/7** (named-token list now carries 272 names; `worldHonours.thMatches` dropped with the cognate) · `qa-locale-completeness` 2/2 · ruff / mypy clean (202 source files) · `qa-translation-quality` 9/9 · `qa-icu-messages` 2/2 · `qa-i18n-literals` 9/9.
 
 **Not claimed.** That the runner has printed any leg of this item green before it has; that the ceilings were raised to make it pass — they were not; every cure reduced a measurement below its ratchet, or removed or reworded the rows out of the drift population.
+
+## §263 — Item 123: the seven forgotten cups land — Italy 1934 → England 1966, and the Real Book now carries the whole World Cup history
+
+**Per cup, from the committed snapshot, every figure counted on every read:**
+
+| year | host | final | goals | venues | biggest win (file) | scorers |
+| --- | --- | --- | --- | --- | --- | --- |
+| **1934** | Italy | Italy 1–1 Czechoslovakia, **ET 2–1** (Rome) | 70 | 8 | **Italy 7–1 United States** | **70 counted, printed** |
+| **1938** | France | Hungary 2–4 Italy (Colombes) | 84 | 10 | **Sweden 8–0 Cuba** | **84 counted, printed (1 fixture unplayed: Sweden v Austria, 1938-06-05, Gerland)** |
+| **1950** | Brazil | Uruguay 2–1 Brazil (Maracanazo, Maracanã) | 88 | 7 | Uruguay 8–0 Bolivia | **88 counted, printed** |
+| **1954** | Switzerland | Hungary 2–3 West Germany (Wankdorf) | 140 | 6 | Hungary 9–0 South Korea | **not carried (this file prints none)** |
+| **1958** | Sweden | Sweden 2–5 Brazil (Råsunda) | 126 | 12 | Czechoslovakia 6–1 Argentina | **not carried** |
+| **1962** | Chile | Brazil 3–1 Czechoslovakia (Santiago) | 89 | 4 | Yugoslavia 5–0 Colombia | **not carried** |
+| **1966** | England | England 2–2 West Germany, **ET 4–2** (Wembley) | 89 | 8 | West Germany 5–0 Switzerland | **not carried** |
+
+**The honours spine, honest end-to-end:** 23 rows — 21 World Cups + Euro 2021 + Euro 2024 — **1,048 matches,
+2,909 goals**, computed from the committed bytes on **every read**, no fixture counted that the file does not
+carry. Repeat champions (≥2): **Brazil 5** · **Italy 5** · **Argentina 3** · **West Germany 3** ·
+**France 2** · **Spain 2** — every cell arithmetic, not assertion.
+
+**The unplayed-fixture discipline, named:** the 1938 file carries `Sweden v Austria` with `status: canceled`
+and no score; the door's `results` list prints **only scored fixtures**, the payload reports the fixture on
+`facts.unplayed` (team1, team2, date, status, ground), and the web page prints the reason — natively in six
+tongues (`worldRealBook.unplayedNote`). No score is ever invented to fill a row.
+
+**Registry corrections landed before the claim:** the three hearings that the 1934/1938/1950 tiles first
+cited scorer silence were wrong — those files carry complete scorer tables; the registry now prints them as
+counted, and the 1954–1966 era keeps its silence intact.
+
+**Front-of-the-house re-pinned:** OG cards print **23/21 years** over **1934 — 2024**; eleven stale
+"fourteen/sixteen" literals natively reworded in six tongues; the Real Book tab rail now prints six chips
+back to 1934; the Champions card lists all 21 years.
+
+**CI discipline carried throughout:** the runner had named Item 120's mypy `str|None` slice and the two
+shared-sentence reds — cured in **Item 122** (`0cffbbd` era), recorded under §262, none re-pinned.
+Contract re-exported once: regex only, SHA
+`ffabba91ec09b0cb6d8913c0674d1d64ec2bff408b2035e16c2584a2ba467862`; ledgers (SECURITY_PROBE_REPORT /
+M12_PRODUCTION_HARDENING_VERIFICATION / ROADMAP) re-pinned; `AUDIT_FIGURES` **249/90/67** unchanged.
+
+**Not claimed.** That the runner has printed any leg of this item green before it has; that attendance
+figures are printed anywhere in these seven books (all `attendance` are `null` — disputed crowds are never
+invented); that the runner would even catch the 1938 fixture — the pytest door suites are written against
+the committed bytes and print exactly what this section records.

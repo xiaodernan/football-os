@@ -16,11 +16,22 @@ from typing import Any
 from app.services.world.real_book import _REGISTRY, ATTRIBUTION, compute_real_book
 
 
-def _pick_row(results: list[dict[str, Any]]) -> dict[str, Any]:
+def _pick_row(results: list[dict[str, Any]], facts: dict[str, Any] | None = None) -> dict[str, Any]:
     final = next((row for row in results if row.get("round") == "Final"), None)
-    if final is None:
-        raise RuntimeError("the committed snapshot has no Final row — this cannot happen for a tournament the door carries")
-    return final
+    if final is not None:
+        return final
+    # 1950 was decided by a four-team "Final Round" group. The row the decider was played in carries the
+    # final pairing; match it against the curated final, in either order, and print the file's own row.
+    final_facts = (facts or {}).get("final") or {}
+    home, away = final_facts.get("home"), final_facts.get("away")
+    if home and away:
+        match = next(
+            (row for row in results if (row.get("team1"), row.get("team2")) in {(home, away), (away, home)}),
+            None,
+        )
+        if match is not None:
+            return match
+    raise RuntimeError("the committed snapshot has no Final row — this cannot happen for a tournament the door carries")
 
 
 def compute_honours() -> dict[str, Any]:
@@ -30,7 +41,7 @@ def compute_honours() -> dict[str, Any]:
         book = compute_real_book(year)
         champion = book["facts"]["champion"]
         runner_up = book["facts"]["runner_up"]
-        final_row = _pick_row(book["results"])
+        final_row = _pick_row(book["results"], book["facts"])
         on_field = final_row["on_field"]
         entry = {
             "tournament": year,

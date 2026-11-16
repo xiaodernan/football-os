@@ -14,7 +14,7 @@ def test_the_roll_carries_both_families() -> None:
     payload = compute_honours()
     kinds = {entry["kind"] for entry in payload["entries"]}
     assert kinds == {"worldcup", "euro"}
-    assert payload["totals"]["entries"] == 16
+    assert payload["totals"]["entries"] == 23
 
 
 def test_every_row_prints_its_own_final_from_the_snapshot() -> None:
@@ -28,7 +28,7 @@ def test_every_row_prints_its_own_final_from_the_snapshot() -> None:
         assert entry["venue"]
         if entry["has_penalties"]:
             assert entry["score_penalties"][0] != entry["score_penalties"][1]
-        extra_time_years = {"1978", "1994", "2006", "2010", "2014", "2022", "euro2021"}
+        extra_time_years = {"1934", "1966", "1978", "1994", "2006", "2010", "2014", "2022", "euro2021"}
         went = entry["went_extra_time"]
         assert went == (entry["tournament"] in extra_time_years), f"{entry['tournament']} went={went}"
 
@@ -41,7 +41,7 @@ def test_the_repeat_champions_are_counted_from_the_rows() -> None:
         assert row["wins"] == sum(1 for entry in payload["entries"] if entry["champion"] == name)
     worldcup_entries = [entry for entry in payload["entries"] if entry["kind"] == "worldcup"]
     euro_entries = [entry for entry in payload["entries"] if entry["kind"] == "euro"]
-    assert len(worldcup_entries) == 14
+    assert len(worldcup_entries) == 21
     assert len(euro_entries) == 2
     assert sum(entry["total_matches"] for entry in payload["entries"]) == payload["totals"]["matches"]
 
@@ -51,6 +51,6 @@ def test_the_door_answers() -> None:
     response = client.get(f"{API}/world/honours")
     assert response.status_code == 200
     body = response.json()
-    assert len(body["entries"]) == 16
+    assert len(body["entries"]) == 23
     assert body["provenance"]["data_origin"] == "public-real"
     assert body["totals"]["matches"] == sum(entry["total_matches"] for entry in body["entries"])

@@ -43,36 +43,49 @@ export default function ChampionsOpenGraphImage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8, fontSize: 34, fontWeight: 800, color: PAPER, lineHeight: 1.05, letterSpacing: "-0.02em", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, fontSize: 24, fontWeight: 800, color: PAPER, lineHeight: 1.3, letterSpacing: "-0.02em", flexWrap: "wrap", maxWidth: 760 }}>
+            1934
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
+            1938
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
+            1950
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
+            1954
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
+            1958
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
+            1962
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
+            1966
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1970
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1974
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1978
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1982
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1986
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1990
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1994
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             1998
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             2002
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             2006
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             2010
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             2014
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             2018
-            <span style={{ fontSize: 20, color: GOLD }}>·</span>
+            <span style={{ fontSize: 16, color: GOLD }}>·</span>
             2022
           </div>
-          <div style={{ height: 3, background: GOLD, width: "34%" }} />
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
