@@ -238,7 +238,8 @@ export default async function TimelinePage() {
         <h2 className="timeline__race-title" style={{ marginBottom: "0.2rem" }}>{t("archiveTitle")}</h2>
         <p className="timeline__sub" style={{ marginTop: 0 }}>{t("archiveLede")}</p>
         <div className="timeline__archive" style={{ marginTop: "0.6rem" }}>
-          <table className="timeline__table">
+          <div className="table-wrap">
+            <table className="timeline__table table">
             <thead>
               <tr>
                 <th scope="col">{t("archiveMW")}</th>
@@ -263,7 +264,8 @@ export default async function TimelinePage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </section>
 

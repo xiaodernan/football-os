@@ -135,7 +135,8 @@ export default async function GazettePage({ searchParams }: Props) {
         <section className="gazette__panel">
           <span className="gazette__panel-eyebrow">{t("tableLabel")}</span>
           <h3>{t("tableTitle", { n: currentEdition })}</h3>
-          <table className="gazette__table">
+          <div className="table-wrap">
+            <table className="gazette__table table">
             <thead>
               <tr>
                 <th scope="col">#</th>
@@ -157,6 +158,7 @@ export default async function GazettePage({ searchParams }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
           <p className="muted" style={{ fontSize: "0.76rem", margin: "0.45rem 0 0" }}>
             {table_leader ? t("tableBody", { leader: table_leader.team?.name ?? t("tableUnknown"), points: table_leader.points, gap: table_gap ?? 0, gd: table_leader.goal_difference >= 0 ? `+${table_leader.goal_difference}` : `${table_leader.goal_difference}` }) : ""}
           </p>
