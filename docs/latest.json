@@ -1,8 +1,8 @@
 {
-  "head": "1c19a17",
-  "total_commits": 1172,
-  "milestone": "§221",
-  "milestone_full": "§221 — the plane composed live end-to-end; the LLM edge still refuses; three legs green everywhere",
+  "head": "155ca75",
+  "total_commits": 1175,
+  "milestone": "§222",
+  "milestone_full": "§222 — the worldbook rail grows its fifth; Item 91",
   "pushed_at": "2026-11-16",
   "screens": 83,
   "assets": 196,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T03:20:15.131Z"
+  "generated_at": "2026-11-16T03:24:11.445Z"
 }
