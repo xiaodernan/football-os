@@ -1,0 +1,130 @@
+/* The Upset Register — the underdog's daybook, in the catalogue's own palette. */
+
+.upsets__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (max-width: 720px) {
+  .upsets__stats { grid-template-columns: 1fr; }
+}
+
+.upsets__tile {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem 0.85rem;
+  background:
+    radial-gradient(circle at 84% 0%, rgba(95, 168, 255, 0.14), transparent 62%),
+    var(--bg-panel-2);
+}
+.upsets__tile-eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 750;
+}
+.upsets__big {
+  font-size: 3.1rem;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  margin: 0.15rem 0;
+}
+.upsets__sub { color: var(--text-2); font-size: 0.78rem; }
+
+.upsets__verdict {
+  font-family: var(--serif, Georgia, serif);
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text);
+  border-inline-start: 4px solid var(--info, #5fa8ff);
+  padding-inline-start: 1rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.1rem;
+  margin: 0;
+}
+
+.upsets__hero {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 12% 120%, rgba(95, 168, 255, 0.22), transparent 55%),
+    var(--bg-panel-2);
+  padding: 1.1rem 1.2rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.upsets__hero-eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--info, #5fa8ff);
+  font-weight: 750;
+}
+.upsets__hero-score {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.upsets__hero-goals { font-variant-numeric: tabular-nums; color: var(--gold, #d8b56b); }
+.upsets__hero-meta { color: var(--text-2); font-size: 0.8rem; }
+.upsets__hero-meta em { font-style: normal; color: var(--info, #5fa8ff); font-weight: 700; }
+
+.upsets__title {
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  font-weight: 750;
+  margin: 0;
+}
+.upsets__board {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  background: var(--bg-panel-2);
+}
+.upsets__row {
+  display: grid;
+  grid-template-columns: 5.4rem 1.3fr 0.7fr 0.7fr 3.2rem;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--line-soft, var(--line));
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.8rem;
+}
+.upsets__row:last-child { border-bottom: none; }
+.upsets__row:hover { background: rgba(95, 168, 255, 0.06); }
+@media (max-width: 860px) {
+  .upsets__row { grid-template-columns: 1fr; gap: 0.15rem; }
+}
+.upsets__row-date { color: var(--text-3); font-size: 0.72rem; }
+.upsets__row-fixture { display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
+.upsets__row-goals { font-variant-numeric: tabular-nums; color: var(--gold, #d8b56b); font-weight: 750; }
+.upsets__row-fav { color: var(--text-2); font-size: 0.74rem; }
+.upsets__row-fav em { font-style: normal; color: var(--info, #5fa8ff); font-weight: 650; }
+.upsets__row-gap {
+  text-align: end;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.upsets__method {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-panel-2);
+  padding: 0.75rem 0.9rem;
+}
+.upsets__method p { margin: 0.25rem 0 0; color: var(--text-2); font-size: 0.85rem; }

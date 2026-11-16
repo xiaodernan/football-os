@@ -40,9 +40,12 @@ export function ScrollDirectionToggle() {
   }
 
   return (
-    <label className="check" style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-      <input type="checkbox" checked={direction === "inverted"} disabled={pending} onChange={toggle} />
-      <span>{direction === "inverted" ? t("wheelInvertLabel") : t("wheelNaturalLabel")}</span>
-    </label>
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+      <label className="check" style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+        <input type="checkbox" checked={direction === "inverted"} disabled={pending} onChange={toggle} />
+        <span>{direction === "inverted" ? t("wheelInvertLabel") : t("wheelNaturalLabel")}</span>
+      </label>
+      <p className="muted" style={{ fontSize: "0.78rem", margin: 0 }}>{t("wheelNote")}</p>
+    </div>
   );
 }

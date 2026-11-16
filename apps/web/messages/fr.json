@@ -4756,7 +4756,9 @@
     "tour12t": "Les finales",
     "tour12d": "les huit coupes — qui a soulevé la coupe, les coups d'éclat de l'année, tirés des lignes",
     "tour13t": "Le dossier du bruit",
-    "tour13d": "le modèle au banc des accusés — précision, nuls appelés juste, les plus gros ratés, depuis les lignes"
+    "tour13d": "le modèle au banc des accusés — précision, nuls appelés juste, les plus gros ratés, depuis les lignes",
+    "tour14t": "Le Registre des Succès",
+    "tour14d": "le faible, compté — chaque rencontre où l'avance du favori a cédé"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -4910,5 +4912,35 @@
     "sectionNoiseLabel": "Le dossier du bruit",
     "sectionNoiseNote": "le bilan du modèle contre des lignes qu'il n'a jamais vues",
     "sectionNoiseChip": "bruit"
+  },
+  "worldUpsets": {
+    "metaTitle": "Le Registre des Succès — le faible, compté",
+    "metaDescription": "Chaque match terminé de la division reine, scoré par la somme des cotes : les cinq plus gros écarts refermés par le faible, les forteresses ramenées à l'égalité, et le bilan de la saison — recalculé depuis les lignes, jamais écrit d'avance.",
+    "eyebrow": "Le registre du faible",
+    "title": "Le Registre des Succès",
+    "lede": "Chaque rencontre jouée ici a un favori. Cette page tient la liste des jours où l'avance du favori n'a pas suffi — comptée sans fard, ligne à ligne.",
+    "statUpsetLabel": "Succès refermés",
+    "upsetCaption": "{count} sur {judged} rencontres renversées",
+    "statFortressLabel": "Forteresses tenues",
+    "fortressCaption": "égalité à 8 points d'écart ou plus",
+    "statMeanLabel": "Écart moyen replié",
+    "meanCaption": "l'avance moyenne du favori qui a cédé",
+    "verdictBody": "Le tirage s'est sous-estimé dans {rate} % des matchs joués — ici, gagner pour le faible n'est pas un miracle, c'est un registre.",
+    "biggestUpsetTitle": "Le plus grand écart replié",
+    "biggestUpsetGapLabel": "écart de cote refermé",
+    "boardTitle": "Les cinq plus gros succès",
+    "boardLede": "Classés par écart refermé, puis par marge acquise. Chaque ligne est un score qui a refusé l'arithmétique.",
+    "fortressTitle": "Les forteresses",
+    "fortressLede": "Un écart de cote de 8,0 ou plus, et toujours l'égalité — les registres têtus du faible.",
+    "methodEyebrow": "L'arithmétique, au grand jour",
+    "methodBody": "La force de chaque camp est la somme des onze meilleures cotes overall de son effectif. Le faible gagne, le résultat imprime upset ; un score nul à 8,0 ou plus imprime fortress. Chaque chiffre est recalculé depuis `real_matches` et `real_players` à la requête — aucun modèle, aucune simulation, aucune colonne upset stockée.",
+    "unavailable": "La saison n'a pas encore écrit ce registre.",
+    "rowUpsetLabel": "succès",
+    "rowFortressLabel": "forteresse",
+    "favoriteHome": "favori : domicile",
+    "favoriteAway": "favori : extérieur",
+    "sectionUpsetsLabel": "Le Registre des Succès",
+    "sectionUpsetsNote": "le faible, compté",
+    "sectionUpsetsChip": "succès"
   }
 }

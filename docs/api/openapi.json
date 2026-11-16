@@ -3063,6 +3063,29 @@
         }
       }
     },
+    "/api/v1/world/upsets": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Upsets",
+        "description": "The Upset Register — the tier-1 underdog, honoured by its own arithmetic.\n\nEvery completed tier-1 fixture is scored by the combined `overall` of each squad's eleven\nstrongest; the underdog is the lower side, and an upset is a fixture where the underdog\nwon. This door publishes the five largest gaps closed, the stalwart fortress draws\n(gap ≥ 8), the season's tally (upsets, fortresses, mean gap fallen) and the five latest\nupsets — every number recomputed from the rows, never authored.",
+        "operationId": "upsets_api_v1_world_upsets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Upsets Api V1 World Upsets Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [

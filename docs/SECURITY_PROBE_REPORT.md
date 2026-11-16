@@ -15,13 +15,13 @@ answer rather than from an assertion about the code.
 artifact the web client and the currency gates read — and takes every operation that declares a
 `security` requirement as a private door, every operation that declares none as a public one.
 
-At the latest run recorded here (run O, §2) the contract's SHA-256 was
-`475e41897df796242310c9803a041e843d59b704ee733d13094250a7422b4ee1`, and the census read:
+At the latest account recorded here (run Q, §2) the contract's SHA-256 is
+`6f38929a12e8c702a7359669c5765cdb9253a75096aac403bd5eb5d751890c70`, and the census reads:
 
 | measurement | value | floor |
 | --- | --- | --- |
 | secured operations | 241 | 200 |
-| public operations | 66 | 40 |
+| public operations | 67 | 40 |
 | private `GET` paths | 104 | 85 |
 
 The floors exist so an empty or half-read contract cannot pass as a clean probe; they are printed with
@@ -64,6 +64,7 @@ Run N is the run against the contract as committed today: the metrics tier gaine
 Run O is the run against the contract as committed today: the world gained its head-to-head door (GET /api/v1/world/duel, one public GET across one new path, comparing two players column-by-column with a 90-minute floor for per-90 rates), the contract was re-exported on 2026-11-13 and its SHA moved with it, so the census moved to 241 / 56 / 104. The run recorded here was made against the tree as committed (2026-11-13T18:57 UTC, port 8751), on a scratch SQLite database the app created on startup, ENV=development, CORS_ORIGINS set to the project's own 3210 pair.
 
 Run P is the ledger's own note for the contract as committed today: the featured-duel door landed (GET /api/v1/world/duel/featured, one public GET across one new path, picking the world's own sharpest scorer and most creative hand, answering with the exact /world/duel envelope), the contract was re-exported on 2026-11-14 and its SHA moved with it, so the census moved to 241 / 57 / 104. No fresh probe was executed for this row — the run O execution (10/10) remains the last run recorded against a live server; the counts and the SHA above are this ledger's account of the committed tree, which the currency gates recompute for themselves.
+Run Q is the ledger's own note for the contract as committed today: the Upset Register door landed (GET /api/v1/world/upsets, one public GET across one new path, the tier-1 underdog's arithmetic recomputed on every read), the contract was re-exported on 2026-11-16 and its SHA moved with it, so the census moved to 241 / 67 / 104 — secured 241 and private GET 104 unchanged. The counts were re-measured from the committed bytes: 241 paths, 308 operations, 67 operations declaring no security requirement in the contract. No fresh probe was executed for this row; the run O execution (10/10) remains the last live run recorded. The §1 table read 66 before this door; Run P's in-paragraph 57 is recorded as a stale reading of the same 2026-11-14 change, not as a separate census — the committed contract measured 67 after the door. The seventeenth public door lands inside the `/world/*` tier, whose rate limiter (60/min) the door declares under `world_upsets`.
 ## 2. The runs
 
 Runs A–C were made on 2026-10-22 local time (their reports' timestamps are UTC, `2026-10-21T19:2x`)

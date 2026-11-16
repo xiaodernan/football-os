@@ -4756,7 +4756,9 @@
     "tour12t": "杯賽終章",
     "tour12d": "八座獎杯——誰捧杯、今年的雷霆，從列裡取，不是從腦裡猜",
     "tour13t": "噪聲單",
-    "tour13d": "受審的模型——準確率、平局中的實話，從列裡取"
+    "tour13d": "受審的模型——準確率、平局中的實話，從列裡取",
+    "tour14t": "冷門登記冊",
+    "tour14d": "弱旅的成績單——看好方優勢被抹平的每一場，按行計算"
   },
   "worldSpotlight": {
     "metaTitle": "世界之眼",
@@ -4910,5 +4912,35 @@
     "sectionNoiseLabel": "噪聲單",
     "sectionNoiseNote": "模型從没碰過的列裡的分數帳",
     "sectionNoiseChip": "噪聲"
+  },
+  "worldUpsets": {
+    "metaTitle": "冷門登記冊——弱旅的成績單",
+    "metaDescription": "每一場已完賽的頂級聯賽：按兩隊合併評分結算——弱旅翻盤的五大最大分差、僵持不下的平局要塞，以及本賽季的總帳——全部從資料列重算，沒有任何杜撰。",
+    "eyebrow": "弱旅手記",
+    "title": "冷門登記冊",
+    "lede": "這個世界裡每場已完賽的比賽都有一方被看好。本頁登記的是看好方優勢最終無效的那些日子——逐筆記帳，錙銖必較。",
+    "statUpsetLabel": "完成翻盤",
+    "upsetCaption": "{count} 場，共 {judged} 場完賽",
+    "statFortressLabel": "要塞堅守",
+    "fortressCaption": "分差 8 分以上仍然戰平",
+    "statMeanLabel": "平均被壓縮分差",
+    "meanCaption": "被弱旅抹平的平均優勢",
+    "verdictBody": "種子低估自己的場次佔比為 {rate}%——在這個世界裡，弱旅贏球不是奇蹟，是帳本。",
+    "biggestUpsetTitle": "最大分差被抹平",
+    "biggestUpsetGapLabel": "翻越的評分分差",
+    "boardTitle": "五大最大冷門",
+    "boardLede": "按抹平分差排序，其次按淨勝球數。每一行都是一份拒絕接受算術的比分。",
+    "fortressTitle": "要塞名單",
+    "fortressLede": "分差 8.0 及以上仍然打平——弱旅防守的倔強帳本。",
+    "methodEyebrow": "演算法，公開可查",
+    "methodBody": "每隊的強度取其十一名最高 overall 球員之和。弱旅獲勝，結果記為「冷門」；分差 8.0 以上的平局記為「要塞」。所有數字在每次請求時從 `real_matches` 與 `real_players` 重算——沒有大模型、沒有模擬、沒有儲存的冷門列。",
+    "unavailable": "賽季還沒有寫滿這本登記冊。",
+    "rowUpsetLabel": "冷門",
+    "rowFortressLabel": "要塞",
+    "favoriteHome": "看好：主隊",
+    "favoriteAway": "看好：客隊",
+    "sectionUpsetsLabel": "冷門登記冊",
+    "sectionUpsetsNote": "弱旅的成績單",
+    "sectionUpsetsChip": "冷門"
   }
 }

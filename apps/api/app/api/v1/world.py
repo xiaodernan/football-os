@@ -49,6 +49,7 @@ from app.services.world.spotlight import compute_spotlight
 from app.services.world.story import compute_story
 from app.services.world.sync import GATE
 from app.services.world.timeline import compute_timeline
+from app.services.world.upsets import compute_upsets
 
 router = APIRouter(prefix="/world", tags=["world"])
 
@@ -1187,6 +1188,20 @@ def noise(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_noise")
     return _envelope(**compute_noise(db))
+
+
+@router.get("/upsets")
+def upsets(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Upset Register — the tier-1 underdog, honoured by its own arithmetic.
+
+    Every completed tier-1 fixture is scored by the combined `overall` of each squad's eleven
+    strongest; the underdog is the lower side, and an upset is a fixture where the underdog
+    won. This door publishes the five largest gaps closed, the stalwart fortress draws
+    (gap ≥ 8), the season's tally (upsets, fortresses, mean gap fallen) and the five latest
+    upsets — every number recomputed from the rows, never authored.
+    """
+    limit(request, 60, 60, scope="world_upsets")
+    return _envelope(**compute_upsets(db))
 
 
 __all__ = ["router"]

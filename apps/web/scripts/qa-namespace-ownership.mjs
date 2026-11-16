@@ -66,6 +66,9 @@ const NAMESPACE_OWNERS = {
   // The Noise Dossier — the world's own noise graded against the rows it never saw
   "worldNoise": { owner: "world", purpose: "the rating-based caller's record against rows it never saw, recomputed live: accuracy, draw-calling, the longest correct run, the five largest misses" },
 
+  // The Upset Register — the tier-1 underdog, honoured by its own arithmetic
+  "worldUpsets": { owner: "world", purpose: "the underdog's ledger, recomputed live from the rows: the five largest gaps closed, the fortress draws, the season's tally" },
+
   // World tier
   "world": { owner: "world", purpose: "World overview pages" },
   "worldPlayer": { owner: "world", purpose: "World player pages" },

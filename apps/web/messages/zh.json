@@ -4756,7 +4756,9 @@
     "tour12t": "杯赛终章",
     "tour12d": "八座奖杯——谁捧杯、今年的雷霆，从行里取，不是从脑里猜",
     "tour13t": "噪声单",
-    "tour13d": "受审的模型——准确率、平局中的实话、被 seed 一手蒙住的；从行里取"
+    "tour13d": "受审的模型——准确率、平局中的实话、被 seed 一手蒙住的；从行里取",
+    "tour14t": "冷门登记册",
+    "tour14d": "弱旅的成绩单——看好方优势被抹平的每一场，按行计算"
   },
   "worldSpotlight": {
     "metaTitle": "世界之眼",
@@ -4910,5 +4912,35 @@
     "sectionNoiseLabel": "噪声单",
     "sectionNoiseNote": "模型从没碰过的行里的分数账",
     "sectionNoiseChip": "噪声"
+  },
+  "worldUpsets": {
+    "metaTitle": "冷门登记册——弱旅的成绩单",
+    "metaDescription": "每一场已完赛的顶级联赛：按两队合并评分结算——弱旅翻盘的五大最大分差、僵持不下的平局要塞，以及本赛季的总账——全部从数据行重算，没有任何杜撰。",
+    "eyebrow": "弱旅手记",
+    "title": "冷门登记册",
+    "lede": "这个世界里每场已完赛的比赛都有一方被看好。本页登记的是看好方优势最终无效的那些日子——逐笔记账，锱铢必较。",
+    "statUpsetLabel": "完成翻盘",
+    "upsetCaption": "{count} 场，共 {judged} 场完赛",
+    "statFortressLabel": "要塞坚守",
+    "fortressCaption": "分差 8 分以上仍然战平",
+    "statMeanLabel": "平均被压缩分差",
+    "meanCaption": "被弱旅抹平的平均优势",
+    "verdictBody": "种子低估自己的场次占比为 {rate}%——在这个世界里，弱旅赢球不是奇迹，是账本。",
+    "biggestUpsetTitle": "最大分差被抹平",
+    "biggestUpsetGapLabel": "翻越的评分分差",
+    "boardTitle": "五大最大冷门",
+    "boardLede": "按抹平分差排序，其次按净胜球数。每一行都是一份拒绝接受算术的比分。",
+    "fortressTitle": "要塞名单",
+    "fortressLede": "分差 8.0 及以上仍然打平——弱旅防守的倔强账本。",
+    "methodEyebrow": "算法，公开可查",
+    "methodBody": "每队的强度取其十一名最高 overall 球员之和。弱旅获胜，结果记为“冷门”；分差 8.0 以上的平局记为“要塞”。所有数字在每次请求时从 `real_matches` 与 `real_players` 重算——没有大模型、没有模拟、没有存储的冷门列。",
+    "unavailable": "赛季还没有写满这本登记册。",
+    "rowUpsetLabel": "冷门",
+    "rowFortressLabel": "要塞",
+    "favoriteHome": "看好：主队",
+    "favoriteAway": "看好：客队",
+    "sectionUpsetsLabel": "冷门登记册",
+    "sectionUpsetsNote": "弱旅的成绩单",
+    "sectionUpsetsChip": "冷门"
   }
 }

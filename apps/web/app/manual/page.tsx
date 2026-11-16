@@ -53,6 +53,7 @@ export default async function ManualPage() {
     { href: "/world/gazette", title: t("tour11t"), desc: t("tour11d") },
     { href: "/world/finals", title: t("tour12t"), desc: t("tour12d") },
     { href: "/world/noise", title: t("tour13t"), desc: t("tour13d") },
+    { href: "/world/upsets", title: t("tour14t"), desc: t("tour14d") },
   ];
 
   const rules = [t("rule1"), t("rule2"), t("rule3"), t("rule4"), t("rule5"), t("rule6")];

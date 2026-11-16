@@ -4756,7 +4756,9 @@
     "tour12t": "The Finals",
     "tour12d": "the eight cups — who lifted, the year's thunderbolts, all read from the rows",
     "tour13t": "The Noise Dossier",
-    "tour13d": "the model on trial — accuracy, draws called right, the loudest misses, straight from the rows"
+    "tour13d": "the model on trial — accuracy, draws called right, the loudest misses, straight from the rows",
+    "tour14t": "The Upset Register",
+    "tour14d": "the underdog, counted — every fixture where the favourite's edge surrendered, by the rows"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
@@ -4910,5 +4912,35 @@
     "sectionNoiseLabel": "The Noise Dossier",
     "sectionNoiseNote": "the model's record against rows it never saw",
     "sectionNoiseChip": "noise"
+  },
+  "worldUpsets": {
+    "metaTitle": "The Upset Register — the underdog, counted",
+    "metaDescription": "Every completed tier-1 fixture, scored by combined rating: the five largest gaps the underdog closed, the fortress draws that still ended level, and the season's tally — recomputed from the rows, never authored.",
+    "eyebrow": "The Underdog's Daybook",
+    "title": "The Upset Register",
+    "lede": "Every completed fixture in this world has a favourite. This page keeps the list of days the favourite's edge was not enough — counted plainly, grain by grain.",
+    "statUpsetLabel": "Upsets closed",
+    "upsetCaption": "{count} of {judged} fixtures flipped",
+    "statFortressLabel": "Fortresses held",
+    "fortressCaption": "level with a rating gap of 8 or more",
+    "statMeanLabel": "Mean gap fallen",
+    "meanCaption": "the average favourite's edge that surrendered",
+    "verdictBody": "The seed underbid itself in {rate}% of completed tier-1 fixtures — the underdog is not a miracle here, it is the ledger.",
+    "biggestUpsetTitle": "The largest gap closed",
+    "biggestUpsetGapLabel": "rating gap overcome",
+    "boardTitle": "The five largest upsets",
+    "boardLede": "Ordered by the gap closed, then by the margin earned. Every row is a scoreline that refused the arithmetic.",
+    "fortressTitle": "The fortresses",
+    "fortressLede": "A rating gap of 8.0 or more, and still level — the lower-rated side's stubborn ledgers.",
+    "methodEyebrow": "The arithmetic, in the open",
+    "methodBody": "Each side's strength is the combined overall rating of its eleven strongest players. The underdog won, the result printed upset; a level score at a gap of 8.0 or more prints fortress. Every figure is recomputed from `real_matches` and `real_players` on this request — no provider, no simulation, no stored upset column.",
+    "unavailable": "The season has not written the register yet.",
+    "rowUpsetLabel": "upset",
+    "rowFortressLabel": "fortress",
+    "favoriteHome": "favourite: home",
+    "favoriteAway": "favourite: away",
+    "sectionUpsetsLabel": "The Upset Register",
+    "sectionUpsetsNote": "the underdog, counted",
+    "sectionUpsetsChip": "upsets"
   }
 }
