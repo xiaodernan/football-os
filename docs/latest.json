@@ -1,12 +1,12 @@
 {
-  "head": "5bc69e5",
-  "total_commits": 1165,
-  "milestone": "§219",
-  "milestone_full": "§219 — five more red runs, one root cause, one word cured; and the plane gains its fifth citizen",
+  "head": "b695cea",
+  "total_commits": 1168,
+  "milestone": "§220",
+  "milestone_full": "§220 — the Dynasties land; eleven-plus-some-reds stand closed; the fact pack moves again",
   "pushed_at": "2026-11-16",
-  "screens": 82,
-  "assets": 195,
-  "world_doors": 18,
+  "screens": 83,
+  "assets": 196,
+  "world_doors": 19,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T02:41:45.834Z"
+  "generated_at": "2026-11-16T02:54:24.279Z"
 }
