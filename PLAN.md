@@ -3398,6 +3398,47 @@ cure is its own commit `a469ec5`: the closure binds at definition time as keywor
 **CI at the time of writing.** The door pushes and the §217/§218 pushes were in the runner's
 queue; the newest run prints the verdicts. Recorded in §218 verbatim.
 
+## Item 88 — the Spring plane's fifth citizen: `jobs-observer` (landed 2026-11-16)
+
+**The gap.** `football_os:jobs` (M16's Redis Streams broker) had workers but no citizen of the
+plane watching it: an operator asked "has any hint crossed in the last minute, and how many
+per type?" without the Python core being up — the core is an application, not a gauge.
+
+**What landed.** `services/jobsobserver` — Java 21, Spring Boot 3.5.16, Spring Cloud 2025.0.3,
+wired exactly the way its sibling `worldcheck` is:
+
+- Eureka-registered (`FOOTBALL-JOBS-OBSERVER`), config-consuming (scratch `football-jobs-observer.yml`
+  in `services/config/src/main/resources/config-repo/`), actuator-exposing (`/actuator/health`
+  with the same unknown → up → degraded → down four-line semantics the other citizens ship).
+- Consumes `football_os:jobs` under its **own** consumer group `football_os:jobs:observers`;
+  it never interprets a payload, never acts on a job, never rewrites a row. `ReadOffset.from("$")`
+  — new hints only; group creation is BUSYGROUP-tolerant (the pair is idempotent across restarts).
+- Pure arithmetic ledger bounded at 64 tracked types with an `other` bucket, unnamed types as
+  `unknown`, newest-first recent ring of 8 ids; `GET /jobs/observer` returns the snapshot, the
+  connection state, stream length and pending count — one door, no faults rendered as 500.
+- `mvn -o package` green offline; **11/11 tests** green (5 StreamLedger, 4 health indicator,
+  2 web slice). Live wiring: against a live Redis at `127.0.0.1:63790/2`, the observer came UP
+  (`NONE_YET → CONNECTED`, 0 failures); a synthetic hint published after it came up was consumed
+  and acked (`per_type.video=1`), then deleted; the `smoke-probe` debug group destroyed.
+  One local bug found and cured in the same arc: the default command budget was 250ms on this
+  host — too small for lettuce's blocking cycles — now 2s everywhere; `stream_exists: true`,
+  `stream_length: 1`, `pending_messages: 0` witnessed live.
+- `infra/docker-compose.yml` gains the citizen on the `plane` profile (127.0.0.1:8871, health-
+  checked, depends on `redis`, `registry`, `config`, jar mounted from
+  `services/jobsobserver/target/`, git-ignored).
+- `services/plane-walk.ps1` gains `-JobsObserver http://127.0.0.1:8871` with five checks
+  (live door 200, ledger keys present, connection block present, eureka registration,
+  config-served `jobsobserver.group = football_os:jobs:observers`); skip by `-JobsObserver ""`.
+- `ARCHITECTURE.md`'s plane sentence and `README.md`'s services table name the fifth citizen;
+  `services/pom.xml` lists `jobsobserver` and its comment reads five modules now.
+
+**Not claimed.** That the `--profile plane` composition or `plane-walk.ps1 -JobsObserver` was
+executed on this host — both were written to be witnesses for a live walk, not executed; the
+walk has never printed clean in this window. That any hint in the shared DB 2 belongs to the
+product (the witness hint was deleted; the stream prints xlen 0 after cleanup). That the
+observer drains anything the workers drain (it does not — independent group). That CI has
+printed this push green at the time of writing.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

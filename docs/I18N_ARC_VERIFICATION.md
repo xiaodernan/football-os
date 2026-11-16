@@ -7902,3 +7902,41 @@ runner's queue at the time of writing; their verdicts print with the next runs a
 honestly when they do. That the fact pack refreshed at `7ad7ce1` is the currently mirrored one —
 the §217 refresh (`9d01dbb`, milestone §217, world_doors 18) is the mirrored bytes. ADR-011
 stands; the seed stands.
+
+## §219 — five more red runs, one root cause, one word cured; and the plane gains its fifth citizen
+
+§218 recorded six red runs with two root causes. This window's pushes added five more, falling into
+exactly two of the three known classes:
+
+| run | commit | legs red | class |
+| --- | --- | --- | --- |
+| `43790746770` | `a5963b8` (the Upset Register door) | api | loadtest B023/B007 (Lint) — the same lint issue §218 names |
+| `43790810946` | `4037f46` (§217 ledger) | api | same |
+| `43790904855` | `9d01dbb` (fact pack §217, 82 routes / 18 doors) | api | same |
+| `43791106275` | `a469ec5` (loadtest ruff cure) | api | SQLite tests — SHA-currency: the probe report's §1 reworded from "the contract's SHA-256 **was** `…`" to "is `…`" |
+| `43791195583` | `4ab631f` (§218 record) | api | SQLite tests — same currency red |
+
+All eleven red runs fall into one of three classes — the wheelNote orphan (six web reds, cured at
+`a5963b8`), the loadtest lint pair (nine api reds; cured at `a469ec5`, verified `ruff check` clean
+locally and the three newer pushes print api green), and the one-word SHA-currency reword (two api
+reds; cured at `c84d595`, "was" restored). No leg failed on anything else in any of the eleven runs.
+
+**The plane's fifth citizen landed (`0305f0b`, Item 88).** `services/jobsobserver` — an Eureka-
+registered, config-consuming Spring Boot service watching `football_os:jobs` under its own
+consumer group; pure arithmetic ledger (bounded 64 types + `other` bucket, `unknown` for nameless
+hints, eight-id newest-first ring); `GET /jobs/observer` + `/actuator/health` with the
+unknown → up → degraded → down semantics; 11/11 tests offline green; live-wired on this host
+against `127.0.0.1:63790/2` — a synthetic hint was consumed and acked end-to-end and the probe
+residue was destroyed (stream back to xlen 0). Compose gains the citizen on the `plane` profile;
+`services/plane-walk.ps1` gains `-JobsObserver` with five witness checks. One local command-budget
+bug was found and cured in the same arc (250ms → 2s everywhere).
+
+**Cured in this window, by commit:** `a5963b8` (door; wheelNote wired inside it), `a469ec5`
+(loadtest lint), `0305f0b` (Item 88 artifact), `c84d595` (SHA-currency "was"). The eleven red runs
+are recorded verbatim and none was re-pinned, re-ordered or re-tagged.
+
+**Not claimed.** That CI is currently green: the queue (door → §217 → §217-factpack → the cure →
+Item 88) prints its verdicts on the next pushes; the standing state of eleven reds is what §218
+and this section record. That the jobs broker's queue has been drained by anything here (it has
+not — the only consumer-observer stopped with the smoke window closing). That the plane-walk has
+printed clean with the fifth citizen (it has not been executed in this window). ADR-011 stands.
