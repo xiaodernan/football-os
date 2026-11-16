@@ -146,6 +146,7 @@ export type CoachAnswer = AiEnvelope & {
   recommendation?: Drill;
   alternatives?: Drill[];
   plan?: { horizon_days: number; days: PlanDay[] };
+  graph_trace?: string[];
 };
 
 /** POST /coach/plan */

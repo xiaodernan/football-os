@@ -873,7 +873,8 @@
     "intentPressing": "الضغط",
     "intentMatchReview": "مراجعة المباراة",
     "intentExplain": "شرح التقدم",
-    "intentGeneral": "عام"
+    "intentGeneral": "عام",
+    "traceToggle": "كيف جمع المدرب هذه الإجابة خطوة خطوة"
   },
   "progress": {
     "metaTitle": "التطوير",

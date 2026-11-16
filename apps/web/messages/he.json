@@ -873,7 +873,8 @@
     "intentPressing": "לחץ",
     "intentMatchReview": "סקירת משחק",
     "intentExplain": "הסבר התקדמות",
-    "intentGeneral": "כללי"
+    "intentGeneral": "כללי",
+    "traceToggle": "איך המאמן בנה את התשובה הזו"
   },
   "progress": {
     "metaTitle": "פיתוח",

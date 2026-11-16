@@ -873,7 +873,8 @@
     "intentPressing": "Pressing",
     "intentMatchReview": "Revue du match",
     "intentExplain": "Expliquer la progression",
-    "intentGeneral": "Général"
+    "intentGeneral": "Général",
+    "traceToggle": "comment l'entraîneur a bâti cette réponse"
   },
   "progress": {
     "metaTitle": "Développement",

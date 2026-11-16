@@ -9658,3 +9658,28 @@ form) — measured freshness 5/5 against the runner's `QA_BASELINE_COMMIT=217510
 **Not claimed.** That the runner prints this cure green before it has run; that anything about the
 original English sentence's own meaning needed defending — it still says what it always said; what
 moved is the locales, deliberately, all the way.
+
+## §269 — Item 129: graph_trace reaches the reader — "show how the coach assembled this"
+
+**What the reader now sees on `/coach`**, directly under each answer (and under the reasons), as a
+native disclosure in six tongues:
+
+- **en** `show how the coach assembled this`
+- **zh** `看看教练是怎么一步步作答的`
+- **zh-TW** `看看教練是怎麼一步步作答的`
+- **fr** `comment l'entraîneur a bâti cette réponse`
+- **ar** `كيف جمع المدرب هذه الإجابة خطوة خطوة`
+- **he** `איך המאמן בנה את התשובה הזו`
+
+The list is the envelope's own `graph_trace` — `START / classify_intent / build_arithmetic /
+spend_gate / phrase_answer / persist_answer / END` — rendered verbatim, `chip`-styled, never
+translated; the node name is the artifact and the page says so.
+
+**Small surface discipline.** One key added to the catalogue (population **5,234 ×6**); the panel's
+CSS rules live in the page's own stylesheet (`app/coach/coach.css`), not in
+`apps/web/styles/`; the stray untracked `apps/web/styles/coach.css` created by a probe was removed
+in the same commit.
+
+**Not claimed.** That the trace opens itself; that the disclosure is keyboard-discoverable without the
+summary being focused (it is — `<summary>` like every native disclosure); that any other panel in the
+product renders the trace (they do not yet).

@@ -175,6 +175,16 @@ export function CoachAsk() {
                   )}
                   {turn.envelope.plan && turn.envelope.plan.days.length > 0 && <PlanPreview days={turn.envelope.plan.days} />}
                   <ReasonList items={turn.envelope.reasons} title={t("whyAnswer")} />
+                  {turn.envelope.graph_trace && turn.envelope.graph_trace.length > 0 ? (
+                    <details className="coach-trace">
+                      <summary className="coach-trace__summary muted">{t("traceToggle")}</summary>
+                      <ol className="coach-trace__list">
+                        {turn.envelope.graph_trace.map((node, traceIndex) => (
+                          <li key={`${traceIndex}-${node}`}><code>{node}</code></li>
+                        ))}
+                      </ol>
+                    </details>
+                  ) : null}
                   <p className="muted coach-disclaimer">{turn.envelope.disclaimer}</p>
                 </div>
               ) : null}

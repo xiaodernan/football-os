@@ -873,7 +873,8 @@
     "intentPressing": "逼抢",
     "intentMatchReview": "比赛复盘",
     "intentExplain": "讲解进步",
-    "intentGeneral": "一般"
+    "intentGeneral": "一般",
+    "traceToggle": "看看教练是怎么一步步作答的"
   },
   "progress": {
     "metaTitle": "成长",

@@ -873,7 +873,8 @@
     "intentPressing": "Pressing",
     "intentMatchReview": "Match review",
     "intentExplain": "Explain progress",
-    "intentGeneral": "General"
+    "intentGeneral": "General",
+    "traceToggle": "show how the coach assembled this"
   },
   "progress": {
     "metaTitle": "Development",

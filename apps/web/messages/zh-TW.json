@@ -873,7 +873,8 @@
     "intentPressing": "逼搶",
     "intentMatchReview": "比賽複盤",
     "intentExplain": "講解進步",
-    "intentGeneral": "一般"
+    "intentGeneral": "一般",
+    "traceToggle": "看看教練是怎麼一步步作答的"
   },
   "progress": {
     "metaTitle": "成長",

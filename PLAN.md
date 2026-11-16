@@ -4418,6 +4418,37 @@ gates stay green (`qa-translation-quality` 9/9 · `qa-shared-keys` 4/4 · `qa-ke
 `43949454613` Item 125 failure — the red above, cured here · `43959944293` Item 127 in flight · the
 cure and the rest ride into the runner's own queue.
 
+## Item 129 — the coach's graph_trace surfaces on `/coach`: "show how the coach assembled this" (landed 2026-11-17)
+
+**The gap.** Item 127 gave every run of `/coach/ask` an envelope that carries `graph_trace` — but only
+on the wire. The reader of the answer could not see it. The whole point of a compiled, inspectable
+pipeline is inspectability.
+
+**What landed.** The coach panel now renders the trace when it exists: a quiet disclosure
+(`CoachAsk` → `apps/web/app/coach/page.tsx` structure under the existing `<ReasonList>`):
+
+```
+show how the coach assembled this
+❯ START → classify_intent → build_arithmetic → spend_gate → phrase_answer → persist_answer → END
+```
+
+Each step is listed verbatim as the node name — no localized aliasing, deliberately: the node's
+identity is the artifact the graph executes, and a reader who opens the file to check the coach's
+wording finds the same word there. One new catalogue key (`coach.traceToggle`) natively in six
+tongues; a couple of small scoped styles in the page's own CSS (not a shared stylesheet — the coach
+prompt owns its page; the stray probe-file `styles/coach.css` was removed in the same commit).
+
+Catalogue population **5,234 ×6** (README re-pinned 5,187 / 4,955; fr identicals 279). Envelope
+compat: the additive `graph_trace` ride is optional-typed in the web-side type.
+
+**Gates re-measured on this tree:** tsc clean · `qa-translation-quality` 9/9 · `qa-shared-keys` 4/4
+· `qa-key-drift` 4/4 · `qa-locale-tokens` 7/7 · `qa-i18n-literals` 9/9 · all other gates unchanged
+(green).
+
+**Not claimed.** That the trace renders against a live gateway in this arc (it is demo-badge-independent
+static DOM); that the node names are localized (they are not — they are the product's own vocabulary);
+that the disclosure is pinned open by default (it is not).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
