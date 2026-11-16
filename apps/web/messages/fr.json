@@ -5082,7 +5082,7 @@
     "ledgerEyebrow": "L'année complète",
     "ledgerTitle": "Les 64 matchs, imprimés",
     "ledgerLede": "Chaque match de la vraie Coupe du monde 2022, groupé par jour de match — scores, prolongations, tirs au but et stades — lu directement depuis l'instantané archivé dans ce dépôt.",
-    "matchesOnDay": "{count, plural, one {# match} other {# matchs}}",
+    "matchesOnDay": "{count, plural, one {# match} many {# de matchs} other {# matchs}}",
     "thFixture": "affiche",
     "thScore": "résultat",
     "thVenue": "stade",

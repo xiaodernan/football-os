@@ -8432,3 +8432,32 @@ stream display badge the user remembers changes anywhere in the web tier (it doe
 of the pages render a streaming claim; the provider and the ledger are where that fact
 lives); and that anything on CI reached this gateway from this host (both probes were run
 from this host over the operator's node).
+
+## §231 — the three web-leg Plural-select reds of Items 94–95, cured in place
+
+**The named red.** `CI → master` runs `43810608113` (Item 95), `43810832078` (the fact pack
+after Item 94/95) and `43810995263` (the §228 amendment) each printed exactly one failing
+step on the web leg:
+
+> `Plural-select gate (ICU plural/ordinal/select branches complete per locale, and the walk proves it read them)`
+> `FAIL  every plural has required categories for each locale — 2 plural issue(s):
+>   ar: worldRealBook.matchesOnDay: plural "count" missing categories: zero (has: one, two, few, many, other)
+>   | fr: worldRealBook.matchesOnDay: plural "count" missing categories: many (has: one, other)`
+
+`matchesOnDay` landed in Item 95 with full one/two/few/many/other for Arabic but without the
+CLDR-required `zero` branch (Arabic mandates it), and French needs `many` (CLDR requires it
+for exact multiples of a million); neither local gate was re-run after the ICU landed —
+`qa-plural-select` had not been in this window's gate list. The cure is exact:
+
+- `ar`: `zero {# مباراة}` added ahead of the existing branches;
+- `fr`: `one {# match} many {# de matchs} other {# matchs}` (the `many` arm can never fire on
+  a matchday count, but the CLDR category inventory is what the gate measures, and the branch
+  is the one French keeps for millions — it is not a false promise, it never renders).
+
+**Re-measured greens on this tree**: `qa-plural-select` 7/7 · `qa-icu-messages` 2/2
+(4,990 ×6) · `qa-locale-completeness` 2/2 · `qa-icu-coverage` 1/1 · `qa-locale-tokens` 7/7 ·
+`qa-unused-keys` 3/3.
+
+**Not claimed.** That the CI queue printed this cure green by the time you read it — the
+three reds stand on their own runs; the cure rides in its own commit; nothing was re-run,
+renumbered or re-pinned. The Item 96/97 push (`b55c2dc`) predates this cure.
