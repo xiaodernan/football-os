@@ -4758,7 +4758,9 @@
     "tour13t": "噪聲單",
     "tour13d": "受審的模型——準確率、平局中的實話，從列裡取",
     "tour14t": "冷門登記冊",
-    "tour14d": "弱旅的成績單——看好方優勢被抹平的每一場，按行計算"
+    "tour14d": "弱旅的成績單——看好方優勢被抹平的每一場，按行計算",
+    "tour15t": "王朝登記冊",
+    "tour15d": "連串名冊——頂級聯賽最長連勝與最長不敗之旅，都在這些行裡"
   },
   "worldSpotlight": {
     "metaTitle": "世界之眼",
@@ -4942,5 +4944,33 @@
     "sectionUpsetsLabel": "冷門登記冊",
     "sectionUpsetsNote": "弱旅的成績單",
     "sectionUpsetsChip": "冷門"
+  },
+  "worldDynasties": {
+    "metaTitle": "王朝名冊——連串之卷",
+    "metaDescription": "本賽季頂級聯賽最長連勝與不敗——每次請求重算：最長五次連勝、最長五次不敗，以及此刻誰最火——純粹對行裡的數字：算出來的，沒有杜撰",
+    "eyebrow": "連串名冊",
+    "title": "王朝登記冊",
+    "lede": "本賽季頂級聯賽最長連勝與不敗之旅，全部在本次請求時重算——沒有儲存的計數器，也沒有編出來的王朝",
+    "statWinLabel": "最長連勝",
+    "winCaption": "連續取勝門數，{team}",
+    "statUnbeatenLabel": "最長不敗場次",
+    "unbeatenCaption": "未嘗一敗的輪數，{team}",
+    "statAblazeLabel": "此刻最熱",
+    "ablazeCaption": "當前最火的連勝，{team}",
+    "ablazeTitle": "正當顛之日",
+    "ablazeBody": "近 {count} 場連勝；本賽季出戰 {matches} 場——本名冊覆蓋所有俱樂部中最熱的一支",
+    "ablazeQuiet": "此刻沒有誰正當顛之日——上一場寫了不同的結尾",
+    "boardWinTitle": "五大最長連勝",
+    "boardWinLede": "按開球順序計連串勝；最長優先，起點更早優先",
+    "boardUnbeatenTitle": "五大最長不敗",
+    "boardUnbeatenLede": "連續的勝與平；最長優先，起點更早優先",
+    "methodEyebrow": "這些規則，公開可查",
+    "methodBody": "每次請求從 `real_matches` 完整走一遍：每一場頂級聯賽完賽場次，都從該俱樂部自己的角度記勝負平，按開球順序排列。連勝必須是連續的勝；不敗允許含和局。連串是連續的——這個聯賽一輪一輪來——而且什麼都不儲存。沒有大模型、沒有模擬、沒有連勝列",
+    "unavailable": "賽季還沒有寫成它的連串記錄",
+    "rowStreakLabel": "連勝",
+    "rowUnbeatenLabel": "不敗",
+    "sectionDynastiesLabel": "王朝登記冊",
+    "sectionDynastiesNote": "連串名冊",
+    "sectionDynastiesChip": "王朝"
   }
 }

@@ -38,6 +38,7 @@ export default async function WorldIndexPage() {
   const tf = await getTranslations("worldFinals");
   const tn = await getTranslations("worldNoise");
   const tu = await getTranslations("worldUpsets");
+  const td = await getTranslations("worldDynasties");
 
   const sections: { href: string; label: string; note: string; countKey?: string; chip?: string }[] = [
     { href: "/world/competitions", label: t("sectionCompetitionsLabel"), note: t("sectionCompetitionsNote"), countKey: "competitions" },
@@ -54,6 +55,7 @@ export default async function WorldIndexPage() {
     { href: "/world/finals", label: tf("sectionFinalsLabel"), note: tf("sectionFinalsNote"), chip: tf("sectionFinalsChip") },
     { href: "/world/noise", label: tn("sectionNoiseLabel"), note: tn("sectionNoiseNote"), chip: tn("sectionNoiseChip") },
     { href: "/world/upsets", label: tu("sectionUpsetsLabel"), note: tu("sectionUpsetsNote"), chip: tu("sectionUpsetsChip") },
+    { href: "/world/dynasties", label: td("sectionDynastiesLabel"), note: td("sectionDynastiesNote"), chip: td("sectionDynastiesChip") },
     { href: "/world/news", label: t("sectionReportsLabel"), note: t("sectionReportsNote"), countKey: "articles" },
   ];
 

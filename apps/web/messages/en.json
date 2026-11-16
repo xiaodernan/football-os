@@ -4758,7 +4758,9 @@
     "tour13t": "The Noise Dossier",
     "tour13d": "the model on trial — accuracy, draws called right, the loudest misses, straight from the rows",
     "tour14t": "The Upset Register",
-    "tour14d": "the underdog, counted — every fixture where the favourite's edge surrendered, by the rows"
+    "tour14d": "the underdog, counted — every fixture where the favourite's edge surrendered, by the rows",
+    "tour15t": "The Dynasties",
+    "tour15d": "the streak ledger — the longest reigns and unbeaten runs in tier-1, straight from the rows"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
@@ -4942,5 +4944,33 @@
     "sectionUpsetsLabel": "The Upset Register",
     "sectionUpsetsNote": "the underdog, counted",
     "sectionUpsetsChip": "upsets"
+  },
+  "worldDynasties": {
+    "metaTitle": "The Dynasties — the streak ledger",
+    "metaDescription": "The longest winning and unbeaten runs in this world's tier-1, recomputed on every request: the five longest reigns, the five longest unbeaten runs, and who is ablaze right now — pure arithmetic on the rows.",
+    "eyebrow": "The Streak Ledger",
+    "title": "The Dynasties",
+    "lede": "The longest winning and unbeaten runs in this world's tier-1, recomputed on this request — never a stored counter, never an authored dynasty.",
+    "statWinLabel": "Longest winning streak",
+    "winCaption": "won on the trot, {team}",
+    "statUnbeatenLabel": "Longest undefeated run",
+    "unbeatenCaption": "rounds without a defeat, {team}",
+    "statAblazeLabel": "Ablaze right now",
+    "ablazeCaption": "the current hot streak, {team}",
+    "ablazeTitle": "Currently ablaze",
+    "ablazeBody": "won their last {count} fixtures; {matches} played this season — the hottest run among the clubs the register covers",
+    "ablazeQuiet": "Nobody is ablaze right now — the latest matchday wrote a different ending.",
+    "boardWinTitle": "The five longest reigns",
+    "boardWinLede": "Consecutive wins, in kickoff order; the longest first, ties broken by who started earlier.",
+    "boardUnbeatenTitle": "The five longest unbeaten runs",
+    "boardUnbeatenLede": "Wins and draws on the trot; the longest first, ties broken by who started earlier.",
+    "methodEyebrow": "The rules, in the open",
+    "methodBody": "One walk per request over `real_matches`: every completed tier-1 fixture is scored from the club's own point of view, in kickoff order. A win run requires consecutive Ws; unbeaten allows draws. Streaks are contiguous — this league completes one round at a time — and nothing is stored. No provider, no simulation, no streak column.",
+    "unavailable": "The season has not written its streaks yet.",
+    "rowStreakLabel": "win streak",
+    "rowUnbeatenLabel": "unbeaten",
+    "sectionDynastiesLabel": "The Dynasties",
+    "sectionDynastiesNote": "the streak ledger",
+    "sectionDynastiesChip": "dynasties"
   }
 }

@@ -4758,7 +4758,9 @@
     "tour13t": "噪声单",
     "tour13d": "受审的模型——准确率、平局中的实话、被 seed 一手蒙住的；从行里取",
     "tour14t": "冷门登记册",
-    "tour14d": "弱旅的成绩单——看好方优势被抹平的每一场，按行计算"
+    "tour14d": "弱旅的成绩单——看好方优势被抹平的每一场，按行计算",
+    "tour15t": "王朝登记册",
+    "tour15d": "连串名册——顶级联赛最长连胜与最长不败之旅，都在这些行里"
   },
   "worldSpotlight": {
     "metaTitle": "世界之眼",
@@ -4942,5 +4944,33 @@
     "sectionUpsetsLabel": "冷门登记册",
     "sectionUpsetsNote": "弱旅的成绩单",
     "sectionUpsetsChip": "冷门"
+  },
+  "worldDynasties": {
+    "metaTitle": "王朝名册——连串之卷",
+    "metaDescription": "本赛季顶级联赛最长连胜与不败——每次请求重算：最长五次连胜、最长五次不败，以及此刻谁最火——纯粹对行里的数字：算出来的，没有杜撰",
+    "eyebrow": "连串名册",
+    "title": "王朝登记册",
+    "lede": "本赛季顶级联赛最长连胜与不败之旅，全部在本次请求时重算——没有存储的计数器，也没有编出来的王朝",
+    "statWinLabel": "最长连胜",
+    "winCaption": "连续取胜门数，{team}",
+    "statUnbeatenLabel": "最长不败场次",
+    "unbeatenCaption": "未尝一败的轮数，{team}",
+    "statAblazeLabel": "此刻最热",
+    "ablazeCaption": "当前最火的连胜，{team}",
+    "ablazeTitle": "正当巅之日",
+    "ablazeBody": "近 {count} 场连胜；本赛季出战 {matches} 场——本名册覆盖所有俱乐部中最热的一支",
+    "ablazeQuiet": "此刻没有谁正当巅之日——上一场写了不同的结尾",
+    "boardWinTitle": "五大最长连胜",
+    "boardWinLede": "按开球顺序计连串胜；最长优先，起点更早优先",
+    "boardUnbeatenTitle": "五大最长不败",
+    "boardUnbeatenLede": "连续的胜与平；最长优先，起点更早优先",
+    "methodEyebrow": "这些规则，公开可查",
+    "methodBody": "每次请求从 `real_matches` 完整走一遍：每一场顶级联赛完赛场次，都从该俱乐部自己的角度记胜负平，按开球顺序排列。连胜必须是连续的胜；不败允许含和局。连串是连续的——这个联赛一轮一轮来——而且什么都不存储。没有大模型、没有模拟、没有连胜列",
+    "unavailable": "赛季还没有写成它的连串记录",
+    "rowStreakLabel": "连胜",
+    "rowUnbeatenLabel": "不败",
+    "sectionDynastiesLabel": "王朝登记册",
+    "sectionDynastiesNote": "连串名册",
+    "sectionDynastiesChip": "王朝"
   }
 }

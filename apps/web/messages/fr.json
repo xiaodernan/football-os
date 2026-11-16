@@ -4758,7 +4758,9 @@
     "tour13t": "Le dossier du bruit",
     "tour13d": "le modèle au banc des accusés — précision, nuls appelés juste, les plus gros ratés, depuis les lignes",
     "tour14t": "Le Registre des Succès",
-    "tour14d": "le faible, compté — chaque rencontre où l'avance du favori a cédé"
+    "tour14d": "le faible, compté — chaque rencontre où l'avance du favori a cédé",
+    "tour15t": "Les Dynasties",
+    "tour15d": "le registre des séries — les plus longs règnes et les plus longues séries d'invincibilité de la division reine"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -4942,5 +4944,33 @@
     "sectionUpsetsLabel": "Le Registre des Succès",
     "sectionUpsetsNote": "le faible, compté",
     "sectionUpsetsChip": "succès"
+  },
+  "worldDynasties": {
+    "metaTitle": "Les Dynasties — le registre des séries",
+    "metaDescription": "Les plus longues séries de victoires et d'invincibilité de la division reine, recalculées à chaque requête : les cinq plus longs règnes, les cinq plus longues séries d'invincibilité, et qui brûle en ce moment — pure arithmétique sur les lignes.",
+    "eyebrow": "Le registre des séries",
+    "title": "Les Dynasties",
+    "lede": "Les plus longues séries de victoires et d'invincibilité de la division reine de ce monde, recalculées à cette requête — jamais un compteur stocké, jamais une dynastie écrite.",
+    "statWinLabel": "Plus longue série de victoires",
+    "winCaption": "victoires d'affilée, {team}",
+    "statUnbeatenLabel": "La plus longue suite sans défaite",
+    "unbeatenCaption": "journées sans défaite, {team}",
+    "statAblazeLabel": "En feu en ce moment",
+    "ablazeCaption": "la série chaude du moment, {team}",
+    "ablazeTitle": "En feu en ce moment",
+    "ablazeBody": "vainqueur de ses {count} derniers matchs ; {matches} joués cette saison — la plus chaude des séries que ce registre couvre",
+    "ablazeQuiet": "Personne n'est en feu pour l'instant — la dernière journée a écrit une autre fin.",
+    "boardWinTitle": "Les cinq plus longs règnes",
+    "boardWinLede": "Victoires consécutives, dans l'ordre des coups d'envoi ; le plus long d'abord, les ex æquo départagent par celui qui a commencé plus tôt.",
+    "boardUnbeatenTitle": "Les cinq plus longues séries d'invincibilité",
+    "boardUnbeatenLede": "Victoires et nuls d'affilée ; le plus long d'abord, les ex æquo départagent par celui qui a commencé plus tôt.",
+    "methodEyebrow": "Les règles, au grand jour",
+    "methodBody": "Un tour par requête sur `real_matches` : chaque match terminé de division reine est scoré depuis le point de vue du club, dans l'ordre des coups d'envoi. Une série de victoires exige des résultats gagnants consécutifs ; l'invincibilité tolère les nuls. Les séries sont contiguës — cette ligue se joue une journée à la fois — et rien n'est stocké. Aucun modèle, aucune simulation, aucune colonne de série.",
+    "unavailable": "La saison n'a pas encore écrit ses séries.",
+    "rowStreakLabel": "série de victoires",
+    "rowUnbeatenLabel": "invincibilité",
+    "sectionDynastiesLabel": "Les Dynasties",
+    "sectionDynastiesNote": "le registre des séries",
+    "sectionDynastiesChip": "règnes"
   }
 }

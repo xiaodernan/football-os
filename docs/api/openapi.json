@@ -3086,6 +3086,29 @@
         }
       }
     },
+    "/api/v1/world/dynasties": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Dynasties",
+        "description": "The Dynasties — the tier-1 streak ledger, recomputed live.\n\nEvery completed fixture scored W/D/L per club in kickoff order; the door publishes the\nfive longest winning streaks, the five longest unbeaten runs, and who is ablaze right\nnow — the longest current winning streak at the latest completed matchday. Pure\narithmetic on the rows, never stored counters.",
+        "operationId": "dynasties_api_v1_world_dynasties_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Dynasties Api V1 World Dynasties Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [
