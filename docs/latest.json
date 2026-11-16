@@ -1,11 +1,11 @@
 {
-  "head": "b55c2dc",
-  "total_commits": 1200,
-  "milestone": "§230",
-  "milestone_full": "§230 — Item 97: the LLM provider gets its door opened properly — proxy-aware, cache-true, docs true to the world, one fixture aligned",
+  "head": "16aac2f",
+  "total_commits": 1203,
+  "milestone": "§232",
+  "milestone_full": "§232 — The Admin Console lands — and the cache meter moved from zero to 97.3% on this host",
   "pushed_at": "2026-11-16",
-  "screens": 86,
-  "assets": 198,
+  "screens": 87,
+  "assets": 199,
   "world_doors": 21,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T07:00:55.985Z"
+  "generated_at": "2026-11-16T07:33:48.970Z"
 }
