@@ -1,8 +1,8 @@
 {
-  "head": "98347b8",
-  "total_commits": 1211,
-  "milestone": "§237",
-  "milestone_full": "§237 — The nav learns to whisper — twenty-six characters, six locales, zero invention",
+  "head": "ab59ef6",
+  "total_commits": 1213,
+  "milestone": "§238",
+  "milestone_full": "§238 — Item 103: two more CI reds cured; mypy 198/198, witness 11/11",
   "pushed_at": "2026-11-16",
   "screens": 87,
   "assets": 199,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T09:02:05.508Z"
+  "generated_at": "2026-11-16T09:09:23.644Z"
 }
