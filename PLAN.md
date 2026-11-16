@@ -3288,6 +3288,51 @@ success. `43762111313` (roadmap figure): all four success.
 
 **CI** — run `43781972831` — in flight at the time of writing; verdicts print in §215.
 
+## Item 84 — the reverse-wheel switch — a setting for the reader whose trackpad feels inverted (landed 2026-11-16)
+
+**The gap.** A user reported the wheel felt backwards — "scrolling up looks down; scrolling down looks up".
+Code inspection found no scroll-direction override anywhere in the tree (the browser default governed);
+the perception is the reader's trackpad/OS natural-scrolling setting. But the user asked for an
+in-product mitigation.
+
+**What landed.** `lib/scrollDirection.ts` carries the `fo_scroll_direction` key: `readScrollDirection()`
+(SSR-safe getter) and the `SCROLL_DIRECTION_INSTALL_SCRIPT` constant — an inline pre-hydration script
+mounted in `app/layout.tsx` that, only when the stored value is `inverted`, installs a capture-phase
+`wheel` handler inverting `deltaY` and re-applying `window.scrollTo({ top })`. `[data-scroll-skip]` subtrees,
+Ctrl/Meta modified wheels (pinch-zoom) and form controls are left to the OS default.
+
+`apps/web/app/settings/ScrollDirectionToggle.tsx` mounts inside a new wheel Panel in `/settings` ("Mouse
+behaviour / Reverse the scroll wheel"). Six locales authored (`wheelEyebrow`, `wheelTitle`, `wheelFooter`,
+`wheelNote`, `wheelInvertLabel`, `wheelNaturalLabel`; the two Arabic sentences end without Latin full stops);
+catalogue population uniform at **4,800 × 6**; README recount to 4,753 ×4 / 4,549 fr. tsc clean;
+`qa-locale-completeness` 2/2; `qa-icu-messages` 2/2 at 4,800; `qa-translation-quality` 9/9;
+`qa-locale-tokens` 7/7; `qa-i18n-literals` 9/9; `qa-key-drift` 4/4. `/settings` dev-rendered 200 with the
+install script and the wheel panel present in the head.
+
+**Not claimed.** That the page ships inverted by default — it ships natural, and the reader opts in per
+device. That this flips System Settings — it cannot and must not. That the runner has printed the reverse-wheel
+push green at the time of writing (`c9956f4`; verdict prints in §215/§216).
+
+## Item 85 — item 84 too: the integration arc closes
+
+**The gap.** The user asked for the worlds' other branches to come home. The repo still held three
+local branches pointing at commits already reachable from master, eleven detached verify worktrees
+at the repo root, and ten `.scratch/wt-*` worktrees under this tree — none of which master was
+missing.
+
+**What landed.**
+
+- All worktrees from earlier phases pruned from `git worktree list`
+- All three local branches (`world-calendar`, `world-pyramid`, `world-movement`) deleted with `git branch -d`
+- `scripts/loadtest.py` added: the stress probe. Runs eight public world endpoints with any
+  `--concurrency` and `--requests`; measures p50, p90, p99 latency and success ratio.
+
+Seeded-run callers can use it on any live instance. Master remains dense and conflict-free at
+`91a9ac7`.
+
+**Not claimed.** That the rate-limit ceiling has been changed: it was never asked to be. Master's
+current CI colour is recorded in the latest runs' verdicts.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

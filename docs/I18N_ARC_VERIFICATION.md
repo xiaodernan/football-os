@@ -7788,3 +7788,39 @@ This window closed two arcs and one long-standing customer request: **"why is my
 **Commits this window (oldest → newest):** `1cc5a95`, `4194567`, `c7da029`, `dfe7caa`. The fact pack refresh in this window (`1cc5a95`) recorded arc §214.
 
 **CI position at the time of writing.** All previous master pushes printed four-legs-success; the newest three pushes are in_progress (api leg still composing); nothing re-pinned, nothing retyped, nothing cloaked.
+
+## §216 — the integration arc closes: parallel work continues to live on master
+
+A backlog formed quietly in this branch over the last week: three local branches
+(world-calendar, world-movement, world-pyramid), eleven detached verify worktrees at the
+repo root, plus ten `.scratch/wt-*` worktrees under this same directory. All of them traced
+back to earlier phase windows; every three local branches were merged into master. The
+detached verify worktrees pointed at commits already reachable from master.
+
+The worktree house lets a worker appear and disappear without a merge dance — the memory
+is "the tree itself", and the three `world-*` branches were pointer twins to commits already on master. This window:
+
+- **all stale worktrees pruned** (`git worktree prune --expire=now`);
+- **all three local branches deleted** (`git branch -d world-calendar world-pyramid world-movement`);
+- **`scripts/loadtest.py`** landed — the stress probe the user asked for, with eight public
+  endpoint probes and explicit output of p50 / p90 / p99 counters.
+
+Load result on the seeded world with `--concurrency 4 --requests 40` (320 requests across 8
+endpoints):
+
+```
+/healthz                 40/40 ok avg=20.7ms  p50=17.6ms  p99=97.3ms
+/api/v1/world/status     40/40 ok avg=14.7ms  p50=14.1ms  p99=25.6ms
+/api/v1/world/competitions 40/40 ok avg=17.2ms p50=16.4ms p99=28.6ms
+/api/v1/world/teams      40/40 ok avg=17.7ms  p50=17.4ms  p99=29.4ms
+/api/v1/world/players    40/40 ok avg=12.3ms  p50=11.6ms  p99=17.1ms
+/api/v1/world/matches    40/40 ok avg=17.0ms  p50=17.4ms  p99=28.5ms
+/api/v1/world/news        40/40 ok avg=14.7ms  p50=13.9ms  p99=28.1ms
+/api/v1/world/almanac     40/40 ok avg=10.8ms  p50=10.0ms  p99=18.0ms
+```
+
+A pressure pass at concurrency=16·200 requests/endpoint refused 402 requests of 1,600
+with `429` from the M15 public world-tier rate limiter (~60/min). That is the limit doing its
+job; it is documented for the operator, not silently raised.
+
+Not claimed: CI greener than the six latest pushes (all four legs reported success most recent); a permanent increase of the rate limit ceiling; anything the runner did not print.
