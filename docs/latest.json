@@ -1,8 +1,8 @@
 {
-  "head": "16aac2f",
-  "total_commits": 1203,
-  "milestone": "§232",
-  "milestone_full": "§232 — The Admin Console lands — and the cache meter moved from zero to 97.3% on this host",
+  "head": "5ca1518",
+  "total_commits": 1207,
+  "milestone": "§235",
+  "milestone_full": "§235 — Item 100: The Real Book grows a Volume II — the 2018 World Cup joins the door",
   "pushed_at": "2026-11-16",
   "screens": 87,
   "assets": 199,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T07:33:48.970Z"
+  "generated_at": "2026-11-16T08:44:08.011Z"
 }
