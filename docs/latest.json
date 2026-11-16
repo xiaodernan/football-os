@@ -1,6 +1,6 @@
 {
-  "head": "74ee514",
-  "total_commits": 1272,
+  "head": "2ac525c",
+  "total_commits": 1274,
   "milestone": "§269",
   "milestone_full": "§269 — Item 129: graph_trace reaches the reader — \"show how the coach assembled this\"",
   "pushed_at": "2026-11-17",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T21:37:12.386Z"
+  "generated_at": "2026-11-16T21:48:28.260Z"
 }
