@@ -3,8 +3,9 @@
   M14 service-plane live walk — reads every claim back from a running process.
 
 .DESCRIPTION
-  Sixteen checks against a locally running plane: core (uvicorn), Eureka registry,
-  Spring Cloud Config server, and the Spring Cloud Gateway (edge) routing /api/v1/**.
+  Sixteen checks against a locally running plane; when the world-check citizen (services/worldcheck) is also up,
+  five more land — live invariants, eureka registration, and the config server serving the worldcheck properties file.
+  The exact count is printed at the bottom of the run; do not pin it in prose.
 
   The walk is a *witness*, not a test suite: it answers "does the plane behave as the
   document claims, on this host, right now?" — trace minted, trace echoed, gateway
@@ -26,6 +27,9 @@
 .PARAMETER Config
   Base URL of the Spring Cloud Config server. Default http://127.0.0.1:8888.
 
+.PARAMETER WorldCheck
+  Base URL of the world-check service. Default http://127.0.0.1:8870. Pass a $null value to skip.
+
 .PARAMETER OutFile
   Where the JSON witness lands. Default: .scratch/plane-walk.json (untracked by design —
   witnesses are run artifacts, not source).
@@ -42,6 +46,7 @@ param(
   [string]$Core     = 'http://127.0.0.1:8100',
   [string]$Registry = 'http://127.0.0.1:8761',
   [string]$Config   = 'http://127.0.0.1:8888',
+  [string]$WorldCheck = 'http://127.0.0.1:8870',
   [string]$OutFile  = '.scratch\plane-walk.json'
 )
 
@@ -92,6 +97,31 @@ $served = (Get-Body "$Config/football-edge/default").body | ConvertFrom-Json
 $edgeSource = ($served.propertySources | Where-Object { $_.name -match 'football-edge' } | Select-Object -First 1).source
 $checks['config_serves_core_api_route'] = ($edgeSource.'spring.cloud.gateway.server.webflux.routes[0].id' -eq 'core-api')
 $checks['config_serves_fallback'] = ("$($edgeSource.'spring.cloud.gateway.server.webflux.routes[0].filters[0].args.fallbackUri')" -eq 'forward:/edge/fallback')
+
+# 7. the fourth citizen speaks arithmetic only: live check + eureka registration + config serving
+if ($WorldCheck -ne '') {
+  try {
+    $wc = Get-Body "$WorldCheck/world/check" -Headers @{ 'Accept' = 'application/json' }
+    $checks['worldcheck_live_200'] = ($wc.status -eq 200)
+    $checks['worldcheck_has_invariants'] = ($wc.body -match '"invariants"')
+    $checks['worldcheck_invariants_aligned'] = ($wc.body -match '"world_aligned":\s*true')
+  } catch {
+    $checks['worldcheck_live_200'] = $false
+    $checks['worldcheck_has_invariants'] = $false
+    $checks['worldcheck_invariants_aligned'] = $false
+  }
+
+  $names2 = @($apps.applications.application | ForEach-Object { $_.name })
+  $checks['worldcheck_registered'] = ($names2 -contains 'FOOTBALL-WORLDCHECK')
+
+  try {
+    $wcServed = (Get-Body "$Config/football-worldcheck/default").body | ConvertFrom-Json
+    $wcSource = ($wcServed.propertySources | Where-Object { $_.name -match 'football-worldcheck' } | Select-Object -First 1).source
+    $checks['config_serves_worldcheck_min_competitions'] = ($wcSource.'worldcheck.min.competitions' -eq '10')
+  } catch {
+    $checks['config_serves_worldcheck_min_competitions'] = $false
+  }
+}
 
 $result = [ordered]@{
   at = (Get-Date).ToString('o')
