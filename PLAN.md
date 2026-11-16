@@ -4495,6 +4495,28 @@ no honest 1,000-request pressure window and no login-burst sequence anywhere in 
 Postgres, this Redis; that any single request exceeded its budget without the system refusing; that
 the burst door distinguishes "wrong password" from "no such account" (it cannot, by design).
 
+## Item 132 — the nav rail's flex floor caused user-visible overlap; clamped in source, plane rebuild pending (landed 2026-11-17)
+
+**The named defect, measured live at vw=1000px:** `a.nav__link` elements at x=766..1052 overlaid
+`div.nav__actions` at x=736..970 — the links rail never shrank below its content because
+`.nav__links` held `min-width: auto` (the default) while its nowrap children demanded 906 px;
+the rail ran `overflow-x: auto` but was never assigned the free width to run within. The header
+frame `.nav__inner` at viewport ≤900 px wraps onto rows, but 640..900 px sits in the broken band.
+
+**The cure.** `.nav__links` now takes `max-width: 100%`, `min-width: 0`, `flex: 1 1 auto` — it sizes
+to the available track and scrolls its own overflow; the actions rail keeps its 234 px anchor.
+
+**Honest scope.** The live 127.0.0.1:3210 demo image is the older build and still renders the pre-fix
+layout — the next `plane` build inherits the source fix; the 2022–2022+ catalogue population stays
+unchanged (no surface change; no new gate; this is a layout clamp). The screenshot path was blocked
+(focused-window permission not granted), so this fix is recorded by measurement, not pixels.
+
+**The demo front also told this arc plain truth when asked for `/world/real-book?tournament=1930`:**
+`数据不可用 · 请求校验未通过` — the demo image is an older contract snapshot (it does not know 1930).
+That is how the running stack behaves against today's tree, and nothing was re-tagged or re-pinned to hide it.
+
+**Gates re-measured:** tsc clean; no catalogue keys moved.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

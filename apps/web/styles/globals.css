@@ -387,7 +387,7 @@ h1, h2, h3, h4, p { margin: 0; }
    their baseline alignment, so the wordmark's optical position does not move. */
 .nav__brand { display: flex; align-items: baseline; gap: 0.5rem; font-weight: 800; letter-spacing: -0.02em; min-height: 24px; }
 .nav__brand span { color: var(--accent); }
-.nav__links { display: flex; align-items: center; gap: 0.25rem; overflow-x: auto; scrollbar-width: none; }
+.nav__links { display: flex; align-items: center; gap: 0.25rem; max-width: 100%; min-width: 0; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
 .nav__links::-webkit-scrollbar { display: none; }
 .nav__link { padding: 0.4rem 0.7rem; border-radius: 8px; font-size: 0.9rem; color: var(--text-2); white-space: nowrap; }
 .nav__link:hover { color: var(--text); background: var(--bg-panel-2); }

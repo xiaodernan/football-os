@@ -9749,3 +9749,38 @@ bottoms out at roughly this point — it bends, it never breaks); that the burst
 distributed attack (rate limits are per scope+per client; an army is a different problem the product
 doesn't claim to block); that these are numbers worth benchmarking others against (file:
 `docs/SPEC_COVERAGE_AUDIT.md` governs claims; this is the host's report).
+
+## §272 — Item 132: one measurement, one clamp, an honest stale demo
+
+**Named measurement (this host, in-app browser at vw=1000):**
+
+```
+large screen sees FOOTBALL OS brand at left, links rail, actions right.
+rail .nav__links: clientWidth=569, scrollWidth=906, computed min-width=auto, flex=0 1 auto, maxWidth=none
+→ children overflow visually into the actions rail over x in [736, 970]
+```
+
+Cure line-by-line, exactly as landed in `apps/web/styles/globals.css`:
+
+```css
+.nav__links { display: flex; align-items: center; gap: 0.25rem; max-width: 100%; min-width: 0;
+              flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+```
+
+**Why that works:** `flex: 1 1 auto` + `min-width: 0` lets the rail shrink to the grid track,
+not to its content's intrinsic minimum; `overflow-x: auto` then turns the excess into its own
+scrollrail instead of onto `.nav__actions`. `.nav__inner`'s `min(1200px, 100% - 2.5rem)` bound
+now actually holds at every width.
+
+**Honest scope, plainly.** The Docker front on :3210 is the older build and still shows the old
+layout — this commit's CSS is picked up by the next plane/web-image rebuild; nothing in this item
+"passed" on pixels, the window screenshot tool was unavailable (tab focus not visible on the
+desktop); the diff stands on the numbers above.
+
+**The demo gave this arc back a true answer it was not asked to hear:** the front at 127.0.0.1:3210
+answered `?tournament=1930` with `数据不可用 · 请求校验未通过` — the running Docker image is
+pre-1930 by construction. Every old front that ships from this repository goes stale in the
+same way; screenshot-ability, image-age and this answer belong to the same lesson.
+
+**Not claimed.** That the live demo at xiaodernan.github.io is on this build. That the Docker
+container was rebuilt here. That a screenshot exists. Anything else.
