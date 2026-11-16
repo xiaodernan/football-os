@@ -118,7 +118,7 @@ def compute_almanac_coach_read(session: Session) -> dict[str, Any]:
             "available": False,
             "edition": almanac.get("season", {}).get("label", "—"),
             "provider": failure.provider,
-            "error": failure.error[:160],
+            "error": (failure.error or "unreachable gateway")[:160],
         }
 
     record_model_call_safely(result=result, feature="world.almanac.read")

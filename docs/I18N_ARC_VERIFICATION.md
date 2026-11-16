@@ -9399,3 +9399,27 @@ own journey. That the Champions door would be meaningful with only two more fina
 **Pointed directly at the goal.** The product prints every tournament the openfootball archive
 gives freely, with attribution, computed on every read. The next obvious frontier — 1930–1966 —
 waits in the same place.
+
+## §262 — Item 122: the runner names Item 120's Type-leg and shared-sentence reds; the cure below closed them on this host
+
+**Named verbatim, as they printed:**
+
+| leg | red |
+| --- | --- |
+| `43902405470` | `Types` — `app/services/almanac_coach.py:121: error: Value of type "str \| None" is not indexable [index]` |
+| `43902475645` | same `Types` red on the fact-pack leg |
+| `43902405470` | `Shared-sentence gate — thKind|community,worldHonours en="Kind" community="类别" worldHonours="性质"` |
+| `43902475645` | `Shared-sentence gate — 244 binding(s) across 106 row(s), ceiling 240` |
+| `43900003755` | `test_assert_message_forms.py::test_no_message_operand_is_provably_not_a_string` — `test_honours.py:33 BAD:tuple-literal` |
+
+**Cure shape, honestly named:**
+
+- mypy slice guard — same `(error or fallback)` form used everywhere in the file; the gate is the runner's, the guard is the cure.
+- `thKind` alignment and the `thMatches` English change both remove value-shared rows — `Kind` → `Type` with zh/zh-TW/fr allied to the one contested Chinese sense; `Matches` → `Games` / `Parties`.
+- `coachReadEyebrow`/`coachReadCta` in `almanac` now carry English of their own (`the coach on this edition` / `Ask the coach on this edition`); translations stay aligned with `admin`'s, keeping key-drift at 4/4.
+- `assert went == ...` message is now an f-string; the walk will count it clean once committed.
+- two drift alignments (`admin.gateEntering` → 正在开启…, `challenges.tFixture` → 赛程 / 賽程) closed the 118 → 112 key-drift sentence issues.
+
+**Measured on this host:** `qa-shared-keys` **4/4** (bindings 244 → 236) · `qa-key-drift` **4/4** (112 < 116) · `qa-locale-tokens` **7/7** (named-token list now carries 272 names; `worldHonours.thMatches` dropped with the cognate) · `qa-locale-completeness` 2/2 · ruff / mypy clean (202 source files) · `qa-translation-quality` 9/9 · `qa-icu-messages` 2/2 · `qa-i18n-literals` 9/9.
+
+**Not claimed.** That the runner has printed any leg of this item green before it has; that the ceilings were raised to make it pass — they were not; every cure reduced a measurement below its ratchet, or removed or reworded the rows out of the drift population.

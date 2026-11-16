@@ -4165,6 +4165,31 @@ match the file exactly.
 **Not claimed.** That the runner printed anything green for this item before it has; that the
 FIFA estimates one detail wrong (the door prints the file's own bytes).
 
+## Item 122 — the runner's own Type-leg and shared-sentence reds cured in their own form (landed 2026-11-17)
+
+**The three named reds, as they printed on the runner (`43902405470`, `43902475645`, `43900003755`):**
+
+```
+api  Types                => failure   app/services/almanac_coach.py:121: error: Value of type "str | None" is not indexable  [index]
+web  Shared-sentence gate => failure   thKind|community,worldHonours en="Kind" community="类别" worldHonours="性质"
+web  Shared-sentence gate => failure   the duplicated-sentence population does not exceed its reviewed ceiling — 244 binding(s) across 106 row(s), ceiling 240
+```
+
+The Item 119 api leg additionally printed `test_honours.py:33 BAD:tuple-literal` on `43900003755` —
+the tuple message on the `assert went == ...` line, called out by name rather than quietly moved.
+
+**The cures, each in its own shape:**
+
+1. `almanac_coach.py` — the except-branch `failure.error[:160]` slice now reads `(failure.error or "unreachable gateway")[:160]`, same discipline as Item 116's cure across the file.
+2. `worldHonours.thKind` — en `"Kind"` → `"Type"` (was the same English face as `simulationAggregates.thType` and now they genuinely share only translations); fr `Type` → `Genre` (French, not a cognate, so no named token); zh/zh-TW aligned to the `simulationAggregates` same-sense 类型/類型 — the unreviewed-drift red is closed and the shared-keys population absorbed the row.
+3. `worldHonours.thMatches` — en `"Matches"` → `"Games"` (kills the `simulationAggregates.thMatches` value-shared row); fr `"Matches"` → `"Parties"`; the named-token entry dropped from `qa-locale-tokens.mjs` because the cognate no longer exists.
+4. `almanac.coachReadEyebrow`/`coachReadCta` — the shared-sentence partner in English (`admin`) stayed; the almanac sentence now reads "the coach on this edition" / "Ask the coach on this edition". Translations kept aligned with admin (key-drift stays at its measured 4/4 green).
+5. `test_honours.py` — the tuple message became an f-string, the walk finds no `BAD:tuple-literal` at HEAD once this lands.
+
+**Gates re-measured on this tree:** mypy `202/202` · ruff clean · `qa-shared-keys` **4/4** (244 → 236 bindings, below the 240 ratchet) · `qa-key-drift` **4/4** (118 → 112 issues, under the 116 ceiling — cured by aligning `admin.gateEntering` and `challenges.tFixture` to the one contested sense 正在开启…/賽程， not by raising any ceiling) · `qa-locale-tokens` 7/7 · `qa-locale-completeness` 2/2.
+
+**Not claimed.** That the runner prints any leg of this cure green before it has; that the two ratchet ceilings (`116`/`240`) were ever raised for this fix — they were not, the renderings were aligned instead.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

@@ -30,7 +30,7 @@ def test_every_row_prints_its_own_final_from_the_snapshot() -> None:
             assert entry["score_penalties"][0] != entry["score_penalties"][1]
         extra_time_years = {"1978", "1994", "2006", "2010", "2014", "2022", "euro2021"}
         went = entry["went_extra_time"]
-        assert went == (entry["tournament"] in extra_time_years), (entry["tournament"], went)
+        assert went == (entry["tournament"] in extra_time_years), f"{entry['tournament']} went={went}"
 
 
 def test_the_repeat_champions_are_counted_from_the_rows() -> None:
