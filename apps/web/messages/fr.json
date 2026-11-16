@@ -2917,7 +2917,9 @@
     "worldBookDynasties": "Les Dynasties",
     "worldBookDynastiesNote": "le registre des séries — les plus longs règnes et les plus longues séries d’invincibilité",
     "navHomeTutorial": "Le guide",
-    "navHomeTutorialNote": "dix portes, une belle soirée — votre première heure ici"
+    "navHomeTutorialNote": "dix portes, une belle soirée — votre première heure ici",
+    "worldBookRealBook": "Le Vrai Livre",
+    "worldBookRealBookNote": "ce que le vrai monde a vraiment imprimé en 2022 — l'Argentine à Lusail, par les chiffres"
   },
   "careerDetail": {
     "academyEyebrow": "une classe de {count} à ou sous {ceiling}, jugée par les onze suivants du moteur",
@@ -4786,7 +4788,9 @@
     "gOriginTitle": "l’origine des données",
     "gOriginBody": "D'où vient le chiffre : 'synthetic' pour le monde généré, 'user' pour vos propres dessins, 'derived' pour l'arithmétique sur les lignes. On le lit sur chaque Provenance.",
     "tour16t": "Le tutoriel",
-    "tour16d": "la tablée des dix — dix portes, une belle soirée, votre première heure ici"
+    "tour16d": "la tablée des dix — dix portes, une belle soirée, votre première heure ici",
+    "tour17t": "Le Vrai Livre",
+    "tour17d": "ce que le vrai monde a imprimé en 2022 — l'Argentine à Lusail, par les chiffres"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -5041,5 +5045,32 @@
     "step9Body": "Chaque fonctionnalité, chaque porte, chaque seuil — tout est écrit dans ce livre. Lisez-le après avoir frappé ; il rend les portes plus nettes.",
     "step10Title": "Dixième porte — rentrez à la maison",
     "step10Body": "Vous êtes désormais le lecteur que le monde attendait. Revenez demain — la saison 2026/27 continue de s'écrire sur les lignes, et cette porte est comment vous continuez de la lire."
+  },
+  "worldRealBook": {
+    "metaTitle": "Le Vrai Livre — ce que le vrai monde imprima en 2022",
+    "metaDescription": "La vraie Coupe du monde 2022, consignée dans ce produit : l'Argentine championne à Lusail, les 64 matchs, les huit enceintes, le Ballon d'Or — des faits qu'aucune graine ne peut générer ni effacer.",
+    "eyebrow": "Le Vrai Livre",
+    "title": "Un monde de vrai football",
+    "lede": "Voici la Coupe du monde 2022, portée par ce produit — chaque chiffre passé par la communauté openfootball, chaque donnée extraite d'un fichier public, attribution incluse.",
+    "opening": "Le vrai football du monde a cessé ici, brièvement, précisément ainsi.",
+    "finalPanelEyebrow": "La finale",
+    "finalPanelTitle": "{home} contre {away}, la finale la plus serrée jamais jouée",
+    "penaltiesChip": "{a}–{b} aux tirs au but",
+    "numbersEyebrow": "Chiffres au mur",
+    "numbersTitle": "Ce que le vrai monde a additionné",
+    "matchesCaption": "matchs joués",
+    "venuesCaption": "enceintes utilisées",
+    "championCaption": "champion du vrai monde",
+    "finalGoalsCaption": "buts après prolongation en finale",
+    "awardsEyebrow": "Trophées & prix",
+    "awardsTitle": "Quels noms le vrai monde a écrits",
+    "goldenBallTitle": "Ballon d'Or — Messi",
+    "topScorerTitle": "Soulier d'Or — Mbappé",
+    "biggestWinTitle": "Victoire la plus dominatrice",
+    "attributionLine": "chiffres issus des données ouvertes de la Coupe du monde 2022 (CC BY 4.0)",
+    "sectionRealBookLabel": "Le Vrai Livre",
+    "sectionRealBookNote": "ce que le vrai monde a imprimé en 2022",
+    "sectionRealBookChip": "Le vrai livre",
+    "sourceLabel": "l’espèce"
   }
 }

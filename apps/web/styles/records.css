@@ -81,3 +81,125 @@
 
 .records__chip-row { margin-block: 0.1rem 0; }
 .records__unavailable { padding: 1.5rem 0; color: var(--text-2); }
+
+/* The Real Book â€?a curated exhibit of the real 2022 World Cup. */
+.records__book {
+  font-family: var(--serif, Georgia, serif);
+  font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+  line-height: 1.4;
+  color: var(--text);
+  border-inline-start: 4px solid var(--gold, #d8b56b);
+  padding-inline-start: 1rem;
+  max-width: 62ch;
+  margin: 0;
+}
+.records__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.records__panel h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.records__panel-eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 750;
+}
+.records__fixture-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.4rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 8% 80%, rgba(216, 181, 107, 0.18), transparent 55%),
+    var(--bg-panel-2);
+}
+.records__team {
+  display: flex;
+  justify-content: center;
+}
+.records__team--winner { justify-content: flex-end; }
+.records__team--runner { justify-content: flex-start; }
+.records__team-name {
+  display: inline-block;
+  font-size: 1.4rem;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+}
+.records__fixture-note {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+  color: var(--text-2);
+  font-size: 0.82rem;
+}
+.records__fixture-note .chip {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(216, 181, 107, 0.12);
+  border-radius: 4px;
+  color: var(--gold, #d8b56b);
+  font-weight: 700;
+}
+.records__numbers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (max-width: 760px) {
+  .records__numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .records__numbers { grid-template-columns: 1fr; }
+}
+.records__number {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.85rem 0.95rem;
+  background: var(--bg-panel-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.records__number-big {
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.records__number-sub {
+  font-size: 0.72rem;
+  color: var(--text-2);
+}
+.records__tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (max-width: 860px) {
+  .records__tiles { grid-template-columns: 1fr; }
+}
+.records__ledger {
+  font-size: 0.78rem;
+  max-width: 70ch;
+}
+.records__link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  margin-inline-start: 0.4rem;
+}
+.records__link:hover { color: var(--text); }
+

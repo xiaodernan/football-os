@@ -72,6 +72,12 @@ const NAMESPACE_OWNERS = {
   // The Dynasties — the streak ledger
   "worldDynasties": { owner: "world", purpose: "the tier-1 streak ledger, recomputed live from the rows: the five longest winning streaks, the five longest unbeaten runs, who is ablaze now" },
 
+  // The Real Book — the real world's 2022 World Cup, carried in this product
+  "worldRealBook": { owner: "world", purpose: "the real world's football facts carried in this product: the 2022 World Cup final, the numbers added up, the awards, the openfootball source with attribution" },
+
+  // The Tutorial — the ten-seat table
+  "tutorial": { owner: "core", purpose: "the in-product /tutorial door: ten steps in the order a fresh reader knocks on them, natively authored in every locale" },
+
   // World tier
   "world": { owner: "world", purpose: "World overview pages" },
   "worldPlayer": { owner: "world", purpose: "World player pages" },

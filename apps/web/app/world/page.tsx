@@ -39,6 +39,7 @@ export default async function WorldIndexPage() {
   const tn = await getTranslations("worldNoise");
   const tu = await getTranslations("worldUpsets");
   const td = await getTranslations("worldDynasties");
+  const tr = await getTranslations("worldRealBook");
 
   const sections: { href: string; label: string; note: string; countKey?: string; chip?: string }[] = [
     { href: "/world/competitions", label: t("sectionCompetitionsLabel"), note: t("sectionCompetitionsNote"), countKey: "competitions" },
@@ -56,6 +57,7 @@ export default async function WorldIndexPage() {
     { href: "/world/noise", label: tn("sectionNoiseLabel"), note: tn("sectionNoiseNote"), chip: tn("sectionNoiseChip") },
     { href: "/world/upsets", label: tu("sectionUpsetsLabel"), note: tu("sectionUpsetsNote"), chip: tu("sectionUpsetsChip") },
     { href: "/world/dynasties", label: td("sectionDynastiesLabel"), note: td("sectionDynastiesNote"), chip: td("sectionDynastiesChip") },
+    { href: "/world/real-book", label: tr("sectionRealBookLabel"), note: tr("sectionRealBookNote"), chip: tr("sectionRealBookChip") },
     { href: "/world/news", label: t("sectionReportsLabel"), note: t("sectionReportsNote"), countKey: "articles" },
   ];
 

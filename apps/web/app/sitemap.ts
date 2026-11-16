@@ -51,6 +51,7 @@ const PUBLIC: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["ch
   { path: "/world/noise", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/upsets", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/dynasties", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/world/real-book", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/training", changeFrequency: "weekly", priority: 0.7 },
   // The duel is the world's public argument — an indexable head-to-head page with a shareable card.
   { path: "/world/duel", changeFrequency: "weekly", priority: 0.8 },

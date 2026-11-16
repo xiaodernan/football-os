@@ -204,6 +204,14 @@ export default async function HomePage() {
               </span>
               <span className="worldbook__arrow" aria-hidden="true">→</span>
             </Link>
+            <Link className="worldbook__row" href="/world/real-book">
+              <span className="worldbook__numeral" aria-hidden="true">VII</span>
+              <span className="worldbook__body">
+                <strong>{t("worldBookRealBook")}</strong>
+                <span className="muted">{t("worldBookRealBookNote")}</span>
+              </span>
+              <span className="worldbook__arrow" aria-hidden="true">→</span>
+            </Link>
           </div>
         </Panel>
       </section>

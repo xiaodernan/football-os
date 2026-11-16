@@ -45,6 +45,7 @@ from app.services.world.finals import compute_finals
 from app.services.world.gazette import compute_gazette
 from app.services.world.matchday_xi import compute_matchday_xi
 from app.services.world.noise import compute_noise
+from app.services.world.real_book import compute_real_book
 from app.services.world.records import compute_records
 from app.services.world.spotlight import compute_spotlight
 from app.services.world.story import compute_story
@@ -1216,6 +1217,19 @@ def dynasties(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]
     """
     limit(request, 60, 60, scope="world_dynasties")
     return _envelope(**compute_dynasties(db))
+
+
+@router.get("/real-book")
+def real_book(request: Request) -> dict[str, Any]:
+    """The Real Book — what real football looked like, from a CC-BY openfootball snapshot.
+
+    The synthetic world in this product is its own universe; this door is a curated
+    hand-of-facts from the real 2022 World Cup, pulled from openfootball's worldcup.json
+    (CC-BY 4.0, with attribution). Every figure on this page is from the public record,
+    not from the seed. No synthetic club or player is named in it.
+    """
+    limit(request, 60, 60, scope="world_real_book")
+    return _envelope(**compute_real_book())
 
 
 __all__ = ["router"]

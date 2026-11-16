@@ -56,6 +56,7 @@ export default async function ManualPage() {
     { href: "/world/upsets", title: t("tour14t"), desc: t("tour14d") },
     { href: "/world/dynasties", title: t("tour15t"), desc: t("tour15d") },
     { href: "/tutorial", title: t("tour16t"), desc: t("tour16d") },
+    { href: "/world/real-book", title: t("tour17t"), desc: t("tour17d") },
   ];
 
   const rules = [t("rule1"), t("rule2"), t("rule3"), t("rule4"), t("rule5"), t("rule6")];

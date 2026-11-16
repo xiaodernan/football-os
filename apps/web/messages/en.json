@@ -2917,7 +2917,9 @@
     "worldBookDynasties": "The Dynasties",
     "worldBookDynastiesNote": "the streak ledger — the longest reigns and unbeaten runs in tier-1, straight from the rows",
     "navHomeTutorial": "The Tutor",
-    "navHomeTutorialNote": "ten doors, one evening — your first hour here"
+    "navHomeTutorialNote": "ten doors, one evening — your first hour here",
+    "worldBookRealBook": "The Real Book",
+    "worldBookRealBookNote": "what the real world actually printed in 2022 — Argentina at Lusail, by the numbers"
   },
   "careerDetail": {
     "academyEyebrow": "a class of {count} at or under {ceiling}, judged by the engine's next eleven",
@@ -4786,7 +4788,9 @@
     "gOriginTitle": "data_origin",
     "gOriginBody": "Where the figure came from: 'synthetic' for the generated world, 'user' for your own drawings, 'derived' for arithmetic on rows. Read it on every Provenance line.",
     "tour16t": "The Tutorial",
-    "tour16d": "the ten-seat table — ten doors, one good evening, your first hour here"
+    "tour16d": "the ten-seat table — ten doors, one good evening, your first hour here",
+    "tour17t": "The Real Book",
+    "tour17d": "what the actual world printed in 2022 — Argentina at Lusail, by the numbers"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
@@ -5041,5 +5045,32 @@
     "step9Body": "Every feature, every gate, every door explained to you in one book. Read it after you knock; it makes the doors open cleanly for you.",
     "step10Title": "Step ten — come home",
     "step10Body": "You are now the reader the world was asking for. Come back tomorrow — the 2026/27 season keeps writing itself onto the rows, and this door is how you keep reading."
+  },
+  "worldRealBook": {
+    "metaTitle": "The Real Book — what the actual world printed in 2022",
+    "metaDescription": "The real 2022 World Cup, documented in this product: Argentina's win at Lusail, the 64 matches, the eight venues, the trophies — facts the seed cannot generate and cannot forget.",
+    "eyebrow": "The Real Book",
+    "title": "A world of real football",
+    "lede": "Here is the 2022 World Cup, carried right inside this product — every figure passed on from the openfootball community, every one of it from a public file, attribution included.",
+    "opening": "The real football world ended here, briefly, exactly this way.",
+    "finalPanelEyebrow": "The Final",
+    "finalPanelTitle": "{home} vs {away}, the loudest final ever played",
+    "penaltiesChip": "{a}–{b} on penalties",
+    "numbersEyebrow": "Numbers on the wall",
+    "numbersTitle": "What the real world added up to",
+    "matchesCaption": "matches played",
+    "venuesCaption": "stadiums used",
+    "championCaption": "champions of the real world",
+    "finalGoalsCaption": "goals after extra time in the final",
+    "awardsEyebrow": "Trophies & awards",
+    "awardsTitle": "Whose names the real world wrote",
+    "goldenBallTitle": "Golden Ball — Messi",
+    "topScorerTitle": "Top scorer — Mbappé",
+    "biggestWinTitle": "Most dominant win",
+    "attributionLine": "figures from the open 2022 World Cup archive — CC BY 4.0",
+    "sectionRealBookLabel": "The Real Book",
+    "sectionRealBookNote": "what the actual world printed in 2022",
+    "sectionRealBookChip": "realbook",
+    "sourceLabel": "source"
   }
 }
