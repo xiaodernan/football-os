@@ -83,7 +83,7 @@ async def main() -> int:
 
             semaphore = asyncio.Semaphore(args.concurrency)
 
-            async def one(i: int) -> tuple[str, int, float, str | None]:
+            async def one(i: int, *, endpoint: str = endpoint, semaphore: asyncio.Semaphore = semaphore) -> tuple[str, int, float, str | None]:
                 async with semaphore:
                     return await fire(client, endpoint, i)
 
@@ -91,7 +91,7 @@ async def main() -> int:
             results = await asyncio.gather(*(one(i) for i in range(args.requests)))
             elapsed = time.perf_counter() - started
 
-            for _, status, latency_ms, error in results:
+            for _, _status, latency_ms, error in results:
                 if error is None:
                     ok_count += 1
                     latencies.append(latency_ms)
