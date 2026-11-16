@@ -8632,3 +8632,30 @@ cited, and it disagrees with FIFA's Golden Boot print on purpose by omission —
 printed that this snapshot does not hold); that the two tabs share a canonical URL split (they do
 not — `?tournament=` selects, the door is one door); or that anything here is live — the door
 reads a committed file at request time and never phones home.
+
+## §236 — Items 101: Item 98's tab, named by the gate, fixed the way the gate prescribes
+
+**Why now.** Three consecutive master runs failed on two named legs; the audit for this item
+reads them verbatim:
+
+- `api :: Lint — app/main.py:3:1: I001 [*] Import block is un-sorted or un-formatted —`
+  `admin ... traces ... telemetry` placed out of alphabet order. Ruff `--fix` placed it
+  between `tactics` and `traces`; `ruff check app/main.py` answers clean.
+- `web :: Metadata-title gate — every page declares its tab exactly once\n —`
+  `app/admin/page.tsx forms=[] title=none —` `/admin` is a client component; the layout
+  exported the tab, and this gate reads each page's own declaration — `forms=[], title=none`
+  means the page declares nothing. The prescribed fix: `page.tsx` becomes a server component
+  that calls `getTranslations("admin")` + `pageMetadata` and renders `<AdminConsole/>`, moving
+  the `use client` body into `components/AdminConsole.tsx`. The tab is now the console's own
+  copy in every locale.
+
+**Per the same discipline.** `admin.metaTitle` / `admin.metaDescription` now exist in all six
+catalogues; the unused-keys gate reads `admin.metaTitle` asked by `/admin`'s wrapper;
+population **5,042 ×6**; `qa-metadata-title` prints **250/250 passed**; tsc clean; `app/main.py`
+isort'd; `qa-namespace-ownership`, `qa-icu-messages`, `qa-icu-coverage`, `qa-locale-tokens`,
+`qa-locale-completeness`, `qa-translation-quality`, `qa-unused-keys`, `qa-table-shape`,
+`qa-i18n-literals` all green on the cured tree.
+
+**Not claimed.** That these cured runs printed green at the time of this commit — the named
+runs (43824743371, 43825135684, 43825693896) stand as recorded; this cure moves as its own
+commit, nothing re-run or renumbered.

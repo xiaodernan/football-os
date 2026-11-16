@@ -5161,6 +5161,8 @@
     "recForecastFlat": "les sessions par jour sont plates — pousse une nouvelle porte pendant quinze jours",
     "recForecastRising": "les sessions par jour montent de {value}/jour — garde le rythme hebdomadaire",
     "recForecastFalling": "les sessions par jour baissent de {value}/jour — audite le chemin d'onboarding avant d'ajouter du monde",
-    "recStrongPage": "{path} retient bien — copie ses recettes ailleurs"
+    "recStrongPage": "{path} retient bien — copie ses recettes ailleurs",
+    "metaTitle": "Console d'administration — le tableau comportemental",
+    "metaDescription": "La console au mot de passe partagé qui surveille chaque porte du navigateur : sessions, rebonds, temps de visite, entonnoirs, la prévision à deux semaines et le registre du modèle."
   }
 }

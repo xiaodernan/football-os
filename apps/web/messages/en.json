@@ -5161,6 +5161,8 @@
     "recForecastFlat": "sessions per day are flat — push one new door hard this fortnight",
     "recForecastRising": "sessions per day are rising {value}/day — hold the weekly shipping rhythm",
     "recForecastFalling": "sessions per day are falling {value}/day — audit the onboarding path before adding more world",
-    "recStrongPage": "{path} is holding readers well — mine it for patterns to copy"
+    "recStrongPage": "{path} is holding readers well — mine it for patterns to copy",
+    "metaTitle": "Admin console — the behavioural board",
+    "metaDescription": "The shared-passphrase console that watches every browser door: sessions, bounces, dwell, funnels, the two-week forecast and the model ledger."
   }
 }

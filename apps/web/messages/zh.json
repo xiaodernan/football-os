@@ -5161,6 +5161,8 @@
     "recForecastFlat": "每日会话数持平——这半个月重点推一扇新门",
     "recForecastRising": "每日会话数以每天 {value} 增长——保持每周发布节奏",
     "recForecastFalling": "每日会话数以每天 {value} 下滑——先审引导路径，再往世界里加门",
-    "recStrongPage": "{path} 留住了读者——把它的做法抄过去"
+    "recStrongPage": "{path} 留住了读者——把它的做法抄过去",
+    "metaTitle": "管理员控制台——行为仪表盘",
+    "metaDescription": "共享口令背后的控制台：看每一扇浏览器之门——会话、跳出、停留、漏斗、两周预测与模型账本。"
   }
 }

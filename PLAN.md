@@ -3666,6 +3666,26 @@ specific user has read it. That CI has printed this push green.
 
 **Not claimed.** That the absence of the official attendance is a bug (it is the source's silence, printed as such); that the 2022 door changed; that the synthetic world moved an inch. The door is two real tournaments now; the next volumes can be added the same way, one snapshot at a time, with the licence honoured at every step.
 
+## Item 101 — `/admin` declares its tab from the server
+
+**The gap, named verbatim by CI.** Three master runs of this window (43824743371 — Item 98,
+43825135684 — the §233 cure, 43825693896 — the §232/234 CSS) printed two red legs each:
+`api :: Lint — app/main.py:3:1: I001 import block un-sorted or un-formatted` (the telemetry
+import sat after trainings instead of before it — isort's alphabet, not mine), and
+`web :: Metadata-title gate — every page declares its tab exactly once —
+app/admin/page.tsx forms=[] title=none`. The admin console shipped as a client component
+(`"use client"`), so the page could not export `metadata` — the layout default exported the
+tab, the gate reads each page's own declaration, and the tab was nowhere. The cure is the
+structural one the gate itself prescribes: a server `page.tsx` wrapper reading
+`admin.metaTitle` via `generateMetadata()`, with the console body moved to
+`components/AdminConsole.tsx`. `admin.metaTitle` / `admin.metaDescription` are authored in all
+six locales (population **5,042 ×6**); `qa-metadata-title` prints **250/250**; `tsc` clean;
+every locale gate green. The dead-key gate that refused `admin.metaTitle` before Item 98's
+landing now sees the page asking.
+
+**Not claimed.** That the CI ref printed green in this window's window — the three reds stand
+on their own runs; this cure moves along as its own commit.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
