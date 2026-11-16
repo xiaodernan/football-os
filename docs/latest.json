@@ -1,11 +1,11 @@
 {
-  "head": "e7719d6",
-  "total_commits": 1251,
-  "milestone": "§258",
-  "milestone_full": "§258 — Item 118: the Roll of Honours — twelve real tournaments, one spine",
+  "head": "62bf72f",
+  "total_commits": 1254,
+  "milestone": "§260",
+  "milestone_full": "§260 — Item 120: the almanac has a voice — the coach reads the season back to the reader",
   "pushed_at": "2026-11-16",
   "screens": 90,
-  "assets": 202,
+  "assets": 203,
   "world_doors": 24,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T15:44:04.995Z"
+  "generated_at": "2026-11-16T15:59:08.461Z"
 }
