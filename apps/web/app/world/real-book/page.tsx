@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
+import { RealBookCoachRead } from "@/components/RealBookCoachRead";
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import { pageMetadata } from "@/lib/site";
 import { readWorld } from "@/lib/world";
@@ -305,6 +306,8 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
         <a href={facts.openfootball_url} rel="noopener" target="_blank" className="records__link">{t("sourceLabel")}</a>
       </p>
       <p className="records__fineprint muted">{t("snapshotNote")}</p>
+
+      <RealBookCoachRead tournament={active} />
 
       <Provenance provenance={provenance} />
     </div>

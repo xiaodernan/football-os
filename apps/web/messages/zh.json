@@ -5184,7 +5184,13 @@
     "unplayedNote": "已提交的档案里这一场标为 {status}：{team1} 对 {team2}（{date}）。本页的算术只数印着比分的比赛。",
     "chip1930": "1930 · 百年纪念",
     "lede1930": "真实世界的首届世界杯——1930 年乌拉圭聚集了十三个远行者，每一项数字都经由世界杯开放档案传来，署名照付。",
-    "opening1930": "1930 年，真实足球世界在蒙得维的亚相聚，片刻，恰是这样。"
+    "opening1930": "1930 年，真实足球世界在蒙得维的亚相聚，片刻，恰是这样。",
+    "coachReadEyebrow": "教练读这一册",
+    "coachReadTitle": "这一届属于自己，哪里？",
+    "coachReadHint": "教练只根据这些数字作答——每按一次，一次模型调用，不发明数字，也不拿别的年份凑数。",
+    "coachReadCta": "问教练这一册",
+    "coachReadEmpty": "未配置密钥时教练不出声——本页上的账目自身即立。",
+    "coachReadProvider": "{provider} · {model} —— {prompt} 个提示词 token 中 {cached} 来自缓存"
   },
   "worldAtlas": {
     "metaTitle": "星图——世界之门，一页画完",

@@ -4296,6 +4296,61 @@ file's own truth).
 
 Not claimed. Anything the runner hasn't printed yet; anything the file doesn't print verbatim.
 
+## Item 126 — the Real Book gains a voice: the coach reads the open volume, one grounded paragraph per press (landed 2026-11-17)
+
+**The gap.** Every other LLM-touched door in this product speaks: the coach on `/coach`, the admin
+on `/admin`, the almanac on `/world/almanac`. The Real Book — the product's single most
+archival page — was silent.
+
+**What landed.** `GET /api/v1/world/real-book/coach-read?tournament=<id>` — public, 20/min, one press
+per call. The coach receives exactly the figures this edition printed: host, final date, the Final
+fixture + venue, extra time / penalty annotations if the file carries them, the champion's note (the
+book's curated prose, marked as such on the tile), the runner-up, goals, fixtures scored, venues, the
+biggest win label, the scorers count and the silences (no scorers, unplayed fixture). It then writes
+one short paragraph about **this edition**, grounded in those figures — plain English, no mixing in
+modern context, no invented numbers, no scorer names where the file carries none.
+
+**Live reads from this host, through the operator's Clash Verge node, all four answers in this arc's
+having-it-both-ways truth:**
+
+```
+== 1930 | provider: openai | model: gpt-6.1-terra | demo_mode: False | 4729 in/43 out · cache False
+The 1930 World Cup's 18 scored fixtures produced 70 goals across three venues; Uruguay won the
+inaugural final 4–2 against Argentina at Montevideo's Estadio Centenario.
+== 1950 | provider: openai | model: gpt-6.1-terra | demo_mode: False | 4756 in/47 out · cache False
+Uruguay won the 1950 World Cup by beating Brazil 2–1 in the deciding Final Round fixture at the
+Maracanã; the edition records 88 goals across 22 scored fixtures at seven venues.
+== 1966 | provider: openai | model: gpt-6.1-terra | demo_mode: False | 4769 in/49 out · cache False
+The 1966 World Cup finished with England beating West Germany 4–2 after extra time, following a 2–2
+draw in regular time; its 89 goals came across 32 scored fixtures at eight venues.
+== 2022 | provider: openai | model: gpt-6.1-terra | demo_mode: False | 4735 in/59 out · cache False
+Qatar 2022 had 172 goals across 64 scored fixtures at eight venues. Argentina won the final on
+penalties after a 3–3 draw with France after extra time, and the edition's widest margin was Spain's
+7–0 win over Costa Rica.
+```
+
+Every number in each answer is present in the payload the coach was handed — the discipline the door
+is built around. No door call is made unless the reader asks; the ledger writes go under
+`world.real_book.read`.
+
+`model_ledger_unrecordable ... OperationalError` — the running host logged that on four presses; the
+door tolerates the ledger being unreachable (`record_model_call_safely` by design) and the section
+names those presses as not recorded locally rather than as written to the ledger from this box.
+
+**The front panel:** the real-book page now carries `the coach's read on this volume` — one button
+(the almanac's exact ergonomic), verbatim answer, provider/model/cache-share chip; resets on edition
+change. Six locales, native copy: population **5,233 ×6**.
+
+**Contract re-exported once more:** **250 paths / 317 operations / 99 schemas** (secured 241 / public
+**76** / private GET 104), SHA `cfe2ba005ec21380685ce83c23d90c6f9e507acf51a1e892d273e82c026edfe9`;
+`AUDIT_FIGURES contract_paths=250 page_routes=90 migrations=67`; the three ledgers re-pinned; the
+audit's door row and module row re-pinned to `250 / 90 / 67`.
+
+**Not claimed.** The runner's verdict on this item before it prints; that the ledger has recorded the
+four live calls from this box (it has not — the host logs prose it cannot connect to the local DB;
+the record is direct HTTP journal, not the ledger); that the coach's answers are the same across
+presses (they differ by design — temperature 0.3, one press per reader ask).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

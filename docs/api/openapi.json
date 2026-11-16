@@ -3178,6 +3178,52 @@
         }
       }
     },
+    "/api/v1/world/real-book/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Real Book Coach Read",
+        "description": "The coach's read on a Real Book volume — one honest, grounded press per ask.\n\nThe coach receives exactly the book's own figures for the edition: the final, the champion's\nnote (already curated prose); the widest margin; the goal tally; the unplayed-fixture disclosure\nif the file carries one; and the scorer-table silence where the file carries no scorers. It is\ninstructed not to invent a figure and, where scorer lists are absent, not to name one.",
+        "operationId": "real_book_coach_read_api_v1_world_real_book_coach_read_get",
+        "parameters": [
+          {
+            "name": "tournament",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(1930|1934|1938|1950|1954|1958|1962|1966|1970|1974|1978|1982|1986|1990|1994|1998|2002|2006|2010|2014|2018|2022|euro2021|euro2024)$",
+              "default": "2022",
+              "title": "Tournament"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Real Book Coach Read Api V1 World Real Book Coach Read Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/real-book": {
       "get": {
         "tags": [

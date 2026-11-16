@@ -5184,7 +5184,13 @@
     "unplayedNote": "已提交的檔案裡這一場標為 {status}：{team1} 對 {team2}（{date}）。本頁的算術只數印著比分的比賽。",
     "chip1930": "1930 · 百年紀念",
     "lede1930": "真實世界的首屆世界盃——1930 年烏拉圭聚集了十三個遠行者，每一項數字都經由世界盃開放檔案傳來，署名照付。",
-    "opening1930": "1930 年，真實足球世界在蒙得維的亞相聚，片刻，恰是這樣。"
+    "opening1930": "1930 年，真實足球世界在蒙得維的亞相聚，片刻，恰是這樣。",
+    "coachReadEyebrow": "教練讀這一冊",
+    "coachReadTitle": "這一屆屬於自己，哪裡？",
+    "coachReadHint": "教練只根據這些數字作答——每按一次，一次模型呼叫，不發明數字，也不拿別的年份湊數。",
+    "coachReadCta": "問教練這一冊",
+    "coachReadEmpty": "未配置密鑰時教練不出聲——本頁上的帳目自身即立。",
+    "coachReadProvider": "{provider} · {model} —— {prompt} 個提示詞 token 中 {cached} 來自快取"
   },
   "worldAtlas": {
     "metaTitle": "星圖——世界之門，一頁畫完",

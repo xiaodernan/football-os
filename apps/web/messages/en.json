@@ -5184,7 +5184,13 @@
     "unplayedNote": "The committed file marks one fixture as {status}: {team1} v {team2} ({date}). The arithmetic on this page counts only fixtures that printed a score.",
     "chip1930": "1930 · Centenario",
     "lede1930": "The real world's first World Cup — Uruguay 1930 gathering the thirteen travelers, carried right inside this product, every figure passed on from the open archive community, attribution included.",
-    "opening1930": "The real football world gathered in Montevideo in 1930, briefly, exactly this way."
+    "opening1930": "The real football world gathered in Montevideo in 1930, briefly, exactly this way.",
+    "coachReadEyebrow": "the coach's read on this volume",
+    "coachReadTitle": "What does this edition own?",
+    "coachReadHint": "The coach answers from exactly these figures — one press, one provider call; no invention, no era mixing.",
+    "coachReadCta": "Ask the coach on this volume",
+    "coachReadEmpty": "The coach stays quiet without a configured key — the book's arithmetic on this page stands on its own.",
+    "coachReadProvider": "{provider} · {model} — {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldAtlas": {
     "metaTitle": "The Atlas — the world's doors, drawn once",

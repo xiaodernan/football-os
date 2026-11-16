@@ -5184,7 +5184,13 @@
     "unplayedNote": "Le fichier archivé marque ce match comme {status} : {team1} v {team2} ({date}). L'arithmétique de cette page ne compte que les matchs qui ont imprimé un score.",
     "chip1930": "1930 · Centenario",
     "lede1930": "La première Coupe du monde de l'histoire — l'Uruguay 1930 rassemble les treize voyageurs, portée par ce produit, chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
-    "opening1930": "En 1930, le vrai monde du football s’est rassemblé à Montevideo, brièvement, exactement ainsi."
+    "opening1930": "En 1930, le vrai monde du football s’est rassemblé à Montevideo, brièvement, exactement ainsi.",
+    "coachReadEyebrow": "la lecture de l'entraîneur",
+    "coachReadTitle": "Cette édition, elle possède quoi ?",
+    "coachReadHint": "L'entraîneur répond à partir de ces chiffres exacts — une pression, une requête ; aucun chiffre inventé, aucune confusion d'époque.",
+    "coachReadCta": "Demander au coach sur cette édition",
+    "coachReadEmpty": "l'entraîneur se tait sans clé configurée — l'arithmétique de cette page tient seule.",
+    "coachReadProvider": "{provider} · {model} — {cached} des {prompt} tokens de prompt servis depuis le cache"
   },
   "worldAtlas": {
     "metaTitle": "L'Atlas — les portes du monde, dessinées",

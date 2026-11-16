@@ -37,6 +37,7 @@ from app.models import (
     Team,
 )
 from app.services.almanac_coach import compute_almanac_coach_read
+from app.services.real_book_coach import compute_real_book_coach_read
 from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
@@ -1258,6 +1259,19 @@ def honours(request: Request) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_honours")
     return _envelope(**compute_honours())
+
+
+@router.get("/real-book/coach-read")
+def real_book_coach_read(request: Request, tournament: str = Query("2022", pattern=r"^(1930|1934|1938|1950|1954|1958|1962|1966|1970|1974|1978|1982|1986|1990|1994|1998|2002|2006|2010|2014|2018|2022|euro2021|euro2024)$")) -> dict[str, Any]:
+    """The coach's read on a Real Book volume — one honest, grounded press per ask.
+
+    The coach receives exactly the book's own figures for the edition: the final, the champion's
+    note (already curated prose); the widest margin; the goal tally; the unplayed-fixture disclosure
+    if the file carries one; and the scorer-table silence where the file carries no scorers. It is
+    instructed not to invent a figure and, where scorer lists are absent, not to name one.
+    """
+    limit(request, 20, 20, scope="world_real_book_read")
+    return _envelope(**compute_real_book_coach_read(tournament))
 
 
 @router.get("/real-book")

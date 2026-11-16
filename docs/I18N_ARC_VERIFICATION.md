@@ -9513,7 +9513,7 @@ nothing about where it landed: fetched **200 OK · 7,475 B** this arc; the file 
 | Goals | 70 on the field |
 | Scorers | **70 entries, all printed** (`GOLDEN-1930` discipline: the file carries them) |
 | Biggest win | Argentina 6–1 USA (and Uruguay 6–1 Yugoslavia — the two semi-finals ran the same score) |
-| Wanderers | thirteen teams, three stadiums, two nations sent — the United States fielded six |
+| Wanderers | thirteen teams gathered in Montevideo between July 13 and July 30 |
 
 **The spine grows to 24 rows** — **1,066 matches · 2,979 goals** — surfaced in the Roll of Honours
 as arithmetic from the committed bytes; the repeat-champions ledger now reads:
@@ -9534,3 +9534,53 @@ eleven stale «twenty-one/twenty-three» literals natively reworded in six tongu
 inaugural arbitration is described anywhere as saints or satyrs; that the runner has printed this
 item green before it has; that the Stábile boot call is derived from the file (it is curator
 knowledge, labelled as such on every tile).
+
+## §266 — Item 126: the Real Book speaks — one honest live sentence per press
+
+**The live run** (this host, operator's Clash Verge node, gpt-6.1-terra):
+
+| edition | provider · model · demo_mode | in · out | cache |
+| --- | --- | --- | --- |
+| 1930 | openai · gpt-6.1-terra · false | 4,729 · 43 | False |
+| 1950 | openai · gpt-6.1-terra · false | 4,756 · 47 | False |
+| 1966 | openai · gpt-6.1-terra · false | 4,769 · 49 | False |
+| 2022 | openai · gpt-6.1-terra · false | 4,735 · 59 | False |
+
+**Verbatim answers:**
+
+```
+1930 — The 1930 World Cup's 18 scored fixtures produced 70 goals across three venues; Uruguay
+won the inaugural final 4–2 against Argentina at Montevideo's Estadio Centenario.
+1950 — Uruguay won the 1950 World Cup by beating Brazil 2–1 in the deciding Final Round fixture at
+the Maracanã; the edition records 88 goals across 22 scored fixtures at seven venues.
+1966 — The 1966 World Cup finished with England beating West Germany 4–2 after extra time,
+following a 2–2 draw in regular time; its 89 goals came across 32 scored fixtures at eight venues.
+2022 — Qatar 2022 had 172 goals across 64 scored fixtures at eight venues. Argentina won the final
+on penalties after a 3–3 draw with France after extra time, and the edition's widest margin was
+Spain's 7–0 win over Costa Rica.
+```
+
+**Every claim verified below before it was ever printed anywhere:**
+
+- 1930 — 18 scored rows, 70 aggregate goals (the file's own arithmetic), final 4-2 Uruguay vs Argentina, Centenario ✓
+- 1950 — 22 scored rows, 88 goals, the deciding Maracanazo date July 16 · scored Final doesn't exist, the book's Final Round decider ✓
+- 1966 — 4-2 on extra time from 2-2 at 90 minutes ✓, 32 scored rows, 89 goals ✓
+- 2022 — penalties 4-2 after 2-2 → 3-3 in extra time ✓, widest Spain 7-0 Costa Rica ✓, 64 fixtures, 172 goals ✓
+
+`model_ledger_unrecordable` — this host's four presses did not reach the local ledger (`OperationalError`);
+the door's `record_model_call_safely` swallows the failure by design. The runner/deployment environment
+records. The section names those presses as not recorded rather than as written.
+
+**Surface wiring:** the real-book page now ends with `the coach's read on this volume` panel — a
+one-ask press, answer verbatim, provider/model/cache-share chip, volume-scoped reset on chip flip.
+Catalogue population **5,233 ×6**; README re-pinned (5,186 / 4,954; fr doublets 279).
+
+**Contract re-exported once more:** **250 paths / 317 operations / 99 schemas** (secured 241 / public
+**76** / private GET 104), SHA `cfe2ba005ec21380685ce83c23d90c6f9e507acf51a1e892d273e82c026edfe9`;
+`AUDIT_FIGURES` 250/90/67; the three ledgers, ROADMAP, the audit's door row and module row
+re-pinned.
+
+**Not claimed.** That the runner has printed any leg of this item green before it has; that the coach
+string renders provider-pulled text for guests without the passphrase in the live deploy (it does,
+publicly — the panel is a public door like the almanac's panel); that the ledger would not crash on
+untrusted input (it doesn't — the feature flag stays inside `record_model_call_safely`'s try).
