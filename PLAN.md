@@ -4517,6 +4517,52 @@ That is how the running stack behaves against today's tree, and nothing was re-t
 
 **Gates re-measured:** tsc clean; no catalogue keys moved.
 
+## Item 133 — the front's /api proxy was truncating every coach read the browser saw (landed 2026-11-17)
+
+**The named defect.** Browser clients calling any `/api/v1/world/*/coach-read` through the Next.js
+`[...path]` proxy received bodies cut short at arbitrary byte offsets (measured: 476–560 bytes of an
+original 755+; `json.loads` errors at `"cached_input_tokens":460`). The API itself sent 755 exact
+bytes with a correct `content-length: 755` — every direct API call parsed to completion. The proxy
+copied the upstream's `content-length` header into its own Response while Next's own streaming of an
+un-transformed body arrived differently than the *exactly-kept* header advertised; clients that trusted
+content-length read a truncated envelope and the answer payload was never delivered.
+
+**The cure (one mechanism, at the one door that matters):**
+
+- JSON doors: read the *full* upstream bytes with `await response.arrayBuffer()`, re-serialize when
+  and only when the body needs localising (errors), then stamp exact `content-length: buffer.byteLength`.
+- Non-JSON / byte-range doors: forward the body untouched and **delete** any inherited `content-length`
+  so the response cannot lie; chunked framing does the counting.
+
+**Two calls through the proxy now answer live, and one cold trap came out clean:**
+
+```
+== 1950 (this build, this host, cache reporting):
+   in 4,756 · out 40 · cached 4,608 · cache_reported True · demo False
+   answer: The 1950 World Cup recorded 88 goals across 22 scored fixtures at seven venues …
+   → cache ratio on that call: 96.9 %
+
+== 1930:   in 4,729 · out 69 · cached 4,608 · cache_reported True · demo False
+== 1966:   in 4,769 · out 126 · cached 4,608 · cache_reported True · demo False   (was briefly demo=True, then recovered)
+   → every retried 1966 call this arc also came back live: out 99 / 158, cached 4,608 every time
+```
+
+And `/api/v1/world/status` delivers all 1,560 bytes the API serialises; `/world/almanac/coach-read`
+answers the reader with the full answer string intact, the exact same bytes the API wrote.
+
+**Side honesty.** The earlier `?tournament=1950` answer's cache ratio 4,608/4,756 = 96.9 % is the
+gateway reporting a cache hit across the three coaching reads called from this host this hour; the
+rate is the gateway's number, printed as `cached_input_tokens`, not a calculation we invented.
+
+**Contract unchanged:** no routes, no schemas moved; the web image was rebuilt from the same committed
+tree (`football-os-web` image rebuilt and redeployed in this arc — the only scope that moved).
+
+**Not claimed.** That the live demo at xiaodernan.github.io is upgraded (separate release path);
+that the portal's e2e flush has ever exercised these doors before a user would notice (they would have:
+content-length corruption cut every coach read at arbitrary byte boundaries — the browser's
+`.json()` would throw); that the transient `demo_mode:true` once observed for 1966 was a gateway
+lap-not-a-rebuild (we observed it, we retried, it recovered — we report both).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

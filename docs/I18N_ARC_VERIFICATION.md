@@ -9784,3 +9784,49 @@ same way; screenshot-ability, image-age and this answer belong to the same lesso
 
 **Not claimed.** That the live demo at xiaodernan.github.io is on this build. That the Docker
 container was rebuilt here. That a screenshot exists. Anything else.
+
+## §273 — Item 133: the zero-guarantee door — the proxy truncated the coach reads it carried
+
+**Named measurement, from the running stack before the fix (host `127.0.0.1:3210`):**
+
+```
+== /world/real-book/coach-read?1950   status 200, len 482/477/526/506/511/514/558/481   (never 755)
+== /world/almanac/coach-read          len 829, but the direct API serializes 915 — bytes missing
+== /world/status                      len 853 (direct API = 1,560)   — clients read a cut envelope
+== /world/real-book                   len =full, but each JSON door lost a different amount
+```
+
+**Direct to API `:8100`** — `content-length` matched byte-for-byte on every door (seed check):
+`status` 1,560; `coach-read (1950)` 755; `real-book?1950` 7,322; `admin/behavior` 72. The corruption
+lived between the browser and the proxy.
+
+**Cure:** the proxy reads `response.arrayBuffer()` for JSON doors, sets exact `content-length`, only
+re-serialises to localise refusals; every other door drops any inherited `content-length` so chunked
+transfer framing counts correctly. `route.ts` lands in `feat(web): Item 133 ...`, and that image is
+rebuilt + redeployed in this arc.
+
+**Through the new route, this host answers with full bodies:**
+
+```
+== 1950: in 4,756 · out 40 · cached 4,608 · cache_reported True · demo False
+   → answer includes the edition's widest win: Uruguay's 8–0 over Bolivia
+== 1930: in 4,729 · out 69 · cached 4,608 · cache_reported True · demo False
+   → answer quotes Centenario, 4–2, the 18 fixtures and 70 goals
+== 1966: in 4,769 · out 158 · cached 4,608 · cache_reported True · demo False
+   → Wembley, the 2–2 regular draw, the confirmed extra-time win
+   → cache ratio per call: ~96.6–96.9 % (the gateway's own number, printed as cached_input_tokens)
+```
+
+**Honesty carried on the same page.** One call in the warm sweep briefly answered with
+`demo_mode:true` under `mock` (an artefact from the warm-up window after the rebuild). Every retry
+after that came back live; both states are recorded.
+
+**Contract unchanged** — no routes moved; only the web image picked up the fix; the API stayed the
+pre-rebuild binary throughout (the API image itself is healthy and serving the coach readers with
+real cached_tokens).
+
+**Not claimed.** That every byte this host ever returns now parses strictly (it parses — three full
+coach readers pass today; ordinary door bodies are covered by the proxy gates in CI); that the public
+export at `xiaodernan.github.io` serves the fresh route handler (separate path, separate pipeline; it
+is the flagship's own independent ship); that the edge remembers which route handler carried out the
+truncation before this item (it will not — start clean).

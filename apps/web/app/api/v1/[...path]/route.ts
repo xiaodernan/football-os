@@ -156,35 +156,49 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
   }
 
   /**
-   * A refusal's sentence is the API's own English, and the reader is the one who has to read it. The
-   * proxy is where the browser's traffic meets the API, so this is where the sentence becomes the
-   * catalogue's — one place, for every client-side error, and nothing below it changes.
+   * The proxy owns the bytes it forwards. An upstream `content-length` cannot be trusted after
+   * the route constructs its own Response: the Next runtime may deliver the body as a different
+   * sequence than the API wrote, and the header it kept was smaller than the bytes that arrived —
+   * every coach read that carried a token ledger came through truncated, and the reader saw a
+   * half-finds keyword instead of the answer. The JSON branch honours the API bytes by reading
+   * them exactly, then writes that exact length on the way out. Media (byte-range) keeps the
+   * streaming pass-through and drops the inherited length rather than vouching for it wrongly.
    */
-  let outBody: BodyInit | null = response.body;
-  const headers = new Headers({
+  const baseHeaders = new Headers({
     "content-type": response.headers.get("content-type") ?? "application/json",
     ...byteRangeHeaders(response),
   });
-  if (!response.ok && (headers.get("content-type") ?? "").includes("application/json")) {
-    const raw = await response.text();
-    let payload: unknown = null;
-    try {
-      payload = JSON.parse(raw);
-    } catch {
-      payload = null;
+  const isJson = (baseHeaders.get("content-type") ?? "").includes("application/json");
+
+  let outBody: BodyInit | null = null;
+  if (isJson) {
+    const buffer = await response.arrayBuffer();
+    let outBytes: ArrayBuffer | Buffer = buffer;
+    if (!response.ok) {
+      let payload: unknown = null;
+      try {
+        payload = JSON.parse(new TextDecoder().decode(buffer));
+      } catch {
+        payload = null;
+      }
+      // The proxy is the browser's door, and it is a server: it can read the catalogue, and the
+      // browser cannot. So the answer it forwards is localised here -- including the one it could not
+      // parse, which used to travel as the API's own bytes and reach a Chinese reader as English.
+      outBytes = Buffer.from(JSON.stringify(await localiseRefusal(payload)), "utf-8");
+      baseHeaders.set("content-type", "application/json");
     }
-    // The proxy is the browser's door, and it is a server: it can read the catalogue, and the browser
-    // cannot. So the answer it forwards is localised here -- including the one it could not parse,
-    // which used to travel as the API's own bytes and reach a Chinese reader as English.
-    const localised = await localiseRefusal(payload);
-    outBody = JSON.stringify(localised);
-    // The body changed, so the length the API sent no longer describes it.
-    headers.delete("content-length");
+    outBody = outBytes as BodyInit;
+    baseHeaders.set("content-length", String(outBytes.byteLength));
+  } else {
+    // Non-JSON, ranged or not: the upstream declares nothing the proxy can vouch for, so the
+    // response carries no length claim; chunked transfer framing does the counting.
+    baseHeaders.delete("content-length");
+    outBody = response.body;
   }
 
   const out = new Response(outBody, {
     status: response.status,
-    headers,
+    headers: baseHeaders,
   });
 
   if (path.join("/") === "auth/logout" && response.status === 204) return applyCookies(out, {}, { clear: true });
