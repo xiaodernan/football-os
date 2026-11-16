@@ -1,12 +1,12 @@
 {
-  "head": "5510f9a",
-  "total_commits": 1220,
-  "milestone": "§242",
-  "milestone_full": "§242 — Item 106: the two reds 552656d printed, cured in their own commit",
+  "head": "e8007f4",
+  "total_commits": 1222,
+  "milestone": "§243",
+  "milestone_full": "§243 — Item 107: The Champions — three real World Cups, side by side, computed on every read",
   "pushed_at": "2026-11-16",
-  "screens": 87,
-  "assets": 199,
-  "world_doors": 21,
+  "screens": 88,
+  "assets": 200,
+  "world_doors": 22,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T10:12:54.891Z"
+  "generated_at": "2026-11-16T12:34:16.206Z"
 }
