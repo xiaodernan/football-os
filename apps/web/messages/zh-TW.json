@@ -617,7 +617,13 @@
     "prefsFollower": "新的追蹤者",
     "prefsComment": "你貼文上的一則留言",
     "prefsReaction": "你貼文上的一次反應",
-    "prefsFailed": "偏好儲存失敗。請重試。"
+    "prefsFailed": "偏好儲存失敗。請重試。",
+    "wheelEyebrow": "滑鼠方向",
+    "wheelTitle": "反向捲動",
+    "wheelFooter": "如果感覺捲動方向反了，勾選此項為本機翻轉。",
+    "wheelNote": "瀏覽器只按自己的方向捲動；您的系統級設定不在此範圍。勾選只為您翻轉本頁的捲動方向。",
+    "wheelInvertLabel": "反向捲動（本頁）",
+    "wheelNaturalLabel": "自然捲動（瀏覽器預設）"
   },
   "disclaimer": {
     "demoData": "示範資料——所有內容均為合成虛構。",

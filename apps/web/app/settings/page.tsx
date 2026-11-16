@@ -9,6 +9,7 @@ import type { CapabilitiesResponse, HealthResponse, UserOut } from "@/lib/types"
 
 import { NotificationPreferences } from "./NotificationPreferences";
 import { PrivacyPanel } from "./PrivacyPanel";
+import { ScrollDirectionToggle } from "./ScrollDirectionToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -123,6 +124,18 @@ export default async function SettingsPage() {
           }
         >
           <PrivacyPanel mode="export" />
+        </Panel>
+
+        <Panel
+          eyebrow={t("wheelEyebrow")}
+          title={t("wheelTitle")}
+          footer={
+            <span className="muted" style={{ fontSize: "0.82rem" }}>
+              {t("wheelFooter")}
+            </span>
+          }
+        >
+          <ScrollDirectionToggle />
         </Panel>
 
         <Panel

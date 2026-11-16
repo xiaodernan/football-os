@@ -9,6 +9,7 @@ import { currentUser, serverFetch } from "@/lib/server";
 import type { CapabilitiesResponse } from "@/lib/types";
 import { locales, defaultLocale } from "@/i18n/request";
 import { textDirection } from "@/i18n/locales";
+import { SCROLL_DIRECTION_INSTALL_SCRIPT } from "@/lib/scrollDirection";
 import enMessages from "@/messages/en.json";
 import zhMessages from "@/messages/zh.json";
 import zhTWMessages from "@/messages/zh-TW.json";
@@ -87,6 +88,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} dir={textDirection(locale)}>
       <body>
         <LocaleProvider locale={locale} messages={messages}>
+          {/* Reverse-wheel mode: a wheel handler installed before hydration by lib/scrollDirection.ts. */}
+          <script dangerouslySetInnerHTML={{ __html: SCROLL_DIRECTION_INSTALL_SCRIPT }} />
           {/* The nav is 11–18 links deep, so a keyboard reader who lands on the page would tab through every one of
               them on every page. The skip link is the first focusable thing in the document and moves the reader to
               `<main id="main">`, which carries `tabIndex={-1}` so the target can take focus at all. */}
