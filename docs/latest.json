@@ -1,12 +1,12 @@
 {
-  "head": "5e9824f",
-  "total_commits": 1197,
-  "milestone": "§228",
-  "milestone_full": "§228 — The Real Book deepens: all 64 fixtures printed; and the two CI reds a1d21e8 left behind (2026-11-16)",
+  "head": "b55c2dc",
+  "total_commits": 1200,
+  "milestone": "§230",
+  "milestone_full": "§230 — Item 97: the LLM provider gets its door opened properly — proxy-aware, cache-true, docs true to the world, one fixture aligned",
   "pushed_at": "2026-11-16",
-  "screens": 85,
-  "assets": 197,
-  "world_doors": 20,
+  "screens": 86,
+  "assets": 198,
+  "world_doors": 21,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T05:31:28.363Z"
+  "generated_at": "2026-11-16T07:00:55.985Z"
 }
