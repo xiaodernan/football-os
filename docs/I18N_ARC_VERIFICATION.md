@@ -9862,3 +9862,56 @@ public route we checked.
 arc chose the honest, earlier-hydrating reader experience over diagnosing a Next edge case. That the
 seven routes render faster with database hits (they now block on data; acceptable). That the skeleton
 CSS tokens still cover every use (they do, and everything still passes).
+
+## §275 — Item 135: the corpus teaches the graph behind its own retrieval (landed 2026-11-17)
+
+**The gap.** `coaching/stategraph-explained.md` taught the pattern; the retrieval the product actually
+runs — heading-anchored chunks, hybrid keyword/vector search, a coverage floor, citation integrity,
+the answer cache, refusals that fire instead of guesses — had no page of its own. The library carried
+"how graphs work" beside a retrieval pipeline with no chapter at all, and a reader who asked
+"how do I know the answer I get back is grounded" found a pattern chapter, not a pipeline.
+
+**The cure.** `data/knowledge/coaching/rag-stategraph.md` — 7 sections, 949 words, difficulty advanced,
+tags `[stategraph, rag, retrieval, grading, citations, refusal, answer-cache]`. It walks one question
+from the raw string to the printed answer: a classify node routing on the question's shape; hybrid
+retrieval (keyword for tokens that must appear, vector for meaning); a **coverage edge that grades
+before the composer is allowed to speak**, with weak candidates refused at the door; composition strictly
+from the surviving chunks with a citation per sentence; a citation-integrity node at the far end; and an
+answer cache sitting at the graph's boundary so a repeated question never re-walks the nodes. The one
+cycle in the design — re-retrieve with a widened query — is bounded at compile time, and the refusal is
+a first-class route with its own node, its own copy and its own audit line, not an error branch.
+"Evidence and its limits" and "When this does not apply" state out loud what is not claimed: no larger
+graph is a better graph, and grading removes the *unearned* assertion — the possibility of a confident
+mistake inside a passage that genuinely supports the answer is named as residual, not solved.
+
+**Measured on this host before the commit:**
+
+```
+python -m pytest tests/test_knowledge_rag.py -q   → 26/26 green
+python -m evals.run_rag_eval                      → all gates passed
+  corpus: 25 documents / 195 chunks / backend=hybrid-vector-python
+  recall_at_k        1.0      gate >= 0.85
+  mrr_at_k           0.9185   gate >= 0.6
+  citation_integrity 1.0      gate >= 1.0
+  refusal_accuracy   1.0      gate >= 1.0
+  hybrid_delta       0.0      gate >= 0.0
+```
+
+(the eval ran against a scratch SQLite at `.scratch/rag-eval.db` created by the run, not the dev
+database; CI's pgvector leg re-runs the same eval against a fresh PostgreSQL on every push.)
+
+**The incident that happened while measuring, recorded verbatim.** During that same eval run the
+gateway printed ~18 `openai_provider_stream_failure HTTPError code=403 … "insufficient_user_quota"
+(用户额度不足, 剩余额度: ≈0.000088, request id 202611162342…)` lines — the account's balance is
+essentially exhausted. The eval's gates do not depend on those calls succeeding (citation integrity
+and refusal accuracy are corpus-computed), so all gates pass; the failed calls cost only latency.
+Minutes later, this host's `/world/real-book/coach-read?tournament=1950` still answered **live**
+with `demo=False, cached_input_tokens=4,608 / 4,756 (≈96.9%)` — cache-served answers continue to be
+served; anything that must generate uncached now refuses with `insufficient_user_quota` until the
+balance is restored. The knowledge ask path degrades to its grounded fallback and still refuses or
+answers with citations rather than inventing.
+
+**Not claimed.** That CI's pgvector leg will see the same 403s (CI never calls the gateway);
+that quota will return on its own; that the demo stack re-ingests this page before its next
+container boot (it will on the next boot, or on `POST /knowledge/ingest` with an admin account;
+until then the running corpus answers from the previous 24).

@@ -4622,3 +4622,33 @@ broke visible styling (it is removed markup, not CSS); that the gates re-ran ide
 5. Write the evidence into the milestone's verification document with the command that reproduces it.
 6. If a claim turns out to be false, correct the claim in the same commit that corrects the code. Several of this
    project's documents currently say what was true at the step they were written, and say so.
+
+## Item 135 — the corpus gains the page for the pipeline it actually is (landed 2026-11-17)
+
+**The gap.** `coaching/stategraph-explained.md` taught the StateGraph pattern with a catalogue of its
+semantics, but the retrieval the product actually runs — heading-anchored chunking, hybrid keyword/vector
+search, a coverage floor, per-sentence citations, an answer cache, and a refusal route that fires instead
+of inventing — had no page of its own. The library carried the pattern chapter and nothing about the
+machine the corpus is.
+
+**The cure.** `data/knowledge/coaching/rag-stategraph.md`: seven sections, 949 words, difficulty advanced,
+tags `stategraph rag retrieval grading citations refusal answer-cache`. One question walks the whole
+graph — classify → hybrid retrieve → grade the coverage → compose strictly from the survivors with a citation
+per sentence → check the citations resolve → refuse what the corpus cannot ground. The single cycle
+(re-retrieve on weak coverage) carries a compile-time budget; the answer cache sits at the graph boundary;
+"Evidence and its limits" and "When this does not apply" say plainly what is not claimed.
+
+**Evidence on this host:** `pytest tests/test_knowledge_rag.py` 26/26 green; `python -m evals.run_rag_eval`
+on a scratch SQLite — corpus **25 documents / 195 chunks**, recall@5 **1.0** (gate ≥ 0.85), MRR@5 **0.9185**,
+citation integrity **1.0**, refusal accuracy **1.0** — all gates passed; CI's pgvector leg re-runs the same eval
+fresh on every push.
+
+**The honest edge, recorded verbatim.** During that eval the gateway printed ~18
+`openai_provider_stream_failure … insufficient_user_quota` (用户额度不足, 剩余额度 ≈0.000088) lines: the
+account is effectively out of quota. Cache-served answers keep answering (a 96.9%-cached coach read minutes
+later was still live, `demo=False`); anything uncached now refuses until the balance is restored — the
+knowledge ask path degrades to its grounded fallback rather than inventing. CI is unaffected (it never calls
+the gateway).
+
+**Not claimed.** That quota has returned; that the running demo stack shows the page before its next boot or
+an admin `POST /knowledge/ingest` — until then its corpus holds the prior 24 documents.
