@@ -1,6 +1,6 @@
 ---
 id: rag-stategraph
-title: "When the answer must be grounded: a retrieval pipeline is a state graph"
+title: "RAG as a state graph: how a football answer stays grounded"
 category: coaching
 tags: [stategraph, rag, retrieval, grading, citations, refusal, answer-cache]
 applies_to: [all]
