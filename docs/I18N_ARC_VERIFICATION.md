@@ -9108,3 +9108,25 @@ nothing; if either reds, this section names it.
 
 **Not claimed.** That any of this is green on the runner until it prints; that the gate itself
 was wrong (it was right — and the arc does not ask for mercy, it asks for a literal).
+
+## §251 — the queue confirms §250's named red: two more legs red on the dead-key gate; the cure is on the board
+
+**Six runs in this window, named:**
+
+| run | head | api | web | containers | services |
+| --- | --- | --- | --- | --- | --- |
+| `43872007852` | `67fdbb9` — Item 108 | success | fail: Catalogue dead-key gate | success | success |
+| `43872116695` | item-108 fact pack | success | fail: Catalogue dead-key gate | success | success |
+| `43872370232` | `fb2fe9f` — §246 docs | success | fail: Catalogue dead-key gate | success | success |
+| `43875407379` | `e55ecfe` — Item 109 | still printing | fail: Catalogue dead-key gate | success | success |
+| `43878210305` | `49893fd` — Item 110 | printing | pending | pending | pending |
+| `43878258731` | Item 110 fact pack | queued | queued | queued | queued |
+
+All four static-red legs stand on the same `t(chip${year} … )` dynamic-read tree and nothing else;
+the six-cups/ten-cups content, sitemap, gates, scans, pytest legs (api) and the contract were all
+green on these runs. `Item 111` (`b819ed3`) holds the cure — three static lookup tables built from
+literal `t(...)` calls; the queued `43878961938`/`43879150897`/`43879200387` runs judge it.
+
+**Not claimed.** That either of those runs prints green; that the cure moves anything on the
+content side; that the runner owes us two fresh green legs to §250's name list — it re-judges on
+its own and this section records what printed, not what would be convenient.
