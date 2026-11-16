@@ -3716,6 +3716,14 @@ phone without long-press (the tooltip is progressive enhancement; nothing is hid
 touch); that the nav will carry fourteen more hints next arc — it will carry what keys
 there's a canonical sentence for.
 
+## Item 103 — The window's red truth: every leg the runner named, cured in place (2026-11-16)
+
+**The gap.** This window shipped Items 96–102 green locally while CI red'd every push on two legs nearly every run. The discipline says each red gets its own cure, named, never re-run. That is what this item is.
+
+**Cures.** I001 (isort); mypy 198/198 (behavior.py typed; providers' stale `type: ignore` removed); Plural-select CLDR branches (`zero` ar, `many` fr) cured in §231; dead keys `worldAtlas.ogTag` and `admin.metaTitle` cured (ogTag deleted; admin.metaTitle reintroduced then repurposed as the /admin tab); Metadata-title gate (server wrapper `/admin` with `AdminConsole.tsx` split; 250/250 passed); Translation-quality behaviour gate arm B (the fixture strips every Latin-1 misread byte from the scratch catalogue, not one known key); the `_CountingProvider` fixture learns the new `prompt_cache_key` kwarg (15/15); ruff UP028 in the provider test.
+
+**The door 3210 load fact** (FastAPI at :8100 320/320 PASS; Next proxy at :3210 reproducible RemoteProtocolError; the edge gateway correctly 429s at burst) is recorded verbatim in §239 and not claimed as anything.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

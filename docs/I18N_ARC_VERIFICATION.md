@@ -8686,3 +8686,33 @@ in their own commits. This arc adds copy, not behavior.
 **`web :: Translation-quality behaviour gate` arm B** — the same fixture Item 101 tightened deletes `worldRealBook.topScorerTitle`; Item 94 added a second French-accented string (`spellingNote`, also "Mbappé") and the general mojibake branch charged it too. The arm now deletes **every value containing a Latin-1 misread byte** (`ØÙÚÛÃÂâ€ï¿½À-ÖØ-ø`) from the scratch plane rather than one key at a time — the cure travels with the branch's own byte list, so when the next accented footballer joins `en.json`, the arm survives without a hand. Witness **11/11**.
 
 **Not claimed.** That the runner printed `bba27e6` green at the time of this push; it printed `api :: Types` red and `web :: Translation-quality behaviour gate` red on that exact tree. The cure rides in its own commit and the reds stand on their runs.
+
+## §239 — Item 103: the CI truth about this window — seven runs red, two legs, all named
+
+**What the runner printed on this window's master** (`43824743371` Item 98, `43824765526` the
+fact pack after it, `43820772465` Item 96/97, `43820808509` the fact pack thereafter,
+`43821001483` the §231 cure, `43825693896` the CSS discipline, `43825135684` the dead-key cure,
+`43833641035`/`43833683531` Item 100 and its fact pack, `43834268672` the three-legs cure),
+with the scripted legs that answered:
+
+- api :: Lint (I001, unsorted imports — fixed `bba27e6`)
+- api :: Types (198 → now 198/198, `behavior.py` fully typed, `providers/__init__.py:201` ignore removed)
+- web :: Plural-select gate (missing CLDR `zero` + `many` — cured §231)
+- web :: Catalogue dead-key gate (`worldAtlas.ogTag` dead; `admin.metaTitle` dead — both cured)
+- web :: Metadata-title gate (`app/admin/page.tsx` client component, title=none — fixed by server wrapper, 250/250)
+- web :: Translation-quality behaviour gate (arm B — the mojibake arm total deletion of Latin-1 misread bytes; witness 11/11)
+
+**The live-load facts on this host, named.** Door 8100 (FastAPI) answers **320/320 PASS** at c=4
+over eight public doors (p99 ≤ 131ms, 1.7s overall). Door 3210 (Next.js production proxy →
+FastAPI) reproducibly fails with `RemoteProtocolError` (~45%) at the same load. Door 18080
+(edge gateway) correctly backpressures burst with HTTP 429 (264-byte body) at the same load —
+this is the edge's public tier working, not a crash. Plane-walk **27/27 PASS** after the host
+reboot (db crashed mid-recovery, healed). The fact pack is current at `98347b8`/`ab59ef6`
+(mirror refreshed).
+
+**Not claimed.** That the runner has printed any of this green — the named runs stand; the
+cures travel as their own commits; nothing was re-run, renumbered or re-pinned. That the 429
+is a defect (it is the public-tier limiter behaving as configured). That the 3210 proxy path
+failing at c=4 is a quota or panic — it is this host's Next.js production pipeline closing
+half its pooled connections at that concurrency, recorded as-is, not yet root-caused. The
+plane-walk is the only honest "27/27" in this section until the runner prints its own.
