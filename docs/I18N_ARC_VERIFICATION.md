@@ -9830,3 +9830,35 @@ coach readers pass today; ordinary door bodies are covered by the proxy gates in
 export at `xiaodernan.github.io` serves the fresh route handler (separate path, separate pipeline; it
 is the flagship's own independent ship); that the edge remembers which route handler carried out the
 truncation before this item (it will not — start clean).
+
+## §274 — Item 134: seven suspense skeletons were forever; Suspense removed from the front
+
+**Named measurement, reproducible at this host:**
+
+| route | before | after |
+| --- | --- | --- |
+| `/world/real-book?tournament=1930` | 200 · skeleton visible forever · `S:0` hidden · 0 characters of content readable | 200 · full content rendered · h1 `真实之书` present · 3,223 chars of text |
+| `/world/honours` | same | 200 · 200-row spine visible · 24 rows · 3 champions-wide repeats |
+| `/world` | same | 200 · full world index rendered · rails all show |
+| `/tactics` | suspense skeleton | direct SSR, content streams in |
+| `/career` `/progress` `/scout` | Suspense skeleton | direct SSR / 401 redirect when unauthenticated |
+
+**Cause, honestly.** Every one of the seven `loading.tsx` routes Suspense-wrapped its children;
+the RSC stream ships the resolved children *hidden* inside the HTML (`<div id="S:0" hidden>`); the
+boundary's `$RC("B:0","S:0")` call from the server is emitted but never executes in this standalone
+Next 15.5.25 server environment — hence users saw skeleton forever. HTTP never errored; scripts
+never 404'd; no console error fired; the page simply never painted real content. Direct evidence that
+the bytes carried the page: the HTML was `395 KB`, the suspense container held the full page markup
+already under `<div id="S:0" hidden>`, and a manual `window.$RV(window.$RB)` from the browser flipped
+the boundary and painted the page instantly — proving delivery + decode worked, only the swap marker
+stalled.
+
+**The fix.** Delete the seven `loading.tsx` files. Pages render before the connection closes; no
+Suspense anywhere; `.skeleton` tokens stay — used by isolated spots, never as whole-page silence.
+Full rebuild + plane restart in this arc; the front at `127.0.0.1:3210` renders full content on every
+public route we checked.
+
+**Not claimed.** That Suspense could not be rescued with a deeper Next 15 streaming wire-up — this
+arc chose the honest, earlier-hydrating reader experience over diagnosing a Next edge case. That the
+seven routes render faster with database hits (they now block on data; acceptable). That the skeleton
+CSS tokens still cover every use (they do, and everything still passes).

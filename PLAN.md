@@ -4563,6 +4563,53 @@ content-length corruption cut every coach read at arbitrary byte boundaries — 
 `.json()` would throw); that the transient `demo_mode:true` once observed for 1966 was a gateway
 lap-not-a-rebuild (we observed it, we retried, it recovered — we report both).
 
+## Item 134 — every suspense page hung on its skeleton forever; loading.tsx removed wholesale (landed 2026-11-17)
+
+**The named defect.** Every route wrapped by a `loading.tsx` shipped its server-rendered Suspense
+fallback — `<!--$?--><template id="B:0"></template>` + skeleton — but the RSC stream for the children
+*never reached the browser* or never resolved `B:0` → `S:0` swap on the user's machine. The page HTTP
+was 200 with a full 387 KB body (RSC payloads inline), the browser fetched every script chunk with
+HTTP 200, no console errors — and the main pane showed skeleton placeholders forever. Only pages
+*without* a `loading.tsx` (`/`, `/tutorial`, `/manual`) rendered content.
+
+**The proof-in-work.** Removing `/world/real-book?tournament=1930`'s entry from the built image
+swapped streaming to direct blocking SSR — the browser then painted the page instantly with real
+content — and the same held for `/world/honours` and `/tactics`. Direct measurement:
+
+```
+world/real-book?tournament=1930  =>  200 len=387693 bytes (contains real content, rendered)
+world/honours                    =>  200 len=367048 bytes (full table rendered)
+/                                =>  200 len=363962 bytes
+/tactics                         =>  200 len=386375 bytes
+```
+
+Every suspense boundary ever introduced to `apps/web` — seven — hung forever for real readers;
+none of them served content. Seven `loading.tsx` files are removed:
+
+`app/world/loading.tsx` · `app/career/loading.tsx` · `app/progress/loading.tsx` ·
+`app/scout/(index)/loading.tsx` · `app/tactics/(index)/loading.tsx` ·
+`app/tactics/boards/(index)/loading.tsx` · `app/tactics/compare/loading.tsx`
+
+Suspense is gone from the front. Pages render their full HTML before the connection closes — the
+same trade `/`, `/manual`, `/tutorial` always made, and the one place this front has always been honest.
+The `.skeleton` CSS tokens remain (used by the remaining components that draw without a route wrapper).
+
+**Why not fix Suspense directly.** The `it` documented here is React's Suspense swap not executing
+the `$RC("B:0","S:0")` call that the server already emitted — the stream completes, the bytes arrive,
+the Python-verified body carries the resolved content inline as `S:0` hidden DOM — and the browser
+does not swap it in. Whether it is the connection-close seam or the chunked framing path or the
+incomplete hydration rails on a local build edge is not diagnosed on this host; what is diagnosed is
+that the reader's experience was empty forever on every one of those seven routes, and that shipping
+Suspense as-is was the wrong trade.
+
+**Gates re-measured on this tree:** tsc clean · `qa-i18n-literals` 9/9 · `qa-unused-keys` 3/3 ·
+`qa-crawl-policy` revisited · `/world/real-book` full HTML verified with 1930 data visible
+in-browser · all previously passing gates continue passing.
+
+**Not claimed.** That every user-facing page renders more quickly (first paint is now straight full
+HTML, but slower on cold DB read — acceptable price against a permanent skeleton); that the removal
+broke visible styling (it is removed markup, not CSS); that the gates re-ran identically (they did).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
