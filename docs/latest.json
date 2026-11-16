@@ -1,8 +1,8 @@
 {
-  "head": "e8007f4",
-  "total_commits": 1222,
-  "milestone": "§243",
-  "milestone_full": "§243 — Item 107: The Champions — three real World Cups, side by side, computed on every read",
+  "head": "67fdbb9",
+  "total_commits": 1225,
+  "milestone": "§245",
+  "milestone_full": "§245 — Item 108: The Real Book carries six World Cups — two reds named, one honest silence",
   "pushed_at": "2026-11-16",
   "screens": 88,
   "assets": 200,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T12:34:16.206Z"
+  "generated_at": "2026-11-16T13:02:33.559Z"
 }
