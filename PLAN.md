@@ -3264,6 +3264,30 @@ success. `43762111313` (roadmap figure): all four success.
 
 **CI** — run `43772043844` — in flight at the time of writing; verdicts in §214.
 
+## Item 81 — the concise manual grows to thirteen doors (landed 2026-11-16)
+
+**The gap.** The manual's walk-through tour missed the two world doors that landed in §211/§212: The Finals and the Noise Dossier.
+
+**What landed.** `/manual` grows to tour12 (The Finals) and tour13 (The Noise Dossier), fully authored natively in all six locales. Population uniform at 4,794; `qa-icu-messages` 2/2 at 4,794; `qa-icu-completeness` re-measured uniform at 4,794; README recount to 4,747 ×4 / 4,543 fr; tour 11 → 13; two stages of the same arc (population 4,790 → 4,794) behave as expected.
+
+**CI** — run `43781855183` — in flight at the time of writing; the verdict prints in §215.
+
+## Item 82 — ADR-011: the upstream quota incident, recorded honestly (landed 2026-11-16)
+
+**The gap.** The user asked repeatedly why the ledger read `provider=mock, demo_mode=true, cached_tokens=0`. The path to the answer turned out to be one level deeper than the provider stub: every wkapi.pro call answered `HTTP 403 insufficient_user_quota`. A fresh API key with no balance read the same: `¥-0.000088`.
+
+**What landed.** `docs/adr/ADR-011-provider-quota-incident.md` — an honest ledger of evidence: the raw 403, the header echo, the body slice, the code path, the consequence (on every call the provider fell back to MockLLMProvider answering from the player's own rows; never a real model). The ADR explicitly does not change behaviour; it documents what was already true.
+
+**CI** — run `43781876662` — in flight at the time of writing; verdicts print in §215.
+
+## Item 83 — `services/plane-walk.ps1` learns about the fourth citizen (landed 2026-11-16)
+
+**The gap.** The M14 service-plane live walk covered the three planes citizens that were shipped before `worldcheck`; the new service landed this window with no live-walk cover.
+
+**What landed.** A fifth switch — `-WorldCheck` defaulting to `http://127.0.0.1:8870`, empty string skips the block — that performs: live `/world/check` returns 200; live body carries invariants; live body carries `world_aligned: true`; Eureka registers `FOOTBALL-WORLDCHECK`; config server answers `GET /football-worldcheck/default` with `worldcheck.min.competitions = '10'`. The documented count remains "exact count is printed"; the issue is "16 baseline / 21 with worldcheck up".
+
+**CI** — run `43781972831` — in flight at the time of writing; verdicts print in §215.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

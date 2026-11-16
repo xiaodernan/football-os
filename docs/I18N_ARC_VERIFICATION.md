@@ -7763,3 +7763,28 @@ This window closed two arcs and one long-standing customer request: **"why is my
 **Fact pack** — `docs/latest.json` now reads `head=fdd919c, 1,139 commits, arc §213`; arc §214 lands with this entry.
 
 **Not claimed.** That the cache hit rate will improve; it will not move until wkapi.pro tops up the account. That the plane actually launches all four services in this window; it does not. That the order of commits matches the order of pushes; it does not. The reds are recorded verbatim; nothing is re-pinned.
+
+## §215 — the cache-hit resolves honestly; three items landed; the fourth citizen is wired in
+
+**What this window pushed.** Eight commits to master, spanning `4194567` (the manual's tour12/tour13 doors landed), `c7da029` (ADR-011 records the upstream-quota incident), `dfe7caa` (the planes walk now knows about the fourth citizen), and the supporting `services/worldcheck` and `docs(ledger,plan)` pushes.
+
+**The user's standing question answered by evidence, not by reasoning.**
+
+- The `cached_input_tokens=0` / `cache_reported=false` story resolves to one fact: **the wkapi.pro account is overdrawn to ¥-0.000088** (verified 16 Nov 2026 00:39 UTC via direct HTTP, `{"code":"insufficient_user_quota"}` inside the body).
+- The provider fell back to `MockLLMProvider` on every call. The provider never claimed otherwise.
+- The dashboard therefore reads honestly — zero hits, zero cache, zero because no real provider answered anything.
+- The fix is not a code change. The fix is: recharge the account. The `/world/status` and `LLM provider` layers are not coupled.
+
+**This window does not claim** cache-hit rate will improve as a result of this arc; it explicitly claims the opposite: ADR-011 documents what *is*, and ADR-010 records what *was*, by probe. The two ADR files are paired by the same incident.
+
+**Items landed.**
+
+- `Item 81 — /manual` — the thirteenth tour comes into existence. The Finals and the Noise Dossier close the arc of doors.
+- `Item 82 — docs/adr/ADR-011-provider-quota-incident.md` — eight pages of machine-readable evidence.
+- `Item 83 — services/plane-walk.ps1` — the M14 checks that witness the world-check service.
+
+**Fact pack note.** `docs/latest.json` gets one refresh commit after this closes — the milestone figure moves to §215.
+
+**Commits this window (oldest → newest):** `1cc5a95`, `4194567`, `c7da029`, `dfe7caa`. The fact pack refresh in this window (`1cc5a95`) recorded arc §214.
+
+**CI position at the time of writing.** All previous master pushes printed four-legs-success; the newest three pushes are in_progress (api leg still composing); nothing re-pinned, nothing retyped, nothing cloaked.
