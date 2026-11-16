@@ -1,12 +1,12 @@
 {
-  "head": "c71ade7",
-  "total_commits": 1245,
-  "milestone": "§256",
-  "milestone_full": "§256 — Item 116: the Admin coach answers with the numbers, through the gateway, or says it cannot",
+  "head": "c3327f9",
+  "total_commits": 1247,
+  "milestone": "§257",
+  "milestone_full": "§257 — Item 117: the world says what the world does — The Creed, six articles",
   "pushed_at": "2026-11-16",
-  "screens": 88,
+  "screens": 89,
   "assets": 201,
-  "world_doors": 22,
+  "world_doors": 23,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T14:53:32.920Z"
+  "generated_at": "2026-11-16T15:07:04.705Z"
 }
