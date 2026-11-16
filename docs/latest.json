@@ -1,6 +1,6 @@
 {
-  "head": "bc7b984",
-  "total_commits": 1284,
+  "head": "a7cb683",
+  "total_commits": 1286,
   "milestone": "§274",
   "milestone_full": "§274 — Item 134: seven suspense skeletons were forever; Suspense removed from the front",
   "pushed_at": "2026-11-17",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T23:26:42.381Z"
+  "generated_at": "2026-11-16T23:29:10.142Z"
 }
