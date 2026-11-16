@@ -9179,3 +9179,22 @@ now prints **12** over **1986 — 2024**, pixels only, same palette, same kicker
 **Not claimed.** Any rendered verification of the OG card on this host (the OG build is a `next/og`
 static render done at build time — the CI containers leg proves it builds and the image carries
 it; `tsc` clean; `qa-i18n-literals` 9/9).
+
+## §255 — the runner prints the cure green: Item 111 web legs pass; Item 112 prints green on web
+
+**The named prints, as recorded at 2026-11-16T14:30Z:**
+
+| run | head | outcome |
+| --- | --- | --- |
+| `43878961938` | `1337034` — Item 111 | **web success** · services success · containers success |
+| `43879150897` | `b819ed3` — Item 111 fact pack | **web success** · services success · containers success |
+| `43880486423` | `e3277af` — Item 112 | **web success** · services/containers/api printing |
+| `43878210305` | `49893fd` — Item 110 | web failure: Catalogue dead-key gate (pre-cure tree, as §250/§251 named) |
+| `43878258731` | `247c885` — Item 110 fact pack | web failure: Catalogue dead-key gate (pre-cure tree) |
+
+Item 113 (`43881499144`), Item 114 (`43883584891`) and Item 111's fact pack (`43879200387`) had
+not printed their legs at the time of this section.
+
+**Not claimed.** That Item 110's web will print green — the cure landed after those runs entered
+the queue; the runner judges each in turn. That Item 113/114 legs are green — they print on
+their own, and this section quotes what printed, not what would compile.

@@ -3985,6 +3985,18 @@ card stays at its ten-cups-only claim by design.
 
 **Not claimed.** A rendered visual of the new card on this host; the runner's verdict.
 
+## Item 115 — the runner answers; the dead-key cure is green on the web legs (landed 2026-11-16)
+
+**What printed.** Item 111's cure passed on web (`43878961938` — `1337034`, and `43879150897` —
+the Item 111 fact pack): web, services, containers green. Item 112 printed **web success**
+(`43880486423` — rail VIII + tour19, six tongues). Item 110's runs carried the dead-key gate as
+named (they entered the queue pre-cure).
+
+**Gates re-verified:** the runner's own verdict, not this host's.
+
+**Not claimed.** That Item 113 or 114 prints green before it has; that the queue contains anything
+other than what it contains.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
