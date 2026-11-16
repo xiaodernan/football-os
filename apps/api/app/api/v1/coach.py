@@ -13,10 +13,9 @@ from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import current_user, limit, new_public_id, ownership_or_admin
 from app.models import CoachMessage, TrainingDrill, User, UserPlayer
-from app.providers import get_llm_provider
 from app.schemas import CoachAskIn, PlanIn
-from app.services import coach_engine, coach_voice
-from app.services.model_ledger import budget_exhausted, record_model_call_safely
+from app.services import coach_engine
+from app.services.agents.coach_graph import run_coach_graph
 
 router = APIRouter(prefix="/coach", tags=["coach"])
 
@@ -112,154 +111,34 @@ def ask(
             content=payload.question,
         )
     )
-    structured: dict[str, Any] = {"intent": intent}
-    reasons: list[str] = []
-    confidence = 0.7
-    provider = get_llm_provider()
-
-    if intent in {"today", "plan_7", "plan_30", "plan_90"}:
-        horizon = {"plan_7": 7, "plan_30": 30, "plan_90": 90}.get(intent, 1)
-        if intent == "today":
-            rec = coach_engine.recommend_today(db, user, player, available_minutes=payload.available_minutes, has_pitch=payload.has_pitch)
-            structured["recommendation"] = rec.drill
-            structured["alternatives"] = rec.alternatives
-            structured["message"] = f"Today: {rec.drill['title']}. {rec.drill['objective']}"
-            reasons = rec.reasons
-            confidence = rec.confidence
-        else:
-            days = coach_engine.build_plan(db, player, horizon_days=horizon, available_minutes=payload.available_minutes or 25, days_per_week=4, has_pitch=payload.has_pitch)
-            structured["plan"] = {"horizon_days": horizon, "days": days}
-            structured["message"] = f"{horizon}-day plan built around {player.goal.replace('_', ' ')} with recovery days scheduled."
-            reasons = [
-                f"Emphasis rotated across {', '.join(coach_engine.plan_emphasis(player)[:4])}",
-                "Recovery days inserted so weekly load stays safe",
-                "Sessions ordered by attribute gap, weakest first",
-            ]
-            confidence = 0.78
-    elif intent == "weak_foot":
-        rec = coach_engine.recommend_today(db, user, player, available_minutes=payload.available_minutes or 15)
-        structured["message"] = "Weak-foot work is the fastest route: two short sessions a week beat one long one."
-        structured["recommendation"] = rec.drill
-        reasons = [
-            f"Weak-foot rating stored as {player.weak_foot_rating}",
-            "Ball-mastery and wall-pass drills transfer to the weak foot in 4-6 weeks of consistent reps",
-        ]
-        confidence = 0.74
-    elif intent == "ball_loss":
-        attrs = player.attributes
-        structured["message"] = f"Ball loss usually traces to first touch under pressure, not dribbling. Your first touch is {attrs.get('first_touch', 40)} and composure {attrs.get('composure', 40)}."
-        reasons = [
-            f"first_touch {attrs.get('first_touch', 40)} vs ball_control {attrs.get('ball_control', 40)} — the lower value is the limiter",
-            f"Recent sessions covered: {', '.join(sorted(coach_engine.history_summary(db, user, player)['recent_categories'])) or 'none yet'}",
-            "Check whether you are receiving square-on; half-turn receiving removes half the pressure",
-        ]
-        confidence = 0.7
-    elif intent == "role_question":
-        knowledge = coach_engine.archetype_knowledge(player.archetype)
-        structured["message"] = (
-            f"As a {player.position} your current profile reads {player.archetype} ({player.archetype_match * 100:.0f}% fit). "
-            f"Priorities: {', '.join(knowledge.get('strengths', ['positional discipline']))}."
-        )
-        reasons = [
-            f"Archetype derived from weighted core attributes: {', '.join(knowledge.get('core', {}).keys())}",
-            f"Preferred zones: {', '.join(knowledge.get('zones', ['central_corridor']))}",
-            f"Known trade-offs: {', '.join(knowledge.get('weaknesses', ['general development']))}",
-            f"Recommended drill categories: {', '.join(knowledge.get('drill_categories', []))}",
-        ]
-        confidence = 0.8
-    elif intent == "pressing":
-        attrs = player.attributes
-        structured["message"] = f"Pressing is triggered, not attempted. Your pressing {attrs.get('pressing', 40)} and stamina {attrs.get('stamina', 40)} set the ceiling."
-        reasons = [
-            f"pressing {attrs.get('pressing', 40)} / stamina {attrs.get('stamina', 40)} / transition {attrs.get('transition', 40)}",
-            "Train counter-press triggers: lose ball -> 5 seconds of controlled pressure",
-            "If the first pressor is beaten, the second must cover the pass, not the dribbler",
-        ]
-        confidence = 0.72
-    elif intent == "match_review":
-        structured["message"] = "No match data is stored for your profile yet. Match analysis lands with the video pipeline (M5); until then I will say 'Data unavailable' rather than guess."
-        reasons = ["No MatchPerformance rows exist for this player", "Spec §15: unavailable metrics must display 'Data unavailable'"]
-        confidence = 0.5
-    elif intent == "explain":
-        summary = coach_engine.history_summary(db, user, player)
-        structured["message"] = f"Your progress is explainable: {summary['sessions_total']} completed sessions, {summary['xp_total']} XP, level {summary['level']}."
-        reasons = [r["reason"] for r in summary["attribute_trend"][:5]] or ["No attribute changes recorded yet — complete a session first"]
-        confidence = 0.8
-    else:
-        rec = coach_engine.recommend_today(db, user, player, available_minutes=payload.available_minutes, has_pitch=payload.has_pitch)
-        structured["recommendation"] = rec.drill
-        structured["message"] = f"Here is the most useful next session: {rec.drill['title']}. {rec.drill['objective']}"
-        reasons = rec.reasons
-        confidence = rec.confidence
-
-    # §76's cap, gated at the call rather than at the request. The answer above is arithmetic over
-    # `user_players` and the training ledger, and the model only phrases it, so a reached cap refuses the
-    # phrasing step and ships the arithmetic — the same trade §60's answer table records as
-    # `ai_budget_exhausted` ("Retrieval still works"), applied to a door that has no separate retrieval.
-    # In demo mode the provider is the mock and costs nothing, so the ledger's actual spend stays at zero
-    # and this never fires there: a cap measured in real dollars cannot bind a free run.
-    spend_capped = budget_exhausted(db)
-    if spend_capped:
-        result = None
-    else:
-        # The prompt carries the question and the measurements, not one pre-written sentence. The
-        # module's docstring records what the old prompt cost when a real provider answered it.
-        recent = coach_engine.history_summary(db, user, player)
-        result = provider.complete(
-            system=coach_voice.SYSTEM,
-            prompt=coach_voice.build_prompt(
-                question=payload.question,
-                intent=intent,
-                player=player,
-                structured=structured,
-                reasons=reasons,
-                history=recent,
-            ),
-            max_tokens=220,
-            temperature=0.5,
-        )
-    # The template is the fallback, never a preamble: a capped turn, a demo provider, an empty
-    # completion and a provider failure all still answer with the arithmetic.
-    template = structured.get("message", "")
-    content = coach_voice.compose_message(
-        template,
-        result.text if result is not None and not result.demo_mode else "",
+    graph = run_coach_graph(
+        db,
+        user,
+        player,
+        question=payload.question,
+        available_minutes=payload.available_minutes,
+        has_pitch=payload.has_pitch,
     )
-    if spend_capped:
-        reasons = [*reasons, "Today's AI spend cap is reached, so the phrasing step was skipped; every figure above is still computed from your stored profile and history"]
-    db.add(
-        CoachMessage(
-            id=new_public_id("msg"),
-            user_id=user.id,
-            player_id=player.id,
-            role="coach",
-            kind=f"answer:{intent}",
-            content=content,
-            structured={"reasons": reasons, "provider_text": result.text if result is not None and not result.demo_mode else None},
-            provider=result.provider if result is not None else "mock",
-            model=result.model if result is not None else "rule-engine-demo",
-            demo_mode=result.demo_mode if result is not None else settings.is_demo_mode,
-            confidence=confidence,
-            reasons=reasons,
-        )
-    )
-    if result is not None:
-        # The reader's turn first: the answer row commits before the ledger asks for anything —
-        # the ledger is a sidecar, never part of the answer's own transaction.
-        db.commit()
-        record_model_call_safely(result=result, feature="coach.ask", user_id=user.id)
-    else:
-        db.commit()
+    intent = graph["intent"]
+    reasons = graph["reasons"]
+    confidence = graph["confidence"]
+    provider_name = graph["provider"]
+    model_name = graph["model"]
+    demo_mode = graph["demo_mode"]
+    structured = dict(graph["structured"])
+    content = structured.pop("message", "")
+    structured = {**structured, "message": content, "question": payload.question}
+
     # The envelope names the provider that answered. A capped turn is answered by the rule engine alone,
     # which is what the CoachMessage defaults already say — the door keeps one vocabulary for "no model
     # was called" rather than inventing a second one for the capped path.
     return _envelope(
         reasons,
         confidence,
-        result.provider if result is not None else "mock",
-        result.model if result is not None else "rule-engine-demo",
-        result.demo_mode if result is not None else settings.is_demo_mode,
-        {**structured, "message": content, "question": payload.question},
+        provider_name,
+        model_name,
+        demo_mode,
+        structured,
     )
 
 

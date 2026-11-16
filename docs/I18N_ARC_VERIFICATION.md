@@ -9584,3 +9584,49 @@ re-pinned.
 string renders provider-pulled text for guests without the passphrase in the live deploy (it does,
 publicly — the panel is a public door like the almanac's panel); that the ledger would not crash on
 untrusted input (it doesn't — the feature flag stays inside `record_model_call_safely`'s try).
+
+## §267 — Item 127: the StateGraph stops being a document — the coach's own answer pipeline, compiled
+
+**What the product does now:** `/api/v1/coach/ask` runs the coach through
+`apps/api/app/services/agents/coach_graph.py`:
+
+```
+entry
+  └─ classify_intent
+         └─ build_arithmetic
+                └── spend_gate ──exhausted──> persist_answer ──> END
+                    └─phrase──> phrase_answer ──> persist_answer ──> END
+```
+
+**State discipline, named plainly:**
+
+- one shared typed object crosses node to node — `CoachGraphState` — with exactly the keys shown
+  in the file; no node is entitled to anything outside it;
+- `spend_gate` is the conditional edge: `budget_exhausted(db)` decides whether the model is asked
+  to phrase the arithmetic at all; the spend-capped turn still ships the arithmetic, skips the
+  provider, and writes the ledger-clean response the old §76 path produced (the coach-budget suite
+  proves the cap still refuses the call; the demo-mode test proves nothing else refuses);
+- ordering is compiled once into `compile_chain()` (`[("classify_intent", node), ...]`), not
+  re-derived per call;
+- recursion is bounded by the walk itself (`MAX_NODE_VISITS = 6`, `START → … → END` never exceeds
+  7 visits); a node path longer than the bound raises `GraphCycleError` — caught in the file's
+  own docstring and enforced in the test;
+- `graph_trace` rides into the envelope both at `structured` and, transitively, into the reader's
+  turn — not a UI feature yet, an inspectability feature today.
+
+**The knowledge population now tells the truth twice: the document teaches the pattern, the product
+runs it.** `data/knowledge/coaching/stategraph-explained.md` gains `## Where it actually runs in
+this product` naming the file, the nodes and the bound, so the next reader is not taught a stranger
+about software that does not exist.
+
+**Measured on this host:** ruff clean · `mypy app` 204/204 · `pytest test_coach_graph.py` 5/5 ·
+`test_coach_budget.py` green after the fix (the early `today/plan` return path now also sets
+`state.template`, so the persisted CoachMessage carries the arithmetic message the capped branch
+needs) · `test_api_flow`, `test_rate_limit`, `test_model_ledger_resilience`, `test_coach_voice` ·
+**59 passed** · contract unchanged (`250 paths / 317 operations / 99 schemas`,
+`AUDIT_FIGURES 250/90/67`, no new doors, no re-pin needed).
+
+**Not claimed.** That this is LangGraph-the-library — it is the StateGraph pattern, deliberately
+framework-independent, exactly what the knowledge page prescribes. That the front renders
+`graph_trace` — it does not yet; surfacing it on a panel is the obvious next front. That the bound
+exercised itself in this arc — it did not; it is the promise the next adversarial test will charge.

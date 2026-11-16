@@ -76,6 +76,20 @@ through the shared envelope, and the envelope is the artefact the next node — 
 trail — reads. The framework-independent phrasing is deliberate: the shape is the machine,
 not the library.
 
+## Where it actually runs in this product
+
+Since 2026-11-17 the pattern is not only a document; the coach door runs it. The coach's answer
+on `/api/v1/coach/ask` is composed by `apps/api/app/services/agents/coach_graph.py`: a shared typed
+state object
+(`CoachGraphState`); six compiled nodes (`classify_intent` → `build_arithmetic` → `spend_gate` →
+`phrase_answer` → `persist_answer` → `END`); a conditional edge at `spend_gate` (a reached spend cap
+refuses the phrasing call — the arithmetic answers, the ledger does not see the call); and a hard
+recursion bound of `MAX_NODE_VISITS` ("6") enforced by the walk itself, not by convention. The
+reader's turn in the answer payload carries a `graph_trace` key; a caller can open their own turn
+and see the exact order in which the coach assembled it. The shape is the contract; the library is
+not required. Source attribution for this document and this section: FOOTBALL OS original editorial
+content, written for this product, with Item 127's ledger recording the running code it documents.
+
 ## Failure modes worth designing against
 
 Four ways a StateGraph hurts rather than helps. No checkpointing: the first incident loses

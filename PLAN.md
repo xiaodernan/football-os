@@ -4351,6 +4351,44 @@ four live calls from this box (it has not — the host logs prose it cannot conn
 the record is direct HTTP journal, not the ledger); that the coach's answers are the same across
 presses (they differ by design — temperature 0.3, one press per reader ask).
 
+## Item 127 — the StateGraph leaves the document and lives in the coach (landed 2026-11-17)
+
+**The gap.** The knowledge corpus carried `stategraph-explained.md` since Item 97 — a confident
+tutorial for a pattern the product did not yet run. The user's standing demand named StateGraph
+explicitly. A knowledge page about a pattern the code never executes is the exact failure mode the
+Creed forbids (claiming operation without evidence).
+
+**What landed.**
+
+- `app/services/agents/coach_graph.py` — the coach's answer pipeline, compiled as an acyclic
+  StateGraph: a typed shared state (`CoachGraphState`); six nodes in compiled order
+  (`classify_intent → build_arithmetic → spend_gate → phrase_answer → persist_answer → END`);
+  a conditional edge at `spend_gate` (today's spend cap reached → the phrasing call is refused, the
+  arithmetic answers, the ledger does not see the call — exactly the old §76 discipline, now in a
+  compiled edge); a hard recursion bound `MAX_NODE_VISITS = 6` enforced by the walk itself, raising
+  `GraphCycleError` if it ever iterates past the bound; and `graph_trace` woven into the answer
+  envelope the player receives.
+- `/coach/ask` — body delegated to `run_coach_graph`; the two probes the original file run
+  registered (the capped provider call), the demo fallback, the node ordering — are now
+  compiler-verified by the same tests that used to stand above them.
+- The knowledge page now carries a section `Where it actually runs in this product` — the reader of
+  the tutorial can point at the exact code that obeys it.
+- `test_coach_graph.py` pins the compiled edge table, the state's shape, and the trace; the coach
+  door suites stay green end to end (59 passed in this arc; the two skips are the run's own
+  transactional fixtures).
+
+**Contract unchanged:** `AUDIT_FIGURES` stays `250/90/67`; no routes moved; the envelope gains
+`graph_trace` in its `structured` payload, which the front ignores today and can render tomorrow
+without a migration.
+
+**Gates re-measured on this tree:** ruff clean · `mypy app` **204/204** · pytest door suites **59
+passed, 2 skipped** · 148 coach-ask answers verified trace-complete in the same breath as before.
+
+**Not claimed.** That this is LangGraph-the-library — it is the StateGraph pattern implemented in
+typed Python against the product's own `Session` and envelope vocabulary, exactly as the knowledge
+page says ("the shape is the machine, not the library"); that the bound has ever fired on a live
+query — it is a promise, not a demonstration; that the front renders `graph_trace` — it does not yet.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
