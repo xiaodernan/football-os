@@ -1,8 +1,8 @@
 {
-  "head": "b16fa2e",
-  "total_commits": 1278,
-  "milestone": "§271",
-  "milestone_full": "§271 — Item 131: three recorded runs — the clamp holds, the box sweats, nothing falls",
+  "head": "7eec42a",
+  "total_commits": 1280,
+  "milestone": "§272",
+  "milestone_full": "§272 — Item 132: one measurement, one clamp, an honest stale demo",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T22:00:09.237Z"
+  "generated_at": "2026-11-16T22:10:12.544Z"
 }
