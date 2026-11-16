@@ -54,6 +54,7 @@ def _cup_entry(tournament: str) -> dict[str, Any]:
         "biggest_win": facts["biggest_win"],
         "top_scorers": book["scorers"][:5],
         "top_scorers_note": facts["joint_top_scorers_note"],
+        "has_scorers": bool(book["scorers"]),
     }
 
 
@@ -80,8 +81,10 @@ def _merged_scorers(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def compute_champions() -> dict[str, Any]:
-    """Compute the three-cups comparison from the committed snapshots, every read."""
-    entries = [_cup_entry(year) for year in ("2014", "2018", "2022")]
+    """Compute the six-cups comparison from the committed snapshots, every read."""
+    from app.services.world.real_book import tournaments
+
+    entries = [_cup_entry(year) for year in tournaments()]
     top_scorers_note = next(entry["top_scorers_note"] for entry in entries if entry["tournament"] == "2022")
     return {
         "available": True,

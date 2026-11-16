@@ -1234,7 +1234,7 @@ def dynasties(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]
 
 
 @router.get("/real-book")
-def real_book(request: Request, tournament: str = Query("2022", pattern=r"^(2014|2018|2022)$")) -> dict[str, Any]:
+def real_book(request: Request, tournament: str = Query("2022", pattern=r"^(2002|2006|2010|2014|2018|2022)$")) -> dict[str, Any]:
     """The Real Book — what real football looked like, from a CC-BY openfootball snapshot.
 
     The synthetic world in this product is its own universe; this door is a curated
@@ -1248,7 +1248,7 @@ def real_book(request: Request, tournament: str = Query("2022", pattern=r"^(2014
     except UnknownTournament:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"code": "unknown_tournament", "message": "The Real Book carries 2014, 2018 and 2022."},
+            detail={"code": "unknown_tournament", "message": "The Real Book carries 2002, 2006, 2010, 2014, 2018 and 2022."},
         ) from None
 
 

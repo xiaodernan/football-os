@@ -108,36 +108,42 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
 
   const { facts, provenance, results, scorers } = result.data;
   const days = groupByDay(results);
-  const is2018 = tournament === "2018";
-  const is2014 = tournament === "2014";
+  const active = ["2022", "2018", "2014", "2010", "2006", "2002"].includes(tournament) ? tournament : "2022";
+  const ledeKey = active === "2018" ? "lede2018" : active === "2014" ? "lede2014" : active === "2010" ? "lede2010" : active === "2006" ? "lede2006" : active === "2002" ? "lede2002" : "lede";
+  const openingKey = active === "2018" ? "opening2018" : active === "2014" ? "opening2014" : active === "2010" ? "opening2010" : active === "2006" ? "opening2006" : active === "2002" ? "opening2002" : "opening";
+  const hasScorers = scorers.length > 0;
+  const homeWon =
+    facts.final.score_regular[0] !== facts.final.score_regular[1]
+      ? facts.final.score_regular[0] > facts.final.score_regular[1]
+      : facts.final.score_extra_time[0] > facts.final.score_extra_time[1];
 
   return (
     <div className="container page stack" style={{ gap: "2rem" }}>
       <WorldHead
         back={{ href: "/world", label: tw("backToWorld") }}
         eyebrow={t("eyebrow")}
-        lede={is2014 ? t("lede2014") : is2018 ? t("lede2018") : t("lede")}
+        lede={t(ledeKey as "opening")}
         provenance={provenance}
         title={t("title")}
       />
 
       <nav className="realbook__switch" aria-label={t("eyebrow")}>
-        <Link href="?tournament=2022" className={`realbook__chip${!is2018 && !is2014 ? " realbook__chip--active" : ""}`} aria-current={!is2018 && !is2014 ? "page" : undefined}>{t("chip2022")}</Link>
-        <Link href="?tournament=2018" className={`realbook__chip${is2018 ? " realbook__chip--active" : ""}`} aria-current={is2018 ? "page" : undefined}>{t("chip2018")}</Link>
-        <Link href="?tournament=2014" className={`realbook__chip${is2014 ? " realbook__chip--active" : ""}`} aria-current={is2014 ? "page" : undefined}>{t("chip2014")}</Link>
+        {(["2022", "2018", "2014", "2010", "2006", "2002"] as const).map((year) => (
+          <Link key={year} href={`?tournament=${year}`} className={`realbook__chip${active === year ? " realbook__chip--active" : ""}`} aria-current={active === year ? "page" : undefined}>{t(`chip${year}` as "chip2022")}</Link>
+        ))}
       </nav>
 
-      <p className="records__book">{is2014 ? t("opening2014") : is2018 ? t("opening2018") : t("opening")}</p>
+      <p className="records__book">{t(openingKey as "opening")}</p>
 
       <section className="records__panel">
         <span className="records__panel-eyebrow">{t("finalPanelEyebrow")}</span>
         <h2>{t("finalPanelTitle", { home: facts.final.home, away: facts.final.away })}</h2>
         <div className="records__fixture-row">
-          <div className="records__team records__team--winner">
+          <div className={`records__team${homeWon ? " records__team--winner" : " records__team--runner"}`}>
             <span className="records__team-name">{facts.final.home}</span>
           </div>
           <div className="records__score num">{facts.final.score_extra_time[0]}–{facts.final.score_extra_time[1]}</div>
-          <div className="records__team records__team--runner">
+          <div className={`records__team${homeWon ? " records__team--runner" : " records__team--winner"}`}>
             <span className="records__team-name">{facts.final.away}</span>
           </div>
         </div>
@@ -194,34 +200,42 @@ export default async function RealBookPage({ searchParams }: { searchParams: Pro
         </div>
       </section>
 
-      <section className="records__panel">
-        <span className="records__panel-eyebrow">{t("scorersEyebrow")}</span>
-        <h2>{t("scorersTitle")}</h2>
-        <p className="records__lede muted">{t("scorersLede")}</p>
-        <div className="world-tablewrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">{t("thPlayer")}</th>
-                <th scope="col">{t("thGoals")}</th>
-                <th scope="col">{t("thPenalties")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {scorers.map((scorer, index) => (
-                <tr key={scorer.name}>
-                  <td className="num muted">{index + 1}</td>
-                  <td>{scorer.name}</td>
-                  <td className="num">{scorer.goals}</td>
-                  <td className="num muted">{scorer.penalties}</td>
+      {hasScorers ? (
+        <section className="records__panel">
+          <span className="records__panel-eyebrow">{t("scorersEyebrow")}</span>
+          <h2>{t("scorersTitle")}</h2>
+          <p className="records__lede muted">{t("scorersLede")}</p>
+          <div className="world-tablewrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">{t("thPlayer")}</th>
+                  <th scope="col">{t("thGoals")}</th>
+                  <th scope="col">{t("thPenalties")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="records__fineprint muted">{t("spellingNote")}</p>
-      </section>
+              </thead>
+              <tbody>
+                {scorers.map((scorer, index) => (
+                  <tr key={scorer.name}>
+                    <td className="num muted">{index + 1}</td>
+                    <td>{scorer.name}</td>
+                    <td className="num">{scorer.goals}</td>
+                    <td className="num muted">{scorer.penalties}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="records__fineprint muted">{t("spellingNote")}</p>
+        </section>
+      ) : (
+        <section className="records__panel">
+          <span className="records__panel-eyebrow">{t("scorersEyebrow")}</span>
+          <h2>{t("scorersTitle")}</h2>
+          <p className="records__lede muted">{t("scorersUnavailable")}</p>
+        </section>
+      )}
 
       <section className="records__panel">
         <span className="records__panel-eyebrow">{t("ledgerEyebrow")}</span>

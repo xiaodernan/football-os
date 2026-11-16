@@ -43,11 +43,17 @@ export default function ChampionsOpenGraphImage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 26, fontSize: 88, fontWeight: 800, color: PAPER, lineHeight: 0.95, letterSpacing: "-0.03em" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14, fontSize: 54, fontWeight: 800, color: PAPER, lineHeight: 0.95, letterSpacing: "-0.02em" }}>
+            2002
+            <span style={{ fontSize: 30, color: GOLD }}>·</span>
+            2006
+            <span style={{ fontSize: 30, color: GOLD }}>·</span>
+            2010
+            <span style={{ fontSize: 30, color: GOLD }}>·</span>
             2014
-            <span style={{ fontSize: 56, color: GOLD }}>·</span>
+            <span style={{ fontSize: 30, color: GOLD }}>·</span>
             2018
-            <span style={{ fontSize: 56, color: GOLD }}>·</span>
+            <span style={{ fontSize: 30, color: GOLD }}>·</span>
             2022
           </div>
           <div style={{ height: 3, background: GOLD, width: "34%" }} />

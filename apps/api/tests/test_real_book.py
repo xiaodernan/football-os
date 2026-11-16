@@ -99,7 +99,7 @@ class TestTheRealBook:
             assert result["provenance"]["license"] == "CC-BY 4.0"
 
     def test_the_committed_snapshots_print_all_64_fixtures_each(self) -> None:
-        for tournament, goals in (("2022", 172), ("2018", 169), ("2014", 171)):
+        for tournament, goals in (("2022", 172), ("2018", 169), ("2014", 171), ("2010", 145), ("2006", 147), ("2002", 161)):
             result = compute_real_book(tournament)
             results = result["results"]
             assert len(results) == 64
@@ -121,6 +121,66 @@ class TestTheRealBook:
         assert final_2014["team1"] == "Germany" and final_2014["team2"] == "Argentina"
         assert final_2014["on_field"] == [1, 0]
 
+    def test_2010_prints_its_own_arithmetic_and_its_silence(self) -> None:
+        result = compute_real_book("2010")
+        assert result["available"] is True
+        assert result["tournament"] == "2010"
+        facts = result["facts"]
+        assert facts["tournament"] == "2010 FIFA World Cup"
+        assert facts["total_matches"] == 64
+        assert facts["venues"] == 10
+        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert facts["champion"]["name"] == "Spain"
+        assert facts["final"]["home"] == "Netherlands"
+        assert facts["final"]["away"] == "Spain"
+        assert facts["final"]["score_extra_time"] == [0, 1]
+        assert facts["has_penalties"] is False
+        assert facts["biggest_win"]["match"] == "Portugal 7-0 North Korea"
+        assert facts["biggest_win"]["matchday_date"] == "2010-06-21"
+        assert facts["goals_scored"] == 145
+        # The snapshot transcribes fixtures and scorelines, not scorer lists.
+        assert result["scorers"] == []
+
+    def test_2006_prints_its_own_arithmetic_and_its_silence(self) -> None:
+        result = compute_real_book("2006")
+        assert result["available"] is True
+        assert result["tournament"] == "2006"
+        facts = result["facts"]
+        assert facts["tournament"] == "2006 FIFA World Cup"
+        assert facts["total_matches"] == 64
+        assert facts["venues"] == 12
+        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert facts["champion"]["name"] == "Italy"
+        assert facts["final"]["home"] == "Italy"
+        assert facts["final"]["away"] == "France"
+        assert facts["final"]["score_penalties"] == [5, 3]
+        assert facts["has_penalties"] is True
+        assert facts["biggest_win"]["match"] == "Argentina 6-0 Serbia and Montenegro"
+        assert facts["biggest_win"]["matchday_date"] == "2006-06-16"
+        assert facts["goals_scored"] == 147
+        # The snapshot transcribes goal minutes only for nine entries in four matches; the door prints none.
+        assert result["scorers"] == []
+
+    def test_2002_prints_its_own_arithmetic_and_its_silence(self) -> None:
+        result = compute_real_book("2002")
+        assert result["available"] is True
+        assert result["tournament"] == "2002"
+        facts = result["facts"]
+        assert facts["tournament"] == "2002 FIFA World Cup"
+        assert facts["total_matches"] == 64
+        assert facts["venues"] == 20
+        assert sum(r["matches"] for r in facts["final_rounds"]) == 64
+        assert facts["champion"]["name"] == "Brazil"
+        assert facts["final"]["home"] == "Germany"
+        assert facts["final"]["away"] == "Brazil"
+        assert facts["final"]["score_regular"] == [0, 2]
+        assert facts["has_penalties"] is False
+        assert facts["biggest_win"]["match"] == "Germany 8-0 Saudi Arabia"
+        assert facts["biggest_win"]["matchday_date"] == "2002-06-01"
+        assert facts["goals_scored"] == 161
+        # The snapshot transcribes fixtures and scorelines, not scorer lists.
+        assert result["scorers"] == []
+
     def test_the_scorers_tables_derive_from_the_committed_snapshots(self) -> None:
         scorers_2022 = {row["name"]: row for row in compute_real_book("2022")["scorers"]}
         assert scorers_2022["Kylian Mbappé"]["goals"] == 8
@@ -137,10 +197,10 @@ class TestTheRealBook:
 
     def test_an_unknown_tournament_is_refused(self) -> None:
         with pytest.raises(UnknownTournament):
-            compute_real_book("2010")
+            compute_real_book("1994")
 
     def test_the_door_answers_with_the_envelope_like_its_siblings(self, client) -> None:  # type: ignore[no-untyped-def]
-        for tournament, expected in (("2022", "2022 FIFA World Cup"), ("2018", "2018 FIFA World Cup")):
+        for tournament, expected in (("2022", "2022 FIFA World Cup"), ("2018", "2018 FIFA World Cup"), ("2014", "2014 FIFA World Cup")):
             response = client.get(f"{API}/world/real-book", params={"tournament": tournament})
             assert response.status_code == 200
             body = response.json()
@@ -150,7 +210,17 @@ class TestTheRealBook:
             assert body["provenance"]["data_origin"] == "public-real"
             assert len(body["results"]) == 64
             assert body["scorers"], "the door publishes a scorers table derived from the committed snapshot"
+        for tournament, expected in (("2010", "2010 FIFA World Cup"), ("2006", "2006 FIFA World Cup"), ("2002", "2002 FIFA World Cup")):
+            response = client.get(f"{API}/world/real-book", params={"tournament": tournament})
+            assert response.status_code == 200
+            body = response.json()
+            assert body["disclaimer"] is not None
+            assert body["source"]
+            assert body["facts"]["tournament"] == expected
+            assert body["provenance"]["data_origin"] == "public-real"
+            assert len(body["results"]) == 64
+            assert body["scorers"] == [], "the door prints no scorers table the committed file does not carry"
 
     def test_the_door_rejects_a_tournament_it_does_not_carry(self, client) -> None:  # type: ignore[no-untyped-def]
-        response = client.get(f"{API}/world/real-book", params={"tournament": "2010"})
+        response = client.get(f"{API}/world/real-book", params={"tournament": "1994"})
         assert response.status_code == 422

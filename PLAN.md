@@ -3798,6 +3798,45 @@ contributors green); alembic drift check clean; `qa-shared-keys` 4/4.
 renders identically at every viewport (walked 200 with markers on this host).
 
 
+## Item 108 — the Real Book, Vols. IV/V/VI: six World Cups side by side (landed 2026-11-16)
+
+**The gap.** The door held 2022, 2018 and 2014 — three cups, a third of the modern World Cup's
+open era. The 2002 (Korea & Japan), 2006 (Germany) and 2010 (South Africa) snapshots are the same
+openfootball archive our other three come from; nothing about them needs synthesizing.
+
+**What landed.**
+
+- `openfootball-worldcup-2002.json`, `-2006.json`, `-2010.json` (unmodified CC-BY snapshots) join
+  the curated directory; the NOTICE now names all six. **No fetches at render time.**
+- Registry entries for the three new cups, all computed from the committed bytes at read time:
+  **171→104→145** goals (2022→2014→2010), **20 venues** for 2002, **12** for 2006, **10** for
+  2010; finals **Germany 0–2 Brazil** (Yokohama, Ronaldo twice), **Italy 1–1 France** (Berlin,
+  5–3 penalties; Zidane's red), **Netherlands 0–1 Spain AET** (Soccer City, Iniesta 116');
+  widest margins computed: **Germany 8–0 Saudi Arabia**, **Argentina 6–0 Serbia & Montenegro**,
+  **Portugal 7–0 North Korea**.
+- **Honest silence, priced in.** The 2006 snapshot transcribes goal minutes only for nine entries
+  in four matches, and the 2002 and 2010 snapshots carry no scorer lists at all; every one of the
+  three cups prints zero scorers and the scorers module prints nothing where the file holds no
+  rows. Claims that must be made anyway (Müller's 2002 Boot, Cannavaro's 2006 Golden Ball,
+  Forlán's 2010 Golden Ball) are printed as **curator knowledge, labelled**.
+- `/world/real-book` grows to **six tabs** (2022·2018·2014·2010·2006·2002) with a winner side now
+  computed from the data rather than asserted, native ledes and opening lines in six locales.
+- `/world/champions` graduates from three cups to **six side by side** (Germany/France/…/Italy/
+  Brazil), merged-scorers ledger held to the three scorer-bearing cups, OG card digits 2002→2022.
+- Contract SHA re-exported (**246 / 313 / 99 unchanged**, regex admits the three new years);
+  re-pinned through the three ledgers; `qa-locale-tokens` gains three named fr-only doublets
+  (Yokohama/Berlin/Johannesburg — the cities' own names, spelled the same in French);
+  catalogue population **5,100 ×6** (README re-pinned).
+
+**Verified on this host:** ruff clean · `mypy app` **199/199** · pytest door suites **39/39**
+(champions + real_book + locale-claims + census) · tsc clean · all web gates green
+(`qa-locale-tokens` 7/7 · `qa-translation-quality` 9/9 · `qa-key-drift` 4/4 · `qa-shared-keys`
+4/4 · `qa-metadata-title` 253/253 · `qa-crawl-policy` 9/9 · `qa-i18n-literals` 9/9).
+
+**Not claimed.** That the runner prints any leg of this item green before it has run. That 2002/
+2006/2010 totals recur in any FIFA print (the source's own arithmetic is printed, attribution
+included).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

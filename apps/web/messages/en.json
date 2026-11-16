@@ -4320,7 +4320,7 @@
     "admin_refused": "The passphrase is wrong.",
     "bad_path": "The path is outside the accepted shape.",
     "bad_session": "The session reference is outside the accepted shape.",
-    "unknown_tournament": "The Real Book carries 2014, 2018 and 2022."
+    "unknown_tournament": "The Real Book carries 2002, 2006, 2010, 2014, 2018 and 2022."
   },
   "errorBoundary": {
     "eyebrow": "Something went wrong",
@@ -5059,8 +5059,8 @@
     "step10Body": "You are now the reader the world was asking for. Come back tomorrow — the 2026/27 season keeps writing itself onto the rows, and this door is how you keep reading."
   },
   "worldRealBook": {
-    "metaTitle": "The Real Book — what the actual world printed in 2022",
-    "metaDescription": "The real 2022 World Cup, documented in this product: Argentina's win at Lusail, the 64 matches, the eight venues, the trophies — facts the seed cannot generate and cannot forget.",
+    "metaTitle": "The Real Book — what the actual world printed at six World Cups",
+    "metaDescription": "The six World Cups this product carries — the real 2002, 2006, 2010, 2014, 2018 and 2022, documented figure by figure: the finals, the numbers, the awards — from the open archive.",
     "eyebrow": "The Real Book",
     "title": "A world of real football",
     "lede": "Here is the 2022 World Cup, carried right inside this product — every figure passed on from the openfootball community, every one of it from a public file, attribution included.",
@@ -5107,7 +5107,17 @@
     "opening2018": "The real football world held its breath here, briefly, exactly this way.",
     "chip2014": "2014 · Maracanã",
     "lede2014": "The real world's Brazil, carried right inside this product — the 2014 World Cup, every figure passed on from the openfootball community, attribution included.",
-    "opening2014": "The real football world took its reckoning here, briefly, exactly this way."
+    "opening2014": "The real football world took its reckoning here, briefly, exactly this way.",
+    "chip2002": "2002 · Yokohama",
+    "chip2006": "2006 · Berlin",
+    "chip2010": "2010 · Johannesburg",
+    "lede2002": "The real world's Korea & Japan, carried right inside this product — the 2002 World Cup, every figure passed on from the open archive community, attribution included.",
+    "opening2002": "The real football world held its breath here in 2002, briefly, exactly this way.",
+    "lede2006": "The real world's Germany, carried right inside this product — the 2006 World Cup, every figure passed on from the open archive community, attribution included.",
+    "opening2006": "The real football world took its reckoning here in 2006, briefly, exactly this way.",
+    "lede2010": "The real world's South Africa, carried right inside this product — the 2010 World Cup, every figure passed on from the open archive community, attribution included.",
+    "opening2010": "The real football world crowned its hero here, briefly, exactly this way.",
+    "scorersUnavailable": "The 2002, 2006 and 2010 files were committed without scorer lists — fixtures and scorelines print from the file; any scorer names on the tiles are curator knowledge, labelled as such."
   },
   "worldAtlas": {
     "metaTitle": "The Atlas — the world's doors, drawn once",
@@ -5179,12 +5189,12 @@
     "metaDescription": "The shared-passphrase console that watches every browser door: sessions, bounces, dwell, funnels, the two-week forecast and the model ledger."
   },
   "worldChampions": {
-    "metaTitle": "The Champions — three real World Cups, side by side",
-    "metaDescription": "The three World Cups carried inside this product: who won, how they won and who scored — every figure recomputed from the committed openfootball snapshots.",
+    "metaTitle": "The Champions — six real World Cups, side by side",
+    "metaDescription": "The six World Cups carried inside this product: who won, how they won and who scored — every figure recomputed from the committed openfootball snapshots.",
     "eyebrow": "World Cup Champions",
-    "title": "Three World Cups, side by side",
-    "lede": "Germany 2014, France 2018, Argentina 2022 — the three real World Cups this product carries, printed side by side from the committed snapshots, figure by figure.",
-    "opening": "Three finals, three ways the world remembers a footballing life.",
+    "title": "Six World Cups, side by side",
+    "lede": "Brazil 2002, Italy 2006, Spain 2010, Germany 2014, France 2018, Argentina 2022 — the six real World Cups this product carries, printed side by side from the committed snapshots, figure by figure.",
+    "opening": "Six finals, six ways the world remembers a footballing life.",
     "finalKicker": "The final",
     "goalsOnFieldCaption": "goals on the field",
     "goalsPerMatchCaption": "goals per match",
@@ -5198,7 +5208,7 @@
     "goldenBallCaption": "Golden Ball",
     "scorersEyebrow": "The scorers, three cups",
     "scorersTitle": "The merged ledger, counted from the files",
-    "scorersLede": "One row per player across the three committed cups. Each column counts that tournament's own goal list; the total is their sum. Zero means no goal in that cup's committed file.",
+    "scorersLede": "One row per player across the three scorer-bearing cups (2014, 2018, 2022) — the 2002, 2006 and 2010 files were committed without scorer lists and print no rows here. Each column counts that cup's own goal list; the total is their sum. Zero means no goal in that cup's committed file.",
     "mergedNote": "the 2022 file spells France's No. 10 two ways — Mbappé and Kylian Mbappé — and this door merges them into one; no other name is merged across the three cups.",
     "thPlayer": "player",
     "th2014": "2014",
@@ -5209,7 +5219,7 @@
     "sourceLabel": "source",
     "snapshotNote": "every figure on this page is recomputed from the committed snapshots on every read — nothing is fetched from the network at render time.",
     "sectionChampionsLabel": "World Cup Champions",
-    "sectionChampionsNote": "three real World Cups, side by side",
+    "sectionChampionsNote": "six real World Cups, side by side",
     "sectionChampionsChip": "champions",
     "aetChip": "AET",
     "penChip": "PEN {a}–{b}",

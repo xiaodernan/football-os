@@ -82,7 +82,7 @@
 .records__chip-row { margin-block: 0.1rem 0; }
 .records__unavailable { padding: 1.5rem 0; color: var(--text-2); }
 
-/* The Real Book â€?a curated exhibit of the real 2022 World Cup. */
+/* The Real Book ï¿½?a curated exhibit of the real 2022 World Cup. */
 .records__book {
   font-family: var(--serif, Georgia, serif);
   font-size: clamp(1.3rem, 2.6vw, 1.7rem);
@@ -204,7 +204,7 @@
 .records__link:hover { color: var(--text); }
 
 
-/* The Real Book â€?the complete fixture ledger and the scorers' table. */
+/* The Real Book ï¿½?the complete fixture ledger and the scorers' table. */
 .records__lede {
   max-width: 70ch;
   color: var(--text-2);
@@ -246,7 +246,7 @@
   margin-inline-end: 0.45rem;
 }
 
-/* The Real Book Vol. II switch â€?2022 and 2018 under one door. */
+/* The Real Book Vol. II switch ï¿½?2022 and 2018 under one door. */
 .realbook__switch {
   display: flex;
   gap: 0.5rem;
@@ -279,7 +279,7 @@
 
 .champions__cups {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1rem;
   text-decoration: none;
   color: inherit;

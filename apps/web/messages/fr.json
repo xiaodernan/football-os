@@ -4320,7 +4320,7 @@
     "admin_refused": "Le mot de passe partagé est faux.",
     "bad_path": "Le chemin sort du format accepté.",
     "bad_session": "La référence de session sort du format accepté.",
-    "unknown_tournament": "Le vrai Cahier ne porte que 2014, 2018 et 2022."
+    "unknown_tournament": "Le vrai Cahier ne porte que 2002, 2006, 2010, 2014, 2018 et 2022."
   },
   "errorBoundary": {
     "eyebrow": "Une erreur est survenue",
@@ -5059,8 +5059,8 @@
     "step10Body": "Vous êtes désormais le lecteur que le monde attendait. Revenez demain — la saison 2026/27 continue de s'écrire sur les lignes, et cette porte est comment vous continuez de la lire."
   },
   "worldRealBook": {
-    "metaTitle": "Le Vrai Livre — ce que le vrai monde imprima en 2022",
-    "metaDescription": "La vraie Coupe du monde 2022, consignée dans ce produit : l'Argentine championne à Lusail, les 64 matchs, les huit enceintes, le Ballon d'Or — des faits qu'aucune graine ne peut générer ni effacer.",
+    "metaTitle": "Le Vrai Cahier — ce que le monde a vraiment imprimé sur six Coupes du monde",
+    "metaDescription": "Les six Coupes du monde portées par ce produit — les vraies 2002, 2006, 2010, 2014, 2018 et 2022, documentées chiffre par chiffre : les finales, les nombres, les prix — depuis les archives ouvertes.",
     "eyebrow": "Le Vrai Livre",
     "title": "Un monde de vrai football",
     "lede": "Voici la Coupe du monde 2022, portée par ce produit — chaque chiffre passé par la communauté openfootball, chaque donnée extraite d'un fichier public, attribution incluse.",
@@ -5107,7 +5107,17 @@
     "opening2018": "Le vrai football du monde a retenu son souffle ici, brièvement, exactement ainsi.",
     "chip2014": "2014 · Maracana",
     "lede2014": "Le vrai Brésil, porté par ce produit — la Coupe du monde 2014, chaque chiffre passé par la communauté openfootball, attribution incluse.",
-    "opening2014": "Le vrai football du monde a vu la note ici, brièvement, exactement ainsi."
+    "opening2014": "Le vrai football du monde a vu la note ici, brièvement, exactement ainsi.",
+    "chip2002": "2002 · Yokohama",
+    "chip2006": "2006 · Berlin",
+    "chip2010": "2010 · Johannesburg",
+    "lede2002": "La vraie Corée et le vrai Japon, portés par ce produit — la Coupe du monde 2002, chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
+    "opening2002": "En 2002, le vrai monde du football a retenu son souffle ici, brièvement, exactement ainsi.",
+    "lede2006": "La vraie Allemagne, portée par ce produit — la Coupe du monde 2006, chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
+    "opening2006": "En 2006, le vrai monde du football s’est rendu des comptes ici, brièvement, exactement ainsi.",
+    "lede2010": "La vraie Afrique du Sud, portée par ce produit — la Coupe du monde 2010, chaque chiffre transmis par la communauté des archives ouvertes, attribution comprise.",
+    "opening2010": "Le vrai monde du football a couronné son héros ici, brièvement, exactement ainsi.",
+    "scorersUnavailable": "Les fichiers 2002, 2006 et 2010 ont été archivés sans liste de buteurs — les affiches et les scores s'impriment depuis le fichier ; tout nom de buteur sur les tuiles est une connaissance de conservateur, étiquetée comme telle."
   },
   "worldAtlas": {
     "metaTitle": "L'Atlas — les portes du monde, dessinées",
@@ -5179,12 +5189,12 @@
     "metaDescription": "La console au mot de passe partagé qui surveille chaque porte du navigateur : sessions, rebonds, temps de visite, entonnoirs, la prévision à deux semaines et le registre du modèle."
   },
   "worldChampions": {
-    "metaTitle": "Les Champions — trois vraies Coupes du monde, côte à côte",
-    "metaDescription": "Les trois Coupes du monde portées par ce produit : qui a gagné, comment, et qui a marqué — chaque chiffre recalculé depuis les instantanés openfootball archivés.",
+    "metaTitle": "Les Champions — six vraies Coupes du monde, côte à côte",
+    "metaDescription": "Les six Coupes du monde portées par ce produit : qui a gagné, comment, et qui a marqué — chaque chiffre recalculé depuis les instantanés openfootball archivés.",
     "eyebrow": "Champions du monde",
-    "title": "Trois Coupes du monde, côte à côte",
-    "lede": "Allemagne 2014, France 2018, Argentine 2022 — les trois vraies Coupes du monde que ce produit porte, imprimées côte à côte depuis les instantanés archivés, chiffre par chiffre.",
-    "opening": "Trois finales, trois façons dont le monde se souvient d'une vie de football.",
+    "title": "Six Coupes du monde, côte à côte",
+    "lede": "Brésil 2002, Italie 2006, Espagne 2010, Allemagne 2014, France 2018, Argentine 2022 — les six vraies Coupes du monde que ce produit porte, imprimées côte à côte depuis les instantanés archivés, chiffre par chiffre.",
+    "opening": "Six finales, six façons dont le monde se souvient d’une vie de football.",
     "finalKicker": "La finale",
     "goalsOnFieldCaption": "buts sur le terrain",
     "goalsPerMatchCaption": "buts par match",
@@ -5196,9 +5206,9 @@
     "widestEyebrow": "Les plus grandes marges",
     "widestTitle": "Les scores dont le monde parle encore",
     "goldenBallCaption": "Ballon d'or",
-    "scorersEyebrow": "Les buteurs, trois Coupes",
+    "scorersEyebrow": "Le registre des buteurs",
     "scorersTitle": "Le registre fusionné, compté dans les fichiers",
-    "scorersLede": "Une ligne par joueur à travers les trois Coupes archivées. Chaque colonne compte la liste de buts propre à sa Coupe ; le total est leur somme. Zéro signifie : aucun but dans le fichier archivé de cette Coupe.",
+    "scorersLede": "Une ligne par joueur à travers les trois Coupes porteuses de listes de buteurs (2014, 2018, 2022) — les fichiers 2002, 2006 et 2010 ont été archivés sans listes et n'impriment aucune ligne ici. Chaque colonne compte la liste de buts propre à sa Coupe ; le total est leur somme. Zéro signifie : aucun but dans le fichier archivé de cette Coupe.",
     "mergedNote": "le fichier 2022 épèle le n° 10 français de deux façons — Mbappé et Kylian Mbappé — et cette porte les fusionne en un seul ; aucun autre nom n'est fusionné entre les trois Coupes.",
     "thPlayer": "joueur",
     "th2014": "CdM 2014",
@@ -5209,7 +5219,7 @@
     "sourceLabel": "l’espèce",
     "snapshotNote": "chaque chiffre de cette page est recalculé à chaque lecture depuis les instantanés archivés — rien n'est récupéré sur le réseau au moment du rendu.",
     "sectionChampionsLabel": "Champions du monde",
-    "sectionChampionsNote": "trois vraies Coupes du monde, côte à côte",
+    "sectionChampionsNote": "six vraies Coupes du monde, côte à côte",
     "sectionChampionsChip": "les champions",
     "aetChip": "a.p.",
     "penChip": "TAB {a}–{b}",

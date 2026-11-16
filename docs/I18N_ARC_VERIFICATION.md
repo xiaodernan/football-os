@@ -8895,3 +8895,57 @@ snapshot and names the FIFA tally as curator knowledge, as the Real Book does.
 **Where the fact pack stands.** The mirror (`xiaodernan.github.io/assets/football/latest.json`)
 now carries the head `e8007f4`, 88 routes, 22 world doors, arc §243; the arc grows this section
 so §245 can quote the runner's own print for Item 107.
+
+## §245 — Item 108: The Real Book carries six World Cups — two reds named, one honest silence
+
+**What landed.** Three further openfootball WS snapshots join the curated directory:
+`openfootball-worldcup-2002.json`, `openfootball-worldcup-2006.json`,
+`openfootball-worldcup-2010.json` (CC-BY 4.0, unmodified; the NOTICE names all six since
+2026-11-16 after this arc overwrote its own three-cups banner with the truth of six).
+
+**The arithmetic the doors now print on every read:**
+
+| cup | goals | venues | the final (orientation = file's own team1/team2) | biggest margin (computed) |
+| --- | --- | --- | --- | --- |
+| 2022 | 172 | 8 | Argentina 3–3 France, 4–2 pens, Lusail | Spain 7–0 Costa Rica |
+| 2018 | 169 | 13 | France 4–2 Croatia, Luzhniki | Russia 5–0 Saudi Arabia |
+| 2014 | 171 | 12 | Germany 1–0 Argentina AET, Maracanã | Brazil 1–7 Germany |
+| 2010 | 145 | 10 | Netherlands 0–1 Spain AET (Iniesta 116'), Soccer City | Portugal 7–0 North Korea |
+| 2006 | 147 | 12 | Italy 1–1 France, 5–3 pens (Zidane's red), Olympiastadion | Argentina 6–0 Serbia & Montenegro |
+| 2002 | 161 | 20 | Germany 0–2 Brazil (Ronaldo twice), Yokohama | Germany 8–0 Saudi Arabia |
+
+**Honest silences, named.** 2006's snapshot transcribes goal minutes for **nine entries in four
+matches**; 2002 and 2010 carry **no scorer lists at all**. The doors therefore print zero scorers
+for those three cups, and the six claimable names (Müller's 2002 Golden Boot, Cannavaro's 2006
+Golden Ball, Forlán's 2010 Golden Ball, the 2006 Zidane red, Iniesta's 116', Ronaldo's Yokohama
+brace) are printed as **curator knowledge, labelled** — never as snapshot arithmetic.
+
+**Named reds cured in their own form (one taught, one prevented).**
+
+- The career-wins paranoia: an apparatus of ids and gates made the en/`unknown_tournament` row
+  byte-identical to the API's sentence in six tongues. The sentence now reads
+  **"The Real Book carries 2002, 2006, 2010, 2014, 2018 and 2022."** — API and catalogue moved
+  together or not at all; `test_locale_claims` 26/26 green after the edit.
+- The `fireworks.json`-class drift: `qa-key-drift` flagged my two sibling opening sentences as
+  unreviewed divergences from the established 2014/2018 pairs; their English is now unique to each
+  cup, drift holds at ceiling **116**.
+
+**Small liars surrendered to the census.** The fr catalogue holds three added named doublets
+(`Yokohama`, `Berlin`, `Johannesburg` — the host cities' own names, spelled the same in French);
+README re-pinned to **population 5,100 ×6** (zh/zh-TW/ar/he translated **5,053** · fr **4,846** ·
+identical tokens named **47 / 254**). `qa-locale-tokens` 7/7 · `qa-key-drift` 4/4 ·
+`qa-translation-quality` 9/9 · `qa-shared-keys` 4/4 · everything else green on this tree.
+
+**Contract moved** — the real-book query regex now admits the three new years:
+SHA-256 `354e67a61862f1bf5ad18c8362a575f25830206dde4d3264703a0c22c9f160a6`; **246 paths / 313
+operations / 99 schemas unchanged**; secured 241 / public 72 / private GET 104; the three SHA
+ledgers re-pinned. The six-cup OG card prints "2002 · 2006 · 2010 · 2014 · 2018 · 2022".
+
+**Gates re-measured on this tree:** ruff clean · `mypy app` **199/199** · pytest door suites
+**39/39** · `tsc` clean · `qa-icu-messages` · `qa-icu-coverage` · `qa-locale-completeness` ·
+`qa-unused-keys` · `qa-plural-select` 7/7 · `qa-namespace-ownership` · `qa-metadata-title`
+253/253 · `qa-crawl-policy` 9/9 · `qa-i18n-literals` 9/9.
+
+**Not claimed.** That the runner prints this green before it runs. That any figure above is live
+(all are committed-byte computed). That the door walks in a browser on this host (tsc clean is
+what is verified; the container build is the strength CI owns).

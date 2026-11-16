@@ -1,22 +1,32 @@
-openfootball worldcup.json — the 2014, 2018 and 2022 FIFA World Cups
+﻿openfootball worldcup.json — the 2002, 2006, 2010, 2014, 2018 and 2022 FIFA World Cups
 
 The files beside this notice are unmodified copies of the openfootball community's
-`worldcup.json` for the 2014, 2018 and 2022 FIFA World Cups.
+`worldcup.json` for the 2002, 2006, 2010, 2014, 2018 and 2022 FIFA World Cups.
 
 Source:   https://github.com/openfootball/worldcup.json
-Files:    https://raw.githubusercontent.com/openfootball/worldcup.json/master/2014/worldcup.json
+Files:    https://raw.githubusercontent.com/openfootball/worldcup.json/master/2002/worldcup.json
+          https://raw.githubusercontent.com/openfootball/worldcup.json/master/2006/worldcup.json
+          https://raw.githubusercontent.com/openfootball/worldcup.json/master/2010/worldcup.json
+          https://raw.githubusercontent.com/openfootball/worldcup.json/master/2014/worldcup.json
           https://raw.githubusercontent.com/openfootball/worldcup.json/master/2018/worldcup.json
           https://raw.githubusercontent.com/openfootball/worldcup.json/master/2022/worldcup.json
 Licence:  Creative Commons Attribution 4.0 International (CC-BY 4.0)
           https://creativecommons.org/licenses/by/4.0/
 
-Attribution (required by the licence, and given here): the match data, scores, goals and
-venues in these files were compiled by the openfootball project, an open-data football
-results archive. The figures this product prints from them (Brazil 2014: the final at
-Maracanã, 171 goals, 12 venues and the 1–7 semi-final; Russia 2018: the final at Luzhniki,
-169 goals, 13 venues; Qatar 2022: the final at Lusail Iconic Stadium, 172 goals, 8 venues)
-are derived from these files.
+Attribution (required by the licence, and given here): the match data, scores, goals and venues
+in these files were compiled by the openfootball project, an open-data football results archive.
+The figures this product prints from them (Korea & Japan 2002: the final at Yokohama, Germany the
+runners-up, 161 goals, 20 venues; Germany 2006: the final at the Olympiastadion, 147 goals,
+12 venues; South Africa 2010: the final at Soccer City, 145 goals, 10 venues;
+Brazil 2014: the final at Maracanã, 171 goals, 12 venues and the 1–7 semi-final; Russia 2018:
+the final at Luzhniki, 169 goals, 13 venues; Qatar 2022: the final at Lusail Iconic Stadium,
+172 goals, 8 venues) are derived from these files.
 
-This product does not modify these files. Its synthetic world is a separate universe and
-shares none of these figures. Any discrepancy between these files and any other account of
-the tournaments is the reader's call to settle with the source, not with us.
+The 2002 and 2010 snapshots transcribe fixtures and scorelines without goal minutes or scorer
+lists; the 2006 snapshot carries goal minutes only for nine entries in four matches. This product
+does not merge or invent those rows: the doors print scorer tables only where the committed file
+carries one and label every scorer claim from curator knowledge otherwise.
+
+This product does not modify these files. Its synthetic world is a separate universe and shares
+none of these figures. Any discrepancy between these files and any other account of the
+tournaments is the reader's call to settle with the source, not with us.

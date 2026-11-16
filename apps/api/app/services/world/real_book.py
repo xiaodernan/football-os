@@ -143,6 +143,121 @@ _REGISTRY: dict[str, dict[str, Any]] = {
         },
         "joint_top_scorers_note": "goals are counted from the openfootball goal lists as committed, without merging; the FIFA Golden Boot credit is curator knowledge (James Rodríguez's six-goal tally is the canonical citation)",
     },
+    "2010": {
+        "snapshot": "openfootball-worldcup-2010.json",
+        "spelling_merge": {},
+        "facts": {
+            "tournament": "2010 FIFA World Cup",
+            "host": "South Africa",
+            "final_date": "2010-07-11",
+            "final_rounds": [
+                {"round": "Group stage", "matches": 48},
+                {"round": "Round of 16", "matches": 8},
+                {"round": "Quarter-finals", "matches": 4},
+                {"round": "Semi-finals", "matches": 2},
+                {"round": "Match for third place", "matches": 1},
+                {"round": "Final", "matches": 1},
+            ],
+            "venues": 10,
+            "total_matches": 64,
+            "has_penalties": False,
+            "champion": {
+                "name": "Spain",
+                "note": "Won the final 1-0 vs Netherlands (Iniesta, 116', extra time) at Soccer City, Johannesburg.",
+            },
+            "final": {
+                "home": "Netherlands",
+                "away": "Spain",
+                "score_regular": [0, 0],
+                "score_extra_time": [0, 1],
+                "score_penalties": [0, 0],
+                "venue": "Soccer City, Johannesburg",
+                "attendance": None,
+                "matchday_date": "2010-07-11",
+            },
+            "runner_up": {"name": "Netherlands", "star": "Thomas Müller won the Golden Boot with 5 goals (curator knowledge; the 2010 snapshot carries fixtures, not scorer lists)"},
+            "golden_ball": {"name": "Diego Forlán", "note": "Golden Ball, Uruguay — the tournament's best player with 5 goals (curator knowledge; the 2010 snapshot carries fixtures, not scorer lists)"},
+            "openfootball_url": "https://github.com/openfootball/worldcup.json",
+        },
+        "joint_top_scorers_note": "the 2010 snapshot carries fixtures and scorelines, not scorer lists; the scorers table is absent from this cup and every top-scorer claim on the tiles is curator knowledge, labelled as such.",
+    },
+    "2006": {
+        "snapshot": "openfootball-worldcup-2006.json",
+        "spelling_merge": {},
+        "facts": {
+            "tournament": "2006 FIFA World Cup",
+            "host": "Germany",
+            "final_date": "2006-07-09",
+            "final_rounds": [
+                {"round": "Group stage", "matches": 48},
+                {"round": "Round of 16", "matches": 8},
+                {"round": "Quarter-finals", "matches": 4},
+                {"round": "Semi-finals", "matches": 2},
+                {"round": "Match for third place", "matches": 1},
+                {"round": "Final", "matches": 1},
+            ],
+            "venues": 12,
+            "total_matches": 64,
+            "has_penalties": True,
+            "champion": {
+                "name": "Italy",
+                "note": "Won the final 1-1 vs France (5-3 on penalties) at Olympiastadion, Berlin.",
+            },
+            "final": {
+                "home": "Italy",
+                "away": "France",
+                "score_regular": [1, 1],
+                "score_extra_time": [1, 1],
+                "score_penalties": [5, 3],
+                "venue": "Olympiastadion, Berlin",
+                "attendance": None,
+                "matchday_date": "2006-07-09",
+            },
+            "runner_up": {"name": "France", "star": "Zinedine Zidane — the Golden Ball, won by the final's runner-up; he was sent off in extra time for a headbutt after levelling from the spot"},
+            "golden_ball": {"name": "Fabio Cannavaro", "note": "Golden Ball, Italy — the champions' captain and best player (curator knowledge; the 2006 snapshot carries only a partial scorer list, no minutes table)"},
+            "openfootball_url": "https://github.com/openfootball/worldcup.json",
+        },
+        "joint_top_scorers_note": "the 2006 snapshot carries goal minutes only for nine entries in four matches; the door prints no scorers table for this cup, and every scorer claim on the tiles is curator knowledge, labelled as such.",
+        "skip_scorers": True,
+    },
+    "2002": {
+        "snapshot": "openfootball-worldcup-2002.json",
+        "spelling_merge": {},
+        "facts": {
+            "tournament": "2002 FIFA World Cup",
+            "host": "South Korea & Japan",
+            "final_date": "2002-06-30",
+            "final_rounds": [
+                {"round": "Group stage", "matches": 48},
+                {"round": "Round of 16", "matches": 8},
+                {"round": "Quarter-finals", "matches": 4},
+                {"round": "Semi-finals", "matches": 2},
+                {"round": "Match for third place", "matches": 1},
+                {"round": "Final", "matches": 1},
+            ],
+            "venues": 20,
+            "total_matches": 64,
+            "has_penalties": False,
+            "champion": {
+                "name": "Brazil",
+                "note": "Won the final 2-0 vs Germany at International Stadium Yokohama (Ronaldo, twice in the second half).",
+            },
+            "final": {
+                "home": "Germany",
+                "away": "Brazil",
+                "score_regular": [0, 2],
+                "score_extra_time": [0, 2],
+                "score_penalties": [0, 0],
+                "venue": "International Stadium Yokohama, Yokohama",
+                "attendance": None,
+                "matchday_date": "2002-06-30",
+            },
+            "runner_up": {"name": "Germany", "star": "Germany reached the final — the Golden Ball went to their goalkeeper, Oliver Kahn (see the Golden Ball tile)"},
+            "golden_ball": {"name": "Oliver Kahn", "note": "Golden Ball, Germany — the tournament's best player, a goalkeeper for the losing finalists (curator knowledge; the 2002 snapshot carries fixtures, not scorer lists)"},
+            "openfootball_url": "https://github.com/openfootball/worldcup.json",
+        },
+        "joint_top_scorers_note": "the 2002 snapshot carries fixtures and scorelines, not scorer lists; the scorers table is absent from this cup and every top-scorer claim on the tiles is curator knowledge, labelled as such.",
+    },
 }
 
 ATTRIBUTION = (
@@ -214,6 +329,12 @@ def compute_real_book(tournament: str = "2022") -> dict[str, Any]:
     results = [_fixture_row(match) for match in matches]
     goals_on_field = sum(row["on_field"][0] + row["on_field"][1] for row in results)
 
+    scorers = _scorers(matches, registry["spelling_merge"])
+    if registry.get("skip_scorers"):
+        # The 2006 snapshot transcribes goal minutes only for nine entries in four matches; printing them as
+        # "the scorers, counted from the file" would be a false claim. The fixtures ledger still prints in full.
+        scorers = []
+
     widest = max(results, key=lambda row: abs(row["on_field"][0] - row["on_field"][1]))
     biggest_win = {
         "match": f"{widest['team1']} {widest['on_field'][0]}-{widest['on_field'][1]} {widest['team2']}",
@@ -238,7 +359,7 @@ def compute_real_book(tournament: str = "2022") -> dict[str, Any]:
         "attribution": ATTRIBUTION,
         "facts": facts,
         "results": results,
-        "scorers": _scorers(matches, registry["spelling_merge"]),
+        "scorers": scorers,
         "provenance": {
             "data_origin": "public-real",
             "is_demo_data": False,

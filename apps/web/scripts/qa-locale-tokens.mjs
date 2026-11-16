@@ -198,6 +198,10 @@ const FR_TOKENS = new Map([
   ["history.xpAmount", "the game's own coin"],
   ["training.xpAwarded", "the game's own coin"],
   ["coach.statXp", "the game's own coin"],
+  // The host cities of the 2002/2006/2010 World Cups are spelled the same in French.
+  ["worldRealBook.chip2002", "the host city's own name, spelled the same in French"],
+  ["worldRealBook.chip2006", "the host city's own name, spelled the same in French"],
+  ["worldRealBook.chip2010", "the host city's own name, spelled the same in French"],
   ["career.club", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
   ["career.thClub", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
   ["world.thClub", "the football English French media uses as-is (club, match, score, pressing, clean sheet)"],
