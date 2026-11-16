@@ -3915,6 +3915,16 @@ tsc clean · all web gates green (`qa-locale-tokens` 7/7 · `qa-translation-qual
 champions ledger will absorb Euros (it stays worldcup-ten by design); that either Euro is a
 FIFA tournament archive (they are `euro.json`, officially UEFA).
 
+## Item 111 — the dead-key gate red cured with literals (landed 2026-11-16)
+
+**The named red.** `43872007852` / `43872116695` — web :: Catalogue dead-key gate — 59 unjudged
+keys, `app/world/real-book/page.tsx:132`, `t(chip${year})` unreadable.
+
+**The cure.** Three static literal-keyed lookup tables (`ledes` / `openings` / `chips`) in the
+page; no key moved, no gate touched; tsc clean; `qa-unused-keys` 3/3. Record: §250.
+
+**Not claimed.** That the runner printed anything green yet.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

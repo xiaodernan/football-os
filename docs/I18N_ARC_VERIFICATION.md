@@ -9075,3 +9075,36 @@ table-shape 124/124 · namespace-ownership · icu-messages / icu-coverage / loca
 will ever carry Euros (it stays a World Cup door until the world's book grows a sibling section);
 that "the real world plays another tournament" is a problem — it is an opportunity, and this arc
 sinks no new flagship claims into it.
+
+## §250 — Item 111: the dead-key gate's verdict was right — my dynamic read exempts the whole namespace
+
+**The named red.** `43872007852` (`67fdbb9`, Item 108) and `43872116695` (the fact pack after it)
+both printed:
+
+> `web :: Catalogue dead-key gate — 59 key(s) unjudged against a floor of 0`
+> `app/world/real-book/page.tsx:132 [worldRealBook] \`chip${year}\` as "chip2022"`
+> `— NOT JUDGED BY ANY READER`
+
+banking on the gate's own honesty rule: a read it cannot resolve to literals exempts the whole
+namespace from judgment rather than false-charging a key a page genuinely reads.
+
+My rewrite turned the World Cup chip row into a runtime-computed key (`t(\`chip${year}\` as "chip2022")`
+in JSX, with a ledes Record computed the same way). The gate was right to refuse that shape; the
+**59 unjudged keys** are the ten chips + 12 ledes/openings + the Euro keys ≈ 60 over six
+locales — all asked for by the page, none asked for in a shape the reader can see.
+
+**The cure, with zero drift.** `apps/web/app/world/real-book/page.tsx` now holds three
+**static** lookup tables built from literal `t(...)` calls — `ledes`, `openings`, `chips` — and
+reads its values out of them. Every read is still one call, every key is still asked for, the
+page asks with bytes the gate can trace; only the shape changed. tsc clean; `qa-unused-keys`
+3/3; `qa-i18n-literals` 9/9. Item 108 and Item 109's six-cups catalogue content needs no
+re-wording; the runner prints the outcome on its own.
+
+**What is honestly still open.** Item 108's web leg stood red on this gate; Item 109
+(`43875407379`, `e55ecfe`) was still printing at the time of this section and its web leg runs
+the same gate — the same cure covers it, because the six-cup page carried the same dynamic-read
+shape. Item 111's own runs print off `1337034`. If either print comes back green, re-pin
+nothing; if either reds, this section names it.
+
+**Not claimed.** That any of this is green on the runner until it prints; that the gate itself
+was wrong (it was right — and the arc does not ask for mercy, it asks for a literal).
