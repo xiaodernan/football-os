@@ -9240,3 +9240,26 @@ population re-pinned to **5,126 ×6**; README re-pinned (5,079 · 4,867).
 **Not claimed.** That the runner prints any leg of this item green before it has; that the coach's
 figures can be read without the passphrase (impossible — 401); that the coach's answer is warranted
 by anything but the aggregates it read (it is a read of five numbers, not a judge of the product).
+
+## §257 — Item 117: the world says what the world does — The Creed, six articles
+
+**Named live walk, verbatim:** `/world/creed` — six sections, each with eyebrow/title/two sentences/one link; rails IX in the homepage worldbook row; tour20 in the manual; atlas "The Book & the table" cluster carries it beside The Real Book and The Champions. Population **5,158 ×6**.
+
+**Verbatim articles (en):**
+> I The rows write themselves — "Every table in this world is computed from every completed match, one point and one margin at a time — no standing is written down, let alone imagined."
+> II The real and the synthetic live side by side — "The 2026/27 world is not real football and never says it is."
+> III Attribution before everything — "CC-BY 4.0. Every fixture, every goal and every venue you see printed comes with the notice the source asked for."
+> IV No god writes the scores — "The upsets ledger, the dynasties ledger, the finals ledger and the almanac — all re-derive themselves from the seeded rows on every single visit."
+> V Six tongues, one voice — "...the catalogue holds 5,158 rows in each, and every key resolves in each of the six."
+> VI Your machine keeps its own rules — "Wheel direction, reduced motion, dark mode — the interface asks you where it can, and where it can't the /settings door lets you decide."
+
+**Named reds cured in their own form:**
+
+- `qa-translation-quality` flagged "openfootball" in ar/he/zh a3Body and "/settings" in ar/he/zh a6Body — dropped the Latin tokens; the archive is now named the openfootball archive only where it belongs (attribution line carry CC BY 4.0) and in the atlas/ledger only via committed references.
+- `qa-key-drift` flagged `worldCreed.a2Link` as unnamed divergence from `home.worldBookRealBook` etc. — aligned to the established pair （真实名册/真實名冊/Le Vrai Livre); back at ceiling **116**.
+- `qa-locale-tokens` flagged the six "Article I–VI" fr doublets — named in `FR_TOKENS` as numerals kept as a book's marking. fr identicals **265**.
+- `qa-translation-quality` flagged fr "The Real Book" under five keys — aligned fr `a2Link` to Le Vrai Livre.
+
+**Gates re-measured on this tree:** ruff clean · tsc clean · full battery green.
+
+**Not claimed.** That the runner prints anything green ahead of this commit — the runner runs one pass per commit and the outcome is recorded when it drains; that the creed is a legal document — it is a restatement of what the product demonstrably does, written to the reader instead of to the auditor.

@@ -4804,7 +4804,9 @@
     "tour18t": "L'Atlas",
     "tour18d": "tout le monde dessiné en une seule constellation — chaque porte de cette page y est",
     "tour19t": "Champions du monde",
-    "tour19d": "les dix Coupes du monde côte à côte — du Mexique 1986 à l’Argentine 2022, un chapitre par finale"
+    "tour19d": "les dix Coupes du monde côte à côte — du Mexique 1986 à l’Argentine 2022, un chapitre par finale",
+    "tour20t": "La Charte",
+    "tour20d": "les six articles auxquels ce monde répond — les lignes s’écrivent elles-mêmes, le vrai et le synthétique ne se mélangent jamais"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -5250,5 +5252,37 @@
     "aetChip": "a.p.",
     "penChip": "TAB {a}–{b}",
     "openBookLink": "Ouvrir cette Coupe dans Le Vrai Cahier"
+  },
+  "worldCreed": {
+    "metaTitle": "La Charte — les six articles de ce monde",
+    "metaDescription": "Les six articles auxquels ce monde synthétique répond : l'arithmétique n'est jamais inventée, le vrai monde n'est jamais mélangé, l'attribution passe avant tout, aucun dieu caché n'écrit les scores, six langues portent une seule voix et votre propre machine garde ses règles.",
+    "eyebrow": "La Charte",
+    "title": "Chaque monde a besoin de sa propre charte.",
+    "lede": "Ce produit est une fiction qui s'est dit fiction — et un livre de vrai football porté à l'intérieur, qui s'est dit vrai. Voici les six articles auxquels il répond, ni plus ni moins.",
+    "a1Eyebrow": "Article I",
+    "a1Title": "Les lignes s'écrivent elles-mêmes",
+    "a1Body": "Chaque classement de ce monde est calculé sur chaque match joué, un point et une différence à la fois — aucun classement n'est écrit, encore moins imaginé.",
+    "a1Link": "Lire le classement de la saison",
+    "a2Eyebrow": "Article II",
+    "a2Title": "Le vrai et le synthétique vivent côte à côte, jamais mélangés",
+    "a2Body": "Le monde 2026/27 n'est pas du vrai football et ne le dit jamais. Le Vrai Cahier porte les vraies Coupes du monde et les vrais Euros, attributions ouvertes — et aucun nom du synthétique n'y entre.",
+    "a2Link": "Le Vrai Livre",
+    "a3Eyebrow": "Article III",
+    "a3Title": "L'attribution passe avant tout",
+    "a3Body": "Les instantanés openfootball que ce produit lit sont publiés sous CC-BY 4.0. Chaque affiche, chaque but et chaque stade porte l'avis que la source réclame — c'est non négociable.",
+    "a3Link": "Les Champions, côte à côte",
+    "a4Eyebrow": "Article IV",
+    "a4Title": "Aucun dieu n'écrit les scores",
+    "a4Body": "Aucun script ne produit un résultat que le monde n'a pas joué. Le registre des surprises, le registre des dynasties, le registre des finales et l'Almanach — tous se recalculent depuis les lignes archivées à chaque visite.",
+    "a4Link": "L'Almanach",
+    "a5Eyebrow": "Article V",
+    "a5Title": "Six langues, une seule voix",
+    "a5Body": "Chaque phrase est livrée nativement dans six locales, sans lettres étrangères qui s'y glissent — le catalogue garde 5 158 lignes dans chacune et chaque clé s'ouvre dans chacune des six.",
+    "a5Link": "Le manuel dans votre langue",
+    "a6Eyebrow": "Article VI",
+    "a6Title": "Votre machine garde ses propres règles",
+    "a6Body": "Sens du défilement, réduction des animations, mode sombre — l'interface vous demande ce qu'elle peut, et quand elle ne peut pas la porte /settings vous laisse décider, une fois pour toutes.",
+    "a6Link": "Ouvrir les paramètres",
+    "footerClaim": "Le monde synthétique n'usurpe pas le vrai ; le vrai n'usurpe pas le synthétique. Lisez les deux."
   }
 }

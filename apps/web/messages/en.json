@@ -4804,7 +4804,9 @@
     "tour18t": "The Atlas",
     "tour18d": "the whole world drawn as one constellation — every door on this page, found",
     "tour19t": "World Cup Champions",
-    "tour19d": "ten World Cups side by side — from Mexico 1986 to Argentina 2022, one chapter per final"
+    "tour19d": "ten World Cups side by side — from Mexico 1986 to Argentina 2022, one chapter per final",
+    "tour20t": "The Creed",
+    "tour20d": "the six articles the world lives by — the rows write themselves, the real and the synthetic never mix, and the reader keeps their own rules"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
@@ -5250,5 +5252,37 @@
     "aetChip": "AET",
     "penChip": "PEN {a}–{b}",
     "openBookLink": "Open this cup in the Real Book"
+  },
+  "worldCreed": {
+    "metaTitle": "The Creed — the six articles of this world",
+    "metaDescription": "The six articles the synthetic world lives by: the arithmetic is never invented, the real world is never mixed in, attribution comes first, no hidden god writes the scores, six tongues carry one voice, and your own machine keeps its rules.",
+    "eyebrow": "The Creed",
+    "title": "Every world needs its own creed.",
+    "lede": "This product is a fiction that was honest about being one — and a book of real football carried inside it, honest about being that too. These are the six articles it answers to, no fewer and no more.",
+    "a1Eyebrow": "Article I",
+    "a1Title": "The rows write themselves",
+    "a1Body": "Every table in this world is computed from every completed match, one point and one margin at a time — no standing is written down, let alone imagined.",
+    "a1Link": "Read this season’s table",
+    "a2Eyebrow": "Article II",
+    "a2Title": "The real and the synthetic live side by side, never mixed",
+    "a2Body": "The 2026/27 world is not real football and never says it is. The Real Book carries the real World Cups and the real European Championships with open attribution — and no synthetic club namesakes into that archive.",
+    "a2Link": "The Real Book",
+    "a3Eyebrow": "Article III",
+    "a3Title": "Attribution before everything",
+    "a3Body": "The openfootball snapshots this product reads live under CC-BY 4.0. Every fixture, every goal and every venue you see printed comes with the notice the source asked for, and that is non-negotiable.",
+    "a3Link": "The Champions, three cups wide",
+    "a4Eyebrow": "Article IV",
+    "a4Title": "No god writes the scores",
+    "a4Body": "No script produces a result the world did not play. The upsets ledger, the dynasties ledger, the finals ledger and the almanac — all re-derive themselves from the seeded rows on every single visit.",
+    "a4Link": "The Almanach",
+    "a5Eyebrow": "Article V",
+    "a5Title": "Six tongues, one voice",
+    "a5Body": "Every sentence in this product ships natively in six locales with no foreign letters leaking across them — the catalogue holds 5,158 rows in each, and every key resolves in each of the six.",
+    "a5Link": "The manual in your language",
+    "a6Eyebrow": "Article VI",
+    "a6Title": "Your machine keeps its own rules",
+    "a6Body": "Wheel direction, reduced motion, dark mode — the interface asks you where it can, and where it cannot the /settings door lets you decide, once and for good.",
+    "a6Link": "Open settings",
+    "footerClaim": "The synthetic world does not pretend to be the real one; the real one does not pretend to be synthetic. Read them both."
   }
 }

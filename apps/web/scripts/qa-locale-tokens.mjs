@@ -198,6 +198,13 @@ const FR_TOKENS = new Map([
   ["history.xpAmount", "the game's own coin"],
   ["training.xpAwarded", "the game's own coin"],
   ["coach.statXp", "the game's own coin"],
+  // The six article numbers of the world's own creed are kept as a book's markings.
+  ["worldCreed.a1Eyebrow", "the article's own numeral, kept as a book's marking"],
+  ["worldCreed.a2Eyebrow", "the article's own numeral, kept as a book's marking"],
+  ["worldCreed.a3Eyebrow", "the article's own numeral, kept as a book's marking"],
+  ["worldCreed.a4Eyebrow", "the article's own numeral, kept as a book's marking"],
+  ["worldCreed.a5Eyebrow", "the article's own numeral, kept as a book's marking"],
+  ["worldCreed.a6Eyebrow", "the article's own numeral, kept as a book's marking"],
   // The host venues of the 2024 championship are spelled the same in French.
   ["worldRealBook.chip2024", "the host venue's own name, spelled the same in French"],
   // The host cities of the 1986/1990/1994/1998 World Cups are spelled the same in French.
