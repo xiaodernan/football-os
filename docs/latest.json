@@ -1,8 +1,8 @@
 {
-  "head": "e5c74f9",
-  "total_commits": 1257,
-  "milestone": "§261",
-  "milestone_full": "§261 — Item 121: the four forgotten cups land — 1970, 1974, 1978, 1982",
+  "head": "7ea85bb",
+  "total_commits": 1260,
+  "milestone": "§263",
+  "milestone_full": "§263 — Item 123: the seven forgotten cups land — Italy 1934 → England 1966, and the Real Book now carries the whole World Cup history",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 203,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T16:23:12.744Z"
+  "generated_at": "2026-11-16T19:56:33.908Z"
 }
