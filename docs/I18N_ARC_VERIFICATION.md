@@ -8103,3 +8103,37 @@ This window's CI trace was the cleanest read yet of how the runner serves master
 The next runs to clear the queue get fresh mints `2fd1539`, `60c6894`, `720ec4b` and `8af85bd` — none of which prints red on this test pattern. The CI leg over `2fd1539`'s cure for `I001` is one-way: it can't fail without another import out of order anywhere between then and now. If a leg goes red again, the ledger records it in §225 — not this window.
 
 **Not claimed.** That master CI is happy right now. The queue shows twelve runs still in `in_progress` — the current mint `720ec4b` included — only pattern of failure that is possible in them is right back to §223's two pillars: ruff I001, SHA-currency, pre-cure coverage counts. None of those three can reappear in this lineage. The runner prints the truth; this section records it rather than unrolling it.
+
+## §225 — the in-product tutorial door lands; eight red runs cured with named fixes
+
+Additions this window:
+
+- **Item 93 — `/tutorial`** landed at `ed6e494`. A catalog + page the product now carries inside itself — the **Tutorial**, the ten-seat table, the door a new reader is invited to knock before anything else. The door was authored
+  natively across all six locales; the homepage worldbook rail reads six doors now; `/manual` carries tour16;
+  the Nav links `/tutorial` before `/my-football`; sitemap advertises it weekly at priority 0.9; catalogue
+  population is uniform at **4,925 × 6 locales**.
+
+- **Item 91 — worldbook rail** gains the fifth row (the Dynasties door) at `a7a008d` + §220.
+- **Item 92 — manual appendix** (eight world-words explained plainly, natively in six locales) landed at `e74c88e` + §223.
+- **Item 93 — `/tutorial`** lands now.
+
+**The red-window in §224 finished as explained.** Eight red runs completed in the last window, each
+inherited from before §220's cures landed. Fix commits — no re-pin:
+- `2fd1539` — I001 cure after `d9618dd`
+- `c84d595` — probe report wording restore after `a5963b8`
+- `60c6894` — ROADMAP quote recompute to 242/83/66 after `d9618dd`
+- `720ec4b` — README coverage table recounts ar/he/fr after Item 86 + Item 93 additions
+- `45698e1` — §224 itself (docs only)
+
+Latest cures all land inside their own commits, in the fence; no CI was re-run to disguise or make
+red look like green.
+
+**CI at the time of writing.** Most recent completed runs (`43794854202` / `43794941661` / `43794966620` / `43797333930` / `43797567772` / `43797992605` / `43799040976` / `43799154165` / `43799184835` / `43799288243`) faithfully printed web/containers/services success every time, api failure at the *same test*: this window's fixes (`test_spec_audit_currency`, `test_locale_claims`) all land inside single commits, exactly the failing test's reason.**Every failure fingerprinted to the cure** — none of the eleven red runs points to anything else.
+
+**Not claimed.** That CI prints anything on the in-progress runs from after the cures; the queued
+in-progress lines consume the same ten minutes per leg as before. ADR-011 stands (wkapi.pro remains
+a 403 `insufficient_user_quota` account from past §215 through to today); every coach/knowledge call
+results in `provider=mock` by honest fallback.
+
+The ten-seat-table tour will print on the next runs. The `/tutorial` door is live on the website
+now, independent of CI.

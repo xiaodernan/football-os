@@ -3550,6 +3550,35 @@ glossary slides under the existing coverage table count-move; the count moves wi
 anything in it is fabricated (every term is the literal label the doors use on screen);
 that CI has printed this push green.
 
+## Item 93 — `/tutorial` — the ten-seat table, the door a new reader is invited to knock first (landed 2026-11-16)
+
+**The gap.** The user asked, in plain terms, that the in-product tutorial live inside the product itself —
+"教学说明书 就写在嵌入项目启动一起就能看到……其中一个功能就是查看教学说明书," not in the project docs.
+Every door was present (`/manual`), and the homepage pointed at the worldbook — but nothing handled
+the product's own on-ramp from zero: arrive, sign in (or don't), take a seat, the world, the coach,
+the almanac, the tactics lab, the challenges, the live replay, the manual, home.
+
+**What landed.** `apps/web/app/tutorial/page.tsx` ships a public, server-rendered route at `/tutorial`.
+Ten steps, each written for a new reader's actual session and linking to the actual doors they will
+use; a footnote block "What this product lives by, in four sentences" names the four non-negotiables
+(synthetic world, derive-never-invent, six doors/six locales, local-first). TheNav grows
+`{ href: "/tutorial", key: "tutorial" }`; `nav.tutorial` in all six locales; sitemap advertises it
+weekly, priority 0.9; the homepage worldbook rail reads a sixth row (VI "导学员 / The Tutor"), the
+manual gains a tour16 door; the messages population grows uniformly to **4,925 × 6 locales**
+(catalog counts: zh=4,878/4,925, zh-TW=4,878, ar=4,870, he=4,870, fr=4,666 identical-to-en).
+
+**Verification.** `tsc` clean; `qa-locale-completeness` 2/2 at 4,925; `qa-icu-messages` 2/2; 9 QA
+locale gates green; `qa-crawl-policy` 9/9 at population 84; `qa-metadata-title` 242/242;
+qa-table-shape 120/120; `qa-unused-keys` 3/3 floor 0; `qa-i18n-literals` 9/9; `qa-translation-quality`
+9/9; `qa-translation-freshness` 2/2; `qa-locale-tokens` 7/7. Production build compiles clean
+(`next build` finished: `/tutorial` = 302 B share, prerendering all 21 static routes succeeds);
+`next start` serves 200 on `/tutorial` (EN + zh), 200 on `/manual`, `/world/dynasties`,
+`/world/upsets` — all live-verified locally at :3313.
+
+**Not claimed.** That the tutorial is exhaustive — the tour covers the main path; the rich detail
+lives at `/manual` and the world. That every user's first session ends at `/tutorial`; that any
+specific user has read it. That CI has printed this push green.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.
