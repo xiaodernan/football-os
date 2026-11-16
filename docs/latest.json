@@ -1,8 +1,8 @@
 {
-  "head": "df9fe46",
-  "total_commits": 1270,
-  "milestone": "§268",
-  "milestone_full": "§268 — Item 128: the 125 red named; the championLinesLede sentence freshens in zh/zh-TW; the runner's queue quoted verbatim",
+  "head": "74ee514",
+  "total_commits": 1272,
+  "milestone": "§269",
+  "milestone_full": "§269 — Item 129: graph_trace reaches the reader — \"show how the coach assembled this\"",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T21:28:35.254Z"
+  "generated_at": "2026-11-16T21:37:12.386Z"
 }
