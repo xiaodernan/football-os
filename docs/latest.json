@@ -1,12 +1,12 @@
 {
-  "head": "c3327f9",
-  "total_commits": 1247,
-  "milestone": "§257",
-  "milestone_full": "§257 — Item 117: the world says what the world does — The Creed, six articles",
+  "head": "2931296",
+  "total_commits": 1249,
+  "milestone": "§258",
+  "milestone_full": "§258 — Item 118: the Roll of Honours — twelve real tournaments, one spine",
   "pushed_at": "2026-11-16",
-  "screens": 89,
-  "assets": 201,
-  "world_doors": 23,
+  "screens": 90,
+  "assets": 202,
+  "world_doors": 24,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T15:07:04.705Z"
+  "generated_at": "2026-11-16T15:33:50.355Z"
 }
