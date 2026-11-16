@@ -4635,7 +4635,13 @@
     "titleRaceRunnerUp": "The runner-up",
     "titleRaceMarginUnit": "pts clear",
     "titleRaceGdUnit": "goal difference",
-    "portraitEyebrow": "honours — held this season"
+    "portraitEyebrow": "honours — held this season",
+    "coachReadEyebrow": "the coach's read",
+    "coachReadTitle": "What does this edition look like?",
+    "coachReadHint": "The coach answers from exactly these figures — one press, one provider call; nothing invented.",
+    "coachReadCta": "Ask the coach",
+    "coachReadEmpty": "The coach stays quiet without a configured key — the arithmetic beside it (the golden boot, the title race) stands on its own.",
+    "coachReadProvider": "{provider} · {model} — {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldStory": {
     "metaTitle": "The Season's Story",

@@ -4635,7 +4635,13 @@
     "titleRaceRunnerUp": "亞軍",
     "titleRaceMarginUnit": "分之差",
     "titleRaceGdUnit": "淨勝球",
-    "portraitEyebrow": "本賽季榮譽"
+    "portraitEyebrow": "本賽季榮譽",
+    "coachReadEyebrow": "教練的答覆",
+    "coachReadTitle": "這一季看起來如何？",
+    "coachReadHint": "教練只根據這些數字作答——每按一次，一次模型呼叫，不發明數字。",
+    "coachReadCta": "問教練",
+    "coachReadEmpty": "未配置密鑰時教練不出聲——旁邊的算術（金靴、爭冠）自身即立。",
+    "coachReadProvider": "{provider} · {model} —— {prompt} 個提示詞 token 中 {cached} 來自快取"
   },
   "worldStory": {
     "metaTitle": "本賽季的故事",

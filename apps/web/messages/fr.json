@@ -4635,7 +4635,13 @@
     "titleRaceRunnerUp": "Le dauphin",
     "titleRaceMarginUnit": "pts d'avance",
     "titleRaceGdUnit": "différence de buts",
-    "portraitEyebrow": "ses honneurs cette saison"
+    "portraitEyebrow": "ses honneurs cette saison",
+    "coachReadEyebrow": "la lecture de l'entraîneur",
+    "coachReadTitle": "Cette édition, elle ressemble à quoi ?",
+    "coachReadHint": "L'entraîneur répond à partir de ces chiffres exacts — une pression, une requête ; aucun chiffre inventé.",
+    "coachReadCta": "Demander au coach",
+    "coachReadEmpty": "l'entraîneur se tait sans clé configurée ; l'arithmétique à côté (le soulier d'or, la course au titre) tient seule.",
+    "coachReadProvider": "{provider} · {model} — {cached} des {prompt} tokens de prompt servis depuis le cache"
   },
   "worldStory": {
     "metaTitle": "L'histoire de la saison",

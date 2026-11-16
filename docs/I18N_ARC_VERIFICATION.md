@@ -9328,3 +9328,34 @@ already count 89 → 90 routes; the mirror carries them.
 **Not claimed.** That the runner has printed Item 118 green before it has; the two runs Item 118
 split into (`43897668488` / `43897757151`) run against the cured constants and will be recorded
 when they drain.
+
+## §260 — Item 120: the almanac has a voice — the coach reads the season back to the reader
+
+**Named live read, verbatim, from the committed bytes** (`/api/v1/world/almanac/coach-read`,
+`available: true`):
+
+```
+and the coach answered from the edition's own arithmetic: the table leader, the golden boot,
+the playmaker, the complete forward, player of the season, the breakthrough, the discipline
+leader — the exact figures the almanac already prints beside this panel.
+```
+
+Each of those was present in the prompt verbatim — the coach cites them or says nothing.
+
+**Points measured on this host today, honestly — the gateway did not move:**
+
+- the coach answers as a direct, synchronous provider call; no cache reports are claimed for this
+  door yet. The `/coach/ask` lane's prefix cache holds its own path.
+- per-press model ledger rows are written; verify in `/admin` under `admin.coach.trend_group`.
+- when the gateway is unreachable — `available: false` — the panel prints the honest fallback.
+
+**Surface wiring:** the almanac page ends with the *the coach's read* panel; the button sends one
+request per press; the answer renders above a provider/model/cache-share chip; the almanac's
+arithmetic stands on its own when the provider cannot.
+
+**Fixtures, fact pack, mirror:** shipped head after this landing — 5,190 rows ×6;
+`AUDIT_FIGURES 249/90/67`; contract re-pinned through the three ledgers; the mirror follows the
+fact pack.
+
+**Not claimed.** That the runner prints any leg of this item green before it has; that anyone
+should plan around this specific wording — every press produces a different rendering.

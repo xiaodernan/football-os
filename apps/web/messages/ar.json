@@ -4635,7 +4635,13 @@
     "titleRaceRunnerUp": "الوصيف",
     "titleRaceMarginUnit": "نقطة فارق",
     "titleRaceGdUnit": "فارق الأهداف",
-    "portraitEyebrow": "ألقاب الموسم"
+    "portraitEyebrow": "ألقاب الموسم",
+    "coachReadEyebrow": "قراءة المدرب",
+    "coachReadTitle": "كيف تبدو هذه النسخة؟",
+    "coachReadHint": "يجيب المدرب من هذه الأرقام بالضبط — ضغطة واحدة، استعلام واحد؛ لا رقم مخترع۔",
+    "coachReadCta": "اسأل المدرب",
+    "coachReadEmpty": "المدرب صامت بلا مفتاح مُهيّأ؛ الحسابات المجاورة (الحذاء الذهبي، سباق اللقب) قائمة بذاتها۔",
+    "coachReadProvider": "{provider} · {model} — {cached} من أصل {prompt} رمز إدخال قادمًا من الذاكرة المخبأة۔"
   },
   "worldStory": {
     "metaTitle": "قصة الموسم",

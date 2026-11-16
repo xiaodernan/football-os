@@ -4635,7 +4635,13 @@
     "titleRaceRunnerUp": "הסגן",
     "titleRaceMarginUnit": "נקודות פער",
     "titleRaceGdUnit": "הפרש שערים",
-    "portraitEyebrow": "הכבודות של העונה"
+    "portraitEyebrow": "הכבודות של העונה",
+    "coachReadEyebrow": "הקריאה של המאמן",
+    "coachReadTitle": "איך נראה המהדורה הזו?",
+    "coachReadHint": "המאמן עונה מתצלומי המספרים האלה בלבד — לחיצה אחת, בקשה אחת; שום מספר מומצא.",
+    "coachReadCta": "שאל את המאמן",
+    "coachReadEmpty": "המאמן שותק בלי מפתח מוגדר; החשבון שלצדו (מלך השערים, מרוץ הכתר) עומד בעצמו.",
+    "coachReadProvider": "{provider} · {model} — {cached} מתוך {prompt} טוקני קלט הגיעו מהמטמון"
   },
   "worldStory": {
     "metaTitle": "סיפור העונה",

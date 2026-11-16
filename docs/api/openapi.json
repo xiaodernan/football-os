@@ -2826,6 +2826,29 @@
         }
       }
     },
+    "/api/v1/world/almanac/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Almanac Coach Read",
+        "description": "The coach's read of the almanac — one honest press, every press a different speaker.\n\nThe coach answers out loud only when a provider is configured (OPENAI_API_KEY). Without one,\nit answers `available: false` and the almanac's own arithmetic stands on the page. The read\ncites exactly the figures the almanac chose to hand — never a figure or a club outside this\nsnapshot.",
+        "operationId": "almanac_coach_read_api_v1_world_almanac_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Almanac Coach Read Api V1 World Almanac Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/almanac": {
       "get": {
         "tags": [

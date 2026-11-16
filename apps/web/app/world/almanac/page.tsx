@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
+import { AlmanacCoachRead } from "@/components/AlmanacCoachRead";
 import { Panel } from "@/components/ui";
 import { OriginBadge, Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import { pageMetadata, absolute } from "@/lib/site";
@@ -184,6 +185,8 @@ export default async function AlmanacPage() {
           </div>
         </Panel>
       )}
+
+      <AlmanacCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

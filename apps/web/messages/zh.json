@@ -4635,7 +4635,13 @@
     "titleRaceRunnerUp": "亚军",
     "titleRaceMarginUnit": "分之差",
     "titleRaceGdUnit": "净胜球",
-    "portraitEyebrow": "本赛季荣誉"
+    "portraitEyebrow": "本赛季荣誉",
+    "coachReadEyebrow": "教练的答复",
+    "coachReadTitle": "这一季看起来如何？",
+    "coachReadHint": "教练只根据这些数字作答——每按一次，一次模型调用，不发明数字。",
+    "coachReadCta": "问教练",
+    "coachReadEmpty": "未配置密钥时教练不出声——旁边的算术（金靴、争冠）自身即立。",
+    "coachReadProvider": "{provider} · {model} —— {prompt} 个提示词 token 中 {cached} 来自缓存"
   },
   "worldStory": {
     "metaTitle": "本赛季的故事",

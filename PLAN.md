@@ -4093,6 +4093,40 @@ apps/web/app holds 25 page.tsx`.
 
 **Not claimed.** That the runner printed Item 118 green before it has.
 
+## Item 120 — the almanac coach speaks: one honest read, behind a door of its own (landed 2026-11-16)
+
+**The gap.** The almanac computed everything — the awards, the title race, the portrait — but
+never spoke to the reader. The coach was wired to /coach and to /admin; the world's most
+arithmetic page kept silence.
+
+**What landed.** The almanac page now ends in a single panel: **the coach's read — "What does
+this edition look like?"** — one press, one provider call, grounded strictly in the payload the
+almanac hands the coach. No figure is invented; no page load calls the model.
+
+- `app/services/almanac_coach.py` — `compute_almanac_coach_read()` hands the coach exactly the
+  edition's computed truths (season, table leader, golden boot, playmaker, complete forward,
+  player of the season, breakthrough, discipline leader, the exact GD), with the same
+  discipline as the admin door (any claim must cite a figure in the hand-out; plain English; no
+  invented numbers).
+- `GET /api/v1/world/almanac/coach-read` — public, 20/min, a button-press door not a per-load
+  call; the almanac page button posts only when the reader asks — the almanac itself stays free.
+- The panel: equal in spirit to the admin door — one button; the answer renders verbatim above
+  a provider/model/cache-share chip; fallback copy when the provider is unreachable.
+- Catalogue population **5,190 ×6** (README re-pinned, fr doublets 4921/269).
+
+**Gates re-measured on this tree:** ruff clean · `mypy app` **202/202** · pytest door suites
+**4/4** new · tsc clean · full web battery green (`qa-icu-messages` 2/2 · `qa-unused-keys` 3/3 ·
+`qa-key-drift` 4/4 at ceiling 116 · `qa-locale-tokens` 7/7 · `qa-translation-quality` 9/9 ·
+`qa-shared-keys` 4/4 · `qa-namespace-ownership` · `qa-locale-wiring` 8/8).
+
+**Contract re-exported:** **249 paths / 316 operations / 99 schemas** (secured 241 / public **75** /
+private GET 104), SHA `9ec10dd6cacb2a57fed5720fba7556e64935dc4e5a6cca96caedd35ca84d48f1`;
+`AUDIT_FIGURES contract_paths=249 page_routes=90 migrations=67`; all ledgers re-pinned.
+
+**Not claimed.** That the runner prints any leg of this item green before it has; that the reader
+should expect the same answer every press — the coach is instructed to answer the reader, not to
+repeat itself.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

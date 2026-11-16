@@ -36,6 +36,7 @@ from app.models import (
     RealTrainingSession,
     Team,
 )
+from app.services.almanac_coach import compute_almanac_coach_read
 from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
@@ -1054,6 +1055,19 @@ def unified_search(
         types=sorted({hit.type for hit in hits}),
         note="Ranked by term overlap over the stored world rows only; no provider call and no web fetch.",
     )
+
+
+@router.get("/almanac/coach-read")
+def almanac_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The coach's read of the almanac — one honest press, every press a different speaker.
+
+    The coach answers out loud only when a provider is configured (OPENAI_API_KEY). Without one,
+    it answers `available: false` and the almanac's own arithmetic stands on the page. The read
+    cites exactly the figures the almanac chose to hand — never a figure or a club outside this
+    snapshot.
+    """
+    limit(request, 20, 20, scope="world_almanac_read")
+    return _envelope(**compute_almanac_coach_read(db))
 
 
 @router.get("/almanac")
