@@ -3479,6 +3479,40 @@ witness of the whole seeded figure set recomputed-on-request.
 printed this push green; that the Dynasties door stays small if the world gains a second
 season (it will grow by arithmetic, not by authoring).
 
+## Item 90 — the plane composed live end-to-end; the first clean plane-walk, 27/27 (landed 2026-11-16)
+
+**The gap.** The M14 service plane had landed over many windows with jars, compose entries, the
+walk script and the four citizens — but the `--profile plane` composition had never printed alive
+on this host, and the API image had never been booted through compose into a healthy state, and
+the walk itself had never finished green.
+
+**What landed.**
+
+- `infra/docker-compose.yml` — the host-published registry port moves from **127.0.0.1:8761** to
+  **127.0.0.1:18760** (the host's Docker backend pins 8761 for its own proxy; the plane
+  never depends on host reachability for that port). The api's healthcheck switched from
+  `curl` (not in the image) to the in-image python interpreter. The worker's inherited
+  api-image healthcheck (aimed at :8100) is disabled.
+- `services/worldcheck/.../WorldCheckFetcher.java` — `@Autowired` added to the `@Value`-injected
+  constructor; the two-constructor ambiguity had the container boot refused with "No default
+  constructor found" while `mvn -o package` stayed green (tests construct directly).
+- `services/config/.../football-jobs-observer.yml` — `group` recorded as the literal
+  `football_os:jobs:observers` (placeholder strings are published verbatim by the config server;
+  the walk reads them literally).
+- `services/plane-walk.ps1` — the stale hard expectation of exactly one route now reads the
+  two routes the plane serves (`core-api` + `web`) and accepts the honest target equivalences.
+
+**Live witness.** `docker compose --profile plane up -d` composes the whole product; all
+`football_os_*` come up healthy (worker intentionally healthcheck-free; its host has no port);
+`plane-walk.ps1 -Registry http://127.0.0.1:18760` prints **27/27** — edge 200 byte-identical;
+X-Request-Id minted/echoed; route table `core-api`/`web`; 4 Eureka registrations; three citizens'
+config served; worldcheck live invariants aligned; the jobs-observer live door healthy.
+The compose-web serves `/` and `/world/dynasties` 200.
+
+**Not claimed.** That CI prints anything on these commits; that the live walk will print at the
+next invocation; that 8761 will be available for earlier scripts unchanged (it is pinned on
+this host and this is documented in the compose file and the ledger §221).
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

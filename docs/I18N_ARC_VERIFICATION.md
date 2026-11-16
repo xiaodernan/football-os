@@ -7978,3 +7978,53 @@ Item 88), `5bc69e5` (§219 record), `b6b847f` (fact pack §218→§219 era), `d9
 runs stand as printed. That the runner has executed a fresh live probe — Run R/R+0 entries in
 the report state no execution; run O remains the last live run. That any streak or upset is a
 prophecy (they are records, not forecasts). ADR-011 stands.
+
+## §221 — the plane composed live end-to-end; the LLM edge still refuses; three legs green everywhere
+
+Master continues its arc. 2026-11-16 midday (UTC+8) master stands at `2fd1539`, with the fact pack
+mirroring on every move; the plane-exited work this arc landed for master:
+
+**Item 90 — the plane composed live end-to-end (`5d1f980`).** `docker compose --profile plane up`
+was executed for the first time on this host. Three latent findings were surfaced and cured:
+
+1. the api container reported **unhealthy** — the compose healthcheck used curl, which the
+   `python:3.11-slim` image does not carry; the healthcheck now uses the interpreter that built it
+   (the ubuntu-less interpreter that certainly exists on the image);
+2. the worker inherited that same bogus healthcheck pointed at :8100, a port it does not own —
+   disabled; the api's curl-less healthcheck equally moved
+   (the worker's `disable: true` is still honest: the worker owns no port and wants no probe);
+3. **worldcheck refused to boot** — "No default constructor found" for `WorldCheckFetcher`:
+   two constructors, neither marked `@Autowired`; Spring fell back to the absent default.
+   `@Autowired` added on the production constructor; the whole plane came up afterwards.
+
+That same commit moves the host-published registry port from 8761 (pinned by the host's Docker
+backend proxy to the `com.docker.backend.exe` catcher) to 18760 — internally the container
+still answers at 8761 and the Eureka peers see the classic name; only the host publish moved.
+The compose plane-walk document in `services/plane-walk.ps1` now reads the committed route
+table (two routes `core-api` and `web`, honest target equivalence), and the jobs-observer
+properties are served as the literal group the live walk measured (`football_os:jobs:observers`).
+
+**The live witness.** `docker compose -f infra/docker-compose.yml --profile plane up -d` brings
+the whole product up; `powershell -File services/plane-walk.ps1 -Registry http://127.0.0.1:18760`
+prints **all 27 checks true**: edge 200 byte-identical body; X-Request-Id minted and echoed;
+the two committed routes read correctly; 4 Eureka registrations (EDGE, CORE, WORLDCHECK,
+JOBS-OBSERVER); all three citizen config yml files served; worldcheck invariants aligned and
+live 200; the jobs-observer live door healthy. `docker logs` shows the api's eureka address PUT
+answered 200 by registry:8761. The compose web container serves 200 on `http://127.0.0.1:3210/`
+and `/world/dynasties` (317488 bytes).
+
+**CI at the time of writing.** The runner prints web/containers/services = success on all new runs;
+the api legs keep printing the two reds this window cured by their own commits:
+`43790746770`/`43790904855` etc. (loadtest B023/B007) and `43791106275`/`43791195583`/
+`43793703383` (SHA-currency "was" precedence — restored at `c84d595`), plus the ruff I001 on the
+dynasty door (`d9618dd`) — cured at `2fd1539`. NEW pushes this window (the plane arc) print
+web/containers/services success; the api legs are in-flight / queued, to be printed honestly on
+the next runs and not claimed prematurely.
+
+**The LLM question, with fresh evidence.** The wkapi.pro account behind `sk-4W8LRjo…` still
+refuses both the non-stream and the streaming path with **HTTP 403**, now `error code: 1010`
+(Cloudflare edge refusal). The call that worked earlier in the window (before 02:00 UTC)
+already answered 403 insufficient_user_quota at that time, and the account is not reachable from
+this host today. ADR-011 stands; the cache-miss / non-stream mystery is an account condition —
+not a code path — and no commit in this repository can change it without the account returning
+to a funded state.
