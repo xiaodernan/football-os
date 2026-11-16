@@ -9015,3 +9015,19 @@ crawl-policy 9/9 · i18n-literals 9/9 · locale-wire 8/8).
 **Not claimed.** That the runner prints any leg of this item green before it has run — Item 108
 (spec-audit 21/21, six cups, factpack `392aea4`) ran into the queue ahead of this commit; the four
 greened leg-true prints for Item 107 stand in §246.
+
+## §248 — the queue drains complete: `3658fe3` and `fb2fe9f` print success
+
+**The named prints, as recorded at 2026-11-16T13:30Z:**
+
+| run | head | outcome |
+| --- | --- | --- |
+| `43867800372` | `3658fe3` — fact pack over Item 107 | **success** |
+| `43868047292` | `fb2fe9f` — §244 ledger | **success** |
+
+Both four-leg runs printed green; the runs against the Item 108 head (`43872007852`, `43872116695`)
+were still printing; Item 109 (`43875407379`, `43875481259`) queued behind them.
+
+**Not claimed.** That Item 108 or Item 109 legs have printed green; what has is the runner's own
+answer for the two commits this section names. This artefact exists so the next section can quote
+the queue honestly instead of reconstructing it from memory.
