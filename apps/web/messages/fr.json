@@ -4321,7 +4321,7 @@
     "admin_refused": "Le mot de passe partagé est faux.",
     "bad_path": "Le chemin sort du format accepté.",
     "bad_session": "La référence de session sort du format accepté.",
-    "unknown_tournament": "Le vrai Cahier ne porte que les Coupes du monde 1986–2022 et les Euros 2021/2024."
+    "unknown_tournament": "Le vrai Cahier porte les Coupes du monde 1930–2022 et les Euros 2021/2024."
   },
   "errorBoundary": {
     "eyebrow": "Une erreur est survenue",

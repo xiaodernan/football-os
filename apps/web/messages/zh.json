@@ -4321,7 +4321,7 @@
     "admin_refused": "共享口令不对",
     "bad_path": "路径不符合允许的格式",
     "bad_session": "会话引用不符合允许的格式",
-    "unknown_tournament": "真实名册只收录 1986–2022 各届世界杯与 2021、2024 两届欧洲杯"
+    "unknown_tournament": "真实名册收录 1930–2022 各届世界杯与 2021、2024 两届欧洲杯。"
   },
   "errorBoundary": {
     "eyebrow": "出了点问题",
