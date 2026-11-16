@@ -64,6 +64,16 @@ export default async function ManualPage() {
     { q: t("faq3q"), a: t("faq3a") },
     { q: t("faq4q"), a: t("faq4a") },
   ];
+  const glossary = [
+    { term: t("gSeedTitle"), body: t("gSeedBody") },
+    { term: t("gTierTitle"), body: t("gTierBody") },
+    { term: t("gOverallTitle"), body: t("gOverallBody") },
+    { term: t("gXgTitle"), body: t("gXgBody") },
+    { term: t("gFormTitle"), body: t("gFormBody") },
+    { term: t("gStreakTitle"), body: t("gStreakBody") },
+    { term: t("gUpsetTitle"), body: t("gUpsetBody") },
+    { term: t("gOriginTitle"), body: t("gOriginBody") },
+  ];
 
   return (
     <div className="container page stack" style={{ gap: "2rem" }}>
@@ -106,6 +116,22 @@ export default async function ManualPage() {
           ))}
         </ul>
       </Panel>
+
+      <section className="manual__glossary" aria-labelledby="manual-glossary-eyebrow">
+        <div className="manual__glossary-head">
+          <span className="manual__toc-eyebrow" id="manual-glossary-eyebrow">{t("glossaryEyebrow")}</span>
+          <h2 className="manual__glossary-title">{t("glossaryTitle")}</h2>
+          <p className="manual__glossary-lede muted">{t("glossaryLede")}</p>
+        </div>
+        <dl className="manual__glossary-list">
+          {glossary.map(({ term, body }) => (
+            <div key={term} className="manual__glossary-row">
+              <dt className="manual__glossary-term">{term}</dt>
+              <dd className="manual__glossary-body muted">{body}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       <Panel eyebrow={t("faqTitle")} title="">
         <div className="manual__faq">
