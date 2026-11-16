@@ -8228,6 +8228,16 @@ elminate in the world's book — but it is, today, real.
   in `tests/test_real_book.py` (`collections.abc.Iterator`, `pytest`,
   `app.core.db.SessionLocal`, `REAL_FACTS_2022`). Removed; `ruff check` answers
   "All checks passed!" Nothing else changed.
+
+**Amendment, same day, after `2069564`'s own run printed.** `gh run 43807977202`
+(`2069564`, the `a1d21e8` cure) failed on exactly one test —
+`tests/test_spec_audit_currency.py::test_the_roadmap_quotes_the_audit_s_current_figures_not_an_older_snapshot`:
+`ROADMAP.md quotes 242/85/66 where the audit declares 243/85/66`. The stale quote was a
+sentence in `ROADMAP.md` whose line wraps between "contract paths, 85 page" and "routes, 66
+migrations", which is why `2069564`'s fix had not covered it — it was found only after that
+push. The cure rides in `5e9824f` — `ROADMAP.md` now prints `243 contract paths` beside the
+audit link — and both currency suites are 21/21 green at `5e9824f` HEAD. The red stands on its
+run; nothing re-ran, re-pinned or renumbered.
 * web :: Translation-quality behaviour gate — arm **B** reddened a third check the arm had not
   predicted. Since Item 94, `en.json` legitimately carries `worldRealBook.topScorerTitle`
   ("Top scorer — Mbappé"), and the gate's general mojibake branch
