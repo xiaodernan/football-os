@@ -1,8 +1,8 @@
 {
-  "head": "8df85ca",
-  "total_commits": 1215,
-  "milestone": "§239",
-  "milestone_full": "§239 — Item 103: the CI truth about this window — seven runs red, two legs, all named",
+  "head": "3b70db7",
+  "total_commits": 1217,
+  "milestone": "§240",
+  "milestone_full": "§240 — Item 104: The Real Book, Volume III — the 2014 World Cup joins the door",
   "pushed_at": "2026-11-16",
   "screens": 87,
   "assets": 199,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T09:12:39.076Z"
+  "generated_at": "2026-11-16T09:27:00.216Z"
 }
