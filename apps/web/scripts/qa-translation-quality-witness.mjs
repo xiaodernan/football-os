@@ -186,6 +186,17 @@ check(
 // B — the hole: ar.json as a byte copy of en.json.
 const copyPlane = fixture("B-arabic-copy-of-english");
 cpSync(join(REAL, "en.json"), join(copyPlane, "messages", "ar.json"));
+// 2026-11-16 (Item 94): en.json legitimately gained `worldRealBook.topScorerTitle`
+// ("Top scorer — Mbappé"), and the gate's general mojibake branch charges an ar file
+// carrying the é bytes — a third red the arm was not written to predict. The arm exists
+// to prove the script check and the identical check redden; the charged line is copied
+// out of the scratch plane so the arm keeps pinning exactly what it exists to prove.
+{
+  const path = join(copyPlane, "messages", "ar.json");
+  const catalogue = JSON.parse(readFileSync(path, "utf8"));
+  delete catalogue.worldRealBook.topScorerTitle;
+  writeFileSync(path, `${JSON.stringify(catalogue, null, 2)}\n`);
+}
 const b = run(copyPlane);
 const bJudged = Number((/^0 of (\d+) message\(s\)/.exec(detailOf(b.out, SCRIPT_AR)) ?? [])[1] ?? 0);
 check(

@@ -7,12 +7,7 @@ World Cup — sourced from the openfootball worldcup.json file, used with attrib
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-
-import pytest
-
-from app.core.db import SessionLocal
-from app.services.world.real_book import ATTRIBUTION, REAL_FACTS_2022, compute_real_book
+from app.services.world.real_book import ATTRIBUTION, compute_real_book
 
 API = "/api/v1"
 
