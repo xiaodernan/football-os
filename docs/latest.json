@@ -1,11 +1,11 @@
 {
-  "head": "6f9a844",
-  "total_commits": 1266,
-  "milestone": "§266",
-  "milestone_full": "§266 — Item 126: the Real Book speaks — one honest live sentence per press",
+  "head": "5d0b5dd",
+  "total_commits": 1268,
+  "milestone": "§267",
+  "milestone_full": "§267 — Item 127: the StateGraph stops being a document — the coach's own answer pipeline, compiled",
   "pushed_at": "2026-11-17",
   "screens": 90,
-  "assets": 204,
+  "assets": 205,
   "world_doors": 24,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T20:51:20.783Z"
+  "generated_at": "2026-11-16T21:25:31.855Z"
 }
