@@ -3333,6 +3333,48 @@ Seeded-run callers can use it on any live instance. Master remains dense and con
 **Not claimed.** That the rate-limit ceiling has been changed: it was never asked to be. Master's
 current CI colour is recorded in the latest runs' verdicts.
 
+## Item 86 — The Upset Register — the tier-1 underdog, counted (`/world/upsets`, landed 2026-11-16)
+
+**The gap.** The Noise Dossier graded the caller; nothing in the world kept the underdog's
+own book — the list of days the favourite's edge surrendered, with the gap each one jumped.
+
+**What landed.** `apps/api/app/services/world/upsets.py` (`compute_upsets`): every completed
+tier-1 fixture scored by the combined `overall` of the eleven strongest (the Noise Dossier's own
+strength rule, by design). An upset is a fixture where the lower-rated side won; a fortress is a
+level finish at a rating gap ≥ 8.0. The door publishes the five largest upsets (gap, then margin),
+the five fortresses, the season's tally (judged / upsets / fortresses / mean gap fallen / rate)
+and the five latest upsets. `GET /api/v1/world/upsets` — public, `world_upsets` bucket, 60/min.
+
+Seeded measurement: 56 judged, 22 upsets, 39.29 % rate, 5 fortresses, mean_gap 5.04,
+biggest = Braewick Athletic 2–0 Vireford Miners (gap 10.18), fortress to speak of = Obrhaven
+Union 1–1 Vireford Miners (gap 9.27).
+
+**Contract moved deliberately.** `docs/api/openapi.json` re-exported (**241 paths / 308
+operations / 98 schemas**); SHA-256 `6f38929a12e8c702a7359669c5765cdb9253a75096aac403bd5eb5d751890c70`
+re-pinned through the three ledgers (ROADMAP, M12 verification, SECURITY_PROBE_REPORT as "Run Q" —
+no fresh live probe, run O remains the last live run); secured 241 / public **67** / private GET
+**104**, re-measured from the committed bytes; floors unchanged. `AUDIT_FIGURES
+contract_paths=241 page_routes=82 migrations=66`; `/world/*` census **20**; page routes **82**;
+sitemap gained the door; the manual grows to **tour14**; catalogue population uniform at
+**4,830 × 6**; README recount **4,783 ×4 / 4,579 fr**. `qa-icu-messages` needs
+`@formatjs/icu-messageformat-parser@3.5.20` present (installed with `--no-save`; CI has it via
+`npm ci`).
+
+**Verification.** 5/5 API tests; web gates green (completeness, ICU 2/2 at 4,830, quality 9/9,
+tokens 7/7, literals 9/9, unused-keys 3/3 floor 0, key-drift 4/4, namespace-ownership 2/2,
+shared-keys 4/4, coverage 1/1, crawl 9/9 population 82, metadata-title 236/236, table-shape
+120/120, rtl 8/8, share 31/31, tsc clean); `test_spec_audit_currency` +
+`test_security_probe_report_currency` **21/21**. Live walk on :8793/:3212 — `/world/upsets` 200
+with the markers, `/manual` tour14, `/world` index door, zh locale 200 with the Chinese title
+rendered. Six QA reds this arc triggered were cured in the arc's own commit
+(methodEyebrow reworded; four locales' methodBody re-translated; namespace ownership declared;
+`wheelNote` wired into the toggle). The two pre-existing `qa-table-shape` reds (Item 73/74 pages)
+were fixed in their own commit `10d0982`.
+
+**Not claimed.** That this predicts anything. It is a record, not a caller; the Noise Dossier
+remains the caller and its figure stands. That CI has printed this push green at the time of
+writing; the verdict prints with the next run.
+
 ## How to work an item
 
 1. Read the milestone's existing verification document first. It will name the trap that was already hit.

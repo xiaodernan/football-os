@@ -7824,3 +7824,53 @@ with `429` from the M15 public world-tier rate limiter (~60/min). That is the li
 job; it is documented for the operator, not silently raised.
 
 Not claimed: CI greener than the six latest pushes (all four legs reported success most recent); a permanent increase of the rate limit ceiling; anything the runner did not print.
+
+## §217 — the Upset Register lands: the underdog keeps its own book; the fact pack moves twice
+
+Master continues its arc. This window landed **Item 86 — `/world/upsets`** (the twenty-first
+public world door), **Item 84's bookkeeping** (PLAN and the §216 ledger, which is now in),
+the fact pack refreshed to §216 and mirrored to the personal mirror, and one cure commit
+(`10d0982`) for the two pre-existing tables the freshly-armed table-shape gate found in
+`08d5562`'s Item 73/74 pages (both sheets now name `.table` and sit in `.table-wrap`;
+`qa-table-shape` prints **120/120**, 188 files walked).
+
+**Item 86 — the door is real, measured and committed at `a5963b8`.**
+
+- Backend: `compute_upsets` (`services/world/upsets.py`); strength = combined `overall` of each
+  squad's eleven strongest; upset = lower-rated side wins; fortress = level finish at a gap of
+  ≥ 8.0; five largest upsets ordered by gap then margin; five fortresses; season tally
+  (judged / upsets / fortresses / mean gap fallen / rate %); five latest upsets. No provider, no
+  stored column; `GET /api/v1/world/upsets` on the `world_upsets` bucket (60/min).
+- Seeded measurement printed above; the live walk on 127.0.0.1:8793 returned the same figures
+  byte-for-byte (56 judged, 22 upsets, 39.29 %, mean gap 5.04, biggest 10.18).
+- Contract re-exported (**241 paths / 308 operations / 98 schemas**); SHA-256 re-pinned through
+  the three ledgers to `6f38929a12e8c702a7359669c5765cdb9253a75096aac403bd5eb5d751890c70`; the
+  public census re-measured from the committed bytes (241/67/104); Run Q recorded in the probe
+  report with the honest witness that no live probe was executed (run O remains the last live
+  run). Currency gates re-pinned and green (`test_spec_audit_currency` +
+  `test_security_probe_report_currency` = **21/21**).
+- Web: door page, force-static OG card (digits and symbols), palette-consistent CSS with the
+  `--info` accent, sitemap entry, `/world` index door, manual tour14, `worldUpsets` namespace
+  natively authored ×6 (population **4,830 × 6**, README recount **4,783 ×4 / 4,579 fr**);
+  namespace ownership declared for `worldUpsets`.
+- Six gate reds this arc triggered were cured in the door's own commit: the `methodEyebrow`
+  sentence ("The arithmetic, in the open"), four locales' methodBody re-translated so no
+  `upset`/`fortress` Latin in ar/he/zh/zh-TW, namespace ownership, and the unused `wheelNote`
+  now read by the `/settings` toggle. The lesson, recorded: new doors do not get to duplicate a
+  sibling's prose or to inherit an orphan key; the gates speak before the push, not after.
+
+**The catalogue population moved 4,800 → 4,829 → 4,830.** The intermediate 4,829 count carried
+an orphan `gapLabel` no page read; the dead-key gate's floor is 0, so the key was deleted rather
+than held. Population prints as uniform 4,830 at the head of this section.
+
+**Fact pack** refreshes land with §217 (this entry records the latest arc and the next refresh
+commit carries the bytes); the personal mirror receives the same bytes in the same move.
+
+**Commits this window:** `10d0982` (table-shape cure), `a5963b8` (the door), plus the earlier
+`91a9ac7`/`7ad7ce1`/`7f5bfbc` (loadtest, §216 ledger, fact pack §216). The two newest pushes
+remain in the runner's queue at the time of writing.
+
+**Not claimed.** That a fresh live security probe executed for Run Q (it did not — the committed
+bytes are re-measured by the currency gates; the last live run is run O). That cache conditions
+changed (they cannot — ADR-011 stands). That CI has printed the door push green. That the upset
+register predicts anything (it records, it does not call).
