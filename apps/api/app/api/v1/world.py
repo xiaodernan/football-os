@@ -1289,7 +1289,7 @@ def real_book(request: Request, tournament: str = Query("2022", pattern=r"^(1930
     except UnknownTournament:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"code": "unknown_tournament", "message": "The Real Book carries the 1986–2022 World Cups and the 2021/2024 European Championships."},
+            detail={"code": "unknown_tournament", "message": "The Real Book carries the 1930–2022 World Cups and the 2021/2024 European Championships."},
         ) from None
 
 
