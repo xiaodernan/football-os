@@ -10278,3 +10278,48 @@ recount, not a tail-end patch to this one. For the same reason the knowledge cor
 Chinese only: a Traditional-Chinese reader's chrome is fully Traditional, but the prose it wraps is
 the zh corpus — deliberate Simplified editorial content, not a converted `zh-TW` twin, and none of it
 is presented as Traditional text.
+
+## §284 — Item 144: the runner's three reds for the Item 141 push, cured in their own forms (2026-11-17)
+
+**The runner's reds, verbatim** (CI run `43996304084`, api leg — 3 failed / 2547 passed / 32 skipped):
+
+```
+FAILED tests/test_spec_audit_currency.py::test_the_audit_s_declared_figures_answer_for_the_committed_tree
+AssertionError: AUDIT_FIGURES says 67 migrations; apps/api/migrations/versions holds 68 committed .py files
+assert 67 == 68
+
+FAILED tests/test_openapi_contract_currency.py::test_the_exporter_derives_the_contract_from_the_tree_and_reproduces_the_committed_bytes
+AssertionError: `scripts/export_openapi.py` and `docs/api/openapi.json` disagree on the same tree:
+the committed contract is 546283 bytes, the tree serialises to 547211. Edit the app, never the file.
+
+FAILED tests/test_knowledge_joint.py::TestRecallHop::test_the_first_pass_of_a_hopped_answer_is_the_single_phase_render
+AssertionError: assert [('kch_RrGnhY...Yb0p_SWV', 4)] == [('kch_BLy3Q0...3clNXloe', 4)]
+```
+
+**The three cures, one mechanism each:**
+
+1. **AUDIT_FIGURES migrations 67 → 68.** Migration `0067` (the corpus's `locale` column) landed with
+   the Item 141 push; the audit line and the two living references to it now read **68**, and the
+   re-read ledger names the door that forced it.
+2. **The contract re-exported from the tree.** `scripts/export_openapi.py` regenerated
+   `docs/api/openapi.json` — **250 paths · 317 operations · 99 schemas**, exactly +928 bytes of the
+   `locale` shapes. The three SHA ledgers the currency gate re-pins
+   (`docs/SECURITY_PROBE_REPORT.md`, `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`,
+   `ROADMAP.md`) move
+   `cfe2ba005ec21380685ce83c23d90c6f9e507acf51a1e892d273e82c026edfe9` →
+   **`94386bedf127804ff95dbb1e0efb6c7eaee8ccff13ea769a4652fe4de11bbc60`** (one occurrence each; the
+   two copied SHA citations in this ledger and in `PLAN.md` moved with them).
+   `test_openapi_contract_currency.py` + `test_security_probe_report_currency.py` +
+   `test_spec_audit_currency.py` → **25 passed** on the committed tree.
+3. **The joint test's mirror reads the window the ask it mirrors reads.** `ask()` now pins
+   `filters.locale="en"` (Item 141); the hop test's `_usable` helper and the
+   `test_the_graph_is_consulted_only_on_the_answered_branch` gate both searched with no locale (the
+   mixed universe), so the two halves of the identity claim could see different winners. Both now
+   pass `Filters(locale="en")` — the same window the ask hop serves, the population the identity
+   claim is about. `tests/test_knowledge_joint.py` → **18 passed** on this tree.
+
+**Not claimed.** That the runner printed green for this cure when this paragraph was written (25/25
+plus 18/18 locally; CI is the judge); that the pgvector leg's winner order matches SQLite's (recorded
+as this item's own open edge — the joint-test half and the zh golden set both reuse a ranking that
+can differ across engines, and the runner will say so one way or the other); that the re-export
+changed anything but the two `locale` shapes (+41 lines, all `locale`).

@@ -4817,3 +4817,21 @@ Catalogue now **5,248 ×6**; README recomputed. Gates green (`qa-i18n-literals`,
 `qa-key-drift`, `qa-shared-keys`, `qa-locale-tokens`, `qa-icu-messages`); tsc clean; SSR verified
 in both locales on the rebuilt demo. Not wired: raw role slugs and `editorial_confidence` enum still
 print English on article pages — named here, not half-fixed (see §283).
+
+## Item 144 — three runner reds for the Item 141 push, cured in their own forms (2026-11-17)
+
+**The reds** (CI run `43996304084`): `test_spec_audit_currency` (AUDIT_FIGURES migrations 67 vs the
+committed 68 `.py` files), `test_openapi_contract_currency` (`openapi.json` 546,283 bytes committed vs
+547,211 tree-serialised — the two `locale` shapes were never re-exported), `test_knowledge_joint`
+(the first-pass identity compared an English-window ask hop against an un-windowed `_usable`; the zh
+corpus made their winners diverge).
+
+**Cures.** Audit migrations `67 → 68` (plus the two living references); contract re-exported
+(**250 paths · 317 operations · 99 schemas**, +928 bytes, all `locale`); the three SHA ledgers
+`cfe2ba00…` → `94386bed…` (REPORT / M12 / ROADMAP, and the copies in the arc ledger and this plan);
+the joint test's `_usable` and the graph-hop gate both read `Filters(locale="en")` — the same window
+the ask hop serves. Locally: currency suites **25 passed**, `test_knowledge_joint.py` **18 passed**.
+
+**Not claimed.** That the runner printed green for the cure when this row was written (locally green;
+CI is the judge); that the pgvector winner order matches SQLite's (open edge, its own leg, its own
+red to cure if it prints).
