@@ -20,6 +20,7 @@ from app.models import KnowledgeQuery
 from app.providers import LlmResult, get_embedding_provider, get_llm_provider
 from app.services.knowledge import answer_cache, graph_join, recall, retrieval
 from app.services.knowledge.chunking import strip_header
+from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.knowledge.retrieval import Filters, Hit
 from app.services.knowledge.text import content_words
 from app.services.model_ledger import record_model_call_safely
@@ -96,6 +97,10 @@ SYSTEM_PROMPT = (
     "Answer only from the passages. Cite inline. Admit the gaps. Never invent. Prefer the passages "
     "to your memory of the game."
 )
+
+# The composed ask path: the corpus' index bakes into the one static prefix the gateway already
+# caches — the naming rail ("here is what the library holds") costs every ask nothing when warm.
+SYSTEM_CHARTER = SYSTEM_PROMPT + LIBRARY_CHARTER
 
 REFUSAL = (
     "I could not find a passage in the loaded football knowledge base that supports an answer to "
@@ -348,7 +353,7 @@ def ask(
                 stored = answer_cache.get(cache_key)
                 if stored is None:
                     llm: LlmResult = provider.complete(
-                        system=SYSTEM_PROMPT,
+                        system=SYSTEM_CHARTER,
                         prompt=json.dumps({"intent": "knowledge_ask", "question": question, "context": context}, ensure_ascii=False),
                         max_tokens=700,
                         temperature=0.3,
