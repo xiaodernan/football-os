@@ -11649,3 +11649,9 @@ The same six doors pressed through the 3210 public spoke (web → edge → api t
 **CI leg `44194144202` was still in-flight when this addendum was written (not pre-claimed green or red; will record verbatim in the next round if it has printed).**
 
 **Account balance.** The fleet now answers as a single fleet under one shared charter; the reader sees public answers from the SPA proxy path through the edge through the api; the gateway serves the charter bytes at ~87–94 % across seven press sites (Item 196: chronicle/manual/knowledge door ~87-94 %; Item 197 fleet average reported: **90.22 %** over 105 reported rows); the admin-coach door reports **86.9 %** on press 2 after the hint to drop cache when the new _SYSTEM is fresh on a rebuilt image.
+
+## §336 — Item 200: the arc §335 release tag (published)
+
+**The release.** `gh release create arc-335 --title "arc §335 · the fleet answers its own ledger" --notes "Item 192/194/196-199" --target master` → created `https://github.com/xiaodernan/football-os/releases/tag/arc-335`. The tag names two arcs' worth of material: **15 commits across `8b81542..b63c5ef`** — the window between the moment Item 195 landed ("feat(manual): the manual answers back") and today's master note (`b63c5ef`). Notes written manually; no autogeneration.
+
+**Not claimed.** That the tag points at a unique 85-byte document anyone reads; that the GitHub release page numbers the arc (it is a tag, not a page summary); that the release triggers CI automatically (it does not; the release is an annotation of an already-done arc).
