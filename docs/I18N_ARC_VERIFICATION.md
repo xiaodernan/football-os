@@ -11239,3 +11239,23 @@ The retrieval was fine — the `offside-interference-explained.md` chapter answe
 **Measured.** `tests/test_agents.py` + `tests/test_agent_trace.py` **34 passed**; `tests/test_knowledge_rag.py` **26 passed**.
 
 **Not claimed.** That the answer is now useful for a one-term question (honest answer: still no; the refusal is the answer); that the gate ever suggested wording-free end-runs; that the "limited information" string was removed from the canned path (it was retired with the canned path). The gate still refuses single-term questions; the reader now learns *why*, not a fabricated "limited information".
+
+## §314 — Item 176: the Chinese coach answers a Chinese question with the model, not a grammar-tuned chip (2026-11-17)
+
+**The walk, recorded as run.** Signed in as the labelled DEMO account; switched `fo_locale` to `zh`; opened `/coach`; the h1 reads `和你的教练一起训练` with the full zh ideation intact — graph chip, `ai 教练 · 规则引擎`, `Today: Rondo Shapes` in front of the zh chrome, `看看教练是怎么一步步作答的` accordion — then typed `我为什么总是丢球？` into the ask box and pressed `问教练`. The page answered in Simplified Chinese, verbatim:
+
+```
+意图：一般                                                 AI 生成   openai   gpt-6.1-terra   置信度 95%
+你容易丢球的原因可能是控球和沉着度偏低（44），而且首次触球与传球都只有53；
+这些数据说明你在压力下接球、护球和出球可能还有提升空间，但无法确定每次丢球的具体原因。
+今天练18分钟的抗压 rondo：用合适的脚面传球，传球后立刻移动，并调整身体朝向以打开下一条传球线路。
+WHY THIS ANSWER (same door-signature line below): Scored 5.95 against 23 eligible drills …
+```
+
+`intent: 一般` + `AI 生成` + `gpt-6.1-terra` + `置信度 95%` printed with the reasons list in the same order the English pair does, the AI-Couch-Learning rail reads same `+50 经验`, and `已存问答轮次 47` server-side persisted.
+
+**The catalogue does not mix.** `en` holds 47 identical tokens to `zh` — but the coach intent-tag is `一般`, not `General`; the coach-edge framework is `规则引擎`; the manual link is `简明说明书`; the cache rail `openai` lands on its own line at the footer of the answer. All tokens are locale-true, none are mixed. The drill `Rondo Shapes: Press Resistance` is shown by preference in English because the corpus is English, exactly the contract from Item 135–148.
+
+**Measured.** (i) `/coach` surface in zh re-arranges to its native catalogue; (ii) the Chinese coaching stamp wins the rank; (iii) the coaching memory rail grows monotonically (47 → 49 across two presses); (iv) no English surprise phrase prints in the zh door.
+
+**Not claimed.** That anything beyond the two locale surfaces (`en`, `zh`) has been checked end-to-end in this walk — the French analogue was verified earlier in the arc, and ar/he beyond that; that the Chinese answer erred — the model repeated the same confidence score it prints in English, which the demo account's stored profile supports; that the zh door rarely surfaces the cache token — it doesn't currently print the cache meter (that lives on the EN /coach), and we are not changing it.

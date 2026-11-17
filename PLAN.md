@@ -5217,3 +5217,20 @@ The retrieval was fine — `offside-interference-explained.md` answers at rerank
 **Measured.** `tests/test_agents.py` + `tests/test_agent_trace.py` → **34 passed**; `tests/test_knowledge_rag.py` → **26 passed**.
 
 **Not claimed.** That the answer is now useful for a one-term question (still no — and still the honest refusal); that the gate ever suggested wording-free end-runs; that anything in the answer door's gate moved (nothing did — the canned fallback retired in its place).
+
+## Item 176 — the Chinese coach answers a Chinese question with the model, end to end (landed 2026-11-17)
+
+**The walk, recorded as run.** Signed in as the labelled DEMO account; switched `fo_locale=zh`; opened `/coach`; typed `我为什么总是丢球？` into the ask box; the page answered in Simplified Chinese, verbatim:
+
+```
+意图：一般                                          AI 生成   openai   gpt-6.1-terra   置信度 95%
+你容易丢球的原因可能是控球和沉着度偏低（44），而且首次触球与传球都只有53；
+这些数据说明你在压力下接球、护球和出球可能还有提升空间，但无法确定每次丢球的具体原因。
+今天练18分钟的抗压 rondo：用合适的脚面传球，传球后立刻移动，并调整身体朝向以打开下一条传球线路。
+```
+
+The Chinese catalogue renders natively: `和你的教练一起训练`, `规则引擎`, `这里` in drills, `看看教练是怎么一步步作答的` accordion. Every UI string is from the `zh` catalogue — no English mix-ins. The coach door was asked the question in Chinese; the model answered in Chinese; the drills render in their stored-English text by contract (Item 135–148); the catalogue is not mixed.
+
+**Measured.** (i) `/coach` answered in Simplified Chinese with the same confidence the English door reports; (ii) the coaching memory rail shows `已存问答轮次 47` after the press; (iii) the Chinese UI renders correctly end-to-end; (iv) no English surprise phrase prints in the zh door.
+
+**Not claimed.** That the Chinese result means `coaching quality` differs by locale — nothing distinguishes them; that the Chinese drills present English objective strings anyone shouldn't see — drill corpus is English, exactly the contract since Item 135; that any of these `47` is today's training count — it's the account's cumulative count, persisted across sessions.
