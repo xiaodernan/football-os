@@ -125,7 +125,7 @@ class TestFloorsUntouched:
         sync_world(session)
         answered_with_graph = 0
         for case in _golden()["queries"]:
-            result = retrieval.search(session, case["query"])
+            result = retrieval.search(session, case["query"], filters=retrieval.Filters(locale="en"))
             answer = graph_join_anchored(session, case["query"])
             if not answer["answered"]:
                 assert not answer["graph_lines"], (
@@ -286,7 +286,7 @@ class TestRecallHop:
     def _usable(self, session: Session, query: str) -> list[Any]:
         from app.services.knowledge import answer as answer_module
 
-        found = retrieval.search(session, query)
+        found = retrieval.search(session, query, filters=retrieval.Filters(locale="en"))
         return [h for h in found.hits if h.score >= answer_module.ANSWER_SCORE_FLOOR] if found.answerable else []
 
     def test_a_hopped_answer_publishes_its_pulls_in_all_three_places(self, session: Session) -> None:

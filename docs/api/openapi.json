@@ -1373,6 +1373,23 @@
               ],
               "title": "Q"
             }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 8
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Locale"
+            }
           }
         ],
         "responses": {
@@ -17207,6 +17224,18 @@
             "title": "Top K",
             "default": 5
           },
+          "locale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
           "category": {
             "anyOf": [
               {
@@ -17321,6 +17350,18 @@
             "minimum": 1.0,
             "title": "Top K",
             "default": 5
+          },
+          "locale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
           },
           "category": {
             "anyOf": [

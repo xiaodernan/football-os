@@ -4342,7 +4342,7 @@ names those presses as not recorded locally rather than as written to the ledger
 change. Six locales, native copy: population **5,233 ×6**.
 
 **Contract re-exported once more:** **250 paths / 317 operations / 99 schemas** (secured 241 / public
-**76** / private GET 104), SHA `cfe2ba005ec21380685ce83c23d90c6f9e507acf51a1e892d273e82c026edfe9`;
+**76** / private GET 104), SHA `94386bedf127804ff95dbb1e0efb6c7eaee8ccff13ea769a4652fe4de11bbc60`;
 `AUDIT_FIGURES contract_paths=250 page_routes=90 migrations=67`; the three ledgers re-pinned; the
 audit's door row and module row re-pinned to `250 / 90 / 67`.
 

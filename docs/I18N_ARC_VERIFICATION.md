@@ -9576,7 +9576,7 @@ one-ask press, answer verbatim, provider/model/cache-share chip, volume-scoped r
 Catalogue population **5,233 ×6**; README re-pinned (5,186 / 4,954; fr doublets 279).
 
 **Contract re-exported once more:** **250 paths / 317 operations / 99 schemas** (secured 241 / public
-**76** / private GET 104), SHA `cfe2ba005ec21380685ce83c23d90c6f9e507acf51a1e892d273e82c026edfe9`;
+**76** / private GET 104), SHA `94386bedf127804ff95dbb1e0efb6c7eaee8ccff13ea769a4652fe4de11bbc60`;
 `AUDIT_FIGURES` 250/90/67; the three ledgers, ROADMAP, the audit's door row and module row
 re-pinned.
 
