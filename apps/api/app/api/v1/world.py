@@ -43,6 +43,7 @@ from app.services.matchday_xi_coach import compute_matchday_xi_coach_read
 from app.services.noise_coach import compute_noise_coach_read
 from app.services.real_book_coach import compute_real_book_coach_read
 from app.services.records_coach import compute_records_coach_read
+from app.services.spotlight_coach import compute_spotlight_coach_read
 from app.services.story_coach import compute_story_coach_read
 from app.services.upsets_coach import compute_upsets_coach_read
 from app.services.world import search_world, web_path
@@ -1190,6 +1191,21 @@ def spotlight(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]
     """
     limit(request, 60, 60, scope="world_spotlight")
     return _envelope(**compute_spotlight(db))
+
+
+@router.get("/spotlight/coach-read")
+def spotlight_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Spotlight's coach-read — one honest paragraph on the three recognitions the world cannot hide from.
+
+    The model receives exactly the three rows the door computed — the hitman (goals per 90 with the
+    sample behind it), the fortress (home clean sheets with the home sample behind it) and the new
+    blood (the youngest tier-1 player with real minutes) — and speaks one short paragraph on what
+    they hold up together. It never invents a player, club, figure or a fourth recognition beyond
+    the snapshot; a per-90 is a rate over a minimum sample, not a destiny, and neither is a forecast.
+    Without a configured provider this returns `available: false` and the spotlight stands alone.
+    """
+    limit(request, 20, 60, scope="world_spotlight_read")
+    return _envelope(**compute_spotlight_coach_read(db))
 
 
 @router.get("/timeline")

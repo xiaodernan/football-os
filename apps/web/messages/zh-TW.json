@@ -4881,7 +4881,13 @@
     "unavailable": "本賽季還沒攢出夠樣本的球員",
     "sectionSpotlightLabel": "世界之眼",
     "sectionSpotlightNote": "世界藏不住的三個認得",
-    "sectionSpotlightChip": "世界之眼"
+    "sectionSpotlightChip": "世界之眼",
+    "coachReadEyebrow": "AI 教練 · 聚光燈述之",
+    "coachReadTitle": "模型讀聚光燈",
+    "coachReadHint": "按一下——模型讀本頁剛算出的三項認可（按時長樣本算出的每 90 分鐘射手王、按主場樣本算出的零封城堡、帶著真實分鐘數登場的新人），然後講一段話：這三項認可放在一起說明了什麼。它不會編造超出這份樣本之外的任何球員、俱樂部、數字或第四項認可。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型暫時不可讀——上面三項認可本身就夠了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "worldTimeline": {
     "metaTitle": "逐輪：賽季的長句",

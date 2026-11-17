@@ -3050,6 +3050,29 @@
         }
       }
     },
+    "/api/v1/world/spotlight/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Spotlight Coach Read",
+        "description": "The Spotlight's coach-read — one honest paragraph on the three recognitions the world cannot hide from.\n\nThe model receives exactly the three rows the door computed — the hitman (goals per 90 with the\nsample behind it), the fortress (home clean sheets with the home sample behind it) and the new\nblood (the youngest tier-1 player with real minutes) — and speaks one short paragraph on what\nthey hold up together. It never invents a player, club, figure or a fourth recognition beyond\nthe snapshot; a per-90 is a rate over a minimum sample, not a destiny, and neither is a forecast.\nWithout a configured provider this returns `available: false` and the spotlight stands alone.",
+        "operationId": "spotlight_coach_read_api_v1_world_spotlight_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Spotlight Coach Read Api V1 World Spotlight Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/timeline": {
       "get": {
         "tags": [

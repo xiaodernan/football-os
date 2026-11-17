@@ -5,11 +5,11 @@ The catalogues, one per locale (`apps/api/app/api/v1/meta.py` publishes whicheve
 | File | Holds today | Served today |
 | --- | --- | --- |
 | `en.json` | the interface's own strings | **yes**, and it is the fallback for every missing key |
-| `zh.json` | 5297 of 5344 keys in Simplified Chinese, and all 5344 present (the other 47 are placeholders, machine tokens and acronyms that are identical in every locale) | **yes** |
-| `zh-TW.json` | 5297 of 5344 keys written in Traditional Chinese, not converted from the `zh` file, and all 5344 present (same 47 identical tokens) | **yes** |
-| `ar.json` | 5297 of 5344 keys in Arabic, and all 5344 present (same 47 identical tokens) | **yes** |
-| `he.json` | 5297 of 5344 keys in Hebrew, and all 5344 present (same 47 identical tokens) | **yes** |
-| `fr.json` | 5064 of 5344 keys in French, and all 5344 present (280 identical values, each named in `qa-locale-tokens.mjs` 鈥?most are loanword doublets French spells the same as English, like *club*, *score* and *format*; the knowledge library's `coaching` category label and the two ICU plural messages the library prints (`knowledge.resultLine`, `knowledge.resultLineOne`) are French, not tokens) | **yes** |
+| `zh.json` | 5303 of 5350 keys in Simplified Chinese, and all 5350 present (the other 47 are placeholders, machine tokens and acronyms that are identical in every locale) | **yes** |
+| `zh-TW.json` | 5303 of 5350 keys written in Traditional Chinese, not converted from the `zh` file, and all 5350 present (same 47 identical tokens) | **yes** |
+| `ar.json` | 5303 of 5350 keys in Arabic, and all 5350 present (same 47 identical tokens) | **yes** |
+| `he.json` | 5303 of 5350 keys in Hebrew, and all 5350 present (same 47 identical tokens) | **yes** |
+| `fr.json` | 5070 of 5350 keys in French, and all 5350 present (280 identical values, each named in `qa-locale-tokens.mjs` 鈥?most are loanword doublets French spells the same as English, like *club*, *score* and *format*; the knowledge library's `coaching` category label and the two ICU plural messages the library prints (`knowledge.resultLine`, `knowledge.resultLineOne`) are French, not tokens) | **yes** |
 
 ## What a reader gets today
 

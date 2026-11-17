@@ -4881,7 +4881,13 @@
     "unavailable": "la saison n'a pas encore assez d'échantillon",
     "sectionSpotlightLabel": "Le Regard",
     "sectionSpotlightNote": "trois regards que le monde ne peut cacher",
-    "sectionSpotlightChip": "regard"
+    "sectionSpotlightChip": "regard",
+    "coachReadEyebrow": "Coach IA · le regard, lu",
+    "coachReadTitle": "Le modèle lit les trois reconnaissances",
+    "coachReadHint": "Un appui — le modèle lit les trois reconnaissances que cette page vient de calculer (le buteur phare avec l'échantillon derrière son per-90, la forteresse avec l'échantillon à domicile derrière ses blanches, et le sang neuf avec ses vraies minutes) et dit un paragraphe honnête sur ce qu'elles tiennent ensemble. Il n'invente aucun joueur, aucun club, aucun chiffre ni une quatrième reconnaissance au-delà de l'instantané.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — les trois reconnaissances ci-dessus tiennent seules.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "worldTimeline": {
     "metaTitle": "La course, journée par journée",

@@ -4881,7 +4881,13 @@
     "unavailable": "the season has not got a qualifying sample yet",
     "sectionSpotlightLabel": "The Spotlight",
     "sectionSpotlightNote": "three recognitions the world cannot hide from",
-    "sectionSpotlightChip": "spotlight"
+    "sectionSpotlightChip": "spotlight",
+    "coachReadEyebrow": "AI Coach · the spotlight, read",
+    "coachReadTitle": "The spotlight, read by the model",
+    "coachReadHint": "One press — the model reads the three recognitions this page computed (the hitman with the sample behind his per-90, the fortress with the home sample behind her clean sheets, the new blood with his real minutes) and speaks one honest paragraph on what they hold up together. It does not invent a player, club, figure or a fourth recognition beyond the snapshot.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the three recognitions above stand alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldTimeline": {
     "metaTitle": "The Race — Matchday by Matchday",

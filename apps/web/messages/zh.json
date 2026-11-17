@@ -4881,7 +4881,13 @@
     "unavailable": "本赛季还没攒出够样本的球员",
     "sectionSpotlightLabel": "世界之眼",
     "sectionSpotlightNote": "世界藏不住的三个认得",
-    "sectionSpotlightChip": "世界之眼"
+    "sectionSpotlightChip": "世界之眼",
+    "coachReadEyebrow": "AI 教练 · 聚光灯述之",
+    "coachReadTitle": "模型读聚光灯",
+    "coachReadHint": "按一下——模型读本页刚算出的三项认可（按时长样本算出的每 90 分钟射手王、按主场样本算出的零封城堡、带着真实分钟数登场的新人），然后讲一段话：这三项认可放在一起说明了什么。它不会编造超出这份样本之外的任何球员、俱乐部、数字或第四项认可。",
+    "coachReadCta": "让模型讲",
+    "coachReadEmpty": "模型暂时不可读——上面三项认可本身就够了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 个提示词 token 中 {cached} 个来自网关缓存"
   },
   "worldTimeline": {
     "metaTitle": "逐轮：赛季的长句",

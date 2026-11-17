@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { Provenance, RefLink, WorldHead, WorldUnavailable } from "@/components/world";
+import { SpotlightCoachRead } from "@/components/SpotlightCoachRead";
 import { pageMetadata } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { WorldEnvelope, PlayerBrief, TeamBrief } from "@/lib/types";
@@ -113,6 +114,8 @@ export default async function SpotlightPage() {
           {bloodTile}
         </article>
       </div>
+
+      <SpotlightCoachRead />
 
       <Provenance provenance={result.data} />
     </div>
