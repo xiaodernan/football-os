@@ -5037,7 +5037,13 @@
     "favoriteAway": "favourite: away",
     "sectionUpsetsLabel": "The Upset Register",
     "sectionUpsetsNote": "the underdog, counted",
-    "sectionUpsetsChip": "upsets"
+    "sectionUpsetsChip": "upsets",
+    "coachReadEyebrow": "AI Coach · the underdogs, read",
+    "coachReadTitle": "The register, read by the model",
+    "coachReadHint": "One press — the model reads the rows this page computed (the biggest gap closed, the five largest upsets, the fortresses held) and speaks one honest paragraph about where the favourite's edge fell short. It does not invent a club, fixture or figure beyond the rows it was handed; the mean gap is a mean, never a prediction.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the register's arithmetic above stands alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldDynasties": {
     "metaTitle": "The Dynasties — the streak ledger",

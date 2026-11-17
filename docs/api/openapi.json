@@ -3195,6 +3195,29 @@
         }
       }
     },
+    "/api/v1/world/upsets/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Upsets Coach Read",
+        "description": "The Upset Register's coach-read — one honest paragraph on where the favourite's edge fell short.\n\nThe model receives exactly the rows the register computed — the biggest gap an underdog closed,\nthe five largest upsets, the fortresses held at a gap of eight or more, and the season's tally\n(upsets, fortresses, mean gap, upset rate). It never invents a club, fixture, scoreline or\nrating gap the rows do not carry; the mean gap is a mean, the rate is a rate — the register\nmakes no claim about any future match. Without a configured provider this returns\n`available: false` and the register's own arithmetic stands alone.",
+        "operationId": "upsets_coach_read_api_v1_world_upsets_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Upsets Coach Read Api V1 World Upsets Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/champions": {
       "get": {
         "tags": [

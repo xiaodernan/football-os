@@ -5037,7 +5037,13 @@
     "favoriteAway": "favori : extérieur",
     "sectionUpsetsLabel": "Le Registre des Succès",
     "sectionUpsetsNote": "le faible, compté",
-    "sectionUpsetsChip": "succès"
+    "sectionUpsetsChip": "succès",
+    "coachReadEyebrow": "Coach IA · le registre lu",
+    "coachReadTitle": "Le modèle lit le registre",
+    "coachReadHint": "Un appui — le modèle lit les lignes que cette page vient de calculer (le plus grand écart comblé, les cinq plus gros coups, les forteresses tenues) et dit un paragraphe honnête sur l'endroit où l'atout du favori a lâché. Il n'invente aucun club, aucune rencontre ni aucun chiffre hors des lignes qu'il a reçues; l'écart moyen est une moyenne, pas une prévision.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — l'arithmétique du registre ci-dessus tient seule.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "worldDynasties": {
     "metaTitle": "Les Dynasties — le registre des séries",

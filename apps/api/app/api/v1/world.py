@@ -38,6 +38,7 @@ from app.models import (
 )
 from app.services.almanac_coach import compute_almanac_coach_read
 from app.services.matchday_xi_coach import compute_matchday_xi_coach_read
+from app.services.upsets_coach import compute_upsets_coach_read
 from app.services.real_book_coach import compute_real_book_coach_read
 from app.services.records_coach import compute_records_coach_read
 from app.services.story_coach import compute_story_coach_read
@@ -1266,6 +1267,21 @@ def upsets(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_upsets")
     return _envelope(**compute_upsets(db))
+
+
+@router.get("/upsets/coach-read")
+def upsets_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Upset Register's coach-read — one honest paragraph on where the favourite's edge fell short.
+
+    The model receives exactly the rows the register computed — the biggest gap an underdog closed,
+    the five largest upsets, the fortresses held at a gap of eight or more, and the season's tally
+    (upsets, fortresses, mean gap, upset rate). It never invents a club, fixture, scoreline or
+    rating gap the rows do not carry; the mean gap is a mean, the rate is a rate — the register
+    makes no claim about any future match. Without a configured provider this returns
+    `available: false` and the register's own arithmetic stands alone.
+    """
+    limit(request, 20, 60, scope="world_upsets_read")
+    return _envelope(**compute_upsets_coach_read(db))
 
 
 @router.get("/champions")

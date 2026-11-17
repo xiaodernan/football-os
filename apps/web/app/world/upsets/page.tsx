@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Provenance, WorldHead, WorldUnavailable, formatDay } from "@/components/world";
+import { UpsetsCoachRead } from "@/components/UpsetsCoachRead";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
@@ -169,6 +170,8 @@ export default async function UpsetsPage() {
         <span className="upsets__tile-eyebrow">{t("methodEyebrow")}</span>
         <p>{t("methodBody")}</p>
       </section>
+
+      <UpsetsCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

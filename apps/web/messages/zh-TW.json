@@ -5037,7 +5037,13 @@
     "favoriteAway": "看好：客隊",
     "sectionUpsetsLabel": "冷門登記冊",
     "sectionUpsetsNote": "弱旅的成績單",
-    "sectionUpsetsChip": "冷門"
+    "sectionUpsetsChip": "冷門",
+    "coachReadEyebrow": "AI 教練 · 爆冷簿述之",
+    "coachReadTitle": "模型讀爆冷紀錄",
+    "coachReadHint": "按一下——模型讀本頁剛算出的數行（合上的最大差距、五場最大的冷門、撐住的城牆），就熱門優勢哪裡撐不住了講一段話。它不會編造超出這些數行的任何俱樂部、比賽或數字；平均差距是平均值，不是預測。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型暫時不可讀——上面爆冷紀錄的算術本身就夠了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "worldDynasties": {
     "metaTitle": "王朝名冊——連串之卷",
