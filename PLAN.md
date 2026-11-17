@@ -5198,3 +5198,22 @@ Both legs running them printed the same error — the new `from app.services.sim
 **Measured through the browser.** Signed in via the public proxy as DEMO; pressed `Ask the model` on `/world/matchday-xi`; the page printed the cold answer with the first-call cache read (`0 of 4958 prompt tokens came from the gateway's cache`). Player names printed from the deterministic door, provider chip none changed none of what the door decides — 6.4 s cold.
 
 **Not claimed.** The XI picked by overall rating is a shortcut, never a scouting report; anything the model invents beyond what the list prints the door refuses to print and the request prompt refuses to invent; that this chapter reckons with any real-world matchday.
+
+## Item 175 — the research agent stops inventing a reason; it renders the answer door's own refusal (landed 2026-11-17)
+
+**The symptom.** `/agents → Pick an agent → What is offside? → Run agent` printed, verbatim:
+
+```
+I found limited information about 'What is offside?' in my knowledge base. …
+Confidence: 30%
+```
+
+The retrieval was fine — `offside-interference-explained.md` answers at rerank ≈ 0.55, far above the floor. The answer door refused because its answerability gate (Item 135) demands at least two discriminative matches; the question carried only one (`offside`). The floor stayed held — never lowered, never worked around.
+
+**The defect.** The agent had a canned fallback that substituted "I found limited information" for the answer door's actual refusal — a misleading diagnosis shipped to the reader.
+
+**The cure.** `apps/api/app/services/agents/research.py` — when `ask()` returns `answered=False`, the agent now renders `result.text` verbatim (the answer door's own honest refusal, with the rare-term-match count and coverage floor in its own language). No floor lowered; no gate moved.
+
+**Measured.** `tests/test_agents.py` + `tests/test_agent_trace.py` → **34 passed**; `tests/test_knowledge_rag.py` → **26 passed**.
+
+**Not claimed.** That the answer is now useful for a one-term question (still no — and still the honest refusal); that the gate ever suggested wording-free end-runs; that anything in the answer door's gate moved (nothing did — the canned fallback retired in its place).

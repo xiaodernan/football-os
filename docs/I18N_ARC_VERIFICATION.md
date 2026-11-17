@@ -11220,3 +11220,22 @@ openai · gpt-6.1-terra · 0 of 4958 prompt tokens came from the gateway's cache
 `{"available": true, "provider": "openai", "model": "gpt-6.1-terra", ...}` direct, 200 — 6.4 s cold.
 
 **Not claimed.** That the XI is the football best eleven in any real league (it is deterministic OVR selection in a synthetic world); that the captain is a tactical captain (the minutes make him the world's own within the XI, nothing else); that this paragraph names the strongest side the world could send — only the one the door prints; that any heatmap, any opponent or any line-of-scrimmage is computed (the XI is a reading aid, not a scouting report).
+
+## §313 — Item 175: the research agent stops inventing a reason; it renders the answer door's own refusal (2026-11-17)
+
+**The symptom.** Pressing `Pick an agent` → `What is offside?` → `Run agent` on `/agents` printed, verbatim:
+
+```
+I found limited information about 'What is offside?' in my knowledge base. …
+confidence 30%
+```
+
+The retrieval was fine — the `offside-interference-explained.md` chapter answers at score ≈ 0.55, far above the rerank floor; the answer door `ask()` itself refused, because the answerability gate (Item 135) demands at least two discriminative matches and the question carried only one (`offside`). Gate at `MIN_DISCRIMINATIVE_MATCHES = 2` stayed held; the RAG was never weak, the floor was doing its job.
+
+**The defect.** The agent had a canned `_generate_fallback_response` that substituted `"I found limited information"` for the ask door's actual refusal — a **false diagnosis** in print, shipped to the reader.
+
+**The cure.** `services/agents/research.py` — when `ask()` returns `answered=False`, the agent now renders `result.text` (the answer door's own refusal, which names the actual cause: too-few discriminative terms with matched rare-term counts), never the canned guess. Otherwise it falls back to the answering-case prose exactly as before. No floor lowered; no contract moved; no `MIN_DISCRIMINATIVE_*` touched.
+
+**Measured.** `tests/test_agents.py` + `tests/test_agent_trace.py` **34 passed**; `tests/test_knowledge_rag.py` **26 passed**.
+
+**Not claimed.** That the answer is now useful for a one-term question (honest answer: still no; the refusal is the answer); that the gate ever suggested wording-free end-runs; that the "limited information" string was removed from the canned path (it was retired with the canned path). The gate still refuses single-term questions; the reader now learns *why*, not a fabricated "limited information".

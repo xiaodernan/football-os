@@ -106,10 +106,13 @@ class ResearchAgent(BaseAgent):
             detail=f"{len(result.citations)} citations at confidence {result.confidence:.2f}",
         )
         
-        # Handle cases where RAG couldn't find relevant information
+        # Handle cases where RAG couldn't provide an answer
         if not result.answered or result.confidence < 0.3:
-            # Provide a helpful response even when data is missing
-            fallback_answer = self._generate_fallback_response(query, result)
+            # The answer door's own refusal is the honest answer to a question it could not
+            # support; it names the cause (floor miss vs too-few discriminative terms) instead of
+            # inventing one. Rendering it here beats the canned "limited information" prose,
+            # which misreported a one-term query as a corpus gap.
+            fallback_answer = result.text if not result.answered else self._generate_fallback_response(query, result)
             return {
                 "answer": fallback_answer,
                 "citations": result.citations,
