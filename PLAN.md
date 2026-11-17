@@ -4888,3 +4888,13 @@ counted **1321**. The commit was amended and pushed with `--force-with-lease`, r
 SHA for a one-line message fix. **Tree identical; the id fwas rewritten.** `--force-with-lease` on master does
 not happen again — every future fact pack message-fix counts the commits at generation time (generator prints it)
 and re-checks before `git commit`. The event is recorded verbatim in `docs/I18N_ARC_VERIFICATION.md` §288.
+
+## Item 149 — the French ICU pair left the token table; the gates recomputed (landed 2026-11-17)
+
+**The local witness red.** `qa-token-gates-witness` printed definer 5/7 reds and named the table's
+figures stale by 2: fr held 4,970 translated keys while the README row said 4,968, and the two
+`knowledge.resultLine*` rows had stopped being identical to English the day they became proper French.
+
+**The cure.** Both rows removed from `qa-locale-tokens.mjs` (278 named tokens now); README recomputed
+to fr 4,970/5,248. Witness reruns **11/11**, tokens **7/7**. Counts for `zh`/`zh-TW`/`ar`/`he` unchanged
+at 5,201/5,248.

@@ -10423,3 +10423,27 @@ advertised itself; every downstream artifact that pins SHAs (`latest.json`) was 
 breath to `2303a8c`. The rule now reads: the fact pack is *generated* with the correct number before it
 is committed, or not-pinned-at-all (`arc §X revisited`); `--force-with-lease` is not used on master
 again, for any reason.
+
+## §289 — Item 149: the two French plurals stopped being tokens, and the token gate recomputed honestly (2026-11-17)
+
+**The local witness, verbatim** (`node scripts/qa-token-gates-witness.mjs`, on a tree holding the Item 143 fr catalogue):
+
+```
+FAIL  definer 5/7 reds [every named technical token is still a token | the catalogue's own table
+      states the figures the catalogue holds]; drift 3/4;
+      table says: fr: the table claims 4968 translated keys; the catalogue holds 4970
+```
+
+Two fr rows of the named token table — `knowledge.resultLine`, `knowledge.resultLineOne` — stopped being
+identical to the English catalogue the day they became proper French (six-branch ICU plurals, Item 143).
+The gate ran against the real tree and named both facts: the table stated 4,968 translated keys while the
+catalogue held 4,970, and two of its named tokens had translated.
+
+**The cure.** Both keys removed from `qa-locale-tokens.mjs` (278 named tokens, from 280);
+`messages/README.md` recomputed to fr **4,970 of 5,248**; `qa-token-gates-witness` reruns **11/11 green**;
+`qa-locale-tokens` **7/7**. The `zh`/`zh-TW`/`ar`/`he` rows unchanged at 5,201/5,248.
+
+**Not claimed.** That any translation was reviewed for style — `resultLine*` passes the ICU parse
+(`qa-icu-messages` 2/2), and no human has proof-read the French plural phrasing end-to-end on a reader
+session; that the 280→278 reduction means something collapsed — it didn't; the two items simply stopped
+being tokens on the day they translated.
