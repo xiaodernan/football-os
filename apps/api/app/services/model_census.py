@@ -112,19 +112,19 @@ def compute_model_census(session: Session, *, window_days: int = WINDOW_DAYS) ->
 
     by_day: dict[str, dict[str, Any]] = {}
     for offset in range(window_days):
-        day = (today - timedelta(days=window_days - 1 - offset)).isoformat()
-        by_day[day] = {"date": day, "calls": 0, "failures": 0, "input_tokens": 0, "cached_tokens": 0, "reported_rows": 0, "cost_usd": 0.0}
+        day_iso = (today - timedelta(days=window_days - 1 - offset)).isoformat()
+        by_day[day_iso] = {"date": day_iso, "calls": 0, "failures": 0, "input_tokens": 0, "cached_tokens": 0, "reported_rows": 0, "cost_usd": 0.0}
     for r in rows:
         key = r.created_at.date().isoformat() if hasattr(r.created_at, "date") else str(r.created_at)[:10]
-        day = by_day.get(key)
-        if day is None:
+        slot = by_day.get(key)
+        if slot is None:
             continue
-        day["calls"] += 1
-        day["failures"] += 0 if r.success else 1
-        day["input_tokens"] += int(r.input_tokens or 0)
-        day["cached_tokens"] += int(r.cached_input_tokens or 0)
-        day["reported_rows"] += 1 if r.cache_reported else 0
-        day["cost_usd"] = round(day["cost_usd"] + float(r.actual_cost_usd or 0.0), 4)
+        slot["calls"] += 1
+        slot["failures"] += 0 if r.success else 1
+        slot["input_tokens"] += int(r.input_tokens or 0)
+        slot["cached_tokens"] += int(r.cached_input_tokens or 0)
+        slot["reported_rows"] += 1 if r.cache_reported else 0
+        slot["cost_usd"] = round(slot["cost_usd"] + float(r.actual_cost_usd or 0.0), 4)
 
     error_groups: dict[str, int] = {}
     for r in rows:
