@@ -1,8 +1,8 @@
 {
-  "head": "59fe29b",
-  "total_commits": 1382,
-  "milestone": "§314",
-  "milestone_full": "§314 — Item 176: the Chinese coach answers a Chinese question with the model, not a grammar-tuned chip (2026-11-17)",
+  "head": "b4d1f75",
+  "total_commits": 1384,
+  "milestone": "§315",
+  "milestone_full": "§315 — Item 177: the Chinese plan works too — `生成 7 天计划` pressed end to end (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 209,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T07:40:37.530Z"
+  "generated_at": "2026-11-17T07:46:00.607Z"
 }
