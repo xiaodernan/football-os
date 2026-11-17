@@ -10377,3 +10377,27 @@ tests/test_knowledge_joint.py` — **59 passed** on the committed tree;
 same as every other chapter — ingesting is the commit, not the press); that CI will green-light the
 new doc on its pgvector judgment the first time it sees it (any ranking divergence surfaces as a
 gate red, recorded in its own commit).
+
+## §287 — Item 147: the kit ran out of, French was short many, and the plural-select gate called it (2026-11-17)
+
+**The red, verbatim** (CI run `44002131406`, web leg, `Plural-select gate`):
+```
+FAIL  every plural has required categories for each locale — 2 plural issue(s):
+fr: knowledge.resultLine      plural "total" missing categories: many (has: one, other)
+fr: knowledge.resultLineOne   plural "total" missing categories: many (has: one, other)
+```
+
+The en, ar, he and Chinese rows already carried the categories their locales require (the gate
+printed en 91 flat 0, zh 25 judged flat 66, ar 6/6, he 6/6); the one it refused was the French
+row, which carried two branches where French carries six (`zero`, `one`, `two`, `few`, `many`,
+`other`). My `doc(s)`-shaped English rendering ported to French without the other four branches —
+the exact defect class the en doc would have caught for `one`↔`many` (English shares them), absent
+for French.
+
+**The cure.** French `resultLine`/`resultLineOne` now spell the full six-branch French plural.
+Gate re-run locally: `qa-plural-select` **7/7** on the committed tree; the fr SSR renders
+"56 documents" at 3210.
+
+**Not claimed.** That the runner will green-light this push because the fr row now matches (CI is
+the judge); that the fr plural rendered correctly on this host means it renders on every French
+client ICU library — that is what the gate is for.
