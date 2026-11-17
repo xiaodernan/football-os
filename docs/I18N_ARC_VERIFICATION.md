@@ -11007,4 +11007,22 @@ carry); that French readers now get French narration of anything else — this a
 now counts as plurilingual beyond its four locales; that any golden slice indexes French (the eval window remains
 en/zh by explicit design).
 
+## §306 — Item 168: the fact-pack message named a commit that does not exist (2026-11-17)
 
+**The slip, verbatim.** The fact-pack commit `51622f9` carries
+
+```
+chore(scripts): fact pack refreshed to faaf5f7 - 1361 commits, arc §305 (Item 167)
+```
+
+`faaf5f7` is not a commit anywhere in this repository; the pack it lands pins `head: 531a619` (the Item 167
+French-library commit — what the generator printed at its run). This is the third time this arc has recorded
+exactly this shape of failure, after `d938246` (§290) and `7d33ccb` (§298); the rule restated after the second
+was not read before this third slip was written into the message. **No amend, no force-push; `51622f9` stands.**
+The fix on any future fact-pack commit is the same one that was already on the books: the message is written from
+the line the generator prints, verbatim, or the commit is not made.
+
+**Not claimed.** That the pack's own contents are wrong (they are not — `531a619`, 1361 commits, arc §305, all true);
+that this entry changes anything about who wrote the message (the same author of the other two); that the rule
+holds forever after this entry (it is restated with every recurrence, which is the correct response to this failure
+mode rather than a cure that ends it).
