@@ -10513,6 +10513,33 @@ that one box can replace knowing the book — it just saves the twenty-three cli
 
 ## §293 — Item 155: the search door taught at /world browse; reader can discover it (2026-11-17)
 
+**The gap.** Item 154 shipped `/world/real-book/search` and left it undiscoverable: the `/world` browse page lists every world door, and search was the only one missing there. A reader who never types the URL learns nothing of it.
+
+**The cure.** `app/world/page.tsx` gains an entry — `/world/real-book/search` — positioned right after `/world/real-book`. Two new catalogue keys per locale (`sectionRealBookSearchLabel`, `sectionRealBookSearchNote`); counts recomputed; every catalogue now holds **5,264 keys**.
+
+Gates green: `qa-unused-keys` **3/3** · `qa-locale-tokens` **7/7** · `qa-i18n-literals` **9/9** · `qa-locale-completeness` **2/2** · `qa-icu-messages` **2/2** · `tsc --noEmit` clean · API `test_knowledge_joint.py` + `test_locale_claims.py` **25 passed**.
+
+**Not claimed.** That the door appears in the primary nav (it is at its thirteen-entry ceiling; a fourteenth pushes the actions rail under the links); that §293 reverts or re-arranges §292's pre-scope — it adds one door link to the browse page.
+
+## §294 — Item 156: the EN column label changed one character, the whole gate reds (2026-11-17)
+
+**The red, verbatim** (CI run `44009858327`, web leg, `Translation-freshness gate`):
+
+```
+FAIL  no stale zh translations (en changed, zh unchanged) — 1 stale zh translation(s):
+        worldRealBook.thScore: en="Score" vs baseline="score" (zh unchanged)
+FAIL  no stale zh-TW translations (en changed, zh-TW unchanged) — 1 stale zh-TW translation(s):
+        worldRealBook.thScore: en="Score" vs baseline="score" (zh-TW unchanged)
+FAIL  no stale ar translations (en changed, ar unchanged) — 1 stale ar translation(s):
+        worldRealBook.thScore: en="Score" vs baseline="score" (ar unchanged)
+```
+
+The `worldRealBook.thScore` key inadvertently carried `Score` (capital) in Item 147's i18n pass; every locale plus the English file match except fr, which was already `score` in another namespace. Gate held: byte-comparison is exactly the contract. Both namespaces moved to identical `score`; the fr table survives with identical-values 280→280 (no movement; fr already held `score` everywhere).
+
+**The cure.** `en.json` and `fr.json` — `worldHonours.thScore` and `worldRealBook.thScore` are now byte-identical `score`; every other locale untouched. `qa-locale-tokens.mjs` continues to name fr `thScore` as a doublet; `qa-translation-freshness` now passes on the same baseline; `qa-locale-tokens` **7/7**. README's fr figure recitation added `4984 / 5264` consistent with the gate's recomputed census.
+
+**Not claimed.** That §156's cure greened the specific failed CI run (it is expected to print green on any push that already carried this commit); that §292's own legs live as reported — the queue is draining those in order.
+
 **The gap.** Item 154 shipped `/world/real-book/search` and left it **undiscoverable**: the `/world` browse page lists every world door, and search was the only one missing there. A reader who never types the URL learns nothing of it.
 
 **The cure.** `app/world/page.tsx` gains an entry — `/world/real-book/search` — positioned right under `/world/real-book` (it is its next step). SSR verified in both locales: `Search the book` on the en page, `搜索真实之书` on the zh page; both fingerprints present in the served HTML. Two new catalogue keys per locale (`sectionRealBookSearchLabel`, `sectionRealBookSearchNote`); counts recomputed; every catalogue now holds **5,264 keys**.

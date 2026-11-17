@@ -5123,7 +5123,7 @@
     "ledgerLede": "Every match this product carries, grouped by the day it was played — the scores, extra time, penalties and the venues — read straight from the committed snapshot.",
     "matchesOnDay": "{count, plural, one {# match} other {# matches}}",
     "thFixture": "Fixture",
-    "thScore": "Score",
+    "thScore": "score",
     "thVenue": "venue",
     "aetChip": "AET",
     "penChip": "PEN {a}–{b}",
@@ -5391,6 +5391,6 @@
     "thWinsTh": "Titles",
     "thYearsTh": "Years",
     "snapshotNote": "every figure on this page is recomputed from the committed snapshots on every read; nothing is fetched from the network.",
-    "thScore": "Score"
+    "thScore": "score"
   }
 }

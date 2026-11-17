@@ -5123,7 +5123,7 @@
     "ledgerLede": "Tous les matches que ce produit porte, groupés par jour — scores, prolongations, tirs au but et stades — lus directement depuis l'instantané archivé.",
     "matchesOnDay": "{count, plural, one {# match} many {# de matchs} other {# matchs}}",
     "thFixture": "affiche",
-    "thScore": "Score",
+    "thScore": "score",
     "thVenue": "stade",
     "aetChip": "a.p.",
     "penChip": "TAB {a}–{b}",
@@ -5391,6 +5391,6 @@
     "thWinsTh": "Titres",
     "thYearsTh": "Années",
     "snapshotNote": "chaque chiffre de cette page est recalculé à chaque lecture depuis les instantanés archivés — rien n'est récupéré sur le réseau au moment du rendu.",
-    "thScore": "Score"
+    "thScore": "score"
   }
 }

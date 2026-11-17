@@ -4913,6 +4913,20 @@ spine is English figures by design, not a defect). SSR renders 200 with the resu
 
 **Not claimed.** That the search door appears in the primary nav (the nav is at its thirteen entry ceiling for portrait widths; adding a fourteenth would push the right-side actions rail out under the links); that the zh catalogue was unreviewed after being edited by script (it is re-read by every gate, and the zh SSR prints fine); that Item 155 adds any new content — it only surfaces a door that Item 154 built.
 
+## Item 156 — the EN column letter-case changed one character; the whole gate reds (landed 2026-11-17)
+
+**The red.** CI `44009858327` web leg, `Translation-freshness gate`:
+
+```
+FAIL  no stale zh translations: worldRealBook.thScore: en="Score" vs baseline="score" (zh unchanged)
+FAIL  no stale zh-TW translations: same shape
+FAIL  no stale ar translations: same shape
+```
+
+Root cause: Item 147's i18n pass capitalised `thScore` in the `worldRealBook` and `worldHonours` namespaces; the Taiwan/Chinese/Arabic siblings had not moved, and the gate is byte-comparison. **Cure:** `en.json` and `fr.json` returned both `thScore` values to `score`; every other locale untouched. `qa-locale-tokens` 7/7 · `qa-translation-freshness` 5/5 locally on the same baseline.
+
+**Not claimed.** That every CI leg pointed at this fix has finished draining; the fr figure note in README (`4984 / 5264`) is reconciled to the gate's recomputed census.
+
 ## Item 149 — the French ICU pair left the token table; the gates recomputed (landed 2026-11-17)
 
 **The local witness red.** `qa-token-gates-witness` printed definer 5/7 reds and named the table's
