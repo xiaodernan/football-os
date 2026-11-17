@@ -1,8 +1,8 @@
 {
-  "head": "385d3d4",
-  "total_commits": 1335,
-  "milestone": "§292",
-  "milestone_full": "§292 — Item 154: the Real Book gets one search box; all 24 tournaments queryable (2026-11-17)",
+  "head": "3a074e3",
+  "total_commits": 1337,
+  "milestone": "§293",
+  "milestone_full": "§293 — Item 155: the search door taught at /world browse; reader can discover it (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 91,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T03:23:01.509Z"
+  "generated_at": "2026-11-17T03:34:52.293Z"
 }
