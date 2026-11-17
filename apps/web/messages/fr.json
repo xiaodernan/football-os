@@ -1397,8 +1397,8 @@
     "libraryEyebrow": "Bibliothèque",
     "libraryTitle": "Bibliothèque de documents",
     "libraryFooter": "Lu depuis GET /knowledge/documents. La provenance, la difficulté et les nombres de passages sont les propres champs de l'API — rien ici n'est modélisé ni décoratif.",
-    "resultLine": "{total} document{s}{category}{query}.",
-    "resultLineOne": "{total} document{s}",
+    "resultLine": "{total, plural, one {# document} other {# documents}}{category}{query}",
+    "resultLineOne": "{total, plural, one {# document} other {# documents}}",
     "filterLabel": "Filtrer le titre / la source",
     "noMatchesTitle": "Aucun document ne correspond à ce filtre",
     "noMatchesBody": "Effacez le filtre ou choisissez une autre catégorie.",
@@ -1478,7 +1478,23 @@
     "demoRerankTitle": "Aucune clé de modèle de langage n'est configurée ; le classement utilise un filtre de caractéristiques et les passages sont affichés mot à mot.",
     "noModelKeyTitle": "Aucune clé de modèle de langage n'est configurée — les réponses de question/recherche sont extractives à partir de passages cités, jamais générées.",
     "cachedPhrasing": "réponse mémorisée",
-    "cachedPhrasingTitle": "Cette question exacte sur ces passages a déjà reçu une réponse : la formulation a été réutilisée, sans nouvel appel au modèle."
+    "cachedPhrasingTitle": "Cette question exacte sur ces passages a déjà reçu une réponse : la formulation a été réutilisée, sans nouvel appel au modèle.",
+    "knowledgeCategories": {
+      "tactics": "Tactique",
+      "training": "Entraînement",
+      "sports-science": "Sciences du sport",
+      "match-analysis": "Analyse de match",
+      "rules": "Lois du jeu",
+      "coaching": "Coaching",
+      "history": "Histoire",
+      "team-profile": "Profil d'équipe",
+      "player-profile": "Profil de joueur"
+    },
+    "categoryClause": " dans {category}",
+    "queryClause": " correspondant à «{query}»",
+    "difficultyBeginner": "Débutant",
+    "difficultyIntermediate": "Intermédiaire",
+    "difficultyAdvanced": "Avancé"
   },
   "challenges": {
     "applied": "APPLIQUÉ",

@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
+import { categoryLabel, difficultyLabel } from "@/lib/knowledgeCategory";
 import { serverFetch } from "@/lib/server";
 import { absolute, pageMetadata, SITE_NAME } from "@/lib/site";
 import type { KnowledgeDocumentDetail } from "@/lib/types";
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = await serverFetch<KnowledgeDocumentDetail>(`/knowledge/documents/${encodeURIComponent(slug)}`);
   const title = result.ok ? result.data.title : slug.replace(/-/g, " ");
   const description = result.ok
-    ? tk("articleDescription", { category: result.data.category.replace(/_/g, " "), count: result.data.chunk_count })
+    ? tk("articleDescription", { category: categoryLabel(tk, result.data.category), count: result.data.chunk_count })
     : tk("metaFallbackDocument");
   return pageMetadata({ title, description, path: `/knowledge/${slug}`, type: "article" });
 }
@@ -58,7 +59,7 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
         </Link>
         <div className="between wrap" style={{ gap: "0.6rem", marginTop: "0.5rem" }}>
           <div>
-            <p className="eyebrow">{doc.category.replace(/_/g, " ")}</p>
+            <p className="eyebrow">{categoryLabel(tk, doc.category)}</p>
             <h1 className="h1">{doc.title}</h1>
           </div>
           <span className="badge badge--authored" title={tk("authoredBadgeTitle")}>
@@ -66,7 +67,7 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
           </span>
         </div>
         <div className="tag-list" style={{ marginTop: "0.6rem" }}>
-          <span className="chip">{tk("difficultyChip", { value: doc.difficulty })}</span>
+          <span className="chip">{tk("difficultyChip", { value: difficultyLabel(tk, doc.difficulty) })}</span>
           <span className="chip">{tk("passagesCount", { count: doc.chunk_count })}</span>
           <span className="chip">{tk("charactersChip", { count: doc.char_count.toLocaleString() })}</span>
           <span className="chip">{tk("editorialConfidence", { value: doc.editorial_confidence })}</span>
@@ -90,7 +91,7 @@ export default async function KnowledgeDocumentPage({ params }: Props) {
             "@context": "https://schema.org",
             "@type": "Article",
             headline: doc.title,
-            description: tk("jsonLdDescription", { category: doc.category.replace(/_/g, " "), passages: doc.chunk_count }),
+            description: tk("jsonLdDescription", { category: categoryLabel(tk, doc.category), passages: doc.chunk_count }),
             url: absolute(`/knowledge/${doc.slug}`),
             mainEntityOfPage: { "@type": "WebPage", "@id": absolute(`/knowledge/${doc.slug}`) },
             author: { "@type": "Organization", name: SITE_NAME },

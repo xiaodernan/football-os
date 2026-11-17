@@ -6,6 +6,7 @@ import { Fragment, useState, type ReactNode } from "react";
 
 import { ReasonList } from "@/components/ui";
 import { browserFetch, errorMessage } from "@/lib/api";
+import { categoryLabel } from "@/lib/knowledgeCategory";
 import { KNOWLEDGE_DIFFICULTIES, KNOWLEDGE_MODES, KNOWLEDGE_POSITIONS, type KnowledgeAskResponse, type KnowledgeCitation } from "@/lib/types";
 
 function fmt(value: number | undefined, digits = 3): string {
@@ -38,7 +39,7 @@ function CitationCard({ citation, index }: { citation: KnowledgeCitation; index:
         <span className="chip">{tk("citationScore", { value: fmt(citation.score) })}</span>
       </div>
       <span className="muted" style={{ fontSize: "0.82rem" }}>
-        {tk("citationMeta", { section: citation.section, category: citation.category.replace(/_/g, " "), value: fmt(citation.similarity) })}
+        {tk("citationMeta", { section: citation.section, category: categoryLabel(tk, citation.category), value: fmt(citation.similarity) })}
       </span>
       <p className="kn-cite__quote">&ldquo;{citation.quote}&rdquo;</p>
       <div className="row wrap" style={{ gap: "0.6rem" }}>

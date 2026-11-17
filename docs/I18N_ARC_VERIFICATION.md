@@ -10232,3 +10232,46 @@ never at the edges.
 429 census means abuse was detected (it means the door kept its promise); that the demo stack was
 untouched by the ablation (its API was rebuilt and re-synced this same arc for Item 141 before this
 soak ran).
+
+## §283 — Item 143: the knowledge library printed Chinese beside English besides "s"; the catalogue now owns its phrasing (2026-11-17)
+
+**The defects, all on one door.** `/knowledge` in Chinese mode printed:
+
+```
+概述分类卡片: 共 14 篇文档s        ← English plural suffix hanging off a Chinese noun
+共 27 篇文档s                     ← the same on the library summary line
+Tactics / Training / Sports-Science/ Match-Analysis / Rules / Coaching / History / Team-Profile / Player-Profile
+                                   ← the nine category slugs, raw, never translated
+难度 chip: "difficulty advanced"    ← English enum glued onto a Chinese sentence
+```
+
+Three violations of demand §八 and the catalogue's own ICU discipline, one root: the page assembled
+bilingual fragments in code instead of the catalogue owning them.
+
+**The cure, at the same layer.** (a) `resultLine` / `resultLineOne` are now real ICU plural messages
+per locale — English/French `one {# document} other {# documents}`, Arabic `zero/one/two/few/many/
+other`, Hebrew `one/two/many/other`, Chinese flat forms — with the hand-rolled `{s}` slot gone and
+`categoryClause` / `queryClause` moved into the catalogues (` in {category}` / ` dans {category}` /
+` في {category}` / ` ב{category}` / `，分类为 {category}` / `，分類為 {category}`). (b) A new
+`knowledge.knowledgeCategories` namespace holds the nine category labels, written natively in each of
+the six languages, wired at every site that printed the raw slug: the SSR cards, the filter chips,
+`resultMeta` / `cardMeta` / `citationMeta`, the article `eyebrow`, `articleDescription`, and the
+JSON-LD `description`. (c) `difficultyBeginner` / `difficultyIntermediate` / `difficultyAdvanced`
+land the three level labels; the detail chip, `cardMeta` and `resultMeta` print them. (d) the French
+`coaching` twin is named in `qa-locale-tokens.mjs` (a French/English loanword doublet) — fr's
+named-token census moves 279 → 280.
+
+**Measured.** `qa-icu-messages` 2/2 · `qa-icu-coverage` 1/1 · `qa-unused-keys` 3/3 · `qa-key-drift`
+4/4 · `qa-shared-keys` 4/4 · `qa-i18n-literals` 9/9 · `qa-locale-tokens` 7/7 · `qa-locale-completeness`
+2/2 · `qa-namespace-ownership` 2/2 · `tsc --noEmit` clean. SSR verified on the rebuilt demo at
+`127.0.0.1:3210/knowledge` under `fo_locale=zh`: all nine Chinese category labels render, `篇文档s`
+no longer appears (ICU renders `共 14 篇文档`), the library summary reads `共 27 篇文档`; under
+`fo_locale=en` the page prints `Tactics`, `27 documents`, `14 documents`. The catalogue stands at
+**5,248 keys × 6 locales** (`zh`/`zh-TW`/`ar`/`he = 5,201 translated`, `fr = 4,968` of 5,248 with
+280 named identical-token values); `messages/README.md` carries the recomputed table.
+
+**Also recorded honestly.** `editorial_confidence` (`high`/`medium`) still prints its raw enum on the
+article page, and the `applies_to` role chips print `goalkeeper` / `midfielder` / … raw on both list
+and article pages — the same defect class, larger blast radius, and deliberately not half-fixed here:
+the catalogue carries no role keys yet, and opening that sweep is its own landing with a six-locale
+recount, not a tail-end patch to this one.

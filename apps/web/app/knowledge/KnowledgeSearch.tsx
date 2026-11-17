@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { ReasonList } from "@/components/ui";
 import { browserFetch, errorMessage } from "@/lib/api";
+import { categoryLabel, difficultyLabel } from "@/lib/knowledgeCategory";
 import { KNOWLEDGE_DIFFICULTIES, KNOWLEDGE_MODES, KNOWLEDGE_POSITIONS, type KnowledgeSearchResponse } from "@/lib/types";
 
 function fmt(value: number | undefined, digits = 3): string {
@@ -198,7 +199,7 @@ export function KnowledgeSearch({ signedIn, categories }: { signedIn: boolean; c
                         {hit.title}
                       </Link>
                       <div className="muted" style={{ fontSize: "0.82rem" }}>
-                        {tk("resultMeta", { heading: hit.heading, category: hit.category.replace(/_/g, " "), difficulty: hit.difficulty })}
+                        {tk("resultMeta", { heading: hit.heading, category: categoryLabel(tk, hit.category), difficulty: difficultyLabel(tk, hit.difficulty) })}
                       </div>
                     </div>
                   </div>

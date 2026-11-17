@@ -228,6 +228,8 @@ const FR_TOKENS = new Map([
   ["worldRealBook.chip1938", "the host venue's own name, spelled the same in French"],
   ["worldRealBook.chip1934", "the host venue's own name, spelled the same in French"],
   ["worldRealBook.chip1930", "the venue's own name, spelled the same in French"],
+  // The knowledge library's category label is the same English loanword in French.
+  ["knowledge.knowledgeCategories.coaching", "a French/English spelling doublet, kept as the table functional word"],
   // The host cities of the 2002/2006/2010 World Cups are spelled the same in French.
   ["worldRealBook.chip2002", "the host city's own name, spelled the same in French"],
   ["worldRealBook.chip2006", "the host city's own name, spelled the same in French"],

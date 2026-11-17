@@ -1397,8 +1397,8 @@
     "libraryEyebrow": "文庫",
     "libraryTitle": "文件文庫",
     "libraryFooter": "讀自 GET /knowledge/documents。來源、難度和區塊數都是 API 自己的欄位——這裡沒有任何建模或裝飾性內容。",
-    "resultLine": "共 {total} 篇文件{s}{category}{query}。",
-    "resultLineOne": "共 {total} 篇文件{s}",
+    "resultLine": "共 {total} 篇文件{category}{query}",
+    "resultLineOne": "共 {total} 篇文件",
     "filterLabel": "按標題／來源篩選",
     "noMatchesTitle": "沒有文件符合這個篩選條件",
     "noMatchesBody": "清除篩選條件，或換一個類別。",
@@ -1478,7 +1478,23 @@
     "demoRerankTitle": "沒有設定語言模型金鑰；排序使用特徵重排器，結果原樣呈現。",
     "noModelKeyTitle": "沒有設定語言模型金鑰——問答的答案由引用段落抽取式拼裝，絕不生成。",
     "cachedPhrasing": "快取作答",
-    "cachedPhrasingTitle": "同樣的問題、同樣的段落先前已經答過，這裡沿用當時的措辭，沒有再呼叫模型。"
+    "cachedPhrasingTitle": "同樣的問題、同樣的段落先前已經答過，這裡沿用當時的措辭，沒有再呼叫模型。",
+    "knowledgeCategories": {
+      "tactics": "戰術",
+      "training": "訓練",
+      "sports-science": "運動科學",
+      "match-analysis": "比賽分析",
+      "rules": "規則",
+      "coaching": "執教",
+      "history": "歷史",
+      "team-profile": "球隊檔案",
+      "player-profile": "球員檔案"
+    },
+    "categoryClause": "，分類為 {category}",
+    "queryClause": "，符合「{query}」",
+    "difficultyBeginner": "入門",
+    "difficultyIntermediate": "進階",
+    "difficultyAdvanced": "高級"
   },
   "challenges": {
     "applied": "已應用",

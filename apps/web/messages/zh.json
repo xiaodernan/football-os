@@ -1397,8 +1397,8 @@
     "libraryEyebrow": "文库",
     "libraryTitle": "文档文库",
     "libraryFooter": "读自 GET /knowledge/documents。来源、难度和段块数都是 API 自己的字段——这里没有任何建模或装饰性内容。",
-    "resultLine": "共 {total} 篇文档{s}{category}{query}。",
-    "resultLineOne": "共 {total} 篇文档{s}",
+    "resultLine": "共 {total} 篇文档{category}{query}",
+    "resultLineOne": "共 {total} 篇文档",
     "filterLabel": "按标题／来源筛选",
     "noMatchesTitle": "没有文档匹配这个筛选条件",
     "noMatchesBody": "清除筛选条件，或换一个类别。",
@@ -1478,7 +1478,23 @@
     "demoRerankTitle": "没有配置语言模型密钥；排序使用特征重排器，结果原样呈现。",
     "noModelKeyTitle": "没有配置语言模型密钥——问答的答案由引用段落抽取式拼装，绝不生成。",
     "cachedPhrasing": "缓存作答",
-    "cachedPhrasingTitle": "同样的问题、同样的段落此前已经答过，这里复用当时的措辞，没有再调用模型。"
+    "cachedPhrasingTitle": "同样的问题、同样的段落此前已经答过，这里复用当时的措辞，没有再调用模型。",
+    "knowledgeCategories": {
+      "tactics": "战术",
+      "training": "训练",
+      "sports-science": "运动科学",
+      "match-analysis": "比赛分析",
+      "rules": "规则",
+      "coaching": "执教",
+      "history": "历史",
+      "team-profile": "球队档案",
+      "player-profile": "球员档案"
+    },
+    "categoryClause": "，分类为 {category}",
+    "queryClause": "，匹配“{query}”",
+    "difficultyBeginner": "入门",
+    "difficultyIntermediate": "进阶",
+    "difficultyAdvanced": "高阶"
   },
   "challenges": {
     "applied": "已应用",

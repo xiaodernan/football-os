@@ -1397,8 +1397,8 @@
     "libraryEyebrow": "المكتبة",
     "libraryTitle": "مكتبة الوثائق",
     "libraryFooter": "تُقرأ من GET /knowledge/documents. المصدر والصعوبة وأعداد المقاطع هي حقول الـ API نفسه — لا شيء هنا مُركَّب أو زخرفي۔",
-    "resultLine": "{total} وثيقة{s}{category}{query}۔",
-    "resultLineOne": "{total} وثيقة{s}",
+    "resultLine": "{total, plural, zero {لا وثائق} one {وثيقة واحدة} two {وثيقتان} few {# وثائق} many {# وثيقة} other {# وثيقة}}{category}{query}",
+    "resultLineOne": "{total, plural, zero {لا وثائق} one {وثيقة واحدة} two {وثيقتان} few {# وثائق} many {# وثيقة} other {# وثيقة}}",
     "filterLabel": "تصفية العنوان / المصدر",
     "noMatchesTitle": "لا توجد وثائق تطابق هذا المرشح",
     "noMatchesBody": "امسح المرشح أو اختر فئة أخرى۔",
@@ -1478,7 +1478,23 @@
     "demoRerankTitle": "لا توجد مفتاح نموذج لغوي مُعد؛ يستخدم الترتيب مُعالج الخصائص وتُعرض النتائج حرفياً۔",
     "noModelKeyTitle": "لا توجد مفتاح نموذج لغوي مُعد — تُجمَّع إجابات السؤال/البحث استخراجياً من المقاطع المستشهد بها، ولا تُولَّد أبداً۔",
     "cachedPhrasing": "إجابة محفوظة",
-    "cachedPhrasingTitle": "سُئل هذا السؤال نفسه عن هذه المقاطع من قبل، فأُعيدت الصياغة المحفوظة دون استدعاء النموذج"
+    "cachedPhrasingTitle": "سُئل هذا السؤال نفسه عن هذه المقاطع من قبل، فأُعيدت الصياغة المحفوظة دون استدعاء النموذج",
+    "knowledgeCategories": {
+      "tactics": "التكتيك",
+      "training": "التدريب",
+      "sports-science": "علوم الرياضة",
+      "match-analysis": "تحليل المباراة",
+      "rules": "قوانين اللعبة",
+      "coaching": "كوتشينغ",
+      "history": "التاريخ",
+      "team-profile": "ملف الفريق",
+      "player-profile": "ملف اللاعب"
+    },
+    "categoryClause": " في {category}",
+    "queryClause": " المطابقة لـ«{query}»",
+    "difficultyBeginner": "مبتدئ",
+    "difficultyIntermediate": "متوسط",
+    "difficultyAdvanced": "متقدم"
   },
   "challenges": {
     "applied": "مُطبَّق",

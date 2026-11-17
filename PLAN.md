@@ -4803,3 +4803,17 @@ api /world/status (direct)                    17,746   2,640   15,106  295.8    
 The direct door kept its admission policy exactly (`Retry-After` contract 429s; p99 68 ms while
 refusing 85%); the front absorbed the same pressure with zero non-2xx. The box bends at the policy
 and never at the edges. See §282.
+
+## Item 143 — no English in Chinese clothing: the catalogue owns its phrasing (landed 2026-11-17)
+
+**The cure.** ICU plural messages per locale for `resultLine`/`resultLineOne` (zero `{s}` slots —
+English/French `one/other`, Arabic six branches, Hebrew three, Chinese flat); `categoryClause` /
+`queryClause` catalogue keys for the fragments the page used to inline; a new nine-key
+`knowledge.knowledgeCategories` namespace written natively in all six languages;
+`difficultyBeginner`/`difficultyIntermediate`/`difficultyAdvanced` keys; French `coaching` named in
+`qa-locale-tokens.mjs`. Wired at every print site: cards, filter chips, library summary, `resultMeta`,
+`cardMeta`, `citationMeta`, article eyebrow, `articleDescription`, JSON-LD description.
+Catalogue now **5,248 ×6**; README recomputed. Gates green (`qa-i18n-literals`, `qa-unused-keys`,
+`qa-key-drift`, `qa-shared-keys`, `qa-locale-tokens`, `qa-icu-messages`); tsc clean; SSR verified
+in both locales on the rebuilt demo. Not wired: raw role slugs and `editorial_confidence` enum still
+print English on article pages — named here, not half-fixed (see §283).

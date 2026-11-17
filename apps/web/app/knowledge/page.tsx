@@ -6,6 +6,7 @@ import { Empty, Panel } from "@/components/ui";
 import { KnowledgeAsk } from "@/app/knowledge/KnowledgeAsk";
 import { KnowledgeSearch } from "@/app/knowledge/KnowledgeSearch";
 import { errorMessage } from "@/lib/api";
+import { categoryLabel, difficultyLabel } from "@/lib/knowledgeCategory";
 import { currentUser, serverFetch } from "@/lib/server";
 import { pageMetadata } from "@/lib/site";
 import type { KnowledgeDocumentList, KnowledgeStatus } from "@/lib/types";
@@ -106,9 +107,9 @@ export default async function KnowledgePage({
             .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
             .map(([name, count]) => (
               <Link key={name} href={`/knowledge?category=${encodeURIComponent(name)}`} className="kn-card">
-                <span className="h3 upper">{name.replace(/_/g, " ")}</span>
+                <span className="h3 upper">{categoryLabel(t, name)}</span>
                 <span className="muted kn-card__summary">
-                  {t("resultLineOne", { total: count, s: count === 1 ? "" : "s" })}
+                  {t("resultLineOne", { total: count })}
                 </span>
               </Link>
             ))}
@@ -136,9 +137,8 @@ export default async function KnowledgePage({
                 <p className="muted" style={{ fontSize: "0.85rem" }}>
                   {t("resultLine", {
                     total: docsResult.data.total,
-                    s: docsResult.data.total === 1 ? "" : "s",
-                    category: category ? ` in ${category.replace(/_/g, " ")}` : "",
-                    query: q ? ` matching “${q}”` : "",
+                    category: category ? t("categoryClause", { category: categoryLabel(t, category) }) : "",
+                    query: q ? t("queryClause", { query: q }) : "",
                   })}
                 </p>
                 <form method="get" action="/knowledge" className="kn-form-row">
@@ -168,7 +168,7 @@ export default async function KnowledgePage({
                     className={`chip kn-filter-chip ${category === name ? "chip--accent" : ""}`}
                     href={`/knowledge?category=${encodeURIComponent(name)}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
                   >
-                    {name.replace(/_/g, " ")}
+                    {categoryLabel(t, name)}
                   </Link>
                 ))}
               </div>
@@ -180,7 +180,7 @@ export default async function KnowledgePage({
                   {docsResult.data.items.map((doc) => (
                     <Link key={doc.slug} href={`/knowledge/${encodeURIComponent(doc.slug)}`} className="kn-card">
                       <span className="h3">{doc.title}</span>
-                      <span className="muted kn-card__summary upper">{t("cardMeta", { category: doc.category.replace(/_/g, " "), difficulty: doc.difficulty })}</span>
+                      <span className="muted kn-card__summary upper">{t("cardMeta", { category: categoryLabel(t, doc.category), difficulty: difficultyLabel(t, doc.difficulty) })}</span>
                       <div className="tag-list">
                         {doc.applies_to.slice(0, 4).map((role) => (
                           <span className="chip" key={role}>

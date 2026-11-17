@@ -1397,8 +1397,8 @@
     "libraryEyebrow": "Library",
     "libraryTitle": "Document library",
     "libraryFooter": "Read from GET /knowledge/documents. Provenance, difficulty and chunk counts are the API's own fields — nothing here is modelled or decorative.",
-    "resultLine": "{total} document{s}{category}{query}.",
-    "resultLineOne": "{total} document{s}",
+    "resultLine": "{total, plural, one {# document} other {# documents}}{category}{query}",
+    "resultLineOne": "{total, plural, one {# document} other {# documents}}",
     "filterLabel": "Filter title / source",
     "noMatchesTitle": "No documents match this filter",
     "noMatchesBody": "Clear the filter or pick another category.",
@@ -1478,7 +1478,23 @@
     "demoRerankTitle": "No language-model key is configured; ranking uses the feature reranker and results are shown verbatim.",
     "noModelKeyTitle": "No language-model key is configured — ask/search answers are assembled extractively from the cited passages, never generated.",
     "cachedPhrasing": "served from cache",
-    "cachedPhrasingTitle": "This exact question over these passages was answered before, so the wording was reused and no model call was made."
+    "cachedPhrasingTitle": "This exact question over these passages was answered before, so the wording was reused and no model call was made.",
+    "knowledgeCategories": {
+      "tactics": "Tactics",
+      "training": "Training",
+      "sports-science": "Sports-Science",
+      "match-analysis": "Match-Analysis",
+      "rules": "Rules",
+      "coaching": "Coaching",
+      "history": "History",
+      "team-profile": "Team-Profile",
+      "player-profile": "Player-Profile"
+    },
+    "categoryClause": " in {category}",
+    "queryClause": " matching “{query}”",
+    "difficultyBeginner": "Beginner",
+    "difficultyIntermediate": "Intermediate",
+    "difficultyAdvanced": "Advanced"
   },
   "challenges": {
     "applied": "APPLIED",

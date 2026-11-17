@@ -1397,8 +1397,8 @@
     "libraryEyebrow": "ספרייה",
     "libraryTitle": "ספריית מסמכים",
     "libraryFooter": "נקראו מ-GET /knowledge/documents. המקור, הקושי ומספרי הקטעים הם שדות ה-API עצמם — שום דבר כאן לא מדווח או דקורטיבי.",
-    "resultLine": "{total} מסמך{s}{category}{query}.",
-    "resultLineOne": "{total} מסמך{s}",
+    "resultLine": "{total, plural, one {מסמך אחד} two {שני מסמכים} many {# מסמכים} other {# מסמכים}}{category}{query}",
+    "resultLineOne": "{total, plural, one {מסמך אחד} two {שני מסמכים} many {# מסמכים} other {# מסמכים}}",
     "filterLabel": "סנן כותרת / מקור",
     "noMatchesTitle": "אין מסמכים שמתאימים למסנן",
     "noMatchesBody": "נקה את המסנן או בחר קטגוריה אחרת.",
@@ -1478,7 +1478,23 @@
     "demoRerankTitle": "אין מפתח מודל שפה מוגדר; דירוג משתמש במסנן תכונות והתוצאות מוצגות מילה במילה.",
     "noModelKeyTitle": "אין מפתח מודל שפה מוגדר — תשובות שאל/חפש מתקבלות בפירוק מקטעים מצוטטים, אף פעם לא מיוצרות.",
     "cachedPhrasing": "תשובה שמורה",
-    "cachedPhrasingTitle": "השאלה הזו על אותם קטעים נענתה כבר, ולכן הנוסח נשלף מהמאגר בלי קריאה נוספת למודל"
+    "cachedPhrasingTitle": "השאלה הזו על אותם קטעים נענתה כבר, ולכן הנוסח נשלף מהמאגר בלי קריאה נוספת למודל",
+    "knowledgeCategories": {
+      "tactics": "טקטיקה",
+      "training": "אימון",
+      "sports-science": "מדעי הספורט",
+      "match-analysis": "ניתוח משחק",
+      "rules": "חוקי המשחק",
+      "coaching": "קואצ'ינג",
+      "history": "היסטוריה",
+      "team-profile": "פרופיל הקבוצה",
+      "player-profile": "פרופיל השחקן"
+    },
+    "categoryClause": " ב{category}",
+    "queryClause": " התואם את “{query}”",
+    "difficultyBeginner": "מתחיל",
+    "difficultyIntermediate": "בינוני",
+    "difficultyAdvanced": "מתקדם"
   },
   "challenges": {
     "applied": "יושם",
