@@ -1,8 +1,8 @@
 {
-  "head": "1adc83d",
-  "total_commits": 1330,
-  "milestone": "§290",
-  "milestone_full": "§290 — Item 152: a fact-pack commit with a literal \"$n\" in its message — recorded, and the rule tightened (2026-11-17)",
+  "head": "075425b",
+  "total_commits": 1333,
+  "milestone": "§291",
+  "milestone_full": "§291 — Item 153: a native Simplified-Chinese StateGraph chapter, authored in Chinese (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T02:55:11.665Z"
+  "generated_at": "2026-11-17T02:58:29.993Z"
 }
