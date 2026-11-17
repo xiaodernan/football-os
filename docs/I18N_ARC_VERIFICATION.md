@@ -11119,3 +11119,22 @@ openai · gpt-6.1-terra · 4480 of 4691 prompt tokens came from the gateway's ca
 carries none); the 0.0 momentum line at minute 0 is what the report printed, and the model repeated it faithfully —
 the refusal-to-invent is the feature, not a limitation. Any claim about this match's quality in real football is out of scope;
 `DEMO DATA` stays honestly labelled everywhere it is printed.
+
+## §309 — Item 171: the French library deepens — a native French chapter on the coach's six nodes (2026-11-17)
+
+**What landed.** `coaching/comment-le-coach-repond-fr.md` — the second French editorial in a corpus that carried none
+none two days ago, native French, not translated: « Comment le coach répond — du score au paragraphe, sans jamais inventer » —
+a walk through the six nodes of `CoachGraphState` (`classify_intent → build_arithmetic → spend_gate → phrase_answer →
+persist_answer → END`), each naming its exact computed-vs-modelled boundary: the rule engine triages the question, the
+arithmetic computes the answer, the portail decides whether the model is allowed to speak at all, persist remembers what the
+modelling said, and the graph is acyclic with a recursion bound that answers before anyone fils improvises past six steps. The
+chapter argues what the product actually is, properly: « Ce n'est pas marketing. C'est un constat d'architecture. »
+
+**Measured.** Ingest: `created=1, chunks_written=6, documents_seen=90, errors=[]`. `/knowledge/status` prints
+`locales {en: 29, zh: 30, zh-TW: 29, fr: 2}` (corpus **90 documents / 428 chunks**; the French coaching window opens at 2,
+history at 10). Hybrid retrieval in `fr` finds the chapter first on every probe: `comment le coach répond` (5 hits, all the
+chapter then honours), `graphe à états` (2 hits, all the chapter), `le coach répond pas` (5 hits, all the chapter). RAG eval
+(`python -m evals.run_rag_eval` on this tree): recall@5 **1.0**, MRR **0.9407**, citation integrity **1.0**, refusal accuracy
+**1.0**, hybrid delta **0.0** — all gates passed.
+
+**Not claimed.** That the French chapter translates the Simplified chapter, the English one, or any other — it has its own voice and its own pedagogical order; that the library is filled for French (exactly two French editorials now exist; the catalogue already carried 5,308 keys × 6); that the French chapter implies anything about bilingual support anywhere else (it does not).

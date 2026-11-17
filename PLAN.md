@@ -5143,3 +5143,11 @@ Both jars rebuilt (`mvn -DskipTests package`); `football_os_config` and `footbal
 **Item 169's RTL red cured on this tree**: `styles/story.css:136 border-left` → `border-inline-start` in both `.story-coach__error` and `.sim-coach__error`; `qa-rtl-readiness` **8/8**.
 
 **Honest since Item 169's push red leg was the same root**: `"the model reads exactly the report's own stored numbers"` is the door's design goal; the read is a model-call and can hallucinate — the panel and the answer carry the prose AND the refusal where the report is silent (the model refused to invent a "block events" section since the report carries none).
+
+## Item 171 — the French library deepens: a native French chapter on the coach's six nodes (landed 2026-11-17)
+
+**What landed.** `coaching/comment-le-coach-repond-fr.md` — the second French editorial in a corpus that had none days ago. Native French, not translated: a walk through `classify_intent → build_arithmetic → spend_gate → phrase_answer → persist_answer → END`, each node naming its exact computed-vs-modelled boundary, closing with « Ce n'est pas marketing. C'est un constat d'architecture. »
+
+**Measured.** Ingest `created=1, chunks_written=6, errors=[]`; `/knowledge/status` prints `locales {en: 29, zh: 30, zh-TW: 29, fr: 2}` (**90 documents / 428 chunks**); `fr hybrid` probes find the chapter first each time (`comment le coach répond`, `graphe à états`, `le coach répond pas`); RAG eval green (**recall@5 1.0, MRR 0.9407, citation integrity 1.0, refusal accuracy 1.0, hybrid delta 0.0**).
+
+**Not claimed.** That the French chapter translates the Simplified or English siblings; that the French window gains anything else (only one chapter shipped); that this implies any new gate or door.
