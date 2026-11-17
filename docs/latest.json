@@ -1,8 +1,8 @@
 {
-  "head": "bcf56ec",
-  "total_commits": 1351,
-  "milestone": "§300",
-  "milestone_full": "§300 — Item 162: the MISGATED red names /coach/how-it-works; the door goes public (2026-11-17)",
+  "head": "53382cc",
+  "total_commits": 1353,
+  "milestone": "§301",
+  "milestone_full": "§301 — Item 163: a pressure night on the live edge — 4% shed, zero 5xx from the app, the 撞库 door held (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T04:49:33.276Z"
+  "generated_at": "2026-11-17T04:59:03.185Z"
 }
