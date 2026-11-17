@@ -1,11 +1,11 @@
 {
-  "head": "cf36484",
-  "total_commits": 1376,
-  "milestone": "§311",
-  "milestone_full": "§311 — Item 173: the stored match's import order cured by ruff — the same hot-fix line Item 169's CI printed red on (2026-11-17)",
+  "head": "51de16b",
+  "total_commits": 1378,
+  "milestone": "§312",
+  "milestone_full": "§312 — Item 174: the XI grows its voice — `/api/v1/world/matchday-xi/coach-read` lands (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
-  "assets": 208,
+  "assets": 209,
   "world_doors": 24,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T06:40:11.897Z"
+  "generated_at": "2026-11-17T06:59:57.109Z"
 }
