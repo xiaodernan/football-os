@@ -9915,3 +9915,46 @@ answers with citations rather than inventing.
 that quota will return on its own; that the demo stack re-ingests this page before its next
 container boot (it will on the next boot, or on `POST /knowledge/ingest` with an admin account;
 until then the running corpus answers from the previous 24).
+
+## §276 — Item 136: the catalogue and the API disagreed with each other; one commit apart, recorded (2026-11-17)
+
+**The runner's red, verbatim** (run `43979674176`, leg `Tests (SQLite dev fallback)`, commit `a7cb683`):
+
+```
+FAILED tests/test_locale_claims.py::test_every_refusal_the_api_publishes_has_a_catalogue_sentence
+AssertionError: 1 catalogue sentence(s) no longer match the API's message, so the English
+rendering would change: ["unknown_tournament: catalogue 'The Real Book carries the
+1930–2022 World Cups and the 2021/2024 European Championships.' != API 'The Real Book
+carries the 1986–2022 World Cups and the 2021/2024 European Championships.'"]
+1 failed, 2549 passed, 32 skipped, 3 warnings in 840.22s
+```
+
+The fact-pack leg that followed it (`43979699439`, `a7cb683` re-pushed as `3064ae3`'s parent)
+printed the same failure for the same reason.
+
+**What happened.** `a7cb683` truthfully updated the *catalogue's* `errors.unknown_tournament`
+from `1986–2022` to `1930–2022` — the refusal had to match the Real Book's real coverage, which
+had grown to 1930 (Item 123/125). The same commit did **not** touch the API's own raise site
+(`apps/api/app/api/v1/world.py`, the `UnknownTournament` → 422 path), whose message the catalogue
+is required to hold verbatim. The two files were one honest sentence apart, and the drift rule did
+its job: it refused the combination.
+
+**The cure** (`30ae282`, Item 136): the API's message is now the catalogue's sentence, word for
+word — `The Real Book carries the 1930–2022 World Cups and the 2021/2024 European Championships.`
+`pytest tests/test_locale_claims.py` → **7 passed** on the committed tree; the census reads committed
+bytes, so the test can only witness the cure after it lands — local red before the commit, green
+after, both observed.
+
+**The shape worth keeping.** This is the second time this arc a "one-line honesty" i18n edit outran
+the drift rule that watches it (the first was the freshness pair cured by `1a4…`/`Item 128`). The
+rule is the right one; the miss is human: the fix touched the side of the wire that was wrong, not
+the side it drifts from. The remedy is not a weaker gate but the census watching both files — which
+is what just failed, exactly as designed, in CI, on the push, before any user could read the
+mismatch.
+
+**Not claimed.** That the in-flight Item 135 legs (`df948c7` → run `43982025331`, `cb71241` → run
+`43982545026`) will be green — both were pushed *before* this cure and contain the catalogue without
+the API fix, so their `Tests (SQLite dev fallback)` legs are expected to print the same single
+red for the same reason, recorded here pre-emptively as the same finding, not as two. That the
+PostgreSQL test leg, which never ran in those two runs, would have caught it anywhere but the same
+byte — it runs the same suite.

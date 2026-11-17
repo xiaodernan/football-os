@@ -4651,4 +4651,19 @@ knowledge ask path degrades to its grounded fallback rather than inventing. CI i
 the gateway).
 
 **Not claimed.** That quota has returned; that the running demo stack shows the page before its next boot or
-an admin `POST /knowledge/ingest` — until then its corpus holds the prior 24 documents.
+an admin `POST /knowledge/ingest` — until then its corpus holds the prior 24 documents. The demo stack
+was re-synced in this arc: `docker cp data/ → football_os_api:/data`, then `sync_knowledge(force=True)`
+inside the container — boot reported `ok=True, written=195 chunks, errors=[]`; `psql` on `football_os_db`
+shows **25 documents / 195 chunks**; `/knowledge` on the web shell renders the new chapter
+(`/knowledge/rag-stategraph`, `RAG as a state graph: how a football answer stays grounded`).
+
+## Item 136 — the runner's red for the unknown_tournament refusal, cured at the source (landed 2026-11-17)
+
+**The red** (CI run `43979674176`, api leg): `test_every_refusal_the_api_publishes_has_a_catalogue_sentence`
+— `1 failed, 2549 passed` — catalogue `1930–2022` vs API `1986–2022`. The fact-pack run `43979699439`
+printed the same red for the same reason. Item 135's own runs (`43982025331`, `43982545026`) were pushed
+before the cure and are expected to print the same single red; recorded in §276 as one finding, not three.
+
+**The cure** (`30ae282`): the API's `UnknownTournament` → 422 message in `apps/api/app/api/v1/world.py`
+now reads the same 1930–2022 sentence the catalogue has carried since `a7cb683` — verbatim, byte-identical,
+as the drift rule requires. `test_locale_claims.py` 7/7 on the committed tree after the commit.
