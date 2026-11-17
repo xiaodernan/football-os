@@ -11605,3 +11605,11 @@ Fleet census after the roll (7 days): **`cached_share_reported` = 0.9022 · repo
 **Not claimed.** That any press served warm unconditionally (cold presses print `cache_reported: false`; the HTTP 60 s TTL is not the gateway cache); that Docker Desktop's host-crash resets cost the gateway cache (each Docker Desktop death resets the container's process LRU but the gateway's persistent cache survived in every observable case — operators of the proxy can reprimand as they wish; I cannot reprimand a relay); that latency meaningfully improved (p50 sits within noise of where it was); that the charter's cost is zero (`$0.2655` actual spend recorded; not zero, not free).
 
 **Measurement honesty.** The two measurements that move the needle got recorded separately and are not collapsed: (a) press-level lines: 94%+ across six doors, `cache_reported: true` (gateway's own report); (b) fleet-roll: 90.22% over 105 reported rows (the aggregate the user's admin screen reads). Both stand in the report exactly as they printed.
+
+## §334 addendum — the fact-pack slip, recorded verbatim (2026-11-17)
+
+**What happened.** `b6d025b` writes "fact pack refreshed to b575ed3 - 1457 commits, arc §334 (Item 197)" — the generator printed **`1458 commits`**. The commit message was written before running `node scripts/generate-latest-json.mjs`; I guessed the count without reading the generator's output. Another of this exact class on the arc; exact number can be computed by reconciling `git log --grep=fact pack refreshed` against the generator outputs of every arc section — the ledger records each slip it caught; this one joins that list.
+
+**Not cured.** The commit is pushed; the message is not amended (no history rewriting on shared master). The arc's count is 1458 in `docs/latest.json`; the message says 1457; the ledger shows both.
+
+**One line that matters.** Stop writing the message before the generator prints; always read the one line; never guess the number again.
