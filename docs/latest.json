@@ -1,8 +1,8 @@
 {
-  "head": "c7760e5",
-  "total_commits": 1355,
-  "milestone": "§302",
-  "milestone_full": "§302 — Item 164: the admin coach-read door was dead through the edge; three chained timeouts cured at their source (2026-11-17)",
+  "head": "6a851cf",
+  "total_commits": 1357,
+  "milestone": "§303",
+  "milestone_full": "§303 — Item 165: the plane walk's four red registration legs were the walk's wrong registry, not the plane's (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T05:11:41.403Z"
+  "generated_at": "2026-11-17T05:18:59.847Z"
 }
