@@ -4741,3 +4741,18 @@ max-width: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none;` + `-web
 re-create, `scrollWidth == innerWidth` at 360/768/1000/1280 and every previously-flagged chip is
 contained by `nav.realbook__switch` (`overflow-x: auto`). All public doors re-checked HTTP 200
 (/coach 307 → /login). Committed as its own unit.
+
+## Item 140 — an overlap audit of every clickable control: 72 phantom pairs, zero painted overlaps (landed 2026-11-17)
+
+**The audit** (`.scratch/overlap-audit.mjs`, headless Chrome, 12 public routes × {360/768/1280} px,
+every intersecting pair of visible controls, >25 px²): **72 flagged pairs**, all the same shape —
+`a.nav__link` rects that extend past the scroll track's client edge (`.nav__links` shows `[147, 493]`
+at 768 px and `[167, 985]` at 1280 px) and so *coordinate-overlap* the actions rail / locale select /
+create-account button.
+
+**The deciding measurement** (`.scratch/overlap-hit-test.mjs`): `document.elementFromPoint` at each
+flagged link's midpoint does **not** return the link where it is clipped — it returns `div.nav__inner`,
+`select.nav__locale` or `a.btn` (the painted surface). Clipped elements receive no clicks, no hover,
+no paint. **Zero user-visible overlapping controls; nothing shipped.** The evidence is recorded in
+§280, not as a code change — a green audit with a named limit (it does not model stacking order
+inside one scroller), and not as a new gate (it is a `.scratch/` walk like the others).

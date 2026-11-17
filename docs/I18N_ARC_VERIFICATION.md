@@ -10093,3 +10093,30 @@ scrolls — the same trade the primary nav made in §272, chosen deliberately); 
 were exercised (the walk measures layout, not gesture capture); that CI's legs changed colour for this
 commit (no catalogue keys moved; the audit lives in `.scratch/`, untracked, as a measurement tool, not
 a gate — making it a gate is a reasonable next unit of work).
+
+## §280 — Item 140: the overlap audit flagged 72 "crushed controls"; every one was clipped nav geometry (2026-11-17)
+
+**The user's standing complaint, taken as a job:** "实体块互相重叠、挤压、遮盖" — entities overlapping,
+pressing and covering each other. A new audit (`.scratch/overlap-audit.mjs`, headless Chrome,
+12 public routes × {360, 768, 1280} px, every pair of visible `a|button|input|select|[role=button]`
+whose rects intersect by > 25 px²) was run against the live demo. It printed **72 flagged pairs**
+— almost all `a.nav__link` × `select.nav__locale`/`a.btn`/`a.nav__link` at 768 px (5 per route) and
+1280 px (1 per route), plus the nav rail echoes at 360 px.
+
+**The follow-up that decides it: a hit-test audit.** A clipped element is not painted at the
+intersection point; `document.elementFromPoint` at a clipped element's midpoint does not return the
+element. Measured at 768 px (rail `clientWidth`: shows `[147, 493]`):
+`足球世界`, `战术实验室`, `AI 助手`, `历史`, `球探`, `训练`, `成长` — all clipped at the rail's right edge;
+their midpoints hit `div.nav__inner`, `select.nav__locale` or `a.btn` (the actions rail painted on top
+of the *coordinate* box, which by definition is not the link). At 1280 px (rail `[167, 985]`,
+clientRight 985): `排行榜` → `div.nav__inner`, `历史` clipped. At 360 px the same class repeats.
+**Zero flagged pair is a user-visible overlap; zero control receives a click meant for another.**
+The nav rail's `overflow-x: auto; max-width: 100%` (Item 132/§272) and this arc's `.realbook__switch`
+clamp (§279) are the whole story: geometry past the track's client edge is scroll, not paint.
+
+**The verdict, recorded as the finding it is.** No code was shipped for this audit; the front's
+actionable elements do not intersect in any painted point we measured. **Not claimed:** that the audit
+modelled every clipping shape (it models pairs of rects, not alpha/stacking order inside the same
+scroller — a same-scroller pair with a translucent overlap would still read as overlapping geometry);
+that CI runs this audit (it does not; it is a `.scratch/` measurement, like the rest of the walks);
+that 360 px shows a comfortable nav (it does not — it shows a scrollable one, §272's chosen trade).
