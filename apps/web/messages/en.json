@@ -4983,7 +4983,13 @@
     "unavailable": "No cups have been completed in the stored world yet.",
     "sectionFinalsLabel": "The Finals",
     "sectionFinalsNote": "every cup final — computed, not narrated",
-    "sectionFinalsChip": "finals"
+    "sectionFinalsChip": "finals",
+    "coachReadEyebrow": "AI Coach · the cups, read",
+    "coachReadTitle": "The cup ledger, read by the model",
+    "coachReadHint": "One press — the model reads the Finals this page printed (every cup final: competition, clubs, scoreline, venue, winner and the best-rated starter of each) plus the loudest final and the cup-haul table, and speaks one honest paragraph about who lifted what. It does not invent a club, player, venue or figure beyond the rows it was handed.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the Finals above stand alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldNoise": {
     "metaTitle": "The Noise Dossier — The Model on Trial",

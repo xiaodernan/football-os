@@ -4983,7 +4983,13 @@
     "unavailable": "Aucune coupe n'a été jouée jusqu'au bout dans les lignes enregistrées.",
     "sectionFinalsLabel": "Les finales",
     "sectionFinalsNote": "chaque finale de coupe — calculée, pas racontée",
-    "sectionFinalsChip": "finales"
+    "sectionFinalsChip": "finales",
+    "coachReadEyebrow": "Coach IA · les coupes, lues",
+    "coachReadTitle": "Le modèle lit le grand livre des coupes",
+    "coachReadHint": "Un appui — le modèle lit les finales que cette page imprime (chaque finale de coupe : compétition, clubs, score, lieu, vainqueur et le titulaire le mieux noté de chacune), plus la finale la plus bruyante et le tableau des coupes levées, et dit un paragraphe honnête sur qui a soulevé quoi. Il n'invente aucun club, aucun joueur, aucun lieu ni aucun chiffre hors des lignes qu'il a reçues.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — les finales ci-dessus tiennent seules.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "worldNoise": {
     "metaTitle": "Le Dossier du Bruit — le modèle au banc des accusés",

@@ -37,6 +37,7 @@ from app.models import (
     Team,
 )
 from app.services.almanac_coach import compute_almanac_coach_read
+from app.services.finals_coach import compute_finals_coach_read
 from app.services.matchday_xi_coach import compute_matchday_xi_coach_read
 from app.services.noise_coach import compute_noise_coach_read
 from app.services.real_book_coach import compute_real_book_coach_read
@@ -1241,6 +1242,21 @@ def finals(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_finals")
     return _envelope(**compute_finals(db))
+
+
+@router.get("/finals/coach-read")
+def finals_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Finals' coach-read — one honest paragraph on the cup ledger of this world.
+
+    The model receives exactly the Finals the door printed — every cup Final with its competition,
+    clubs, scoreline, venue, the winner, and the best-rated starter of each final (with rating,
+    goals and assists) — plus the loudest final and the cup-haul table. It never invents a club,
+    player, venue or figure beyond the snapshot; an MVP is the best-rated starter in the rows,
+    nothing else. Without a configured provider this returns `available: false` and the Finals
+    stand alone on the page.
+    """
+    limit(request, 20, 60, scope="world_finals_read")
+    return _envelope(**compute_finals_coach_read(db))
 
 
 @router.get("/noise")

@@ -3149,6 +3149,29 @@
         }
       }
     },
+    "/api/v1/world/finals/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Finals Coach Read",
+        "description": "The Finals' coach-read — one honest paragraph on the cup ledger of this world.\n\nThe model receives exactly the Finals the door printed — every cup Final with its competition,\nclubs, scoreline, venue, the winner, and the best-rated starter of each final (with rating,\ngoals and assists) — plus the loudest final and the cup-haul table. It never invents a club,\nplayer, venue or figure beyond the snapshot; an MVP is the best-rated starter in the rows,\nnothing else. Without a configured provider this returns `available: false` and the Finals\nstand alone on the page.",
+        "operationId": "finals_coach_read_api_v1_world_finals_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Finals Coach Read Api V1 World Finals Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/noise": {
       "get": {
         "tags": [

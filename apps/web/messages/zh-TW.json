@@ -4983,7 +4983,13 @@
     "unavailable": "存行資料裡還沒有完賽的杯賽決賽。",
     "sectionFinalsLabel": "杯賽終章",
     "sectionFinalsNote": "每場杯賽決賽——算出來的，不是寫出來的",
-    "sectionFinalsChip": "決賽"
+    "sectionFinalsChip": "決賽",
+    "coachReadEyebrow": "AI 教練 · 盃賽簿述之",
+    "coachReadTitle": "模型讀盃賽賬簿",
+    "coachReadHint": "按一下——模型讀本頁剛印出的決賽（每一場盃賽決賽：賽事、俱樂部、比分、場地、勝者，以及每場表現最好的首發），外加最熱鬧的一場和奪冠次數榜，然後講一段話：誰舉起了哪一座獎盃。它不會編造超出這些數行的任何俱樂部、球員、場地或數字。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型暫時不可讀——上面的決賽頁本身就夠了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "worldNoise": {
     "metaTitle": "噪聲單——模型公審",

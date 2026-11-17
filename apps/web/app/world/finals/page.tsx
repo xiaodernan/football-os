@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { Provenance, WorldHead, WorldUnavailable, formatDay } from "@/components/world";
+import { FinalsCoachRead } from "@/components/FinalsCoachRead";
 import { pageMetadata, absolute } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { WorldEnvelope } from "@/lib/types";
@@ -125,6 +126,8 @@ export default async function FinalsPage() {
           </article>
         ))}
       </div>
+
+      <FinalsCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

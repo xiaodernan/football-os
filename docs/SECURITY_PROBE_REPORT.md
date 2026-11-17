@@ -15,13 +15,13 @@ answer rather than from an assertion about the code.
 artifact the web client and the currency gates read — and takes every operation that declares a
 `security` requirement as a private door, every operation that declares none as a public one.
 
-At the latest account recorded here (run Y, §2) the contract's SHA-256 was
-`49d6d6d05b656bfcf2b4957874795c6a362ab6d1e6f6b6ed01f3c3e9adeb85fd`, and the census reads:
+At the latest account recorded here (run Z, §2) the contract's SHA-256 was
+`27d6ed4d3f46f25c46a1536515d10ea365a36b99df66ac18c263953268c6b440`, and the census reads:
 
 | measurement | value | floor |
 | --- | --- | --- |
 | secured operations | 242 | 200 |
-| public operations | 82 | 40 |
+| public operations | 83 | 40 |
 | private `GET` paths | 105 | 85 |
 
 The floors exist so an empty or half-read contract cannot pass as a clean probe; they are printed with
@@ -73,6 +73,7 @@ Run V is the ledger's own note for the contract as committed today: the Record B
 Run W is the ledger's own note for the contract as committed today: the Matchday XI's coach-read door landed (GET /api/v1/world/matchday-xi/coach-read, one public GET across one new path, the model's one honest paragraph on the eleven the world would send), and the contract was re-exported on 2026-11-17 (`scripts/export_openapi.py`), so the contract's bytes moved and its SHA moved with it; the census moved to **242 / 80 / 105** — public 79 → 80 (this door is a public read) and secured 242 / private GET 105 unchanged. The counts were re-measured from the committed bytes: 255 paths, 322 operations, 80 operations declaring no security requirement. No fresh probe was executed for this row; run O remains the last live run recorded. Both the secured population and the private-GET set did not move; the public population moved 79 → 80 with no door re-gated or removed.
 Run X is the ledger's own note for the contract as committed today: the Upset Register's coach-read door landed (GET /api/v1/world/upsets/coach-read, one public GET across one new path, the model's one honest paragraph on where the favourite's edge fell short), and the contract was re-exported on 2026-11-17 (`scripts/export_openapi.py`), so the contract's bytes moved and its SHA moved with it; the census moved to **242 / 81 / 105** — public 80 → 81 (this door is a public read) and secured 242 / private GET 105 unchanged. The counts were re-measured from the committed bytes: 256 paths, 323 operations, 81 operations declaring no security requirement. No fresh probe was executed for this row; run O remains the last live run recorded. Both the secured population and the private-GET set did not move; the public population moved 80 → 81 with no door re-gated or removed.
 Run Y is the ledger's own note for the contract as committed today: the Noise Dossier's coach-read door landed (GET /api/v1/world/noise/coach-read, one public GET across one new path, the model's one honest paragraph on the caller the seed defeats), and the contract was re-exported on 2026-11-17 (`scripts/export_openapi.py`), so the contract's bytes moved and its SHA moved with it; the census moved to **242 / 82 / 105** — public 81 → 82 (this door is a public read) and secured 242 / private GET 105 unchanged. The counts were re-measured from the committed bytes: 257 paths, 324 operations, 82 operations declaring no security requirement. No fresh probe was executed for this row; run O remains the last live run recorded. Both the secured population and the private-GET set did not move; the public population moved 81 → 82 with no door re-gated or removed.
+Run Z is the ledger's own note for the contract as committed today: the Finals' coach-read door landed (GET /api/v1/world/finals/coach-read, one public GET across one new path, the model's one honest paragraph on the cup ledger of this world), and the contract was re-exported on 2026-11-17 (`scripts/export_openapi.py`), so the contract's bytes moved and its SHA moved with it; the census moved to **242 / 83 / 105** — public 82 → 83 (this door is a public read) and secured 242 / private GET 105 unchanged. The counts were re-measured from the committed bytes: 258 paths, 325 operations, 83 operations declaring no security requirement. No fresh probe was executed for this row; run O remains the last live run recorded. Both the secured population and the private-GET set did not move; the public population moved 82 → 83 with no door re-gated or removed.
 ## 2. The runs
 
 Runs A–C were made on 2026-10-22 local time (their reports' timestamps are UTC, `2026-10-21T19:2x`)
