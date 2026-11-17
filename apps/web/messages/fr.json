@@ -4869,7 +4869,10 @@
     "tour20t": "La Charte",
     "tour20d": "les six articles auxquels ce monde répond — les lignes s’écrivent elles-mêmes, le vrai et le synthétique ne se mélangent jamais",
     "tour21t": "Le Registre d'honneur",
-    "tour21d": "vingt-quatre vrais tournois en une colonne — hôte, finale, vainqueur, buts, chaque case recalculée depuis les fichiers"
+    "tour21d": "vingt-quatre vrais tournois en une colonne — hôte, finale, vainqueur, buts, chaque case recalculée depuis les fichiers",
+    "askNextDoors": "Portes à suivre",
+    "askAdminChip": "Entrer au panneau",
+    "askManualChip": "Guide du lecteur"
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",

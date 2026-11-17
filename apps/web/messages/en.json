@@ -4869,7 +4869,10 @@
     "tour20t": "The Creed",
     "tour20d": "the six articles the world lives by — the rows write themselves, the real and the synthetic never mix, and the reader keeps their own rules",
     "tour21t": "The Roll of Honours",
-    "tour21d": "twenty-four real tournaments in one column — the host, the final, the winner, the goals, every cell recomputed from the bytes"
+    "tour21d": "twenty-four real tournaments in one column — the host, the final, the winner, the goals, every cell recomputed from the bytes",
+    "askNextDoors": "Next doors",
+    "askAdminChip": "Enter the admin panel",
+    "askManualChip": "Reader guide"
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",

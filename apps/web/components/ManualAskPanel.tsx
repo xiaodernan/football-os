@@ -1,10 +1,57 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Panel } from "@/components/ui";
 import { browserFetch } from "@/lib/api";
+
+type NextPod = { href: string; titleKey: string };const NEXT_BY_INTENT: Record<string, NextPod[]> = {
+  getting_started: [
+    { href: "/coach", titleKey: "tour2t" },
+    { href: "/world", titleKey: "tour3t" },
+    { href: "/tutorial", titleKey: "tour16t" },
+    { href: "/my-football", titleKey: "tour1t" },
+  ],
+  tour: [
+    { href: "/world/gazette", titleKey: "tour11t" },
+    { href: "/world/timeline", titleKey: "tour10t" },
+    { href: "/world/champions", titleKey: "tour19t" },
+    { href: "/world/story", titleKey: "tour5t" },
+    { href: "/world/spotlight", titleKey: "tour9t" },
+  ],
+  glossary: [
+    { href: "/world/records", titleKey: "tour6t" },
+    { href: "/world/champions", titleKey: "tour19t" },
+    { href: "/world/noise", titleKey: "tour13t" },
+  ],
+  rules: [
+    { href: "/world/creed", titleKey: "tour20t" },
+    { href: "/world/dynasties", titleKey: "tour15t" },
+  ],
+  admin: [
+    { href: "/admin", titleKey: "askAdminChip" },
+  ],
+  faq: [
+    { href: "/manual", titleKey: "askManualChip" },
+    { href: "/tutorial", titleKey: "tour16t" },
+  ],
+  get_value: [
+    { href: "/admin", titleKey: "askAdminChip" },
+  ],
+};
+
+const DEFAULT_PODS: NextPod[] = [
+  { href: "/world/gazette", titleKey: "tour11t" },
+  { href: "/world/champions", titleKey: "tour19t" },
+  { href: "/world/timeline", titleKey: "tour10t" },
+];
+
+function nextPods(intent: string | undefined): NextPod[] {
+  if (intent && NEXT_BY_INTENT[intent]) return NEXT_BY_INTENT[intent];
+  return DEFAULT_PODS;
+}
 
 type ManualAskPayload = {
   available: boolean;
@@ -90,6 +137,16 @@ export function ManualAskPanel() {
                 prompt: data.input_tokens ?? 0,
               })}
             </p>
+            <nav aria-label={t("askNextDoors")} style={{ marginTop: "0.6rem" }}>
+              <p className="muted" style={{ margin: 0, fontSize: "0.82rem" }}>{t("askNextDoors")}</p>
+              <ul style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", listStyle: "none", padding: 0, marginTop: "0.35rem" }}>
+                {nextPods(data.intent).map((pod) => (
+                  <li key={pod.href}>
+                    <Link className="chip mono world-link" href={pod.href}>{t(pod.titleKey as Parameters<typeof t>[0])}</Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </>
         ) : (
           <p className="muted">{t("askError")}</p>
