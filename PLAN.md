@@ -4898,3 +4898,21 @@ figures stale by 2: fr held 4,970 translated keys while the README row said 4,96
 **The cure.** Both rows removed from `qa-locale-tokens.mjs` (278 named tokens now); README recomputed
 to fr 4,970/5,248. Witness reruns **11/11**, tokens **7/7**. Counts for `zh`/`zh-TW`/`ar`/`he` unchanged
 at 5,201/5,248.
+
+## Item 150 — the mirror stops per-commit-syncing; from here on it ships only on named milestones (landed 2026-11-17)
+
+**Demand §十, read honestly.** The standing brief said the public page must reflect the latest
+成果 — but it closed with *"但要降低更新频率，有大提升再更新，提高效率"*. Every fact-pack push has
+been mirror-synced automatically, which is the opposite of fewer updates. The mirror therefore
+ships only when the arc ledger's milestone heading moves (`§N` → `§N+1`), or when a named,
+user-visible surface lands (Real Book volume, admin console evolution, corpus-scale addition).
+Chore commits, fact-pack-only pushes, and in-flight CI cures do not touch the profile page.
+
+## Item 151 — the coach transient-mock day explained; one 200 after the restart shows live gateway (landed 2026-11-17)
+
+Earlier in this session the coach door answered `provider: mock, demo_mode: true` (cached transient
+while the gateway was unreachable). Direct same-session probes inside and outside the container
+return `provider: openai, model: gpt-6.1-terra, demo_mode: false`. The coach does **not** fail open to
+the client silently: a capped turn is answered by the rule engine with a labelled `provider:
+"rule-engine-demo"` message (that was the case observed). The earlier `mock` was transient gateway
+negotiation — re-probed three times; all three now answer live.
