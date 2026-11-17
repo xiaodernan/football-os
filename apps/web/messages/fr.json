@@ -5218,7 +5218,9 @@
     "searchCountAll": "Les 24 éditions",
     "searchEyebrowResults": "Lignes correspondantes",
     "searchNoMatches": "Aucun tournoi ne correspond — essayez un autre nom, une autre année ou un autre hôte",
-    "searchUnavailable": "La recherche du livre n'est pas disponible"
+    "searchUnavailable": "La recherche du livre n'est pas disponible",
+    "sectionRealBookSearchLabel": "Chercher dans le livre",
+    "sectionRealBookSearchNote": "Un champ, les 24 lignes du palmarès — une année, un hôte, un champion"
   },
   "worldAtlas": {
     "metaTitle": "L'Atlas — les portes du monde, dessinées",

@@ -5218,7 +5218,9 @@
     "searchCountAll": "كل النسخ الـ24",
     "searchEyebrowResults": "الصفوف المطابقة",
     "searchNoMatches": "لا توجد نسخة مطابقة — جرّب اسمًا أو سنة أو مضيفًا آخر",
-    "searchUnavailable": "البحث في الكتاب غير متاح الآن"
+    "searchUnavailable": "البحث في الكتاب غير متاح الآن",
+    "sectionRealBookSearchLabel": "ابحث في الكتاب",
+    "sectionRealBookSearchNote": "مربع واحد، 24 صفًا من سجل الإنجازات — سنة، مضيف، بطل"
   },
   "worldAtlas": {
     "metaTitle": "الأطلس — أبواب العالم كلها في صفحة",

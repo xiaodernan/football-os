@@ -5218,7 +5218,9 @@
     "searchCountAll": "全部 24 屆賽事",
     "searchEyebrowResults": "匹配的條目",
     "searchNoMatches": "沒有賽事匹配——換個名字、年份或東道主試試",
-    "searchUnavailable": "真實之書搜尋暫不可用"
+    "searchUnavailable": "真實之書搜尋暫不可用",
+    "sectionRealBookSearchLabel": "搜尋真實之書",
+    "sectionRealBookSearchNote": "一框搜 24 屆榮耀名冊——年份、東道主、冠軍都能找"
   },
   "worldAtlas": {
     "metaTitle": "星圖——世界之門，一頁畫完",

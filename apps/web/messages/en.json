@@ -5218,7 +5218,9 @@
     "searchCountAll": "All 24 tournaments",
     "searchEyebrowResults": "Matching rows",
     "searchNoMatches": "No tournament matches — try a different name, year or host",
-    "searchUnavailable": "The Real Book search is unavailable"
+    "searchUnavailable": "The Real Book search is unavailable",
+    "sectionRealBookSearchLabel": "Search the book",
+    "sectionRealBookSearchNote": "One box, the 24-row honours spine — finds a tournament, a year, a host, a champion"
   },
   "worldAtlas": {
     "metaTitle": "The Atlas — the world's doors, drawn once",

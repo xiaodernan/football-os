@@ -4903,6 +4903,16 @@ All gates green: unused-keys, locale-tokens, i18n-literals, locale-completeness,
 **Measured.** q=Maracanazo → 1950; q=1994 → 1994; q=Germany → 10; q=<empty> → all 24; q=Allemagne (fr) → 0 (the
 spine is English figures by design, not a defect). SSR renders 200 with the results table in en/zh/zh-TW/fr.
 
+## Item 155 — the search door taught at /world browse; reader can discover it (landed 2026-11-17)
+
+**The gap.** Item 154 added `/world/real-book/search` — and left it undiscoverable to the reader browsing `/world`. The world browse page lists every world door; the new search door was the only one missing there.
+
+**The cure.** `/world/page.tsx` now lists "Search the book" (and its zh/zh-TW/fr/ar/he twins) as a door. SSR confirmed in en/zh: "Search the book" prints on `/world`; "搜索真实之书" prints on the zh page. Two new catalogue keys (`sectionRealBookSearchLabel`, `sectionRealBookSearchNote`) × 6 locales; counts recomputed to **5,264 keys × 6 locales** everywhere; README recomputed accordingly; gates green (unused-keys, locale-tokens, i18n-literals, locale-completeness).
+
+**Measured.** Gate `qa-unused-keys` 3/3 · `qa-locale-tokens` 7/7 · `qa-i18n-literals` 9/9 · `qa-locale-completeness` 2/2 · `tsc` clean. API `pytest tests/test_knowledge_joint.py tests/test_locale_claims.py` **25 passed**.
+
+**Not claimed.** That the search door appears in the primary nav (the nav is at its thirteen entry ceiling for portrait widths; adding a fourteenth would push the right-side actions rail out under the links); that the zh catalogue was unreviewed after being edited by script (it is re-read by every gate, and the zh SSR prints fine); that Item 155 adds any new content — it only surfaces a door that Item 154 built.
+
 ## Item 149 — the French ICU pair left the token table; the gates recomputed (landed 2026-11-17)
 
 **The local witness red.** `qa-token-gates-witness` printed definer 5/7 reds and named the table's

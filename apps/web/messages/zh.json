@@ -5218,7 +5218,9 @@
     "searchCountAll": "全部 24 届赛事",
     "searchEyebrowResults": "匹配的条目",
     "searchNoMatches": "没有赛事匹配——换个名字、年份或东道主试试",
-    "searchUnavailable": "真实之书搜索暂不可用"
+    "searchUnavailable": "真实之书搜索暂不可用",
+    "sectionRealBookSearchLabel": "搜索真实之书",
+    "sectionRealBookSearchNote": "一框搜 24 届荣耀名册——年份、东道主、冠军都能找"
   },
   "worldAtlas": {
     "metaTitle": "星图——世界之门，一页画完",

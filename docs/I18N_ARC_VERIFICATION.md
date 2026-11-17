@@ -10510,3 +10510,17 @@ deep-linking to its volume. SSR verified in en/zh/zh-TW/fr.
 a French reader typing « Allemagne » gets zero hits — honestly empty, not a fallback table); that it
 makes sense to index anything beyond the spine currently carried (only 24 tournaments exist as committed data);
 that one box can replace knowing the book — it just saves the twenty-three clicks.
+
+## §293 — Item 155: the search door taught at /world browse; reader can discover it (2026-11-17)
+
+**The gap.** Item 154 shipped `/world/real-book/search` and left it **undiscoverable**: the `/world` browse page lists every world door, and search was the only one missing there. A reader who never types the URL learns nothing of it.
+
+**The cure.** `app/world/page.tsx` gains an entry — `/world/real-book/search` — positioned right under `/world/real-book` (it is its next step). SSR verified in both locales: `Search the book` on the en page, `搜索真实之书` on the zh page; both fingerprints present in the served HTML. Two new catalogue keys per locale (`sectionRealBookSearchLabel`, `sectionRealBookSearchNote`); counts recomputed; every catalogue now holds **5,264 keys**.
+
+Gates green:
+`qa-unused-keys` **3/3** · `qa-locale-tokens` **7/7** · `qa-i18n-literals` **9/9** · `qa-locale-completeness` **2/2** ·
+`qa-icu-messages` **2/2** · `tsc --noEmit` clean · `test_knowledge_joint.py` + `test_locale_claims.py` **25 passed**.
+
+**Not claimed.** That the door appears in the primary nav — the nav is at its thirteen-entry ceiling for portrait
+widths and a fourteenth would push the actions rail under the links; that the counts printed on this page are
+observable in CI (the queue is still draining the Item 154 push); that anything beyond this exact wiring is shipped.

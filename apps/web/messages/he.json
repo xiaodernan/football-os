@@ -5218,7 +5218,9 @@
     "searchCountAll": "כל 24 המהדורות",
     "searchEyebrowResults": "השורות התואמות",
     "searchNoMatches": "אין מהדורה תואמת — נסו שם אחר, שנה אחרת, מארחת אחרת",
-    "searchUnavailable": "החיפוש בספר אינו זמין כעת"
+    "searchUnavailable": "החיפוש בספר אינו זמין כעת",
+    "sectionRealBookSearchLabel": "חפשו בספר",
+    "sectionRealBookSearchNote": "תיבה אחת, 24 שורות ההישגים — שנה, מארחת, מנצחת"
   },
   "worldAtlas": {
     "metaTitle": "האטלס — כל דלתות העולם בדף אחד",
