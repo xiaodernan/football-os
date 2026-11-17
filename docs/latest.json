@@ -1,8 +1,8 @@
 {
-  "head": "fa2efaa",
-  "total_commits": 1426,
-  "milestone": "§325",
-  "milestone_full": "§325 — Item 188: the Champions grow their voice — `/api/v1/world/champions/coach-read` lands (2026-11-17)",
+  "head": "7798652",
+  "total_commits": 1429,
+  "milestone": "§326",
+  "milestone_full": "§326 — Item 189: the coach-read doors all carry a stable `prompt_cache_key`; the gateway shows the ~96–98% that codex sees (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 218,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T14:17:32.163Z"
+  "generated_at": "2026-11-17T14:34:41.867Z"
 }
