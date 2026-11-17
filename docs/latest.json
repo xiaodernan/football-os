@@ -1,11 +1,11 @@
 {
-  "head": "37c1d7c",
-  "total_commits": 1436,
-  "milestone": "§329",
-  "milestone_full": "§329 — Item 192: the Chronicle — the state graph that writes the chapter (2026-11-18)",
+  "head": "ff3fa20",
+  "total_commits": 1443,
+  "milestone": "§330",
+  "milestone_full": "§330 — Item 193: the fleet answers its own ledger (2026-11-18)",
   "pushed_at": "2026-11-18",
   "screens": 93,
-  "assets": 219,
+  "assets": 220,
   "world_doors": 25,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T16:20:35.559Z"
+  "generated_at": "2026-11-17T18:50:57.482Z"
 }
