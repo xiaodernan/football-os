@@ -5252,7 +5252,7 @@ D7  2026-11-23  Mobility, hydration and 10 min video review. Recovery is part of
 
 Drill titles stay in the stored-English corpus (the demo account's authored rows), by Item 135's contract — the three artefacts: `ai 生成`, `rule-engine`, `plan-builder-v1` are proper nouns of the engine; the renderer follows the Chinese catalogue for everything outside those; the 7-day drill rotation reads correctly in Chinese days with `emphasis` English.
 
-**Measured.** (i) Plan generation taps → **22 min · goalkeeping** for D1 ordered by attribute gap; (ii) recovery days structure correctly D2, D4, D5, D6; (iii) Testing day plus recovery reflected; (iv) memory rail reads **已存问答轮次 54** — from 50 to 54 across both presses — confirming server-side persistence works in zh. CI printed **success** on `44041378632` (the §315 push `9d9ae91`, all four legs, 25 m 33 s); the original §315 push `b4d1f75` (`44041245930`) remained in the queue at the time of writing and is recorded when it prints.
+**Measured.** (i) Plan generation taps → **22 min · goalkeeping** for D1 ordered by attribute gap; (ii) recovery days structure correctly D2, D4, D5, D6; (iii) Testing day plus recovery reflected; (iv) memory rail reads **已存问答轮次 54** — from 50 to 54 across both presses — confirming server-side persistence works in zh. CI printed **success** on `44041378632` (the §315 push `9d9ae91`, all four legs, 25 m 33 s) and **success** on `44041245930` (`b4d1f75`, 33 m 34 s) — the original §315 push, recorded once it printed.
 
 **Not claimed.** That the Chinese goes to train every language — that's not the claim; only zh and en have been pressed. The plan is an estimate, same as any football-flavoured advice is labelled: `AI coach output is an estimate for training purposes. It is not medical, scouting or performance certification.`
 
@@ -5286,7 +5286,7 @@ Drill titles stay in the stored-English corpus (the demo account's authored rows
 
 **The cure.** `ruff check --fix app/api/v1/world.py` (CI-pinned ruff 0.8.4). Exactly one line moved; the whole `apps/api` tree walks clean under the pinned binary (`ruff check app` → `All checks passed!`); the door's behaviour, contract and gates are unchanged. Cure committed as its own commit per the red-cure rule.
 
-**Not claimed.** That the local venv had caught it before push (it had not — the failure mode is recorded in §318); that `44048244193` (§317 fact-pack run for the unsorted tree) is green or red (in the queue; its print gets recorded when it arrives). The five green legs from this arc (§313 / §315 × 2 / §316 earlier legs) are recorded where printed.
+**Not claimed.** That the local venv had caught it before push (it had not — the failure mode is recorded in §318). Prints since: `44048244193` (§317 push, `0869449`) printed **failure** — api `Lint` in 37 s (the exact I001 this cure resolves); `44048511382` (§318 fact-pack push `a016466`, carrying this cure) printed **success** (35 m 40 s); `44048585127` (§318 slip-record push `f6deacc`) printed **success** (36 m 29 s). The red and the two greens are all from the same import-ordering root.
 
 ## Item 181 — the Finals grow their voice: `/api/v1/world/finals/coach-read` (landed 2026-11-17)
 
