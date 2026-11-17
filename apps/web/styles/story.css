@@ -133,4 +133,4 @@
 /* The model's telling of the season — the one-honest-press panel on /world/story */
 .story-coach__answer { border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--bg-panel-2); padding: 0.85rem 1rem; max-width: 72ch; white-space: pre-line; line-height: 1.6; }
 .story-coach__meta { margin: 0; font-size: 0.75rem; color: var(--text-2); }
-.story-coach__error { border: 1px solid var(--line-soft); border-left: 3px solid var(--accent); padding: 0.75rem 0.9rem; margin: 0; color: var(--text-2); }
+.story-coach__error { border: 1px solid var(--line-soft); border-inline-start: 3px solid var(--accent); padding: 0.75rem 0.9rem; margin: 0; color: var(--text-2); }

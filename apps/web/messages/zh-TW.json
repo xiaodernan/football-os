@@ -2370,7 +2370,13 @@
     "replayedDigestChip": "重播摘要：{digest}",
     "pageDigestChip": "本頁摘要：{digest}",
     "modelChip": "模型：{version}",
-    "digestChip": "摘要 {digest}"
+    "digestChip": "摘要 {digest}",
+    "coachReadEyebrow": "AI 教練 · 對這場讀解",
+    "coachReadTitle": "模型讀這場儲存的比賽",
+    "coachReadHint": "按一下——模型讀這一行自己的事實（種子值、模型版本、雙方戰術體系、比分、控球率、射門和預期進球），就這場比賽講一段話。它不會編出超出頁面已經印出的那兩組十一人之外的任何球員。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型的按壓暫時不可用——本頁已經印出的數字仍然就是這份報告。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "club": {
     "accountMeterItem": "{feature} 每 {period} {used}/{limit}",

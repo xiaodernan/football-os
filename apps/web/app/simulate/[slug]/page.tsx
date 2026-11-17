@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { Panel } from "@/components/ui";
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import { SimTools } from "@/components/SimTools";
+import { SimulateCoachRead } from "@/components/SimulateCoachRead";
 import { BlockTable, EventTimeline, InputList, LineupList, ModelPanel, ScoreLine, SideComparison, type SideHrefs } from "@/components/simulation";
 import { absolute } from "@/lib/site";
 import { currentUser, serverFetch } from "@/lib/server";
@@ -197,6 +198,8 @@ export default async function SimulationReportPage({ params }: Props) {
       <Panel eyebrow={report.model.model_version} title={t("modelPanelTitle")}>
         <ModelPanel model={report.model} />
       </Panel>
+
+      <SimulateCoachRead ident={match.slug} />
 
       <Panel eyebrow={t("ownerEyebrow")} title={t("ownerTitle")}>
         <div className="stack-sm">

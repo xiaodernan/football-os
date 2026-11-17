@@ -2370,7 +2370,13 @@
     "replayedDigestChip": "תקציר משוחזר: {digest}",
     "pageDigestChip": "התקציר של העמוד הזה: {digest}",
     "modelChip": "מודל: {version}",
-    "digestChip": "תקציר {digest}"
+    "digestChip": "תקציר {digest}",
+    "coachReadEyebrow": "מאמן הבינה · המשחק נקרא",
+    "coachReadTitle": "המודל קורא את המשחק השמור הזה",
+    "coachReadHint": "לחיצה אחת — המודל קורא את העובדות השמורות של השורה הזו (הזרע, גרסת המודל, שתי המערכות, התוצאה, החזקת הכדור, הבעיטות וה-xG) ומוסר תיאור כנה וקצר של המשחק. הוא אינו ממציא שחקן מעבר לשתי הקבוצות של אחד-עשר שהדף כבר מדפיס.",
+    "coachReadCta": "בקש מהמודל לקרוא",
+    "coachReadEmpty": "הקריאה של המודל אינה זמינה כעת — המספרים המודפסים למעלה הם הדוח.",
+    "coachReadProvider": "{provider} · {model} · {cached} מתוך {prompt} טוקני קלט הגיעו מהמטמון של השער"
   },
   "club": {
     "accountMeterItem": "{feature} {used} מתוך {limit} לכל {period}",

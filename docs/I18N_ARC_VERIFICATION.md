@@ -9576,7 +9576,7 @@ one-ask press, answer verbatim, provider/model/cache-share chip, volume-scoped r
 Catalogue population **5,233 ×6**; README re-pinned (5,186 / 4,954; fr doublets 279).
 
 **Contract re-exported once more (2026-11-17, the re-export Item 154 owed):** **251 paths / 318 operations / 99 schemas** (secured 241 / public
-**77** / private GET 104), SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5`;
+**77** / private GET 104), SHA `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb`;
 `AUDIT_FIGURES` 251/91/68; the three ledgers, ROADMAP, the audit's door row and module row
 re-pinned (the `AUDIT_FIGURES` line moves 250/90/67 with this commit; the 2026-11-16 account line's
 second re-export pass above is recorded there with its own figures).
@@ -10583,7 +10583,7 @@ committed tree answers 251 once the contract is re-exported, and `apps/web/app` 
 (the Item 154 search page made it 91); the module table said `/world/*` pages (26) where the tree holds 27.
 
 **The cure.** `python scripts/export_openapi.py` re-exported the contract — **251 paths / 318 operations / 99
-schemas**, SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5` (548,833 bytes). The three SHA
+schemas**, SHA `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb` (548,833 bytes). The three SHA
 ledgers the currency gates re-pin (`docs/SECURITY_PROBE_REPORT.md` §1, `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`,
 `ROADMAP.md`) move to the new SHA; the two copied citations in this ledger's §266 and in `PLAN.md` move with them;
 the probe report's §1 census moves **241 / 76 / 104 → 241 / 77 / 104** (the search door is one public GET — no other
@@ -11040,7 +11040,7 @@ the Rim's sibling of the almanac/coach-read and real-book/coach-read shapes.
 **The cure chain (mirroring §295/Item 157 step by step).** New service `services/story_coach.py`
 (`compute_story_coach_read`, prompt outside the slashes); route `GET /api/v1/world/story/coach-read`
 in `api/v1/world.py`; test `test_story_coach_read.py` — **4 passed**; contract re-export → **252 paths /
-319 operations / 99 schemas**, SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5`
+319 operations / 99 schemas**, SHA `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb`
 (550,030 bytes); `AUDIT_FIGURES` **252 / 92 / 68**; probe §1 census **241 / 78 / 104** with **Run T** appended
 (no fresh live probe executed); ROADMAP quoted triple **(252, 92, 68)**; module row's door list gains
 `story/coach-read`; audit's line-4 re-read ledger names it.
@@ -11071,3 +11071,51 @@ the gateway's prefix cache nearly whole. Gates green: `qa-i18n-literals` 9/9 · 
 snapshot and never claims the season's remaining candle-light; that the demo world's rows are facts about real
 football (labelled `DEMO DATA` by its own banner); that this is the last door this arc will give the model — it
 is simply the latest, and it is the front of a line.
+
+## §308 — Item 170: the stored match gets its own presser — `/api/v1/simulate/{ident}/analysis` lands; its sibling RTL red cured (2026-11-17)
+
+**The door.** One honest paragraph on one stored match. The owner presses once; the model reads exactly the report's own
+stored numbers — the seed and the model version verbatim; the two clubs' systems and formations; the score; possession, shots,
+on-target, xG; the rumours — and answers in one short paragraph. It does not see a player beyond the XI lists in the report; it
+is instructed not to invent one and not to name one. The door gates itself on `current_user` and the SIMULATION-OWNERSHIP rule
+(`ownership_or_admin`, foreign id → 404, not 403, so enumeration is cheap for nobody). Ledger feature `simulate.analysis`;
+20/min. This is the deliberate sibling of the story/almanac/real-book coach-read doors, and the first **session-gated** one —
+pure arithmetic carried exactly as far as the task needs it and no further.
+
+**The cure chain (mirroring §295/Item 157 step by step).** New service `services/sim_coach.py`; route
+`GET /api/v1/simulate/{ident}/analysis` in `v1/simulations.py` (with `/replay` and DELETE moved below it, byte-identically);
+contract re-export → **253 paths / 320 operations / 99 schemas**, SHA `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb`
+(551,818 bytes); `test_sim_coach_read.py` **3 passed**; `AUDIT_FIGURES` **253 / 92 / 68**; probe §1 census **242 / 78 / 105**
+(secured doors gained one — this is the only new session-gated read; private GETs gained one too; public unchanged) with **Run U**
+appended; ROADMAP quoted triple **(253, 92, 68)**; module 19's door list names the door and its `simulate*` census moved **4/6 → 5/7**,
+re-read over this commit.
+
+**Front.** `components/SimulateCoachRead.tsx` — on-demand press; `simulate.coachRead*` keys × 6 (population **5,308 × 6**);
+SSR green in all six locales; the owner panel measures **operator-friendly 95.5% cache share** on press two
+(`4480 of 4691 prompt tokens came from the gateway's cache`). Arabic gate green after two terminal `۔`s replaced the Latin
+periods (the same repair as Item 158).
+
+**The exact push that rode the sibling red (sharing authorship between these leaves).** Item 169's push (`44026668094`) printed
+**web failure at step 40 (RTL-readiness gate)**: `styles/story.css:136 — .story-coach__error { border-left: 3px solid … }` is a
+horizontal physical declaration that would not follow the locale's writing direction. **The cure — already on the tree before
+this item's own commit — applies the RTL mirror to its sibling**, exactly:
+`border-left → border-inline-start` in both `styles/story.css` (the offence item) and `styles/simulate.css` (the same bug about
+to ship with Item 170). `qa-rtl-readiness` **8/8** on this tree.
+
+**Measured in-browser.** Signed in as the DEMO account; played a match via `POST /api/v1/simulate` (`braa-v-brat-55f710fde1efb02b`,
+home 1–1 away); opened the report; pressed `Ask the model`; the page printed:
+
+```
+In seed 497147029, the `possession-block-v1@1.0.0` simulation produced a 1-1 draw after 90 minutes, …
+Braeford led the shot count 6-4 and shots on target 3-1 … No block events or momentum line beyond the
+reported starting momentum of 0.0 for both sides is included in the supplied report.
+
+openai · gpt-6.1-terra · 4480 of 4691 prompt tokens came from the gateway's cache
+```
+
+`{"available": true, "provider": "openai", "model": "gpt-6.1-terra", ... "latency_ms": 13113}` direct, 200.
+
+**Not claimed.** This is a fiction generator reading fiction; the analysis door does not read an opponent's tactics (the report
+carries none); the 0.0 momentum line at minute 0 is what the report printed, and the model repeated it faithfully —
+the refusal-to-invent is the feature, not a limitation. Any claim about this match's quality in real football is out of scope;
+`DEMO DATA` stays honestly labelled everywhere it is printed.

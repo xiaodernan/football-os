@@ -2370,7 +2370,13 @@
     "replayedDigestChip": "empreinte rejouée : {digest}",
     "pageDigestChip": "l'empreinte de cette page : {digest}",
     "modelChip": "modèle : {version}",
-    "digestChip": "empreinte {digest}"
+    "digestChip": "empreinte {digest}",
+    "coachReadEyebrow": "Coach IA · le match lu",
+    "coachReadTitle": "Le modèle lit ce match enregistré",
+    "coachReadHint": "Un appui — le modèle lit les faits stockés de cette ligne (la graine, la version du modèle, les deux systèmes, le score, la possession, les tirs et les xG) et raconte ce match en une honnête phrase. Il n'invente aucun joueur au-delà des deux onze que la page imprime déjà.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — les chiffres imprimés ci-dessus sont le rapport.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "club": {
     "accountMeterItem": "{feature} {used} sur {limit} par {period}",

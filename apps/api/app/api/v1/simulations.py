@@ -35,6 +35,7 @@ from app.services.simulation.service import (
     sim_ready,
     system_options,
 )
+from app.services.sim_coach import compute_simulation_coach_read
 from app.services.tactics.plan import system_by_slug
 
 router = APIRouter(prefix="/simulate", tags=["simulation"])
@@ -184,6 +185,25 @@ def read_simulation(
 ) -> dict[str, Any]:
     limit(request, 60, 60, scope="simulate_read")
     return row(_one(db, user, ident), full=True, session=db)
+
+
+@router.get("/{ident}/analysis")
+def read_analysis(
+    ident: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """One honest paragraph about one stored match — its seed, model version, systems and score.
+
+    The model receives the report's own stored numbers — the two systems and formations, the score,
+    possession, shots and xG split — and speaks one short paragraph. Any number-match from the
+    language model with the report means the prose stays honest about its source. The door belongs
+    to the account it was played for, like `/{ident}` itself; the provider mock-mode reads are
+    labelled the same way the other coach doors label them.
+    """
+    limit(request, 20, 60, scope="simulate_read")
+    return compute_simulation_coach_read(db, user, ident)
 
 
 @router.get("/{ident}/replay")

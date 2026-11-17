@@ -4342,7 +4342,7 @@ names those presses as not recorded locally rather than as written to the ledger
 change. Six locales, native copy: population **5,233 ×6**.
 
 **Contract re-exported once more (2026-11-17, the re-export Item 154 owed):** **251 paths / 318 operations / 99 schemas** (secured 241 / public
-**77** / private GET 104), SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5`;
+**77** / private GET 104), SHA `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb`;
 `AUDIT_FIGURES contract_paths=251 page_routes=91 migrations=68`; the three ledgers re-pinned; the
 audit's door row and module row re-pinned to `251 / 91 / 68`, and the `/world/*` pages census 26 → 27.
 
@@ -4905,7 +4905,7 @@ The local full suite printed the same three failures (`test_openapi_contract_cur
 one real cause was Item 154's owed re-export, unrecorded at landing because the API legs were never opened once Item 154
 shipped.
 
-**The cure.** Contract re-exported: **251 paths / 318 operations / 99 schemas**, SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5`.
+**The cure.** Contract re-exported: **251 paths / 318 operations / 99 schemas**, SHA `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb`.
 The three SHA ledgers re-pinned (`SECURITY_PROBE_REPORT.md` §1, `M12_PRODUCTION_HARDENING_VERIFICATION.md`, `ROADMAP.md`);
 the two copied citations (the arc ledger's §266 and PLAN's own) moved with them; the probe report's §1 census moves
 **241 / 76 / 104 → 241 / 77 / 104** with Run S appended; `AUDIT_FIGURES` **251 / 91 / 68**; the `/world/*` pages census **26 → 27**;
@@ -5131,3 +5131,15 @@ Both jars rebuilt (`mvn -DskipTests package`); `football_os_config` and `footbal
 **Cure chain.** `services/story_coach.py` (`compute_story_coach_read`) → `GET /api/v1/world/story/coach-read` in `api/v1/world.py` → contract re-export **252 / 319 / 99**, SHA `2400b751…`; `test_story_coach_read.py` **4 passed**; SHA ledgers re-pinned; probe census **241 / 78 / 104** + Run T; `AUDIT_FIGURES` **252 / 92 / 68**; ROADMAP triple (252, 92, 68); `/world/story` panel (`StoryCoachRead.tsx`, on-demand press); `worldStory.coachRead*` keys × 6 (catalogue **5,302 × 6**); SSR green in six locales; **measured in-browser**: answer with `openai · gpt-6.1-terra` — `4736 of 4855 prompt tokens came from the gateway's cache` on press two.
 
 **Not claimed.** That this paragraph is a season forecast — it reads only what the snapshot prints; that the demo rows are facts about real football; that the model arc stops here.
+
+## Item 170 — the stored match gets its own presser: `/api/v1/simulate/{ident}/analysis` (landed 2026-11-17)
+
+**The door.** One honest paragraph on one stored match. The owner presses once; the model reads the report's own stored numbers — the seed and model version verbatim, the two systems and formations, the score, possession/shots/SOT/xG split — and says one short paragraph. It never invents a player beyond the XI lists in the report; the door gates itself on `current_user` and the SIMULATION-OWNERSHIP rule (`ownership_or_admin`, foreign id → 404). Ledger feature `simulate.analysis`; 20/min; secure-shell sibling of the story/almanac/real-book coach-read doors.
+
+**Cure chain.** `services/sim_coach.py` → `GET /api/v1/simulate/{ident}/analysis` in `v1/simulations.py`; contract re-export **253 / 320 / 99**, SHA `cfbe7154…`; `test_sim_coach_read.py` **3 passed**; `AUDIT_FIGURES` **253 / 92 / 68**; probe §1 census **242 / 78 / 105** + Run U (exactly one new secured door, one new private GET, public unchanged); ROADMAP triple (253, 92, 68); module 19's door list names the door with its `simulate*` census moved **4/6 → 5/7** (path/op named, re-read over this commit).
+
+**Front.** `SimulateCoachRead.tsx` on `/simulate/[slug]` — on-demand press; `simulate.coachRead*` keys × 6 (**5,308 × 6**); SSR six locales green; module/service both rebuilt and re-created (`football_os_api`, `football_os_web`). **Measured in-browser** (DEMO account; played via API → `braa-v-brat-55f710fde1efb02b` 1–1): `openai · gpt-6.1-terra` — **95.5% cache on press two** (`4480 of 4691 prompt tokens`); the answer grounds in the report (`"the home side created the stronger chance quality despite having less of the ball"`) and refuses to invent block events.
+
+**Item 169's RTL red cured on this tree**: `styles/story.css:136 border-left` → `border-inline-start` in both `.story-coach__error` and `.sim-coach__error`; `qa-rtl-readiness` **8/8**.
+
+**Honest since Item 169's push red leg was the same root**: `"the model reads exactly the report's own stored numbers"` is the door's design goal; the read is a model-call and can hallucinate — the panel and the answer carry the prose AND the refusal where the report is silent (the model refused to invent a "block events" section since the report carries none).

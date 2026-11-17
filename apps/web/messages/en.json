@@ -2370,7 +2370,13 @@
     "replayedDigestChip": "replayed digest: {digest}",
     "pageDigestChip": "this page’s digest: {digest}",
     "modelChip": "model: {version}",
-    "digestChip": "digest {digest}"
+    "digestChip": "digest {digest}",
+    "coachReadEyebrow": "AI Coach · the match, read",
+    "coachReadTitle": "The stored match, read by the model",
+    "coachReadHint": "One press — the model reads this row's stored facts (the seed, the model version, the two systems, the score, possession, shots and xG) and speaks one honest paragraph about the match. It never invents a player beyond the eleven lists you already see.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the numbers this page already prints are the report.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "club": {
     "accountMeterItem": "{feature} {used} of {limit} per {period}",

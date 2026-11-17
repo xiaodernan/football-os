@@ -6122,6 +6122,55 @@
         }
       }
     },
+    "/api/v1/simulate/{ident}/analysis": {
+      "get": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Read Analysis",
+        "description": "One honest paragraph about one stored match — its seed, model version, systems and score.\n\nThe model receives the report's own stored numbers — the two systems and formations, the score,\npossession, shots and xG split — and speaks one short paragraph. Any number-match from the\nlanguage model with the report means the prose stays honest about its source. The door belongs\nto the account it was played for, like `/{ident}` itself; the provider mock-mode reads are\nlabelled the same way the other coach doors label them.",
+        "operationId": "read_analysis_api_v1_simulate__ident__analysis_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ident",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ident"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Read Analysis Api V1 Simulate  Ident  Analysis Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/simulate/{ident}/replay": {
       "get": {
         "tags": [
