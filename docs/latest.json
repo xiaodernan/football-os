@@ -1,6 +1,6 @@
 {
-  "head": "24cb31b",
-  "total_commits": 1407,
+  "head": "f475892",
+  "total_commits": 1409,
   "milestone": "§321",
   "milestone_full": "§321 — Item 184: the Spotlight grows its voice — `/api/v1/world/spotlight/coach-read` lands (2026-11-17)",
   "pushed_at": "2026-11-17",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T12:10:48.168Z"
+  "generated_at": "2026-11-17T12:20:50.387Z"
 }
