@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.security import current_user, limit, ownership_or_admin
 from app.models import SimulationMatch, Team, User
+from app.services.sim_coach import compute_simulation_coach_read
 from app.services.simulation.service import (
     MINUTES_CHOICES,
     SIM_LIMIT_PER_USER,
@@ -35,7 +36,6 @@ from app.services.simulation.service import (
     sim_ready,
     system_options,
 )
-from app.services.sim_coach import compute_simulation_coach_read
 from app.services.tactics.plan import system_by_slug
 
 router = APIRouter(prefix="/simulate", tags=["simulation"])
