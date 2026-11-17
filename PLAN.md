@@ -5214,7 +5214,7 @@ The retrieval was fine — `offside-interference-explained.md` answers at rerank
 
 **The cure.** `apps/api/app/services/agents/research.py` — when `ask()` returns `answered=False`, the agent now renders `result.text` verbatim (the answer door's own honest refusal, with the rare-term-match count and coverage floor in its own language). No floor lowered; no gate moved.
 
-**Measured.** `tests/test_agents.py` + `tests/test_agent_trace.py` → **34 passed**; `tests/test_knowledge_rag.py` → **26 passed**.
+**Measured.** `tests/test_agents.py` + `tests/test_agent_trace.py` → **34 passed**; `tests/test_knowledge_rag.py` → **26 passed**. CI printed **success** on `44039971833` (Item 175's §313 fact-pack push, all four legs, 37 m 19 s).
 
 **Not claimed.** That the answer is now useful for a one-term question (still no — and still the honest refusal); that the gate ever suggested wording-free end-runs; that anything in the answer door's gate moved (nothing did — the canned fallback retired in its place).
 
@@ -5231,7 +5231,7 @@ The retrieval was fine — `offside-interference-explained.md` answers at rerank
 
 The Chinese catalogue renders natively: `和你的教练一起训练`, `规则引擎`, `这里` in drills, `看看教练是怎么一步步作答的` accordion. Every UI string is from the `zh` catalogue — no English mix-ins. The coach door was asked the question in Chinese; the model answered in Chinese; the drills render in their stored-English text by contract (Item 135–148); the catalogue is not mixed.
 
-**Measured.** (i) `/coach` answered in Simplified Chinese with the same confidence the English door reports; (ii) the coaching memory rail shows `已存问答轮次 47` after the press; (iii) the Chinese UI renders correctly end-to-end; (iv) no English surprise phrase prints in the zh door.
+**Measured.** (i) `/coach` answered in Simplified Chinese with the same confidence the English door reports; (ii) the coaching memory rail shows `已存问答轮次 47` after the press; (iii) the Chinese UI renders correctly end-to-end; (iv) no English surprise phrase prints in the zh door. CI printed **success** on `44040569968` (Item 176's fact-pack push `773df9c`, all four legs, 24 m 4 s).
 
 **Not claimed.** That the Chinese result means `coaching quality` differs by locale — nothing distinguishes them; that the Chinese drills present English objective strings anyone shouldn't see — drill corpus is English, exactly the contract since Item 135; that any of these `47` is today's training count — it's the account's cumulative count, persisted across sessions.
 
@@ -5252,7 +5252,7 @@ D7  2026-11-23  Mobility, hydration and 10 min video review. Recovery is part of
 
 Drill titles stay in the stored-English corpus (the demo account's authored rows), by Item 135's contract — the three artefacts: `ai 生成`, `rule-engine`, `plan-builder-v1` are proper nouns of the engine; the renderer follows the Chinese catalogue for everything outside those; the 7-day drill rotation reads correctly in Chinese days with `emphasis` English.
 
-**Measured.** (i) Plan generation taps → **22 min · goalkeeping** for D1 ordered by attribute gap; (ii) recovery days structure correctly D2, D4, D5, D6; (iii) Testing day plus recovery reflected; (iv) memory rail reads **已存问答轮次 54** — from 50 to 54 across both presses — confirming server-side persistence works in zh.
+**Measured.** (i) Plan generation taps → **22 min · goalkeeping** for D1 ordered by attribute gap; (ii) recovery days structure correctly D2, D4, D5, D6; (iii) Testing day plus recovery reflected; (iv) memory rail reads **已存问答轮次 54** — from 50 to 54 across both presses — confirming server-side persistence works in zh. CI printed **success** on `44041378632` (the §315 push `9d9ae91`, all four legs, 25 m 33 s); the original §315 push `b4d1f75` (`44041245930`) remained in the queue at the time of writing and is recorded when it prints.
 
 **Not claimed.** That the Chinese goes to train every language — that's not the claim; only zh and en have been pressed. The plan is an estimate, same as any football-flavoured advice is labelled: `AI coach output is an estimate for training purposes. It is not medical, scouting or performance certification.`
 
@@ -5264,6 +5264,6 @@ Drill titles stay in the stored-English corpus (the demo account's authored rows
 
 **The page.** `UpsetsCoachRead.tsx` mounted on `/world/upsets` below the ledger board and above Provenance; `worldUpsets.coachRead*` keys × 6 locales (catalogue **5,326 × 6** uniform; README re-read to 5,326 with 5,279 translated per CJK/Arabic/Hebrew sibling and 5,046 of 5,326 for French; `qa-locale-tokens` parity cured for the shared `coachReadCta` sentence in zh/zh-TW, which now matches the four sibling world doors (`让模型讲` / `讓模型講`); `qa-i18n-literals` 9/9, `qa-rtl-readiness` 8/8, `qa-translation-quality` 9/9, `qa-icu-messages` 2/2, `tsc --noEmit` clean); `.upsets-coach__*` styles in `upsets.css` with `border-inline-start` for RTL.
 
-**Measured.** Direct API press: `openai · gpt-6.1-terra`, 5,043 input / 0 cached / 264 output / 9.57 s, cold; a second press 20 s later byte-identical (HTTP-layer cache). SSR six locales green; EN press through the public proxy printed the full paragraph and `0 of 5043 prompt tokens came from the gateway's cache`.
+**Measured.** Direct API press: `openai · gpt-6.1-terra`, 5,043 input / 0 cached / 264 output / 9.57 s, cold; a second press 20 s later byte-identical (HTTP-layer cache). SSR six locales green; EN press through the public proxy printed the full paragraph and `0 of 5043 prompt tokens came from the gateway's cache`. A zh press on the freshly restarted web tier moved the panel into the `coachReadEmpty` branch while a direct probe of the same door answered `available: true` (27,893 ms) — recorded verbatim in §316's addendum; the door was not down, the press path rendered its designed fallback.
 
 **Not claimed.** That the register predicts anything; that any press was cache-warm (none was); that the pattern is new or complete (five world doors carried the coach-read press before this one — almanac, real-book, story, records, matchday-xi — this one makes six; noise and finals are the natural successors). That the web tier needed a rebuild here (it did — the running `football_os_web` was from before the catalogue insert, so it was rebuilt and re-run on 3210 in the same turn).
