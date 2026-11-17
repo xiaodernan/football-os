@@ -4667,3 +4667,31 @@ before the cure and are expected to print the same single red; recorded in §276
 **The cure** (`30ae282`): the API's `UnknownTournament` → 422 message in `apps/api/app/api/v1/world.py`
 now reads the same 1930–2022 sentence the catalogue has carried since `a7cb683` — verbatim, byte-identical,
 as the drift rule requires. `test_locale_claims.py` 7/7 on the committed tree after the commit.
+
+## Item 137 — the cache test's probe question fell under the coverage floor (landed 2026-11-17)
+
+**The red** (CI run `43982025331`, api leg — the Item 135 push, same run that printed the §276 refusal red):
+`test_the_second_ask_over_the_same_passages_makes_no_provider_call` — `AssertionError: one phrasing, one call; got 0`.
+Reproduced locally on the committed tree (18.13s) before the cure.
+
+**Root cause, measured, not guessed** — retrieval on the 25-document corpus for
+`"cache probe: how should the far-side forward move when the ball is switched"`:
+
+```
+discriminative_terms:    ['cache', 'far', 'forward', 'move', 'should', 'side']
+discriminative_matches:  ['far', 'side']
+discriminative_coverage: 0.333   (floor 0.40)   →   answerable: False
+```
+
+The 25th document (`coaching/rag-stategraph.md`) shifted the corpus's document frequencies; the probe
+question stopped being answerable; the ask refused before composition; the stub provider was never
+called. A true answerability verdict on a stale probe — not a cache defect, not a floor defeat.
+
+**The cure:** the probe question now reads `"cache probe: how do I stop getting beaten in 1v1 as a
+defender"` — same role, same counting provider, same assertion untouched. `test_knowledge_answer_cache.py`
+15/15 green; the triple suite (`test_locale_claims` + `test_knowledge_rag` + `test_knowledge_answer_cache`)
+**48 passed in 127s**.
+
+**Not claimed.** That the answerability floors moved (they did not; the RAG eval is green with 25 documents);
+that run `43982545026` will be green (pushed before both cures); that this red was the runner's only report
+for Item 135's leg (it was one of two — §276 carries the other).

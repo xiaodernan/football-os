@@ -9958,3 +9958,46 @@ the API fix, so their `Tests (SQLite dev fallback)` legs are expected to print t
 red for the same reason, recorded here pre-emptively as the same finding, not as two. That the
 PostgreSQL test leg, which never ran in those two runs, would have caught it anywhere but the same
 byte — it runs the same suite.
+
+## §277 — Item 137: the 25th document moved the coverage gate; the cache test's probe question paid for it (2026-11-17)
+
+**The runner's red, verbatim** (run `43982025331`, the Item 135 push, leg `Tests (SQLite dev fallback)`):
+
+```
+FAILED tests/test_knowledge_answer_cache.py::test_the_second_ask_over_the_same_passages_makes_no_provider_call
+AssertionError: one phrasing, one call; got 0
+   (the same run also printed the §276 unknown_tournament refusal red — one push, two reds)
+```
+
+Same red reproduced locally on the committed tree (18.13s) before the cure.
+
+**Root cause, measured rather than guessed** — retrieval for the probe question on the 25-document
+corpus (scratch SQLite, `backend=hybrid-vector-python`):
+
+```
+discriminative_terms:    ['cache', 'far', 'forward', 'move', 'should', 'side']
+discriminative_matches:  ['far', 'side']
+discriminative_coverage: 0.333   (the floor is 0.40)   →  answerable: False
+```
+
+The 25th document (`coaching/rag-stategraph.md`) changed the corpus's document frequencies; the
+question the test was written to exercise — `"cache probe: how should the far-side forward move
+when the ball is switched"` — now falls **under the coverage floor**, the ask refuses before any
+composition, and the stub provider is correctly never called. The red is the runner reporting a
+*true* answerability verdict on a probe question that stopped being answerable, not a bug in the
+cache and not a bug in the floor. The sibling tests that lean on golden-class phrasings
+(`test_a_cached_answer_still_carries_this_call_s_own_citations`, answerable, matches `1v1` doc)
+stayed green for the same reason.
+
+**The cure** (Item 137): the probe question is now `"cache probe: how do I stop getting beaten in
+1v1 as a defender"` — same cache-probe role, same assertion, no weakening, same counting provider.
+After the change: `test_knowledge_answer_cache.py` **15/15 green**; the triple suite
+(`test_locale_claims` + `test_knowledge_rag` + `test_knowledge_answer_cache`) **48 passed in 127s**.
+
+**Not claimed.** That the answerability floors should have moved — they did not, and the RAG eval
+(recall@5 1.0, MRR 0.9185, citation integrity 1.0, refusal accuracy 1.0) still passes with 25
+documents, so the golden-set derivation documented at `retrieval.py:41-53` remains true of the
+shipped corpus. That the run's second red (§276's) is cured by this commit — it is cured by
+`30ae282`/§276; the two reds landed one push apart and are recorded separately. That run
+`43982545026` (Item 135's re-push) will be green — it was pushed before both cures and is
+expected to print these same two reds.

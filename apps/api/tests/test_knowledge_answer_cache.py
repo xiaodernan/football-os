@@ -188,7 +188,7 @@ def _ask_twice(db: Session, monkeypatch: pytest.MonkeyPatch, question: str) -> t
 
 
 def test_the_second_ask_over_the_same_passages_makes_no_provider_call(db: Session, monkeypatch: pytest.MonkeyPatch) -> None:
-    question = "cache probe: how should the far-side forward move when the ball is switched"
+    question = "cache probe: how do I stop getting beaten in 1v1 as a defender"
     first, second, provider = _ask_twice(db, monkeypatch, question)
 
     assert provider.calls == 1, f"one phrasing, one call; got {provider.calls}"
