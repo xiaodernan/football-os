@@ -1,10 +1,10 @@
 {
-  "head": "6e3b7c6",
-  "total_commits": 1339,
-  "milestone": "§294",
-  "milestone_full": "§294 — Item 156: the EN column label changed one character, the whole gate reds (2026-11-17)",
+  "head": "9a17506",
+  "total_commits": 1342,
+  "milestone": "§296",
+  "milestone_full": "§296 — Item 158: the StateGraph route taught on a page of its own; signed-out is welcome to the login wall (2026-11-17)",
   "pushed_at": "2026-11-17",
-  "screens": 91,
+  "screens": 92,
   "assets": 205,
   "world_doors": 24,
   "locales": 6,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T03:38:35.080Z"
+  "generated_at": "2026-11-17T04:11:27.039Z"
 }
