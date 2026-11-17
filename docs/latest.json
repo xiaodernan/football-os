@@ -1,8 +1,8 @@
 {
-  "head": "c6fc360",
-  "total_commits": 1290,
-  "milestone": "§275",
-  "milestone_full": "§275 — Item 135: the corpus teaches the graph behind its own retrieval (landed 2026-11-17)",
+  "head": "fe4da02",
+  "total_commits": 1293,
+  "milestone": "§276",
+  "milestone_full": "§276 — Item 136: the catalogue and the API disagreed with each other; one commit apart, recorded (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-16T23:49:03.280Z"
+  "generated_at": "2026-11-17T00:05:55.572Z"
 }
