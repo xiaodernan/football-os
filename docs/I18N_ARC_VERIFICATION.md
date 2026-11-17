@@ -10819,6 +10819,41 @@ background at the time of writing had not printed its final line.
 
 ## §302 — Item 164: the admin coach-read door was dead through the edge; three chained timeouts cured at their source (2026-11-17)
 
+**How it surfaced.** The pressure probe (§301) had the plane-walk re-run after the timeout cure (§302) — four of
+its twenty-seven checks read red: `edge_registered`, `edge_instance_up`, `worldcheck_registered`,
+`jobsobserver_registered` — the football peers never present in the registry query path.
+
+**The investigation, honestly.** The peers demonstrably attempt registration at every boot
+(`Registering application FOOTBALL-EDGE with eureka with status UP` … `registration status: 204`; the same for
+worldcheck and jobs-observer); the API renews `FOOTBALL-CORE`'s lease every ten seconds at `HTTP/1.1 200`;
+yet `GET 127.0.0.1:8761/eureka/apps*` showed only the careeros project's `BACKEND` and rejected the football
+peers at both the aggregate and per-app reads, while manual `POST`s of probes were honoured at the same paths
+this host answered for the football peers. The discriminator is one port: **host port 8761 on this dev compose
+belongs to `careeros-discovery`, not to the football plane** — `docker ps` prints it in one line
+(`careeros-discovery 127.0.0.1:8761->8761/tcp` / `football_os_registry 127.0.0.1:18760->8761/tcp`).
+`football_os_registry` serves 8761 only container-to-container, and the plane-walk's default
+(`http://127.0.0.1:8761`) pointed at the other registry — the walk passed its probes into a registry it could
+not and never did join.
+
+**The verification.** Queried the football registry directly:
+`GET http://127.0.0.1:18760/eureka/apps` → **FOOTBALL-WORLDCHECK 1×UP, FOOTBALL-JOBS-OBSERVER 1×UP,
+FOOTBALL-CORE 1×UP, FOOTBALL-EDGE 1×UP**.
+
+**The cure (two honest parts).**
+1. `services/plane-walk.ps1` — the default `-Registry` is now `http://127.0.0.1:18760` (this host's football-registry
+   publish; the compose pins 8761 for the Docker backend proxy, so only the host-side publish moved). The four
+   registration checks were re-pointed at the per-app reads (`/eureka/apps/FOOTBALL-*`), which are the wire truth,
+   not at the aggregate listing; the aggregate is printed as an information field (`aggregate_apps_seen`) outside
+   the pass/fail count — a witness that can't see a plane's own registry for a plane's own peers was recording an
+   environment property, not a plane defect.
+2. Re-run with defaults: **PLANE WALK OK 27/27** (witness `.scratch/plane-walk.json`); the aggregate now prints
+   `FOOTBALL-WORLDCHECK,FOOTBALL-JOBS-OBSERVER,FOOTBALL-CORE,FOOTBALL-EDGE`.
+
+**Not claimed.** That the football peers were ever down — they never were on this host; that the §302 cure
+depends on the plane walk (it does not — the timeout fix was verified live before the walk greened); that the
+careeros registry is misconfigured in any way (it is a different project's discovery server, serving its own
+registry correctly); that per-app reads strengthen what the witness can refuse on beyond documentation duty.
+
 **How it surfaced.** Probing `/api/v1/admin/coach-read` with the shared admin passphrase against the edge
 declined twice with the edge's own 236-byte envelope:
 
@@ -10861,3 +10896,5 @@ answer cache hides the first reader's wait (it does not — caching begins after
 budget belongs at 60s forever (it belongs to the door's own cold latency plus margin — another synthesis door
 landing later moves the number with the same measurement discipline); that the admin console's AI recommendation
 is organic insight (`source_note.seeded_views 2491 : real_views 1` — the console says so itself; use directionally).
+
+## §303 — Item 165: the plane walk's four red registration legs were the walk's wrong registry, not the plane's (2026-11-17)

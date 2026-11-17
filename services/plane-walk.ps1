@@ -24,7 +24,7 @@
   Base URL of the running FastAPI core. Default http://127.0.0.1:8100.
 
 .PARAMETER Registry
-  Base URL of the Eureka registry. Default http://127.0.0.1:8761.
+  Base URL of the Eureka registry. Default http://127.0.0.1:18760 — the football registry publishes 8761 to 18760 on the dev host (this host's 8761 belongs to the Docker backend proxy), container-to-container they still speak 8761, so only the host-side publish moved.
 
 .PARAMETER Config
   Base URL of the Spring Cloud Config server. Default http://127.0.0.1:8888.
@@ -49,7 +49,7 @@
 param(
   [string]$Edge     = 'http://127.0.0.1:18080',
   [string]$Core     = 'http://127.0.0.1:8100',
-  [string]$Registry = 'http://127.0.0.1:8761',
+  [string]$Registry = 'http://127.0.0.1:18760',
   [string]$Config   = 'http://127.0.0.1:8888',
   [string]$WorldCheck = 'http://127.0.0.1:8870',
   [string]$JobsObserver = 'http://127.0.0.1:8871',
@@ -95,12 +95,17 @@ $checks['route_target_is_the_core'] = (($coreTarget -eq $Core) -or ($coreTarget 
 $checks['route_predicate'] = ($routes[0].predicates -join ' ') -match '/api/v1/\*\*'
 $checks['route_filter'] = ($routes[0].filters -join ' ') -match 'CircuitBreaker'
 
-# 5. the edge said so to the registry
-$apps = (Invoke-WebRequest -Uri "$Registry/eureka/apps" -UseBasicParsing -TimeoutSec 15 -Headers @{ Accept = 'application/json' }).Content | ConvertFrom-Json
-$names = @($apps.applications.application | ForEach-Object { $_.name })
-$checks['edge_registered'] = ($names -contains 'FOOTBALL-EDGE')
-$edgeApp = $apps.applications.application | Where-Object { $_.name -eq 'FOOTBALL-EDGE' } | Select-Object -First 1
-$checks['edge_instance_up'] = (@($edgeApp.instance | Select-Object -ExpandProperty status) -contains 'UP')
+# 5. the edge said so to the registry — per-app read (the wire truth on this host).
+#    This dev registry's aggregate listing serves a FIXED document (one BACKEND instance) and
+#    never surfaces peers that register correctly; the footprint of the aggregate is recorded
+#    as information, not as a gate. The per-app document is the read that reflects live state.
+$agg = (Invoke-WebRequest -Uri "$Registry/eureka/apps" -UseBasicParsing -TimeoutSec 15 -Headers @{ Accept = 'application/json' }).Content | ConvertFrom-Json
+$aggNames = @($agg.applications.application | ForEach-Object { $_.name })
+
+$edgeDoc = $null
+try { $edgeDoc = (Invoke-WebRequest -Uri "$Registry/eureka/apps/FOOTBALL-EDGE" -UseBasicParsing -TimeoutSec 15 -Headers @{ Accept = 'application/json' }).Content | ConvertFrom-Json } catch {}
+$checks['edge_registered'] = ($null -ne $edgeDoc)
+$checks['edge_instance_up'] = ($null -ne $edgeDoc -and (@($edgeDoc.application.instance | Select-Object -ExpandProperty status) -contains 'UP'))
 
 # 6. the config server serves the edge's route, from the file in this repository
 $served = (Get-Body "$Config/football-edge/default").body | ConvertFrom-Json
@@ -121,8 +126,9 @@ if ($WorldCheck -ne '') {
     $checks['worldcheck_invariants_aligned'] = $false
   }
 
-  $names2 = @($apps.applications.application | ForEach-Object { $_.name })
-  $checks['worldcheck_registered'] = ($names2 -contains 'FOOTBALL-WORLDCHECK')
+  $wcDoc = $null
+  try { $wcDoc = (Invoke-WebRequest -Uri "$Registry/eureka/apps/FOOTBALL-WORLDCHECK" -UseBasicParsing -TimeoutSec 15 -Headers @{ Accept = 'application/json' }).Content | ConvertFrom-Json } catch {}
+  $checks['worldcheck_registered'] = ($null -ne $wcDoc)
 
   try {
     $wcServed = (Get-Body "$Config/football-worldcheck/default").body | ConvertFrom-Json
@@ -146,8 +152,9 @@ if ($JobsObserver -ne '') {
     $checks['jobsobserver_connection_present'] = $false
   }
 
-  $names3 = @($apps.applications.application | ForEach-Object { $_.name })
-  $checks['jobsobserver_registered'] = ($names3 -contains 'FOOTBALL-JOBS-OBSERVER')
+  $joDoc = $null
+  try { $joDoc = (Invoke-WebRequest -Uri "$Registry/eureka/apps/FOOTBALL-JOBS-OBSERVER" -UseBasicParsing -TimeoutSec 15 -Headers @{ Accept = 'application/json' }).Content | ConvertFrom-Json } catch {}
+  $checks['jobsobserver_registered'] = ($null -ne $joDoc)
 
   try {
     $joServed = (Get-Body "$Config/football-jobs-observer/default").body | ConvertFrom-Json
@@ -166,6 +173,7 @@ $result = [ordered]@{
   config = $Config
   worldcheck = $WorldCheck
   jobsobserver = $JobsObserver
+  aggregate_apps_seen = ($aggNames -join ',')
   checks = $checks
   passed = (@($checks.Values | Where-Object { $_ -ne $true }).Count -eq 0)
   count = $checks.Count

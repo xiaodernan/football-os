@@ -5095,3 +5095,13 @@ Both jars rebuilt (`mvn -DskipTests package`); `football_os_config` and `footbal
 **Measured after.** Through the edge: **200 in 24.9 s** (the very call that was 503 three times running); through the browser path at 3210: **200 in 26.1 s**; warm path: **200 in 270 ms, then 48 ms** (server-side answer cache — the reader pays twenty-five seconds once, not per visit).
 
 **Honest bounds.** The answer is synthetic-cohort, labelled as such by the door itself (`source_note.seeded_views 2491 : real_views 1`); the cold latency is real and unavoidable while reasoning models are in the path; no application 5xx anywhere on this door since the cure.
+
+## Item 165 — the plane walk's four red registration legs were the walk's wrong registry, not the plane's (landed 2026-11-17)
+
+**Diagnosis chain.** The post-§302 walk printed four reds: `edge_registered`, `edge_instance_up`, `worldcheck_registered`, `jobsobserver_registered`. The peers demonstrably register at boot (`Registering application FOOTBALL-EDGE ... status UP`, `registration status: 204`) and the core renews every 10s at 200 — yet `GET 127.0.0.1:8761/eureka/apps*` served only careeros' projects' `BACKEND`. Host port **8761 is `careeros-discovery`**; `football_os_registry` publishes on host **18760** (`docker ps --format '{{.Names}} {{.Ports}}'` says it in one line). The walk's default `-Registry http://127.0.0.1:8761` pointed at the wrong registry.
+
+**Cure.** (1) `plane-walk.ps1` default `-Registry http://127.0.0.1:18760`; (2) the four registration legs assert the per-app read (`/eureka/apps/FOOTBALL-*`), aggregate kept as an information-only field outside the pass/fail count.
+
+**Verified.** Direct query `GET 127.0.0.1:18760/eureka/apps` → FOOTBALL-WORLDCHECK/JOBS-OBSERVER/CORE/EDGE, all `UP`. Witness re-run: **PLANE WALK OK 27/27** (`aggregate_apps_seen: FOOTBALL-WORLDCHECK,FOOTBALL-JOBS-OBSERVER,FOOTBALL-CORE,FOOTBALL-EDGE`).
+
+**Not claimed.** That any football peer was ever down on this host — they were not; that the §302 cure depended on this walk — it did not; that the careeros registry is defective in any way — it is a different project's discovery server serving its own state correctly.
