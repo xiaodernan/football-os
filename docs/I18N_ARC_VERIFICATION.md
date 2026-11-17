@@ -11628,3 +11628,13 @@ The same six doors pressed through the 3210 public spoke (web → edge → api t
 * Second (near-identical) press 9 seconds later: `openai · gpt-6.1-terra · demo_mode: false` · 16,885 in / **14,644 cached (86.7 %)** / cache_reported: true · output 345 / 9.0 s — the same byte-0 charter serves across admin/feature/chronicle/manual/bay of the fleet.
 
 ****Not claimed.** That the answer text names the new ledger block explicitly — the printed first and second paragraphs anchor on the seeded-cohort flag and the slope/r² plateau. Whether the model read the second block end-to-end is not verifiable from the text alone; the block reached the prompt; the model answered; the cost lines do not appear in the printed text verbatim. That is an open result Item 199 should cure with a companion clause in _SYSTEM explicitly naming the ledger block as its second authority. The ledger is honest about that.
+
+## §335 addendum — Item 199: the admin coach's TASK names the two authorities (2026-11-17)
+
+**The cure.** `_SYSTEM` in `services/behavior_coach.py` re-written as two authorities from the top: the visitor cohort block (page behaviour) and the model ledger block (the fleet's own model economics). One committed change (`0c803d7`), no other prompt-text moved, no requirement reflowed, no route moved, no gate moved, no schema moved.
+
+**Test parity.** `tests/test_admin_coach_read.py` — **5 passed** — the assertions are the same as Item 198's: `"three optimizations" in system.lower()` and `"seeded" in prompt.lower()`. Neither moved. The well-established stub confirms the TASK framing still satisfies the suite — no regression.
+
+**The honest floor under this entry.** The api image that `b59eee3` builds (Item 198) is what is on disk now. The new `0c803d7` is committed and pushed; it is not deployed in this window because Docker Desktop on this host died mid-flight before the api container could come back up — it has died and restarted five or six times in the last hour. The print could not be captured; the rest of the evidence model remains exactly as recorded in §335 for Item 198 — verified through the spoke at **cache_reported: true · cached_input_tokens 14,644 of 16,885 (86.7%)**.
+
+**Not claimed.** That Item 199's image was ever rebuilt nor ever booted this window; that any CI leg in this window printed a verdict on `0c803d7` (the legs it ticks off the list are still in-flight); that the new framing achieved anything (it has not been pressure-tested); that Docker Desktop's restart cadence won't pick the worse pattern from Item 190's list; that Item 198 legs pre-condemn any particular result before they print.
