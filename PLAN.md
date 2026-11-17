@@ -4342,7 +4342,7 @@ names those presses as not recorded locally rather than as written to the ledger
 change. Six locales, native copy: population **5,233 ×6**.
 
 **Contract re-exported once more (2026-11-17, the re-export Item 154 owed):** **251 paths / 318 operations / 99 schemas** (secured 241 / public
-**77** / private GET 104), SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9`;
+**77** / private GET 104), SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5`;
 `AUDIT_FIGURES contract_paths=251 page_routes=91 migrations=68`; the three ledgers re-pinned; the
 audit's door row and module row re-pinned to `251 / 91 / 68`, and the `/world/*` pages census 26 → 27.
 
@@ -4905,7 +4905,7 @@ The local full suite printed the same three failures (`test_openapi_contract_cur
 one real cause was Item 154's owed re-export, unrecorded at landing because the API legs were never opened once Item 154
 shipped.
 
-**The cure.** Contract re-exported: **251 paths / 318 operations / 99 schemas**, SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9`.
+**The cure.** Contract re-exported: **251 paths / 318 operations / 99 schemas**, SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5`.
 The three SHA ledgers re-pinned (`SECURITY_PROBE_REPORT.md` §1, `M12_PRODUCTION_HARDENING_VERIFICATION.md`, `ROADMAP.md`);
 the two copied citations (the arc ledger's §266 and PLAN's own) moved with them; the probe report's §1 census moves
 **241 / 76 / 104 → 241 / 77 / 104** with Run S appended; `AUDIT_FIGURES` **251 / 91 / 68**; the `/world/*` pages census **26 → 27**;
@@ -5123,3 +5123,11 @@ Both jars rebuilt (`mvn -DskipTests package`); `football_os_config` and `footbal
 ## Item 168 — the fact-pack message named a commit that does not exist (landed 2026-11-17)
 
 **The slip, verbatim.** Commit `51622f9` (the §305 French-library fact pack) carries the message `"chore(scripts): fact pack refreshed to faaf5f7 - 1361 commits, arc §305 (Item 167)"`. `faaf5f7` is not a commit anywhere in this repository. The pack it lands pins `head: 531a619` — the printed line was `latest.json: 531a619 1361 commits · 92 routes · 6 locales · arc §305 pulled from the ledger`, and the message was invented instead of copied. **No amend, no force-push; `51622f9` stands.** §306/Item 168 in the arc ledger records this verbatim — the third recorded failure of this exact shape (after §290, §298) — and restates the binding rule: the fact-pack message is written from the generator's own printed line, or the commit is not made.
+
+## Item 169 — the model gains its own door to the season: `/api/v1/world/story/coach-read` (landed 2026-11-17)
+
+**The design.** The Story has been three honest chapters of stored-row arithmetic; the coach door asks the model to read exactly those three chapters and speak one honest paragraph about the season's shape. Mirrors the `almanac/coach-read` and `real-book/coach-read` shapes exactly; public (20/min); ledger feature `world.story.read`.
+
+**Cure chain.** `services/story_coach.py` (`compute_story_coach_read`) → `GET /api/v1/world/story/coach-read` in `api/v1/world.py` → contract re-export **252 / 319 / 99**, SHA `2400b751…`; `test_story_coach_read.py` **4 passed**; SHA ledgers re-pinned; probe census **241 / 78 / 104** + Run T; `AUDIT_FIGURES` **252 / 92 / 68**; ROADMAP triple (252, 92, 68); `/world/story` panel (`StoryCoachRead.tsx`, on-demand press); `worldStory.coachRead*` keys × 6 (catalogue **5,302 × 6**); SSR green in six locales; **measured in-browser**: answer with `openai · gpt-6.1-terra` — `4736 of 4855 prompt tokens came from the gateway's cache` on press two.
+
+**Not claimed.** That this paragraph is a season forecast — it reads only what the snapshot prints; that the demo rows are facts about real football; that the model arc stops here.

@@ -4682,7 +4682,13 @@
     "chapterThreeEnded": "最近一場敗局讓它終結",
     "chapterThreeRun": "{run} 場不敗",
     "unavailable": "這個世界暫時還沒有寫完這一章",
-    "chapterOneGdGap": "淨勝球作計"
+    "chapterOneGdGap": "淨勝球作計",
+    "coachReadEyebrow": "AI 教練 · 故事述之",
+    "coachReadTitle": "模型講一季",
+    "coachReadHint": "按一下——讓模型讀這一季印在頁面上的三章內容，講一段故事說出這一季的形狀。它不會編出未被交給它的任何球隊、球員或比賽。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型的按壓暫時不可用——上面三章仍然獨立成立。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "worldRecords": {
     "metaTitle": "本賽季的紀錄",

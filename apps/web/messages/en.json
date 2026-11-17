@@ -4682,7 +4682,13 @@
     "chapterThreeEnded": "the last defeat closes it",
     "chapterThreeRun": "{run} unbeaten",
     "unavailable": "this chapter is not written for this world yet",
-    "chapterOneGdGap": "on goal difference"
+    "chapterOneGdGap": "on goal difference",
+    "coachReadEyebrow": "AI Coach · the story, told",
+    "coachReadTitle": "The story, read by the model",
+    "coachReadHint": "One press — the model reads the same three chapters this page prints and speaks one honest paragraph on the season's shape. It never invents a fixture, club or player beyond the rows it was handed.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's press is unavailable right now — the three chapters above stand alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldRecords": {
     "metaTitle": "The Season's Records",

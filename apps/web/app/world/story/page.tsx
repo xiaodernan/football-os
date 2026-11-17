@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { Provenance, WorldHead, WorldUnavailable, formatMoment } from "@/components/world";
+import { StoryCoachRead } from "@/components/StoryCoachRead";
 import { pageMetadata, absolute } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type {
@@ -119,6 +120,8 @@ export default async function StoryPage() {
           </div>
         </section>
       </div>
+
+      <StoryCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

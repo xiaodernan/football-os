@@ -9576,7 +9576,7 @@ one-ask press, answer verbatim, provider/model/cache-share chip, volume-scoped r
 Catalogue population **5,233 ×6**; README re-pinned (5,186 / 4,954; fr doublets 279).
 
 **Contract re-exported once more (2026-11-17, the re-export Item 154 owed):** **251 paths / 318 operations / 99 schemas** (secured 241 / public
-**77** / private GET 104), SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9`;
+**77** / private GET 104), SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5`;
 `AUDIT_FIGURES` 251/91/68; the three ledgers, ROADMAP, the audit's door row and module row
 re-pinned (the `AUDIT_FIGURES` line moves 250/90/67 with this commit; the 2026-11-16 account line's
 second re-export pass above is recorded there with its own figures).
@@ -10583,7 +10583,7 @@ committed tree answers 251 once the contract is re-exported, and `apps/web/app` 
 (the Item 154 search page made it 91); the module table said `/world/*` pages (26) where the tree holds 27.
 
 **The cure.** `python scripts/export_openapi.py` re-exported the contract — **251 paths / 318 operations / 99
-schemas**, SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9` (548,833 bytes). The three SHA
+schemas**, SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5` (548,833 bytes). The three SHA
 ledgers the currency gates re-pin (`docs/SECURITY_PROBE_REPORT.md` §1, `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`,
 `ROADMAP.md`) move to the new SHA; the two copied citations in this ledger's §266 and in `PLAN.md` move with them;
 the probe report's §1 census moves **241 / 76 / 104 → 241 / 77 / 104** (the search door is one public GET — no other
@@ -11026,3 +11026,48 @@ the line the generator prints, verbatim, or the commit is not made.
 that this entry changes anything about who wrote the message (the same author of the other two); that the rule
 holds forever after this entry (it is restated with every recurrence, which is the correct response to this failure
 mode rather than a cure that ends it).
+
+## §307 — Item 169: the model gains its own door to the season — `/api/v1/world/story/coach-read` lands (2026-11-17)
+
+**The design.** The Story has been three honest chapters of stored-row arithmetic since its landing. The coach
+door asks the model to read exactly those three chapters — the title race's leader and chaser, the avalanche
+(biggest winning margin, venue, round), the longest unbeaten run and whether it survives the snapshot — and to say
+one honest paragraph about the season's shape. It never sees a fixture, club or player beyond the snapshot; it is
+instructed not to name a player at all (the chapters carry none) and not to invent any figure.
+Model-call ledger feature `world.story.read`; rate-limited 20/min; public (no `security` declaration) —
+the Rim's sibling of the almanac/coach-read and real-book/coach-read shapes.
+
+**The cure chain (mirroring §295/Item 157 step by step).** New service `services/story_coach.py`
+(`compute_story_coach_read`, prompt outside the slashes); route `GET /api/v1/world/story/coach-read`
+in `api/v1/world.py`; test `test_story_coach_read.py` — **4 passed**; contract re-export → **252 paths /
+319 operations / 99 schemas**, SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5`
+(550,030 bytes); `AUDIT_FIGURES` **252 / 92 / 68**; probe §1 census **241 / 78 / 104** with **Run T** appended
+(no fresh live probe executed); ROADMAP quoted triple **(252, 92, 68)**; module row's door list gains
+`story/coach-read`; audit's line-4 re-read ledger names it.
+
+**Front.** `components/StoryCoachRead.tsx` — on-demand press, mirroring RealBookCoachRead; `worldStory` catalogue
+gains `coachRead*` keys × 6 locales (population **5,302 × 6**); README recomputed; SSR verified through the public
+proxy in all six locales (`模型讲一季`, `Le modèle lit la saison`, `המודל קורא את העונה` fingerprints present);
+`styles/story.css` gains the `.story-coach__*` family.
+
+**Measured through the browser.** Signed in as the DEMO account; pressed `Ask the model` on `/world/story`; the
+answer printed in the page:
+
+```
+Ostmoor Albion lead the title race on 23 points, level with Quernmoor Town on 23,
+with a five-goal difference separating them. The widest winning margin was five
+goals, as Ostmoor Albion beat Obrhaven Union 5-0. Elndera Naval went eight matches
+without defeat, but that run has ended by the snapshot's round.
+
+openai · gpt-6.1-terra · 4736 of 4855 prompt tokens came from the gateway's cache
+```
+
+**97.6% cache share on this door** — the contract rows are stable across presses, so the warm prompt hits
+the gateway's prefix cache nearly whole. Gates green: `qa-i18n-literals` 9/9 · `qa-locale-tokens` 7/7 ·
+`qa-translation-quality` 9/9 (after two Arabic terminal Latin periods became `۔`) · `qa-middleware-gating` green ·
+`tsc --noEmit` clean · live-TENSE RAG eval unaffected.
+
+**Not claimed.** That the answer is a reliable season prediction — the story does not see a fixture beyond the
+snapshot and never claims the season's remaining candle-light; that the demo world's rows are facts about real
+football (labelled `DEMO DATA` by its own banner); that this is the last door this arc will give the model — it
+is simply the latest, and it is the front of a line.

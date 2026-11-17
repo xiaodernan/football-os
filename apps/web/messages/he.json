@@ -4682,7 +4682,13 @@
     "chapterThreeEnded": "התבוסה האחרונה סוגרת פרק",
     "chapterThreeRun": "{run} ללא הפסד",
     "unavailable": "הפרק הזה עדיין לא נכתב לעולם הזה",
-    "chapterOneGdGap": "בהפרש שערים"
+    "chapterOneGdGap": "בהפרש שערים",
+    "coachReadEyebrow": "מאמן הבינה · הסיפור נקרא",
+    "coachReadTitle": "המודל קורא את העונה",
+    "coachReadHint": "לחיצה אחת — המודל קורא את שלושת הפרקים שמודפסים כאן בדף הזה ומוסר תיאור אחד כנה של צורת העונה. הוא אינו ממציא מועדון, משחק או שחקן מעבר לשורות שנמסרו לו.",
+    "coachReadCta": "בקש מהמודל לקרוא",
+    "coachReadEmpty": "הקריאה של המודל אינה זמינה כעת — שלושת הפרקים שלמעלה עומדים בעצמם.",
+    "coachReadProvider": "{provider} · {model} · {cached} מתוך {prompt} טוקני קלט הגיעו מהמטמון של השער"
   },
   "worldRecords": {
     "metaTitle": "שיאי העונה",

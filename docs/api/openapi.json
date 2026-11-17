@@ -2912,6 +2912,29 @@
         }
       }
     },
+    "/api/v1/world/story/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Story Coach Read",
+        "description": "The Story's coach-read — one honest paragraph, asked of the model on the computed rows.\n\nThe model receives exactly the three chapters the page prints: the title race's leader and\nchaser with their points and gap, the avalanche fixture with its margin, the longest unbeaten\nrun with its alive flag. It does not see a fixture, club or player beyond the snapshot; it is\ninstructed not to invent one and not to name a player at all (the chapters carry none). Without\na configured provider this returns `available: false` and the three chapters stand alone.",
+        "operationId": "story_coach_read_api_v1_world_story_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Story Coach Read Api V1 World Story Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/records": {
       "get": {
         "tags": [

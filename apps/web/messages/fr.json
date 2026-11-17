@@ -4682,7 +4682,13 @@
     "chapterThreeEnded": "la dernière défaite ferme le chapitre",
     "chapterThreeRun": "{run} sans défaite",
     "unavailable": "ce chapitre n'est pas encore écrit pour ce monde",
-    "chapterOneGdGap": "à la différence de buts"
+    "chapterOneGdGap": "à la différence de buts",
+    "coachReadEyebrow": "Coach IA · le récit lu",
+    "coachReadTitle": "Le modèle lit la saison",
+    "coachReadHint": "Un appui — le modèle lit les trois mêmes chapitres que cette page imprime et raconte la saison en une honnête phrase. Il n'invente aucun club, aucune rencontre, aucun joueur au-delà des lignes qui lui sont remises.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — les trois chapitres ci-dessus se tiennent seuls.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "worldRecords": {
     "metaTitle": "Les records de la saison",

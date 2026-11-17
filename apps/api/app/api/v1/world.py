@@ -38,6 +38,7 @@ from app.models import (
 )
 from app.services.almanac_coach import compute_almanac_coach_read
 from app.services.real_book_coach import compute_real_book_coach_read
+from app.services.story_coach import compute_story_coach_read
 from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
@@ -1097,6 +1098,20 @@ def story(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_story")
     return _envelope(**compute_story(db))
+
+
+@router.get("/story/coach-read")
+def story_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Story's coach-read — one honest paragraph, asked of the model on the computed rows.
+
+    The model receives exactly the three chapters the page prints: the title race's leader and
+    chaser with their points and gap, the avalanche fixture with its margin, the longest unbeaten
+    run with its alive flag. It does not see a fixture, club or player beyond the snapshot; it is
+    instructed not to invent one and not to name a player at all (the chapters carry none). Without
+    a configured provider this returns `available: false` and the three chapters stand alone.
+    """
+    limit(request, 20, 20, scope="world_story_read")
+    return _envelope(**compute_story_coach_read(db))
 
 
 @router.get("/records")
