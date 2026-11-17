@@ -16139,6 +16139,69 @@
           }
         }
       }
+    },
+    "/api/v1/admin/model-census": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Model Census",
+        "description": "The AI ledger census: calls, failures, cache share, daily line — identities never projected.",
+        "operationId": "model_census_api_v1_admin_model_census_get",
+        "parameters": [
+          {
+            "name": "window_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 120,
+              "minimum": 7,
+              "default": 30,
+              "title": "Window Days"
+            }
+          },
+          {
+            "name": "x-admin-passphrase",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Passphrase"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Model Census Api V1 Admin Model Census Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

@@ -34,6 +34,45 @@ type BehaviorPayload = {
   model: { calls_in_window: number; input_tokens_reported: number; cached_input_tokens: number; cached_share: number };
 };
 
+type CensusFeature = {
+  feature: string;
+  calls: number;
+  failures: number;
+  demo_mode_calls: number;
+  cached_share_reported: number;
+  reported_rows: number;
+  output_tokens: number;
+  median_latency_ms: number;
+  cost_usd: number;
+  last_called: string | null;
+};
+type CensusDaily = { date: string; calls: number; failures: number; input_tokens: number; cached_tokens: number; reported_rows: number; cost_usd: number };
+type CensusPayload = {
+  available: boolean;
+  window_days: number;
+  totals: {
+    calls: number;
+    failures: number;
+    failure_rate: number;
+    demo_mode_calls: number;
+    demo_mode_share: number;
+    input_tokens: number;
+    output_tokens: number;
+    cached_input_tokens: number;
+    in_cache_reported: number;
+    cached_reported: number;
+    cached_share_reported: number;
+    reported_rows: number;
+    estimated_cost_usd: number;
+    actual_cost_usd: number;
+    median_latency_ms: number;
+  };
+  by_feature: CensusFeature[];
+  daily: CensusDaily[];
+  errors: { sample: string; count: number }[];
+  note?: string;
+};
+
 const SESSION_KEY = "fo_admin_pass";
 
 function pct(fraction: number): string {
@@ -63,6 +102,8 @@ export function AdminConsole() {
   const [data, setData] = useState<BehaviorPayload | null>(null);
   const [coachState, setCoachState] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [coachData, setCoachData] = useState<CoachReadPayload | null>(null);
+  const [censusState, setCensusState] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [census, setCensus] = useState<CensusPayload | null>(null);
 
   useEffect(() => {
     if (!passphrase) return;
@@ -109,6 +150,35 @@ export function AdminConsole() {
       })
       .catch(() => setCoachState("error"));
   };
+
+  useEffect(() => {
+    if (state !== "ok") return;
+    let cancelled = false;
+    setCensusState("loading");
+    fetch("/api/v1/admin/model-census?window_days=30", { headers: { "x-admin-passphrase": passphrase } })
+      .then(async (response) => (response.ok ? ((await response.json()) as CensusPayload) : null))
+      .then((payload) => {
+        if (cancelled) return;
+        setCensus(payload);
+        setCensusState(payload ? "ok" : "error");
+      })
+      .catch(() => {
+        if (!cancelled) setCensusState("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [state, passphrase]);
+
+  const censusChart = useMemo(() => {
+    if (!census) return null;
+    const values = census.daily.map((day) => day.calls);
+    return {
+      calls: chartPoints(values, 640, 150),
+      first: census.daily[0]?.date ?? "",
+      last: census.daily[census.daily.length - 1]?.date ?? "",
+    };
+  }, [census]);
 
   const chart = useMemo(() => {
     if (!data) return null;
@@ -218,6 +288,78 @@ export function AdminConsole() {
             )
           ) : null}
         </div>
+      </Panel>
+
+      <Panel eyebrow={t("censusEyebrow")} title={t("censusTitle")}>
+        <p className="muted" style={{ maxWidth: "72ch" }}>{t("censusHint")}</p>
+        {censusState === "loading" ? <p className="muted">{t("gateEntering")}</p> : null}
+        {censusState === "error" ? <p className="admin__gate-error" role="alert">{t("gateError")}</p> : null}
+        {censusState === "ok" && census ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem", marginTop: "0.5rem" }}>
+            <section className="admin__kpis" aria-label={t("censusTitle")}>
+              {[
+                { label: t("censusCalls"), value: census.totals.calls.toLocaleString() },
+                { label: t("censusFailures", { rate: pct(census.totals.failure_rate) }), value: census.totals.failures.toLocaleString() },
+                { label: t("censusCachedShare"), value: pct(census.totals.cached_share_reported) },
+                { label: t("censusDemoShare"), value: pct(census.totals.demo_mode_share) },
+                { label: t("censusCostEst"), value: `$${census.totals.estimated_cost_usd.toFixed(4)}` },
+                { label: t("censusCostActual"), value: `$${census.totals.actual_cost_usd.toFixed(4)}` },
+                { label: t("censusMedianLatency"), value: `${census.totals.median_latency_ms} ms` },
+              ].map((kpi) => (
+                <div key={kpi.label} className="admin__kpi">
+                  <span className="admin__kpi-value num">{kpi.value}</span>
+                  <span className="admin__kpi-label">{kpi.label}</span>
+                </div>
+              ))}
+            </section>
+            {censusChart ? (
+              <div className="admin__chartwrap">
+                <svg viewBox="0 0 640 150" className="admin__chart" role="img" aria-label={t("censusChartTitle")}>
+                  <polyline className="admin__line admin__line--views" points={censusChart.calls} />
+                </svg>
+                <div className="admin__chartfoot muted">
+                  <span className="mono">{censusChart.first}</span>
+                  <span className="mono">{censusChart.last}</span>
+                </div>
+              </div>
+            ) : null}
+            <div className="world-tablewrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th scope="col">{t("censusThFeature")}</th>
+                    <th scope="col">{t("censusThCalls")}</th>
+                    <th scope="col">{t("censusThCached")}</th>
+                    <th scope="col">{t("censusThFailures")}</th>
+                    <th scope="col">{t("censusThCost")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {census.by_feature.slice(0, 8).map((row) => (
+                    <tr key={row.feature}>
+                      <td className="mono">{row.feature}</td>
+                      <td className="num">{row.calls.toLocaleString()}</td>
+                      <td className="num muted">{pct(row.cached_share_reported)}</td>
+                      <td className="num">{row.failures.toLocaleString()}</td>
+                      <td className="num">{`$${row.cost_usd.toFixed(4)}`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {census.errors.length > 0 ? (
+              <div>
+                <p className="eyebrow" style={{ marginBottom: "0.3rem" }}>{t("censusErrorsTitle")}</p>
+                <ul className="admin__recs">
+                  {census.errors.map((entry) => (
+                    <li key={entry.sample}><span className="mono">{entry.sample}</span>{" "}— <span className="num">{entry.count}</span></li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <p className="muted" style={{ fontSize: "0.75rem" }}>{t("censusNote")}</p>
+          </div>
+        ) : null}
       </Panel>
 
       {chart ? (

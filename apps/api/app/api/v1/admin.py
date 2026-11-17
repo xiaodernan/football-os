@@ -19,6 +19,7 @@ from app.core.db import get_db
 from app.core.security import limit
 from app.services.behavior import compute_behavior
 from app.services.behavior_coach import compute_admin_coach_read
+from app.services.model_census import compute_model_census
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -43,3 +44,10 @@ def behavior(request: Request, window_days: int = Query(default=90, ge=7, le=365
 def coach_read(request: Request, window_days: int = Query(default=90, ge=7, le=365), db: Session = Depends(get_db)) -> dict[str, Any]:
     limit(request, 10, 10, scope="admin_coach_read")
     return compute_admin_coach_read(db, window_days=window_days)
+
+
+@router.get("/model-census", dependencies=[Depends(require_admin_passphrase)])
+def model_census(request: Request, window_days: int = Query(default=30, ge=7, le=120), db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The AI ledger census: calls, failures, cache share, daily line — identities never projected."""
+    limit(request, 60, 60, scope="admin_model_census")
+    return compute_model_census(db, window_days=window_days)
