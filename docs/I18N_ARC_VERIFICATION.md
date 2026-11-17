@@ -10274,4 +10274,7 @@ no longer appears (ICU renders `共 14 篇文档`), the library summary reads `�
 article page, and the `applies_to` role chips print `goalkeeper` / `midfielder` / … raw on both list
 and article pages — the same defect class, larger blast radius, and deliberately not half-fixed here:
 the catalogue carries no role keys yet, and opening that sweep is its own landing with a six-locale
-recount, not a tail-end patch to this one.
+recount, not a tail-end patch to this one. For the same reason the knowledge corpus ships Simplified
+Chinese only: a Traditional-Chinese reader's chrome is fully Traditional, but the prose it wraps is
+the zh corpus — deliberate Simplified editorial content, not a converted `zh-TW` twin, and none of it
+is presented as Traditional text.
