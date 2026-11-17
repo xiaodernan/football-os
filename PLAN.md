@@ -4916,3 +4916,9 @@ return `provider: openai, model: gpt-6.1-terra, demo_mode: false`. The coach doe
 the client silently: a capped turn is answered by the rule engine with a labelled `provider:
 "rule-engine-demo"` message (that was the case observed). The earlier `mock` was transient gateway
 negotiation — re-probed three times; all three now answer live.
+
+## Item 152 — the fact pack message with literal "$n"; recorded twice, the history holds, the rule is tight
+
+Item 149's fact pack (`d938246`) carried an unexpanded PowerShell variable in its commit message.
+**Left in history as-is** (never force-push). The fact-pack writer now records its count from the
+generator's printout before committing; recorded in the ledger §290.

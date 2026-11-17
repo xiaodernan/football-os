@@ -10447,3 +10447,17 @@ catalogue held 4,970, and two of its named tokens had translated.
 (`qa-icu-messages` 2/2), and no human has proof-read the French plural phrasing end-to-end on a reader
 session; that the 280→278 reduction means something collapsed — it didn't; the two items simply stopped
 being tokens on the day they translated.
+
+## §290 — Item 152: a fact-pack commit with a literal "$n" in its message — recorded, and the rule tightened (2026-11-17)
+
+**What happened, verbatim.** Item 149's fact pack commit (`d938246`) was created with the PowerShell
+`$n` unexpanded — the message reads literally
+`chore(scripts): fact pack refreshed to HEAD -  commits, arc §289 (Item 150+151)`.
+The commit itself is honest (the file inside was regenerated from the then-HEAD, so the SHAs pin correctly),
+and amending the message would have meant force-`d938246`'s replacement on already-pushed master.
+The repo rule (this arc, §288's patch) is "never force-push master". **The rule holds; the defect
+stands in history.** No erase, no re-tag, no rewrite. The fact-pack generator prints the commit count
+*before* this happens next time; every fact-pack commit message is written from the value the generator
+prints, or the commit is not made.
+
+**Not claimed.** That `d938246`'s message is beautiful. It is not, and it doesn't get prettier.
