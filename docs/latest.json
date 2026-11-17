@@ -1,8 +1,8 @@
 {
-  "head": "8e821f8",
-  "total_commits": 1432,
-  "milestone": "§327",
-  "milestone_full": "§327 — Item 190: the worldcheck that stuck unhealthy after the Docker Desktop crash; a plain restart sufficed; recorded honestly (2026-11-17)",
+  "head": "243d3a5",
+  "total_commits": 1434,
+  "milestone": "§328",
+  "milestone_full": "§328 — Item 191: Item 189's cure skipped the test stubs; 16 dummies refuse prompt_cache_key; fixed (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 218,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T14:50:57.468Z"
+  "generated_at": "2026-11-17T14:58:58.317Z"
 }
