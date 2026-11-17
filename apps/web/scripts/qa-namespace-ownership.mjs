@@ -116,6 +116,7 @@ const NAMESPACE_OWNERS = {
 
   // Coach tier
   "coach": { owner: "coach", purpose: "Coach AI pages" },
+  "coachHow": { owner: "coach", purpose: "/coach/how-it-works — the StateGraph route the coach's answers take, taught in six nodes" },
 
   // Knowledge tier
   "knowledge": { owner: "knowledge", purpose: "Knowledge base pages" },

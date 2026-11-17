@@ -208,6 +208,11 @@ const ALLOWED_ENGLISH = new Set([
   "XSRF", "CORS", "ALLOW", "ORIGIN", "METHODS",
   // Additional domain terms found in translations
   "HTML", "JAVASCRIPT", "NOINDEX", "USER", "KNOWLEDGE", "DOCUMENTS", "SEARCH", "ASK", "OVR", "MOV", "WEBM", "SHA", "KBIT", "PNG", "COMMUNITY", "ONE", "MONO", "FATIGUE", "LAB", "LIB", "READY", "ACTIVE", "OWNERS", "TEAMS", "MATCH", "READ", "CLUB", "PLAYERS", "SCHEMA", "TACTICS", "PRESSING", "CITATIONS", "ISO", "WITHHELD", "ENTITY", "OVERVIEW", "ATTRIBUTES", "TIMELINE", "COUNT", "APPS", "POSSESSION", "TRAININGS", "SESSIONS", "COMPLETED", "WORLD", "APP", "SERVICES", "VIREMONT", "ILJA", "MATCHDAY", "SOURCE", "SYNTHETIC", "SEED",
+  // Machine node identifiers and project proper nouns (2026-11-17): the coach pipeline prints
+  // these exact words in every locale — `END`/`START` are the compiled graph's edge sentinels
+  // (the graph_trace chips), `StateGraph` names the chapter and the machine, and `openfootball`
+  // is the public-domain dataset the honours spine cites — they are identifiers, not run-on English.
+  "END", "START", "STATEGRAPH", "OPENFOOTBALL",
 ]);
 
 // This rule reads Latin words as untranslated English by construction — in Arabic, Hebrew and Chinese

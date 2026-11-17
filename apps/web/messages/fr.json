@@ -874,7 +874,8 @@
     "intentMatchReview": "Revue du match",
     "intentExplain": "Expliquer la progression",
     "intentGeneral": "Général",
-    "traceToggle": "comment l'entraîneur a bâti cette réponse"
+    "traceToggle": "comment l'entraîneur a bâti cette réponse",
+    "howItWorksLink": "Comment le coach répond — l'itinéraire derrière chaque réponse"
   },
   "progress": {
     "metaTitle": "Développement",
@@ -5392,5 +5393,38 @@
     "thYearsTh": "Années",
     "snapshotNote": "chaque chiffre de cette page est recalculé à chaque lecture depuis les instantanés archivés — rien n'est récupéré sur le réseau au moment du rendu.",
     "thScore": "score"
+  },
+  "coachHow": {
+    "metaTitle": "Comment le coach répond",
+    "metaDescription": "Chaque réponse du coach, nœud par nœud : intention, arithmétique, porte budgétaire, formulation, persistance — et le reçu pour le prouver.",
+    "eyebrow": "Coach IA · sous le capot",
+    "title": "Comment le coach répond",
+    "lede": "Posez une question et la réponse est assemblée sur un itinéraire fixe — jamais improvisée. Vous voyez les étapes, les chiffres calculés, si le modèle a été sollicité, et ce qui est retenu.",
+    "tryInCoachCta": "Aller voir le coach",
+    "sixNodesEyebrow": "L'itinéraire",
+    "sixNodesTitle": "Six étapes, toujours dans cet ordre",
+    "node1Title": "classify_intent — que demandez-vous ?",
+    "node1Body": "Un moteur de règles associe votre question à une intention connue (séance du jour, plan, pied faible, perte de balle…). Aucun modèle ne décide de ce que vous vouliez dire.",
+    "node2Title": "build_arithmetic — calculez la réponse",
+    "node2Body": "Votre profil, vos séances et votre pied faible donnent l'exercice ou le plan. Les chiffres sont calculés, pas générés.",
+    "node3Title": "spend_gate — avons-nous le droit de demander une formulation ?",
+    "node3Body": "Si le budget IA du jour est épuisé, la formulation est sautée et vous recevez la phrase du moteur de règles. Les chiffres tiennent ; seule la tournure change.",
+    "node4Title": "phrase_answer — l'unique rôle du modèle",
+    "node4Body": "Le modèle reformule les chiffres calculés, rien d'autre. Il ne choisit ni l'exercice, ni la durée du plan, ni le dosage au pied faible.",
+    "node5Title": "persist_answer — retenir le tour",
+    "node5Body": "Question, réponse et itinéraire sont enregistrés comme message du coach. Votre prochaine question pourra s'y appuyer.",
+    "node6Title": "END — et le reçu",
+    "node6Body": "Le pipeline s'arrête. L'enveloppe porte l'intention, la confiance et le graph_trace lisible puce par puce.",
+    "neverEyebrow": "Ce qui n'arrive jamais",
+    "neverTitle": "Quatre choses que le coach ne fera pas",
+    "never1": "Il n'invente jamais un exercice absent du corpus — chaque référence vient de la bibliothèque enregistrée.",
+    "never2": "Il ne devine jamais au-delà de votre profil et de votre historique — ce que vous voyez est ce qu'il a utilisé.",
+    "never3": "Il ne dépense jamais le budget de tokens du jour deux fois, ni au-delà du plafond que vous avez fixé.",
+    "never4": "Il ne cache jamais son itinéraire — le graph_trace fait partie de la réponse.",
+    "traceEyebrow": "Votre reçu",
+    "traceTitle": "Lisez l'itinéraire sous chaque réponse",
+    "traceBody": "Chaque question imprime son trajet en puces. Si spend_gate indique le budget clos, la tournure vient du moteur de règles ; si phrase_answer a tourné, le modèle n'a retouché que des chiffres vérifiables.",
+    "moreInLibrary": "Le chapitre complet de cette machine est dans la bibliothèque :",
+    "libraryLink": "StateGraph, le chapitre natif en chinois"
   }
 }

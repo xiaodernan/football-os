@@ -874,7 +874,8 @@
     "intentMatchReview": "比赛复盘",
     "intentExplain": "讲解进步",
     "intentGeneral": "一般",
-    "traceToggle": "看看教练是怎么一步步作答的"
+    "traceToggle": "看看教练是怎么一步步作答的",
+    "howItWorksLink": "教练是怎么回答的 —— 每条回答背后的那条路线"
   },
   "progress": {
     "metaTitle": "成长",
@@ -5209,7 +5210,7 @@
     "searchMetaTitle": "搜寻真实之书 — 每一届赛事、每一位冠军",
     "searchMetaDescription": "一框搜索 24 届赛事：1930 到 2024，世界杯与欧洲杯 — 冠军、亚军、东道主与最悬殊的比分，全部来自开放足球档案 CC-BY 4.0。",
     "searchEyebrow": "一框，24 行名册",
-    "searchTitle": "搜寻真实之书",
+    "searchTitle": "搜索真实之书",
     "searchLede": "随便输入——年份、东道主、冠军、亚军、场馆，整张荣耀簿都会帮你查。",
     "searchFormLabel": "搜寻荣耀簿",
     "searchFieldLabel": "届数、年份、东道主、冠军、亚军",
@@ -5392,5 +5393,38 @@
     "thYearsTh": "年份",
     "snapshotNote": "本页每一项数字都在每次读取时从已提交的快照重新计算——本页渲染时不联网拉取任何内容。",
     "thScore": "比分"
+  },
+  "coachHow": {
+    "metaTitle": "教练是怎么回答的",
+    "metaDescription": "教练每一次作答都逐节点走一遍：意图识别、算术计算、预算闸门、措辞生成、落库——每一步都有回执。",
+    "eyebrow": "AI 教练 · 内里",
+    "title": "教练是怎么回答的",
+    "lede": "你问一个训练问题，答案是沿固定路线拼出来的，从不是临场发挥。路线走了哪几步、算出了什么数字、模型究竟有没有被请来，全部摆在明处。",
+    "tryInCoachCta": "去问问教练",
+    "sixNodesEyebrow": "这条路线",
+    "sixNodesTitle": "六个节点，永远这个顺序",
+    "node1Title": "classify_intent —— 你到底在问什么",
+    "node1Body": "规则引擎把你的问题对应到一个已存的意图（今日训练、计划、弱脚、丢球……）。不请模型来判断你的意思。",
+    "node2Title": "build_arithmetic —— 把答案算出来",
+    "node2Body": "用你的档案、训练记录和弱脚评级计算出该练什么。数字是算出来的，不是生成出来的。",
+    "node3Title": "spend_gate —— 还能请模型润色吗",
+    "node3Body": "如果今日 AI 预算已用完，措辞这一步直接跳过，你拿到的是规则引擎的原话。数字不受影响，变的只有说法。",
+    "node4Title": "phrase_answer —— 模型的唯一职责",
+    "node4Body": "模型只负责把算好的数字换个说法。选什么训练、计划多长、弱脚带练多少——都不是它说了算。",
+    "node5Title": "persist_answer —— 把这一轮记下来",
+    "node5Body": "问题、答案和执行路线都写进教练消息里。你下次提问，可以接着这一轮往下走。",
+    "node6Title": "END —— 回执在此",
+    "node6Body": "流程到此为止。返回信封里有意图、信心值，以及可以按 标签 逐个看的 graph_trace。",
+    "neverEyebrow": "不会发生的事",
+    "neverTitle": "教练绝对不会做的四件事",
+    "never1": "绝不会编造语料库里没有的训练——每个训练出处都来自已提交的库。",
+    "never2": "绝不会超出你已存的档案和历史瞎猜——你看到的就是它用到的。",
+    "never3": "绝不会花超过你自己设定的每日 token 额度，更不会算重一遍。",
+    "never4": "绝不会藏起自己的走法——graph_trace 就是答案的一部分。",
+    "traceEyebrow": "你的回执",
+    "traceTitle": "每条回答下面都有这串路线",
+    "traceBody": "每一次提问都会把路线印成 标签。如果 spend_gate 显示预算打烊，措辞就出自规则引擎；如果 phrase_answer 跑了，模型也只改了你能自己验算的数字。",
+    "moreInLibrary": "这套机器的完整章节，写在书架里：",
+    "libraryLink": "StateGraph，中文原生章节"
   }
 }

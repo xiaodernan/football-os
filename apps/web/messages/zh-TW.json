@@ -874,7 +874,8 @@
     "intentMatchReview": "比賽複盤",
     "intentExplain": "講解進步",
     "intentGeneral": "一般",
-    "traceToggle": "看看教練是怎麼一步步作答的"
+    "traceToggle": "看看教練是怎麼一步步作答的",
+    "howItWorksLink": "教練是怎麼回答的 —— 每條回答背後的那條路線"
   },
   "progress": {
     "metaTitle": "成長",
@@ -5392,5 +5393,38 @@
     "thYearsTh": "年份",
     "snapshotNote": "本頁每一項數字都在每次讀取時從已提交的快照重新計算——本頁渲染時不連網拉取任何內容。",
     "thScore": "比分"
+  },
+  "coachHow": {
+    "metaTitle": "教練是怎麼回答的",
+    "metaDescription": "教練每一次作答都逐節點走一遍：意圖識別、算術計算、預算閘門、措辭生成、落庫——每一步都有回執。",
+    "eyebrow": "AI 教練 · 內裡",
+    "title": "教練是怎麼回答的",
+    "lede": "你問一個訓練問題，答案是沿固定路線拼出來的，從不是臨場發揮。路線走了哪幾步、算出了什麼數字、模型究竟有沒有被請來，全部擺在明處。",
+    "tryInCoachCta": "去問問教練",
+    "sixNodesEyebrow": "這條路線",
+    "sixNodesTitle": "六個節點，永遠這個順序",
+    "node1Title": "classify_intent —— 你到底在問什麼",
+    "node1Body": "規則引擎把你的問題對應到一個已存的意圖（今日訓練、計劃、弱腳、丟球……）。不請模型來判斷你的意思。",
+    "node2Title": "build_arithmetic —— 把答案算出來",
+    "node2Body": "用你的檔案、訓練記錄和弱腳評級計算出該練什麼。數字是算出來的，不是生成出來的。",
+    "node3Title": "spend_gate —— 還能請模型潤色嗎",
+    "node3Body": "如果今日 AI 預算已用完，措辭這一步直接跳過，你拿到的是規則引擎的原話。數字不受影響，變的只有說法。",
+    "node4Title": "phrase_answer —— 模型的唯一職責",
+    "node4Body": "模型只負責把算好的數字換個說法。選什麼訓練、計劃多長、弱腳帶練多少——都不是它說了算。",
+    "node5Title": "persist_answer —— 把這一輪記下來",
+    "node5Body": "問題、答案和執行路線都寫進教練訊息裡。你下次提問，可以接著這一輪往下走。",
+    "node6Title": "END —— 回執在此",
+    "node6Body": "流程到此為止。返回信封裡有意圖、信心值，以及可以按 標籤 逐個看的 graph_trace。",
+    "neverEyebrow": "不會發生的事",
+    "neverTitle": "教練絕對不會做的四件事",
+    "never1": "絕不會編造語料庫裡沒有的訓練——每個訓練出處都來自已提交的庫。",
+    "never2": "絕不會超出你已存的檔案和歷史瞎猜——你看到的就是它用到的。",
+    "never3": "絕不會花超過你自己設定的每日 token 額度，更不會算重一遍。",
+    "never4": "絕不會藏起自己的走法——graph_trace 就是答案的一部分。",
+    "traceEyebrow": "你的回執",
+    "traceTitle": "每條回答下面都有這串路線",
+    "traceBody": "每一次提問都會把路線印成 標籤。如果 spend_gate 顯示預算打烊，措辭就出自規則引擎；如果 phrase_answer 跑了，模型也只改了你能自己驗算的數字。",
+    "moreInLibrary": "這套機器的完整章節，寫在書架裡：",
+    "libraryLink": "StateGraph，中文原生章節"
   }
 }

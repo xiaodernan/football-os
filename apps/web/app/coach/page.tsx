@@ -63,6 +63,9 @@ export default async function CoachPage() {
         <p className="eyebrow">{t("eyebrow")}</p>
         <h1 className="h1">{t("title")}</h1>
         <p className="lede">{t("lede")}</p>
+        <p className="muted coach-how__foot" style={{ marginTop: "0.5rem" }}>
+          <Link className="coach-how__inline-link" href="/coach/how-it-works">{t("howItWorksLink")}</Link>
+        </p>
       </div>
 
       <nav className="coach-tabs" aria-label={t("sectionsLabel")}>

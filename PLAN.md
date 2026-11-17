@@ -4996,3 +4996,35 @@ decision chain, and the `CoachGraphState` engine on `/coach/ask`. It is not a re
 live demo through the rebuilt container `football_os_api` — `/knowledge/status` reads locales
 `{en: 28, zh: 29, zh-TW: 28}`. Local frontmatter parse passes; the RAG snapshot for both windows is
 independent of this addition. Local RAG re-run re-passed before ingestion was committed.
+
+## Item 158 — /coach/how-it-works: the StateGraph route taught on a page of its own (landed 2026-11-17)
+
+**The gap.** The coach's answers have carried `graph_trace` since Item 129, and the reader had no way to learn what the
+chain means — the door that teaches it existed only as an API artefact and inside a Chinese corpus chapter. The master's
+standing rule — every button and action carries a teaching explanation — was unmet for the coach itself.
+
+**The door.** `/coach/how-it-works` (static, `force-dynamic`, no API calls). Learned here, taught here: six nodes in the
+exact order the compiled graph takes — `classify_intent → build_arithmetic → spend_gate → phrase_answer → persist_answer
+→ END` — each with one sentence on what it computes and one on what it never decides; four "what never happens" rules;
+the `graph_trace` chips explained as a receipt the reader can verify; a link to the library chapter
+(`stategraph-native-zh`, the native-Chinese editorial). All six locales, authored per locale (zh and zh-TW native copy —
+the Traditional twin is a single-pass OpenCC glyph conversion like every zh-TW sibling in this arc; English and French plain;
+ar and he written, not transliterated). Signed-out readers bounce to `/login?next=/coach/how-it-works` like every `/coach` door.
+
+**Discoverability.** `/coach` now carries one inline link under the lede — "How the coach works — the route behind every
+answer" — the same pattern Item 155 proved for the search door.
+
+**Catalogue.** New namespace `coachHow` (31 keys) plus `coach.howItWorksLink` — 5,296 keys × 6 in every locale; the README table recomputed honestly (zh/zh-TW/ar/he 5,249 translated; fr 5,016; 47 / 280 identical). Three machine identifiers (`END`, `START`, `STATEGRAPH`) and the corpus's own `openfootball` source name are named in the token allowlist of `qa-translation-quality` (proper nouns / graph sentinels, not run-on English); the Arabic gate's 15 terminal Latin periods became `۔` (U+06D4), including the two `worldRealBook.search*` siblings Item 154 shipped red; the Chinese copy's stray `chip` became 标签/標籤; `worldRealBook.searchTitle` harmonised with its same-context sibling (drift 0). `qa-namespace-ownership` gained `coachHow`.
+
+**Measured.** Signed in as the labelled DEMO account (`demo@footballos.local`): all six locales render **200** with the full
+fingerprint set (heading, all six node ids, CTA, `StateGraph` library link); signed out every locale 307s to `/login` with
+`next=/coach/how-it-works`. `tsc --noEmit` clean. Gates: `qa-unused-keys` 3/3 · `qa-locale-tokens` 7/7 · `qa-i18n-literals` 9/9
+· `qa-icu-messages` 2/2 · `qa-locale-completeness` 2/2 · `qa-key-drift` 4/4 · `qa-namespace-ownership` 2/2 ·
+`qa-translation-quality` 9/9 · `qa-shared-keys` 4/4 · `qa-locale-wiring` 8/8. `AUDIT_FIGURES page_routes=91 → 92`; the ROADMAP's
+quoted triple reads **251/92/68**. Fact pack regenerated at the tip.
+
+**Not claimed.** That a signed-in reader's browser was driven end-to-end to press the page's one CTA — the walk is HTTP-level
+(`httpx` through the 3210 container), not a browser session; that the Traditional Chinese copy was proof-read by a Traditional
+editor (it is a single-pass OpenCC glyph conversion of the Simplified source, like the corpus twins); that anything about the
+coach's behaviour itself changed — the page teaches the existing pipeline, it does not alter it; that the fact pack's `92` is
+routes-on-master before this commit lands (it is routes on this commit).

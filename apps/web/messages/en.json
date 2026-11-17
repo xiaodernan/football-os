@@ -874,7 +874,8 @@
     "intentMatchReview": "Match review",
     "intentExplain": "Explain progress",
     "intentGeneral": "General",
-    "traceToggle": "show how the coach assembled this"
+    "traceToggle": "show how the coach assembled this",
+    "howItWorksLink": "How the coach works — the route behind every answer"
   },
   "progress": {
     "metaTitle": "Development",
@@ -5392,5 +5393,38 @@
     "thYearsTh": "Years",
     "snapshotNote": "every figure on this page is recomputed from the committed snapshots on every read; nothing is fetched from the network.",
     "thScore": "score"
+  },
+  "coachHow": {
+    "metaTitle": "How the coach works",
+    "metaDescription": "Every coach answer, node by node: classify, arithmetic, spend gate, phrasing, persistence — and the receipt to prove it.",
+    "eyebrow": "AI Coach · under the hood",
+    "title": "How the coach answers",
+    "lede": "Ask a coaching question and the answer is assembled on a fixed route — never improvised. You can see the route taken, the figures computed, whether the model was asked at all, and what got remembered.",
+    "tryInCoachCta": "Go ask the coach",
+    "sixNodesEyebrow": "The route",
+    "sixNodesTitle": "Six steps, always in this order",
+    "node1Title": "classify_intent — what are you asking?",
+    "node1Body": "A rule engine maps your question onto a stored intent (today, plan, weak foot, ball loss…). No model is consulted to decide what you meant.",
+    "node2Title": "build_arithmetic — compute the answer",
+    "node2Body": "Your profile, sessions and weak-foot rating become the drill or the plan. Figures are computed, not generated.",
+    "node3Title": "spend_gate — may the model be asked to phrase?",
+    "node3Body": "If the day's AI budget is spent, phrasing is skipped and you get the rule engine's own sentence. The figures stand; only the wording changes.",
+    "node4Title": "phrase_answer — the model's one job",
+    "node4Body": "The model paraphrases the computed figures and nothing else. It never picks the drill, the plan length or the weak-foot tape.",
+    "node5Title": "persist_answer — remember the turn",
+    "node5Body": "Question, answer and route are stored as a coach message. Your next question can build on this one.",
+    "node6Title": "END — and the receipt",
+    "node6Body": "The pipeline stops. The envelope carries intent, confidence, and the graph_trace you can read chip by chip under the answer.",
+    "neverEyebrow": "What never happens",
+    "neverTitle": "Four things the coach will not do",
+    "never1": "It never invents a drill the corpus can't back — every drill reference comes from the committed library.",
+    "never2": "It never guesses beyond your stored profile and history — what you see is what it used.",
+    "never3": "It never spends the day's token budget twice, and never beyond the cap you set.",
+    "never4": "It never hides its route — the graph_trace is part of the answer.",
+    "traceEyebrow": "Your receipt",
+    "traceTitle": "Read the route under every answer",
+    "traceBody": "Each ask prints its route as chips. If spend_gate says the budget closed, the wording came from the rule engine; if phrase_answer ran, the model only re-worded figures you can recompute.",
+    "moreInLibrary": "The full chapter on this machine lives in the library:",
+    "libraryLink": "StateGraph, the native-Chinese chapter"
   }
 }
