@@ -151,6 +151,11 @@ export default async function ManualPage() {
       </Panel>
 
       <p className="manual__closing muted">{t("closingNote")}</p>
+
+      <section aria-label={t("askEyebrow")} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+        <p className="muted" style={{ maxWidth: "46ch", margin: 0 }}>{t("askHint")}</p>
+        <Link className="btn btn--primary" href="/manual/ask">{t("askCta")} →</Link>
+      </section>
     </div>
   );
 }

@@ -16202,6 +16202,48 @@
           }
         }
       }
+    },
+    "/api/v1/manual/ask": {
+      "post": {
+        "tags": [
+          "manual"
+        ],
+        "summary": "Ask",
+        "operationId": "ask_api_v1_manual_ask_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualAskIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Ask Api V1 Manual Ask Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -17936,6 +17978,34 @@
           "password"
         ],
         "title": "LoginIn"
+      },
+      "ManualAskIn": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 280,
+            "minLength": 3,
+            "title": "Question"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "zh",
+              "zh-TW",
+              "fr",
+              "ar",
+              "he"
+            ],
+            "title": "Locale",
+            "default": "en"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "ManualAskIn"
       },
       "MatchIn": {
         "properties": {

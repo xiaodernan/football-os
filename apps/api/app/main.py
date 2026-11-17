@@ -31,6 +31,7 @@ from app.api.v1 import (
     jobs,
     knowledge,
     leaderboard,
+    manual,
     meta,
     metrics,
     model_router,
@@ -560,6 +561,7 @@ def create_app() -> FastAPI:
     app.include_router(traces.router, prefix=api)
     app.include_router(telemetry.router, prefix=api)
     app.include_router(admin.router, prefix=api)
+    app.include_router(manual.router, prefix=api)
 
     @app.get("/healthz", include_in_schema=False)
     def root_health() -> JSONResponse:
