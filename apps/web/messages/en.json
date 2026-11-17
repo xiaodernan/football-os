@@ -5095,7 +5095,13 @@
     "rowUnbeatenLabel": "unbeaten",
     "sectionDynastiesLabel": "The Dynasties",
     "sectionDynastiesNote": "the streak ledger",
-    "sectionDynastiesChip": "dynasties"
+    "sectionDynastiesChip": "dynasties",
+    "coachReadEyebrow": "AI Coach · the streaks, read",
+    "coachReadTitle": "The streak ledger, read by the model",
+    "coachReadHint": "One press — the model reads the rows this page computed (the longest winning streak, the longest unbeaten run, and who is ablaze at the latest completed matchday) and speaks one honest paragraph on the streaks this world produced. It invents nothing beyond those rows; a streak is a run of results in kickoff order, not a claim about any future fixture.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the streak ledger above stands alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "tutorial": {
     "metaTitle": "FOOTBALL OS — the ten-seat table",

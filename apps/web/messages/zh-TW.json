@@ -5095,7 +5095,13 @@
     "rowUnbeatenLabel": "不敗",
     "sectionDynastiesLabel": "王朝登記冊",
     "sectionDynastiesNote": "連串名冊",
-    "sectionDynastiesChip": "王朝"
+    "sectionDynastiesChip": "王朝",
+    "coachReadEyebrow": "AI 教練 · 連勝簿述之",
+    "coachReadTitle": "模型讀連勝賬",
+    "coachReadHint": "按一下——模型讀本頁剛算出的數行（最長連勝、最長不敗、以及最近一個已完賽日誰在狂飆），然後講一段話：這幾行到底撐住了什麼。它不會編造超出這些數行的任何俱樂部、場次或數字；連勝只是按時序數的一段結果，不是對任何後續場次的斷言。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型暫時不可讀——上面連勝賬本身就夠了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "tutorial": {
     "metaTitle": "FOOTBALL OS — 十人餐桌",

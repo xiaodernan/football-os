@@ -3356,6 +3356,29 @@
         }
       }
     },
+    "/api/v1/world/dynasties/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Dynasties Coach Read",
+        "description": "The Dynasties' coach-read — one honest paragraph on the world's streak ledger.\n\nThe model receives exactly the rows the door computed — the longest winning streak (with its\nclub, length and round span), the longest unbeaten run, who is ablaze at the latest completed\nmatchday, and the five longest streaks and unbeaten runs — and speaks one short paragraph on\nwhat they hold up. It invents nothing beyond those rows; a streak is a run of results in\nkickoff order, not a claim about any future fixture. Without a configured provider this\nreturns `available: false` and the ledger stands alone on the page.",
+        "operationId": "dynasties_coach_read_api_v1_world_dynasties_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Dynasties Coach Read Api V1 World Dynasties Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/honours": {
       "get": {
         "tags": [

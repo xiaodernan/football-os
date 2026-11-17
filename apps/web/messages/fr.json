@@ -5095,7 +5095,13 @@
     "rowUnbeatenLabel": "invincibilité",
     "sectionDynastiesLabel": "Les Dynasties",
     "sectionDynastiesNote": "le registre des séries",
-    "sectionDynastiesChip": "règnes"
+    "sectionDynastiesChip": "règnes",
+    "coachReadEyebrow": "Coach IA · les séries, lues",
+    "coachReadTitle": "Le modèle lit le grand livre des séries",
+    "coachReadHint": "Un appui — le modèle lit les lignes que cette page vient de calculer (la plus longue série de victoires, la plus longue série d'invincibilité, et qui est en feu au dernier matchday complété) et dit un paragraphe honnête sur ce que ces séries tiennent debout. Il n'invente rien au-delà de ces lignes ; une série n'est que des résultats alignés dans l'ordre des coups d'envoi, pas une annonce pour les prochains matchs.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — le registre des séries ci-dessus tient seul.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "tutorial": {
     "metaTitle": "FOOTBALL OS — la tablée des dix",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Provenance, WorldHead, WorldUnavailable, formatDay } from "@/components/world";
+import { DynastiesCoachRead } from "@/components/DynastiesCoachRead";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
@@ -131,6 +132,8 @@ export default async function DynastiesPage() {
         <span className="dynasties__tile-eyebrow">{t("methodEyebrow")}</span>
         <p>{t("methodBody")}</p>
       </section>
+
+      <DynastiesCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

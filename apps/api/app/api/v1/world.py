@@ -37,6 +37,7 @@ from app.models import (
     Team,
 )
 from app.services.almanac_coach import compute_almanac_coach_read
+from app.services.dynasties_coach import compute_dynasties_coach_read
 from app.services.finals_coach import compute_finals_coach_read
 from app.services.honours_coach import compute_honours_coach_read
 from app.services.matchday_xi_coach import compute_matchday_xi_coach_read
@@ -1373,6 +1374,21 @@ def dynasties(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]
     """
     limit(request, 60, 60, scope="world_dynasties")
     return _envelope(**compute_dynasties(db))
+
+
+@router.get("/dynasties/coach-read")
+def dynasties_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Dynasties' coach-read — one honest paragraph on the world's streak ledger.
+
+    The model receives exactly the rows the door computed — the longest winning streak (with its
+    club, length and round span), the longest unbeaten run, who is ablaze at the latest completed
+    matchday, and the five longest streaks and unbeaten runs — and speaks one short paragraph on
+    what they hold up. It invents nothing beyond those rows; a streak is a run of results in
+    kickoff order, not a claim about any future fixture. Without a configured provider this
+    returns `available: false` and the ledger stands alone on the page.
+    """
+    limit(request, 20, 60, scope="world_dynasties_read")
+    return _envelope(**compute_dynasties_coach_read(db))
 
 
 @router.get("/honours")

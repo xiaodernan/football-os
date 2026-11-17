@@ -5095,7 +5095,13 @@
     "rowUnbeatenLabel": "בלי הפסד",
     "sectionDynastiesLabel": "השושלות",
     "sectionDynastiesNote": "מגילת הרצפים",
-    "sectionDynastiesChip": "שושלות"
+    "sectionDynastiesChip": "שושלות",
+    "coachReadEyebrow": "מאמן הבינה · הרצפים נקראים",
+    "coachReadTitle": "המודל קורא את רישום הרצפים",
+    "coachReadHint": "לחיצה אחת — המודל קורא את השורות שהעמוד הזה חישב (רצף הניצחונות הארוך ביותר, רצף חוסר ההפסד הארוך ביותר, ומי בוער בסיום המחזור האחרון) ואומר פסקה כנה על מה שהרצפים האלה מחזיקים מעמד. הוא אינו ממציא דבר מעבר לשורות האלה; רצף הוא רק תוצאות לפי סדר שריקות הפתיחה, לא הכרזה על משחק הבא.",
+    "coachReadCta": "בקש מהמודל לקרוא",
+    "coachReadEmpty": "הקריאה של המודל אינה זמינה כעת — רישום הרצפים שלמעלה עומד בעצמו.",
+    "coachReadProvider": "{provider} · {model} · {cached} מתוך {prompt} טוקני קלט הגיעו מהמטמון של השער"
   },
   "tutorial": {
     "metaTitle": "FOOTBALL OS —  שולחן העשרה",
