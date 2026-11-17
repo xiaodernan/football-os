@@ -209,7 +209,7 @@ re-running the probe against the same contract is what reproduces them.
 | ident | claim | measured in run L |
 | --- | --- | --- |
 | C0 | the private-door population is read from the committed contract and is not empty | 241 secured / 66 public / 104 private GET paths, contract SHA-256 above |
-| S1 | every secured operation refuses a caller with no credential, and asks for one | **241 knocked, 241 answered 401**, 0 deviations, 3 throttled knocks waited out and re-knocked |
+| S1 | every secured operation refuses a caller with no credential, and asks for one | **242 knocked, 242 answered 401**, 0 deviations, 3 throttled knocks waited out and re-knocked |
 | S2 | a token whose signature no longer verifies is refused | 401, body keys `code`, `message` |
 | S3 | one account's row is absent to another, in both the direct read and the listing | create 201; owner read 200; stranger read **404**; stranger patch **404**; stranger's listing 200 with the owner's row absent; `/auth/me` caller-scoped |
 | S4 | a public answer is served from cache under its own request id, and a cached private answer never crosses callers | private: A MISS → HIT, B MISS → HIT, **stranger never received the owner's row**; public: MISS → HIT, bodies byte-identical, request ids different |

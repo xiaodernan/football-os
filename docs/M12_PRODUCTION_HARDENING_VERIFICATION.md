@@ -969,7 +969,7 @@ every run. Ten checks, each one an HTTP exchange against a live uvicorn rather t
 | ident | what was measured | result |
 | --- | --- | --- |
 | C0 | the door population comes from the contract and is not empty | 242 / 78 / 105 |
-| S1 | every secured operation refuses a caller with no credential | **241 knocked, 241 × 401**, 0 deviations |
+| S1 | every secured operation refuses a caller with no credential | **242 knocked, 242 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |
