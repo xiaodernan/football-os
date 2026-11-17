@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Provenance, WorldHead, WorldUnavailable, formatDay } from "@/components/world";
+import { NoiseCoachRead } from "@/components/NoiseCoachRead";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
@@ -120,6 +121,8 @@ export default async function NoisePage() {
         <span className="noise__tile-eyebrow">{t("methodEyebrow")}</span>
         <p>{t("methodBody")}</p>
       </section>
+
+      <NoiseCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

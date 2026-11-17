@@ -5007,7 +5007,13 @@
     "unavailable": "The season has not written enough noise to grade yet.",
     "sectionNoiseLabel": "The Noise Dossier",
     "sectionNoiseNote": "the model's record against rows it never saw",
-    "sectionNoiseChip": "noise"
+    "sectionNoiseChip": "noise",
+    "coachReadEyebrow": "AI Coach · the noise, read",
+    "coachReadTitle": "The dossier, read by the model",
+    "coachReadHint": "One press — the model reads the run this page measured (the judged fixtures, the accuracy against the 33.33% chance line, the draw calls and the five largest wrong calls) and speaks one honest paragraph about what the seed kept for itself. It does not invent a club, fixture or figure beyond the rows it was handed; the accuracy is a measurement of one seeded season, not a forecast.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the dossier's arithmetic above stands alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldUpsets": {
     "metaTitle": "The Upset Register — the underdog, counted",

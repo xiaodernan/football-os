@@ -3172,6 +3172,29 @@
         }
       }
     },
+    "/api/v1/world/noise/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Noise Coach Read",
+        "description": "The Noise Dossier's coach-read — one honest paragraph on the caller the seed defeats.\n\nThe model receives exactly the run the dossier measured — judged count, correct and wrong\ncalls, the accuracy against the 33.33% chance line, the draw calls and landings, the best\nstreak, and the five largest wrong calls with their scorelines and gaps. It never invents a\nclub, fixture or figure beyond the snapshot; the accuracy is a measurement of one seeded\nseason, never a forecast, a betting edge or a claim about any future fixture. Without a\nconfigured provider this returns `available: false` and the dossier's own arithmetic\nstands alone.",
+        "operationId": "noise_coach_read_api_v1_world_noise_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Noise Coach Read Api V1 World Noise Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/upsets": {
       "get": {
         "tags": [

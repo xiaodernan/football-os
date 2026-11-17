@@ -38,6 +38,7 @@ from app.models import (
 )
 from app.services.almanac_coach import compute_almanac_coach_read
 from app.services.matchday_xi_coach import compute_matchday_xi_coach_read
+from app.services.noise_coach import compute_noise_coach_read
 from app.services.upsets_coach import compute_upsets_coach_read
 from app.services.real_book_coach import compute_real_book_coach_read
 from app.services.records_coach import compute_records_coach_read
@@ -1253,6 +1254,22 @@ def noise(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_noise")
     return _envelope(**compute_noise(db))
+
+
+@router.get("/noise/coach-read")
+def noise_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Noise Dossier's coach-read — one honest paragraph on the caller the seed defeats.
+
+    The model receives exactly the run the dossier measured — judged count, correct and wrong
+    calls, the accuracy against the 33.33% chance line, the draw calls and landings, the best
+    streak, and the five largest wrong calls with their scorelines and gaps. It never invents a
+    club, fixture or figure beyond the snapshot; the accuracy is a measurement of one seeded
+    season, never a forecast, a betting edge or a claim about any future fixture. Without a
+    configured provider this returns `available: false` and the dossier's own arithmetic
+    stands alone.
+    """
+    limit(request, 20, 60, scope="world_noise_read")
+    return _envelope(**compute_noise_coach_read(db))
 
 
 @router.get("/upsets")

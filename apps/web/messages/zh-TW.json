@@ -5007,7 +5007,13 @@
     "unavailable": "賽季還沒有寫出夠多的噪聲給你來打分。",
     "sectionNoiseLabel": "噪聲單",
     "sectionNoiseNote": "模型從没碰過的列裡的分數帳",
-    "sectionNoiseChip": "噪聲"
+    "sectionNoiseChip": "噪聲",
+    "coachReadEyebrow": "AI 教練 · 噪聲簿述之",
+    "coachReadTitle": "模型讀噪聲簿",
+    "coachReadHint": "按一下——模型讀本頁剛測出的那一輪（已評分的場次、相對 33.33% 概率線的準確率、猜中的平局，以及五次最大的誤判），就種子自己留了什麼講一段話。它不會編造超出這些數行的任何俱樂部、比賽或數字；這個準確率是一次播種賽季的測量，不是預測。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型暫時不可讀——上面噪聲簿的算術本身就夠了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "worldUpsets": {
     "metaTitle": "冷門登記冊——弱旅的成績單",
