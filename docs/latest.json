@@ -1,8 +1,8 @@
 {
-  "head": "fe4da02",
-  "total_commits": 1293,
-  "milestone": "§276",
-  "milestone_full": "§276 — Item 136: the catalogue and the API disagreed with each other; one commit apart, recorded (2026-11-17)",
+  "head": "8f58a1f",
+  "total_commits": 1295,
+  "milestone": "§277",
+  "milestone_full": "§277 — Item 137: the 25th document moved the coverage gate; the cache test's probe question paid for it (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T00:05:55.572Z"
+  "generated_at": "2026-11-17T00:15:06.960Z"
 }
