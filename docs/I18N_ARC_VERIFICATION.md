@@ -10701,3 +10701,23 @@ second; the exit is to read the print, not to remember it.
 
 **Not claimed.** That the profile-page mirror moves for §298 alone — Item 150's rule stands; the mirror wins its
 sync when the arc crosses a milestone that belongs there. Nothing else in this arc changed hands.
+
+## §299 — Item 161: the sitemap's PUBLIC list learns the Real Book search door (2026-11-17)
+
+**The gap.** `/world/real-book/search` shipped in Item 154, was taught at `/world` browse in Item 155, cured its
+catalogue defect class at §294/§296 — and stayed invisible to crawlers: `app/sitemap.ts` lists the routes that
+render content for a signed-out reader, and the search door was the only one of those it didn't carry.
+
+**The cure.** One line in the `PUBLIC` array, immediately after `/world/real-book`: 
+`{ path: "/world/real-book/search", changeFrequency: "weekly", priority: 0.7 }`. The door renders the honours table
+to a signed-out reader (empty query returns all 24); it declares no `robots: noindex`; the file's own rule
+("routes that render real content for a signed-out visitor are listed") admits it. `/world/search` and
+`/tactics/compare` stay absent on purpose (query pages over synthetic data, `noindex`); `/coach/how-it-works` stays
+absent by middleware design (session-gated).
+
+**Measured.** `tsc --noEmit` clean; container rebuilt and restarted; `GET /sitemap.xml` answers 200 in 327,038 bytes
+with 1,809 `<loc>` entries; the file now carries `/world/real-book/search`.
+
+**Not claimed.** That any crawler has re-crawled the sitemap yet (it is a live file wired to the same rules
+`scripts/metadata-title-gate` reads); that `/world/real-book/search` moves rankings anywhere; that anything besides
+the one line changed.

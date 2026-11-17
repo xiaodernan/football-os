@@ -53,6 +53,7 @@ const PUBLIC: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["ch
   { path: "/world/dynasties", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/atlas", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/real-book", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/world/real-book/search", changeFrequency: "weekly", priority: 0.7 },
   { path: "/world/champions", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/creed", changeFrequency: "weekly", priority: 0.8 },
   { path: "/world/honours", changeFrequency: "weekly", priority: 0.8 },

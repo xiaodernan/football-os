@@ -5053,3 +5053,13 @@ routes-on-master before this commit lands (it is routes on this commit).
 ## Item 160 — the fact-pack message named the wrong head; recorded twice, stands (landed 2026-11-17)
 
 **What happened.** Commit `7d33ccb`'s message reads `fact pack refreshed to e98bd8f - 1345 commits, arc §297` while the pack it lands pins `head: fa9fbe9` (the tip when the generator ran, after the ledger-relocation commit). `1345` and `§297` are correct; the head named is not. **No amend, no force-push** — `7d33ccb` stays in history. §298 in the arc ledger records the slip verbatim; the binding rule is restated there: the fact-pack commit message is written from the generator's own printed line, or the commit is not made.
+
+## Item 161 — the sitemap's PUBLIC list learns the Real Book search door (landed 2026-11-17)
+
+**The gap.** `/world/real-book/search` shipped in Item 154, was taught at `/world` browse in Item 155 — and stayed invisible to crawlers: `app/sitemap.ts` lists only routes that render content for a signed-out reader, and the search door was the one public route missing there.
+
+**The cure.** One line in `PUBLIC`, after `/world/real-book`: `{ path: "/world/real-book/search", changeFrequency: "weekly", priority: 0.7 }`. The search door renders the honours table to a signed-out reader (empty query returns all 24 rows) and declares no `robots: noindex`, so the file's own rule admits it. `/world/search` and `/tactics/compare` remain absent on purpose (query pages, `noindex`); `/coach/how-it-works` remains absent by middleware design (session-gated).
+
+**Measured.** `tsc --noEmit` clean; container rebuilt and restarted; `GET /sitemap.xml` answers **200** in 327,038 bytes with **1,809 `<loc>` entries**, the file now carrying `/world/real-book/search`.
+
+**Not claimed.** That any crawler has re-crawled the sitemap yet; that the door moves rankings anywhere; that anything besides the one line changed.
