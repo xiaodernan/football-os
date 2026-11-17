@@ -37,6 +37,7 @@ from app.models import (
     Team,
 )
 from app.services.almanac_coach import compute_almanac_coach_read
+from app.services.champions_coach import compute_champions_coach_read
 from app.services.dynasties_coach import compute_dynasties_coach_read
 from app.services.finals_coach import compute_finals_coach_read
 from app.services.gazette_coach import compute_gazette_coach_read
@@ -1377,6 +1378,21 @@ def champions(request: Request) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_champions")
     return _envelope(**compute_champions())
+
+
+@router.get("/champions/coach-read")
+def champions_coach_read(request: Request) -> dict[str, Any]:
+    """The Champions' coach-read — one honest paragraph on the three World Cups the product carries.
+
+    The model receives exactly the rows the door prints — the three champions (2014 Germany, 2018
+    France, 2022 Argentina) with their finals, the merged scorers ledger across the three cups and
+    the per-tournament arithmetic — and speaks one short paragraph on the three champions. It
+    never invents a nation, player, final or figure beyond the committed openfootball snapshots
+    (CC-BY 4.0); the counts are counts. Without a configured provider this returns `available:
+    false` and the champions stand alone on the page.
+    """
+    limit(request, 20, 60, scope="world_champions_read")
+    return _envelope(**compute_champions_coach_read())
 
 
 @router.get("/dynasties")

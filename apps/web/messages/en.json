@@ -5399,7 +5399,13 @@
     "sectionChampionsChip": "champions",
     "aetChip": "AET",
     "penChip": "PEN {a}–{b}",
-    "openBookLink": "Open this cup in the Real Book"
+    "openBookLink": "Open this cup in the Real Book",
+    "coachReadEyebrow": "AI Coach · the champions, read",
+    "coachReadTitle": "The Champions, read by the model",
+    "coachReadHint": "One press — the model reads the three World Cups this product carries (2014 Germany, 2018 France, 2022 Argentina: the finals, the golden balls, the biggest wins, the merged scorers ledger) and speaks one honest paragraph on the three champions. It invents nothing beyond the committed snapshots; the counts are counts.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the champions above stand alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldCreed": {
     "metaTitle": "The Creed — the six articles of this world",

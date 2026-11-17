@@ -5399,7 +5399,13 @@
     "sectionChampionsChip": "冠軍",
     "aetChip": "加時",
     "penChip": "點球 {a}–{b}",
-    "openBookLink": "在《真實之書》中打開這一屆"
+    "openBookLink": "在《真實之書》中打開這一屆",
+    "coachReadEyebrow": "AI 教練 · 冠軍讀之",
+    "coachReadTitle": "模型讀這三屆冠軍",
+    "coachReadHint": "按一下——模型讀這個產品收錄的三屆世界盃快照（2014 德國、2018 法國、2022 阿根廷：決賽、金球獎、最懸殊的勝利、合併的射手榜），然後講一段話：三屆冠軍都贏在了哪裡。它不會編造超出這三份提交快照之外的任何國家、球員、比賽或數字；這些只是計數，不是判斷。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型暫時不可讀——上面這三屆冠軍本身就夠了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "worldCreed": {
     "metaTitle": "世界憲法 — 只有六條",

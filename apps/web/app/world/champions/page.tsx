@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
+import { ChampionsCoachRead } from "@/components/ChampionsCoachRead";
 import { pageMetadata } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { WorldEnvelope } from "@/lib/types";
@@ -179,6 +180,8 @@ export default async function ChampionsPage() {
         <a href="https://github.com/openfootball/worldcup.json" rel="noopener" target="_blank" className="records__link">{t("sourceLabel")}</a>
       </p>
       <p className="records__fineprint muted">{t("snapshotNote")}</p>
+
+      <ChampionsCoachRead />
 
       <Provenance provenance={provenance} />
     </div>

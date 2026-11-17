@@ -3356,6 +3356,29 @@
         }
       }
     },
+    "/api/v1/world/champions/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Champions Coach Read",
+        "description": "The Champions' coach-read — one honest paragraph on the three World Cups the product carries.\n\nThe model receives exactly the rows the door prints — the three champions (2014 Germany, 2018\nFrance, 2022 Argentina) with their finals, the merged scorers ledger across the three cups and\nthe per-tournament arithmetic — and speaks one short paragraph on the three champions. It\nnever invents a nation, player, final or figure beyond the committed openfootball snapshots\n(CC-BY 4.0); the counts are counts. Without a configured provider this returns `available:\nfalse` and the champions stand alone on the page.",
+        "operationId": "champions_coach_read_api_v1_world_champions_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Champions Coach Read Api V1 World Champions Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/dynasties": {
       "get": {
         "tags": [

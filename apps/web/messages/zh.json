@@ -5399,7 +5399,13 @@
     "sectionChampionsChip": "冠军",
     "aetChip": "加时",
     "penChip": "点球 {a}–{b}",
-    "openBookLink": "在《真实之书》中打开这一届"
+    "openBookLink": "在《真实之书》中打开这一届",
+    "coachReadEyebrow": "AI 教练 · 冠军读之",
+    "coachReadTitle": "模型读这三届冠军",
+    "coachReadHint": "按一下——模型读这个产品收录的三届世界杯快照（2014 德国、2018 法国、2022 阿根廷：决赛、金球奖、最悬殊的胜利、合并的射手榜），然后讲一段话：三届冠军都赢在了哪里。它不会编造超出这三份提交快照之外的任何国家、球员、比赛或数字；这些只是计数，不是判断。",
+    "coachReadCta": "让模型讲",
+    "coachReadEmpty": "模型暂时不可读——上面这三届冠军本身就够了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 个提示词 token 中 {cached} 个来自网关缓存"
   },
   "worldCreed": {
     "metaTitle": "世界宪法 — 只有六条",

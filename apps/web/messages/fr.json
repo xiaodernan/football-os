@@ -5399,7 +5399,13 @@
     "sectionChampionsChip": "les champions",
     "aetChip": "a.p.",
     "penChip": "TAB {a}–{b}",
-    "openBookLink": "Ouvrir cette Coupe dans Le Vrai Cahier"
+    "openBookLink": "Ouvrir cette Coupe dans Le Vrai Cahier",
+    "coachReadEyebrow": "Coach IA · les champions, lus",
+    "coachReadTitle": "Le modèle lit les trois champions",
+    "coachReadHint": "Un appui — le modèle lit les trois Coupes du monde que ce produit embarque (2014 Allemagne, 2018 France, 2022 Argentine : les finales, les Ballons d'or, les victoires les plus larges, le registre des buteurs fusionné) et dit un paragraphe honnête sur ces trois champions. Il n'invente rien au-delà des instantanés validés ; ces chiffres sont des comptes, pas des verdicts.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — les trois champions ci-dessus tiennent seuls.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "worldCreed": {
     "metaTitle": "La Charte — les six articles de ce monde",
