@@ -1,8 +1,8 @@
 {
-  "head": "e2f5939",
-  "total_commits": 1328,
-  "milestone": "§289",
-  "milestone_full": "§289 — Item 149: the two French plurals stopped being tokens, and the token gate recomputed honestly (2026-11-17)",
+  "head": "1adc83d",
+  "total_commits": 1330,
+  "milestone": "§290",
+  "milestone_full": "§290 — Item 152: a fact-pack commit with a literal \"$n\" in its message — recorded, and the rule tightened (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T02:54:19.418Z"
+  "generated_at": "2026-11-17T02:55:11.665Z"
 }
