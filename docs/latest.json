@@ -1,12 +1,12 @@
 {
-  "head": "243d3a5",
-  "total_commits": 1434,
-  "milestone": "§328",
-  "milestone_full": "§328 — Item 191: Item 189's cure skipped the test stubs; 16 dummies refuse prompt_cache_key; fixed (2026-11-17)",
-  "pushed_at": "2026-11-17",
-  "screens": 92,
-  "assets": 218,
-  "world_doors": 24,
+  "head": "37c1d7c",
+  "total_commits": 1436,
+  "milestone": "§329",
+  "milestone_full": "§329 — Item 192: the Chronicle — the state graph that writes the chapter (2026-11-18)",
+  "pushed_at": "2026-11-18",
+  "screens": 93,
+  "assets": 219,
+  "world_doors": 25,
   "locales": 6,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T14:58:58.317Z"
+  "generated_at": "2026-11-17T16:20:35.559Z"
 }
