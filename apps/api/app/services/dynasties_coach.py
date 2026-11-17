@@ -18,6 +18,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.providers import LlmResult, get_llm_provider
+from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.model_ledger import record_model_call_safely
 from app.services.world.dynasties import compute_dynasties
 
@@ -121,7 +122,7 @@ def compute_dynasties_coach_read(db: Session) -> dict[str, Any]:
 
     provider = get_llm_provider()
     try:
-        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=320, temperature=0.3, prompt_cache_key="world.dynasties.read")
+        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=320, temperature=0.3, prompt_cache_key="world.dynasties.read")
     except Exception as error:  # noqa: BLE001
         failure = LlmResult(
             text="",

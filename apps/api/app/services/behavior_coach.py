@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from app.providers import LlmResult, get_llm_provider
 from app.services.behavior import compute_behavior
+from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.model_ledger import record_model_call_safely
 
 _SYSTEM = """\
@@ -106,7 +107,7 @@ def compute_admin_coach_read(db: Session, *, window_days: int = 90) -> dict[str,
     )
 
     try:
-        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=500, temperature=0.35, prompt_cache_key="admin.coach.read")
+        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=500, temperature=0.35, prompt_cache_key="admin.coach.read")
     except Exception as error:  # noqa: BLE001 — the provider gateway itself is the risk; the door must stay up.
         failure = LlmResult(
             text="",

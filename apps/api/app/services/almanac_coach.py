@@ -17,6 +17,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.providers import LlmResult, get_llm_provider
+from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.model_ledger import record_model_call_safely
 from app.services.world.almanac import compute_almanac
 
@@ -103,7 +104,7 @@ def compute_almanac_coach_read(session: Session) -> dict[str, Any]:
 
     provider = get_llm_provider()
     try:
-        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=420, temperature=0.4, prompt_cache_key="world.almanac.read")
+        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=420, temperature=0.4, prompt_cache_key="world.almanac.read")
     except Exception as error:  # noqa: BLE001 — the provider is the risk; the door stays up.
         failure = LlmResult(
             text="",

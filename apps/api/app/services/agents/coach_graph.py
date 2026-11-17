@@ -38,6 +38,7 @@ from app.core.security import new_public_id
 from app.models import CoachMessage
 from app.providers import get_llm_provider
 from app.services import coach_engine, coach_voice
+from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.model_ledger import budget_exhausted, record_model_call_safely
 
 if TYPE_CHECKING:
@@ -197,7 +198,7 @@ def _node_spend_gate(state: CoachGraphState, db: Session, user: User, player: Us
 
     recent = coach_engine.history_summary(db, user, player)
     state.result = provider.complete(
-        system=coach_voice.SYSTEM,
+        system=LIBRARY_CHARTER + coach_voice.SYSTEM,
         prompt=coach_voice.build_prompt(
             question=state.question,
             intent=state.intent,
