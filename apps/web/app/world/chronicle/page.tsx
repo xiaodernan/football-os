@@ -39,13 +39,13 @@ export default async function ChroniclePage() {
         <span className="eyebrow">{t("sourcesTitle")}</span>
         <p style={{ marginTop: "0.4rem" }}>{t("sourcesBody")}</p>
         <p className="mono" style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--text-2)" }}>
-          <Link className="world-link" href="/world/gazette">gazette</Link>
+          <Link className="world-link" href="/world/gazette">{t("sourcesLinkGazette")}</Link>
           {" · "}
-          <Link className="world-link" href="/world/champions">champions</Link>
+          <Link className="world-link" href="/world/champions">{t("sourcesLinkChampions")}</Link>
           {" · "}
-          <Link className="world-link" href="/world/records">records</Link>
+          <Link className="world-link" href="/world/records">{t("sourcesLinkRecords")}</Link>
           {" · "}
-          <Link className="world-link" href="/world/dynasties">dynasties</Link>
+          <Link className="world-link" href="/world/dynasties">{t("sourcesLinkDynasties")}</Link>
         </p>
       </section>
 
