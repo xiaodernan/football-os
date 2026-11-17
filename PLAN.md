@@ -5144,6 +5144,14 @@ Both jars rebuilt (`mvn -DskipTests package`); `football_os_config` and `footbal
 
 **Honest since Item 169's push red leg was the same root**: `"the model reads exactly the report's own stored numbers"` is the door's design goal; the read is a model-call and can hallucinate — the panel and the answer carry the prose AND the refusal where the report is silent (the model refused to invent a "block events" section since the report carries none).
 
+## Item 171 — the French library deepens: a native French chapter on the coach's six nodes (landed 2026-11-17)
+
+**What landed.** `coaching/comment-le-coach-repond-fr.md` — the second French editorial in a corpus that had none days ago. Native French, not translated: a walk through `classify_intent → build_arithmetic → spend_gate → phrase_answer → persist_answer → END`, each node naming its exact computed-vs-modelled boundary, closing with « Ce n'est pas marketing. C'est un constat d'architecture. »
+
+**Measured.** Ingest `created=1, chunks_written=6, errors=[]`; `/knowledge/status` prints `locales {en: 29, zh: 30, zh-TW: 29, fr: 2}` (**90 documents / 428 chunks**); `fr hybrid` probes find the chapter first each time (`comment le coach répond`, `graphe à états`, `le coach répond pas`); RAG eval green (**recall@5 1.0, MRR 0.9407, citation integrity 1.0, refusal accuracy 1.0, hybrid delta 0.0**).
+
+**Not claimed.** That the French chapter translates the Simplified or English siblings; that the French window gains anything else (only one chapter shipped); that this implies any new gate or door.
+
 ## Item 172 — the model reads the Record Book: `/api/v1/world/records/coach-read` (landed 2026-11-17)
 
 **The design.** The eight marks have been a page of arithmetic since they landed — the biggest haul, the goal-fest, the strongest offence and defence, the clean-sheet fortress, the cards fixture, the keeper's wall, the highest rating. The coach door asks the model to read exactly those eight payloads and speak one honest paragraph about the season. It never sees a player not named on a three-term XI-listing the payload carries; it refuses to produce a name the rows do not carry. Public; 20/min; ledger feature `world.records.read`; a sibling of the story/almanac/real-book/simulate coach-read doors.
@@ -5164,10 +5172,17 @@ openai · gpt-6.1-terra · 0 of 4800 prompt tokens came from the gateway's cache
 
 **Not claimed.** That this paragraph recognises any real player in this synthetic cohort; that the "strongest defence" print is a ranking the model was asked to produce; that the gateway's cache is sensitive to anything but the model prefix; that the second press prints cache hit.
 
-## Item 171 — the French library deepens: a native French chapter on the coach's six nodes (landed 2026-11-17)
+## Item 173 — the stored match's own import order cured by ruff (landed 2026-11-17)
 
-**What landed.** `coaching/comment-le-coach-repond-fr.md` — the second French editorial in a corpus that had none days ago. Native French, not translated: a walk through `classify_intent → build_arithmetic → spend_gate → phrase_answer → persist_answer → END`, each node naming its exact computed-vs-modelled boundary, closing with « Ce n'est pas marketing. C'est un constat d'architecture. »
+**The red, verbatim** (CI run `44029335945` and `44029770116`, api leg, step 7 `Lint`, `scripts/lint.sh`):
 
-**Measured.** Ingest `created=1, chunks_written=6, errors=[]`; `/knowledge/status` prints `locales {en: 29, zh: 30, zh-TW: 29, fr: 2}` (**90 documents / 428 chunks**); `fr hybrid` probes find the chapter first each time (`comment le coach répond`, `graphe à états`, `le coach répond pas`); RAG eval green (**recall@5 1.0, MRR 0.9407, citation integrity 1.0, refusal accuracy 1.0, hybrid delta 0.0**).
+```
+apps/api/app/api/v1/simulations.py:41: I001
+Found 1 error.
+```
 
-**Not claimed.** That the French chapter translates the Simplified or English siblings; that the French window gains anything else (only one chapter shipped); that this implies any new gate or door.
+Both legs running them printed the same error — the new `from app.services.sim_coach import compute_simulation_coach_read` landed above `from app.services.simulation.service import …` alphabetically (`simulation.service` sorts before `sim_coach`), tripping `I001`.
+
+**The cure.** `ruff check --fix app` — one-line move, nothing else; `pytest tests/test_sim_coach_read.py` → **3 passed**.
+
+**Not claimed.** That any other lint finding is lurking after the fix — the gate is now green on this line and covers its files; that `.scratch` / `.workbuddy` bring lint into scope — they do not, the lint gate reads the tracked set.
