@@ -1,8 +1,8 @@
 {
-  "head": "4d74e45",
-  "total_commits": 1452,
-  "milestone": "§332",
-  "milestone_full": "§332 — Item 195: the manual answers back (2026-11-17/18)",
+  "head": "b9521a4",
+  "total_commits": 1456,
+  "milestone": "§333",
+  "milestone_full": "§333 — Item 196: the fleet's byte-0 shared prefix (2026-11-18)",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 222,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T20:45:26.145Z"
+  "generated_at": "2026-11-17T21:39:19.533Z"
 }
