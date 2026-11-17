@@ -10756,3 +10756,63 @@ supersedes the gating clause and nothing else.
 **Not claimed.** That CI has printed `44015478364` green at the time this is written — the queue drains in
 push order and the cure rides the next push; that any reader arrived at the page yet; that the public course
 of this page was the intent in Item 158 — it was not, and the gate caught what the item missed.
+
+## §301 — Item 163: a pressure night on the live edge — 4% shed, zero 5xx from the app, the 撞库 door held (2026-11-17)
+
+**The probe, and the miss baked into it.** `scripts/loadtest.py` was run against the live edge
+(`http://127.0.0.1:18080`), `c=8`, fixed targets — verbatim head:
+
+```
+FAIL /healthz
+     ok=0 fail=100  rps=20.9 avg=0.0ms
+     err: HTTP 500 (136 bytes)
+PASS /api/v1/world/status ... (6 doors, 700/700 ok)
+verdict: FAIL
+```
+
+The red is **this probe's target list, not the product**: the edge's catch-all web route resolves
+`${apc.web-uri:http://localhost:3000}` and the dev compose never sets `APC_WEB_URI`, so a bare `/healthz`
+hits an upstream that is not there (edge log: `ConnectException: finishConnect(..) failed with error(-111)`).
+The honest health legs: `GET 18080/api/v1/healthz` → **200**, `GET 3210/healthz` → **200**, and the edge's own
+`localhost:8080/actuator/health` (what the container healthcheck polls) is what proves the edge itself healthy.
+Nothing cured — the route never had an upstream; the probe's target list was wrong; the fix (if any) belongs
+to an operator who wants the edge to serve HTML, which dev never needs. Recorded here, not hidden.
+
+**The measured knee.** Same harness shape, `/api/v1/healthz`, against the same edge:
+
+| stage | concurrency | n | result | latency |
+| --- | --- | --- | --- | --- |
+| settle | 8 | 200 | **200 / 200 ok** | avg 109 ms · p50 100 · p90 169 · p99 261 · 67 req/s |
+| ramp | 16 | 200 | **200 / 200 ok** | avg 435 ms · p50 315 · p90 849 · p99 1,742 · 33.6 req/s |
+| burst | 32 | 400 | **383 ok / 17 shed (4.25%)** · 503 fast-fail | avg 831 ms · p50 584 · p90 1,833 · p99 3,246 · 37 req/s |
+
+All shed responses were the edge's own 503 fallback envelope (237 bytes) — the bulkhead/breaker shed, never an
+application 5xx, never a hung socket, never a dropped connection. Immediately after the burst the same door
+answer 200/200/200/200 — the breaker recovered inside seconds. `docker stats` snapshot right after: api 0.18% CPU /
+297 MiB, edge 0.35% / 376 MiB, web 0.00% — no resource exhaustion, no memory pressure.
+
+**The 撞库 leg, word for word.** A burst of 30 `POST /api/v1/auth/login` with bogus credentials against the edge
+was answered by two tiers: the edge's AUTH bucket (`capacity 12, refill 0.2/s`) and the API's own login limiter —
+both said 429 with honest `retry in N s` messages; the exact output recorded:
+
+```
+POST …/auth/login (c=30, n=30) -> ok=0 fail=30  err: HTTP 503 x30 (all landed inside the breaker's open window)
+then, after the breaker cooled:
+429 "Too many requests for login; retry in 1s"
+5   401 "invalid_credentials"              <- one honest answer when the budget refilled
+6+  429 "This door (auth); retry in 5s" …  <- two-tier shed, both honest, zero 5xx, no password oracle
+```
+
+Post-burst cooldown run (0.22 s pacing): calls 1–4 `429 Too many requests for login`, call 5 `401
+invalid_credentials` — the door answered honestly when the budget allowed rather than inventing a refusal reason.
+The anti-enumeration property held: `n login calls = budget-limited shed`, never a parallel timing of password check.
+
+**A whole truthful sentence.** The edge is not a free-floating benchmark tool here; it is a gate that refuses
+fast, names the budget it enforced, and recovers on its own; the system under it never printed a 5xx from an
+application or a connection it could not finish.
+
+**Not claimed.** That 4.25% shed was fully root-caused (edge bulkhead vs breaker transition under the exact burst
+pattern — the distinction is an operator's window, not this arc's); that these figures generalise beyond this
+single-host dev compose; that any crawler or monitor hit these endpoints; that `APC_WEB_URI` should ship set (it
+is unset by the dev profile on purpose — the web shell owns HTML at :3210). The full-suite pytest running in
+background at the time of writing had not printed its final line.

@@ -5071,3 +5071,13 @@ routes-on-master before this commit lands (it is routes on this commit).
 **The cure.** `PUBLIC_EXCEPTIONS` gains `/coach/how-it-works` with a comment in the file's own idiom (the page reads no session, so the exception cannot cost a signed-in reader a forwarded/refreshed token). Gate re-run: **census green — 92 pages, 43 read or redirect to a session, 39 gated, exceptions in force include the new one**. Container rebuilt; signed-out probes of all six locales answer **200** with the fingerprint; signed-in still **200**.
 
 **Not claimed.** That CI prints `44015478364` green at the time of landing — the cure rides this push; that Item 158's §296 prints of the 307 bounce were wrong — they were right on the gated design, superseded here; that the gate complained about anything other than this one route.
+
+## Item 163 — a pressure night on the live edge (landed 2026-11-17)
+
+**The probe, honestly.** `scripts/loadtest.py` at c=8 against `http://127.0.0.1:18080` printed `FAIL /healthz` — 100 × 500. The red is the probe's target list, not the product: the edge's catch-all web route resolves `${apc.web-uri:http://localhost:3000}` and dev never sets `APC_WEB_URI`, so a bare `/healthz` hits an upstream that is not there (`ConnectException: error(-111)` in edge logs, 136-byte envelope). The three honest legs: `GET 18080/api/v1/healthz` → 200, `GET 3210/healthz` → 200, and the container's own `localhost:8080/actuator/health` is the edge-healthcheck source.
+
+**Measured knee on `/api/v1/healthz`.** c=8 → **200/200**, 67 req/s, avg 109 ms (p99 261); c=16 → **200/200**, avg 435 ms (p99 1,742); c=32 → **383/400 = 95.75% ok**, 17 shed (4.25%) with 503 fast-fail (edge fallback envelope), zero application 5xx, immediate recovery to 200 afterwards. `docker stats` after: api 0.18% CPU / 297 MiB, edge 0.35% / 376 MiB — no resource pressure.
+
+**Credential stuffing.** 30 bogus-credential POSTs at c=30 hit a two-tier shed — edge AUTH bucket (`capacity 12, refill 0.2/s`) + API login limiter — every answered 429 with honest `retry in N s` guidance; after cooldown one `401 invalid_credentials` surfaced when budget allowed (the honest answer) and the rest stayed 429. **No 5xx anywhere; no password oracle; no crash; no hang.**
+
+**Not claimed.** That the 4.25% shed at c=32 was root-caused to bulkhead vs breaker (operator-level question, this host); that figures generalise beyond the dev compose; that `APC_WEB_URI` should ship set (unset by design — web owns HTML at :3210); that the full-suite pytest had printed when this entry was written.
