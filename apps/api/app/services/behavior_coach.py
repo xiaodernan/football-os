@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.providers import LlmResult, get_llm_provider
 from app.services.behavior import compute_behavior
 from app.services.knowledge.library_charter import LIBRARY_CHARTER
+from app.services.model_census import compute_model_census
 from app.services.model_ledger import record_model_call_safely
 
 _SYSTEM = """\
@@ -53,8 +54,33 @@ projected day 1 through day 14: {projected_sessions}.
 Rule-based reads the console itself printed this window:
 {recs_block}
 
-What does the operator do next, in three moves?
+The cost and health of the model layer itself, over the most recent 7 days:
+{census_block}
+
+What does the operator do next, in three moves, in light of both blocks?
 """
+
+
+def _census_block(census: dict[str, Any]) -> str:
+    t = census["totals"]
+    cost_per_call = (t["actual_cost_usd"] / t["calls"]) if t["calls"] else 0.0
+    in_thousands = t["input_tokens"] / 1000.0
+    cost_per_1k_in = (t["actual_cost_usd"] / in_thousands) if in_thousands else 0.0
+    demo = t["demo_mode_share"]
+    low_cache = [row for row in census["by_feature"] if row["cached_share_reported"] < 0.85 and row["reported_rows"] > 0]
+    low = [f"  {row['feature']}: {round(row['cached_share_reported'] * 100, 1)}% cached ({row['reported_rows']} reported row(s), {row['calls']} calls)" for row in low_cache[:5]]
+    lines = [
+        f"  calls over the last 7 days: {t['calls']}",
+        f"  failures: {t['failures']} (failure rate {t['failure_rate']})",
+        f"  demo-mode share (budget cap stands in for the model): {round(demo * 100, 2)}%",
+        f"  gateway-reported cache share: {round(t['cached_share_reported'] * 100, 2)}% of reported input tokens ({t['reported_rows']} reported row(s))",
+        f"  actual cost: ${t['actual_cost_usd']:.4f} (est. ${t['estimated_cost_usd']:.4f})",
+        f"  cost per call: ${cost_per_call:.5f}; cost per 1k input tokens: ${cost_per_1k_in:.4f}",
+        f"  median latency_ms: {t['median_latency_ms']}",
+        "  lowest-cache features by reported rows:",
+        *low,
+    ]
+    return "\n".join(lines)
 
 
 def _pages_block(pages: list[dict[str, Any]]) -> str:
@@ -82,6 +108,7 @@ def _recs_block(recs: list[dict[str, Any]]) -> str:
 def compute_admin_coach_read(db: Session, *, window_days: int = 90) -> dict[str, Any]:
     """Compute the admin's numbers, then ask the coach for three optimizations — or say it cannot."""
     data = compute_behavior(db, window_days=window_days)
+    census = compute_model_census(db, window_days=7)
     provider = get_llm_provider()
 
     pages = data.get("pages", [])
@@ -104,6 +131,7 @@ def compute_admin_coach_read(db: Session, *, window_days: int = 90) -> dict[str,
         r_squared=forecast["r_squared"],
         projected_sessions=", ".join(str(v) for v in projected),
         recs_block=_recs_block(recs),
+        census_block="\n".join(_census_block(census)),
     )
 
     try:

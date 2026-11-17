@@ -11617,3 +11617,14 @@ Fleet census after the roll (7 days): **`cached_share_reported` = 0.9022 · repo
 **Addendum — the spoke presses the same byte-0: 94 % through the public chain (2026-11-18).**
 
 The same six doors pressed through the 3210 public spoke (web → edge → api through the SPA's own proxy path): `champions` 17,627/18,677 (**94.4 %**) · `dynasties` 15,070/16,049 (**93.9 %**) · `finals` 15,434/16,459 (**93.8 %**) · `gazette` 14,951/15,862 (**94.3 %**) · `honours` 15,316/16,250 (**94.3 %**) · `records` 14,951/15,878 (**94.2 %**). Each printed `cache_reported: true` and real model outputs — the at-gateway cache is reached identically from the public web tier.
+
+## §335 — Item 198: the admin coach reads the fleet's own ledger (2026-11-17/18)
+
+**The gap, answered.** The admin console's coach was answering "for three optimization moves" using only the visitor cohort (views, bounce, dwell, funnels, slope). It knew nothing about the fleet's model layer — calls per feature, cost, failures, demo-mode stand-ins, cache share. The ask on the page is now a two-block brief: browse aggregates + ledger aggregates over the 7-day window.
+
+**The cure.** `services/behavior_coach.py` pulls `compute_model_census(db, window_days=7)` and interpolates a new `_census_block` into the prompt: calls, failures/rate, demo-mode share, gateway-reported cache share, estimated/actual cost, cost per call, cost per 1k input tokens, median latency, per-reported-feature lowest-cache rows (below 85% reported share with at least 1 reported row). The same passphrase gate, same route, same admin panel, same cap on the number of words the coach gives the reader — only the second block was added. The model's own answer content measured live through the 3210 spoke:
+
+* First press after the rebuild: `openai · gpt-6.1-terra · demo_mode: false` · 16,885 in / 0 cached / cache_reported: false (cold for the new lines).
+* Second (near-identical) press 9 seconds later: `openai · gpt-6.1-terra · demo_mode: false` · 16,885 in / **14,644 cached (86.7 %)** / cache_reported: true · output 345 / 9.0 s — the same byte-0 charter serves across admin/feature/chronicle/manual/bay of the fleet.
+
+****Not claimed.** That the answer text names the new ledger block explicitly — the printed first and second paragraphs anchor on the seeded-cohort flag and the slope/r² plateau. Whether the model read the second block end-to-end is not verifiable from the text alone; the block reached the prompt; the model answered; the cost lines do not appear in the printed text verbatim. That is an open result Item 199 should cure with a companion clause in _SYSTEM explicitly naming the ledger block as its second authority. The ledger is honest about that.
