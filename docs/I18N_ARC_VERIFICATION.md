@@ -11613,3 +11613,7 @@ Fleet census after the roll (7 days): **`cached_share_reported` = 0.9022 · repo
 **Not cured.** The commit is pushed; the message is not amended (no history rewriting on shared master). The arc's count is 1458 in `docs/latest.json`; the message says 1457; the ledger shows both.
 
 **One line that matters.** Stop writing the message before the generator prints; always read the one line; never guess the number again.
+
+**Addendum — the spoke presses the same byte-0: 94 % through the public chain (2026-11-18).**
+
+The same six doors pressed through the 3210 public spoke (web → edge → api through the SPA's own proxy path): `champions` 17,627/18,677 (**94.4 %**) · `dynasties` 15,070/16,049 (**93.9 %**) · `finals` 15,434/16,459 (**93.8 %**) · `gazette` 14,951/15,862 (**94.3 %**) · `honours` 15,316/16,250 (**94.3 %**) · `records` 14,951/15,878 (**94.2 %**). Each printed `cache_reported: true` and real model outputs — the at-gateway cache is reached identically from the public web tier.
